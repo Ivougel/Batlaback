@@ -1,6 +1,6 @@
 /*
  * Canvas: display → ui-layout.js fitCanvasDisplaySize(); bitmap → game.js.
- * Layout contract — секция в конце файла (prep grid, field island, battle scene).
+ * Layout contract — секция в конце файла.
  */
 
 * {
@@ -366,351 +366,16 @@ body.is-ui-dragging * {
 
 /* ─── Фазы: prep / battle ─── */
 
-#app[data-phase="prep"] .overlay-side-enemy {
-  display: none;
-}
-
 body:has(#app[data-phase="prep"]) #battle-controls {
   display: none !important;
-}
-
-#app[data-phase="prep"] #battle-stats-panel {
-  display: none;
 }
 
 #app[data-phase="prep"] #board-hint {
   display: none;
 }
 
-#app[data-phase="prep"][data-prep-side="enemy"] #shop-panel .shop-panel-header {
-  flex-direction: row-reverse;
-}
-
-#app[data-phase="prep"][data-prep-side="enemy"] .shop-panel .shop-card {
-  flex-direction: row-reverse;
-  justify-content: flex-start;
-  text-align: right;
-  padding: calc(2px * var(--ui-scale)) calc(4px * var(--ui-scale)) calc(2px * var(--ui-scale)) calc(22px * var(--ui-scale));
-}
-
-#app[data-phase="prep"][data-prep-side="enemy"] .shop-panel .shop-card .shop-item-main {
-  flex-direction: row-reverse;
-}
-
-#app[data-phase="prep"][data-prep-side="enemy"] .shop-panel .shop-item-visual .cost {
-  right: auto;
-  left: -3px;
-}
-
-#app[data-phase="prep"][data-prep-side="enemy"] .shop-pin {
-  right: auto;
-  left: 4px;
-}
-
-#app[data-phase="prep"] #shop-panel.shop-readonly .btn-recipe-book {
-  pointer-events: auto;
-  opacity: 1;
-}
-
-#app[data-phase="prep"] #shop-panel.shop-readonly {
-  opacity: 0.95;
-  pointer-events: auto;
-  background: rgba(13, 17, 23, 0.97);
-}
-
-#app[data-phase="prep"] #shop-panel.shop-readonly .shop-hint {
-  color: #8b949e;
-}
-
 #app[data-phase="battle"] #prep-toolbar {
   display: none;
-}
-
-#app[data-phase="battle"] #bench-panel {
-  display: none;
-}
-
-#app[data-phase="prep"] #shop-panel .bench-panel {
-  margin-top: auto;
-  flex-shrink: 0;
-  margin-bottom: 0;
-  padding: calc(10px * var(--ui-scale)) 0 0;
-  background: transparent;
-  border: none;
-  border-top: none;
-  border-radius: 0;
-}
-
-#app[data-phase="prep"] #shop-panel .shop-sell-zone {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: calc(6px * var(--ui-scale));
-  padding: calc(10px * var(--ui-scale)) calc(4px * var(--ui-scale));
-  margin-top: calc(4px * var(--ui-scale));
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  border-radius: calc(8px * var(--ui-scale));
-  transition: background 0.15s, box-shadow 0.15s, border-color 0.15s;
-}
-
-#app[data-phase="prep"] #shop-panel .shop-sell-zone.sell-drop-target {
-  border-color: rgba(240, 193, 75, 0.55);
-  background: rgba(240, 193, 75, 0.08);
-  box-shadow: inset 0 0 0 2px rgba(240, 193, 75, 0.22);
-}
-
-#app[data-phase="prep"] #shop-panel .shop-action-row {
-  display: flex;
-  gap: calc(8px * var(--ui-scale));
-  width: 100%;
-  max-width: calc(320px * var(--ui-scale));
-}
-
-#app[data-phase="prep"] #shop-panel .shop-action-row .btn-secondary {
-  flex: 1 1 0;
-  min-width: 0;
-  padding: calc(12px * var(--ui-scale)) calc(10px * var(--ui-scale));
-  font-size: 0.9rem;
-  font-weight: 700;
-}
-
-#app[data-phase="prep"] #shop-panel .btn-sell-drop {
-  width: auto;
-  max-width: none;
-}
-
-#app[data-phase="prep"] #shop-panel .btn-recipe-book {
-  border-color: rgba(188, 140, 255, 0.45);
-  color: #d2a8ff;
-  background: rgba(163, 113, 247, 0.1);
-}
-
-#app[data-phase="prep"] #shop-panel .btn-recipe-book:hover {
-  border-color: rgba(188, 140, 255, 0.75);
-  background: rgba(163, 113, 247, 0.18);
-}
-
-#app[data-phase="prep"] #shop-panel .shop-sell-hint {
-  font-size: 0.72rem;
-  color: var(--muted);
-  text-align: center;
-  line-height: 1.35;
-}
-
-#app[data-phase="prep"] #shop-panel .bench-panel .bench-slots {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: calc(6px * var(--ui-scale));
-}
-
-#app[data-phase="prep"] #shop-panel .bench-panel .bench-card {
-  flex: none;
-  max-width: none;
-  min-height: calc(72px * var(--ui-scale));
-  padding: calc(6px * var(--ui-scale));
-}
-
-#app[data-phase="prep"] .shop-panel .shop-slots {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-auto-rows: var(--shop-card-row-h);
-  align-content: start;
-  justify-items: stretch;
-  gap: calc(5px * var(--ui-scale));
-  overflow-y: auto;
-}
-
-#app[data-phase="prep"] .shop-panel .shop-card:last-child:nth-child(odd) {
-  grid-column: 1 / -1;
-  width: calc(50% - calc(3px * var(--ui-scale)));
-  justify-self: center;
-}
-
-#app[data-phase="prep"] .shop-panel .shop-card {
-  position: relative;
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-start;
-  text-align: left;
-  gap: calc(4px * var(--ui-scale));
-  height: var(--shop-card-row-h);
-  min-height: var(--shop-card-row-h);
-  max-height: var(--shop-card-row-h);
-  padding: calc(2px * var(--ui-scale)) calc(22px * var(--ui-scale)) calc(2px * var(--ui-scale)) calc(4px * var(--ui-scale));
-  overflow: visible;
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  border-radius: 0;
-}
-
-#app[data-phase="prep"] .shop-panel .shop-card.rarity-common,
-#app[data-phase="prep"] .shop-panel .shop-card.rarity-uncommon,
-#app[data-phase="prep"] .shop-panel .shop-card.rarity-rare,
-#app[data-phase="prep"] .shop-panel .shop-card.rarity-epic,
-#app[data-phase="prep"] .shop-panel .shop-card.rarity-legendary,
-#app[data-phase="prep"] .shop-panel .shop-card.frozen {
-  background: transparent;
-  border: none;
-  box-shadow: none;
-}
-
-#app[data-phase="prep"] .shop-panel .shop-card:hover:not(.empty):not(.unaffordable) {
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  transform: scale(1.04);
-}
-
-#app[data-phase="prep"] .shop-panel .shop-card.unaffordable:hover {
-  background: transparent;
-  border: none;
-  box-shadow: none;
-}
-
-#app[data-phase="prep"] .shop-panel .shop-card.empty {
-  min-height: var(--shop-card-row-h);
-  height: var(--shop-card-row-h);
-  background: transparent;
-  border: none;
-  box-shadow: none;
-}
-
-#app[data-phase="prep"] .shop-panel .shop-item-main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: calc(6px * var(--ui-scale));
-}
-
-#app[data-phase="prep"] .shop-panel .shop-item-visual {
-  position: relative;
-  flex-shrink: 0;
-}
-
-#app[data-phase="prep"] .shop-panel .shop-card .shop-item-visual .icon {
-  width: calc(var(--game-item-icon-size) * var(--shop-item-icon-scale, 1.28));
-  height: calc(var(--game-item-icon-size) * var(--shop-item-icon-scale, 1.28));
-  font-size: calc(1.95rem * var(--ui-scale));
-  margin: 0;
-  flex-shrink: 0;
-  border-radius: calc(12px * var(--ui-scale));
-  transition: box-shadow 0.15s, transform 0.1s;
-}
-
-#app[data-phase="prep"] .shop-panel .shop-card .info,
-#app[data-phase="prep"] #shop-panel .bench-panel .bench-card:not(.empty) .info {
-  display: none;
-}
-
-#app[data-phase="prep"] .shop-panel .shop-card .item-shape-mini {
-  flex: 1;
-  min-width: 0;
-  margin: 0;
-  justify-content: flex-end;
-}
-
-#app[data-phase="prep"] #shop-panel .bench-panel .bench-card .item-shape-mini {
-  padding: 2px;
-  gap: 1px;
-}
-
-#app[data-phase="prep"] .shop-panel .shop-item-visual .cost {
-  position: absolute;
-  right: -3px;
-  bottom: -4px;
-  z-index: 2;
-  display: inline-flex;
-  align-items: center;
-  gap: calc(2px * var(--ui-scale));
-  padding: calc(1px * var(--ui-scale)) calc(5px * var(--ui-scale));
-  border-radius: calc(8px * var(--ui-scale));
-  background: rgba(13, 17, 23, 0.94);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
-  font-size: calc(0.92rem * var(--ui-scale));
-  font-weight: 800;
-  line-height: 1.1;
-  letter-spacing: 0.01em;
-  pointer-events: none;
-}
-
-#app[data-phase="prep"] .shop-panel .shop-item-visual .cost-value {
-  font-variant-numeric: tabular-nums;
-  color: var(--gold);
-}
-
-#app[data-phase="prep"] .shop-panel .shop-item-visual .cost-coin {
-  font-size: calc(1rem * var(--ui-scale));
-  line-height: 1;
-}
-
-/* Редкость в магазине: лёгкое свечение иконки, без рамок карточки */
-#app[data-phase="prep"] .shop-panel .shop-card.rarity-common .shop-item-visual .icon {
-  box-shadow: 0 0 0 1px rgba(139, 148, 158, 0.42);
-}
-
-#app[data-phase="prep"] .shop-panel .shop-card.rarity-uncommon .shop-item-visual .icon {
-  box-shadow:
-    0 0 0 1.5px rgba(63, 185, 80, 0.55),
-    0 0 14px rgba(63, 185, 80, 0.14);
-}
-
-#app[data-phase="prep"] .shop-panel .shop-card.rarity-rare .shop-item-visual .icon {
-  box-shadow:
-    0 0 0 1.5px rgba(88, 166, 255, 0.58),
-    0 0 16px rgba(88, 166, 255, 0.18);
-}
-
-#app[data-phase="prep"] .shop-panel .shop-card.rarity-epic .shop-item-visual .icon {
-  box-shadow:
-    0 0 0 1.5px rgba(163, 113, 247, 0.62),
-    0 0 18px rgba(163, 113, 247, 0.22);
-}
-
-#app[data-phase="prep"] .shop-panel .shop-card.rarity-legendary .shop-item-visual .icon {
-  box-shadow:
-    0 0 0 2px rgba(240, 193, 75, 0.65),
-    0 0 20px rgba(240, 193, 75, 0.28);
-}
-
-#app[data-phase="prep"] .shop-panel .shop-card.frozen .shop-item-visual .icon {
-  box-shadow:
-    0 0 0 2px rgba(88, 166, 255, 0.75),
-    0 0 12px rgba(88, 166, 255, 0.2);
-}
-
-#app[data-phase="prep"] .shop-panel .shop-card.frozen.rarity-uncommon .shop-item-visual .icon {
-  box-shadow:
-    0 0 0 2px rgba(88, 166, 255, 0.75),
-    0 0 0 4px rgba(63, 185, 80, 0.35),
-    0 0 14px rgba(63, 185, 80, 0.14);
-}
-
-#app[data-phase="prep"] .shop-panel .shop-card.frozen.rarity-rare .shop-item-visual .icon {
-  box-shadow:
-    0 0 0 2px rgba(88, 166, 255, 0.75),
-    0 0 0 4px rgba(88, 166, 255, 0.28),
-    0 0 16px rgba(88, 166, 255, 0.18);
-}
-
-#app[data-phase="prep"] .shop-panel .shop-card.frozen.rarity-epic .shop-item-visual .icon {
-  box-shadow:
-    0 0 0 2px rgba(88, 166, 255, 0.75),
-    0 0 0 4px rgba(163, 113, 247, 0.32),
-    0 0 18px rgba(163, 113, 247, 0.22);
-}
-
-#app[data-phase="prep"] .shop-panel .shop-card.frozen.rarity-legendary .shop-item-visual .icon {
-  box-shadow:
-    0 0 0 2px rgba(88, 166, 255, 0.75),
-    0 0 0 4px rgba(240, 193, 75, 0.35),
-    0 0 20px rgba(240, 193, 75, 0.28);
 }
 
 #app[data-phase="battle"] #shop-panel {
@@ -810,22 +475,6 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 .battle-canvas-stage #game-canvas,
 .battle-canvas-stage .canvas-scale-wrap #game-canvas {
   border-radius: 0;
-}
-
-.battle-arena-overlay {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  grid-template-columns:
-    calc(var(--battle-field-ratio) * 100%)
-    calc(var(--battle-center-ratio) * 100%)
-    calc(var(--battle-enemy-ratio, var(--battle-field-ratio)) * 100%);
-  pointer-events: none;
-  z-index: 2;
-}
-
-.overlay-side {
-  pointer-events: none;
 }
 
 .center-stats-panel {
@@ -1436,15 +1085,6 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 }
 
 @media (max-width: 820px) {
-  .battle-arena-overlay {
-    position: static;
-    display: block;
-  }
-
-  .overlay-side {
-    display: none;
-  }
-
   .center-stats-panel {
     max-height: none;
     border-bottom: none;
@@ -1907,39 +1547,318 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
   background: rgba(88, 166, 255, 0.12);
 }
 
+/* ─── Prep shop chrome (магазин, скамейка, продажа) ─── */
 
-@media (max-width: 599px) {
-  #app[data-phase="prep"] #shop-panel {
-    position: static;
-    left: auto;
-    display: flex;
-    margin-top: 6px;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    background: #161b22;
-  }
+#app[data-phase="prep"][data-prep-side="enemy"] #shop-panel .shop-panel-header {
+  flex-direction: row-reverse;
+}
 
-  #app[data-phase="prep"] #shop-panel .bench-panel {
-    margin-top: calc(8px * var(--ui-scale));
-    padding-top: calc(10px * var(--ui-scale));
-    border-top: 1px solid var(--border);
-  }
+#app[data-phase="prep"][data-prep-side="enemy"] #shop-panel .shop-card {
+  flex-direction: row-reverse;
+  justify-content: flex-start;
+  text-align: right;
+  padding: calc(2px * var(--ui-scale)) calc(4px * var(--ui-scale)) calc(2px * var(--ui-scale)) calc(22px * var(--ui-scale));
+}
 
-  #app[data-phase="prep"] #shop-panel .bench-panel .bench-slots {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+#app[data-phase="prep"][data-prep-side="enemy"] #shop-panel .shop-card .shop-item-main {
+  flex-direction: row-reverse;
+}
 
-  #app[data-phase="prep"] .shop-panel .shop-slots {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-auto-rows: var(--shop-card-row-h);
-  }
+#app[data-phase="prep"][data-prep-side="enemy"] #shop-panel .shop-item-visual .cost {
+  right: auto;
+  left: -3px;
+}
 
-  #app[data-phase="prep"] .shop-panel .shop-card,
-  #app[data-phase="prep"] .shop-panel .shop-card.empty {
-    height: var(--shop-card-row-h);
-    min-height: var(--shop-card-row-h);
-    max-height: var(--shop-card-row-h);
-  }
+#app[data-phase="prep"][data-prep-side="enemy"] .shop-pin {
+  right: auto;
+  left: 4px;
+}
+
+#app[data-phase="prep"] #shop-panel.shop-readonly .btn-recipe-book {
+  pointer-events: auto;
+  opacity: 1;
+}
+
+#app[data-phase="prep"] #shop-panel.shop-readonly {
+  opacity: 0.95;
+  pointer-events: auto;
+  background: rgba(13, 17, 23, 0.97);
+}
+
+#app[data-phase="prep"] #shop-panel.shop-readonly .shop-hint {
+  color: #8b949e;
+}
+
+#app[data-phase="prep"] #shop-panel .bench-panel {
+  margin-top: auto;
+  flex-shrink: 0;
+  margin-bottom: 0;
+  padding: calc(10px * var(--ui-scale)) 0 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-sell-zone {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(6px * var(--ui-scale));
+  padding: calc(10px * var(--ui-scale)) calc(4px * var(--ui-scale));
+  margin-top: calc(4px * var(--ui-scale));
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  border-radius: calc(8px * var(--ui-scale));
+  transition: background 0.15s, box-shadow 0.15s, border-color 0.15s;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-sell-zone.sell-drop-target {
+  border-color: rgba(240, 193, 75, 0.55);
+  background: rgba(240, 193, 75, 0.08);
+  box-shadow: inset 0 0 0 2px rgba(240, 193, 75, 0.22);
+}
+
+#app[data-phase="prep"] #shop-panel .shop-action-row {
+  display: flex;
+  gap: calc(8px * var(--ui-scale));
+  width: 100%;
+  max-width: calc(320px * var(--ui-scale));
+}
+
+#app[data-phase="prep"] #shop-panel .shop-action-row .btn-secondary {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: calc(12px * var(--ui-scale)) calc(10px * var(--ui-scale));
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+#app[data-phase="prep"] #shop-panel .btn-sell-drop {
+  width: auto;
+  max-width: none;
+}
+
+#app[data-phase="prep"] #shop-panel .btn-recipe-book {
+  border-color: rgba(188, 140, 255, 0.45);
+  color: #d2a8ff;
+  background: rgba(163, 113, 247, 0.1);
+}
+
+#app[data-phase="prep"] #shop-panel .btn-recipe-book:hover {
+  border-color: rgba(188, 140, 255, 0.75);
+  background: rgba(163, 113, 247, 0.18);
+}
+
+#app[data-phase="prep"] #shop-panel .shop-sell-hint {
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.35;
+}
+
+#app[data-phase="prep"] #shop-panel .bench-panel .bench-slots {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: calc(6px * var(--ui-scale));
+}
+
+#app[data-phase="prep"] #shop-panel .bench-panel .bench-card {
+  flex: none;
+  max-width: none;
+  min-height: calc(72px * var(--ui-scale));
+  padding: calc(6px * var(--ui-scale));
+}
+
+#app[data-phase="prep"] #shop-panel .shop-slots {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: var(--shop-card-row-h);
+  align-content: start;
+  justify-items: stretch;
+  gap: calc(5px * var(--ui-scale));
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-card:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+  width: calc(50% - calc(3px * var(--ui-scale)));
+  justify-self: center;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-card {
+  position: relative;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: left;
+  gap: calc(4px * var(--ui-scale));
+  height: var(--shop-card-row-h);
+  min-height: var(--shop-card-row-h);
+  max-height: var(--shop-card-row-h);
+  padding: calc(2px * var(--ui-scale)) calc(22px * var(--ui-scale)) calc(2px * var(--ui-scale)) calc(4px * var(--ui-scale));
+  overflow: visible;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-card:is(
+  .rarity-common,
+  .rarity-uncommon,
+  .rarity-rare,
+  .rarity-epic,
+  .rarity-legendary,
+  .frozen,
+  .empty,
+  .unaffordable:hover
+) {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-card:hover:not(.empty):not(.unaffordable) {
+  transform: scale(1.04);
+}
+
+#app[data-phase="prep"] #shop-panel .shop-item-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: calc(6px * var(--ui-scale));
+}
+
+#app[data-phase="prep"] #shop-panel .shop-item-visual {
+  position: relative;
+  flex-shrink: 0;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-card .shop-item-visual .icon {
+  width: calc(var(--game-item-icon-size) * var(--shop-item-icon-scale, 1.28));
+  height: calc(var(--game-item-icon-size) * var(--shop-item-icon-scale, 1.28));
+  font-size: calc(1.95rem * var(--ui-scale));
+  margin: 0;
+  flex-shrink: 0;
+  border-radius: calc(12px * var(--ui-scale));
+  transition: box-shadow 0.15s, transform 0.1s;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-card .info,
+#app[data-phase="prep"] #shop-panel .bench-panel .bench-card:not(.empty) .info {
+  display: none;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-card .item-shape-mini {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  justify-content: flex-end;
+}
+
+#app[data-phase="prep"] #shop-panel .bench-panel .bench-card .item-shape-mini {
+  padding: 2px;
+  gap: 1px;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-item-visual .cost {
+  position: absolute;
+  right: -3px;
+  bottom: -4px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: calc(2px * var(--ui-scale));
+  padding: calc(1px * var(--ui-scale)) calc(5px * var(--ui-scale));
+  border-radius: calc(8px * var(--ui-scale));
+  background: rgba(13, 17, 23, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  font-size: calc(0.92rem * var(--ui-scale));
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+  pointer-events: none;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-item-visual .cost-value {
+  font-variant-numeric: tabular-nums;
+  color: var(--gold);
+}
+
+#app[data-phase="prep"] #shop-panel .shop-item-visual .cost-coin {
+  font-size: calc(1rem * var(--ui-scale));
+  line-height: 1;
+}
+
+/* Редкость: свечение иконки */
+#app[data-phase="prep"] #shop-panel .shop-card.rarity-common .shop-item-visual .icon {
+  box-shadow: 0 0 0 1px rgba(139, 148, 158, 0.42);
+}
+
+#app[data-phase="prep"] #shop-panel .shop-card.rarity-uncommon .shop-item-visual .icon {
+  box-shadow:
+    0 0 0 1.5px rgba(63, 185, 80, 0.55),
+    0 0 14px rgba(63, 185, 80, 0.14);
+}
+
+#app[data-phase="prep"] #shop-panel .shop-card.rarity-rare .shop-item-visual .icon {
+  box-shadow:
+    0 0 0 1.5px rgba(88, 166, 255, 0.58),
+    0 0 16px rgba(88, 166, 255, 0.18);
+}
+
+#app[data-phase="prep"] #shop-panel .shop-card.rarity-epic .shop-item-visual .icon {
+  box-shadow:
+    0 0 0 1.5px rgba(163, 113, 247, 0.62),
+    0 0 18px rgba(163, 113, 247, 0.22);
+}
+
+#app[data-phase="prep"] #shop-panel .shop-card.rarity-legendary .shop-item-visual .icon {
+  box-shadow:
+    0 0 0 2px rgba(240, 193, 75, 0.65),
+    0 0 20px rgba(240, 193, 75, 0.28);
+}
+
+#app[data-phase="prep"] #shop-panel .shop-card.frozen .shop-item-visual .icon {
+  box-shadow:
+    0 0 0 2px rgba(88, 166, 255, 0.75),
+    0 0 12px rgba(88, 166, 255, 0.2);
+}
+
+#app[data-phase="prep"] #shop-panel .shop-card.frozen.rarity-uncommon .shop-item-visual .icon {
+  box-shadow:
+    0 0 0 2px rgba(88, 166, 255, 0.75),
+    0 0 0 4px rgba(63, 185, 80, 0.35),
+    0 0 14px rgba(63, 185, 80, 0.14);
+}
+
+#app[data-phase="prep"] #shop-panel .shop-card.frozen.rarity-rare .shop-item-visual .icon {
+  box-shadow:
+    0 0 0 2px rgba(88, 166, 255, 0.75),
+    0 0 0 4px rgba(88, 166, 255, 0.28),
+    0 0 16px rgba(88, 166, 255, 0.18);
+}
+
+#app[data-phase="prep"] #shop-panel .shop-card.frozen.rarity-epic .shop-item-visual .icon {
+  box-shadow:
+    0 0 0 2px rgba(88, 166, 255, 0.75),
+    0 0 0 4px rgba(163, 113, 247, 0.32),
+    0 0 18px rgba(163, 113, 247, 0.22);
+}
+
+#app[data-phase="prep"] #shop-panel .shop-card.frozen.rarity-legendary .shop-item-visual .icon {
+  box-shadow:
+    0 0 0 2px rgba(88, 166, 255, 0.75),
+    0 0 0 4px rgba(240, 193, 75, 0.35),
+    0 0 20px rgba(240, 193, 75, 0.28);
 }
 
 /* ─── iPad mini / планшет 600–1200px: поле слева, магазин+скамейка справа ─── */
@@ -2046,51 +1965,24 @@ html[data-battle-hud-pin="true"] body {
     flex-shrink: 0;
   }
 
-  #app[data-phase="prep"] #shop-panel .shop-slots {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 6px;
-    flex: 1 1 auto;
-    min-height: 0;
-    min-width: 0;
-    overflow-x: hidden;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    grid-auto-rows: var(--shop-card-row-h);
-  }
-
-  #app[data-phase="prep"] #shop-panel .bench-panel .bench-slots {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
-  }
-
-  #app[data-phase="prep"] #shop-panel .shop-sell-zone {
-    flex-shrink: 0;
-  }
-
   #app[data-phase="prep"] #shop-panel .bench-panel {
-    flex-shrink: 0;
     margin-top: calc(6px * var(--ui-scale));
   }
 
-  #app[data-phase="prep"] .shop-panel .shop-card,
-  #app[data-phase="prep"] .shop-panel .shop-card.empty {
-    height: var(--shop-card-row-h);
-    min-height: var(--shop-card-row-h);
-    max-height: var(--shop-card-row-h);
+  #app[data-phase="prep"] #shop-panel .shop-card,
+  #app[data-phase="prep"] #shop-panel .shop-card.empty {
     min-width: 0;
     overflow: hidden;
     padding: calc(4px * var(--ui-scale)) calc(24px * var(--ui-scale)) calc(4px * var(--ui-scale)) calc(6px * var(--ui-scale));
     gap: calc(4px * var(--ui-scale));
   }
 
-  #app[data-phase="prep"] .shop-panel .shop-item-visual .cost {
+  #app[data-phase="prep"] #shop-panel .shop-item-visual .cost {
     white-space: nowrap;
     font-size: calc(0.86rem * var(--ui-scale));
   }
 
-  #app[data-phase="prep"] .shop-panel .shop-item-visual .cost-coin {
+  #app[data-phase="prep"] #shop-panel .shop-item-visual .cost-coin {
     font-size: calc(0.94rem * var(--ui-scale));
   }
 
@@ -2138,11 +2030,6 @@ html[data-battle-hud-pin="true"] body {
   flex-wrap: wrap;
   align-items: center;
   gap: 6px 8px;
-  margin-top: 0;
-  padding: 8px 10px;
-  background: #161b22;
-  border: 1px solid var(--border);
-  border-radius: 10px;
   flex-shrink: 0;
 }
 
@@ -4671,20 +4558,12 @@ html[data-prep-layout="stacked"] #app[data-phase="prep"] #shop-panel .bench-pane
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-html[data-prep-layout="stacked"] #app[data-phase="prep"] .shop-panel .shop-slots {
+html[data-prep-layout="stacked"] #app[data-phase="prep"] #shop-panel .shop-slots {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-auto-rows: calc(86px * var(--ui-scale));
   max-height: min(42dvh, 360px);
 }
 
-html[data-prep-layout="stacked"] #app[data-phase="prep"] .shop-panel .shop-card,
-html[data-prep-layout="stacked"] #app[data-phase="prep"] .shop-panel .shop-card.empty {
-  height: calc(86px * var(--ui-scale));
-  min-height: calc(86px * var(--ui-scale));
-  max-height: calc(86px * var(--ui-scale));
-}
-
-html[data-prep-layout="stacked"] #app[data-phase="prep"][data-prep-side="enemy"] .shop-panel .shop-card {
+html[data-prep-layout="stacked"] #app[data-phase="prep"][data-prep-side="enemy"] #shop-panel .shop-card {
   flex-direction: row;
   justify-content: flex-start;
   text-align: left;
@@ -4708,15 +4587,6 @@ html[data-prep-layout="stacked"] .shop-panel {
 html[data-prep-layout="stacked"] .shop-panel .shop-card,
 html[data-prep-layout="stacked"] .bench-panel .bench-card {
   touch-action: none;
-}
-
-html[data-prep-layout="stacked"] .battle-arena-overlay {
-  position: static;
-  display: block;
-}
-
-html[data-prep-layout="stacked"] .overlay-side {
-  display: none;
 }
 
 html[data-prep-layout="stacked"] .center-stats-panel {
@@ -4796,10 +4666,6 @@ html[data-prep-layout="stacked"] #app[data-phase="prep"] .battle-canvas-stage {
 html[data-prep-layout="stacked"] #app[data-phase="prep"][data-prep-side="player"] #shop-panel,
 html[data-prep-layout="stacked"] #app[data-phase="prep"][data-prep-side="enemy"] #shop-panel {
   width: 100%;
-  flex-shrink: 0;
-}
-
-html[data-prep-layout="stacked"] #app[data-phase="prep"] #shop-panel .shop-sell-zone {
   flex-shrink: 0;
 }
 
@@ -4924,12 +4790,10 @@ html[data-prep-side-fit="true"] #app[data-phase="prep"] .shop-panel .shop-slots 
 }
 
 html[data-prep-side-fit="true"] #app[data-phase="prep"] #shop-panel .shop-sell-zone {
-  flex-shrink: 0;
   margin-top: calc(4px * var(--ui-scale));
 }
 
 html[data-prep-side-fit="true"] #app[data-phase="prep"] #shop-panel .bench-panel {
-  flex-shrink: 0;
   margin-top: calc(4px * var(--ui-scale));
   margin-bottom: 0;
 }
@@ -5043,7 +4907,6 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .shop-panel .shop-ca
 }
 
 html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #shop-panel .shop-sell-zone {
-  flex-shrink: 0;
   padding: calc(6px * var(--ui-scale)) calc(4px * var(--ui-scale));
   margin-top: calc(4px * var(--ui-scale));
 }
@@ -5055,7 +4918,6 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #shop-panel .shop-ac
 }
 
 html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #shop-panel .bench-panel {
-  flex-shrink: 0;
   margin-top: calc(4px * var(--ui-scale));
   padding-top: calc(6px * var(--ui-scale));
 }

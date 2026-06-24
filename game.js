@@ -2448,60 +2448,6 @@ function drawLoadoutItems(items, team, dimmed) {
   });
 }
 
-function drawBattleItems(items, team, dimmed) {
-  items.forEach((item) => {
-    const def = ITEM_CATALOG[item.itemId];
-    getItemCells(item).forEach(([c, r], idx) => {
-      const { x, y, w, h } = cellRect(team, c, r);
-      ctx.globalAlpha = dimmed ? 0.55 : 1;
-      ctx.fillStyle = def.color + "cc";
-      roundRect(x + 3, y + 3, w - 6, h - 6, 5);
-      ctx.fill();
-      if (idx === 0) {
-        drawCellEmoji(ctx, def.icon, x, y, w, h);
-      }
-      if (item.currentCooldown != null) {
-        const maxCd = getEffectiveCooldown(item);
-        const pct = 1 - item.currentCooldown / maxCd;
-        ctx.fillStyle = pct >= 1 ? "#3fb950" : "#58a6ff";
-        roundRect(x + 4, y + h - 10, (w - 8) * Math.max(0, Math.min(1, pct)), 5, 2);
-        ctx.fill();
-      }
-      ctx.globalAlpha = 1;
-    });
-  });
-}
-
-function drawBattleHud() {
-  /* HP и VS — в центральной HTML-панели статов */
-}
-
-function drawHpBar(x, y, w, hp, maxHp, color, label) {
-  ctx.fillStyle = "#8b949e";
-  ctx.font = `${uiPx(10)}px sans-serif`;
-  ctx.textAlign = x > 400 ? "right" : "left";
-  ctx.fillText(`${label}: ${Math.ceil(hp)}`, x + (x > 400 ? w : 0), y - 4);
-  ctx.fillStyle = "#21262d";
-  roundRect(x, y, w, 10, 4);
-  ctx.fill();
-  ctx.fillStyle = color;
-  roundRect(x, y, w * Math.max(0, hp / maxHp), 10, 4);
-  ctx.fill();
-}
-
-function drawFloatingNumbers() {
-  battleState?.floatingNumbers?.forEach((fn) => {
-    const alpha = fn.age / fn.maxAge < 0.3 ? 1 : 1 - (fn.age / fn.maxAge - 0.3) / 0.7;
-    ctx.save();
-    ctx.globalAlpha = Math.max(0, alpha);
-    ctx.font = `bold ${uiPx(16)}px sans-serif`;
-    ctx.textAlign = "center";
-    ctx.fillStyle = fn.color;
-    ctx.fillText(fn.text, fn.x, fn.y - fn.age * 55);
-    ctx.restore();
-  });
-}
-
 function drawItemPreview(x, y, def, itemId, selected, rotation, targetCtx = ctx) {
   const shape = rotateShape(def.shape, rotation);
   targetCtx.fillStyle = selected ? "rgba(240,193,75,0.15)" : "rgba(0,0,0,0.2)";
