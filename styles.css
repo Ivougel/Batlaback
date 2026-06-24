@@ -4352,3 +4352,15 @@ html[data-touch="true"] .hint-front {
 html[data-touch="true"] .hint-touch {
   display: inline;
 }
+
+html[data-touch="true"] #app[data-phase="prep"] .battle-canvas-stage {
+  touch-action: none;
+}
+
+html[data-touch="true"] #app[data-phase="prep"] .board-section {
+  touch-action: none;
+}
+
+html[data-touch="true"] #app[data-phase="prep"] .shop-panel .shop-slots {
+  touch-action: pan-y;
+}

@@ -78,7 +78,6 @@ let runItemStats = createEmptyRunItemStats();
 let battleEndHandled = false;
 let pendingShopDrag = null;
 let shopDidDrag = false;
-let touchInputActive = false;
 let lastTouchEventAt = 0;
 let suppressShopClickUntil = 0;
 let opponentMode = "ai";
@@ -413,40 +412,50 @@ function isSyntheticMouseFromTouch() {
 
 function bindTouchInput() {
   const boardSection = document.querySelector(".board-section");
-  const touchOpts = { passive: false };
+  const interactionOpts = { passive: false };
+  let activePointerId = null;
 
-  boardSection?.addEventListener("touchstart", (e) => {
-    if (phase !== "prep" || gameOver || e.touches.length !== 1) return;
+  const isTouchLike = (e) => e.pointerType === "touch" || e.pointerType === "pen";
+
+  const handlePointerDown = (e) => {
+    if (phase !== "prep" || gameOver || !isTouchLike(e)) return;
     if (e.target.closest("button, a, input, select, textarea")) return;
-    const t = e.touches[0];
+    activePointerId = e.pointerId;
     lastTouchEventAt = Date.now();
-    touchInputActive = true;
+    try {
+      boardSection?.setPointerCapture(e.pointerId);
+    } catch (_) {}
     e.preventDefault();
-    gamepadPointerDownAt(t.clientX, t.clientY);
-  }, touchOpts);
-
-  window.addEventListener("touchmove", (e) => {
-    if (!touchInputActive || !e.touches[0]) return;
-    if (dragPayload || pendingShopDrag) e.preventDefault();
-    updatePointerFromClient(e.touches[0].clientX, e.touches[0].clientY);
-  }, touchOpts);
-
-  const onTouchEnd = (e) => {
-    if (!touchInputActive) return;
-    lastTouchEventAt = Date.now();
-    const t = e.changedTouches[0];
-    if (t) gamepadPointerUpAt(t.clientX, t.clientY);
-    touchInputActive = false;
+    gamepadPointerDownAt(e.clientX, e.clientY);
   };
-  window.addEventListener("touchend", onTouchEnd, touchOpts);
-  window.addEventListener("touchcancel", onTouchEnd, touchOpts);
+
+  const handlePointerMove = (e) => {
+    if (activePointerId === null || e.pointerId !== activePointerId) return;
+    e.preventDefault();
+    updatePointerFromClient(e.clientX, e.clientY);
+  };
+
+  const handlePointerUp = (e) => {
+    if (activePointerId === null || e.pointerId !== activePointerId) return;
+    lastTouchEventAt = Date.now();
+    gamepadPointerUpAt(e.clientX, e.clientY);
+    try {
+      boardSection?.releasePointerCapture(e.pointerId);
+    } catch (_) {}
+    activePointerId = null;
+  };
+
+  boardSection?.addEventListener("pointerdown", handlePointerDown, interactionOpts);
+  boardSection?.addEventListener("pointermove", handlePointerMove, interactionOpts);
+  boardSection?.addEventListener("pointerup", handlePointerUp, interactionOpts);
+  boardSection?.addEventListener("pointercancel", handlePointerUp, interactionOpts);
 
   document.addEventListener("touchstart", (e) => {
     if (dragPayload && phase === "prep" && e.touches.length === 2) {
       e.preventDefault();
       rotateDragItem();
     }
-  }, touchOpts);
+  }, interactionOpts);
 
   canvas?.addEventListener("touchend", (e) => {
     if (phase !== "battle" && phase !== "replay") return;
@@ -464,7 +473,10 @@ function init() {
   canvas.height = CANVAS_H;
   canvas.width = CANVAS_W;
   syncBattleArenaLayout();
-  canvas.addEventListener("mousedown", onMouseDown);
+  canvas.addEventListener("mousedown", (e) => {
+    if (isSyntheticMouseFromTouch()) return;
+    onMouseDown(e);
+  });
   canvas.addEventListener("contextmenu", (e) => {
     e.preventDefault();
     if (dragPayload && phase === "prep") rotateDragItem();
@@ -2698,7 +2710,6 @@ function bindItemTooltipEvents(el, itemId, contentItem, context = "shop") {
 }
 
 function onMouseDown(e) {
-  if (isSyntheticMouseFromTouch()) return;
   if (phase !== "prep" || gameOver || !canEditPrepSide()) return;
   const side = prepViewSide;
   const st = getSideState(side);
