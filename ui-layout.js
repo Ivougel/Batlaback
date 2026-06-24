@@ -47,6 +47,9 @@
     const compact = tier !== "desktop" || h <= 940;
     document.documentElement.dataset.uiCompact = compact ? "true" : "false";
 
+    const touch = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+    document.documentElement.dataset.touch = touch ? "true" : "false";
+
     const hudH = isModalOpen() || !isHudVisible() ? 0 : (document.getElementById("gamepad-hints-bar")?.offsetHeight ?? 0);
     document.documentElement.style.setProperty("--hud-offset", `${hudH}px`);
     document.documentElement.style.setProperty(

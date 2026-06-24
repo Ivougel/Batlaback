@@ -78,6 +78,9 @@ let runItemStats = createEmptyRunItemStats();
 let battleEndHandled = false;
 let pendingShopDrag = null;
 let shopDidDrag = false;
+let touchInputActive = false;
+let lastTouchEventAt = 0;
+let suppressShopClickUntil = 0;
 let opponentMode = "ai";
 let gameMode = "solo";
 let prepViewSide = "player";
@@ -404,6 +407,57 @@ function clonePrepBattleItem(item) {
   };
 }
 
+function isSyntheticMouseFromTouch() {
+  return Date.now() - lastTouchEventAt < 700;
+}
+
+function bindTouchInput() {
+  const boardSection = document.querySelector(".board-section");
+  const touchOpts = { passive: false };
+
+  boardSection?.addEventListener("touchstart", (e) => {
+    if (phase !== "prep" || gameOver || e.touches.length !== 1) return;
+    if (e.target.closest("button, a, input, select, textarea")) return;
+    const t = e.touches[0];
+    lastTouchEventAt = Date.now();
+    touchInputActive = true;
+    e.preventDefault();
+    gamepadPointerDownAt(t.clientX, t.clientY);
+  }, touchOpts);
+
+  window.addEventListener("touchmove", (e) => {
+    if (!touchInputActive || !e.touches[0]) return;
+    if (dragPayload || pendingShopDrag) e.preventDefault();
+    updatePointerFromClient(e.touches[0].clientX, e.touches[0].clientY);
+  }, touchOpts);
+
+  const onTouchEnd = (e) => {
+    if (!touchInputActive) return;
+    lastTouchEventAt = Date.now();
+    const t = e.changedTouches[0];
+    if (t) gamepadPointerUpAt(t.clientX, t.clientY);
+    touchInputActive = false;
+  };
+  window.addEventListener("touchend", onTouchEnd, touchOpts);
+  window.addEventListener("touchcancel", onTouchEnd, touchOpts);
+
+  document.addEventListener("touchstart", (e) => {
+    if (dragPayload && phase === "prep" && e.touches.length === 2) {
+      e.preventDefault();
+      rotateDragItem();
+    }
+  }, touchOpts);
+
+  canvas?.addEventListener("touchend", (e) => {
+    if (phase !== "battle" && phase !== "replay") return;
+    if (dragPayload || !battleState) return;
+    const t = e.changedTouches[0];
+    if (!t) return;
+    updatePointerFromClient(t.clientX, t.clientY);
+    updateTooltip(mousePos.x, mousePos.y);
+  }, { passive: true });
+}
+
 function init() {
   canvas = document.getElementById("game-canvas");
   ctx = canvas.getContext("2d");
@@ -423,14 +477,21 @@ function init() {
     }
   });
   window.addEventListener("keydown", handleGlobalKeydown);
-  window.addEventListener("mousemove", onGlobalMouseMove);
-  window.addEventListener("mouseup", finishDragDrop);
+  window.addEventListener("mousemove", (e) => {
+    if (isSyntheticMouseFromTouch()) return;
+    onGlobalMouseMove(e);
+  });
+  window.addEventListener("mouseup", (e) => {
+    if (isSyntheticMouseFromTouch()) return;
+    finishDragDrop(e);
+  });
   document.addEventListener("selectstart", (e) => {
     if (dragPayload || pendingShopDrag) e.preventDefault();
   });
   document.addEventListener("dragstart", (e) => {
     if (dragPayload || pendingShopDrag) e.preventDefault();
   });
+  bindTouchInput();
   document.getElementById("btn-fight").addEventListener("click", startBattle);
   document.getElementById("btn-refresh")?.addEventListener("click", () => refreshShop(true));
   document.getElementById("btn-sell").addEventListener("click", sellSelected);
@@ -1809,6 +1870,7 @@ function gamepadPointerUpAt(clientX, clientY) {
       const { index, side } = pendingShopDrag;
       pendingShopDrag = null;
       buyFromShop(index, side);
+      suppressShopClickUntil = Date.now() + 500;
       syncUiDragState();
       return;
     }
@@ -2636,6 +2698,7 @@ function bindItemTooltipEvents(el, itemId, contentItem, context = "shop") {
 }
 
 function onMouseDown(e) {
+  if (isSyntheticMouseFromTouch()) return;
   if (phase !== "prep" || gameOver || !canEditPrepSide()) return;
   const side = prepViewSide;
   const st = getSideState(side);
@@ -3040,10 +3103,12 @@ function renderShop(side = prepViewSide) {
   el.querySelectorAll(".shop-card:not(.empty)").forEach((card) => {
     if (!card.dataset.unaffordable) {
       card.addEventListener("mousedown", (e) => {
+        if (isSyntheticMouseFromTouch()) return;
         if (e.button !== 0 || e.target.closest(".shop-pin")) return;
         beginPendingShopDrag(+card.dataset.index, e, side);
       });
       card.addEventListener("click", (e) => {
+        if (Date.now() < suppressShopClickUntil) return;
         if (e.target.closest(".shop-pin") || shopDidDrag) {
           shopDidDrag = false;
           return;
@@ -3075,7 +3140,10 @@ function renderBench(side = prepViewSide) {
   if (!canEditPrepSide(side)) return;
   el.querySelectorAll(".bench-card:not(.empty)").forEach((card) => {
     const idx = +card.dataset.bench;
-    card.addEventListener("mousedown", (e) => startBenchDrag(idx, e, side));
+    card.addEventListener("mousedown", (e) => {
+      if (isSyntheticMouseFromTouch()) return;
+      startBenchDrag(idx, e, side);
+    });
   });
 }
 
