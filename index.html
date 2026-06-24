@@ -9,13 +9,6 @@
 </head>
 <body>
   <div id="app" data-phase="prep">
-    <header class="top-bar top-bar-slim">
-      <div class="logo">🎒 Backpack Battles</div>
-      <div class="stats">
-        <span class="stat" id="round-stat">Раунд 1</span>
-      </div>
-    </header>
-
     <div class="battle-header-stack">
       <div class="battle-controls hidden" id="battle-controls">
         <button type="button" class="bc-btn" id="btn-battle-pause" title="Пауза (Start)">⏸</button>
@@ -95,6 +88,7 @@
             <button type="button" class="btn-secondary prep-side-btn" id="btn-prep-enemy" data-prep-side="enemy">🤖 Противник</button>
           </div>
           <div class="prep-toolbar-actions">
+            <span class="stat stat-round" id="round-stat">Раунд 1</span>
             <button class="btn-primary btn-fight-header" id="btn-fight" type="button">⚔️ В бой!</button>
             <div class="run-stats-anchor">
               <button type="button" class="btn-top-stats" id="btn-settings" aria-expanded="false" aria-controls="settings-overlay">

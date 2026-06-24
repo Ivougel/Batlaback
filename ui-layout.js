@@ -8,8 +8,6 @@
   const SCALE_MAX = 1;
   const PREP_STACKED_CONTENT_H = 640;
   const PREP_SIDE_CONTENT_H = 760;
-  const MIN_TOUCH_CELL_PX = 44;
-  const INTERNAL_CELL_BASE = 30;
 
   function viewportSize() {
     const vv = window.visualViewport;
@@ -59,12 +57,7 @@
   function measurePrepChromeHeight() {
     const app = document.getElementById("app");
     if (!app) return 72;
-    const topBar = app.querySelector(".top-bar");
     let chrome = 0;
-    if (topBar) {
-      const style = getComputedStyle(topBar);
-      chrome += topBar.offsetHeight + (parseFloat(style.marginBottom) || 0);
-    }
     const bottomBar = app.querySelector("#prep-toolbar");
     if (bottomBar && getComputedStyle(bottomBar).display !== "none") {
       const bottomStyle = getComputedStyle(bottomBar);
@@ -105,14 +98,8 @@
     const sh = stage.clientHeight;
     if (sw <= 0 || sh <= 0) return;
 
-    const uiScale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--ui-scale")) || 1;
-    const internalCell = INTERNAL_CELL_BASE * uiScale;
-    const minScaleForTouch = MIN_TOUCH_CELL_PX / internalCell;
-
-    let scale = Math.min(sw / canvas.width, sh / canvas.height);
-    if (Number.isFinite(minScaleForTouch) && minScaleForTouch > 0) {
-      scale = Math.max(scale, minScaleForTouch);
-    }
+    const scale = Math.min(sw / canvas.width, sh / canvas.height);
+    if (scale <= 0) return;
 
     const w = Math.max(1, Math.floor(canvas.width * scale));
     const h = Math.max(1, Math.floor(canvas.height * scale));
@@ -122,10 +109,7 @@
 
   function scheduleCanvasFit() {
     requestAnimationFrame(() => {
-      if (typeof syncPrepCanvasDisplaySize === "function") {
-        syncPrepCanvasDisplaySize();
-      }
-      fitPrepCanvasToStage();
+      requestAnimationFrame(fitPrepCanvasToStage);
     });
   }
 
@@ -217,6 +201,10 @@
   window.visualViewport?.addEventListener("resize", scheduleLayout, { passive: true });
   document.addEventListener("DOMContentLoaded", () => {
     scheduleLayout();
+    const stage = document.querySelector(".battle-canvas-stage");
+    if (stage && typeof ResizeObserver !== "undefined") {
+      new ResizeObserver(scheduleCanvasFit).observe(stage);
+    }
     const hud = document.getElementById("gamepad-hints-bar");
     if (hud) {
       new MutationObserver(scheduleLayout).observe(hud, {

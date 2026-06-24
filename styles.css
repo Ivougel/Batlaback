@@ -638,8 +638,8 @@ body.is-ui-dragging * {
 }
 
 #app[data-phase="prep"] .prep-left-column .battle-canvas-stage {
-  flex: 1 1 58%;
-  min-height: 0;
+  flex: 1.35 1 0;
+  min-height: 160px;
   width: 100%;
   max-width: none;
   display: flex;
@@ -647,6 +647,7 @@ body.is-ui-dragging * {
   align-items: stretch;
   justify-content: flex-start;
   overflow: hidden;
+  clip-path: none !important;
 }
 
 #app[data-phase="prep"] .prep-left-column .canvas-scale-wrap {
@@ -655,14 +656,14 @@ body.is-ui-dragging * {
   width: 100%;
   max-width: none;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-start;
+  justify-content: flex-start;
   overflow: hidden;
 }
 
 #app[data-phase="prep"] .prep-left-column .battle-avatars-row {
-  flex: 1 1 42%;
-  min-height: 0;
+  flex: 1 1 0;
+  min-height: 120px;
   width: 100%;
   max-width: none;
   margin: 0;
@@ -2243,6 +2244,17 @@ body.is-ui-dragging * {
   gap: 6px;
   margin-left: auto;
   flex-shrink: 0;
+}
+
+.prep-toolbar-actions .stat-round {
+  flex-shrink: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text);
+  padding: 6px 10px;
+  background: #21262d;
+  border-radius: 16px;
+  white-space: nowrap;
 }
 
 .prep-toolbar-actions .phase-label {
