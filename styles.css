@@ -887,6 +887,12 @@ body:has(#app[data-phase="replay"]) #battle-controls:not(.hidden) {
 body:has(#app[data-phase="battle"]) .gamepad-hints-bar,
 body:has(#app[data-phase="replay"]) .gamepad-hints-bar {
   display: flex !important;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding-left: calc(12px + env(safe-area-inset-left, 0px));
+  padding-right: calc(12px + env(safe-area-inset-right, 0px));
 }
 
 #app[data-phase="battle"] .battle-canvas-stage {
@@ -2424,6 +2430,11 @@ html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .field-a
     overflow: hidden;
     display: flex;
     flex-direction: column;
+  }
+
+  #app[data-phase="battle"],
+  #app[data-phase="replay"] {
+    padding-bottom: 6px;
   }
 
   #app .top-bar {

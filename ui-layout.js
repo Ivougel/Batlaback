@@ -234,11 +234,14 @@
     document.documentElement.style.setProperty("--viewport-h", `${Math.round(h)}px`);
     document.documentElement.style.setProperty("--viewport-w", `${Math.round(w)}px`);
 
-    const hudH = isModalOpen() || !isHudVisible() ? 0 : (document.getElementById("gamepad-hints-bar")?.offsetHeight ?? 0);
+    const hudVisible = !isModalOpen() && isHudVisible();
+    const hudH = hudVisible ? (document.getElementById("gamepad-hints-bar")?.offsetHeight ?? 0) : 0;
     document.documentElement.style.setProperty("--hud-offset", `${hudH}px`);
     document.documentElement.style.setProperty(
       "--app-h",
-      "calc(100dvh - var(--hud-offset) - env(safe-area-inset-top) - env(safe-area-inset-bottom))",
+      hudVisible
+        ? "calc(100dvh - var(--hud-offset) - env(safe-area-inset-top))"
+        : "calc(100dvh - var(--hud-offset) - env(safe-area-inset-top) - env(safe-area-inset-bottom))",
     );
     document.documentElement.style.setProperty(
       "--overlay-max-h",
