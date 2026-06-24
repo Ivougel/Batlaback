@@ -28,6 +28,10 @@
     });
   }
 
+  function isTouchDevice() {
+    return "ontouchstart" in window || navigator.maxTouchPoints > 0;
+  }
+
   function applyUiLayout() {
     const { w, h } = viewportSize();
     const rawScale = Math.min(w / DESIGN_W, h / DESIGN_H);
@@ -37,18 +41,21 @@
     document.documentElement.style.setProperty("--viewport-h", `${Math.round(h)}px`);
     document.documentElement.style.setProperty("--viewport-w", `${Math.round(w)}px`);
 
+    const touchDev = isTouchDevice();
+    document.documentElement.dataset.touch = touchDev ? "true" : "false";
+
     let tier = "desktop";
     if (w <= 720 || h <= 520) tier = "phone";
-    else if (w <= 1100 || h <= 920) tier = "tablet";
+    else if (w <= 1366 || h <= 940 || touchDev) tier = "tablet";
 
     document.documentElement.dataset.uiTier = tier;
     document.documentElement.dataset.orientation = w > h ? "landscape" : "portrait";
 
-    const compact = tier !== "desktop" || h <= 940;
+    const compact = tier !== "desktop" || h <= 940 || touchDev;
     document.documentElement.dataset.uiCompact = compact ? "true" : "false";
 
-    const touch = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
-    document.documentElement.dataset.touch = touch ? "true" : "false";
+    const stackedPrep = touchDev || tier !== "desktop" || w <= 1200;
+    document.documentElement.dataset.prepLayout = stackedPrep ? "stacked" : "side";
 
     const hudH = isModalOpen() || !isHudVisible() ? 0 : (document.getElementById("gamepad-hints-bar")?.offsetHeight ?? 0);
     document.documentElement.style.setProperty("--hud-offset", `${hudH}px`);

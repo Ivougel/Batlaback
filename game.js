@@ -412,50 +412,116 @@ function isSyntheticMouseFromTouch() {
 
 function bindTouchInput() {
   const boardSection = document.querySelector(".board-section");
-  const interactionOpts = { passive: false };
-  let activePointerId = null;
+  const shopPanel = document.getElementById("shop-panel");
+  const touchTargets = [boardSection, canvas, shopPanel].filter(Boolean);
+  const captureOpts = { passive: false, capture: true };
+  const bubbleOpts = { passive: false };
+  let activeGesture = null;
 
-  const isTouchLike = (e) => e.pointerType === "touch" || e.pointerType === "pen";
+  const isTouchLikePointer = (e) => e.pointerType === "touch" || e.pointerType === "pen";
+  const gestureKey = (kind, id) => `${kind}:${id}`;
+  const ignoreTarget = (target) => target?.closest?.("button, a, input, select, textarea");
 
-  const handlePointerDown = (e) => {
-    if (phase !== "prep" || gameOver || !isTouchLike(e)) return;
-    if (e.target.closest("button, a, input, select, textarea")) return;
-    activePointerId = e.pointerId;
+  const onDown = (kind, id, x, y, e) => {
+    if (phase !== "prep" || gameOver || activeGesture) return;
+    if (ignoreTarget(e.target)) return;
+    activeGesture = gestureKey(kind, id);
     lastTouchEventAt = Date.now();
-    try {
-      boardSection?.setPointerCapture(e.pointerId);
-    } catch (_) {}
-    e.preventDefault();
-    gamepadPointerDownAt(e.clientX, e.clientY);
+    if (e.cancelable) e.preventDefault();
+    if (kind === "pointer") {
+      try {
+        boardSection?.setPointerCapture(id);
+      } catch (_) {}
+    }
+    gamepadPointerDownAt(x, y);
   };
 
-  const handlePointerMove = (e) => {
-    if (activePointerId === null || e.pointerId !== activePointerId) return;
-    e.preventDefault();
-    updatePointerFromClient(e.clientX, e.clientY);
+  const onMove = (kind, id, x, y, e) => {
+    if (activeGesture !== gestureKey(kind, id)) return;
+    if (e.cancelable) e.preventDefault();
+    updatePointerFromClient(x, y);
   };
 
-  const handlePointerUp = (e) => {
-    if (activePointerId === null || e.pointerId !== activePointerId) return;
+  const onUp = (kind, id, x, y) => {
+    if (activeGesture !== gestureKey(kind, id)) return;
     lastTouchEventAt = Date.now();
-    gamepadPointerUpAt(e.clientX, e.clientY);
-    try {
-      boardSection?.releasePointerCapture(e.pointerId);
-    } catch (_) {}
-    activePointerId = null;
+    gamepadPointerUpAt(x, y);
+    if (kind === "pointer") {
+      try {
+        boardSection?.releasePointerCapture(id);
+      } catch (_) {}
+    }
+    activeGesture = null;
   };
 
-  boardSection?.addEventListener("pointerdown", handlePointerDown, interactionOpts);
-  boardSection?.addEventListener("pointermove", handlePointerMove, interactionOpts);
-  boardSection?.addEventListener("pointerup", handlePointerUp, interactionOpts);
-  boardSection?.addEventListener("pointercancel", handlePointerUp, interactionOpts);
+  boardSection?.addEventListener("pointerdown", (e) => {
+    if (!isTouchLikePointer(e)) return;
+    onDown("pointer", e.pointerId, e.clientX, e.clientY, e);
+  }, captureOpts);
+
+  boardSection?.addEventListener("pointermove", (e) => {
+    if (!isTouchLikePointer(e)) return;
+    onMove("pointer", e.pointerId, e.clientX, e.clientY, e);
+  }, captureOpts);
+
+  boardSection?.addEventListener("pointerup", (e) => {
+    if (!isTouchLikePointer(e)) return;
+    onUp("pointer", e.pointerId, e.clientX, e.clientY);
+  }, captureOpts);
+
+  boardSection?.addEventListener("pointercancel", (e) => {
+    if (!isTouchLikePointer(e)) return;
+    onUp("pointer", e.pointerId, e.clientX, e.clientY);
+  }, captureOpts);
+
+  touchTargets.forEach((el) => {
+    el.addEventListener("touchstart", (e) => {
+      if (e.touches.length !== 1) return;
+      const t = e.touches[0];
+      onDown("touch", t.identifier, t.clientX, t.clientY, e);
+    }, captureOpts);
+
+    el.addEventListener("touchmove", (e) => {
+      const id = activeGesture?.startsWith("touch:") ? +activeGesture.split(":")[1] : null;
+      const t = id == null ? e.touches[0] : [...e.touches].find((touch) => touch.identifier === id) || e.touches[0];
+      if (!t) return;
+      onMove("touch", t.identifier, t.clientX, t.clientY, e);
+    }, bubbleOpts);
+
+    el.addEventListener("touchend", (e) => {
+      const t = e.changedTouches[0];
+      if (!t) return;
+      onUp("touch", t.identifier, t.clientX, t.clientY);
+    }, bubbleOpts);
+
+    el.addEventListener("touchcancel", (e) => {
+      const t = e.changedTouches[0];
+      if (!t) return;
+      onUp("touch", t.identifier, t.clientX, t.clientY);
+    }, bubbleOpts);
+  });
+
+  window.addEventListener("touchmove", (e) => {
+    if (!activeGesture?.startsWith("touch:")) return;
+    const id = +activeGesture.split(":")[1];
+    const t = [...e.touches].find((touch) => touch.identifier === id) || e.touches[0];
+    if (!t) return;
+    onMove("touch", t.identifier, t.clientX, t.clientY, e);
+  }, bubbleOpts);
+
+  window.addEventListener("touchend", (e) => {
+    if (!activeGesture?.startsWith("touch:")) return;
+    const t = e.changedTouches[0];
+    if (!t) return;
+    onUp("touch", t.identifier, t.clientX, t.clientY);
+  }, bubbleOpts);
 
   document.addEventListener("touchstart", (e) => {
     if (dragPayload && phase === "prep" && e.touches.length === 2) {
       e.preventDefault();
       rotateDragItem();
     }
-  }, interactionOpts);
+  }, bubbleOpts);
 
   canvas?.addEventListener("touchend", (e) => {
     if (phase !== "battle" && phase !== "replay") return;
