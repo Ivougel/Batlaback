@@ -2073,13 +2073,13 @@ html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .field-a
 /* Crit flip — зеркало спрайта на img, 100–200 мс (как hit-shake через CSS-класс) */
 #app[data-phase="battle"] .battle-scene-avatar-player .profile-avatar-img.profile-avatar-crit-flip,
 #app[data-phase="replay"] .battle-scene-avatar-player .profile-avatar-img.profile-avatar-crit-flip {
-  animation: profile-avatar-crit-flip-player var(--crit-flip-ms, 300ms) ease-in-out both;
+  animation: profile-avatar-crit-flip-player var(--crit-flip-ms, 600ms) ease-in-out both;
   transition: none !important;
 }
 
 #app[data-phase="battle"] .battle-scene-avatar-enemy .profile-avatar-img.profile-avatar-crit-flip,
 #app[data-phase="replay"] .battle-scene-avatar-enemy .profile-avatar-img.profile-avatar-crit-flip {
-  animation: profile-avatar-crit-flip-enemy var(--crit-flip-ms, 300ms) ease-in-out both;
+  animation: profile-avatar-crit-flip-enemy var(--crit-flip-ms, 600ms) ease-in-out both;
   transition: none !important;
 }
 

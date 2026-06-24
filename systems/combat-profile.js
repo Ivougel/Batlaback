@@ -771,8 +771,15 @@ function bindProfileStatusTooltips() {
         e.target.style.removeProperty("--hit-shake-ms");
       }
       if (e.target.classList?.contains("profile-avatar-img") && e.animationName.startsWith("profile-avatar-crit-flip")) {
+        clearAvatarFlipBusy(e.target);
         e.target.classList.remove("profile-avatar-crit-flip");
         e.target.style.removeProperty("--crit-flip-ms");
+      }
+    });
+
+    panel.addEventListener("animationcancel", (e) => {
+      if (e.target.classList?.contains("profile-avatar-img") && e.animationName.startsWith("profile-avatar-crit-flip")) {
+        clearAvatarFlipBusy(e.target);
       }
     });
   });
@@ -789,11 +796,30 @@ function getProfileAvatarElements(team) {
   };
 }
 
+const avatarFlipState = {
+  player: { pending: 0, busy: false },
+  enemy: { pending: 0, busy: false },
+};
+
 function restartAvatarReaction(el, className) {
   if (!el) return;
   el.classList.remove(className);
+  el.getAnimations?.().forEach((anim) => anim.cancel());
   void el.offsetWidth;
   el.classList.add(className);
+}
+
+function clearAvatarFlipBusy(img) {
+  if (!img) return;
+  const team = img.dataset.avatarFlipTeam;
+  if (team && avatarFlipState[team]) {
+    avatarFlipState[team].busy = false;
+    if (img.dataset.avatarFlipTimer) {
+      window.clearTimeout(Number(img.dataset.avatarFlipTimer));
+      img.removeAttribute("data-avatar-flip-timer");
+    }
+  }
+  img.removeAttribute("data-avatar-flip-team");
 }
 
 function triggerProfileAvatarHitShake(team) {
@@ -813,10 +839,19 @@ function triggerProfileAvatarHitShake(team) {
 function triggerProfileAvatarCritFlip(team) {
   if (team !== "player" && team !== "enemy") return;
 
+  const state = avatarFlipState[team];
+  state.pending += 1;
+  if (state.pending % 2 === 0) return;
+  if (state.busy) return;
+
   const { img } = getProfileAvatarElements(team);
   if (!img) return;
 
-  img.style.setProperty("--crit-flip-ms", `${100 + Math.floor(Math.random() * 401)}ms`);
+  const durationMs = 200 + Math.floor(Math.random() * 801);
+  state.busy = true;
+  img.dataset.avatarFlipTeam = team;
+  img.style.setProperty("--crit-flip-ms", `${durationMs}ms`);
+  img.dataset.avatarFlipTimer = String(window.setTimeout(() => clearAvatarFlipBusy(img), durationMs + 48));
   restartAvatarReaction(img, "profile-avatar-crit-flip");
 }
 
