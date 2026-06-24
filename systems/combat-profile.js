@@ -801,6 +801,15 @@ const avatarFlipState = {
   enemy: { pending: 0, busy: false },
 };
 
+const avatarFatigueMirrorState = {
+  player: { lockedUntil: 0, revertTimer: null, held: false, flipDone: null },
+  enemy: { lockedUntil: 0, revertTimer: null, held: false, flipDone: null },
+};
+
+function randomMirrorGapMs() {
+  return 1000 + Math.floor(Math.random() * 4001);
+}
+
 function restartAvatarReaction(el, className) {
   if (!el) return;
   el.classList.remove(className);
@@ -819,7 +828,48 @@ function clearAvatarFlipBusy(img) {
       img.removeAttribute("data-avatar-flip-timer");
     }
   }
+  if (team && img.dataset.avatarFlipSource === "fatigue") {
+    finishFatigueMirrorAction(team);
+  }
   img.removeAttribute("data-avatar-flip-team");
+  img.removeAttribute("data-avatar-flip-source");
+}
+
+function finishFatigueMirrorAction(team) {
+  const state = avatarFatigueMirrorState[team];
+  if (!state) return;
+  if (state.flipDone) {
+    state.flipDone();
+    state.flipDone = null;
+    return;
+  }
+  if (state.lockedUntil === Number.MAX_SAFE_INTEGER) {
+    state.lockedUntil = Date.now() + randomMirrorGapMs();
+  }
+}
+
+function startAvatarMirrorFlipAnimation(team, { source = "dot", onComplete = null } = {}) {
+  const { img } = getProfileAvatarElements(team);
+  if (!img) return false;
+
+  if (source === "dot") {
+    const state = avatarFlipState[team];
+    if (state?.busy) return false;
+    state.busy = true;
+  }
+
+  const durationMs = 200 + Math.floor(Math.random() * 801);
+  img.dataset.avatarFlipTeam = team;
+  img.dataset.avatarFlipSource = source;
+  img.style.setProperty("--crit-flip-ms", `${durationMs}ms`);
+  img.dataset.avatarFlipTimer = String(window.setTimeout(() => clearAvatarFlipBusy(img), durationMs + 48));
+
+  if (source === "fatigue") {
+    avatarFatigueMirrorState[team].flipDone = onComplete;
+  }
+
+  restartAvatarReaction(img, "profile-avatar-crit-flip");
+  return true;
 }
 
 function triggerProfileAvatarHitShake(team) {
@@ -842,17 +892,42 @@ function triggerProfileAvatarCritFlip(team) {
   const state = avatarFlipState[team];
   state.pending += 1;
   if (state.pending % 2 === 0) return;
-  if (state.busy) return;
+
+  startAvatarMirrorFlipAnimation(team, { source: "dot" });
+}
+
+function triggerProfileAvatarFatigueMirror(team) {
+  if (team !== "player" && team !== "enemy") return;
+
+  const state = avatarFatigueMirrorState[team];
+  const now = Date.now();
+  if (now < state.lockedUntil || state.held) return;
 
   const { img } = getProfileAvatarElements(team);
   if (!img) return;
 
-  const durationMs = 200 + Math.floor(Math.random() * 801);
-  state.busy = true;
-  img.dataset.avatarFlipTeam = team;
-  img.style.setProperty("--crit-flip-ms", `${durationMs}ms`);
-  img.dataset.avatarFlipTimer = String(window.setTimeout(() => clearAvatarFlipBusy(img), durationMs + 48));
-  restartAvatarReaction(img, "profile-avatar-crit-flip");
+  state.lockedUntil = Number.MAX_SAFE_INTEGER;
+
+  if (Math.random() < 0.5) {
+    const started = startAvatarMirrorFlipAnimation(team, {
+      source: "fatigue",
+      onComplete: () => {
+        state.lockedUntil = Date.now() + randomMirrorGapMs();
+      },
+    });
+    if (!started) state.lockedUntil = Date.now() + randomMirrorGapMs();
+    return;
+  }
+
+  state.held = true;
+  img.classList.add("profile-avatar-mirror-held");
+  const holdMs = randomMirrorGapMs();
+  state.revertTimer = window.setTimeout(() => {
+    img.classList.remove("profile-avatar-mirror-held");
+    state.held = false;
+    state.revertTimer = null;
+    state.lockedUntil = Date.now() + randomMirrorGapMs();
+  }, holdMs);
 }
 
 function showProfileStatusTooltip(e, chip) {

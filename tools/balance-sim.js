@@ -34,6 +34,7 @@ const context = {
   queueHitAnimation: () => {},
   spawnBattleFloat: () => {},
   triggerProfileAvatarCritFlip: () => {},
+  triggerProfileAvatarFatigueMirror: () => {},
   triggerProfileAvatarHitShake: () => {},
   initBattleAnimations: () => {},
   tickBattleAnimations: () => {},

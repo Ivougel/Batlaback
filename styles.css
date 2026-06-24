@@ -2115,6 +2115,15 @@ html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .field-a
   }
 }
 
+/* Fatigue — залипшее зеркало на img, потом возврат через 1–5 с */
+#app[data-phase="battle"] .battle-scene-avatar-player .profile-avatar-img.profile-avatar-mirror-held,
+#app[data-phase="replay"] .battle-scene-avatar-player .profile-avatar-img.profile-avatar-mirror-held,
+#app[data-phase="battle"] .battle-scene-avatar-enemy .profile-avatar-img.profile-avatar-mirror-held,
+#app[data-phase="replay"] .battle-scene-avatar-enemy .profile-avatar-img.profile-avatar-mirror-held {
+  transform: scaleX(-1);
+  transition: none !important;
+}
+
 .profile-avatar-player {
   border-color: #388bfd;
   box-shadow: 0 0 0 2px rgba(56, 139, 253, 0.15);

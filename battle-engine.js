@@ -830,7 +830,7 @@ function tickFatigue(state, dt) {
         kind: "debuff",
       });
       triggerProfileAvatarHitShake(team);
-      triggerProfileAvatarCritFlip(team);
+      triggerProfileAvatarFatigueMirror(team);
     }
   });
 }
