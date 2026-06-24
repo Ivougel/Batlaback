@@ -84,8 +84,6 @@ function applyGridMetricsFromCss() {
 }
 
 window.applyGridMetricsFromCss = applyGridMetricsFromCss;
-window.lockPrepCanvasDisplaySize = lockPrepCanvasDisplaySize;
-window.lockBattleCanvasDisplaySize = lockBattleCanvasDisplaySize;
 
 let canvas, ctx;
 let lastGameLoopDt = 0.016;
@@ -859,10 +857,8 @@ function applyPhaseCanvasLayout() {
     canvas.height = BATTLE_CANVAS_H;
   }
   layoutCanvasH = canvas.height;
-  if (phase === "prep") {
-    lockPrepCanvasDisplaySize();
-  } else if (isBattleUiPhase()) {
-    lockBattleCanvasDisplaySize();
+  if (typeof window.fitCanvasDisplaySize === "function") {
+    window.fitCanvasDisplaySize();
   }
 }
 
@@ -983,97 +979,9 @@ function syncBattleArenaLayout() {
   arena.style.setProperty("--battle-shop-right", String(layout.shopRightRatio));
 
   arena.classList.toggle("is-battle", isBattleUiPhase());
-  syncPrepCanvasDisplaySize();
-}
-
-function lockPrepCanvasDisplaySize() {
-  if (!canvas || phase !== "prep") return;
-  const displayW = readCssPx("--prep-canvas-w", PREP_CANVAS_W);
-  const displayH = readCssPx("--prep-canvas-h", PREP_CANVAS_H);
-  if (canvas.width !== displayW || canvas.height !== displayH) {
-    canvas.width = displayW;
-    canvas.height = displayH;
-    layoutCanvasH = canvas.height;
+  if (typeof window.fitCanvasDisplaySize === "function") {
+    window.fitCanvasDisplaySize();
   }
-  canvas.style.setProperty("width", `${displayW}px`, "important");
-  canvas.style.setProperty("height", `${displayH}px`, "important");
-  canvas.style.setProperty("max-width", `${displayW}px`, "important");
-  canvas.style.setProperty("max-height", `${displayH}px`, "important");
-}
-
-function lockBattleCanvasDisplaySize() {
-  if (!canvas || !isBattleUiPhase()) return;
-  const displayW = readCssPx("--battle-canvas-w", BATTLE_CANVAS_W);
-  const displayH = readCssPx("--battle-canvas-h", BATTLE_CANVAS_H);
-  if (canvas.width !== displayW || canvas.height !== displayH) {
-    canvas.width = displayW;
-    canvas.height = displayH;
-    layoutCanvasH = canvas.height;
-  }
-  canvas.style.setProperty("width", `${displayW}px`, "important");
-  canvas.style.setProperty("height", `${displayH}px`, "important");
-  canvas.style.setProperty("max-width", `${displayW}px`, "important");
-  canvas.style.setProperty("max-height", `${displayH}px`, "important");
-}
-
-function syncPrepCanvasDisplaySize() {
-  if (!canvas) return;
-
-  const app = document.getElementById("app");
-  const isPrep = app?.dataset.phase === "prep";
-  if (isBattleUiPhase()) {
-    lockBattleCanvasDisplaySize();
-    return;
-  }
-  if (!isPrep) {
-    canvas.style.width = "";
-    canvas.style.height = "";
-    canvas.style.removeProperty("max-width");
-    canvas.style.removeProperty("max-height");
-    return;
-  }
-
-  const root = document.documentElement;
-  const sideFit = root.dataset.prepSideFit === "true";
-  const viewportFit = root.dataset.prepViewportFit === "true";
-  const vw = window.visualViewport?.width ?? window.innerWidth;
-  const sideBySidePrep = root.dataset.prepLayout === "side" && vw >= 600;
-
-  if (!sideFit && !viewportFit && !sideBySidePrep) {
-    canvas.style.width = "";
-    canvas.style.height = "";
-    return;
-  }
-
-  const stage = canvas.closest(".battle-canvas-stage");
-  if (!stage) return;
-
-  const stageW = stage.clientWidth;
-  const stageH = stage.clientHeight;
-  if (stageW <= 0 || stageH <= 0) return;
-
-  if (sideBySidePrep || document.querySelector(".prep-field-column")) {
-    lockPrepCanvasDisplaySize();
-    return;
-  }
-
-  let maxH = canvas.height;
-  let maxW = canvas.width;
-  if (sideFit) {
-    const chromeReserve = 200;
-    const vv = window.visualViewport;
-    const avail = vv?.height ?? window.innerHeight;
-    maxH = Math.max(180, avail - chromeReserve);
-  } else if (viewportFit) {
-    const cssMax = getComputedStyle(root).getPropertyValue("--prep-canvas-max-h").trim();
-    if (cssMax) maxH = parseFloat(cssMax) || maxH;
-  }
-
-  const scale = Math.min(stageW / canvas.width, maxW / canvas.width, maxH / canvas.height);
-  const w = Math.max(1, Math.floor(canvas.width * scale));
-  const h = Math.max(1, Math.floor(canvas.height * scale));
-  canvas.style.width = `${w}px`;
-  canvas.style.height = `${h}px`;
 }
 
 function bindRunStatsToggle() {

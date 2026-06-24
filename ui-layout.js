@@ -77,96 +77,107 @@
     return chrome + 8;
   }
 
+  function readCssPx(name, fallback = null) {
+    const raw = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    const val = parseFloat(raw);
+    return Number.isFinite(val) ? val : fallback;
+  }
+
   function clearCanvasDisplaySize() {
     const canvas = document.getElementById("game-canvas");
     if (!canvas) return;
     canvas.style.removeProperty("width");
     canvas.style.removeProperty("height");
+    canvas.style.removeProperty("max-width");
+    canvas.style.removeProperty("max-height");
   }
 
-  function isSideBySidePrepLayout() {
-    return document.documentElement.dataset.prepLayout === "side";
+  function setCanvasDisplaySize(canvas, w, h) {
+    canvas.style.width = `${w}px`;
+    canvas.style.height = `${h}px`;
+    canvas.style.maxWidth = `${w}px`;
+    canvas.style.maxHeight = `${h}px`;
   }
 
-  function isSideBySidePrepBand() {
-    const { w } = viewportSize();
-    return w >= 600 && isSideBySidePrepLayout();
-  }
-
-  function isPrepShopOverlayLayout() {
-    return false;
-  }
-
-  function getPrepFieldVisibleWidthRatio(app) {
-    if (!isPrepShopOverlayLayout()) return 1;
-
-    const arena = document.getElementById("battle-arena");
-    const style = arena ? getComputedStyle(arena) : null;
-    const readRatio = (names) => {
-      if (!style) return null;
-      for (const name of names) {
-        const raw = style.getPropertyValue(name).trim();
-        if (!raw) continue;
-        const val = parseFloat(raw);
-        if (Number.isFinite(val) && val > 0) return val;
-      }
-      return null;
-    };
-
-    const side = app?.dataset.prepSide || "player";
-    if (side === "enemy") {
-      const shopRight = readRatio(["--battle-shop-right", "--battle-shop-left"]);
-      return shopRight != null ? Math.max(0.12, Math.min(1, 1 - shopRight)) : 0.28;
-    }
-    const shopLeft = readRatio(["--battle-shop-left", "--battle-field-ratio"]);
-    return shopLeft != null ? Math.max(0.12, Math.min(1, shopLeft)) : 0.31;
-  }
-
-  function fitPrepCanvasToStage() {
+  /** Единственный источник display-size #game-canvas (bitmap — game.js applyPhaseCanvasLayout). */
+  function fitCanvasDisplaySize() {
     const app = document.getElementById("app");
-    const phase = app?.dataset.phase;
-    if (phase !== "prep") {
-      if ((phase === "battle" || phase === "replay") && typeof window.lockBattleCanvasDisplaySize === "function") {
-        window.lockBattleCanvasDisplaySize();
-      } else {
-        clearCanvasDisplaySize();
-      }
-      return;
-    }
-
-    if (isSideBySidePrepLayout()) {
-      if (document.querySelector(".prep-field-column") && typeof window.lockPrepCanvasDisplaySize === "function") {
-        window.lockPrepCanvasDisplaySize();
-      } else {
-        clearCanvasDisplaySize();
-      }
-      return;
-    }
-
     const canvas = document.getElementById("game-canvas");
-    const stage = document.querySelector("#app[data-phase=\"prep\"] .prep-left-column .battle-canvas-stage")
-      || document.querySelector(".battle-canvas-stage");
-    if (!canvas || !stage || canvas.width <= 0 || canvas.height <= 0) return;
+    if (!canvas || canvas.width <= 0 || canvas.height <= 0) return;
 
-    const sw = stage.clientWidth;
-    const sh = stage.clientHeight;
-    if (sw <= 0 || sh <= 0) return;
+    const phase = app?.dataset.phase;
+    const root = document.documentElement;
 
-    const visibleRatio = getPrepFieldVisibleWidthRatio(app);
-    const scaleW = sw / (visibleRatio * canvas.width);
-    const scaleH = sh / canvas.height;
-    const scale = Math.min(scaleW, scaleH);
-    if (scale <= 0) return;
+    if (phase === "battle" || phase === "replay") {
+      setCanvasDisplaySize(
+        canvas,
+        readCssPx("--battle-canvas-w", canvas.width),
+        readCssPx("--battle-canvas-h", canvas.height),
+      );
+      return;
+    }
 
-    const w = Math.max(1, Math.floor(canvas.width * scale));
-    const h = Math.max(1, Math.floor(canvas.height * scale));
-    canvas.style.setProperty("width", `${w}px`, "important");
-    canvas.style.setProperty("height", `${h}px`, "important");
+    if (phase !== "prep") {
+      clearCanvasDisplaySize();
+      return;
+    }
+
+    const sideFit = root.dataset.prepSideFit === "true";
+    const viewportFit = root.dataset.prepViewportFit === "true";
+    const vw = window.visualViewport?.width ?? window.innerWidth;
+    const sideBySidePrep = root.dataset.prepLayout === "side" && vw >= 600;
+    const hasFieldColumn = !!document.querySelector(".prep-field-column");
+
+    if (sideBySidePrep && hasFieldColumn) {
+      setCanvasDisplaySize(
+        canvas,
+        readCssPx("--prep-canvas-w", canvas.width),
+        readCssPx("--prep-canvas-h", canvas.height),
+      );
+      return;
+    }
+
+    if (sideFit || viewportFit) {
+      const stage = canvas.closest(".battle-canvas-stage");
+      if (!stage) return;
+
+      const stageW = stage.clientWidth;
+      if (stageW <= 0) return;
+
+      let maxH = canvas.height;
+      const maxW = canvas.width;
+      if (sideFit) {
+        const avail = window.visualViewport?.height ?? window.innerHeight;
+        maxH = Math.max(180, avail - 200);
+      } else if (viewportFit) {
+        const cssMax = getComputedStyle(root).getPropertyValue("--prep-canvas-max-h").trim();
+        if (cssMax) maxH = parseFloat(cssMax) || maxH;
+      }
+
+      const scale = Math.min(stageW / canvas.width, maxW / canvas.width, maxH / canvas.height);
+      if (scale <= 0) return;
+
+      const w = Math.max(1, Math.floor(canvas.width * scale));
+      const h = Math.max(1, Math.floor(canvas.height * scale));
+      setCanvasDisplaySize(canvas, w, h);
+      return;
+    }
+
+    if (hasFieldColumn) {
+      setCanvasDisplaySize(
+        canvas,
+        readCssPx("--prep-canvas-w", canvas.width),
+        readCssPx("--prep-canvas-h", canvas.height),
+      );
+      return;
+    }
+
+    clearCanvasDisplaySize();
   }
 
   function scheduleCanvasFit() {
     requestAnimationFrame(() => {
-      requestAnimationFrame(fitPrepCanvasToStage);
+      requestAnimationFrame(fitCanvasDisplaySize);
     });
   }
 
@@ -330,5 +341,7 @@
   });
 
   window.applyUiLayout = applyUiLayout;
-  window.fitPrepCanvasToStage = fitPrepCanvasToStage;
+  window.fitCanvasDisplaySize = fitCanvasDisplaySize;
+  window.fitPrepCanvasToStage = fitCanvasDisplaySize;
+  window.scheduleCanvasFit = scheduleCanvasFit;
 })();

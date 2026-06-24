@@ -1,146 +1,9 @@
 /*
- * ═══════════════════════════════════════════════════════════════════════════
- * CANVAS SIZE AUDIT — Шаг 1 (2025-06-24) · Фаза A CSS (2025-06-24)
- * ═══════════════════════════════════════════════════════════════════════════
- *
- * Фаза A (безопасная чистка): удалены .battle-avatars-* (мёртвая разметка),
- *   legacy overlay shop (absolute + left/right calc), .sidebar, prep clip-path,
- *   слиты @media 600–1200px. side-fit overlay shop сохранён (touch w<600).
- *
- * ПРОБЛЕМА: размер #game-canvas задаётся из ≥5 независимых источников.
- * CSS width:100% / !important бьётся с game.js lock* и ui-layout.js fit*.
- * prep-ref-layout.css (804 строки) перебивает styles.css через !important.
- *
- * ЦЕЛЬ РЕФАКТОРИНГА (шаги 2–5):
- *   • Единственный display-size: ui-layout.js → canvas.style.width/height
- *   • CSS: никаких width/height/max-width на #game-canvas и .canvas-scale-wrap
- *   • Bitmap: canvas.width/height (атрибуты) — game.js applyPhaseCanvasLayout()
- *   • prep-ref-layout.css → слить в styles.css, удалить второй файл
- *
- * ─── styles.css — правила, влияющие на размер canvas ───
- *
- * [A] БАЗОВЫЕ (глобальные, всегда активны) — ГЛАВНЫЙ КОНФЛИКТ
- *   L1936–1945  #game-canvas
- *               width:100%; height:auto  ← растягивает canvas на всю обёртку
- *   L1948–1953  .canvas-scale-wrap
- *               width:100%; max-width:100%
- *   L1955–1959  .canvas-scale-wrap #game-canvas
- *               width:100% !important; height:auto !important  ← перебивает JS
- *
- * [B] PREP — левая колонка / stage (контейнер, косвенно задаёт 100% canvas)
- *   L631–641   #app[data-phase="prep"] .prep-left-column .battle-canvas-stage
- *              width:100%; flex:1.35; display:flex
- *   L651–660   #app[data-phase="prep"] .prep-left-column .canvas-scale-wrap
- *              width:100%; max-width:none; flex:1.35
- *
- * [C] SIDE PREP (html[data-prep-layout="side"]) — width:100% !important
- *   L768–775   .prep-left-column .battle-canvas-stage
- *              width:100%; height:auto; display:block
- *   L777–784   .prep-left-column .canvas-scale-wrap
- *              display:block; height:auto (без фикс. размера)
- *   L786–790   [data-prep-side="player"] .canvas-scale-wrap
- *              width:calc(100% / var(--battle-field-ratio))  ← ~357% ширины колонки
- *   L792–796   [data-prep-side="enemy"] .canvas-scale-wrap
- *              width:calc(100% / var(--battle-enemy-ratio))
- *   L798–803   .canvas-scale-wrap #game-canvas, #game-canvas
- *              width:100% !important; height:auto !important; max-width:none
- *
- * [D] STACKED PREP (телефоны, html[data-prep-layout="stacked"])
- *   L4756–4758  .battle-canvas-stage — overflow:hidden
- *   L4812–4817  #game-canvas — max-width:100%; height:auto
- *   L4945–4950  .battle-canvas-stage — display:flex; width:100%
- *
- * [E] SIDE PREP fit (телефон touch, html[data-prep-side-fit="true"], w<600)
- *   L5056–5061  .battle-canvas-stage — max-height:calc(var(--app-h) - 180px)
- *   L5071–5077  #game-canvas — max-width:none; max-height:none (без width)
- *
- * [F] VIEWPORT FIT (stacked, html[data-prep-viewport-fit="true"])
- *   L5191–5198  .battle-canvas-stage — max-height:var(--prep-canvas-max-h)
- *   L5200–5206  #game-canvas — max-width:none; max-height:none
- *
- * [G] SIDE layout band (600–1200px)
- *   L5010–5014  #game-canvas — max-width:100%; height:auto
- *
- * [H] Без размеров (только оформление / cursor — OK оставить)
- *   L596–598   battle .battle-canvas-stage — position:relative
- *   L728–732   .battle-canvas-stage — position, overflow
- *   L883–886   .battle-canvas-stage #game-canvas — border-radius:0
- *   L3439–3451 #game-canvas.synergy-preview-mode / transition
- *   L4597–4599 body.gamepad-active #game-canvas — cursor:none
- *   L4926–4928 touch .battle-canvas-stage — touch-action:none
- *
- * ИТОГО styles.css: 5 блоков с width:100% на canvas, 3 с !important,
- *   2 блока calc(100%/ratio) на .canvas-scale-wrap.
- *
- * ─── prep-ref-layout.css — правила размера canvas (перебивает styles.css) ───
- *
- * [P1] PREP field column — фикс. px через CSS vars + !important
- *   L236–250  .prep-field-column .battle-canvas-stage
- *             width/height: var(--prep-canvas-w/h)
- *   L252–257  .canvas-scale-wrap — width/height: var(--prep-canvas-w/h)
- *   L259–265  #game-canvas — width/height: var(--prep-canvas-w/h) !important
- *
- * [P2] BATTLE / REPLAY — аналогично battle vars
- *   L364–381  .battle-canvas-stage — var(--battle-canvas-w/h)
- *   L383–389  .canvas-scale-wrap — var(--battle-canvas-w/h)
- *   L391–398  #game-canvas — var(--battle-canvas-w/h) !important
- *
- * [P3] LEGACY OVERRIDE (html[data-prep-layout="side"], prep-side-fit)
- *   L541–556  .battle-canvas-stage — position/size !important (prep-canvas-w/h)
- *   L558–567  .canvas-scale-wrap — width/height/max-width !important
- *   L569–581  #game-canvas — width/height/max-width/max-height !important
- *   L583–596  @media min-width:600px — дубли canvas-scale-wrap + #game-canvas
- *
- * ИТОГО prep-ref-layout.css: 3 слоя !important на canvas, дублирует game.js lock*.
- *
- * ─── ui-layout.js — inline размер canvas ───
- *
- *   clearCanvasDisplaySize()     L73–78   — removeProperty width/height
- *   fitPrepCanvasToStage()       L118–158
- *     • phase≠prep → lockBattleCanvasDisplaySize() (game.js) ИЛИ clear
- *     • prep+side+.prep-field-column → lockPrepCanvasDisplaySize() (game.js)
- *     • prep+stacked → scale от stage.clientWidth/Height, clip-path ratio
- *       canvas.style.setProperty('width/height', px, 'important')  L156–157
- *   scheduleCanvasFit()          L160–164 — rAF ×2 → fitPrepCanvasToStage
- *   applyUiLayout()              L241     — scheduleCanvasFit на каждый resize
- *   ResizeObserver(stage)        L258–261 — пересчёт при изменении stage
- *
- * КОНФЛИКТ: ui-layout делегирует side-prep в game.js lock*, stacked — сам
- *   считает scale; game.js syncPrepCanvasDisplaySize() — третий путь для stacked.
- *
- * ─── game.js — bitmap + display lock ───
- *
- *   applyGridMetricsFromCss()    L48–84   — PREP/BATTLE_CANVAS_W/H из --cell-size
- *   applyPhaseCanvasLayout()     L769–786
- *     canvas.width/height = PREP_* или BATTLE_* (bitmap, атрибуты)
- *     → lockPrepCanvasDisplaySize() / lockBattleCanvasDisplaySize()
- *   lockPrepCanvasDisplaySize()  L908–916
- *     style width/height/max-* = readCssPx('--prep-canvas-w/h') !important
- *   lockBattleCanvasDisplaySize() L918–926
- *     style width/height/max-* = readCssPx('--battle-canvas-w/h') !important
- *   syncPrepCanvasDisplaySize()  L928–986 — вызывается из syncBattleArenaLayout
- *     side+prep-field-column → lockPrepCanvasDisplaySize()
- *     stacked/viewportFit → свой scale → canvas.style.width/height (без !important)
- *   window.lockPrep/BattleCanvasDisplaySize — экспорт для ui-layout.js
- *
- * КОНФЛИКТ: lock* и prep-ref-layout.css оба ставят одни и те же px с !important.
- *   syncPrepCanvasDisplaySize дублирует fitPrepCanvasToStage для stacked.
- *
- * ─── index.html ───
- *   <canvas id="game-canvas"> — без width/height атрибутов (задаёт game.js)
- *
- * ─── Порядок каскада (почему «всё ломается») ───
- *   1. styles.css: width:100% !important (L1955, L798)
- *   2. prep-ref-layout.css: var(--prep-canvas-w) !important (L259, L577)
- *   3. game.js lock*: readCssPx + !important (при renderPhase / applyGridMetrics)
- *   4. ui-layout.js fit*: свой scale + !important (stacked) или lock* (side)
- *   5. ResizeObserver → п.4 снова
- *   Победитель зависит от порядка вызова JS, не от дизайна.
- *
- * ─── CSS vars размеров поля (bitmap, не display) ───
- *   prep-ref-layout.css :root — --cell-size, --prep-canvas-w/h, --battle-canvas-w/h
- *   game.js читает через readCssPx / applyGridMetricsFromCss
- * ═══════════════════════════════════════════════════════════════════════════
+ * Canvas sizing (2025-06-24):
+ *   display-size → ui-layout.js fitCanvasDisplaySize() (единственный источник)
+ *   bitmap       → game.js applyPhaseCanvasLayout() (canvas.width/height)
+ *   layout box   → prep-ref-layout.css .prep-field-island (--prep/battle-canvas-w/h)
+ * Следующие шаги: Фаза C — слить prep-ref-layout.css; Фаза D — дальнейшая чистка CSS.
  */
 
 * {
@@ -930,8 +793,6 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 #app[data-phase="prep"] .prep-left-column .canvas-scale-wrap {
   flex: 1 1 auto;
   min-height: 0;
-  width: 100%;
-  max-width: none;
   display: flex;
   align-items: flex-start;
   justify-content: flex-start;
@@ -1023,30 +884,9 @@ html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .battle-
 
 html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .canvas-scale-wrap {
   display: block;
-  max-width: none;
   line-height: 0;
   flex: none;
   min-height: 0;
-  height: auto;
-}
-
-html[data-prep-layout="side"] #app[data-phase="prep"][data-prep-side="player"] .prep-left-column .canvas-scale-wrap {
-  width: calc(100% / var(--battle-field-ratio));
-  margin-left: 0;
-  margin-right: auto;
-}
-
-html[data-prep-layout="side"] #app[data-phase="prep"][data-prep-side="enemy"] .prep-left-column .canvas-scale-wrap {
-  width: calc(100% / var(--battle-enemy-ratio, var(--battle-field-ratio)));
-  margin-left: auto;
-  margin-right: 0;
-}
-
-html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .canvas-scale-wrap #game-canvas,
-html[data-prep-layout="side"] #app[data-phase="prep"] #game-canvas {
-  width: 100% !important;
-  height: auto !important;
-  max-width: none;
 }
 
 html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .field-avatar-wrap {
@@ -2106,8 +1946,6 @@ html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .field-a
 
 #game-canvas {
   display: block;
-  width: 100%;
-  height: auto;
   border-radius: 0;
   cursor: default;
   position: relative;
@@ -2115,18 +1953,9 @@ html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .field-a
   vertical-align: top;
 }
 
-/* Обёртка: CSS задаёт только ширину, height:auto сохраняет пропорции bitmap canvas */
 .canvas-scale-wrap {
   display: block;
-  width: 100%;
-  max-width: 100%;
   line-height: 0;
-}
-
-.canvas-scale-wrap #game-canvas {
-  width: 100% !important;
-  height: auto !important;
-  max-height: none !important;
 }
 
 #game-canvas:active {
@@ -5001,8 +4830,6 @@ html[data-prep-layout="stacked"] #app[data-phase="prep"][data-prep-side="enemy"]
 
 html[data-prep-layout="stacked"] #game-canvas {
   display: block;
-  max-width: 100%;
-  height: auto;
   touch-action: none;
 }
 
@@ -5128,12 +4955,6 @@ html[data-prep-layout="side"] #app[data-phase="prep"] .battle-arena {
   min-height: calc(280px * var(--ui-scale));
 }
 
-html[data-prep-layout="side"] #app[data-phase="prep"] #game-canvas {
-  display: block;
-  max-width: 100%;
-  height: auto;
-}
-
 /* Side prep fit — iPad mini landscape: магазин overlay, один экран */
 html[data-prep-side-fit="true"] body {
   overflow: hidden;
@@ -5198,8 +5019,6 @@ html[data-prep-side-fit="true"] #app[data-phase="prep"] #game-canvas {
   display: block;
   flex-shrink: 0;
   margin: 0;
-  max-width: none;
-  max-height: none;
 }
 
 html[data-prep-side-fit="true"] #app[data-phase="prep"] #shop-panel {
@@ -5318,8 +5137,6 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #game-canvas {
   display: block;
   flex-shrink: 0;
   margin: 0;
-  max-width: none;
-  max-height: none;
 }
 
 html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #shop-panel {

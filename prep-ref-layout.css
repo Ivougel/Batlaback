@@ -306,14 +306,9 @@
 #app[data-phase="prep"] .prep-field-island .canvas-scale-wrap {
   display: block;
   line-height: 0;
-  width: var(--prep-canvas-w);
-  height: var(--prep-canvas-h);
 }
 
 #app[data-phase="prep"] .prep-field-island .canvas-scale-wrap #game-canvas {
-  width: var(--prep-canvas-w) !important;
-  height: var(--prep-canvas-h) !important;
-  max-width: none;
   display: block;
   background: transparent;
 }
@@ -427,15 +422,10 @@
 #app[data-phase="replay"] .prep-field-island .canvas-scale-wrap {
   display: block;
   line-height: 0;
-  width: var(--battle-canvas-w);
-  height: var(--battle-canvas-h);
 }
 
 #app[data-phase="battle"] .prep-field-island .canvas-scale-wrap #game-canvas,
 #app[data-phase="replay"] .prep-field-island .canvas-scale-wrap #game-canvas {
-  width: var(--battle-canvas-w) !important;
-  height: var(--battle-canvas-h) !important;
-  max-width: none;
   display: block;
   background: transparent;
 }
@@ -600,40 +590,6 @@ html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-field-island {
   max-width: var(--prep-canvas-w) !important;
   min-height: 0 !important;
   display: block !important;
-}
-
-html[data-prep-layout="side"] #app[data-phase="prep"] .prep-field-island .canvas-scale-wrap,
-html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-field-island .canvas-scale-wrap {
-  flex: none !important;
-  width: var(--prep-canvas-w) !important;
-  height: var(--prep-canvas-h) !important;
-  max-width: var(--prep-canvas-w) !important;
-  display: block !important;
-}
-
-html[data-prep-layout="side"] #app[data-phase="prep"] .prep-field-island .canvas-scale-wrap #game-canvas,
-html[data-prep-layout="side"] #app[data-phase="prep"] .prep-field-island #game-canvas,
-html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-field-island .canvas-scale-wrap #game-canvas,
-html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-field-island #game-canvas {
-  width: var(--prep-canvas-w) !important;
-  height: var(--prep-canvas-h) !important;
-  max-width: var(--prep-canvas-w) !important;
-  max-height: var(--prep-canvas-h) !important;
-}
-
-@media (min-width: 600px) {
-  html[data-prep-layout="side"] #app[data-phase="prep"] .prep-field-island .canvas-scale-wrap,
-  html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-field-island .canvas-scale-wrap {
-    width: var(--prep-canvas-w) !important;
-    max-width: var(--prep-canvas-w) !important;
-  }
-
-  html[data-prep-layout="side"] #app[data-phase="prep"] .prep-field-island #game-canvas,
-  html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-field-island #game-canvas {
-    width: var(--prep-canvas-w) !important;
-    height: var(--prep-canvas-h) !important;
-    max-width: var(--prep-canvas-w) !important;
-  }
 }
 
 /* ─── Бой: дашборд статов (ширина по макету) ─── */
