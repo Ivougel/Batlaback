@@ -398,6 +398,8 @@ function refreshGamepadHints() {
 
   const context = getMenuContext();
   const pad = getActiveGamepad();
+  refreshPrepToolbarHints(pad);
+
   const hints = context ? mapHintsForPad(GP_HINT_SETS[context], pad) : null;
 
   if (status) {
@@ -424,8 +426,10 @@ function refreshGamepadHints() {
   list.innerHTML = hints.map((h) =>
     `<span class="gamepad-hint-chip"><kbd class="gamepad-hint-key">${h.keys}</kbd><span>${h.label}</span></span>`,
   ).join("");
+}
 
-  refreshPrepToolbarHints(pad);
+function isTouchPrepUi() {
+  return document.documentElement.dataset.touch === "true";
 }
 
 function refreshPrepToolbarHints(pad) {
@@ -434,28 +438,49 @@ function refreshPrepToolbarHints(pad) {
   const context = getMenuContext();
   if (context !== "prep" && context !== "prepDrag") {
     el.classList.add("hidden");
+    el.innerHTML = "";
     return;
   }
   el.classList.remove("hidden");
-  const switchPad = pad && isSwitchGamepad(pad);
-  const hints = context === "prepDrag"
-    ? [
-      { keys: "✚", label: "клетка" },
-      { keys: "A", label: "положить" },
-      { keys: "X", label: "скамейка" },
-      { keys: switchPad ? "ZR" : "RT", label: "поворот" },
-      { keys: "B", label: "отмена" },
-    ]
-    : [
-      { keys: "✚", label: "навигация" },
-      { keys: switchPad ? "ZL" : "RB", label: "поле" },
-      { keys: switchPad ? "L" : "LB", label: "стол" },
-      { keys: "A", label: "выбор" },
-      { keys: "X", label: "скамейка" },
-      { keys: "B", label: "отмена" },
-      { keys: "T", label: "инфо" },
-      { keys: "+", label: "бой" },
-    ];
+
+  let hints;
+  if (isTouchPrepUi()) {
+    hints = context === "prepDrag"
+      ? [
+        { keys: "✌️", label: "поворот" },
+        { keys: "💰", label: "продать" },
+        { keys: "📦", label: "скамейка" },
+        { keys: "👆", label: "положить" },
+      ]
+      : [
+        { keys: "👆", label: "перетащить" },
+        { keys: "✌️", label: "поворот" },
+        { keys: "💰", label: "продажа" },
+        { keys: "📦", label: "скамейка" },
+        { keys: "⏱", label: "инфо" },
+      ];
+  } else {
+    const switchPad = pad && isSwitchGamepad(pad);
+    hints = context === "prepDrag"
+      ? [
+        { keys: "✚", label: "клетка" },
+        { keys: "A", label: "положить" },
+        { keys: "X", label: "скамейка" },
+        { keys: switchPad ? "ZR" : "RT", label: "поворот" },
+        { keys: "B", label: "отмена" },
+      ]
+      : [
+        { keys: "✚", label: "навигация" },
+        { keys: switchPad ? "ZL" : "RB", label: "поле" },
+        { keys: switchPad ? "L" : "LB", label: "стол" },
+        { keys: "A", label: "выбор" },
+        { keys: "X", label: "скамейка" },
+        { keys: "B", label: "отмена" },
+        { keys: "T", label: "инфо" },
+        { keys: "+", label: "бой" },
+      ];
+  }
+
   el.innerHTML = hints.map((h) =>
     `<span class="prep-hint-chip"><kbd class="prep-hint-key">${h.keys}</kbd><span>${h.label}</span></span>`,
   ).join("");

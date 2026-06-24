@@ -1639,6 +1639,7 @@ function syncUiDragState() {
     tooltipItem = null;
     hideSidebarTooltip();
   }
+  if (typeof refreshGamepadHints === "function") refreshGamepadHints();
 }
 
 function applyCraftingForSide(side = prepViewSide) {

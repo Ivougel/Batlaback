@@ -5075,9 +5075,13 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .board-section {
   padding: 4px;
 }
 
-html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #prep-toolbar,
 html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #board-hint {
   display: none !important;
+}
+
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #prep-toolbar {
+  display: grid !important;
+  flex-shrink: 0;
 }
 
 html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .battle-arena {
@@ -5198,7 +5202,7 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .btn-refresh-shop {
 #app[data-phase="prep"] .game-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--shop-panel-w);
-  grid-template-rows: 1fr var(--prep-toolbar-h);
+  grid-template-rows: minmax(0, 1fr) auto;
   align-items: stretch;
   gap: 0;
   height: 100%;
@@ -5245,30 +5249,39 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .btn-refresh-shop {
   grid-column: 1 / -1;
   grid-row: 2;
   flex-shrink: 0;
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr) minmax(0, auto);
+  align-items: center;
   height: auto;
   min-height: var(--prep-toolbar-h);
   max-height: none;
   margin: 0;
   padding: 6px 10px 8px;
-  gap: 6px;
-  flex-wrap: wrap;
-  overflow-x: auto;
-  overflow-y: hidden;
-  align-items: center;
+  gap: 6px 10px;
+  overflow: visible;
   border: none;
   border-top: 1px solid rgba(80, 65, 50, 0.35);
   border-radius: 0;
   background: #14110e;
 }
 
+#app[data-phase="prep"] #prep-toolbar .prep-toolbar-side-switch {
+  grid-column: 1;
+}
+
 #app[data-phase="prep"] #prep-toolbar .prep-toolbar-hints {
-  flex: 1 1 100%;
+  grid-column: 2;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 6px 10px;
   min-width: 0;
+}
+
+#app[data-phase="prep"] #prep-toolbar .prep-toolbar-actions {
+  grid-column: 3;
+  margin-left: 0;
 }
 
 #app[data-phase="prep"] #prep-toolbar .prep-toolbar-hints.hidden {
@@ -5292,12 +5305,22 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .btn-refresh-shop {
   padding: 1px 6px;
   border-radius: 4px;
   border: 1px solid rgba(139, 148, 158, 0.45);
-  background: rgba(33, 38, 45, 0.9);
-  color: #c9d1d9;
-  font: inherit;
+  background: rgba(22, 27, 34, 0.92);
+  color: #e6edf3;
   font-size: 0.68rem;
   font-weight: 700;
-  line-height: 1.35;
+  line-height: 1.2;
+}
+
+html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-chip {
+  font-size: 0.78rem;
+  color: #aeb6c0;
+}
+
+html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
+  font-size: 0.76rem;
+  min-width: 1.6em;
+  padding: 2px 7px;
 }
 
 #app[data-phase="prep"] #prep-toolbar .prep-side-hint {
