@@ -43,10 +43,16 @@ function drawBattleItemWithAnimation(ctx, item, team, def, cellRectFn, roundRect
     }
 
     if (idx === 0) {
-      ctx.font = `${Math.round(uiPx(27) * (pulse > 1 ? pulse : 1))}px sans-serif`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(def.icon, cx, cy);
+      if (pulse > 1) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.scale(pulse, pulse);
+        ctx.translate(-cx, -cy);
+        drawCellEmoji(ctx, def.icon, x, y, w, h);
+        ctx.restore();
+      } else {
+        drawCellEmoji(ctx, def.icon, x, y, w, h);
+      }
     }
 
     if (item.currentCooldown != null) {

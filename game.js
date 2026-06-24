@@ -990,6 +990,11 @@ function lockPrepCanvasDisplaySize() {
   if (!canvas || phase !== "prep") return;
   const displayW = readCssPx("--prep-canvas-w", PREP_CANVAS_W);
   const displayH = readCssPx("--prep-canvas-h", PREP_CANVAS_H);
+  if (canvas.width !== displayW || canvas.height !== displayH) {
+    canvas.width = displayW;
+    canvas.height = displayH;
+    layoutCanvasH = canvas.height;
+  }
   canvas.style.setProperty("width", `${displayW}px`, "important");
   canvas.style.setProperty("height", `${displayH}px`, "important");
   canvas.style.setProperty("max-width", `${displayW}px`, "important");
@@ -1000,6 +1005,11 @@ function lockBattleCanvasDisplaySize() {
   if (!canvas || !isBattleUiPhase()) return;
   const displayW = readCssPx("--battle-canvas-w", BATTLE_CANVAS_W);
   const displayH = readCssPx("--battle-canvas-h", BATTLE_CANVAS_H);
+  if (canvas.width !== displayW || canvas.height !== displayH) {
+    canvas.width = displayW;
+    canvas.height = displayH;
+    layoutCanvasH = canvas.height;
+  }
   canvas.style.setProperty("width", `${displayW}px`, "important");
   canvas.style.setProperty("height", `${displayH}px`, "important");
   canvas.style.setProperty("max-width", `${displayW}px`, "important");
@@ -2521,10 +2531,7 @@ function drawLoadoutItems(items, team, dimmed) {
       roundRect(x + 3, y + 3, w - 6, h - 6, 5);
       ctx.stroke();
       if (idx === 0) {
-        ctx.font = `${uiPx(27)}px sans-serif`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(def.icon, x + w / 2, y + h / 2);
+        drawCellEmoji(ctx, def.icon, x, y, w, h);
       }
     });
     ctx.globalAlpha = 1;
@@ -2541,10 +2548,7 @@ function drawBattleItems(items, team, dimmed) {
       roundRect(x + 3, y + 3, w - 6, h - 6, 5);
       ctx.fill();
       if (idx === 0) {
-        ctx.font = `${uiPx(27)}px sans-serif`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(def.icon, x + w / 2, y + h / 2);
+        drawCellEmoji(ctx, def.icon, x, y, w, h);
       }
       if (item.currentCooldown != null) {
         const maxCd = getEffectiveCooldown(item);
@@ -2598,10 +2602,9 @@ function drawItemPreview(x, y, def, itemId, selected, rotation, targetCtx = ctx)
     roundRect(x + 8 + dx * 16, y + 8 + dy * 16, 14, 14, 3, targetCtx);
     targetCtx.fill();
     if (idx === 0) {
-      targetCtx.font = `${uiPx(27)}px sans-serif`;
-      targetCtx.textAlign = "center";
-      targetCtx.textBaseline = "middle";
-      targetCtx.fillText(def.icon, x + 15 + dx * 16, y + 15 + dy * 16);
+      const cellX = x + 8 + dx * 16;
+      const cellY = y + 8 + dy * 16;
+      drawCellEmoji(targetCtx, def.icon, cellX, cellY, 14, 14);
     }
   });
 }
@@ -2843,6 +2846,36 @@ function isPointerOverPrepSidebar(clientX, clientY) {
   );
 }
 
+function getTooltipCorridorBounds(margin = 10, gap = 14) {
+  const canvasRect = document.getElementById("game-canvas")?.getBoundingClientRect();
+  const shopRect = document.getElementById("shop-panel")?.getBoundingClientRect();
+  const vv = window.visualViewport;
+  const viewTop = (vv?.offsetTop ?? 0) + margin;
+  const viewBottom = (vv?.offsetTop ?? 0) + (vv?.height ?? window.innerHeight) - margin;
+
+  if (!canvasRect || !shopRect) return null;
+
+  const left = canvasRect.right + gap;
+  const right = shopRect.left - gap;
+  if (right - left < 72) return null;
+
+  return { left, right, top: viewTop, bottom: viewBottom };
+}
+
+function positionTooltipInCorridor(clientY, tipW, tipH, margin, gap, verticalBias = 0.42) {
+  const corridor = getTooltipCorridorBounds(margin, gap);
+  if (!corridor) return null;
+
+  let left = corridor.left;
+  if (left + tipW > corridor.right) {
+    left = Math.max(corridor.left, corridor.right - tipW);
+  }
+
+  let top = clientY - tipH * verticalBias;
+  top = Math.max(corridor.top, Math.min(top, corridor.bottom - tipH));
+  return { left, top };
+}
+
 function positionSidebarTooltip(clientX, clientY, boundsKind = "viewport", placement = "auto") {
   const el = document.getElementById("sidebar-tooltip");
   if (!el || el.classList.contains("hidden")) return;
@@ -2860,31 +2893,25 @@ function positionSidebarTooltip(clientX, clientY, boundsKind = "viewport", place
   let left;
   let top;
 
-  if (placement === "shop") {
-    left = clientX + gap;
-    top = clientY - tipH * 0.35;
-  } else if (placement === "bench") {
-    left = clientX + gap;
-    top = clientY + gap * 0.85;
-  } else if (placement === "field") {
-    const canvasEl = document.getElementById("game-canvas");
-    const canvasRect = canvasEl?.getBoundingClientRect();
-    const vv = window.visualViewport;
-    const viewRight = (vv?.offsetLeft ?? 0) + (vv?.width ?? window.innerWidth) - margin;
-    const viewTop = (vv?.offsetTop ?? 0) + margin;
-    const viewBottom = (vv?.offsetTop ?? 0) + (vv?.height ?? window.innerHeight) - margin;
-
-    left = viewRight - tipW;
-    if (canvasRect) {
-      const rightOfCanvas = canvasRect.right + gap;
-      if (rightOfCanvas + tipW <= viewRight) {
-        left = rightOfCanvas;
-      }
+  if (placement === "shop" || placement === "bench" || placement === "field") {
+    const bias = placement === "bench" ? 0.58 : 0.42;
+    const corridorPos = positionTooltipInCorridor(clientY, tipW, tipH, margin, gap, bias);
+    if (corridorPos) {
+      left = corridorPos.left;
+      top = corridorPos.top;
+    } else if (placement === "field") {
+      const vv = window.visualViewport;
+      const viewRight = (vv?.offsetLeft ?? 0) + (vv?.width ?? window.innerWidth) - margin;
+      const viewTop = (vv?.offsetTop ?? 0) + margin;
+      const viewBottom = (vv?.offsetTop ?? 0) + (vv?.height ?? window.innerHeight) - margin;
+      left = viewRight - tipW;
+      top = Math.max(viewTop, Math.min(clientY - tipH * 0.42, viewBottom - tipH));
+    } else {
+      left = clientX - tipW - gap;
+      top = clientY - tipH * bias;
+      top = Math.max(bounds.top + margin, Math.min(top, bounds.bottom - tipH - margin));
+      left = Math.max(bounds.left + margin, Math.min(left, bounds.right - tipW - margin));
     }
-
-    top = clientY - tipH * 0.42;
-    top = Math.max(viewTop, Math.min(top, viewBottom - tipH));
-    left = Math.max(margin + (vv?.offsetLeft ?? 0), Math.min(left, viewRight - tipW));
   } else {
     const spaceRight = bounds.right - clientX - margin;
     const spaceLeft = clientX - bounds.left - margin;
@@ -2901,11 +2928,6 @@ function positionSidebarTooltip(clientX, clientY, boundsKind = "viewport", place
     }
 
     top = clientY - tipH * 0.35;
-    top = Math.max(bounds.top + margin, Math.min(top, bounds.bottom - tipH - margin));
-    left = Math.max(bounds.left + margin, Math.min(left, bounds.right - tipW - margin));
-  }
-
-  if (placement === "shop" || placement === "bench") {
     top = Math.max(bounds.top + margin, Math.min(top, bounds.bottom - tipH - margin));
     left = Math.max(bounds.left + margin, Math.min(left, bounds.right - tipW - margin));
   }

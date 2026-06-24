@@ -3775,39 +3775,39 @@ body:has(#overlay:not(.hidden)) {
 }
 
 html[data-touch="true"] .sidebar-tooltip {
-  max-width: min(calc(640px * var(--ui-scale)), calc(100vw - 24px));
-  padding: calc(24px * var(--ui-scale)) calc(28px * var(--ui-scale));
+  max-width: min(calc(480px * var(--ui-scale)), calc(100vw - 24px));
+  padding: calc(16px * var(--ui-scale)) calc(18px * var(--ui-scale));
 }
 
 html[data-touch="true"] .sidebar-tooltip .tt-line {
-  font-size: calc(24px * var(--ui-scale));
+  font-size: calc(16px * var(--ui-scale));
   line-height: 1.4;
 }
 
 html[data-touch="true"] .sidebar-tooltip .tt-title {
-  font-size: calc(28px * var(--ui-scale));
-  margin-bottom: 8px;
+  font-size: calc(19px * var(--ui-scale));
+  margin-bottom: 6px;
 }
 
 html[data-touch="true"] .sidebar-tooltip .tt-sub,
 html[data-touch="true"] .sidebar-tooltip .tt-label {
-  font-size: calc(22px * var(--ui-scale));
+  font-size: calc(15px * var(--ui-scale));
 }
 
 html[data-touch="true"] .sidebar-tooltip.synergy-tooltip {
-  max-width: min(560px, calc(100vw - 24px));
-  padding: 20px 24px;
+  max-width: min(420px, calc(100vw - 24px));
+  padding: 14px 16px;
 }
 
 html[data-touch="true"] .sidebar-tooltip.synergy-tooltip .synergy-tt-title {
-  font-size: 1.8rem;
-  margin-bottom: 12px;
+  font-size: 1.2rem;
+  margin-bottom: 8px;
 }
 
 html[data-touch="true"] .sidebar-tooltip.synergy-tooltip .synergy-tt-row,
 html[data-touch="true"] .sidebar-tooltip.synergy-tooltip .synergy-tt-source {
-  font-size: 1.56rem;
-  margin-bottom: 6px;
+  font-size: 1.04rem;
+  margin-bottom: 4px;
 }
 
 @media (max-width: 700px) {

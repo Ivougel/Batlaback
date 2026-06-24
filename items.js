@@ -10,6 +10,20 @@ function uiPx(value) {
   return Math.round(value * UI_SCALE);
 }
 
+/** Центрирует emoji в клетке canvas (устойчиво на Safari/iOS). */
+function drawCellEmoji(ctx, icon, x, y, w, h) {
+  const cx = x + w / 2;
+  const cy = y + h / 2;
+  const size = Math.max(14, Math.round(Math.min(w, h) * 0.58));
+  ctx.save();
+  ctx.font = `${size}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#ffffff";
+  ctx.fillText(icon, cx, cy);
+  ctx.restore();
+}
+
 const RARITY_COLORS = {
   common: "#8b949e",
   uncommon: "#3fb950",

@@ -136,11 +136,7 @@ function drawDisplacedItem(ctx, item, team, centerX, centerY, alpha, scale) {
     ctx.stroke();
 
     if (idx === 0) {
-      ctx.font = `${uiPx(27 * scale)}px sans-serif`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillStyle = "#ffffff";
-      ctx.fillText(def.icon, x + w / 2, y + h / 2);
+      drawCellEmoji(ctx, def.icon, x, y, w, h);
     }
   });
 
