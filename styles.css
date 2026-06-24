@@ -1741,6 +1741,11 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
   flex-shrink: 0;
 }
 
+#app[data-phase="prep"] #shop-panel .shop-card:not(.empty),
+#app[data-phase="prep"] #shop-panel .bench-panel .bench-card:not(.empty) {
+  touch-action: none;
+}
+
 #app[data-phase="prep"] #shop-panel .shop-card .shop-item-visual .icon {
   display: inline-flex;
   align-items: center;

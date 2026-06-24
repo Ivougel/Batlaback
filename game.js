@@ -142,6 +142,8 @@ let shopDidDrag = false;
 let lastTouchEventAt = 0;
 const TOUCH_LONG_PRESS_MS = 450;
 const TOUCH_LONG_PRESS_MOVE_PX = 10;
+const MOUSE_DRAG_THRESHOLD_PX = 5;
+const TOUCH_DRAG_THRESHOLD_PX = 4;
 let touchLongPress = null;
 let suppressShopClickUntil = 0;
 let opponentMode = "ai";
@@ -479,6 +481,22 @@ function isTouchUi() {
   return document.documentElement.dataset.touch === "true";
 }
 
+function getDragThresholdPx() {
+  return isTouchUi() ? TOUCH_DRAG_THRESHOLD_PX : MOUSE_DRAG_THRESHOLD_PX;
+}
+
+function getDropPointerClient(e) {
+  if (isTouchUi() && (dragPayload || pendingShopDrag || pendingBenchDrag)) {
+    return { x: lastPointerClient.x, y: lastPointerClient.y };
+  }
+  return { x: e.clientX, y: e.clientY };
+}
+
+function createDropPointerEvent(e) {
+  const { x, y } = getDropPointerClient(e);
+  return createSyntheticPointerEvent(x, y);
+}
+
 function clearTouchLongPress() {
   if (touchLongPress?.timer) clearTimeout(touchLongPress.timer);
   touchLongPress = null;
@@ -579,7 +597,8 @@ function bindTouchInput() {
   const onUp = (kind, id, x, y) => {
     if (activeGesture !== gestureKey(kind, id)) return;
     lastTouchEventAt = Date.now();
-    if (finishTouchLongPress()) {
+    const longPressHeld = finishTouchLongPress();
+    if (longPressHeld && !dragPayload) {
       pendingShopDrag = null;
       pendingBenchDrag = null;
       pendingCanvasPick = null;
@@ -1899,7 +1918,9 @@ function isDropOnSell(e) {
   if (!zone || !e) return false;
   if (e.target?.closest?.("#shop-sell-zone")) return true;
   const r = zone.getBoundingClientRect();
-  return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+  const pad = isTouchUi() ? 14 : 0;
+  return e.clientX >= r.left - pad && e.clientX <= r.right + pad
+    && e.clientY >= r.top - pad && e.clientY <= r.bottom + pad;
 }
 
 function isDropOnBench(e) {
@@ -1907,7 +1928,9 @@ function isDropOnBench(e) {
   if (!panel || !e) return false;
   if (e.target?.closest?.("#bench-panel")) return true;
   const r = panel.getBoundingClientRect();
-  return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+  const pad = isTouchUi() ? 14 : 0;
+  return e.clientX >= r.left - pad && e.clientX <= r.right + pad
+    && e.clientY >= r.top - pad && e.clientY <= r.bottom + pad;
 }
 
 function canvasCoordsFromClient(clientX, clientY) {
@@ -2208,8 +2231,7 @@ function gamepadPointerDownAt(clientX, clientY) {
           clientX,
           clientY,
           onHold: () => {
-            pendingShopDrag = null;
-            syncUiDragState();
+            if (dragPayload || shopDidDrag) return;
             showSidebarTooltipAt(
               clientX,
               clientY,
@@ -2235,7 +2257,7 @@ function gamepadPointerDownAt(clientX, clientY) {
           clientX,
           clientY,
           onHold: () => {
-            pendingBenchDrag = null;
+            if (dragPayload) return;
             showSidebarTooltipAt(
               clientX,
               clientY,
@@ -2279,10 +2301,11 @@ function gamepadPointerDownAt(clientX, clientY) {
 
 function gamepadPointerUpAt(clientX, clientY) {
   updatePointerFromClient(clientX, clientY);
+  const threshold = getDragThresholdPx();
   if (pendingShopDrag && !dragPayload) {
     const dx = clientX - pendingShopDrag.startX;
     const dy = clientY - pendingShopDrag.startY;
-    if (Math.hypot(dx, dy) < 6) {
+    if (Math.hypot(dx, dy) < threshold) {
       const { index, side } = pendingShopDrag;
       pendingShopDrag = null;
       syncUiDragState();
@@ -3206,6 +3229,9 @@ function finishDragDrop(e) {
     return;
   }
 
+  const dropE = createDropPointerEvent(e);
+  const { x: dropClientX, y: dropClientY } = getDropPointerClient(e);
+
   const side = dragFrom.side || prepViewSide;
   const st = getSideState(side);
   if (!canEditPrepSide(side)) {
@@ -3214,9 +3240,9 @@ function finishDragDrop(e) {
     return;
   }
 
-  const dropOnSell = isDropOnSell(e);
-  const dropOnBench = isDropOnBench(e);
-  const { x: mx, y: my } = canvasCoordsFromEvent(e);
+  const dropOnSell = isDropOnSell(dropE);
+  const dropOnBench = isDropOnBench(dropE);
+  const { x: mx, y: my } = canvasCoordsFromClient(dropClientX, dropClientY);
 
   if (dropOnSell && sellDraggedItem(side)) {
     clearDragUiState();
@@ -3402,9 +3428,10 @@ function updatePendingBenchDrag(e) {
   if (!pendingBenchDrag || dragPayload) return;
   const dx = e.clientX - pendingBenchDrag.startX;
   const dy = e.clientY - pendingBenchDrag.startY;
-  if (Math.hypot(dx, dy) < 6) return;
+  if (Math.hypot(dx, dy) < getDragThresholdPx()) return;
   const { index, side } = pendingBenchDrag;
   pendingBenchDrag = null;
+  clearTouchLongPress();
   hideSidebarTooltip();
   startBenchDrag(index, e, side);
 }
@@ -3413,7 +3440,7 @@ function updatePendingCanvasPick(clientX, clientY) {
   if (!pendingCanvasPick || dragPayload) return;
   const dx = clientX - pendingCanvasPick.clientX;
   const dy = clientY - pendingCanvasPick.clientY;
-  if (Math.hypot(dx, dy) < 6) return;
+  if (Math.hypot(dx, dy) < getDragThresholdPx()) return;
   pendingCanvasPick = null;
   onMouseDown(createSyntheticPointerEvent(clientX, clientY));
 }
@@ -3434,9 +3461,10 @@ function updatePendingShopDrag(e) {
   if (!pendingShopDrag || dragPayload) return;
   const dx = e.clientX - pendingShopDrag.startX;
   const dy = e.clientY - pendingShopDrag.startY;
-  if (Math.hypot(dx, dy) < 6) return;
+  if (Math.hypot(dx, dy) < getDragThresholdPx()) return;
   const { index, side } = pendingShopDrag;
   pendingShopDrag = null;
+  clearTouchLongPress();
   shopDidDrag = true;
   startShopDrag(index, e, side);
 }
@@ -3448,6 +3476,7 @@ function startShopDrag(index, e, side = prepViewSide) {
   const def = ITEM_CATALOG[st.shop[index]];
   if (st.gold < def.cost) return;
   if (e?.preventDefault) e.preventDefault();
+  clearTouchLongPress();
   hideSidebarTooltip();
   dragPayload = { itemId: st.shop[index], rotation: 0 };
   dragFrom = { type: "shop", index, side };
@@ -3465,6 +3494,7 @@ function startBenchDrag(index, e, side = prepViewSide) {
   const st = getSideState(side);
   if (phase !== "prep" || gameOver || !canEditPrepSide(side) || !st.bench[index]) return;
   e.preventDefault();
+  clearTouchLongPress();
   hideSidebarTooltip();
   selectedBench = index;
   renderBench();
