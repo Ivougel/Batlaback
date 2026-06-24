@@ -736,7 +736,7 @@ body:has(#app[data-phase="replay"]) #battle-controls:not(.hidden) {
 }
 
 html[data-prep-layout="side"] #app[data-phase="prep"] .battle-canvas-stage {
-  clip-path: none;
+  clip-path: none !important;
 }
 
 #app[data-phase="prep"][data-prep-side="player"] .battle-canvas-stage {
@@ -749,6 +749,135 @@ html[data-prep-layout="side"] #app[data-phase="prep"] .battle-canvas-stage {
 
 html[data-prep-layout="stacked"] #app[data-phase="prep"] .battle-canvas-stage {
   clip-path: none;
+}
+
+/* Side prep (Mac / iPad): canvas и аватары как в фазе боя */
+html[data-prep-layout="side"] #app[data-phase="prep"] .battle-arena {
+  --battle-avatar-w: calc(222px * var(--ui-scale));
+  --battle-avatar-h: calc(288px * var(--ui-scale));
+}
+
+html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .battle-canvas-stage {
+  flex: 0 0 auto;
+  width: 100%;
+  min-height: 0;
+  height: auto;
+  display: block;
+  overflow: hidden;
+}
+
+html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .canvas-scale-wrap {
+  display: block;
+  max-width: none;
+  line-height: 0;
+  flex: none;
+  min-height: 0;
+  height: auto;
+}
+
+html[data-prep-layout="side"] #app[data-phase="prep"][data-prep-side="player"] .prep-left-column .canvas-scale-wrap {
+  width: calc(100% / var(--battle-field-ratio));
+  margin-left: 0;
+  margin-right: auto;
+}
+
+html[data-prep-layout="side"] #app[data-phase="prep"][data-prep-side="enemy"] .prep-left-column .canvas-scale-wrap {
+  width: calc(100% / var(--battle-enemy-ratio, var(--battle-field-ratio)));
+  margin-left: auto;
+  margin-right: 0;
+}
+
+html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .canvas-scale-wrap #game-canvas,
+html[data-prep-layout="side"] #app[data-phase="prep"] #game-canvas {
+  width: 100% !important;
+  height: auto !important;
+  max-width: none;
+}
+
+html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .battle-avatars-row {
+  position: static;
+  inset: auto;
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: 1fr;
+  min-height: 0;
+  height: auto;
+  margin: 0;
+  padding: calc(8px * var(--ui-scale)) calc(4px * var(--ui-scale)) calc(4px * var(--ui-scale));
+  pointer-events: auto;
+}
+
+html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .battle-avatars-col {
+  position: static;
+  display: flex;
+  justify-content: center;
+  min-height: 0;
+  width: 100%;
+}
+
+html[data-prep-layout="side"] #app[data-phase="prep"][data-prep-side="player"] .battle-avatars-enemy,
+html[data-prep-layout="side"] #app[data-phase="prep"][data-prep-side="enemy"] .battle-avatars-player {
+  display: none !important;
+}
+
+html[data-prep-layout="side"] #app[data-phase="prep"][data-prep-side="player"] .battle-avatars-player,
+html[data-prep-layout="side"] #app[data-phase="prep"][data-prep-side="enemy"] .battle-avatars-enemy {
+  display: flex !important;
+  grid-column: 1;
+}
+
+html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .field-avatar-wrap {
+  width: auto;
+  height: auto;
+  min-height: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .field-avatar-slot {
+  flex: none;
+  width: auto;
+  min-height: 0;
+}
+
+html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .field-avatar-wrap .profile-avatar {
+  width: var(--battle-avatar-w);
+  height: var(--battle-avatar-h);
+  max-width: none;
+  max-height: none;
+  flex: none;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  border-radius: 0;
+  overflow: visible;
+}
+
+html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .field-avatar-wrap .profile-avatar-player,
+html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .field-avatar-wrap .profile-avatar-enemy {
+  border: none;
+  box-shadow: none;
+}
+
+html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .field-avatar-wrap .profile-avatar-img,
+html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .field-avatar-wrap .class-sticker {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  object-fit: contain;
+  object-position: center bottom;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.45));
 }
 
 .battle-canvas-stage #game-canvas,
@@ -2033,124 +2162,9 @@ html[data-prep-layout="stacked"] #app[data-phase="prep"] .battle-canvas-stage {
   #app[data-phase="prep"] .prep-left-column {
     grid-column: 1;
     grid-row: 1;
-    position: relative;
     min-height: 0;
     height: 100%;
     overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-
-  #app[data-phase="prep"] .battle-canvas-stage {
-    overflow: hidden;
-    max-width: none;
-    width: 100%;
-    flex: 1 1 auto;
-    min-height: 0;
-    height: 100%;
-    align-self: stretch;
-    clip-path: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  #app[data-phase="prep"] .canvas-scale-wrap {
-    width: 100%;
-    height: 100%;
-    max-width: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-  }
-
-  #app[data-phase="prep"] #game-canvas {
-    max-width: none;
-    flex-shrink: 0;
-  }
-
-  #app[data-phase="prep"] .prep-left-column .battle-avatars-row {
-    position: absolute;
-    inset: 0;
-    z-index: 6;
-    pointer-events: none;
-    display: block;
-    min-height: 0;
-    flex: none;
-    margin: 0;
-    padding: 0;
-    max-width: none;
-  }
-
-  #app[data-phase="prep"] .prep-left-column .battle-avatars-col {
-    position: absolute;
-    bottom: calc(8px * var(--ui-scale));
-    width: auto;
-    height: auto;
-    min-height: 0;
-    pointer-events: auto;
-  }
-
-  #app[data-phase="prep"][data-prep-side="player"] .battle-avatars-player {
-    left: calc(8px * var(--ui-scale));
-    display: block;
-  }
-
-  #app[data-phase="prep"][data-prep-side="player"] .battle-avatars-enemy {
-    display: none;
-  }
-
-  #app[data-phase="prep"][data-prep-side="enemy"] .battle-avatars-enemy {
-    right: calc(8px * var(--ui-scale));
-    left: auto;
-    display: block;
-  }
-
-  #app[data-phase="prep"][data-prep-side="enemy"] .battle-avatars-player {
-    display: none;
-  }
-
-  #app[data-phase="prep"] .prep-left-column .field-avatar-wrap {
-    width: auto;
-    height: auto;
-    min-height: 0;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: flex-end;
-  }
-
-  #app[data-phase="prep"] .prep-left-column .field-avatar-slot {
-    flex: none;
-    width: auto;
-    min-height: 0;
-  }
-
-  #app[data-phase="prep"] .prep-left-column .field-avatar-wrap .profile-avatar {
-    width: clamp(72px, 14vw, 108px);
-    height: clamp(92px, 18vw, 138px);
-    max-width: none;
-    max-height: none;
-    flex: none;
-    pointer-events: auto;
-  }
-
-  #app[data-phase="prep"] .prep-left-column .field-avatar-wrap .profile-avatar-img {
-    width: 100%;
-    height: 100%;
-    max-width: none;
-    max-height: none;
-    object-fit: contain;
-    object-position: center bottom;
-  }
-
-  #app[data-phase="prep"] .prep-left-column .field-avatar-wrap .btn-player-stats {
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 2;
-    padding: 2px 6px;
-    font-size: 0.62rem;
   }
 
   #app[data-phase="prep"] #shop-panel {
@@ -5477,86 +5491,9 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .btn-refresh-shop {
   #app[data-phase="prep"] .prep-left-column {
     grid-column: 1;
     grid-row: 1;
-    position: relative;
     min-height: 0;
     height: 100%;
     overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-
-  #app[data-phase="prep"] .prep-left-column .battle-canvas-stage {
-    flex: 1 1 auto;
-    min-height: calc(360px * var(--ui-scale));
-    height: 100%;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    clip-path: none;
-  }
-
-  #app[data-phase="prep"] .prep-left-column .canvas-scale-wrap {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-  }
-
-  #app[data-phase="prep"] .prep-left-column .battle-avatars-row {
-    position: absolute;
-    inset: 0;
-    z-index: 6;
-    pointer-events: none;
-    display: block;
-    min-height: 0;
-    flex: none;
-    margin: 0;
-    padding: 0;
-  }
-
-  #app[data-phase="prep"] .prep-left-column .battle-avatars-col {
-    position: absolute;
-    bottom: calc(8px * var(--ui-scale));
-    width: auto;
-    height: auto;
-    min-height: 0;
-    pointer-events: auto;
-  }
-
-  #app[data-phase="prep"][data-prep-side="player"] .battle-avatars-player {
-    left: calc(8px * var(--ui-scale));
-    display: block;
-  }
-
-  #app[data-phase="prep"][data-prep-side="player"] .battle-avatars-enemy {
-    display: none;
-  }
-
-  #app[data-phase="prep"][data-prep-side="enemy"] .battle-avatars-enemy {
-    right: calc(8px * var(--ui-scale));
-    left: auto;
-    display: block;
-  }
-
-  #app[data-phase="prep"][data-prep-side="enemy"] .battle-avatars-player {
-    display: none;
-  }
-
-  #app[data-phase="prep"] .prep-left-column .field-avatar-wrap {
-    width: auto;
-    height: auto;
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  #app[data-phase="prep"] .prep-left-column .field-avatar-wrap .profile-avatar {
-    width: clamp(80px, 10vw, 120px);
-    height: clamp(100px, 13vw, 150px);
-    flex: none;
   }
 
   #app[data-phase="prep"] #shop-panel {

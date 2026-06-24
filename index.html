@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Backpack Battles — Автобатлер</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="prep-ref-layout.css">
   <script src="ui-layout.js"></script>
 </head>
 <body>
@@ -13,31 +14,32 @@
       <section class="board-section">
         <div class="battle-arena" id="battle-arena">
           <div class="prep-left-column" id="prep-left-column">
-            <div class="battle-canvas-stage">
-              <div class="canvas-scale-wrap">
-                <canvas id="game-canvas"></canvas>
+            <div class="prep-field-column" id="prep-field-column">
+              <div class="prep-character-layer" id="prep-character-layer" aria-hidden="true">
+                <div class="prep-character" id="prep-character-player" hidden></div>
+                <div class="prep-character" id="prep-character-enemy" hidden></div>
               </div>
-              <div class="battle-arena-overlay" aria-hidden="true">
-                <div class="overlay-side overlay-side-player"></div>
-                <div class="overlay-side overlay-side-center"></div>
-                <div class="overlay-side overlay-side-enemy"></div>
+              <div class="prep-stats-hud" id="prep-stats-hud" aria-live="polite"></div>
+              <div class="battle-canvas-stage">
+                <div class="canvas-scale-wrap">
+                  <canvas id="game-canvas"></canvas>
+                </div>
+                <div class="battle-arena-overlay" aria-hidden="true">
+                  <div class="overlay-side overlay-side-player"></div>
+                  <div class="overlay-side overlay-side-center"></div>
+                  <div class="overlay-side overlay-side-enemy"></div>
+                </div>
               </div>
-            </div>
-            <div class="battle-avatars-row">
-              <div class="battle-avatars-col battle-avatars-player">
-                <div class="field-avatar-wrap" id="player-avatar-panel" aria-label="Аватар игрока">
+              <div class="battle-scene-ui" id="battle-scene-ui" aria-hidden="true">
+                <div class="field-avatar-wrap battle-scene-avatar battle-scene-avatar-player" id="player-avatar-panel" aria-label="Аватар игрока">
                   <button type="button" class="btn-secondary btn-player-stats" id="btn-player-stats" aria-expanded="false" aria-controls="player-characteristics-popup" title="H — характеристики">📋 Характеристики</button>
                   <div class="field-avatar-slot" id="player-avatar-slot"></div>
                   <div class="player-characteristics-popup hidden" id="player-characteristics-popup" role="dialog" aria-labelledby="player-char-title" aria-modal="true">
                     <div id="player-characteristics-content"></div>
                   </div>
                 </div>
-              </div>
-              <div class="battle-avatars-col battle-avatars-center">
-                <div class="center-stats-panel" id="battle-stats-panel" aria-label="Сравнение статов"></div>
-              </div>
-              <div class="battle-avatars-col battle-avatars-enemy">
-                <div class="field-avatar-wrap" id="enemy-avatar-panel" aria-label="Аватар противника">
+                <div class="center-stats-panel battle-scene-stats" id="battle-stats-panel" aria-label="Сравнение статов"></div>
+                <div class="field-avatar-wrap battle-scene-avatar battle-scene-avatar-enemy" id="enemy-avatar-panel" aria-label="Аватар противника">
                   <button type="button" class="btn-secondary btn-player-stats btn-enemy-stats" id="btn-enemy-stats" aria-expanded="false" aria-controls="enemy-characteristics-popup" title="Характеристики противника">📋 Характеристики</button>
                   <div class="field-avatar-slot" id="enemy-avatar-slot"></div>
                   <div class="player-characteristics-popup fighter-char-popup-enemy hidden" id="enemy-characteristics-popup" role="dialog" aria-labelledby="enemy-char-title" aria-modal="true">

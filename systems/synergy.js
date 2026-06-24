@@ -335,12 +335,15 @@ function getItemVisualCenter(item, team) {
 }
 
 function cellRectForSynergy(team, col, row) {
-  const stride = typeof GRID_STRIDE !== "undefined" ? GRID_STRIDE : 92;
-  const originX = team === "player"
-    ? (typeof GRID_PLAYER_X !== "undefined" ? GRID_PLAYER_X : 8)
-    : (typeof ENEMY_X !== "undefined" ? ENEMY_X : 944);
-  const cell = typeof GRID_CELL !== "undefined" ? GRID_CELL : 88;
-  const topY = typeof BACKPACK_Y !== "undefined" ? BACKPACK_Y : 8;
+  if (typeof cellRect === "function") {
+    return cellRect(team, col, row);
+  }
+  const stride = typeof GRID_STRIDE !== "undefined" ? GRID_STRIDE : 47;
+  const originX = typeof layoutGridOrigin === "function"
+    ? layoutGridOrigin(team)
+    : (team === "player" ? (GRID_PLAYER_X || 0) : (ENEMY_X || 0));
+  const topY = typeof layoutBackpackY === "function" ? layoutBackpackY() : (BACKPACK_Y || 0);
+  const cell = typeof GRID_CELL !== "undefined" ? GRID_CELL : 46;
   return { x: originX + col * stride, y: topY + row * stride, w: cell, h: cell };
 }
 

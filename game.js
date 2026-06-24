@@ -4,38 +4,87 @@
 
 const GRID_COLS = 9;
 const GRID_ROWS = 7;
-const GRID_CELL = 88;
-const GRID_CELL_GAP = 4;
-const GRID_STRIDE = GRID_CELL + GRID_CELL_GAP;
-const FRAME_PAD = 8;
-const FRAME_TITLE_H = 8;
 const FRAME_EDGE = 2;
 const SHOP_FIELD_GAP = 12;
 const BACKPACK_COLS = GRID_COLS;
 const BACKPACK_ROWS = GRID_ROWS;
-const CELL = GRID_CELL;
-const GRID_INNER_W = GRID_COLS * GRID_CELL + (GRID_COLS - 1) * GRID_CELL_GAP;
-const GRID_INNER_H = GRID_ROWS * GRID_CELL + (GRID_ROWS - 1) * GRID_CELL_GAP;
-const BACKPACK_Y = 8;
-const GRID_TOP_Y = BACKPACK_Y;
-const GRID_PLAYER_X = FRAME_PAD;
-const PLAYER_X = GRID_PLAYER_X;
-const PLAYER_FIELD_OUTER_W = GRID_INNER_W + FRAME_PAD * 2;
-const PREP_CANVAS_W = PLAYER_FIELD_OUTER_W;
-const PREP_CANVAS_H = 648;
-const GRID_GAP = 96;
-const ENEMY_X = PLAYER_FIELD_OUTER_W + GRID_GAP + FRAME_PAD;
-const GAP_W = GRID_GAP;
-const BATTLE_CANVAS_W = ENEMY_X - FRAME_PAD + PLAYER_FIELD_OUTER_W;
-const BATTLE_CANVAS_H = PREP_CANVAS_H;
-const CANVAS_H = BATTLE_CANVAS_H;
-const CANVAS_W = BATTLE_CANVAS_W;
 const MAX_BENCH = 6;
 const MAX_SHOP = 5;
 const SHOP_RARITY_RANK = { common: 0, uncommon: 1, rare: 2, epic: 3, legendary: 4 };
 const START_GOLD = 12;
 const ROUND_GOLD = 10;
 const WIN_GOLD = 3;
+
+/** Читаются из CSS (--cell-size, --cell-gap, …) и пересчитываются на resize. */
+let GRID_CELL = 46;
+let GRID_CELL_GAP = 1;
+let GRID_STRIDE = 47;
+let FRAME_PAD = 8;
+let FRAME_TITLE_H = 22;
+let GRID_INNER_W = 807;
+let GRID_INNER_H = 627;
+let BACKPACK_Y = 0;
+let GRID_TOP_Y = 0;
+let GRID_PLAYER_X = 0;
+let PLAYER_X = 0;
+let PLAYER_FIELD_OUTER_W = 823;
+let PREP_CANVAS_W = 422;
+let PREP_CANVAS_H = 328;
+let GRID_GAP = 108;
+let ENEMY_X = 939;
+let GAP_W = 108;
+let BATTLE_CANVAS_W = 1762;
+let BATTLE_CANVAS_H = 657;
+let CANVAS_H = BATTLE_CANVAS_H;
+let CANVAS_W = BATTLE_CANVAS_W;
+let CELL = GRID_CELL;
+
+function readCssPx(name, fallback) {
+  const raw = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const val = parseFloat(raw);
+  return Number.isFinite(val) ? val : fallback;
+}
+
+function applyGridMetricsFromCss() {
+  GRID_CELL = readCssPx("--cell-size", 46);
+  GRID_CELL_GAP = readCssPx("--cell-gap", 1);
+  FRAME_PAD = readCssPx("--frame-pad", 8);
+  FRAME_TITLE_H = readCssPx("--frame-title-h", 22);
+  GRID_GAP = readCssPx("--grid-gap", 36);
+
+  GRID_STRIDE = GRID_CELL + GRID_CELL_GAP;
+  CELL = GRID_CELL;
+  GRID_INNER_W = GRID_COLS * GRID_CELL + (GRID_COLS - 1) * GRID_CELL_GAP;
+  GRID_INNER_H = GRID_ROWS * GRID_CELL + (GRID_ROWS - 1) * GRID_CELL_GAP;
+
+  PREP_CANVAS_W = GRID_INNER_W;
+  PREP_CANVAS_H = GRID_INNER_H;
+
+  GRID_PLAYER_X = 0;
+  PLAYER_X = 0;
+  BACKPACK_Y = 0;
+  GRID_TOP_Y = 0;
+  PLAYER_FIELD_OUTER_W = GRID_INNER_W;
+  ENEMY_X = GRID_INNER_W + GRID_GAP;
+  GAP_W = GRID_GAP;
+  BATTLE_CANVAS_W = GRID_INNER_W + GRID_GAP + GRID_INNER_W;
+  BATTLE_CANVAS_H = GRID_INNER_H;
+  CANVAS_W = BATTLE_CANVAS_W;
+  CANVAS_H = BATTLE_CANVAS_H;
+
+  layoutCell = GRID_CELL;
+  layoutPlayerX = GRID_PLAYER_X;
+  layoutCanvasH = canvas ? canvas.height : BATTLE_CANVAS_H;
+
+  if (canvas) {
+    applyPhaseCanvasLayout();
+    syncBattleArenaLayout();
+    if (phase === "prep") draw();
+  }
+}
+
+window.applyGridMetricsFromCss = applyGridMetricsFromCss;
+window.lockPrepCanvasDisplaySize = lockPrepCanvasDisplaySize;
 
 let canvas, ctx;
 let lastGameLoopDt = 0.016;
@@ -248,6 +297,7 @@ function setPrepViewSide(side) {
   if (app) app.dataset.prepSide = side;
   if (typeof resetPrepFocus === "function") resetPrepFocus();
   syncBattleArenaLayout();
+  draw();
   updatePrepSideUI();
   ensureShopReadyForSide(side);
   renderShop();
@@ -542,10 +592,10 @@ function bindTouchInput() {
 }
 
 function init() {
+  applyGridMetricsFromCss();
   canvas = document.getElementById("game-canvas");
   ctx = canvas.getContext("2d");
-  canvas.height = PREP_CANVAS_H;
-  canvas.width = PREP_CANVAS_W;
+  applyPhaseCanvasLayout();
   syncBattleArenaLayout();
   canvas.addEventListener("mousedown", (e) => {
     if (isSyntheticMouseFromTouch()) return;
@@ -700,6 +750,9 @@ function init() {
     },
   });
   window.addEventListener("resize", syncBattleArenaLayout);
+  window.addEventListener("resize", () => {
+    requestAnimationFrame(applyGridMetricsFromCss);
+  });
   showClassSelect();
   requestAnimationFrame(gameLoop);
 }
@@ -763,6 +816,8 @@ function renderPhase() {
   applyPhaseCanvasLayout();
   setBattleControlsVisible(isBattleUiPhase());
   syncBattleArenaLayout();
+  const battleSceneUi = document.getElementById("battle-scene-ui");
+  if (battleSceneUi) battleSceneUi.setAttribute("aria-hidden", isBattleUiPhase() ? "false" : "true");
   renderPlayerProfiles();
   if (typeof refreshGamepadHints === "function") refreshGamepadHints();
   if (phase === "prep" && !gameOver) {
@@ -803,11 +858,11 @@ function transitionToPhase(newPhase, afterTransition) {
 
 function getFieldLayoutMetrics() {
   const gridInnerW = GRID_INNER_W;
-  const playerLeft = GRID_PLAYER_X - FRAME_PAD;
-  const playerRight = GRID_PLAYER_X + gridInnerW + FRAME_PAD + FRAME_EDGE;
-  const enemyLeft = ENEMY_X - FRAME_PAD;
-  const enemyRight = ENEMY_X + gridInnerW + FRAME_PAD + FRAME_EDGE;
-  const totalW = phase === "prep" ? PREP_CANVAS_W : BATTLE_CANVAS_W;
+  const playerLeft = 0;
+  const playerRight = gridInnerW;
+  const enemyLeft = ENEMY_X;
+  const enemyRight = ENEMY_X + gridInnerW;
+  const totalW = BATTLE_CANVAS_W;
   const centerWidth = enemyLeft - playerRight;
   const enemyWidth = enemyRight - enemyLeft;
   const shopLeftRatio = Math.min(1, (playerRight + SHOP_FIELD_GAP) / totalW);
@@ -844,6 +899,16 @@ function syncBattleArenaLayout() {
   syncPrepCanvasDisplaySize();
 }
 
+function lockPrepCanvasDisplaySize() {
+  if (!canvas || phase !== "prep") return;
+  const displayW = readCssPx("--prep-canvas-w", PREP_CANVAS_W);
+  const displayH = readCssPx("--prep-canvas-h", PREP_CANVAS_H);
+  canvas.style.setProperty("width", `${displayW}px`, "important");
+  canvas.style.setProperty("height", `${displayH}px`, "important");
+  canvas.style.setProperty("max-width", `${displayW}px`, "important");
+  canvas.style.setProperty("max-height", `${displayH}px`, "important");
+}
+
 function syncPrepCanvasDisplaySize() {
   if (!canvas) return;
 
@@ -852,6 +917,8 @@ function syncPrepCanvasDisplaySize() {
   if (!isPrep) {
     canvas.style.width = "";
     canvas.style.height = "";
+    canvas.style.removeProperty("max-width");
+    canvas.style.removeProperty("max-height");
     return;
   }
 
@@ -874,12 +941,8 @@ function syncPrepCanvasDisplaySize() {
   const stageH = stage.clientHeight;
   if (stageW <= 0 || stageH <= 0) return;
 
-  if (sideBySidePrep) {
-    const scale = Math.max(stageW / canvas.width, stageH / canvas.height);
-    const w = Math.max(1, Math.floor(canvas.width * scale));
-    const h = Math.max(1, Math.floor(canvas.height * scale));
-    canvas.style.setProperty("width", `${w}px`, "important");
-    canvas.style.setProperty("height", `${h}px`, "important");
+  if (sideBySidePrep || document.querySelector(".prep-field-column")) {
+    lockPrepCanvasDisplaySize();
     return;
   }
 
@@ -1766,7 +1829,18 @@ function gameLoop(ts) {
   requestAnimationFrame(gameLoop);
 }
 
-function gridOrigin(team) { return team === "player" ? layoutPlayerX : ENEMY_X; }
+function layoutGridOrigin(team) {
+  if (phase === "prep") return 0;
+  return team === "player" ? 0 : ENEMY_X;
+}
+
+function layoutBackpackY() {
+  return 0;
+}
+
+function gridOrigin(team) {
+  return layoutGridOrigin(team);
+}
 function gridStrideFor(team) {
   return team === "enemy" ? GRID_STRIDE : GRID_STRIDE;
 }
@@ -1774,23 +1848,24 @@ function cellRect(team, col, row) {
   const cell = team === "enemy" ? GRID_CELL : layoutCell;
   const stride = gridStrideFor(team);
   return {
-    x: gridOrigin(team) + col * stride,
-    y: BACKPACK_Y + row * stride,
+    x: layoutGridOrigin(team) + col * stride,
+    y: layoutBackpackY() + row * stride,
     w: cell,
     h: cell,
   };
 }
 function xToCol(x, team = "player") {
   const stride = gridStrideFor(team);
-  return Math.floor((x - gridOrigin(team)) / stride);
+  return Math.floor((x - layoutGridOrigin(team)) / stride);
 }
 function yToRow(y, team = "player") {
   const stride = gridStrideFor(team);
-  return Math.floor((y - BACKPACK_Y) / stride);
+  return Math.floor((y - layoutBackpackY()) / stride);
 }
 function isOnBoard(mx, my, team = "player") {
-  const ox = gridOrigin(team);
-  return mx >= ox && mx < ox + GRID_INNER_W && my >= BACKPACK_Y && my < BACKPACK_Y + GRID_INNER_H;
+  const ox = layoutGridOrigin(team);
+  const oy = layoutBackpackY();
+  return mx >= ox && mx < ox + GRID_INNER_W && my >= oy && my < oy + GRID_INNER_H;
 }
 
 function isDropOnSell(e) {
@@ -2062,8 +2137,8 @@ function draw() {
   drawBackground();
   if (phase === "prep") {
     const side = prepViewSide;
-    const st = getSideState(side);
     drawBackpackFrame(side, true);
+    const st = getSideState(side);
     drawContainers(st.containers, side, false);
     drawSynergyVisuals(ctx, synergyAnimTime, synergyPreviewBuilt, "under", side);
     drawLoadoutItems(st.items, side, false);
@@ -2108,24 +2183,36 @@ function draw() {
 }
 
 function drawBackground() {
-  const cx = canvas.width / 2;
-  const cy = canvas.height / 2;
-  const g = ctx.createRadialGradient(cx, cy * 0.5, 60, cx, cy, Math.max(canvas.width, canvas.height) * 0.55);
-  g.addColorStop(0, "#1a2433");
-  g.addColorStop(1, "#0a0e14");
-  ctx.fillStyle = g;
+  if (phase === "prep") {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    return;
+  }
+  ctx.fillStyle = "#12100d";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
 function getFieldFrameRect(team) {
   const cell = teamLayoutCell(team);
-  const ox = gridOrigin(team);
+  const ox = layoutGridOrigin(team);
+  const oy = layoutBackpackY();
   const gridW = GRID_INNER_W;
   const gridH = GRID_INNER_H;
+  if (phase === "prep") {
+    return {
+      x: ox,
+      y: oy,
+      w: gridW,
+      h: gridH,
+      cell,
+      ox,
+      gridW,
+      gridH,
+    };
+  }
   const pad = FRAME_PAD;
   return {
     x: ox - pad,
-    y: BACKPACK_Y - pad - FRAME_TITLE_H,
+    y: oy - pad - FRAME_TITLE_H,
     w: gridW + pad * 2,
     h: gridH + pad * 2 + FRAME_TITLE_H,
     cell,
@@ -2135,74 +2222,24 @@ function getFieldFrameRect(team) {
   };
 }
 
+function gridCellFill(available, row, col) {
+  if (!available) return "#1a1612";
+  return (row + col) % 2 === 0 ? "#4a4038" : "#403830";
+}
+
 function drawBackpackFrame(team, interactive) {
-  const frame = getFieldFrameRect(team);
-  const { x, y, w, h, ox, gridW: gw, cell } = frame;
-  const pad = FRAME_PAD;
-  ctx.save();
-  roundRect(x, y, w, h, uiPx(12));
-  ctx.fillStyle = interactive ? "rgba(22, 45, 82, 0.55)" : "rgba(62, 28, 35, 0.5)";
-  ctx.fill();
-  ctx.strokeStyle = interactive ? "rgba(88, 166, 255, 0.6)" : "rgba(248, 81, 73, 0.5)";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-  ctx.restore();
-  ctx.fillStyle = interactive ? "#79c0ff" : "#ffa198";
-  ctx.font = `bold ${uiPx(12)}px sans-serif`;
-  let title = interactive ? "ВАШЕ ПОЛЕ" : "ПОЛЕ ИИ";
-  let titleEmoji = interactive ? "🎒" : "🤖";
-  if (phase === "prep") {
-    if (isVersusMode()) {
-      if (team === "player" && prepViewSide === "player") {
-        title = "ИГРОК 1";
-        titleEmoji = "🧑";
-      } else if (team === "player") {
-        title = "ИГР. 1";
-        titleEmoji = "🧑";
-      } else if (team === "enemy" && prepViewSide === "enemy") {
-        title = "ИГРОК 2";
-        titleEmoji = "🧑";
-      } else {
-        title = "ИГР. 2";
-        titleEmoji = "🧑";
-      }
-    } else if (team === "player" && prepViewSide === "player") {
-      title = "ВАШЕ ПОЛЕ";
-      titleEmoji = "🎒";
-    } else if (team === "player") {
-      title = "ВЫ";
-      titleEmoji = "🧑";
-    } else if (team === "enemy" && prepViewSide === "enemy") {
-      title = "ИИ";
-      titleEmoji = "🤖";
-    } else {
-      title = "ИИ";
-      titleEmoji = "🤖";
-    }
-  }
-  const titleY = BACKPACK_Y - pad - uiPx(8);
-  const titleCenterX = ox + gw / 2;
-  const titleWidth = ctx.measureText(title).width;
-  const emojiGap = uiPx(6);
-  ctx.textAlign = "right";
-  ctx.fillText(titleEmoji, titleCenterX - titleWidth / 2 - emojiGap, titleY);
-  ctx.textAlign = "center";
-  ctx.fillText(title, titleCenterX, titleY);
   for (let row = 0; row < GRID_ROWS; row++) {
     for (let col = 0; col < GRID_COLS; col++) {
-      const { x, y, w: cw, h: ch } = cellRect(team, col, row);
+      const { x: cx, y: cy, w: cw, h: ch } = cellRect(team, col, row);
       const available = isBoardCellAvailable(col, row, GRID_COLS, GRID_ROWS);
-      ctx.fillStyle = !available ? (interactive ? "#0d1520" : "#1a1014")
-        : interactive ? ((row + col) % 2 === 0 ? "#1a3050" : "#152840")
-        : ((row + col) % 2 === 0 ? "#3d2228" : "#331c22");
-      roundRect(x + 2, y + 2, cw - 4, ch - 4, 4);
-      ctx.fill();
+      ctx.fillStyle = gridCellFill(available, row, col);
+      ctx.fillRect(cx, cy, cw, ch);
       if (!available) {
         ctx.fillStyle = "rgba(255,255,255,0.04)";
         ctx.font = `${uiPx(10)}px sans-serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText("✕", x + cw / 2, y + ch / 2);
+        ctx.fillText("✕", cx + cw / 2, cy + ch / 2);
       }
     }
   }
@@ -2220,7 +2257,7 @@ function drawContainers(containers, team, dimmed) {
     const boardW = bounds.maxCol - bounds.minCol + 1;
     const boardH = bounds.maxRow - bounds.minRow + 1;
     const ox = gridOrigin(team) + bounds.minCol * GRID_STRIDE;
-    const oy = BACKPACK_Y + bounds.minRow * GRID_STRIDE;
+    const oy = layoutBackpackY() + bounds.minRow * GRID_STRIDE;
     const alpha = dimmed ? 0.55 : 1;
 
     getItemCells(container).forEach(([c, r]) => {
@@ -3156,11 +3193,52 @@ function updateUI() {
   }
 }
 
+function renderPrepStageChrome(playerProfile, enemyProfile) {
+  const layer = document.getElementById("prep-character-layer");
+  const prepPlayer = document.getElementById("prep-character-player");
+  const prepEnemy = document.getElementById("prep-character-enemy");
+  const statsHud = document.getElementById("prep-stats-hud");
+  if (phase !== "prep") {
+    layer?.setAttribute("aria-hidden", "true");
+    prepPlayer?.setAttribute("hidden", "");
+    prepEnemy?.setAttribute("hidden", "");
+    return;
+  }
+
+  layer?.setAttribute("aria-hidden", "false");
+
+  const fillChar = (el, profile) => {
+    if (!el) return;
+    if (profile.classIconSrc) {
+      el.innerHTML = `<img class="prep-character-img" src="${profile.classIconSrc}" alt="" draggable="false">`;
+    } else {
+      el.innerHTML = `<span class="prep-character-emoji">${profile.classIcon || "❓"}</span>`;
+    }
+  };
+
+  fillChar(prepPlayer, playerProfile);
+  fillChar(prepEnemy, enemyProfile);
+  prepPlayer?.toggleAttribute("hidden", prepViewSide !== "player");
+  prepEnemy?.toggleAttribute("hidden", prepViewSide !== "enemy");
+
+  const side = prepViewSide;
+  const profile = side === "player" ? playerProfile : enemyProfile;
+  const st = getSideState(side);
+
+  if (statsHud) {
+    statsHud.innerHTML = `
+      <div class="prep-stats-class">${profile.className || "—"}</div>
+      <div class="prep-stats-row"><span>💰</span><b>${st.gold}</b></div>
+      <div class="prep-stats-row"><span>❤️</span><b>${profile.hpDisplay}</b></div>
+      <div class="prep-stats-row"><span>Раунд</span><b>${Math.min(round, RUN_BATTLES)}/${RUN_BATTLES}</b></div>
+    `;
+  }
+}
+
 function renderPlayerProfiles() {
   const statsEl = document.getElementById("battle-stats-panel");
   const playerAvatarEl = document.getElementById("player-avatar-slot");
   const enemyAvatarEl = document.getElementById("enemy-avatar-slot");
-  if (!statsEl || !playerAvatarEl || !enemyAvatarEl) return;
 
   let playerProfile;
   let enemyProfile;
@@ -3180,6 +3258,10 @@ function renderPlayerProfiles() {
   applyProfileIdentity(enemyProfile, enemyClass, enemyGold);
   playerProfile.backpackPower = computeBackpackPower(playerContainers, playerItems, playerClass);
   enemyProfile.backpackPower = computeBackpackPower(enemyContainers, enemyItems, enemyClass);
+
+  renderPrepStageChrome(playerProfile, enemyProfile);
+
+  if (!statsEl || !playerAvatarEl || !enemyAvatarEl) return;
 
   statsEl.innerHTML = renderBattleStatsCompareHTML(playerProfile, enemyProfile, {
     round,

@@ -122,6 +122,15 @@
       return;
     }
 
+    if (isSideBySidePrepLayout()) {
+      if (document.querySelector(".prep-field-column") && typeof window.lockPrepCanvasDisplaySize === "function") {
+        window.lockPrepCanvasDisplaySize();
+      } else {
+        clearCanvasDisplaySize();
+      }
+      return;
+    }
+
     const canvas = document.getElementById("game-canvas");
     const stage = document.querySelector("#app[data-phase=\"prep\"] .prep-left-column .battle-canvas-stage")
       || document.querySelector(".battle-canvas-stage");
@@ -134,9 +143,7 @@
     const visibleRatio = getPrepFieldVisibleWidthRatio(app);
     const scaleW = sw / (visibleRatio * canvas.width);
     const scaleH = sh / canvas.height;
-    const scale = isSideBySidePrepBand()
-      ? Math.max(scaleW, scaleH)
-      : Math.min(scaleW, scaleH);
+    const scale = Math.min(scaleW, scaleH);
     if (scale <= 0) return;
 
     const w = Math.max(1, Math.floor(canvas.width * scale));
@@ -227,6 +234,10 @@
     );
 
     scheduleCanvasFit();
+
+    if (typeof window.applyGridMetricsFromCss === "function") {
+      window.applyGridMetricsFromCss();
+    }
   }
 
   function scheduleLayout() {

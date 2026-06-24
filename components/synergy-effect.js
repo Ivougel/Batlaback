@@ -13,6 +13,10 @@ function glowPad(strongPad, weakPad, isStrong) {
   return Math.max(1, Math.round((isStrong ? strongPad : weakPad) * GLOW_RADIUS));
 }
 
+function synergyCellPath(ctx, rect) {
+  ctx.rect(rect.x, rect.y, rect.w, rect.h);
+}
+
 function drawSynergyCellGlow(ctx, col, row, type, strength, pulse, mode) {
   const rect = cellRectForSynergy("player", col, row);
   const color = synergyColorForType(type, strength, mode);
@@ -33,13 +37,15 @@ function drawSynergyCellGlow(ctx, col, row, type, strength, pulse, mode) {
   ctx.shadowColor = color;
   ctx.shadowBlur = blur;
   ctx.fillStyle = hexToRgba(color, fillAlpha);
-  roundRectSynergy(ctx, rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4, 5);
+  ctx.beginPath();
+  synergyCellPath(ctx, rect);
   ctx.fill();
 
   ctx.shadowBlur = 0;
   ctx.strokeStyle = hexToRgba(color, strokeAlpha);
   ctx.lineWidth = isPreview ? 2 : 1;
-  roundRectSynergy(ctx, rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4, 5);
+  ctx.beginPath();
+  synergyCellPath(ctx, rect);
   ctx.stroke();
   ctx.restore();
 }
@@ -63,7 +69,8 @@ function drawActiveCellHalo(ctx, col, row, team, type, strength, pulse) {
   ctx.shadowColor = color;
   ctx.shadowBlur = glowSize(isStrong ? 32 : 22, isStrong ? 16 : 10, pulse);
   ctx.fillStyle = hexToRgba(color, isStrong ? 0.09 + pulse * 0.05 : 0.06 + pulse * 0.035);
-  roundRectSynergy(ctx, rect.x - pad, rect.y - pad, rect.w + pad * 2, rect.h + pad * 2, 8);
+  ctx.beginPath();
+  ctx.rect(rect.x - pad, rect.y - pad, rect.w + pad * 2, rect.h + pad * 2);
   ctx.fill();
   ctx.restore();
 }
@@ -77,22 +84,19 @@ function drawActiveCellSurface(ctx, col, row, team, type, strength, pulse) {
   ctx.save();
 
   ctx.fillStyle = hexToRgba(color, isStrong ? 0.11 + pulse * 0.07 : 0.08 + pulse * 0.05);
-  roundRectSynergy(ctx, rect.x + 1, rect.y + 1, rect.w - 2, rect.h - 2, 6);
+  ctx.beginPath();
+  synergyCellPath(ctx, rect);
   ctx.fill();
 
   ctx.strokeStyle = hexToRgba(color, isStrong ? 0.425 + pulse * 0.06 : 0.325 + pulse * 0.075);
-  ctx.lineWidth = isStrong ? 2.5 : 2;
+  ctx.lineWidth = isStrong ? 2 : 1.5;
   ctx.shadowColor = color;
   ctx.shadowBlur = glowSize(isStrong ? 14 : 10, isStrong ? 8 : 5, pulse);
-  roundRectSynergy(ctx, rect.x + 1, rect.y + 1, rect.w - 2, rect.h - 2, 6);
+  ctx.beginPath();
+  synergyCellPath(ctx, rect);
   ctx.stroke();
 
   ctx.shadowBlur = 0;
-  ctx.strokeStyle = hexToRgba("#ffffff", 0.08 + pulse * 0.06);
-  ctx.lineWidth = 1;
-  roundRectSynergy(ctx, rect.x + 3, rect.y + 3, rect.w - 6, rect.h - 6, 4);
-  ctx.stroke();
-
   if (pulse > 0.55) {
     const sparkAlpha = (pulse - 0.55) * 0.9;
     ctx.globalAlpha = sparkAlpha;

@@ -580,10 +580,33 @@ function renderBackpackPowerStatHTML(bp, extraClass = "") {
     </span>`;
 }
 
+function shortenBattleName(name, fallback) {
+  const raw = (name || fallback || "").trim();
+  if (!raw) return escapeProfileHtml((fallback || "—").toUpperCase());
+  if (raw.length <= 8) return escapeProfileHtml(raw.toUpperCase());
+  return escapeProfileHtml(`${raw.slice(0, 7).toUpperCase()}…`);
+}
+
+function battleStatRow(label, playerHtml, enemyHtml, rowClass = "") {
+  return `<div class="battle-stat-row${rowClass ? ` ${rowClass}` : ""}">
+    <div class="battle-stat-side battle-stat-side-player">${playerHtml}</div>
+    <div class="battle-stat-label">${label}</div>
+    <div class="battle-stat-side battle-stat-side-enemy">${enemyHtml}</div>
+  </div>`;
+}
+
+function battleStatValRow(label, playerVal, enemyVal, playerCls = "", enemyCls = "") {
+  return battleStatRow(
+    label,
+    `<span class="battle-stat-val stat-compare-player ${playerCls}">${playerVal}</span>`,
+    `<span class="battle-stat-val stat-compare-enemy ${enemyCls}">${enemyVal}</span>`,
+  );
+}
+
 function renderBattleStatsCompareHTML(playerProfile, enemyProfile, options = {}) {
   const { round = 1, maxRound = 16, liveBattle = false, itemCount = 7 } = options;
-  const playerName = escapeProfileHtml(playerProfile.name || "Игрок");
-  const enemyName = escapeProfileHtml(enemyProfile.name || "Противник");
+  const playerName = shortenBattleName(playerProfile.name, "Игрок");
+  const enemyName = shortenBattleName(enemyProfile.name, "ИИ");
 
   const pHp = playerProfile.hpCurrent ?? playerProfile.hp ?? 0;
   const eHp = enemyProfile.hpCurrent ?? 0;
@@ -607,106 +630,82 @@ function renderBattleStatsCompareHTML(playerProfile, enemyProfile, options = {})
   const eBp = enemyProfile.backpackPower || { score: 0, tier: { label: "—", className: "" } };
   const bpCls = statCompareClass(pBp.score ?? 0, eBp.score ?? 0);
 
-  const buffsLabel = liveBattle ? "Баффы" : "Положительные эффекты";
-  const debuffsLabel = liveBattle ? "Дебаффы" : "Отрицательные эффекты";
-
   const roundBadge = `<div class="stats-round-badge">Раунд ${Math.min(round, maxRound)} из ${maxRound}</div>`;
   const fatigueHint = (!liveBattle && typeof getFatigueStartSec === "function" && typeof getFatiguePrepDescription === "function")
     ? `<div class="stats-fatigue-hint" title="${escapeProfileHtml(getFatiguePrepDescription(round, itemCount))}">⏳ ${escapeProfileHtml(getFatiguePrepDescription(round, itemCount))}</div>`
     : "";
 
-  const statRow = (label, playerVal, enemyVal, playerExtra = "", enemyExtra = "", rowClass = "") => `
-    <tr class="stat-compare-row${rowClass ? ` ${rowClass}` : ""}">
-      <td class="stat-compare-label">${label}</td>
-      <td class="stat-compare-val stat-compare-player ${playerExtra}">${playerVal}</td>
-      <td class="stat-compare-divider">/</td>
-      <td class="stat-compare-val stat-compare-enemy ${enemyExtra}">${enemyVal}</td>
-    </tr>`;
+  const hpPlayerHtml = liveBattle
+    ? `${renderHpBarHTML(pHp, pHpMax, "player")}<span class="stat-hp-num">${Math.ceil(pHp)}</span>`
+    : `<span class="stat-hp-num">${Math.ceil(pHp)}</span>`;
+  const hpEnemyHtml = liveBattle
+    ? `<span class="stat-hp-num">${Math.ceil(eHp)}</span>${renderHpBarHTML(eHp, eHpMax, "enemy")}`
+    : `<span class="stat-hp-num">${Math.ceil(eHp)}</span>`;
+
+  const hpRow = battleStatRow(
+    "HP",
+    `<div class="stat-compare-hp-cell stat-compare-player">${hpPlayerHtml}</div>`,
+    `<div class="stat-compare-hp-cell stat-compare-enemy">${hpEnemyHtml}</div>`,
+    `stat-compare-hp-row ${hpRowClass}`.trim(),
+  );
+
+  const staminaRow = showStamina ? battleStatRow(
+    "⚡",
+    `<div class="stat-compare-stamina-cell stat-stamina-cell-player stat-compare-player">
+      <span class="stat-stamina-num">${Math.ceil(pStamina)}</span>
+      ${renderStaminaBarHTML(pStamina, pStaminaMax, "player", playerProfile.staminaSpendFlash || 0)}
+    </div>`,
+    `<div class="stat-compare-stamina-cell stat-stamina-cell-enemy stat-compare-enemy">
+      ${renderStaminaBarHTML(eStamina, eStaminaMax, "enemy", enemyProfile.staminaSpendFlash || 0)}
+      <span class="stat-stamina-num">${Math.ceil(eStamina)}</span>
+    </div>`,
+    "stat-compare-stamina-row",
+  ) : "";
 
   return `
-    ${roundBadge}
-    ${fatigueHint}
-    <div class="stats-vs-header">
-      <span class="stats-name stats-name-player">${playerName}</span>
-      <span class="stats-vs-icon" aria-hidden="true">⚔</span>
-      <span class="stats-name stats-name-enemy">${enemyName}</span>
-    </div>
-    <div class="stat-compare-columns-header" aria-hidden="true">
-      <span></span>
-      <span class="stat-compare-caption stat-compare-caption-player">Игрок</span>
-      <span></span>
-      <span class="stat-compare-caption stat-compare-caption-enemy">Противник</span>
-    </div>
-    <table class="stat-compare-table">
-      <tbody>
-        <tr class="stat-compare-row stat-compare-hp-row${hpRowClass ? ` ${hpRowClass}` : ""}">
-          <td class="stat-compare-label">HP</td>
-          <td class="stat-compare-hp-cell stat-compare-player">
-            ${renderHpBarHTML(pHp, pHpMax, "player")}
-            <span class="stat-hp-num">${Math.ceil(pHp)}</span>
-          </td>
-          <td class="stat-compare-divider">/</td>
-          <td class="stat-compare-hp-cell stat-compare-enemy">
-            <span class="stat-hp-num">${Math.ceil(eHp)}</span>
-            ${renderHpBarHTML(eHp, eHpMax, "enemy")}
-          </td>
-        </tr>
-        ${showStamina ? `
-        <tr class="stat-compare-row stat-compare-stamina-row">
-          <td class="stat-compare-label">⚡</td>
-          <td class="stat-compare-stamina-cell stat-stamina-cell-player stat-compare-player">
-            ${renderStaminaBarHTML(pStamina, pStaminaMax, "player", playerProfile.staminaSpendFlash || 0)}
-            <span class="stat-stamina-num">${Math.ceil(pStamina)}</span>
-          </td>
-          <td class="stat-compare-divider">/</td>
-          <td class="stat-compare-stamina-cell stat-stamina-cell-enemy stat-compare-enemy">
-            <span class="stat-stamina-num">${Math.ceil(eStamina)}</span>
-            ${renderStaminaBarHTML(eStamina, eStaminaMax, "enemy", enemyProfile.staminaSpendFlash || 0)}
-          </td>
-        </tr>` : ""}
-        ${statRow("Урон", formatStatNumber(playerProfile.damage), formatStatNumber(enemyProfile.damage), dmgCls.player, dmgCls.enemy)}
-        ${statRow("Броня", formatStatNumber(playerProfile.armor), formatStatNumber(enemyProfile.armor), armorCls.player, armorCls.enemy)}
-        ${statRow("Скорость", playerProfile.attackSpeed, enemyProfile.attackSpeed, speedCls.player, speedCls.enemy)}
-        ${statRow("Магия", formatStatNumber(playerProfile.magicDamage), formatStatNumber(enemyProfile.magicDamage), magicCls.player, magicCls.enemy)}
-        ${statRow("Крит", `${playerProfile.critChance}%`, `${enemyProfile.critChance}%`, critCls.player, critCls.enemy)}
-        <tr class="stat-compare-row stat-compare-bp-row">
-          <td class="stat-compare-label stat-compare-label-bp" title="Сила рюкзака">Сила рюкзака</td>
-          <td class="stat-compare-val stat-compare-player ${bpCls.player}">${renderBackpackPowerStatHTML(pBp, bpCls.player)}</td>
-          <td class="stat-compare-divider">/</td>
-          <td class="stat-compare-val stat-compare-enemy ${bpCls.enemy}">${renderBackpackPowerStatHTML(eBp, bpCls.enemy)}</td>
-        </tr>
-      </tbody>
-    </table>
-    <div class="stats-effects-sep"></div>
-    <div class="stats-effects-block">
-      <div class="stats-effects-row stats-effects-row-header">
-        <span class="stats-effects-label">${buffsLabel}</span>
-        <span class="stats-col-caption stats-col-caption-player">Вы</span>
-        <span class="stats-col-caption stats-col-caption-enemy">Враг</span>
+    <div class="battle-stats-narrow">
+      ${roundBadge}
+      ${fatigueHint}
+      <div class="battle-stats-matchup">
+        <span class="stats-name stats-name-player">${playerName}</span>
+        <span class="stats-vs-icon" aria-hidden="true">×</span>
+        <span class="stats-name stats-name-enemy">${enemyName}</span>
       </div>
-      <div class="stats-effects-row">
-        <span class="stats-effects-row-spacer" aria-hidden="true"></span>
-        <div class="stats-effects-col stats-col-player">
-          <div class="status-chips status-buffs">${renderStatusChipsRowHTML(playerProfile.buffs || [], "buffs")}</div>
-        </div>
-        <div class="stats-effects-col stats-col-enemy">
-          <div class="status-chips status-buffs">${renderStatusChipsRowHTML(enemyProfile.buffs || [], "buffs")}</div>
+      <div class="battle-stats-rows">
+        ${hpRow}
+        ${staminaRow}
+        ${battleStatValRow("Урон", formatStatNumber(playerProfile.damage), formatStatNumber(enemyProfile.damage), dmgCls.player, dmgCls.enemy)}
+        ${battleStatValRow("Броня", formatStatNumber(playerProfile.armor), formatStatNumber(enemyProfile.armor), armorCls.player, armorCls.enemy)}
+        ${battleStatValRow("Скор", playerProfile.attackSpeed, enemyProfile.attackSpeed, speedCls.player, speedCls.enemy)}
+        ${battleStatValRow("Маги", formatStatNumber(playerProfile.magicDamage), formatStatNumber(enemyProfile.magicDamage), magicCls.player, magicCls.enemy)}
+        ${battleStatValRow("Крит", `${playerProfile.critChance}%`, `${enemyProfile.critChance}%`, critCls.player, critCls.enemy)}
+        ${battleStatRow(
+    "рюкз",
+    `<span class="battle-stat-val stat-compare-player ${bpCls.player}">${pBp.score ?? 0}</span>`,
+    `<span class="battle-stat-val stat-compare-enemy ${bpCls.enemy}">${eBp.score ?? 0}</span>`,
+    "stat-compare-bp-row",
+  )}
+      </div>
+      <div class="battle-stats-section battle-stats-section-buff">
+        <div class="battle-stats-section-title battle-stats-section-title-buff">БАФФ</div>
+        <div class="battle-stats-effects">
+          <div class="stats-effects-col stats-col-player">
+            <div class="status-chips status-buffs">${renderStatusChipsRowHTML(playerProfile.buffs || [], "buffs")}</div>
+          </div>
+          <div class="stats-effects-col stats-col-enemy">
+            <div class="status-chips status-buffs">${renderStatusChipsRowHTML(enemyProfile.buffs || [], "buffs")}</div>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="stats-effects-block stats-effects-block-debuffs">
-      <div class="stats-effects-row stats-effects-row-header">
-        <span class="stats-effects-label">${debuffsLabel}</span>
-        <span class="stats-col-caption stats-col-caption-player">Ваши</span>
-        <span class="stats-col-caption stats-col-caption-enemy">Врага</span>
-      </div>
-      <div class="stats-effects-row">
-        <span class="stats-effects-row-spacer" aria-hidden="true"></span>
-        <div class="stats-effects-col stats-col-player">
-          <div class="status-chips status-debuffs">${renderStatusChipsRowHTML(playerProfile.debuffs || [], "debuffs")}</div>
-        </div>
-        <div class="stats-effects-col stats-col-enemy">
-          <div class="status-chips status-debuffs">${renderStatusChipsRowHTML(enemyProfile.debuffs || [], "debuffs")}</div>
+      <div class="battle-stats-section battle-stats-section-debuff">
+        <div class="battle-stats-section-title battle-stats-section-title-debuff">ДЕБА</div>
+        <div class="battle-stats-effects">
+          <div class="stats-effects-col stats-col-player">
+            <div class="status-chips status-debuffs">${renderStatusChipsRowHTML(playerProfile.debuffs || [], "debuffs")}</div>
+          </div>
+          <div class="stats-effects-col stats-col-enemy">
+            <div class="status-chips status-debuffs">${renderStatusChipsRowHTML(enemyProfile.debuffs || [], "debuffs")}</div>
+          </div>
         </div>
       </div>
     </div>
