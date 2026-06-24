@@ -126,6 +126,8 @@ let synergyAnimTime = 0;
 let synergyPreviewBuilt = null;
 let tooltipItem = null;
 let fieldTooltipVisible = false;
+let prepTooltipsEnabled = true;
+let lastGamepadPrepFocus = null;
 let sidebarTooltipSource = null;
 let lastRoundStats = null;
 let pendingGameOver = false;
@@ -814,6 +816,10 @@ function init() {
       if (phase !== "prep" || gameOver || isPhaseTransitioning()) return;
       setPrepViewSide(prepViewSide === "player" ? "enemy" : "player");
     },
+    onPrepFocusChanged: onGamepadPrepFocusChanged,
+    togglePrepTooltips,
+    sendBoardFocusToBench,
+    dropDragToBench: dropDraggedItemToBench,
     toggleRecipeBook: toggleRecipeBookPopup,
     toggleCharacteristics: () => togglePlayerCharacteristicsPopup(getPlayerCharacteristicsState()),
     refreshShop: () => refreshShop(true),
@@ -1329,6 +1335,120 @@ function handleRecipeBookHotkey(e) {
   return true;
 }
 
+function handlePrepTooltipsHotkey(e) {
+  if (e.key !== "t" && e.key !== "T" && e.key !== "е" && e.key !== "Е") return false;
+  if (phase !== "prep" || gameOver || isPhaseTransitioning()) return false;
+  if (
+    isBoardPreviewOpen()
+    || isRecipeBookOpen()
+    || isPopupOpen("class-overlay")
+    || isPopupOpen("overlay")
+    || isPopupOpen("battle-result-overlay")
+  ) {
+    return false;
+  }
+  togglePrepTooltips();
+  e.preventDefault();
+  return true;
+}
+
+function togglePrepTooltips() {
+  prepTooltipsEnabled = !prepTooltipsEnabled;
+  document.documentElement.dataset.prepTooltips = prepTooltipsEnabled ? "on" : "off";
+  document.documentElement.dataset.gamepadHud = prepTooltipsEnabled ? "auto" : "hidden";
+  if (!prepTooltipsEnabled) hideSidebarTooltip();
+  else if (lastGamepadPrepFocus) applyGamepadPrepFocusTooltip(lastGamepadPrepFocus);
+  if (typeof refreshGamepadHints === "function") refreshGamepadHints();
+}
+
+function applyGamepadPrepFocusTooltip(focus) {
+  if (!prepTooltipsEnabled || phase !== "prep" || dragPayload) {
+    if (!prepTooltipsEnabled || dragPayload) hideSidebarTooltip();
+    return;
+  }
+  if (!focus) {
+    hideSidebarTooltip();
+    return;
+  }
+  if (focus.zone === "shop") {
+    const card = document.querySelectorAll("#shop-slots .shop-card")[focus.index];
+    if (!card || card.classList.contains("empty") || !card.dataset.itemId) {
+      hideSidebarTooltip();
+      return;
+    }
+    const c = getElementClientCenter(card);
+    if (c) showSidebarTooltipAt(c.x, c.y, card.dataset.itemId, null, "shop", card);
+    return;
+  }
+  if (focus.zone === "bench") {
+    const card = document.querySelectorAll("#bench-slots .bench-card")[focus.index];
+    const st = getSideState(prepViewSide);
+    const idx = +card?.dataset?.bench;
+    const entry = Number.isFinite(idx) ? st.bench[idx] : null;
+    if (!card || card.classList.contains("empty") || !entry) {
+      hideSidebarTooltip();
+      return;
+    }
+    const c = getElementClientCenter(card);
+    if (c) showSidebarTooltipAt(c.x, c.y, entry.itemId, entry, "bench", card);
+    return;
+  }
+  if (focus.zone === "board" && gamepadBoardFocus) {
+    const st = getSideState(prepViewSide);
+    const { col, row } = gamepadBoardFocus;
+    const item = findItemAtSlot(st.items, col, row);
+    if (item) {
+      const { x, y } = boardCellClientCenter(col, row);
+      showSidebarTooltipAt(x, y, item.itemId, item, "field");
+      return;
+    }
+    const container = findContainerAtCell(st.containers, col, row);
+    if (container) {
+      const { x, y } = boardCellClientCenter(col, row);
+      showSidebarTooltipAt(x, y, container.itemId, null, "field");
+      return;
+    }
+    hideSidebarTooltip();
+  }
+}
+
+function sendBoardFocusToBench() {
+  if (phase !== "prep" || !canEditPrepSide() || !gamepadBoardFocus) return false;
+  const st = getSideState(prepViewSide);
+  const { col, row } = gamepadBoardFocus;
+  const item = findItemAtSlot(st.items, col, row);
+  if (!item) return false;
+  if (st.bench.length >= MAX_BENCH) {
+    log("Скамейка полна!");
+    return false;
+  }
+  st.items = st.items.filter((i) => i.uid !== item.uid);
+  st.bench.push({
+    itemId: item.itemId,
+    uid: item.uid,
+    rotation: item.rotation || 0,
+  });
+  synergyPreviewBuilt = null;
+  recalcSynergies();
+  renderBench();
+  updateUI();
+  if (lastGamepadPrepFocus) applyGamepadPrepFocusTooltip(lastGamepadPrepFocus);
+  return true;
+}
+
+function dropDraggedItemToBench() {
+  if (!dragPayload) return;
+  const benchPanel = document.getElementById("bench-panel");
+  if (!benchPanel) return;
+  const r = benchPanel.getBoundingClientRect();
+  finishDragDrop(createSyntheticPointerEvent(r.left + r.width / 2, r.top + r.height / 2));
+}
+
+function onGamepadPrepFocusChanged(focus) {
+  lastGamepadPrepFocus = focus;
+  applyGamepadPrepFocusTooltip(focus);
+}
+
 function handleCharacteristicsHotkey(e) {
   if (e.key !== "h" && e.key !== "H") return false;
   if (phase !== "prep" || gameOver || isPhaseTransitioning()) return false;
@@ -1361,6 +1481,8 @@ function handleGlobalKeydown(e) {
   if (handleRecipeBookHotkey(e)) return;
 
   if (handleCharacteristicsHotkey(e)) return;
+
+  if (handlePrepTooltipsHotkey(e)) return;
 
   if (e.key === "r" || e.key === "R" || e.key === "к" || e.key === "К") {
     if (dragPayload && phase === "prep") rotateDragItem();
@@ -2037,24 +2159,6 @@ function activateGamepadPrepFocus(focus) {
     const { x, y } = boardCellClientCenter(focus.col, focus.row);
     if (dragPayload) dropGamepadAtBoardFocus();
     else gamepadPointerDownAt(x, y);
-    return;
-  }
-
-  if (focus.zone === "actions") {
-    const btns = [
-      document.getElementById("btn-sell"),
-      document.getElementById("btn-recipe-book"),
-    ].filter(Boolean);
-    btns[focus.index]?.click();
-    return;
-  }
-
-  if (focus.zone === "header") {
-    const btns = [
-      document.getElementById("btn-fight"),
-      document.getElementById("btn-refresh"),
-    ].filter((el) => el && !el.disabled && !el.classList.contains("hidden"));
-    btns[focus.index]?.click();
   }
 }
 
@@ -3714,6 +3818,7 @@ function renderShop(side = prepViewSide) {
       });
     }
   });
+  if (typeof refreshGamepadPrepFocus === "function") refreshGamepadPrepFocus();
 }
 
 function renderBench(side = prepViewSide) {
@@ -3742,6 +3847,7 @@ function renderBench(side = prepViewSide) {
       startBenchDrag(idx, e, side);
     });
   });
+  if (typeof refreshGamepadPrepFocus === "function") refreshGamepadPrepFocus();
 }
 
 function renderBattleStats() {

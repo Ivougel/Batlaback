@@ -21,8 +21,7 @@ const GP_ACTIVATION_IDLE_MS = 4000;
 const GP_DPAD_REPEAT_DELAY = 0.42;
 const GP_DPAD_REPEAT_RATE = 0.13;
 const GP_DPAD_COOLDOWN = 0.16;
-const GP_SHOP_SLOTS = 5;
-const GP_BENCH_SLOTS = 6;
+const GP_PREP_ZONES = ["board", "shop", "bench"];
 
 let gpHandlers = null;
 let gpActive = false;
@@ -35,7 +34,6 @@ let gpLastInputAt = 0;
 let gpMenuFocus = { items: [], index: -1, context: null };
 let gpPointerDown = false;
 let gpPrepInputMode = "dpad";
-let gpLastSidebarZone = "shop";
 let gpPrepSideKey = null;
 let gpDpadHold = { x: 0, y: 0, age: 0 };
 let gpDpadCooldown = 0;
@@ -66,17 +64,19 @@ const GP_HINT_SETS = {
     { keys: "B", label: "назад" },
   ],
   prep: [
-    { keys: "✚", label: "навигация" },
-    { keys: "A", label: "выбрать / положить" },
-    { keys: "X", label: "обновить" },
+    { keys: "✚", label: "в зоне" },
+    { keys: "RB", label: "поле" },
+    { keys: "LB", label: "стол" },
+    { keys: "A", label: "выбрать" },
+    { keys: "X", label: "скамейка / обновить" },
     { keys: "B", label: "отмена" },
-    { keys: "←", label: "доска" },
-    { keys: "L / R", label: "стол" },
+    { keys: "SELECT", label: "подсказки" },
     { keys: "+", label: "в бой" },
   ],
   prepDrag: [
-    { keys: "✚", label: "клетка доски" },
+    { keys: "✚", label: "клетка" },
     { keys: "A", label: "положить" },
+    { keys: "X", label: "на скамейку" },
     { keys: "ZR", label: "поворот" },
     { keys: "B", label: "отмена" },
   ],
@@ -145,7 +145,6 @@ function initGamepadControls(handlers) {
 
 function resetPrepFocus() {
   gpPrepFocus = { zone: "shop", index: 0, col: 4, row: 3 };
-  gpLastSidebarZone = "shop";
   gpPrepInputMode = "dpad";
   applyPrepFocusVisual();
 }
@@ -491,10 +490,9 @@ function clearGamepadMenuFocus() {
   gpMenuFocus = { items: [], index: -1, context: null };
 }
 
-function stepSpatialMenuFocus(dx, dy) {
-  const items = gpMenuFocus.items;
-  const current = items[gpMenuFocus.index];
-  if (!current || (!dx && !dy)) return;
+function stepSpatialFocusIndex(items, currentIndex, dx, dy) {
+  const current = items[currentIndex];
+  if (!current || (!dx && !dy)) return currentIndex;
 
   const cur = current.getBoundingClientRect();
   const curCx = cur.left + cur.width / 2;
@@ -503,7 +501,7 @@ function stepSpatialMenuFocus(dx, dy) {
   let bestScore = Infinity;
 
   items.forEach((el, i) => {
-    if (i === gpMenuFocus.index) return;
+    if (i === currentIndex) return;
     const r = el.getBoundingClientRect();
     const cx = r.left + r.width / 2;
     const cy = r.top + r.height / 2;
@@ -522,11 +520,17 @@ function stepSpatialMenuFocus(dx, dy) {
     }
   });
 
-  if (bestIdx >= 0) {
-    gpMenuFocus.index = bestIdx;
+  return bestIdx >= 0 ? bestIdx : currentIndex;
+}
+
+function stepSpatialMenuFocus(dx, dy) {
+  const items = gpMenuFocus.items;
+  const next = stepSpatialFocusIndex(items, gpMenuFocus.index, dx, dy);
+  if (next !== gpMenuFocus.index) {
+    gpMenuFocus.index = next;
     applyMenuFocusVisual();
     markGamepadInput();
-    items[bestIdx]?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+    items[next]?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
   }
 }
 
@@ -547,48 +551,57 @@ function clearPrepFocusVisual() {
   document.querySelectorAll(".shop-card.gamepad-focus, .bench-card.gamepad-focus").forEach((el) => {
     el.classList.remove("gamepad-focus");
   });
-  document.querySelectorAll("#shop-panel button.gamepad-focus, #btn-fight.gamepad-focus").forEach((el) => {
-    el.classList.remove("gamepad-focus");
-  });
   gpHandlers?.clearBoardFocus?.();
 }
 
-function getPrepHeaderButtons() {
-  return [
-    document.getElementById("btn-fight"),
-    document.getElementById("btn-refresh"),
-  ].filter((el) => el && !el.disabled && !el.classList.contains("hidden"));
+function getShopFocusCards() {
+  return [...document.querySelectorAll("#shop-slots .shop-card")];
 }
 
-function getPrepActionButtons() {
-  return [
-    document.getElementById("btn-sell"),
-    document.getElementById("btn-recipe-book"),
-  ].filter(Boolean);
+function getBenchFocusCards() {
+  return [...document.querySelectorAll("#bench-slots .bench-card")];
+}
+
+function clampPrepFocusIndices() {
+  if (gpPrepFocus.zone === "shop") {
+    const n = getShopFocusCards().length;
+    if (n) gpPrepFocus.index = Math.max(0, Math.min(gpPrepFocus.index, n - 1));
+    else gpPrepFocus.index = 0;
+  } else if (gpPrepFocus.zone === "bench") {
+    const n = getBenchFocusCards().length;
+    if (n) gpPrepFocus.index = Math.max(0, Math.min(gpPrepFocus.index, n - 1));
+    else gpPrepFocus.index = 0;
+  }
 }
 
 function applyPrepFocusVisual() {
   clearPrepFocusVisual();
+  clampPrepFocusIndices();
   const f = gpPrepFocus;
 
   if (f.zone === "shop") {
-    document.querySelectorAll("#shop-slots .shop-card")[f.index]?.classList.add("gamepad-focus");
+    getShopFocusCards()[f.index]?.classList.add("gamepad-focus");
   } else if (f.zone === "bench") {
-    document.querySelectorAll("#bench-slots .bench-card")[f.index]?.classList.add("gamepad-focus");
-  } else if (f.zone === "actions") {
-    getPrepActionButtons()[f.index]?.classList.add("gamepad-focus");
-  } else if (f.zone === "header") {
-    getPrepHeaderButtons()[f.index]?.classList.add("gamepad-focus");
+    getBenchFocusCards()[f.index]?.classList.add("gamepad-focus");
   } else if (f.zone === "board") {
     gpHandlers?.setBoardFocus?.(f.col, f.row);
   }
 
   const focused = document.querySelector(".gamepad-focus");
   focused?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+  gpHandlers?.onPrepFocusChanged?.(f);
+}
+
+function cyclePrepZone(dir = 1) {
+  const zones = GP_PREP_ZONES;
+  let i = zones.indexOf(gpPrepFocus.zone);
+  if (i < 0) i = 0;
+  gpPrepFocus.zone = zones[(i + dir + zones.length) % zones.length];
+  applyPrepFocusVisual();
+  markGamepadInput();
 }
 
 function moveBoardFocus(dx, dy) {
-  gpPrepFocus.zone = "board";
   gpPrepFocus.col = Math.max(0, Math.min((gpHandlers?.getGridCols?.() || 9) - 1, gpPrepFocus.col + dx));
   gpPrepFocus.row = Math.max(0, Math.min((gpHandlers?.getGridRows?.() || 7) - 1, gpPrepFocus.row + dy));
   applyPrepFocusVisual();
@@ -601,6 +614,9 @@ function movePrepFocus(dx, dy) {
   markGamepadInput();
 
   if (gpHandlers?.isDragging?.()) {
+    if (gpPrepFocus.zone !== "board") {
+      gpPrepFocus.zone = "board";
+    }
     moveBoardFocus(dx, dy);
     return;
   }
@@ -608,54 +624,22 @@ function movePrepFocus(dx, dy) {
   const f = gpPrepFocus;
 
   if (f.zone === "board") {
-    if (dx > 0) {
-      f.zone = gpLastSidebarZone || "shop";
-      applyPrepFocusVisual();
-      return;
-    }
-    if (dx < 0 || dy !== 0) moveBoardFocus(dx, dy);
-    return;
-  }
-
-  if (dx < 0 && f.zone !== "board") {
-    gpLastSidebarZone = f.zone;
-    f.zone = "board";
-    applyPrepFocusVisual();
-    return;
-  }
-
-  if (f.zone === "header") {
-    const btns = getPrepHeaderButtons();
-    if (dx > 0 && f.index < btns.length - 1) f.index += 1;
-    if (dx < 0 && f.index > 0) f.index -= 1;
-    if (dy > 0) { f.zone = "shop"; f.index = 0; }
-    applyPrepFocusVisual();
+    moveBoardFocus(dx, dy);
     return;
   }
 
   if (f.zone === "shop") {
-    if (dx > 0 && f.index < GP_SHOP_SLOTS - 1) f.index += 1;
-    if (dx < 0 && f.index > 0) f.index -= 1;
-    if (dy > 0) { f.zone = "actions"; f.index = 0; }
-    if (dy < 0) { f.zone = "header"; f.index = 0; }
-    applyPrepFocusVisual();
-    return;
-  }
-
-  if (f.zone === "actions") {
-    const btns = getPrepActionButtons();
-    if (dx > 0 && f.index < btns.length - 1) f.index += 1;
-    if (dx < 0 && f.index > 0) f.index -= 1;
-    if (dy > 0) { f.zone = "bench"; f.index = 0; }
-    if (dy < 0) { f.zone = "shop"; f.index = Math.min(f.index, GP_SHOP_SLOTS - 1); }
+    const cards = getShopFocusCards();
+    if (!cards.length) return;
+    f.index = stepSpatialFocusIndex(cards, Math.min(f.index, cards.length - 1), dx, dy);
     applyPrepFocusVisual();
     return;
   }
 
   if (f.zone === "bench") {
-    if (dx > 0 && f.index < GP_BENCH_SLOTS - 1) f.index += 1;
-    if (dx < 0 && f.index > 0) f.index -= 1;
-    if (dy < 0) { f.zone = "actions"; f.index = 0; }
+    const cards = getBenchFocusCards();
+    if (!cards.length) return;
+    f.index = stepSpatialFocusIndex(cards, Math.min(f.index, cards.length - 1), dx, dy);
     applyPrepFocusVisual();
   }
 }
@@ -741,23 +725,28 @@ function handlePrepGamepad(pad, prevButtons, dt) {
   }
 
   if (wasBtnPressed(pad, "LB", prevButtons)) {
-    gpHandlers?.togglePrepSide?.(-1);
+    gpHandlers?.togglePrepSide?.();
     markGamepadInput();
   }
   if (wasBtnPressed(pad, "RB", prevButtons)) {
-    gpHandlers?.togglePrepSide?.(1);
-    markGamepadInput();
+    cyclePrepZone(1);
   }
   if (wasBtnPressed(pad, "Y", prevButtons)) {
     gpHandlers?.toggleRecipeBook?.();
     markGamepadInput();
   }
   if (wasBtnPressed(pad, "SELECT", prevButtons)) {
-    gpHandlers?.toggleCharacteristics?.();
+    gpHandlers?.togglePrepTooltips?.();
     markGamepadInput();
   }
-  if (wasBtnPressed(pad, "X", prevButtons) && !gpHandlers?.isDragging?.()) {
-    gpHandlers?.refreshShop?.();
+  if (wasBtnPressed(pad, "X", prevButtons)) {
+    if (gpHandlers?.isDragging?.()) {
+      gpHandlers?.dropDragToBench?.();
+    } else if (gpPrepFocus.zone === "board") {
+      gpHandlers?.sendBoardFocusToBench?.();
+    } else if (gpPrepFocus.zone === "shop") {
+      gpHandlers?.refreshShop?.();
+    }
     markGamepadInput();
   }
   if (wasBtnPressed(pad, "RT", prevButtons) && gpHandlers?.isDragging?.()) {
@@ -821,6 +810,11 @@ function handleBattleGamepad(pad, prevButtons) {
     gpHandlers?.closeAllPopups?.();
     markGamepadInput();
   }
+}
+
+function refreshGamepadPrepFocus() {
+  const ctx = getMenuContext();
+  if (ctx === "prep" || ctx === "prepDrag") applyPrepFocusVisual();
 }
 
 function tickGamepad(dt) {
