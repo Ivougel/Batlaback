@@ -8,6 +8,8 @@
   const SCALE_MAX = 1;
   const PREP_STACKED_CONTENT_H = 640;
   const PREP_SIDE_CONTENT_H = 760;
+  const MIN_TOUCH_CELL_PX = 44;
+  const INTERNAL_CELL_BASE = 30;
 
   function viewportSize() {
     const vv = window.visualViewport;
@@ -42,7 +44,7 @@
 
   /** Stacked только на телефонах (<600px). Планшеты 600–1100px — side (поле | магазин). */
   function shouldUseStackedPrep(w, h) {
-    if (w >= 600 && w <= 1100) return false;
+    if (w >= 600 && w <= 1200) return false;
 
     const landscape = w > h;
 
@@ -63,9 +65,68 @@
       const style = getComputedStyle(topBar);
       chrome += topBar.offsetHeight + (parseFloat(style.marginBottom) || 0);
     }
+    const bottomBar = app.querySelector("#prep-toolbar");
+    if (bottomBar && getComputedStyle(bottomBar).display !== "none") {
+      const bottomStyle = getComputedStyle(bottomBar);
+      chrome += bottomBar.offsetHeight
+        + (parseFloat(bottomStyle.marginTop) || 0)
+        + (parseFloat(bottomStyle.marginBottom) || 0);
+    }
+    const battleHeader = app.querySelector(".battle-header-stack");
+    if (battleHeader && getComputedStyle(battleHeader).display !== "none") {
+      const battleStyle = getComputedStyle(battleHeader);
+      chrome += battleHeader.offsetHeight + (parseFloat(battleStyle.marginBottom) || 0);
+    }
     const appStyle = getComputedStyle(app);
     chrome += (parseFloat(appStyle.paddingTop) || 0) + (parseFloat(appStyle.paddingBottom) || 0);
     return chrome + 8;
+  }
+
+  function clearCanvasDisplaySize() {
+    const canvas = document.getElementById("game-canvas");
+    if (!canvas) return;
+    canvas.style.removeProperty("width");
+    canvas.style.removeProperty("height");
+  }
+
+  function fitPrepCanvasToStage() {
+    const app = document.getElementById("app");
+    if (app?.dataset.phase !== "prep") {
+      clearCanvasDisplaySize();
+      return;
+    }
+
+    const canvas = document.getElementById("game-canvas");
+    const stage = document.querySelector("#app[data-phase=\"prep\"] .prep-left-column .battle-canvas-stage")
+      || document.querySelector(".battle-canvas-stage");
+    if (!canvas || !stage || canvas.width <= 0 || canvas.height <= 0) return;
+
+    const sw = stage.clientWidth;
+    const sh = stage.clientHeight;
+    if (sw <= 0 || sh <= 0) return;
+
+    const uiScale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--ui-scale")) || 1;
+    const internalCell = INTERNAL_CELL_BASE * uiScale;
+    const minScaleForTouch = MIN_TOUCH_CELL_PX / internalCell;
+
+    let scale = Math.min(sw / canvas.width, sh / canvas.height);
+    if (Number.isFinite(minScaleForTouch) && minScaleForTouch > 0) {
+      scale = Math.max(scale, minScaleForTouch);
+    }
+
+    const w = Math.max(1, Math.floor(canvas.width * scale));
+    const h = Math.max(1, Math.floor(canvas.height * scale));
+    canvas.style.setProperty("width", `${w}px`, "important");
+    canvas.style.setProperty("height", `${h}px`, "important");
+  }
+
+  function scheduleCanvasFit() {
+    requestAnimationFrame(() => {
+      if (typeof syncPrepCanvasDisplaySize === "function") {
+        syncPrepCanvasDisplaySize();
+      }
+      fitPrepCanvasToStage();
+    });
   }
 
   function applyPrepLayoutFit(w, h, prepLayout, baseScale, touchDev) {
@@ -89,7 +150,7 @@
       return Math.round(fitScale * 1000) / 1000;
     }
 
-    if (w >= 600 && w <= 1100) {
+    if (w >= 600 && w <= 1200) {
       let fitScale = Math.min(baseScale, available / PREP_SIDE_CONTENT_H, w / DESIGN_W);
       fitScale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, fitScale));
       return Math.round(fitScale * 1000) / 1000;
@@ -143,9 +204,7 @@
       "calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 10px)",
     );
 
-    if (typeof syncPrepCanvasDisplaySize === "function") {
-      requestAnimationFrame(syncPrepCanvasDisplaySize);
-    }
+    scheduleCanvasFit();
   }
 
   function scheduleLayout() {
@@ -184,4 +243,5 @@
   });
 
   window.applyUiLayout = applyUiLayout;
+  window.fitPrepCanvasToStage = fitPrepCanvasToStage;
 })();

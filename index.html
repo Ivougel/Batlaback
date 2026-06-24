@@ -9,25 +9,10 @@
 </head>
 <body>
   <div id="app" data-phase="prep">
-    <header class="top-bar">
+    <header class="top-bar top-bar-slim">
       <div class="logo">🎒 Backpack Battles</div>
       <div class="stats">
         <span class="stat" id="round-stat">Раунд 1</span>
-      </div>
-      <div class="top-bar-end">
-        <button class="btn-primary btn-fight-header" id="btn-fight" type="button">⚔️ В бой!</button>
-        <div class="run-stats-anchor">
-          <button type="button" class="btn-top-stats" id="btn-settings" aria-expanded="false" aria-controls="settings-overlay">
-            ⚙️ Настройки
-          </button>
-          <button type="button" class="btn-top-stats" id="btn-toggle-run-stats" aria-expanded="false" aria-controls="run-stats-popover">
-            📊 Показать статистику
-          </button>
-          <div class="run-stats-popover hidden" id="run-stats-popover">
-            <div class="run-stats-panel" id="run-stats-panel"></div>
-          </div>
-        </div>
-        <div class="phase-label" id="phase-label">Подготовка</div>
       </div>
     </header>
 
@@ -45,14 +30,39 @@
     <main class="game-layout">
       <section class="board-section">
         <div class="battle-arena" id="battle-arena">
-          <div class="battle-canvas-stage">
-            <div class="canvas-scale-wrap">
-              <canvas id="game-canvas"></canvas>
+          <div class="prep-left-column" id="prep-left-column">
+            <div class="battle-canvas-stage">
+              <div class="canvas-scale-wrap">
+                <canvas id="game-canvas"></canvas>
+              </div>
+              <div class="battle-arena-overlay" aria-hidden="true">
+                <div class="overlay-side overlay-side-player"></div>
+                <div class="overlay-side overlay-side-center"></div>
+                <div class="overlay-side overlay-side-enemy"></div>
+              </div>
             </div>
-            <div class="battle-arena-overlay" aria-hidden="true">
-              <div class="overlay-side overlay-side-player"></div>
-              <div class="overlay-side overlay-side-center"></div>
-              <div class="overlay-side overlay-side-enemy"></div>
+            <div class="battle-avatars-row">
+              <div class="battle-avatars-col battle-avatars-player">
+                <div class="field-avatar-wrap" id="player-avatar-panel" aria-label="Аватар игрока">
+                  <button type="button" class="btn-secondary btn-player-stats" id="btn-player-stats" aria-expanded="false" aria-controls="player-characteristics-popup" title="H — характеристики">📋 Характеристики</button>
+                  <div class="field-avatar-slot" id="player-avatar-slot"></div>
+                  <div class="player-characteristics-popup hidden" id="player-characteristics-popup" role="dialog" aria-labelledby="player-char-title" aria-modal="true">
+                    <div id="player-characteristics-content"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="battle-avatars-col battle-avatars-center">
+                <div class="center-stats-panel" id="battle-stats-panel" aria-label="Сравнение статов"></div>
+              </div>
+              <div class="battle-avatars-col battle-avatars-enemy">
+                <div class="field-avatar-wrap" id="enemy-avatar-panel" aria-label="Аватар противника">
+                  <button type="button" class="btn-secondary btn-player-stats btn-enemy-stats" id="btn-enemy-stats" aria-expanded="false" aria-controls="enemy-characteristics-popup" title="Характеристики противника">📋 Характеристики</button>
+                  <div class="field-avatar-slot" id="enemy-avatar-slot"></div>
+                  <div class="player-characteristics-popup fighter-char-popup-enemy hidden" id="enemy-characteristics-popup" role="dialog" aria-labelledby="enemy-char-title" aria-modal="true">
+                    <div id="enemy-characteristics-content"></div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           <div class="shop-panel" id="shop-panel">
@@ -78,33 +88,27 @@
               <div class="bench-slots" id="bench-slots"></div>
             </div>
           </div>
-          <div class="battle-avatars-row">
-            <div class="battle-avatars-col battle-avatars-player">
-              <div class="field-avatar-wrap" id="player-avatar-panel" aria-label="Аватар игрока">
-                <button type="button" class="btn-secondary btn-player-stats" id="btn-player-stats" aria-expanded="false" aria-controls="player-characteristics-popup" title="H — характеристики">📋 Характеристики</button>
-                <div class="field-avatar-slot" id="player-avatar-slot"></div>
-                <div class="player-characteristics-popup hidden" id="player-characteristics-popup" role="dialog" aria-labelledby="player-char-title" aria-modal="true">
-                  <div id="player-characteristics-content"></div>
-                </div>
-              </div>
-            </div>
-            <div class="battle-avatars-col battle-avatars-center">
-              <div class="center-stats-panel" id="battle-stats-panel" aria-label="Сравнение статов"></div>
-            </div>
-            <div class="battle-avatars-col battle-avatars-enemy">
-              <div class="field-avatar-wrap" id="enemy-avatar-panel" aria-label="Аватар противника">
-                <button type="button" class="btn-secondary btn-player-stats btn-enemy-stats" id="btn-enemy-stats" aria-expanded="false" aria-controls="enemy-characteristics-popup" title="Характеристики противника">📋 Характеристики</button>
-                <div class="field-avatar-slot" id="enemy-avatar-slot"></div>
-                <div class="player-characteristics-popup fighter-char-popup-enemy hidden" id="enemy-characteristics-popup" role="dialog" aria-labelledby="enemy-char-title" aria-modal="true">
-                  <div id="enemy-characteristics-content"></div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
         <div class="prep-toolbar" id="prep-toolbar">
-          <button type="button" class="btn-secondary prep-side-btn active" id="btn-prep-player" data-prep-side="player">🧑 Мой стол</button>
-          <button type="button" class="btn-secondary prep-side-btn" id="btn-prep-enemy" data-prep-side="enemy">🤖 Противник</button>
+          <div class="prep-toolbar-side-switch">
+            <button type="button" class="btn-secondary prep-side-btn active" id="btn-prep-player" data-prep-side="player">🧑 Мой стол</button>
+            <button type="button" class="btn-secondary prep-side-btn" id="btn-prep-enemy" data-prep-side="enemy">🤖 Противник</button>
+          </div>
+          <div class="prep-toolbar-actions">
+            <button class="btn-primary btn-fight-header" id="btn-fight" type="button">⚔️ В бой!</button>
+            <div class="run-stats-anchor">
+              <button type="button" class="btn-top-stats" id="btn-settings" aria-expanded="false" aria-controls="settings-overlay">
+                ⚙️ Настройки
+              </button>
+              <button type="button" class="btn-top-stats" id="btn-toggle-run-stats" aria-expanded="false" aria-controls="run-stats-popover">
+                📊 Показать статистику
+              </button>
+              <div class="run-stats-popover hidden" id="run-stats-popover">
+                <div class="run-stats-panel" id="run-stats-panel"></div>
+              </div>
+            </div>
+            <div class="phase-label" id="phase-label">Подготовка</div>
+          </div>
           <span class="prep-side-hint" id="prep-side-hint">✚ — элементы · ← — доска · L/R — стол · + — в бой</span>
         </div>
         <div class="board-hint" id="board-hint">

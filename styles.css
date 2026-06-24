@@ -66,8 +66,9 @@ body.is-ui-dragging * {
   margin: 0 auto;
   padding: calc(10px * var(--ui-scale));
   overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow-y: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .top-bar {
@@ -81,6 +82,31 @@ body.is-ui-dragging * {
   border: 1px solid var(--border);
   border-radius: 12px;
   margin-bottom: 8px;
+  flex-shrink: 0;
+}
+
+.top-bar-slim {
+  flex-wrap: nowrap;
+  gap: 10px;
+  padding: 4px 10px;
+  margin-bottom: 4px;
+  min-height: 0;
+}
+
+.top-bar-slim .logo {
+  font-size: 1rem;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.top-bar-slim .stats {
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.top-bar-slim .stat {
+  font-size: 0.88rem;
 }
 
 .logo {
@@ -174,6 +200,11 @@ body.is-ui-dragging * {
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
 }
 
+.prep-toolbar .run-stats-popover {
+  top: auto;
+  bottom: calc(100% + 8px);
+}
+
 .run-stats-popover.hidden {
   display: none;
 }
@@ -261,6 +292,9 @@ body.is-ui-dragging * {
 .game-layout {
   display: block;
   transition: opacity 200ms ease;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .game-layout.phase-transitioning {
@@ -583,6 +617,102 @@ body.is-ui-dragging * {
   padding: 8px;
   position: relative;
   min-width: 0;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Левая колонка prep: поле + карточка класса */
+.prep-left-column {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+#app[data-phase="prep"] .prep-left-column {
+  flex: 1 1 auto;
+}
+
+#app[data-phase="prep"] .prep-left-column .battle-canvas-stage {
+  flex: 1 1 58%;
+  min-height: 0;
+  width: 100%;
+  max-width: none;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  overflow: hidden;
+}
+
+#app[data-phase="prep"] .prep-left-column .canvas-scale-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  max-width: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+#app[data-phase="prep"] .prep-left-column .battle-avatars-row {
+  flex: 1 1 42%;
+  min-height: 0;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 4px 0 0;
+  align-items: stretch;
+}
+
+#app[data-phase="prep"] .prep-left-column .battle-avatars-col {
+  min-height: 0;
+  height: 100%;
+  align-items: stretch;
+}
+
+#app[data-phase="prep"] .prep-left-column .field-avatar-wrap {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+#app[data-phase="prep"] .prep-left-column .field-avatar-slot {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  align-items: stretch;
+  display: flex;
+}
+
+#app[data-phase="prep"] .prep-left-column .field-avatar-wrap .profile-avatar {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+  --battle-avatar-w: 100%;
+  --battle-avatar-h: 100%;
+  padding: calc(4px * var(--ui-scale));
+  font-size: clamp(2rem, 12vh, 5rem);
+  border-radius: 10px;
+}
+
+#app[data-phase="prep"] .prep-left-column .field-avatar-wrap .profile-avatar-img {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  object-fit: cover;
+  object-position: center top;
+  border-radius: 8px;
 }
 
 /* ─── Боевой экран: поля по бокам, статы по центру ─── */
@@ -1882,8 +2012,8 @@ body.is-ui-dragging * {
 
   #app[data-phase="prep"] .game-layout {
     display: grid;
-    grid-template-columns: minmax(280px, 420px) minmax(0, 1fr);
-    grid-template-rows: auto auto auto;
+    grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+    grid-template-rows: 1fr auto;
     align-items: stretch;
     gap: 6px;
     height: 100%;
@@ -1897,34 +2027,33 @@ body.is-ui-dragging * {
     display: contents;
   }
 
-  #app[data-phase="prep"] .battle-canvas-stage {
+  #app[data-phase="prep"] .prep-left-column {
     grid-column: 1;
     grid-row: 1;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  #app[data-phase="prep"] .battle-canvas-stage {
     clip-path: none !important;
     overflow: hidden;
-    max-width: 420px;
+    max-width: none;
     width: 100%;
-    flex-shrink: 0;
-    align-self: start;
+    align-self: stretch;
   }
 
   #app[data-phase="prep"] .canvas-scale-wrap {
     width: 100%;
-    max-width: 420px;
+    max-width: none;
   }
 
   #app[data-phase="prep"] #game-canvas {
-    width: 100% !important;
-    max-width: 420px;
-    height: auto !important;
-    max-height: none !important;
-    margin: 0;
+    max-width: none;
   }
 
-  #app[data-phase="prep"] .battle-avatars-row {
-    grid-column: 1;
-    grid-row: 2;
-    max-width: 420px;
+  #app[data-phase="prep"] .prep-left-column .battle-avatars-row {
+    max-width: none;
   }
 
   #app[data-phase="prep"] #shop-panel {
@@ -1934,7 +2063,7 @@ body.is-ui-dragging * {
     top: auto;
     bottom: auto;
     grid-column: 2;
-    grid-row: 1 / 3;
+    grid-row: 1;
     align-self: stretch;
     z-index: 1;
     display: flex;
@@ -2052,7 +2181,7 @@ body.is-ui-dragging * {
 
   #app[data-phase="prep"] #prep-toolbar {
     grid-column: 1 / -1;
-    grid-row: 3;
+    grid-row: 2;
     flex-shrink: 0;
   }
 
@@ -2090,12 +2219,45 @@ body.is-ui-dragging * {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  margin-top: 6px;
+  gap: 6px 8px;
+  margin-top: 0;
   padding: 8px 10px;
   background: #161b22;
   border: 1px solid var(--border);
   border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.prep-toolbar-side-switch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.prep-toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.prep-toolbar-actions .phase-label {
+  padding: 6px 12px;
+  font-size: 0.82rem;
+}
+
+.prep-toolbar-actions .btn-fight-header {
+  padding: 8px 14px;
+  font-size: 0.88rem;
+}
+
+.prep-toolbar-actions .btn-top-stats {
+  padding: 6px 10px;
+  font-size: 0.78rem;
 }
 
 .prep-toolbar.hidden {
@@ -2114,9 +2276,18 @@ body.is-ui-dragging * {
 }
 
 .prep-side-hint {
-  margin-left: auto;
-  font-size: 0.78rem;
+  flex: 1 1 100%;
+  font-size: 0.72rem;
   color: #8b949e;
+  text-align: center;
+}
+
+@media (min-width: 720px) {
+  .prep-side-hint {
+    flex: 1 1 auto;
+    text-align: right;
+    margin-left: 0;
+  }
 }
 
 .class-step-heading {
@@ -4908,8 +5079,8 @@ html[data-prep-side-fit="true"] #app[data-phase="prep"] #shop-panel .bench-panel
   min-height: calc(44px * var(--ui-scale));
 }
 
-html[data-prep-side-fit="true"] #app[data-phase="prep"] .field-avatar-wrap .profile-avatar {
-  font-size: calc(2.4rem * var(--ui-scale));
+html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-left-column .field-avatar-wrap .profile-avatar {
+  font-size: clamp(2rem, 12vh, 5rem);
 }
 
 /* Prep viewport fit — stacked portrait */
@@ -5069,8 +5240,8 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .btn-refresh-shop {
     flex: 1 1 auto;
     min-height: 0;
     display: grid;
-    grid-template-columns: minmax(280px, 420px) minmax(0, 1fr);
-    grid-template-rows: auto auto auto;
+    grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+    grid-template-rows: 1fr auto;
     align-items: stretch;
     gap: 6px;
     height: 100%;
@@ -5089,39 +5260,38 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .btn-refresh-shop {
     min-height: 0;
   }
 
-  html[data-prep-layout="side"] #app[data-phase="prep"] .battle-canvas-stage,
-  html[data-prep-side-fit="true"] #app[data-phase="prep"] .battle-canvas-stage {
+  html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column,
+  html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-left-column {
     grid-column: 1;
     grid-row: 1;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  html[data-prep-layout="side"] #app[data-phase="prep"] .battle-canvas-stage,
+  html[data-prep-side-fit="true"] #app[data-phase="prep"] .battle-canvas-stage {
     clip-path: none !important;
     overflow: hidden;
-    max-width: 420px;
-    max-height: none;
-    align-self: start;
+    max-width: none;
+    width: 100%;
+    align-self: stretch;
   }
 
   html[data-prep-layout="side"] #app[data-phase="prep"] .canvas-scale-wrap,
   html[data-prep-side-fit="true"] #app[data-phase="prep"] .canvas-scale-wrap {
     width: 100%;
-    max-width: 420px;
+    max-width: none;
   }
 
   html[data-prep-layout="side"] #app[data-phase="prep"] #game-canvas,
   html[data-prep-side-fit="true"] #app[data-phase="prep"] #game-canvas {
-    display: block;
-    width: 100% !important;
-    max-width: 420px;
-    height: auto !important;
-    max-height: none !important;
-    margin: 0;
-    flex-shrink: 0;
+    max-width: none;
   }
 
-  html[data-prep-layout="side"] #app[data-phase="prep"] .battle-avatars-row,
-  html[data-prep-side-fit="true"] #app[data-phase="prep"] .battle-avatars-row {
-    grid-column: 1;
-    grid-row: 2;
-    max-width: 420px;
+  html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .battle-avatars-row,
+  html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-left-column .battle-avatars-row {
+    max-width: none;
   }
 
   html[data-prep-layout="side"] #app[data-phase="prep"] #shop-panel,
@@ -5132,7 +5302,7 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .btn-refresh-shop {
     top: auto;
     bottom: auto;
     grid-column: 2;
-    grid-row: 1 / 3;
+    grid-row: 1;
     min-width: 0;
     width: 100%;
     max-width: 100%;
@@ -5162,6 +5332,6 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .btn-refresh-shop {
   html[data-prep-layout="side"] #app[data-phase="prep"] #prep-toolbar,
   html[data-prep-side-fit="true"] #app[data-phase="prep"] #prep-toolbar {
     grid-column: 1 / -1;
-    grid-row: 3;
+    grid-row: 2;
   }
 }
