@@ -65,11 +65,6 @@
         + (parseFloat(bottomStyle.marginTop) || 0)
         + (parseFloat(bottomStyle.marginBottom) || 0);
     }
-    const battleHeader = app.querySelector(".battle-header-stack");
-    if (battleHeader && getComputedStyle(battleHeader).display !== "none") {
-      const battleStyle = getComputedStyle(battleHeader);
-      chrome += battleHeader.offsetHeight + (parseFloat(battleStyle.marginBottom) || 0);
-    }
     const appStyle = getComputedStyle(app);
     chrome += (parseFloat(appStyle.paddingTop) || 0) + (parseFloat(appStyle.paddingBottom) || 0);
     return chrome + 8;
@@ -82,7 +77,15 @@
     canvas.style.removeProperty("height");
   }
 
+  function isPrepShopOverlayLayout() {
+    const { w } = viewportSize();
+    if (w >= 600 && w <= 1200) return false;
+    return document.documentElement.dataset.prepLayout === "side";
+  }
+
   function getPrepFieldVisibleWidthRatio(app) {
+    if (!isPrepShopOverlayLayout()) return 1;
+
     const arena = document.getElementById("battle-arena");
     const style = arena ? getComputedStyle(arena) : null;
     const readRatio = (names) => {
@@ -122,7 +125,11 @@
     if (sw <= 0 || sh <= 0) return;
 
     const visibleRatio = getPrepFieldVisibleWidthRatio(app);
-    const scale = Math.min(sw / (visibleRatio * canvas.width), sh / canvas.height);
+    const scaleW = sw / (visibleRatio * canvas.width);
+    const scaleH = sh / canvas.height;
+    const scale = visibleRatio < 0.99
+      ? Math.max(scaleW, scaleH)
+      : Math.min(scaleW, scaleH);
     if (scale <= 0) return;
 
     const w = Math.max(1, Math.floor(canvas.width * scale));

@@ -214,10 +214,6 @@ body.is-ui-dragging * {
   animation: pulse 1s infinite;
 }
 
-.battle-header-stack {
-  margin-bottom: calc(8px * var(--ui-scale));
-}
-
 .synergy-chip {
   position: relative;
   display: inline-flex;
@@ -303,12 +299,12 @@ body.is-ui-dragging * {
 
 /* ─── Фазы: prep / battle ─── */
 
-#app[data-phase="prep"] #battle-controls {
-  display: none !important;
-}
-
 #app[data-phase="prep"] .overlay-side-enemy {
   display: none;
+}
+
+body:has(#app[data-phase="prep"]) #battle-controls {
+  display: none !important;
 }
 
 #app[data-phase="prep"] #battle-stats-panel {
@@ -592,14 +588,9 @@ body.is-ui-dragging * {
   display: none;
 }
 
-#app[data-phase="battle"] #battle-controls:not(.hidden) {
+body:has(#app[data-phase="battle"]) #battle-controls:not(.hidden),
+body:has(#app[data-phase="replay"]) #battle-controls:not(.hidden) {
   display: flex !important;
-}
-
-#app[data-phase="battle"] .battle-header-stack #battle-controls:not(.hidden) {
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: rgba(13, 17, 23, 0.92);
 }
 
 #app[data-phase="battle"] .battle-canvas-stage {
@@ -1982,10 +1973,6 @@ body.is-ui-dragging * {
     flex-direction: column;
   }
 
-  #app .battle-header-stack {
-    flex-shrink: 0;
-  }
-
   #app .top-bar {
     flex-shrink: 0;
   }
@@ -2048,6 +2035,7 @@ body.is-ui-dragging * {
     max-width: none;
     width: 100%;
     align-self: stretch;
+    clip-path: none;
   }
 
   #app[data-phase="prep"] .canvas-scale-wrap {
@@ -4391,9 +4379,11 @@ body.recipe-book-open {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: calc(6px * var(--ui-scale)) calc(12px * var(--ui-scale));
+  padding: 0 calc(8px * var(--ui-scale)) 0 0;
   pointer-events: auto;
   flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  margin-right: 4px;
 }
 
 .battle-controls.hidden {
@@ -4978,10 +4968,6 @@ html[data-prep-side-fit="true"] #app[data-phase="prep"] {
   flex-direction: column;
 }
 
-html[data-prep-side-fit="true"] #app[data-phase="prep"] .battle-header-stack {
-  display: none;
-}
-
 html[data-prep-side-fit="true"] #app[data-phase="prep"] .game-layout {
   flex: 1 1 auto;
   min-height: 0;
@@ -5111,10 +5097,6 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-}
-
-html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .battle-header-stack {
-  display: none;
 }
 
 html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .game-layout {
@@ -5349,5 +5331,91 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .btn-refresh-shop {
   html[data-prep-side-fit="true"] #app[data-phase="prep"] #prep-toolbar {
     grid-column: 1 / -1;
     grid-row: 2;
+  }
+}
+
+/* ─── Desktop (>1200px): классический side-prep — магазин overlay, компактные аватары ─── */
+
+@media (min-width: 1201px) {
+  #app[data-phase="prep"] .board-section {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  #app[data-phase="prep"] .battle-arena {
+    flex: 1 1 auto;
+    min-height: calc(420px * var(--ui-scale));
+    display: block;
+    position: relative;
+  }
+
+  #app[data-phase="prep"] .prep-left-column {
+    display: block;
+    height: auto;
+    flex: none;
+  }
+
+  #app[data-phase="prep"] .prep-left-column .battle-canvas-stage {
+    flex: none;
+    min-height: calc(300px * var(--ui-scale));
+    display: block;
+  }
+
+  #app[data-phase="prep"] .prep-left-column .canvas-scale-wrap {
+    flex: none;
+    display: block;
+    min-height: 0;
+    width: 100%;
+  }
+
+  #app[data-phase="prep"] .prep-left-column .battle-avatars-row {
+    flex: none;
+    min-height: 0;
+    height: auto;
+    padding: calc(8px * var(--ui-scale)) calc(4px * var(--ui-scale)) calc(4px * var(--ui-scale));
+  }
+
+  #app[data-phase="prep"] .prep-left-column .battle-avatars-col {
+    height: auto;
+    min-height: 0;
+    align-items: center;
+  }
+
+  #app[data-phase="prep"] .prep-left-column .field-avatar-wrap {
+    width: auto;
+    height: auto;
+    min-height: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  #app[data-phase="prep"] .prep-left-column .field-avatar-slot {
+    flex: none;
+    width: auto;
+    min-height: 0;
+  }
+
+  #app[data-phase="prep"] .prep-left-column .field-avatar-wrap .profile-avatar {
+    width: var(--battle-avatar-w);
+    height: var(--battle-avatar-h);
+    max-width: none;
+    max-height: none;
+    flex: none;
+  }
+
+  #app[data-phase="prep"] .prep-left-column .field-avatar-wrap .profile-avatar-img {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    object-fit: contain;
+    object-position: center top;
+  }
+
+  #app[data-phase="prep"] #shop-panel {
+    z-index: 6;
   }
 }

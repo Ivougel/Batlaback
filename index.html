@@ -9,17 +9,6 @@
 </head>
 <body>
   <div id="app" data-phase="prep">
-    <div class="battle-header-stack">
-      <div class="battle-controls hidden" id="battle-controls">
-        <button type="button" class="bc-btn" id="btn-battle-pause" title="Пауза (Start)">⏸</button>
-        <button type="button" class="bc-btn bc-speed" data-speed="1">×1</button>
-        <button type="button" class="bc-btn bc-speed" data-speed="2">×2</button>
-        <button type="button" class="bc-btn bc-speed" data-speed="3">×3</button>
-        <button type="button" class="bc-btn bc-skip" id="btn-battle-skip">⏩ Пропустить</button>
-        <span class="battle-controls-hint">Start — пауза · A — пропуск · LB/RB — скорость</span>
-      </div>
-    </div>
-
     <main class="game-layout">
       <section class="board-section">
         <div class="battle-arena" id="battle-arena">
@@ -279,6 +268,14 @@
   </div>
 
   <div id="gamepad-hints-bar" class="gamepad-hints-bar" aria-live="polite">
+    <div class="battle-controls hidden" id="battle-controls">
+      <button type="button" class="bc-btn" id="btn-battle-pause" title="Пауза (Start)">⏸</button>
+      <button type="button" class="bc-btn bc-speed" data-speed="1">×1</button>
+      <button type="button" class="bc-btn bc-speed" data-speed="2">×2</button>
+      <button type="button" class="bc-btn bc-speed" data-speed="3">×3</button>
+      <button type="button" class="bc-btn bc-skip" id="btn-battle-skip">⏩ Пропустить</button>
+      <span class="battle-controls-hint">Start — пауза · A — пропуск · LB/RB — скорость</span>
+    </div>
     <span class="gamepad-hints-status" id="gamepad-status">🎮 Кликните по игре и нажмите кнопку на геймпаде</span>
     <div class="gamepad-hints-list" id="gamepad-hints-list"></div>
   </div>
