@@ -138,8 +138,13 @@ let runResults = [];
 let runItemStats = createEmptyRunItemStats();
 let battleEndHandled = false;
 let pendingShopDrag = null;
+let pendingBenchDrag = null;
+let pendingCanvasPick = null;
 let shopDidDrag = false;
 let lastTouchEventAt = 0;
+const TOUCH_LONG_PRESS_MS = 450;
+const TOUCH_LONG_PRESS_MOVE_PX = 10;
+let touchLongPress = null;
 let suppressShopClickUntil = 0;
 let opponentMode = "ai";
 let gameMode = "solo";
@@ -472,6 +477,57 @@ function isSyntheticMouseFromTouch() {
   return Date.now() - lastTouchEventAt < 700;
 }
 
+function isTouchUi() {
+  return document.documentElement.dataset.touch === "true";
+}
+
+function clearTouchLongPress() {
+  if (touchLongPress?.timer) clearTimeout(touchLongPress.timer);
+  touchLongPress = null;
+}
+
+function armTouchLongPress({ clientX, clientY, onHold, onCancel }) {
+  if (!isTouchUi()) return;
+  clearTouchLongPress();
+  const state = {
+    clientX,
+    clientY,
+    startX: clientX,
+    startY: clientY,
+    onHold,
+    onCancel,
+    held: false,
+    timer: null,
+  };
+  state.timer = setTimeout(() => {
+    state.held = true;
+    state.timer = null;
+    onHold?.(state);
+  }, TOUCH_LONG_PRESS_MS);
+  touchLongPress = state;
+}
+
+function updateTouchLongPressMove(clientX, clientY) {
+  if (!touchLongPress) return;
+  const dx = clientX - touchLongPress.startX;
+  const dy = clientY - touchLongPress.startY;
+  if (Math.hypot(dx, dy) < TOUCH_LONG_PRESS_MOVE_PX) return;
+  if (touchLongPress.held) {
+    hideSidebarTooltip();
+    clearTouchLongPress();
+    return;
+  }
+  touchLongPress.onCancel?.();
+  clearTouchLongPress();
+}
+
+function finishTouchLongPress() {
+  const wasHeld = touchLongPress?.held;
+  clearTouchLongPress();
+  if (wasHeld) hideSidebarTooltip();
+  return wasHeld;
+}
+
 function bindTouchInput() {
   const boardSection = document.querySelector(".board-section");
   const shopPanel = document.getElementById("shop-panel");
@@ -485,8 +541,25 @@ function bindTouchInput() {
   const ignoreTarget = (target) => target?.closest?.("button, a, input, select, textarea");
 
   const onDown = (kind, id, x, y, e) => {
-    if (phase !== "prep" || gameOver || activeGesture) return;
+    if (activeGesture) return;
     if (ignoreTarget(e.target)) return;
+
+    if ((phase === "battle" || phase === "replay") && e.target?.closest?.("#game-canvas") && !dragPayload) {
+      activeGesture = gestureKey(kind, id);
+      lastTouchEventAt = Date.now();
+      if (e.cancelable) e.preventDefault();
+      armTouchLongPress({
+        clientX: x,
+        clientY: y,
+        onHold: () => {
+          updatePointerFromClient(x, y);
+          updateTooltip(mousePos.x, mousePos.y);
+        },
+      });
+      return;
+    }
+
+    if (phase !== "prep" || gameOver) return;
     activeGesture = gestureKey(kind, id);
     lastTouchEventAt = Date.now();
     if (e.cancelable) e.preventDefault();
@@ -500,6 +573,7 @@ function bindTouchInput() {
 
   const onMove = (kind, id, x, y, e) => {
     if (activeGesture !== gestureKey(kind, id)) return;
+    updateTouchLongPressMove(x, y);
     if (e.cancelable) e.preventDefault();
     updatePointerFromClient(x, y);
   };
@@ -507,6 +581,19 @@ function bindTouchInput() {
   const onUp = (kind, id, x, y) => {
     if (activeGesture !== gestureKey(kind, id)) return;
     lastTouchEventAt = Date.now();
+    if (finishTouchLongPress()) {
+      pendingShopDrag = null;
+      pendingBenchDrag = null;
+      pendingCanvasPick = null;
+      syncUiDragState();
+      activeGesture = null;
+      if (kind === "pointer") {
+        try {
+          boardSection?.releasePointerCapture(id);
+        } catch (_) {}
+      }
+      return;
+    }
     gamepadPointerUpAt(x, y);
     if (kind === "pointer") {
       try {
@@ -584,15 +671,6 @@ function bindTouchInput() {
       rotateDragItem();
     }
   }, bubbleOpts);
-
-  canvas?.addEventListener("touchend", (e) => {
-    if (phase !== "battle" && phase !== "replay") return;
-    if (dragPayload || !battleState) return;
-    const t = e.changedTouches[0];
-    if (!t) return;
-    updatePointerFromClient(t.clientX, t.clientY);
-    updateTooltip(mousePos.x, mousePos.y);
-  }, { passive: true });
 }
 
 function init() {
@@ -1453,8 +1531,8 @@ function restoreDraggedItem(side = prepViewSide) {
 }
 
 function syncUiDragState() {
-  document.body.classList.toggle("is-ui-dragging", !!(dragPayload || pendingShopDrag));
-  if (dragPayload || pendingShopDrag) {
+  document.body.classList.toggle("is-ui-dragging", !!(dragPayload || pendingShopDrag || pendingBenchDrag));
+  if (dragPayload || pendingShopDrag || pendingBenchDrag) {
     tooltipItem = null;
     hideSidebarTooltip();
   }
@@ -1475,6 +1553,8 @@ function applyCraftingForSide(side = prepViewSide) {
 function clearDragUiState() {
   document.querySelectorAll(".shop-card.shop-dragging").forEach((el) => el.classList.remove("shop-dragging"));
   pendingShopDrag = null;
+  pendingBenchDrag = null;
+  pendingCanvasPick = null;
   shopDidDrag = false;
   endSynergyPreview();
   synergyPreviewBuilt = null;
@@ -1848,9 +1928,9 @@ function gameLoop(ts) {
   } else {
     tickGamepad(dt);
   }
-  if (phase === "prep" && !dragPayload && !isPointerOverPrepSidebar(lastPointerClient.x, lastPointerClient.y)) {
+  if (phase === "prep" && !dragPayload && !isTouchUi() && !isPointerOverPrepSidebar(lastPointerClient.x, lastPointerClient.y)) {
     updateTooltip(mousePos.x, mousePos.y);
-  } else if ((phase === "battle" || phase === "replay") && battleState && !dragPayload) {
+  } else if ((phase === "battle" || phase === "replay") && battleState && !dragPayload && !isTouchUi()) {
     updateTooltip(mousePos.x, mousePos.y);
   }
   draw();
@@ -2102,6 +2182,8 @@ function updatePointerFromClient(clientX, clientY) {
     hoverSlot = null;
     const synthetic = createSyntheticPointerEvent(clientX, clientY);
     updatePendingShopDrag(synthetic);
+    updatePendingBenchDrag(synthetic);
+    updatePendingCanvasPick(clientX, clientY);
     const side = dragPayload && dragFrom?.side ? dragFrom.side : prepViewSide;
     const st = getSideState(side);
     if (dragPayload && canEditPrepSide(side) && isOnBoard(mousePos.x, mousePos.y, side)) {
@@ -2120,14 +2202,16 @@ function updatePointerFromClient(clientX, clientY) {
     if (overSidebar) {
       tooltipItem = null;
       syncFieldTooltip();
-    } else if (dragPayload || pendingShopDrag) {
+    } else if (dragPayload || pendingShopDrag || pendingBenchDrag) {
       tooltipItem = null;
       hideSidebarTooltip();
     } else {
       if (sidebarTooltipSource === "shop" || sidebarTooltipSource === "bench") {
         hideSidebarTooltip();
       }
-      updateTooltip(mousePos.x, mousePos.y);
+      if (!isTouchUi() || touchLongPress?.held) {
+        updateTooltip(mousePos.x, mousePos.y);
+      }
     }
 
     const benchPanel = document.getElementById("bench-panel");
@@ -2158,6 +2242,24 @@ function gamepadPointerDownAt(clientX, clientY) {
   if (shopCard && canEditPrepSide(prepViewSide)) {
     const index = +shopCard.dataset.index;
     if (!Number.isNaN(index)) {
+      if (isTouchUi()) {
+        armTouchLongPress({
+          clientX,
+          clientY,
+          onHold: () => {
+            pendingShopDrag = null;
+            syncUiDragState();
+            showSidebarTooltipAt(
+              clientX,
+              clientY,
+              shopCard.dataset.itemId,
+              null,
+              "shop",
+              shopCard,
+            );
+          },
+        });
+      }
       beginPendingShopDrag(index, synthetic, prepViewSide);
       return;
     }
@@ -2167,7 +2269,26 @@ function gamepadPointerDownAt(clientX, clientY) {
   if (benchCard && canEditPrepSide(prepViewSide)) {
     const index = +benchCard.dataset.bench;
     if (!Number.isNaN(index)) {
-      startBenchDrag(index, synthetic, prepViewSide);
+      if (isTouchUi()) {
+        armTouchLongPress({
+          clientX,
+          clientY,
+          onHold: () => {
+            pendingBenchDrag = null;
+            showSidebarTooltipAt(
+              clientX,
+              clientY,
+              benchCard.dataset.itemId,
+              null,
+              "bench",
+              benchCard,
+            );
+          },
+        });
+        beginPendingBenchDrag(index, synthetic, prepViewSide);
+      } else {
+        startBenchDrag(index, synthetic, prepViewSide);
+      }
       return;
     }
   }
@@ -2175,6 +2296,20 @@ function gamepadPointerDownAt(clientX, clientY) {
   const clickable = target?.closest?.("button:not([disabled]), .shop-pin");
   if (clickable && !clickable.closest("#game-canvas")) {
     clickable.click();
+    return;
+  }
+
+  if (isTouchUi() && target?.closest?.("#game-canvas")) {
+    armTouchLongPress({
+      clientX,
+      clientY,
+      onHold: () => {
+        pendingCanvasPick = null;
+        updatePointerFromClient(clientX, clientY);
+        updateTooltip(mousePos.x, mousePos.y);
+      },
+    });
+    pendingCanvasPick = { clientX, clientY };
     return;
   }
 
@@ -2195,6 +2330,8 @@ function gamepadPointerUpAt(clientX, clientY) {
       return;
     }
   }
+  pendingBenchDrag = null;
+  pendingCanvasPick = null;
   finishDragDrop(createSyntheticPointerEvent(clientX, clientY));
 }
 
@@ -2706,7 +2843,7 @@ function isPointerOverPrepSidebar(clientX, clientY) {
   );
 }
 
-function positionSidebarTooltip(clientX, clientY, boundsKind = "viewport") {
+function positionSidebarTooltip(clientX, clientY, boundsKind = "viewport", placement = "auto") {
   const el = document.getElementById("sidebar-tooltip");
   if (!el || el.classList.contains("hidden")) return;
 
@@ -2720,24 +2857,58 @@ function positionSidebarTooltip(clientX, clientY, boundsKind = "viewport") {
   const tipW = el.offsetWidth;
   const tipH = el.offsetHeight;
 
-  const spaceRight = bounds.right - clientX - margin;
-  const spaceLeft = clientX - bounds.left - margin;
-  const preferRight = spaceRight >= spaceLeft;
-
   let left;
-  if (preferRight && spaceRight >= Math.min(tipW, 120)) {
+  let top;
+
+  if (placement === "shop") {
     left = clientX + gap;
-  } else if (spaceLeft >= Math.min(tipW, 120)) {
-    left = clientX - tipW - gap;
-  } else if (spaceRight >= spaceLeft) {
+    top = clientY - tipH * 0.35;
+  } else if (placement === "bench") {
     left = clientX + gap;
+    top = clientY + gap * 0.85;
+  } else if (placement === "field") {
+    const canvasEl = document.getElementById("game-canvas");
+    const canvasRect = canvasEl?.getBoundingClientRect();
+    const vv = window.visualViewport;
+    const viewRight = (vv?.offsetLeft ?? 0) + (vv?.width ?? window.innerWidth) - margin;
+    const viewTop = (vv?.offsetTop ?? 0) + margin;
+    const viewBottom = (vv?.offsetTop ?? 0) + (vv?.height ?? window.innerHeight) - margin;
+
+    left = viewRight - tipW;
+    if (canvasRect) {
+      const rightOfCanvas = canvasRect.right + gap;
+      if (rightOfCanvas + tipW <= viewRight) {
+        left = rightOfCanvas;
+      }
+    }
+
+    top = clientY - tipH * 0.42;
+    top = Math.max(viewTop, Math.min(top, viewBottom - tipH));
+    left = Math.max(margin + (vv?.offsetLeft ?? 0), Math.min(left, viewRight - tipW));
   } else {
-    left = clientX - tipW - gap;
+    const spaceRight = bounds.right - clientX - margin;
+    const spaceLeft = clientX - bounds.left - margin;
+    const preferRight = spaceRight >= spaceLeft;
+
+    if (preferRight && spaceRight >= Math.min(tipW, 120)) {
+      left = clientX + gap;
+    } else if (spaceLeft >= Math.min(tipW, 120)) {
+      left = clientX - tipW - gap;
+    } else if (spaceRight >= spaceLeft) {
+      left = clientX + gap;
+    } else {
+      left = clientX - tipW - gap;
+    }
+
+    top = clientY - tipH * 0.35;
+    top = Math.max(bounds.top + margin, Math.min(top, bounds.bottom - tipH - margin));
+    left = Math.max(bounds.left + margin, Math.min(left, bounds.right - tipW - margin));
   }
 
-  let top = clientY - tipH * 0.35;
-  top = Math.max(bounds.top + margin, Math.min(top, bounds.bottom - tipH - margin));
-  left = Math.max(bounds.left + margin, Math.min(left, bounds.right - tipW - margin));
+  if (placement === "shop" || placement === "bench") {
+    top = Math.max(bounds.top + margin, Math.min(top, bounds.bottom - tipH - margin));
+    left = Math.max(bounds.left + margin, Math.min(left, bounds.right - tipW - margin));
+  }
 
   el.style.left = `${left}px`;
   el.style.top = `${top}px`;
@@ -2772,7 +2943,7 @@ function syncFieldTooltip() {
   fieldTooltipVisible = true;
 
   const client = canvasPointToClient(x, y);
-  positionSidebarTooltip(client.x, client.y, "field");
+  positionSidebarTooltip(client.x, client.y, "field", "field");
 }
 
 function roundRect(x, y, w, h, r, targetCtx = ctx) {
@@ -2924,7 +3095,7 @@ function updateTooltip(mx, my) {
   syncFieldTooltip();
 }
 
-function showSidebarTooltip(e, itemId, contentItem, context = "shop") {
+function showSidebarTooltipAt(clientX, clientY, itemId, contentItem, context = "shop", sourceEl = null) {
   const el = document.getElementById("sidebar-tooltip");
   const def = ITEM_CATALOG[itemId];
   if (!el || !def) return;
@@ -2932,7 +3103,7 @@ function showSidebarTooltip(e, itemId, contentItem, context = "shop") {
   tooltipItem = null;
   fieldTooltipVisible = false;
   el.classList.remove("synergy-tooltip");
-  if (e.currentTarget?.dataset?.unaffordable) {
+  if (sourceEl?.dataset?.unaffordable) {
     const sideGold = getSideState(prepViewSide).gold;
     el.innerHTML = `<div class="tt-line tt-title">Недостаточно золота</div><div class="tt-line tt-sub">${def.cost}💰 · у вас ${sideGold}💰</div>`;
   } else {
@@ -2942,12 +3113,18 @@ function showSidebarTooltip(e, itemId, contentItem, context = "shop") {
       .map((l) => `<div class="tt-line tt-${l.style || "normal"}">${l.text}</div>`)
       .join("");
   }
+  el.style.borderColor = RARITY_COLORS[def.rarity] || "#30363d";
   el.classList.remove("hidden");
-  moveSidebarTooltip(e, "shop");
+  const boundsKind = context === "shop" ? "shop" : context === "bench" ? "bench" : context === "field" ? "field" : "viewport";
+  positionSidebarTooltip(clientX, clientY, boundsKind, context);
 }
 
-function moveSidebarTooltip(e, boundsKind = "viewport") {
-  positionSidebarTooltip(e.clientX, e.clientY, boundsKind);
+function showSidebarTooltip(e, itemId, contentItem, context = "shop") {
+  showSidebarTooltipAt(e.clientX, e.clientY, itemId, contentItem, context, e.currentTarget);
+}
+
+function moveSidebarTooltip(e, boundsKind = "viewport", placement = "auto") {
+  positionSidebarTooltip(e.clientX, e.clientY, boundsKind, placement);
 }
 
 function hideSidebarTooltip() {
@@ -2959,18 +3136,46 @@ function hideSidebarTooltip() {
 
 function bindItemTooltipEvents(el, itemId, contentItem, context = "shop") {
   if (!itemId || !el) return;
-  const boundsKind = context === "shop" ? "shop" : "viewport";
+  const boundsKind = context === "shop" ? "shop" : context === "bench" ? "bench" : context === "field" ? "field" : "viewport";
   const refresh = (e) => {
     const liveItemId = el.dataset.itemId || itemId;
     if (!liveItemId) return;
     showSidebarTooltip(e, liveItemId, contentItem, context);
   };
+
   el.addEventListener("mouseenter", refresh);
   el.addEventListener("mousemove", (e) => {
     refresh(e);
-    moveSidebarTooltip(e, boundsKind);
+    moveSidebarTooltip(e, boundsKind, context);
   });
   el.addEventListener("mouseleave", hideSidebarTooltip);
+
+  if (isTouchUi() && context !== "shop" && context !== "bench") {
+    const touchOpts = { passive: false };
+    el.addEventListener("touchstart", (e) => {
+      if (e.touches.length !== 1) return;
+      const t = e.touches[0];
+      armTouchLongPress({
+        clientX: t.clientX,
+        clientY: t.clientY,
+        onHold: () => {
+          showSidebarTooltipAt(t.clientX, t.clientY, el.dataset.itemId || itemId, contentItem, context, el);
+        },
+      });
+    }, touchOpts);
+    el.addEventListener("touchmove", (e) => {
+      const t = e.touches[0];
+      if (!t) return;
+      updateTouchLongPressMove(t.clientX, t.clientY);
+    }, touchOpts);
+    el.addEventListener("touchend", () => {
+      finishTouchLongPress();
+    }, touchOpts);
+    el.addEventListener("touchcancel", () => {
+      finishTouchLongPress();
+    }, touchOpts);
+  }
+
   if (context === "shop" || context === "bench" || context === "field") {
     el.style.cursor = "help";
   }
@@ -3199,6 +3404,34 @@ function finishDragDrop(e) {
   updateUI();
 }
 
+function beginPendingBenchDrag(index, e, side = prepViewSide) {
+  if (phase !== "prep" || gameOver || !canEditPrepSide(side)) return;
+  const st = getSideState(side);
+  if (!st.bench[index]) return;
+  pendingBenchDrag = { index, startX: e.clientX, startY: e.clientY, side };
+  syncUiDragState();
+}
+
+function updatePendingBenchDrag(e) {
+  if (!pendingBenchDrag || dragPayload) return;
+  const dx = e.clientX - pendingBenchDrag.startX;
+  const dy = e.clientY - pendingBenchDrag.startY;
+  if (Math.hypot(dx, dy) < 6) return;
+  const { index, side } = pendingBenchDrag;
+  pendingBenchDrag = null;
+  hideSidebarTooltip();
+  startBenchDrag(index, e, side);
+}
+
+function updatePendingCanvasPick(clientX, clientY) {
+  if (!pendingCanvasPick || dragPayload) return;
+  const dx = clientX - pendingCanvasPick.clientX;
+  const dy = clientY - pendingCanvasPick.clientY;
+  if (Math.hypot(dx, dy) < 6) return;
+  pendingCanvasPick = null;
+  onMouseDown(createSyntheticPointerEvent(clientX, clientY));
+}
+
 function beginPendingShopDrag(index, e, side = prepViewSide) {
   if (phase !== "prep" || gameOver || !canEditPrepSide(side)) return;
   const st = getSideState(side);
@@ -3246,6 +3479,7 @@ function startBenchDrag(index, e, side = prepViewSide) {
   const st = getSideState(side);
   if (phase !== "prep" || gameOver || !canEditPrepSide(side) || !st.bench[index]) return;
   e.preventDefault();
+  hideSidebarTooltip();
   selectedBench = index;
   renderBench();
   dragPayload = { itemId: st.bench[index].itemId, rotation: st.bench[index].rotation || 0 };

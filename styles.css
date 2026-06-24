@@ -3774,6 +3774,42 @@ body:has(#overlay:not(.hidden)) {
   margin-top: 4px;
 }
 
+html[data-touch="true"] .sidebar-tooltip {
+  max-width: min(calc(640px * var(--ui-scale)), calc(100vw - 24px));
+  padding: calc(24px * var(--ui-scale)) calc(28px * var(--ui-scale));
+}
+
+html[data-touch="true"] .sidebar-tooltip .tt-line {
+  font-size: calc(24px * var(--ui-scale));
+  line-height: 1.4;
+}
+
+html[data-touch="true"] .sidebar-tooltip .tt-title {
+  font-size: calc(28px * var(--ui-scale));
+  margin-bottom: 8px;
+}
+
+html[data-touch="true"] .sidebar-tooltip .tt-sub,
+html[data-touch="true"] .sidebar-tooltip .tt-label {
+  font-size: calc(22px * var(--ui-scale));
+}
+
+html[data-touch="true"] .sidebar-tooltip.synergy-tooltip {
+  max-width: min(560px, calc(100vw - 24px));
+  padding: 20px 24px;
+}
+
+html[data-touch="true"] .sidebar-tooltip.synergy-tooltip .synergy-tt-title {
+  font-size: 1.8rem;
+  margin-bottom: 12px;
+}
+
+html[data-touch="true"] .sidebar-tooltip.synergy-tooltip .synergy-tt-row,
+html[data-touch="true"] .sidebar-tooltip.synergy-tooltip .synergy-tt-source {
+  font-size: 1.56rem;
+  margin-bottom: 6px;
+}
+
 @media (max-width: 700px) {
   .class-grid {
     grid-template-columns: 1fr;
