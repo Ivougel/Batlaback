@@ -2427,16 +2427,30 @@ button:disabled {
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(0, 0, 0, 0.92);
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  z-index: 100;
+  z-index: 2000;
   padding:
     max(6px, env(safe-area-inset-top))
     max(6px, env(safe-area-inset-right))
     max(6px, env(safe-area-inset-bottom))
     max(6px, env(safe-area-inset-left));
+  overflow: hidden;
+}
+
+body:has(#class-overlay:not(.hidden)) #app,
+body:has(#battle-result-overlay:not(.hidden)) #app,
+body:has(#overlay:not(.hidden)) #app {
+  visibility: hidden;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+body:has(#class-overlay:not(.hidden)),
+body:has(#battle-result-overlay:not(.hidden)),
+body:has(#overlay:not(.hidden)) {
   overflow: hidden;
 }
 
@@ -2683,6 +2697,10 @@ button:disabled {
   --class-picker-card-w: clamp(148px, 36vw, 260px);
   --class-picker-sticker: clamp(52px, 14vw, 76px);
   --class-picker-gap: calc(10px * var(--ui-scale));
+}
+
+#class-overlay {
+  align-items: center;
 }
 
 .class-modal h2 {
