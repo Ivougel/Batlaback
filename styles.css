@@ -3033,6 +3033,7 @@ body:has(#overlay:not(.hidden)) {
   justify-content: space-between;
   gap: 10px;
   padding: 12px 14px;
+  min-height: 44px;
   border: none;
   background: transparent;
   color: #e6edf3;
@@ -3040,10 +3041,13 @@ body:has(#overlay:not(.hidden)) {
   font-weight: 600;
   cursor: pointer;
   text-align: left;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   transition: background 0.15s;
 }
 
-.popup-trigger-btn:hover {
+.popup-trigger-btn:hover,
+.popup-trigger-btn:active {
   background: #2a3140;
 }
 
@@ -3081,7 +3085,7 @@ body:has(#overlay:not(.hidden)) {
 
 /* Pop-up деталей (вклад предметов / лог боя) */
 .battle-detail-overlay {
-  z-index: 150;
+  z-index: 2100;
   align-items: flex-start;
   padding:
     max(6px, env(safe-area-inset-top))
@@ -4558,17 +4562,26 @@ html[data-prep-side-fit="true"] #app[data-phase="prep"] .battle-arena {
 }
 
 html[data-prep-side-fit="true"] #app[data-phase="prep"] .battle-canvas-stage {
+  display: flex;
+  align-items: flex-start;
   max-height: calc(var(--app-h) - 180px);
   overflow: hidden;
 }
 
+html[data-prep-side-fit="true"] #app[data-phase="prep"][data-prep-side="player"] .battle-canvas-stage {
+  justify-content: flex-start;
+}
+
+html[data-prep-side-fit="true"] #app[data-phase="prep"][data-prep-side="enemy"] .battle-canvas-stage {
+  justify-content: flex-end;
+}
+
 html[data-prep-side-fit="true"] #app[data-phase="prep"] #game-canvas {
-  max-width: 100%;
-  max-height: calc(var(--app-h) - 200px);
-  width: auto;
-  height: auto;
   display: block;
-  margin: 0 auto;
+  flex-shrink: 0;
+  margin: 0;
+  max-width: none;
+  max-height: none;
 }
 
 html[data-prep-side-fit="true"] #app[data-phase="prep"] #shop-panel {
@@ -4576,6 +4589,9 @@ html[data-prep-side-fit="true"] #app[data-phase="prep"] #shop-panel {
   top: 0;
   bottom: 0;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: calc(8px * var(--ui-scale));
 }
 
 html[data-prep-side-fit="true"] #app[data-phase="prep"] .battle-avatars-row {
@@ -4596,19 +4612,40 @@ html[data-prep-side-fit="true"] #app[data-phase="prep"] #board-hint {
   display: none;
 }
 
+html[data-prep-side-fit="true"] #app[data-phase="prep"] .shop-panel-header {
+  flex-shrink: 0;
+}
+
+html[data-prep-side-fit="true"] #app[data-phase="prep"] .shop-hint,
+html[data-prep-side-fit="true"] #app[data-phase="prep"] .shop-hint-touch {
+  flex-shrink: 0;
+}
+
 html[data-prep-side-fit="true"] #app[data-phase="prep"] .shop-panel .shop-slots {
-  grid-auto-rows: calc(72px * var(--ui-scale));
+  grid-auto-rows: calc(68px * var(--ui-scale));
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   flex: 1 1 auto;
   min-height: 0;
+  max-height: none;
+}
+
+html[data-prep-side-fit="true"] #app[data-phase="prep"] #shop-panel .shop-sell-zone {
+  flex-shrink: 0;
+  margin-top: calc(4px * var(--ui-scale));
+}
+
+html[data-prep-side-fit="true"] #app[data-phase="prep"] #shop-panel .bench-panel {
+  flex-shrink: 0;
+  margin-top: calc(4px * var(--ui-scale));
+  margin-bottom: 0;
 }
 
 html[data-prep-side-fit="true"] #app[data-phase="prep"] .shop-panel .shop-card,
 html[data-prep-side-fit="true"] #app[data-phase="prep"] .shop-panel .shop-card.empty {
-  height: calc(72px * var(--ui-scale));
-  min-height: calc(72px * var(--ui-scale));
-  max-height: calc(72px * var(--ui-scale));
+  height: calc(68px * var(--ui-scale));
+  min-height: calc(68px * var(--ui-scale));
+  max-height: calc(68px * var(--ui-scale));
 }
 
 html[data-prep-side-fit="true"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-card {
@@ -4665,17 +4702,19 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .battle-arena {
 
 html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .battle-canvas-stage {
   flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
   max-height: var(--prep-canvas-max-h, 34dvh);
   overflow: hidden;
 }
 
 html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #game-canvas {
   display: block;
-  max-height: var(--prep-canvas-max-h, 34dvh);
-  max-width: 100%;
-  width: auto;
-  height: auto;
-  margin: 0 auto;
+  flex-shrink: 0;
+  margin: 0;
+  max-width: none;
+  max-height: none;
 }
 
 html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #shop-panel {

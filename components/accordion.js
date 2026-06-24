@@ -130,6 +130,23 @@ function createStaticResultBlock(title, bodyHtml) {
   return block;
 }
 
+function bindTapActivate(el, handler) {
+  let lastTouchAt = 0;
+  el.addEventListener("touchend", (e) => {
+    if (e.cancelable) e.preventDefault();
+    e.stopPropagation();
+    lastTouchAt = Date.now();
+    handler(e);
+  }, { passive: false });
+  el.addEventListener("click", (e) => {
+    if (Date.now() - lastTouchAt < 400) {
+      e.preventDefault();
+      return;
+    }
+    handler(e);
+  });
+}
+
 function createPopupTriggerRow(title, popupTitle, bodyHtml, getCopyText) {
   const row = document.createElement("div");
   row.className = "popup-trigger-row";
@@ -138,7 +155,7 @@ function createPopupTriggerRow(title, popupTitle, bodyHtml, getCopyText) {
   btn.type = "button";
   btn.className = "popup-trigger-btn battle-result-popup-trigger";
   btn.innerHTML = `<span class="popup-trigger-title">${title}</span><span class="popup-trigger-chevron" aria-hidden="true">›</span>`;
-  btn.addEventListener("click", () => {
+  bindTapActivate(btn, () => {
     showDetailPopup(popupTitle || title, bodyHtml, getCopyText);
   });
 
@@ -151,7 +168,7 @@ function createPopupTriggerRow(title, popupTitle, bodyHtml, getCopyText) {
     copyBtn.title = "Копировать";
     copyBtn.setAttribute("aria-label", "Копировать");
     copyBtn.textContent = "📋";
-    copyBtn.addEventListener("click", async (e) => {
+    bindTapActivate(copyBtn, async (e) => {
       e.preventDefault();
       e.stopPropagation();
       const text = getCopyText();

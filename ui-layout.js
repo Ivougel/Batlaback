@@ -135,6 +135,10 @@
       "--overlay-max-h",
       "calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 10px)",
     );
+
+    if (typeof syncPrepCanvasDisplaySize === "function") {
+      requestAnimationFrame(syncPrepCanvasDisplaySize);
+    }
   }
 
   function scheduleLayout() {

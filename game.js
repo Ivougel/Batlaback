@@ -828,6 +828,46 @@ function syncBattleArenaLayout() {
   arena.style.setProperty("--battle-shop-right", String(layout.shopRightRatio));
 
   arena.classList.toggle("is-battle", isBattleUiPhase());
+  syncPrepCanvasDisplaySize();
+}
+
+function syncPrepCanvasDisplaySize() {
+  if (!canvas) return;
+
+  const app = document.getElementById("app");
+  const isPrep = app?.dataset.phase === "prep";
+  const root = document.documentElement;
+  const sideFit = root.dataset.prepSideFit === "true";
+  const viewportFit = root.dataset.prepViewportFit === "true";
+
+  if (!isPrep || (!sideFit && !viewportFit)) {
+    canvas.style.width = "";
+    canvas.style.height = "";
+    return;
+  }
+
+  const stage = canvas.closest(".battle-canvas-stage");
+  if (!stage) return;
+
+  const stageW = stage.clientWidth;
+  if (stageW <= 0) return;
+
+  let maxH = canvas.height;
+  if (sideFit) {
+    const chromeReserve = 200;
+    const vv = window.visualViewport;
+    const avail = vv?.height ?? window.innerHeight;
+    maxH = Math.max(180, avail - chromeReserve);
+  } else if (viewportFit) {
+    const cssMax = getComputedStyle(root).getPropertyValue("--prep-canvas-max-h").trim();
+    if (cssMax) maxH = parseFloat(cssMax) || maxH;
+  }
+
+  const scale = Math.min(stageW / canvas.width, maxH / canvas.height);
+  const w = Math.max(1, Math.floor(canvas.width * scale));
+  const h = Math.max(1, Math.floor(canvas.height * scale));
+  canvas.style.width = `${w}px`;
+  canvas.style.height = `${h}px`;
 }
 
 function bindRunStatsToggle() {
