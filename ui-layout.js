@@ -77,9 +77,14 @@
     canvas.style.removeProperty("height");
   }
 
+  function isTabletPrepBand() {
+    const { w } = viewportSize();
+    return w >= 600 && w <= 1200;
+  }
+
   function isPrepShopOverlayLayout() {
     const { w } = viewportSize();
-    if (w >= 600 && w <= 1200) return false;
+    if (isTabletPrepBand()) return false;
     return document.documentElement.dataset.prepLayout === "side";
   }
 
@@ -127,9 +132,11 @@
     const visibleRatio = getPrepFieldVisibleWidthRatio(app);
     const scaleW = sw / (visibleRatio * canvas.width);
     const scaleH = sh / canvas.height;
-    const scale = visibleRatio < 0.99
+    const scale = isTabletPrepBand()
       ? Math.max(scaleW, scaleH)
-      : Math.min(scaleW, scaleH);
+      : visibleRatio < 0.99
+        ? Math.max(scaleW, scaleH)
+        : Math.min(scaleW, scaleH);
     if (scale <= 0) return;
 
     const w = Math.max(1, Math.floor(canvas.width * scale));

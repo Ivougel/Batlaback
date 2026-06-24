@@ -4,24 +4,32 @@
 
 const GRID_COLS = 9;
 const GRID_ROWS = 7;
-const GRID_CELL = uiPx(30);
-const GRID_PLAYER_X = uiPx(14);
-const GRID_GAP = uiPx(380);
-const FRAME_PAD = uiPx(10);
-const FRAME_TITLE_H = uiPx(24);
-const FRAME_EDGE = uiPx(2);
-const SHOP_FIELD_GAP = uiPx(12);
+const GRID_CELL = 88;
+const GRID_CELL_GAP = 4;
+const GRID_STRIDE = GRID_CELL + GRID_CELL_GAP;
+const FRAME_PAD = 8;
+const FRAME_TITLE_H = 8;
+const FRAME_EDGE = 2;
+const SHOP_FIELD_GAP = 12;
 const BACKPACK_COLS = GRID_COLS;
 const BACKPACK_ROWS = GRID_ROWS;
 const CELL = GRID_CELL;
-/** Y-координата сетки: заголовок рамки + верхний отступ, верх рамки = 0. */
-const BACKPACK_Y = FRAME_TITLE_H + FRAME_PAD;
+const GRID_INNER_W = GRID_COLS * GRID_CELL + (GRID_COLS - 1) * GRID_CELL_GAP;
+const GRID_INNER_H = GRID_ROWS * GRID_CELL + (GRID_ROWS - 1) * GRID_CELL_GAP;
+const BACKPACK_Y = 8;
 const GRID_TOP_Y = BACKPACK_Y;
+const GRID_PLAYER_X = FRAME_PAD;
 const PLAYER_X = GRID_PLAYER_X;
-const ENEMY_X = PLAYER_X + GRID_COLS * GRID_CELL + GRID_GAP;
+const PLAYER_FIELD_OUTER_W = GRID_INNER_W + FRAME_PAD * 2;
+const PREP_CANVAS_W = PLAYER_FIELD_OUTER_W;
+const PREP_CANVAS_H = 648;
+const GRID_GAP = 96;
+const ENEMY_X = PLAYER_FIELD_OUTER_W + GRID_GAP + FRAME_PAD;
 const GAP_W = GRID_GAP;
-const CANVAS_H = BACKPACK_Y + GRID_ROWS * CELL + FRAME_PAD + FRAME_EDGE;
-const CANVAS_W = ENEMY_X + GRID_COLS * CELL + FRAME_PAD + FRAME_EDGE;
+const BATTLE_CANVAS_W = ENEMY_X - FRAME_PAD + PLAYER_FIELD_OUTER_W;
+const BATTLE_CANVAS_H = PREP_CANVAS_H;
+const CANVAS_H = BATTLE_CANVAS_H;
+const CANVAS_W = BATTLE_CANVAS_W;
 const MAX_BENCH = 6;
 const MAX_SHOP = 5;
 const SHOP_RARITY_RANK = { common: 0, uncommon: 1, rare: 2, epic: 3, legendary: 4 };
@@ -536,8 +544,8 @@ function bindTouchInput() {
 function init() {
   canvas = document.getElementById("game-canvas");
   ctx = canvas.getContext("2d");
-  canvas.height = CANVAS_H;
-  canvas.width = CANVAS_W;
+  canvas.height = PREP_CANVAS_H;
+  canvas.width = PREP_CANVAS_W;
   syncBattleArenaLayout();
   canvas.addEventListener("mousedown", (e) => {
     if (isSyntheticMouseFromTouch()) return;
@@ -708,9 +716,14 @@ function applyPhaseCanvasLayout() {
   if (!canvas) return;
   layoutCell = GRID_CELL;
   layoutPlayerX = GRID_PLAYER_X;
-  canvas.width = CANVAS_W;
-  canvas.height = CANVAS_H;
-  layoutCanvasH = CANVAS_H;
+  if (phase === "prep") {
+    canvas.width = PREP_CANVAS_W;
+    canvas.height = PREP_CANVAS_H;
+  } else {
+    canvas.width = BATTLE_CANVAS_W;
+    canvas.height = BATTLE_CANVAS_H;
+  }
+  layoutCanvasH = canvas.height;
 }
 
 function getPlayerCharacteristicsState() {
@@ -789,12 +802,12 @@ function transitionToPhase(newPhase, afterTransition) {
 }
 
 function getFieldLayoutMetrics() {
-  const cell = GRID_CELL;
+  const gridInnerW = GRID_INNER_W;
   const playerLeft = GRID_PLAYER_X - FRAME_PAD;
-  const playerRight = GRID_PLAYER_X + GRID_COLS * cell + FRAME_PAD + FRAME_EDGE;
+  const playerRight = GRID_PLAYER_X + gridInnerW + FRAME_PAD + FRAME_EDGE;
   const enemyLeft = ENEMY_X - FRAME_PAD;
-  const enemyRight = ENEMY_X + GRID_COLS * cell + FRAME_PAD + FRAME_EDGE;
-  const totalW = CANVAS_W;
+  const enemyRight = ENEMY_X + gridInnerW + FRAME_PAD + FRAME_EDGE;
+  const totalW = phase === "prep" ? PREP_CANVAS_W : BATTLE_CANVAS_W;
   const centerWidth = enemyLeft - playerRight;
   const enemyWidth = enemyRight - enemyLeft;
   const shopLeftRatio = Math.min(1, (playerRight + SHOP_FIELD_GAP) / totalW);
@@ -836,13 +849,19 @@ function syncPrepCanvasDisplaySize() {
 
   const app = document.getElementById("app");
   const isPrep = app?.dataset.phase === "prep";
+  if (!isPrep) {
+    canvas.style.width = "";
+    canvas.style.height = "";
+    return;
+  }
+
   const root = document.documentElement;
   const sideFit = root.dataset.prepSideFit === "true";
   const viewportFit = root.dataset.prepViewportFit === "true";
   const vw = window.visualViewport?.width ?? window.innerWidth;
-  const tabletBand = vw >= 600 && vw <= 1100;
+  const tabletBand = vw >= 600 && vw <= 1200;
 
-  if (!isPrep || (!sideFit && !viewportFit && !tabletBand)) {
+  if (!sideFit && !viewportFit && !tabletBand) {
     canvas.style.width = "";
     canvas.style.height = "";
     return;
@@ -852,16 +871,21 @@ function syncPrepCanvasDisplaySize() {
   if (!stage) return;
 
   const stageW = stage.clientWidth;
-  if (stageW <= 0) return;
+  const stageH = stage.clientHeight;
+  if (stageW <= 0 || stageH <= 0) return;
+
+  if (tabletBand) {
+    const scale = Math.max(stageW / canvas.width, stageH / canvas.height);
+    const w = Math.max(1, Math.floor(canvas.width * scale));
+    const h = Math.max(1, Math.floor(canvas.height * scale));
+    canvas.style.setProperty("width", `${w}px`, "important");
+    canvas.style.setProperty("height", `${h}px`, "important");
+    return;
+  }
 
   let maxH = canvas.height;
   let maxW = canvas.width;
-  if (tabletBand) {
-    maxW = Math.min(stageW, 420);
-    const vv = window.visualViewport;
-    const avail = vv?.height ?? window.innerHeight;
-    maxH = Math.max(180, avail - 160);
-  } else if (sideFit) {
+  if (sideFit) {
     const chromeReserve = 200;
     const vv = window.visualViewport;
     const avail = vv?.height ?? window.innerHeight;
@@ -1743,22 +1767,30 @@ function gameLoop(ts) {
 }
 
 function gridOrigin(team) { return team === "player" ? layoutPlayerX : ENEMY_X; }
+function gridStrideFor(team) {
+  return team === "enemy" ? GRID_STRIDE : GRID_STRIDE;
+}
 function cellRect(team, col, row) {
   const cell = team === "enemy" ? GRID_CELL : layoutCell;
-  return { x: gridOrigin(team) + col * cell, y: BACKPACK_Y + row * cell, w: cell, h: cell };
+  const stride = gridStrideFor(team);
+  return {
+    x: gridOrigin(team) + col * stride,
+    y: BACKPACK_Y + row * stride,
+    w: cell,
+    h: cell,
+  };
 }
 function xToCol(x, team = "player") {
-  const cell = team === "enemy" ? GRID_CELL : layoutCell;
-  return Math.floor((x - gridOrigin(team)) / cell);
+  const stride = gridStrideFor(team);
+  return Math.floor((x - gridOrigin(team)) / stride);
 }
 function yToRow(y, team = "player") {
-  const cell = team === "enemy" ? GRID_CELL : layoutCell;
-  return Math.floor((y - BACKPACK_Y) / cell);
+  const stride = gridStrideFor(team);
+  return Math.floor((y - BACKPACK_Y) / stride);
 }
 function isOnBoard(mx, my, team = "player") {
   const ox = gridOrigin(team);
-  const cell = team === "enemy" ? GRID_CELL : layoutCell;
-  return mx >= ox && mx < ox + GRID_COLS * cell && my >= BACKPACK_Y && my < BACKPACK_Y + GRID_ROWS * cell;
+  return mx >= ox && mx < ox + GRID_INNER_W && my >= BACKPACK_Y && my < BACKPACK_Y + GRID_INNER_H;
 }
 
 function isDropOnSell(e) {
@@ -2088,18 +2120,18 @@ function drawBackground() {
 function getFieldFrameRect(team) {
   const cell = teamLayoutCell(team);
   const ox = gridOrigin(team);
-  const w = GRID_COLS * cell;
-  const h = GRID_ROWS * cell;
+  const gridW = GRID_INNER_W;
+  const gridH = GRID_INNER_H;
   const pad = FRAME_PAD;
   return {
     x: ox - pad,
     y: BACKPACK_Y - pad - FRAME_TITLE_H,
-    w: w + pad * 2,
-    h: h + pad * 2 + FRAME_TITLE_H,
+    w: gridW + pad * 2,
+    h: gridH + pad * 2 + FRAME_TITLE_H,
     cell,
     ox,
-    gridW: w,
-    gridH: h,
+    gridW,
+    gridH,
   };
 }
 
@@ -2187,8 +2219,8 @@ function drawContainers(containers, team, dimmed) {
     const bounds = getContainerBounds(container);
     const boardW = bounds.maxCol - bounds.minCol + 1;
     const boardH = bounds.maxRow - bounds.minRow + 1;
-    const ox = gridOrigin(team) + bounds.minCol * cell;
-    const oy = BACKPACK_Y + bounds.minRow * cell;
+    const ox = gridOrigin(team) + bounds.minCol * GRID_STRIDE;
+    const oy = BACKPACK_Y + bounds.minRow * GRID_STRIDE;
     const alpha = dimmed ? 0.55 : 1;
 
     getItemCells(container).forEach(([c, r]) => {

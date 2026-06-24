@@ -335,15 +335,13 @@ function getItemVisualCenter(item, team) {
 }
 
 function cellRectForSynergy(team, col, row) {
+  const stride = typeof GRID_STRIDE !== "undefined" ? GRID_STRIDE : 92;
   const originX = team === "player"
-    ? (typeof GRID_PLAYER_X !== "undefined" ? GRID_PLAYER_X : 36)
-    : (typeof GRID_PLAYER_X !== "undefined" ? GRID_PLAYER_X : 36)
-      + (typeof GRID_COLS !== "undefined" ? GRID_COLS : 9)
-      * (typeof GRID_CELL !== "undefined" ? GRID_CELL : 42)
-      + (typeof GRID_GAP !== "undefined" ? GRID_GAP : 72);
-  const cell = typeof GRID_CELL !== "undefined" ? GRID_CELL : 42;
-  const topY = typeof GRID_TOP_Y !== "undefined" ? GRID_TOP_Y : 60;
-  return { x: originX + col * cell, y: topY + row * cell, w: cell, h: cell };
+    ? (typeof GRID_PLAYER_X !== "undefined" ? GRID_PLAYER_X : 8)
+    : (typeof ENEMY_X !== "undefined" ? ENEMY_X : 944);
+  const cell = typeof GRID_CELL !== "undefined" ? GRID_CELL : 88;
+  const topY = typeof BACKPACK_Y !== "undefined" ? BACKPACK_Y : 8;
+  return { x: originX + col * stride, y: topY + row * stride, w: cell, h: cell };
 }
 
 function synergyColorForType(type, strength, mode) {
