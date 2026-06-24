@@ -2334,9 +2334,11 @@ function gamepadPointerUpAt(clientX, clientY) {
     if (Math.hypot(dx, dy) < 6) {
       const { index, side } = pendingShopDrag;
       pendingShopDrag = null;
-      buyFromShop(index, side);
-      suppressShopClickUntil = Date.now() + 500;
       syncUiDragState();
+      if (!isTouchUi()) {
+        buyFromShop(index, side);
+        suppressShopClickUntil = Date.now() + 500;
+      }
       return;
     }
   }
@@ -3786,6 +3788,7 @@ function renderShop(side = prepViewSide) {
         beginPendingShopDrag(+card.dataset.index, e, side);
       });
       card.addEventListener("click", (e) => {
+        if (isTouchUi()) return;
         if (Date.now() < suppressShopClickUntil) return;
         if (e.target.closest(".shop-pin") || shopDidDrag) {
           shopDidDrag = false;
