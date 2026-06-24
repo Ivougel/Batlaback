@@ -2057,6 +2057,48 @@ function hideDragGhostOverlay() {
   getDragGhostCanvas()?.classList.add("hidden");
 }
 
+/** На touch: призрак привязан к центру клетки превью, а не к пальцу между клетками. */
+function getDragGhostAnchorClient(clientX, clientY) {
+  if (!isTouchUi() || phase !== "prep" || !dragPayload || !canvas) {
+    return { x: clientX, y: clientY };
+  }
+
+  const side = dragFrom?.side || prepViewSide;
+  if (!canEditPrepSide(side)) return { x: clientX, y: clientY };
+
+  const team = prepViewSide;
+
+  if (isContainerItem(dragPayload.itemId) && hoverCell) {
+    return boardCellClientCenter(hoverCell.col, hoverCell.row, team);
+  }
+
+  if (!isContainerItem(dragPayload.itemId) && hoverSlot) {
+    const st = getSideState(side);
+    const placement = resolveLoadoutPlacementDisplacing(
+      st.containers,
+      dragPayload.itemId,
+      hoverSlot.col,
+      hoverSlot.row,
+      dragPayload.rotation || 0,
+    );
+    if (placement.valid) {
+      const def = ITEM_CATALOG[dragPayload.itemId];
+      const shape = rotateShape(def.shape, placement.rotation);
+      let sx = 0;
+      let sy = 0;
+      shape.forEach(([dx, dy]) => {
+        const c = boardCellClientCenter(placement.col + dx, placement.row + dy, team);
+        sx += c.x;
+        sy += c.y;
+      });
+      return { x: sx / shape.length, y: sy / shape.length };
+    }
+    return boardCellClientCenter(hoverSlot.col, hoverSlot.row, team);
+  }
+
+  return { x: clientX, y: clientY };
+}
+
 function syncDragGhostOverlay(clientX, clientY) {
   if (!dragPayload) {
     hideDragGhostOverlay();
@@ -2065,9 +2107,10 @@ function syncDragGhostOverlay(clientX, clientY) {
   const el = getDragGhostCanvas();
   if (!el || !dragGhostCtx) return;
 
+  const anchor = getDragGhostAnchorClient(clientX, clientY);
   el.classList.remove("hidden");
-  el.style.left = `${clientX}px`;
-  el.style.top = `${clientY}px`;
+  el.style.left = `${anchor.x}px`;
+  el.style.top = `${anchor.y}px`;
 
   const size = DRAG_GHOST_CANVAS_SIZE;
   const dpr = window.devicePixelRatio || 1;
