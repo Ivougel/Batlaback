@@ -1,34 +1,79 @@
 /**
- * Prep-сцена по референсу Backpack Battles:
- * компактное поле, персонаж слева, фон на всю левую колонку.
+ * Layout contract — слои не смешивать:
+ *
+ * FROZEN (сетка поля, shop+battle): --cell-size, --cell-gap, --grid-gap,
+ *   --prep-canvas-w/h, --battle-canvas-w/h. Менять только осознанно + чеклист фаз.
+ *
+ * FIELD ISLAND (только canvas-сетка): --field-base-x, --field-offset-x/y на .prep-field-island.
+ *   Герой, shop, HUD — другие переменные, поле двигается отдельно.
+ *
+ * ANCHOR (battle): --battle-scene-offset-x, --battle-enemy-slot-left (аватары привязаны к полю).
+ *
+ * CHARACTER (иконка под полем): --character-slot-h, --character-scale.
+ *
+ * SHOP CHROME (правая колонка): --shop-panel-w, --shop-card-row-h.
+ *
+ * FX (летящие числа): --fx-float-scale, --fx-projectile-scale.
  */
 
 :root {
+  /* ── FROZEN: grid / canvas ── */
   --cell-size: 46px;
   --cell-gap: 1px;
   --frame-pad: 8px;
   --frame-title-h: 22px;
   --grid-gap: 36px;
-  --shop-panel-w: 300px;
-  --prep-toolbar-h: 50px;
   --prep-canvas-w: calc(9 * var(--cell-size) + 8 * var(--cell-gap));
   --prep-canvas-h: calc(7 * var(--cell-size) + 6 * var(--cell-gap));
-  --prep-canvas-offset-x: 168px;
-  --prep-scene-top: 14px;
-  --prep-character-gap: 8px;
-  --prep-character-slot-h: min(380px, calc(100vh - 480px));
-  --prep-character-top: calc(var(--prep-scene-top) + var(--prep-canvas-h) + var(--prep-character-gap));
   --battle-canvas-w: calc(2 * (9 * var(--cell-size) + 8 * var(--cell-gap)) + var(--grid-gap));
   --battle-canvas-h: calc(7 * var(--cell-size) + 6 * var(--cell-gap));
+
+  /* ── FIELD ISLAND (prep: только .prep-field-island) ── */
+  --field-base-x: 12px;
+  --field-offset-x: 0px;
+  --field-offset-y: 0px;
+  --prep-scene-top: 14px;
+
+  /* ── ANCHOR (battle / вертикаль под полем) ── */
+  --prep-character-gap: 8px;
+  --prep-character-top: calc(var(--prep-scene-top) + var(--prep-canvas-h) + var(--prep-character-gap));
+
+  /* ── CHARACTER ── */
+  --character-slot-h: min(380px, calc(100vh - 480px));
+  --character-scale: 1;
+  --prep-character-slot-h: var(--character-slot-h);
+  /* Prep shop: слот героя (зелёная зона на макете) */
+  --prep-hero-slot-left: 22%;
+  --prep-hero-slot-width: 17%;
+  --prep-hero-slot-bottom: 6px;
+  --prep-hero-slot-height: min(400px, 46vh);
+
+  /* ── SHOP CHROME ── */
+  --shop-panel-w: 300px;
+  --shop-card-row-h: calc(108px * var(--ui-scale, 1));
+  --shop-item-icon-scale: 1.28;
+  --prep-toolbar-h: 50px;
+
+  /* ── FX ── */
+  --fx-float-scale: 1;
+  --fx-projectile-scale: 1;
+
+  /* ── BATTLE HUD ── */
+  --battle-stats-panel-w: 276px;
 }
 
 @media (max-width: 1100px) {
   :root {
     --cell-size: 40px;
     --grid-gap: 28px;
-    --shop-panel-w: 260px;
-    --prep-canvas-offset-x: 132px;
+    --shop-panel-w: 280px;
+    --shop-card-row-h: calc(86px * var(--ui-scale, 1));
+    --shop-item-icon-scale: 1.22;
     --prep-scene-top: 10px;
+    --battle-stats-panel-w: 252px;
+    --prep-hero-slot-left: 20%;
+    --prep-hero-slot-width: 19%;
+    --prep-hero-slot-height: min(360px, 44vh);
   }
 }
 
@@ -154,18 +199,75 @@
     linear-gradient(165deg, #1c1713 0%, #12100d 42%, #0c0a08 100%);
 }
 
+.prep-field-island {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.prep-field-island .battle-canvas-stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  overflow: visible;
+  clip-path: none !important;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  pointer-events: auto;
+}
+
+#app[data-phase="prep"] .prep-field-island {
+  left: calc(var(--field-base-x) + var(--field-offset-x));
+  top: calc(var(--prep-scene-top) + var(--field-offset-y));
+  width: var(--prep-canvas-w);
+  height: var(--prep-canvas-h);
+}
+
 .prep-character-layer {
   position: absolute;
-  left: var(--prep-canvas-offset-x);
-  top: calc(var(--prep-scene-top) + var(--prep-canvas-h) + var(--prep-character-gap));
+  left: 0;
+  top: var(--prep-character-top);
   width: var(--prep-canvas-w);
   height: var(--prep-character-slot-h);
   z-index: 2;
   pointer-events: none;
   display: flex;
   align-items: flex-end;
-  justify-content: center;
+  justify-content: flex-start;
   padding: 0;
+}
+
+/* Prep shop: герой в фиксированном слоте (макет), stats HUD остаётся слева внизу */
+#app[data-phase="prep"] .prep-character-layer {
+  left: var(--prep-hero-slot-left);
+  width: var(--prep-hero-slot-width);
+  top: auto;
+  bottom: var(--prep-hero-slot-bottom);
+  height: var(--prep-hero-slot-height);
+  justify-content: center;
+}
+
+#app[data-phase="prep"][data-prep-side="enemy"] .prep-character-layer {
+  left: auto;
+  right: var(--prep-hero-slot-left);
+  width: var(--prep-hero-slot-width);
+  justify-content: center;
+}
+
+#app[data-phase="prep"] .prep-character,
+#app[data-phase="prep"][data-prep-side="enemy"] .prep-character {
+  justify-content: center;
+}
+
+#app[data-phase="prep"] .prep-character-img {
+  object-position: center bottom;
+}
+
+#app[data-phase="prep"][data-prep-side="enemy"] .prep-character-img {
+  object-position: center bottom;
 }
 
 .prep-character {
@@ -173,7 +275,7 @@
   height: 100%;
   width: 100%;
   align-items: flex-end;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 #app[data-phase="prep"][data-prep-side="player"] #prep-character-player,
@@ -182,11 +284,11 @@
 }
 
 .prep-character-img {
-  height: 100%;
+  height: calc(100% * var(--character-scale));
   width: auto;
   max-width: 100%;
   object-fit: contain;
-  object-position: center bottom;
+  object-position: left bottom;
   filter: none;
   background: none;
   border: none;
@@ -201,30 +303,14 @@
   filter: none;
 }
 
-#app[data-phase="prep"] .prep-field-column .battle-canvas-stage {
-  position: absolute;
-  top: var(--prep-scene-top);
-  left: var(--prep-canvas-offset-x);
-  z-index: 1;
-  width: var(--prep-canvas-w);
-  height: var(--prep-canvas-h);
-  padding: 0;
-  margin: 0;
-  overflow: visible;
-  clip-path: none !important;
-  background: transparent;
-  border: none;
-  border-radius: 0;
-}
-
-#app[data-phase="prep"] .prep-field-column .canvas-scale-wrap {
+#app[data-phase="prep"] .prep-field-island .canvas-scale-wrap {
   display: block;
   line-height: 0;
   width: var(--prep-canvas-w);
   height: var(--prep-canvas-h);
 }
 
-#app[data-phase="prep"] .prep-field-column .canvas-scale-wrap #game-canvas {
+#app[data-phase="prep"] .prep-field-island .canvas-scale-wrap #game-canvas {
   width: var(--prep-canvas-w) !important;
   height: var(--prep-canvas-h) !important;
   max-width: none;
@@ -329,35 +415,24 @@
   --battle-scene-center-x: calc(var(--battle-scene-offset-x) + var(--battle-canvas-w) / 2);
 }
 
-#app[data-phase="battle"] .prep-field-column .battle-canvas-stage,
-#app[data-phase="replay"] .prep-field-column .battle-canvas-stage {
-  position: absolute;
-  top: var(--prep-scene-top);
-  left: var(--battle-scene-offset-x);
-  z-index: 1;
+#app[data-phase="battle"] .prep-field-island,
+#app[data-phase="replay"] .prep-field-island {
+  left: calc(var(--battle-scene-offset-x) + var(--field-offset-x, 0px));
+  top: calc(var(--prep-scene-top) + var(--field-offset-y, 0px));
   width: var(--battle-canvas-w);
   height: var(--battle-canvas-h);
-  padding: 0;
-  margin: 0;
-  overflow: visible;
-  clip-path: none !important;
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  flex: none;
-  display: block;
 }
 
-#app[data-phase="battle"] .prep-field-column .canvas-scale-wrap,
-#app[data-phase="replay"] .prep-field-column .canvas-scale-wrap {
+#app[data-phase="battle"] .prep-field-island .canvas-scale-wrap,
+#app[data-phase="replay"] .prep-field-island .canvas-scale-wrap {
   display: block;
   line-height: 0;
   width: var(--battle-canvas-w);
   height: var(--battle-canvas-h);
 }
 
-#app[data-phase="battle"] .prep-field-column .canvas-scale-wrap #game-canvas,
-#app[data-phase="replay"] .prep-field-column .canvas-scale-wrap #game-canvas {
+#app[data-phase="battle"] .prep-field-island .canvas-scale-wrap #game-canvas,
+#app[data-phase="replay"] .prep-field-island .canvas-scale-wrap #game-canvas {
   width: var(--battle-canvas-w) !important;
   height: var(--battle-canvas-h) !important;
   max-width: none;
@@ -452,7 +527,7 @@
 
 #app[data-phase="battle"] .battle-scene-ui .profile-avatar-img,
 #app[data-phase="replay"] .battle-scene-ui .profile-avatar-img {
-  height: 100%;
+  height: calc(100% * var(--character-scale));
   width: auto;
   max-width: 100%;
   object-fit: contain;
@@ -489,29 +564,15 @@
   pointer-events: auto;
 }
 
-html[data-prep-layout="side"] #app[data-phase="prep"] .battle-canvas-stage {
+html[data-prep-layout="side"] #app[data-phase="prep"] .prep-field-island .battle-canvas-stage {
   clip-path: none !important;
-}
-
-html[data-prep-layout="side"] #app[data-phase="prep"] #shop-panel {
-  width: var(--shop-panel-w);
-  min-width: var(--shop-panel-w);
-  max-width: var(--shop-panel-w);
 }
 
 html[data-prep-layout="side"] #app[data-phase="prep"] #shop-panel .shop-action-row {
   max-width: 100%;
 }
 
-@media (min-width: 600px) {
-  html[data-prep-layout="side"] #app[data-phase="prep"] .game-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) var(--shop-panel-w);
-    grid-template-rows: 1fr var(--prep-toolbar-h);
-  }
-}
-
-/* ─── Перебить legacy side-prep: компактный canvas 422×328, не 100% ─── */
+/* ─── Перебить legacy side-prep: компактный canvas, не 100% ─── */
 
 #app[data-phase="prep"] .prep-left-column {
   display: block;
@@ -520,27 +581,21 @@ html[data-prep-layout="side"] #app[data-phase="prep"] #shop-panel .shop-action-r
   min-height: 0;
 }
 
-html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .battle-canvas-stage,
-html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-left-column .battle-canvas-stage,
-html[data-prep-layout="side"] #app[data-phase="prep"] .prep-field-column .battle-canvas-stage,
-html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-field-column .battle-canvas-stage {
+html[data-prep-layout="side"] #app[data-phase="prep"] .prep-field-island,
+html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-field-island {
   position: absolute !important;
   flex: none !important;
-  top: var(--prep-scene-top) !important;
-  left: var(--prep-canvas-offset-x) !important;
+  top: calc(var(--prep-scene-top) + var(--field-offset-y)) !important;
+  left: calc(var(--field-base-x) + var(--field-offset-x)) !important;
   width: var(--prep-canvas-w) !important;
   height: var(--prep-canvas-h) !important;
   max-width: var(--prep-canvas-w) !important;
   min-height: 0 !important;
   display: block !important;
-  align-items: unset !important;
-  justify-content: unset !important;
 }
 
-html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .canvas-scale-wrap,
-html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-left-column .canvas-scale-wrap,
-html[data-prep-layout="side"] #app[data-phase="prep"] .prep-field-column .canvas-scale-wrap,
-html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-field-column .canvas-scale-wrap {
+html[data-prep-layout="side"] #app[data-phase="prep"] .prep-field-island .canvas-scale-wrap,
+html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-field-island .canvas-scale-wrap {
   flex: none !important;
   width: var(--prep-canvas-w) !important;
   height: var(--prep-canvas-h) !important;
@@ -548,14 +603,10 @@ html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-field-column .canv
   display: block !important;
 }
 
-html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .canvas-scale-wrap #game-canvas,
-html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column #game-canvas,
-html[data-prep-layout="side"] #app[data-phase="prep"] .prep-field-column .canvas-scale-wrap #game-canvas,
-html[data-prep-layout="side"] #app[data-phase="prep"] .prep-field-column #game-canvas,
-html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-left-column .canvas-scale-wrap #game-canvas,
-html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-left-column #game-canvas,
-html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-field-column .canvas-scale-wrap #game-canvas,
-html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-field-column #game-canvas {
+html[data-prep-layout="side"] #app[data-phase="prep"] .prep-field-island .canvas-scale-wrap #game-canvas,
+html[data-prep-layout="side"] #app[data-phase="prep"] .prep-field-island #game-canvas,
+html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-field-island .canvas-scale-wrap #game-canvas,
+html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-field-island #game-canvas {
   width: var(--prep-canvas-w) !important;
   height: var(--prep-canvas-h) !important;
   max-width: var(--prep-canvas-w) !important;
@@ -563,14 +614,14 @@ html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-field-column #game
 }
 
 @media (min-width: 600px) {
-  html[data-prep-layout="side"] #app[data-phase="prep"] .prep-field-column .canvas-scale-wrap,
-  html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-field-column .canvas-scale-wrap {
+  html[data-prep-layout="side"] #app[data-phase="prep"] .prep-field-island .canvas-scale-wrap,
+  html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-field-island .canvas-scale-wrap {
     width: var(--prep-canvas-w) !important;
     max-width: var(--prep-canvas-w) !important;
   }
 
-  html[data-prep-layout="side"] #app[data-phase="prep"] .prep-field-column #game-canvas,
-  html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-field-column #game-canvas {
+  html[data-prep-layout="side"] #app[data-phase="prep"] .prep-field-island #game-canvas,
+  html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-field-island #game-canvas {
     width: var(--prep-canvas-w) !important;
     height: var(--prep-canvas-h) !important;
     max-width: var(--prep-canvas-w) !important;
@@ -578,16 +629,6 @@ html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-field-column #game
 }
 
 /* ─── Бой: дашборд статов (ширина по макету) ─── */
-
-:root {
-  --battle-stats-panel-w: 276px;
-}
-
-@media (max-width: 1100px) {
-  :root {
-    --battle-stats-panel-w: 252px;
-  }
-}
 
 #app[data-phase="battle"] .battle-scene-stats.center-stats-panel,
 #app[data-phase="replay"] .battle-scene-stats.center-stats-panel {

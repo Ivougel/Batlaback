@@ -11,18 +11,18 @@ function uiPx(value) {
 }
 
 const RARITY_COLORS = {
-  common: "#c9d1d9",
-  uncommon: "#58a6ff",
-  rare: "#a371f7",
+  common: "#8b949e",
+  uncommon: "#3fb950",
+  rare: "#58a6ff",
   epic: "#a371f7",
   legendary: "#f0c14b",
 };
 
 /** Визуальные стили карточек и названий по rarity из ITEM_CATALOG. */
 const RARITY_UI = {
-  common: { nameColor: "#c9d1d9", borderColor: "#484f58", glow: null },
-  uncommon: { nameColor: "#58a6ff", borderColor: "#58a6ff", glow: "soft" },
-  rare: { nameColor: "#a371f7", borderColor: "#a371f7", glow: "medium" },
+  common: { nameColor: "#8b949e", borderColor: "#484f58", glow: null },
+  uncommon: { nameColor: "#3fb950", borderColor: "#3fb950", glow: "soft" },
+  rare: { nameColor: "#58a6ff", borderColor: "#58a6ff", glow: "medium" },
   epic: { nameColor: "#a371f7", borderColor: "#a371f7", glow: "medium" },
   legendary: { nameColor: "#f0c14b", borderColor: "#f0c14b", glow: "strong" },
 };

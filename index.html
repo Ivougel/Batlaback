@@ -20,14 +20,16 @@
                 <div class="prep-character" id="prep-character-enemy" hidden></div>
               </div>
               <div class="prep-stats-hud" id="prep-stats-hud" aria-live="polite"></div>
-              <div class="battle-canvas-stage">
-                <div class="canvas-scale-wrap">
-                  <canvas id="game-canvas"></canvas>
-                </div>
-                <div class="battle-arena-overlay" aria-hidden="true">
-                  <div class="overlay-side overlay-side-player"></div>
-                  <div class="overlay-side overlay-side-center"></div>
-                  <div class="overlay-side overlay-side-enemy"></div>
+              <div class="prep-field-island" id="prep-field-island">
+                <div class="battle-canvas-stage">
+                  <div class="canvas-scale-wrap">
+                    <canvas id="game-canvas"></canvas>
+                  </div>
+                  <div class="battle-arena-overlay" aria-hidden="true">
+                    <div class="overlay-side overlay-side-player"></div>
+                    <div class="overlay-side overlay-side-center"></div>
+                    <div class="overlay-side overlay-side-enemy"></div>
+                  </div>
                 </div>
               </div>
               <div class="battle-scene-ui" id="battle-scene-ui" aria-hidden="true">
@@ -282,6 +284,7 @@
     <div class="gamepad-hints-list" id="gamepad-hints-list"></div>
   </div>
   <div id="gamepad-cursor" class="gamepad-cursor hidden" aria-hidden="true"></div>
+  <canvas id="ui-drag-ghost" class="ui-drag-ghost hidden" aria-hidden="true"></canvas>
   <div id="sidebar-tooltip" class="sidebar-tooltip hidden"></div>
   <script src="classes.js"></script>
   <script src="items.js"></script>

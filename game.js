@@ -119,6 +119,9 @@ let gameOver = false;
 let hoverCell = null;
 let hoverSlot = null;
 let mousePos = { x: 0, y: 0 };
+let dragGhostCanvas = null;
+let dragGhostCtx = null;
+const DRAG_GHOST_CANVAS_SIZE = uiPx(88);
 let lastPointerClient = { x: 0, y: 0 };
 let gamepadBoardFocus = null;
 let synergyAnimTime = 0;
@@ -1451,6 +1454,10 @@ function restoreDraggedItem(side = prepViewSide) {
 
 function syncUiDragState() {
   document.body.classList.toggle("is-ui-dragging", !!(dragPayload || pendingShopDrag));
+  if (dragPayload || pendingShopDrag) {
+    tooltipItem = null;
+    hideSidebarTooltip();
+  }
 }
 
 function applyCraftingForSide(side = prepViewSide) {
@@ -1477,6 +1484,7 @@ function clearDragUiState() {
   dragPayload = null;
   dragFrom = null;
   clearGamepadBoardFocus();
+  hideDragGhostOverlay();
   syncUiDragState();
 }
 
@@ -2039,6 +2047,48 @@ function createSyntheticPointerEvent(clientX, clientY) {
   };
 }
 
+function getDragGhostCanvas() {
+  if (!dragGhostCanvas) {
+    dragGhostCanvas = document.getElementById("ui-drag-ghost");
+    dragGhostCtx = dragGhostCanvas?.getContext("2d") || null;
+  }
+  return dragGhostCanvas;
+}
+
+function hideDragGhostOverlay() {
+  getDragGhostCanvas()?.classList.add("hidden");
+}
+
+function syncDragGhostOverlay(clientX, clientY) {
+  if (!dragPayload) {
+    hideDragGhostOverlay();
+    return;
+  }
+  const el = getDragGhostCanvas();
+  if (!el || !dragGhostCtx) return;
+
+  el.classList.remove("hidden");
+  el.style.left = `${clientX}px`;
+  el.style.top = `${clientY}px`;
+
+  const size = DRAG_GHOST_CANVAS_SIZE;
+  const dpr = window.devicePixelRatio || 1;
+  if (el.width !== Math.ceil(size * dpr) || el.height !== Math.ceil(size * dpr)) {
+    el.width = Math.ceil(size * dpr);
+    el.height = Math.ceil(size * dpr);
+    el.style.width = `${size}px`;
+    el.style.height = `${size}px`;
+  }
+
+  dragGhostCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  dragGhostCtx.clearRect(0, 0, size, size);
+
+  const def = ITEM_CATALOG[dragPayload.itemId];
+  if (!def) return;
+  const offset = uiPx(10);
+  drawItemPreview(offset, offset, def, dragPayload.itemId, true, dragPayload.rotation || 0, dragGhostCtx);
+}
+
 function updatePointerFromClient(clientX, clientY) {
   if (!canvas) return;
   lastPointerClient.x = clientX;
@@ -2070,13 +2120,14 @@ function updatePointerFromClient(clientX, clientY) {
     if (overSidebar) {
       tooltipItem = null;
       syncFieldTooltip();
+    } else if (dragPayload || pendingShopDrag) {
+      tooltipItem = null;
+      hideSidebarTooltip();
     } else {
       if (sidebarTooltipSource === "shop" || sidebarTooltipSource === "bench") {
         hideSidebarTooltip();
       }
-      if (!dragPayload) {
-        updateTooltip(mousePos.x, mousePos.y);
-      }
+      updateTooltip(mousePos.x, mousePos.y);
     }
 
     const benchPanel = document.getElementById("bench-panel");
@@ -2093,6 +2144,8 @@ function updatePointerFromClient(clientX, clientY) {
   } else if ((phase === "battle" || phase === "replay") && battleState) {
     updateTooltip(mousePos.x, mousePos.y);
   }
+
+  syncDragGhostOverlay(clientX, clientY);
 }
 
 function gamepadPointerDownAt(clientX, clientY) {
@@ -2149,7 +2202,9 @@ function canvasCoordsFromEvent(e) {
   return canvasCoordsFromClient(e.clientX, e.clientY);
 }
 function rotateDragItem() {
-  if (dragPayload) dragPayload.rotation = ((dragPayload.rotation || 0) + 1) % 4;
+  if (!dragPayload) return;
+  dragPayload.rotation = ((dragPayload.rotation || 0) + 1) % 4;
+  syncDragGhostOverlay(lastPointerClient.x, lastPointerClient.y);
 }
 
 function draw() {
@@ -2199,7 +2254,6 @@ function draw() {
   } else {
     clearBattleFloatLayer();
   }
-  if (dragPayload) drawDragGhost();
 }
 
 function drawBackground() {
@@ -2397,20 +2451,20 @@ function drawFloatingNumbers() {
   });
 }
 
-function drawItemPreview(x, y, def, itemId, selected, rotation) {
+function drawItemPreview(x, y, def, itemId, selected, rotation, targetCtx = ctx) {
   const shape = rotateShape(def.shape, rotation);
-  ctx.fillStyle = selected ? "rgba(240,193,75,0.15)" : "rgba(0,0,0,0.2)";
-  roundRect(x, y, CELL + 4, CELL - 4, 6);
-  ctx.fill();
+  targetCtx.fillStyle = selected ? "rgba(240,193,75,0.15)" : "rgba(0,0,0,0.2)";
+  roundRect(x, y, CELL + 4, CELL - 4, 6, targetCtx);
+  targetCtx.fill();
   shape.forEach(([dx, dy], idx) => {
-    ctx.fillStyle = def.color;
-    roundRect(x + 8 + dx * 16, y + 8 + dy * 16, 14, 14, 3);
-    ctx.fill();
+    targetCtx.fillStyle = def.color;
+    roundRect(x + 8 + dx * 16, y + 8 + dy * 16, 14, 14, 3, targetCtx);
+    targetCtx.fill();
     if (idx === 0) {
-      ctx.font = `${uiPx(27)}px sans-serif`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(def.icon, x + 15 + dx * 16, y + 15 + dy * 16);
+      targetCtx.font = `${uiPx(27)}px sans-serif`;
+      targetCtx.textAlign = "center";
+      targetCtx.textBaseline = "middle";
+      targetCtx.fillText(def.icon, x + 15 + dx * 16, y + 15 + dy * 16);
     }
   });
 }
@@ -2484,10 +2538,6 @@ function drawDropPreview() {
       ctx.fill();
     });
   });
-}
-
-function drawDragGhost() {
-  drawItemPreview(mousePos.x - 30, mousePos.y - 30, ITEM_CATALOG[dragPayload.itemId], dragPayload.itemId, true, dragPayload.rotation || 0);
 }
 
 function describeEffect(e) {
@@ -2725,18 +2775,18 @@ function syncFieldTooltip() {
   positionSidebarTooltip(client.x, client.y, "field");
 }
 
-function roundRect(x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w, y + h - r);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  ctx.lineTo(x + r, y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
-  ctx.closePath();
+function roundRect(x, y, w, h, r, targetCtx = ctx) {
+  targetCtx.beginPath();
+  targetCtx.moveTo(x + r, y);
+  targetCtx.lineTo(x + w - r, y);
+  targetCtx.quadraticCurveTo(x + w, y, x + w, y + r);
+  targetCtx.lineTo(x + w, y + h - r);
+  targetCtx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  targetCtx.lineTo(x + r, y + h);
+  targetCtx.quadraticCurveTo(x, y + h, x, y + h - r);
+  targetCtx.lineTo(x, y + r);
+  targetCtx.quadraticCurveTo(x, y, x + r, y);
+  targetCtx.closePath();
 }
 
 
@@ -2942,6 +2992,7 @@ function onMouseDown(e) {
     startSynergyPreview();
     recalcSynergies();
     syncUiDragState();
+    syncDragGhostOverlay(e.clientX, e.clientY);
   } else if (hit?.zone === "slot" && hit.container && !hit.item && !ITEM_CATALOG[hit.container.itemId].immovable) {
     e.preventDefault();
     selectedBench = -1;
@@ -2953,6 +3004,7 @@ function onMouseDown(e) {
     startSynergyPreview();
     recalcSynergies();
     syncUiDragState();
+    syncDragGhostOverlay(e.clientX, e.clientY);
   }
 }
 
@@ -3183,6 +3235,11 @@ function startShopDrag(index, e, side = prepViewSide) {
   startSynergyPreview();
   document.querySelector(`.shop-card[data-index="${index}"]`)?.classList.add("shop-dragging");
   syncUiDragState();
+  if (e?.clientX != null && e?.clientY != null) {
+    lastPointerClient.x = e.clientX;
+    lastPointerClient.y = e.clientY;
+  }
+  syncDragGhostOverlay(lastPointerClient.x, lastPointerClient.y);
 }
 
 function startBenchDrag(index, e, side = prepViewSide) {
@@ -3195,6 +3252,11 @@ function startBenchDrag(index, e, side = prepViewSide) {
   dragFrom = { type: "bench", index, side };
   startSynergyPreview();
   syncUiDragState();
+  if (e?.clientX != null && e?.clientY != null) {
+    lastPointerClient.x = e.clientX;
+    lastPointerClient.y = e.clientY;
+  }
+  syncDragGhostOverlay(lastPointerClient.x, lastPointerClient.y);
 }
 
 function updateUI() {
@@ -3327,6 +3389,22 @@ function buildItemCardHTML(def, { cardType = "item-card", extraClasses = "", tag
   </div>`;
 }
 
+function renderShopCardHTML(def, { extraClasses = "", innerBefore = "", dataAttrs = "", shapeSize = "md" } = {}) {
+  const classes = getRarityCardClasses(def.rarity, ["shop-card", extraClasses].filter(Boolean).join(" "));
+  const shapeHtml = renderItemShapeMiniHTML(def, { size: shapeSize });
+  const rarityColor = getRarityNameColor(def.rarity);
+  return `<div class="${classes}"${dataAttrs ? ` ${dataAttrs}` : ""} style="--shop-rarity-color:${rarityColor}">
+    ${innerBefore}
+    <div class="shop-item-main">
+      <div class="shop-item-visual">
+        <div class="icon" style="background:${def.color}33">${def.icon}</div>
+        <div class="cost" aria-label="Цена ${def.cost}"><span class="cost-value">${def.cost}</span><span class="cost-coin" aria-hidden="true">💰</span></div>
+      </div>
+      ${shapeHtml}
+    </div>
+  </div>`;
+}
+
 function getShopDisplayEntries(side = prepViewSide) {
   const st = getSideState(side);
   return st.shop
@@ -3354,11 +3432,9 @@ function renderShop(side = prepViewSide) {
     const pinBtn = editable
       ? `<button type="button" class="shop-pin${frozen ? " active" : ""}" data-pin="${index}" title="${frozen ? "Открепить" : "❄️ Заморозить предмет"}">${frozen ? "📌" : "📍"}</button>`
       : "";
-    return buildItemCardHTML(def, {
-      cardType: "shop-card",
+    return renderShopCardHTML(def, {
       extraClasses: [frozen ? "frozen" : "", affordable || !editable ? "" : "unaffordable"].filter(Boolean).join(" "),
       innerBefore: pinBtn,
-      innerAfter: `<div class="cost">${def.cost}💰</div>`,
       shapeSize: "md",
       dataAttrs: `data-index="${index}" data-item-id="${itemId}"${affordable || !editable ? "" : ' data-unaffordable="1" title="Недостаточно золота"'}`, 
     });

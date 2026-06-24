@@ -18,9 +18,16 @@ function parseFloatingMagnitude(text) {
   return match ? parseFloat(match[1]) : 1;
 }
 
+function readCssNumber(name, fallback = 1) {
+  const raw = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const val = parseFloat(raw);
+  return Number.isFinite(val) ? val : fallback;
+}
+
 function getFloatingScale(magnitude) {
   const mag = Math.max(1, magnitude || 1);
-  return Math.min(2.5, 0.88 + Math.log2(mag + 1) * 0.42);
+  const base = Math.min(2.5, 0.88 + Math.log2(mag + 1) * 0.42);
+  return base * readCssNumber("--fx-float-scale", 1);
 }
 
 function classifyFloatingText(text) {

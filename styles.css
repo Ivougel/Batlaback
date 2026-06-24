@@ -1,3 +1,144 @@
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * CANVAS SIZE AUDIT — Шаг 1 (2025-06-24)
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ПРОБЛЕМА: размер #game-canvas задаётся из ≥5 независимых источников.
+ * CSS width:100% / !important бьётся с game.js lock* и ui-layout.js fit*.
+ * prep-ref-layout.css (804 строки) перебивает styles.css через !important.
+ *
+ * ЦЕЛЬ РЕФАКТОРИНГА (шаги 2–5):
+ *   • Единственный display-size: ui-layout.js → canvas.style.width/height
+ *   • CSS: никаких width/height/max-width на #game-canvas и .canvas-scale-wrap
+ *   • Bitmap: canvas.width/height (атрибуты) — game.js applyPhaseCanvasLayout()
+ *   • prep-ref-layout.css → слить в styles.css, удалить второй файл
+ *
+ * ─── styles.css — правила, влияющие на размер canvas ───
+ *
+ * [A] БАЗОВЫЕ (глобальные, всегда активны) — ГЛАВНЫЙ КОНФЛИКТ
+ *   L1936–1945  #game-canvas
+ *               width:100%; height:auto  ← растягивает canvas на всю обёртку
+ *   L1948–1953  .canvas-scale-wrap
+ *               width:100%; max-width:100%
+ *   L1955–1959  .canvas-scale-wrap #game-canvas
+ *               width:100% !important; height:auto !important  ← перебивает JS
+ *
+ * [B] PREP — левая колонка / stage (контейнер, косвенно задаёт 100% canvas)
+ *   L631–641   #app[data-phase="prep"] .prep-left-column .battle-canvas-stage
+ *              width:100%; flex:1.35; display:flex
+ *   L651–660   #app[data-phase="prep"] .prep-left-column .canvas-scale-wrap
+ *              width:100%; max-width:none; flex:1.35
+ *
+ * [C] SIDE PREP (html[data-prep-layout="side"]) — width:100% !important
+ *   L768–775   .prep-left-column .battle-canvas-stage
+ *              width:100%; height:auto; display:block
+ *   L777–784   .prep-left-column .canvas-scale-wrap
+ *              display:block; height:auto (без фикс. размера)
+ *   L786–790   [data-prep-side="player"] .canvas-scale-wrap
+ *              width:calc(100% / var(--battle-field-ratio))  ← ~357% ширины колонки
+ *   L792–796   [data-prep-side="enemy"] .canvas-scale-wrap
+ *              width:calc(100% / var(--battle-enemy-ratio))
+ *   L798–803   .canvas-scale-wrap #game-canvas, #game-canvas
+ *              width:100% !important; height:auto !important; max-width:none
+ *
+ * [D] STACKED PREP (телефоны, html[data-prep-layout="stacked"])
+ *   L4756–4758  .battle-canvas-stage — overflow:hidden
+ *   L4812–4817  #game-canvas — max-width:100%; height:auto
+ *   L4945–4950  .battle-canvas-stage — display:flex; width:100%
+ *
+ * [E] SIDE PREP fit (телефон touch, html[data-prep-side-fit="true"], w<600)
+ *   L5056–5061  .battle-canvas-stage — max-height:calc(var(--app-h) - 180px)
+ *   L5071–5077  #game-canvas — max-width:none; max-height:none (без width)
+ *
+ * [F] VIEWPORT FIT (stacked, html[data-prep-viewport-fit="true"])
+ *   L5191–5198  .battle-canvas-stage — max-height:var(--prep-canvas-max-h)
+ *   L5200–5206  #game-canvas — max-width:none; max-height:none
+ *
+ * [G] SIDE layout band (600–1200px)
+ *   L5010–5014  #game-canvas — max-width:100%; height:auto
+ *
+ * [H] Без размеров (только оформление / cursor — OK оставить)
+ *   L596–598   battle .battle-canvas-stage — position:relative
+ *   L728–732   .battle-canvas-stage — position, overflow
+ *   L883–886   .battle-canvas-stage #game-canvas — border-radius:0
+ *   L3439–3451 #game-canvas.synergy-preview-mode / transition
+ *   L4597–4599 body.gamepad-active #game-canvas — cursor:none
+ *   L4926–4928 touch .battle-canvas-stage — touch-action:none
+ *
+ * ИТОГО styles.css: 5 блоков с width:100% на canvas, 3 с !important,
+ *   2 блока calc(100%/ratio) на .canvas-scale-wrap.
+ *
+ * ─── prep-ref-layout.css — правила размера canvas (перебивает styles.css) ───
+ *
+ * [P1] PREP field column — фикс. px через CSS vars + !important
+ *   L236–250  .prep-field-column .battle-canvas-stage
+ *             width/height: var(--prep-canvas-w/h)
+ *   L252–257  .canvas-scale-wrap — width/height: var(--prep-canvas-w/h)
+ *   L259–265  #game-canvas — width/height: var(--prep-canvas-w/h) !important
+ *
+ * [P2] BATTLE / REPLAY — аналогично battle vars
+ *   L364–381  .battle-canvas-stage — var(--battle-canvas-w/h)
+ *   L383–389  .canvas-scale-wrap — var(--battle-canvas-w/h)
+ *   L391–398  #game-canvas — var(--battle-canvas-w/h) !important
+ *
+ * [P3] LEGACY OVERRIDE (html[data-prep-layout="side"], prep-side-fit)
+ *   L541–556  .battle-canvas-stage — position/size !important (prep-canvas-w/h)
+ *   L558–567  .canvas-scale-wrap — width/height/max-width !important
+ *   L569–581  #game-canvas — width/height/max-width/max-height !important
+ *   L583–596  @media min-width:600px — дубли canvas-scale-wrap + #game-canvas
+ *
+ * ИТОГО prep-ref-layout.css: 3 слоя !important на canvas, дублирует game.js lock*.
+ *
+ * ─── ui-layout.js — inline размер canvas ───
+ *
+ *   clearCanvasDisplaySize()     L73–78   — removeProperty width/height
+ *   fitPrepCanvasToStage()       L118–158
+ *     • phase≠prep → lockBattleCanvasDisplaySize() (game.js) ИЛИ clear
+ *     • prep+side+.prep-field-column → lockPrepCanvasDisplaySize() (game.js)
+ *     • prep+stacked → scale от stage.clientWidth/Height, clip-path ratio
+ *       canvas.style.setProperty('width/height', px, 'important')  L156–157
+ *   scheduleCanvasFit()          L160–164 — rAF ×2 → fitPrepCanvasToStage
+ *   applyUiLayout()              L241     — scheduleCanvasFit на каждый resize
+ *   ResizeObserver(stage)        L258–261 — пересчёт при изменении stage
+ *
+ * КОНФЛИКТ: ui-layout делегирует side-prep в game.js lock*, stacked — сам
+ *   считает scale; game.js syncPrepCanvasDisplaySize() — третий путь для stacked.
+ *
+ * ─── game.js — bitmap + display lock ───
+ *
+ *   applyGridMetricsFromCss()    L48–84   — PREP/BATTLE_CANVAS_W/H из --cell-size
+ *   applyPhaseCanvasLayout()     L769–786
+ *     canvas.width/height = PREP_* или BATTLE_* (bitmap, атрибуты)
+ *     → lockPrepCanvasDisplaySize() / lockBattleCanvasDisplaySize()
+ *   lockPrepCanvasDisplaySize()  L908–916
+ *     style width/height/max-* = readCssPx('--prep-canvas-w/h') !important
+ *   lockBattleCanvasDisplaySize() L918–926
+ *     style width/height/max-* = readCssPx('--battle-canvas-w/h') !important
+ *   syncPrepCanvasDisplaySize()  L928–986 — вызывается из syncBattleArenaLayout
+ *     side+prep-field-column → lockPrepCanvasDisplaySize()
+ *     stacked/viewportFit → свой scale → canvas.style.width/height (без !important)
+ *   window.lockPrep/BattleCanvasDisplaySize — экспорт для ui-layout.js
+ *
+ * КОНФЛИКТ: lock* и prep-ref-layout.css оба ставят одни и те же px с !important.
+ *   syncPrepCanvasDisplaySize дублирует fitPrepCanvasToStage для stacked.
+ *
+ * ─── index.html ───
+ *   <canvas id="game-canvas"> — без width/height атрибутов (задаёт game.js)
+ *
+ * ─── Порядок каскада (почему «всё ломается») ───
+ *   1. styles.css: width:100% !important (L1955, L798)
+ *   2. prep-ref-layout.css: var(--prep-canvas-w) !important (L259, L577)
+ *   3. game.js lock*: readCssPx + !important (при renderPhase / applyGridMetrics)
+ *   4. ui-layout.js fit*: свой scale + !important (stacked) или lock* (side)
+ *   5. ResizeObserver → п.4 снова
+ *   Победитель зависит от порядка вызова JS, не от дизайна.
+ *
+ * ─── CSS vars размеров поля (bitmap, не display) ───
+ *   prep-ref-layout.css :root — --cell-size, --prep-canvas-w/h, --battle-canvas-w/h
+ *   game.js читает через readCssPx / applyGridMetricsFromCss
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -56,6 +197,21 @@ body.is-ui-dragging {
 
 body.is-ui-dragging * {
   cursor: grabbing !important;
+}
+
+.ui-drag-ghost {
+  position: fixed;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  z-index: 10050;
+  transform: translate(-50%, -50%);
+  opacity: 0.94;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.45));
+}
+
+.ui-drag-ghost.hidden {
+  display: none;
 }
 
 #app {
@@ -377,15 +533,16 @@ body:has(#app[data-phase="prep"]) #battle-controls {
   flex-direction: row-reverse;
   justify-content: flex-start;
   text-align: right;
-  padding: calc(6px * var(--ui-scale)) calc(8px * var(--ui-scale)) calc(6px * var(--ui-scale)) calc(28px * var(--ui-scale));
+  padding: calc(2px * var(--ui-scale)) calc(4px * var(--ui-scale)) calc(2px * var(--ui-scale)) calc(22px * var(--ui-scale));
 }
 
-#app[data-phase="prep"][data-prep-side="enemy"] .shop-panel .shop-card .info {
-  align-items: flex-end;
+#app[data-phase="prep"][data-prep-side="enemy"] .shop-panel .shop-card .shop-item-main {
+  flex-direction: row-reverse;
 }
 
-#app[data-phase="prep"][data-prep-side="enemy"] .shop-panel .shop-card .cost {
-  align-self: flex-end;
+#app[data-phase="prep"][data-prep-side="enemy"] .shop-panel .shop-item-visual .cost {
+  right: auto;
+  left: -3px;
 }
 
 #app[data-phase="prep"][data-prep-side="enemy"] .shop-pin {
@@ -424,7 +581,7 @@ body:has(#app[data-phase="prep"]) #battle-controls {
   display: flex;
   flex-direction: column;
   margin-top: 0;
-  padding: calc(10px * var(--ui-scale));
+  padding: calc(6px * var(--ui-scale)) calc(8px * var(--ui-scale)) calc(8px * var(--ui-scale));
   background: rgba(22, 27, 34, 0.97);
   border: none;
   overflow: hidden;
@@ -518,56 +675,102 @@ body:has(#app[data-phase="prep"]) #battle-controls {
   min-height: 0;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-auto-rows: calc(90px * var(--ui-scale));
+  grid-auto-rows: var(--shop-card-row-h);
   align-content: start;
   justify-items: stretch;
-  gap: calc(8px * var(--ui-scale));
+  gap: calc(5px * var(--ui-scale));
   overflow-y: auto;
 }
 
 #app[data-phase="prep"] .shop-panel .shop-card:last-child:nth-child(odd) {
   grid-column: 1 / -1;
-  width: calc(50% - calc(4px * var(--ui-scale)));
+  width: calc(50% - calc(3px * var(--ui-scale)));
   justify-self: center;
 }
 
 #app[data-phase="prep"] .shop-panel .shop-card {
+  position: relative;
   flex-direction: row;
   align-items: center;
   justify-content: flex-start;
   text-align: left;
-  gap: calc(6px * var(--ui-scale));
-  height: calc(90px * var(--ui-scale));
-  min-height: calc(90px * var(--ui-scale));
-  max-height: calc(90px * var(--ui-scale));
-  padding: calc(6px * var(--ui-scale)) calc(28px * var(--ui-scale)) calc(6px * var(--ui-scale)) calc(8px * var(--ui-scale));
-  overflow: hidden;
+  gap: calc(4px * var(--ui-scale));
+  height: var(--shop-card-row-h);
+  min-height: var(--shop-card-row-h);
+  max-height: var(--shop-card-row-h);
+  padding: calc(2px * var(--ui-scale)) calc(22px * var(--ui-scale)) calc(2px * var(--ui-scale)) calc(4px * var(--ui-scale));
+  overflow: visible;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+#app[data-phase="prep"] .shop-panel .shop-card.rarity-common,
+#app[data-phase="prep"] .shop-panel .shop-card.rarity-uncommon,
+#app[data-phase="prep"] .shop-panel .shop-card.rarity-rare,
+#app[data-phase="prep"] .shop-panel .shop-card.rarity-epic,
+#app[data-phase="prep"] .shop-panel .shop-card.rarity-legendary,
+#app[data-phase="prep"] .shop-panel .shop-card.frozen {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+#app[data-phase="prep"] .shop-panel .shop-card:hover:not(.empty):not(.unaffordable) {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  transform: scale(1.04);
+}
+
+#app[data-phase="prep"] .shop-panel .shop-card.unaffordable:hover {
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 #app[data-phase="prep"] .shop-panel .shop-card.empty {
-  min-height: calc(90px * var(--ui-scale));
-  height: calc(90px * var(--ui-scale));
+  min-height: var(--shop-card-row-h);
+  height: var(--shop-card-row-h);
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
-#app[data-phase="prep"] .shop-panel .shop-card .icon {
-  width: var(--game-item-icon-size);
-  height: var(--game-item-icon-size);
-  font-size: 1.575rem;
-  margin: 0;
-  flex-shrink: 0;
-}
-
-#app[data-phase="prep"] .shop-panel .shop-card .info {
+#app[data-phase="prep"] .shop-panel .shop-item-main {
   flex: 1;
   min-width: 0;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: calc(2px * var(--ui-scale));
+  align-items: center;
+  gap: calc(6px * var(--ui-scale));
+}
+
+#app[data-phase="prep"] .shop-panel .shop-item-visual {
+  position: relative;
+  flex-shrink: 0;
+}
+
+#app[data-phase="prep"] .shop-panel .shop-card .shop-item-visual .icon {
+  width: calc(var(--game-item-icon-size) * var(--shop-item-icon-scale, 1.28));
+  height: calc(var(--game-item-icon-size) * var(--shop-item-icon-scale, 1.28));
+  font-size: calc(1.95rem * var(--ui-scale));
+  margin: 0;
+  flex-shrink: 0;
+  border-radius: calc(12px * var(--ui-scale));
+  transition: box-shadow 0.15s, transform 0.1s;
+}
+
+#app[data-phase="prep"] .shop-panel .shop-card .info,
+#app[data-phase="prep"] #shop-panel .bench-panel .bench-card:not(.empty) .info {
+  display: none;
 }
 
 #app[data-phase="prep"] .shop-panel .shop-card .item-shape-mini {
-  margin-right: calc(2px * var(--ui-scale));
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  justify-content: flex-end;
 }
 
 #app[data-phase="prep"] #shop-panel .bench-panel .bench-card .item-shape-mini {
@@ -575,9 +778,97 @@ body:has(#app[data-phase="prep"]) #battle-controls {
   gap: 1px;
 }
 
-#app[data-phase="prep"] .shop-panel .shop-card .cost {
-  flex-shrink: 0;
-  align-self: flex-start;
+#app[data-phase="prep"] .shop-panel .shop-item-visual .cost {
+  position: absolute;
+  right: -3px;
+  bottom: -4px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: calc(2px * var(--ui-scale));
+  padding: calc(1px * var(--ui-scale)) calc(5px * var(--ui-scale));
+  border-radius: calc(8px * var(--ui-scale));
+  background: rgba(13, 17, 23, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  font-size: calc(0.92rem * var(--ui-scale));
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+  pointer-events: none;
+}
+
+#app[data-phase="prep"] .shop-panel .shop-item-visual .cost-value {
+  font-variant-numeric: tabular-nums;
+  color: var(--gold);
+}
+
+#app[data-phase="prep"] .shop-panel .shop-item-visual .cost-coin {
+  font-size: calc(1rem * var(--ui-scale));
+  line-height: 1;
+}
+
+/* Редкость в магазине: лёгкое свечение иконки, без рамок карточки */
+#app[data-phase="prep"] .shop-panel .shop-card.rarity-common .shop-item-visual .icon {
+  box-shadow: 0 0 0 1px rgba(139, 148, 158, 0.42);
+}
+
+#app[data-phase="prep"] .shop-panel .shop-card.rarity-uncommon .shop-item-visual .icon {
+  box-shadow:
+    0 0 0 1.5px rgba(63, 185, 80, 0.55),
+    0 0 14px rgba(63, 185, 80, 0.14);
+}
+
+#app[data-phase="prep"] .shop-panel .shop-card.rarity-rare .shop-item-visual .icon {
+  box-shadow:
+    0 0 0 1.5px rgba(88, 166, 255, 0.58),
+    0 0 16px rgba(88, 166, 255, 0.18);
+}
+
+#app[data-phase="prep"] .shop-panel .shop-card.rarity-epic .shop-item-visual .icon {
+  box-shadow:
+    0 0 0 1.5px rgba(163, 113, 247, 0.62),
+    0 0 18px rgba(163, 113, 247, 0.22);
+}
+
+#app[data-phase="prep"] .shop-panel .shop-card.rarity-legendary .shop-item-visual .icon {
+  box-shadow:
+    0 0 0 2px rgba(240, 193, 75, 0.65),
+    0 0 20px rgba(240, 193, 75, 0.28);
+}
+
+#app[data-phase="prep"] .shop-panel .shop-card.frozen .shop-item-visual .icon {
+  box-shadow:
+    0 0 0 2px rgba(88, 166, 255, 0.75),
+    0 0 12px rgba(88, 166, 255, 0.2);
+}
+
+#app[data-phase="prep"] .shop-panel .shop-card.frozen.rarity-uncommon .shop-item-visual .icon {
+  box-shadow:
+    0 0 0 2px rgba(88, 166, 255, 0.75),
+    0 0 0 4px rgba(63, 185, 80, 0.35),
+    0 0 14px rgba(63, 185, 80, 0.14);
+}
+
+#app[data-phase="prep"] .shop-panel .shop-card.frozen.rarity-rare .shop-item-visual .icon {
+  box-shadow:
+    0 0 0 2px rgba(88, 166, 255, 0.75),
+    0 0 0 4px rgba(88, 166, 255, 0.28),
+    0 0 16px rgba(88, 166, 255, 0.18);
+}
+
+#app[data-phase="prep"] .shop-panel .shop-card.frozen.rarity-epic .shop-item-visual .icon {
+  box-shadow:
+    0 0 0 2px rgba(88, 166, 255, 0.75),
+    0 0 0 4px rgba(163, 113, 247, 0.32),
+    0 0 18px rgba(163, 113, 247, 0.22);
+}
+
+#app[data-phase="prep"] .shop-panel .shop-card.frozen.rarity-legendary .shop-item-visual .icon {
+  box-shadow:
+    0 0 0 2px rgba(88, 166, 255, 0.75),
+    0 0 0 4px rgba(240, 193, 75, 0.35),
+    0 0 20px rgba(240, 193, 75, 0.28);
 }
 
 #app[data-phase="battle"] #shop-panel {
@@ -2022,7 +2313,7 @@ html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .field-a
 }
 
 .shop-panel .shop-hint {
-  margin: 0 0 calc(8px * var(--ui-scale));
+  margin: 0 0 calc(4px * var(--ui-scale));
   font-size: 0.72rem;
   flex-shrink: 0;
 }
@@ -2039,22 +2330,6 @@ html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .field-a
   background: rgba(88, 166, 255, 0.12);
 }
 
-#app[data-phase="prep"] .shop-panel .shop-card .name {
-  font-size: 0.72rem;
-  line-height: 1.2;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-
-#app[data-phase="prep"] .shop-panel .shop-card .tags {
-  display: none;
-}
-
-#app[data-phase="prep"] .shop-panel .shop-card .cost {
-  font-size: 0.82rem;
-}
 
 @media (max-width: 599px) {
   #app[data-phase="prep"] #shop-panel {
@@ -2079,14 +2354,14 @@ html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .field-a
 
   #app[data-phase="prep"] .shop-panel .shop-slots {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-auto-rows: calc(86px * var(--ui-scale));
+    grid-auto-rows: var(--shop-card-row-h);
   }
 
   #app[data-phase="prep"] .shop-panel .shop-card,
   #app[data-phase="prep"] .shop-panel .shop-card.empty {
-    height: calc(86px * var(--ui-scale));
-    min-height: calc(86px * var(--ui-scale));
-    max-height: calc(86px * var(--ui-scale));
+    height: var(--shop-card-row-h);
+    min-height: var(--shop-card-row-h);
+    max-height: var(--shop-card-row-h);
   }
 }
 
@@ -2142,55 +2417,7 @@ html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .field-a
     font-size: 1.15rem;
   }
 
-  #app[data-phase="prep"] .game-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 280px;
-    grid-template-rows: 1fr auto;
-    align-items: stretch;
-    gap: 6px;
-    height: 100%;
-  }
-
-  #app[data-phase="prep"] .board-section {
-    display: contents;
-  }
-
-  #app[data-phase="prep"] .battle-arena {
-    display: contents;
-  }
-
-  #app[data-phase="prep"] .prep-left-column {
-    grid-column: 1;
-    grid-row: 1;
-    min-height: 0;
-    height: 100%;
-    overflow: hidden;
-  }
-
-  #app[data-phase="prep"] #shop-panel {
-    position: static;
-    left: auto;
-    right: auto;
-    top: auto;
-    bottom: auto;
-    grid-column: 2;
-    grid-row: 1;
-    align-self: stretch;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-    min-width: 280px;
-    width: 280px;
-    max-width: 280px;
-    min-height: 0;
-    max-height: none;
-    margin: 0;
-    padding: calc(8px * var(--ui-scale));
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    background: #161b22;
-    overflow: hidden;
-  }
+  /* Grid/shop width: prep-ref-layout.css (--shop-panel-w) */
 
   #app[data-phase="prep"] #shop-panel .shop-panel-header {
     flex-shrink: 0;
@@ -2240,7 +2467,7 @@ html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .field-a
     overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    grid-auto-rows: calc(72px * var(--ui-scale));
+    grid-auto-rows: var(--shop-card-row-h);
   }
 
   #app[data-phase="prep"] #shop-panel .bench-panel .bench-slots,
@@ -2261,54 +2488,22 @@ html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .field-a
 
   #app[data-phase="prep"] .shop-panel .shop-card,
   #app[data-phase="prep"] .shop-panel .shop-card.empty {
-    height: calc(72px * var(--ui-scale));
-    min-height: calc(72px * var(--ui-scale));
-    max-height: calc(72px * var(--ui-scale));
+    height: var(--shop-card-row-h);
+    min-height: var(--shop-card-row-h);
+    max-height: var(--shop-card-row-h);
     min-width: 0;
     overflow: hidden;
     padding: calc(4px * var(--ui-scale)) calc(24px * var(--ui-scale)) calc(4px * var(--ui-scale)) calc(6px * var(--ui-scale));
     gap: calc(4px * var(--ui-scale));
   }
 
-  #app[data-phase="prep"] .shop-panel .shop-card .info {
-    min-width: 0;
-    overflow: hidden;
-  }
-
-  #app[data-phase="prep"] .shop-panel .shop-card .name {
-    display: block;
+  #app[data-phase="prep"] .shop-panel .shop-item-visual .cost {
     white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    -webkit-line-clamp: unset;
-    -webkit-box-orient: unset;
+    font-size: calc(0.86rem * var(--ui-scale));
   }
 
-  #app[data-phase="prep"] .shop-panel .shop-card .cost {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  #app[data-phase="prep"] #prep-toolbar {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    flex-shrink: 0;
-    min-height: 50px;
-    max-height: 50px;
-    height: 50px;
-    padding: 4px 8px;
-    margin-top: 0;
-    overflow: hidden;
-    align-items: center;
-  }
-
-  #app[data-phase="prep"] #prep-toolbar .prep-side-hint {
-    display: none;
-  }
-
-  #app[data-phase="prep"] #prep-toolbar .phase-label {
-    display: none;
+  #app[data-phase="prep"] .shop-panel .shop-item-visual .cost-coin {
+    font-size: calc(0.94rem * var(--ui-scale));
   }
 
   #app[data-phase="prep"][data-prep-side="player"] .battle-avatars-row {
@@ -2654,25 +2849,35 @@ html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .field-a
 .item-card.rarity-common .name,
 .shop-card.rarity-common .name,
 .bench-card.rarity-common .name {
-  color: #c9d1d9;
+  color: #8b949e;
 }
 
 .item-card.rarity-uncommon,
 .shop-card.rarity-uncommon,
 .bench-card.rarity-uncommon {
-  border-color: rgba(88, 166, 255, 0.55);
-  box-shadow: 0 0 8px rgba(88, 166, 255, 0.12);
+  border-color: rgba(63, 185, 80, 0.55);
+  box-shadow: 0 0 8px rgba(63, 185, 80, 0.12);
 }
 
 .item-card.rarity-uncommon .name,
 .shop-card.rarity-uncommon .name,
 .bench-card.rarity-uncommon .name {
-  color: #58a6ff;
+  color: #3fb950;
 }
 
 .item-card.rarity-rare,
 .shop-card.rarity-rare,
-.bench-card.rarity-rare,
+.bench-card.rarity-rare {
+  border-color: rgba(88, 166, 255, 0.6);
+  box-shadow: 0 0 10px rgba(88, 166, 255, 0.15);
+}
+
+.item-card.rarity-rare .name,
+.shop-card.rarity-rare .name,
+.bench-card.rarity-rare .name {
+  color: #58a6ff;
+}
+
 .item-card.rarity-epic,
 .shop-card.rarity-epic,
 .bench-card.rarity-epic {
@@ -2680,9 +2885,6 @@ html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .field-a
   box-shadow: 0 0 12px rgba(163, 113, 247, 0.22);
 }
 
-.item-card.rarity-rare .name,
-.shop-card.rarity-rare .name,
-.bench-card.rarity-rare .name,
 .item-card.rarity-epic .name,
 .shop-card.rarity-epic .name,
 .bench-card.rarity-epic .name {
@@ -2731,6 +2933,12 @@ html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .field-a
 .bench-card .info {
   flex: 1;
   min-width: 0;
+}
+
+/* Магазин и скамейка: названия только в sidebar-tooltip при наведении */
+.shop-panel .shop-card .info,
+.bench-panel .bench-card:not(.empty) .info {
+  display: none;
 }
 
 .shop-card .name,
@@ -2966,7 +3174,7 @@ button:disabled {
   top: 0;
   transform: translate3d(-9999px, -9999px, 0);
   font-weight: 700;
-  font-size: calc(17px * var(--ui-scale));
+  font-size: calc(17px * var(--ui-scale) * var(--fx-float-scale, 1));
   line-height: 1;
   white-space: nowrap;
   color: var(--bf-color, #f85149);
@@ -2980,7 +3188,7 @@ button:disabled {
 }
 
 .battle-float-projectile {
-  font-size: calc(22px * var(--ui-scale));
+  font-size: calc(22px * var(--ui-scale) * var(--fx-projectile-scale, 1));
   filter: drop-shadow(0 0 8px rgba(88, 166, 255, 0.45));
 }
 
@@ -4259,8 +4467,8 @@ body:has(#overlay:not(.hidden)) {
   background: #161b22;
 }
 
-.recipe-book-item.rarity-uncommon { border-color: rgba(88, 166, 255, 0.45); }
-.recipe-book-item.rarity-rare { border-color: rgba(163, 113, 247, 0.5); }
+.recipe-book-item.rarity-uncommon { border-color: rgba(63, 185, 80, 0.45); }
+.recipe-book-item.rarity-rare { border-color: rgba(88, 166, 255, 0.5); }
 .recipe-book-item.rarity-epic { border-color: rgba(163, 113, 247, 0.65); }
 .recipe-book-item.rarity-legendary { border-color: rgba(240, 193, 75, 0.55); }
 
@@ -4869,10 +5077,6 @@ html[data-prep-layout="stacked"] #app[data-phase="prep"][data-prep-side="enemy"]
   padding: calc(6px * var(--ui-scale)) calc(28px * var(--ui-scale)) calc(6px * var(--ui-scale)) calc(8px * var(--ui-scale));
 }
 
-html[data-prep-layout="stacked"] #app[data-phase="prep"][data-prep-side="enemy"] .shop-panel .shop-card .info {
-  align-items: flex-start;
-}
-
 html[data-prep-layout="stacked"] #app[data-phase="prep"][data-prep-side="enemy"] .shop-pin {
   left: auto;
   right: 4px;
@@ -5354,7 +5558,7 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .btn-refresh-shop {
   font-size: 0.78rem;
 }
 
-/* Планшет 600–1200px: перебивает prep-side-fit (landscape iPad mini ~1133px) */
+/* Планшет 600–1200px: высота app; grid/canvas/shop — prep-ref-layout.css */
 @media (min-width: 600px) and (max-width: 1200px) {
   html[data-prep-layout="side"] #app[data-phase="prep"],
   html[data-prep-side-fit="true"] #app[data-phase="prep"] {
@@ -5369,159 +5573,9 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .btn-refresh-shop {
   html[data-prep-side-fit="true"] #app[data-phase="prep"] .game-layout {
     flex: 1 1 auto;
     min-height: 0;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 280px;
-    grid-template-rows: 1fr auto;
-    align-items: stretch;
-    gap: 6px;
     height: 100%;
     overflow: hidden;
-  }
-
-  html[data-prep-layout="side"] #app[data-phase="prep"] .board-section,
-  html[data-prep-side-fit="true"] #app[data-phase="prep"] .board-section {
-    display: contents;
-    min-height: 0;
-  }
-
-  html[data-prep-layout="side"] #app[data-phase="prep"] .battle-arena,
-  html[data-prep-side-fit="true"] #app[data-phase="prep"] .battle-arena {
-    display: contents;
-    min-height: 0;
-  }
-
-  html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column,
-  html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-left-column {
-    grid-column: 1;
-    grid-row: 1;
-    min-height: 0;
-    height: 100%;
-    overflow: hidden;
-  }
-
-  html[data-prep-layout="side"] #app[data-phase="prep"] .battle-canvas-stage,
-  html[data-prep-side-fit="true"] #app[data-phase="prep"] .battle-canvas-stage {
-    overflow: hidden;
-    max-width: none;
-    width: 100%;
-    align-self: stretch;
-  }
-
-  html[data-prep-layout="side"] #app[data-phase="prep"] .canvas-scale-wrap,
-  html[data-prep-side-fit="true"] #app[data-phase="prep"] .canvas-scale-wrap {
-    width: 100%;
-    max-width: none;
-  }
-
-  html[data-prep-layout="side"] #app[data-phase="prep"] #game-canvas,
-  html[data-prep-side-fit="true"] #app[data-phase="prep"] #game-canvas {
-    max-width: none;
-  }
-
-  html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .battle-avatars-row,
-  html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-left-column .battle-avatars-row {
-    max-width: none;
-  }
-
-  html[data-prep-layout="side"] #app[data-phase="prep"] #shop-panel,
-  html[data-prep-side-fit="true"] #app[data-phase="prep"] #shop-panel {
-    position: static;
-    left: auto;
-    right: auto;
-    top: auto;
-    bottom: auto;
-    grid-column: 2;
-    grid-row: 1;
-    min-width: 280px;
-    width: 280px;
-    max-width: 280px;
-    max-height: none;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    padding: calc(8px * var(--ui-scale));
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    background: #161b22;
-  }
-
-  html[data-prep-layout="side"] #app[data-phase="prep"] #shop-panel .shop-slots,
-  html[data-prep-side-fit="true"] #app[data-phase="prep"] .shop-panel .shop-slots {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 6px;
-    flex: 1 1 auto;
-    min-height: 0;
-    min-width: 0;
-    overflow-x: hidden;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  html[data-prep-layout="side"] #app[data-phase="prep"] #prep-toolbar,
-  html[data-prep-side-fit="true"] #app[data-phase="prep"] #prep-toolbar {
-    grid-column: 1 / -1;
-    grid-row: 2;
   }
 }
 
-/* ─── Desktop (>1200px): side-prep — поле | магазин 280px (как на iPad) ─── */
-
-@media (min-width: 1201px) {
-  #app[data-phase="prep"] .game-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 280px;
-    grid-template-rows: 1fr auto;
-    align-items: stretch;
-    gap: 8px;
-    height: 100%;
-    min-height: 0;
-  }
-
-  #app[data-phase="prep"] .board-section {
-    display: contents;
-    min-height: 0;
-  }
-
-  #app[data-phase="prep"] .battle-arena {
-    display: contents;
-    min-height: 0;
-  }
-
-  #app[data-phase="prep"] .prep-left-column {
-    grid-column: 1;
-    grid-row: 1;
-    min-height: 0;
-    height: 100%;
-    overflow: hidden;
-  }
-
-  #app[data-phase="prep"] #shop-panel {
-    position: static;
-    left: auto;
-    right: auto;
-    top: auto;
-    bottom: auto;
-    grid-column: 2;
-    grid-row: 1;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-    min-width: 280px;
-    width: 280px;
-    max-width: 280px;
-    min-height: 0;
-    margin: 0;
-    padding: calc(10px * var(--ui-scale));
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    background: #161b22;
-    overflow: hidden;
-  }
-
-  #app[data-phase="prep"] #prep-toolbar {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    flex-shrink: 0;
-  }
-}
+/* Desktop prep grid/shop: prep-ref-layout.css (--shop-panel-w) */
