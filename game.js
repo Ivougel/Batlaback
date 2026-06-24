@@ -368,7 +368,7 @@ function showGameModeStep() {
   document.getElementById("class-step-player")?.classList.add("hidden");
   document.getElementById("class-step-opponent")?.classList.add("hidden");
   document.getElementById("class-modal-title").textContent = "Режим игры";
-  document.getElementById("class-modal-subtitle").textContent = "Одиночная — против бота. Противостояние — два игрока за одним экраном.";
+  document.getElementById("class-modal-subtitle").textContent = "Выберите формат — одиночный или с другом";
 }
 
 function showPlayerClassStep() {
@@ -401,17 +401,14 @@ function showSecondClassStep() {
   document.getElementById("class-step-mode")?.classList.add("hidden");
   document.getElementById("class-step-player")?.classList.add("hidden");
   document.getElementById("class-step-opponent")?.classList.remove("hidden");
-  const heading = document.getElementById("class-step-opponent-heading");
   const hint = document.getElementById("opponent-mode-hint");
   if (selectedGameMode === "versus") {
     document.getElementById("class-modal-title").textContent = "Игрок 2 — класс";
     document.getElementById("class-modal-subtitle").textContent = `Игрок 1: ${getClassById(pendingPlayerClass)?.name || pendingPlayerClass}`;
-    if (heading) heading.textContent = "Класс второго игрока";
     if (hint) hint.textContent = "Перед боем оба игрока по очереди покупают в магазине (Tab или кнопки внизу).";
   } else {
     document.getElementById("class-modal-title").textContent = "Класс бота";
     document.getElementById("class-modal-subtitle").textContent = `Ваш класс: ${getClassById(pendingPlayerClass)?.name || pendingPlayerClass}`;
-    if (heading) heading.textContent = "Класс бота";
     if (hint) hint.textContent = "Бот сам покупает предметы и расставляет билд между боями.";
   }
   if (!selectedEnemyClass) selectedEnemyClass = pendingPlayerClass === "mage" ? "warrior" : "mage";

@@ -103,52 +103,58 @@
   </div>
 
   <div class="overlay hidden" id="class-overlay">
+      <div class="class-overlay-bg" aria-hidden="true">
+        <span class="class-overlay-blob class-overlay-blob--purple"></span>
+        <span class="class-overlay-blob class-overlay-blob--cyan"></span>
+      </div>
       <div class="modal class-modal">
-        <h2 id="class-modal-title">Выберите класс</h2>
-        <p class="class-subtitle" id="class-modal-subtitle">Каждый класс получает стартовый набор и уникальный бонус на весь забег.</p>
+        <header class="class-modal-header">
+          <p class="class-modal-eyebrow">BACKPACK BATTLES</p>
+          <h2 class="class-modal-title" id="class-modal-title">Режим игры</h2>
+          <p class="class-subtitle" id="class-modal-subtitle">Выберите формат — одиночный или с другом</p>
+        </header>
         <p class="class-controls-hint">✚ — выбор · A — подтвердить · B — назад · + — начать</p>
         <div class="class-step" id="class-step-mode">
           <div class="game-mode-grid">
-            <button type="button" class="class-card game-mode-card selected" data-game-mode="solo">
-              <span class="class-icon">🤖</span>
+            <button type="button" class="class-card game-mode-card glass-card selected" data-game-mode="solo">
+              <span class="glass-card-icon glass-card-icon--solo class-icon" aria-hidden="true">🤖</span>
               <span class="class-name">Одиночная</span>
-              <span class="class-desc">Против бота</span>
-              <span class="class-bonus">Вы выбираете класс · бот собирает билд сам</span>
+              <span class="class-desc">Против ИИ, без ограничений по времени</span>
+              <span class="class-badge class-badge--solo">Против бота</span>
             </button>
-            <button type="button" class="class-card game-mode-card" data-game-mode="versus">
-              <span class="class-icon">⚔️</span>
+            <button type="button" class="class-card game-mode-card glass-card" data-game-mode="versus">
+              <span class="glass-card-icon glass-card-icon--versus class-icon" aria-hidden="true">⚔️</span>
               <span class="class-name">Противостояние</span>
-              <span class="class-desc">Игрок против игрока</span>
-              <span class="class-bonus">Два класса · магазины по очереди на одном экране</span>
+              <span class="class-desc">Два игрока за одним экраном</span>
+              <span class="class-badge class-badge--versus">Локальный PvP</span>
             </button>
           </div>
         </div>
         <div class="class-step hidden" id="class-step-player">
         <div class="class-step-actions class-step-actions-top">
-          <button type="button" class="btn-secondary" id="btn-class-back-mode">← Режим игры</button>
+          <button type="button" class="btn-secondary btn-glass-back" id="btn-class-back-mode">← Режим игры</button>
         </div>
-        <p class="class-swipe-hint">← свайп · выберите класс →</p>
         <div class="class-grid" id="player-class-grid">
-          <button class="class-card" data-class="warrior">
-            <span class="class-icon"><img src="img/sticker_wariormarta.png" alt="Воин" class="class-sticker" draggable="false"></span>
+          <button type="button" class="class-card glass-card" data-class="warrior">
+            <span class="glass-card-icon glass-card-icon--class class-icon"><img src="img/sticker_wariormarta.png" alt="" class="class-sticker" draggable="false"></span>
             <span class="class-name">Воин</span>
             <span class="class-desc">Ржавый меч + железный шлем</span>
             <span class="class-bonus">+10% макс. HP</span>
           </button>
-          <button class="class-card" data-class="rogue">
-            <span class="class-icon"><img src="img/stickerrogue.webp" alt="Разбойник" class="class-sticker" draggable="false"></span>
+          <button type="button" class="class-card glass-card" data-class="rogue">
+            <span class="glass-card-icon glass-card-icon--class class-icon"><img src="img/stickerrogue.webp" alt="" class="class-sticker" draggable="false"></span>
             <span class="class-name">Разбойник</span>
             <span class="class-desc">Кинжал + яд</span>
             <span class="class-bonus">+10% скорость атаки</span>
           </button>
-          <button class="class-card" data-class="mage">
-            <span class="class-icon"><img src="img/stickermage.webp" alt="Маг" class="class-sticker" draggable="false"></span>
+          <button type="button" class="class-card glass-card" data-class="mage">
+            <span class="glass-card-icon glass-card-icon--class class-icon"><img src="img/stickermage.webp" alt="" class="class-sticker" draggable="false"></span>
             <span class="class-name">Маг</span>
             <span class="class-desc">Посох ученика + мана-кристалл</span>
             <span class="class-bonus">+10% магический урон</span>
           </button>
-          <button type="button" class="class-card class-card-disabled" data-class="priest" disabled aria-disabled="true" title="Скоро">
-            <span class="class-icon"><img src="img/stiker_priestMika.png" alt="Жрец" class="class-sticker" draggable="false"></span>
+          <button type="button" class="class-card glass-card class-card-disabled" data-class="priest" disabled aria-disabled="true" title="Скоро">
+            <span class="glass-card-icon glass-card-icon--class class-icon"><img src="img/stiker_priestMika.png" alt="" class="class-sticker" draggable="false"></span>
             <span class="class-name">Жрец</span>
             <span class="class-desc">Скоро</span>
             <span class="class-bonus class-bonus-soon">Скоро доступен</span>
@@ -156,31 +162,30 @@
         </div>
         </div>
         <div class="class-step hidden" id="class-step-opponent">
-          <h3 class="class-step-heading" id="class-step-opponent-heading">Класс бота</h3>
-          <p class="class-subtitle" id="opponent-mode-hint">ИИ сам покупает предметы и расставляет билд между боями.</p>
-          <p class="class-swipe-hint">← свайп · выберите класс →</p>
-          <div class="class-grid" id="opponent-class-grid">
-            <button type="button" class="class-card opponent-class-card" data-opponent-class="warrior">
-              <span class="class-icon"><img src="img/sticker_wariormarta.png" alt="Воин" class="class-sticker" draggable="false"></span>
+          <p class="class-subtitle class-step-sub" id="opponent-mode-hint">ИИ сам покупает предметы и расставляет билд между боями.</p>
+          <div class="class-grid class-grid--opponent" id="opponent-class-grid">
+            <button type="button" class="class-card opponent-class-card glass-card" data-opponent-class="warrior">
+              <span class="glass-card-icon glass-card-icon--class class-icon"><img src="img/sticker_wariormarta.png" alt="" class="class-sticker" draggable="false"></span>
               <span class="class-name">Воин</span>
               <span class="class-desc">Ржавый меч + железный шлем</span>
             </button>
-            <button type="button" class="class-card opponent-class-card" data-opponent-class="rogue">
-              <span class="class-icon"><img src="img/stickerrogue.webp" alt="Разбойник" class="class-sticker" draggable="false"></span>
+            <button type="button" class="class-card opponent-class-card glass-card" data-opponent-class="rogue">
+              <span class="glass-card-icon glass-card-icon--class class-icon"><img src="img/stickerrogue.webp" alt="" class="class-sticker" draggable="false"></span>
               <span class="class-name">Разбойник</span>
               <span class="class-desc">Кинжал + яд</span>
             </button>
-            <button type="button" class="class-card opponent-class-card" data-opponent-class="mage">
-              <span class="class-icon"><img src="img/stickermage.webp" alt="Маг" class="class-sticker" draggable="false"></span>
+            <button type="button" class="class-card opponent-class-card glass-card" data-opponent-class="mage">
+              <span class="glass-card-icon glass-card-icon--class class-icon"><img src="img/stickermage.webp" alt="" class="class-sticker" draggable="false"></span>
               <span class="class-name">Маг</span>
               <span class="class-desc">Посох ученика + мана-кристалл</span>
             </button>
           </div>
           <div class="class-step-actions">
-            <button type="button" class="btn-secondary" id="btn-class-back">← Назад</button>
-            <button type="button" class="btn-primary" id="btn-start-run" disabled>Начать забег</button>
+            <button type="button" class="btn-secondary btn-glass-back" id="btn-class-back">← Назад</button>
+            <button type="button" class="btn-primary btn-glass-start" id="btn-start-run" disabled>Начать забег</button>
           </div>
         </div>
+        <footer class="class-modal-footer">v1.0 · Backpack Battles</footer>
       </div>
     </div>
 

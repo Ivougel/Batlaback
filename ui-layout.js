@@ -196,7 +196,7 @@
       let fitScale = Math.min(baseScale, available / PREP_STACKED_CONTENT_H, w / DESIGN_W);
       fitScale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, fitScale));
       const canvasMax = Math.round(Math.min(available * 0.34, 240 * fitScale));
-      const shopRowH = Math.round(Math.max(50, Math.min(68, 64 * fitScale)));
+      const shopRowH = Math.round(Math.max(54, Math.min(74, 70 * fitScale)));
       document.documentElement.style.setProperty("--prep-canvas-max-h", `${canvasMax}px`);
       document.documentElement.style.setProperty("--prep-shop-row-h", `${shopRowH}px`);
       return Math.round(fitScale * 1000) / 1000;

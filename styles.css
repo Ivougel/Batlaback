@@ -51,7 +51,8 @@
   --prep-hero-slot-height: min(400px, 46vh);
   --shop-panel-w: 300px;
   --shop-card-row-h: calc(108px * var(--ui-scale, 1));
-  --shop-item-icon-scale: 1.28;
+  --shop-item-icon-size: calc(58px * var(--ui-scale, 1));
+  --shop-item-icon-font: calc(50px * var(--ui-scale, 1));
   --prep-toolbar-h: 50px;
   --fx-float-scale: 1;
   --fx-projectile-scale: 1;
@@ -63,8 +64,9 @@
     --cell-size: 40px;
     --grid-gap: 28px;
     --shop-panel-w: 280px;
-    --shop-card-row-h: calc(86px * var(--ui-scale, 1));
-    --shop-item-icon-scale: 1.22;
+    --shop-card-row-h: calc(88px * var(--ui-scale, 1));
+    --shop-item-icon-size: calc(54px * var(--ui-scale, 1));
+    --shop-item-icon-font: calc(46px * var(--ui-scale, 1));
     --prep-scene-top: 10px;
     --battle-stats-panel-w: 252px;
     --prep-hero-slot-left: 20%;
@@ -1571,7 +1573,7 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 
 #app[data-phase="prep"][data-prep-side="enemy"] .shop-pin {
   right: auto;
-  left: 4px;
+  left: 2px;
 }
 
 #app[data-phase="prep"] #shop-panel.shop-readonly .btn-recipe-book {
@@ -1739,6 +1741,7 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 #app[data-phase="prep"] #shop-panel .shop-item-visual {
   position: relative;
   flex-shrink: 0;
+  padding: 0 calc(2px * var(--ui-scale)) calc(4px * var(--ui-scale)) 0;
 }
 
 #app[data-phase="prep"] #shop-panel .shop-card:not(.empty),
@@ -1750,13 +1753,13 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: calc(var(--game-item-icon-size) * var(--shop-item-icon-scale, 1.28));
-  height: calc(var(--game-item-icon-size) * var(--shop-item-icon-scale, 1.28));
-  font-size: calc(1.95rem * var(--ui-scale));
+  width: var(--shop-item-icon-size);
+  height: var(--shop-item-icon-size);
+  font-size: var(--shop-item-icon-font);
   line-height: 1;
   margin: 0;
   flex-shrink: 0;
-  border-radius: calc(12px * var(--ui-scale));
+  border-radius: calc(14px * var(--ui-scale));
   transition: box-shadow 0.15s, transform 0.1s;
 }
 
@@ -1770,6 +1773,7 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
   min-width: 0;
   margin: 0;
   justify-content: flex-end;
+  opacity: 0.72;
 }
 
 #app[data-phase="prep"] #shop-panel .bench-panel .bench-card .item-shape-mini {
@@ -1779,32 +1783,49 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 
 #app[data-phase="prep"] #shop-panel .shop-item-visual .cost {
   position: absolute;
-  right: -3px;
-  bottom: -4px;
+  right: -2px;
+  bottom: -3px;
   z-index: 2;
   display: inline-flex;
   align-items: center;
-  gap: calc(2px * var(--ui-scale));
-  padding: calc(1px * var(--ui-scale)) calc(5px * var(--ui-scale));
-  border-radius: calc(8px * var(--ui-scale));
-  background: rgba(13, 17, 23, 0.94);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
-  font-size: calc(0.92rem * var(--ui-scale));
-  font-weight: 800;
+  gap: calc(1px * var(--ui-scale));
+  padding: calc(1px * var(--ui-scale)) calc(4px * var(--ui-scale));
+  border-radius: calc(6px * var(--ui-scale));
+  background: rgba(13, 17, 23, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28);
+  font-size: calc(0.76rem * var(--ui-scale));
+  font-weight: 600;
   line-height: 1.1;
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
   pointer-events: none;
 }
 
 #app[data-phase="prep"] #shop-panel .shop-item-visual .cost-value {
   font-variant-numeric: tabular-nums;
-  color: var(--gold);
+  color: rgba(240, 193, 75, 0.88);
 }
 
 #app[data-phase="prep"] #shop-panel .shop-item-visual .cost-coin {
-  font-size: calc(1rem * var(--ui-scale));
+  font-size: calc(0.78rem * var(--ui-scale));
   line-height: 1;
+  opacity: 0.85;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-pin {
+  top: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
+  border-radius: 4px;
+  opacity: 0.45;
+  z-index: 3;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-pin:hover,
+#app[data-phase="prep"] #shop-panel .shop-pin.active {
+  opacity: 0.92;
 }
 
 /* Редкость: свечение иконки */
@@ -1978,7 +1999,13 @@ html[data-battle-hud-pin="true"] body {
     margin-top: calc(6px * var(--ui-scale));
   }
 
-  #app[data-phase="prep"] #shop-panel .shop-card,
+  #app[data-phase="prep"] #shop-panel .shop-card:not(.empty) {
+    min-width: 0;
+    overflow: visible;
+    padding: calc(4px * var(--ui-scale)) calc(24px * var(--ui-scale)) calc(4px * var(--ui-scale)) calc(6px * var(--ui-scale));
+    gap: calc(4px * var(--ui-scale));
+  }
+
   #app[data-phase="prep"] #shop-panel .shop-card.empty {
     min-width: 0;
     overflow: hidden;
@@ -1988,11 +2015,11 @@ html[data-battle-hud-pin="true"] body {
 
   #app[data-phase="prep"] #shop-panel .shop-item-visual .cost {
     white-space: nowrap;
-    font-size: calc(0.86rem * var(--ui-scale));
+    font-size: calc(0.72rem * var(--ui-scale));
   }
 
   #app[data-phase="prep"] #shop-panel .shop-item-visual .cost-coin {
-    font-size: calc(0.94rem * var(--ui-scale));
+    font-size: calc(0.74rem * var(--ui-scale));
   }
 
   html[data-prep-layout="side"] #app[data-phase="prep"],
@@ -2128,9 +2155,15 @@ html[data-battle-hud-pin="true"] body {
 }
 
 .class-modal .class-step-actions {
-  margin-top: calc(10px * var(--ui-scale));
-  padding-top: calc(8px * var(--ui-scale));
-  border-top: 1px solid var(--border);
+  margin-top: 16px;
+  padding-top: 0;
+  border-top: none;
+  justify-content: center;
+  gap: 12px;
+  max-width: 560px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .opponent-mode-toggle {
@@ -2146,9 +2179,11 @@ html[data-battle-hud-pin="true"] body {
 }
 
 .class-card.selected,
-.opponent-class-card.selected {
-  border-color: #58a6ff;
-  box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.35);
+.opponent-class-card.selected,
+.game-mode-card.selected {
+  border-color: rgba(110, 168, 255, 0.42);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 1px rgba(110, 168, 255, 0.18), 0 12px 40px rgba(88, 166, 255, 0.1);
 }
 
 .class-step.hidden {
@@ -2167,17 +2202,14 @@ html[data-battle-hud-pin="true"] body {
 .class-modal .class-step:not(.hidden) .game-mode-grid {
   flex: 0 0 auto;
   min-height: 0;
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-  scroll-snap-type: x proximity;
-  scroll-padding-inline: 8px;
-  padding: 2px 4px 6px;
-  margin: 0 -4px;
+  overflow: visible;
+  padding: 0;
+  margin: 0 auto;
+  scroll-snap-type: none;
 }
 
-.class-modal > h2,
-.class-modal > .class-subtitle {
+.class-modal-header,
+.class-modal-footer {
   flex-shrink: 0;
 }
 
@@ -2185,16 +2217,16 @@ html[data-battle-hud-pin="true"] body {
   display: none;
 }
 
-#class-step-opponent .class-step-heading {
-  display: none;
-}
-
-#class-step-opponent #opponent-mode-hint {
-  display: none;
-}
-
 .class-step-actions-top {
   flex-shrink: 0;
+  max-width: 560px;
+  width: 100%;
+  margin: 0 auto 12px;
+  justify-content: flex-start;
+}
+
+.class-step-actions-top .btn-secondary {
+  min-width: auto;
 }
 
 .class-swipe-hint {
@@ -2931,34 +2963,91 @@ body:has(#overlay:not(.hidden)) {
   background: #f85149;
 }
 
-.class-modal {
-  width: min(1040px, 96vw);
-  max-width: 1040px;
+#class-overlay {
+  background: #080810;
+  align-items: center;
+  justify-content: center;
+}
+
+.class-overlay-bg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.class-overlay-blob {
+  position: absolute;
+  border-radius: 50%;
+}
+
+.class-overlay-blob--purple {
+  width: min(560px, 92vw);
+  height: min(560px, 92vw);
+  left: -14%;
+  top: -12%;
+  background: radial-gradient(circle, rgba(109, 40, 217, 0.38) 0%, transparent 68%);
+}
+
+.class-overlay-blob--cyan {
+  width: min(620px, 96vw);
+  height: min(620px, 96vw);
+  right: -16%;
+  bottom: -14%;
+  background: radial-gradient(circle, rgba(34, 211, 238, 0.22) 0%, transparent 68%);
+}
+
+#class-overlay .class-modal {
+  position: relative;
+  z-index: 1;
+  width: min(640px, 96vw);
+  max-width: 640px;
   max-height: var(--overlay-max-h, calc(100dvh - 10px));
-  padding: calc(20px * var(--ui-scale)) calc(18px * var(--ui-scale)) calc(16px * var(--ui-scale));
+  padding:
+    max(20px, env(safe-area-inset-top))
+    max(16px, env(safe-area-inset-right))
+    max(12px, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  --class-picker-square: clamp(140px, 34vw, 240px);
-  /* sqrt(70%) ≈ 83.67% стороны — иконка занимает 70% площади квадрата */
-  --class-picker-icon-frac: 83.67%;
-  --class-picker-gap: calc(14px * var(--ui-scale));
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  text-align: center;
 }
 
-#class-overlay {
-  align-items: center;
+.class-modal-header {
+  margin-bottom: 20px;
 }
 
-.class-modal h2 {
-  font-size: calc(1.35rem * var(--ui-scale));
-  margin-bottom: 4px;
-  flex-shrink: 0;
+.class-modal-eyebrow {
+  margin: 0 0 8px;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(139, 148, 158, 0.85);
 }
 
-.class-modal > .class-subtitle {
-  margin-bottom: calc(10px * var(--ui-scale));
-  font-size: calc(0.84rem * var(--ui-scale));
-  line-height: 1.3;
+.class-modal-title {
+  margin: 0 0 8px;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.15;
+  background: linear-gradient(90deg, #5b9dff 0%, #7ee8ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.class-modal-header .class-subtitle {
+  margin: 0;
+  font-size: 0.875rem;
+  color: rgba(139, 148, 158, 0.95);
 }
 
 .class-subtitle {
@@ -2967,143 +3056,184 @@ body:has(#overlay:not(.hidden)) {
   line-height: 1.35;
 }
 
-.class-modal .class-grid,
-.class-modal .game-mode-grid {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  gap: var(--class-picker-gap);
-  align-items: stretch;
+.class-step-sub {
+  margin: -6px auto 16px;
+  max-width: 560px;
+  font-size: 0.82rem;
+  line-height: 1.35;
 }
 
-.class-modal .class-grid .class-card,
-.class-modal .game-mode-grid .class-card {
-  flex: 0 0 var(--class-picker-square);
-  width: var(--class-picker-square);
-  height: var(--class-picker-square);
-  aspect-ratio: 1;
-  scroll-snap-align: center;
-  min-height: 0;
-  min-width: 0;
-  padding: 0;
-  gap: 0;
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
-  container-type: size;
+.class-modal-footer {
+  margin-top: auto;
+  padding-top: 20px;
+  font-size: 0.72rem;
+  color: rgba(139, 148, 158, 0.55);
+}
+
+.class-modal .game-mode-grid,
+.class-modal .class-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  max-width: 560px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.class-modal .glass-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 20px;
+  padding: 24px 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.class-modal #class-step-mode .game-mode-grid {
-  overflow-x: hidden;
-  justify-content: stretch;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-}
-
-.class-modal #class-step-mode .game-mode-card {
-  flex: 1 1 0;
+  text-align: center;
+  gap: 0;
+  min-height: auto;
   width: auto;
   height: auto;
-  min-width: 0;
-  max-width: none;
-  aspect-ratio: 1;
+  aspect-ratio: auto;
+  color: var(--text);
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  transition: border-color 0.18s, background 0.18s, transform 0.18s, box-shadow 0.18s;
 }
 
-.class-modal .class-icon {
-  width: var(--class-picker-icon-frac);
-  height: var(--class-picker-icon-frac);
-  flex-shrink: 0;
+.class-modal .glass-card:hover:not(:disabled):not(.class-card-disabled) {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.14);
+  transform: translateY(-2px);
+}
+
+.glass-card-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  margin-bottom: 14px;
   line-height: 1;
 }
 
-.class-modal .game-mode-card .class-icon {
-  font-size: 83.67cqmin;
+.glass-card-icon--solo {
+  background: rgba(109, 40, 217, 0.28);
+  font-size: 2rem;
 }
 
-.class-modal .class-icon .class-sticker {
+.glass-card-icon--versus {
+  background: rgba(220, 38, 38, 0.28);
+  font-size: 2rem;
+}
+
+.glass-card-icon--class {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.class-modal .glass-card-icon .class-sticker {
   width: 100%;
   height: 100%;
   object-fit: contain;
 }
 
-.class-modal .class-name,
-.class-modal .class-desc,
+.class-modal .class-name {
+  display: block;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f0f6fc;
+  margin-bottom: 6px;
+}
+
+.class-modal .class-desc {
+  display: block;
+  font-size: 0.78rem;
+  color: rgba(139, 148, 158, 0.95);
+  line-height: 1.35;
+  margin-bottom: 10px;
+}
+
 .class-modal .class-bonus {
-  display: none;
+  display: block;
+  font-size: 0.72rem;
+  color: #d4a72c;
+  line-height: 1.3;
 }
 
-.class-modal .class-card:hover {
-  border: none;
-  transform: scale(1.04);
+.class-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-top: 4px;
 }
 
-.class-modal .class-card.selected,
-.class-modal .game-mode-card.selected,
-.class-modal .opponent-class-card.selected {
-  border: none;
-  box-shadow: none;
-  background: transparent;
+.class-badge--solo {
+  background: rgba(109, 40, 217, 0.35);
+  color: #c4b5fd;
 }
 
-.class-modal .class-card.selected .class-icon,
-.class-modal .game-mode-card.selected .class-icon,
-.class-modal .opponent-class-card.selected .class-icon {
-  filter: drop-shadow(0 0 10px rgba(88, 166, 255, 0.75));
+.class-badge--versus {
+  background: rgba(220, 38, 38, 0.35);
+  color: #fca5a5;
+}
+
+.class-modal .class-card-disabled,
+.class-modal .class-card:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: grayscale(0.4);
 }
 
 .class-modal .class-card-disabled:hover,
 .class-modal .class-card:disabled:hover {
-  border: none;
   transform: none;
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.09);
 }
 
-.class-modal .class-name {
-  font-size: calc(0.95rem * var(--ui-scale));
+.btn-glass-back {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(230, 237, 243, 0.9);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 0.82rem;
+  min-width: auto;
 }
 
-.class-modal .class-desc,
-.class-modal .class-bonus {
-  font-size: calc(0.72rem * var(--ui-scale));
-  line-height: 1.25;
+.btn-glass-back:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.btn-glass-start {
+  border-radius: 999px;
+  padding-left: 20px;
+  padding-right: 20px;
 }
 
 .class-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: calc(20px * var(--ui-scale));
+  gap: 16px;
 }
 
 .game-mode-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: calc(20px * var(--ui-scale));
+  gap: 16px;
 }
 
-.game-mode-card.selected {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent);
-}
-
-.class-step-actions-top {
-  margin-bottom: calc(8px * var(--ui-scale));
-  justify-content: flex-start;
-}
-
-.class-step-actions-top .btn-secondary {
-  min-width: auto;
-}
-
-.class-card {
+.class-card:not(.glass-card) {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -3118,7 +3248,7 @@ body:has(#overlay:not(.hidden)) {
   min-height: calc(var(--class-sticker-size) + 140px * var(--ui-scale));
 }
 
-.class-card:hover {
+.class-card:not(.glass-card):hover {
   border-color: var(--accent);
   transform: translateY(-2px);
 }
@@ -3165,6 +3295,34 @@ body:has(#overlay:not(.hidden)) {
 
 .class-bonus {
   color: var(--gold);
+}
+
+.class-modal .glass-card .glass-card-icon {
+  width: 72px;
+  height: 72px;
+}
+
+.class-modal .glass-card .class-name {
+  display: block;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f0f6fc;
+  margin-bottom: 6px;
+}
+
+.class-modal .glass-card .class-desc {
+  display: block;
+  font-size: 0.78rem;
+  color: rgba(139, 148, 158, 0.95);
+  line-height: 1.35;
+  margin-bottom: 10px;
+}
+
+.class-modal .glass-card .class-bonus {
+  display: block;
+  font-size: 0.72rem;
+  color: #d4a72c;
+  line-height: 1.3;
 }
 
 .shop-card {
@@ -3255,9 +3413,11 @@ html[data-touch="true"] .sidebar-tooltip.synergy-tooltip .synergy-tt-source {
   margin-bottom: 4px;
 }
 
-@media (max-width: 700px) {
-  .class-grid {
+@media (max-width: 520px) {
+  .class-modal .game-mode-grid,
+  .class-modal .class-grid {
     grid-template-columns: 1fr;
+    max-width: 320px;
   }
 }
 
@@ -4473,55 +4633,57 @@ html[data-ui-tier="phone"] {
   --class-sticker-size: calc(80px * var(--ui-scale));
 }
 
-html[data-ui-compact="true"] .class-modal {
-  padding: calc(12px * var(--ui-scale)) calc(12px * var(--ui-scale)) calc(10px * var(--ui-scale));
-  --class-picker-square: clamp(108px, 30vw, 168px);
+html[data-ui-compact="true"] #class-overlay .class-modal {
+  padding:
+    max(12px, env(safe-area-inset-top))
+    max(12px, env(safe-area-inset-right))
+    max(10px, env(safe-area-inset-bottom))
+    max(12px, env(safe-area-inset-left));
 }
 
-html[data-ui-compact="true"] .class-modal h2 {
-  font-size: calc(1.2rem * var(--ui-scale));
-  margin-bottom: 4px;
+html[data-ui-compact="true"] .class-modal-title {
+  font-size: 22px;
 }
 
-html[data-ui-compact="true"] .class-modal > .class-subtitle {
-  margin-bottom: calc(8px * var(--ui-scale));
-  font-size: calc(0.82rem * var(--ui-scale));
+html[data-ui-compact="true"] .class-modal-header .class-subtitle {
+  font-size: 0.8rem;
 }
 
 html[data-ui-compact="true"] .class-controls-hint {
   display: none;
 }
 
-html[data-ui-compact="true"] .class-grid,
-html[data-ui-compact="true"] .game-mode-grid {
-  gap: calc(8px * var(--ui-scale));
+html[data-ui-compact="true"] .class-modal .game-mode-grid,
+html[data-ui-compact="true"] .class-modal .class-grid {
+  gap: 12px;
 }
 
-html[data-ui-compact="true"] .class-card {
-  min-height: auto;
+html[data-ui-compact="true"] .class-modal .glass-card {
+  padding: 18px 16px;
 }
 
-html[data-ui-compact="true"] .class-name {
-  font-size: calc(0.95rem * var(--ui-scale));
+html[data-ui-compact="true"] .glass-card-icon,
+html[data-ui-compact="true"] .class-modal .glass-card .glass-card-icon {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 10px;
 }
 
-html[data-ui-compact="true"] .class-desc,
-html[data-ui-compact="true"] .class-bonus {
-  font-size: calc(0.75rem * var(--ui-scale));
+html[data-ui-compact="true"] .class-modal .class-name {
+  font-size: 0.92rem;
+}
+
+html[data-ui-compact="true"] .class-modal .class-desc,
+html[data-ui-compact="true"] .class-modal .class-bonus {
+  font-size: 0.72rem;
 }
 
 html[data-ui-compact="true"] .class-step-actions-top {
-  margin-bottom: calc(6px * var(--ui-scale));
-}
-
-html[data-ui-compact="true"] .class-swipe-hint {
-  margin-bottom: 4px;
-  font-size: 0.68rem;
+  margin-bottom: 8px;
 }
 
 html[data-ui-compact="true"] .class-modal .class-step-actions {
-  margin-top: 8px;
-  padding-top: 6px;
+  margin-top: 12px;
 }
 
 html[data-ui-compact="true"] .class-modal .class-step-actions .btn-primary,
@@ -4871,9 +5033,14 @@ html[data-prep-side-fit="true"] #app[data-phase="prep"] #shop-panel .bench-panel
 
 html[data-prep-side-fit="true"] #app[data-phase="prep"] .shop-panel .shop-card,
 html[data-prep-side-fit="true"] #app[data-phase="prep"] .shop-panel .shop-card.empty {
-  height: calc(68px * var(--ui-scale));
-  min-height: calc(68px * var(--ui-scale));
-  max-height: calc(68px * var(--ui-scale));
+  height: calc(74px * var(--ui-scale));
+  min-height: calc(74px * var(--ui-scale));
+  max-height: calc(74px * var(--ui-scale));
+}
+
+html[data-prep-side-fit="true"] #app[data-phase="prep"] {
+  --shop-item-icon-size: calc(50px * var(--ui-scale, 1));
+  --shop-item-icon-font: calc(42px * var(--ui-scale, 1));
 }
 
 html[data-prep-side-fit="true"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-card {
@@ -4968,6 +5135,11 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .shop-panel .shop-sl
   -webkit-overflow-scrolling: touch;
   grid-auto-rows: var(--prep-shop-row-h, calc(64px * var(--ui-scale)));
   max-height: none;
+}
+
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] {
+  --shop-item-icon-size: calc(50px * var(--ui-scale, 1));
+  --shop-item-icon-font: calc(42px * var(--ui-scale, 1));
 }
 
 html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .shop-panel .shop-card,
