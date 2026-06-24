@@ -619,6 +619,8 @@ function init() {
   bindPlayerCharacteristicsControls(getPlayerCharacteristicsState, getEnemyCharacteristicsState);
   initBoardPreviewControls();
   initRecipeBookControls();
+  initSettingsControls();
+  initMusic();
   initGamepadControls({
     getPhase: () => phase,
     getGameOver: () => gameOver,
@@ -1073,6 +1075,11 @@ function closeAllPopups() {
 
   if (isRecipeBookOpen()) {
     hideRecipeBookPopup();
+    closed = true;
+  }
+
+  if (typeof isSettingsOpen === "function" && isSettingsOpen()) {
+    hideSettingsPopup();
     closed = true;
   }
 

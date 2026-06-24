@@ -3477,6 +3477,88 @@ body:has(#overlay:not(.hidden)) {
   z-index: 115;
 }
 
+/* Settings popup */
+.settings-overlay {
+  z-index: 120;
+}
+
+.settings-modal {
+  width: min(420px, 94vw);
+  max-height: var(--overlay-max-h, calc(100dvh - 10px));
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  padding: calc(18px * var(--ui-scale));
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: calc(16px * var(--ui-scale));
+  flex-shrink: 0;
+}
+
+.settings-header h2 {
+  margin: 0;
+  font-size: calc(1.25rem * var(--ui-scale));
+}
+
+.settings-close {
+  border: 1px solid var(--border);
+  background: #21262d;
+  color: var(--text);
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  font-size: 1rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.settings-close:hover {
+  border-color: #58a6ff;
+  color: #79c0ff;
+}
+
+.settings-body {
+  display: flex;
+  flex-direction: column;
+  gap: calc(10px * var(--ui-scale));
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.settings-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.settings-value {
+  font-size: 0.88rem;
+  color: var(--muted);
+  min-width: 3.2em;
+  text-align: right;
+}
+
+.settings-slider {
+  width: 100%;
+  accent-color: #58a6ff;
+  cursor: pointer;
+}
+
+.settings-slider:focus-visible {
+  outline: 2px solid #58a6ff;
+  outline-offset: 2px;
+}
+
 .recipe-book-modal {
   width: min(720px, 96vw);
   max-height: 92vh;

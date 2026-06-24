@@ -17,6 +17,9 @@
       <div class="top-bar-end">
         <button class="btn-primary btn-fight-header" id="btn-fight" type="button">⚔️ В бой!</button>
         <div class="run-stats-anchor">
+          <button type="button" class="btn-top-stats" id="btn-settings" aria-expanded="false" aria-controls="settings-overlay">
+            ⚙️ Настройки
+          </button>
           <button type="button" class="btn-top-stats" id="btn-toggle-run-stats" aria-expanded="false" aria-controls="run-stats-popover">
             📊 Показать статистику
           </button>
@@ -259,6 +262,22 @@
       </div>
     </div>
 
+  <div class="overlay settings-overlay hidden" id="settings-overlay" aria-hidden="true">
+    <div class="modal settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+      <div class="settings-header">
+        <h2 id="settings-title">⚙️ Настройки</h2>
+        <button type="button" class="settings-close" id="btn-settings-close" aria-label="Закрыть">✕</button>
+      </div>
+      <div class="settings-body">
+        <div class="settings-row">
+          <label class="settings-label" for="settings-music-volume">🎵 Громкость музыки</label>
+          <span class="settings-value" id="settings-music-volume-value">60%</span>
+        </div>
+        <input type="range" id="settings-music-volume" class="settings-slider" min="0" max="100" step="1" value="60" aria-label="Громкость музыки">
+      </div>
+    </div>
+  </div>
+
   <div id="gamepad-hints-bar" class="gamepad-hints-bar" aria-live="polite">
     <span class="gamepad-hints-status" id="gamepad-status">🎮 Кликните по игре и нажмите кнопку на геймпаде</span>
     <div class="gamepad-hints-list" id="gamepad-hints-list"></div>
@@ -280,12 +299,14 @@
   <script src="components/item-stats.js"></script>
   <script src="components/board-preview.js"></script>
   <script src="components/recipe-book.js"></script>
+  <script src="components/settings.js"></script>
   <script src="components/battle-result.js"></script>
   <script src="components/synergy-effect.js"></script>
   <script src="components/synergy-panel.js"></script>
   <script src="components/attack-animation.js"></script>
   <script src="components/battle-float-layer.js"></script>
   <script src="systems/battle-speed.js"></script>
+  <script src="systems/music.js"></script>
   <script src="systems/gamepad.js"></script>
   <script src="components/displace-animation.js"></script>
   <script src="components/battle-controls.js"></script>
