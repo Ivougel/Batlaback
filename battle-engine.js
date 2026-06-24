@@ -760,6 +760,7 @@ function tickPoison(state, dt) {
         kind: "debuff",
         fromDebuffChip: "poison",
       });
+      triggerProfileAvatarHitShake(team);
     }
   });
 }
@@ -788,6 +789,7 @@ function tickGroundFire(state, dt) {
         kind: "debuff",
         fromDebuffChip: "ground-fire",
       });
+      triggerProfileAvatarHitShake(team);
     }
   });
 }
@@ -827,6 +829,8 @@ function tickFatigue(state, dt) {
         targetTeam: team,
         kind: "debuff",
       });
+      triggerProfileAvatarHitShake(team);
+      triggerProfileAvatarCritFlip(team);
     }
   });
 }
@@ -876,6 +880,7 @@ function activateItem(state, item, self, foe, team) {
         message: `${battleTeamLabel(team)} · ${def.name}: огонь на поле ×${foe.groundFire} → ${battleTeamLabel(victimTeam)}`,
       });
       queueHitAnimation(state, item, team, `🔥 −${foe.groundFire} огонь`, "#f0883e");
+      triggerProfileAvatarCritFlip(victimTeam);
     }
   }
 }
@@ -933,7 +938,6 @@ function executeEffect(state, effect, item, self, foe, rt, team) {
           source: def.name,
           message: `${battleTeamLabel(team)} · ${def.name}: крит!`,
         });
-        triggerProfileAvatarCritFlip(team);
         if (self.critDoublePoison) {
           executeEffect(state, { type: "poison", value: (rt.poisonBonus || 0) + 4 }, item, self, foe, rt, team);
         }
@@ -1036,6 +1040,7 @@ function executeEffect(state, effect, item, self, foe, rt, team) {
         message: `${battleTeamLabel(team)} · ${def.name}: +${added} яда${effNote} (×${foe.poisonStacks}) → ${battleTeamLabel(team === "player" ? "enemy" : "player")}`,
       });
       queueHitAnimation(state, item, team, `☠ +${added} яд`, "#3fb950");
+      triggerProfileAvatarCritFlip(team === "player" ? "enemy" : "player");
       break;
     }
     case "slow": {
@@ -1132,9 +1137,7 @@ function applyDamage(target, amount, state, sourceLabel, attackerTeam, attackerS
       : dmgType === "magic" ? `✨ −${Math.round(hpDmg)}`
         : `−${Math.round(hpDmg)}`;
     queueHitAnimation(state, sourceItem, attackerTeam, floatText, "#f85149");
-    if (options.isCrit) {
-      triggerProfileAvatarCritFlip(targetTeam);
-    }
+    triggerProfileAvatarHitShake(targetTeam);
   } else if (blockAbs + armorAbs > 0) {
     const absorbed = Math.round(blockAbs + armorAbs);
     queueHitAnimation(state, sourceItem, attackerTeam, `🛡 −${absorbed}`, "#8b949e");

@@ -764,21 +764,60 @@ function bindProfileStatusTooltips() {
     });
 
     panel.addEventListener("animationend", (e) => {
+      if (e.target.classList?.contains("field-avatar-slot") && e.animationName === "profile-avatar-hit-shake") {
+        e.target.classList.remove("profile-avatar-hit-shake");
+        e.target.style.removeProperty("--hit-shake-x");
+        e.target.style.removeProperty("--hit-shake-y");
+        e.target.style.removeProperty("--hit-shake-ms");
+      }
       if (e.target.classList?.contains("profile-avatar-img") && e.animationName.startsWith("profile-avatar-crit-flip")) {
         e.target.classList.remove("profile-avatar-crit-flip");
+        e.target.style.removeProperty("--crit-flip-ms");
       }
     });
   });
 }
 
-function triggerProfileAvatarCritFlip(team) {
+function getProfileAvatarElements(team) {
   const avatarId = team === "player" ? "player-avatar-panel" : "enemy-avatar-panel";
-  const img = document.querySelector(`#${avatarId} .profile-avatar-img`);
+  const panel = document.getElementById(avatarId);
+  if (!panel) return { slot: null, wrap: null, img: null };
+  return {
+    slot: panel.querySelector(".field-avatar-slot"),
+    wrap: panel.querySelector(".profile-avatar"),
+    img: panel.querySelector(".profile-avatar-img"),
+  };
+}
+
+function restartAvatarReaction(el, className) {
+  if (!el) return;
+  el.classList.remove(className);
+  void el.offsetWidth;
+  el.classList.add(className);
+}
+
+function triggerProfileAvatarHitShake(team) {
+  const { slot } = getProfileAvatarElements(team);
+  if (!slot) return;
+
+  const shakeX = uiPx(Math.round((Math.random() - 0.5) * 10));
+  const shakeY = uiPx(Math.round((Math.random() - 0.5) * 8));
+  const durationMs = 80 + Math.floor(Math.random() * 71);
+
+  slot.style.setProperty("--hit-shake-x", `${shakeX}px`);
+  slot.style.setProperty("--hit-shake-y", `${shakeY}px`);
+  slot.style.setProperty("--hit-shake-ms", `${durationMs}ms`);
+  restartAvatarReaction(slot, "profile-avatar-hit-shake");
+}
+
+function triggerProfileAvatarCritFlip(team) {
+  if (team !== "player" && team !== "enemy") return;
+
+  const { img } = getProfileAvatarElements(team);
   if (!img) return;
 
-  img.classList.remove("profile-avatar-crit-flip");
-  void img.offsetWidth;
-  img.classList.add("profile-avatar-crit-flip");
+  img.style.setProperty("--crit-flip-ms", `${100 + Math.floor(Math.random() * 401)}ms`);
+  restartAvatarReaction(img, "profile-avatar-crit-flip");
 }
 
 function showProfileStatusTooltip(e, chip) {

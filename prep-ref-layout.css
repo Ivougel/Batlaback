@@ -452,7 +452,7 @@
 #app[data-phase="replay"] .battle-scene-ui .battle-scene-avatar {
   position: absolute;
   top: var(--prep-character-top);
-  height: var(--prep-character-slot-h);
+  height: var(--battle-avatar-h);
   width: var(--prep-canvas-w);
   display: flex;
   align-items: flex-end;
@@ -479,6 +479,8 @@
   width: auto;
   max-width: 100%;
   height: 100%;
+  perspective: calc(420px * var(--ui-scale));
+  transform-style: preserve-3d;
 }
 
 #app[data-phase="battle"] .battle-scene-avatar-player .field-avatar-slot,
@@ -493,8 +495,8 @@
 
 #app[data-phase="battle"] .battle-scene-ui .profile-avatar,
 #app[data-phase="replay"] .battle-scene-ui .profile-avatar {
-  width: auto;
-  height: 100%;
+  width: var(--battle-avatar-w);
+  height: var(--battle-avatar-h);
   max-width: 100%;
   max-height: 100%;
   border: none !important;
@@ -505,6 +507,9 @@
   overflow: visible;
   display: flex;
   align-items: flex-end;
+  transform-origin: center bottom;
+  transform-style: preserve-3d;
+  backface-visibility: visible;
 }
 
 #app[data-phase="battle"] .battle-scene-avatar-player .profile-avatar,
@@ -527,12 +532,15 @@
 
 #app[data-phase="battle"] .battle-scene-ui .profile-avatar-img,
 #app[data-phase="replay"] .battle-scene-ui .profile-avatar-img {
-  height: calc(100% * var(--character-scale));
-  width: auto;
+  width: 100%;
+  height: 100%;
   max-width: 100%;
   object-fit: contain;
   filter: none;
   background: none;
+  transform-origin: center bottom;
+  transform-style: preserve-3d;
+  backface-visibility: visible;
 }
 
 #app[data-phase="battle"] .battle-scene-avatar-player .profile-avatar-img,
@@ -543,13 +551,12 @@
 #app[data-phase="battle"] .battle-scene-avatar-enemy .profile-avatar-img,
 #app[data-phase="replay"] .battle-scene-avatar-enemy .profile-avatar-img {
   object-position: right bottom;
-  transform: scaleX(-1);
-  transform-origin: center bottom;
 }
 
 #app[data-phase="battle"] .battle-scene-avatar-enemy .profile-avatar,
 #app[data-phase="replay"] .battle-scene-avatar-enemy .profile-avatar {
-  transform: none;
+  transform: scaleX(-1);
+  transform-origin: center bottom;
 }
 
 #app[data-phase="battle"] .battle-scene-stats,

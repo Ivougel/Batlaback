@@ -2016,7 +2016,6 @@ html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .field-a
   overflow: hidden;
   padding: calc(6px * var(--ui-scale));
   flex-shrink: 0;
-  perspective: calc(720px * var(--ui-scale));
 }
 
 .profile-details {
@@ -2031,78 +2030,88 @@ html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .field-a
   display: block;
   pointer-events: none;
   user-select: none;
-  transform-style: preserve-3d;
-  backface-visibility: hidden;
+  transform-origin: center bottom;
 }
 
 .profile-avatar:hover {
   transform: scale(1.06);
 }
 
-.profile-avatar-img.profile-avatar-crit-flip {
-  animation: profile-avatar-crit-flip 0.44s cubic-bezier(0.45, 0, 0.55, 1) both;
+/* Hit shake — слот (translate), не конфликтует с scaleX(-1) на .profile-avatar у врага */
+#app[data-phase="battle"] .battle-scene-ui .field-avatar-slot.profile-avatar-hit-shake,
+#app[data-phase="replay"] .battle-scene-ui .field-avatar-slot.profile-avatar-hit-shake {
+  animation: profile-avatar-hit-shake var(--hit-shake-ms, 120ms) ease-out both;
+  transition: none;
 }
 
-.profile-avatar-enemy .profile-avatar-img.profile-avatar-crit-flip,
-#app[data-phase="battle"] .battle-scene-avatar-enemy .profile-avatar-img.profile-avatar-crit-flip,
-#app[data-phase="replay"] .battle-scene-avatar-enemy .profile-avatar-img.profile-avatar-crit-flip {
-  animation: profile-avatar-crit-flip-enemy 0.44s cubic-bezier(0.45, 0, 0.55, 1) both;
-}
-
-@keyframes profile-avatar-crit-flip {
-  0% {
-    transform: rotateY(0deg);
-    filter: brightness(1);
+@keyframes profile-avatar-hit-shake {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
   }
-  38% {
-    transform: rotateY(180deg);
-    filter: brightness(1.35) saturate(1.2);
+  18% {
+    transform: translate3d(var(--hit-shake-x, 0px), var(--hit-shake-y, 0px), 0);
   }
-  100% {
-    transform: rotateY(360deg);
-    filter: brightness(1);
+  36% {
+    transform: translate3d(calc(var(--hit-shake-x, 0px) * -0.65), calc(var(--hit-shake-y, 0px) * -0.55), 0);
   }
-}
-
-@keyframes profile-avatar-crit-flip-enemy {
-  0% {
-    transform: scaleX(-1) rotateY(0deg);
-    filter: brightness(1);
+  54% {
+    transform: translate3d(calc(var(--hit-shake-x, 0px) * 0.4), calc(var(--hit-shake-y, 0px) * 0.3), 0);
   }
-  38% {
-    transform: scaleX(-1) rotateY(180deg);
-    filter: brightness(1.35) saturate(1.2);
-  }
-  100% {
-    transform: scaleX(-1) rotateY(360deg);
-    filter: brightness(1);
+  72% {
+    transform: translate3d(calc(var(--hit-shake-x, 0px) * -0.2), calc(var(--hit-shake-y, 0px) * -0.15), 0);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  @keyframes profile-avatar-crit-flip {
+  @keyframes profile-avatar-hit-shake {
     0%, 100% {
       transform: none;
-      filter: brightness(1);
     }
-    40% {
-      filter: brightness(1.2) saturate(1.1);
+  }
+}
+
+/* Crit flip — зеркало спрайта на img, 100–200 мс (как hit-shake через CSS-класс) */
+#app[data-phase="battle"] .battle-scene-avatar-player .profile-avatar-img.profile-avatar-crit-flip,
+#app[data-phase="replay"] .battle-scene-avatar-player .profile-avatar-img.profile-avatar-crit-flip {
+  animation: profile-avatar-crit-flip-player var(--crit-flip-ms, 300ms) ease-in-out both;
+  transition: none !important;
+}
+
+#app[data-phase="battle"] .battle-scene-avatar-enemy .profile-avatar-img.profile-avatar-crit-flip,
+#app[data-phase="replay"] .battle-scene-avatar-enemy .profile-avatar-img.profile-avatar-crit-flip {
+  animation: profile-avatar-crit-flip-enemy var(--crit-flip-ms, 300ms) ease-in-out both;
+  transition: none !important;
+}
+
+@keyframes profile-avatar-crit-flip-player {
+  0%, 100% {
+    transform: scaleX(1);
+  }
+  50% {
+    transform: scaleX(-1);
+  }
+}
+
+@keyframes profile-avatar-crit-flip-enemy {
+  0%, 100% {
+    transform: scaleX(1);
+  }
+  50% {
+    transform: scaleX(-1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes profile-avatar-crit-flip-player {
+    0%, 100% {
+      transform: scaleX(1);
     }
   }
 
   @keyframes profile-avatar-crit-flip-enemy {
     0%, 100% {
-      transform: scaleX(-1);
-      filter: brightness(1);
+      transform: scaleX(1);
     }
-    40% {
-      filter: brightness(1.2) saturate(1.1);
-    }
-  }
-
-  .profile-avatar-img.profile-avatar-crit-flip,
-  .profile-avatar-enemy .profile-avatar-img.profile-avatar-crit-flip {
-    animation-duration: 0.3s;
   }
 }
 
