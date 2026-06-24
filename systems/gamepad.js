@@ -655,7 +655,14 @@ function movePrepFocus(dx, dy) {
   if (f.zone === "shop") {
     const cards = getShopFocusCards();
     if (!cards.length) return;
-    f.index = stepSpatialFocusIndex(cards, Math.min(f.index, cards.length - 1), dx, dy);
+    let idx = Math.min(f.index, cards.length - 1);
+    if (dx !== 0) {
+      const next = idx - dx;
+      if (next >= 0 && next < cards.length) idx = next;
+    } else if (dy !== 0) {
+      idx = stepSpatialFocusIndex(cards, idx, 0, dy);
+    }
+    f.index = idx;
     applyPrepFocusVisual();
     return;
   }

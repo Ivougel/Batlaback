@@ -303,6 +303,7 @@ function setPrepViewSide(side) {
   if (side !== "player" && side !== "enemy") return;
   if (side === prepViewSide) return;
   clearDragUiState();
+  closePrepHeroTooltip();
   prepViewSide = side;
   const app = document.getElementById("app");
   if (app) app.dataset.prepSide = side;
@@ -692,6 +693,13 @@ function bindTouchInput() {
   }, bubbleOpts);
 }
 
+function setPhaseLabel(text, isBattle = false) {
+  const el = document.getElementById("phase-label");
+  if (!el) return;
+  el.textContent = text;
+  el.classList.toggle("battle", isBattle);
+}
+
 function init() {
   applyGridMetricsFromCss();
   canvas = document.getElementById("game-canvas");
@@ -759,8 +767,7 @@ function init() {
         pendingGameOver = false;
         return;
       }
-      document.getElementById("phase-label").textContent = "Подготовка";
-      document.getElementById("phase-label").classList.remove("battle");
+      setPhaseLabel("Подготовка", false);
       updatePrepSideUI();
       renderFightButton();
       ensureShopReady();
@@ -775,6 +782,7 @@ function init() {
   loadBattleSettings();
   bindProfileStatusTooltips();
   bindRunStatsToggle();
+  bindPrepHeroTooltip();
   bindPlayerCharacteristicsControls(getPlayerCharacteristicsState, getEnemyCharacteristicsState);
   initBoardPreviewControls();
   initRecipeBookControls();
@@ -1010,20 +1018,68 @@ function syncBattleArenaLayout() {
 }
 
 function bindRunStatsToggle() {
-  const btn = document.getElementById("btn-toggle-run-stats");
+  const btn = document.getElementById("btn-prep-hero-stats");
   const popover = document.getElementById("run-stats-popover");
   if (!btn || !popover) return;
 
   btn.addEventListener("click", (e) => {
     e.stopPropagation();
+    closePrepHeroTooltip();
     toggleRunStatsPopover();
   });
 
   document.addEventListener("click", (e) => {
     if (popover.classList.contains("hidden")) return;
-    if (e.target.closest(".run-stats-anchor")) return;
+    if (e.target.closest(".run-stats-anchor") || e.target.closest("#prep-hero-tooltip")) return;
     closeRunStatsPopover();
   });
+}
+
+function bindPrepHeroTooltip() {
+  const hud = document.getElementById("prep-stats-hud");
+  const tooltip = document.getElementById("prep-hero-tooltip");
+  if (!hud || !tooltip) return;
+
+  const open = () => {
+    refreshPrepHeroTooltip();
+    tooltip.classList.remove("hidden");
+    hud.setAttribute("aria-expanded", "true");
+  };
+
+  const toggle = (e) => {
+    e?.stopPropagation?.();
+    if (tooltip.classList.contains("hidden")) open();
+    else closePrepHeroTooltip();
+  };
+
+  hud.addEventListener("click", toggle);
+  hud.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      toggle(e);
+    }
+    if (e.key === "Escape") closePrepHeroTooltip();
+  });
+
+  document.addEventListener("click", (e) => {
+    if (tooltip.classList.contains("hidden")) return;
+    if (e.target.closest("#prep-stats-hud") || e.target.closest("#prep-hero-tooltip")) return;
+    closePrepHeroTooltip();
+  });
+}
+
+function refreshPrepHeroTooltip() {
+  const titleEl = document.getElementById("prep-hero-tooltip-title");
+  const descEl = document.getElementById("prep-hero-tooltip-desc");
+  const classId = prepViewSide === "player" ? playerClass : enemyClass;
+  const cls = getClassById(classId);
+  if (titleEl) titleEl.textContent = cls?.name || "—";
+  if (descEl) descEl.textContent = cls?.desc || "Описание класса недоступно.";
+}
+
+function closePrepHeroTooltip() {
+  document.getElementById("prep-hero-tooltip")?.classList.add("hidden");
+  document.getElementById("prep-stats-hud")?.setAttribute("aria-expanded", "false");
 }
 
 function isRunStatsPopoverOpen() {
@@ -1031,22 +1087,20 @@ function isRunStatsPopoverOpen() {
 }
 
 function openRunStatsPopover() {
-  const btn = document.getElementById("btn-toggle-run-stats");
   const popover = document.getElementById("run-stats-popover");
-  if (!btn || !popover) return;
+  const btn = document.getElementById("btn-prep-hero-stats");
+  if (!popover) return;
   renderRunStats();
   popover.classList.remove("hidden");
-  btn.setAttribute("aria-expanded", "true");
-  btn.textContent = "📊 Скрыть статистику";
+  btn?.setAttribute("aria-expanded", "true");
 }
 
 function closeRunStatsPopover() {
-  const btn = document.getElementById("btn-toggle-run-stats");
   const popover = document.getElementById("run-stats-popover");
-  if (!btn || !popover) return;
+  const btn = document.getElementById("btn-prep-hero-stats");
+  if (!popover) return;
   popover.classList.add("hidden");
-  btn.setAttribute("aria-expanded", "false");
-  btn.textContent = "📊 Показать статистику";
+  btn?.setAttribute("aria-expanded", "false");
 }
 
 function toggleRunStatsPopover() {
@@ -1074,8 +1128,7 @@ function returnToMainMenu() {
   document.getElementById("overlay")?.classList.add("hidden");
   document.getElementById("class-overlay")?.classList.remove("hidden");
   resetClassSelectOverlay();
-  document.getElementById("phase-label").textContent = "Выбор класса";
-  document.getElementById("phase-label").classList.remove("battle");
+  setPhaseLabel("Выбор класса", false);
   renderPhase();
   renderFightButton();
 }
@@ -1167,8 +1220,7 @@ function restartGame() {
   updateUI();
   renderRunStats();
   renderFightButton();
-  document.getElementById("phase-label").textContent = "Подготовка";
-  document.getElementById("phase-label").classList.remove("battle");
+  setPhaseLabel("Подготовка", false);
   log(isVersusMode()
     ? "Режим противостояния: Tab или кнопки — переключить магазин между игроками."
     : "Расставьте предметы и в бой! Tab — посмотреть билд бота.");
@@ -1691,8 +1743,7 @@ function startBattleReplay() {
   applyBattleFrame(battleState, lastBattleReplay.frames[0]);
   updateBattleControlsUI();
   renderFightButton();
-  document.getElementById("phase-label").textContent = "Повтор боя";
-  document.getElementById("phase-label").classList.add("battle");
+  setPhaseLabel("Повтор боя", true);
 }
 
 function finishBattleReplay() {
@@ -1783,8 +1834,7 @@ function startBattle() {
     battleState.lastRecordAt = 0;
     setBattleSpeed(savedBattleSpeed);
     updateBattleControlsUI();
-    document.getElementById("phase-label").textContent = "Бой!";
-    document.getElementById("phase-label").classList.add("battle");
+    setPhaseLabel("Бой!", true);
     log(`Раунд ${round}: бой!`);
     renderBattleStats();
     renderPlayerProfiles();
@@ -2857,7 +2907,7 @@ function isPointerOverPrepSidebar(clientX, clientY) {
   const hit = document.elementFromPoint(clientX, clientY);
   if (!hit) return false;
   return !!hit.closest(
-    "#shop-panel, .run-stats-anchor, #run-stats-popover, #sidebar-tooltip, #recipe-book-overlay",
+    "#shop-panel, .run-stats-anchor, #prep-run-stats-anchor, #run-stats-popover, #sidebar-tooltip, #recipe-book-overlay",
   );
 }
 
@@ -3603,7 +3653,6 @@ function startBenchDrag(index, e, side = prepViewSide) {
 }
 
 function updateUI() {
-  document.getElementById("round-stat").textContent = `Раунд ${Math.min(round, RUN_BATTLES)}/${RUN_BATTLES}`;
   renderPlayerProfiles();
   renderRunStats();
   if (typeof refreshGamepadHints === "function") refreshGamepadHints();
@@ -3657,6 +3706,9 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
       <div class="prep-stats-row"><span>❤️</span><b>${profile.hpDisplay}</b></div>
       <div class="prep-stats-row"><span>Раунд</span><b>${Math.min(round, RUN_BATTLES)}/${RUN_BATTLES}</b></div>
     `;
+    if (!document.getElementById("prep-hero-tooltip")?.classList.contains("hidden")) {
+      refreshPrepHeroTooltip();
+    }
   }
 }
 

@@ -18,7 +18,19 @@
                 <div class="prep-character" id="prep-character-player" hidden></div>
                 <div class="prep-character" id="prep-character-enemy" hidden></div>
               </div>
-              <div class="prep-stats-hud" id="prep-stats-hud" aria-live="polite"></div>
+              <div class="prep-stats-stack">
+                <div class="prep-stats-hud" id="prep-stats-hud" aria-live="polite" role="button" tabindex="0" aria-haspopup="dialog" aria-expanded="false" aria-controls="prep-hero-tooltip"></div>
+                <div class="prep-hero-tooltip hidden" id="prep-hero-tooltip" role="dialog" aria-labelledby="prep-hero-tooltip-title">
+                  <div class="prep-hero-tooltip-title" id="prep-hero-tooltip-title"></div>
+                  <div class="prep-hero-tooltip-desc" id="prep-hero-tooltip-desc"></div>
+                  <button type="button" class="btn-secondary prep-hero-stats-btn" id="btn-prep-hero-stats">📊 Статистика забега</button>
+                </div>
+                <div class="run-stats-anchor run-stats-anchor--prep" id="prep-run-stats-anchor">
+                  <div class="run-stats-popover hidden" id="run-stats-popover">
+                    <div class="run-stats-panel" id="run-stats-panel"></div>
+                  </div>
+                </div>
+              </div>
               <div class="prep-field-island" id="prep-field-island">
                 <div class="battle-canvas-stage">
                   <div class="canvas-scale-wrap">
@@ -73,22 +85,10 @@
           <div class="prep-toolbar-side-switch">
             <button type="button" class="btn-secondary prep-side-btn active" id="btn-prep-player" data-prep-side="player">🧑 Мой стол</button>
             <button type="button" class="btn-secondary prep-side-btn" id="btn-prep-enemy" data-prep-side="enemy">🤖 Противник</button>
+            <button type="button" class="btn-secondary prep-settings-btn" id="btn-settings" aria-label="Настройки" aria-expanded="false" aria-controls="settings-overlay">⚙️</button>
           </div>
           <div class="prep-toolbar-actions">
-            <span class="stat stat-round" id="round-stat">Раунд 1</span>
             <button class="btn-primary btn-fight-header" id="btn-fight" type="button">⚔️ В бой!</button>
-            <div class="run-stats-anchor">
-              <button type="button" class="btn-top-stats" id="btn-settings" aria-expanded="false" aria-controls="settings-overlay">
-                ⚙️ Настройки
-              </button>
-              <button type="button" class="btn-top-stats" id="btn-toggle-run-stats" aria-expanded="false" aria-controls="run-stats-popover">
-                📊 Показать статистику
-              </button>
-              <div class="run-stats-popover hidden" id="run-stats-popover">
-                <div class="run-stats-panel" id="run-stats-panel"></div>
-              </div>
-            </div>
-            <div class="phase-label" id="phase-label">Подготовка</div>
           </div>
           <span class="prep-side-hint" id="prep-side-hint">✚ — элементы · ← — доска · L/R — стол · + — в бой</span>
         </div>
