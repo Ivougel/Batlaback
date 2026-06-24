@@ -760,7 +760,6 @@ function tickPoison(state, dt) {
         kind: "debuff",
         fromDebuffChip: "poison",
       });
-      triggerProfileAvatarHitShake(team);
     }
   });
 }
@@ -789,7 +788,6 @@ function tickGroundFire(state, dt) {
         kind: "debuff",
         fromDebuffChip: "ground-fire",
       });
-      triggerProfileAvatarHitShake(team);
     }
   });
 }
@@ -829,7 +827,6 @@ function tickFatigue(state, dt) {
         targetTeam: team,
         kind: "debuff",
       });
-      triggerProfileAvatarHitShake(team);
     }
   });
 }
@@ -926,7 +923,9 @@ function executeEffect(state, effect, item, self, foe, rt, team) {
       if (effect.damageType === "magic") dmg *= self.magicDamageMult;
       else dmg *= getTimedDamageMult(self);
 
+      let isCrit = false;
       if (self.critChance > 0 && Math.random() < self.critChance) {
+        isCrit = true;
         dmg *= 2;
         pushBattleLog(state, {
           actor: team,
@@ -934,6 +933,7 @@ function executeEffect(state, effect, item, self, foe, rt, team) {
           source: def.name,
           message: `${battleTeamLabel(team)} · ${def.name}: крит!`,
         });
+        triggerProfileAvatarCritFlip(team);
         if (self.critDoublePoison) {
           executeEffect(state, { type: "poison", value: (rt.poisonBonus || 0) + 4 }, item, self, foe, rt, team);
         }
@@ -946,7 +946,7 @@ function executeEffect(state, effect, item, self, foe, rt, team) {
 
       dmg = scalePacedValue(dmg, DAMAGE_PACING_SCALE);
 
-      const actualDmg = applyDamage(foe, dmg, state, def.name, team, self, effect, item);
+      const actualDmg = applyDamage(foe, dmg, state, def.name, team, self, effect, item, { isCrit });
       creditDamageStats(self, stat, actualDmg, effect.damageType);
 
       if (self.lifesteal > 0 && actualDmg > 0) {
@@ -1071,7 +1071,7 @@ function executeEffect(state, effect, item, self, foe, rt, team) {
   }
 }
 
-function applyDamage(target, amount, state, sourceLabel, attackerTeam, attackerSide, effect, sourceItem) {
+function applyDamage(target, amount, state, sourceLabel, attackerTeam, attackerSide, effect, sourceItem, options = {}) {
   const targetTeam = attackerTeam === "player" ? "enemy" : "player";
 
   if (target.dodgeReady) {
@@ -1132,7 +1132,9 @@ function applyDamage(target, amount, state, sourceLabel, attackerTeam, attackerS
       : dmgType === "magic" ? `✨ −${Math.round(hpDmg)}`
         : `−${Math.round(hpDmg)}`;
     queueHitAnimation(state, sourceItem, attackerTeam, floatText, "#f85149");
-    triggerProfileAvatarHitShake(targetTeam);
+    if (options.isCrit) {
+      triggerProfileAvatarCritFlip(targetTeam);
+    }
   } else if (blockAbs + armorAbs > 0) {
     const absorbed = Math.round(blockAbs + armorAbs);
     queueHitAnimation(state, sourceItem, attackerTeam, `🛡 −${absorbed}`, "#8b949e");

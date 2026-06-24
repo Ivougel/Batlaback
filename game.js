@@ -3351,8 +3351,16 @@ function renderPlayerProfiles() {
     liveBattle: phase === "battle" || phase === "replay",
     itemCount: Math.max(playerItems.length, enemyItems.length, 1),
   });
-  playerAvatarEl.innerHTML = renderProfileAvatarHTML(playerProfile, "player");
-  enemyAvatarEl.innerHTML = renderProfileAvatarHTML(enemyProfile, "enemy");
+
+  const liveBattle = phase === "battle" || phase === "replay";
+  const playerNeedsAvatar = !liveBattle || !playerAvatarEl.querySelector(".profile-avatar");
+  const enemyNeedsAvatar = !liveBattle || !enemyAvatarEl.querySelector(".profile-avatar");
+  if (playerNeedsAvatar) {
+    playerAvatarEl.innerHTML = renderProfileAvatarHTML(playerProfile, "player");
+  }
+  if (enemyNeedsAvatar) {
+    enemyAvatarEl.innerHTML = renderProfileAvatarHTML(enemyProfile, "enemy");
+  }
   syncBattleArenaLayout();
 }
 

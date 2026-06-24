@@ -543,12 +543,13 @@
 #app[data-phase="battle"] .battle-scene-avatar-enemy .profile-avatar-img,
 #app[data-phase="replay"] .battle-scene-avatar-enemy .profile-avatar-img {
   object-position: right bottom;
+  transform: scaleX(-1);
+  transform-origin: center bottom;
 }
 
 #app[data-phase="battle"] .battle-scene-avatar-enemy .profile-avatar,
 #app[data-phase="replay"] .battle-scene-avatar-enemy .profile-avatar {
-  transform: scaleX(-1);
-  transform-origin: center bottom;
+  transform: none;
 }
 
 #app[data-phase="battle"] .battle-scene-stats,

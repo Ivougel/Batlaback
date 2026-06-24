@@ -764,21 +764,21 @@ function bindProfileStatusTooltips() {
     });
 
     panel.addEventListener("animationend", (e) => {
-      if (e.target.classList?.contains("profile-avatar") && e.animationName === "profile-avatar-hit") {
-        e.target.classList.remove("profile-avatar-hit");
+      if (e.target.classList?.contains("profile-avatar-img") && e.animationName.startsWith("profile-avatar-crit-flip")) {
+        e.target.classList.remove("profile-avatar-crit-flip");
       }
     });
   });
 }
 
-function triggerProfileAvatarHitShake(team) {
+function triggerProfileAvatarCritFlip(team) {
   const avatarId = team === "player" ? "player-avatar-panel" : "enemy-avatar-panel";
-  const avatar = document.querySelector(`#${avatarId} .profile-avatar`);
-  if (!avatar) return;
+  const img = document.querySelector(`#${avatarId} .profile-avatar-img`);
+  if (!img) return;
 
-  avatar.classList.remove("profile-avatar-hit");
-  void avatar.offsetWidth;
-  avatar.classList.add("profile-avatar-hit");
+  img.classList.remove("profile-avatar-crit-flip");
+  void img.offsetWidth;
+  img.classList.add("profile-avatar-crit-flip");
 }
 
 function showProfileStatusTooltip(e, chip) {
