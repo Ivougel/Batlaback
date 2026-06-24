@@ -839,8 +839,10 @@ function syncPrepCanvasDisplaySize() {
   const root = document.documentElement;
   const sideFit = root.dataset.prepSideFit === "true";
   const viewportFit = root.dataset.prepViewportFit === "true";
+  const vw = window.visualViewport?.width ?? window.innerWidth;
+  const tabletBand = vw >= 600 && vw <= 1100;
 
-  if (!isPrep || (!sideFit && !viewportFit)) {
+  if (!isPrep || (!sideFit && !viewportFit && !tabletBand)) {
     canvas.style.width = "";
     canvas.style.height = "";
     return;
@@ -853,7 +855,13 @@ function syncPrepCanvasDisplaySize() {
   if (stageW <= 0) return;
 
   let maxH = canvas.height;
-  if (sideFit) {
+  let maxW = canvas.width;
+  if (tabletBand) {
+    maxW = Math.min(stageW, 420);
+    const vv = window.visualViewport;
+    const avail = vv?.height ?? window.innerHeight;
+    maxH = Math.max(180, avail - 160);
+  } else if (sideFit) {
     const chromeReserve = 200;
     const vv = window.visualViewport;
     const avail = vv?.height ?? window.innerHeight;
@@ -863,7 +871,7 @@ function syncPrepCanvasDisplaySize() {
     if (cssMax) maxH = parseFloat(cssMax) || maxH;
   }
 
-  const scale = Math.min(stageW / canvas.width, maxH / canvas.height);
+  const scale = Math.min(stageW / canvas.width, maxW / canvas.width, maxH / canvas.height);
   const w = Math.max(1, Math.floor(canvas.width * scale));
   const h = Math.max(1, Math.floor(canvas.height * scale));
   canvas.style.width = `${w}px`;

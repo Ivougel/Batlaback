@@ -40,15 +40,16 @@
       && !window.matchMedia("(pointer: fine)").matches;
   }
 
-  /** Stacked только для узких/portrait экранов. Landscape iPad mini+ → side. */
+  /** Stacked только на телефонах (<600px). Планшеты 600–1100px — side (поле | магазин). */
   function shouldUseStackedPrep(w, h) {
+    if (w >= 600 && w <= 1100) return false;
+
     const landscape = w > h;
 
     if (landscape && w >= 880 && h >= 620) return false;
 
-    if (w <= 720 || h <= 560) return true;
-    if (isCoarsePointerOnly() && h <= 680) return true;
-    if (!landscape && w <= 1024) return true;
+    if (w <= 599 || h <= 560) return true;
+    if (isCoarsePointerOnly() && w < 600 && h <= 680) return true;
     if (w <= 900 || h <= 620) return true;
     return false;
   }
@@ -85,6 +86,12 @@
       const shopRowH = Math.round(Math.max(50, Math.min(68, 64 * fitScale)));
       document.documentElement.style.setProperty("--prep-canvas-max-h", `${canvasMax}px`);
       document.documentElement.style.setProperty("--prep-shop-row-h", `${shopRowH}px`);
+      return Math.round(fitScale * 1000) / 1000;
+    }
+
+    if (w >= 600 && w <= 1100) {
+      let fitScale = Math.min(baseScale, available / PREP_SIDE_CONTENT_H, w / DESIGN_W);
+      fitScale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, fitScale));
       return Math.round(fitScale * 1000) / 1000;
     }
 
