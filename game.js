@@ -2846,6 +2846,24 @@ function isPointerOverPrepSidebar(clientX, clientY) {
   );
 }
 
+function getShopTooltipAnchorY() {
+  const slots = document.getElementById("shop-slots");
+  const panel = document.getElementById("shop-panel");
+  const el = slots || panel;
+  if (!el) return null;
+  const rect = el.getBoundingClientRect();
+  return rect.top + rect.height * 0.42;
+}
+
+function getBenchTooltipAnchorY() {
+  const slots = document.getElementById("bench-slots");
+  const panel = document.getElementById("bench-panel");
+  const el = slots || panel;
+  if (!el) return null;
+  const rect = el.getBoundingClientRect();
+  return rect.top + rect.height * 0.38;
+}
+
 function getTooltipCorridorBounds(margin = 10, gap = 14) {
   const canvasRect = document.getElementById("game-canvas")?.getBoundingClientRect();
   const shopRect = document.getElementById("shop-panel")?.getBoundingClientRect();
@@ -2862,18 +2880,65 @@ function getTooltipCorridorBounds(margin = 10, gap = 14) {
   return { left, right, top: viewTop, bottom: viewBottom };
 }
 
-function positionTooltipInCorridor(clientY, tipW, tipH, margin, gap, verticalBias = 0.42) {
+function positionTooltipInCorridor(tipW, tipH, margin, gap, options = {}) {
+  const {
+    hAnchor = "left",
+    hFraction = 0.55,
+    clientY = 0,
+    verticalBias = 0.42,
+    anchorY = null,
+  } = options;
+
   const corridor = getTooltipCorridorBounds(margin, gap);
   if (!corridor) return null;
 
-  let left = corridor.left;
-  if (left + tipW > corridor.right) {
-    left = Math.max(corridor.left, corridor.right - tipW);
+  const corridorW = corridor.right - corridor.left;
+  let left;
+
+  if (hAnchor === "center") {
+    const centerX = corridor.left + corridorW * hFraction;
+    left = centerX - tipW / 2;
+    left = Math.max(corridor.left, Math.min(left, corridor.right - tipW));
+  } else {
+    left = corridor.left;
+    if (left + tipW > corridor.right) {
+      left = Math.max(corridor.left, corridor.right - tipW);
+    }
   }
 
-  let top = clientY - tipH * verticalBias;
+  const refY = anchorY ?? clientY;
+  let top = refY - tipH * verticalBias;
   top = Math.max(corridor.top, Math.min(top, corridor.bottom - tipH));
   return { left, top };
+}
+
+function getCorridorTooltipPosition(placement, clientX, clientY, tipW, tipH, margin, gap) {
+  if (placement === "field") {
+    return positionTooltipInCorridor(tipW, tipH, margin, gap, {
+      hAnchor: "left",
+      clientY,
+      verticalBias: 0.42,
+    });
+  }
+  if (placement === "shop") {
+    return positionTooltipInCorridor(tipW, tipH, margin, gap, {
+      hAnchor: "center",
+      hFraction: 0.58,
+      anchorY: getShopTooltipAnchorY(),
+      clientY,
+      verticalBias: 0.36,
+    });
+  }
+  if (placement === "bench") {
+    return positionTooltipInCorridor(tipW, tipH, margin, gap, {
+      hAnchor: "center",
+      hFraction: 0.58,
+      anchorY: getBenchTooltipAnchorY(),
+      clientY,
+      verticalBias: 0.4,
+    });
+  }
+  return null;
 }
 
 function positionSidebarTooltip(clientX, clientY, boundsKind = "viewport", placement = "auto") {
@@ -2894,8 +2959,7 @@ function positionSidebarTooltip(clientX, clientY, boundsKind = "viewport", place
   let top;
 
   if (placement === "shop" || placement === "bench" || placement === "field") {
-    const bias = placement === "bench" ? 0.58 : 0.42;
-    const corridorPos = positionTooltipInCorridor(clientY, tipW, tipH, margin, gap, bias);
+    const corridorPos = getCorridorTooltipPosition(placement, clientX, clientY, tipW, tipH, margin, gap);
     if (corridorPos) {
       left = corridorPos.left;
       top = corridorPos.top;
@@ -2907,6 +2971,7 @@ function positionSidebarTooltip(clientX, clientY, boundsKind = "viewport", place
       left = viewRight - tipW;
       top = Math.max(viewTop, Math.min(clientY - tipH * 0.42, viewBottom - tipH));
     } else {
+      const bias = placement === "bench" ? 0.58 : 0.42;
       left = clientX - tipW - gap;
       top = clientY - tipH * bias;
       top = Math.max(bounds.top + margin, Math.min(top, bounds.bottom - tipH - margin));
