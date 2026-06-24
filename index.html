@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Backpack Battles — Автобатлер</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="ui-layout.js"></script>
+</head>
+<body>
+  <div id="app" data-phase="prep">
+    <header class="top-bar">
+      <div class="logo">🎒 Backpack Battles</div>
+      <div class="stats">
+        <span class="stat" id="round-stat">Раунд 1</span>
+      </div>
+      <div class="top-bar-end">
+        <button class="btn-primary btn-fight-header" id="btn-fight" type="button">⚔️ В бой!</button>
+        <div class="run-stats-anchor">
+          <button type="button" class="btn-top-stats" id="btn-toggle-run-stats" aria-expanded="false" aria-controls="run-stats-popover">
+            📊 Показать статистику
+          </button>
+          <div class="run-stats-popover hidden" id="run-stats-popover">
+            <div class="run-stats-panel" id="run-stats-panel"></div>
+          </div>
+        </div>
+        <div class="phase-label" id="phase-label">Подготовка</div>
+      </div>
+    </header>
+
+    <div class="battle-header-stack">
+      <div class="battle-controls hidden" id="battle-controls">
+        <button type="button" class="bc-btn" id="btn-battle-pause" title="Пауза (Start)">⏸</button>
+        <button type="button" class="bc-btn bc-speed" data-speed="1">×1</button>
+        <button type="button" class="bc-btn bc-speed" data-speed="2">×2</button>
+        <button type="button" class="bc-btn bc-speed" data-speed="3">×3</button>
+        <button type="button" class="bc-btn bc-skip" id="btn-battle-skip">⏩ Пропустить</button>
+        <span class="battle-controls-hint">Start — пауза · A — пропуск · LB/RB — скорость</span>
+      </div>
+    </div>
+
+    <main class="game-layout">
+      <section class="board-section">
+        <div class="battle-arena" id="battle-arena">
+          <div class="battle-canvas-stage">
+            <canvas id="game-canvas"></canvas>
+            <div class="battle-arena-overlay" aria-hidden="true">
+              <div class="overlay-side overlay-side-player"></div>
+              <div class="overlay-side overlay-side-center"></div>
+              <div class="overlay-side overlay-side-enemy"></div>
+            </div>
+          </div>
+          <div class="shop-panel" id="shop-panel">
+            <div class="shop-panel-header">
+              <div class="shop-panel-heading">
+                <h3 id="shop-panel-title">🛒 Магазин</h3>
+                <span class="shop-gold-stat" id="shop-gold-stat">💰 12 · Игрок 1</span>
+              </div>
+              <button type="button" class="btn-secondary btn-refresh-shop" id="btn-refresh">🔄 Обновить (1💰)</button>
+            </div>
+            <p class="shop-hint" id="shop-panel-hint">✚ — навигация · A — выбрать · ← — доска · 📍 — заморозить</p>
+            <div class="shop-slots" id="shop-slots"></div>
+            <div class="shop-sell-zone" id="shop-sell-zone">
+              <div class="shop-action-row">
+                <button type="button" class="btn-secondary btn-sell-drop" id="btn-sell">💰 Продать</button>
+                <button type="button" class="btn-secondary btn-recipe-book" id="btn-recipe-book">⚗️ Рецепты</button>
+              </div>
+              <span class="shop-sell-hint">Перетащите предмет · полная стоимость</span>
+            </div>
+            <div class="bench-panel" id="bench-panel">
+              <h3>📦 Скамейка</h3>
+              <div class="bench-slots" id="bench-slots"></div>
+            </div>
+          </div>
+          <div class="battle-avatars-row">
+            <div class="battle-avatars-col battle-avatars-player">
+              <div class="field-avatar-wrap" id="player-avatar-panel" aria-label="Аватар игрока">
+                <button type="button" class="btn-secondary btn-player-stats" id="btn-player-stats" aria-expanded="false" aria-controls="player-characteristics-popup" title="H — характеристики">📋 Характеристики</button>
+                <div class="field-avatar-slot" id="player-avatar-slot"></div>
+                <div class="player-characteristics-popup hidden" id="player-characteristics-popup" role="dialog" aria-labelledby="player-char-title" aria-modal="true">
+                  <div id="player-characteristics-content"></div>
+                </div>
+              </div>
+            </div>
+            <div class="battle-avatars-col battle-avatars-center">
+              <div class="center-stats-panel" id="battle-stats-panel" aria-label="Сравнение статов"></div>
+            </div>
+            <div class="battle-avatars-col battle-avatars-enemy">
+              <div class="field-avatar-wrap" id="enemy-avatar-panel" aria-label="Аватар противника">
+                <button type="button" class="btn-secondary btn-player-stats btn-enemy-stats" id="btn-enemy-stats" aria-expanded="false" aria-controls="enemy-characteristics-popup" title="Характеристики противника">📋 Характеристики</button>
+                <div class="field-avatar-slot" id="enemy-avatar-slot"></div>
+                <div class="player-characteristics-popup fighter-char-popup-enemy hidden" id="enemy-characteristics-popup" role="dialog" aria-labelledby="enemy-char-title" aria-modal="true">
+                  <div id="enemy-characteristics-content"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="prep-toolbar" id="prep-toolbar">
+          <button type="button" class="btn-secondary prep-side-btn active" id="btn-prep-player" data-prep-side="player">🧑 Мой стол</button>
+          <button type="button" class="btn-secondary prep-side-btn" id="btn-prep-enemy" data-prep-side="enemy">🤖 Противник</button>
+          <span class="prep-side-hint" id="prep-side-hint">✚ — элементы · ← — доска · L/R — стол · + — в бой</span>
+        </div>
+        <div class="board-hint" id="board-hint">
+          <span class="hint-you">■ Синее поле — ваш билд (9×7)</span>
+          <span class="hint-front">✚ — клетки · A — действие · ZR — поворот · B — отмена</span>
+          <span class="hint-enemy">■ Красное — поле противника</span>
+        </div>
+      </section>
+    </main>
+
+    <div class="overlay hidden" id="class-overlay">
+      <div class="modal class-modal">
+        <h2 id="class-modal-title">Выберите класс</h2>
+        <p class="class-subtitle" id="class-modal-subtitle">Каждый класс получает стартовый набор и уникальный бонус на весь забег.</p>
+        <p class="class-controls-hint">✚ — выбор · A — подтвердить · B — назад · + — начать</p>
+        <div class="class-step" id="class-step-mode">
+          <div class="game-mode-grid">
+            <button type="button" class="class-card game-mode-card selected" data-game-mode="solo">
+              <span class="class-icon">🤖</span>
+              <span class="class-name">Одиночная</span>
+              <span class="class-desc">Против бота</span>
+              <span class="class-bonus">Вы выбираете класс · бот собирает билд сам</span>
+            </button>
+            <button type="button" class="class-card game-mode-card" data-game-mode="versus">
+              <span class="class-icon">⚔️</span>
+              <span class="class-name">Противостояние</span>
+              <span class="class-desc">Игрок против игрока</span>
+              <span class="class-bonus">Два класса · магазины по очереди на одном экране</span>
+            </button>
+          </div>
+        </div>
+        <div class="class-step hidden" id="class-step-player">
+        <div class="class-step-actions class-step-actions-top">
+          <button type="button" class="btn-secondary" id="btn-class-back-mode">← Режим игры</button>
+        </div>
+        <p class="class-swipe-hint">← свайп · выберите класс →</p>
+        <div class="class-grid" id="player-class-grid">
+          <button class="class-card" data-class="warrior">
+            <span class="class-icon"><img src="img/sticker_wariormarta.png" alt="Воин" class="class-sticker" draggable="false"></span>
+            <span class="class-name">Воин</span>
+            <span class="class-desc">Ржавый меч + железный шлем</span>
+            <span class="class-bonus">+10% макс. HP</span>
+          </button>
+          <button class="class-card" data-class="rogue">
+            <span class="class-icon"><img src="img/stickerrogue.webp" alt="Разбойник" class="class-sticker" draggable="false"></span>
+            <span class="class-name">Разбойник</span>
+            <span class="class-desc">Кинжал + яд</span>
+            <span class="class-bonus">+10% скорость атаки</span>
+          </button>
+          <button class="class-card" data-class="mage">
+            <span class="class-icon"><img src="img/stickermage.webp" alt="Маг" class="class-sticker" draggable="false"></span>
+            <span class="class-name">Маг</span>
+            <span class="class-desc">Посох ученика + мана-кристалл</span>
+            <span class="class-bonus">+10% магический урон</span>
+          </button>
+          <button type="button" class="class-card class-card-disabled" data-class="priest" disabled aria-disabled="true" title="Скоро">
+            <span class="class-icon"><img src="img/stiker_priestMika.png" alt="Жрец" class="class-sticker" draggable="false"></span>
+            <span class="class-name">Жрец</span>
+            <span class="class-desc">Скоро</span>
+            <span class="class-bonus class-bonus-soon">Скоро доступен</span>
+          </button>
+        </div>
+        </div>
+        <div class="class-step hidden" id="class-step-opponent">
+          <h3 class="class-step-heading" id="class-step-opponent-heading">Класс бота</h3>
+          <p class="class-subtitle" id="opponent-mode-hint">ИИ сам покупает предметы и расставляет билд между боями.</p>
+          <p class="class-swipe-hint">← свайп · выберите класс →</p>
+          <div class="class-grid" id="opponent-class-grid">
+            <button type="button" class="class-card opponent-class-card" data-opponent-class="warrior">
+              <span class="class-icon"><img src="img/sticker_wariormarta.png" alt="Воин" class="class-sticker" draggable="false"></span>
+              <span class="class-name">Воин</span>
+              <span class="class-desc">Ржавый меч + железный шлем</span>
+            </button>
+            <button type="button" class="class-card opponent-class-card" data-opponent-class="rogue">
+              <span class="class-icon"><img src="img/stickerrogue.webp" alt="Разбойник" class="class-sticker" draggable="false"></span>
+              <span class="class-name">Разбойник</span>
+              <span class="class-desc">Кинжал + яд</span>
+            </button>
+            <button type="button" class="class-card opponent-class-card" data-opponent-class="mage">
+              <span class="class-icon"><img src="img/stickermage.webp" alt="Маг" class="class-sticker" draggable="false"></span>
+              <span class="class-name">Маг</span>
+              <span class="class-desc">Посох ученика + мана-кристалл</span>
+            </button>
+          </div>
+          <div class="class-step-actions">
+            <button type="button" class="btn-secondary" id="btn-class-back">← Назад</button>
+            <button type="button" class="btn-primary" id="btn-start-run" disabled>Начать забег</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay hidden" id="battle-result-overlay">
+      <div class="modal battle-result-modal">
+        <h2 id="battle-result-title">Бой завершён</h2>
+        <p id="battle-result-subtitle" class="battle-result-subtitle"></p>
+        <div id="battle-result-accordions"></div>
+        <div class="battle-result-actions">
+          <button type="button" class="btn-secondary hidden" id="btn-battle-replay">↻ Посмотреть бой</button>
+          <button class="btn-primary" id="btn-battle-continue">Продолжить</button>
+        </div>
+        <p class="battle-result-controls-hint">✚ — кнопки · A — вклад/лог · + — продолжить · X — повтор · B — закрыть</p>
+      </div>
+    </div>
+
+    <div class="overlay battle-detail-overlay hidden" id="battle-detail-overlay" aria-hidden="true">
+      <div class="modal battle-detail-modal" role="dialog" aria-modal="true" aria-labelledby="battle-detail-title">
+        <div class="battle-detail-header">
+          <h3 id="battle-detail-title">Детали</h3>
+          <div class="battle-detail-header-actions">
+            <button type="button" class="battle-detail-copy" id="btn-battle-detail-copy" title="Копировать" aria-label="Копировать">📋</button>
+            <button type="button" class="battle-detail-close" id="btn-battle-detail-close" aria-label="Закрыть">✕</button>
+          </div>
+        </div>
+        <div class="battle-detail-body" id="battle-detail-body"></div>
+      </div>
+    </div>
+
+    <div class="overlay hidden" id="overlay">
+      <div class="modal run-complete-modal">
+        <h2 id="overlay-title">Забег завершён!</h2>
+        <p id="overlay-text"></p>
+        <div id="run-complete-accordions"></div>
+        <p class="run-complete-hint">Выберите класс на главном экране и начните новый забег · 🎮 A / Start — главный экран</p>
+        <button class="btn-primary" id="btn-restart">🏠 На главный экран</button>
+      </div>
+    </div>
+
+    <div class="overlay board-preview-overlay hidden" id="board-preview-overlay">
+      <div class="modal board-preview-modal" role="dialog" aria-modal="true" aria-labelledby="board-preview-title">
+        <div class="board-preview-header">
+          <h3 id="board-preview-title">Стол</h3>
+          <button type="button" class="board-preview-close" id="btn-board-preview-close" aria-label="Закрыть">✕</button>
+        </div>
+        <div class="board-preview-body">
+          <div id="board-preview-grid"></div>
+          <div class="board-preview-synergies">
+            <div class="board-preview-section-title">Активные синергии</div>
+            <div id="board-preview-synergies"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay recipe-book-overlay hidden" id="recipe-book-overlay">
+      <div class="modal recipe-book-modal" role="dialog" aria-modal="true" aria-labelledby="recipe-book-title">
+        <div class="recipe-book-header">
+          <div class="recipe-book-heading">
+            <h2 id="recipe-book-title">⚗️ Книга рецептов</h2>
+            <p class="recipe-book-subtitle">Сложите ингредиенты вплотную на столе · Esc — закрыть</p>
+          </div>
+          <button type="button" class="recipe-book-close" id="btn-recipe-book-close" aria-label="Закрыть">✕</button>
+        </div>
+        <div class="recipe-book-body" id="recipe-book-body"></div>
+      </div>
+    </div>
+  </div>
+  <div id="gamepad-hints-bar" class="gamepad-hints-bar" aria-live="polite">
+    <span class="gamepad-hints-status" id="gamepad-status">🎮 Кликните по игре и нажмите кнопку на геймпаде</span>
+    <div class="gamepad-hints-list" id="gamepad-hints-list"></div>
+  </div>
+  <div id="gamepad-cursor" class="gamepad-cursor hidden" aria-hidden="true"></div>
+  <div id="sidebar-tooltip" class="sidebar-tooltip hidden"></div>
+  <script src="classes.js"></script>
+  <script src="items.js"></script>
+  <script src="shop-engine.js"></script>
+  <script src="backpack-engine.js"></script>
+  <script src="systems/crafting.js"></script>
+  <script src="systems/synergy.js"></script>
+  <script src="systems/combat.js"></script>
+  <script src="systems/combat-profile.js"></script>
+  <script src="components/run-stats.js"></script>
+  <script src="components/player-characteristics.js"></script>
+  <script src="systems/animation.js"></script>
+  <script src="components/accordion.js"></script>
+  <script src="components/item-stats.js"></script>
+  <script src="components/board-preview.js"></script>
+  <script src="components/recipe-book.js"></script>
+  <script src="components/battle-result.js"></script>
+  <script src="components/synergy-effect.js"></script>
+  <script src="components/synergy-panel.js"></script>
+  <script src="components/attack-animation.js"></script>
+  <script src="components/battle-float-layer.js"></script>
+  <script src="systems/battle-speed.js"></script>
+  <script src="systems/gamepad.js"></script>
+  <script src="components/displace-animation.js"></script>
+  <script src="components/battle-controls.js"></script>
+  <script src="ai-engine.js"></script>
+  <script src="battle-engine.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
