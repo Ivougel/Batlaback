@@ -647,7 +647,14 @@ body.is-ui-dragging * {
   align-items: stretch;
   justify-content: flex-start;
   overflow: hidden;
-  clip-path: none !important;
+}
+
+#app[data-phase="prep"][data-prep-side="player"] .prep-left-column .canvas-scale-wrap {
+  justify-content: flex-start;
+}
+
+#app[data-phase="prep"][data-prep-side="enemy"] .prep-left-column .canvas-scale-wrap {
+  justify-content: flex-end;
 }
 
 #app[data-phase="prep"] .prep-left-column .canvas-scale-wrap {
@@ -2037,7 +2044,6 @@ body.is-ui-dragging * {
   }
 
   #app[data-phase="prep"] .battle-canvas-stage {
-    clip-path: none !important;
     overflow: hidden;
     max-width: none;
     width: 100%;
@@ -4696,8 +4702,7 @@ html[data-ui-compact="true"] .prep-toolbar .btn-secondary {
 /* ─── Tablet / touch prep: stacked layout (iPad landscape и т.п.) ─── */
 
 html[data-prep-layout="stacked"] #app[data-phase="prep"] .battle-canvas-stage {
-  clip-path: none !important;
-  overflow: visible;
+  overflow: hidden;
 }
 
 html[data-prep-layout="stacked"] #app[data-phase="prep"] #shop-panel {
@@ -5283,7 +5288,6 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .btn-refresh-shop {
 
   html[data-prep-layout="side"] #app[data-phase="prep"] .battle-canvas-stage,
   html[data-prep-side-fit="true"] #app[data-phase="prep"] .battle-canvas-stage {
-    clip-path: none !important;
     overflow: hidden;
     max-width: none;
     width: 100%;

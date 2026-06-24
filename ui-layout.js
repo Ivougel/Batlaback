@@ -82,6 +82,29 @@
     canvas.style.removeProperty("height");
   }
 
+  function getPrepFieldVisibleWidthRatio(app) {
+    const arena = document.getElementById("battle-arena");
+    const style = arena ? getComputedStyle(arena) : null;
+    const readRatio = (names) => {
+      if (!style) return null;
+      for (const name of names) {
+        const raw = style.getPropertyValue(name).trim();
+        if (!raw) continue;
+        const val = parseFloat(raw);
+        if (Number.isFinite(val) && val > 0) return val;
+      }
+      return null;
+    };
+
+    const side = app?.dataset.prepSide || "player";
+    if (side === "enemy") {
+      const shopRight = readRatio(["--battle-shop-right", "--battle-shop-left"]);
+      return shopRight != null ? Math.max(0.12, Math.min(1, 1 - shopRight)) : 0.28;
+    }
+    const shopLeft = readRatio(["--battle-shop-left", "--battle-field-ratio"]);
+    return shopLeft != null ? Math.max(0.12, Math.min(1, shopLeft)) : 0.31;
+  }
+
   function fitPrepCanvasToStage() {
     const app = document.getElementById("app");
     if (app?.dataset.phase !== "prep") {
@@ -98,7 +121,8 @@
     const sh = stage.clientHeight;
     if (sw <= 0 || sh <= 0) return;
 
-    const scale = Math.min(sw / canvas.width, sh / canvas.height);
+    const visibleRatio = getPrepFieldVisibleWidthRatio(app);
+    const scale = Math.min(sw / (visibleRatio * canvas.width), sh / canvas.height);
     if (scale <= 0) return;
 
     const w = Math.max(1, Math.floor(canvas.width * scale));
@@ -225,7 +249,7 @@
     if (app) {
       new MutationObserver(scheduleLayout).observe(app, {
         attributes: true,
-        attributeFilter: ["data-phase"],
+        attributeFilter: ["data-phase", "data-prep-side"],
       });
     }
   });
