@@ -17,9 +17,16 @@
     };
   }
 
+  function isBattleUiPhase() {
+    const phase = document.getElementById("app")?.dataset.phase;
+    return phase === "battle" || phase === "replay";
+  }
+
   function isHudVisible() {
     const hud = document.getElementById("gamepad-hints-bar");
     if (!hud || hud.classList.contains("hidden")) return false;
+    if (isModalOpen()) return false;
+    if (isBattleUiPhase()) return true;
     if (document.documentElement.dataset.gamepadHud === "hidden") return false;
     return getComputedStyle(hud).display !== "none";
   }
@@ -207,7 +214,7 @@
 
     const touchDev = isTouchDevice();
     document.documentElement.dataset.touch = touchDev ? "true" : "false";
-    document.documentElement.dataset.gamepadHud = touchDev ? "hidden" : "auto";
+    document.documentElement.dataset.gamepadHud = (touchDev && !isBattleUiPhase()) ? "hidden" : "auto";
 
     let tier = "desktop";
     if (w <= 720 || h <= 520) tier = "phone";

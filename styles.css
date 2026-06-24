@@ -884,6 +884,11 @@ body:has(#app[data-phase="replay"]) #battle-controls:not(.hidden) {
   display: flex !important;
 }
 
+body:has(#app[data-phase="battle"]) .gamepad-hints-bar,
+body:has(#app[data-phase="replay"]) .gamepad-hints-bar {
+  display: flex !important;
+}
+
 #app[data-phase="battle"] .battle-canvas-stage {
   position: relative;
 }
@@ -4828,10 +4833,13 @@ body.recipe-book-open {
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-  padding: 6px 12px;
+  padding:
+    6px 12px
+    calc(6px + env(safe-area-inset-bottom, 0px));
   background: rgba(13, 17, 23, 0.92);
   border-top: 1px solid #30363d;
   backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 body:has(#class-overlay:not(.hidden)) .gamepad-hints-bar,
@@ -5054,12 +5062,12 @@ html[data-ui-compact="true"] .prep-toolbar .btn-secondary {
 }
 
 @media (hover: none) and (pointer: coarse) {
-  .gamepad-hints-bar {
+  body:has(#app[data-phase="prep"]) .gamepad-hints-bar {
     display: none;
   }
 
   .class-controls-hint,
-  .battle-controls-hint {
+  body:has(#app[data-phase="prep"]) .battle-controls-hint {
     display: none;
   }
 }
@@ -5329,6 +5337,11 @@ html[data-prep-side-fit="true"] body {
 
 html[data-gamepad-hud="hidden"] .gamepad-hints-bar {
   display: none !important;
+}
+
+html[data-gamepad-hud="hidden"] body:has(#app[data-phase="battle"]) .gamepad-hints-bar,
+html[data-gamepad-hud="hidden"] body:has(#app[data-phase="replay"]) .gamepad-hints-bar {
+  display: flex !important;
 }
 
 html[data-prep-side-fit="true"] #app[data-phase="prep"] {
