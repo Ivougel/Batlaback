@@ -818,7 +818,9 @@ function init() {
     },
     onPrepFocusChanged: onGamepadPrepFocusChanged,
     togglePrepTooltips,
-    sendBoardFocusToBench,
+    sellBoardFocus: sellBoardFocusItem,
+    sellBenchFocus: sellBenchFocusItem,
+    sellDraggedQuick: sellDraggedItemQuick,
     dropDragToBench: dropDraggedItemToBench,
     toggleRecipeBook: toggleRecipeBookPopup,
     toggleCharacteristics: () => togglePlayerCharacteristicsPopup(getPlayerCharacteristicsState()),
@@ -1456,27 +1458,49 @@ function applyGamepadPrepFocusTooltip(focus) {
   }
 }
 
-function sendBoardFocusToBench() {
+function sellBoardFocusItem() {
   if (phase !== "prep" || !canEditPrepSide() || !gamepadBoardFocus) return false;
   const st = getSideState(prepViewSide);
   const { col, row } = gamepadBoardFocus;
   const item = findItemAtSlot(st.items, col, row);
-  if (!item) return false;
-  if (st.bench.length >= MAX_BENCH) {
-    log("Скамейка полна!");
-    return false;
+  if (item) {
+    creditItemSale(item.itemId, prepViewSide);
+    st.items = st.items.filter((i) => i.uid !== item.uid);
+    synergyPreviewBuilt = null;
+    recalcSynergies();
+    updateUI();
+    if (lastGamepadPrepFocus) applyGamepadPrepFocusTooltip(lastGamepadPrepFocus);
+    return true;
   }
-  st.items = st.items.filter((i) => i.uid !== item.uid);
-  st.bench.push({
-    itemId: item.itemId,
-    uid: item.uid,
-    rotation: item.rotation || 0,
-  });
+  const container = findContainerAtCell(st.containers, col, row);
+  if (!container || ITEM_CATALOG[container.itemId]?.immovable) return false;
+  const carriedItems = getItemsTouchingContainer(st.items, container);
+  creditItemSale(container.itemId, prepViewSide);
+  carriedItems.forEach((ci) => creditItemSale(ci.itemId, prepViewSide));
+  st.containers = st.containers.filter((c) => c.uid !== container.uid);
+  st.items = st.items.filter((i) => !carriedItems.some((c) => c.uid === i.uid));
   synergyPreviewBuilt = null;
   recalcSynergies();
-  renderBench();
   updateUI();
   if (lastGamepadPrepFocus) applyGamepadPrepFocusTooltip(lastGamepadPrepFocus);
+  return true;
+}
+
+function sellBenchFocusItem(index) {
+  if (phase !== "prep" || !canEditPrepSide()) return false;
+  if (!sellBenchEntry(index)) return false;
+  renderBench();
+  recalcSynergies();
+  updateUI();
+  return true;
+}
+
+function sellDraggedItemQuick(side = prepViewSide) {
+  if (!sellDraggedItem(side)) return false;
+  clearDragUiState();
+  renderBench();
+  recalcSynergies();
+  updateUI();
   return true;
 }
 
