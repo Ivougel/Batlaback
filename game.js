@@ -2080,9 +2080,9 @@ function hideDragGhostOverlay() {
   getDragGhostCanvas()?.classList.add("hidden");
 }
 
-/** На touch: призрак привязан к центру клетки превью, а не к пальцу между клетками. */
+/** Призрак drag: центр якорной клетки превью, не середина всей фигуры. */
 function getDragGhostAnchorClient(clientX, clientY) {
-  if (!isTouchUi() || phase !== "prep" || !dragPayload || !canvas) {
+  if (phase !== "prep" || !dragPayload || !canvas) {
     return { x: clientX, y: clientY };
   }
 
@@ -2105,16 +2105,7 @@ function getDragGhostAnchorClient(clientX, clientY) {
       dragPayload.rotation || 0,
     );
     if (placement.valid) {
-      const def = ITEM_CATALOG[dragPayload.itemId];
-      const shape = rotateShape(def.shape, placement.rotation);
-      let sx = 0;
-      let sy = 0;
-      shape.forEach(([dx, dy]) => {
-        const c = boardCellClientCenter(placement.col + dx, placement.row + dy, team);
-        sx += c.x;
-        sy += c.y;
-      });
-      return { x: sx / shape.length, y: sy / shape.length };
+      return boardCellClientCenter(placement.col, placement.row, team);
     }
     return boardCellClientCenter(hoverSlot.col, hoverSlot.row, team);
   }
@@ -2496,7 +2487,7 @@ function drawLoadoutItems(items, team, dimmed) {
   items.forEach((item) => {
     const def = ITEM_CATALOG[item.itemId];
     const alpha = dimmed ? 0.55 : 1;
-    getItemCells(item).forEach(([c, r], idx) => {
+    getItemCells(item).forEach(([c, r]) => {
       const { x, y, w, h } = cellRect(team, c, r);
       ctx.globalAlpha = alpha;
       ctx.fillStyle = def.color + "dd";
@@ -2506,10 +2497,11 @@ function drawLoadoutItems(items, team, dimmed) {
       ctx.lineWidth = 1.5;
       roundRect(x + CELL_TILE_PAD, y + CELL_TILE_PAD, w - CELL_TILE_PAD * 2, h - CELL_TILE_PAD * 2, 5);
       ctx.stroke();
-      if (idx === 0) {
-        drawCellEmoji(ctx, def.icon, x, y, w, h);
-      }
     });
+    const [iconCol, iconRow] = getItemIconCell(item);
+    const iconRect = cellRect(team, iconCol, iconRow);
+    ctx.globalAlpha = alpha;
+    drawCellEmoji(ctx, def.icon, iconRect.x, iconRect.y, iconRect.w, iconRect.h);
     ctx.globalAlpha = 1;
   });
 }
@@ -2519,16 +2511,13 @@ function drawItemPreview(x, y, def, itemId, selected, rotation, targetCtx = ctx)
   targetCtx.fillStyle = selected ? "rgba(240,193,75,0.15)" : "rgba(0,0,0,0.2)";
   roundRect(x, y, CELL + 4, CELL - 4, 6, targetCtx);
   targetCtx.fill();
-  shape.forEach(([dx, dy], idx) => {
+  shape.forEach(([dx, dy]) => {
     targetCtx.fillStyle = def.color;
     roundRect(x + 8 + dx * 16, y + 8 + dy * 16, 14, 14, 3, targetCtx);
     targetCtx.fill();
-    if (idx === 0) {
-      const cellX = x + 8 + dx * 16;
-      const cellY = y + 8 + dy * 16;
-      drawCellEmoji(targetCtx, def.icon, cellX, cellY, 14, 14, 2);
-    }
   });
+  const [adx, ady] = getShapeAnchorOffset(shape);
+  drawCellEmoji(targetCtx, def.icon, x + 8 + adx * 16, y + 8 + ady * 16, 14, 14, 2);
 }
 
 function drawHoverCell() {

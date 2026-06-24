@@ -62,6 +62,16 @@ function getItemCells(item) {
   return shape.map(([dx, dy]) => [item.col + dx, item.row + dy]);
 }
 
+/** Клетка-якорь: иконка всегда по центру этого квадрата, не всей фигуры. */
+function getItemIconCell(item) {
+  return [item.col, item.row];
+}
+
+/** Смещение якорной клетки в повёрнутой shape (после normalize всегда есть [0,0]). */
+function getShapeAnchorOffset(shape) {
+  return shape.find(([dx, dy]) => dx === 0 && dy === 0) || [0, 0];
+}
+
 function getContainerBounds(container) {
   const cells = getItemCells(container);
   return {

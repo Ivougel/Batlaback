@@ -48,8 +48,8 @@ function drawBattleItemWithAnimation(ctx, item, team, def, cellRectFn, roundRect
 
   if (!cells.length) return;
 
-  const [anchorCol, anchorRow] = cells[0];
-  const { x, y, w, h } = cellRectFn(team, anchorCol, anchorRow);
+  const [iconCol, iconRow] = getItemIconCell(item);
+  const { x, y, w, h } = cellRectFn(team, iconCol, iconRow);
   const innerW = w - pad * 2;
   const innerH = h - pad * 2;
   const iconCx = x + pad + innerW / 2;

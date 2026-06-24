@@ -139,8 +139,8 @@ function drawDisplacedItem(ctx, item, team, centerX, centerY, alpha, scale) {
   });
 
   if (cells.length) {
-    const [fc, fr] = cells[0];
-    const rect = cellRect(team, fc, fr);
+    const [iconCol, iconRow] = getItemIconCell(item);
+    const rect = cellRect(team, iconCol, iconRow);
     const x = centerX + (rect.x - itemCenter.x) * scale;
     const y = centerY + (rect.y - itemCenter.y) * scale;
     const w = rect.w * scale;
