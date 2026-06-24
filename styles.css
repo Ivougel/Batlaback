@@ -4513,7 +4513,113 @@ html[data-prep-layout="side"] #app[data-phase="prep"] #game-canvas {
   height: auto;
 }
 
-/* Prep viewport fit — один экран на iPad mini и крупнее */
+/* Side prep fit — iPad mini landscape: магазин overlay, один экран */
+html[data-prep-side-fit="true"] body {
+  overflow: hidden;
+}
+
+html[data-gamepad-hud="hidden"] .gamepad-hints-bar {
+  display: none !important;
+}
+
+html[data-prep-side-fit="true"] #app[data-phase="prep"] {
+  height: var(--app-h);
+  max-height: var(--app-h);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+html[data-prep-side-fit="true"] #app[data-phase="prep"] .battle-header-stack {
+  display: none;
+}
+
+html[data-prep-side-fit="true"] #app[data-phase="prep"] .game-layout {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+html[data-prep-side-fit="true"] #app[data-phase="prep"] .board-section {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+}
+
+html[data-prep-side-fit="true"] #app[data-phase="prep"] .battle-arena {
+  flex: 1 1 auto;
+  min-height: 0;
+  position: relative;
+  --battle-avatar-w: clamp(72px, 12vw, 120px);
+  --battle-avatar-h: clamp(92px, 15vw, 155px);
+}
+
+html[data-prep-side-fit="true"] #app[data-phase="prep"] .battle-canvas-stage {
+  max-height: calc(var(--app-h) - 180px);
+  overflow: hidden;
+}
+
+html[data-prep-side-fit="true"] #app[data-phase="prep"] #game-canvas {
+  max-width: 100%;
+  max-height: calc(var(--app-h) - 200px);
+  width: auto;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+html[data-prep-side-fit="true"] #app[data-phase="prep"] #shop-panel {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+
+html[data-prep-side-fit="true"] #app[data-phase="prep"] .battle-avatars-row {
+  flex-shrink: 0;
+}
+
+html[data-prep-side-fit="true"] #app[data-phase="prep"] .battle-avatars-col {
+  min-height: 0;
+}
+
+html[data-prep-side-fit="true"] #app[data-phase="prep"] #prep-toolbar {
+  flex-shrink: 0;
+  margin-top: 4px;
+  padding: 4px 8px;
+}
+
+html[data-prep-side-fit="true"] #app[data-phase="prep"] #board-hint {
+  display: none;
+}
+
+html[data-prep-side-fit="true"] #app[data-phase="prep"] .shop-panel .shop-slots {
+  grid-auto-rows: calc(72px * var(--ui-scale));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+html[data-prep-side-fit="true"] #app[data-phase="prep"] .shop-panel .shop-card,
+html[data-prep-side-fit="true"] #app[data-phase="prep"] .shop-panel .shop-card.empty {
+  height: calc(72px * var(--ui-scale));
+  min-height: calc(72px * var(--ui-scale));
+  max-height: calc(72px * var(--ui-scale));
+}
+
+html[data-prep-side-fit="true"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-card {
+  min-height: calc(44px * var(--ui-scale));
+}
+
+html[data-prep-side-fit="true"] #app[data-phase="prep"] .field-avatar-wrap .profile-avatar {
+  font-size: calc(2.4rem * var(--ui-scale));
+}
+
+/* Prep viewport fit — stacked portrait */
 html[data-prep-viewport-fit="true"] body {
   overflow: hidden;
 }
