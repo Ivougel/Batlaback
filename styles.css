@@ -614,7 +614,8 @@ body.is-ui-dragging * {
   clip-path: inset(0 0 0 calc(var(--battle-shop-right, var(--battle-shop-left, var(--battle-field-ratio))) * 100%));
 }
 
-.battle-canvas-stage #game-canvas {
+.battle-canvas-stage #game-canvas,
+.battle-canvas-stage .canvas-scale-wrap #game-canvas {
   border-radius: 0;
 }
 
@@ -1677,6 +1678,20 @@ body.is-ui-dragging * {
   vertical-align: top;
 }
 
+/* Обёртка: CSS задаёт только ширину, height:auto сохраняет пропорции bitmap canvas */
+.canvas-scale-wrap {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  line-height: 0;
+}
+
+.canvas-scale-wrap #game-canvas {
+  width: 100% !important;
+  height: auto !important;
+  max-height: none !important;
+}
+
 #game-canvas:active {
   cursor: grabbing;
 }
@@ -1809,9 +1824,40 @@ body.is-ui-dragging * {
   }
 }
 
-/* ─── iPad mini / планшет 600–1100px: поле слева, магазин+скамейка справа ─── */
+/* ─── iPad mini / планшет 600–1200px: поле слева, магазин+скамейка справа ─── */
 
-@media (min-width: 600px) and (max-width: 1100px) {
+@media (min-width: 600px) and (max-width: 1200px) {
+  #app {
+    max-width: none;
+    width: 100%;
+    height: var(--app-h, 100dvh);
+    min-height: var(--app-h, 100dvh);
+    max-height: var(--app-h, 100dvh);
+    margin: 0;
+    padding:
+      max(6px, env(safe-area-inset-top))
+      max(6px, env(safe-area-inset-right))
+      max(6px, env(safe-area-inset-bottom))
+      max(6px, env(safe-area-inset-left));
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  #app .battle-header-stack {
+    flex-shrink: 0;
+  }
+
+  #app .top-bar {
+    flex-shrink: 0;
+  }
+
+  #app .game-layout {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+
   .top-bar {
     flex-wrap: nowrap;
     gap: 6px;
@@ -1836,9 +1882,11 @@ body.is-ui-dragging * {
 
   #app[data-phase="prep"] .game-layout {
     display: grid;
-    grid-template-columns: minmax(320px, 420px) 1fr;
-    align-items: start;
-    gap: 8px;
+    grid-template-columns: minmax(280px, 420px) minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    align-items: stretch;
+    gap: 6px;
+    height: 100%;
   }
 
   #app[data-phase="prep"] .board-section {
@@ -1857,12 +1905,19 @@ body.is-ui-dragging * {
     max-width: 420px;
     width: 100%;
     flex-shrink: 0;
+    align-self: start;
+  }
+
+  #app[data-phase="prep"] .canvas-scale-wrap {
+    width: 100%;
+    max-width: 420px;
   }
 
   #app[data-phase="prep"] #game-canvas {
-    width: 100%;
+    width: 100% !important;
     max-width: 420px;
-    height: auto;
+    height: auto !important;
+    max-height: none !important;
     margin: 0;
   }
 
@@ -1884,8 +1939,11 @@ body.is-ui-dragging * {
     z-index: 1;
     display: flex;
     flex-direction: column;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
     min-height: 0;
-    max-height: calc(var(--app-h, 100dvh) - 120px);
+    max-height: none;
     margin: 0;
     padding: calc(8px * var(--ui-scale));
     border: 1px solid var(--border);
@@ -1896,6 +1954,34 @@ body.is-ui-dragging * {
 
   #app[data-phase="prep"] #shop-panel .shop-panel-header {
     flex-shrink: 0;
+    min-width: 0;
+    gap: 4px;
+  }
+
+  #app[data-phase="prep"] #shop-panel .shop-panel-heading {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  #app[data-phase="prep"] #shop-panel .shop-panel-heading h3,
+  #app[data-phase="prep"] #shop-panel .shop-gold-stat {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  #app[data-phase="prep"] #shop-panel .btn-refresh-shop {
+    flex-shrink: 0;
+    max-width: 46%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.68rem;
+    padding: 6px 8px;
+  }
+
+  #app[data-phase="prep"] #shop-panel .shop-action-row {
+    max-width: 100%;
   }
 
   #app[data-phase="prep"] #shop-panel .shop-hint,
@@ -1906,10 +1992,12 @@ body.is-ui-dragging * {
   #app[data-phase="prep"] #shop-panel .shop-slots,
   #app[data-phase="prep"] .sidebar .shop-slots {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 6px;
     flex: 1 1 auto;
     min-height: 0;
+    min-width: 0;
+    overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     grid-auto-rows: calc(72px * var(--ui-scale));
@@ -1936,10 +2024,36 @@ body.is-ui-dragging * {
     height: calc(72px * var(--ui-scale));
     min-height: calc(72px * var(--ui-scale));
     max-height: calc(72px * var(--ui-scale));
+    min-width: 0;
+    overflow: hidden;
+    padding: calc(4px * var(--ui-scale)) calc(24px * var(--ui-scale)) calc(4px * var(--ui-scale)) calc(6px * var(--ui-scale));
+    gap: calc(4px * var(--ui-scale));
+  }
+
+  #app[data-phase="prep"] .shop-panel .shop-card .info {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  #app[data-phase="prep"] .shop-panel .shop-card .name {
+    display: block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    -webkit-line-clamp: unset;
+    -webkit-box-orient: unset;
+  }
+
+  #app[data-phase="prep"] .shop-panel .shop-card .cost {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   #app[data-phase="prep"] #prep-toolbar {
     grid-column: 1 / -1;
+    grid-row: 3;
+    flex-shrink: 0;
   }
 
   #app[data-phase="prep"][data-prep-side="player"] .battle-avatars-row {
@@ -4937,4 +5051,117 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #shop-panel .bench-p
 html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .btn-refresh-shop {
   padding: calc(6px * var(--ui-scale)) calc(10px * var(--ui-scale));
   font-size: 0.78rem;
+}
+
+/* Планшет 600–1200px: перебивает prep-side-fit (landscape iPad mini ~1133px) */
+@media (min-width: 600px) and (max-width: 1200px) {
+  html[data-prep-layout="side"] #app[data-phase="prep"],
+  html[data-prep-side-fit="true"] #app[data-phase="prep"] {
+    height: var(--app-h, 100dvh);
+    max-height: var(--app-h, 100dvh);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  html[data-prep-layout="side"] #app[data-phase="prep"] .game-layout,
+  html[data-prep-side-fit="true"] #app[data-phase="prep"] .game-layout {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(280px, 420px) minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    align-items: stretch;
+    gap: 6px;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  html[data-prep-layout="side"] #app[data-phase="prep"] .board-section,
+  html[data-prep-side-fit="true"] #app[data-phase="prep"] .board-section {
+    display: contents;
+    min-height: 0;
+  }
+
+  html[data-prep-layout="side"] #app[data-phase="prep"] .battle-arena,
+  html[data-prep-side-fit="true"] #app[data-phase="prep"] .battle-arena {
+    display: contents;
+    min-height: 0;
+  }
+
+  html[data-prep-layout="side"] #app[data-phase="prep"] .battle-canvas-stage,
+  html[data-prep-side-fit="true"] #app[data-phase="prep"] .battle-canvas-stage {
+    grid-column: 1;
+    grid-row: 1;
+    clip-path: none !important;
+    overflow: hidden;
+    max-width: 420px;
+    max-height: none;
+    align-self: start;
+  }
+
+  html[data-prep-layout="side"] #app[data-phase="prep"] .canvas-scale-wrap,
+  html[data-prep-side-fit="true"] #app[data-phase="prep"] .canvas-scale-wrap {
+    width: 100%;
+    max-width: 420px;
+  }
+
+  html[data-prep-layout="side"] #app[data-phase="prep"] #game-canvas,
+  html[data-prep-side-fit="true"] #app[data-phase="prep"] #game-canvas {
+    display: block;
+    width: 100% !important;
+    max-width: 420px;
+    height: auto !important;
+    max-height: none !important;
+    margin: 0;
+    flex-shrink: 0;
+  }
+
+  html[data-prep-layout="side"] #app[data-phase="prep"] .battle-avatars-row,
+  html[data-prep-side-fit="true"] #app[data-phase="prep"] .battle-avatars-row {
+    grid-column: 1;
+    grid-row: 2;
+    max-width: 420px;
+  }
+
+  html[data-prep-layout="side"] #app[data-phase="prep"] #shop-panel,
+  html[data-prep-side-fit="true"] #app[data-phase="prep"] #shop-panel {
+    position: static;
+    left: auto;
+    right: auto;
+    top: auto;
+    bottom: auto;
+    grid-column: 2;
+    grid-row: 1 / 3;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+    max-height: none;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: calc(8px * var(--ui-scale));
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #161b22;
+  }
+
+  html[data-prep-layout="side"] #app[data-phase="prep"] #shop-panel .shop-slots,
+  html[data-prep-side-fit="true"] #app[data-phase="prep"] .shop-panel .shop-slots {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 6px;
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  html[data-prep-layout="side"] #app[data-phase="prep"] #prep-toolbar,
+  html[data-prep-side-fit="true"] #app[data-phase="prep"] #prep-toolbar {
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
 }
