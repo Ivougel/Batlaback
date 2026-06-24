@@ -10,45 +10,27 @@ function uiPx(value) {
   return Math.round(value * UI_SCALE);
 }
 
-/** Доп. сдвиг (доля клетки), если bbox на устройстве всё ещё кривой. */
+/** Точечная коррекция (доля клетки) поверх center/middle — только для кривых глифов. */
 const ICON_OPTICAL_OFFSETS = {
-  "☠️": [-0.05, 0.02],
-  "\u2620\uFE0F": [-0.05, 0.02],
-  "☠": [-0.05, 0.02],
+  "☠️": [0.04, 0.03],
+  "\u2620\uFE0F": [0.04, 0.03],
+  "☠": [0.04, 0.03],
 };
 
-/** Центрирует emoji в клетке canvas (оптический центр ink bbox, Safari/iOS). */
+/** Центрирует emoji в клетке canvas (center/middle + опциональный offset). */
 function drawCellEmoji(ctx, icon, x, y, w, h) {
   const cx = x + w / 2;
   const cy = y + h / 2;
   const size = Math.max(14, Math.round(Math.min(w, h) * 0.58));
   ctx.save();
   ctx.font = `${size}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
   ctx.fillStyle = "#ffffff";
-
-  const m = ctx.measureText(icon);
-  const hasBBox = m.actualBoundingBoxAscent != null && m.actualBoundingBoxDescent != null;
-
-  if (hasBBox) {
-    ctx.textAlign = "left";
-    ctx.textBaseline = "alphabetic";
-    let drawX = cx - (m.actualBoundingBoxRight - m.actualBoundingBoxLeft) / 2;
-    let drawY = cy - (m.actualBoundingBoxDescent - m.actualBoundingBoxAscent) / 2;
-    const fallback = ICON_OPTICAL_OFFSETS[icon];
-    if (fallback) {
-      drawX += fallback[0] * w;
-      drawY += fallback[1] * h;
-    }
-    ctx.fillText(icon, drawX, drawY);
-  } else {
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    const fallback = ICON_OPTICAL_OFFSETS[icon];
-    const ox = fallback ? fallback[0] * w : 0;
-    const oy = fallback ? fallback[1] * h : 0;
-    ctx.fillText(icon, cx + ox, cy + oy);
-  }
-
+  const fallback = ICON_OPTICAL_OFFSETS[icon];
+  const ox = fallback ? fallback[0] * w : 0;
+  const oy = fallback ? fallback[1] * h : 0;
+  ctx.fillText(icon, cx + ox, cy + oy);
   ctx.restore();
 }
 

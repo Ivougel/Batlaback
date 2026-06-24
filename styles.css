@@ -1742,9 +1742,13 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 }
 
 #app[data-phase="prep"] #shop-panel .shop-card .shop-item-visual .icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: calc(var(--game-item-icon-size) * var(--shop-item-icon-scale, 1.28));
   height: calc(var(--game-item-icon-size) * var(--shop-item-icon-scale, 1.28));
   font-size: calc(1.95rem * var(--ui-scale));
+  line-height: 1;
   margin: 0;
   flex-shrink: 0;
   border-radius: calc(12px * var(--ui-scale));
