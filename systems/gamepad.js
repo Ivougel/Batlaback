@@ -195,7 +195,10 @@ function bindActiveGamepad(pad, resetPrev = true) {
   if (gpConnectedPadKey !== key || resetPrev) {
     gpConnectedPadKey = key;
     gpButtonMap = resolveGamepadButtons(pad);
-    gpPrevButtons = (pad.buttons || []).map((b) => !!b.pressed);
+    gpPrevButtons = (pad.buttons || []).map((b) => {
+      const val = b?.value ?? 0;
+      return !!b?.pressed || val > 0.5;
+    });
   }
   gpActive = true;
 }
@@ -223,16 +226,37 @@ function syncGamepadCursorVisibility() {
   document.body.classList.toggle("gamepad-active", !!show);
 }
 
+function isButtonActive(pad, idx) {
+  const btn = pad.buttons[idx];
+  if (!btn) return false;
+  const val = btn.value ?? 0;
+  return !!btn.pressed || val > 0.5;
+}
+
 function wasBtnPressed(pad, name, prevButtons) {
   const idx = gpButtonMap[name];
   if (idx == null) return false;
-  return !!pad.buttons[idx]?.pressed && !(prevButtons[idx] ?? false);
+  return isButtonActive(pad, idx) && !(prevButtons[idx] ?? false);
 }
 
 function isBtnHeld(pad, name) {
   const idx = gpButtonMap[name];
   if (idx == null) return false;
-  return !!pad.buttons[idx]?.pressed;
+  return isButtonActive(pad, idx);
+}
+
+/** Switch Pro: смена зоны на ZL (LT), Xbox — на RB. */
+function getPrepZoneCycleButton(pad) {
+  return isSwitchGamepad(pad) ? "LT" : "RB";
+}
+
+function mapHintsForPad(hints, pad) {
+  if (!hints || !isSwitchGamepad(pad)) return hints;
+  return hints.map((h) => {
+    if (h.keys === "RB" && h.label === "поле") return { ...h, keys: "ZL" };
+    if (h.keys === "LB" && h.label === "стол") return { ...h, keys: "L" };
+    return h;
+  });
 }
 
 function readStick(pad, axisX, axisY) {
@@ -371,8 +395,8 @@ function refreshGamepadHints() {
   if (!bar || !list) return;
 
   const context = getMenuContext();
-  const hints = context ? GP_HINT_SETS[context] : null;
   const pad = getActiveGamepad();
+  const hints = context ? mapHintsForPad(GP_HINT_SETS[context], pad) : null;
 
   if (status) {
     if (pad) {
@@ -728,8 +752,9 @@ function handlePrepGamepad(pad, prevButtons, dt) {
     gpHandlers?.togglePrepSide?.();
     markGamepadInput();
   }
-  if (wasBtnPressed(pad, "RB", prevButtons)) {
+  if (wasBtnPressed(pad, getPrepZoneCycleButton(pad), prevButtons)) {
     cyclePrepZone(1);
+    markGamepadInput();
   }
   if (wasBtnPressed(pad, "Y", prevButtons)) {
     gpHandlers?.toggleRecipeBook?.();
@@ -835,7 +860,10 @@ function tickGamepad(dt) {
   gpAwaitingWake = false;
 
   const prevButtons = gpPrevButtons;
-  gpPrevButtons = (pad.buttons || []).map((b) => !!b.pressed);
+  gpPrevButtons = (pad.buttons || []).map((b) => {
+    const val = b?.value ?? 0;
+    return !!b?.pressed || val > 0.5;
+  });
 
   const context = getMenuContext();
   refreshGamepadHints();
