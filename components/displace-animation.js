@@ -139,9 +139,13 @@ function drawDisplacedItem(ctx, item, team, centerX, centerY, alpha, scale) {
   });
 
   if (cells.length) {
-    const sample = cellRect(team, cells[0][0], cells[0][1]);
-    const inner = (sample.w - pad * 2) * scale;
-    drawCellEmojiAt(ctx, def.icon, centerX, centerY, inner);
+    const [fc, fr] = cells[0];
+    const rect = cellRect(team, fc, fr);
+    const x = centerX + (rect.x - itemCenter.x) * scale;
+    const y = centerY + (rect.y - itemCenter.y) * scale;
+    const w = rect.w * scale;
+    const h = rect.h * scale;
+    drawCellEmoji(ctx, def.icon, x, y, w, h, pad * scale);
   }
 
   ctx.restore();

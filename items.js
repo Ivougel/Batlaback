@@ -25,7 +25,7 @@ function drawCellEmojiAt(ctx, icon, cx, cy, innerSize) {
   ctx.restore();
 }
 
-/** Центрирует emoji в клетке canvas — внутри цветной плитки, не по внешнему bbox клетки. */
+/** Центрирует emoji внутри одной клетки сетки (цветной плитки), не по центру всей фигуры. */
 function drawCellEmoji(ctx, icon, x, y, w, h, pad = CELL_TILE_PAD) {
   const innerW = Math.max(1, w - pad * 2);
   const innerH = Math.max(1, h - pad * 2);

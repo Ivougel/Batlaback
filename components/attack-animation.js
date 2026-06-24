@@ -48,20 +48,18 @@ function drawBattleItemWithAnimation(ctx, item, team, def, cellRectFn, roundRect
 
   if (!cells.length) return;
 
-  const iconCenter = typeof getItemVisualCenter === "function"
-    ? getItemVisualCenter(item, team)
-    : (() => {
-      const { x, y, w, h } = cellRectFn(team, cells[0][0], cells[0][1]);
-      return { x: x + w / 2, y: y + h / 2 };
-    })();
-  const sample = cellRectFn(team, cells[0][0], cells[0][1]);
-  const inner = sample.w - pad * 2;
+  const [anchorCol, anchorRow] = cells[0];
+  const { x, y, w, h } = cellRectFn(team, anchorCol, anchorRow);
+  const innerW = w - pad * 2;
+  const innerH = h - pad * 2;
+  const iconCx = x + pad + innerW / 2;
+  const iconCy = y + pad + innerH / 2;
 
   ctx.save();
   if (pulse > 1) {
-    ctx.translate(iconCenter.x, iconCenter.y);
+    ctx.translate(iconCx, iconCy);
     ctx.scale(pulse, pulse);
-    ctx.translate(-iconCenter.x, -iconCenter.y);
+    ctx.translate(-iconCx, -iconCy);
   }
   if (failedFlash) {
     ctx.shadowColor = "#f85149";
@@ -70,7 +68,7 @@ function drawBattleItemWithAnimation(ctx, item, team, def, cellRectFn, roundRect
     ctx.shadowColor = team === "player" ? "#58a6ff" : "#f85149";
     ctx.shadowBlur = 16;
   }
-  drawCellEmojiAt(ctx, def.icon, iconCenter.x, iconCenter.y, inner);
+  drawCellEmoji(ctx, def.icon, x, y, w, h);
   ctx.restore();
 }
 
