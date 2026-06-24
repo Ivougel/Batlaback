@@ -1,7 +1,11 @@
 /*
  * ═══════════════════════════════════════════════════════════════════════════
- * CANVAS SIZE AUDIT — Шаг 1 (2025-06-24)
+ * CANVAS SIZE AUDIT — Шаг 1 (2025-06-24) · Фаза A CSS (2025-06-24)
  * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * Фаза A (безопасная чистка): удалены .battle-avatars-* (мёртвая разметка),
+ *   legacy overlay shop (absolute + left/right calc), .sidebar, prep clip-path,
+ *   слиты @media 600–1200px. side-fit overlay shop сохранён (touch w<600).
  *
  * ПРОБЛЕМА: размер #game-canvas задаётся из ≥5 независимых источников.
  * CSS width:100% / !important бьётся с game.js lock* и ui-layout.js fit*.
@@ -471,58 +475,8 @@ body:has(#app[data-phase="prep"]) #battle-controls {
   display: none;
 }
 
-#app[data-phase="prep"] .battle-avatars-center {
-  display: none;
-}
-
-#app[data-phase="prep"][data-prep-side="player"] .battle-avatars-row {
-  grid-template-columns: calc(var(--battle-field-ratio) * 100%) 1fr;
-}
-
-#app[data-phase="prep"][data-prep-side="player"] .battle-avatars-player {
-  display: flex;
-  grid-column: 1;
-  grid-row: 1;
-}
-
-#app[data-phase="prep"][data-prep-side="player"] .battle-avatars-enemy {
-  display: none;
-}
-
-#app[data-phase="prep"][data-prep-side="enemy"] .battle-avatars-row {
-  grid-template-columns: 1fr calc(var(--battle-enemy-ratio, var(--battle-field-ratio)) * 100%);
-}
-
-#app[data-phase="prep"][data-prep-side="enemy"] .battle-avatars-player {
-  display: none;
-}
-
-#app[data-phase="prep"][data-prep-side="enemy"] .battle-avatars-enemy {
-  display: flex;
-  grid-column: 2;
-  grid-row: 1;
-  justify-content: center;
-  align-items: flex-end;
-}
-
 #app[data-phase="prep"] #prep-toolbar {
   display: flex;
-}
-
-#app[data-phase="prep"][data-prep-side="player"] #shop-panel {
-  left: calc(var(--battle-shop-left, var(--battle-field-ratio)) * 100%);
-  right: 0;
-  border-left: 1px solid var(--border);
-  border-right: none;
-  border-radius: 0 8px 8px 0;
-}
-
-#app[data-phase="prep"][data-prep-side="enemy"] #shop-panel {
-  left: 0;
-  right: calc((1 - var(--battle-shop-right, var(--battle-shop-left, var(--battle-field-ratio)))) * 100%);
-  border-left: none;
-  border-right: 1px solid var(--border);
-  border-radius: 8px 0 0 8px;
 }
 
 #app[data-phase="prep"][data-prep-side="enemy"] #shop-panel .shop-panel-header {
@@ -574,10 +528,6 @@ body:has(#app[data-phase="prep"]) #battle-controls {
 }
 
 #app[data-phase="prep"] #shop-panel {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  z-index: 5;
   display: flex;
   flex-direction: column;
   margin-top: 0;
@@ -930,10 +880,6 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
   position: relative;
 }
 
-#app[data-phase="battle"] .battle-avatars-row {
-  border-radius: 0 0 8px 8px;
-}
-
 .board-section {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -990,22 +936,6 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
   align-items: flex-start;
   justify-content: flex-start;
   overflow: hidden;
-}
-
-#app[data-phase="prep"] .prep-left-column .battle-avatars-row {
-  flex: 1 1 0;
-  min-height: 120px;
-  width: 100%;
-  max-width: none;
-  margin: 0;
-  padding: 4px 0 0;
-  align-items: stretch;
-}
-
-#app[data-phase="prep"] .prep-left-column .battle-avatars-col {
-  min-height: 0;
-  height: 100%;
-  align-items: stretch;
 }
 
 #app[data-phase="prep"] .prep-left-column .field-avatar-wrap {
@@ -1068,23 +998,7 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
   overflow: hidden;
 }
 
-html[data-prep-layout="side"] #app[data-phase="prep"] .battle-canvas-stage {
-  clip-path: none !important;
-}
-
-#app[data-phase="prep"][data-prep-side="player"] .battle-canvas-stage {
-  clip-path: inset(0 calc((1 - var(--battle-shop-left, var(--battle-field-ratio))) * 100%) 0 0);
-}
-
-#app[data-phase="prep"][data-prep-side="enemy"] .battle-canvas-stage {
-  clip-path: inset(0 0 0 calc(var(--battle-shop-right, var(--battle-shop-left, var(--battle-field-ratio))) * 100%));
-}
-
-html[data-prep-layout="stacked"] #app[data-phase="prep"] .battle-canvas-stage {
-  clip-path: none;
-}
-
-/* Side prep (Mac / iPad): canvas и аватары как в фазе боя */
+/* Side prep (Mac / iPad): canvas и аватары как в фазе бою */
 html[data-prep-layout="side"] #app[data-phase="prep"] .battle-arena {
   --battle-avatar-w: calc(222px * var(--ui-scale));
   --battle-avatar-h: calc(288px * var(--ui-scale));
@@ -1133,38 +1047,6 @@ html[data-prep-layout="side"] #app[data-phase="prep"] #game-canvas {
   width: 100% !important;
   height: auto !important;
   max-width: none;
-}
-
-html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .battle-avatars-row {
-  position: static;
-  inset: auto;
-  flex: 0 0 auto;
-  display: grid;
-  grid-template-columns: 1fr;
-  min-height: 0;
-  height: auto;
-  margin: 0;
-  padding: calc(8px * var(--ui-scale)) calc(4px * var(--ui-scale)) calc(4px * var(--ui-scale));
-  pointer-events: auto;
-}
-
-html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .battle-avatars-col {
-  position: static;
-  display: flex;
-  justify-content: center;
-  min-height: 0;
-  width: 100%;
-}
-
-html[data-prep-layout="side"] #app[data-phase="prep"][data-prep-side="player"] .battle-avatars-enemy,
-html[data-prep-layout="side"] #app[data-phase="prep"][data-prep-side="enemy"] .battle-avatars-player {
-  display: none !important;
-}
-
-html[data-prep-layout="side"] #app[data-phase="prep"][data-prep-side="player"] .battle-avatars-player,
-html[data-prep-layout="side"] #app[data-phase="prep"][data-prep-side="enemy"] .battle-avatars-enemy {
-  display: flex !important;
-  grid-column: 1;
 }
 
 html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .field-avatar-wrap {
@@ -1250,49 +1132,6 @@ html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .field-a
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
 }
 
-.battle-avatars-row {
-  display: grid;
-  grid-template-columns:
-    calc(var(--battle-field-ratio) * 100%)
-    calc(var(--battle-center-ratio) * 100%)
-    calc(var(--battle-enemy-ratio, var(--battle-field-ratio)) * 100%);
-  align-items: center;
-  padding: calc(8px * var(--ui-scale)) calc(4px * var(--ui-scale)) calc(4px * var(--ui-scale));
-  background: rgba(13, 17, 23, 0.85);
-  border-top: 1px solid var(--border);
-  border-radius: 0;
-  position: relative;
-  z-index: 1;
-}
-
-.battle-avatars-col {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: calc(var(--battle-avatar-h) + 8px);
-}
-
-.battle-avatars-player {
-  justify-content: center;
-  align-items: flex-end;
-}
-
-.battle-avatars-enemy {
-  justify-content: center;
-  align-items: flex-end;
-}
-
-.battle-avatars-center {
-  display: none;
-  flex-direction: column;
-  justify-content: center;
-  align-items: stretch;
-  pointer-events: auto;
-  padding: 0 calc(6px * var(--ui-scale));
-  min-width: 0;
-}
-
-#app[data-phase="battle"] .battle-avatars-center,
 #app[data-phase="battle"] #battle-stats-panel {
   display: flex;
 }
@@ -1889,43 +1728,6 @@ html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .field-a
 }
 
 @media (max-width: 820px) {
-  .battle-avatars-row {
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto;
-    gap: calc(8px * var(--ui-scale));
-  }
-
-  .battle-avatars-player { grid-column: 1; grid-row: 1; }
-  .battle-avatars-enemy { grid-column: 2; grid-row: 1; }
-
-  #app[data-phase="battle"] .battle-avatars-row {
-    grid-template-rows: auto auto auto;
-  }
-
-  #app[data-phase="battle"] .battle-avatars-center {
-    display: flex;
-    grid-column: 1 / -1;
-    grid-row: 2;
-    padding: calc(4px * var(--ui-scale)) 0;
-  }
-
-  #app[data-phase="prep"] .battle-avatars-center {
-    display: none;
-  }
-
-  #app[data-phase="prep"][data-prep-side="player"] .battle-avatars-row {
-    grid-template-columns: 1fr;
-  }
-
-  #app[data-phase="prep"][data-prep-side="enemy"] .battle-avatars-row {
-    grid-template-columns: 1fr;
-  }
-
-  #app[data-phase="prep"][data-prep-side="enemy"] .battle-avatars-enemy {
-    grid-column: 1;
-    justify-content: center;
-  }
-
   .battle-arena-overlay {
     position: static;
     display: block;
@@ -2547,8 +2349,7 @@ html[data-battle-hud-pin="true"] body {
     flex-shrink: 0;
   }
 
-  #app[data-phase="prep"] #shop-panel .shop-slots,
-  #app[data-phase="prep"] .sidebar .shop-slots {
+  #app[data-phase="prep"] #shop-panel .shop-slots {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 6px;
@@ -2561,8 +2362,7 @@ html[data-battle-hud-pin="true"] body {
     grid-auto-rows: var(--shop-card-row-h);
   }
 
-  #app[data-phase="prep"] #shop-panel .bench-panel .bench-slots,
-  #app[data-phase="prep"] .sidebar .bench-slots {
+  #app[data-phase="prep"] #shop-panel .bench-panel .bench-slots {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 6px;
@@ -2597,12 +2397,21 @@ html[data-battle-hud-pin="true"] body {
     font-size: calc(0.94rem * var(--ui-scale));
   }
 
-  #app[data-phase="prep"][data-prep-side="player"] .battle-avatars-row {
-    grid-template-columns: 1fr;
+  html[data-prep-layout="side"] #app[data-phase="prep"],
+  html[data-prep-side-fit="true"] #app[data-phase="prep"] {
+    height: var(--app-h, 100dvh);
+    max-height: var(--app-h, 100dvh);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
 
-  #app[data-phase="prep"][data-prep-side="enemy"] .battle-avatars-row {
-    grid-template-columns: 1fr;
+  html[data-prep-layout="side"] #app[data-phase="prep"] .game-layout,
+  html[data-prep-side-fit="true"] #app[data-phase="prep"] .game-layout {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
   }
 }
 
@@ -2802,28 +2611,6 @@ html[data-battle-hud-pin="true"] body {
   color: var(--muted);
   text-align: center;
   line-height: 1.2;
-}
-
-.sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.sidebar > div {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px;
-}
-
-.sidebar h3 {
-  font-size: 0.85rem;
-  margin-bottom: 8px;
-  color: var(--muted);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
 }
 
 .synergies-list {
@@ -5228,47 +5015,6 @@ html[data-prep-layout="stacked"] .bench-panel .bench-card {
   touch-action: none;
 }
 
-html[data-prep-layout="stacked"] .battle-avatars-row {
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto auto;
-  gap: calc(8px * var(--ui-scale));
-}
-
-html[data-prep-layout="stacked"] .battle-avatars-player {
-  grid-column: 1;
-  grid-row: 1;
-}
-
-html[data-prep-layout="stacked"] .battle-avatars-enemy {
-  grid-column: 2;
-  grid-row: 1;
-}
-
-html[data-prep-layout="stacked"] #app[data-phase="battle"] .battle-avatars-row {
-  grid-template-rows: auto auto auto;
-}
-
-html[data-prep-layout="stacked"] #app[data-phase="battle"] .battle-avatars-center {
-  display: flex;
-  grid-column: 1 / -1;
-  grid-row: 2;
-  padding: calc(4px * var(--ui-scale)) 0;
-}
-
-html[data-prep-layout="stacked"] #app[data-phase="prep"] .battle-avatars-center {
-  display: none;
-}
-
-html[data-prep-layout="stacked"] #app[data-phase="prep"][data-prep-side="player"] .battle-avatars-row,
-html[data-prep-layout="stacked"] #app[data-phase="prep"][data-prep-side="enemy"] .battle-avatars-row {
-  grid-template-columns: 1fr;
-}
-
-html[data-prep-layout="stacked"] #app[data-phase="prep"][data-prep-side="enemy"] .battle-avatars-enemy {
-  grid-column: 1;
-  justify-content: center;
-}
-
 html[data-prep-layout="stacked"] .battle-arena-overlay {
   position: static;
   display: block;
@@ -5354,40 +5100,12 @@ html[data-prep-layout="stacked"] #app[data-phase="prep"] .battle-canvas-stage {
 
 html[data-prep-layout="stacked"] #app[data-phase="prep"][data-prep-side="player"] #shop-panel,
 html[data-prep-layout="stacked"] #app[data-phase="prep"][data-prep-side="enemy"] #shop-panel {
-  position: static !important;
-  left: auto !important;
-  right: auto !important;
-  top: auto !important;
-  bottom: auto !important;
-  width: 100% !important;
+  width: 100%;
   flex-shrink: 0;
-}
-
-html[data-prep-layout="stacked"] #app[data-phase="prep"][data-prep-side="player"] .battle-avatars-row,
-html[data-prep-layout="stacked"] #app[data-phase="prep"][data-prep-side="enemy"] .battle-avatars-row {
-  grid-template-columns: 1fr !important;
-  flex-shrink: 0;
-}
-
-html[data-prep-layout="stacked"] #app[data-phase="prep"][data-prep-side="player"] .battle-avatars-player,
-html[data-prep-layout="stacked"] #app[data-phase="prep"][data-prep-side="enemy"] .battle-avatars-enemy {
-  grid-column: 1 !important;
-  grid-row: 1 !important;
-  justify-content: center !important;
-  min-height: 0;
-}
-
-html[data-prep-layout="stacked"] #app[data-phase="prep"] .battle-arena {
-  --battle-avatar-w: clamp(96px, 20vw, 150px);
-  --battle-avatar-h: clamp(124px, 26vw, 195px);
 }
 
 html[data-prep-layout="stacked"] #app[data-phase="prep"] .field-avatar-wrap .profile-avatar {
   font-size: calc(3rem * var(--ui-scale));
-}
-
-html[data-prep-layout="stacked"] #app[data-phase="prep"] .battle-avatars-col {
-  min-height: 0;
 }
 
 html[data-prep-layout="stacked"] #app[data-phase="prep"] #shop-panel .shop-sell-zone {
@@ -5494,14 +5212,6 @@ html[data-prep-side-fit="true"] #app[data-phase="prep"] #shop-panel {
   padding: calc(8px * var(--ui-scale));
 }
 
-html[data-prep-side-fit="true"] #app[data-phase="prep"] .battle-avatars-row {
-  flex-shrink: 0;
-}
-
-html[data-prep-side-fit="true"] #app[data-phase="prep"] .battle-avatars-col {
-  min-height: 0;
-}
-
 html[data-prep-side-fit="true"] #app[data-phase="prep"] #prep-toolbar {
   flex-shrink: 0;
   margin-top: 4px;
@@ -5585,8 +5295,7 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .board-section {
 }
 
 html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #prep-toolbar,
-html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #board-hint,
-html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .battle-avatars-row {
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #board-hint {
   display: none !important;
 }
 
@@ -5691,26 +5400,6 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #shop-panel .bench-p
 html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .btn-refresh-shop {
   padding: calc(6px * var(--ui-scale)) calc(10px * var(--ui-scale));
   font-size: 0.78rem;
-}
-
-/* Планшет 600–1200px: высота app; grid/canvas/shop — prep-ref-layout.css */
-@media (min-width: 600px) and (max-width: 1200px) {
-  html[data-prep-layout="side"] #app[data-phase="prep"],
-  html[data-prep-side-fit="true"] #app[data-phase="prep"] {
-    height: var(--app-h, 100dvh);
-    max-height: var(--app-h, 100dvh);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-
-  html[data-prep-layout="side"] #app[data-phase="prep"] .game-layout,
-  html[data-prep-side-fit="true"] #app[data-phase="prep"] .game-layout {
-    flex: 1 1 auto;
-    min-height: 0;
-    height: 100%;
-    overflow: hidden;
-  }
 }
 
 /* Desktop prep grid/shop: prep-ref-layout.css (--shop-panel-w) */
