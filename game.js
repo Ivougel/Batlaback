@@ -761,6 +761,13 @@ function renderPhase() {
   }
   renderFightButton();
   if (phase !== "prep") closeAllFighterCharacteristicsPopups();
+  if (typeof applyUiLayout === "function") scheduleLayoutAfterPhase();
+}
+
+function scheduleLayoutAfterPhase() {
+  requestAnimationFrame(() => {
+    if (typeof applyUiLayout === "function") applyUiLayout();
+  });
 }
 
 function setPhase(newPhase) {

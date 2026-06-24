@@ -4140,7 +4140,8 @@ html[data-ui-compact="true"] .class-controls-hint {
   display: none;
 }
 
-html[data-ui-compact="true"] .class-grid
+html[data-ui-compact="true"] .class-grid,
+html[data-ui-compact="true"] .game-mode-grid {
   gap: calc(8px * var(--ui-scale));
 }
 
@@ -4154,7 +4155,8 @@ html[data-ui-compact="true"] .class-name {
   font-size: calc(0.95rem * var(--ui-scale));
 }
 
-html[data-ui-compact="true"] .class-desc
+html[data-ui-compact="true"] .class-desc,
+html[data-ui-compact="true"] .class-bonus {
   font-size: calc(0.75rem * var(--ui-scale));
 }
 
@@ -4172,14 +4174,16 @@ html[data-ui-compact="true"] .class-modal .class-step-actions {
   padding-top: 6px;
 }
 
-html[data-ui-compact="true"] .class-modal .class-step-actions .btn-primary
+html[data-ui-compact="true"] .class-modal .class-step-actions .btn-primary,
+html[data-ui-compact="true"] .class-modal .class-step-actions .btn-secondary,
 html[data-ui-compact="true"] .class-modal .class-step-actions-top .btn-secondary {
   min-height: 40px;
   padding: 8px 14px;
   font-size: 0.88rem;
 }
 
-html[data-ui-compact="true"] .battle-result-modal
+html[data-ui-compact="true"] .battle-result-modal,
+html[data-ui-compact="true"] .run-complete-modal {
   padding: calc(14px * var(--ui-scale)) calc(16px * var(--ui-scale));
 }
 
@@ -4202,12 +4206,14 @@ html[data-ui-compact="true"] .accordion-section.open .accordion-body {
   max-height: min(280px, 38dvh);
 }
 
-html[data-ui-compact="true"] .run-complete-hint
+html[data-ui-compact="true"] .run-complete-hint,
+html[data-ui-compact="true"] .battle-result-controls-hint {
   font-size: 0.7rem;
   margin-top: 4px;
 }
 
-html[data-ui-compact="true"] .btn-primary
+html[data-ui-compact="true"] .btn-primary,
+html[data-ui-compact="true"] .btn-secondary {
   min-height: 44px;
 }
 
@@ -4505,4 +4511,143 @@ html[data-prep-layout="side"] #app[data-phase="prep"] #game-canvas {
   display: block;
   max-width: 100%;
   height: auto;
+}
+
+/* Prep viewport fit — один экран на iPad mini и крупнее */
+html[data-prep-viewport-fit="true"] body {
+  overflow: hidden;
+}
+
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] {
+  height: var(--app-h);
+  max-height: var(--app-h);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .battle-header-stack {
+  display: none;
+}
+
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .game-layout {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .board-section {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+}
+
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #prep-toolbar,
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #board-hint,
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .battle-avatars-row {
+  display: none !important;
+}
+
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .battle-arena {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .battle-canvas-stage {
+  flex: 0 0 auto;
+  max-height: var(--prep-canvas-max-h, 34dvh);
+  overflow: hidden;
+}
+
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #game-canvas {
+  display: block;
+  max-height: var(--prep-canvas-max-h, 34dvh);
+  max-width: 100%;
+  width: auto;
+  height: auto;
+  margin: 0 auto;
+}
+
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #shop-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-top: 4px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: calc(8px * var(--ui-scale));
+}
+
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .shop-panel-header {
+  flex-shrink: 0;
+  gap: calc(4px * var(--ui-scale));
+}
+
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .shop-panel-heading h3 {
+  font-size: 0.9rem;
+}
+
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .shop-hint,
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .shop-hint-touch {
+  flex-shrink: 0;
+  font-size: 0.66rem;
+  line-height: 1.25;
+  margin: 0 0 4px;
+}
+
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .shop-panel .shop-slots {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  grid-auto-rows: var(--prep-shop-row-h, calc(64px * var(--ui-scale)));
+  max-height: none;
+}
+
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .shop-panel .shop-card,
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .shop-panel .shop-card.empty {
+  height: var(--prep-shop-row-h, calc(64px * var(--ui-scale)));
+  min-height: var(--prep-shop-row-h, calc(64px * var(--ui-scale)));
+  max-height: var(--prep-shop-row-h, calc(64px * var(--ui-scale)));
+}
+
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #shop-panel .shop-sell-zone {
+  flex-shrink: 0;
+  padding: calc(6px * var(--ui-scale)) calc(4px * var(--ui-scale));
+  margin-top: calc(4px * var(--ui-scale));
+}
+
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #shop-panel .shop-action-row .btn-secondary {
+  min-height: 40px;
+  padding: calc(8px * var(--ui-scale)) calc(8px * var(--ui-scale));
+  font-size: 0.82rem;
+}
+
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #shop-panel .bench-panel {
+  flex-shrink: 0;
+  margin-top: calc(4px * var(--ui-scale));
+  padding-top: calc(6px * var(--ui-scale));
+}
+
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #shop-panel .bench-panel h3 {
+  font-size: 0.78rem;
+  margin-bottom: 4px;
+}
+
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-slots {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-card {
+  min-height: calc(44px * var(--ui-scale));
+  padding: calc(4px * var(--ui-scale));
+}
+
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .btn-refresh-shop {
+  padding: calc(6px * var(--ui-scale)) calc(10px * var(--ui-scale));
+  font-size: 0.78rem;
 }

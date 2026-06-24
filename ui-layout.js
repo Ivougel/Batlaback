@@ -4,8 +4,9 @@
 (function initUiLayout() {
   const DESIGN_W = 1280;
   const DESIGN_H = 800;
-  const SCALE_MIN = 0.62;
+  const SCALE_MIN = 0.55;
   const SCALE_MAX = 1;
+  const PREP_STACKED_CONTENT_H = 640;
 
   function viewportSize() {
     const vv = window.visualViewport;
@@ -22,7 +23,7 @@
   }
 
   function isModalOpen() {
-    return ["class-overlay", "battle-result-overlay", "battle-detail-overlay", "overlay"].some((id) => {
+    return ["class-overlay", "battle-result-overlay", "battle-detail-overlay", "overlay", "settings-overlay"].some((id) => {
       const el = document.getElementById(id);
       return el && !el.classList.contains("hidden");
     });
@@ -39,23 +40,57 @@
 
   function shouldUseStackedPrep(w, h) {
     const touchDev = isTouchDevice();
-    const noHover = window.matchMedia("(hover: none)").matches;
-
     if (w <= 720 || h <= 560) return true;
-    if (isCoarsePointerOnly() || (noHover && touchDev)) return true;
-    if (touchDev && w <= 1100 && h <= 900) return true;
+    if (isCoarsePointerOnly()) return true;
+    if (touchDev && w <= 1366) return true;
     if (w <= 960 || h <= 680) return true;
     return false;
+  }
+
+  function measurePrepChromeHeight() {
+    const app = document.getElementById("app");
+    if (!app) return 72;
+    const topBar = app.querySelector(".top-bar");
+    let chrome = 0;
+    if (topBar) {
+      const style = getComputedStyle(topBar);
+      chrome += topBar.offsetHeight + (parseFloat(style.marginBottom) || 0);
+    }
+    const appStyle = getComputedStyle(app);
+    chrome += (parseFloat(appStyle.paddingTop) || 0) + (parseFloat(appStyle.paddingBottom) || 0);
+    return chrome + 8;
+  }
+
+  function applyPrepViewportFit(w, h, prepLayout, baseScale) {
+    if (prepLayout !== "stacked") {
+      document.documentElement.dataset.prepViewportFit = "false";
+      document.documentElement.style.removeProperty("--prep-canvas-max-h");
+      document.documentElement.style.removeProperty("--prep-shop-row-h");
+      return baseScale;
+    }
+
+    document.documentElement.dataset.prepViewportFit = "true";
+
+    const hudH = isModalOpen() || !isHudVisible() ? 0 : (document.getElementById("gamepad-hints-bar")?.offsetHeight ?? 0);
+    const chromeH = measurePrepChromeHeight() + hudH;
+    const available = Math.max(420, h - chromeH);
+
+    let fitScale = Math.min(baseScale, available / PREP_STACKED_CONTENT_H);
+    fitScale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, fitScale));
+
+    const canvasMax = Math.round(Math.min(available * 0.36, 260 * fitScale));
+    const shopRowH = Math.round(Math.max(52, Math.min(72, 68 * fitScale)));
+
+    document.documentElement.style.setProperty("--prep-canvas-max-h", `${canvasMax}px`);
+    document.documentElement.style.setProperty("--prep-shop-row-h", `${shopRowH}px`);
+
+    return Math.round(fitScale * 1000) / 1000;
   }
 
   function applyUiLayout() {
     const { w, h } = viewportSize();
     const rawScale = Math.min(w / DESIGN_W, h / DESIGN_H);
-    const clamped = Math.max(SCALE_MIN, Math.min(SCALE_MAX, rawScale));
-
-    document.documentElement.style.setProperty("--ui-scale", String(Math.round(clamped * 1000) / 1000));
-    document.documentElement.style.setProperty("--viewport-h", `${Math.round(h)}px`);
-    document.documentElement.style.setProperty("--viewport-w", `${Math.round(w)}px`);
+    let clamped = Math.max(SCALE_MIN, Math.min(SCALE_MAX, rawScale));
 
     const touchDev = isTouchDevice();
     document.documentElement.dataset.touch = touchDev ? "true" : "false";
@@ -70,7 +105,13 @@
     const compact = tier !== "desktop" || h <= 820;
     document.documentElement.dataset.uiCompact = compact ? "true" : "false";
 
-    document.documentElement.dataset.prepLayout = shouldUseStackedPrep(w, h) ? "stacked" : "side";
+    const prepLayout = shouldUseStackedPrep(w, h) ? "stacked" : "side";
+    document.documentElement.dataset.prepLayout = prepLayout;
+    clamped = applyPrepViewportFit(w, h, prepLayout, clamped);
+
+    document.documentElement.style.setProperty("--ui-scale", String(clamped));
+    document.documentElement.style.setProperty("--viewport-h", `${Math.round(h)}px`);
+    document.documentElement.style.setProperty("--viewport-w", `${Math.round(w)}px`);
 
     const hudH = isModalOpen() || !isHudVisible() ? 0 : (document.getElementById("gamepad-hints-bar")?.offsetHeight ?? 0);
     document.documentElement.style.setProperty("--hud-offset", `${hudH}px`);
@@ -101,7 +142,7 @@
         attributeFilter: ["class", "style"],
       });
     }
-    ["class-overlay", "battle-result-overlay", "battle-detail-overlay", "overlay"].forEach((id) => {
+    ["class-overlay", "battle-result-overlay", "battle-detail-overlay", "overlay", "settings-overlay"].forEach((id) => {
       const el = document.getElementById(id);
       if (el) {
         new MutationObserver(scheduleLayout).observe(el, {
@@ -110,6 +151,13 @@
         });
       }
     });
+    const app = document.getElementById("app");
+    if (app) {
+      new MutationObserver(scheduleLayout).observe(app, {
+        attributes: true,
+        attributeFilter: ["data-phase"],
+      });
+    }
   });
 
   window.applyUiLayout = applyUiLayout;
