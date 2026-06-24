@@ -891,8 +891,39 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar {
   left: 0;
   right: 0;
   bottom: 0;
-  padding-left: calc(12px + env(safe-area-inset-left, 0px));
-  padding-right: calc(12px + env(safe-area-inset-right, 0px));
+  top: var(--hud-fixed-top, auto);
+  align-items: stretch;
+  padding:
+    0
+    calc(12px + env(safe-area-inset-right, 0px))
+    env(safe-area-inset-bottom, 0px)
+    calc(12px + env(safe-area-inset-left, 0px));
+  margin: 0;
+  z-index: 900;
+}
+
+html[data-battle-hud-pin="true"] body:has(#app[data-phase="battle"]) .gamepad-hints-bar,
+html[data-battle-hud-pin="true"] body:has(#app[data-phase="replay"]) .gamepad-hints-bar {
+  bottom: auto;
+}
+
+body:has(#app[data-phase="battle"]) .gamepad-hints-bar .battle-controls:not(.hidden),
+body:has(#app[data-phase="replay"]) .gamepad-hints-bar .battle-controls:not(.hidden) {
+  align-self: stretch;
+  align-items: center;
+  padding-top: 6px;
+  padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+  margin-right: 4px;
+  margin-bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
+}
+
+body:has(#app[data-phase="battle"]) .gamepad-hints-bar .gamepad-hints-status,
+body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-status,
+body:has(#app[data-phase="battle"]) .gamepad-hints-bar .gamepad-hints-list,
+body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
+  align-self: center;
+  padding-top: 6px;
+  padding-bottom: 6px;
 }
 
 #app[data-phase="battle"] .battle-canvas-stage {
@@ -2414,13 +2445,21 @@ html[data-prep-layout="side"] #app[data-phase="prep"] .prep-left-column .field-a
 
 /* ─── iPad mini / планшет 600–1200px: поле слева, магазин+скамейка справа ─── */
 
+html[data-battle-hud-pin="true"],
+html[data-battle-hud-pin="true"] body {
+  height: var(--viewport-h, 100dvh);
+  min-height: var(--viewport-h, 100dvh);
+  max-height: var(--viewport-h, 100dvh);
+  overflow: hidden;
+}
+
 @media (min-width: 600px) and (max-width: 1200px) {
   #app {
     max-width: none;
     width: 100%;
-    height: var(--app-h, 100dvh);
-    min-height: var(--app-h, 100dvh);
-    max-height: var(--app-h, 100dvh);
+    height: var(--app-h, var(--viewport-h, 100dvh));
+    min-height: var(--app-h, var(--viewport-h, 100dvh));
+    max-height: var(--app-h, var(--viewport-h, 100dvh));
     margin: 0;
     padding:
       max(6px, env(safe-area-inset-top))

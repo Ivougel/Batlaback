@@ -207,6 +207,32 @@
     return baseScale;
   }
 
+  function applyBattleHudPin(hudVisible, refreshAppH = false) {
+    const bar = document.getElementById("gamepad-hints-bar");
+    if (!bar || !hudVisible || !isBattleUiPhase() || isModalOpen()) {
+      document.documentElement.dataset.battleHudPin = "false";
+      document.documentElement.style.removeProperty("--hud-fixed-top");
+      return;
+    }
+
+    const vv = window.visualViewport;
+    const vTop = vv?.offsetTop ?? 0;
+    const vHeight = vv?.height ?? window.innerHeight;
+    const barH = bar.offsetHeight || 0;
+    const top = Math.max(0, Math.round(vTop + vHeight - barH));
+
+    document.documentElement.dataset.battleHudPin = "true";
+    document.documentElement.style.setProperty("--hud-fixed-top", `${top}px`);
+
+    if (refreshAppH && barH > 0) {
+      document.documentElement.style.setProperty("--hud-offset", `${barH}px`);
+      document.documentElement.style.setProperty(
+        "--app-h",
+        `calc(var(--viewport-h, 100dvh) - ${barH}px - env(safe-area-inset-top))`,
+      );
+    }
+  }
+
   function applyUiLayout() {
     const { w, h } = viewportSize();
     const rawScale = Math.min(w / DESIGN_W, h / DESIGN_H);
@@ -240,9 +266,10 @@
     document.documentElement.style.setProperty(
       "--app-h",
       hudVisible
-        ? "calc(100dvh - var(--hud-offset) - env(safe-area-inset-top))"
-        : "calc(100dvh - var(--hud-offset) - env(safe-area-inset-top) - env(safe-area-inset-bottom))",
+        ? "calc(var(--viewport-h, 100dvh) - var(--hud-offset) - env(safe-area-inset-top))"
+        : "calc(var(--viewport-h, 100dvh) - var(--hud-offset) - env(safe-area-inset-top) - env(safe-area-inset-bottom))",
     );
+    applyBattleHudPin(hudVisible);
     document.documentElement.style.setProperty(
       "--overlay-max-h",
       "calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 10px)",
@@ -256,13 +283,21 @@
   }
 
   function scheduleLayout() {
-    requestAnimationFrame(applyUiLayout);
+    requestAnimationFrame(() => {
+      applyUiLayout();
+      requestAnimationFrame(() => {
+        if (document.documentElement.dataset.battleHudPin === "true") {
+          applyBattleHudPin(true, true);
+        }
+      });
+    });
   }
 
-  applyUiLayout();
+  scheduleLayout();
   window.addEventListener("resize", scheduleLayout, { passive: true });
   window.addEventListener("orientationchange", scheduleLayout, { passive: true });
   window.visualViewport?.addEventListener("resize", scheduleLayout, { passive: true });
+  window.visualViewport?.addEventListener("scroll", scheduleLayout, { passive: true });
   document.addEventListener("DOMContentLoaded", () => {
     scheduleLayout();
     const stage = document.querySelector(".battle-canvas-stage");
