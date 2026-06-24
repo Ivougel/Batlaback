@@ -117,8 +117,13 @@
 
   function fitPrepCanvasToStage() {
     const app = document.getElementById("app");
-    if (app?.dataset.phase !== "prep") {
-      clearCanvasDisplaySize();
+    const phase = app?.dataset.phase;
+    if (phase !== "prep") {
+      if ((phase === "battle" || phase === "replay") && typeof window.lockBattleCanvasDisplaySize === "function") {
+        window.lockBattleCanvasDisplaySize();
+      } else {
+        clearCanvasDisplaySize();
+      }
       return;
     }
 

@@ -85,6 +85,7 @@ function applyGridMetricsFromCss() {
 
 window.applyGridMetricsFromCss = applyGridMetricsFromCss;
 window.lockPrepCanvasDisplaySize = lockPrepCanvasDisplaySize;
+window.lockBattleCanvasDisplaySize = lockBattleCanvasDisplaySize;
 
 let canvas, ctx;
 let lastGameLoopDt = 0.016;
@@ -777,6 +778,11 @@ function applyPhaseCanvasLayout() {
     canvas.height = BATTLE_CANVAS_H;
   }
   layoutCanvasH = canvas.height;
+  if (phase === "prep") {
+    lockPrepCanvasDisplaySize();
+  } else if (isBattleUiPhase()) {
+    lockBattleCanvasDisplaySize();
+  }
 }
 
 function getPlayerCharacteristicsState() {
@@ -909,11 +915,25 @@ function lockPrepCanvasDisplaySize() {
   canvas.style.setProperty("max-height", `${displayH}px`, "important");
 }
 
+function lockBattleCanvasDisplaySize() {
+  if (!canvas || !isBattleUiPhase()) return;
+  const displayW = readCssPx("--battle-canvas-w", BATTLE_CANVAS_W);
+  const displayH = readCssPx("--battle-canvas-h", BATTLE_CANVAS_H);
+  canvas.style.setProperty("width", `${displayW}px`, "important");
+  canvas.style.setProperty("height", `${displayH}px`, "important");
+  canvas.style.setProperty("max-width", `${displayW}px`, "important");
+  canvas.style.setProperty("max-height", `${displayH}px`, "important");
+}
+
 function syncPrepCanvasDisplaySize() {
   if (!canvas) return;
 
   const app = document.getElementById("app");
   const isPrep = app?.dataset.phase === "prep";
+  if (isBattleUiPhase()) {
+    lockBattleCanvasDisplaySize();
+    return;
+  }
   if (!isPrep) {
     canvas.style.width = "";
     canvas.style.height = "";
