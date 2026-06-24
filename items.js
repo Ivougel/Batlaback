@@ -18,10 +18,30 @@ function drawCellEmojiAt(ctx, icon, cx, cy, innerSize) {
   const size = Math.max(14, Math.round(Math.max(1, innerSize) * 0.62));
   ctx.save();
   ctx.font = `${size}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
   ctx.fillStyle = "#ffffff";
-  ctx.fillText(icon, cx, cy);
+
+  const m = ctx.measureText(icon);
+  const hasBBox = m.actualBoundingBoxAscent != null
+    && m.actualBoundingBoxDescent != null
+    && m.actualBoundingBoxLeft != null
+    && m.actualBoundingBoxRight != null;
+
+  if (hasBBox) {
+    // Safari/iOS: center/middle ломает позицию цветных emoji — центрируем по ink bbox.
+    const left = m.actualBoundingBoxLeft;
+    const right = m.actualBoundingBoxRight;
+    const ascent = m.actualBoundingBoxAscent;
+    const descent = m.actualBoundingBoxDescent;
+    const centerOffsetX = (left + right) / 2;
+    const centerOffsetY = (descent - ascent) / 2;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillText(icon, cx - centerOffsetX, cy - centerOffsetY);
+  } else {
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(icon, cx, cy);
+  }
   ctx.restore();
 }
 
