@@ -2388,10 +2388,12 @@ html[data-battle-hud-pin="true"] body {
   width: var(--game-item-icon-size);
   height: var(--game-item-icon-size);
   border-radius: 50%;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   font-size: var(--game-item-icon-font);
+  line-height: 1;
+  text-align: center;
   flex-shrink: 0;
 }
 

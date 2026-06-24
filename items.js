@@ -10,28 +10,28 @@ function uiPx(value) {
   return Math.round(value * UI_SCALE);
 }
 
-/** Точечная коррекция (доля клетки) поверх center/middle — только для кривых глифов. */
-const ICON_OPTICAL_OFFSETS = {
-  "☠️": [0.04, 0.03],
-  "\u2620\uFE0F": [0.04, 0.03],
-  "☠": [0.04, 0.03],
-};
+/** Отступ цветной плитки предмета внутри клетки (совпадает с roundRect в drawLoadoutItems). */
+const CELL_TILE_PAD = 3;
 
-/** Центрирует emoji в клетке canvas (center/middle + опциональный offset). */
-function drawCellEmoji(ctx, icon, x, y, w, h) {
-  const cx = x + w / 2;
-  const cy = y + h / 2;
-  const size = Math.max(14, Math.round(Math.min(w, h) * 0.58));
+/** Рисует emoji в точке (cx, cy) внутри квадрата innerSize×innerSize. */
+function drawCellEmojiAt(ctx, icon, cx, cy, innerSize) {
+  const size = Math.max(14, Math.round(Math.max(1, innerSize) * 0.62));
   ctx.save();
   ctx.font = `${size}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#ffffff";
-  const fallback = ICON_OPTICAL_OFFSETS[icon];
-  const ox = fallback ? fallback[0] * w : 0;
-  const oy = fallback ? fallback[1] * h : 0;
-  ctx.fillText(icon, cx + ox, cy + oy);
+  ctx.fillText(icon, cx, cy);
   ctx.restore();
+}
+
+/** Центрирует emoji в клетке canvas — внутри цветной плитки, не по внешнему bbox клетки. */
+function drawCellEmoji(ctx, icon, x, y, w, h, pad = CELL_TILE_PAD) {
+  const innerW = Math.max(1, w - pad * 2);
+  const innerH = Math.max(1, h - pad * 2);
+  const cx = x + pad + innerW / 2;
+  const cy = y + pad + innerH / 2;
+  drawCellEmojiAt(ctx, icon, cx, cy, Math.min(innerW, innerH));
 }
 
 const RARITY_COLORS = {

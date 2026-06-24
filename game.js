@@ -2473,20 +2473,31 @@ function drawLoadoutItems(items, team, dimmed) {
   items.forEach((item) => {
     const def = ITEM_CATALOG[item.itemId];
     const alpha = dimmed ? 0.55 : 1;
-    getItemCells(item).forEach(([c, r], idx) => {
+    const cells = getItemCells(item);
+    cells.forEach(([c, r]) => {
       const { x, y, w, h } = cellRect(team, c, r);
       ctx.globalAlpha = alpha;
       ctx.fillStyle = def.color + "dd";
-      roundRect(x + 3, y + 3, w - 6, h - 6, 5);
+      roundRect(x + CELL_TILE_PAD, y + CELL_TILE_PAD, w - CELL_TILE_PAD * 2, h - CELL_TILE_PAD * 2, 5);
       ctx.fill();
       ctx.strokeStyle = RARITY_COLORS[def.rarity] || "#8b949e";
       ctx.lineWidth = 1.5;
-      roundRect(x + 3, y + 3, w - 6, h - 6, 5);
+      roundRect(x + CELL_TILE_PAD, y + CELL_TILE_PAD, w - CELL_TILE_PAD * 2, h - CELL_TILE_PAD * 2, 5);
       ctx.stroke();
-      if (idx === 0) {
-        drawCellEmoji(ctx, def.icon, x, y, w, h);
-      }
     });
+    if (cells.length) {
+      let sx = 0;
+      let sy = 0;
+      let inner = 0;
+      cells.forEach(([c, r]) => {
+        const { x, y, w, h } = cellRect(team, c, r);
+        sx += x + w / 2;
+        sy += y + h / 2;
+        inner = w - CELL_TILE_PAD * 2;
+      });
+      ctx.globalAlpha = alpha;
+      drawCellEmojiAt(ctx, def.icon, sx / cells.length, sy / cells.length, inner);
+    }
     ctx.globalAlpha = 1;
   });
 }
@@ -2503,7 +2514,7 @@ function drawItemPreview(x, y, def, itemId, selected, rotation, targetCtx = ctx)
     if (idx === 0) {
       const cellX = x + 8 + dx * 16;
       const cellY = y + 8 + dy * 16;
-      drawCellEmoji(targetCtx, def.icon, cellX, cellY, 14, 14);
+      drawCellEmoji(targetCtx, def.icon, cellX, cellY, 14, 14, 2);
     }
   });
 }

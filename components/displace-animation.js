@@ -116,11 +116,13 @@ function drawDisplacedItem(ctx, item, team, centerX, centerY, alpha, scale) {
   if (!def) return;
 
   const itemCenter = getItemVisualCenterOnBoard(item, team);
+  const pad = typeof CELL_TILE_PAD !== "undefined" ? CELL_TILE_PAD : 3;
+  const cells = getItemCells(item);
 
   ctx.save();
   ctx.globalAlpha = alpha;
 
-  getItemCells(item).forEach(([c, r], idx) => {
+  cells.forEach(([c, r]) => {
     const rect = cellRect(team, c, r);
     const x = centerX + (rect.x - itemCenter.x) * scale;
     const y = centerY + (rect.y - itemCenter.y) * scale;
@@ -128,17 +130,19 @@ function drawDisplacedItem(ctx, item, team, centerX, centerY, alpha, scale) {
     const h = rect.h * scale;
 
     ctx.fillStyle = def.color + "dd";
-    roundRect(x + 3 * scale, y + 3 * scale, w - 6 * scale, h - 6 * scale, 5 * scale);
+    roundRect(x + pad * scale, y + pad * scale, w - pad * 2 * scale, h - pad * 2 * scale, 5 * scale);
     ctx.fill();
     ctx.strokeStyle = RARITY_COLORS[def.rarity] || "#8b949e";
     ctx.lineWidth = 1.5;
-    roundRect(x + 3 * scale, y + 3 * scale, w - 6 * scale, h - 6 * scale, 5 * scale);
+    roundRect(x + pad * scale, y + pad * scale, w - pad * 2 * scale, h - pad * 2 * scale, 5 * scale);
     ctx.stroke();
-
-    if (idx === 0) {
-      drawCellEmoji(ctx, def.icon, x, y, w, h);
-    }
   });
+
+  if (cells.length) {
+    const sample = cellRect(team, cells[0][0], cells[0][1]);
+    const inner = (sample.w - pad * 2) * scale;
+    drawCellEmojiAt(ctx, def.icon, centerX, centerY, inner);
+  }
 
   ctx.restore();
 }

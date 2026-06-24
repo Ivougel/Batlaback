@@ -10,19 +10,13 @@ function drawBattleItemWithAnimation(ctx, item, team, def, cellRectFn, roundRect
   const pulse = getItemPulseScale(state, item.uid);
   const flashing = isItemFlashing(state, item.uid);
   const failedFlash = typeof isItemFailedFlash === "function" && isItemFailedFlash(state, item.uid);
+  const cells = getItemCells(item);
+  const pad = typeof CELL_TILE_PAD !== "undefined" ? CELL_TILE_PAD : 3;
 
-  getItemCells(item).forEach(([c, r], idx) => {
+  cells.forEach(([c, r]) => {
     const { x, y, w, h } = cellRectFn(team, c, r);
-    const cx = x + w / 2;
-    const cy = y + h / 2;
 
     ctx.save();
-    if (idx === 0 && pulse > 1) {
-      ctx.translate(cx, cy);
-      ctx.scale(pulse, pulse);
-      ctx.translate(-cx, -cy);
-    }
-
     if (failedFlash) {
       ctx.shadowColor = "#f85149";
       ctx.shadowBlur = 18;
@@ -32,27 +26,14 @@ function drawBattleItemWithAnimation(ctx, item, team, def, cellRectFn, roundRect
     }
 
     ctx.fillStyle = def.color + (failedFlash ? "ee" : flashing ? "ff" : "cc");
-    roundRectFn(x + 3, y + 3, w - 6, h - 6, 5);
+    roundRectFn(x + pad, y + pad, w - pad * 2, h - pad * 2, 5);
     ctx.fill();
 
     if (failedFlash) {
       ctx.strokeStyle = "#f85149";
       ctx.lineWidth = 2;
-      roundRectFn(x + 3, y + 3, w - 6, h - 6, 5);
+      roundRectFn(x + pad, y + pad, w - pad * 2, h - pad * 2, 5);
       ctx.stroke();
-    }
-
-    if (idx === 0) {
-      if (pulse > 1) {
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.scale(pulse, pulse);
-        ctx.translate(-cx, -cy);
-        drawCellEmoji(ctx, def.icon, x, y, w, h);
-        ctx.restore();
-      } else {
-        drawCellEmoji(ctx, def.icon, x, y, w, h);
-      }
     }
 
     if (item.currentCooldown != null) {
@@ -64,6 +45,33 @@ function drawBattleItemWithAnimation(ctx, item, team, def, cellRectFn, roundRect
     }
     ctx.restore();
   });
+
+  if (!cells.length) return;
+
+  const iconCenter = typeof getItemVisualCenter === "function"
+    ? getItemVisualCenter(item, team)
+    : (() => {
+      const { x, y, w, h } = cellRectFn(team, cells[0][0], cells[0][1]);
+      return { x: x + w / 2, y: y + h / 2 };
+    })();
+  const sample = cellRectFn(team, cells[0][0], cells[0][1]);
+  const inner = sample.w - pad * 2;
+
+  ctx.save();
+  if (pulse > 1) {
+    ctx.translate(iconCenter.x, iconCenter.y);
+    ctx.scale(pulse, pulse);
+    ctx.translate(-iconCenter.x, -iconCenter.y);
+  }
+  if (failedFlash) {
+    ctx.shadowColor = "#f85149";
+    ctx.shadowBlur = 18;
+  } else if (flashing) {
+    ctx.shadowColor = team === "player" ? "#58a6ff" : "#f85149";
+    ctx.shadowBlur = 16;
+  }
+  drawCellEmojiAt(ctx, def.icon, iconCenter.x, iconCenter.y, inner);
+  ctx.restore();
 }
 
 function easeOutCubic(t) {
