@@ -1,0 +1,282 @@
+/**
+ * HTML-overlay для летящих чисел и снарядов — цель: аватар в профиле сбоку.
+ */
+
+const battleFloatDomPool = new Map();
+
+function ensureBattleFloatLayer() {
+  let layer = document.getElementById("battle-float-layer");
+  if (!layer) {
+    layer = document.createElement("div");
+    layer.id = "battle-float-layer";
+    layer.className = "battle-float-layer";
+    layer.setAttribute("aria-hidden", "true");
+    document.body.appendChild(layer);
+  }
+  return layer;
+}
+
+function clearBattleFloatLayer() {
+  battleFloatDomPool.forEach((el) => el.remove());
+  battleFloatDomPool.clear();
+  const layer = document.getElementById("battle-float-layer");
+  if (layer) layer.innerHTML = "";
+}
+
+function getBattleCanvasEl() {
+  return document.getElementById("game-canvas");
+}
+
+function quadraticBezier(p0, p1, p2, t) {
+  const u = 1 - t;
+  return {
+    x: u * u * p0.x + 2 * u * t * p1.x + t * t * p2.x,
+    y: u * u * p0.y + 2 * u * t * p1.y + t * t * p2.y,
+  };
+}
+
+function getArcControlPoint(from, to, targetTeam) {
+  const midX = (from.x + to.x) / 2;
+  const midY = (from.y + to.y) / 2;
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const dist = Math.hypot(dx, dy) || 1;
+  const lift = Math.max(56, dist * 0.48);
+  const side = targetTeam === "player" ? -1 : targetTeam === "enemy" ? 1 : (to.x < from.x ? -1 : 1);
+  return {
+    x: midX + side * dist * 0.14,
+    y: midY - lift,
+  };
+}
+
+function getBattlefieldCenterViewport() {
+  if (typeof getTeamGridCenter === "function") {
+    const player = getTeamGridCenter("player");
+    const enemy = getTeamGridCenter("enemy");
+    const cell = typeof GRID_CELL !== "undefined" ? GRID_CELL : 30;
+    const topY = typeof GRID_TOP_Y !== "undefined" ? GRID_TOP_Y : 24;
+    const cx = (player.x + enemy.x) / 2;
+    const cy = topY + cell * 0.25;
+    return canvasPointToViewport(cx, cy);
+  }
+  const canvas = getBattleCanvasEl();
+  if (!canvas) return { x: window.innerWidth / 2, y: window.innerHeight * 0.28 };
+  const rect = canvas.getBoundingClientRect();
+  return { x: rect.left + rect.width / 2, y: rect.top + rect.height * 0.1 };
+}
+
+function getBattleStatsStaminaBarCenter(team) {
+  const row = document.querySelector(`#battle-stats-panel .stat-stamina-cell-${team}`);
+  if (row) {
+    const bar = row.querySelector(".stat-stamina-bar");
+    const rect = (bar || row).getBoundingClientRect();
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+  }
+  return getBattleStatsPanelCenter();
+}
+
+function getBattleStatsPanelCenter() {
+  const panel = document.getElementById("battle-stats-panel");
+  if (!panel || panel.offsetParent === null) return getBattlefieldCenterViewport();
+  const rect = panel.getBoundingClientRect();
+  return {
+    x: rect.left + rect.width / 2,
+    y: rect.top + rect.height * 0.28,
+  };
+}
+
+function getItemViewportCenter(item, team) {
+  if (!item || typeof getItemCells !== "function" || typeof cellRect !== "function") {
+    return getBattlefieldCenterViewport();
+  }
+  const cells = getItemCells(item);
+  if (!cells.length) return getBattlefieldCenterViewport();
+  let sx = 0;
+  let sy = 0;
+  cells.forEach(([c, r]) => {
+    const rect = cellRect(team, c, r);
+    sx += rect.x + rect.w / 2;
+    sy += rect.y + rect.h / 2;
+  });
+  return canvasPointToViewport(sx / cells.length, sy / cells.length);
+}
+
+function resolveFloatOriginViewport(options = {}, kind = "damage", targetTeam = "enemy") {
+  if (options.fromDebuffChip) {
+    return getProfileDebuffChipCenter(targetTeam, options.fromDebuffChip);
+  }
+  if (options.item && typeof getItemViewportCenter === "function") {
+    const itemTeam = options.sourceTeam || targetTeam;
+    return getItemViewportCenter(options.item, itemTeam);
+  }
+  if (kind === "positive") {
+    return getBattleStatsPanelCenter();
+  }
+  return getBattlefieldCenterViewport();
+}
+
+function canvasPointToViewport(x, y) {
+  const canvas = getBattleCanvasEl();
+  if (!canvas) return { x: 0, y: 0 };
+  const rect = canvas.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) return { x: rect.left, y: rect.top };
+  return {
+    x: rect.left + (x / canvas.width) * rect.width,
+    y: rect.top + (y / canvas.height) * rect.height,
+  };
+}
+
+function getProfileDebuffChipCenter(team, debuffId) {
+  const colClass = team === "player" ? ".stats-col-player" : ".stats-col-enemy";
+  const chip = document.querySelector(`#battle-stats-panel ${colClass} .status-debuffs [data-status-id="${debuffId}"]`);
+  if (chip) {
+    const rect = chip.getBoundingClientRect();
+    return {
+      x: rect.left + rect.width / 2 + (Math.random() - 0.5) * 8,
+      y: rect.top + rect.height / 2 + (Math.random() - 0.5) * 4,
+    };
+  }
+  const section = document.querySelector(`#battle-stats-panel ${colClass} .status-debuffs`);
+  if (section) {
+    const rect = section.getBoundingClientRect();
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+  }
+  return getProfileAvatarViewportCenter(team);
+}
+
+function getProfileAvatarViewportCenter(team) {
+  const avatarId = team === "player" ? "player-avatar-panel" : "enemy-avatar-panel";
+  const avatar = document.querySelector(`#${avatarId} .profile-avatar`);
+  if (avatar) {
+    const rect = avatar.getBoundingClientRect();
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+  }
+  const fallback = getTeamGridCenter(team);
+  return canvasPointToViewport(fallback.x, fallback.y);
+}
+
+function getFloatAlpha(fn) {
+  if (fn.delay && fn.age < fn.delay) return 0;
+  const effectiveAge = fn.delay ? fn.age - fn.delay : fn.age;
+  const effectiveMax = fn.maxAge || 1;
+  const fadeStart = fn.kind === "positive" ? 0.72 : 0.68;
+  const progress = effectiveAge / effectiveMax;
+  if (progress < fadeStart) return 1;
+  const fade = (progress - fadeStart) / (1 - fadeStart);
+  return Math.max(0, 1 - fade * fade);
+}
+
+function applyBattleFloatTransform(el, x, y, scale, alpha) {
+  el.style.opacity = String(Math.max(0, Math.min(1, alpha)));
+  el.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%) scale(${scale})`;
+}
+
+function upsertBattleFloatEl(layer, uid, className, content, asHtml = false) {
+  let el = battleFloatDomPool.get(uid);
+  if (!el) {
+    el = document.createElement("div");
+    el.className = className;
+    el.dataset.floatUid = uid;
+    battleFloatDomPool.set(uid, el);
+    layer.appendChild(el);
+  } else if (el.className !== className) {
+    el.className = className;
+  }
+  if (asHtml) {
+    if (el.innerHTML !== content) el.innerHTML = content;
+  } else if (el.textContent !== content) {
+    el.textContent = content;
+  }
+  return el;
+}
+
+function renderBattleEffectsOverlay(state) {
+  const layer = ensureBattleFloatLayer();
+  if (!state) {
+    clearBattleFloatLayer();
+    return;
+  }
+
+  const activeIds = new Set();
+
+  state.animations?.projectiles?.forEach((p) => {
+    const uid = p.uid || `proj-${p.fromX}-${p.fromY}-${p.icon}`;
+    activeIds.add(uid);
+    const t = easeInOutSine(Math.min(1, p.progress));
+    const from = { x: p.fromX, y: p.fromY };
+    const to = getProfileAvatarViewportCenter(p.toTeam);
+    const cp = getArcControlPoint(from, to, p.toTeam);
+    const pt = quadraticBezier(from, cp, to, t);
+    const scale = 1 + Math.sin(t * Math.PI) * 0.14;
+    const alpha = 1 - t * 0.2;
+    const shadow = p.team === "player" ? "#58a6ff" : "#f85149";
+    const el = upsertBattleFloatEl(
+      layer,
+      uid,
+      `battle-float battle-float-projectile battle-float-team-${p.team}`,
+      p.icon,
+    );
+    el.style.setProperty("--bf-color", shadow);
+    applyBattleFloatTransform(el, pt.x, pt.y, scale, alpha);
+  });
+
+  (state.floatingNumbers || []).forEach((fn) => {
+    const uid = fn.uid || fn.text;
+    activeIds.add(uid);
+    const alpha = getFloatAlpha(fn);
+    const magnitude = fn.magnitude ?? parseFloatingMagnitude(fn.text);
+    const scale = getFloatingScale(magnitude);
+    const pulse = 1 + Math.sin(Math.min(1, fn.age / fn.maxAge) * Math.PI) * 0.04;
+    const color = fn.color || "#f85149";
+    const isFailed = fn.kind === "failed";
+    const isStamina = fn.kind === "stamina";
+    const className = isFailed
+      ? `battle-float battle-float-failed battle-float-team-${fn.itemTeam || fn.sourceTeam || "player"}`
+      : isStamina
+        ? `battle-float battle-float-stamina battle-float-team-${fn.itemTeam || fn.sourceTeam || "player"}`
+        : `battle-float battle-float-${fn.kind || "damage"} battle-float-target-${fn.team || "enemy"}`;
+    const el = upsertBattleFloatEl(layer, uid, className, fn.text, false);
+    el.style.setProperty("--bf-color", color);
+    applyBattleFloatTransform(el, fn.x, fn.y, scale * pulse, alpha);
+  });
+
+  (state.animations?.failedPopups || []).forEach((popup) => {
+    const uid = popup.uid || `fail-${popup.itemUid}`;
+    activeIds.add(uid);
+    const side = popup.team === "player" ? state.player : state.enemy;
+    const item = side?.items?.find((i) => i.uid === popup.itemUid);
+    const origin = item && typeof getItemViewportCenter === "function"
+      ? getItemViewportCenter(item, popup.team)
+      : getBattlefieldCenterViewport();
+    const t = Math.min(1, popup.age / popup.maxAge);
+    const alpha = t < 0.12 ? t / 0.12 : t > 0.72 ? Math.max(0, 1 - (t - 0.72) / 0.28) : 1;
+    const scale = 0.92 + Math.sin(t * Math.PI) * 0.08;
+    const html = `<span class="battle-float-failed-icon">${popup.icon}</span><span class="battle-float-failed-label">${popup.label}</span>`;
+    const el = upsertBattleFloatEl(
+      layer,
+      uid,
+      `battle-float battle-float-failed-card battle-float-team-${popup.team}`,
+      html,
+      true,
+    );
+    applyBattleFloatTransform(el, origin.x, origin.y - t * 16, scale, alpha);
+  });
+
+  battleFloatDomPool.forEach((el, uid) => {
+    if (activeIds.has(uid)) return;
+    el.remove();
+    battleFloatDomPool.delete(uid);
+  });
+}
+
+function easeInOutSine(t) {
+  return -(Math.cos(Math.PI * t) - 1) / 2;
+}
+
+function easeInOutQuint(t) {
+  return t < 0.5 ? 16 * t ** 5 : 1 - (-2 * t + 2) ** 5 / 2;
+}
+
+function easeInOutCubic(t) {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
