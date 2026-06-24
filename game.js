@@ -327,7 +327,6 @@ function updatePrepSideUI() {
   shopPanel?.classList.toggle("shop-readonly", !editable);
   const title = document.getElementById("shop-panel-title");
   const hint = document.getElementById("shop-panel-hint");
-  const sideHint = document.getElementById("prep-side-hint");
   const refreshBtn = document.getElementById("btn-refresh");
   const playerBtn = document.getElementById("btn-prep-player");
   const enemyBtn = document.getElementById("btn-prep-enemy");
@@ -338,24 +337,20 @@ function updatePrepSideUI() {
     if (prepViewSide === "enemy") {
       if (title) title.textContent = "🛒 Магазин · Игрок 2";
       if (hint) hint.textContent = "Покупки и расстановка второго игрока · Tab — вернуться к игроку 1";
-      if (sideHint) sideHint.textContent = "Редактируете стол и магазин игрока 2 · Tab — переключить";
     } else {
       if (title) title.textContent = "🛒 Магазин · Игрок 1";
       if (hint) hint.textContent = "Покупки и расстановка первого игрока · Tab — перейти к игроку 2";
-      if (sideHint) sideHint.textContent = "Редактируете стол и магазин игрока 1 · Tab — переключить";
     }
   } else if (prepViewSide === "enemy") {
     if (playerBtn) playerBtn.textContent = "🧑 Мой стол";
     if (enemyBtn) enemyBtn.textContent = "🤖 Противник";
     if (title) title.textContent = "🛒 Магазин ИИ (просмотр)";
     if (hint) hint.textContent = "ИИ управляет этим билдом сам — только просмотр";
-    if (sideHint) sideHint.textContent = "Просмотр билда ИИ · Tab — ваш магазин и стол";
   } else {
     if (playerBtn) playerBtn.textContent = "🧑 Мой стол";
     if (enemyBtn) enemyBtn.textContent = "🤖 Противник";
     if (title) title.textContent = "🛒 Магазин";
     if (hint) hint.textContent = "Перетащите предмет в инвентарь или на скамейку · 📍 — заморозить";
-    if (sideHint) sideHint.textContent = "Ваш магазин и стол · Tab — билд бота · ⚗️ Рецепты — в панели магазина";
   }
   if (refreshBtn) refreshBtn.disabled = !editable;
   updateShopGoldStat();

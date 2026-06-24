@@ -22,6 +22,8 @@ const GP_DPAD_REPEAT_DELAY = 0.42;
 const GP_DPAD_REPEAT_RATE = 0.13;
 const GP_DPAD_COOLDOWN = 0.16;
 const GP_PREP_ZONES = ["board", "shop", "bench"];
+const SHOP_GRID_COLS = 2;
+const BENCH_GRID_COLS = 3;
 
 let gpHandlers = null;
 let gpActive = false;
@@ -422,6 +424,41 @@ function refreshGamepadHints() {
   list.innerHTML = hints.map((h) =>
     `<span class="gamepad-hint-chip"><kbd class="gamepad-hint-key">${h.keys}</kbd><span>${h.label}</span></span>`,
   ).join("");
+
+  refreshPrepToolbarHints(pad);
+}
+
+function refreshPrepToolbarHints(pad) {
+  const el = document.getElementById("prep-toolbar-hints");
+  if (!el) return;
+  const context = getMenuContext();
+  if (context !== "prep" && context !== "prepDrag") {
+    el.classList.add("hidden");
+    return;
+  }
+  el.classList.remove("hidden");
+  const switchPad = pad && isSwitchGamepad(pad);
+  const hints = context === "prepDrag"
+    ? [
+      { keys: "✚", label: "клетка" },
+      { keys: "A", label: "положить" },
+      { keys: "X", label: "скамейка" },
+      { keys: switchPad ? "ZR" : "RT", label: "поворот" },
+      { keys: "B", label: "отмена" },
+    ]
+    : [
+      { keys: "✚", label: "навигация" },
+      { keys: switchPad ? "ZL" : "RB", label: "поле" },
+      { keys: switchPad ? "L" : "LB", label: "стол" },
+      { keys: "A", label: "выбор" },
+      { keys: "X", label: "скамейка" },
+      { keys: "B", label: "отмена" },
+      { keys: "T", label: "инфо" },
+      { keys: "+", label: "бой" },
+    ];
+  el.innerHTML = hints.map((h) =>
+    `<span class="prep-hint-chip"><kbd class="prep-hint-key">${h.keys}</kbd><span>${h.label}</span></span>`,
+  ).join("");
 }
 
 function queryAccordionFocusables(containerSelector) {
@@ -632,6 +669,37 @@ function moveBoardFocus(dx, dy) {
   markGamepadInput();
 }
 
+function moveGridFocusIndex(index, count, cols, dx, dy) {
+  if (!count) return index;
+  let idx = Math.min(Math.max(0, index), count - 1);
+  const row = Math.floor(idx / cols);
+  const col = idx % cols;
+
+  if (dx !== 0) {
+    const newCol = col + dx;
+    if (newCol >= 0 && newCol < cols) {
+      const candidate = row * cols + newCol;
+      if (candidate < count) idx = candidate;
+    }
+    return idx;
+  }
+
+  if (dy !== 0) {
+    const newRow = row + dy;
+    if (newRow < 0) return idx;
+    const maxRow = Math.floor((count - 1) / cols);
+    if (newRow > maxRow) return idx;
+    let candidate = newRow * cols + col;
+    if (candidate >= count) {
+      if (count % cols === 1 && newRow === maxRow) idx = count - 1;
+      return idx;
+    }
+    idx = candidate;
+  }
+
+  return idx;
+}
+
 function movePrepFocus(dx, dy) {
   if (!dx && !dy) return;
   gpPrepInputMode = "dpad";
@@ -655,14 +723,7 @@ function movePrepFocus(dx, dy) {
   if (f.zone === "shop") {
     const cards = getShopFocusCards();
     if (!cards.length) return;
-    let idx = Math.min(f.index, cards.length - 1);
-    if (dx !== 0) {
-      const next = idx - dx;
-      if (next >= 0 && next < cards.length) idx = next;
-    } else if (dy !== 0) {
-      idx = stepSpatialFocusIndex(cards, idx, 0, dy);
-    }
-    f.index = idx;
+    f.index = moveGridFocusIndex(f.index, cards.length, SHOP_GRID_COLS, dx, dy);
     applyPrepFocusVisual();
     return;
   }
@@ -670,7 +731,7 @@ function movePrepFocus(dx, dy) {
   if (f.zone === "bench") {
     const cards = getBenchFocusCards();
     if (!cards.length) return;
-    f.index = stepSpatialFocusIndex(cards, Math.min(f.index, cards.length - 1), dx, dy);
+    f.index = moveGridFocusIndex(f.index, cards.length, BENCH_GRID_COLS, dx, dy);
     applyPrepFocusVisual();
   }
 }
