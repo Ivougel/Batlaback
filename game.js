@@ -859,9 +859,9 @@ function syncPrepCanvasDisplaySize() {
   const sideFit = root.dataset.prepSideFit === "true";
   const viewportFit = root.dataset.prepViewportFit === "true";
   const vw = window.visualViewport?.width ?? window.innerWidth;
-  const tabletBand = vw >= 600 && vw <= 1200;
+  const sideBySidePrep = root.dataset.prepLayout === "side" && vw >= 600;
 
-  if (!sideFit && !viewportFit && !tabletBand) {
+  if (!sideFit && !viewportFit && !sideBySidePrep) {
     canvas.style.width = "";
     canvas.style.height = "";
     return;
@@ -874,7 +874,7 @@ function syncPrepCanvasDisplaySize() {
   const stageH = stage.clientHeight;
   if (stageW <= 0 || stageH <= 0) return;
 
-  if (tabletBand) {
+  if (sideBySidePrep) {
     const scale = Math.max(stageW / canvas.width, stageH / canvas.height);
     const w = Math.max(1, Math.floor(canvas.width * scale));
     const h = Math.max(1, Math.floor(canvas.height * scale));

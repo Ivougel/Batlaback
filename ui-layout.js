@@ -77,15 +77,17 @@
     canvas.style.removeProperty("height");
   }
 
-  function isTabletPrepBand() {
+  function isSideBySidePrepLayout() {
+    return document.documentElement.dataset.prepLayout === "side";
+  }
+
+  function isSideBySidePrepBand() {
     const { w } = viewportSize();
-    return w >= 600 && w <= 1200;
+    return w >= 600 && isSideBySidePrepLayout();
   }
 
   function isPrepShopOverlayLayout() {
-    const { w } = viewportSize();
-    if (isTabletPrepBand()) return false;
-    return document.documentElement.dataset.prepLayout === "side";
+    return false;
   }
 
   function getPrepFieldVisibleWidthRatio(app) {
@@ -132,11 +134,9 @@
     const visibleRatio = getPrepFieldVisibleWidthRatio(app);
     const scaleW = sw / (visibleRatio * canvas.width);
     const scaleH = sh / canvas.height;
-    const scale = isTabletPrepBand()
+    const scale = isSideBySidePrepBand()
       ? Math.max(scaleW, scaleH)
-      : visibleRatio < 0.99
-        ? Math.max(scaleW, scaleH)
-        : Math.min(scaleW, scaleH);
+      : Math.min(scaleW, scaleH);
     if (scale <= 0) return;
 
     const w = Math.max(1, Math.floor(canvas.width * scale));
@@ -172,13 +172,13 @@
       return Math.round(fitScale * 1000) / 1000;
     }
 
-    if (w >= 600 && w <= 1200) {
+    if (prepLayout === "side" && w >= 600) {
       let fitScale = Math.min(baseScale, available / PREP_SIDE_CONTENT_H, w / DESIGN_W);
       fitScale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, fitScale));
       return Math.round(fitScale * 1000) / 1000;
     }
 
-    if (touchDev || w <= 1366) {
+    if (touchDev && w < 600) {
       document.documentElement.dataset.prepSideFit = "true";
       let fitScale = Math.min(baseScale, available / PREP_SIDE_CONTENT_H, w / DESIGN_W);
       fitScale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, fitScale));
