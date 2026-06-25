@@ -15,8 +15,9 @@
 | `DAMAGE_PACING_SCALE` | 0.88 | Сглаживание исходящего урона предметов |
 | `POISON_STACK_PACING` | 0.55 | Сглаживание стаков яда при наложении (×1 может не пройти) |
 | `GROUND_FIRE_PACING` | 0.85 | Сглаживание огня на поле |
-| `STAMINA_REGEN_PER_SEC` | 9 | Базовая регенерация ⚡ |
-| `STAMINA_COST_SCALE` | 1.12 | Множитель стоимости активации |
+| `STAMINA_BASE_MAX` | 40 | Базовый пул ⚡ |
+| `STAMINA_REGEN_PER_SEC` | 5 | Базовая регенерация ⚡ (+1/с за каждое оружие с ненулевой ⚡) |
+| `STAMINA_COST_SCALE` | 1.05 | Множитель стоимости активации (+ CD-floor под regen 6) |
 | `MAX_LIFESTEAL` | 35% | Вампиризм |
 | `MAX_CRIT_CHANCE` | 35% | Крит |
 | `MAX_SHIELD_BLOCK_MULT` | 45% | Усиление блока |

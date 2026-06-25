@@ -291,8 +291,13 @@ function enrichDamageEffect(effect, rarity) {
   };
 }
 
-/** Стоимость выносливости только для оружия (тег weapon). */
-const STAMINA_COST_SCALE = 1.12;
+/**
+ * Стоимость выносливости только для оружия (тег weapon).
+ * Подогнано под пул 40 и regen 5+1/оружие: быстрые клинки платят по CD-floor.
+ */
+const STAMINA_COST_SCALE = 1.05;
+/** Бенчмарк: STAMINA_REGEN_PER_SEC (5) + бонус за одно оружие (1). */
+const STAMINA_COST_REGEN_BENCHMARK = 6;
 
 function computeItemStaminaCostFromOpts(opts) {
   const tags = opts.tags || [];
@@ -310,7 +315,10 @@ function computeItemStaminaCostFromOpts(opts) {
       cost = Math.max(cost, Math.round(e.value * 2.2 + 3));
     }
   });
-  if (cost <= 0) cost = 5;
+  if (cost <= 0) cost = 4;
+  const cd = opts.cooldown ?? 2.5;
+  const cdFloor = Math.ceil(STAMINA_COST_REGEN_BENCHMARK * cd * 0.95);
+  cost = Math.max(cost, cdFloor);
   return Math.max(1, Math.ceil(cost * STAMINA_COST_SCALE));
 }
 

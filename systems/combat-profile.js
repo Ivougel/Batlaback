@@ -614,8 +614,8 @@ function renderBattleStatsCompareHTML(playerProfile, enemyProfile, options = {})
   const eHpMax = enemyProfile.hpMax ?? 100;
   const pStamina = playerProfile.staminaCurrent ?? playerProfile.stamina ?? null;
   const eStamina = enemyProfile.staminaCurrent ?? enemyProfile.stamina ?? null;
-  const pStaminaMax = playerProfile.staminaMax ?? 100;
-  const eStaminaMax = enemyProfile.staminaMax ?? 100;
+  const pStaminaMax = playerProfile.staminaMax ?? 40;
+  const eStaminaMax = enemyProfile.staminaMax ?? 40;
   const showStamina = liveBattle && pStamina != null && eStamina != null;
   const playerLosing = pHp < eHp;
   const enemyLosing = eHp < pHp;
