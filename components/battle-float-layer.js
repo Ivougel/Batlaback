@@ -35,6 +35,18 @@ function quadraticBezier(p0, p1, p2, t) {
   };
 }
 
+function cubicBezier(p0, p1, p2, p3, t) {
+  const u = 1 - t;
+  const uu = u * u;
+  const uuu = uu * u;
+  const tt = t * t;
+  const ttt = tt * t;
+  return {
+    x: uuu * p0.x + 3 * uu * t * p1.x + 3 * u * tt * p2.x + ttt * p3.x,
+    y: uuu * p0.y + 3 * uu * t * p1.y + 3 * u * tt * p2.y + ttt * p3.y,
+  };
+}
+
 function getArcControlPoint(from, to, targetTeam) {
   const midX = (from.x + to.x) / 2;
   const midY = (from.y + to.y) / 2;
@@ -47,6 +59,94 @@ function getArcControlPoint(from, to, targetTeam) {
     x: midX + side * dist * 0.14,
     y: midY - lift,
   };
+}
+
+/** Прямой урон от предмета → аватар противника (красная стрелка). */
+function getWeaponControlPoint(from, to, targetTeam) {
+  const midX = (from.x + to.x) / 2;
+  const midY = (from.y + to.y) / 2;
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const dist = Math.hypot(dx, dy) || 1;
+  const lift = Math.max(28, dist * 0.12);
+  const side = targetTeam === "player" ? -1 : targetTeam === "enemy" ? 1 : (to.x < from.x ? -1 : 1);
+  return {
+    x: midX + side * dist * 0.06,
+    y: midY - lift,
+  };
+}
+
+/** Усталость арены: сверху экрана → аватар (синяя стрелка). */
+function getFatigueOriginViewport(targetTeam) {
+  const canvas = getBattleCanvasEl();
+  const avatar = getProfileAvatarViewportCenter(targetTeam);
+  if (!canvas) {
+    return { x: avatar.x, y: Math.max(48, avatar.y - window.innerHeight * 0.42) };
+  }
+  const rect = canvas.getBoundingClientRect();
+  const bias = targetTeam === "player" ? -0.12 : targetTeam === "enemy" ? 0.12 : 0;
+  return {
+    x: rect.left + rect.width * (0.5 + bias),
+    y: rect.top + rect.height * 0.04,
+  };
+}
+
+function getFatigueControlPoint(from, to) {
+  const midX = (from.x + to.x) / 2;
+  const midY = (from.y + to.y) * 0.42 + to.y * 0.58;
+  return { x: midX, y: midY };
+}
+
+/** DoT яда/огня: чип ДЕБА в центре → аватар владельца дебаффа. */
+function getDebuffDotControlPoint(from, to, targetTeam) {
+  const midX = (from.x + to.x) / 2;
+  const midY = (from.y + to.y) / 2;
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const dist = Math.hypot(dx, dy) || 1;
+  const outward = targetTeam === "player" ? -1 : 1;
+  const bulge = Math.min(52, dist * 0.24);
+  return {
+    x: midX + outward * bulge * 0.35,
+    y: midY + Math.min(32, dist * 0.14),
+  };
+}
+
+/** Лечение: петля от предмета к своему аватару (зелёная стрелка). */
+function getHealLoopControls(from, to, targetTeam) {
+  const outward = targetTeam === "player" ? -1 : 1;
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const dist = Math.hypot(dx, dy) || 1;
+  const loop = Math.max(72, dist * 0.38);
+  const lift = Math.max(36, dist * 0.16);
+  return {
+    c1: {
+      x: from.x + outward * loop,
+      y: from.y - lift * 0.55,
+    },
+    c2: {
+      x: to.x + outward * loop * 0.55,
+      y: to.y - lift,
+    },
+  };
+}
+
+function sampleFloatTrajectory(trajectory, from, to, targetTeam, t) {
+  switch (trajectory) {
+    case "weapon":
+      return quadraticBezier(from, getWeaponControlPoint(from, to, targetTeam), to, t);
+    case "fatigue":
+      return quadraticBezier(from, getFatigueControlPoint(from, to), to, t);
+    case "debuff-dot":
+      return quadraticBezier(from, getDebuffDotControlPoint(from, to, targetTeam), to, t);
+    case "heal-loop": {
+      const { c1, c2 } = getHealLoopControls(from, to, targetTeam);
+      return cubicBezier(from, c1, c2, to, t);
+    }
+    default:
+      return quadraticBezier(from, getArcControlPoint(from, to, targetTeam), to, t);
+  }
 }
 
 function getBattlefieldCenterViewport() {
@@ -102,8 +202,11 @@ function getItemViewportCenter(item, team) {
 }
 
 function resolveFloatOriginViewport(options = {}, kind = "damage", targetTeam = "enemy") {
-  if (options.fromDebuffChip) {
-    return getProfileDebuffChipCenter(targetTeam, options.fromDebuffChip);
+  if (options.trajectory === "fatigue") {
+    return getFatigueOriginViewport(targetTeam);
+  }
+  if (options.fromDebuffChip || options.trajectory === "debuff-dot") {
+    return getProfileDebuffChipCenter(targetTeam, options.fromDebuffChip || "poison");
   }
   if (options.item && typeof getItemViewportCenter === "function") {
     const itemTeam = options.sourceTeam || targetTeam;
@@ -132,8 +235,8 @@ function getProfileDebuffChipCenter(team, debuffId) {
   if (chip) {
     const rect = chip.getBoundingClientRect();
     return {
-      x: rect.left + rect.width / 2 + (Math.random() - 0.5) * 8,
-      y: rect.top + rect.height / 2 + (Math.random() - 0.5) * 4,
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2,
     };
   }
   const section = document.querySelector(`#battle-stats-panel ${colClass} .status-debuffs`);
@@ -205,7 +308,9 @@ function renderBattleEffectsOverlay(state) {
     const t = easeInOutSine(Math.min(1, p.progress));
     const from = { x: p.fromX, y: p.fromY };
     const to = getProfileAvatarViewportCenter(p.toTeam);
-    const cp = getArcControlPoint(from, to, p.toTeam);
+    const cp = typeof getWeaponControlPoint === "function"
+      ? getWeaponControlPoint(from, to, p.toTeam)
+      : getArcControlPoint(from, to, p.toTeam);
     const pt = quadraticBezier(from, cp, to, t);
     const scale = 1 + Math.sin(t * Math.PI) * 0.14;
     const alpha = 1 - t * 0.2;

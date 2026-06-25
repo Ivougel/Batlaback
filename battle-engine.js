@@ -759,6 +759,8 @@ function tickPoison(state, dt) {
         targetTeam: team,
         kind: "debuff",
         fromDebuffChip: "poison",
+        trajectory: "debuff-dot",
+        maxAge: 1.5,
       });
       triggerProfileAvatarHitShake(team);
     }
@@ -788,6 +790,8 @@ function tickGroundFire(state, dt) {
         targetTeam: team,
         kind: "debuff",
         fromDebuffChip: "ground-fire",
+        trajectory: "debuff-dot",
+        maxAge: 1.5,
       });
       triggerProfileAvatarHitShake(team);
     }
@@ -828,6 +832,8 @@ function tickFatigue(state, dt) {
       spawnBattleFloat(state, `-${FATIGUE_HP_DRAIN_PER_SEC}⏳`, "#d29922", {
         targetTeam: team,
         kind: "debuff",
+        trajectory: "fatigue",
+        maxAge: 1.4,
       });
       triggerProfileAvatarHitShake(team);
       triggerProfileAvatarFatigueMirror(team);

@@ -74,28 +74,36 @@ function resolveFloatingEndpointsCanvas(options = {}) {
   };
 }
 
+function resolveFloatTrajectory(options = {}, kind = "damage", text = "") {
+  if (options.trajectory) return options.trajectory;
+  if (options.fromDebuffChip) return "debuff-dot";
+  if (kind === "positive" && options.item && String(text).includes("❤")) return "heal-loop";
+  if (kind === "damage" || kind === "miss") return "weapon";
+  return "default";
+}
+
 function spawnBattleFloat(state, text, color, options = {}) {
   state.floatingNumbers = state.floatingNumbers || [];
   state._floatUid = (state._floatUid || 0) + 1;
   const kind = options.kind || classifyFloatingText(text);
   const magnitude = options.magnitude ?? parseFloatingMagnitude(text);
   const { originTeam, targetTeam } = resolveFloatTeams(options, kind);
+  const trajectory = resolveFloatTrajectory(options, kind, text);
+  const isWeaponHit = trajectory === "weapon";
+  const isDebuffApply = kind === "debuff" && trajectory !== "debuff-dot" && trajectory !== "fatigue";
 
   const fromVp = resolveFloatOriginViewport(options, kind, targetTeam);
-  const spread = options.fromDebuffChip ? 0 : 12;
+  const spread = (options.fromDebuffChip || trajectory === "debuff-dot" || trajectory === "fatigue") ? 0 : 12;
   if (spread) {
     fromVp.x += (Math.random() - 0.5) * spread;
     fromVp.y += (Math.random() - 0.5) * spread * 0.6;
   }
   const toVp = getProfileAvatarViewportCenter(targetTeam);
-  const controlVp = getArcControlPoint(fromVp, toVp, targetTeam);
 
   state.floatingNumbers.push({
     uid: `float-${state._floatUid}`,
     fromX: fromVp.x,
     fromY: fromVp.y,
-    controlX: controlVp.x,
-    controlY: controlVp.y,
     toX: toVp.x,
     toY: toVp.y,
     x: fromVp.x,
@@ -103,16 +111,19 @@ function spawnBattleFloat(state, text, color, options = {}) {
     text,
     color: color || "#f85149",
     age: 0,
-    maxAge: options.maxAge ?? 5.5,
+    maxAge: options.maxAge ?? (isWeaponHit ? 1.35 : 5.5),
     magnitude,
     kind,
+    trajectory,
     team: targetTeam,
-    sourceTeam: options.fromDebuffChip ? null : originTeam,
+    sourceTeam: (options.fromDebuffChip || trajectory === "debuff-dot" || trajectory === "fatigue")
+      ? null
+      : originTeam,
     debuffId: options.fromDebuffChip || null,
     itemUid: options.item?.uid || null,
     itemTeam: options.sourceTeam || originTeam,
-    delay: options.delay ?? 0,
-    spawnAtTarget: options.spawnAtTarget ?? false,
+    delay: options.delay ?? (isDebuffApply ? PROJECTILE_DURATION : 0),
+    spawnAtTarget: options.spawnAtTarget ?? isDebuffApply,
     stayInPlace: options.stayInPlace ?? (kind === "failed" || kind === "stamina"),
   });
 }
@@ -229,15 +240,18 @@ function queueItemAttackAnimation(state, item, team) {
 function queueHitAnimation(state, item, team, text, color) {
   if (!state.animations) initBattleAnimations(state);
   const kind = classifyFloatingText(text);
-  const hitsOnTarget = kind === "damage" || kind === "debuff" || kind === "miss";
+  const trajectory = resolveFloatTrajectory({ sourceTeam: team, item }, kind, text);
+  const isWeaponHit = trajectory === "weapon";
+  const isDebuffApply = kind === "debuff";
 
   spawnBattleFloat(state, text, color, {
     sourceTeam: team,
     item,
     kind,
-    delay: hitsOnTarget ? PROJECTILE_DURATION : 0,
-    spawnAtTarget: hitsOnTarget,
-    maxAge: hitsOnTarget ? 1.8 : 5.5,
+    trajectory: isDebuffApply ? undefined : trajectory,
+    delay: isDebuffApply ? PROJECTILE_DURATION : 0,
+    spawnAtTarget: isDebuffApply,
+    maxAge: isWeaponHit ? 1.35 : isDebuffApply ? 1.8 : undefined,
   });
 
   if (item) {
@@ -317,23 +331,25 @@ function tickFloatingNumbers(state, dt) {
 
       const ease = easeInOutCubic(t);
       let fromAnchor;
-      if (fn.debuffId) {
-        fromAnchor = getProfileDebuffChipCenter(fn.team, fn.debuffId);
+      if (fn.trajectory === "fatigue") {
+        fromAnchor = getFatigueOriginViewport(fn.team);
+      } else if (fn.debuffId || fn.trajectory === "debuff-dot") {
+        fromAnchor = getProfileDebuffChipCenter(fn.team, fn.debuffId || "poison");
       } else {
         fromAnchor = getFloatItemOriginViewport(state, fn)
           || (fn.kind === "positive" ? getBattleStatsPanelCenter() : getBattlefieldCenterViewport());
       }
 
-      const control = getArcControlPoint(fromAnchor, liveTo, fn.team);
-      const pt = quadraticBezier(fromAnchor, control, liveTo, ease);
+      const trajectory = fn.trajectory || (fn.debuffId ? "debuff-dot" : "default");
+      const pt = typeof sampleFloatTrajectory === "function"
+        ? sampleFloatTrajectory(trajectory, fromAnchor, liveTo, fn.team, ease)
+        : quadraticBezier(fromAnchor, getArcControlPoint(fromAnchor, liveTo, fn.team), liveTo, ease);
 
       return {
         ...fn,
         age,
         fromX: fromAnchor.x,
         fromY: fromAnchor.y,
-        controlX: control.x,
-        controlY: control.y,
         toX: liveTo.x,
         toY: liveTo.y,
         x: pt.x,
