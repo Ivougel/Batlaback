@@ -4870,6 +4870,43 @@ html[data-touch="true"] .hint-touch {
   display: inline;
 }
 
+/* Подсказки по активному режиму ввода */
+html[data-input-mode="mouse"] .shop-hint-touch,
+html[data-input-mode="gamepad"] .shop-hint-touch {
+  display: none;
+}
+
+html[data-input-mode="mouse"] .shop-hint:not(.shop-hint-touch),
+html[data-input-mode="gamepad"] .shop-hint:not(.shop-hint-touch) {
+  display: block;
+}
+
+html[data-input-mode="touch"] .shop-hint:not(.shop-hint-touch) {
+  display: none;
+}
+
+html[data-input-mode="touch"] .shop-hint-touch {
+  display: block;
+}
+
+html[data-input-mode="mouse"] .hint-touch,
+html[data-input-mode="gamepad"] .hint-touch {
+  display: none;
+}
+
+html[data-input-mode="mouse"] .hint-front,
+html[data-input-mode="gamepad"] .hint-front {
+  display: inline;
+}
+
+html[data-input-mode="touch"] .hint-front {
+  display: none;
+}
+
+html[data-input-mode="touch"] .hint-touch {
+  display: inline;
+}
+
 html[data-touch="true"] #app[data-phase="prep"] .battle-canvas-stage {
   touch-action: none;
 }

@@ -131,16 +131,21 @@ function initGamepadControls(handlers) {
   window.addEventListener("gamepadconnected", onPadChange);
   window.addEventListener("gamepaddisconnected", onPadChange);
 
-  const wakeGamepads = () => {
+  const pollGamepads = () => {
     const pad = getActiveGamepad();
-    if (pad) {
-      bindActiveGamepad(pad, !gpConnectedPadKey);
-      gpAwaitingWake = false;
-      refreshGamepadHints();
-    }
+    if (pad) bindActiveGamepad(pad, !gpConnectedPadKey);
   };
-  window.addEventListener("pointerdown", wakeGamepads, { passive: true });
-  window.addEventListener("keydown", wakeGamepads);
+  window.addEventListener("pointerdown", pollGamepads, { passive: true });
+  window.addEventListener("keydown", pollGamepads);
+
+  onInteractionModeChange((mode, prev) => {
+    if (prev === "gamepad" && mode !== "gamepad") {
+      clearGamepadInteractionState({ cancelDrag: true });
+    }
+    refreshGamepadHints();
+    syncGamepadCursorVisibility();
+    if (typeof applyUiLayout === "function") applyUiLayout();
+  });
 
   refreshGamepadHints();
 }
@@ -191,6 +196,20 @@ function resetGamepadBinding() {
   }
 }
 
+function clearGamepadInteractionState(options = {}) {
+  if (gpPointerDown) {
+    gpPointerDown = false;
+    gpHandlers?.pointerUpAt?.(gpCursor.x, gpCursor.y);
+  }
+  if (options.cancelDrag && gpHandlers?.isDragging?.()) {
+    gpHandlers?.cancelDrag?.();
+  }
+  gpActive = false;
+  clearGamepadMenuFocus();
+  clearPrepFocusVisual();
+  syncGamepadCursorVisibility();
+}
+
 function bindActiveGamepad(pad, resetPrev = true) {
   if (!pad) return;
   const key = `${pad.index}:${pad.id}`;
@@ -202,13 +221,13 @@ function bindActiveGamepad(pad, resetPrev = true) {
       return !!b?.pressed || val > 0.5;
     });
   }
-  gpActive = true;
 }
 
 function markGamepadInput() {
+  markGamepadInteraction();
   gpLastInputAt = performance.now();
-  gpActive = true;
   gpAwaitingWake = false;
+  gpActive = true;
   syncGamepadCursorVisibility();
 }
 
@@ -221,11 +240,35 @@ function syncGamepadCursorElement() {
 function syncGamepadCursorVisibility() {
   const el = document.getElementById("gamepad-cursor");
   if (!el) return;
-  const useCursor = gpPrepInputMode === "stick" && gpHandlers?.useVirtualCursor?.();
+  const useCursor = isGamepadInteraction()
+    && gpPrepInputMode === "stick"
+    && gpHandlers?.useVirtualCursor?.();
   const show = gpActive && useCursor
     && (performance.now() - gpLastInputAt < GP_ACTIVATION_IDLE_MS || gpPointerDown || gpHandlers?.isDragging?.());
   el.classList.toggle("hidden", !show);
   document.body.classList.toggle("gamepad-active", !!show);
+}
+
+function detectGamepadActivity(pad, prevButtons) {
+  if (!pad) return false;
+
+  const buttons = pad.buttons || [];
+  for (let i = 0; i < buttons.length; i++) {
+    const val = buttons[i]?.value ?? 0;
+    const pressed = !!buttons[i]?.pressed || val > 0.5;
+    if (pressed && !(prevButtons[i] ?? false)) return true;
+  }
+
+  for (let axis = 0; axis + 1 < (pad.axes?.length || 0); axis += 2) {
+    const x = pad.axes[axis] || 0;
+    const y = pad.axes[axis + 1] || 0;
+    if (Math.hypot(x, y) > GP_DEADZONE) return true;
+  }
+
+  const dpad = readDpadDirection(pad);
+  if (dpad.x || dpad.y) return true;
+
+  return false;
 }
 
 function isButtonActive(pad, idx) {
@@ -417,7 +460,7 @@ function refreshGamepadHints() {
     }
   }
 
-  if (!hints) {
+  if (!hints || !isGamepadInteraction()) {
     bar.classList.add("hidden");
     return;
   }
@@ -429,14 +472,14 @@ function refreshGamepadHints() {
 }
 
 function preferSwitchPrepHints(pad) {
-  return isSwitchGamepad(pad) || document.documentElement.dataset.touch === "true";
+  return isSwitchGamepad(pad) || isTouchInteraction() || document.documentElement.dataset.touch === "true";
 }
 
 function refreshPrepToolbarHints(pad) {
   const el = document.getElementById("prep-toolbar-hints");
   if (!el) return;
   const context = getMenuContext();
-  if (context !== "prep" && context !== "prepDrag") {
+  if (!isGamepadInteraction() || (context !== "prep" && context !== "prepDrag")) {
     el.classList.add("hidden");
     el.innerHTML = "";
     return;
@@ -924,23 +967,35 @@ function tickGamepad(dt) {
 
   const pad = getActiveGamepad();
   if (!pad) {
-    if (gpPointerDown) {
+    if (gpPointerDown && isGamepadInteraction()) {
       gpPointerDown = false;
       gpHandlers?.pointerUpAt?.(gpCursor.x, gpCursor.y);
     }
+    gpActive = false;
     syncGamepadCursorVisibility();
     return;
   }
 
   bindActiveGamepad(pad, false);
-  gpActive = true;
-  gpAwaitingWake = false;
 
   const prevButtons = gpPrevButtons;
-  gpPrevButtons = (pad.buttons || []).map((b) => {
+  const nextButtons = (pad.buttons || []).map((b) => {
     const val = b?.value ?? 0;
     return !!b?.pressed || val > 0.5;
   });
+
+  if (detectGamepadActivity(pad, prevButtons)) {
+    markGamepadInput();
+  }
+
+  gpPrevButtons = nextButtons;
+
+  if (!isGamepadInteraction()) {
+    gpActive = false;
+    refreshGamepadHints();
+    syncGamepadCursorVisibility();
+    return;
+  }
 
   const context = getMenuContext();
   refreshGamepadHints();

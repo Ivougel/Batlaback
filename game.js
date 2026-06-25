@@ -473,7 +473,9 @@ function isSyntheticMouseFromTouch() {
 }
 
 function isTouchUi() {
-  return document.documentElement.dataset.touch === "true";
+  return typeof isTouchInteraction === "function"
+    ? isTouchInteraction()
+    : document.documentElement.dataset.touch === "true";
 }
 
 function getDragThresholdPx() {
@@ -554,6 +556,8 @@ function bindTouchInput() {
   const onDown = (kind, id, x, y, e) => {
     if (activeGesture) return;
     if (ignoreTarget(e.target)) return;
+
+    markTouchInteraction();
 
     if ((phase === "battle" || phase === "replay") && e.target?.closest?.("#game-canvas") && !dragPayload) {
       activeGesture = gestureKey(kind, id);
@@ -694,12 +698,30 @@ function setPhaseLabel(text, isBattle = false) {
 
 function init() {
   applyGridMetricsFromCss();
+  initInteractionMode();
+  onInteractionModeChange((mode) => {
+    if (mode !== "touch") clearTouchLongPress();
+    if (typeof refreshGamepadHints === "function") refreshGamepadHints();
+  });
+
+  const markMouseFromEvent = (e) => {
+    if (isSyntheticMouseFromTouch()) return;
+    if (e.pointerType && e.pointerType !== "mouse") return;
+    markMouseInteraction();
+  };
+  document.addEventListener("mousedown", markMouseFromEvent, true);
+  document.addEventListener("pointerdown", (e) => {
+    if (e.pointerType === "touch" || e.pointerType === "pen") return;
+    if (e.pointerType === "mouse") markMouseInteraction();
+  }, true);
+
   canvas = document.getElementById("game-canvas");
   ctx = canvas.getContext("2d");
   applyPhaseCanvasLayout();
   syncBattleArenaLayout();
   canvas.addEventListener("mousedown", (e) => {
     if (isSyntheticMouseFromTouch()) return;
+    markMouseInteraction();
     onMouseDown(e);
   });
   canvas.addEventListener("contextmenu", (e) => {

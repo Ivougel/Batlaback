@@ -251,7 +251,8 @@
 
     const touchDev = isTouchDevice();
     document.documentElement.dataset.touch = touchDev ? "true" : "false";
-    document.documentElement.dataset.gamepadHud = (touchDev && !isBattleUiPhase()) ? "hidden" : "auto";
+    const gamepadMode = typeof isGamepadInteraction === "function" && isGamepadInteraction();
+    document.documentElement.dataset.gamepadHud = (touchDev && !isBattleUiPhase() && !gamepadMode) ? "hidden" : "auto";
 
     let tier = "desktop";
     if (w <= 720 || h <= 520) tier = "phone";
