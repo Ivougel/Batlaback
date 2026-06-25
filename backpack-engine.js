@@ -121,6 +121,21 @@ function buildSlotSet(containers) {
   return set;
 }
 
+/** Клетки, которые рисуем в компактном режиме: слоты сумок + занятые предметами. */
+function buildActiveVisualCellSet(containers, items) {
+  const set = buildSlotSet(containers);
+  (items || []).forEach((item) => {
+    getItemCells(item).forEach(([c, r]) => set.add(`${c},${r}`));
+  });
+  return set;
+}
+
+/** Контейнер из магазина, расширяющий поле (не стартовая сумка). */
+function isShopExpansionContainer(itemId) {
+  const def = ITEM_CATALOG[itemId];
+  return !!def?.isContainer && !!def?.shopContainer && !def?.immovable;
+}
+
 function isSlotCell(containers, col, row) {
   return buildSlotSet(containers).has(`${col},${row}`);
 }

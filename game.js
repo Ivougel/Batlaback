@@ -2497,8 +2497,13 @@ function draw() {
   drawBackground();
   if (phase === "prep") {
     const side = prepViewSide;
-    drawBackpackFrame(side, true);
     const st = getSideState(side);
+    const frameOptions = {
+      showFullPlacementGrid: shouldShowFullContainerPlacementGrid(),
+      containers: st.containers,
+      items: st.items,
+    };
+    drawBackpackFrame(side, frameOptions);
     drawContainers(st.containers, side, false);
     drawSynergyVisuals(ctx, synergyAnimTime, synergyPreviewBuilt, "under", side);
     drawLoadoutItems(st.items, side, false);
@@ -2508,8 +2513,21 @@ function draw() {
     if (canEditPrepSide() && gamepadBoardFocus) drawGamepadBoardFocus();
     if (canEditPrepSide() && dragPayload && (hoverCell || hoverSlot)) drawDropPreview();
   } else if (isBattleUiPhase()) {
-    drawBackpackFrame("player", true);
-    drawBackpackFrame("enemy", false);
+    if (battleState) {
+      drawBackpackFrame("player", {
+        containers: playerContainers,
+        items: battleState.player.items,
+      });
+      drawBackpackFrame("enemy", {
+        containers: enemyContainers,
+        items: battleState.enemy.items,
+      });
+      drawContainers(playerContainers, "player", false);
+      drawContainers(enemyContainers, "enemy", false);
+    } else {
+      drawBackpackFrame("player", { containers: playerContainers, items: playerItems });
+      drawBackpackFrame("enemy", { containers: enemyContainers, items: enemyItems });
+    }
   }
   if (phase !== "prep" && battleState) {
     battleState.player.items.forEach((item) => {
@@ -2586,20 +2604,31 @@ function gridCellFill(available, row, col) {
   return (row + col) % 2 === 0 ? "#4a4038" : "#403830";
 }
 
-function drawBackpackFrame(team, interactive) {
+function shouldShowFullContainerPlacementGrid() {
+  return phase === "prep"
+    && !!dragPayload
+    && isShopExpansionContainer(dragPayload.itemId);
+}
+
+function drawBackpackFrame(team, options = {}) {
+  const {
+    showFullPlacementGrid = false,
+    containers = [],
+    items = [],
+  } = options;
+  const activeCells = showFullPlacementGrid ? null : buildActiveVisualCellSet(containers, items);
+
   for (let row = 0; row < GRID_ROWS; row++) {
     for (let col = 0; col < GRID_COLS; col++) {
-      const { x: cx, y: cy, w: cw, h: ch } = cellRect(team, col, row);
       const available = isBoardCellAvailable(col, row, GRID_COLS, GRID_ROWS);
-      ctx.fillStyle = gridCellFill(available, row, col);
+      if (!available) continue;
+
+      const key = `${col},${row}`;
+      if (!showFullPlacementGrid && activeCells && !activeCells.has(key)) continue;
+
+      const { x: cx, y: cy, w: cw, h: ch } = cellRect(team, col, row);
+      ctx.fillStyle = gridCellFill(true, row, col);
       ctx.fillRect(cx, cy, cw, ch);
-      if (!available) {
-        ctx.fillStyle = "rgba(255,255,255,0.04)";
-        ctx.font = `${uiPx(10)}px sans-serif`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText("✕", cx + cw / 2, cy + ch / 2);
-      }
     }
   }
 }
