@@ -1896,6 +1896,7 @@ function startBattleReplay() {
 function finishBattleReplay() {
   battleState = null;
   clearBattleFloatLayer();
+  if (typeof clearBattleEmotions === "function") clearBattleEmotions();
   replayPlayback = null;
   resetBattlePause();
   setBattleControlsVisible(false);
@@ -2016,6 +2017,7 @@ function endBattle() {
   const finishedState = battleState;
   battleState = null;
   clearBattleFloatLayer();
+  if (typeof clearBattleEmotions === "function") clearBattleEmotions();
 
   let battleSummary;
   try {
@@ -2713,9 +2715,11 @@ function draw() {
     renderBattleEffectsOverlay(battleState);
     if (typeof renderAttackVisuals === "function") renderAttackVisuals(battleState);
     if (typeof syncLiveAvatarHeroFrame === "function") syncLiveAvatarHeroFrame(battleState);
+    if (typeof tickBattleEmotions === "function") tickBattleEmotions(battleState, lastGameLoopDt || 0.016);
   } else {
     clearBattleFloatLayer();
     if (typeof clearAttackFxLayer === "function") clearAttackFxLayer();
+    if (typeof clearBattleEmotions === "function") clearBattleEmotions();
   }
 }
 

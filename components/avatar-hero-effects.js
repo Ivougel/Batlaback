@@ -32,7 +32,13 @@ function renderAvatarHeroHTML(profile, team) {
     <div class="avatar-hero-shell avatar-hero-shell-${team}" data-team="${team}">
       <div class="avatar-hero-name">${displayName}</div>
       <div class="avatar-hero-stage">
-        <div class="avatar-beads avatar-beads-positive" aria-hidden="true"></div>
+        <div class="avatar-emotion-orbit" data-team="${team}" aria-hidden="true">
+          <span class="avatar-emotion-float avatar-emotion-mood">🙂</span>
+          <span class="avatar-emotion-float avatar-emotion-reaction" hidden></span>
+          <span class="avatar-battle-timer">0:00</span>
+        </div>
+        <div class="avatar-effect-orbit" data-team="${team}" aria-hidden="true"></div>
+        <div class="avatar-beads avatar-beads-positive" aria-hidden="true" hidden></div>
         <div class="profile-avatar profile-avatar-${team}"
              data-status-title="${className}"
              data-status-desc="${tooltipDesc}"
@@ -43,7 +49,7 @@ function renderAvatarHeroHTML(profile, team) {
       <div class="avatar-hero-footer">
         <div class="avatar-hero-hp-bar"><div class="avatar-hero-hp-fill avatar-hero-hp-fill-${team}" style="width:${hpPct}%"></div></div>
         <div class="avatar-hero-hp-text">${Math.ceil(hpCurrent)} / ${hpMax}</div>
-        <div class="avatar-hero-debuff-row"></div>
+        <div class="avatar-hero-debuff-row" hidden></div>
       </div>
     </div>
   `;
@@ -195,8 +201,9 @@ function syncAvatarHeroEffects(team, profile, state) {
   syncAvatarCompanionBeads(team, state);
 
   const debuffs = profile.debuffs || [];
-  const debuffHtml = debuffs.map(renderDebuffBeadHTML).join("");
-  if (debuffRow) debuffRow.innerHTML = debuffHtml;
+  if (debuffRow && !shell.querySelector(".avatar-effect-orbit")) {
+    debuffRow.innerHTML = debuffs.map(renderDebuffBeadHTML).join("");
+  }
   if (negRing) negRing.innerHTML = "";
 
   shell.classList.toggle("avatar-hero-has-buffs", posBeads.length > 0);

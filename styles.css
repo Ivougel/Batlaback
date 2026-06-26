@@ -1344,6 +1344,187 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 .avatar-hero-stage .profile-avatar {
   position: relative;
   z-index: 2;
+  filter: brightness(var(--avatar-mood-brightness, 1));
+  transition: filter 0.45s ease, transform 0.25s ease;
+}
+
+/* ─── Battle Commentary / Emotion Layer ─── */
+
+.avatar-emotion-orbit,
+.avatar-effect-orbit {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  overflow: visible;
+}
+
+.avatar-emotion-orbit {
+  z-index: 6;
+}
+
+.avatar-effect-orbit {
+  z-index: 4;
+}
+
+.avatar-emotion-float {
+  position: absolute;
+  left: var(--emo-x, 50%);
+  top: var(--emo-y, 20%);
+  font-size: 8vh;
+  line-height: 1;
+  transform: translate(-50%, -50%) rotate(var(--emo-rot, 0deg));
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.55));
+  animation: avatar-emotion-hover 3.4s ease-in-out infinite;
+  will-change: left, top, transform;
+  transition: left 0.85s ease, top 0.85s ease;
+}
+
+.avatar-emotion-reaction {
+  animation-delay: 0.55s;
+  z-index: 2;
+}
+
+.avatar-emotion-mood {
+  z-index: 1;
+  opacity: 0.92;
+}
+
+@keyframes avatar-emotion-hover {
+  0%, 100% { transform: translate(-50%, -50%) rotate(var(--emo-rot, 0deg)) translateY(0); }
+  50% { transform: translate(-50%, -50%) rotate(var(--emo-rot, 0deg)) translateY(calc(-1.2vh * -1)); }
+}
+
+.avatar-effect-hop {
+  position: absolute;
+  left: var(--fx-x, 50%);
+  top: var(--fx-y, 50%);
+  font-size: 3vh;
+  line-height: 1;
+  transform: translate(-50%, -50%) rotate(var(--fx-rot, 0deg));
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
+  animation: avatar-effect-hop 1.05s cubic-bezier(0.34, 1.4, 0.64, 1) infinite;
+  animation-delay: var(--fx-delay, 0s);
+  transition: left 0.45s cubic-bezier(0.22, 1, 0.36, 1), top 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: left, top, transform;
+}
+
+.avatar-effect-hop-buff {
+  filter: drop-shadow(0 0 8px rgba(63, 185, 80, 0.45));
+}
+
+.avatar-effect-hop-debuff {
+  filter: drop-shadow(0 0 8px rgba(248, 81, 73, 0.4));
+}
+
+.avatar-effect-count {
+  position: absolute;
+  top: -0.4vh;
+  right: -0.6vh;
+  font-size: 1.35vh;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+}
+
+@keyframes avatar-effect-hop {
+  0%, 100% { transform: translate(-50%, -50%) rotate(var(--fx-rot, 0deg)) scale(1); }
+  35% { transform: translate(-50%, calc(-50% - 1.1vh)) rotate(calc(var(--fx-rot, 0deg) + 8deg)) scale(1.12); }
+  70% { transform: translate(-50%, calc(-50% + 0.4vh)) rotate(calc(var(--fx-rot, 0deg) - 4deg)) scale(0.96); }
+}
+
+.avatar-battle-timer {
+  position: absolute;
+  left: 50%;
+  bottom: calc(-2px * var(--ui-scale));
+  transform: translateX(-50%);
+  font-size: calc(0.62rem * var(--ui-scale));
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  padding: calc(1px * var(--ui-scale)) calc(6px * var(--ui-scale));
+  border-radius: 999px;
+  background: rgba(13, 17, 23, 0.72);
+  border: 1px solid rgba(48, 54, 61, 0.9);
+  z-index: 3;
+}
+
+.avatar-emotion-pop {
+  animation: avatar-emotion-pop 0.38s ease-out, avatar-emotion-hover 3.4s ease-in-out 0.38s infinite;
+}
+
+@keyframes avatar-emotion-pop {
+  0% { transform: scale(0.5); opacity: 0; }
+  55% { transform: scale(1.18); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.avatar-hero-shell.avatar-mood-pulse .profile-avatar {
+  animation: avatar-mood-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes avatar-mood-pulse {
+  0%, 100% { filter: brightness(var(--avatar-mood-brightness, 1)); }
+  50% { filter: brightness(calc(var(--avatar-mood-brightness, 1) * 1.12)); }
+}
+
+.avatar-hero-shell.emotion-poisoned .profile-avatar {
+  filter: brightness(var(--avatar-mood-brightness, 1)) drop-shadow(0 0 10px rgba(63, 185, 80, 0.45));
+}
+
+.avatar-hero-shell.emotion-burning .profile-avatar {
+  filter: brightness(var(--avatar-mood-brightness, 1)) drop-shadow(0 0 12px rgba(240, 136, 62, 0.55));
+}
+
+.avatar-hero-shell.emotion-stunned .profile-avatar {
+  filter: brightness(calc(var(--avatar-mood-brightness, 1) * 0.75)) saturate(0.55);
+}
+
+.avatar-hero-shell.emotion-desperate .profile-avatar,
+.avatar-hero-shell.emotion-losing .profile-avatar {
+  filter: brightness(calc(var(--avatar-mood-brightness, 1) * 0.7));
+}
+
+.avatar-hero-shell.emotion-hit-shake .avatar-hero-stage {
+  animation: avatar-emotion-shake 0.42s ease-out;
+}
+
+@keyframes avatar-emotion-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-5px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(2px); }
+}
+
+.avatar-hero-shell.emotion-winning .profile-avatar,
+.avatar-hero-shell.emotion-confident .profile-avatar {
+  filter: brightness(calc(var(--avatar-mood-brightness, 1) * 1.08)) drop-shadow(0 0 8px rgba(88, 166, 255, 0.25));
+}
+
+.avatar-hero-shell.emotion-slowed .profile-avatar {
+  filter: brightness(calc(var(--avatar-mood-brightness, 1) * 0.88)) saturate(0.85);
+}
+
+.avatar-hero-shell.emotion-invuln .profile-avatar {
+  filter: brightness(calc(var(--avatar-mood-brightness, 1) * 1.15)) drop-shadow(0 0 14px rgba(210, 168, 255, 0.55));
+}
+
+.avatar-hero-shell.emotion-exhaustion .avatar-battle-timer,
+.avatar-hero-shell.emotion-survival .avatar-battle-timer {
+  color: #f0883e;
+  border-color: rgba(240, 136, 62, 0.45);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avatar-hero-shell.avatar-mood-pulse .profile-avatar,
+  .avatar-emotion-pop,
+  .avatar-emotion-float,
+  .avatar-effect-hop,
+  .avatar-hero-shell.emotion-hit-shake .avatar-hero-stage {
+    animation: none !important;
+  }
 }
 
 .avatar-beads {
