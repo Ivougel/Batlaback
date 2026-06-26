@@ -161,7 +161,8 @@ function initGamepadControls(handlers) {
 function resetPrepFocus() {
   gpPrepFocus = { zone: "shop", index: 0, col: 4, row: 3 };
   gpPrepInputMode = "dpad";
-  applyPrepFocusVisual();
+  if (isGamepadInteraction()) applyPrepFocusVisual();
+  else clearPrepFocusVisual();
 }
 
 function normalizePadId(id) {
@@ -739,6 +740,7 @@ function applyMenuFocusVisual() {
   document.querySelectorAll(".gamepad-focus").forEach((el) => {
     if (!el.closest("#game-canvas")) el.classList.remove("gamepad-focus");
   });
+  if (!isGamepadInteraction()) return;
   gpMenuFocus.items.forEach((el, i) => {
     el?.classList.toggle("gamepad-focus", i === gpMenuFocus.index);
   });
@@ -849,6 +851,7 @@ function clampPrepFocusIndices() {
 
 function applyPrepFocusVisual() {
   clearPrepFocusVisual();
+  if (!isGamepadInteraction()) return;
   clampPrepFocusIndices();
   const f = gpPrepFocus;
 
@@ -1121,7 +1124,9 @@ function handleBattleGamepad(pad, prevButtons) {
 
 function refreshGamepadPrepFocus() {
   const ctx = getMenuContext();
-  if (ctx === "prep" || ctx === "prepDrag") applyPrepFocusVisual();
+  if (ctx !== "prep" && ctx !== "prepDrag") return;
+  if (isGamepadInteraction()) applyPrepFocusVisual();
+  else clearPrepFocusVisual();
 }
 
 function tickGamepad(dt) {

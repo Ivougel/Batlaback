@@ -683,7 +683,8 @@ const ITEM_CATALOG = {
     shape: shapeRect(1, 2), rarity: "common", cost: 3, tags: ["weapon", "poison"], damage: 2, cooldown: 2.6,
     effects: [
       { type: "damage", value: 2, valueMin: 1, valueMax: 2 },
-      { type: "poison", value: 1, interval: 3 },
+      { type: "poison", value: 2, trigger: "on_hit" },
+      { type: "extraAttackOnStun", trigger: "passive" },
     ],
   }),
   healing_herb: defItem({
@@ -711,7 +712,10 @@ const ITEM_CATALOG = {
   dagger: defItem({
     id: "dagger", name: "Кинжал", icon: "🔪", color: "#c9d1d9",
     shape: [[0, 0]], rarity: "common", cost: 2, tags: ["weapon"], damage: 2, cooldown: 1.5,
-    effects: [{ type: "damage", value: 2, valueMin: 1, valueMax: 3 }],
+    effects: [
+      { type: "damage", value: 2, valueMin: 1, valueMax: 3 },
+      { type: "extraAttackOnStun", trigger: "passive" },
+    ],
   }),
   poison_vial: defItem({
     id: "poison_vial", name: "Яд", icon: "☠️", color: "#3fb950",
@@ -959,7 +963,11 @@ const ITEM_CATALOG = {
   spectral_dagger: defItem({
     id: "spectral_dagger", name: "Призрачный кинжал", icon: "👻", color: "#a371f7",
     shape: [[0, 0]], rarity: "uncommon", cost: 0, craftOnly: true, tags: ["weapon", "magic"], damage: 5, cooldown: 1.6,
-    effects: [{ type: "damage", value: 5, damageType: "magic" }],
+    effects: [
+      { type: "damage", value: 5, damageType: "magic" },
+      { type: "spendStack", stack: "mana", value: 1, trigger: "on_hit", attackBuff: 6 },
+      { type: "extraAttackOnStun", trigger: "passive" },
+    ],
   }),
   manathirst: defItem({
     id: "manathirst", name: "Жаждущий маны", icon: "🩸", color: "#a371f7",

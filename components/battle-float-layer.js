@@ -302,28 +302,6 @@ function renderBattleEffectsOverlay(state) {
 
   const activeIds = new Set();
 
-  state.animations?.projectiles?.forEach((p) => {
-    const uid = p.uid || `proj-${p.fromX}-${p.fromY}-${p.icon}`;
-    activeIds.add(uid);
-    const t = easeInOutSine(Math.min(1, p.progress));
-    const from = { x: p.fromX, y: p.fromY };
-    const to = getProfileAvatarViewportCenter(p.toTeam);
-    const cp = typeof getWeaponControlPoint === "function"
-      ? getWeaponControlPoint(from, to, p.toTeam)
-      : getArcControlPoint(from, to, p.toTeam);
-    const pt = quadraticBezier(from, cp, to, t);
-    const scale = 1 + Math.sin(t * Math.PI) * 0.14;
-    const alpha = 1 - t * 0.2;
-    const shadow = p.team === "player" ? "#58a6ff" : "#f85149";
-    const el = upsertBattleFloatEl(
-      layer,
-      uid,
-      `battle-float battle-float-projectile battle-float-team-${p.team}`,
-      p.icon,
-    );
-    el.style.setProperty("--bf-color", shadow);
-    applyBattleFloatTransform(el, pt.x, pt.y, scale, alpha);
-  });
 
   (state.floatingNumbers || []).forEach((fn) => {
     const uid = fn.uid || fn.text;
@@ -339,7 +317,7 @@ function renderBattleEffectsOverlay(state) {
       ? `battle-float battle-float-failed battle-float-team-${fn.itemTeam || fn.sourceTeam || "player"}`
       : isStamina
         ? `battle-float battle-float-stamina battle-float-team-${fn.itemTeam || fn.sourceTeam || "player"}`
-        : `battle-float battle-float-${fn.kind || "damage"} battle-float-target-${fn.team || "enemy"}`;
+        : `battle-float battle-float-${fn.kind || "damage"} battle-float-target-${fn.team || "enemy"}${fn.anchorMode === "hero-above" ? " battle-float-hero-above" : ""}`;
     const el = upsertBattleFloatEl(layer, uid, className, fn.text, false);
     el.style.setProperty("--bf-color", color);
     applyBattleFloatTransform(el, fn.x, fn.y, scale * pulse, alpha);

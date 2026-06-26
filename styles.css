@@ -1266,6 +1266,357 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
   }
 }
 
+.avatar-reaction-hit {
+  animation: avatar-hit 0.35s ease-out;
+}
+.avatar-reaction-block {
+  animation: avatar-block 0.4s ease-out;
+}
+.avatar-reaction-heal {
+  animation: avatar-heal 0.5s ease-out;
+}
+
+@keyframes avatar-hit {
+  0%   { filter: brightness(1) drop-shadow(0 0 0px #f85149); transform: translateX(0); }
+  15%  { filter: brightness(2) drop-shadow(0 0 12px #f85149); transform: translateX(-6px); }
+  35%  { transform: translateX(5px); }
+  55%  { transform: translateX(-3px); }
+  100% { filter: brightness(1) drop-shadow(0 0 0px #f85149); transform: translateX(0); }
+}
+@keyframes avatar-block {
+  0%   { filter: brightness(1) drop-shadow(0 0 0px #58a6ff); }
+  20%  { filter: brightness(1.6) drop-shadow(0 0 16px #58a6ff); transform: scale(1.05); }
+  100% { filter: brightness(1) drop-shadow(0 0 0px #58a6ff); transform: scale(1); }
+}
+@keyframes avatar-heal {
+  0%   { filter: brightness(1) drop-shadow(0 0 0px #3fb950); }
+  30%  { filter: brightness(1.4) drop-shadow(0 0 14px #3fb950); transform: scale(1.04); }
+  100% { filter: brightness(1) drop-shadow(0 0 0px #3fb950); transform: scale(1); }
+}
+
+/* ─── Область героя: бусины эффектов, HP, floating anchor ─── */
+
+.battle-stats-section-hidden {
+  display: none !important;
+}
+
+.avatar-hero-shell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  height: 100%;
+  gap: calc(6px * var(--ui-scale));
+  pointer-events: none;
+}
+
+.avatar-hero-shell .profile-avatar {
+  pointer-events: auto;
+}
+
+.avatar-hero-name {
+  font-size: calc(0.78rem * var(--ui-scale));
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  line-height: 1;
+  pointer-events: none;
+}
+
+.avatar-hero-stage {
+  position: relative;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: calc(80px * var(--ui-scale));
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: avatar-hero-idle-sway 3.6s ease-in-out infinite;
+}
+
+@keyframes avatar-hero-idle-sway {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(calc(-4px * var(--ui-scale))); }
+}
+
+.avatar-hero-stage .profile-avatar {
+  position: relative;
+  z-index: 2;
+}
+
+.avatar-beads {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.avatar-beads-positive {
+  z-index: 4;
+}
+
+.avatar-bead-positive {
+  position: absolute;
+  left: calc(50% + (var(--bead-i) - (var(--bead-n) - 1) / 2) * calc(26px * var(--ui-scale)));
+  top: calc(2% + var(--bead-i) * calc(2px * var(--ui-scale)));
+  transform: translateX(-50%);
+  font-size: calc(1.15rem * var(--ui-scale));
+  line-height: 1;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.55));
+  animation: avatar-bead-sway 2.3s ease-in-out infinite;
+  animation-delay: calc(var(--bead-i) * 0.11s);
+  will-change: transform, opacity;
+}
+
+.avatar-bead-positive.avatar-bead-heal {
+  filter: drop-shadow(0 0 8px rgba(63, 185, 80, 0.45));
+}
+
+.avatar-bead-positive.avatar-bead-block {
+  filter: drop-shadow(0 0 8px rgba(88, 166, 255, 0.45));
+}
+
+.avatar-bead-transient {
+  animation: avatar-bead-pop 0.35s ease-out, avatar-bead-sway 2.3s ease-in-out 0.35s infinite;
+}
+
+@keyframes avatar-bead-sway {
+  0%, 100% { transform: translateX(-50%) translateY(0) rotate(0deg); }
+  35% { transform: translateX(calc(-50% - 2px)) translateY(calc(-3px * var(--ui-scale))) rotate(-4deg); }
+  70% { transform: translateX(calc(-50% + 2px)) translateY(calc(-1px * var(--ui-scale))) rotate(3deg); }
+}
+
+@keyframes avatar-bead-pop {
+  0% { transform: translateX(-50%) scale(0.4); opacity: 0; }
+  100% { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+
+.avatar-bead-count {
+  position: absolute;
+  top: calc(-6px * var(--ui-scale));
+  right: calc(-8px * var(--ui-scale));
+  min-width: calc(14px * var(--ui-scale));
+  padding: 0 calc(3px * var(--ui-scale));
+  border-radius: 999px;
+  background: rgba(13, 17, 23, 0.92);
+  border: 1px solid var(--border);
+  font-size: calc(0.58rem * var(--ui-scale));
+  font-weight: 800;
+  color: var(--text);
+  line-height: calc(14px * var(--ui-scale));
+  text-align: center;
+}
+
+.avatar-hero-footer {
+  width: min(100%, calc(var(--battle-avatar-w) * 0.72));
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: calc(3px * var(--ui-scale));
+  pointer-events: none;
+}
+
+.avatar-hero-hp-bar {
+  height: calc(5px * var(--ui-scale));
+  border-radius: 999px;
+  background: rgba(48, 54, 61, 0.85);
+  overflow: hidden;
+  border: 1px solid rgba(48, 54, 61, 0.9);
+}
+
+.avatar-hero-hp-fill {
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.25s ease-out;
+}
+
+.avatar-hero-hp-fill-player {
+  background: linear-gradient(90deg, #238636, #3fb950);
+}
+
+.avatar-hero-hp-fill-enemy {
+  background: linear-gradient(90deg, #b62324, #f85149);
+}
+
+.avatar-hero-hp-text {
+  font-size: calc(0.68rem * var(--ui-scale));
+  font-weight: 600;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.avatar-hero-debuff-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: calc(5px * var(--ui-scale));
+  min-height: calc(22px * var(--ui-scale));
+}
+
+.avatar-bead-debuff {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(3px * var(--ui-scale));
+  padding: calc(3px * var(--ui-scale)) calc(8px * var(--ui-scale));
+  border-radius: 999px;
+  font-size: calc(0.68rem * var(--ui-scale));
+  line-height: 1;
+  border: 1px solid;
+  pointer-events: auto;
+  cursor: help;
+  user-select: none;
+  animation: avatar-debuff-bead-in 0.35s ease-out both;
+}
+
+@keyframes avatar-debuff-bead-in {
+  from { opacity: 0; transform: translateY(4px) scale(0.92); }
+  to { opacity: 1; transform: none; }
+}
+
+.avatar-bead-debuff-poison,
+.avatar-bead-debuff-id-poison {
+  border-color: rgba(63, 185, 80, 0.55);
+  background: rgba(35, 134, 54, 0.18);
+  color: #7ee787;
+}
+
+.avatar-bead-debuff-slow {
+  border-color: rgba(163, 113, 247, 0.55);
+  background: rgba(163, 113, 247, 0.14);
+  color: #d2a8ff;
+}
+
+.avatar-bead-debuff-ground-fire {
+  border-color: rgba(240, 136, 62, 0.55);
+  background: rgba(240, 136, 62, 0.12);
+  color: #ffa657;
+}
+
+.avatar-bead-debuff-icon {
+  font-size: calc(0.82rem * var(--ui-scale));
+}
+
+.avatar-bead-debuff-label {
+  font-weight: 600;
+  opacity: 0.92;
+}
+
+.avatar-bead-debuff-value {
+  font-weight: 800;
+  font-size: calc(0.72rem * var(--ui-scale));
+}
+
+.battle-float-hero-above {
+  font-size: calc(20px * var(--ui-scale) * var(--fx-float-scale, 1));
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  z-index: 95;
+}
+
+.battle-float-hero-above.battle-float-damage {
+  text-shadow: 0 0 12px rgba(248, 81, 73, 0.55), 0 2px 4px rgba(0, 0, 0, 0.9);
+}
+
+.battle-float-hero-above.battle-float-positive {
+  text-shadow: 0 0 12px rgba(63, 185, 80, 0.55), 0 2px 4px rgba(0, 0, 0, 0.9);
+}
+
+/* ─── AttackAnimationManager: визуальные атаки (от аватара, не из рюкзака) ─── */
+
+.attack-fx-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 88;
+  overflow: hidden;
+}
+
+.attack-fx {
+  position: fixed;
+  left: 0;
+  top: 0;
+  font-size: calc(22px * var(--ui-scale));
+  line-height: 1;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+
+.attack-fx-projectile,
+.attack-fx-magic {
+  filter: drop-shadow(0 0 10px rgba(88, 166, 255, 0.5));
+}
+
+.attack-fx-team-enemy.attack-fx-projectile,
+.attack-fx-team-enemy.attack-fx-magic {
+  filter: drop-shadow(0 0 10px rgba(248, 81, 73, 0.5));
+}
+
+.attack-fx-magic {
+  filter: drop-shadow(0 0 14px rgba(163, 113, 247, 0.55));
+}
+
+.attack-fx-melee-slash {
+  display: block;
+  font-size: calc(28px * var(--ui-scale));
+  filter: drop-shadow(0 0 12px rgba(248, 81, 73, 0.55));
+}
+
+.attack-fx-aoe {
+  width: calc(48px * var(--ui-scale));
+  height: calc(48px * var(--ui-scale));
+}
+
+.attack-fx-aoe-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(163, 113, 247, 0.65);
+  box-shadow: 0 0 16px rgba(163, 113, 247, 0.35);
+}
+
+.attack-fx-aoe-icon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(18px * var(--ui-scale));
+}
+
+.attack-fx-support {
+  filter: drop-shadow(0 0 10px rgba(63, 185, 80, 0.45));
+}
+
+.attack-fx-crit {
+  filter: drop-shadow(0 0 16px rgba(255, 200, 80, 0.75)) brightness(1.25);
+}
+
+.attack-fx-miss {
+  opacity: 0.55;
+  filter: grayscale(0.6);
+}
+
+#app[data-phase="battle"] .field-avatar-slot.profile-avatar-hit-shake .avatar-hero-stage,
+#app[data-phase="replay"] .field-avatar-slot.profile-avatar-hit-shake .avatar-hero-stage {
+  animation: none;
+}
+
+#app[data-phase="battle"] .field-avatar-slot.avatar-reaction-hit .avatar-hero-stage,
+#app[data-phase="replay"] .field-avatar-slot.avatar-reaction-hit .avatar-hero-stage {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avatar-hero-stage,
+  .avatar-bead-positive,
+  .avatar-bead-debuff {
+    animation: none !important;
+  }
+}
+
 /* Crit flip — зеркало спрайта на img, 100–200 мс (как hit-shake через CSS-класс) */
 #app[data-phase="battle"] .battle-scene-avatar-player .profile-avatar-img.profile-avatar-crit-flip,
 #app[data-phase="replay"] .battle-scene-avatar-player .profile-avatar-img.profile-avatar-crit-flip {
@@ -4685,7 +5036,7 @@ body.gamepad-active #game-canvas {
   cursor: none;
 }
 
-.gamepad-focus {
+html[data-input-mode="gamepad"] .gamepad-focus {
   outline: 2px solid #f0c14b !important;
   outline-offset: 2px;
   box-shadow: 0 0 0 3px rgba(240, 193, 75, 0.25) !important;

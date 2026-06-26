@@ -2192,7 +2192,11 @@ function gameLoop(ts) {
   if (phase === "battle" && battleState && !battleState.finished) {
     const simDt = getBattleSimDt(dt);
     if (simDt > 0) {
-      battleTick(battleState, simDt);
+      try {
+        battleTick(battleState, simDt);
+      } catch (err) {
+        console.error("battleTick failed:", err);
+      }
       recordBattleFrame(battleState);
     }
     if (Math.floor(ts / 500) !== Math.floor((ts - dt * 1000) / 500)) {
@@ -2663,7 +2667,7 @@ function draw() {
     drawDisplaceAnimations(ctx, side);
     drawSynergyVisuals(ctx, synergyAnimTime, synergyPreviewBuilt, "over", side);
     if (canEditPrepSide() && hoverSlot && !dragPayload && !gamepadBoardFocus) drawHoverCell();
-    if (canEditPrepSide() && gamepadBoardFocus) drawGamepadBoardFocus();
+    if (canEditPrepSide() && gamepadBoardFocus && isGamepadInteraction()) drawGamepadBoardFocus();
     if (canEditPrepSide() && dragPayload && (hoverCell || hoverSlot)) drawDropPreview();
   } else if (isBattleUiPhase()) {
     if (battleState) {
@@ -2707,8 +2711,11 @@ function draw() {
     });
     drawAttackAnimations(ctx, battleState);
     renderBattleEffectsOverlay(battleState);
+    if (typeof renderAttackVisuals === "function") renderAttackVisuals(battleState);
+    if (typeof syncLiveAvatarHeroFrame === "function") syncLiveAvatarHeroFrame(battleState);
   } else {
     clearBattleFloatLayer();
+    if (typeof clearAttackFxLayer === "function") clearAttackFxLayer();
   }
 }
 
@@ -2981,6 +2988,89 @@ function describeEffect(e) {
     case "repeatCast": return `🔮 Повтор магических заклинаний`;
     case "shieldBreakBonus": return `🛡 Пробивание блока: +${Math.round((e.value || 0) * 100)}%`;
     case "shieldBlockMult": return `🛡 Усиление блока: +${Math.round((e.value || 0) * 100)}%`;
+    case "gainStack": {
+      const stack = e.stack || "spikes";
+      const label = typeof getStackLabel === "function" ? getStackLabel(stack, e.value || 1) : stack;
+      const when = e.trigger === "battle_start" ? "В начале боя" : e.trigger === "on_hit" ? "При попадании" : "Получить";
+      const chance = e.chance != null ? ` (${Math.round(e.chance * 100)}%)` : "";
+      return `📌 ${when}: +${e.value || 1} ${label}${chance}`;
+    }
+    case "spendStack": {
+      const stack = e.stack || "spikes";
+      const label = typeof getStackLabel === "function" ? getStackLabel(stack, e.value || 1) : stack;
+      const parts = [`Потратить ${e.value || 1} ${label}`];
+      if (e.heal) parts.push(`+${e.heal} HP`);
+      if (e.attackBuff) parts.push(`+${e.attackBuff} урона след. атаке`);
+      return `📌 ${parts.join(", ")}`;
+    }
+    case "damagePerStack": {
+      const stack = e.stack || "spikes";
+      const label = typeof getStackLabel === "function" ? getStackLabel(stack, 2) : stack;
+      return `📌 +${e.value || 1} урона за каждый ${label.slice(0, -1) || "стак"}`;
+    }
+    case "weaponDamageStart": return `⚔ В начале боя: оружие +${e.value || 0} урона`;
+    case "stackThreshold": {
+      const stack = e.stack || "heat";
+      const label = typeof getStackLabel === "function" ? getStackLabel(stack, e.threshold || 0) : stack;
+      const parts = [`При ${e.threshold} ${label}`];
+      if (e.weaponDamage) parts.push(`оружие +${e.weaponDamage} урона`);
+      if (e.heal) parts.push(`+${e.heal} HP`);
+      if (e.damage) parts.push(`${e.damage} урона`);
+      if (e.critChance) parts.push(`+${Math.round(e.critChance * 100)}% крит`);
+      return `📊 ${parts.join(", ")}`;
+    }
+    case "periodic": return `⏱ Каждые ${e.interval || 3}с: особый эффект`;
+    case "tagScaledStack": return `📌 +${e.perTag || e.value || 1} ${e.stack || "блок"} за предмет «${e.tag || "armor"}»`;
+    case "convertHp": return `❤️ −${e.hpCost || e.from} HP → +${e.stackGain || e.toStacks} ${e.stack || "regen"}`;
+    case "timedDamageReduction": return `🛡 −${Math.round((e.value || 0.25) * 100)}% урона на ${e.duration || 3}с`;
+    case "cooldownStartMult": return `⚡ Предметы на ${Math.round((e.value || 0) * 100)}% быстрее`;
+    case "hpLossRatio": return `❤️ В начале боя: −${Math.round((e.value || 0) * 100)}% HP`;
+    case "revive": return `🔄 Перерождение с ${Math.round((e.hpRatio || 0.5) * 100)}% HP, неуязвимость ${e.invuln || 2}с`;
+    case "applyStun": {
+      const chance = e.chance != null ? ` (${Math.round(e.chance * 100)}%)` : "";
+      return `💫 Оглушение ${e.duration || 0.5}с${chance}`;
+    }
+    case "bonusDamageOnStun": return `⚔ +${e.value || 1} урона по оглушённому`;
+    case "cleanseDebuffs": return `✨ Снять ${e.value || 1} дебафф(ов)`;
+    case "stealWeaponDamage": return `🗡 Украсть ${e.value || 1} урона с оружия противника`;
+    case "damagePerFoeDebuff": return `☠ +${e.value || 0.5} урона за дебафф противника`;
+    case "damagePerTag": return `🏷 +${e.value || 1} урона за предмет «${e.tag || "food"}»`;
+    case "hpThreshold": {
+      const pct = Math.round((e.threshold || 0.7) * 100);
+      const dir = e.direction === "above" ? "выше" : "ниже";
+      return `❤️ При HP ${dir} ${pct}%: особый эффект`;
+    }
+    case "activationThreshold": return `🔁 После ${e.count || 6} активаций: особый эффект`;
+    case "zeroStamina": return `⚡ При нулевой выносливости: +${e.restoreStamina || 2} выносливости`;
+    case "invulnOnStaminaSpend": return `✨ Потратить ${e.staminaCost || 10} выносливости → неуязвимость ${e.duration || 2}с`;
+    case "extraAttackOnStun": return `⚔ Доп. атака по оглушённому противнику`;
+    case "critPerStack": {
+      const stack = e.stack || "luck";
+      const label = typeof getStackLabel === "function" ? getStackLabel(stack, 2) : stack;
+      return `🎯 +${Math.round((e.value || 0.05) * 100)}% крит за ${label}`;
+    }
+    case "cooldownMultPerTag": return `⚡ На ${Math.round((e.perTag || 0.15) * 100)}% быстрее за питомца/еду`;
+    case "heartThreshold": return `💖 При ${e.count || 7} сердцах: особый эффект`;
+    case "tagScaledMaxHp": return `❤️ +${e.perTag || 40} макс. HP за «${e.tag || "pet"}»`;
+    case "passiveMaxStamina": return `⚡ +${e.value || 1} макс. выносливости`;
+    case "onRevive": return `🔄 При перерождении: урон/яд по тегам`;
+    case "onFoeHeal": return `☠ При лечении противника: яд`;
+    case "critPerFoeDebuff": return `🎯 +${Math.round((e.value || 0.01) * 100)}% крит за дебафф противника`;
+    case "lifestealPerTag": return `🩸 +${Math.round((e.value || 0.15) * 100)}% вампиризм за «${e.tag || "cold"}»`;
+    case "healPerTag": return `❤ +${e.value || 1} лечения за «${e.tag || "vampiric"}»`;
+    case "gainWeakestStack": return `📊 +${e.value || 1} к самому слабому стаку`;
+    case "onHitCapBonus": return `⚔ При попадании: +${e.value || 1} урона (до ${e.cap || 7})`;
+    case "breakBlockOnHit": return `🛡 Снять ${e.value || 4} блока при попадании`;
+    case "breakBlockOnCrit": return `🛡 При крите: снять ${e.value || 15} блока`;
+    case "critDamageMult": return `🎯 +${Math.round((e.value || 0.5) * 100)}% крит. урона`;
+    case "mutualHpThreshold": return `❤️ Оба ниже ${Math.round((e.threshold || 0.8) * 100)}% HP: особый эффект`;
+    case "hitCounter": return `🎯 Каждые ${e.threshold || 4} попадания: особый эффект`;
+    case "battleRageLowHp": return `🔥 Боевая ярость (<50% HP): особый эффект`;
+    case "selfPoison": return `☠ +${e.value || 1} яда себе при попадании`;
+    case "onDefend": return `🛡 При блоке/уклонении (${Math.round((e.chance ?? 1) * 100)}%): особый эффект`;
+    case "activationLimit": return `⏳ До ${e.base || 3} активаций за бой`;
+    case "preventMiss": return `🎯 Потратить ресурс → отменить промах`;
+    case "onActivate": return `⚡ При активации: особый эффект`;
     default: return `${typeof localizeBbDescription === "function" ? localizeBbDescription(e.type) : e.type}${e.value != null ? `: ${e.value}` : ""}`;
   }
 }
@@ -4120,13 +4210,24 @@ function renderPlayerProfiles() {
   });
 
   const liveBattle = phase === "battle" || phase === "replay";
-  const playerNeedsAvatar = !liveBattle || !playerAvatarEl.querySelector(".profile-avatar");
-  const enemyNeedsAvatar = !liveBattle || !enemyAvatarEl.querySelector(".profile-avatar");
-  if (playerNeedsAvatar) {
-    playerAvatarEl.innerHTML = renderProfileAvatarHTML(playerProfile, "player");
+  if (liveBattle) {
+    if (!playerAvatarEl.querySelector(".avatar-hero-shell")) {
+      playerAvatarEl.innerHTML = renderAvatarHeroHTML(playerProfile, "player");
+    }
+    if (!enemyAvatarEl.querySelector(".avatar-hero-shell")) {
+      enemyAvatarEl.innerHTML = renderAvatarHeroHTML(enemyProfile, "enemy");
+    }
+  } else {
+    if (!playerAvatarEl.querySelector(".profile-avatar") || playerAvatarEl.querySelector(".avatar-hero-shell")) {
+      playerAvatarEl.innerHTML = renderProfileAvatarHTML(playerProfile, "player");
+    }
+    if (!enemyAvatarEl.querySelector(".profile-avatar") || enemyAvatarEl.querySelector(".avatar-hero-shell")) {
+      enemyAvatarEl.innerHTML = renderProfileAvatarHTML(enemyProfile, "enemy");
+    }
   }
-  if (enemyNeedsAvatar) {
-    enemyAvatarEl.innerHTML = renderProfileAvatarHTML(enemyProfile, "enemy");
+  if (liveBattle && battleState) {
+    battleState._heroProfiles = { player: playerProfile, enemy: enemyProfile };
+    syncAllAvatarHeroEffects(playerProfile, enemyProfile, battleState);
   }
   syncBattleArenaLayout();
 }

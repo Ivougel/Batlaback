@@ -171,6 +171,15 @@ function countHighRarityItems(items = []) {
   return n;
 }
 
+const POTION_UPGRADE_MAP = {
+  health_potion: "strong_health_potion",
+  strong_health_potion: "strong_health_potion",
+  mana_potion: "strong_mana_potion",
+  strong_mana_potion: "strong_mana_potion",
+  heroic_potion: "strong_heroic_potion",
+  vampiric_potion: "strong_vampiric_potion",
+};
+
 function applyShopEnterMeta(side, items, logFn) {
   const st = typeof getSideState === "function" ? getSideState(side) : null;
   if (!st) return;
@@ -220,9 +229,19 @@ function applyShopEnterMeta(side, items, logFn) {
         }
         break;
       case "upgrade_adjacent_potion": {
-        const potionOnBench = st.bench.find((b) => ITEM_CATALOG[b.itemId]?.tags?.includes("potion"));
-        if (potionOnBench && typeof logFn === "function") {
-          logFn(`🧪 ${effect.sourceName}: зелье на скамейке улучшено`);
+        const potionIdx = st.bench.findIndex((b) => ITEM_CATALOG[b.itemId]?.tags?.includes("potion"));
+        if (potionIdx >= 0) {
+          const curId = st.bench[potionIdx].itemId;
+          const upgraded = POTION_UPGRADE_MAP[curId] || curId;
+          if (upgraded !== curId) {
+            st.bench[potionIdx].itemId = upgraded;
+            const def = ITEM_CATALOG[upgraded];
+            if (typeof logFn === "function" && def) {
+              logFn(`🧪 ${effect.sourceName}: ${typeof getItemDisplayName === "function" ? getItemDisplayName(def) : def.name}`);
+            }
+          } else if (typeof logFn === "function") {
+            logFn(`🧪 ${effect.sourceName}: зелье уже максимального уровня`);
+          }
         }
         break;
       }

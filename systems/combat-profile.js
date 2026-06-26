@@ -307,6 +307,13 @@ function collectBattleStatusEffects(side, items, battleState = null) {
     }, seen);
   }
 
+  if (typeof collectStackStatusChips === "function") {
+    collectStackStatusChips(side, buffs, debuffs, seen, pushUniqueStatusChip);
+  }
+  if (typeof collectDebuffStatusChips === "function") {
+    collectDebuffStatusChips(side, buffs, debuffs, seen, pushUniqueStatusChip);
+  }
+
   if (side.slowDebuff > 0 && side.slowTimer > 0) {
     const pct = Math.round(side.slowDebuff * 100);
     pushUniqueStatusChip(debuffs, {
@@ -700,7 +707,7 @@ function renderBattleStatsCompareHTML(playerProfile, enemyProfile, options = {})
     "stat-compare-bp-row",
   )}
       </div>
-      <div class="battle-stats-section battle-stats-section-buff">
+      <div class="battle-stats-section battle-stats-section-buff${liveBattle ? " battle-stats-section-hidden" : ""}">
         <div class="battle-stats-section-title battle-stats-section-title-buff">БАФФ</div>
         <div class="battle-stats-effects">
           <div class="stats-effects-col stats-col-player">
@@ -711,7 +718,7 @@ function renderBattleStatsCompareHTML(playerProfile, enemyProfile, options = {})
           </div>
         </div>
       </div>
-      <div class="battle-stats-section battle-stats-section-debuff">
+      <div class="battle-stats-section battle-stats-section-debuff${liveBattle ? " battle-stats-section-hidden" : ""}">
         <div class="battle-stats-section-title battle-stats-section-title-debuff">ДЕБА</div>
         <div class="battle-stats-effects">
           <div class="stats-effects-col stats-col-player">
@@ -760,17 +767,17 @@ function bindProfileStatusTooltips() {
     panel.dataset.statusTooltipsBound = "1";
 
     panel.addEventListener("mouseover", (e) => {
-      const target = e.target.closest(".status-chip, .profile-avatar");
+      const target = e.target.closest(".status-chip, .profile-avatar, .avatar-bead-debuff");
       if (!target) return;
       showProfileStatusTooltip(e, target);
     });
 
     panel.addEventListener("mousemove", (e) => {
-      if (e.target.closest(".status-chip, .profile-avatar")) moveSidebarTooltip(e);
+      if (e.target.closest(".status-chip, .profile-avatar, .avatar-bead-debuff")) moveSidebarTooltip(e);
     });
 
     panel.addEventListener("mouseout", (e) => {
-      const target = e.target.closest(".status-chip, .profile-avatar");
+      const target = e.target.closest(".status-chip, .profile-avatar, .avatar-bead-debuff");
       if (!target) return;
       const next = e.relatedTarget;
       if (next && target.contains(next)) return;

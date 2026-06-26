@@ -6,7 +6,6 @@ const PROJECTILE_DURATION = 1.5;
 
 function initBattleAnimations(state) {
   state.animations = {
-    projectiles: [],
     pulses: [],
     flashes: [],
     failedPopups: [],
@@ -100,18 +99,34 @@ function spawnBattleFloat(state, text, color, options = {}) {
   }
   const toVp = getProfileAvatarViewportCenter(targetTeam);
 
+  const itemUid = options.item?.uid || null;
+  if (itemUid) {
+    state.floatingNumbers = state.floatingNumbers.filter(
+      (fn) => !(fn.itemUid === itemUid && fn.age < 0.2),
+    );
+  }
+
+  const heroFloat = (kind === "damage" || kind === "positive")
+    && !options.stayInPlace
+    && !options.fromDebuffChip
+    && kind !== "stamina"
+    && kind !== "failed"
+    && !isDebuffApply;
+  const lane = heroFloat ? allocateHeroFloatLane(state, targetTeam) : 0;
+  const anchor = heroFloat ? getProfileAvatarFloatAnchor(targetTeam, lane) : null;
+
   state.floatingNumbers.push({
     uid: `float-${state._floatUid}`,
-    fromX: fromVp.x,
-    fromY: fromVp.y,
-    toX: toVp.x,
-    toY: toVp.y,
-    x: fromVp.x,
-    y: fromVp.y,
+    fromX: anchor?.x ?? fromVp.x,
+    fromY: anchor?.y ?? fromVp.y,
+    toX: anchor?.x ?? toVp.x,
+    toY: anchor?.y ?? toVp.y,
+    x: anchor?.x ?? fromVp.x,
+    y: anchor?.y ?? fromVp.y,
     text,
     color: color || "#f85149",
     age: 0,
-    maxAge: options.maxAge ?? (isWeaponHit ? 1.35 : 5.5),
+    maxAge: options.maxAge ?? (isWeaponHit ? 1.35 : 1.6),
     magnitude,
     kind,
     trajectory,
@@ -123,8 +138,10 @@ function spawnBattleFloat(state, text, color, options = {}) {
     itemUid: options.item?.uid || null,
     itemTeam: options.sourceTeam || originTeam,
     delay: options.delay ?? (isDebuffApply ? PROJECTILE_DURATION : 0),
-    spawnAtTarget: options.spawnAtTarget ?? isDebuffApply,
+    spawnAtTarget: options.spawnAtTarget ?? (isDebuffApply || heroFloat),
     stayInPlace: options.stayInPlace ?? (kind === "failed" || kind === "stamina"),
+    anchorMode: heroFloat ? "hero-above" : null,
+    lane,
   });
 }
 
@@ -194,30 +211,8 @@ function queueStaminaSpendFeedback(state, team, amount, item) {
   });
 }
 
-function queueItemAttackAnimation(state, item, team) {
+function queueItemActivationPulse(state, item, team) {
   if (!state.animations) initBattleAnimations(state);
-  const def = ITEM_CATALOG[item.itemId];
-  const targetTeam = getItemProjectileTargetTeam(item, team);
-  const fromVp = typeof getItemViewportCenter === "function"
-    ? getItemViewportCenter(item, team)
-    : getAvatarOriginViewport(team, 10, 8);
-  fromVp.x += (Math.random() - 0.5) * 6;
-  fromVp.y += (Math.random() - 0.5) * 4;
-
-  state._floatUid = (state._floatUid || 0) + 1;
-  state.animations.projectiles.push({
-    uid: `proj-${state._floatUid}`,
-    icon: def.icon,
-    itemUid: item.uid,
-    fromCol: item.col,
-    fromRow: item.row,
-    fromX: fromVp.x,
-    fromY: fromVp.y,
-    toTeam: targetTeam,
-    progress: 0,
-    duration: PROJECTILE_DURATION,
-    team,
-  });
 
   state.animations.pulses.push({
     itemUid: item.uid,
@@ -237,9 +232,23 @@ function queueItemAttackAnimation(state, item, team) {
   });
 }
 
+/** @deprecated Используй emitAttackEvent + AttackAnimationManager */
+function queueItemAttackAnimation(state, item, team) {
+  queueItemActivationPulse(state, item, team);
+}
+
+function triggerAvatarReaction(team, type) {
+  const el = document.getElementById(team === "player" ? "player-avatar-slot" : "enemy-avatar-slot");
+  if (!el) return;
+  const cls = `avatar-reaction-${type}`;
+  el.classList.add(cls);
+  setTimeout(() => el.classList.remove(cls), 400);
+}
+
 function queueHitAnimation(state, item, team, text, color) {
   if (!state.animations) initBattleAnimations(state);
   const kind = classifyFloatingText(text);
+  const { targetTeam } = resolveFloatTeams({ sourceTeam: team, item }, kind);
   const trajectory = resolveFloatTrajectory({ sourceTeam: team, item }, kind, text);
   const isWeaponHit = trajectory === "weapon";
   const isDebuffApply = kind === "debuff";
@@ -248,11 +257,29 @@ function queueHitAnimation(state, item, team, text, color) {
     sourceTeam: team,
     item,
     kind,
-    trajectory: isDebuffApply ? undefined : trajectory,
+    trajectory: isDebuffApply ? undefined : (kind === "damage" || kind === "positive" ? "hero-rise" : trajectory),
     delay: isDebuffApply ? PROJECTILE_DURATION : 0,
-    spawnAtTarget: isDebuffApply,
+    spawnAtTarget: isDebuffApply || kind === "damage" || kind === "positive",
     maxAge: isWeaponHit ? 1.35 : isDebuffApply ? 1.8 : undefined,
   });
+
+  if (item && kind === "positive") {
+    const beadKind = String(text).includes("❤") ? "heal" : "block";
+    queueAvatarCompanionBead(state, team, item, beadKind);
+  }
+  if (item && kind === "damage" && color === "#8b949e") {
+    queueAvatarCompanionBead(state, targetTeam, item, "block");
+  }
+
+  if (kind === "damage" && color !== "#8b949e") {
+    triggerAvatarReaction(targetTeam, "hit");
+  }
+  if (String(text).includes("🛡") || (kind === "damage" && color === "#8b949e")) {
+    triggerAvatarReaction(kind === "damage" && color === "#8b949e" ? targetTeam : team, "block");
+  }
+  if (kind === "positive") {
+    triggerAvatarReaction(team, "heal");
+  }
 
   if (item) {
     state.animations.flashes.push({
@@ -317,15 +344,18 @@ function tickFloatingNumbers(state, dt) {
         };
       }
 
-      if (fn.spawnAtTarget) {
-        const lift = 42;
+      if (fn.spawnAtTarget || fn.anchorMode === "hero-above") {
+        const anchor = typeof getProfileAvatarFloatAnchor === "function"
+          ? getProfileAvatarFloatAnchor(fn.team, fn.lane || 0)
+          : liveTo;
+        const lift = fn.anchorMode === "hero-above" ? 52 : 42;
         return {
           ...fn,
           age,
-          x: liveTo.x,
-          y: liveTo.y - t * lift,
-          toX: liveTo.x,
-          toY: liveTo.y,
+          x: anchor.x,
+          y: anchor.y - t * lift,
+          toX: anchor.x,
+          toY: anchor.y,
         };
       }
 
@@ -374,21 +404,11 @@ function easeInOutCubic(t) {
 function tickBattleAnimations(state, dt) {
   if (!state?.animations) {
     tickFloatingNumbers(state, dt);
+    if (typeof tickAvatarCompanions === "function") tickAvatarCompanions(state, dt);
+    if (typeof tickAttackVisuals === "function") tickAttackVisuals(state, dt);
     return;
   }
   const anim = state.animations;
-
-  anim.projectiles = anim.projectiles
-    .map((p) => {
-      const liveFrom = getProjectileFromViewport(state, p);
-      return {
-        ...p,
-        fromX: liveFrom.x,
-        fromY: liveFrom.y,
-        progress: p.progress + dt / p.duration,
-      };
-    })
-    .filter((p) => p.progress < 1);
 
   anim.pulses = anim.pulses
     .map((p) => ({ ...p, age: p.age + dt }))
@@ -403,6 +423,8 @@ function tickBattleAnimations(state, dt) {
     .filter((p) => p.age < p.maxAge);
 
   tickFloatingNumbers(state, dt);
+  if (typeof tickAvatarCompanions === "function") tickAvatarCompanions(state, dt);
+  if (typeof tickAttackVisuals === "function") tickAttackVisuals(state, dt);
 }
 
 function getItemPulseScale(state, itemUid) {
