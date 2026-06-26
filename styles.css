@@ -25,6 +25,7 @@
   --class-sticker-size: calc(160px * var(--ui-scale));
   --game-item-icon-size: calc(54px * var(--ui-scale));
   --game-item-icon-font: 2.025rem;
+  --game-item-icon-duo-width: calc(var(--game-item-icon-size) * 1.85);
 
   /* Layout contract — FROZEN grid / canvas */
   --cell-size: 46px;
@@ -53,6 +54,7 @@
   --shop-card-row-h: calc(108px * var(--ui-scale, 1));
   --shop-item-icon-size: calc(58px * var(--ui-scale, 1));
   --shop-item-icon-font: calc(50px * var(--ui-scale, 1));
+  --shop-item-icon-duo-width: calc(var(--shop-item-icon-size) * 1.85);
   --prep-toolbar-h: 50px;
   --fx-float-scale: 1;
   --fx-projectile-scale: 1;
@@ -1674,7 +1676,7 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 
 #app[data-phase="prep"] #shop-panel .shop-slots {
   flex: 1;
-  min-height: 0;
+  min-height: calc(var(--shop-card-row-h, 108px) * 2);
   min-width: 0;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1761,6 +1763,20 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
   flex-shrink: 0;
   border-radius: calc(14px * var(--ui-scale));
   transition: box-shadow 0.15s, transform 0.1s;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-card .shop-item-visual .icon.icon--duo,
+#app[data-phase="prep"] #shop-panel .bench-panel .bench-card .icon.icon--duo {
+  width: var(--shop-item-icon-duo-width);
+  min-width: var(--shop-item-icon-duo-width);
+  max-width: var(--shop-item-icon-duo-width);
+  padding: 0 calc(5px * var(--ui-scale));
+  box-sizing: border-box;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-card .shop-item-visual .icon.icon--duo .icon-glyph,
+#app[data-phase="prep"] #shop-panel .bench-panel .bench-card .icon.icon--duo .icon-glyph {
+  font-size: 0.8em;
 }
 
 #app[data-phase="prep"] #shop-panel .shop-card .info,
@@ -2432,6 +2448,43 @@ html[data-battle-hud-pin="true"] body {
   line-height: 1;
   text-align: center;
   flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.shop-card .icon.icon--duo,
+.bench-card .icon.icon--duo {
+  width: var(--game-item-icon-duo-width);
+  min-width: var(--game-item-icon-duo-width);
+  max-width: var(--game-item-icon-duo-width);
+  border-radius: calc(16px * var(--ui-scale));
+  padding: 0 calc(4px * var(--ui-scale));
+}
+
+.shop-card .icon .icon-duo,
+.bench-card .icon .icon-duo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(2px * var(--ui-scale));
+  width: 100%;
+  height: 100%;
+}
+
+.shop-card .icon .icon-glyph,
+.bench-card .icon .icon-glyph {
+  display: inline-block;
+  font-size: 0.8em;
+  line-height: 1;
+}
+
+.shop-card .icon:not(.icon--duo),
+.bench-card .icon:not(.icon--duo) {
+  font-size: var(--game-item-icon-font);
+}
+
+.shop-card .icon:not(.icon--duo) .icon-glyph,
+.bench-card .icon:not(.icon--duo) .icon-glyph {
+  font-size: 1em;
 }
 
 .shop-card .info,

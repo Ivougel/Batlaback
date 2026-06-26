@@ -54,12 +54,200 @@ function drawCellEmoji(ctx, icon, x, y, w, h, pad = CELL_TILE_PAD) {
   drawCellEmojiAt(ctx, icon, cx, cy, Math.min(innerW, innerH));
 }
 
+/** Разбивает строку иконки на 1–2 эмодзи (поддержка ZWJ-последовательностей). */
+function splitItemIconString(icon) {
+  if (!icon) return ["📦"];
+  const str = String(icon).trim();
+  if (!str) return ["📦"];
+  if (typeof Intl !== "undefined" && Intl.Segmenter) {
+    const parts = [...new Intl.Segmenter().segment(str)].map((s) => s.segment).filter(Boolean);
+    if (parts.length) return parts.slice(0, 2);
+  }
+  const graphemes = str.match(/\p{Extended_Pictographic}(\uFE0F|\uFE0E)?(\u200D\p{Extended_Pictographic}(\uFE0F|\uFE0E)?)*/gu);
+  if (graphemes?.length) return graphemes.slice(0, 2);
+  return [str];
+}
+
+function getItemIcons(def) {
+  return splitItemIconString(def?.icon);
+}
+
+/** В сокете — только основной глиф (цвет сердца), без маркера тира (◇/◆/💎/…). */
+function getSocketGemDisplayIcon(def) {
+  const icons = getItemIcons(def);
+  if (!icons.length) return "💎";
+  if (icons.length === 1) return icons[0];
+  const isGem = def?.tags?.includes("gem")
+    || (typeof isGemItem === "function" && def?.id && isGemItem(def.id));
+  return isGem ? icons[icons.length - 1] : icons[0];
+}
+
+/** HTML для магазина / скамейки: до 2 эмодзи в одной подложке. */
+function renderItemIconsHTML(def) {
+  const icons = getItemIcons(def);
+  if (icons.length <= 1) return icons[0] || "📦";
+  return `<span class="icon-duo">${icons.map((glyph) => `<span class="icon-glyph">${glyph}</span>`).join("")}</span>`;
+}
+
+/** Класс оболочки иконки: шире при двух эмодзи. */
+function getItemIconShellClass(def) {
+  return getItemIcons(def).length > 1 ? "icon icon--duo" : "icon";
+}
+
+/** Компактно: оба эмодзи в одной клетке (магазин, скамейка, 1×1 на поле). */
+function drawItemIcons(ctx, icons, x, y, w, h, pad = CELL_TILE_PAD) {
+  const list = (icons || []).slice(0, 2);
+  if (!list.length) return;
+  if (list.length === 1) {
+    drawCellEmoji(ctx, list[0], x, y, w, h, pad);
+    return;
+  }
+  const innerW = Math.max(1, w - pad * 2);
+  const innerH = Math.max(1, h - pad * 2);
+  const slotW = innerW / list.length;
+  list.forEach((icon, i) => {
+    const cx = x + pad + slotW * i + slotW / 2;
+    const cy = y + pad + innerH / 2;
+    drawCellEmojiAt(ctx, icon, cx, cy, Math.min(slotW, innerH) * 0.92);
+  });
+}
+
+/**
+ * Иконки размещённого предмета: при форме >1 клетки — по эмодзи на ячейку,
+ * иначе оба эмодзи компактно в якорной клетке.
+ */
+function drawPlacedItemIcons(ctx, def, item, cellRectFn) {
+  const layout = typeof getPlacedItemVisualLayout === "function"
+    ? getPlacedItemVisualLayout(item, def)
+    : null;
+
+  if (layout?.iconSlots?.length) {
+    layout.iconSlots.forEach((slot) => {
+      const [c, r] = slot.cell;
+      const rect = cellRectFn(c, r);
+      drawItemIcons(ctx, slot.icons, rect.x, rect.y, rect.w, rect.h);
+    });
+    return;
+  }
+
+  const icons = getItemIcons(def);
+  const cells = typeof getItemCells === "function" ? getItemCells(item) : [];
+  if (cells.length > 1 && icons.length > 1) {
+    cells.slice(0, icons.length).forEach(([c, r], i) => {
+      const rect = cellRectFn(c, r);
+      drawCellEmoji(ctx, icons[i], rect.x, rect.y, rect.w, rect.h);
+    });
+    return;
+  }
+  const [iconCol, iconRow] = typeof getItemIconCell === "function"
+    ? getItemIconCell(item)
+    : [item.col, item.row];
+  const rect = cellRectFn(iconCol, iconRow);
+  drawItemIcons(ctx, icons, rect.x, rect.y, rect.w, rect.h);
+}
+
+/** Камни в свободных клетках формы; пустые сокеты — индикатор в клетке или оверлей. */
+function drawGemInCell(ctx, gemDef, rect, pad = typeof CELL_TILE_PAD !== "undefined" ? CELL_TILE_PAD : 3) {
+  if (!gemDef) return;
+  const ix = rect.x + pad;
+  const iy = rect.y + pad;
+  const iw = rect.w - pad * 2;
+  const ih = rect.h - pad * 2;
+  const round = typeof roundRect === "function" ? roundRect : null;
+
+  ctx.fillStyle = `${gemDef.color || "#d2a8ff"}bb`;
+  if (round) {
+    round(ix, iy, iw, ih, 5, ctx);
+    ctx.fill();
+    ctx.strokeStyle = RARITY_COLORS[gemDef.rarity] || "#f0c14b";
+    ctx.lineWidth = 2;
+    round(ix, iy, iw, ih, 5, ctx);
+    ctx.stroke();
+  } else {
+    ctx.fillRect(ix, iy, iw, ih);
+    ctx.strokeStyle = RARITY_COLORS[gemDef.rarity] || "#f0c14b";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(ix, iy, iw, ih);
+  }
+  drawCellEmoji(ctx, getSocketGemDisplayIcon(gemDef), rect.x, rect.y, rect.w, rect.h, pad);
+}
+
+function drawEmptySocketInCell(ctx, rect, pad = typeof CELL_TILE_PAD !== "undefined" ? CELL_TILE_PAD : 3) {
+  const ix = rect.x + pad;
+  const iy = rect.y + pad;
+  const iw = rect.w - pad * 2;
+  const ih = rect.h - pad * 2;
+  const cx = rect.x + rect.w / 2;
+  const cy = rect.y + rect.h / 2;
+  const radius = Math.min(iw, ih) * 0.2;
+
+  ctx.fillStyle = "rgba(88,60,140,0.35)";
+  ctx.fillRect(ix, iy, iw, ih);
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.strokeStyle = "rgba(188,140,255,0.75)";
+  ctx.lineWidth = 2;
+  ctx.setLineDash([4, 3]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function drawItemSocketVisuals(ctx, item, def, cellRectFn) {
+  if (typeof getPlacedItemVisualLayout !== "function") return;
+  const layout = getPlacedItemVisualLayout(item, def);
+  if (!layout.gemSlots.length) return;
+
+  layout.gemSlots.forEach((slot) => {
+    const gemDef = slot.gemId ? ITEM_CATALOG[slot.gemId] : null;
+
+    if (slot.cell) {
+      const [c, r] = slot.cell;
+      const rect = cellRectFn(c, r);
+      ctx.save();
+      if (gemDef) drawGemInCell(ctx, gemDef, rect);
+      else drawEmptySocketInCell(ctx, rect);
+      ctx.restore();
+      return;
+    }
+
+    if (!slot.overlay) return;
+    const [iconCol, iconRow] = typeof getItemIconCell === "function"
+      ? getItemIconCell(item)
+      : [item.col, item.row];
+    const rect = cellRectFn(iconCol, iconRow);
+    const badgeW = Math.min(rect.w * 0.55, 28);
+    const badgeH = Math.min(rect.h * 0.32, 22);
+    const bx = rect.x + (rect.w - badgeW) / 2;
+    const by = rect.y + rect.h - badgeH - 4;
+
+    ctx.save();
+    if (gemDef) {
+      drawGemInCell(ctx, gemDef, { x: bx, y: by, w: badgeW, h: badgeH }, 2);
+    } else {
+      const cx = rect.x + rect.w / 2;
+      const cy = rect.y + rect.h - 6;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(255,255,255,0.18)";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(188,140,255,0.55)";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 3]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    ctx.restore();
+  });
+}
+
 const RARITY_COLORS = {
   common: "#8b949e",
   uncommon: "#3fb950",
   rare: "#58a6ff",
   epic: "#a371f7",
   legendary: "#f0c14b",
+  godly: "#ff7b72",
+  unique: "#ffa657",
 };
 
 /** Визуальные стили карточек и названий по rarity из ITEM_CATALOG. */
@@ -69,6 +257,8 @@ const RARITY_UI = {
   rare: { nameColor: "#58a6ff", borderColor: "#58a6ff", glow: "medium" },
   epic: { nameColor: "#a371f7", borderColor: "#a371f7", glow: "medium" },
   legendary: { nameColor: "#f0c14b", borderColor: "#f0c14b", glow: "strong" },
+  godly: { nameColor: "#ff7b72", borderColor: "#ff7b72", glow: "strong" },
+  unique: { nameColor: "#ffa657", borderColor: "#ffa657", glow: "strong" },
 };
 
 function getRarityUI(rarity) {
@@ -203,9 +393,21 @@ function getShapeBounds(shape) {
 }
 
 /** Схема занятости клеток для карточек магазина и скамейки. */
+function normalizeItemShape(shape) {
+  if (Array.isArray(shape) && shape.length) return shape;
+  if (shape && typeof shape.w === "number" && typeof shape.h === "number") {
+    const cells = [];
+    for (let r = 0; r < shape.h; r++) {
+      for (let c = 0; c < shape.w; c++) cells.push([c, r]);
+    }
+    return cells.length ? cells : [[0, 0]];
+  }
+  return [[0, 0]];
+}
+
 function renderItemShapeMiniHTML(def, options = {}) {
-  const shape = def?.shape;
-  if (!shape?.length) return "";
+  const shape = normalizeItemShape(def?.shape);
+  if (!shape.length) return "";
 
   const { size = "md" } = options;
   const cellSet = new Set(shape.map(([c, r]) => `${c},${r}`));
@@ -350,7 +552,11 @@ function defItem(opts) {
     },
     cooldown: opts.cooldown ?? 2.5,
     staminaCost,
+    description: opts.description ?? "",
+    goldPerRound: opts.goldPerRound ?? 0,
+    sockets: opts.sockets ?? 0,
     effects: (opts.effects ?? []).map((e) => enrichDamageEffect(e, opts.rarity)),
+    metaEffects: opts.metaEffects ?? [],
     synergies: mergeSynergies(tags, opts.synergies ?? []),
     isContainer: false,
     craftOnly: opts.craftOnly ?? false,
@@ -386,7 +592,6 @@ const ITEM_CATALOG = {
     internalCols: 1,
     internalRows: 2,
     isContainer: true,
-    shopContainer: true,
     immovable: false,
     classRestriction: null,
     rarity: "common",
@@ -406,7 +611,6 @@ const ITEM_CATALOG = {
     internalCols: 1,
     internalRows: 3,
     isContainer: true,
-    shopContainer: true,
     immovable: false,
     classRestriction: null,
     rarity: "uncommon",
@@ -426,7 +630,6 @@ const ITEM_CATALOG = {
     internalCols: 2,
     internalRows: 2,
     isContainer: true,
-    shopContainer: true,
     immovable: false,
     classRestriction: null,
     rarity: "rare",
@@ -447,7 +650,6 @@ const ITEM_CATALOG = {
     internalCols: 2,
     internalRows: 3,
     isContainer: true,
-    shopContainer: true,
     immovable: false,
     classRestriction: null,
     rarity: "rare",
@@ -498,16 +700,6 @@ const ITEM_CATALOG = {
     shape: [[0, 0]], rarity: "common", cost: 1, tags: ["food"], cooldown: 2.5,
     effects: [{ type: "heal", value: 3 }],
   }),
-  leather_armor: defItem({
-    id: "leather_armor", name: "Кожаная броня", icon: "🦺", color: "#8b6914",
-    shape: shapeRect(2, 2), rarity: "common", cost: 3, tags: ["armor"], defense: 5, cooldown: 0,
-    effects: [{ type: "passiveDefense", value: 5, trigger: "passive" }],
-    synergies: [{
-      id: "leather_shield_support", adjacency: "strong", neighborTags: ["shield"], target: "neighbor",
-      apply: { type: "blockBonus", value: 1 },
-      desc: "Рядом со щитом: +1 к блоку щита",
-    }],
-  }),
   iron_helmet: defItem({
     id: "iron_helmet", name: "Железный шлем", icon: "⛑️", color: "#6e7681",
     shape: shapeRect(1, 2), rarity: "common", cost: 2, tags: ["armor"], defense: 3, cooldown: 4,
@@ -538,50 +730,10 @@ const ITEM_CATALOG = {
     shape: [[0, 0]], rarity: "common", cost: 2, tags: ["utility", "gem"], cooldown: 0,
     effects: [{ type: "passiveLuck", value: 35, trigger: "passive" }],
   }),
-  wooden_buckler: defItem({
-    id: "wooden_buckler", name: "Деревянный щиток", icon: "🪵", color: "#8b6914",
-    shape: shapeRect(2, 1), rarity: "common", cost: 2, tags: ["utility", "shield"], cooldown: 4,
-    effects: [{ type: "block", value: 3 }],
-  }),
   cork_charm: defItem({
     id: "cork_charm", name: "Пробка-оберег", icon: "🧿", color: "#6e7681",
     shape: [[0, 0]], rarity: "common", cost: 2, tags: ["utility"], cooldown: 5,
     effects: [{ type: "block", value: 2 }],
-  }),
-  whetstone: defItem({
-    id: "whetstone", name: "Точильный камень", icon: "🪨", color: "#8b949e",
-    shape: [[0, 0]], rarity: "common", cost: 3, tags: ["utility", "craft"], cooldown: 0,
-    effects: [],
-  }),
-  gloves_of_haste: defItem({
-    id: "gloves_of_haste", name: "Перчатки спешки", icon: "🧤", color: "#58a6ff",
-    shape: [[0, 0]], rarity: "common", cost: 3, tags: ["utility", "craft"], cooldown: 0,
-    effects: [],
-  }),
-  pestilence_flask: defItem({
-    id: "pestilence_flask", name: "Ядовитое зелье", icon: "🧪", color: "#3fb950",
-    shape: [[0, 0]], rarity: "common", cost: 3, tags: ["poison", "craft"], cooldown: 0,
-    effects: [],
-  }),
-  broom: defItem({
-    id: "broom", name: "Метла", icon: "🧹", color: "#8b6914",
-    shape: shapeRect(1, 2), rarity: "common", cost: 2, tags: ["utility", "craft"], cooldown: 0,
-    effects: [],
-  }),
-  pan: defItem({
-    id: "pan", name: "Сковородка", icon: "🍳", color: "#c9d1d9",
-    shape: shapeRect(2, 1), rarity: "common", cost: 3, tags: ["utility", "craft"], cooldown: 0,
-    effects: [],
-  }),
-  heroic_potion: defItem({
-    id: "heroic_potion", name: "Геройское зелье", icon: "⚗️", color: "#f0c14b",
-    shape: [[0, 0]], rarity: "uncommon", cost: 4, tags: ["food", "craft"], cooldown: 0,
-    effects: [],
-  }),
-  hungry_blade: defItem({
-    id: "hungry_blade", name: "Голодный клинок", icon: "🗡️", color: "#d29922",
-    shape: shapeRect(1, 2), rarity: "uncommon", cost: 5, tags: ["weapon"], damage: 5, cooldown: 2.2,
-    effects: [{ type: "damage", value: 5 }],
   }),
   iron_patch: defItem({
     id: "iron_patch", name: "Железная заплатка", icon: "🔩", color: "#6e7681",
@@ -823,9 +975,17 @@ const ITEM_CATALOG = {
     effects: [{ type: "damage", value: 5, damageType: "magic" }],
   }),
   shovel: defItem({
-    id: "shovel", name: "Лопата", icon: "⛏️", color: "#8b6914",
-    shape: shapeRect(1, 2), rarity: "uncommon", cost: 0, craftOnly: true, tags: ["weapon"], damage: 4, cooldown: 2.5,
-    effects: [{ type: "damage", value: 4 }],
+    id: "shovel", name: "Лопата", icon: "⛏️", color: "#58a6ff",
+    shape: shapeRect(1, 2), rarity: "rare", cost: 8, craftOnly: true,
+    tags: ["weapon", "debuff", "melee", "craft"], damage: 6, cooldown: 2.2, staminaCost: 1.5,
+    effects: [
+      { type: "damage", value: 6, valueMin: 5, valueMax: 8 },
+      { type: "slow", value: 0.12, duration: 3, chance: 0.4 },
+    ],
+    metaEffects: [
+      { phase: "shop_enter", type: "dig_item", value: 1 },
+    ],
+    description: "При входе в магазин: Выкопать случайный предмет. При попадании: 40% шанс наложить 1 стак(ов)",
   }),
   eggscalibur: defItem({
     id: "eggscalibur", name: "Яйце-экскалибур", icon: "🥚", color: "#f0c14b",
@@ -834,13 +994,19 @@ const ITEM_CATALOG = {
   }),
 };
 
-function getShopEligibleItems(playerClass) {
-  return Object.values(ITEM_CATALOG).filter((item) => {
-    if (item.isContainer) return false;
-    if (item.craftOnly) return false;
-    if (item.classRestriction && item.classRestriction !== playerClass) return false;
-    return true;
-  });
+function isShopEligibleItem(item, playerClass = null, round = 1) {
+  if (!item || item.craftOnly) return false;
+  if (typeof CRAFT_OUTPUT_IDS !== "undefined" && CRAFT_OUTPUT_IDS.has(item.id)) return false;
+  if (item.classRestriction && item.classRestriction !== playerClass) return false;
+  if (item.isContainer) {
+    if (!item.shopContainer || item.immovable) return false;
+    return isContainerAvailableInShop(item, round);
+  }
+  return true;
+}
+
+function getShopEligibleItems(playerClass, round = 1) {
+  return Object.values(ITEM_CATALOG).filter((item) => isShopEligibleItem(item, playerClass, round));
 }
 
 function isUtilityItem(item) {
@@ -855,8 +1021,8 @@ function getUtilityShopItems(playerClass) {
   return getShopEligibleItems(playerClass).filter(isUtilityItem);
 }
 
-function getAffordableShopItems(playerClass, gold) {
-  return getShopEligibleItems(playerClass).filter((item) => isItemAffordable(item, gold));
+function getAffordableShopItems(playerClass, gold, round = 1) {
+  return getShopEligibleItems(playerClass, round).filter((item) => isItemAffordable(item, gold));
 }
 
 function collectLoadoutTags(items) {

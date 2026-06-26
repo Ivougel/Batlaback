@@ -15,6 +15,15 @@ function drawBattleItemWithAnimation(ctx, item, team, def, cellRectFn, roundRect
 
   cells.forEach(([c, r]) => {
     const { x, y, w, h } = cellRectFn(team, c, r);
+    const gemVis = typeof getGemCellVisualMap === "function"
+      ? getGemCellVisualMap(item, def).get(`${c},${r}`)
+      : null;
+    let fill = def.color;
+    if (gemVis?.gemId) {
+      fill = ITEM_CATALOG[gemVis.gemId]?.color || def.color;
+    } else if (gemVis?.emptySocket) {
+      fill = "#4a3868";
+    }
 
     ctx.save();
     if (failedFlash) {
@@ -25,7 +34,7 @@ function drawBattleItemWithAnimation(ctx, item, team, def, cellRectFn, roundRect
       ctx.shadowBlur = 16;
     }
 
-    ctx.fillStyle = def.color + (failedFlash ? "ee" : flashing ? "ff" : "cc");
+    ctx.fillStyle = fill + (failedFlash ? "ee" : flashing ? "ff" : "cc");
     roundRectFn(x + pad, y + pad, w - pad * 2, h - pad * 2, 5);
     ctx.fill();
 
@@ -68,7 +77,10 @@ function drawBattleItemWithAnimation(ctx, item, team, def, cellRectFn, roundRect
     ctx.shadowColor = team === "player" ? "#58a6ff" : "#f85149";
     ctx.shadowBlur = 16;
   }
-  drawCellEmoji(ctx, def.icon, x, y, w, h);
+  drawPlacedItemIcons(ctx, def, item, (c, r) => cellRectFn(team, c, r));
+  if (typeof drawItemSocketVisuals === "function") {
+    drawItemSocketVisuals(ctx, item, def, (c, r) => cellRectFn(team, c, r));
+  }
   ctx.restore();
 }
 

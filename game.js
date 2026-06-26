@@ -10,7 +10,7 @@ const BACKPACK_COLS = GRID_COLS;
 const BACKPACK_ROWS = GRID_ROWS;
 const MAX_BENCH = 6;
 const MAX_SHOP = 5;
-const SHOP_RARITY_RANK = { common: 0, uncommon: 1, rare: 2, epic: 3, legendary: 4 };
+const SHOP_RARITY_RANK = { common: 0, uncommon: 1, rare: 2, epic: 3, legendary: 4, godly: 5, unique: 6 };
 const START_GOLD = 12;
 const ROUND_GOLD = 10;
 const WIN_GOLD = 3;
@@ -93,8 +93,8 @@ let layoutPlayerX = GRID_PLAYER_X;
 let layoutCanvasH = CANVAS_H;
 let round = 1;
 let gold = START_GOLD;
-let shop = [];
-let shopFrozen = [];
+let shop = Array(MAX_SHOP).fill(null);
+let shopFrozen = Array(MAX_SHOP).fill(false);
 let shopReadyForRound = 0;
 let bench = [];
 let playerContainers = [];
@@ -155,9 +155,13 @@ let selectedGameMode = "solo";
 let selectedOpponentMode = "ai";
 let selectedEnemyClass = null;
 let pendingPlayerClass = null;
-let enemyShop = [];
-let enemyShopFrozen = [];
+let enemyShop = Array(MAX_SHOP).fill(null);
+let enemyShopFrozen = Array(MAX_SHOP).fill(false);
 let enemyShopReadyForRound = 0;
+let playerPendingShopBuffs = 0;
+let enemyPendingShopBuffs = 0;
+let playerBonusUniqueGranted = false;
+let enemyBonusUniqueGranted = false;
 
 function getSideState(side = prepViewSide) {
   if (side === "enemy") {
@@ -175,6 +179,10 @@ function getSideState(side = prepViewSide) {
       get items() { return enemyItems; },
       set items(value) { enemyItems = value; },
       get classId() { return enemyClass; },
+      get pendingShopBuffs() { return enemyPendingShopBuffs; },
+      set pendingShopBuffs(value) { enemyPendingShopBuffs = value; },
+      get bonusUniqueGranted() { return enemyBonusUniqueGranted; },
+      set bonusUniqueGranted(value) { enemyBonusUniqueGranted = value; },
     };
   }
   return {
@@ -191,6 +199,10 @@ function getSideState(side = prepViewSide) {
     get items() { return playerItems; },
     set items(value) { playerItems = value; },
     get classId() { return playerClass; },
+    get pendingShopBuffs() { return playerPendingShopBuffs; },
+    set pendingShopBuffs(value) { playerPendingShopBuffs = value; },
+    get bonusUniqueGranted() { return playerBonusUniqueGranted; },
+    set bonusUniqueGranted(value) { playerBonusUniqueGranted = value; },
   };
 }
 
@@ -226,9 +238,10 @@ function getPrepFieldTeam() {
   return prepViewSide;
 }
 
-function getShopContextForSide(side = prepViewSide) {
+function getShopContextForSide(side = prepViewSide, opts = {}) {
   const st = getSideState(side);
   const otherItems = side === "player" ? enemyItems : playerItems;
+  const loadoutItems = st.items;
   return {
     round,
     gold: st.gold,
@@ -236,8 +249,17 @@ function getShopContextForSide(side = prepViewSide) {
     goldEarnedTotal: side === "player" ? goldEarnedTotal : 0,
     recentResults: recentBattleResults.slice(-3),
     playerClass: st.classId,
-    loadoutTags: collectLoadoutTags(st.items),
+    loadoutTags: collectLoadoutTags(loadoutItems),
+    loadoutItems,
     opponentLoadoutTags: collectLoadoutTags(otherItems),
+    isReroll: !!opts.isReroll,
+    hasUniqueInLoadout: typeof loadoutHasUniqueItem === "function"
+      ? loadoutHasUniqueItem(loadoutItems)
+      : false,
+    shopModifiers: typeof collectShopPoolModifiers === "function"
+      ? collectShopPoolModifiers(loadoutItems)
+      : null,
+    bonusUniqueGranted: getSideState(side).bonusUniqueGranted,
   };
 }
 
@@ -250,25 +272,37 @@ function ensureSideShopArrays(st) {
   }
 }
 
-function refreshShopSlotsForSide(side = prepViewSide) {
+function refreshShopSlotsForSide(side = prepViewSide, opts = {}) {
   const st = getSideState(side);
   ensureSideShopArrays(st);
-  const ctx = getShopContextForSide(side);
+  const ctx = getShopContextForSide(side, opts);
   const unfrozen = [];
   for (let i = 0; i < MAX_SHOP; i++) {
     if (st.shopFrozen[i] && st.shop[i]) continue;
     unfrozen.push(i);
   }
-  if (!unfrozen.length) return;
+  if (!unfrozen.length) return [];
   const rolled = rollShopBatch(unfrozen.length, ctx);
+  if (ctx.shopModifiers?.bonusUnique > 0 && ctx.bonusUniqueGranted) {
+    st.bonusUniqueGranted = true;
+  }
   unfrozen.forEach((shopIndex, j) => {
     st.shop[shopIndex] = rolled[j] || rollShopItemGuaranteed(ctx);
   });
+  if (opts.isReroll && typeof applyShopRefreshMeta === "function") {
+    applyShopRefreshMeta(side, st.items, unfrozen, st, ctx, (msg) => log(msg));
+  }
+  return unfrozen;
 }
 
 function resetShopForNewRoundForSide(side = prepViewSide) {
   if (gameOver) return;
+  const st = getSideState(side);
+  const wasNewRound = st.shopReadyForRound !== round;
   refreshShopSlotsForSide(side);
+  if (wasNewRound && typeof applyShopEnterMeta === "function") {
+    applyShopEnterMeta(side, st.items, (msg) => log(msg));
+  }
   getSideState(side).shopReadyForRound = round;
 }
 
@@ -277,6 +311,16 @@ function ensureShopReadyForSide(side = prepViewSide) {
   const st = getSideState(side);
   ensureSideShopArrays(st);
   if (st.shopReadyForRound !== round) resetShopForNewRoundForSide(side);
+  else ensureShopHasStock(side);
+}
+
+function ensureShopHasStock(side = prepViewSide) {
+  if (phase !== "prep" || gameOver) return;
+  const st = getSideState(side);
+  ensureSideShopArrays(st);
+  if (st.shop.some(Boolean)) return;
+  refreshShopSlotsForSide(side);
+  st.shopReadyForRound = round;
 }
 
 function initManualEnemyState() {
@@ -742,6 +786,7 @@ function init() {
   });
   window.addEventListener("mouseup", (e) => {
     if (isSyntheticMouseFromTouch()) return;
+    if (tryBuyFromPendingShopDrag(e.clientX, e.clientY)) return;
     finishDragDrop(e);
   });
   document.addEventListener("selectstart", (e) => {
@@ -1185,14 +1230,22 @@ function restartGame() {
   phase = "prep";
   round = 1;
   gold = START_GOLD;
+  playerPendingShopBuffs = 0;
+  playerBonusUniqueGranted = false;
+  enemyPendingShopBuffs = 0;
+  enemyBonusUniqueGranted = false;
   goldSpentTotal = 0;
   goldEarnedTotal = 0;
   recentBattleResults = [];
   runResults = [];
   runItemStats = createEmptyRunItemStats();
   bench = [];
+  shop = Array(MAX_SHOP).fill(null);
   playerContainers = createStartingContainers();
   playerItems = applyClassStarters(playerContainers, [], playerClass);
+  if (typeof getStartingValueBonus === "function") {
+    gold += getStartingValueBonus(playerItems);
+  }
   enemyGold = START_GOLD;
   enemyBench = [];
   if (opponentMode === "ai") {
@@ -1237,6 +1290,14 @@ function restartGame() {
   renderRunStats();
   renderFightButton();
   setPhaseLabel("Подготовка", false);
+  requestAnimationFrame(() => {
+    ensureShopReadyForSide("player");
+    if (isEnemyPrepEditable()) ensureShopReadyForSide("enemy");
+    renderShop();
+    renderBench();
+    updatePrepSideUI();
+    if (typeof applyUiLayout === "function") applyUiLayout();
+  });
   log(isVersusMode()
     ? "Режим противостояния: Tab или кнопки — переключить магазин между игроками."
     : "Расставьте предметы и в бой! Tab — посмотреть билд бота.");
@@ -1273,7 +1334,7 @@ function refreshShop(pay = false, side = prepViewSide) {
     st.gold -= 1;
     if (side === "player") goldSpentTotal += 1;
   }
-  refreshShopSlotsForSide(side);
+  refreshShopSlotsForSide(side, { isReroll: pay });
   if (phase === "prep") {
     renderShop();
     updateUI();
@@ -1597,11 +1658,15 @@ function commitShopPurchase(index, side = prepViewSide) {
   const itemId = st.shop[index];
   if (!itemId) return null;
   const def = ITEM_CATALOG[itemId];
-  if (st.gold < def.cost) return null;
+  if (!def || st.gold < def.cost) return null;
   st.gold -= def.cost;
   if (side === "player") goldSpentTotal += def.cost;
   st.shop[index] = null;
   st.shopFrozen[index] = false;
+  if (typeof applyShopBuyMeta === "function") {
+    const ctx = getShopContextForSide(side);
+    applyShopBuyMeta(side, st.items, itemId, st, ctx, (msg) => log(msg));
+  }
   return itemId;
 }
 
@@ -1618,8 +1683,21 @@ function buyFromShop(index, side = prepViewSide) {
   updateUI();
 }
 
-function getSellRefund(itemId) {
-  return ITEM_CATALOG[itemId]?.cost || 0;
+function getSellRefund(itemId, side = prepViewSide) {
+  const base = ITEM_CATALOG[itemId]?.cost || 0;
+  const mult = typeof getSellBonusMultiplier === "function"
+    ? getSellBonusMultiplier(getSideState(side).items)
+    : 1;
+  return Math.max(0, Math.round(base * mult));
+}
+
+function getLoadoutGoldPerRoundBonus(items) {
+  let bonus = 0;
+  (items || []).forEach((item) => {
+    const def = ITEM_CATALOG[item.itemId];
+    if (def?.goldPerRound > 0) bonus += def.goldPerRound;
+  });
+  return bonus;
 }
 
 function creditItemSale(itemId, side = prepViewSide) {
@@ -1748,8 +1826,29 @@ function recalcSynergies() {
 }
 
 function skipBattle() {
-  if (phase !== "battle" || !battleState || battleState.finished) return;
-  fastForwardBattle(battleState);
+  if (phase !== "battle") return;
+  if (!battleState) {
+    transitionToPhase("prep", () => {
+      battleEndHandled = false;
+      ensureShopReady();
+      renderShop();
+      renderBench();
+      updateUI();
+      setPhaseLabel("Подготовка", false);
+    });
+    return;
+  }
+  if (battleState.finished) {
+    endBattle();
+    return;
+  }
+  try {
+    fastForwardBattle(battleState);
+  } catch (err) {
+    console.error("skipBattle fastForward failed:", err);
+    battleState.finished = true;
+    battleState.winner = battleState.winner || "draw";
+  }
   renderBattleStats();
   if (battleState?.finished) endBattle();
 }
@@ -1846,38 +1945,57 @@ function startBattle() {
   if (isVersusMode()) applyCraftingForSide("enemy");
 
   transitionToPhase("battle", () => {
-    battleEndHandled = false;
-    tooltipItem = null;
-    lastRoundStats = null;
-    resetBattlePause();
-    applySynergyModifiersToContainers(playerContainers, playerItems);
-    applySynergyModifiersToContainers(enemyContainers, enemyItems);
-    lastBattlePrepSnapshot = {
-      playerItems: flattenContainersForBattle(playerContainers, playerItems).map(clonePrepBattleItem),
-      enemyItems: flattenContainersForBattle(enemyContainers, enemyItems).map(clonePrepBattleItem),
-      playerClass,
-      enemyClass,
-    };
-    if (typeof setBattleEnemyTeamLabel === "function") {
-      setBattleEnemyTeamLabel(getEnemyDisplayName());
+    try {
+      battleEndHandled = false;
+      tooltipItem = null;
+      lastRoundStats = null;
+      resetBattlePause();
+      applySynergyModifiersToContainers(playerContainers, playerItems);
+      applySynergyModifiersToContainers(enemyContainers, enemyItems);
+      lastBattlePrepSnapshot = {
+        playerItems: flattenContainersForBattle(playerContainers, playerItems).map(clonePrepBattleItem),
+        enemyItems: flattenContainersForBattle(enemyContainers, enemyItems).map(clonePrepBattleItem),
+        playerClass,
+        enemyClass,
+      };
+      if (typeof setBattleEnemyTeamLabel === "function") {
+        setBattleEnemyTeamLabel(getEnemyDisplayName());
+      }
+      battleState = createBattleState(
+        lastBattlePrepSnapshot.playerItems,
+        lastBattlePrepSnapshot.enemyItems,
+        playerClass,
+        enemyClass,
+        round,
+        {
+          player: { pendingShopBuffs: playerPendingShopBuffs },
+          enemy: { pendingShopBuffs: enemyPendingShopBuffs },
+        },
+      );
+      playerPendingShopBuffs = 0;
+      enemyPendingShopBuffs = 0;
+      battleState.recording = true;
+      battleState.replayFrames = [captureBattleFrame(battleState)];
+      battleState.lastRecordAt = 0;
+      setBattleSpeed(savedBattleSpeed);
+      updateBattleControlsUI();
+      setPhaseLabel("Бой!", true);
+      log(`Раунд ${round}: бой!`);
+      renderBattleStats();
+      renderPlayerProfiles();
+      renderFightButton();
+    } catch (err) {
+      console.error("startBattle failed:", err);
+      battleState = null;
+      transitionToPhase("prep", () => {
+        ensureShopReady();
+        renderShop();
+        renderBench();
+        updateUI();
+        setPhaseLabel("Подготовка", false);
+        log("Не удалось начать бой — проверьте консоль");
+      });
     }
-    battleState = createBattleState(
-      lastBattlePrepSnapshot.playerItems,
-      lastBattlePrepSnapshot.enemyItems,
-      playerClass,
-      enemyClass,
-      round,
-    );
-    battleState.recording = true;
-    battleState.replayFrames = [captureBattleFrame(battleState)];
-    battleState.lastRecordAt = 0;
-    setBattleSpeed(savedBattleSpeed);
-    updateBattleControlsUI();
-    setPhaseLabel("Бой!", true);
-    log(`Раунд ${round}: бой!`);
-    renderBattleStats();
-    renderPlayerProfiles();
-    renderFightButton();
   });
 }
 
@@ -1896,22 +2014,32 @@ function endBattle() {
     accumulateRunItemStats(runItemStats, finishedState.itemDamageStats);
     let goldReward = 0;
 
+    const piggyGold = getLoadoutGoldPerRoundBonus(playerItems);
+    if (piggyGold > 0) {
+      gold += piggyGold;
+      goldEarnedTotal += piggyGold;
+      log(`Копилки и сокровища: +${piggyGold}💰`);
+    }
+
     if (battleWinner === "player") {
       goldReward = ROUND_GOLD + WIN_GOLD;
-      gold += goldReward;
-      goldEarnedTotal += goldReward;
+    } else if (battleWinner === "enemy") {
+      goldReward = ROUND_GOLD;
+    } else {
+      goldReward = ROUND_GOLD;
+    }
+    if (typeof applyRoundGoldWithShopMeta === "function") {
+      goldReward = applyRoundGoldWithShopMeta("player", goldReward, playerItems, (msg) => log(msg));
+    }
+    gold += goldReward;
+    goldEarnedTotal += goldReward;
+    if (battleWinner === "player") {
       recentBattleResults.push("win");
       log(`Победа в бою! +${goldReward}💰`);
     } else if (battleWinner === "enemy") {
-      goldReward = ROUND_GOLD;
-      gold += goldReward;
-      goldEarnedTotal += goldReward;
       recentBattleResults.push("loss");
       log(`Поражение в бою. +${goldReward}💰`);
     } else {
-      goldReward = ROUND_GOLD;
-      gold += goldReward;
-      goldEarnedTotal += goldReward;
       recentBattleResults.push("draw");
       log(`Ничья. +${goldReward}💰`);
     }
@@ -2077,11 +2205,19 @@ function gameLoop(ts) {
     tickGamepad(dt);
   }
   if (phase === "prep" && !dragPayload && !isTouchUi() && !isPointerOverPrepSidebar(lastPointerClient.x, lastPointerClient.y)) {
-    updateTooltip(mousePos.x, mousePos.y);
+    if (prepTooltipsEnabled) {
+      try { updateTooltip(mousePos.x, mousePos.y); } catch (err) { console.error("updateTooltip failed:", err); }
+    }
   } else if ((phase === "battle" || phase === "replay") && battleState && !dragPayload && !isTouchUi()) {
-    updateTooltip(mousePos.x, mousePos.y);
+    if (prepTooltipsEnabled) {
+      try { updateTooltip(mousePos.x, mousePos.y); } catch (err) { console.error("updateTooltip failed:", err); }
+    }
   }
-  draw();
+  try {
+    draw();
+  } catch (err) {
+    console.error("draw failed:", err);
+  }
   requestAnimationFrame(gameLoop);
 }
 
@@ -2485,21 +2621,7 @@ function gamepadPointerDownAt(clientX, clientY) {
 
 function gamepadPointerUpAt(clientX, clientY) {
   updatePointerFromClient(clientX, clientY);
-  const threshold = getDragThresholdPx();
-  if (pendingShopDrag && !dragPayload) {
-    const dx = clientX - pendingShopDrag.startX;
-    const dy = clientY - pendingShopDrag.startY;
-    if (Math.hypot(dx, dy) < threshold) {
-      const { index, side } = pendingShopDrag;
-      pendingShopDrag = null;
-      syncUiDragState();
-      if (!isTouchUi()) {
-        buyFromShop(index, side);
-        suppressShopClickUntil = Date.now() + 500;
-      }
-      return;
-    }
-  }
+  if (tryBuyFromPendingShopDrag(clientX, clientY)) return;
   pendingBenchDrag = null;
   pendingCanvasPick = null;
   finishDragDrop(createSyntheticPointerEvent(clientX, clientY));
@@ -2709,10 +2831,20 @@ function drawLoadoutItems(items, team, dimmed) {
   items.forEach((item) => {
     const def = ITEM_CATALOG[item.itemId];
     const alpha = dimmed ? 0.55 : 1;
+    const gemCellMap = typeof getGemCellVisualMap === "function"
+      ? getGemCellVisualMap(item, def)
+      : null;
     getItemCells(item).forEach(([c, r]) => {
       const { x, y, w, h } = cellRect(team, c, r);
+      const gemVis = gemCellMap?.get(`${c},${r}`);
+      let fill = def.color;
+      if (gemVis?.gemId) {
+        fill = ITEM_CATALOG[gemVis.gemId]?.color || def.color;
+      } else if (gemVis?.emptySocket) {
+        fill = "#4a3868";
+      }
       ctx.globalAlpha = alpha;
-      ctx.fillStyle = def.color + "dd";
+      ctx.fillStyle = fill + "dd";
       roundRect(x + CELL_TILE_PAD, y + CELL_TILE_PAD, w - CELL_TILE_PAD * 2, h - CELL_TILE_PAD * 2, 5);
       ctx.fill();
       ctx.strokeStyle = RARITY_COLORS[def.rarity] || "#8b949e";
@@ -2720,10 +2852,9 @@ function drawLoadoutItems(items, team, dimmed) {
       roundRect(x + CELL_TILE_PAD, y + CELL_TILE_PAD, w - CELL_TILE_PAD * 2, h - CELL_TILE_PAD * 2, 5);
       ctx.stroke();
     });
-    const [iconCol, iconRow] = getItemIconCell(item);
-    const iconRect = cellRect(team, iconCol, iconRow);
     ctx.globalAlpha = alpha;
-    drawCellEmoji(ctx, def.icon, iconRect.x, iconRect.y, iconRect.w, iconRect.h);
+    drawPlacedItemIcons(ctx, def, item, (c, r) => cellRect(team, c, r));
+    drawItemSocketVisuals(ctx, item, def, (c, r) => cellRect(team, c, r));
     ctx.globalAlpha = 1;
   });
 }
@@ -2739,7 +2870,7 @@ function drawItemPreview(x, y, def, itemId, selected, rotation, targetCtx = ctx)
     targetCtx.fill();
   });
   const [adx, ady] = getShapeAnchorOffset(shape);
-  drawCellEmoji(targetCtx, def.icon, x + 8 + adx * 16, y + 8 + ady * 16, 14, 14, 2);
+  drawItemIcons(targetCtx, getItemIcons(def), x + 8 + adx * 16, y + 8 + ady * 16, 14, 14, 2);
 }
 
 function drawHoverCell() {
@@ -2828,29 +2959,47 @@ function describeEffect(e) {
       const pct = Math.round(Math.abs(e.value) * 100);
       if (e.stat === "cooldown") return `⚡ Кулдаун: −${pct}%`;
       if (e.stat === "magicDamage") return `✨ Маг. урон: +${pct}%`;
+      if (e.stat === "heal") return `💚 Лечение: +${pct}%`;
       return `💪 Урон: +${pct}%`;
     }
     case "lifesteal": return `🩸 Вампиризм: ${Math.round(e.value * 100)}%`;
-    case "buffTimed": return `🔥 +${Math.round(e.value * 100)}% ${e.stat || "урон"} на ${e.duration}с`;
+    case "buffTimed":
+      if (e.stat === "heart") return `💖 Сердце: +${e.value} (каждые ${e.duration}с)`;
+      return `🔥 +${Math.round(e.value * 100)}% ${e.stat || "урон"} на ${e.duration}с`;
     case "crit": return `🎯 Крит: ${Math.round((e.chance || 0) * 100)}%`;
     case "dodgePeriodic": return `💨 Уклонение каждые ${e.interval || 5}с`;
     case "groundFire": return `🔥 Огонь на поле: ${e.value} урона/с`;
     case "repeatCast": return `🔮 Повтор магических заклинаний`;
     case "shieldBreakBonus": return `🛡 Пробивание блока: +${Math.round((e.value || 0) * 100)}%`;
     case "shieldBlockMult": return `🛡 Усиление блока: +${Math.round((e.value || 0) * 100)}%`;
-    default: return `${e.type}${e.value != null ? `: ${e.value}` : ""}`;
+    default: return `${typeof localizeBbDescription === "function" ? localizeBbDescription(e.type) : e.type}${e.value != null ? `: ${e.value}` : ""}`;
   }
 }
 
 /** context: shop — магазин; bench — скамейка; field — предмет на поле / canvas */
 function buildItemTooltipLines(def, contentItem, rotation, context = "field") {
   const lines = [];
-  lines.push({ text: `${def.icon} ${def.name}`, style: "title", color: RARITY_COLORS[def.rarity] || "#e6edf3" });
+  lines.push({ text: `${getItemIcons(def).join("")} ${typeof getItemDisplayName === "function" ? getItemDisplayName(def) : def.name}`, style: "title", color: RARITY_COLORS[def.rarity] || "#e6edf3" });
 
   if (def.isContainer) {
     const slots = getSlotBounds(playerContainers);
-    const { w, h } = getInternalSize(def, rotation || 0);
-    lines.push({ text: `Контейнер · ${w}×${h} слотов`, style: "sub", color: "#8b949e" });
+    const shape = typeof normalizeItemShape === "function"
+      ? normalizeItemShape(def.shape)
+      : (Array.isArray(def.shape) ? def.shape : []);
+    const bounds = typeof getShapeBounds === "function"
+      ? getShapeBounds(shape)
+      : { cols: shape.length || 1, rows: 1 };
+    lines.push({
+      text: `Контейнер · +${shape.length} слотов (${bounds.cols}×${bounds.rows})`,
+      style: "sub",
+      color: "#8b949e",
+    });
+    const containerDesc = typeof getItemTooltipDescription === "function"
+      ? getItemTooltipDescription(def)
+      : def.description;
+    if (containerDesc) {
+      lines.push({ text: containerDesc, style: "normal", color: "#c9d1d9" });
+    }
     if (context === "shop") {
       lines.push({ text: `${def.cost}💰 · купите и поставьте рядом с инвентарём`, style: "normal", color: "#f0c14b" });
     }
@@ -2865,7 +3014,43 @@ function buildItemTooltipLines(def, contentItem, rotation, context = "field") {
   }
 
   if (context !== "shop") {
-    lines.push({ text: `${def.shape.length} кл.`, style: "sub", color: "#8b949e" });
+    const shape = typeof normalizeItemShape === "function"
+      ? normalizeItemShape(def.shape)
+      : (Array.isArray(def.shape) ? def.shape : []);
+    lines.push({ text: `${shape.length} кл.`, style: "sub", color: "#8b949e" });
+  }
+
+  const tooltipDescription = typeof getItemTooltipDescription === "function"
+    ? getItemTooltipDescription(def)
+    : def.description;
+  if (tooltipDescription) {
+    lines.push({ text: tooltipDescription, style: "normal", color: "#c9d1d9" });
+  }
+
+  const buildHints = typeof getItemBuildHints === "function" ? getItemBuildHints(def) : def.buildHints;
+  if (buildHints && context !== "shop") {
+    lines.push({ text: `💡 ${buildHints}`, style: "sub", color: "#79c0ff" });
+  }
+
+  if (contentItem && typeof formatSocketedGemsLine === "function") {
+    const socketLine = formatSocketedGemsLine(contentItem);
+    if (socketLine) lines.push({ text: socketLine, style: "normal", color: "#d2a8ff" });
+  }
+  if (def.sockets > 0 && context !== "shop") {
+    const used = contentItem?.socketedGems?.filter(Boolean).length || 0;
+    lines.push({
+      text: `⭕ Сокеты: ${used}/${def.sockets}`,
+      style: "normal",
+      color: "#bc8cff",
+    });
+  }
+
+  if (isGemItem(def.id) && context === "field") {
+    lines.push({ text: "Перетащите на предмет с сокетом для вставки", style: "normal", color: "#bc8cff" });
+  }
+
+  if (def.goldPerRound > 0) {
+    lines.push({ text: `💰 +${def.goldPerRound} золота за раунд`, style: "normal", color: "#f0c14b" });
   }
 
   if (def.effects?.length) {
@@ -2889,7 +3074,8 @@ function buildItemTooltipLines(def, contentItem, rotation, context = "field") {
   }
 
   getUniqueItemSynergies(def).forEach((s) => {
-    lines.push({ text: s.desc, style: "normal", color: "#79c0ff" });
+    const desc = typeof localizeSynergyDesc === "function" ? localizeSynergyDesc(s.desc) : s.desc;
+    lines.push({ text: desc, style: "normal", color: "#79c0ff" });
   });
 
   if (typeof getCraftTooltipLines === "function") {
@@ -3136,34 +3322,40 @@ function positionSidebarTooltip(clientX, clientY, boundsKind = "viewport", place
 }
 
 function syncFieldTooltip() {
-  if (!tooltipItem || dragPayload) {
-    if (fieldTooltipVisible) {
-      hideSidebarTooltip();
+  try {
+    if (!tooltipItem || dragPayload) {
+      if (fieldTooltipVisible) {
+        hideSidebarTooltip();
+      }
+      return;
     }
-    return;
+
+    sidebarTooltipSource = "field";
+    const { itemId, x, y, contentItem, rotation } = tooltipItem;
+    const el = document.getElementById("sidebar-tooltip");
+    const def = ITEM_CATALOG[itemId];
+    if (!el || !def) return;
+
+    el.classList.remove("synergy-tooltip");
+    el.style.borderColor = RARITY_COLORS[def.rarity] || "#30363d";
+    const lines = buildItemTooltipLines(def, contentItem, rotation || 0, "field");
+    el.innerHTML = lines
+      .filter((l) => !l.sep)
+      .map((l) => {
+        const color = l.color ? ` style="color:${l.color}"` : "";
+        return `<div class="tt-line tt-${l.style || "normal"}"${color}>${l.text}</div>`;
+      })
+      .join("");
+    el.classList.remove("hidden");
+    fieldTooltipVisible = true;
+
+    const client = canvasPointToClient(x, y);
+    positionSidebarTooltip(client.x, client.y, "field", "field");
+  } catch (err) {
+    console.error("syncFieldTooltip failed:", err);
+    tooltipItem = null;
+    hideSidebarTooltip();
   }
-
-  sidebarTooltipSource = "field";
-  const { itemId, x, y, contentItem, rotation } = tooltipItem;
-  const el = document.getElementById("sidebar-tooltip");
-  const def = ITEM_CATALOG[itemId];
-  if (!el || !def) return;
-
-  el.classList.remove("synergy-tooltip");
-  el.style.borderColor = RARITY_COLORS[def.rarity] || "#30363d";
-  const lines = buildItemTooltipLines(def, contentItem, rotation || 0, "field");
-  el.innerHTML = lines
-    .filter((l) => !l.sep)
-    .map((l) => {
-      const color = l.color ? ` style="color:${l.color}"` : "";
-      return `<div class="tt-line tt-${l.style || "normal"}"${color}>${l.text}</div>`;
-    })
-    .join("");
-  el.classList.remove("hidden");
-  fieldTooltipVisible = true;
-
-  const client = canvasPointToClient(x, y);
-  positionSidebarTooltip(client.x, client.y, "field", "field");
 }
 
 function roundRect(x, y, w, h, r, targetCtx = ctx) {
@@ -3235,7 +3427,11 @@ function updateTooltip(mx, my) {
     return;
   }
 
-  if (sidebarTooltipSource === "shop" || sidebarTooltipSource === "bench") {
+  const sidebarEl = document.getElementById("sidebar-tooltip");
+  const sidebarHoverActive = sidebarEl
+    && !sidebarEl.classList.contains("hidden")
+    && (sidebarTooltipSource === "shop" || sidebarTooltipSource === "bench");
+  if (sidebarHoverActive) {
     return;
   }
 
@@ -3358,6 +3554,7 @@ function bindItemTooltipEvents(el, itemId, contentItem, context = "shop") {
   if (!itemId || !el) return;
   const boundsKind = context === "shop" ? "shop" : context === "bench" ? "bench" : context === "field" ? "field" : "viewport";
   const refresh = (e) => {
+    if (!prepTooltipsEnabled) return;
     const liveItemId = el.dataset.itemId || itemId;
     if (!liveItemId) return;
     showSidebarTooltip(e, liveItemId, contentItem, context);
@@ -3430,6 +3627,77 @@ function onMouseDown(e) {
     recalcSynergies();
     syncUiDragState();
     syncDragGhostOverlay(e.clientX, e.clientY);
+  }
+}
+
+function tryGemSocketDrop(st, dragFrom, dragPayload, col, row, side) {
+  if (!isGemItem(dragPayload.itemId)) return false;
+  const excludeUid = dragFrom.type === "item" ? dragFrom.item.uid : null;
+  const host = findSocketHostAt(st.items, col, row, dragPayload.itemId, excludeUid);
+  if (!host) return false;
+
+  let gemId = dragPayload.itemId;
+
+  if (dragFrom.type === "shop") {
+    const bought = commitShopPurchase(dragFrom.index, side);
+    if (!bought) return false;
+    gemId = bought;
+  } else if (dragFrom.type === "bench") {
+    st.bench.splice(dragFrom.index, 1);
+    if (selectedBench === dragFrom.index) selectedBench = -1;
+  } else if (dragFrom.type === "item") {
+    st.items = st.items.filter((i) => i.uid !== dragFrom.item.uid);
+  }
+
+  const hostIdx = st.items.findIndex((i) => i.uid === host.uid);
+  if (hostIdx < 0) return false;
+  const socketed = socketGemIntoItem(st.items[hostIdx], gemId);
+  if (!socketed) return false;
+
+  st.items[hostIdx] = socketed;
+  const gemName = ITEM_CATALOG[gemId]?.name || gemId;
+  const hostName = ITEM_CATALOG[host.itemId]?.name || host.itemId;
+  log(`💎 ${gemName} вставлен в ${hostName}`);
+  return true;
+}
+
+function drawItemSocketMarkers(ctx, item, def, team, cellRectFn) {
+  if (typeof drawItemSocketVisuals === "function") {
+    drawItemSocketVisuals(ctx, item, def, cellRectFn);
+    return;
+  }
+  const count = getItemSocketCount(item.itemId);
+  if (!count) return;
+  const normalized = ensureSocketArray(item);
+  const cells = getItemCells(item);
+  const cols = cells.map(([c]) => c);
+  const rows = cells.map(([, r]) => r);
+  const minCol = Math.min(...cols);
+  const maxCol = Math.max(...cols);
+  const maxRow = Math.max(...rows);
+
+  for (let i = 0; i < count; i++) {
+    const col = count === 1
+      ? Math.round((minCol + maxCol) / 2)
+      : Math.round(minCol + ((maxCol - minCol) * i) / Math.max(1, count - 1));
+    const rect = cellRectFn(col, maxRow);
+    const cx = rect.x + rect.w / 2;
+    const cy = rect.y + rect.h - 6;
+    const gemId = normalized.socketedGems[i];
+    const filled = !!gemId;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+    ctx.fillStyle = filled ? `${ITEM_CATALOG[gemId]?.color || "#d2a8ff"}cc` : "rgba(255,255,255,0.18)";
+    ctx.fill();
+    ctx.strokeStyle = filled ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.45)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    if (filled && ITEM_CATALOG[gemId]) {
+      drawCellEmojiAt(ctx, getItemIcons(ITEM_CATALOG[gemId])[0], cx, cy, 10);
+    }
+    ctx.restore();
   }
 }
 
@@ -3552,7 +3820,9 @@ function finishDragDrop(e) {
   } else if (!isContainerItem(dragPayload.itemId) && isOnBoard(mx, my, side)) {
     const col = xToCol(mx, side);
     const row = yToRow(my, side);
-    if (isSlotCell(st.containers, col, row)) {
+    if (isSlotCell(st.containers, col, row) && tryGemSocketDrop(st, dragFrom, dragPayload, col, row, side)) {
+      // камень вставлен в сокет
+    } else if (isSlotCell(st.containers, col, row)) {
       const excludeUid = dragFrom.type === "item" ? dragFrom.item.uid : null;
       const placement = resolveLoadoutPlacementDisplacing(
         st.containers,
@@ -3604,7 +3874,10 @@ function finishDragDrop(e) {
           dragPayload.itemId = itemId;
         }
         const placed = createPlacedItem(dragPayload.itemId, placement.col, placement.row, placement.rotation);
-        if (dragFrom.type === "item") placed.uid = dragFrom.item.uid;
+        if (dragFrom.type === "item") {
+          placed.uid = dragFrom.item.uid;
+          if (dragFrom.item.socketedGems) placed.socketedGems = [...dragFrom.item.socketedGems];
+        }
         st.items = [...st.items, placed];
         dragPayload.rotation = placement.rotation;
       } else if (dragFrom.type === "item") {
@@ -3625,6 +3898,13 @@ function finishDragDrop(e) {
   renderBench();
   recalcSynergies();
   updateUI();
+  if (!dragPayload && !isPointerOverPrepSidebar(lastPointerClient.x, lastPointerClient.y)) {
+    if (prepTooltipsEnabled && !isTouchUi()) {
+      try { updateTooltip(mousePos.x, mousePos.y); } catch (err) { console.error("updateTooltip failed:", err); }
+    } else if (prepTooltipsEnabled && typeof applyGamepadPrepFocusTooltip === "function" && lastGamepadPrepFocus) {
+      applyGamepadPrepFocusTooltip(lastGamepadPrepFocus);
+    }
+  }
 }
 
 function beginPendingBenchDrag(index, e, side = prepViewSide) {
@@ -3656,12 +3936,27 @@ function updatePendingCanvasPick(clientX, clientY) {
   onMouseDown(createSyntheticPointerEvent(clientX, clientY));
 }
 
+function tryBuyFromPendingShopDrag(clientX, clientY) {
+  if (!pendingShopDrag || dragPayload) return false;
+  const dx = clientX - pendingShopDrag.startX;
+  const dy = clientY - pendingShopDrag.startY;
+  if (Math.hypot(dx, dy) >= getDragThresholdPx()) return false;
+  const { index, side } = pendingShopDrag;
+  pendingShopDrag = null;
+  syncUiDragState();
+  if (!isTouchUi()) {
+    buyFromShop(index, side);
+    suppressShopClickUntil = Date.now() + 500;
+  }
+  return true;
+}
+
 function beginPendingShopDrag(index, e, side = prepViewSide) {
   if (phase !== "prep" || gameOver || !canEditPrepSide(side)) return;
   const st = getSideState(side);
   if (!st.shop[index]) return;
   const def = ITEM_CATALOG[st.shop[index]];
-  if (st.gold < def.cost) return;
+  if (!def || st.gold < def.cost) return;
   e.preventDefault();
   pendingShopDrag = { index, startX: e.clientX, startY: e.clientY, side };
   shopDidDrag = false;
@@ -3685,7 +3980,7 @@ function startShopDrag(index, e, side = prepViewSide) {
   const st = getSideState(side);
   if (!st.shop[index]) return;
   const def = ITEM_CATALOG[st.shop[index]];
-  if (st.gold < def.cost) return;
+  if (!def || st.gold < def.cost) return;
   if (e?.preventDefault) e.preventDefault();
   clearTouchLongPress();
   hideSidebarTooltip();
@@ -3853,7 +4148,7 @@ function buildItemCardHTML(def, { cardType = "item-card", extraClasses = "", tag
   const shapeHtml = showShape ? renderItemShapeMiniHTML(def, { size: shapeSize }) : "";
   return `<div class="${classes}"${dataAttrs ? ` ${dataAttrs}` : ""}>
     ${innerBefore}
-    <div class="icon" style="background:${def.color}33">${def.icon}</div>
+    <div class="${getItemIconShellClass(def)}" style="background:${def.color}33">${renderItemIconsHTML(def)}</div>
     ${shapeHtml}
     <div class="info"><div class="name">${def.name}</div>${tagsHtml ? `<div class="tags">${tagsHtml}</div>` : ""}</div>
     ${innerAfter}
@@ -3868,7 +4163,7 @@ function renderShopCardHTML(def, { extraClasses = "", innerBefore = "", dataAttr
     ${innerBefore}
     <div class="shop-item-main">
       <div class="shop-item-visual">
-        <div class="icon" style="background:${def.color}33">${def.icon}</div>
+        <div class="${getItemIconShellClass(def)}" style="background:${def.color}33">${renderItemIconsHTML(def)}</div>
         <div class="cost" aria-label="Цена ${def.cost}"><span class="cost-value">${def.cost}</span><span class="cost-coin" aria-hidden="true">💰</span></div>
       </div>
       ${shapeHtml}
@@ -3894,22 +4189,44 @@ function renderShop(side = prepViewSide) {
   const el = document.getElementById("shop-slots");
   if (!el) return;
   const st = getSideState(side);
+  ensureSideShopArrays(st);
+  if (phase === "prep" && !gameOver) {
+    if (st.shopReadyForRound !== round) resetShopForNewRoundForSide(side);
+    else ensureShopHasStock(side);
+  }
   const editable = canEditPrepSide(side);
-  el.innerHTML = getShopDisplayEntries(side).map(({ itemId, index }) => {
-    if (!itemId) return `<div class="shop-card empty">—</div>`;
-    const def = ITEM_CATALOG[itemId];
-    const frozen = st.shopFrozen[index];
-    const affordable = st.gold >= def.cost;
-    const pinBtn = editable
-      ? `<button type="button" class="shop-pin${frozen ? " active" : ""}" data-pin="${index}" title="${frozen ? "Открепить" : "❄️ Заморозить предмет"}">${frozen ? "📌" : "📍"}</button>`
-      : "";
-    return renderShopCardHTML(def, {
-      extraClasses: [frozen ? "frozen" : "", affordable || !editable ? "" : "unaffordable"].filter(Boolean).join(" "),
-      innerBefore: pinBtn,
-      shapeSize: "md",
-      dataAttrs: `data-index="${index}" data-item-id="${itemId}"${affordable || !editable ? "" : ' data-unaffordable="1" title="Недостаточно золота"'}`, 
-    });
-  }).join("");
+  const emptySlotsHtml = Array.from({ length: MAX_SHOP }, () => `<div class="shop-card empty">—</div>`).join("");
+  let html = emptySlotsHtml;
+  try {
+    const entries = getShopDisplayEntries(side);
+    if (entries.length) {
+      html = entries.map(({ itemId, index }) => {
+        try {
+          if (!itemId) return `<div class="shop-card empty">—</div>`;
+          const def = ITEM_CATALOG[itemId];
+          if (!def) return `<div class="shop-card empty" title="Предмет не найден: ${itemId}">—</div>`;
+          const frozen = st.shopFrozen[index];
+          const affordable = st.gold >= (def.cost ?? 0);
+          const pinBtn = editable
+            ? `<button type="button" class="shop-pin${frozen ? " active" : ""}" data-pin="${index}" title="${frozen ? "Открепить" : "❄️ Заморозить предмет"}">${frozen ? "📌" : "📍"}</button>`
+            : "";
+          return renderShopCardHTML(def, {
+            extraClasses: [frozen ? "frozen" : "", affordable || !editable ? "" : "unaffordable"].filter(Boolean).join(" "),
+            innerBefore: pinBtn,
+            shapeSize: "md",
+            dataAttrs: `data-index="${index}" data-item-id="${itemId}"${affordable || !editable ? "" : ' data-unaffordable="1" title="Недостаточно золота"'}`, 
+          });
+        } catch (itemErr) {
+          console.error("renderShop item failed:", itemId, itemErr);
+          return `<div class="shop-card empty" title="Ошибка карточки">—</div>`;
+        }
+      }).join("");
+    }
+  } catch (err) {
+    console.error("renderShop failed:", err);
+    html = emptySlotsHtml;
+  }
+  el.innerHTML = html;
   el.querySelectorAll(".shop-card:not(.empty)").forEach((card) => {
     bindItemTooltipEvents(card, card.dataset.itemId, null, "shop");
   });

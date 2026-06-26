@@ -969,9 +969,14 @@ function aiEnemyPrepPhase(state, round, gridW, gridH, battleWon = null, playerIt
     gold: next.gold,
     playerClass: next.classId,
     loadoutTags: collectLoadoutTags(next.items),
+    loadoutItems: next.items,
     opponentLoadoutTags: scout.tags,
     recentResults: battleWon === false ? ["loss", "loss"] : [],
     goldSpentTotal: 0,
+    isReroll: false,
+    hasUniqueInLoadout: typeof loadoutHasUniqueItem === "function"
+      ? loadoutHasUniqueItem(next.items)
+      : false,
   };
 
   let shopArchetype = next.archetype;
@@ -984,7 +989,7 @@ function aiEnemyPrepPhase(state, round, gridW, gridH, battleWon = null, playerIt
     shopArchetype = aiBuyFromShop(
       next,
       shopArchetype,
-      generateAIShopSlots(4, shopCtx),
+      generateAIShopSlots(4, { ...shopCtx, isReroll: true }),
       gridW,
       gridH,
       scout,

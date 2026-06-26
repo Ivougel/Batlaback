@@ -1,6 +1,0 @@
-﻿key,value,note
-BASE_HP,108,Стартовое HP всех классов до предметов
-STAMINA_BASE_MAX,40,Базовый пул выносливости
-STAMINA_REGEN_PER_SEC,5,Базовая регенерация
-STAMINA_WEAPON_REGEN_BONUS,1,+1/с за оружие с ⚡
-DAMAGE_PACING_SCALE,0.88,Множитель исходящего урона в бою

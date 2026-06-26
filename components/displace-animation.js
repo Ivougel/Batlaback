@@ -139,13 +139,26 @@ function drawDisplacedItem(ctx, item, team, centerX, centerY, alpha, scale) {
   });
 
   if (cells.length) {
-    const [iconCol, iconRow] = getItemIconCell(item);
-    const rect = cellRect(team, iconCol, iconRow);
-    const x = centerX + (rect.x - itemCenter.x) * scale;
-    const y = centerY + (rect.y - itemCenter.y) * scale;
-    const w = rect.w * scale;
-    const h = rect.h * scale;
-    drawCellEmoji(ctx, def.icon, x, y, w, h, pad * scale);
+    drawPlacedItemIcons(ctx, def, item, (c, r) => {
+      const rect = cellRect(team, c, r);
+      return {
+        x: centerX + (rect.x - itemCenter.x) * scale,
+        y: centerY + (rect.y - itemCenter.y) * scale,
+        w: rect.w * scale,
+        h: rect.h * scale,
+      };
+    });
+    if (typeof drawItemSocketVisuals === "function") {
+      drawItemSocketVisuals(ctx, item, def, (c, r) => {
+        const rect = cellRect(team, c, r);
+        return {
+          x: centerX + (rect.x - itemCenter.x) * scale,
+          y: centerY + (rect.y - itemCenter.y) * scale,
+          w: rect.w * scale,
+          h: rect.h * scale,
+        };
+      });
+    }
   }
 
   ctx.restore();

@@ -41,7 +41,10 @@ function getInternalSize(def, rotation = 0) {
 }
 
 function rotateShape(shape, times = 1) {
-  let cells = shape.map(([x, y]) => [x, y]);
+  const base = typeof normalizeItemShape === "function"
+    ? normalizeItemShape(shape)
+    : (Array.isArray(shape) && shape.length ? shape : [[0, 0]]);
+  let cells = base.map(([x, y]) => [x, y]);
   const t = ((times % 4) + 4) % 4;
   for (let i = 0; i < t; i++) {
     cells = cells.map(([x, y]) => [y, -x]);
@@ -83,7 +86,7 @@ function getContainerBounds(container) {
 }
 
 function createPlacedItem(itemId, col, row, rotation = 0) {
-  return {
+  const item = {
     uid: `item-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     itemId,
     col,
@@ -91,6 +94,7 @@ function createPlacedItem(itemId, col, row, rotation = 0) {
     rotation: rotation || 0,
     runtime: null,
   };
+  return typeof initPlacedItemSockets === "function" ? initPlacedItemSockets(item) : item;
 }
 
 function createContainer(itemId, col, row, rotation = 0) {

@@ -302,7 +302,7 @@ function resolveBattleTimeout(state) {
   });
 }
 
-function createBattleSide(items, classId) {
+function createBattleSide(items, classId, prepMeta = {}) {
   const side = {
     hp: 108,
     maxHp: 108,
@@ -343,6 +343,12 @@ function createBattleSide(items, classId) {
     blockLedger: [],
     classId: classId || null,
     luck: 0,
+    procChanceBonus: 0,
+    battleRageTimer: 0,
+    battleRageUsed: false,
+    battleRageDamageReduction: 0,
+    battleRageCooldownFactor: 1,
+    pendingShopBuffs: 0,
     stamina: 0,
     maxStamina: STAMINA_BASE_MAX,
     staminaRegen: STAMINA_REGEN_PER_SEC,
@@ -356,6 +362,30 @@ function createBattleSide(items, classId) {
   assignPoisonSourceEfficiency(side);
   assignGrantBlockBuffEfficiency(side);
   applyPassiveItemEffects(side);
+  side.pendingShopBuffs = Number(prepMeta.pendingShopBuffs) || 0;
+  if (typeof collectMetaEffectsFromItems === "function") {
+    collectMetaEffectsFromItems(side.items).forEach((effect) => {
+      if (effect.phase === "battle_start" && effect.type === "starred_chance_bonus") {
+        side.procChanceBonus = (side.procChanceBonus || 0) + (Number(effect.value) || 0);
+      }
+    });
+  }
+  side.items.forEach((item) => {
+    const def = ITEM_CATALOG[item.itemId];
+    (def?.effects || []).forEach((effect) => {
+      if (effect.type !== "max_hp_per_start_item") return;
+      const startCount = countBattleStartItems(side.items);
+      side.maxHp += startCount * (Number(effect.value) || 0);
+    });
+  });
+  if (side.pendingShopBuffs > 0) {
+    side.timedBuffs.push({
+      stat: "damage",
+      value: 0.08 * side.pendingShopBuffs,
+      remaining: 8,
+    });
+  }
+  side.hp = side.maxHp;
   finalizeSideCombatStats(side);
   finalizeSideStamina(side);
   side.hp = side.maxHp;
@@ -404,6 +434,52 @@ function tryItemActivationWithoutStamina(state, item, self, team, staminaCost) {
   });
 }
 
+function countBattleStartItems(items = []) {
+  return items.filter((item) => isBattleStartItem(item.itemId)).length;
+}
+
+function isBattleStartItem(itemId) {
+  const def = ITEM_CATALOG[itemId];
+  if (!def) return false;
+  if ((def.effects || []).some((e) => e.phase === "battle_start")) return true;
+  if ((def.metaEffects || []).some((e) => e.phase === "battle_start")) return true;
+  if ((def.effects || []).some((e) => (
+    e.trigger === "passive"
+    && ["passiveMaxHp", "passiveLuck", "groundFire"].includes(e.type)
+  ))) return true;
+  return false;
+}
+
+function rollEffectChance(side, chance) {
+  const base = Number(chance) || 0;
+  if (base <= 0) return true;
+  const bonus = side?.procChanceBonus || 0;
+  return Math.random() < Math.min(0.95, base + bonus);
+}
+
+function tryActivateBattleRage(side, state, team, sourceLabel) {
+  if (side.battleRageUsed || side.maxHp <= 0) return;
+  if (side.hp / side.maxHp >= 0.5) return;
+  const rageEffect = side.items
+    .map((item) => ITEM_CATALOG[item.itemId]?.effects || [])
+    .flat()
+    .find((e) => e.type === "battleRageLowHp");
+  if (!rageEffect) return;
+  side.battleRageUsed = true;
+  side.battleRageTimer = Number(rageEffect.duration) || 5;
+  side.battleRageDamageReduction = Number(rageEffect.damageReduction) || 0.2;
+  const cdBoost = Number(rageEffect.cooldownBoost) || 0.25;
+  side.battleRageCooldownFactor = 1 - cdBoost;
+  side.cooldownMult *= side.battleRageCooldownFactor;
+  finalizeSideCombatStats(side);
+  pushBattleLog(state, {
+    actor: team,
+    type: "buff",
+    source: sourceLabel || "Battle Rage",
+    message: `${battleTeamLabel(team)}: Battle Rage на ${side.battleRageTimer}с`,
+  });
+}
+
 function applyClassCombatBonus(side, classId) {
   const cls = getClassById(classId);
   if (!cls?.combatBonus) return;
@@ -415,8 +491,10 @@ function applyClassCombatBonus(side, classId) {
 
 function applyPassiveItemEffects(side) {
   side.items.forEach((item) => {
-    const def = ITEM_CATALOG[item.itemId];
-    (def.effects || []).forEach((effect) => {
+    const effects = typeof getBattleEffectsForItem === "function"
+      ? getBattleEffectsForItem(item)
+      : (ITEM_CATALOG[item.itemId]?.effects || []);
+    effects.forEach((effect) => {
       if (effect.trigger !== "passive" && effect.type.startsWith("passive")) {
         applyPassiveEffect(side, item, effect);
         return;
@@ -466,6 +544,8 @@ function applyPassiveEffect(side, item, effect) {
     case "repeatCast":
       if (effect.magicOnly) side.repeatMagic = true;
       break;
+    case "battleRageLowHp":
+      break;
     default:
       break;
   }
@@ -482,9 +562,9 @@ function getItemCooldownMult(item) {
   return clampCooldownMult(item.runtime?.cooldownMult ?? 1);
 }
 
-function createBattleState(playerItems, enemyItems, playerClassId = null, enemyClassId = null, battleRound = 1) {
-  const player = createBattleSide(playerItems, playerClassId);
-  const enemy = createBattleSide(enemyItems, enemyClassId || pickRandomClassId());
+function createBattleState(playerItems, enemyItems, playerClassId = null, enemyClassId = null, battleRound = 1, prepMeta = {}) {
+  const player = createBattleSide(playerItems, playerClassId, prepMeta.player || {});
+  const enemy = createBattleSide(enemyItems, enemyClassId || pickRandomClassId(), prepMeta.enemy || {});
   const state = {
     player,
     enemy,
@@ -603,7 +683,8 @@ function battleTick(state, dt) {
 }
 
 function tickStatusEffects(state, dt) {
-  [state.player, state.enemy].forEach((side) => {
+  [state.player, state.enemy].forEach((side, idx) => {
+    const team = idx === 0 ? "player" : "enemy";
     side.timedBuffs = side.timedBuffs.filter((b) => {
       b.remaining -= dt;
       return b.remaining > 0;
@@ -612,6 +693,18 @@ function tickStatusEffects(state, dt) {
       side.slowTimer -= dt;
       if (side.slowTimer <= 0) side.slowDebuff = 0;
     }
+    if (side.battleRageTimer > 0) {
+      side.battleRageTimer -= dt;
+      if (side.battleRageTimer <= 0) {
+        if (side.battleRageCooldownFactor && side.battleRageCooldownFactor !== 1) {
+          side.cooldownMult /= side.battleRageCooldownFactor;
+          side.battleRageCooldownFactor = 1;
+          finalizeSideCombatStats(side);
+        }
+        side.battleRageDamageReduction = 0;
+      }
+    }
+    tryActivateBattleRage(side, state, team, "Battle Rage");
   });
 }
 
@@ -848,7 +941,10 @@ function activateItem(state, item, self, foe, team) {
   state.itemDamageStats[item.uid].activations++;
   queueItemAttackAnimation(state, item, team);
 
-  const activeEffects = (def.effects || []).filter((e) => e.trigger !== "passive");
+  const allEffects = typeof getBattleEffectsForItem === "function"
+    ? getBattleEffectsForItem(item)
+    : (def.effects || []);
+  const activeEffects = allEffects.filter((e) => e.trigger !== "passive");
   const magicEffects = activeEffects.filter((e) => e.damageType === "magic" || def.tags.includes("magic"));
 
   activeEffects.forEach((effect) => {
@@ -869,7 +965,7 @@ function activateItem(state, item, self, foe, team) {
     });
   }
 
-  const groundFx = (def.effects || []).find((e) => e.type === "groundFire");
+  const groundFx = allEffects.find((e) => e.type === "groundFire");
   if (groundFx && activeEffects.some((e) => e.type === "damage" && (e.damageType === "fire" || def.tags.includes("fire")))) {
     const value = scalePacedValue(groundFx.value || 2, GROUND_FIRE_PACING);
     const before = foe.groundFire;
@@ -1050,6 +1146,7 @@ function executeEffect(state, effect, item, self, foe, rt, team) {
       break;
     }
     case "slow": {
+      if (effect.chance != null && !rollEffectChance(self, effect.chance)) break;
       foe.slowDebuff = Math.max(foe.slowDebuff, effect.value || 0.1);
       foe.slowTimer = Math.max(foe.slowTimer, effect.duration || 3);
       pushBattleLog(state, {
@@ -1103,6 +1200,9 @@ function applyDamage(target, amount, state, sourceLabel, attackerTeam, attackerS
   if (isFatigueActive(state)) {
     dmg *= getFatigueDamageTakenMult(state);
   }
+  if (target.battleRageDamageReduction > 0) {
+    dmg *= 1 - target.battleRageDamageReduction;
+  }
   const rawAmount = dmg;
   let blockAbs = 0;
   let armorAbs = 0;
@@ -1138,6 +1238,7 @@ function applyDamage(target, amount, state, sourceLabel, attackerTeam, attackerS
 
   if (hpDmg > 0) {
     target.hp = Math.max(0, target.hp - hpDmg);
+    tryActivateBattleRage(target, state, targetTeam, "Battle Rage");
     const dmgType = effect?.damageType;
     const floatText = dmgType === "fire" ? `🔥 −${Math.round(hpDmg)}`
       : dmgType === "magic" ? `✨ −${Math.round(hpDmg)}`

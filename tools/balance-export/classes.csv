@@ -1,4 +1,0 @@
-﻿id,name,bonus,starter_items,hp_start,max_stamina,stamina_regen,passive_armor
-warrior,Воин,+10% максимального здоровья,rusty_sword; iron_helmet,118,40,6,3
-rogue,Разбойник,+10% скорость атаки,dagger; poison_vial,108,40,6,0
-mage,Маг,+10% магический урон,apprentice_staff; mana_crystal,108,40,6,0
