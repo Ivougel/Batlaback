@@ -16,6 +16,8 @@ const GP_SWITCH = {
 };
 
 const GP_DEADZONE = 0.18;
+const GP_WAKE_THRESHOLD = 0.12;
+const GP_HAT_THRESHOLD = 0.35;
 const GP_CURSOR_SPEED = 620;
 const GP_ACTIVATION_IDLE_MS = 4000;
 const GP_DPAD_REPEAT_DELAY = 0.42;
@@ -30,6 +32,8 @@ let gpActive = false;
 let gpAwaitingWake = true;
 let gpButtonMap = GP_XBOX;
 let gpConnectedPadKey = null;
+let gpPreferredPadIndex = null;
+let gpMergedPadCache = null;
 let gpCursor = { x: 0, y: 0, initialized: false };
 let gpPrevButtons = [];
 let gpLastInputAt = 0;
@@ -137,6 +141,10 @@ function initGamepadControls(handlers) {
   };
   window.addEventListener("pointerdown", pollGamepads, { passive: true });
   window.addEventListener("keydown", pollGamepads);
+  window.addEventListener("focus", pollGamepads);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") pollGamepads();
+  });
 
   onInteractionModeChange((mode, prev) => {
     if (prev === "gamepad" && mode !== "gamepad") {
@@ -160,10 +168,33 @@ function normalizePadId(id) {
   return String(id || "").toLowerCase();
 }
 
+function gamepadButtonValue(btn) {
+  if (!btn) return 0;
+  if (btn.pressed) return 1;
+  return btn.value ?? 0;
+}
+
+function isGameSirGamepad(pad) {
+  const id = normalizePadId(pad?.id);
+  return id.includes("gamesir") || id.includes("game sir") || id.includes("x2s") || id.includes("x2 ");
+}
+
+function isGenericIosXboxPad(pad) {
+  const id = normalizePadId(pad?.id);
+  return id.includes("xbox wireless controller") && !id.includes("microsoft");
+}
+
 function isSwitchGamepad(pad) {
   const id = normalizePadId(pad?.id);
-  return id.includes("nintendo") || id.includes("switch") || id.includes("057e")
-    || id.includes("pro controller") || id.includes("joy-con") || id.includes("joycon");
+  if (id.includes("nintendo") || id.includes("switch") || id.includes("057e")
+    || id.includes("pro controller") || id.includes("joy-con") || id.includes("joycon")) {
+    return true;
+  }
+  // GameSir в режиме Switch на iOS часто маскируется под Xbox Wireless Controller.
+  if (isGameSirGamepad(pad) && (id.includes("switch") || pad?.mapping === "xr-standard")) {
+    return true;
+  }
+  return false;
 }
 
 function resolveGamepadButtons(pad) {
@@ -173,21 +204,110 @@ function resolveGamepadButtons(pad) {
 function getGamepadLabel(pad) {
   if (!pad) return "Геймпад";
   if (isSwitchGamepad(pad)) return "Switch Pro";
+  if (isGameSirGamepad(pad)) return "GameSir";
+  if (isGenericIosXboxPad(pad)) return "GameSir / Xbox";
   const id = pad.id || "";
   return id.split("(")[0].trim() || "Геймпад";
 }
 
-function getActiveGamepad() {
-  if (!navigator.getGamepads) return null;
-  const pads = navigator.getGamepads();
-  for (let i = 0; i < pads.length; i++) {
-    if (pads[i]?.connected) return pads[i];
+function getConnectedGamepads() {
+  if (!navigator.getGamepads) return [];
+  const pads = [];
+  const list = navigator.getGamepads();
+  for (let i = 0; i < list.length; i++) {
+    const pad = list[i];
+    if (pad && pad.connected !== false) pads.push(pad);
   }
-  return null;
+  return pads;
+}
+
+function isSplitHalfPad(pad) {
+  const count = pad?.buttons?.length || 0;
+  return count > 0 && count <= 10;
+}
+
+function gamepadActivityScore(pad) {
+  if (!pad) return 0;
+  let score = 0;
+  for (const btn of pad.buttons || []) {
+    const val = gamepadButtonValue(btn);
+    if (val > GP_WAKE_THRESHOLD) score += val;
+  }
+  for (const axis of pad.axes || []) {
+    if (Math.abs(axis) > GP_DEADZONE) score += Math.abs(axis);
+  }
+  const hat = readHatAxes(pad);
+  if (hat.x || hat.y) score += 1;
+  return score;
+}
+
+function mergeGamepadStates(pads) {
+  if (!pads.length) return null;
+  if (pads.length === 1) return pads[0];
+
+  const base = pads[0];
+  const mergedButtons = [...(base.buttons || [])];
+  const mergedAxes = [...(base.axes || [])];
+
+  for (let i = 1; i < pads.length; i++) {
+    const pad = pads[i];
+    for (let b = 0; b < (pad.buttons?.length || 0); b++) {
+      const val = gamepadButtonValue(pad.buttons[b]);
+      if (val > gamepadButtonValue(mergedButtons[b])) mergedButtons[b] = pad.buttons[b];
+    }
+    for (let a = 0; a < (pad.axes?.length || 0); a++) {
+      const val = pad.axes[a] || 0;
+      if (Math.abs(val) > Math.abs(mergedAxes[a] || 0)) mergedAxes[a] = val;
+    }
+  }
+
+  gpMergedPadCache = {
+    index: base.index,
+    id: pads.map((p) => p.id).join(" + "),
+    connected: true,
+    buttons: mergedButtons,
+    axes: mergedAxes,
+    mapping: base.mapping || "",
+  };
+  return gpMergedPadCache;
+}
+
+function pickActiveGamepad(pads) {
+  if (!pads.length) return null;
+
+  if (gpPreferredPadIndex != null) {
+    const preferred = pads.find((p) => p.index === gpPreferredPadIndex);
+    if (preferred) return preferred;
+    gpPreferredPadIndex = null;
+  }
+
+  if (pads.length >= 2 && pads.every(isSplitHalfPad)) {
+    return mergeGamepadStates(pads);
+  }
+
+  if (pads.length === 1) return pads[0];
+
+  let best = pads[0];
+  let bestScore = gamepadActivityScore(best);
+  for (let i = 1; i < pads.length; i++) {
+    const score = gamepadActivityScore(pads[i]);
+    if (score > bestScore) {
+      best = pads[i];
+      bestScore = score;
+    }
+  }
+  return best;
+}
+
+function getActiveGamepad() {
+  const pads = getConnectedGamepads();
+  return pickActiveGamepad(pads);
 }
 
 function resetGamepadBinding() {
   gpConnectedPadKey = null;
+  gpPreferredPadIndex = null;
+  gpMergedPadCache = null;
   gpPrevButtons = [];
   gpPointerDown = false;
   if (!getActiveGamepad()) {
@@ -216,18 +336,16 @@ function bindActiveGamepad(pad, resetPrev = true) {
   if (gpConnectedPadKey !== key || resetPrev) {
     gpConnectedPadKey = key;
     gpButtonMap = resolveGamepadButtons(pad);
-    gpPrevButtons = (pad.buttons || []).map((b) => {
-      const val = b?.value ?? 0;
-      return !!b?.pressed || val > 0.5;
-    });
+    gpPrevButtons = (pad.buttons || []).map((b) => gamepadButtonValue(b) > GP_WAKE_THRESHOLD);
   }
 }
 
-function markGamepadInput() {
+function markGamepadInput(pad) {
   markGamepadInteraction();
   gpLastInputAt = performance.now();
   gpAwaitingWake = false;
   gpActive = true;
+  if (pad?.index != null) gpPreferredPadIndex = pad.index;
   syncGamepadCursorVisibility();
 }
 
@@ -249,14 +367,42 @@ function syncGamepadCursorVisibility() {
   document.body.classList.toggle("gamepad-active", !!show);
 }
 
+function readHatAxes(pad) {
+  const hatX = pad.axes?.[6] ?? pad.axes?.[9] ?? 0;
+  const hatY = pad.axes?.[7] ?? pad.axes?.[10] ?? 0;
+  let x = 0;
+  let y = 0;
+  if (Math.abs(hatX) >= GP_HAT_THRESHOLD) x = hatX > 0 ? 1 : -1;
+  if (Math.abs(hatY) >= GP_HAT_THRESHOLD) y = hatY > 0 ? 1 : -1;
+  return { x, y };
+}
+
+function hasAnyGamepadInput(pad) {
+  if (!pad) return false;
+
+  for (const btn of pad.buttons || []) {
+    if (gamepadButtonValue(btn) > GP_WAKE_THRESHOLD) return true;
+  }
+
+  for (let axis = 0; axis + 1 < (pad.axes?.length || 0); axis += 2) {
+    const x = pad.axes[axis] || 0;
+    const y = pad.axes[axis + 1] || 0;
+    if (Math.hypot(x, y) > GP_DEADZONE) return true;
+  }
+
+  const hat = readHatAxes(pad);
+  return !!(hat.x || hat.y);
+}
+
 function detectGamepadActivity(pad, prevButtons) {
   if (!pad) return false;
 
   const buttons = pad.buttons || [];
   for (let i = 0; i < buttons.length; i++) {
-    const val = buttons[i]?.value ?? 0;
-    const pressed = !!buttons[i]?.pressed || val > 0.5;
+    const val = gamepadButtonValue(buttons[i]);
+    const pressed = val > GP_WAKE_THRESHOLD;
     if (pressed && !(prevButtons[i] ?? false)) return true;
+    if (gpAwaitingWake && pressed) return true;
   }
 
   for (let axis = 0; axis + 1 < (pad.axes?.length || 0); axis += 2) {
@@ -268,14 +414,22 @@ function detectGamepadActivity(pad, prevButtons) {
   const dpad = readDpadDirection(pad);
   if (dpad.x || dpad.y) return true;
 
+  const hat = readHatAxes(pad);
+  if (hat.x || hat.y) {
+    if (gpAwaitingWake) return true;
+    if (Math.abs((pad.axes?.[6] ?? pad.axes?.[9] ?? 0) - gpHatPrev.x) >= GP_HAT_THRESHOLD
+      || Math.abs((pad.axes?.[7] ?? pad.axes?.[10] ?? 0) - gpHatPrev.y) >= GP_HAT_THRESHOLD) {
+      return true;
+    }
+  }
+
   return false;
 }
 
 function isButtonActive(pad, idx) {
   const btn = pad.buttons[idx];
   if (!btn) return false;
-  const val = btn.value ?? 0;
-  return !!btn.pressed || val > 0.5;
+  return gamepadButtonValue(btn) > GP_WAKE_THRESHOLD;
 }
 
 function wasBtnPressed(pad, name, prevButtons) {
@@ -313,7 +467,7 @@ function readStick(pad, axisX, axisY) {
   return { x: (x / len) * scale, y: (y / len) * scale };
 }
 
-function readDpadDirection(pad) {
+function readDpadButtonsOnly(pad) {
   let x = 0;
   let y = 0;
   if (isBtnHeld(pad, "LEFT")) x -= 1;
@@ -321,6 +475,12 @@ function readDpadDirection(pad) {
   if (isBtnHeld(pad, "UP")) y -= 1;
   if (isBtnHeld(pad, "DOWN")) y += 1;
   return { x, y };
+}
+
+function readDpadDirection(pad) {
+  const buttons = readDpadButtonsOnly(pad);
+  if (buttons.x || buttons.y) return buttons;
+  return readHatAxes(pad);
 }
 
 function readDpadEdge(pad, prevButtons) {
@@ -337,12 +497,12 @@ function readDpadEdge(pad, prevButtons) {
   }
 
   // Если крестовина уже идёт через кнопки — оси hat не читаем (иначе двойной ввод).
-  const btnHeld = readDpadDirection(pad);
+  const btnHeld = readDpadButtonsOnly(pad);
   if (btnHeld.x || btnHeld.y) return { x: 0, y: 0 };
 
   const hatX = pad.axes[6] ?? pad.axes[9] ?? 0;
   const hatY = pad.axes[7] ?? pad.axes[10] ?? 0;
-  if (Math.abs(hatX) < 0.45 && Math.abs(hatY) < 0.45) {
+  if (Math.abs(hatX) < GP_HAT_THRESHOLD && Math.abs(hatY) < GP_HAT_THRESHOLD) {
     gpHatPrev.x = hatX;
     gpHatPrev.y = hatY;
     return { x: 0, y: 0 };
@@ -351,8 +511,8 @@ function readDpadEdge(pad, prevButtons) {
   let edgeX = 0;
   let edgeY = 0;
   if (Math.abs(hatX) >= Math.abs(hatY)) {
-    if (Math.abs(hatX - gpHatPrev.x) >= 0.35) edgeX = hatX > 0 ? 1 : -1;
-  } else if (Math.abs(hatY - gpHatPrev.y) >= 0.35) {
+    if (Math.abs(hatX - gpHatPrev.x) >= GP_HAT_THRESHOLD) edgeX = hatX > 0 ? 1 : -1;
+  } else if (Math.abs(hatY - gpHatPrev.y) >= GP_HAT_THRESHOLD) {
     edgeY = hatY > 0 ? 1 : -1;
   }
 
@@ -452,7 +612,9 @@ function refreshGamepadHints() {
       status.textContent = `🎮 ${label}${layout}`;
       status.classList.add("is-connected");
     } else if (gpAwaitingWake) {
-      status.textContent = "🎮 Кликните по игре и нажмите кнопку на геймпаде";
+      status.textContent = isTouchCapableDevice()
+        ? "🎮 Коснитесь экрана и нажмите любую кнопку на геймпаде"
+        : "🎮 Кликните по игре и нажмите кнопку на геймпаде";
       status.classList.remove("is-connected");
     } else {
       status.textContent = "🎮 Подключите геймпад";
@@ -979,13 +1141,11 @@ function tickGamepad(dt) {
   bindActiveGamepad(pad, false);
 
   const prevButtons = gpPrevButtons;
-  const nextButtons = (pad.buttons || []).map((b) => {
-    const val = b?.value ?? 0;
-    return !!b?.pressed || val > 0.5;
-  });
+  const nextButtons = (pad.buttons || []).map((b) => gamepadButtonValue(b) > GP_WAKE_THRESHOLD);
 
-  if (detectGamepadActivity(pad, prevButtons)) {
-    markGamepadInput();
+  if (detectGamepadActivity(pad, prevButtons)
+    || (!isGamepadInteraction() && hasAnyGamepadInput(pad))) {
+    markGamepadInput(pad);
   }
 
   gpPrevButtons = nextButtons;
