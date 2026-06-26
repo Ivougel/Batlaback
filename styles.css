@@ -1495,6 +1495,18 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
   color: #ffa657;
 }
 
+.avatar-bead-debuff-stun {
+  border-color: rgba(210, 153, 34, 0.55);
+  background: rgba(210, 153, 34, 0.14);
+  color: #e3b341;
+}
+
+.avatar-bead-debuff-arena-fatigue {
+  border-color: rgba(210, 153, 34, 0.45);
+  background: rgba(139, 148, 158, 0.12);
+  color: #d29922;
+}
+
 .avatar-bead-debuff-icon {
   font-size: calc(0.82rem * var(--ui-scale));
 }

@@ -72,7 +72,7 @@ function getFatiguePrepDescription(battleRound = 1, itemCount = 7) {
   return `С ${start}с: входящий урон растёт; через ${FATIGUE_HP_DRAIN_DELAY_AFTER_START}с после — −${FATIGUE_HP_DRAIN_PER_SEC} HP/с`;
 }
 
-const POISON_STACK_CAP = 3;
+const POISON_STACK_CAP = 999;
 /** Урон яда в секунду = floor(стаки × множитель), мин. 1 при стаках > 0. */
 const POISON_DOT_PER_STACK = 0.5;
 const REPEAT_MAGIC_EFFECT_SCALE = 0.42;
@@ -121,7 +121,22 @@ function scalePacedValue(value, scale) {
 
 function scalePoisonStacks(stacks, scale = POISON_STACK_PACING) {
   if (stacks <= 0 || scale >= 1) return stacks;
-  return Math.max(0, Math.floor(stacks * scale));
+  return Math.max(1, Math.floor(stacks * scale));
+}
+
+function getMaxGroundFireFromEffects(effects) {
+  return (effects || [])
+    .filter((e) => e.type === "groundFire")
+    .reduce((max, e) => Math.max(max, Number(e.value) || 0), 0);
+}
+
+function resolveGroundFireValue(effects, fallback = 2) {
+  const raw = getMaxGroundFireFromEffects(effects);
+  return scalePacedValue(raw > 0 ? raw : fallback, GROUND_FIRE_PACING);
+}
+
+function getPoisonVictimTeam(self, foe, attackerTeam) {
+  return foe === self ? attackerTeam : (attackerTeam === "player" ? "enemy" : "player");
 }
 
 function getArmorCapRatio(damageType) {
@@ -2036,15 +2051,15 @@ function activateItem(state, item, self, foe, team) {
     });
   }
 
-  const groundFx = allEffects.find((e) => e.type === "groundFire");
-  if (groundFx && activeEffects.some((e) => e.type === "damage" && (e.damageType === "fire" || def.tags.includes("fire")))) {
-    const value = scalePacedValue(groundFx.value || 2, GROUND_FIRE_PACING);
+  const groundFxValues = allEffects.filter((e) => e.type === "groundFire");
+  if (groundFxValues.length > 0 && activeEffects.some((e) => e.type === "damage" && (e.damageType === "fire" || def.tags.includes("fire")))) {
+    const value = resolveGroundFireValue(allEffects);
     const before = foe.groundFire;
     foe.groundFire = Math.max(foe.groundFire, value);
     foe.groundFireSourceTeam = team;
     foe.groundFireSourceItemUid = item.uid;
     if (foe.groundFire > before) {
-      const victimTeam = team === "player" ? "enemy" : "player";
+      const victimTeam = getPoisonVictimTeam(self, foe, team);
       pushBattleLog(state, {
         actor: team,
         type: "debuff",
@@ -2274,12 +2289,11 @@ function executeEffect(state, effect, item, self, foe, rt, team, execOptions = {
       const added = Math.min(stacks, room);
       if (added <= 0) break;
       foe.poisonStacks += added;
+      const victimTeam = getPoisonVictimTeam(self, foe, team);
       if (added > 0) {
-        const attackerTeam = team;
-        const attacker = attackerTeam === "player" ? state.player : state.enemy;
-        const victimTeam = team === "player" ? "enemy" : "player";
+        const attacker = team === "player" ? state.player : state.enemy;
         const victim = victimTeam === "player" ? state.player : state.enemy;
-        checkStackThresholds(state, attacker, victim, attackerTeam);
+        checkStackThresholds(state, attacker, victim, team);
       }
       foe.poisonSourceTeam = team;
       foe.poisonSourceItemUid = item.uid;
@@ -2288,37 +2302,38 @@ function executeEffect(state, effect, item, self, foe, rt, team, execOptions = {
       pushBattleLog(state, {
         actor: team,
         type: "poison",
-        target: team === "player" ? "enemy" : "player",
+        target: victimTeam,
         source: def.name,
-        message: `${battleTeamLabel(team)} · ${def.name}: +${added} яда${effNote} (×${foe.poisonStacks}) → ${battleTeamLabel(team === "player" ? "enemy" : "player")}`,
+        message: `${battleTeamLabel(team)} · ${def.name}: +${added} яда${effNote} (×${foe.poisonStacks}) → ${battleTeamLabel(victimTeam)}`,
       });
       queueHitAnimation(state, item, team, `☠ +${added} яд`, "#3fb950");
       if (typeof emitEffectAttackVisual === "function") {
         emitEffectAttackVisual(state, item, team, effect, {
           damage: 0,
-          targetTeam: team === "player" ? "enemy" : "player",
+          targetTeam: victimTeam,
         });
       }
-      triggerProfileAvatarCritFlip(team === "player" ? "enemy" : "player");
+      triggerProfileAvatarCritFlip(victimTeam);
       break;
     }
     case "slow": {
       if (effect.chance != null && !rollEffectChance(self, effect.chance)) break;
       foe.slowDebuff = Math.max(foe.slowDebuff, effect.value || 0.1);
       foe.slowTimer = Math.max(foe.slowTimer, effect.duration || 3);
+      const victimTeam = getPoisonVictimTeam(self, foe, team);
       pushBattleLog(state, {
         actor: team,
         type: "debuff",
         source: def.name,
-        target: team === "player" ? "enemy" : "player",
-        message: `${battleTeamLabel(team)} · ${def.name}: замедление → ${battleTeamLabel(team === "player" ? "enemy" : "player")}`,
+        target: victimTeam,
+        message: `${battleTeamLabel(team)} · ${def.name}: замедление → ${battleTeamLabel(victimTeam)}`,
       });
       const slowPct = Math.round((effect.value || 0.1) * 100);
       queueHitAnimation(state, item, team, `🐌 −${slowPct}%`, "#a371f7");
       if (typeof emitEffectAttackVisual === "function") {
         emitEffectAttackVisual(state, item, team, effect, {
           damage: 0,
-          targetTeam: team === "player" ? "enemy" : "player",
+          targetTeam: victimTeam,
         });
       }
       break;
