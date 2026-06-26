@@ -488,6 +488,14 @@ function scoreItemForAI(
   score += countSynergyPotential(itemId, items);
   score += countSynergyPotential(itemId, bench);
   score += countCraftPotential(itemId, items, bench);
+  if (typeof isGemItem === "function" && isGemItem(itemId)) {
+    const emptySockets = items.filter((i) => {
+      if (typeof getItemSocketCount !== "function" || getItemSocketCount(i.itemId) <= 0) return false;
+      const normalized = typeof ensureSocketArray === "function" ? ensureSocketArray(i) : i;
+      return (normalized.socketedGems || []).some((g) => !g);
+    }).length;
+    if (emptySockets > 0) score += 10 + emptySockets * 3;
+  }
   score += scoreSynergyCompletion(itemId, items, bench);
   score += scoreCounterPick(def, scout, items, bench);
   score += scoreKillPressure(def, scout, archetype);
@@ -572,7 +580,7 @@ function scorePlacementPosition(containers, items, itemId, placement) {
       getRecipesUsingIngredient(itemId).forEach((recipe) => {
         recipe.inputs.forEach((input) => {
           if (input.itemId === itemId || other.itemId !== input.itemId) return;
-          if (entry.strong) score += 12;
+          if (entry.strong) score += 20;
         });
       });
     }
@@ -793,6 +801,7 @@ function aiPlaceBenchItems(state, gridW, gridH, archetype = null, scout = null, 
       const benchIndex = state.bench.indexOf(benchItem);
       if (benchIndex < 0) continue;
       if (isContainerItem(benchItem.itemId)) continue;
+      if (typeof isGemItem === "function" && isGemItem(benchItem.itemId)) continue;
       if (
         archetype
         && isLoadoutCommitted(round, state.items.length)
@@ -881,6 +890,231 @@ function aiApplyCrafting(state) {
     const result = tryResolveCrafting(state.containers, state.items);
     if (!result.crafted.length) break;
     state.items = result.items;
+  }
+}
+
+function findStrongAdjacentPlacement(containers, items, itemId, anchorItem, excludeUid = null) {
+  if (!ITEM_CATALOG[itemId] || !anchorItem) return null;
+  const anchorCells = getItemCells(anchorItem);
+  let best = null;
+  let bestScore = -Infinity;
+
+  for (let rot = 0; rot < 4; rot += 1) {
+    const shape = rotateShape(ITEM_CATALOG[itemId].shape, rot);
+    for (const [ac, ar] of anchorCells) {
+      for (const [dx, dy] of STRONG_OFFSETS) {
+        const touchCol = ac + dx;
+        const touchRow = ar + dy;
+        for (const [sdx, sdy] of shape) {
+          const col = touchCol - sdx;
+          const row = touchRow - sdy;
+          const placement = resolveLoadoutPlacement(
+            containers,
+            items,
+            itemId,
+            col,
+            row,
+            rot,
+            excludeUid,
+          );
+          if (!placement.valid) continue;
+          const temp = createPlacedItem(itemId, placement.col, placement.row, placement.rotation);
+          const pool = [
+            ...items.filter((i) => i.uid !== excludeUid && i.uid !== temp.uid),
+            temp,
+          ];
+          const adj = getAdjacentItems(pool, temp);
+          if (!adj.get(anchorItem.uid)?.strong) continue;
+          const posScore = scorePlacementPosition(containers, items, itemId, placement) + 25;
+          if (posScore > bestScore) {
+            bestScore = posScore;
+            best = placement;
+          }
+        }
+      }
+    }
+  }
+  return best;
+}
+
+function aiRecipeInputTotal(recipe) {
+  return recipe.inputs.reduce((sum, input) => sum + input.count, 0);
+}
+
+function aiHasIngredientsForRecipe(recipe, items, bench) {
+  const counts = new Map();
+  [...items, ...bench].forEach((item) => {
+    counts.set(item.itemId, (counts.get(item.itemId) || 0) + 1);
+  });
+  return recipe.inputs.every((input) => (counts.get(input.itemId) || 0) >= input.count);
+}
+
+function aiIsRecipeClusterReady(items, recipe) {
+  if (typeof getStrongCraftComponents !== "function") return false;
+  const components = getStrongCraftComponents(items);
+  return components.some((cluster) => {
+    if (cluster.length !== aiRecipeInputTotal(recipe)) return false;
+    const counts = new Map();
+    cluster.forEach((item) => {
+      counts.set(item.itemId, (counts.get(item.itemId) || 0) + 1);
+    });
+    return recipe.inputs.every((input) => (counts.get(input.itemId) || 0) === input.count);
+  });
+}
+
+function aiCraftRecipePriority(recipe) {
+  const outDef = ITEM_CATALOG[recipe.output];
+  return outDef ? getItemPowerScore(outDef) : 0;
+}
+
+function aiNudgeForCrafting(state) {
+  if (typeof getAllCraftRecipes !== "function") return;
+  const recipes = [...getAllCraftRecipes()].sort(
+    (a, b) => aiCraftRecipePriority(b) - aiCraftRecipePriority(a),
+  );
+  const ingredientIds = (recipe) => recipe.inputs.map((input) => input.itemId);
+
+  let guard = 0;
+  while (guard < 32) {
+    guard += 1;
+    let progress = false;
+
+    if (typeof tryResolveCrafting === "function") {
+      const crafted = tryResolveCrafting(state.containers, state.items);
+      if (crafted.crafted.length) {
+        state.items = crafted.items;
+        progress = true;
+        continue;
+      }
+    }
+
+    for (const recipe of recipes) {
+      if (!aiHasIngredientsForRecipe(recipe, state.items, state.bench)) continue;
+      if (aiIsRecipeClusterReady(state.items, recipe)) continue;
+
+      const inputs = ingredientIds(recipe);
+      const anchors = state.items.filter(
+        (item) => inputs.includes(item.itemId) && !(typeof isGemItem === "function" && isGemItem(item.itemId)),
+      );
+
+      for (const anchor of anchors) {
+        for (let bi = 0; bi < state.bench.length; bi += 1) {
+          const benchItem = state.bench[bi];
+          if (!inputs.includes(benchItem.itemId)) continue;
+          const spot = findStrongAdjacentPlacement(
+            state.containers,
+            state.items,
+            benchItem.itemId,
+            anchor,
+          );
+          if (!spot?.valid) continue;
+          state.items.push(createPlacedItem(benchItem.itemId, spot.col, spot.row, spot.rotation));
+          state.bench.splice(bi, 1);
+          progress = true;
+          break;
+        }
+        if (progress) break;
+
+        for (const mover of state.items) {
+          if (mover.uid === anchor.uid) continue;
+          if (!inputs.includes(mover.itemId)) continue;
+          const spot = findStrongAdjacentPlacement(
+            state.containers,
+            state.items,
+            mover.itemId,
+            anchor,
+            mover.uid,
+          );
+          if (!spot?.valid) continue;
+          const samePlace = mover.col === spot.col && mover.row === spot.row
+            && (mover.rotation || 0) === (spot.rotation || 0);
+          if (samePlace) continue;
+          const moved = state.items.map((item) =>
+            (item.uid === mover.uid
+              ? { ...item, col: spot.col, row: spot.row, rotation: spot.rotation }
+              : item),
+          );
+          if (!validateLoadoutItems(state.containers, moved)) continue;
+          state.items = moved;
+          progress = true;
+          break;
+        }
+        if (progress) break;
+      }
+      if (progress) break;
+    }
+
+    if (!progress) break;
+  }
+}
+
+function aiScoreGemHost(host, gemId, archetype) {
+  if (typeof canSocketGem !== "function" || !canSocketGem(host, gemId)) return -999;
+  const def = ITEM_CATALOG[host.itemId];
+  if (!def) return -999;
+  let score = getItemPowerScore(def);
+  const cat = typeof getSocketCategory === "function" ? getSocketCategory(def) : "accessory";
+  if (cat === "weapon") score += 10;
+  else if (cat === "armor" || def.tags?.includes("shield")) score += 7;
+  else score += 4;
+
+  const parsed = typeof parseGemId === "function" ? parseGemId(gemId) : null;
+  if (parsed && archetype?.id) {
+    if (archetype.id === "mage" && parsed.type === "amethyst") score += 6;
+    if (archetype.id === "warrior" && parsed.type === "ruby") score += 6;
+    if (archetype.id === "rogue" && parsed.type === "emerald") score += 6;
+    if (archetype.id === "priest" && parsed.type === "sapphire") score += 6;
+  }
+  return score;
+}
+
+function aiSocketGems(state) {
+  if (typeof socketGemIntoItem !== "function" || typeof canSocketGem !== "function") return;
+  if (typeof isGemItem !== "function") return;
+
+  const archetype = state.archetype || null;
+  let guard = 0;
+
+  while (guard < 24) {
+    guard += 1;
+
+    let gemId = null;
+    let gemUid = null;
+    let benchIdx = state.bench.findIndex((b) => isGemItem(b.itemId));
+    if (benchIdx >= 0) {
+      gemId = state.bench[benchIdx].itemId;
+    } else {
+      const fieldGem = state.items.find((item) => isGemItem(item.itemId));
+      if (fieldGem) {
+        gemId = fieldGem.itemId;
+        gemUid = fieldGem.uid;
+      }
+    }
+    if (!gemId) break;
+
+    let bestHost = null;
+    let bestScore = -Infinity;
+    state.items.forEach((host) => {
+      if (isGemItem(host.itemId)) return;
+      const hostScore = aiScoreGemHost(host, gemId, archetype);
+      if (hostScore > bestScore) {
+        bestScore = hostScore;
+        bestHost = host;
+      }
+    });
+    if (!bestHost || bestScore < 0) break;
+
+    const hostUid = bestHost.uid;
+    const socketed = socketGemIntoItem(bestHost, gemId);
+    if (!socketed) break;
+
+    state.items = state.items
+      .filter((item) => item.uid !== gemUid)
+      .map((item) => (item.uid === hostUid ? socketed : item));
+
+    if (benchIdx >= 0) {
+      state.bench.splice(benchIdx, 1);
+    }
   }
 }
 
@@ -1024,9 +1258,17 @@ function aiEnemyPrepPhase(state, round, gridW, gridH, battleWon = null, playerIt
   aiTrySellWeakest(next, next.archetype, gridW, gridH, scout, round, battleWon);
   aiPlaceBenchItems(next, gridW, gridH, next.archetype, scout, round);
   aiOptimizeLoadout(next);
+  aiSocketGems(next);
+  aiNudgeForCrafting(next);
+  aiApplyCrafting(next);
+  aiOptimizeLoadout(next);
+  aiSocketGems(next);
+  aiNudgeForCrafting(next);
   aiApplyCrafting(next);
   aiPurgeOffBuildBoard(next, next.archetype, scout, round, battleWon);
   aiTrySellWeakest(next, next.archetype, gridW, gridH, scout, round, battleWon);
+  aiSocketGems(next);
+  aiNudgeForCrafting(next);
   aiApplyCrafting(next);
   applySynergyModifiersToContainers(next.containers, next.items);
 

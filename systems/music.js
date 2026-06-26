@@ -1,12 +1,17 @@
 /**
- * Фоновая музыка: loop, громкость в localStorage, autoplay после первого жеста.
+ * Фоновая музыка: плейлист по очереди, громкость в localStorage, autoplay после первого жеста.
  */
 (function initMusicSystem() {
-  const MUSIC_TRACK = "music/Backpack Bazaar.mp3";
+  const MUSIC_PLAYLIST = [
+    "music/negrov.mp3",
+    "music/Backpack Bazaar.mp3",
+    "music/Backpack Bazaar2.mp3",
+  ];
   const MUSIC_VOLUME_KEY = "bb-music-volume";
   const DEFAULT_VOLUME = 0.6;
 
   let musicAudio = null;
+  let currentTrackIndex = 0;
   let musicStarted = false;
   let unlockBound = false;
 
@@ -36,6 +41,30 @@
     return clamped;
   }
 
+  function playTrack(index, autoplay = false) {
+    if (!musicAudio || !MUSIC_PLAYLIST.length) return;
+    currentTrackIndex = ((index % MUSIC_PLAYLIST.length) + MUSIC_PLAYLIST.length) % MUSIC_PLAYLIST.length;
+    musicAudio.src = MUSIC_PLAYLIST[currentTrackIndex];
+    musicAudio.load();
+    if (!autoplay) return;
+    const playPromise = musicAudio.play();
+    if (!playPromise) return;
+    playPromise.catch(() => {});
+  }
+
+  function playNextTrack() {
+    playTrack(currentTrackIndex + 1, true);
+  }
+
+  function onTrackEnded() {
+    playNextTrack();
+  }
+
+  function onTrackError() {
+    if (MUSIC_PLAYLIST.length <= 1) return;
+    playNextTrack();
+  }
+
   function tryStartMusic() {
     if (!musicAudio || musicStarted) return;
     const playPromise = musicAudio.play();
@@ -59,9 +88,12 @@
 
   function initMusic() {
     if (musicAudio) return;
-    musicAudio = new Audio(MUSIC_TRACK);
-    musicAudio.loop = true;
+    musicAudio = new Audio(MUSIC_PLAYLIST[0]);
+    musicAudio.loop = false;
     musicAudio.preload = "auto";
+    musicAudio.addEventListener("ended", onTrackEnded);
+    musicAudio.addEventListener("error", onTrackError);
+    currentTrackIndex = 0;
     applyMusicVolume(getMusicVolume());
     bindMusicUnlock();
     tryStartMusic();
