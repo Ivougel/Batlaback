@@ -1743,16 +1743,14 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 #app[data-phase="prep"] #shop-panel .shop-item-visual {
   position: relative;
   flex-shrink: 0;
-  padding: 0 calc(2px * var(--ui-scale)) calc(4px * var(--ui-scale)) 0;
-}
-
-#app[data-phase="prep"] #shop-panel .shop-card:not(.empty),
-#app[data-phase="prep"] #shop-panel .bench-panel .bench-card:not(.empty) {
-  touch-action: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0 calc(4px * var(--ui-scale)) 0;
 }
 
 #app[data-phase="prep"] #shop-panel .shop-card .shop-item-visual .icon {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
   width: var(--shop-item-icon-size);
@@ -1763,20 +1761,52 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
   flex-shrink: 0;
   border-radius: calc(14px * var(--ui-scale));
   transition: box-shadow 0.15s, transform 0.1s;
-}
-
-#app[data-phase="prep"] #shop-panel .shop-card .shop-item-visual .icon.icon--duo,
-#app[data-phase="prep"] #shop-panel .bench-panel .bench-card .icon.icon--duo {
-  width: var(--shop-item-icon-duo-width);
-  min-width: var(--shop-item-icon-duo-width);
-  max-width: var(--shop-item-icon-duo-width);
-  padding: 0 calc(5px * var(--ui-scale));
+  text-align: center;
+  overflow: hidden;
   box-sizing: border-box;
 }
 
-#app[data-phase="prep"] #shop-panel .shop-card .shop-item-visual .icon.icon--duo .icon-glyph,
-#app[data-phase="prep"] #shop-panel .bench-panel .bench-card .icon.icon--duo .icon-glyph {
-  font-size: 0.8em;
+#app[data-phase="prep"] #shop-panel .shop-card .shop-item-visual .icon.icon--duo {
+  font-size: calc(var(--shop-item-icon-font) * 0.72);
+  border-radius: calc(14px * var(--ui-scale));
+}
+
+#app[data-phase="prep"] #shop-panel .shop-card .shop-item-visual .icon .icon-duo,
+#app[data-phase="prep"] #shop-panel .bench-panel .bench-card .icon .icon-duo {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: calc(1px * var(--ui-scale));
+  width: 100%;
+  height: 100%;
+  line-height: 1;
+  direction: ltr;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-card .shop-item-visual .icon .icon-glyph,
+#app[data-phase="prep"] #shop-panel .bench-panel .bench-card .icon .icon-glyph {
+  display: block;
+  flex: 0 0 auto;
+  line-height: 1;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-card:not(.empty),
+#app[data-phase="prep"] #shop-panel .bench-panel .bench-card:not(.empty) {
+  touch-action: none;
+}
+
+#app[data-phase="prep"] #shop-panel .bench-panel .bench-card:not(.empty) {
+  justify-content: center;
+  overflow: hidden;
+  gap: calc(4px * var(--ui-scale));
+}
+
+#app[data-phase="prep"] #shop-panel .bench-panel .bench-card .icon.icon--duo {
+  font-size: calc(var(--game-item-icon-font) * 0.72);
+  border-radius: calc(14px * var(--ui-scale, 1));
+  overflow: hidden;
 }
 
 #app[data-phase="prep"] #shop-panel .shop-card .info,
@@ -2453,38 +2483,30 @@ html[data-battle-hud-pin="true"] body {
 
 .shop-card .icon.icon--duo,
 .bench-card .icon.icon--duo {
-  width: var(--game-item-icon-duo-width);
-  min-width: var(--game-item-icon-duo-width);
-  max-width: var(--game-item-icon-duo-width);
-  border-radius: calc(16px * var(--ui-scale));
-  padding: 0 calc(4px * var(--ui-scale));
+  font-size: calc(var(--game-item-icon-font) * 0.72);
+  border-radius: calc(14px * var(--ui-scale, 1));
+  overflow: hidden;
 }
 
 .shop-card .icon .icon-duo,
 .bench-card .icon .icon-duo {
-  display: inline-flex;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: center;
-  gap: calc(2px * var(--ui-scale));
+  gap: calc(1px * var(--ui-scale, 1));
   width: 100%;
   height: 100%;
+  line-height: 1;
+  direction: ltr;
 }
 
 .shop-card .icon .icon-glyph,
 .bench-card .icon .icon-glyph {
-  display: inline-block;
-  font-size: 0.8em;
+  display: block;
+  flex: 0 0 auto;
   line-height: 1;
-}
-
-.shop-card .icon:not(.icon--duo),
-.bench-card .icon:not(.icon--duo) {
-  font-size: var(--game-item-icon-font);
-}
-
-.shop-card .icon:not(.icon--duo) .icon-glyph,
-.bench-card .icon:not(.icon--duo) .icon-glyph {
-  font-size: 1em;
 }
 
 .shop-card .info,

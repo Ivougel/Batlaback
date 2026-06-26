@@ -104,6 +104,20 @@ function collectPrepStatusEffects(side, items) {
     }, seen);
   }
 
+  if (side.classId === "priest" && side.classFoodBonusHp > 0) {
+    const perFood = getClassById(side.classId)?.combatBonus?.maxHpPerFood || 5;
+    pushUniqueStatusChip(buffs, {
+      id: "priest-food-bonus",
+      icon: "🍎",
+      value: side.classFoodBonusHp,
+      title: "Благословение жреца",
+      lines: [
+        `+${perFood} макс. HP за каждую еду в рюкзаке`,
+        `${side.classFoodCount || 0} еды → +${side.classFoodBonusHp} HP`,
+      ],
+    }, seen);
+  }
+
   const poisonSources = items.filter((item) => {
     const def = ITEM_CATALOG[item.itemId];
     return (def?.effects || []).some((e) => e.type === "poison");

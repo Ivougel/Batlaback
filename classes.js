@@ -32,6 +32,16 @@ const CLASS_CATALOG = {
     combatBonus: { type: "magicDamageMult", value: 0.1 },
     priorityTags: ["magic", "gem", "fire"],
   },
+  priest: {
+    id: "priest",
+    name: "Жрец",
+    icon: "✨",
+    iconSrc: "img/stiker_priestMika.png",
+    desc: "+5 макс. HP за каждую еду в рюкзаке",
+    starterItems: ["apple", "banana"],
+    combatBonus: { type: "foodInventory", maxHpPerFood: 5 },
+    priorityTags: ["food", "potion", "nature"],
+  },
 };
 
 function escapeClassHtml(value) {

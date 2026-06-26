@@ -487,6 +487,23 @@ function applyClassCombatBonus(side, classId) {
   if (b.type === "maxHpMult") side.maxHp = Math.floor(side.maxHp * (1 + b.value));
   if (b.type === "attackSpeedMult") side.cooldownMult *= 1 - b.value;
   if (b.type === "magicDamageMult") side.magicDamageMult *= 1 + b.value;
+  if (b.type === "foodInventory") {
+    const foodCount = countFoodItemsInLoadout(side.items);
+    const perFood = Number(b.maxHpPerFood) || 0;
+    const bonusHp = foodCount * perFood;
+    if (bonusHp > 0) {
+      side.maxHp += bonusHp;
+      side.classFoodBonusHp = bonusHp;
+      side.classFoodCount = foodCount;
+    }
+  }
+}
+
+function countFoodItemsInLoadout(items = []) {
+  return items.filter((item) => {
+    const def = ITEM_CATALOG[item.itemId];
+    return def && !def.isContainer && def.tags?.includes("food");
+  }).length;
 }
 
 function applyPassiveItemEffects(side) {

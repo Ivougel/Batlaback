@@ -1135,7 +1135,16 @@ function refreshPrepHeroTooltip() {
   const classId = prepViewSide === "player" ? playerClass : enemyClass;
   const cls = getClassById(classId);
   if (titleEl) titleEl.textContent = cls?.name || "—";
-  if (descEl) descEl.textContent = cls?.desc || "Описание класса недоступно.";
+  if (descEl) {
+    let desc = cls?.desc || "Описание класса недоступно.";
+    if (classId === "priest" && typeof countFoodItemsInLoadout === "function") {
+      const items = prepViewSide === "player" ? playerItems : enemyItems;
+      const foodCount = countFoodItemsInLoadout(items);
+      const perFood = cls?.combatBonus?.maxHpPerFood || 5;
+      desc += ` · Сейчас: ${foodCount} еды → +${foodCount * perFood} HP`;
+    }
+    descEl.textContent = desc;
+  }
 }
 
 function closePrepHeroTooltip() {

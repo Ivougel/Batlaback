@@ -23,6 +23,12 @@ const AI_ARCHETYPES = {
     priorityTags: ["weapon", "poison"],
     secondaryTags: ["nature"],
   },
+  priest: {
+    id: "priest",
+    name: "Жрец",
+    priorityTags: ["food", "potion"],
+    secondaryTags: ["nature"],
+  },
 };
 
 const AI_MAX_BENCH = 6;
@@ -122,6 +128,12 @@ function itemMatchesKillArchetype(def, archetype) {
     return def.tags.includes("nature");
   }
 
+  if (archetype.id === "priest") {
+    return def.tags.includes("food")
+      || def.tags.includes("potion")
+      || def.tags.includes("nature");
+  }
+
   const { hasPriority } = countTagAffinity(def, archetype);
   if (hasPriority) return true;
   return (archetype.secondaryTags || []).some((tag) => def.tags.includes(tag));
@@ -136,7 +148,7 @@ function isLoadoutCommitted(round, itemCount) {
  * Цель — не «случайный класс», а контр-стратегия под scout игрока.
  */
 function pickKillArchetype(scout, playerClass, round, currentArchetype, ownItems, battleWon) {
-  const scores = { mage: 0, warrior: 0, rogue: 0 };
+  const scores = { mage: 0, warrior: 0, rogue: 0, priest: 0 };
 
   if (playerClass === "mage" || scout.hasMagic) {
     scores.mage += 16;
@@ -152,6 +164,12 @@ function pickKillArchetype(scout, playerClass, round, currentArchetype, ownItems
     scores.mage += 13;
     scores.warrior += 7;
     scores.rogue += 4;
+  }
+  if (playerClass === "priest" || scout.healSources >= 2) {
+    scores.rogue += 14;
+    scores.mage += 8;
+    scores.priest += 6;
+    scores.warrior += 5;
   }
   if (scout.blockSources >= 1 || scout.hasShield) {
     scores.mage += 10;
