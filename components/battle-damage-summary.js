@@ -49,6 +49,10 @@ function initBattleDamageTracker(state) {
     player: { byUid: {}, order: [] },
     enemy: { byUid: {}, order: [] },
   };
+  state.dotStacks = {
+    player: { byUid: {}, order: [] },
+    enemy: { byUid: {}, order: [] },
+  };
   state.damageFlights = [];
   state._damageFlightUid = 0;
 }
@@ -183,11 +187,43 @@ function ensureBenefitStackEntry(store, uid, item) {
     itemId: item?.itemId || null,
     icon: firstItemIconGrapheme(def?.icon),
     benefit: 0,
+    healBenefit: 0,
+    blockBenefit: 0,
+    otherBenefit: 0,
     bounceUntil: 0,
   };
   store.byUid[uid] = entry;
   store.order.push(uid);
   return entry;
+}
+
+function ensureDotStackEntry(store, uid, item, dotKind) {
+  if (store.byUid[uid]) return store.byUid[uid];
+  const def = item?.itemId ? ITEM_CATALOG[item.itemId] : null;
+  const entry = {
+    uid,
+    itemId: item?.itemId || null,
+    icon: firstItemIconGrapheme(def?.icon),
+    dotKind: dotKind || "poison",
+    dotDamage: 0,
+    bounceUntil: 0,
+  };
+  store.byUid[uid] = entry;
+  store.order.push(uid);
+  return entry;
+}
+
+function recordDotDamageDealt(state, sourceTeam, item, amount, dotKind = "poison") {
+  const value = Math.max(0, Number(amount) || 0);
+  if (!state || !sourceTeam || !item?.uid || value <= 0) return;
+  if (isBattleCountdownActive(state)) return;
+
+  initBattleDamageTracker(state);
+  const store = state.dotStacks[sourceTeam];
+  const entry = ensureDotStackEntry(store, item.uid, item, dotKind);
+  entry.dotDamage += value;
+  entry.bounceUntil = (state.elapsed || 0) + DAMAGE_STACK_BOUNCE_SEC;
+  syncDotStackDisplay(sourceTeam, state);
 }
 
 function recordIncomingDamage(state, targetTeam, sourceTeam, item, damage) {
@@ -232,7 +268,47 @@ function recordIncomingDamage(state, targetTeam, sourceTeam, item, damage) {
   syncDamageStackDisplay(targetTeam, state);
 }
 
-function recordBenefitEffect(state, team, item, amount) {
+function formatStackItemName(entry) {
+  if (entry?.itemId && ITEM_CATALOG[entry.itemId]) return ITEM_CATALOG[entry.itemId].name;
+  return "Предмет";
+}
+
+function formatDamageStackTooltipMeta(entry) {
+  const amount = Math.round(entry.damage || 0);
+  return {
+    title: formatStackItemName(entry),
+    desc: `Входящий урон: −${amount} HP`,
+  };
+}
+
+function formatBenefitStackTooltipMeta(entry) {
+  const title = formatStackItemName(entry);
+  const lines = [];
+  if (entry.healBenefit > 0) lines.push(`Лечение: +${Math.round(entry.healBenefit)} HP`);
+  if (entry.blockBenefit > 0) lines.push(`Блок: +${Math.round(entry.blockBenefit)}`);
+  if (entry.otherBenefit > 0) lines.push(`Положительный эффект: +${Math.round(entry.otherBenefit)}`);
+  if (!lines.length) lines.push(`Положительный эффект: +${Math.round(entry.benefit || 0)}`);
+  return { title, desc: lines.join("\n") };
+}
+
+function formatDotStackTooltipMeta(entry) {
+  const amount = Math.round(entry.dotDamage || 0);
+  const label = entry.dotKind === "fire" ? "DoT огонь" : "DoT яд";
+  return {
+    title: formatStackItemName(entry),
+    desc: `${label}: ${amount} HP`,
+  };
+}
+
+function applyStackTooltipMeta(el, meta) {
+  if (!el || !meta) return;
+  el.dataset.stackTitle = meta.title;
+  el.dataset.stackDesc = meta.desc;
+  el.setAttribute("aria-label", `${meta.title}. ${meta.desc}`);
+  el.setAttribute("tabindex", "0");
+}
+
+function recordBenefitEffect(state, team, item, amount, benefitKind = "other") {
   const value = Math.max(0, Number(amount) || 0);
   if (!state || !team || !item?.uid || value <= 0) return;
   if (isBattleCountdownActive(state)) return;
@@ -241,6 +317,9 @@ function recordBenefitEffect(state, team, item, amount) {
   const store = state.benefitStacks[team];
   const entry = ensureBenefitStackEntry(store, item.uid, item);
   entry.benefit += value;
+  if (benefitKind === "heal") entry.healBenefit += value;
+  else if (benefitKind === "block") entry.blockBenefit += value;
+  else entry.otherBenefit += value;
   entry.bounceUntil = (state.elapsed || 0) + DAMAGE_STACK_BOUNCE_SEC;
   syncBenefitStackDisplay(team, state);
 }
@@ -423,11 +502,77 @@ function ensureBenefitStacksEl(shell) {
     stacks = document.createElement("div");
     stacks.className = "avatar-benefit-stacks";
     stacks.setAttribute("aria-hidden", "true");
-    const hpText = footer.querySelector(".avatar-hero-hp-text");
-    if (hpText) hpText.insertAdjacentElement("afterend", stacks);
+    const staminaBar = footer.querySelector(".avatar-hero-stamina-bar");
+    if (staminaBar) staminaBar.insertAdjacentElement("afterend", stacks);
     else footer.appendChild(stacks);
   }
   return stacks;
+}
+
+function ensureDotStacksEl(shell) {
+  const footer = shell.querySelector(".avatar-hero-footer");
+  if (!footer) return null;
+  let stacks = footer.querySelector(".avatar-dot-stacks");
+  if (!stacks) {
+    stacks = document.createElement("div");
+    stacks.className = "avatar-dot-stacks";
+    stacks.setAttribute("aria-hidden", "true");
+    const damageStacks = footer.querySelector(".avatar-damage-stacks");
+    if (damageStacks) damageStacks.insertAdjacentElement("afterend", stacks);
+    else footer.insertBefore(stacks, footer.firstChild);
+  }
+  return stacks;
+}
+
+function syncDotStackDisplay(team, state) {
+  const slot = typeof getAvatarSlotEl === "function" ? getAvatarSlotEl(team) : null;
+  const shell = slot?.querySelector(".avatar-hero-shell");
+  if (!shell) return;
+
+  const stacksEl = ensureDotStacksEl(shell);
+  if (!stacksEl) return;
+
+  const store = state?.dotStacks?.[team];
+  const now = state?.elapsed || 0;
+  if (!store?.order?.length) {
+    stacksEl.innerHTML = "";
+    stacksEl.hidden = true;
+    return;
+  }
+
+  stacksEl.hidden = false;
+  const activeUids = new Set(store.order.filter((uid) => store.byUid[uid]?.dotDamage > 0));
+
+  stacksEl.querySelectorAll(".avatar-dot-stack").forEach((el) => {
+    if (!activeUids.has(el.dataset.stackUid)) el.remove();
+  });
+
+  store.order.forEach((uid, slotIndex) => {
+    const entry = store.byUid[uid];
+    if (!entry || entry.dotDamage <= 0) return;
+
+    let el = stacksEl.querySelector(`[data-stack-uid="${CSS.escape(uid)}"]`);
+    if (!el) {
+      el = document.createElement("div");
+      el.className = `avatar-dot-stack avatar-dot-stack-${entry.dotKind || "poison"}`;
+      el.dataset.stackUid = uid;
+      el.dataset.slot = String(slotIndex);
+      el.innerHTML = `<span class="avatar-dot-stack-icon"></span><span class="avatar-dot-stack-value"></span>`;
+      stacksEl.appendChild(el);
+    }
+
+    el.className = `avatar-dot-stack avatar-dot-stack-${entry.dotKind || "poison"}`;
+    el.dataset.slot = String(slotIndex);
+    const iconEl = el.querySelector(".avatar-dot-stack-icon");
+    const valEl = el.querySelector(".avatar-dot-stack-value");
+    if (iconEl) iconEl.textContent = entry.icon;
+    if (valEl) valEl.textContent = String(Math.round(entry.dotDamage));
+
+    const bouncing = entry.bounceUntil > now;
+    el.classList.toggle("avatar-dot-stack-bounce", bouncing);
+    el.classList.add("avatar-dot-stack-pulse");
+    applyStackTooltipMeta(el, formatDotStackTooltipMeta(entry));
+  });
 }
 
 function syncBenefitStackDisplay(team, state) {
@@ -475,9 +620,7 @@ function syncBenefitStackDisplay(team, state) {
 
     const bouncing = entry.bounceUntil > now;
     el.classList.toggle("avatar-benefit-stack-bounce", bouncing);
-    if (entry.itemId && ITEM_CATALOG[entry.itemId]) {
-      el.title = ITEM_CATALOG[entry.itemId].name;
-    }
+    applyStackTooltipMeta(el, formatBenefitStackTooltipMeta(entry));
   });
 }
 
@@ -526,9 +669,7 @@ function syncDamageStackDisplay(team, state) {
 
     const bouncing = entry.bounceUntil > now;
     el.classList.toggle("avatar-damage-stack-bounce", bouncing);
-    if (entry.itemId && ITEM_CATALOG[entry.itemId]) {
-      el.title = ITEM_CATALOG[entry.itemId].name;
-    }
+    applyStackTooltipMeta(el, formatDamageStackTooltipMeta(entry));
   });
 }
 
@@ -548,13 +689,17 @@ function syncIncomingDpsTooltip(team, state) {
     ? state.commentary?.playerState
     : state.commentary?.enemyState;
   const dps = sideState?.metrics?.incomingDps ?? 0;
+  const metrics = sideState?.metrics;
   const tip = formatIncomingDpsTooltip(dps);
 
-  const hpText = shell.querySelector(".avatar-hero-hp-text");
+  const hpLabel = shell.querySelector(".avatar-hero-hp-label");
   const hpBar = shell.querySelector(".avatar-hero-hp-bar");
   const stacksEl = shell.querySelector(".avatar-damage-stacks");
-  if (hpText) hpText.title = tip;
-  if (hpBar) hpBar.title = tip;
+  const healTip = metrics?.projectedHeal2s > 0.5
+    ? `${tip}\nОжидаемое лечение за 2 с: +${Math.round(metrics.projectedHeal2s)} HP`
+    : tip;
+  if (hpLabel) hpLabel.title = healTip;
+  if (hpBar) hpBar.title = healTip;
   if (stacksEl) stacksEl.title = tip;
 }
 
@@ -564,6 +709,8 @@ function syncAllDamageSummaryDisplays(state) {
   syncDamageStackDisplay("enemy", state);
   syncBenefitStackDisplay("player", state);
   syncBenefitStackDisplay("enemy", state);
+  syncDotStackDisplay("player", state);
+  syncDotStackDisplay("enemy", state);
   syncIncomingDpsTooltip("player", state);
   syncIncomingDpsTooltip("enemy", state);
 }
@@ -624,6 +771,10 @@ function clearBattleDamageSummary(state) {
       player: createDamageStackStore(),
       enemy: createDamageStackStore(),
     };
+    state.dotStacks = {
+      player: createDamageStackStore(),
+      enemy: createDamageStackStore(),
+    };
     state.damageFlights = [];
     state.countdown = { active: false, remaining: 0, label: null };
   }
@@ -641,6 +792,11 @@ function clearBattleDamageSummary(state) {
     if (benefits) {
       benefits.innerHTML = "";
       benefits.hidden = true;
+    }
+    const dots = slot?.querySelector(".avatar-dot-stacks");
+    if (dots) {
+      dots.innerHTML = "";
+      dots.hidden = true;
     }
   });
 }

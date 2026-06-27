@@ -2736,10 +2736,10 @@ function draw() {
     });
     drawAttackAnimations(ctx, battleState);
     renderBattleEffectsOverlay(battleState);
+    if (typeof tickBattleEmotions === "function") tickBattleEmotions(battleState);
     if (typeof syncLiveAvatarHeroFrame === "function") syncLiveAvatarHeroFrame(battleState);
     if (typeof renderDamageFlights === "function") renderDamageFlights(battleState);
     if (typeof renderBattleCountdown === "function") renderBattleCountdown(battleState);
-    if (typeof tickBattleEmotions === "function") tickBattleEmotions(battleState);
   } else {
     clearBattleFloatLayer();
     if (typeof clearAttackFxLayer === "function") clearAttackFxLayer();
@@ -4234,14 +4234,18 @@ function renderPlayerProfiles() {
 
   if (!statsEl || !playerAvatarEl || !enemyAvatarEl) return;
 
-  statsEl.innerHTML = renderBattleStatsCompareHTML(playerProfile, enemyProfile, {
-    round,
-    maxRound: RUN_BATTLES,
-    liveBattle: phase === "battle" || phase === "replay",
-    itemCount: Math.max(playerItems.length, enemyItems.length, 1),
-  });
-
   const liveBattle = phase === "battle" || phase === "replay";
+  if (liveBattle) {
+    statsEl.innerHTML = "";
+  } else {
+    statsEl.innerHTML = renderBattleStatsCompareHTML(playerProfile, enemyProfile, {
+      round,
+      maxRound: RUN_BATTLES,
+      liveBattle: false,
+      itemCount: Math.max(playerItems.length, enemyItems.length, 1),
+    });
+  }
+
   if (liveBattle) {
     if (!playerAvatarEl.querySelector(".avatar-hero-shell")) {
       playerAvatarEl.innerHTML = renderAvatarHeroHTML(playerProfile, "player");

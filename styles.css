@@ -904,10 +904,10 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 
 .stat-hp-bar {
   flex: 1;
-  min-width: calc(36px * var(--ui-scale));
-  max-width: calc(72px * var(--ui-scale));
-  height: calc(6px * var(--ui-scale));
-  border-radius: 3px;
+  min-width: calc(48px * var(--ui-scale));
+  max-width: calc(112px * var(--ui-scale));
+  height: calc(10px * var(--ui-scale));
+  border-radius: 999px;
   background: #21262d;
   overflow: hidden;
 }
@@ -943,10 +943,10 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 
 .stat-stamina-bar {
   flex: 1;
-  min-width: calc(36px * var(--ui-scale));
-  max-width: calc(72px * var(--ui-scale));
-  height: calc(5px * var(--ui-scale));
-  border-radius: 3px;
+  min-width: calc(48px * var(--ui-scale));
+  max-width: calc(112px * var(--ui-scale));
+  height: calc(10px * var(--ui-scale));
+  border-radius: 999px;
   background: #21262d;
   overflow: hidden;
   box-shadow: inset 0 0 0 1px rgba(210, 153, 34, 0.18);
@@ -1423,6 +1423,14 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
   pointer-events: none;
 }
 
+.avatar-damage-stack,
+.avatar-benefit-stack,
+.avatar-dot-stack {
+  pointer-events: auto;
+  cursor: help;
+  touch-action: manipulation;
+}
+
 .avatar-damage-stack {
   display: flex;
   flex-direction: column;
@@ -1483,6 +1491,72 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 
 .avatar-benefit-stack-bounce .avatar-benefit-stack-icon {
   animation: damage-stack-land 0.38s cubic-bezier(0.22, 1.35, 0.36, 1);
+}
+
+.avatar-dot-stacks {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: calc(6px * var(--ui-scale));
+  min-height: calc(52px * var(--ui-scale));
+  margin-bottom: calc(4px * var(--ui-scale));
+  pointer-events: none;
+}
+
+.avatar-dot-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(2px * var(--ui-scale));
+  min-width: calc(44px * var(--ui-scale));
+}
+
+.avatar-dot-stack-icon {
+  font-size: calc(2rem * var(--ui-scale));
+  line-height: 1;
+  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.65));
+}
+
+.avatar-dot-stack-value {
+  font-size: calc(13px * var(--ui-scale));
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+}
+
+.avatar-dot-stack-poison .avatar-dot-stack-value {
+  color: #3fb950;
+}
+
+.avatar-dot-stack-fire .avatar-dot-stack-value {
+  color: #ffa657;
+}
+
+.avatar-dot-stack-pulse .avatar-dot-stack-icon {
+  animation: avatar-dot-stack-pulse 1.15s ease-in-out infinite;
+}
+
+.avatar-dot-stack-bounce .avatar-dot-stack-icon {
+  animation: avatar-dot-stack-bounce 0.38s cubic-bezier(0.22, 1.35, 0.36, 1), avatar-dot-stack-pulse 1.15s ease-in-out 0.38s infinite;
+}
+
+@keyframes avatar-dot-stack-pulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.65)); }
+  50% { transform: scale(1.08); filter: drop-shadow(0 0 12px rgba(63, 185, 80, 0.55)); }
+}
+
+.avatar-dot-stack-fire.avatar-dot-stack-pulse .avatar-dot-stack-icon {
+  animation-name: avatar-dot-stack-pulse-fire;
+}
+
+@keyframes avatar-dot-stack-pulse-fire {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.65)); }
+  50% { transform: scale(1.08); filter: drop-shadow(0 0 12px rgba(255, 166, 87, 0.65)); }
+}
+
+@keyframes avatar-dot-stack-bounce {
+  0% { transform: translateY(calc(-14px * var(--ui-scale))) scale(1.28); }
+  100% { transform: scale(1); }
 }
 
 @keyframes damage-stack-land {
@@ -1576,6 +1650,27 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 
 .avatar-effect-hop-debuff {
   filter: drop-shadow(0 0 8px rgba(248, 81, 73, 0.4));
+}
+
+.avatar-effect-hop-dot {
+  animation: avatar-effect-dot-pulse 0.9s ease-in-out infinite;
+}
+
+.avatar-effect-hop-dot.avatar-effect-hop-debuff {
+  filter: drop-shadow(0 0 10px rgba(63, 185, 80, 0.55));
+}
+
+.avatar-effect-hop-dot[data-effect-key="debuff-ground-fire"] {
+  filter: drop-shadow(0 0 10px rgba(255, 166, 87, 0.6));
+}
+
+@keyframes avatar-effect-dot-pulse {
+  0%, 100% {
+    transform: translate(-50%, -50%) rotate(var(--fx-rot, 0deg)) scale(1);
+  }
+  50% {
+    transform: translate(-50%, calc(-50% - 1.35vh)) rotate(calc(var(--fx-rot, 0deg) + 6deg)) scale(1.16);
+  }
 }
 
 .avatar-effect-count {
@@ -1756,26 +1851,60 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 }
 
 .avatar-hero-footer {
-  width: min(100%, calc(var(--battle-avatar-w) * 0.72));
+  width: min(100%, calc(var(--battle-avatar-w) * 0.95));
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: calc(3px * var(--ui-scale));
+  gap: calc(4px * var(--ui-scale));
   pointer-events: none;
 }
 
-.avatar-hero-hp-bar {
-  height: calc(5px * var(--ui-scale));
+.avatar-hero-hp-bar,
+.avatar-hero-stamina-bar {
+  position: relative;
+  height: calc(14px * var(--ui-scale));
   border-radius: 999px;
-  background: rgba(48, 54, 61, 0.85);
   overflow: hidden;
   border: 1px solid rgba(48, 54, 61, 0.9);
+  box-sizing: border-box;
+}
+
+.avatar-hero-hp-bar {
+  background: rgba(48, 54, 61, 0.85);
+}
+
+.avatar-hero-stamina-bar {
+  display: none;
+  background: rgba(48, 54, 61, 0.75);
+  border-color: rgba(210, 153, 34, 0.28);
+}
+
+.avatar-hero-hp-track,
+.avatar-hero-stamina-track {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
 }
 
 .avatar-hero-hp-fill {
-  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
   border-radius: inherit;
   transition: width 0.25s ease-out;
+}
+
+.avatar-hero-hp-heal-preview {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(63, 185, 80, 0.35), rgba(126, 231, 135, 0.72));
+  box-shadow: inset 0 0 0 1px rgba(126, 231, 135, 0.35);
+  pointer-events: none;
+  transition: left 0.25s ease-out, width 0.25s ease-out;
 }
 
 .avatar-hero-hp-fill-player {
@@ -1786,18 +1915,57 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
   background: linear-gradient(90deg, #b62324, #f85149);
 }
 
-.avatar-hero-hp-text {
-  font-size: calc(0.68rem * var(--ui-scale));
-  font-weight: 600;
-  color: var(--muted);
-  text-align: center;
-  line-height: 1.2;
+.avatar-hero-stamina-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: inherit;
+  transition: width 0.2s ease-out;
+  background: linear-gradient(90deg, #9a6700, #e3b341);
 }
 
-#app[data-phase="battle"] .avatar-hero-hp-text,
-#app[data-phase="replay"] .avatar-hero-hp-text,
+.avatar-hero-stamina-fill-player,
+.avatar-hero-stamina-fill-enemy {
+  background: linear-gradient(90deg, #9a6700, #e3b341);
+}
+
+.avatar-hero-hp-label,
+.avatar-hero-stamina-label {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: calc(0.62rem * var(--ui-scale));
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  user-select: none;
+}
+
+.avatar-hero-hp-label {
+  color: #f0f6fc;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85), 0 0 6px rgba(0, 0, 0, 0.55);
+}
+
+.avatar-hero-stamina-label {
+  color: #ffe08a;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85), 0 0 6px rgba(0, 0, 0, 0.55);
+}
+
+#app[data-phase="battle"] .avatar-hero-stamina-bar,
+#app[data-phase="replay"] .avatar-hero-stamina-bar {
+  display: block;
+}
+
 #app[data-phase="battle"] .avatar-hero-hp-bar,
-#app[data-phase="replay"] .avatar-hero-hp-bar {
+#app[data-phase="replay"] .avatar-hero-hp-bar,
+#app[data-phase="battle"] .avatar-hero-stamina-bar,
+#app[data-phase="replay"] .avatar-hero-stamina-bar {
   pointer-events: auto;
   cursor: help;
 }
@@ -6703,17 +6871,7 @@ html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-field-island {
 
 #app[data-phase="battle"] .battle-scene-stats.center-stats-panel,
 #app[data-phase="replay"] .battle-scene-stats.center-stats-panel {
-  display: flex !important;
-  flex: none;
-  padding: calc(8px * var(--ui-scale)) calc(10px * var(--ui-scale));
-  margin-bottom: 0;
-  border-radius: 10px;
-  background: rgba(17, 24, 39, 0.92);
-  border: 1px solid rgba(75, 85, 99, 0.45);
-  gap: calc(5px * var(--ui-scale));
-  max-height: 100%;
-  overflow-y: auto;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+  display: none !important;
 }
 
 .battle-stats-narrow {
@@ -6814,8 +6972,8 @@ html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-field-island {
 .center-stats-panel .battle-stat-row .stat-stamina-bar,
 .center-stats-panel .battle-stat-row .stat-hp-bar {
   flex: 0 1 auto;
-  min-width: calc(24px * var(--ui-scale));
-  max-width: calc(52px * var(--ui-scale));
+  min-width: calc(40px * var(--ui-scale));
+  max-width: calc(96px * var(--ui-scale));
   display: block;
 }
 

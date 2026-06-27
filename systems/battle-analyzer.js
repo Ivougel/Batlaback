@@ -61,11 +61,18 @@ function sampleSideMetrics(side, team, state, tracker) {
   tracker.hpSamples = tracker.hpSamples.filter((s) => s.t >= cutoff);
 
   let incomingDps = 0;
+  let healRate = 0;
   if (tracker.hpSamples.length >= 2) {
     const oldest = tracker.hpSamples[0];
     const dt = Math.max(0.25, elapsed - oldest.t);
     incomingDps = Math.max(0, (oldest.hp - hp) / dt);
+    healRate = Math.max(0, (hp - oldest.hp) / dt);
   }
+  const regenPerSec = typeof getSideStack === "function" ? getSideStack(side, "regen") : 0;
+  const projectedHeal2s = Math.min(
+    Math.max(0, maxHp - hp),
+    (healRate + regenPerSec) * 2,
+  );
 
   const hpLost = tracker.lastHp != null ? Math.max(0, tracker.lastHp - hp) : 0;
   tracker.lastHp = hp;
@@ -82,6 +89,9 @@ function sampleSideMetrics(side, team, state, tracker) {
     hpPct,
     hpLost,
     incomingDps,
+    healRate,
+    regenPerSec,
+    projectedHeal2s,
     stamina,
     maxStamina,
     staminaPct,

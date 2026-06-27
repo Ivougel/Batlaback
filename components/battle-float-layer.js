@@ -166,6 +166,14 @@ function getBattlefieldCenterViewport() {
 }
 
 function getBattleStatsStaminaBarCenter(team) {
+  const slotId = team === "player" ? "player-avatar-slot" : "enemy-avatar-slot";
+  const bar = document.querySelector(`#${slotId} .avatar-hero-stamina-bar`);
+  if (bar) {
+    const rect = bar.getBoundingClientRect();
+    if (rect.width > 0 && rect.height > 0) {
+      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    }
+  }
   const row = document.querySelector(`#battle-stats-panel .stat-stamina-cell-${team}`);
   if (row) {
     const bar = row.querySelector(".stat-stamina-bar");

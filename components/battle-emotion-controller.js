@@ -345,11 +345,13 @@ function collectEffectOrbitItems(profile) {
   });
   (profile?.debuffs || []).forEach((chip) => {
     if (chip.id === "arena-fatigue") return;
+    const isDotDebuff = chip.id === "poison" || chip.id === "ground-fire";
     items.push({
       key: `debuff-${chip.id}`,
       icon: normalizeEffectOrbitIcon(chip),
       kind: "debuff",
       count: formatEffectOrbitCount(chip.value),
+      dotActive: isDotDebuff,
     });
   });
   return items.slice(0, 6);
@@ -371,10 +373,11 @@ function syncEffectOrbit(team, profile, tick) {
     let el = effectOrbit.querySelector(`[data-effect-key="${CSS.escape(item.key)}"]`);
     if (!el) {
       el = document.createElement("span");
-      el.className = `avatar-effect-hop avatar-effect-hop-${item.kind}`;
+      el.className = `avatar-effect-hop avatar-effect-hop-${item.kind}${item.dotActive ? " avatar-effect-hop-dot" : ""}`;
       el.dataset.effectKey = item.key;
       effectOrbit.appendChild(el);
     }
+    el.className = `avatar-effect-hop avatar-effect-hop-${item.kind}${item.dotActive ? " avatar-effect-hop-dot" : ""}`;
     const countHtml = item.count > 1 ? `<span class="avatar-effect-count">×${item.count}</span>` : "";
     const inner = `${item.icon}${countHtml}`;
     if (el.innerHTML !== inner) el.innerHTML = inner;

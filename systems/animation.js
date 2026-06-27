@@ -278,7 +278,10 @@ function queueHitAnimation(state, item, team, text, color) {
   if (kind === "positive" && item && typeof recordBenefitEffect === "function") {
     const match = String(text).match(/(\d+(?:\.\d+)?)/);
     if (match) {
-      recordBenefitEffect(state, team, item, parseFloat(match[1]));
+      const benefitKind = String(text).includes("❤") ? "heal"
+        : String(text).includes("🛡") ? "block"
+          : "other";
+      recordBenefitEffect(state, team, item, parseFloat(match[1]), benefitKind);
     }
   }
 

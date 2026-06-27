@@ -760,6 +760,19 @@ const PROFILE_TOOLTIP_PANEL_IDS = [
   "enemy-avatar-panel",
 ];
 
+const PROFILE_TOOLTIP_TARGET_SELECTOR = [
+  ".status-chip",
+  ".profile-avatar",
+  ".avatar-bead-debuff",
+  ".avatar-damage-stack",
+  ".avatar-benefit-stack",
+  ".avatar-dot-stack",
+].join(", ");
+
+function findProfileTooltipTarget(node) {
+  return node?.closest?.(PROFILE_TOOLTIP_TARGET_SELECTOR) || null;
+}
+
 function bindProfileStatusTooltips() {
   PROFILE_TOOLTIP_PANEL_IDS.forEach((id) => {
     const panel = document.getElementById(id);
@@ -767,21 +780,42 @@ function bindProfileStatusTooltips() {
     panel.dataset.statusTooltipsBound = "1";
 
     panel.addEventListener("mouseover", (e) => {
-      const target = e.target.closest(".status-chip, .profile-avatar, .avatar-bead-debuff");
+      if (typeof isTouchUi === "function" && isTouchUi()) return;
+      const target = findProfileTooltipTarget(e.target);
       if (!target) return;
       showProfileStatusTooltip(e, target);
     });
 
     panel.addEventListener("mousemove", (e) => {
-      if (e.target.closest(".status-chip, .profile-avatar, .avatar-bead-debuff")) moveSidebarTooltip(e);
+      if (findProfileTooltipTarget(e.target)) moveSidebarTooltip(e);
     });
 
     panel.addEventListener("mouseout", (e) => {
-      const target = e.target.closest(".status-chip, .profile-avatar, .avatar-bead-debuff");
+      const target = findProfileTooltipTarget(e.target);
       if (!target) return;
       const next = e.relatedTarget;
       if (next && target.contains(next)) return;
       hideSidebarTooltip();
+    });
+
+    panel.addEventListener("click", (e) => {
+      if (typeof isTouchUi !== "function" || !isTouchUi()) return;
+      const target = findProfileTooltipTarget(e.target);
+      if (!target) {
+        hideSidebarTooltip();
+        return;
+      }
+      e.stopPropagation();
+      showProfileStatusTooltip(e, target);
+    });
+
+    panel.addEventListener("keydown", (e) => {
+      const target = findProfileTooltipTarget(e.target);
+      if (!target) return;
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        showProfileStatusTooltip(e, target);
+      }
     });
 
     panel.addEventListener("animationend", (e) => {
@@ -804,6 +838,16 @@ function bindProfileStatusTooltips() {
       }
     });
   });
+
+  if (!document.documentElement.dataset.battleStackTouchDismissBound) {
+    document.documentElement.dataset.battleStackTouchDismissBound = "1";
+    document.addEventListener("click", (e) => {
+      if (typeof isTouchUi !== "function" || !isTouchUi()) return;
+      if (e.target.closest("#sidebar-tooltip")) return;
+      if (findProfileTooltipTarget(e.target)) return;
+      hideSidebarTooltip();
+    });
+  }
 }
 
 function getProfileAvatarElements(team) {
@@ -955,8 +999,8 @@ function showProfileStatusTooltip(e, chip) {
   const el = document.getElementById("sidebar-tooltip");
   if (!el) return;
 
-  const title = chip.dataset.statusTitle || "";
-  const desc = chip.dataset.statusDesc || "";
+  const title = chip.dataset.statusTitle || chip.dataset.stackTitle || "";
+  const desc = chip.dataset.statusDesc || chip.dataset.stackDesc || "";
   el.classList.remove("synergy-tooltip");
   el.innerHTML = [
     `<div class="tt-line tt-title">${title}</div>`,

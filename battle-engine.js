@@ -1777,6 +1777,13 @@ function creditDotDamage(state, sourceTeam, sourceItemUid, dmg, damageType = nul
   const attacker = sourceTeam === "player" ? state.player : state.enemy;
   const stat = sourceItemUid ? state.itemDamageStats[sourceItemUid] : null;
   creditDamageStats(attacker, stat, dmg, damageType);
+  if (sourceItemUid && typeof recordDotDamageDealt === "function") {
+    const item = attacker.items?.find((i) => i.uid === sourceItemUid);
+    if (item) {
+      const dotKind = damageType === "fire" ? "fire" : "poison";
+      recordDotDamageDealt(state, sourceTeam, item, dmg, dotKind);
+    }
+  }
 }
 
 function creditItemDamageBlocked(state, itemUid, team, amount) {
@@ -1879,13 +1886,6 @@ function tickPoison(state, dt) {
         target: team,
         message: `${battleTeamLabel(team)}: яд −${dmg} HP (стаков: ${side.poisonStacks}, ${getPoisonDotDamage(side.poisonStacks)}/с)`,
       });
-      spawnBattleFloat(state, `-${dmg}☠`, "#3fb950", {
-        targetTeam: team,
-        kind: "debuff",
-        fromDebuffChip: "poison",
-        trajectory: "debuff-dot",
-        maxAge: 1.5,
-      });
       triggerProfileAvatarHitShake(team);
     }
   });
@@ -1909,13 +1909,6 @@ function tickGroundFire(state, dt) {
         type: "fire",
         target: team,
         message: `${battleTeamLabel(team)}: огонь на поле −${dmg} HP`,
-      });
-      spawnBattleFloat(state, `-${dmg}🔥`, "#f0883e", {
-        targetTeam: team,
-        kind: "debuff",
-        fromDebuffChip: "ground-fire",
-        trajectory: "debuff-dot",
-        maxAge: 1.5,
       });
       triggerProfileAvatarHitShake(team);
     }
