@@ -45,6 +45,10 @@ function initBattleDamageTracker(state) {
     player: { byUid: {}, order: [] },
     enemy: { byUid: {}, order: [] },
   };
+  state.benefitStacks = {
+    player: { byUid: {}, order: [] },
+    enemy: { byUid: {}, order: [] },
+  };
   state.damageFlights = [];
   state._damageFlightUid = 0;
 }
@@ -171,6 +175,21 @@ function ensureStackEntry(store, uid, item) {
   return entry;
 }
 
+function ensureBenefitStackEntry(store, uid, item) {
+  if (store.byUid[uid]) return store.byUid[uid];
+  const def = item?.itemId ? ITEM_CATALOG[item.itemId] : null;
+  const entry = {
+    uid,
+    itemId: item?.itemId || null,
+    icon: firstItemIconGrapheme(def?.icon),
+    benefit: 0,
+    bounceUntil: 0,
+  };
+  store.byUid[uid] = entry;
+  store.order.push(uid);
+  return entry;
+}
+
 function recordIncomingDamage(state, targetTeam, sourceTeam, item, damage) {
   const amount = Math.max(0, Number(damage) || 0);
   if (!state || !targetTeam || !item?.uid || amount <= 0) return;
@@ -211,6 +230,19 @@ function recordIncomingDamage(state, targetTeam, sourceTeam, item, damage) {
     ...path,
   });
   syncDamageStackDisplay(targetTeam, state);
+}
+
+function recordBenefitEffect(state, team, item, amount) {
+  const value = Math.max(0, Number(amount) || 0);
+  if (!state || !team || !item?.uid || value <= 0) return;
+  if (isBattleCountdownActive(state)) return;
+
+  initBattleDamageTracker(state);
+  const store = state.benefitStacks[team];
+  const entry = ensureBenefitStackEntry(store, item.uid, item);
+  entry.benefit += value;
+  entry.bounceUntil = (state.elapsed || 0) + DAMAGE_STACK_BOUNCE_SEC;
+  syncBenefitStackDisplay(team, state);
 }
 
 function getDamageStackSlotViewport(team, slotIndex, total) {
@@ -383,6 +415,72 @@ function ensureDamageStacksEl(shell) {
   return stacks;
 }
 
+function ensureBenefitStacksEl(shell) {
+  const footer = shell.querySelector(".avatar-hero-footer");
+  if (!footer) return null;
+  let stacks = footer.querySelector(".avatar-benefit-stacks");
+  if (!stacks) {
+    stacks = document.createElement("div");
+    stacks.className = "avatar-benefit-stacks";
+    stacks.setAttribute("aria-hidden", "true");
+    const hpText = footer.querySelector(".avatar-hero-hp-text");
+    if (hpText) hpText.insertAdjacentElement("afterend", stacks);
+    else footer.appendChild(stacks);
+  }
+  return stacks;
+}
+
+function syncBenefitStackDisplay(team, state) {
+  const slot = typeof getAvatarSlotEl === "function" ? getAvatarSlotEl(team) : null;
+  const shell = slot?.querySelector(".avatar-hero-shell");
+  if (!shell) return;
+
+  const stacksEl = ensureBenefitStacksEl(shell);
+  if (!stacksEl) return;
+
+  const store = state?.benefitStacks?.[team];
+  const now = state?.elapsed || 0;
+  if (!store?.order?.length) {
+    stacksEl.innerHTML = "";
+    stacksEl.hidden = true;
+    return;
+  }
+
+  stacksEl.hidden = false;
+  const activeUids = new Set(store.order.filter((uid) => store.byUid[uid]?.benefit > 0));
+
+  stacksEl.querySelectorAll(".avatar-benefit-stack").forEach((el) => {
+    if (!activeUids.has(el.dataset.stackUid)) el.remove();
+  });
+
+  store.order.forEach((uid, slotIndex) => {
+    const entry = store.byUid[uid];
+    if (!entry || entry.benefit <= 0) return;
+
+    let el = stacksEl.querySelector(`[data-stack-uid="${CSS.escape(uid)}"]`);
+    if (!el) {
+      el = document.createElement("div");
+      el.className = "avatar-benefit-stack";
+      el.dataset.stackUid = uid;
+      el.dataset.slot = String(slotIndex);
+      el.innerHTML = `<span class="avatar-benefit-stack-icon"></span><span class="avatar-benefit-stack-value"></span>`;
+      stacksEl.appendChild(el);
+    }
+
+    el.dataset.slot = String(slotIndex);
+    const iconEl = el.querySelector(".avatar-benefit-stack-icon");
+    const valEl = el.querySelector(".avatar-benefit-stack-value");
+    if (iconEl) iconEl.textContent = entry.icon;
+    if (valEl) valEl.textContent = `+${Math.round(entry.benefit)}`;
+
+    const bouncing = entry.bounceUntil > now;
+    el.classList.toggle("avatar-benefit-stack-bounce", bouncing);
+    if (entry.itemId && ITEM_CATALOG[entry.itemId]) {
+      el.title = ITEM_CATALOG[entry.itemId].name;
+    }
+  });
+}
+
 function syncDamageStackDisplay(team, state) {
   const slot = typeof getAvatarSlotEl === "function" ? getAvatarSlotEl(team) : null;
   const shell = slot?.querySelector(".avatar-hero-shell");
@@ -464,6 +562,8 @@ function syncAllDamageSummaryDisplays(state) {
   if (!state) return;
   syncDamageStackDisplay("player", state);
   syncDamageStackDisplay("enemy", state);
+  syncBenefitStackDisplay("player", state);
+  syncBenefitStackDisplay("enemy", state);
   syncIncomingDpsTooltip("player", state);
   syncIncomingDpsTooltip("enemy", state);
 }
@@ -520,6 +620,10 @@ function clearBattleDamageSummary(state) {
       player: createDamageStackStore(),
       enemy: createDamageStackStore(),
     };
+    state.benefitStacks = {
+      player: createDamageStackStore(),
+      enemy: createDamageStackStore(),
+    };
     state.damageFlights = [];
     state.countdown = { active: false, remaining: 0, label: null };
   }
@@ -532,6 +636,11 @@ function clearBattleDamageSummary(state) {
     if (stacks) {
       stacks.innerHTML = "";
       stacks.hidden = true;
+    }
+    const benefits = slot?.querySelector(".avatar-benefit-stacks");
+    if (benefits) {
+      benefits.innerHTML = "";
+      benefits.hidden = true;
     }
   });
 }

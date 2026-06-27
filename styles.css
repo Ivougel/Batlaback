@@ -1449,6 +1449,42 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
   animation: damage-stack-land 0.38s cubic-bezier(0.22, 1.35, 0.36, 1);
 }
 
+.avatar-benefit-stacks {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: calc(6px * var(--ui-scale));
+  min-height: calc(44px * var(--ui-scale));
+  margin-top: calc(2px * var(--ui-scale));
+  pointer-events: none;
+}
+
+.avatar-benefit-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(2px * var(--ui-scale));
+  min-width: calc(44px * var(--ui-scale));
+}
+
+.avatar-benefit-stack-icon {
+  font-size: calc(1.85rem * var(--ui-scale));
+  line-height: 1;
+  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.65));
+}
+
+.avatar-benefit-stack-value {
+  font-size: calc(13px * var(--ui-scale));
+  font-weight: 800;
+  color: #3fb950;
+  letter-spacing: -0.02em;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+}
+
+.avatar-benefit-stack-bounce .avatar-benefit-stack-icon {
+  animation: damage-stack-land 0.38s cubic-bezier(0.22, 1.35, 0.36, 1);
+}
+
 @keyframes damage-stack-land {
   0% { transform: translateY(calc(-18px * var(--ui-scale))) scale(1.35); }
   55% { transform: translateY(calc(4px * var(--ui-scale))) scale(0.92); }

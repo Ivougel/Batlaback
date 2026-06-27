@@ -323,28 +323,6 @@ function renderBattleEffectsOverlay(state) {
     applyBattleFloatTransform(el, fn.x, fn.y, scale * pulse, alpha);
   });
 
-  (state.animations?.failedPopups || []).forEach((popup) => {
-    const uid = popup.uid || `fail-${popup.itemUid}`;
-    activeIds.add(uid);
-    const side = popup.team === "player" ? state.player : state.enemy;
-    const item = side?.items?.find((i) => i.uid === popup.itemUid);
-    const origin = item && typeof getItemViewportCenter === "function"
-      ? getItemViewportCenter(item, popup.team)
-      : getBattlefieldCenterViewport();
-    const t = Math.min(1, popup.age / popup.maxAge);
-    const alpha = t < 0.12 ? t / 0.12 : t > 0.72 ? Math.max(0, 1 - (t - 0.72) / 0.28) : 1;
-    const scale = 0.92 + Math.sin(t * Math.PI) * 0.08;
-    const html = `<span class="battle-float-failed-icon">${popup.icon}</span><span class="battle-float-failed-label">${popup.label}</span>`;
-    const el = upsertBattleFloatEl(
-      layer,
-      uid,
-      `battle-float battle-float-failed-card battle-float-team-${popup.team}`,
-      html,
-      true,
-    );
-    applyBattleFloatTransform(el, origin.x, origin.y - t * 16, scale, alpha);
-  });
-
   battleFloatDomPool.forEach((el, uid) => {
     if (activeIds.has(uid)) return;
     el.remove();

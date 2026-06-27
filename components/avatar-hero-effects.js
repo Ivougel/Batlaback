@@ -51,6 +51,7 @@ function renderAvatarHeroHTML(profile, team) {
         <div class="avatar-damage-stacks" aria-hidden="true" hidden></div>
         <div class="avatar-hero-hp-bar"><div class="avatar-hero-hp-fill avatar-hero-hp-fill-${team}" style="width:${hpPct}%"></div></div>
         <div class="avatar-hero-hp-text">${Math.ceil(hpCurrent)} / ${hpMax}</div>
+        <div class="avatar-benefit-stacks" aria-hidden="true" hidden></div>
         <div class="avatar-hero-debuff-row" hidden></div>
       </div>
     </div>

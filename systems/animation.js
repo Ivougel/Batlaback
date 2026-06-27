@@ -181,17 +181,6 @@ function getFloatItemOriginViewport(state, fn) {
 
 function queueItemFailedAnimation(state, item, team, _staminaCost) {
   if (!state.animations) initBattleAnimations(state);
-  const def = ITEM_CATALOG[item.itemId];
-  state._floatUid = (state._floatUid || 0) + 1;
-  state.animations.failedPopups.push({
-    uid: `fail-${state._floatUid}`,
-    icon: def?.icon || "⚔",
-    label: "Неудачно",
-    itemUid: item.uid,
-    team,
-    age: 0,
-    maxAge: 1.15,
-  });
   state.animations.flashes.push({
     itemUid: item.uid,
     team,
@@ -284,6 +273,13 @@ function queueHitAnimation(state, item, team, text, color) {
   if (aggregatedDamage && typeof recordIncomingDamage === "function") {
     const damage = parseFloatingMagnitude(text);
     recordIncomingDamage(state, targetTeam, team, item, damage);
+  }
+
+  if (kind === "positive" && item && typeof recordBenefitEffect === "function") {
+    const match = String(text).match(/(\d+(?:\.\d+)?)/);
+    if (match) {
+      recordBenefitEffect(state, team, item, parseFloat(match[1]));
+    }
   }
 
   if (blockFx && blockTeam) {
