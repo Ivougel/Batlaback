@@ -1843,6 +1843,12 @@ function applyCraftingForSide(side = prepViewSide) {
   return true;
 }
 
+function notifyPrepDragRejectedFromDragFrom() {
+  if (dragFrom?.type === "item" && dragFrom.item) {
+    notifyPrepPlacementRejected(dragFrom.item);
+  }
+}
+
 function clearDragUiState() {
   document.querySelectorAll(".shop-card.shop-dragging").forEach((el) => el.classList.remove("shop-dragging"));
   pendingShopDrag = null;
@@ -1857,6 +1863,7 @@ function clearDragUiState() {
   dragPayload = null;
   dragFrom = null;
   clearGamepadBoardFocus();
+  if (typeof onPrepDragEnd === "function") onPrepDragEnd();
   hideDragGhostOverlay();
   syncUiDragState();
 }
@@ -1887,6 +1894,9 @@ function recalcSynergies() {
   applySynergyModifiersToContainers(playerContainers, playerItems);
   applySynergyModifiersToContainers(enemyContainers, enemyItems);
   refreshActiveSynergies(playerItems, enemyItems);
+  if (typeof onPrepSynergiesUpdated === "function") {
+    onPrepSynergiesUpdated(prepViewSide);
+  }
   renderPlayerProfiles();
 }
 
@@ -2238,6 +2248,12 @@ function gameLoop(ts) {
   lastGameLoopDt = dt;
   synergyAnimTime += dt;
 
+  if (phase === "prep") {
+    if (typeof tickInventoryAnimationController === "function") tickInventoryAnimationController(dt);
+    if (typeof tickSynergyVisualController === "function") tickSynergyVisualController(dt);
+    if (typeof tickPrepEmotionController === "function") tickPrepEmotionController(dt, prepViewSide);
+  }
+
   if (phase === "prep" && synergyState.isDragging && dragPayload) {
     const st = getSideState(prepViewSide);
     const otherItems = prepViewSide === "player" ? enemyItems : playerItems;
@@ -2563,6 +2579,7 @@ function syncDragGhostOverlay(clientX, clientY) {
   if (!def) return;
   const offset = uiPx(10);
   drawItemPreview(offset, offset, def, dragPayload.itemId, true, dragPayload.rotation || 0, dragGhostCtx);
+  if (typeof applyPrepDragGhostStyles === "function") applyPrepDragGhostStyles(el);
 }
 
 function updatePointerFromClient(clientX, clientY) {
@@ -2626,6 +2643,7 @@ function updatePointerFromClient(clientX, clientY) {
   }
 
   syncDragGhostOverlay(clientX, clientY);
+  if (dragPayload && typeof onPrepDragMove === "function") onPrepDragMove(clientX, clientY);
 }
 
 function gamepadPointerDownAt(clientX, clientY) {
@@ -2734,6 +2752,11 @@ function draw() {
   if (phase === "prep") {
     const side = prepViewSide;
     const st = getSideState(side);
+    const shake = typeof getPrepBackpackShakeOffset === "function"
+      ? getPrepBackpackShakeOffset()
+      : { x: 0, y: 0 };
+    ctx.save();
+    ctx.translate(shake.x, shake.y);
     const frameOptions = {
       showFullPlacementGrid: shouldShowFullContainerPlacementGrid(),
       containers: st.containers,
@@ -2743,11 +2766,22 @@ function draw() {
     drawContainers(st.containers, side, false);
     drawSynergyVisuals(ctx, synergyAnimTime, synergyPreviewBuilt, "under", side);
     drawLoadoutItems(st.items, side, false);
+    if (typeof drawAllPrepItemIdleEffects === "function") {
+      drawAllPrepItemIdleEffects(ctx, st.items, side, synergyAnimTime);
+    }
     drawDisplaceAnimations(ctx, side);
     drawSynergyVisuals(ctx, synergyAnimTime, synergyPreviewBuilt, "over", side);
+    if (typeof drawPrepSynergyEnhancements === "function") {
+      drawPrepSynergyEnhancements(ctx, synergyAnimTime, side, st.items);
+    }
     if (canEditPrepSide() && hoverSlot && !dragPayload && !gamepadBoardFocus) drawHoverCell();
     if (canEditPrepSide() && gamepadBoardFocus && isGamepadInteraction()) drawGamepadBoardFocus();
-    if (canEditPrepSide() && dragPayload && (hoverCell || hoverSlot)) drawDropPreview();
+    if (canEditPrepSide() && dragPayload && (hoverCell || hoverSlot)) {
+      if (typeof drawPrepDropPreview === "function") drawPrepDropPreview(ctx, side, st);
+      else drawDropPreview();
+    }
+    if (typeof drawPrepCellReactions === "function") drawPrepCellReactions(ctx, side);
+    ctx.restore();
   } else if (isBattleUiPhase()) {
     if (battleState) {
       drawBackpackFrame("player", {
@@ -2808,6 +2842,14 @@ function draw() {
 function drawBackground() {
   if (phase === "prep") {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const w = canvas.width;
+    const h = canvas.height;
+    const glow = ctx.createRadialGradient(w * 0.5, h * 0.35, 0, w * 0.5, h * 0.55, Math.max(w, h) * 0.75);
+    glow.addColorStop(0, "rgba(72, 58, 42, 0.22)");
+    glow.addColorStop(0.55, "rgba(36, 30, 24, 0.08)");
+    glow.addColorStop(1, "rgba(0, 0, 0, 0)");
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, w, h);
     return;
   }
   ctx.fillStyle = "#12100d";
@@ -2933,9 +2975,29 @@ function drawLoadoutItems(items, team, dimmed) {
   items.forEach((item) => {
     const def = ITEM_CATALOG[item.itemId];
     const alpha = dimmed ? 0.55 : 1;
+    const transform = typeof getPrepItemDrawTransform === "function"
+      ? getPrepItemDrawTransform(item.uid)
+      : null;
+    const spread = typeof getPrepNeighborSpread === "function"
+      ? getPrepNeighborSpread(item, team)
+      : { x: 0, y: 0 };
+    const center = typeof getItemVisualCenter === "function"
+      ? getItemVisualCenter(item, team)
+      : null;
     const gemCellMap = typeof getGemCellVisualMap === "function"
       ? getGemCellVisualMap(item, def)
       : null;
+
+    ctx.save();
+    if (center && (transform || spread.x || spread.y)) {
+      ctx.translate(center.x + spread.x, center.y + spread.y);
+      if (transform?.scale) ctx.scale(transform.scale, transform.scale);
+      ctx.translate(-center.x, -center.y);
+      if (transform?.offsetX || transform?.offsetY) {
+        ctx.translate(transform.offsetX || 0, transform.offsetY || 0);
+      }
+    }
+
     getItemCells(item).forEach(([c, r]) => {
       const { x, y, w, h } = cellRect(team, c, r);
       const gemVis = gemCellMap?.get(`${c},${r}`);
@@ -2958,6 +3020,7 @@ function drawLoadoutItems(items, team, dimmed) {
     drawPlacedItemIcons(ctx, def, item, (c, r) => cellRect(team, c, r));
     drawItemSocketVisuals(ctx, item, def, (c, r) => cellRect(team, c, r));
     ctx.globalAlpha = 1;
+    ctx.restore();
   });
 }
 
@@ -3799,6 +3862,7 @@ function onMouseDown(e) {
     startSynergyPreview();
     recalcSynergies();
     syncUiDragState();
+    if (typeof onPrepDragStart === "function") onPrepDragStart();
     syncDragGhostOverlay(e.clientX, e.clientY);
   } else if (hit?.zone === "slot" && hit.container && !hit.item && !ITEM_CATALOG[hit.container.itemId].immovable) {
     e.preventDefault();
@@ -3811,6 +3875,7 @@ function onMouseDown(e) {
     startSynergyPreview();
     recalcSynergies();
     syncUiDragState();
+    if (typeof onPrepDragStart === "function") onPrepDragStart();
     syncDragGhostOverlay(e.clientX, e.clientY);
   }
 }
@@ -3900,6 +3965,7 @@ function finishDragDrop(e) {
   const st = getSideState(side);
   if (!canEditPrepSide(side)) {
     restoreDraggedItem(side);
+    notifyPrepDragRejectedFromDragFrom();
     clearDragUiState();
     return;
   }
@@ -3918,6 +3984,7 @@ function finishDragDrop(e) {
 
   if (dropOnSell) {
     restoreDraggedItem(side);
+    notifyPrepDragRejectedFromDragFrom();
     clearDragUiState();
     renderBench();
     recalcSynergies();
@@ -3998,9 +4065,22 @@ function finishDragDrop(e) {
           }))];
         }
       }
+      if (typeof notifyPrepHeavyDrop === "function") {
+        notifyPrepHeavyDrop(ITEM_CATALOG[dragPayload.itemId]);
+      }
+      if (dragFrom.type === "container" && dragFrom.carriedItems?.length) {
+        dragFrom.carriedItems.forEach((item) => {
+          if (typeof notifyPrepItemPlaced === "function") {
+            notifyPrepItemPlaced(item, ITEM_CATALOG[item.itemId]);
+          }
+        });
+      }
     } else if (dragFrom.type === "container") {
       st.containers = [...st.containers, dragFrom.container];
       st.items = [...st.items, ...dragFrom.carriedItems];
+      dragFrom.carriedItems?.forEach((item) => {
+        if (typeof notifyPrepPlacementRejected === "function") notifyPrepPlacementRejected(item);
+      });
     }
   } else if (!isContainerItem(dragPayload.itemId) && isOnBoard(mx, my, side)) {
     const col = xToCol(mx, side);
@@ -4027,7 +4107,10 @@ function finishDragDrop(e) {
         );
         if (st.bench.length + displaced.length > MAX_BENCH) {
           log("Скамейка полна!");
-          if (dragFrom.type === "item") st.items = [...st.items, dragFrom.item];
+          if (dragFrom.type === "item") {
+            st.items = [...st.items, dragFrom.item];
+            if (typeof notifyPrepPlacementRejected === "function") notifyPrepPlacementRejected(dragFrom.item);
+          }
           clearDragUiState();
           renderBench();
           recalcSynergies();
@@ -4071,17 +4154,26 @@ function finishDragDrop(e) {
         }
         st.items = [...st.items, placed];
         dragPayload.rotation = placement.rotation;
+        if (typeof notifyPrepItemPlaced === "function") {
+          notifyPrepItemPlaced(placed, ITEM_CATALOG[placed.itemId]);
+        }
       } else if (dragFrom.type === "item") {
         st.items = [...st.items, dragFrom.item];
+        if (typeof notifyPrepPlacementRejected === "function") notifyPrepPlacementRejected(dragFrom.item);
       }
     } else if (dragFrom.type === "item") {
       st.items = [...st.items, dragFrom.item];
+      if (typeof notifyPrepPlacementRejected === "function") notifyPrepPlacementRejected(dragFrom.item);
     }
   } else if (dragFrom.type === "item") {
     st.items = [...st.items, dragFrom.item];
+    if (typeof notifyPrepPlacementRejected === "function") notifyPrepPlacementRejected(dragFrom.item);
   } else if (dragFrom.type === "container") {
     st.containers = [...st.containers, dragFrom.container];
     st.items = [...st.items, ...dragFrom.carriedItems];
+    dragFrom.carriedItems?.forEach((item) => {
+      if (typeof notifyPrepPlacementRejected === "function") notifyPrepPlacementRejected(item);
+    });
   }
 
   clearDragUiState();
@@ -4180,6 +4272,7 @@ function startShopDrag(index, e, side = prepViewSide) {
   startSynergyPreview();
   document.querySelector(`.shop-card[data-index="${index}"]`)?.classList.add("shop-dragging");
   syncUiDragState();
+  if (typeof onPrepDragStart === "function") onPrepDragStart();
   if (e?.clientX != null && e?.clientY != null) {
     lastPointerClient.x = e.clientX;
     lastPointerClient.y = e.clientY;
@@ -4199,6 +4292,7 @@ function startBenchDrag(index, e, side = prepViewSide) {
   dragFrom = { type: "bench", index, side };
   startSynergyPreview();
   syncUiDragState();
+  if (typeof onPrepDragStart === "function") onPrepDragStart();
   if (e?.clientX != null && e?.clientY != null) {
     lastPointerClient.x = e.clientX;
     lastPointerClient.y = e.clientY;
@@ -4248,6 +4342,7 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
   fillChar(prepEnemy, enemyProfile);
   prepPlayer?.toggleAttribute("hidden", prepViewSide !== "player");
   prepEnemy?.toggleAttribute("hidden", prepViewSide !== "enemy");
+  if (typeof syncPrepEmotion === "function") syncPrepEmotion(prepViewSide);
 
   const side = prepViewSide;
   const profile = side === "player" ? playerProfile : enemyProfile;

@@ -123,6 +123,8 @@ body.is-ui-dragging * {
   transform: translate(-50%, -50%);
   opacity: 0.94;
   filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.45));
+  transition: filter 80ms ease, opacity 80ms ease;
+  will-change: transform, filter;
 }
 
 .ui-drag-ghost.hidden {
@@ -366,7 +368,14 @@ body.is-ui-dragging * {
 }
 
 .game-layout.phase-transitioning {
-  opacity: 0;
+  opacity: 0.35;
+  transform: scale(1.015);
+  filter: saturate(1.08) brightness(1.04);
+  transition: opacity 200ms ease, transform 220ms ease, filter 220ms ease;
+}
+
+.game-layout {
+  transition: opacity 200ms ease, transform 220ms ease, filter 220ms ease;
 }
 
 /* ─── Фазы: prep / battle ─── */
@@ -7291,4 +7300,77 @@ html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-field-island {
     width: min(var(--battle-stats-panel-w), calc(100% - 12px));
     max-width: min(var(--battle-stats-panel-w), calc(100% - 12px));
   }
+}
+
+/* ─── Prep inventory visual layer ─── */
+
+#app[data-phase="prep"] .prep-field-island {
+  transition: transform 120ms ease;
+}
+
+#app[data-phase="prep"] .prep-field-island.prep-backpack-shake {
+  animation: prep-backpack-shake 0.38s ease-out;
+}
+
+@keyframes prep-backpack-shake {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  15% { transform: translate(calc(var(--prep-shake-power, 0.5) * -2px), 1px) rotate(-0.4deg); }
+  35% { transform: translate(calc(var(--prep-shake-power, 0.5) * 2px), -1px) rotate(0.35deg); }
+  55% { transform: translate(calc(var(--prep-shake-power, 0.5) * -1px), 0) rotate(-0.2deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+#app[data-phase="prep"] .prep-field-island .canvas-scale-wrap {
+  border-radius: 14px;
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+#app[data-phase="prep"] .prep-field-column {
+  filter: saturate(0.96) brightness(1.02);
+}
+
+.prep-emotion-badge {
+  position: absolute;
+  top: 8%;
+  right: 8%;
+  z-index: 4;
+  font-size: clamp(1.4rem, 2.8vw, 2rem);
+  line-height: 1;
+  transform: scale(var(--prep-emotion-scale, 1));
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.45));
+  transition: transform 180ms ease, opacity 180ms ease;
+  pointer-events: none;
+}
+
+.prep-emotion-badge.hidden {
+  opacity: 0;
+}
+
+.prep-emotion-badge.prep-emotion-pop {
+  animation: prep-emotion-pop 260ms ease-out;
+}
+
+@keyframes prep-emotion-pop {
+  0% { transform: scale(0.6); opacity: 0.4; }
+  55% { transform: scale(1.18); opacity: 1; }
+  100% { transform: scale(var(--prep-emotion-scale, 1)); opacity: 1; }
+}
+
+#app[data-phase="prep"][data-prep-side="enemy"] .prep-emotion-badge {
+  right: auto;
+  left: 8%;
+}
+
+body.is-ui-dragging #app[data-phase="prep"] .prep-field-island .canvas-scale-wrap {
+  box-shadow:
+    0 16px 46px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+#app[data-phase="prep"] .prep-field-island:has(#game-canvas.synergy-preview-mode) .canvas-scale-wrap {
+  box-shadow:
+    0 14px 44px rgba(88, 166, 255, 0.12),
+    0 12px 40px rgba(0, 0, 0, 0.35);
 }
