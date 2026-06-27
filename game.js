@@ -843,6 +843,7 @@ function init() {
   loadBattleSettings();
   bindProfileStatusTooltips();
   bindRunStatsToggle();
+  bindBattleBuildStatsToggle();
   bindPrepHeroTooltip();
   bindPlayerCharacteristicsControls(getPlayerCharacteristicsState, getEnemyCharacteristicsState);
   initBoardPreviewControls();
@@ -1180,6 +1181,54 @@ function toggleRunStatsPopover() {
   else openRunStatsPopover();
 }
 
+function isBattleBuildStatsOpen() {
+  return isPopupOpen("battle-build-stats-popover");
+}
+
+function openBattleBuildStatsPopover() {
+  const popover = document.getElementById("battle-build-stats-popover");
+  const btn = document.getElementById("btn-battle-build-stats");
+  if (!popover || !btn) return;
+  popover.classList.remove("hidden");
+  btn.setAttribute("aria-expanded", "true");
+}
+
+function closeBattleBuildStatsPopover() {
+  const popover = document.getElementById("battle-build-stats-popover");
+  const btn = document.getElementById("btn-battle-build-stats");
+  if (!popover || !btn) return;
+  popover.classList.add("hidden");
+  btn.setAttribute("aria-expanded", "false");
+}
+
+function toggleBattleBuildStatsPopover() {
+  if (isBattleBuildStatsOpen()) closeBattleBuildStatsPopover();
+  else openBattleBuildStatsPopover();
+}
+
+function bindBattleBuildStatsToggle() {
+  const btn = document.getElementById("btn-battle-build-stats");
+  const popover = document.getElementById("battle-build-stats-popover");
+  const anchor = document.getElementById("battle-build-stats-anchor");
+  if (!btn || !popover || !anchor) return;
+
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    toggleBattleBuildStatsPopover();
+  });
+
+  document.addEventListener("click", (e) => {
+    if (popover.classList.contains("hidden")) return;
+    if (e.target.closest("#battle-build-stats-anchor")) return;
+    closeBattleBuildStatsPopover();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape" || popover.classList.contains("hidden")) return;
+    closeBattleBuildStatsPopover();
+  });
+}
+
 function returnToMainMenu() {
   pendingGameOver = false;
   gameOver = false;
@@ -1192,6 +1241,7 @@ function returnToMainMenu() {
   dragFrom = null;
   clearDragUiState();
   closeRunStatsPopover();
+  closeBattleBuildStatsPopover();
   closeAllFighterCharacteristicsPopups();
   hideSidebarTooltip();
   hideSynergyTooltip();
@@ -1380,6 +1430,10 @@ function closeAllPopups() {
   }
   if (isRunStatsPopoverOpen()) {
     closeRunStatsPopover();
+    closed = true;
+  }
+  if (isBattleBuildStatsOpen()) {
+    closeBattleBuildStatsPopover();
     closed = true;
   }
   if (isPopupOpen("overlay")) {
@@ -3984,7 +4038,13 @@ function finishDragDrop(e) {
           displaced.forEach((existing) => {
             st.items = st.items.filter((i) => i.uid !== existing.uid);
           });
-          queueDisplaceToBenchAnimations(side, displaced, prepViewSide, () => {
+          queueDisplaceToBenchAnimations(side, displaced, prepViewSide, (item) => {
+            const benchState = getSideState(side);
+            benchState.bench.push({
+              itemId: item.itemId,
+              uid: item.uid,
+              rotation: item.rotation || 0,
+            });
             renderBench();
             recalcSynergies();
             updateUI();
@@ -4235,14 +4295,28 @@ function renderPlayerProfiles() {
   if (!statsEl || !playerAvatarEl || !enemyAvatarEl) return;
 
   const liveBattle = phase === "battle" || phase === "replay";
+  const buildStatsEl = document.getElementById("battle-build-stats-content");
+  const statsOptions = {
+    round,
+    maxRound: RUN_BATTLES,
+    itemCount: Math.max(playerItems.length, enemyItems.length, 1),
+  };
+
   if (liveBattle) {
     statsEl.innerHTML = "";
+    if (buildStatsEl) {
+      buildStatsEl.innerHTML = renderBattleStatsCompareHTML(playerProfile, enemyProfile, {
+        ...statsOptions,
+        liveBattle: true,
+        buildOnly: true,
+      });
+    }
   } else {
+    if (buildStatsEl) buildStatsEl.innerHTML = "";
+    closeBattleBuildStatsPopover();
     statsEl.innerHTML = renderBattleStatsCompareHTML(playerProfile, enemyProfile, {
-      round,
-      maxRound: RUN_BATTLES,
+      ...statsOptions,
       liveBattle: false,
-      itemCount: Math.max(playerItems.length, enemyItems.length, 1),
     });
   }
 

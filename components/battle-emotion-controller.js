@@ -5,8 +5,12 @@
 
 const KAYFU_EMOJI = "🤠";
 
-/** На 80% реже: длительности пульса и ротации ×5. */
+/** Замедление прыгающих эффектов на орбите. */
 const EMOTION_INTERVAL_SCALE = 5;
+/** Быстрый цикл mood/reaction — эмоции должны быть заметны каждые 1–3 с. */
+const MOOD_PULSE_INTERVAL_SCALE = 0.52;
+/** Минимальный интервал между реакциями (сек). */
+const EMOTION_DISPLAY_ROTATION_SEC = 2.2;
 
 const EMOTION_CATALOG = {
   stunned:         { emoji: "😵", variants: ["😵‍💫", "🫠", "💫", "😵💢"], priority: 100, shellClass: "emotion-stunned" },
@@ -57,28 +61,28 @@ function moodPulseRand(team, cycleIndex, part) {
 
 function computeMoodPulseSegment(elapsed, durationPhase, team, cycleIndex, willBeVisible) {
   const mins = (elapsed || 0) / 60;
-  let hideMin = 10.8 * EMOTION_INTERVAL_SCALE;
-  let hideSpan = 7.6 * EMOTION_INTERVAL_SCALE;
+  let hideMin = 2.4 * MOOD_PULSE_INTERVAL_SCALE;
+  let hideSpan = 1.6 * MOOD_PULSE_INTERVAL_SCALE;
   if (mins >= 2) {
-    hideMin = 6.8 * EMOTION_INTERVAL_SCALE;
-    hideSpan = 4.4 * EMOTION_INTERVAL_SCALE;
+    hideMin = 6.8 * MOOD_PULSE_INTERVAL_SCALE;
+    hideSpan = 4.4 * MOOD_PULSE_INTERVAL_SCALE;
   } else if (mins >= 1) {
-    hideMin = 8.4 * EMOTION_INTERVAL_SCALE;
-    hideSpan = 5.2 * EMOTION_INTERVAL_SCALE;
+    hideMin = 8.4 * MOOD_PULSE_INTERVAL_SCALE;
+    hideSpan = 5.2 * MOOD_PULSE_INTERVAL_SCALE;
   } else if (mins >= 0.5) {
-    hideMin = 9.6 * EMOTION_INTERVAL_SCALE;
-    hideSpan = 6.0 * EMOTION_INTERVAL_SCALE;
+    hideMin = 9.6 * MOOD_PULSE_INTERVAL_SCALE;
+    hideSpan = 6.0 * MOOD_PULSE_INTERVAL_SCALE;
   }
   if (durationPhase?.sec >= 120) {
-    hideMin -= 1.2 * EMOTION_INTERVAL_SCALE;
-    hideSpan -= 0.7 * EMOTION_INTERVAL_SCALE;
+    hideMin -= 1.2 * MOOD_PULSE_INTERVAL_SCALE;
+    hideSpan -= 0.7 * MOOD_PULSE_INTERVAL_SCALE;
   } else if (durationPhase?.sec >= 60) {
-    hideMin -= 0.6 * EMOTION_INTERVAL_SCALE;
-    hideSpan -= 0.4 * EMOTION_INTERVAL_SCALE;
+    hideMin -= 0.6 * MOOD_PULSE_INTERVAL_SCALE;
+    hideSpan -= 0.4 * MOOD_PULSE_INTERVAL_SCALE;
   }
 
-  const showMin = 1.6 * EMOTION_INTERVAL_SCALE;
-  const showSpan = (0.9 + moodPulseRand(team, cycleIndex, 9) * 1.1) * EMOTION_INTERVAL_SCALE;
+  const showMin = 0.55 * MOOD_PULSE_INTERVAL_SCALE;
+  const showSpan = (0.45 + moodPulseRand(team, cycleIndex, 9) * 0.55) * MOOD_PULSE_INTERVAL_SCALE;
   const r = moodPulseRand(team, cycleIndex, willBeVisible ? 2 : 3);
 
   if (willBeVisible) return showMin + r * showSpan;
@@ -90,9 +94,9 @@ function ensureMoodPulseState(state, team) {
   if (state.moodPulse[team]) return state.moodPulse[team];
 
   const elapsed = state.visualElapsed ?? state.elapsed ?? 0;
-  const firstWait = computeMoodPulseSegment(elapsed, null, team, 0, false);
+  const firstWait = computeMoodPulseSegment(elapsed, null, team, 0, true);
   state.moodPulse[team] = {
-    visible: false,
+    visible: true,
     cycleIndex: 0,
     nextFlipAt: elapsed + firstWait,
   };
@@ -125,14 +129,14 @@ function pickEmotionVariant(def, key, elapsed, teamSlot = 0) {
   const pool = def?.variants?.length ? def.variants : [def?.emoji || "✨"];
   let h = 0;
   for (let i = 0; i < String(key).length; i += 1) h = (h * 33 + key.charCodeAt(i)) % 1000;
-  const idx = Math.floor(((elapsed || 0) + teamSlot) / (4.2 * EMOTION_INTERVAL_SCALE) + h * 0.17) % pool.length;
+  const idx = Math.floor(((elapsed || 0) + teamSlot) / EMOTION_DISPLAY_ROTATION_SEC + h * 0.17) % pool.length;
   return pool[idx];
 }
 
 function pickMoodEmoji(mood, elapsed, team) {
   const pool = MOOD_VARIANTS[mood?.id] || [mood?.emoji || "🙂"];
   const slot = EMOTION_ORBIT_PHASE[team] || 0;
-  const idx = Math.floor(((elapsed || 0) + slot) / (6.6 * EMOTION_INTERVAL_SCALE)) % pool.length;
+  const idx = Math.floor(((elapsed || 0) + slot) / (EMOTION_DISPLAY_ROTATION_SEC * 1.35)) % pool.length;
   return pool[idx];
 }
 
@@ -155,7 +159,7 @@ function pickRotatingEmotion(flags, elapsed, slot = 0) {
   if (!flags.length) return { key: "healthy", def: EMOTION_CATALOG.healthy };
   const topTier = EMOTION_CATALOG[flags[0]].priority;
   const tier = flags.filter((k) => EMOTION_CATALOG[k].priority >= topTier - 5);
-  const idx = Math.floor((elapsed + slot * 1.3) / (4.4 * EMOTION_INTERVAL_SCALE)) % tier.length;
+  const idx = Math.floor((elapsed + slot * 1.3) / EMOTION_DISPLAY_ROTATION_SEC) % tier.length;
   const key = tier[idx] || flags[0];
   return { key, def: EMOTION_CATALOG[key] };
 }
@@ -202,20 +206,19 @@ function ensureEmotionOrbit(shell, team) {
     orbit.className = "avatar-emotion-orbit";
     orbit.dataset.team = team;
     orbit.innerHTML = `
-      <span class="avatar-emotion-float avatar-emotion-kayfu avatar-emotion-kayfu-active" aria-hidden="true">${KAYFU_EMOJI}</span>
       <span class="avatar-emotion-float avatar-emotion-mood" aria-hidden="true"></span>
       <span class="avatar-emotion-float avatar-emotion-reaction" aria-hidden="true"></span>
+      <span class="avatar-emotion-float avatar-emotion-secondary" aria-hidden="true"></span>
       <span class="avatar-battle-timer" aria-hidden="true" hidden></span>
     `;
     const stage = shell.querySelector(".avatar-hero-stage");
     if (stage) stage.prepend(orbit);
   }
-  if (!orbit.querySelector(".avatar-emotion-kayfu")) {
-    const kayfu = document.createElement("span");
-    kayfu.className = "avatar-emotion-float avatar-emotion-kayfu avatar-emotion-kayfu-active";
-    kayfu.textContent = KAYFU_EMOJI;
-    kayfu.setAttribute("aria-hidden", "true");
-    orbit.prepend(kayfu);
+  if (!orbit.querySelector(".avatar-emotion-secondary")) {
+    const secondary = document.createElement("span");
+    secondary.className = "avatar-emotion-float avatar-emotion-secondary";
+    secondary.setAttribute("aria-hidden", "true");
+    orbit.appendChild(secondary);
   }
   let effectOrbit = shell.querySelector(".avatar-effect-orbit");
   if (!effectOrbit) {
@@ -239,32 +242,22 @@ function layoutEmotionFloat(el, emoji, phase, slotIndex, options = {}) {
   }
   if (show) {
     const angle = phase * 0.9 + slotIndex * Math.PI * 0.85;
-    const rx = 38 + Math.sin(phase * 0.7 + slotIndex) * 8;
-    const ry = 32 + Math.cos(phase * 0.55 + slotIndex * 1.2) * 10;
+    const rx = 42 + Math.sin(phase * 0.7 + slotIndex) * 10;
+    const ry = 38 + Math.cos(phase * 0.55 + slotIndex * 1.2) * 12;
     const x = 50 + Math.cos(angle) * rx;
-    const y = 28 + Math.sin(angle) * ry;
+    const y = 50 + Math.sin(angle) * ry;
     el.style.setProperty("--emo-x", `${x}%`);
     el.style.setProperty("--emo-y", `${y}%`);
     el.style.setProperty("--emo-rot", `${Math.sin(phase * 1.1 + slotIndex) * 12}deg`);
   }
   el.hidden = !show;
   if (options.moodPulse) {
-    el.hidden = false;
     el.classList.toggle("avatar-emotion-mood-active", show);
   }
 }
 
-function layoutKayfuFloat(el, phase, team) {
-  if (!el) return;
-  el.textContent = KAYFU_EMOJI;
-  const side = team === "player" ? -1 : 1;
-  const x = 50 + side * 36 + Math.sin(phase * 0.45 + 0.6) * 5;
-  const y = 44 + Math.cos(phase * 0.38 + 1.2) * 6;
-  el.style.setProperty("--emo-x", `${x}%`);
-  el.style.setProperty("--emo-y", `${y}%`);
-  el.style.setProperty("--emo-rot", `${-6 + Math.sin(phase * 0.55) * 10}deg`);
-  el.hidden = false;
-  el.classList.add("avatar-emotion-kayfu-active");
+function layoutKayfuFloat(_el) {
+  /* Ковбой отключён — только каталог эмоций. */
 }
 
 function hashEffectSlot(key, team) {
@@ -392,26 +385,26 @@ function applyEmotionPresentation(team, presentation, profile, state) {
   if (!shell) return;
 
   const { orbit } = ensureEmotionOrbit(shell, team);
-  const kayfuEl = orbit.querySelector(".avatar-emotion-kayfu");
   const moodEl = orbit.querySelector(".avatar-emotion-mood");
   const reactionEl = orbit.querySelector(".avatar-emotion-reaction");
+  const secondaryEl = orbit.querySelector(".avatar-emotion-secondary");
   const timerEl = orbit.querySelector(".avatar-battle-timer");
 
-  layoutKayfuFloat(kayfuEl, presentation.floatPhase, team);
-
-  const moodVisible = resolveMoodPulseVisible(state, team);
   layoutEmotionFloat(
     moodEl,
-    moodVisible ? presentation.moodEmoji : null,
+    presentation.moodEmoji,
     presentation.floatPhase,
     0,
     { moodPulse: true },
   );
 
-  const reactionEmoji = presentation.primaryEmoji !== presentation.moodEmoji
-    ? presentation.primaryEmoji
-    : (presentation.secondaryEmoji || null);
-  layoutEmotionFloat(reactionEl, reactionEmoji, presentation.floatPhase + 0.8, 1);
+  layoutEmotionFloat(reactionEl, presentation.primaryEmoji, presentation.floatPhase + 0.85, 1);
+
+  const secondaryEmoji = presentation.secondaryEmoji
+    && presentation.secondaryEmoji !== presentation.primaryEmoji
+    ? presentation.secondaryEmoji
+    : null;
+  layoutEmotionFloat(secondaryEl, secondaryEmoji, presentation.floatPhase + 1.55, 2);
 
   if (timerEl) {
     timerEl.textContent = presentation.showTimer ? presentation.elapsedLabel : "";

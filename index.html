@@ -39,6 +39,15 @@
                 </div>
               </div>
               <div class="battle-scene-ui" id="battle-scene-ui" aria-hidden="true">
+                <div class="battle-build-stats-anchor" id="battle-build-stats-anchor">
+                  <button type="button" class="btn-secondary battle-build-stats-btn" id="btn-battle-build-stats" aria-expanded="false" aria-controls="battle-build-stats-popover" title="Сравнение сборок">📊 Сборки</button>
+                  <div class="battle-build-stats-popover center-stats-panel hidden" id="battle-build-stats-popover" role="dialog" aria-labelledby="battle-build-stats-title" aria-modal="true">
+                    <div class="battle-build-stats-popover-head">
+                      <span id="battle-build-stats-title">Сравнение сборок</span>
+                    </div>
+                    <div id="battle-build-stats-content"></div>
+                  </div>
+                </div>
                 <div class="field-avatar-wrap battle-scene-avatar battle-scene-avatar-player" id="player-avatar-panel" aria-label="Аватар игрока">
                   <button type="button" class="btn-secondary btn-player-stats" id="btn-player-stats" aria-expanded="false" aria-controls="player-characteristics-popup" title="H — характеристики">📋 Характеристики</button>
                   <div class="field-avatar-slot" id="player-avatar-slot"></div>
@@ -331,6 +340,7 @@
   <script src="systems/music.js"></script>
   <script src="systems/input-mode.js"></script>
   <script src="systems/gamepad.js"></script>
+  <script src="components/item-flight-controller.js"></script>
   <script src="components/displace-animation.js"></script>
   <script src="components/battle-controls.js"></script>
   <script src="ai-engine.js"></script>

@@ -616,7 +616,7 @@ function syncBenefitStackDisplay(team, state) {
     const iconEl = el.querySelector(".avatar-benefit-stack-icon");
     const valEl = el.querySelector(".avatar-benefit-stack-value");
     if (iconEl) iconEl.textContent = entry.icon;
-    if (valEl) valEl.textContent = `+${Math.round(entry.benefit)}`;
+    if (valEl) valEl.textContent = `+${Math.round(entry.benefit || 0)}`;
 
     const bouncing = entry.bounceUntil > now;
     el.classList.toggle("avatar-benefit-stack-bounce", bouncing);

@@ -625,7 +625,7 @@ function battleStatValRow(label, playerVal, enemyVal, playerCls = "", enemyCls =
 }
 
 function renderBattleStatsCompareHTML(playerProfile, enemyProfile, options = {}) {
-  const { round = 1, maxRound = 16, liveBattle = false, itemCount = 7 } = options;
+  const { round = 1, maxRound = 16, liveBattle = false, itemCount = 7, buildOnly = false } = options;
   const playerName = shortenBattleName(playerProfile.name, "Игрок");
   const enemyName = shortenBattleName(enemyProfile.name, "ИИ");
 
@@ -652,7 +652,7 @@ function renderBattleStatsCompareHTML(playerProfile, enemyProfile, options = {})
   const bpCls = statCompareClass(pBp.score ?? 0, eBp.score ?? 0);
 
   const roundBadge = `<div class="stats-round-badge">Раунд ${Math.min(round, maxRound)} из ${maxRound}</div>`;
-  const fatigueHint = (!liveBattle && typeof getFatigueStartSec === "function" && typeof getFatiguePrepDescription === "function")
+  const fatigueHint = (!buildOnly && !liveBattle && typeof getFatigueStartSec === "function" && typeof getFatiguePrepDescription === "function")
     ? `<div class="stats-fatigue-hint" title="${escapeProfileHtml(getFatiguePrepDescription(round, itemCount))}">⏳ ${escapeProfileHtml(getFatiguePrepDescription(round, itemCount))}</div>`
     : "";
 
@@ -663,14 +663,14 @@ function renderBattleStatsCompareHTML(playerProfile, enemyProfile, options = {})
     ? `<span class="stat-hp-num">${Math.ceil(eHp)}</span>${renderHpBarHTML(eHp, eHpMax, "enemy")}`
     : `<span class="stat-hp-num">${Math.ceil(eHp)}</span>`;
 
-  const hpRow = battleStatRow(
+  const hpRow = buildOnly ? "" : battleStatRow(
     "HP",
     `<div class="stat-compare-hp-cell stat-compare-player">${hpPlayerHtml}</div>`,
     `<div class="stat-compare-hp-cell stat-compare-enemy">${hpEnemyHtml}</div>`,
     `stat-compare-hp-row ${hpRowClass}`.trim(),
   );
 
-  const staminaRow = showStamina ? battleStatRow(
+  const staminaRow = buildOnly || !showStamina ? "" : battleStatRow(
     "⚡",
     `<div class="stat-compare-stamina-cell stat-stamina-cell-player stat-compare-player">
       <span class="stat-stamina-num">${Math.ceil(pStamina)}</span>
@@ -681,7 +681,7 @@ function renderBattleStatsCompareHTML(playerProfile, enemyProfile, options = {})
       <span class="stat-stamina-num">${Math.ceil(eStamina)}</span>
     </div>`,
     "stat-compare-stamina-row",
-  ) : "";
+  );
 
   return `
     <div class="battle-stats-narrow">
@@ -707,7 +707,7 @@ function renderBattleStatsCompareHTML(playerProfile, enemyProfile, options = {})
     "stat-compare-bp-row",
   )}
       </div>
-      <div class="battle-stats-section battle-stats-section-buff${liveBattle ? " battle-stats-section-hidden" : ""}">
+      <div class="battle-stats-section battle-stats-section-buff${liveBattle || buildOnly ? " battle-stats-section-hidden" : ""}">
         <div class="battle-stats-section-title battle-stats-section-title-buff">БАФФ</div>
         <div class="battle-stats-effects">
           <div class="stats-effects-col stats-col-player">
@@ -718,7 +718,7 @@ function renderBattleStatsCompareHTML(playerProfile, enemyProfile, options = {})
           </div>
         </div>
       </div>
-      <div class="battle-stats-section battle-stats-section-debuff${liveBattle ? " battle-stats-section-hidden" : ""}">
+      <div class="battle-stats-section battle-stats-section-debuff${liveBattle || buildOnly ? " battle-stats-section-hidden" : ""}">
         <div class="battle-stats-section-title battle-stats-section-title-debuff">${liveBattle ? "Дебаффы" : "ДЕБА"}</div>
         <div class="battle-stats-effects">
           <div class="stats-effects-col stats-col-player">

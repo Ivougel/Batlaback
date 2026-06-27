@@ -1,22 +1,9 @@
 /**
- * Анимация вытеснения: предметы «вываливаются» с доски и падают на скамейку.
- * Рисуется в DOM-overlay (viewport), чтобы траектория была видна между рюкзаком и магазином.
+ * Анимация вытеснения: предметы летят с доски на скамейку.
+ * Координаты — здесь; физика полёта — в ItemFlightController.
  */
 
-const DISPLACE_FALL_DURATION = 2;
-const DISPLACE_STAGGER = 0.14;
-
-let displaceAnimations = [];
-let displaceAnimIdCounter = 0;
-const displaceDomActive = new Map();
-
-function easeInQuad(t) {
-  return t * t;
-}
-
-function easeInOutSine(t) {
-  return -(Math.cos(Math.PI * t) - 1) / 2;
-}
+const DISPLACE_STAGGER = ITEM_FLIGHT_STAGGER;
 
 function getCanvasClientScale() {
   const canvasEl = document.getElementById("game-canvas");
@@ -86,161 +73,48 @@ function getDisplaceItemEmoji(item) {
   return icons.join("") || "📦";
 }
 
-function ensureDisplaceLayer() {
-  let layer = document.getElementById("displace-fx-layer");
-  if (!layer) {
-    layer = document.createElement("div");
-    layer.id = "displace-fx-layer";
-    layer.className = "displace-fx-layer";
-    layer.setAttribute("aria-hidden", "true");
-    document.body.appendChild(layer);
-  }
-  return layer;
-}
-
-function clearDisplaceDomLayer() {
-  displaceDomActive.forEach((el) => el.remove());
-  displaceDomActive.clear();
-  const layer = document.getElementById("displace-fx-layer");
-  if (layer) layer.innerHTML = "";
-}
-
-function sampleDisplaceAnimPoint(anim, localAge) {
-  if (localAge < 0) {
-    return {
-      x: anim.fromX,
-      y: anim.fromY,
-      alpha: 1,
-      scale: 1,
-    };
-  }
-
-  const t = Math.min(1, localAge / anim.duration);
-  const fallT = easeInQuad(t);
-  const slideT = easeInOutSine(t);
-  const { x: scaleX, y: scaleY } = getCanvasClientScale();
-  const arcLift = Math.sin(t * Math.PI) * uiPx(52) * scaleY;
-  const x = anim.fromX
-    + (anim.toX - anim.fromX) * slideT
-    + Math.sin(t * Math.PI * 2) * anim.wobble * uiPx(10) * scaleX * (1 - t);
-  const y = anim.fromY + (anim.toY - anim.fromY) * fallT - arcLift;
-  const alpha = t > 0.94 ? 1 - (t - 0.94) / 0.06 : 1;
-  const scale = 1 - t * 0.08;
-
-  return { x, y, alpha, scale };
-}
-
-function renderDisplaceDomAnimations() {
-  if (!displaceAnimations.length) {
-    if (displaceDomActive.size) clearDisplaceDomLayer();
-    return;
-  }
-
-  const layer = ensureDisplaceLayer();
-  const active = new Set();
-  const uiScale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--ui-scale")) || 1;
-  const fontSize = 52 * uiScale;
-
-  displaceAnimations.forEach((anim) => {
-    active.add(anim.id);
-    const localAge = anim.age - anim.delay;
-    const pt = sampleDisplaceAnimPoint(anim, localAge);
-
-    let el = displaceDomActive.get(anim.id);
-    if (!el) {
-      el = document.createElement("div");
-      el.className = "displace-flight";
-      el.textContent = getDisplaceItemEmoji(anim.item);
-      layer.appendChild(el);
-      displaceDomActive.set(anim.id, el);
-    }
-
-    el.style.fontSize = `${fontSize}px`;
-    el.style.opacity = String(pt.alpha);
-    el.style.transform = `translate3d(${pt.x}px, ${pt.y}px, 0) translate(-50%, -50%) scale(${pt.scale})`;
-  });
-
-  displaceDomActive.forEach((el, id) => {
-    if (active.has(id)) return;
-    el.remove();
-    displaceDomActive.delete(id);
-  });
-}
-
 function queueDisplaceToBenchAnimations(side, items, team, onItemLanded) {
-  if (!items?.length) return;
+  if (!items?.length || typeof queueItemFlight !== "function") return;
 
   const { x: scaleX } = getCanvasClientScale();
 
   items.forEach((item, index) => {
     const from = getItemVisualCenterClient(item, team);
     const to = getBenchTargetClientPoint(side, index);
-    displaceAnimations.push({
-      id: ++displaceAnimIdCounter,
-      side,
-      item: {
-        itemId: item.itemId,
-        uid: item.uid,
-        rotation: item.rotation || 0,
-        col: item.col,
-        row: item.row,
-      },
-      team,
+    queueItemFlight({
       fromX: from.x,
       fromY: from.y,
       toX: to.x + (index - (items.length - 1) / 2) * uiPx(6) * scaleX,
       toY: to.y,
+      emoji: getDisplaceItemEmoji(item),
+      itemId: item.itemId,
       delay: index * DISPLACE_STAGGER,
-      age: 0,
-      duration: DISPLACE_FALL_DURATION,
-      wobble: (Math.random() - 0.5) * 0.35,
+      meta: { side, team, item },
       onComplete: () => {
-        const st = getSideState(side);
-        st.bench.push({
-          itemId: item.itemId,
-          uid: item.uid,
-          rotation: item.rotation || 0,
-        });
         if (typeof onItemLanded === "function") onItemLanded(item, side);
       },
     });
   });
-
-  renderDisplaceDomAnimations();
 }
 
 function tickDisplaceAnimations(dt) {
-  if (!displaceAnimations.length) return;
-
-  displaceAnimations = displaceAnimations.filter((anim) => {
-    anim.age += dt;
-    if (anim.age < anim.delay + anim.duration) return true;
-
-    try {
-      anim.onComplete?.();
-    } catch (err) {
-      console.error("displace onComplete failed:", err);
-    }
-    return false;
-  });
-
-  renderDisplaceDomAnimations();
+  if (typeof tickItemFlights === "function") tickItemFlights(dt);
 }
 
 function hasActiveDisplaceAnimations(side = null) {
-  if (!side) return displaceAnimations.length > 0;
-  return displaceAnimations.some((anim) => anim.side === side);
+  if (typeof hasActiveItemFlights !== "function") return false;
+  if (!side) return hasActiveItemFlights();
+  return hasActiveItemFlights((m) => m.meta?.side === side);
 }
 
 /** @deprecated Canvas draw replaced by DOM overlay; kept for call-site compatibility. */
 function drawDisplaceAnimations(_ctx, _team) {}
 
 function clearDisplaceAnimations(side = null) {
+  if (typeof clearItemFlights !== "function") return;
   if (!side) {
-    displaceAnimations = [];
-    clearDisplaceDomLayer();
+    clearItemFlights();
     return;
   }
-  displaceAnimations = displaceAnimations.filter((anim) => anim.side !== side);
-  renderDisplaceDomAnimations();
+  clearItemFlights((m) => m.meta?.side === side);
 }
