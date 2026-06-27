@@ -8,6 +8,9 @@ function showSettingsPopup() {
   if (typeof syncMusicVolumeUi === "function") {
     syncMusicVolumeUi(typeof getMusicVolume === "function" ? getMusicVolume() : 0.6);
   }
+  if (typeof syncNegrovEnabledUi === "function") {
+    syncNegrovEnabledUi(typeof isNegrovEnabled === "function" ? isNegrovEnabled() : false);
+  }
   overlay.classList.remove("hidden");
   overlay.setAttribute("aria-hidden", "false");
   document.getElementById("btn-settings")?.setAttribute("aria-expanded", "true");
@@ -45,6 +48,12 @@ function initSettingsControls() {
   slider?.addEventListener("input", (e) => {
     const pct = +e.target.value;
     if (typeof setMusicVolume === "function") setMusicVolume(pct / 100);
+    if (typeof tryStartMusic === "function") tryStartMusic();
+  });
+
+  const negrovCheckbox = document.getElementById("settings-negrov-enabled");
+  negrovCheckbox?.addEventListener("change", (e) => {
+    if (typeof setNegrovEnabled === "function") setNegrovEnabled(e.target.checked);
     if (typeof tryStartMusic === "function") tryStartMusic();
   });
 }

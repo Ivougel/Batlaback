@@ -2,18 +2,41 @@
  * Фоновая музыка: плейлист по очереди, громкость в localStorage, autoplay после первого жеста.
  */
 (function initMusicSystem() {
-  const MUSIC_PLAYLIST = [
-    "music/negrov.mp3",
+  const NEGROV_TRACK = "music/negrov.mp3";
+  const BASE_PLAYLIST = [
     "music/Backpack Bazaar.mp3",
     "music/Backpack Bazaar2.mp3",
   ];
   const MUSIC_VOLUME_KEY = "bb-music-volume";
+  const NEGROV_ENABLED_KEY = "bb-negrov-enabled";
   const DEFAULT_VOLUME = 0.6;
 
   let musicAudio = null;
   let currentTrackIndex = 0;
   let musicStarted = false;
   let unlockBound = false;
+
+  function isNegrovEnabled() {
+    return localStorage.getItem(NEGROV_ENABLED_KEY) === "1";
+  }
+
+  function getMusicPlaylist() {
+    if (isNegrovEnabled()) return [NEGROV_TRACK, ...BASE_PLAYLIST];
+    return [...BASE_PLAYLIST];
+  }
+
+  function getCurrentTrackSrc() {
+    const playlist = getMusicPlaylist();
+    if (!playlist.length) return null;
+    const idx = ((currentTrackIndex % playlist.length) + playlist.length) % playlist.length;
+    return playlist[idx];
+  }
+
+  function isPlayingNegrovTrack() {
+    if (!musicAudio) return false;
+    const src = musicAudio.getAttribute("src") || musicAudio.src || "";
+    return src.includes("negrov");
+  }
 
   function getMusicVolume() {
     const raw = localStorage.getItem(MUSIC_VOLUME_KEY);
@@ -29,6 +52,11 @@
     if (label) label.textContent = `${pct}%`;
   }
 
+  function syncNegrovEnabledUi(enabled) {
+    const checkbox = document.getElementById("settings-negrov-enabled");
+    if (checkbox) checkbox.checked = !!enabled;
+  }
+
   function applyMusicVolume(volume) {
     if (musicAudio) musicAudio.volume = volume;
     syncMusicVolumeUi(volume);
@@ -41,10 +69,40 @@
     return clamped;
   }
 
+  function setNegrovEnabled(enabled) {
+    const next = !!enabled;
+    localStorage.setItem(NEGROV_ENABLED_KEY, next ? "1" : "0");
+    syncNegrovEnabledUi(next);
+
+    if (!musicAudio) return next;
+
+    const playlist = getMusicPlaylist();
+    if (!playlist.length) return next;
+
+    const currentSrc = getCurrentTrackSrc();
+    if (!next && isPlayingNegrovTrack()) {
+      currentTrackIndex = 0;
+      playTrack(0, musicStarted && !musicAudio.paused);
+      return next;
+    }
+
+    const playingSrc = musicAudio.getAttribute("src") || musicAudio.src || "";
+    const idxInNew = playlist.findIndex((track) => playingSrc.includes(track.replace(/^\.?\//, "")));
+    if (idxInNew >= 0) {
+      currentTrackIndex = idxInNew;
+    } else if (currentSrc) {
+      currentTrackIndex = playlist.indexOf(currentSrc);
+      if (currentTrackIndex < 0) currentTrackIndex = 0;
+    }
+
+    return next;
+  }
+
   function playTrack(index, autoplay = false) {
-    if (!musicAudio || !MUSIC_PLAYLIST.length) return;
-    currentTrackIndex = ((index % MUSIC_PLAYLIST.length) + MUSIC_PLAYLIST.length) % MUSIC_PLAYLIST.length;
-    musicAudio.src = MUSIC_PLAYLIST[currentTrackIndex];
+    const playlist = getMusicPlaylist();
+    if (!musicAudio || !playlist.length) return;
+    currentTrackIndex = ((index % playlist.length) + playlist.length) % playlist.length;
+    musicAudio.src = playlist[currentTrackIndex];
     musicAudio.load();
     if (!autoplay) return;
     const playPromise = musicAudio.play();
@@ -61,7 +119,8 @@
   }
 
   function onTrackError() {
-    if (MUSIC_PLAYLIST.length <= 1) return;
+    const playlist = getMusicPlaylist();
+    if (playlist.length <= 1) return;
     playNextTrack();
   }
 
@@ -88,13 +147,16 @@
 
   function initMusic() {
     if (musicAudio) return;
-    musicAudio = new Audio(MUSIC_PLAYLIST[0]);
+    const playlist = getMusicPlaylist();
+    if (!playlist.length) return;
+    musicAudio = new Audio(playlist[0]);
     musicAudio.loop = false;
     musicAudio.preload = "auto";
     musicAudio.addEventListener("ended", onTrackEnded);
     musicAudio.addEventListener("error", onTrackError);
     currentTrackIndex = 0;
     applyMusicVolume(getMusicVolume());
+    syncNegrovEnabledUi(isNegrovEnabled());
     bindMusicUnlock();
     tryStartMusic();
   }
@@ -102,6 +164,9 @@
   window.getMusicVolume = getMusicVolume;
   window.setMusicVolume = setMusicVolume;
   window.syncMusicVolumeUi = syncMusicVolumeUi;
+  window.isNegrovEnabled = isNegrovEnabled;
+  window.setNegrovEnabled = setNegrovEnabled;
+  window.syncNegrovEnabledUi = syncNegrovEnabledUi;
   window.initMusic = initMusic;
   window.tryStartMusic = tryStartMusic;
 })();
