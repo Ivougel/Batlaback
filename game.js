@@ -4308,11 +4308,13 @@ function renderShopCardHTML(def, { extraClasses = "", innerBefore = "", dataAttr
   return `<div class="${classes}"${dataAttrs ? ` ${dataAttrs}` : ""} style="--shop-rarity-color:${rarityColor}">
     ${innerBefore}
     <div class="shop-item-main">
-      <div class="shop-item-visual">
-        <div class="${getItemIconShellClass(def)}" style="background:${def.color}33">${renderItemIconsHTML(def)}</div>
-        <div class="cost" aria-label="Цена ${def.cost}"><span class="cost-value">${def.cost}</span><span class="cost-coin" aria-hidden="true">💰</span></div>
+      <div class="shop-item-stack">
+        <div class="shop-item-visual">
+          <div class="${getItemIconShellClass(def)}" style="background:${def.color}33">${renderItemIconsHTML(def)}</div>
+          <div class="cost" aria-label="Цена ${def.cost}"><span class="cost-value">${def.cost}</span><span class="cost-coin" aria-hidden="true">💰</span></div>
+        </div>
+        ${shapeHtml}
       </div>
-      ${shapeHtml}
     </div>
   </div>`;
 }
