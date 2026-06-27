@@ -50,7 +50,7 @@
   --prep-hero-slot-width: 17%;
   --prep-hero-slot-bottom: 6px;
   --prep-hero-slot-height: min(400px, 46vh);
-  --shop-panel-w: 300px;
+  --shop-panel-w: 320px;
   --shop-card-row-h: calc(108px * var(--ui-scale, 1));
   --shop-item-icon-size: calc(58px * var(--ui-scale, 1));
   --shop-item-icon-font: calc(50px * var(--ui-scale, 1));
@@ -65,7 +65,7 @@
   :root {
     --cell-size: 40px;
     --grid-gap: 28px;
-    --shop-panel-w: 280px;
+    --shop-panel-w: 300px;
     --shop-card-row-h: calc(88px * var(--ui-scale, 1));
     --shop-item-icon-size: calc(54px * var(--ui-scale, 1));
     --shop-item-icon-font: calc(46px * var(--ui-scale, 1));
@@ -2463,7 +2463,7 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 0 calc(4px * var(--ui-scale)) 0;
+  padding: 0;
 }
 
 #app[data-phase="prep"] #shop-panel .shop-card .shop-item-visual .icon {
@@ -2481,6 +2481,7 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
   text-align: center;
   overflow: hidden;
   box-sizing: border-box;
+  padding: calc(2px * var(--ui-scale));
 }
 
 #app[data-phase="prep"] #shop-panel .shop-card .shop-item-visual .icon.icon--duo {
@@ -2504,9 +2505,15 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 
 #app[data-phase="prep"] #shop-panel .shop-card .shop-item-visual .icon .icon-glyph,
 #app[data-phase="prep"] #shop-panel .bench-panel .bench-card .icon .icon-glyph {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex: 0 0 auto;
+  width: 100%;
+  height: 100%;
   line-height: 1;
+  font-size: inherit;
+  transform: translateY(calc(-0.04em * var(--ui-scale, 1)));
 }
 
 #app[data-phase="prep"] #shop-panel .shop-card:not(.empty),
@@ -3221,9 +3228,14 @@ html[data-battle-hud-pin="true"] body {
 
 .shop-card .icon .icon-glyph,
 .bench-card .icon .icon-glyph {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex: 0 0 auto;
+  width: 100%;
+  height: 100%;
   line-height: 1;
+  transform: translateY(calc(-0.04em * var(--ui-scale, 1)));
 }
 
 .shop-card .info,

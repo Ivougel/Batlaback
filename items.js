@@ -85,8 +85,9 @@ function getSocketGemDisplayIcon(def) {
 /** HTML для магазина / скамейки: до 2 эмодзи в одной подложке, слева направо. */
 function renderItemIconsHTML(def) {
   const icons = getItemIcons(def);
-  if (icons.length <= 1) return icons[0] || "📦";
-  return `<span class="icon-duo">${icons.map((glyph) => `<span class="icon-glyph">${glyph}</span>`).join("")}</span>`;
+  if (!icons.length) return `<span class="icon-glyph" aria-hidden="true">📦</span>`;
+  if (icons.length === 1) return `<span class="icon-glyph" aria-hidden="true">${icons[0]}</span>`;
+  return `<span class="icon-duo" aria-hidden="true">${icons.map((glyph) => `<span class="icon-glyph">${glyph}</span>`).join("")}</span>`;
 }
 
 /** Класс оболочки иконки: два эмодзи — та же подложка, уже глифы внутри. */

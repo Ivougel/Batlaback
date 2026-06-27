@@ -2,13 +2,17 @@
  * Анимация вытеснения: предметы «вываливаются» с доски и падают на скамейку.
  */
 
-const DISPLACE_FALL_DURATION = 0.58;
-const DISPLACE_STAGGER = 0.07;
+const DISPLACE_FALL_DURATION = 2;
+const DISPLACE_STAGGER = 0.14;
 
 let displaceAnimations = [];
 
 function easeInQuad(t) {
   return t * t;
+}
+
+function easeInOutSine(t) {
+  return -(Math.cos(Math.PI * t) - 1) / 2;
 }
 
 function easeOutCubic(t) {
@@ -184,11 +188,12 @@ function drawDisplaceAnimations(ctx, team) {
 
     const t = Math.min(1, localAge / anim.duration);
     const fallT = easeInQuad(t);
-    const slideT = easeOutCubic(t);
-    const x = anim.fromX + (anim.toX - anim.fromX) * slideT + Math.sin(t * Math.PI * 2) * anim.wobble * uiPx(8) * (1 - t);
-    const y = anim.fromY + (anim.toY - anim.fromY) * fallT;
-    const alpha = t > 0.88 ? 1 - (t - 0.88) / 0.12 : 1;
-    const scale = 1 - t * 0.18;
+    const slideT = easeInOutSine(t);
+    const arcLift = Math.sin(t * Math.PI) * uiPx(52);
+    const x = anim.fromX + (anim.toX - anim.fromX) * slideT + Math.sin(t * Math.PI * 2) * anim.wobble * uiPx(10) * (1 - t);
+    const y = anim.fromY + (anim.toY - anim.fromY) * fallT - arcLift;
+    const alpha = t > 0.94 ? 1 - (t - 0.94) / 0.06 : 1;
+    const scale = 1 - t * 0.08;
 
     drawDisplacedItem(ctx, anim.item, anim.team, x, y, alpha, scale);
   });
