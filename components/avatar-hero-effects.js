@@ -42,32 +42,41 @@ function renderAvatarHeroHTML(profile, team) {
           <span class="avatar-battle-timer" hidden aria-hidden="true">0:00</span>
         </div>
         <div class="avatar-effect-orbit" data-team="${team}" aria-hidden="true"></div>
-        <div class="avatar-beads avatar-beads-positive" aria-hidden="true"></div>
         <div class="profile-avatar profile-avatar-${team}"
              data-status-title="${className}"
              data-status-desc="${tooltipDesc}"
              tabindex="0"
              aria-label="${className}">${icon}</div>
-        <div class="avatar-beads avatar-beads-negative" aria-hidden="true"></div>
       </div>
       <div class="avatar-hero-footer">
-        <div class="avatar-damage-stacks" aria-hidden="true" hidden></div>
-        <div class="avatar-dot-stacks" aria-hidden="true" hidden></div>
-        <div class="avatar-hero-hp-bar">
-          <div class="avatar-hero-hp-track">
-            <div class="avatar-hero-hp-fill avatar-hero-hp-fill-${team}" style="width:${hpPct}%"></div>
-            <div class="avatar-hero-hp-heal-preview" hidden style="left:${hpPct}%;width:0%"></div>
+        <div class="avatar-hero-anchor">
+          <div class="avatar-damage-stacks" aria-hidden="true" hidden></div>
+          <div class="avatar-hero-bars-col">
+            <div class="avatar-hero-hp-bar">
+              <div class="avatar-hero-hp-track">
+                <div class="avatar-hero-hp-fill avatar-hero-hp-fill-${team}" style="width:${hpPct}%"></div>
+                <div class="avatar-hero-hp-heal-preview" hidden style="left:${hpPct}%;width:0%"></div>
+              </div>
+              <span class="avatar-hero-hp-label">${Math.ceil(hpCurrent)}/${hpMax}</span>
+            </div>
+            <div class="avatar-hero-stamina-bar">
+              <div class="avatar-hero-stamina-track">
+                <div class="avatar-hero-stamina-fill avatar-hero-stamina-fill-${team}" style="width:${staminaPct}%"></div>
+              </div>
+              <span class="avatar-hero-stamina-label">${Math.ceil(staminaCurrent)}/${staminaMax}</span>
+            </div>
           </div>
-          <span class="avatar-hero-hp-label">${Math.ceil(hpCurrent)}/${hpMax}</span>
-        </div>
-        <div class="avatar-hero-stamina-bar">
-          <div class="avatar-hero-stamina-track">
-            <div class="avatar-hero-stamina-fill avatar-hero-stamina-fill-${team}" style="width:${staminaPct}%"></div>
+          <div class="avatar-hero-status-zones" aria-hidden="true">
+            <div class="avatar-status-zone avatar-status-zone-buffs">
+              <div class="avatar-beads avatar-beads-positive avatar-status-stack" aria-hidden="true"></div>
+              <div class="avatar-benefit-stacks" aria-hidden="true" hidden></div>
+            </div>
+            <div class="avatar-status-zone avatar-status-zone-debuffs">
+              <div class="avatar-hero-debuff-row" hidden></div>
+              <div class="avatar-dot-stacks" aria-hidden="true" hidden></div>
+            </div>
           </div>
-          <span class="avatar-hero-stamina-label">${Math.ceil(staminaCurrent)}/${staminaMax}</span>
         </div>
-        <div class="avatar-benefit-stacks" aria-hidden="true" hidden></div>
-        <div class="avatar-hero-debuff-row" hidden></div>
       </div>
     </div>
   `;
@@ -79,7 +88,7 @@ function getBeadDebuffLabel(chip) {
 }
 
 function renderPositiveBeadHTML(bead, index, total) {
-  const count = bead.count > 1 ? `<span class="avatar-bead-count">×${bead.count}</span>` : "";
+  const countHtml = bead.count > 1 ? `<span class="avatar-bead-count">${bead.count}</span>` : "";
   const title = escapeProfileHtml(bead.title || bead.icon || "");
   const transient = bead.transient ? " avatar-bead-transient" : "";
   const opacity = bead.transient && bead.maxAge
@@ -88,18 +97,21 @@ function renderPositiveBeadHTML(bead, index, total) {
   return `<span class="avatar-bead avatar-bead-positive avatar-bead-${bead.kind || "buff"}${transient}"
     style="--bead-i:${index};--bead-n:${Math.max(1, total)};opacity:${opacity.toFixed(2)}"
     data-bead-key="${escapeProfileHtml(bead.key || bead.id || "")}"
-    title="${title}">${bead.icon}${count}</span>`;
+    title="${title}"><span class="avatar-bead-icon">${bead.icon}</span>${countHtml}</span>`;
 }
 
 function renderDebuffBeadHTML(chip) {
-  const label = getBeadDebuffLabel(chip);
   const title = escapeProfileHtml((chip.lines || []).join("\n") || chip.title || "");
+  const value = Math.ceil(Number(chip.value) || 0);
+  const valueHtml = value > 1
+    ? `<span class="avatar-bead-debuff-value">${value}</span>`
+    : "";
   return `<span class="avatar-bead avatar-bead-debuff avatar-bead-debuff-${escapeProfileHtml(chip.id)}"
     data-status-id="${escapeProfileHtml(chip.id)}"
     data-status-title="${escapeProfileHtml(chip.title || "")}"
     data-status-desc="${title}"
     tabindex="0"
-    title="${title}"><span class="avatar-bead-debuff-icon">${chip.icon}</span><span class="avatar-bead-debuff-label">${escapeProfileHtml(label)}</span><span class="avatar-bead-debuff-value">${chip.value}</span></span>`;
+    title="${title}"><span class="avatar-bead-debuff-icon">${chip.icon}</span>${valueHtml}</span>`;
 }
 
 function collectPositiveBeads(profile, team, state) {
@@ -202,7 +214,8 @@ function syncAvatarHeroHpOnly(team, hpCurrent, hpMax, state = null) {
 
 function syncAvatarCompanionBeads(team, state) {
   const slot = getAvatarSlotEl(team);
-  const posEl = slot?.querySelector(".avatar-beads-positive");
+  const posEl = slot?.querySelector(".avatar-status-zone-buffs .avatar-beads-positive")
+    || slot?.querySelector(".avatar-beads-positive");
   if (!posEl || !state?.avatarCompanions?.[team]) return;
 
   const companions = state.avatarCompanions[team].filter((c) => c.age < c.maxAge);
@@ -215,12 +228,12 @@ function syncAvatarCompanionBeads(team, state) {
   companions.forEach((c, i) => {
     let el = posEl.querySelector(`.avatar-bead-transient[data-bead-key="${CSS.escape(c.key)}"]`);
     const opacity = Math.max(0.12, 1 - (c.age / c.maxAge) * 0.88);
-    const countHtml = c.count > 1 ? `<span class="avatar-bead-count">×${c.count}</span>` : "";
+    const countHtml = c.count > 1 ? `<span class="avatar-bead-count">${c.count}</span>` : "";
     if (!el) {
       posEl.insertAdjacentHTML("beforeend", `<span class="avatar-bead avatar-bead-positive avatar-bead-${c.kind || "buff"} avatar-bead-transient"
         style="--bead-i:${i};--bead-n:${Math.max(1, companions.length)};opacity:${opacity.toFixed(2)}"
         data-bead-key="${escapeProfileHtml(c.key)}"
-        title="${escapeProfileHtml(c.title || "")}">${c.icon}${countHtml}</span>`);
+        title="${escapeProfileHtml(c.title || "")}"><span class="avatar-bead-icon">${c.icon}</span>${countHtml}</span>`);
       return;
     }
     el.style.opacity = String(opacity);
@@ -228,8 +241,8 @@ function syncAvatarCompanionBeads(team, state) {
     el.style.setProperty("--bead-n", String(Math.max(1, companions.length)));
     const countEl = el.querySelector(".avatar-bead-count");
     if (c.count > 1) {
-      if (countEl) countEl.textContent = `×${c.count}`;
-      else el.insertAdjacentHTML("beforeend", `<span class="avatar-bead-count">×${c.count}</span>`);
+      if (countEl) countEl.textContent = String(c.count);
+      else el.insertAdjacentHTML("beforeend", `<span class="avatar-bead-count">${c.count}</span>`);
     } else if (countEl) {
       countEl.remove();
     }
@@ -262,9 +275,10 @@ function syncAvatarHeroEffects(team, profile, state) {
   if (staminaLabel) staminaLabel.textContent = formatHeroStaminaLabel(staminaCurrent, staminaMax);
   syncAvatarHeroHealPreview(shell, hpCurrent, hpMax, metrics?.projectedHeal2s ?? 0);
 
-  const posEl = shell.querySelector(".avatar-beads-positive");
-  const debuffRow = shell.querySelector(".avatar-hero-debuff-row");
-  const negRing = shell.querySelector(".avatar-beads-negative");
+  const posEl = shell.querySelector(".avatar-status-zone-buffs .avatar-beads-positive")
+    || shell.querySelector(".avatar-beads-positive");
+  const debuffRow = shell.querySelector(".avatar-status-zone-debuffs .avatar-hero-debuff-row")
+    || shell.querySelector(".avatar-hero-debuff-row");
 
   const posBeads = collectPositiveBeads(profile, team, state);
   if (posEl) {
@@ -280,16 +294,6 @@ function syncAvatarHeroEffects(team, profile, state) {
   if (debuffRow) {
     debuffRow.hidden = debuffs.length === 0;
     debuffRow.innerHTML = debuffs.map(renderDebuffBeadHTML).join("");
-  }
-  if (negRing) {
-    negRing.innerHTML = debuffs.slice(0, 6).map((chip, i, arr) => {
-      const angle = (-Math.PI / 2) + (i / Math.max(1, arr.length)) * Math.PI * 1.15;
-      const rx = 46 + (i % 2) * 6;
-      const x = 50 + Math.cos(angle) * rx;
-      const y = 50 + Math.sin(angle) * rx * 0.72;
-      const inner = renderDebuffBeadHTML(chip);
-      return `<span class="avatar-bead-debuff-ring" style="--bead-x:${x}%;--bead-y:${y}%">${inner}</span>`;
-    }).join("");
   }
 
   shell.classList.toggle("avatar-hero-has-buffs", posBeads.length > 0);

@@ -219,11 +219,13 @@ function recordDotDamageDealt(state, sourceTeam, item, amount, dotKind = "poison
   if (isBattleCountdownActive(state)) return;
 
   initBattleDamageTracker(state);
-  const store = state.dotStacks[sourceTeam];
+  const victimTeam = sourceTeam === "player" ? "enemy" : "player";
+  const store = state.dotStacks[victimTeam];
   const entry = ensureDotStackEntry(store, item.uid, item, dotKind);
   entry.dotDamage += value;
+  entry.sourceTeam = sourceTeam;
   entry.bounceUntil = (state.elapsed || 0) + DAMAGE_STACK_BOUNCE_SEC;
-  syncDotStackDisplay(sourceTeam, state);
+  syncDotStackDisplay(victimTeam, state);
 }
 
 function recordIncomingDamage(state, targetTeam, sourceTeam, item, damage) {
@@ -294,9 +296,16 @@ function formatBenefitStackTooltipMeta(entry) {
 function formatDotStackTooltipMeta(entry) {
   const amount = Math.round(entry.dotDamage || 0);
   const label = entry.dotKind === "fire" ? "DoT огонь" : "DoT яд";
+  const sourceLabel = entry.sourceTeam === "player"
+    ? "от вас"
+    : entry.sourceTeam === "enemy"
+      ? "от противника"
+      : "";
   return {
     title: formatStackItemName(entry),
-    desc: `${label}: ${amount} HP`,
+    desc: sourceLabel
+      ? `${label} ${sourceLabel}: ${amount} HP`
+      : `${label}: ${amount} HP`,
   };
 }
 
@@ -326,8 +335,8 @@ function recordBenefitEffect(state, team, item, amount, benefitKind = "other") {
 
 function getDamageStackSlotViewport(team, slotIndex, total) {
   const slot = typeof getAvatarSlotEl === "function" ? getAvatarSlotEl(team) : null;
-  const footer = slot?.querySelector(".avatar-hero-footer");
-  const stacksEl = footer?.querySelector(".avatar-damage-stacks");
+  const anchor = slot?.querySelector(".avatar-hero-anchor") || slot?.querySelector(".avatar-hero-footer");
+  const stacksEl = anchor?.querySelector(".avatar-damage-stacks");
   if (stacksEl) {
     const existing = stacksEl.querySelector(`[data-stack-uid][data-slot="${slotIndex}"]`);
     if (existing) {
@@ -482,44 +491,44 @@ function renderDamageFlights(state) {
 }
 
 function ensureDamageStacksEl(shell) {
-  const footer = shell.querySelector(".avatar-hero-footer");
-  if (!footer) return null;
-  let stacks = footer.querySelector(".avatar-damage-stacks");
+  const anchor = shell.querySelector(".avatar-hero-anchor") || shell.querySelector(".avatar-hero-footer");
+  if (!anchor) return null;
+  let stacks = anchor.querySelector(".avatar-damage-stacks");
   if (!stacks) {
     stacks = document.createElement("div");
     stacks.className = "avatar-damage-stacks";
     stacks.setAttribute("aria-hidden", "true");
-    footer.insertBefore(stacks, footer.firstChild);
+    anchor.insertBefore(stacks, anchor.firstChild);
   }
   return stacks;
 }
 
 function ensureBenefitStacksEl(shell) {
-  const footer = shell.querySelector(".avatar-hero-footer");
-  if (!footer) return null;
-  let stacks = footer.querySelector(".avatar-benefit-stacks");
+  const buffZone = shell.querySelector(".avatar-status-zone-buffs")
+    || shell.querySelector(".avatar-hero-footer");
+  if (!buffZone) return null;
+  let stacks = buffZone.querySelector(".avatar-benefit-stacks");
   if (!stacks) {
     stacks = document.createElement("div");
     stacks.className = "avatar-benefit-stacks";
     stacks.setAttribute("aria-hidden", "true");
-    const staminaBar = footer.querySelector(".avatar-hero-stamina-bar");
-    if (staminaBar) staminaBar.insertAdjacentElement("afterend", stacks);
-    else footer.appendChild(stacks);
+    buffZone.appendChild(stacks);
   }
   return stacks;
 }
 
 function ensureDotStacksEl(shell) {
-  const footer = shell.querySelector(".avatar-hero-footer");
-  if (!footer) return null;
-  let stacks = footer.querySelector(".avatar-dot-stacks");
+  const debuffZone = shell.querySelector(".avatar-status-zone-debuffs")
+    || shell.querySelector(".avatar-hero-footer");
+  if (!debuffZone) return null;
+  let stacks = debuffZone.querySelector(".avatar-dot-stacks");
   if (!stacks) {
     stacks = document.createElement("div");
     stacks.className = "avatar-dot-stacks";
     stacks.setAttribute("aria-hidden", "true");
-    const damageStacks = footer.querySelector(".avatar-damage-stacks");
-    if (damageStacks) damageStacks.insertAdjacentElement("afterend", stacks);
-    else footer.insertBefore(stacks, footer.firstChild);
+    const debuffRow = debuffZone.querySelector(".avatar-hero-debuff-row");
+    if (debuffRow) debuffRow.insertAdjacentElement("afterend", stacks);
+    else debuffZone.appendChild(stacks);
   }
   return stacks;
 }

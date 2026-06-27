@@ -347,7 +347,10 @@ function createBattleSide(items, classId, prepMeta = {}) {
     hpThresholdFired: new Set(),
     sideActivationTotal: 0,
     guaranteedCritTimer: 0,
+    guaranteedCritHitsRemaining: 0,
     mutualHpThresholdFired: new Set(),
+    foeHpThresholdFired: new Set(),
+    debuffThresholdFired: new Set(),
     hearts: 0,
     heartThresholdFired: new Set(),
     dodgeInterval: 0,
@@ -443,12 +446,12 @@ function finalizeSideStamina(side) {
   side.staminaRegen = STAMINA_REGEN_PER_SEC + weaponCount * STAMINA_WEAPON_REGEN_BONUS;
 }
 
-function spendBattleStamina(state, side, team, amount, item) {
+function spendBattleStamina(state, side, team, amount, item, foe) {
   if (amount <= 0) return;
   side.stamina = Math.max(0, side.stamina - amount);
   side.staminaSpendFlash = 0.42;
   side.lastStaminaSpend = amount;
-  if (item) applyInvulnOnStaminaSpend(state, item, side, team, amount);
+  if (item) applyInvulnOnStaminaSpend(state, item, side, team, amount, foe);
   if (typeof queueStaminaSpendFeedback === "function") {
     queueStaminaSpendFeedback(state, team, amount, item);
   }
@@ -508,6 +511,12 @@ function tryActivateBattleRage(side, state, team, sourceLabel) {
   if (rageEffect.gainBlock) {
     applyGainStackEffect(state, { stack: "block", value: Number(rageEffect.gainBlock) }, null, side, team);
   }
+  if (rageEffect.cleanseDebuffs && typeof cleanseSideDebuffs === "function") {
+    cleanseSideDebuffs(side, Number(rageEffect.cleanseDebuffs));
+  }
+  if (rageEffect.gainStack) {
+    applyGainStackEffect(state, rageEffect.gainStack, null, side, team);
+  }
   finalizeSideCombatStats(side);
   pushBattleLog(state, {
     actor: team,
@@ -558,6 +567,110 @@ function checkMutualHpThresholdEffects(state) {
           });
         }
       });
+    });
+  });
+}
+
+function checkFoeHpThresholdEffects(state) {
+  if (!state?.player || !state?.enemy) return;
+  [
+    { side: state.player, foe: state.enemy, team: "player" },
+    { side: state.enemy, foe: state.player, team: "enemy" },
+  ].forEach(({ side, foe, team }) => {
+    if (!foe?.maxHp) return;
+    const foeRatio = foe.hp / foe.maxHp;
+    const selfRatio = side.maxHp > 0 ? side.hp / side.maxHp : 1;
+    side.items.forEach((item) => {
+      collectItemBattleEffects(item).forEach((effect) => {
+        if (effect.type !== "foeHpThreshold") return;
+        const threshold = Number(effect.threshold) || 0.5;
+        const selfThreshold = Number(effect.selfThreshold);
+        const foeOk = foeRatio <= threshold;
+        const selfOk = Number.isFinite(selfThreshold) ? selfRatio <= selfThreshold : false;
+        if (!foeOk && !selfOk) return;
+        const key = getStackThresholdKey(item, effect);
+        if (!side.foeHpThresholdFired) side.foeHpThresholdFired = new Set();
+        if (effect.once !== false && side.foeHpThresholdFired.has(key)) return;
+        if (effect.once !== false) side.foeHpThresholdFired.add(key);
+        const rt = item.runtime || createRuntimeState(item);
+        const def = ITEM_CATALOG[item.itemId];
+        let dmg = Number(effect.damage) || 0;
+        if (effect.damagePerFoeDebuffMult && typeof countSideDebuffs === "function") {
+          dmg += countSideDebuffs(foe) * Number(effect.damagePerFoeDebuffMult);
+        }
+        if (dmg > 0 && foe) {
+          const savedLs = side.lifesteal;
+          if (effect.lifesteal) side.lifesteal = Number(effect.lifesteal);
+          executeEffect(state, {
+            type: "damage",
+            value: dmg,
+            damageType: effect.damageType || "magic",
+          }, item, side, foe, rt, team);
+          side.lifesteal = savedLs;
+        }
+        if (effect.gainStack) applyGainStackEffect(state, effect.gainStack, item, side, team);
+        if (state && def) {
+          pushBattleLog(state, {
+            actor: team,
+            type: "buff",
+            source: def.name,
+            message: `${battleTeamLabel(team)} · ${def.name}: порог HP противника`,
+          });
+        }
+      });
+    });
+  });
+}
+
+function checkDebuffThresholdEffects(state, side, foe, team) {
+  if (!side?.items || typeof countSideDebuffs !== "function") return;
+  const debuffs = countSideDebuffs(side);
+  side.items.forEach((item) => {
+    collectItemBattleEffects(item).forEach((effect) => {
+      if (effect.type !== "debuffThreshold") return;
+      const need = Number(effect.threshold) || 10;
+      if (debuffs < need) return;
+      const key = getStackThresholdKey(item, effect);
+      if (!side.debuffThresholdFired) side.debuffThresholdFired = new Set();
+      if (effect.once !== false && side.debuffThresholdFired.has(key)) return;
+      if (effect.once !== false) side.debuffThresholdFired.add(key);
+      const rt = item.runtime || createRuntimeState(item);
+      const def = ITEM_CATALOG[item.itemId];
+      if (effect.cleanseDebuffs && typeof cleanseSideDebuffs === "function") {
+        cleanseSideDebuffs(side, effect.cleanseDebuffs);
+      }
+      if (effect.gainStack) applyGainStackEffect(state, effect.gainStack, item, side, team);
+      if (effect.gainDominantStack) {
+        const stacks = ["spikes", "block", "empower", "regen", "luck", "heat", "mana"];
+        let maxType = stacks[0];
+        let maxVal = getSideStack(side, maxType);
+        stacks.forEach((t) => {
+          const v = getSideStack(side, t);
+          if (v > maxVal) { maxVal = v; maxType = t; }
+        });
+        applyGainStackEffect(state, {
+          stack: maxType,
+          value: Number(effect.gainDominantStack) || 8,
+        }, item, side, team);
+      }
+      if (effect.convertHp) {
+        const hpCost = Math.min(Number(effect.convertHp.hpCost) || 15, Math.max(0, side.hp - 1));
+        if (hpCost > 0) {
+          side.hp -= hpCost;
+          applyGainStackEffect(state, {
+            stack: effect.convertHp.stack || "regen",
+            value: effect.convertHp.stackGain || 35,
+          }, item, side, team);
+        }
+      }
+      if (state && def) {
+        pushBattleLog(state, {
+          actor: team,
+          type: "buff",
+          source: def.name,
+          message: `${battleTeamLabel(team)} · ${def.name}: ${need}+ дебаффов`,
+        });
+      }
     });
   });
 }
@@ -801,6 +914,12 @@ function checkStackThresholds(state, self, foe, team, sourceItem = null) {
       if (effect.critChance) {
         self.critChance = Math.min(MAX_CRIT_CHANCE, (self.critChance || 0) + Number(effect.critChance));
       }
+      if (effect.guaranteedCritHits) {
+        self.guaranteedCritHitsRemaining = Math.max(
+          self.guaranteedCritHitsRemaining || 0,
+          Number(effect.guaranteedCritHits) || 3,
+        );
+      }
       if (effect.convertHp) {
         const hpCost = Math.min(Number(effect.convertHp.hpCost) || 15, Math.max(0, self.hp - 1));
         if (hpCost > 0) {
@@ -876,6 +995,14 @@ function tickPeriodicItemEffects(state, dt) {
           if (pick.gainStack) applyGainStackEffect(state, pick.gainStack, item, self, team);
           if (pick.foePoison && foe) executeEffect(state, { type: "poison", value: pick.foePoison }, item, self, foe, rt, team);
           return;
+        }
+        if (effect.stealFoeStack && foe && typeof spendSideStack === "function" && typeof addSideStack === "function") {
+          const sf = effect.stealFoeStack;
+          const stack = sf.stack || "heat";
+          const amt = Number(sf.value) || 1;
+          if (spendSideStack(foe, stack, amt)) {
+            applyGainStackEffect(state, { stack, value: amt }, item, self, team);
+          }
         }
         if (effect.gainStack) {
           if (effect.chance == null || rollEffectChance(self, effect.chance)) {
@@ -1173,6 +1300,9 @@ function checkActivationThresholdEffects(state, side, foe, team) {
       if (effect.foePoison && foe) {
         executeEffect(state, { type: "poison", value: effect.foePoison }, item, side, foe, rt, team);
       }
+      if (effect.cleanseDebuffs && typeof cleanseSideDebuffs === "function") {
+        cleanseSideDebuffs(side, effect.cleanseDebuffs);
+      }
       if (effect.repeat !== false && effect.once === false) {
         side.sideActivationTotal = 0;
       }
@@ -1209,21 +1339,28 @@ function tryZeroStaminaItemEffects(state, side, team) {
   });
 }
 
-function applyInvulnOnStaminaSpend(state, item, side, team, staminaCost) {
+function applyInvulnOnStaminaSpend(state, item, side, team, staminaCost, foe) {
   collectItemBattleEffects(item).forEach((effect) => {
     if (effect.type !== "invulnOnStaminaSpend") return;
     const need = Number(effect.staminaCost) || 10;
     if (staminaCost < need) return;
-    grantSideInvulnerability(side, effect.duration || 2);
-    if (effect.gainStack) applyGainStackEffect(state, effect.gainStack, item, side, team);
+    const rt = item.runtime || createRuntimeState(item);
     const def = ITEM_CATALOG[item.itemId];
+    if (effect.foeSlow && foe) {
+      executeEffect(state, {
+        type: "slow",
+        value: Number(effect.foeSlow),
+        duration: Number(effect.slowDuration) || 6,
+      }, item, side, foe, rt, team);
+    } else if ((effect.duration || 0) > 0) {
+      grantSideInvulnerability(side, effect.duration || 2);
+    }
+    if (effect.gainStack) applyGainStackEffect(state, effect.gainStack, item, side, team);
     if (state && def) {
-      pushBattleLog(state, {
-        actor: team,
-        type: "buff",
-        source: def.name,
-        message: `${battleTeamLabel(team)} · ${def.name}: неуязвимость ${effect.duration || 2}с`,
-      });
+      const msg = effect.foeSlow
+        ? `${battleTeamLabel(team)} · ${def.name}: замедление ${effect.foeSlow}`
+        : `${battleTeamLabel(team)} · ${def.name}: неуязвимость ${effect.duration || 2}с`;
+      pushBattleLog(state, { actor: team, type: "buff", source: def.name, message: msg });
     }
   });
 }
@@ -1483,6 +1620,9 @@ function applyPassiveEffect(side, item, effect) {
       side.maxStamina += Number(effect.value) || 1;
       side.stamina += Number(effect.value) || 1;
       break;
+    case "procChanceBonus":
+      side.procChanceBonus = (side.procChanceBonus || 0) + (Number(effect.value) || 0);
+      break;
     case "lifestealPerTag": {
       const count = countTaggedItemsOnSide(side, effect.tag || "cold");
       side.lifesteal += count * (Number(effect.value) || 0.15);
@@ -1570,6 +1710,7 @@ function applyTagScaledMaxHp(side, effect) {
 
 function getEffectiveCritChance(side, item, foe) {
   if ((side.guaranteedCritTimer || 0) > 0) return 1;
+  if ((side.guaranteedCritHitsRemaining || 0) > 0) return 1;
   let crit = side.critChance || 0;
   (side.items || []).forEach((it) => {
     collectItemBattleEffects(it).forEach((effect) => {
@@ -1686,7 +1827,7 @@ function battleTick(state, dt) {
         return;
       }
       if (staminaCost > 0) {
-        spendBattleStamina(state, self, team, staminaCost, item);
+        spendBattleStamina(state, self, team, staminaCost, item, foe);
       }
       activateItem(state, item, self, foe, team);
       activations += 1;
@@ -1704,8 +1845,11 @@ function battleTick(state, dt) {
 
 function tickStatusEffects(state, dt) {
   checkMutualHpThresholdEffects(state);
+  checkFoeHpThresholdEffects(state);
   [state.player, state.enemy].forEach((side, idx) => {
     const team = idx === 0 ? "player" : "enemy";
+    const foe = idx === 0 ? state.enemy : state.player;
+    checkDebuffThresholdEffects(state, side, foe, team);
     side.timedBuffs = side.timedBuffs.filter((b) => {
       b.remaining -= dt;
       return b.remaining > 0;
@@ -1965,6 +2109,10 @@ function triggerOnActivateListeners(state, sourceItem, self, foe, team) {
     effects.forEach((effect) => {
       if (effect.type !== "onActivate") return;
       if (effect.chance != null && !rollEffectChance(self, effect.chance)) return;
+      if (effect.hpCost) {
+        const pay = Math.min(Number(effect.hpCost), Math.max(0, self.hp - 1));
+        if (pay > 0) self.hp -= pay;
+      }
       if (effect.gainStack) applyGainStackEffect(state, effect.gainStack, listenerItem, self, team);
       if (effect.heal) executeEffect(state, { type: "heal", value: effect.heal }, listenerItem, self, foe, rt, team);
     });
@@ -1989,6 +2137,13 @@ function activateItem(state, item, self, foe, team) {
     const tr = effect.trigger || effect.phase;
     if (tr === "on_hit" || tr === "on_block" || tr === "battle_start" || tr === "passive" || tr === "on_miss") return;
     applySpendStackEffect(state, effect, item, self, foe, rt, team);
+  });
+  allEffects.forEach((effect) => {
+    if (effect.type !== "onActivate") return;
+    if (effect.hpCost) {
+      const pay = Math.min(Number(effect.hpCost), Math.max(0, self.hp - 1));
+      if (pay > 0) self.hp -= pay;
+    }
   });
   const activeEffects = allEffects.filter((e) => {
     const tr = e.trigger || e.phase;
@@ -2016,7 +2171,8 @@ function activateItem(state, item, self, foe, team) {
       || effect.type === "onRevive" || effect.type === "onFoeHeal" || effect.type === "critPerFoeDebuff"
       || effect.type === "lifestealPerTag" || effect.type === "healPerTag"
       || effect.type === "onDefend" || effect.type === "activationLimit" || effect.type === "preventMiss"
-      || effect.type === "onActivate") return;
+      || effect.type === "onActivate" || effect.type === "foeHpThreshold" || effect.type === "debuffThreshold"
+      || effect.type === "procChanceBonus" || effect.type === "damagePerTotalStacks") return;
     executeEffect(state, effect, item, self, foe, rt, team);
   });
 
@@ -2150,6 +2306,9 @@ function executeEffect(state, effect, item, self, foe, rt, team, execOptions = {
       if (critChance > 0 && Math.random() < critChance) {
         isCrit = true;
         dmg *= 2 + critDamageBonus;
+        if ((self.guaranteedCritHitsRemaining || 0) > 0) {
+          self.guaranteedCritHitsRemaining -= 1;
+        }
         pushBattleLog(state, {
           actor: team,
           type: "crit",

@@ -1431,13 +1431,21 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 }
 
 .avatar-damage-stacks {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + calc(2px * var(--ui-scale)));
+  transform: translateX(-50%);
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+  align-content: flex-end;
   gap: calc(6px * var(--ui-scale));
-  min-height: calc(52px * var(--ui-scale));
-  margin-bottom: calc(4px * var(--ui-scale));
+  width: max-content;
+  max-width: calc(var(--battle-avatar-w) * 1.35);
+  min-height: 0;
+  margin: 0;
   pointer-events: none;
+  z-index: 3;
 }
 
 .avatar-damage-stack,
@@ -1476,11 +1484,11 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 
 .avatar-benefit-stacks {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: calc(6px * var(--ui-scale));
-  min-height: calc(44px * var(--ui-scale));
-  margin-top: calc(2px * var(--ui-scale));
+  flex-direction: column;
+  align-items: inherit;
+  gap: calc(5px * var(--ui-scale));
+  min-height: 0;
+  margin: 0;
   pointer-events: none;
 }
 
@@ -1512,11 +1520,11 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 
 .avatar-dot-stacks {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: calc(6px * var(--ui-scale));
-  min-height: calc(52px * var(--ui-scale));
-  margin-bottom: calc(4px * var(--ui-scale));
+  flex-direction: column;
+  align-items: inherit;
+  gap: calc(5px * var(--ui-scale));
+  min-height: 0;
+  margin: 0;
   pointer-events: none;
 }
 
@@ -1974,12 +1982,168 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 }
 
 .avatar-hero-footer {
-  width: min(100%, calc(var(--battle-avatar-w) * 0.95));
+  position: relative;
+  width: min(100%, calc(var(--battle-avatar-w) * 1.08));
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: calc(4px * var(--ui-scale));
+  gap: 0;
   pointer-events: none;
+  overflow: visible;
+  flex-shrink: 0;
+}
+
+.avatar-hero-anchor {
+  position: relative;
+  width: 100%;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+.avatar-hero-shell-player .avatar-hero-anchor,
+.avatar-hero-shell-player .avatar-hero-bars-col {
+  align-self: flex-start;
+}
+
+.avatar-hero-shell-enemy .avatar-hero-anchor,
+.avatar-hero-shell-enemy .avatar-hero-bars-col {
+  align-self: flex-end;
+}
+
+.avatar-hero-bars-col {
+  flex: 0 0 auto;
+  width: min(100%, calc(var(--battle-avatar-w) * 0.92));
+  min-width: calc(120px * var(--ui-scale));
+  display: flex;
+  flex-direction: column;
+  gap: calc(4px * var(--ui-scale));
+}
+
+.avatar-hero-status-zones {
+  position: absolute;
+  top: calc(100% + calc(3px * var(--ui-scale)));
+  left: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: calc(8px * var(--ui-scale));
+  pointer-events: none;
+  overflow: visible;
+  z-index: 2;
+}
+
+.avatar-status-zone-buffs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: calc(5px * var(--ui-scale)) calc(6px * var(--ui-scale));
+  align-items: start;
+  justify-items: center;
+}
+
+.avatar-status-zone-debuffs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: calc(5px * var(--ui-scale)) calc(6px * var(--ui-scale));
+  align-items: start;
+  justify-items: center;
+}
+
+.avatar-hero-shell-player .avatar-status-zone-buffs {
+  justify-items: start;
+}
+
+.avatar-hero-shell-player .avatar-status-zone-debuffs {
+  justify-items: end;
+}
+
+.avatar-hero-shell-enemy .avatar-status-zone-debuffs {
+  justify-items: start;
+}
+
+.avatar-hero-shell-enemy .avatar-status-zone-buffs {
+  justify-items: end;
+}
+
+.avatar-status-zone-buffs .avatar-beads.avatar-status-stack,
+.avatar-status-zone-buffs .avatar-benefit-stacks,
+.avatar-status-zone-debuffs .avatar-hero-debuff-row,
+.avatar-status-zone-debuffs .avatar-dot-stacks {
+  display: contents;
+}
+
+.avatar-status-zone-buffs .avatar-bead-positive,
+.avatar-status-zone-buffs .avatar-benefit-stack,
+.avatar-status-zone-debuffs .avatar-dot-stack,
+.avatar-status-zone-debuffs .avatar-bead-debuff {
+  position: relative;
+  left: auto;
+  top: auto;
+  transform: none;
+  animation: none;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: calc(2px * var(--ui-scale));
+  min-width: calc(34px * var(--ui-scale));
+  pointer-events: auto;
+  cursor: help;
+}
+
+.avatar-status-zone-buffs .avatar-bead-positive {
+  font-size: calc(1.45rem * var(--ui-scale));
+  line-height: 1;
+  filter: drop-shadow(0 0 8px rgba(63, 185, 80, 0.42));
+}
+
+.avatar-status-zone-buffs .avatar-bead-count,
+.avatar-status-zone-buffs .avatar-benefit-stack-value {
+  font-size: calc(13px * var(--ui-scale));
+  font-weight: 800;
+  color: #3fb950;
+  letter-spacing: -0.02em;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+}
+
+.avatar-status-zone-buffs .avatar-benefit-stack-icon {
+  font-size: calc(1.45rem * var(--ui-scale));
+  line-height: 1;
+  filter: drop-shadow(0 0 8px rgba(63, 185, 80, 0.42));
+}
+
+.avatar-status-zone-debuffs .avatar-bead-debuff {
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: 0;
+}
+
+.avatar-status-zone-debuffs .avatar-bead-debuff-icon,
+.avatar-status-zone-debuffs .avatar-dot-stack-icon {
+  font-size: calc(1.45rem * var(--ui-scale));
+  line-height: 1;
+  filter: drop-shadow(0 0 8px rgba(248, 81, 73, 0.42));
+}
+
+.avatar-status-zone-debuffs .avatar-bead-debuff-value,
+.avatar-status-zone-debuffs .avatar-dot-stack-value {
+  font-size: calc(13px * var(--ui-scale));
+  font-weight: 800;
+  color: #f85149;
+  letter-spacing: -0.02em;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+}
+
+.avatar-status-zone-debuffs .avatar-bead-debuff-label {
+  display: none;
+}
+
+#app[data-phase="battle"] .avatar-hero-stage .avatar-beads-positive:not(.avatar-status-stack),
+#app[data-phase="replay"] .avatar-hero-stage .avatar-beads-positive:not(.avatar-status-stack),
+#app[data-phase="battle"] .avatar-hero-stage .avatar-beads-negative,
+#app[data-phase="replay"] .avatar-hero-stage .avatar-beads-negative {
+  display: none !important;
 }
 
 .avatar-hero-hp-bar,
@@ -2094,11 +2258,13 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 }
 
 .avatar-hero-debuff-row {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: calc(5px * var(--ui-scale));
-  min-height: calc(22px * var(--ui-scale));
+  display: contents;
+  min-height: 0;
+}
+
+.avatar-status-zone-debuffs .avatar-dot-stack-poison .avatar-dot-stack-value,
+.avatar-status-zone-debuffs .avatar-dot-stack-fire .avatar-dot-stack-value {
+  color: #f85149;
 }
 
 .avatar-bead-debuff {
@@ -6925,12 +7091,15 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
 #app[data-phase="replay"] .avatar-hero-shell {
   gap: calc(2px * var(--ui-scale));
   justify-content: flex-end;
+  overflow: visible;
+  flex-shrink: 0;
 }
 
 #app[data-phase="battle"] .avatar-hero-name,
 #app[data-phase="replay"] .avatar-hero-name {
   margin-bottom: calc(1px * var(--ui-scale));
   line-height: 1.05;
+  flex-shrink: 0;
 }
 
 #app[data-phase="battle"] .avatar-hero-stage,
@@ -6938,7 +7107,30 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
   flex: 0 0 auto;
   height: var(--battle-hero-img-h);
   min-height: var(--battle-hero-img-h);
+  max-height: var(--battle-hero-img-h);
   overflow: visible;
+}
+
+#app[data-phase="battle"] .avatar-hero-footer,
+#app[data-phase="replay"] .avatar-hero-footer {
+  gap: calc(2px * var(--ui-scale));
+  margin-top: calc(-2px * var(--ui-scale));
+  overflow: visible;
+}
+
+#app[data-phase="battle"] .avatar-hero-status-zones,
+#app[data-phase="replay"] .avatar-hero-status-zones {
+  overflow: visible;
+}
+
+#app[data-phase="battle"] .avatar-status-zone-buffs .avatar-benefit-stacks,
+#app[data-phase="replay"] .avatar-status-zone-buffs .avatar-benefit-stacks,
+#app[data-phase="battle"] .avatar-status-zone-debuffs .avatar-dot-stacks,
+#app[data-phase="replay"] .avatar-status-zone-debuffs .avatar-dot-stacks,
+#app[data-phase="battle"] .avatar-status-zone-debuffs .avatar-hero-debuff-row,
+#app[data-phase="replay"] .avatar-status-zone-debuffs .avatar-hero-debuff-row {
+  min-height: 0;
+  margin: 0;
 }
 
 #app[data-phase="battle"] .battle-scene-ui .profile-avatar,
@@ -6962,11 +7154,6 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
   overflow: visible;
 }
 
-#app[data-phase="battle"] .avatar-hero-shell,
-#app[data-phase="replay"] .avatar-hero-shell {
-  overflow: visible;
-}
-
 #app[data-phase="battle"] .avatar-effect-hop,
 #app[data-phase="replay"] .avatar-effect-hop {
   font-size: calc(2.2rem * var(--ui-scale));
@@ -6978,10 +7165,10 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
   overflow: visible;
 }
 
-#app[data-phase="battle"] .avatar-hero-footer,
-#app[data-phase="replay"] .avatar-hero-footer {
-  gap: calc(2px * var(--ui-scale));
-  margin-top: calc(-2px * var(--ui-scale));
+#app[data-phase="battle"] .avatar-damage-stacks,
+#app[data-phase="replay"] .avatar-damage-stacks {
+  min-height: 0;
+  margin: 0;
 }
 
 #app[data-phase="battle"] .avatar-damage-stacks,

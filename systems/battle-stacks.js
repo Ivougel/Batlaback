@@ -144,6 +144,9 @@ function getDamageBonusFromStacks(side, item, effects = []) {
     if (effect.type === "damagePerStack") {
       bonus += getSideStack(side, effect.stack || "spikes") * (Number(effect.value) || 1);
     }
+    if (effect.type === "damagePerTotalStacks" && typeof getTotalSideStacks === "function") {
+      bonus += getTotalSideStacks(side) * (Number(effect.value) || 1);
+    }
   });
   const def = ITEM_CATALOG[item?.itemId];
   if (def?.tags?.includes("spikes") && !effects.some((e) => e.type === "damagePerStack")) {
@@ -173,6 +176,11 @@ function countTaggedItemsOnSide(side, tag) {
     const def = ITEM_CATALOG[item.itemId];
     return def && !def.isContainer && def.tags?.includes(tag);
   }).length;
+}
+
+function getTotalSideStacks(side) {
+  const types = ["spikes", "block", "empower", "regen", "luck", "heat", "mana"];
+  return types.reduce((sum, t) => sum + getSideStack(side, t), 0);
 }
 
 function getStackThresholdKey(item, effect) {

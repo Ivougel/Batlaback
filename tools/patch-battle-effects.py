@@ -670,6 +670,106 @@ BATTLE_EFFECT_PATCHES = {
         {"type": "stackThreshold", "stack": "heat", "threshold": 5, "direction": "above", "once": False,
          "trigger": "passive", "gainStack": {"stack": "empower", "value": 1}},
     ],
+    # --- Этап 8: зелья-пороги, губерты, питомцы, огонь, meta-adjacent ---
+    "lightsaber": [
+        {"type": "invulnOnStaminaSpend", "staminaCost": 3, "duration": 0, "foeSlow": 8,
+         "slowDuration": 6, "trigger": "passive"},
+        {"type": "damagePerFoeDebuff", "value": 1, "trigger": "passive"},
+    ],
+    "demonic_flask": [
+        {"type": "foeHpThreshold", "threshold": 0.5, "once": True, "trigger": "passive",
+         "damagePerFoeDebuffMult": 5, "damageType": "magic"},
+    ],
+    "strong_demonic_flask": [
+        {"type": "foeHpThreshold", "threshold": 0.5, "selfThreshold": 0.25, "once": True,
+         "trigger": "passive", "damagePerFoeDebuffMult": 8, "damageType": "magic"},
+    ],
+    "divine_potion": [
+        {"type": "debuffThreshold", "threshold": 10, "once": True, "trigger": "passive", "cleanseDebuffs": 10},
+    ],
+    "strong_divine_potion": [
+        {"type": "debuffThreshold", "threshold": 10, "once": True, "trigger": "passive",
+         "cleanseDebuffs": 10, "gainDominantStack": 8},
+    ],
+    "strong_stone_skin_potion": [
+        {"type": "stackThreshold", "stack": "block", "threshold": 45, "once": True, "trigger": "passive",
+         "convertHp": {"hpCost": 15, "stackGain": 35, "stack": "regen"},
+         "gainStack": {"stack": "empower", "value": 2}},
+    ],
+    "leather_boots": [
+        {"type": "hpThreshold", "threshold": 0.7, "direction": "below", "once": True, "trigger": "passive",
+         "gainStack": {"stack": "luck", "value": 1}, "gainBlock": 15},
+    ],
+    "dragonskin_boots": [
+        {"type": "battleRageLowHp", "trigger": "passive", "cleanseDebuffs": 3,
+         "gainStack": {"stack": "luck", "value": 1}, "gainBlock": 20, "cooldownBoost": 0.4},
+    ],
+    "cap_of_discomfort": [
+        {"type": "timedDamageReduction", "value": 0.25, "duration": 5, "trigger": "battle_start"},
+    ],
+    "steel_goobert": [
+        {"type": "activationThreshold", "count": 6, "once": True, "trigger": "passive",
+         "weaponDamageStart": 2, "gainStack": {"stack": "block", "value": 16}},
+    ],
+    "light_goobert": [
+        {"type": "activationThreshold", "count": 6, "once": True, "trigger": "passive",
+         "heal": 20, "foePoison": 6},
+    ],
+    "poison_goobert": [
+        {"type": "activationThreshold", "count": 5, "once": True, "trigger": "passive",
+         "heal": 9, "foePoison": 4},
+    ],
+    "chili_goobert": [
+        {"type": "activationThreshold", "count": 6, "once": True, "trigger": "passive",
+         "heal": 12, "gainStack": {"stack": "heat", "value": 2}},
+    ],
+    "carrot_goobert": [
+        {"type": "activationThreshold", "count": 5, "once": True, "trigger": "passive",
+         "cleanseDebuffs": 3, "gainStack": {"stack": "empower", "value": 2}},
+    ],
+    "rat": [
+        {"type": "periodic", "interval": 3.3, "trigger": "passive", "damage": 5, "damageType": "magic",
+         "foePoison": 1, "chance": 0.75},
+        {"type": "cooldownMultPerTag", "tags": ["pet", "food"], "perTag": 0.15, "trigger": "passive"},
+    ],
+    "torch": [
+        {"type": "gainStack", "stack": "empower", "value": 1, "trigger": "on_hit", "chance": 0.25},
+    ],
+    "burning_torch": [
+        {"type": "gainStack", "stack": "heat", "value": 2, "trigger": "battle_start"},
+        {"type": "gainStack", "stack": "empower", "value": 1, "trigger": "on_hit", "chance": 0.3},
+    ],
+    "forging_hammer": [
+        {"type": "damagePerTotalStacks", "value": 1, "trigger": "passive"},
+    ],
+    "lucky_piggy": [
+        {"type": "gainStack", "stack": "luck", "value": 2, "trigger": "battle_start"},
+        {"type": "procChanceBonus", "value": 0.12, "trigger": "passive"},
+    ],
+    "draconic_orb": [
+        {"type": "stackThreshold", "stack": "heat", "threshold": 15, "once": True, "trigger": "passive",
+         "guaranteedCritHits": 3},
+        {"type": "periodic", "interval": 3.8, "trigger": "passive",
+         "stealFoeStack": {"stack": "heat", "value": 1}},
+    ],
+    "obsidian_dragon": [
+        {"type": "stackThreshold", "stack": "heat", "threshold": 8, "once": False, "trigger": "passive",
+         "itemDamage": 2, "guaranteedCritHits": 1},
+    ],
+    "phoenix": [
+        {"type": "onActivate", "hpCost": 10},
+        {"type": "revive", "hpRatio": 0.06, "invuln": 1, "trigger": "passive"},
+    ],
+    "dragon_claws": [
+        {"type": "procChanceBonus", "value": 0.1, "trigger": "passive"},
+        {"type": "battleRageLowHp", "trigger": "passive", "cooldownBoost": 0.4},
+    ],
+    "offering_bowl": [
+        {"type": "gainStack", "stack": "luck", "value": 1, "trigger": "battle_start"},
+    ],
+    "piggybank": [
+        {"type": "max_hp_per_start_item", "value": 2, "trigger": "battle_start"},
+    ],
 }
 
 DESCRIPTION_OVERRIDES = {
@@ -808,6 +908,31 @@ DESCRIPTION_OVERRIDES = {
     "pocket_sand": "В начале боя: +1 удача.",
     "impractically_large_greatsword": "При 5+ жара: +1 усиление.",
     "molten_greatsword": "При попадании: −2 жара → +4 жара. При 5+ жара: +1 усиление.",
+    # --- Этап 8 ---
+    "lightsaber": "−3 выносливости: замедление 8 на 6с. +1 урона за дебафф противника.",
+    "demonic_flask": "Противник <50% HP: 5 маг. урона за каждый его дебафф.",
+    "strong_demonic_flask": "Противник <50% или вы <25% HP: 8 маг. урона за дебафф.",
+    "divine_potion": "При 10+ дебаффах: снять 10.",
+    "strong_divine_potion": "При 10+ дебаффах: снять 10 и +8 к сильнейшему стаку.",
+    "strong_stone_skin_potion": "При 45 блока: −15 HP → +35 регена и +2 усиления.",
+    "leather_boots": "При HP <70%: +1 удача и +15 блока (раз).",
+    "dragonskin_boots": "При боевой ярости: снять 3 дебаффа, +1 удача, +20 блока.",
+    "cap_of_discomfort": "В начале боя: −25% получаемого урона на 5с.",
+    "steel_goobert": "После 6 активаций: оружие +2 урона и +16 блока.",
+    "light_goobert": "После 6 активаций: +20 HP и +6 яда.",
+    "poison_goobert": "После 5 активаций: +9 HP и +4 яда.",
+    "chili_goobert": "После 6 активаций: +12 HP и +2 жара.",
+    "carrot_goobert": "После 5 активаций: снять 3 дебаффа и +2 усиления.",
+    "rat": "Каждые 3.3с: 5 маг. урона и 75% +1 яд.",
+    "torch": "При попадании: 25% +1 усиление.",
+    "burning_torch": "В начале боя: +2 жара. При попадании: 30% +1 усиление.",
+    "forging_hammer": "+1 урона за каждый стак.",
+    "lucky_piggy": "В начале боя: +2 удачи. Эффекты на 12% чаще.",
+    "draconic_orb": "При 15 жара: 3 гарантированных крита. Каждые 3.8с: украсть 1 жар.",
+    "obsidian_dragon": "При 8 жара: +2 урона и гарантированный крит.",
+    "phoenix": "При атаке: −10 HP. Перерождение с 6% HP.",
+    "dragon_claws": "+10% к прокам. Боевая ярость: предметы на 40% быстрее.",
+    "offering_bowl": "В начале боя: +1 удача. Контейнер: переработка в магазине.",
 }
 
 

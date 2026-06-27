@@ -3223,6 +3223,10 @@ function describeEffect(e) {
     case "activationLimit": return `⏳ До ${e.base || 3} активаций за бой`;
     case "preventMiss": return `🎯 Потратить ресурс → отменить промах`;
     case "onActivate": return `⚡ При активации: особый эффект`;
+    case "foeHpThreshold": return `❤️ Противник ниже ${Math.round((e.threshold || 0.5) * 100)}% HP: особый эффект`;
+    case "debuffThreshold": return `☠ При ${e.threshold || 10}+ дебаффах: особый эффект`;
+    case "procChanceBonus": return `🍀 +${Math.round((e.value || 0.12) * 100)}% к шансу эффектов`;
+    case "damagePerTotalStacks": return `⚔ +${e.value || 1} урона за каждый стак`;
     default: return `${typeof localizeBbDescription === "function" ? localizeBbDescription(e.type) : e.type}${e.value != null ? `: ${e.value}` : ""}`;
   }
 }
