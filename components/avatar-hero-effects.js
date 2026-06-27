@@ -42,7 +42,7 @@ function renderAvatarHeroHTML(profile, team) {
           <span class="avatar-battle-timer" hidden aria-hidden="true">0:00</span>
         </div>
         <div class="avatar-effect-orbit" data-team="${team}" aria-hidden="true"></div>
-        <div class="avatar-beads avatar-beads-positive" aria-hidden="true" hidden></div>
+        <div class="avatar-beads avatar-beads-positive" aria-hidden="true"></div>
         <div class="profile-avatar profile-avatar-${team}"
              data-status-title="${className}"
              data-status-desc="${tooltipDesc}"
@@ -234,6 +234,7 @@ function syncAvatarCompanionBeads(team, state) {
       countEl.remove();
     }
   });
+  posEl.hidden = false;
 }
 
 function syncAvatarHeroEffects(team, profile, state) {
@@ -272,20 +273,45 @@ function syncAvatarHeroEffects(team, profile, state) {
     persistent.forEach((b, i) => {
       posEl.insertAdjacentHTML("beforeend", renderPositiveBeadHTML(b, i, persistent.length));
     });
+    posEl.hidden = persistent.length === 0
+      && !posEl.querySelector(".avatar-bead-transient");
   }
   const debuffs = profile.debuffs || [];
-  if (debuffRow && !shell.querySelector(".avatar-effect-orbit")) {
+  if (debuffRow) {
+    debuffRow.hidden = debuffs.length === 0;
     debuffRow.innerHTML = debuffs.map(renderDebuffBeadHTML).join("");
   }
-  if (negRing) negRing.innerHTML = "";
+  if (negRing) {
+    negRing.innerHTML = debuffs.slice(0, 6).map((chip, i, arr) => {
+      const angle = (-Math.PI / 2) + (i / Math.max(1, arr.length)) * Math.PI * 1.15;
+      const rx = 46 + (i % 2) * 6;
+      const x = 50 + Math.cos(angle) * rx;
+      const y = 50 + Math.sin(angle) * rx * 0.72;
+      const inner = renderDebuffBeadHTML(chip);
+      return `<span class="avatar-bead-debuff-ring" style="--bead-x:${x}%;--bead-y:${y}%">${inner}</span>`;
+    }).join("");
+  }
 
   shell.classList.toggle("avatar-hero-has-buffs", posBeads.length > 0);
   shell.classList.toggle("avatar-hero-has-debuffs", debuffs.length > 0);
+  if (typeof syncAvatarCompanionBeads === "function") syncAvatarCompanionBeads(team, state);
 }
 
 function syncAllAvatarHeroEffects(playerProfile, enemyProfile, state) {
   syncAvatarHeroEffects("player", playerProfile, state);
   syncAvatarHeroEffects("enemy", enemyProfile, state);
+}
+
+function ensureBattleHeroShells(state, playerProfile, enemyProfile) {
+  if (!state) return;
+  ["player", "enemy"].forEach((team) => {
+    const slot = getAvatarSlotEl(team);
+    if (!slot) return;
+    const profile = team === "player" ? playerProfile : enemyProfile;
+    if (!slot.querySelector(".avatar-hero-shell")) {
+      slot.innerHTML = renderAvatarHeroHTML(profile, team);
+    }
+  });
 }
 
 function initAvatarCompanions(state) {
@@ -332,14 +358,31 @@ function tickAvatarCompanions(state, dt) {
 
 function getAvatarHeroStageRect(team) {
   const slot = getAvatarSlotEl(team);
-  const stage = slot?.querySelector(".avatar-hero-stage");
-  if (stage) {
-    const rect = stage.getBoundingClientRect();
+  const candidates = [
+    slot?.querySelector(".avatar-hero-stage"),
+    slot?.querySelector(".profile-avatar"),
+    slot,
+    slot?.closest(".battle-scene-avatar"),
+  ];
+  for (const el of candidates) {
+    if (!el) continue;
+    const rect = el.getBoundingClientRect();
     if (rect.width > 0 && rect.height > 0) return rect;
   }
-  const avatar = slot?.querySelector(".profile-avatar");
-  if (avatar) return avatar.getBoundingClientRect();
-  return getProfileAvatarViewportCenter(team);
+  if (typeof getProfileAvatarViewportCenter === "function") {
+    const center = getProfileAvatarViewportCenter(team);
+    if (center?.x != null && center?.y != null) {
+      const scale = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--ui-scale")) || 1;
+      const size = 152 * scale;
+      return {
+        left: center.x - size / 2,
+        top: center.y - size / 2,
+        width: size,
+        height: size,
+      };
+    }
+  }
+  return { left: 0, top: 0, width: 0, height: 0 };
 }
 
 function getProfileAvatarFloatAnchor(team, lane = 0) {

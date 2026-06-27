@@ -4419,11 +4419,15 @@ function renderPlayerProfiles() {
   }
 
   if (liveBattle) {
-    if (!playerAvatarEl.querySelector(".avatar-hero-shell")) {
-      playerAvatarEl.innerHTML = renderAvatarHeroHTML(playerProfile, "player");
-    }
-    if (!enemyAvatarEl.querySelector(".avatar-hero-shell")) {
-      enemyAvatarEl.innerHTML = renderAvatarHeroHTML(enemyProfile, "enemy");
+    if (typeof ensureBattleHeroShells === "function") {
+      ensureBattleHeroShells(battleState, playerProfile, enemyProfile);
+    } else {
+      if (!playerAvatarEl.querySelector(".avatar-hero-shell")) {
+        playerAvatarEl.innerHTML = renderAvatarHeroHTML(playerProfile, "player");
+      }
+      if (!enemyAvatarEl.querySelector(".avatar-hero-shell")) {
+        enemyAvatarEl.innerHTML = renderAvatarHeroHTML(enemyProfile, "enemy");
+      }
     }
   } else {
     if (!playerAvatarEl.querySelector(".profile-avatar") || playerAvatarEl.querySelector(".avatar-hero-shell")) {

@@ -283,6 +283,155 @@ function layoutEffectHop(el, key, team, tick) {
   el.style.setProperty("--fx-y", `${y}%`);
   el.style.setProperty("--fx-rot", `${rot}deg`);
   el.style.setProperty("--fx-delay", `${(h % 8) * 0.11}s`);
+  return { x, y, rot };
+}
+
+function hopPointFromRect(rect, key, team, tick) {
+  if (!rect?.width) return null;
+  const h = hashEffectSlot(key, team);
+  const jumpEvery = (2.8 + (h % 10) * 0.26) * EFFECT_HOP_INTERVAL_SCALE;
+  const jumpPhase = Math.floor(tick / jumpEvery);
+  const rnd = (n) => {
+    const x = Math.sin((h + 1) * 928371 + n * 2654435761 + jumpPhase * 1337) * 10000;
+    return x - Math.floor(x);
+  };
+  const px = (12 + rnd(1) * 76) / 100;
+  const py = (8 + rnd(2) * 72) / 100;
+  return {
+    x: rect.left + rect.width * px,
+    y: rect.top + rect.height * py,
+    rot: -18 + rnd(3) * 36,
+  };
+}
+
+const battleCommentaryDomPool = new Map();
+
+function ensureBattleCommentaryLayer() {
+  let layer = document.getElementById("battle-commentary-layer");
+  if (!layer) {
+    layer = document.createElement("div");
+    layer.id = "battle-commentary-layer";
+    layer.className = "battle-commentary-layer";
+    layer.setAttribute("aria-hidden", "true");
+    document.body.appendChild(layer);
+  }
+  return layer;
+}
+
+function clearBattleCommentaryOverlay() {
+  battleCommentaryDomPool.forEach((el) => el.remove());
+  battleCommentaryDomPool.clear();
+  document.getElementById("battle-commentary-layer")?.replaceChildren();
+}
+
+function orbitPointFromRect(rect, phase, slotIndex) {
+  if (!rect?.width) return null;
+  const angle = phase * 0.9 + slotIndex * Math.PI * 0.85;
+  const rx = (42 + Math.sin(phase * 0.7 + slotIndex) * 10) / 100 * rect.width;
+  const ry = (38 + Math.cos(phase * 0.55 + slotIndex * 1.2) * 12) / 100 * rect.height;
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  return {
+    x: cx + Math.cos(angle) * rx,
+    y: cy + Math.sin(angle) * ry,
+    rot: Math.sin(phase * 1.1 + slotIndex) * 12,
+  };
+}
+
+function upsertBattleCommentaryEl(uid, className, content, asHtml = false) {
+  let el = battleCommentaryDomPool.get(uid);
+  if (!el) {
+    el = document.createElement("div");
+    el.className = className;
+    el.dataset.commentaryUid = uid;
+    battleCommentaryDomPool.set(uid, el);
+    ensureBattleCommentaryLayer().appendChild(el);
+  } else if (el.className !== className) {
+    el.className = className;
+  }
+  if (asHtml) {
+    if (el.innerHTML !== content) el.innerHTML = content;
+  } else if (el.textContent !== content) {
+    el.textContent = content;
+  }
+  return el;
+}
+
+function placeCommentaryEl(el, x, y, rot = 0, scale = 1) {
+  el.style.left = `${x}px`;
+  el.style.top = `${y}px`;
+  el.style.transform = `translate(-50%, -50%) rotate(${rot}deg) scale(${scale})`;
+}
+
+function isBattleCommentaryPhaseActive() {
+  const appPhase = document.getElementById("app")?.dataset?.phase;
+  return appPhase === "battle" || appPhase === "replay";
+}
+
+function renderBattleCommentaryOverlay(state) {
+  if (!state || state.finished || !isBattleCommentaryPhaseActive()) {
+    clearBattleCommentaryOverlay();
+    return;
+  }
+
+  const active = new Set();
+  ensureBattleCommentaryLayer();
+
+  ["player", "enemy"].forEach((team) => {
+    const presentation = resolveEmotionPresentation(state, team);
+    const rect = typeof getAvatarHeroStageRect === "function" ? getAvatarHeroStageRect(team) : null;
+    if (!presentation || !rect?.width) return;
+
+    const profile = state._heroProfiles?.[team]
+      || (typeof computeCombatProfileFromBattleSide === "function"
+        ? computeCombatProfileFromBattleSide(
+          team === "player" ? state.player : state.enemy,
+          null,
+          team === "player" ? "Игрок" : "ИИ",
+          state,
+        )
+        : null);
+
+    const emojiSlots = [
+      { uid: `${team}-mood`, emoji: presentation.moodEmoji, slot: 0, kind: "mood" },
+      { uid: `${team}-reaction`, emoji: presentation.primaryEmoji, slot: 1, kind: "reaction" },
+      { uid: `${team}-secondary`, emoji: presentation.secondaryEmoji, slot: 2, kind: "secondary" },
+    ];
+
+    emojiSlots.forEach(({ uid, emoji, slot, kind }) => {
+      if (!emoji) return;
+      active.add(uid);
+      const pt = orbitPointFromRect(rect, presentation.floatPhase + slot * 0.85, slot);
+      if (!pt) return;
+      const el = upsertBattleCommentaryEl(
+        uid,
+        `battle-commentary-emoji battle-commentary-${kind} battle-commentary-team-${team}`,
+        emoji,
+      );
+      placeCommentaryEl(el, pt.x, pt.y, pt.rot);
+    });
+
+    collectEffectOrbitItems(profile).forEach((item) => {
+      const uid = `${team}-fx-${item.key}`;
+      active.add(uid);
+      const pt = hopPointFromRect(rect, item.key, team, presentation.floatPhase);
+      if (!pt) return;
+      const countHtml = item.count > 1 ? `<span class="battle-commentary-fx-count">×${item.count}</span>` : "";
+      const el = upsertBattleCommentaryEl(
+        uid,
+        `battle-commentary-fx battle-commentary-fx-${item.kind}${item.dotActive ? " battle-commentary-fx-dot" : ""} battle-commentary-team-${team}`,
+        `${item.icon}${countHtml}`,
+        true,
+      );
+      placeCommentaryEl(el, pt.x, pt.y, pt.rot, item.dotActive ? 1.08 : 1);
+    });
+  });
+
+  battleCommentaryDomPool.forEach((el, uid) => {
+    if (active.has(uid)) return;
+    el.remove();
+    battleCommentaryDomPool.delete(uid);
+  });
 }
 
 const EFFECT_ORBIT_ICON_BY_ID = {
@@ -430,17 +579,23 @@ function applyEmotionPresentation(team, presentation, profile, state) {
 
 function updateBattleEmotions(state) {
   if (!state?.commentary?.playerState) return;
-  const playerProfile = state._heroProfiles?.player
-    || (typeof computeCombatProfileFromBattleSide === "function"
-      ? computeCombatProfileFromBattleSide(state.player, null, "Игрок", state)
-      : null);
-  const enemyProfile = state._heroProfiles?.enemy
-    || (typeof computeCombatProfileFromBattleSide === "function"
-      ? computeCombatProfileFromBattleSide(state.enemy, null, "ИИ", state)
-      : null);
+  let playerProfile = state._heroProfiles?.player;
+  let enemyProfile = state._heroProfiles?.enemy;
+  if (typeof computeCombatProfileFromBattleSide === "function") {
+    playerProfile = computeCombatProfileFromBattleSide(state.player, null, "Игрок", state);
+    enemyProfile = computeCombatProfileFromBattleSide(state.enemy, null, "ИИ", state);
+    state._heroProfiles = { player: playerProfile, enemy: enemyProfile };
+  }
+  if (typeof ensureBattleHeroShells === "function") {
+    ensureBattleHeroShells(state, playerProfile, enemyProfile);
+  }
 
   applyEmotionPresentation("player", resolveEmotionPresentation(state, "player"), playerProfile, state);
   applyEmotionPresentation("enemy", resolveEmotionPresentation(state, "enemy"), enemyProfile, state);
+  if (typeof syncAllAvatarHeroEffects === "function") {
+    syncAllAvatarHeroEffects(playerProfile, enemyProfile, state);
+  }
+  renderBattleCommentaryOverlay(state);
 }
 
 function hideBattleTimerDisplay() {
@@ -454,6 +609,7 @@ function hideBattleTimerDisplay() {
 
 function clearBattleEmotions() {
   hideBattleTimerDisplay();
+  clearBattleCommentaryOverlay();
   ["player", "enemy"].forEach((team) => {
     const slot = typeof getAvatarSlotEl === "function" ? getAvatarSlotEl(team) : null;
     const shell = slot?.querySelector(".avatar-hero-shell");
