@@ -33,7 +33,8 @@ function renderAvatarHeroHTML(profile, team) {
       <div class="avatar-hero-name">${displayName}</div>
       <div class="avatar-hero-stage">
         <div class="avatar-emotion-orbit" data-team="${team}" aria-hidden="true">
-          <span class="avatar-emotion-float avatar-emotion-mood">🙂</span>
+          <span class="avatar-emotion-float avatar-emotion-kayfu avatar-emotion-kayfu-active" aria-hidden="true">🤠</span>
+          <span class="avatar-emotion-float avatar-emotion-mood" aria-hidden="true"></span>
           <span class="avatar-emotion-float avatar-emotion-reaction" hidden></span>
           <span class="avatar-battle-timer">0:00</span>
         </div>
@@ -47,6 +48,7 @@ function renderAvatarHeroHTML(profile, team) {
         <div class="avatar-beads avatar-beads-negative" aria-hidden="true"></div>
       </div>
       <div class="avatar-hero-footer">
+        <div class="avatar-damage-stacks" aria-hidden="true" hidden></div>
         <div class="avatar-hero-hp-bar"><div class="avatar-hero-hp-fill avatar-hero-hp-fill-${team}" style="width:${hpPct}%"></div></div>
         <div class="avatar-hero-hp-text">${Math.ceil(hpCurrent)} / ${hpMax}</div>
         <div class="avatar-hero-debuff-row" hidden></div>
@@ -103,21 +105,6 @@ function collectPositiveBeads(profile, team, state) {
       transient: false,
       age: 0,
       maxAge: 0,
-    });
-  });
-
-  const companions = state?.avatarCompanions?.[team] || [];
-  companions.forEach((c) => {
-    if (c.age >= c.maxAge) return;
-    beads.push({
-      key: c.key,
-      icon: c.icon,
-      count: c.count > 1 ? c.count : 0,
-      kind: c.kind,
-      title: c.title || "",
-      transient: true,
-      age: c.age,
-      maxAge: c.maxAge,
     });
   });
 
@@ -198,8 +185,6 @@ function syncAvatarHeroEffects(team, profile, state) {
       posEl.insertAdjacentHTML("beforeend", renderPositiveBeadHTML(b, i, persistent.length));
     });
   }
-  syncAvatarCompanionBeads(team, state);
-
   const debuffs = profile.debuffs || [];
   if (debuffRow && !shell.querySelector(".avatar-effect-orbit")) {
     debuffRow.innerHTML = debuffs.map(renderDebuffBeadHTML).join("");
@@ -286,8 +271,7 @@ function syncLiveAvatarHeroFrame(state) {
   if (!state) return;
   syncAvatarHeroHpOnly("player", state.player.hp, state.player.maxHp);
   syncAvatarHeroHpOnly("enemy", state.enemy.hp, state.enemy.maxHp);
-  syncAvatarCompanionBeads("player", state);
-  syncAvatarCompanionBeads("enemy", state);
+  if (typeof syncAllDamageSummaryDisplays === "function") syncAllDamageSummaryDisplays(state);
 }
 
 function allocateHeroFloatLane(state, team) {

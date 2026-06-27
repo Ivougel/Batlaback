@@ -3,30 +3,135 @@
  * BattleAnalyzer → BattleState → EmotionController → UI
  */
 
+const KAYFU_EMOJI = "🤠";
+
 const EMOTION_CATALOG = {
-  stunned:         { emoji: "😵", priority: 100, shellClass: "emotion-stunned" },
-  desperate:       { emoji: "💀", priority: 90, shellClass: "emotion-desperate" },
-  poisoned:        { emoji: "🤢", priority: 85, shellClass: "emotion-poisoned" },
-  burning:         { emoji: "🥵🔥", priority: 80, shellClass: "emotion-burning" },
-  crit:            { emoji: "😡💥", priority: 75, transient: true, shellClass: "emotion-hit-shake" },
-  big_hit:         { emoji: "💥", priority: 72, transient: true, shellClass: "emotion-hit-shake" },
-  lifesteal:       { emoji: "😈🩸", priority: 70, transient: true },
-  invulnerable:    { emoji: "✨", priority: 68, shellClass: "emotion-invuln" },
-  tired:           { emoji: "🥵", priority: 65, shellClass: "emotion-tired" },
-  slowed:          { emoji: "🐌", priority: 63, shellClass: "emotion-slowed" },
-  losing:          { emoji: "😰", priority: 60, shellClass: "emotion-losing" },
-  survival_battle: { emoji: "⚔️💀", priority: 55, shellClass: "emotion-survival" },
-  exhaustion:      { emoji: "😮‍💨", priority: 50, shellClass: "emotion-exhaustion" },
-  dodge_ready:     { emoji: "💨", priority: 48 },
-  prolonged:       { emoji: "⚔️", priority: 40, shellClass: "emotion-prolonged" },
-  heal_boost:      { emoji: "💚", priority: 45, transient: true },
-  winning:         { emoji: "😎", priority: 35, shellClass: "emotion-winning" },
-  shield:          { emoji: "🛡️😏", priority: 28, transient: true },
-  confident:       { emoji: "😏", priority: 30, shellClass: "emotion-confident" },
-  healthy:         { emoji: "😎", priority: 20, shellClass: "emotion-healthy" },
+  stunned:         { emoji: "😵", variants: ["😵‍💫", "🫠", "💫", "😵💢"], priority: 100, shellClass: "emotion-stunned" },
+  desperate:       { emoji: "💀", variants: ["☠️", "⚰️", "📉", "💀🔥"], priority: 90, shellClass: "emotion-desperate" },
+  poisoned:        { emoji: "🤢", variants: ["🤮", "🫠", "☣️", "🤢💅"], priority: 85, shellClass: "emotion-poisoned" },
+  burning:         { emoji: "🥵🔥", variants: ["🔥😭", "🥵", "🌋", "🔥💀"], priority: 80, shellClass: "emotion-burning" },
+  crit:            { emoji: "😡💥", variants: ["💥😤", "🗿💥", "⚡😡", "👊💥"], priority: 75, transient: true, shellClass: "emotion-hit-shake" },
+  big_hit:         { emoji: "💥", variants: ["🫨", "💢", "😱", "📉💥"], priority: 72, transient: true, shellClass: "emotion-hit-shake" },
+  lifesteal:       { emoji: "😈🩸", variants: ["🧛", "🩸😏", "😈", "🧃🩸"], priority: 70, transient: true },
+  invulnerable:    { emoji: "✨", variants: ["🛡️✨", "💫", "🌟", "✨😎"], priority: 68, shellClass: "emotion-invuln" },
+  tired:           { emoji: "🥵", variants: ["😮‍💨", "🥱", "🔋🪫", "☕😵"], priority: 65, shellClass: "emotion-tired" },
+  slowed:          { emoji: "🐌", variants: ["🦥", "⏳", "🐢", "🐌💤"], priority: 63, shellClass: "emotion-slowed" },
+  losing:          { emoji: "😰", variants: ["😭", "🫠", "📉😰", "💀☕"], priority: 60, shellClass: "emotion-losing" },
+  cooked:          { emoji: "🫠", variants: ["💀☕", "🔥🫠", "📉", "😭🔥"], priority: 58, shellClass: "emotion-losing" },
+  survival_battle: { emoji: "⚔️💀", variants: ["⏳💀", "🪦", "⚔️😵", "🏴‍☠️"], priority: 55, shellClass: "emotion-survival" },
+  exhaustion:      { emoji: "😮‍💨", variants: ["🥱", "🪫", "😵‍💫", "💤"], priority: 50, shellClass: "emotion-exhaustion" },
+  dodge_ready:     { emoji: "💨", variants: ["🏃💨", "💨😏", "🌬️", "💨✨"], priority: 48 },
+  heal_boost:      { emoji: "💚", variants: ["❤️‍🩹", "💚✨", "🩹", "💚😌"], priority: 45, transient: true },
+  prolonged:       { emoji: "⚔️", variants: ["⏳⚔️", "🗿⚔️", "⌛", "⚔️😮‍💨"], priority: 40, shellClass: "emotion-prolonged" },
+  winning:         { emoji: "😎", variants: ["😎✨", "🗿", "💪", "👑"], priority: 35, shellClass: "emotion-winning" },
+  confident:       { emoji: "😏", variants: ["😏✨", "🗿", "💅", "😏👍"], priority: 30, shellClass: "emotion-confident" },
+  shield:          { emoji: "🛡️😏", variants: ["🛡️", "🧱😏", "🛡️💅", "😏🛡️"], priority: 28, transient: true },
+  delulu:          { emoji: "✨🙂", variants: ["🦄", "🌈", "💭✨", "🌟😌"], priority: 24, shellClass: "emotion-confident" },
+  rizz:            { emoji: "😏✨", variants: ["💅", "🤙", "✨😮‍💨", "😏🔥"], priority: 22 },
+  sigma:           { emoji: "🗿", variants: ["😐🗿", "💪🗿", "🗿👍", "🫡🗿"], priority: 20 },
+  healthy:         { emoji: "😎", variants: ["🙂", "😌", "☺️", "🫡"], priority: 18, shellClass: "emotion-healthy" },
+  vibing:          { emoji: "🤙", variants: ["✨🤙", "🎧", "😌✨", "🕺"], priority: 16 },
+  based:           { emoji: "🗿👍", variants: ["👍🗿", "🫡", "😤👍", "💯"], priority: 14 },
+  touch_grass:     { emoji: "🌿", variants: ["🌿📵", "🌱", "🍃", "🌿😌"], priority: 12 },
+  skibidi:         { emoji: "🚽", variants: ["📱💀", "🎤", "🚽💀", "📺"], priority: 10 },
+  no_cap:          { emoji: "🧢", variants: ["🧢🔥", "🫡", "💯", "🧢✨"], priority: 8 },
+};
+
+const MOOD_VARIANTS = {
+  critical: ["💀", "⚰️", "📉", "🫠"],
+  panic: ["😰", "😱", "🫨", "💀😭"],
+  neutral: ["😐", "😑", "🫠", "🙂‍↔️"],
+  calm: ["🙂", "😌", "☺️", "🫡"],
 };
 
 const EMOTION_ORBIT_PHASE = { player: 0, enemy: 1.7 };
+
+function moodPulseRand(team, cycleIndex, part) {
+  const base = team === "enemy" ? 7919 : 6151;
+  const x = Math.sin((cycleIndex + 1) * (base + part * 1337) * 0.0013) * 10000;
+  return x - Math.floor(x);
+}
+
+function computeMoodPulseSegment(elapsed, durationPhase, team, cycleIndex, willBeVisible) {
+  const mins = (elapsed || 0) / 60;
+  let hideMin = 5.4;
+  let hideSpan = 3.8;
+  if (mins >= 2) {
+    hideMin = 3.4;
+    hideSpan = 2.2;
+  } else if (mins >= 1) {
+    hideMin = 4.2;
+    hideSpan = 2.6;
+  } else if (mins >= 0.5) {
+    hideMin = 4.8;
+    hideSpan = 3.0;
+  }
+  if (durationPhase?.sec >= 120) {
+    hideMin -= 0.6;
+    hideSpan -= 0.35;
+  } else if (durationPhase?.sec >= 60) {
+    hideMin -= 0.3;
+    hideSpan -= 0.2;
+  }
+
+  const showMin = 0.8;
+  const showSpan = 0.45 + moodPulseRand(team, cycleIndex, 9) * 0.55;
+  const r = moodPulseRand(team, cycleIndex, willBeVisible ? 2 : 3);
+
+  if (willBeVisible) return showMin + r * showSpan;
+  return hideMin + r * hideSpan;
+}
+
+function ensureMoodPulseState(state, team) {
+  if (!state.moodPulse) state.moodPulse = {};
+  if (state.moodPulse[team]) return state.moodPulse[team];
+
+  const elapsed = state.elapsed || 0;
+  const firstWait = computeMoodPulseSegment(elapsed, null, team, 0, false);
+  state.moodPulse[team] = {
+    visible: false,
+    cycleIndex: 0,
+    nextFlipAt: elapsed + firstWait,
+  };
+  return state.moodPulse[team];
+}
+
+function resolveMoodPulseVisible(state, team) {
+  if (!state) return false;
+  const elapsed = state.elapsed || 0;
+  const pulse = ensureMoodPulseState(state, team);
+  const sideState = team === "player" ? state.commentary?.playerState : state.commentary?.enemyState;
+
+  if (elapsed >= pulse.nextFlipAt) {
+    pulse.visible = !pulse.visible;
+    pulse.cycleIndex += 1;
+    const segment = computeMoodPulseSegment(
+      elapsed,
+      sideState?.durationPhase,
+      team,
+      pulse.cycleIndex,
+      pulse.visible,
+    );
+    pulse.nextFlipAt = elapsed + segment;
+  }
+
+  return pulse.visible;
+}
+
+function pickEmotionVariant(def, key, elapsed, teamSlot = 0) {
+  const pool = def?.variants?.length ? def.variants : [def?.emoji || "✨"];
+  let h = 0;
+  for (let i = 0; i < String(key).length; i += 1) h = (h * 33 + key.charCodeAt(i)) % 1000;
+  const idx = Math.floor(((elapsed || 0) + teamSlot) / 2.1 + h * 0.17) % pool.length;
+  return pool[idx];
+}
+
+function pickMoodEmoji(mood, elapsed, team) {
+  const pool = MOOD_VARIANTS[mood?.id] || [mood?.emoji || "🙂"];
+  const slot = EMOTION_ORBIT_PHASE[team] || 0;
+  const idx = Math.floor(((elapsed || 0) + slot) / 3.3) % pool.length;
+  return pool[idx];
+}
 
 function collectRankedEmotionFlags(sideState, battleState) {
   const team = sideState.team;
@@ -61,6 +166,8 @@ function resolveEmotionPresentation(battleState, team) {
   const flags = collectRankedEmotionFlags(sideState, battleState);
   const primary = pickRotatingEmotion(flags, sideState.elapsed || 0, EMOTION_ORBIT_PHASE[team] || 0);
   const mood = sideState.mood;
+  const elapsed = sideState.elapsed || 0;
+  const teamSlot = EMOTION_ORBIT_PHASE[team] || 0;
   const secondary = flags.find((k) => k !== primary.key && EMOTION_CATALOG[k]?.emoji !== mood?.emoji);
   const secondaryDef = secondary ? EMOTION_CATALOG[secondary] : null;
 
@@ -68,9 +175,11 @@ function resolveEmotionPresentation(battleState, team) {
     team,
     mood,
     primaryKey: primary.key,
-    primaryEmoji: primary.def.emoji,
-    secondaryEmoji: secondaryDef?.emoji || null,
-    moodEmoji: mood?.emoji || "🙂",
+    primaryEmoji: pickEmotionVariant(primary.def, primary.key, elapsed, teamSlot),
+    secondaryEmoji: secondaryDef
+      ? pickEmotionVariant(secondaryDef, secondary, elapsed + 1.1, teamSlot)
+      : null,
+    moodEmoji: pickMoodEmoji(mood, elapsed, team),
     shellClass: primary.def.shellClass || "",
     brightness: mood.brightness ?? 1,
     pulse: !!mood.pulse || primary.key === "desperate" || primary.key === "losing",
@@ -87,12 +196,20 @@ function ensureEmotionOrbit(shell, team) {
     orbit.className = "avatar-emotion-orbit";
     orbit.dataset.team = team;
     orbit.innerHTML = `
+      <span class="avatar-emotion-float avatar-emotion-kayfu avatar-emotion-kayfu-active" aria-hidden="true">${KAYFU_EMOJI}</span>
       <span class="avatar-emotion-float avatar-emotion-mood" aria-hidden="true"></span>
       <span class="avatar-emotion-float avatar-emotion-reaction" aria-hidden="true"></span>
       <span class="avatar-battle-timer" aria-hidden="true"></span>
     `;
     const stage = shell.querySelector(".avatar-hero-stage");
     if (stage) stage.prepend(orbit);
+  }
+  if (!orbit.querySelector(".avatar-emotion-kayfu")) {
+    const kayfu = document.createElement("span");
+    kayfu.className = "avatar-emotion-float avatar-emotion-kayfu avatar-emotion-kayfu-active";
+    kayfu.textContent = KAYFU_EMOJI;
+    kayfu.setAttribute("aria-hidden", "true");
+    orbit.prepend(kayfu);
   }
   let effectOrbit = shell.querySelector(".avatar-effect-orbit");
   if (!effectOrbit) {
@@ -105,23 +222,43 @@ function ensureEmotionOrbit(shell, team) {
   return { orbit, effectOrbit };
 }
 
-function layoutEmotionFloat(el, emoji, phase, slotIndex) {
+function layoutEmotionFloat(el, emoji, phase, slotIndex, options = {}) {
   if (!el) return;
-  if (el.textContent !== emoji) {
+  const show = !!emoji;
+  if (show && el.textContent !== emoji) {
     el.textContent = emoji;
     el.classList.remove("avatar-emotion-pop");
     void el.offsetWidth;
     el.classList.add("avatar-emotion-pop");
   }
-  const angle = phase * 0.9 + slotIndex * Math.PI * 0.85;
-  const rx = 38 + Math.sin(phase * 0.7 + slotIndex) * 8;
-  const ry = 32 + Math.cos(phase * 0.55 + slotIndex * 1.2) * 10;
-  const x = 50 + Math.cos(angle) * rx;
-  const y = 28 + Math.sin(angle) * ry;
+  if (show) {
+    const angle = phase * 0.9 + slotIndex * Math.PI * 0.85;
+    const rx = 38 + Math.sin(phase * 0.7 + slotIndex) * 8;
+    const ry = 32 + Math.cos(phase * 0.55 + slotIndex * 1.2) * 10;
+    const x = 50 + Math.cos(angle) * rx;
+    const y = 28 + Math.sin(angle) * ry;
+    el.style.setProperty("--emo-x", `${x}%`);
+    el.style.setProperty("--emo-y", `${y}%`);
+    el.style.setProperty("--emo-rot", `${Math.sin(phase * 1.1 + slotIndex) * 12}deg`);
+  }
+  el.hidden = !show;
+  if (options.moodPulse) {
+    el.hidden = false;
+    el.classList.toggle("avatar-emotion-mood-active", show);
+  }
+}
+
+function layoutKayfuFloat(el, phase, team) {
+  if (!el) return;
+  el.textContent = KAYFU_EMOJI;
+  const side = team === "player" ? -1 : 1;
+  const x = 50 + side * 36 + Math.sin(phase * 0.45 + 0.6) * 5;
+  const y = 44 + Math.cos(phase * 0.38 + 1.2) * 6;
   el.style.setProperty("--emo-x", `${x}%`);
   el.style.setProperty("--emo-y", `${y}%`);
-  el.style.setProperty("--emo-rot", `${Math.sin(phase * 1.1 + slotIndex) * 12}deg`);
-  el.hidden = !emoji;
+  el.style.setProperty("--emo-rot", `${-6 + Math.sin(phase * 0.55) * 10}deg`);
+  el.hidden = false;
+  el.classList.add("avatar-emotion-kayfu-active");
 }
 
 function hashEffectSlot(key, team) {
@@ -147,25 +284,68 @@ function layoutEffectHop(el, key, team, tick) {
   el.style.setProperty("--fx-delay", `${(h % 8) * 0.11}s`);
 }
 
+const EFFECT_ORBIT_ICON_BY_ID = {
+  block: "🛡",
+  "dodge-ready": "💨",
+  "stack-block": "🛡",
+  "stack-spikes": "📌",
+  "stack-empower": "⚡",
+  "stack-regen": "💚",
+  "stack-heat": "🔥",
+  "stack-mana": "✨",
+  "stack-luck": "🍀",
+  poison: "☠",
+  slow: "🐌",
+  "ground-fire": "🔥",
+  stun: "😵",
+  invuln: "✨",
+  revive: "💫",
+  "arena-fatigue": "😮‍💨",
+};
+
+function firstGrapheme(text) {
+  const raw = String(text || "✨");
+  if (typeof Intl !== "undefined" && Intl.Segmenter) {
+    const seg = [...new Intl.Segmenter("en", { granularity: "grapheme" }).segment(raw)];
+    if (seg[0]?.segment) return seg[0].segment;
+  }
+  return raw.charAt(0) || "✨";
+}
+
+function normalizeEffectOrbitIcon(chip) {
+  if (EFFECT_ORBIT_ICON_BY_ID[chip.id]) return EFFECT_ORBIT_ICON_BY_ID[chip.id];
+  return firstGrapheme(chip.icon);
+}
+
+function formatEffectOrbitCount(value) {
+  const n = Math.ceil(Number(value) || 0);
+  if (n <= 1) return 0;
+  return Math.min(99, n);
+}
+
 function collectEffectOrbitItems(profile) {
   const items = [];
-  (profile?.buffs || []).forEach((chip) => {
+  const buffs = profile?.buffs || [];
+  const hasBlockBuff = buffs.some((chip) => chip.id === "block");
+
+  buffs.forEach((chip) => {
+    if (hasBlockBuff && chip.id === "stack-block") return;
     items.push({
       key: `buff-${chip.id}`,
-      icon: chip.icon,
+      icon: normalizeEffectOrbitIcon(chip),
       kind: "buff",
-      count: chip.value > 1 ? chip.value : 0,
+      count: formatEffectOrbitCount(chip.value),
     });
   });
   (profile?.debuffs || []).forEach((chip) => {
     items.push({
       key: `debuff-${chip.id}`,
-      icon: chip.icon,
+      icon: normalizeEffectOrbitIcon(chip),
       kind: "debuff",
-      count: chip.value > 1 ? chip.value : 0,
+      count: formatEffectOrbitCount(chip.value),
     });
   });
-  return items.slice(0, 10);
+  return items.slice(0, 6);
 }
 
 function syncEffectOrbit(team, profile, tick) {
@@ -195,18 +375,28 @@ function syncEffectOrbit(team, profile, tick) {
   });
 }
 
-function applyEmotionPresentation(team, presentation, profile) {
+function applyEmotionPresentation(team, presentation, profile, state) {
   if (!presentation) return;
   const slot = typeof getAvatarSlotEl === "function" ? getAvatarSlotEl(team) : null;
   const shell = slot?.querySelector(".avatar-hero-shell");
   if (!shell) return;
 
   const { orbit } = ensureEmotionOrbit(shell, team);
+  const kayfuEl = orbit.querySelector(".avatar-emotion-kayfu");
   const moodEl = orbit.querySelector(".avatar-emotion-mood");
   const reactionEl = orbit.querySelector(".avatar-emotion-reaction");
   const timerEl = orbit.querySelector(".avatar-battle-timer");
 
-  layoutEmotionFloat(moodEl, presentation.moodEmoji, presentation.floatPhase, 0);
+  layoutKayfuFloat(kayfuEl, presentation.floatPhase, team);
+
+  const moodVisible = resolveMoodPulseVisible(state, team);
+  layoutEmotionFloat(
+    moodEl,
+    moodVisible ? presentation.moodEmoji : null,
+    presentation.floatPhase,
+    0,
+    { moodPulse: true },
+  );
 
   const reactionEmoji = presentation.primaryEmoji !== presentation.moodEmoji
     ? presentation.primaryEmoji
@@ -241,8 +431,8 @@ function updateBattleEmotions(state) {
       ? computeCombatProfileFromBattleSide(state.enemy, null, "ИИ", state)
       : null);
 
-  applyEmotionPresentation("player", resolveEmotionPresentation(state, "player"), playerProfile);
-  applyEmotionPresentation("enemy", resolveEmotionPresentation(state, "enemy"), enemyProfile);
+  applyEmotionPresentation("player", resolveEmotionPresentation(state, "player"), playerProfile, state);
+  applyEmotionPresentation("enemy", resolveEmotionPresentation(state, "enemy"), enemyProfile, state);
 }
 
 function clearBattleEmotions() {

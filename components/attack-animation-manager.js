@@ -1,6 +1,6 @@
 /**
  * AttackAnimationManager — визуальный слой атак (не влияет на урон/баланс).
- * Снаряды летят от аватара атакующего, не из ячеек рюкзака. DOM-пул объектов.
+ * Снаряды летят от ячейки предмета в инвентаре к аватару цели. DOM-пул объектов.
  */
 
 const ATTACK_FX_MAX = 48;
@@ -43,7 +43,13 @@ function releaseAttackFxEl(el) {
   if (attackFxPool.length < ATTACK_FX_MAX) attackFxPool.push(el);
 }
 
-function getAttackFxOrigin(team) {
+function getAttackFxOrigin(fx, state) {
+  if (state && fx?.sourceItemUid && typeof getItemViewportCenter === "function") {
+    const side = fx.sourceTeam === "player" ? state.player : state.enemy;
+    const item = side?.items?.find((i) => i.uid === fx.sourceItemUid);
+    if (item) return getItemViewportCenter(item, fx.sourceTeam);
+  }
+  const team = fx?.sourceTeam || "player";
   if (typeof getProfileAvatarFloatAnchor === "function") {
     const pt = getProfileAvatarFloatAnchor(team, 0);
     return { x: pt.x, y: pt.y + 28 };
@@ -148,7 +154,7 @@ function renderAttackVisuals(state) {
     if (fx.age < 0) return;
     activeIds.add(fx.id);
 
-    const from = getAttackFxOrigin(fx.sourceTeam);
+    const from = getAttackFxOrigin(fx, state);
     const to = getAttackFxTarget(fx.targetTeam);
     const rawT = fx.age / (fx.duration || 0.5);
     const t = easeOutCubic(Math.min(1, rawT));
@@ -164,11 +170,11 @@ function renderAttackVisuals(state) {
       el = acquireAttackFxEl(className);
       el.dataset.fxUid = fx.id;
       if (fx.attackType === "aoe") {
-        el.innerHTML = `<span class="attack-fx-aoe-ring"></span><span class="attack-fx-aoe-icon">${fx.icon}</span>`;
+        el.innerHTML = `<span class="attack-fx-aoe-ring"></span><span class="attack-fx-aoe-icon">${typeof firstItemIconGrapheme === "function" ? firstItemIconGrapheme(fx.icon) : fx.icon}</span>`;
       } else if (fx.attackType === "melee") {
-        el.innerHTML = `<span class="attack-fx-melee-slash">${fx.icon}</span>`;
+        el.innerHTML = `<span class="attack-fx-melee-slash">${typeof firstItemIconGrapheme === "function" ? firstItemIconGrapheme(fx.icon) : fx.icon}</span>`;
       } else {
-        el.textContent = fx.icon;
+        el.textContent = typeof firstItemIconGrapheme === "function" ? firstItemIconGrapheme(fx.icon) : fx.icon;
       }
       layer.appendChild(el);
       attackFxActive.set(fx.id, el);

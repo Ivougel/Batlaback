@@ -64,7 +64,11 @@ function buildAttackEvent(state, item, sourceTeam, effect, context = {}) {
     targetTeam,
     attackType: cfg.attackType,
     visual,
-    icon: def?.icon || "⚔",
+    icon: effect?.type === "block"
+      ? "🛡"
+      : effect?.type === "heal"
+        ? "❤"
+        : (def?.icon || "⚔"),
     damage: Math.max(0, context.damage || 0),
     damageType: context.damageType || effect?.damageType || "physical",
     duration: cfg.duration,
@@ -90,5 +94,6 @@ function emitAttackEvent(state, event) {
 
 function emitEffectAttackVisual(state, item, sourceTeam, effect, context = {}) {
   if (!state || !item || !effect) return;
+  if ((context.damage || 0) > 0 && effect.type === "damage") return;
   emitAttackEvent(state, buildAttackEvent(state, item, sourceTeam, effect, context));
 }

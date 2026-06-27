@@ -245,6 +245,30 @@ function triggerAvatarReaction(team, type) {
   setTimeout(() => el.classList.remove(cls), 400);
 }
 
+function isBlockFeedback(text, color, kind) {
+  return String(text).includes("🛡") || (kind === "damage" && color === "#8b949e");
+}
+
+function resolveBlockFeedbackTeam(kind, sourceTeam, targetTeam) {
+  if (kind === "positive") return sourceTeam;
+  return targetTeam;
+}
+
+function shouldThrottleBlockFeedback(state, team) {
+  if (!state || !team) return false;
+  state._blockFxGate = state._blockFxGate || {};
+  const now = state.elapsed || 0;
+  const last = state._blockFxGate[team];
+  if (last != null && now - last < 0.45) return true;
+  state._blockFxGate[team] = now;
+  return false;
+}
+
+function notifyBlockEmotion(state, team) {
+  if (typeof pushTransientReaction !== "function" || !state || !team) return;
+  pushTransientReaction(state, team, "shield", 0.9);
+}
+
 function queueHitAnimation(state, item, team, text, color) {
   if (!state.animations) initBattleAnimations(state);
   const kind = classifyFloatingText(text);
@@ -252,32 +276,41 @@ function queueHitAnimation(state, item, team, text, color) {
   const trajectory = resolveFloatTrajectory({ sourceTeam: team, item }, kind, text);
   const isWeaponHit = trajectory === "weapon";
   const isDebuffApply = kind === "debuff";
+  const blockFx = isBlockFeedback(text, color, kind);
+  const blockTeam = blockFx ? resolveBlockFeedbackTeam(kind, team, targetTeam) : null;
+  const aggregatedDamage = typeof isAggregatedWeaponDamage === "function"
+    && isAggregatedWeaponDamage(text, color, kind);
 
-  spawnBattleFloat(state, text, color, {
-    sourceTeam: team,
-    item,
-    kind,
-    trajectory: isDebuffApply ? undefined : (kind === "damage" || kind === "positive" ? "hero-rise" : trajectory),
-    delay: isDebuffApply ? PROJECTILE_DURATION : 0,
-    spawnAtTarget: isDebuffApply || kind === "damage" || kind === "positive",
-    maxAge: isWeaponHit ? 1.35 : isDebuffApply ? 1.8 : undefined,
-  });
-
-  if (item && kind === "positive") {
-    const beadKind = String(text).includes("❤") ? "heal" : "block";
-    queueAvatarCompanionBead(state, team, item, beadKind);
+  if (aggregatedDamage && typeof recordIncomingDamage === "function") {
+    const damage = parseFloatingMagnitude(text);
+    recordIncomingDamage(state, targetTeam, team, item, damage);
   }
-  if (item && kind === "damage" && color === "#8b949e") {
-    queueAvatarCompanionBead(state, targetTeam, item, "block");
+
+  if (blockFx && blockTeam) {
+    notifyBlockEmotion(state, blockTeam);
+  }
+
+  const skipBlockFloat = blockFx && blockTeam && shouldThrottleBlockFeedback(state, blockTeam);
+  const skipFloat = aggregatedDamage || skipBlockFloat;
+  if (!skipFloat) {
+    spawnBattleFloat(state, text, color, {
+      sourceTeam: team,
+      item: blockFx ? null : item,
+      kind,
+      trajectory: isDebuffApply ? undefined : (kind === "damage" || kind === "positive" ? "hero-rise" : trajectory),
+      delay: isDebuffApply ? PROJECTILE_DURATION : 0,
+      spawnAtTarget: isDebuffApply || kind === "damage" || kind === "positive",
+      maxAge: isWeaponHit ? 1.35 : isDebuffApply ? 1.8 : undefined,
+    });
   }
 
   if (kind === "damage" && color !== "#8b949e") {
     triggerAvatarReaction(targetTeam, "hit");
   }
-  if (String(text).includes("🛡") || (kind === "damage" && color === "#8b949e")) {
-    triggerAvatarReaction(kind === "damage" && color === "#8b949e" ? targetTeam : team, "block");
+  if (blockFx) {
+    triggerAvatarReaction(blockTeam, "block");
   }
-  if (kind === "positive") {
+  if (kind === "positive" && String(text).includes("❤")) {
     triggerAvatarReaction(team, "heal");
   }
 

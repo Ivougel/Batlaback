@@ -1385,9 +1385,121 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
   z-index: 2;
 }
 
+.avatar-emotion-kayfu {
+  z-index: 8;
+  font-size: calc(5.4vh * var(--ui-scale));
+  opacity: 1;
+  filter: drop-shadow(0 0 12px rgba(255, 196, 72, 0.55));
+  animation: avatar-kayfu-bob 2.6s ease-in-out infinite;
+  transition: none;
+}
+
+.avatar-emotion-kayfu-active {
+  opacity: 1;
+}
+
+@keyframes avatar-kayfu-bob {
+  0%, 100% { transform: translate(-50%, -50%) rotate(var(--emo-rot, 0deg)) translateY(0) scale(1); }
+  50% { transform: translate(-50%, -50%) rotate(var(--emo-rot, 0deg)) translateY(calc(-0.8vh * -1)) scale(1.06); }
+}
+
 .avatar-emotion-mood {
   z-index: 1;
+  opacity: 0;
+  transition: opacity 0.32s ease, transform 0.32s ease;
+}
+
+.avatar-emotion-mood.avatar-emotion-mood-active {
   opacity: 0.92;
+}
+
+.avatar-damage-stacks {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: calc(6px * var(--ui-scale));
+  min-height: calc(52px * var(--ui-scale));
+  margin-bottom: calc(4px * var(--ui-scale));
+  pointer-events: none;
+}
+
+.avatar-damage-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(2px * var(--ui-scale));
+  min-width: calc(44px * var(--ui-scale));
+}
+
+.avatar-damage-stack-icon {
+  font-size: calc(2rem * var(--ui-scale));
+  line-height: 1;
+  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.65));
+}
+
+.avatar-damage-stack-value {
+  font-size: calc(13px * var(--ui-scale));
+  font-weight: 800;
+  color: #f85149;
+  letter-spacing: -0.02em;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+}
+
+.avatar-damage-stack-bounce .avatar-damage-stack-icon {
+  animation: damage-stack-land 0.38s cubic-bezier(0.22, 1.35, 0.36, 1);
+}
+
+@keyframes damage-stack-land {
+  0% { transform: translateY(calc(-18px * var(--ui-scale))) scale(1.35); }
+  55% { transform: translateY(calc(4px * var(--ui-scale))) scale(0.92); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+.battle-damage-fx-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 92;
+  overflow: hidden;
+}
+
+.battle-damage-flight {
+  position: fixed;
+  left: 0;
+  top: 0;
+  line-height: 1;
+  will-change: transform, opacity;
+  filter: drop-shadow(0 0 10px rgba(248, 81, 73, 0.45));
+}
+
+.battle-countdown-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 120;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.battle-countdown-digit {
+  font-size: min(28vw, 120px);
+  font-weight: 900;
+  color: #fff;
+  text-shadow:
+    0 0 40px rgba(88, 166, 255, 0.65),
+    0 4px 20px rgba(0, 0, 0, 0.85);
+}
+
+.battle-countdown-digit.battle-countdown-pop {
+  animation: battle-countdown-pop 0.85s cubic-bezier(0.22, 1.2, 0.36, 1);
+}
+
+@keyframes battle-countdown-pop {
+  0% { transform: scale(0.2); opacity: 0; }
+  35% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.92; }
 }
 
 @keyframes avatar-emotion-hover {

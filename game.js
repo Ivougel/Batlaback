@@ -1982,6 +1982,8 @@ function startBattle() {
           enemy: { pendingShopBuffs: enemyPendingShopBuffs },
         },
       );
+      if (typeof initBattleCountdown === "function") initBattleCountdown(battleState);
+      if (typeof initBattleDamageTracker === "function") initBattleDamageTracker(battleState);
       playerPendingShopBuffs = 0;
       enemyPendingShopBuffs = 0;
       battleState.recording = true;
@@ -2017,6 +2019,7 @@ function endBattle() {
   const finishedState = battleState;
   battleState = null;
   clearBattleFloatLayer();
+  if (typeof clearBattleDamageSummary === "function") clearBattleDamageSummary(finishedState);
   if (typeof clearBattleEmotions === "function") clearBattleEmotions();
 
   let battleSummary;
@@ -2713,12 +2716,15 @@ function draw() {
     });
     drawAttackAnimations(ctx, battleState);
     renderBattleEffectsOverlay(battleState);
-    if (typeof renderAttackVisuals === "function") renderAttackVisuals(battleState);
     if (typeof syncLiveAvatarHeroFrame === "function") syncLiveAvatarHeroFrame(battleState);
+    if (typeof renderDamageFlights === "function") renderDamageFlights(battleState);
+    if (typeof renderBattleCountdown === "function") renderBattleCountdown(battleState);
     if (typeof tickBattleEmotions === "function") tickBattleEmotions(battleState, lastGameLoopDt || 0.016);
   } else {
     clearBattleFloatLayer();
     if (typeof clearAttackFxLayer === "function") clearAttackFxLayer();
+    if (typeof clearBattleDamageSummary === "function") clearBattleDamageSummary(battleState);
+    if (typeof clearDamageFlightLayer === "function") clearDamageFlightLayer();
     if (typeof clearBattleEmotions === "function") clearBattleEmotions();
   }
 }

@@ -1522,6 +1522,7 @@ function createBattleState(playerItems, enemyItems, playerClassId = null, enemyC
     itemDamageStats: {},
   };
   initBattleAnimations(state);
+  if (typeof initBattleDamageTracker === "function") initBattleDamageTracker(state);
   state.replayFrames = [];
   state.lastRecordAt = 0;
   state.recording = false;
@@ -1617,6 +1618,9 @@ function checkHeartThresholdEffects(state, side, foe, team) {
 function battleTick(state, dt) {
   if (state.finished) return;
 
+  if (typeof tickBattleCountdown === "function") tickBattleCountdown(state, dt);
+  if (typeof isBattleCountdownActive === "function" && isBattleCountdownActive(state)) return;
+
   state.elapsed += dt;
   tickStatusEffects(state, dt);
   tickRegenStacks(state, dt);
@@ -1625,6 +1629,7 @@ function battleTick(state, dt) {
   tickGroundFire(state, dt);
   tickFatigue(state, dt);
   tickBattleAnimations(state, dt);
+  if (typeof tickDamageFlights === "function") tickDamageFlights(state, dt);
 
   if (state.elapsed >= MAX_BATTLE_DURATION) {
     resolveBattleTimeout(state);
@@ -2463,8 +2468,7 @@ function applyDamage(target, amount, state, sourceLabel, attackerTeam, attackerS
     triggerProfileAvatarHitShake(targetTeam);
   } else if (blockAbs + armorAbs > 0) {
     const absorbed = Math.round(blockAbs + armorAbs);
-    const blockIcon = ITEM_CATALOG[sourceItem?.itemId]?.icon || "🛡";
-    queueHitAnimation(state, sourceItem, attackerTeam, `${blockIcon} −${absorbed}`, "#8b949e");
+    queueHitAnimation(state, null, attackerTeam, `🛡 −${absorbed}`, "#8b949e");
   }
 
   if (rawAmount > 0 || blockAbs > 0 || armorAbs > 0) {
