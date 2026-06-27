@@ -1758,6 +1758,14 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
   line-height: 1.2;
 }
 
+#app[data-phase="battle"] .avatar-hero-hp-text,
+#app[data-phase="replay"] .avatar-hero-hp-text,
+#app[data-phase="battle"] .avatar-hero-hp-bar,
+#app[data-phase="replay"] .avatar-hero-hp-bar {
+  pointer-events: auto;
+  cursor: help;
+}
+
 .avatar-hero-debuff-row {
   display: flex;
   flex-wrap: wrap;
@@ -4811,6 +4819,30 @@ html[data-touch="true"] .sidebar-tooltip.synergy-tooltip .synergy-tt-source {
 }
 
 .settings-slider:focus-visible {
+  outline: 2px solid #58a6ff;
+  outline-offset: 2px;
+}
+
+.settings-row-checkbox {
+  margin-top: calc(4px * var(--ui-scale));
+  padding-top: calc(10px * var(--ui-scale));
+  border-top: 1px solid var(--border);
+}
+
+.settings-checkbox-label {
+  cursor: pointer;
+  user-select: none;
+}
+
+.settings-checkbox {
+  width: calc(18px * var(--ui-scale));
+  height: calc(18px * var(--ui-scale));
+  accent-color: #58a6ff;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.settings-checkbox:focus-visible {
   outline: 2px solid #58a6ff;
   outline-offset: 2px;
 }

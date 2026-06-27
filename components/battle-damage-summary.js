@@ -434,10 +434,38 @@ function syncDamageStackDisplay(team, state) {
   });
 }
 
+function formatIncomingDpsTooltip(dps) {
+  if (!dps || dps < 0.05) {
+    return "Входящий урон: нет активного давления (окно 5 с)";
+  }
+  return `Входящий урон: ${dps.toFixed(1)} HP/с (скользящее окно ${BATTLE_ANALYZER_WINDOW_SEC} с)`;
+}
+
+function syncIncomingDpsTooltip(team, state) {
+  const slot = typeof getAvatarSlotEl === "function" ? getAvatarSlotEl(team) : null;
+  const shell = slot?.querySelector(".avatar-hero-shell");
+  if (!shell || !state) return;
+
+  const sideState = team === "player"
+    ? state.commentary?.playerState
+    : state.commentary?.enemyState;
+  const dps = sideState?.metrics?.incomingDps ?? 0;
+  const tip = formatIncomingDpsTooltip(dps);
+
+  const hpText = shell.querySelector(".avatar-hero-hp-text");
+  const hpBar = shell.querySelector(".avatar-hero-hp-bar");
+  const stacksEl = shell.querySelector(".avatar-damage-stacks");
+  if (hpText) hpText.title = tip;
+  if (hpBar) hpBar.title = tip;
+  if (stacksEl) stacksEl.title = tip;
+}
+
 function syncAllDamageSummaryDisplays(state) {
   if (!state) return;
   syncDamageStackDisplay("player", state);
   syncDamageStackDisplay("enemy", state);
+  syncIncomingDpsTooltip("player", state);
+  syncIncomingDpsTooltip("enemy", state);
 }
 
 function hideBattleCountdownOverlay() {

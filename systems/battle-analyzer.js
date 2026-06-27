@@ -4,6 +4,12 @@
  */
 
 const BATTLE_ANALYZER_WINDOW_SEC = 5;
+/** Минимальный интервал между реакциями — визуальное время (не ускоряется ×2/×3). */
+const EMOTION_REACTION_MIN_GAP = 1.6;
+
+function getBattleVisualNow(state) {
+  return state?.visualElapsed ?? state?.elapsed ?? 0;
+}
 const BATTLE_PHASE_THRESHOLDS = [
   { sec: 120, id: "survival", emotion: "survival_battle" },
   { sec: 60, id: "exhaustion", emotion: "exhaustion" },
@@ -27,6 +33,7 @@ function createSideCommentaryTracker() {
     lastStamina: null,
     transientQueue: [],
     lastReactionAt: 0,
+    lastReactionAtVisual: 0,
     lastReactionKey: null,
     activeReactionKey: null,
     activeReactionUntil: 0,
@@ -151,17 +158,17 @@ function buildSideBattleState(team, metrics, foeMetrics, state) {
   else if (metrics.hpPct >= 0.65) flags.push("healthy");
   if (durationPhase) flags.push(durationPhase.emotion);
 
-  const elapsed = state.elapsed || 0;
-  const ambient = Math.sin(elapsed * 0.47 + (team === "player" ? 0.9 : 2.4));
+  const visualElapsed = getBattleVisualNow(state);
+  const ambient = Math.sin(visualElapsed * 0.47 + (team === "player" ? 0.9 : 2.4));
   if (ambient > 0.86) flags.push("rizz");
   else if (ambient > 0.72) flags.push("vibing");
   else if (ambient > 0.58) flags.push("sigma");
   else if (ambient < -0.86 && metrics.hpPct < 0.35) flags.push("cooked");
   else if (ambient < -0.72 && metrics.hpPct < 0.5) flags.push("touch_grass");
   else if (ambient < -0.58 && winProb >= 0.55) flags.push("delulu");
-  else if (Math.abs(Math.sin(elapsed * 0.19 + team.length)) > 0.94) flags.push("no_cap");
-  else if (Math.abs(Math.cos(elapsed * 0.31 + (team === "player" ? 1 : 3))) > 0.96) flags.push("skibidi");
-  else if (Math.abs(Math.sin(elapsed * 0.23)) > 0.97) flags.push("based");
+  else if (Math.abs(Math.sin(visualElapsed * 0.19 + team.length)) > 0.94) flags.push("no_cap");
+  else if (Math.abs(Math.cos(visualElapsed * 0.31 + (team === "player" ? 1 : 3))) > 0.96) flags.push("skibidi");
+  else if (Math.abs(Math.sin(visualElapsed * 0.23)) > 0.97) flags.push("based");
 
   if (metrics.hpLost >= metrics.maxHp * 0.12) {
     pushTransientReaction(state, team, "big_hit", 0.55);
@@ -250,11 +257,13 @@ function collectAttackVisualTriggers(state) {
 function pushTransientReaction(state, team, key, duration = 1.1) {
   initBattleCommentary(state);
   const tracker = state.commentary[team];
-  const now = state.elapsed || 0;
+  const now = getBattleVisualNow(state);
+  if (now - (tracker.lastReactionAtVisual || 0) < EMOTION_REACTION_MIN_GAP) return;
   tracker.transientQueue.push({ key, until: now + duration });
   tracker.activeReactionKey = key;
   tracker.activeReactionUntil = now + duration;
   tracker.lastReactionAt = now;
+  tracker.lastReactionAtVisual = now;
   tracker.lastReactionKey = key;
 }
 
@@ -265,7 +274,7 @@ function detectHpSpikeReactions(state) {
 function updateBattleAnalyzer(state, _dt) {
   if (!state || state.finished) return;
   initBattleCommentary(state);
-  const now = state.elapsed || 0;
+  const now = getBattleVisualNow(state);
 
   collectAttackVisualTriggers(state).forEach((tr) => {
     pushTransientReaction(state, tr.team, tr.key, tr.transient ? 1.0 : 0.85);

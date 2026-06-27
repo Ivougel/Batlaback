@@ -54,28 +54,28 @@ function moodPulseRand(team, cycleIndex, part) {
 
 function computeMoodPulseSegment(elapsed, durationPhase, team, cycleIndex, willBeVisible) {
   const mins = (elapsed || 0) / 60;
-  let hideMin = 5.4;
-  let hideSpan = 3.8;
+  let hideMin = 10.8;
+  let hideSpan = 7.6;
   if (mins >= 2) {
-    hideMin = 3.4;
-    hideSpan = 2.2;
+    hideMin = 6.8;
+    hideSpan = 4.4;
   } else if (mins >= 1) {
-    hideMin = 4.2;
-    hideSpan = 2.6;
+    hideMin = 8.4;
+    hideSpan = 5.2;
   } else if (mins >= 0.5) {
-    hideMin = 4.8;
-    hideSpan = 3.0;
+    hideMin = 9.6;
+    hideSpan = 6.0;
   }
   if (durationPhase?.sec >= 120) {
-    hideMin -= 0.6;
-    hideSpan -= 0.35;
+    hideMin -= 1.2;
+    hideSpan -= 0.7;
   } else if (durationPhase?.sec >= 60) {
-    hideMin -= 0.3;
-    hideSpan -= 0.2;
+    hideMin -= 0.6;
+    hideSpan -= 0.4;
   }
 
-  const showMin = 0.8;
-  const showSpan = 0.45 + moodPulseRand(team, cycleIndex, 9) * 0.55;
+  const showMin = 1.6;
+  const showSpan = 0.9 + moodPulseRand(team, cycleIndex, 9) * 1.1;
   const r = moodPulseRand(team, cycleIndex, willBeVisible ? 2 : 3);
 
   if (willBeVisible) return showMin + r * showSpan;
@@ -122,21 +122,21 @@ function pickEmotionVariant(def, key, elapsed, teamSlot = 0) {
   const pool = def?.variants?.length ? def.variants : [def?.emoji || "✨"];
   let h = 0;
   for (let i = 0; i < String(key).length; i += 1) h = (h * 33 + key.charCodeAt(i)) % 1000;
-  const idx = Math.floor(((elapsed || 0) + teamSlot) / 2.1 + h * 0.17) % pool.length;
+  const idx = Math.floor(((elapsed || 0) + teamSlot) / 4.2 + h * 0.17) % pool.length;
   return pool[idx];
 }
 
 function pickMoodEmoji(mood, elapsed, team) {
   const pool = MOOD_VARIANTS[mood?.id] || [mood?.emoji || "🙂"];
   const slot = EMOTION_ORBIT_PHASE[team] || 0;
-  const idx = Math.floor(((elapsed || 0) + slot) / 3.3) % pool.length;
+  const idx = Math.floor(((elapsed || 0) + slot) / 6.6) % pool.length;
   return pool[idx];
 }
 
 function collectRankedEmotionFlags(sideState, battleState) {
   const team = sideState.team;
   const tracker = battleState.commentary?.[team];
-  const now = sideState.elapsed || 0;
+  const now = battleState.visualElapsed ?? sideState.elapsed ?? 0;
   const keys = new Set(sideState.flags || []);
 
   if (tracker?.activeReactionKey && tracker.activeReactionUntil > now) {
@@ -152,7 +152,7 @@ function pickRotatingEmotion(flags, elapsed, slot = 0) {
   if (!flags.length) return { key: "healthy", def: EMOTION_CATALOG.healthy };
   const topTier = EMOTION_CATALOG[flags[0]].priority;
   const tier = flags.filter((k) => EMOTION_CATALOG[k].priority >= topTier - 5);
-  const idx = Math.floor((elapsed + slot * 1.3) / 2.2) % tier.length;
+  const idx = Math.floor((elapsed + slot * 1.3) / 4.4) % tier.length;
   const key = tier[idx] || flags[0];
   return { key, def: EMOTION_CATALOG[key] };
 }
@@ -272,7 +272,7 @@ function hashEffectSlot(key, team) {
 
 function layoutEffectHop(el, key, team, tick) {
   const h = hashEffectSlot(key, team);
-  const jumpEvery = 1.4 + (h % 10) * 0.13;
+  const jumpEvery = 2.8 + (h % 10) * 0.26;
   const jumpPhase = Math.floor(tick / jumpEvery);
   const rnd = (n) => {
     const x = Math.sin((h + 1) * 928371 + n * 2654435761 + jumpPhase * 1337) * 10000;
@@ -471,4 +471,8 @@ function tickBattleEmotions(state) {
   if (!state || state.finished) return;
   updateBattleAnalyzer(state, 0);
   updateBattleEmotions(state);
+  if (typeof syncIncomingDpsTooltip === "function") {
+    syncIncomingDpsTooltip("player", state);
+    syncIncomingDpsTooltip("enemy", state);
+  }
 }
