@@ -5,6 +5,9 @@
 
 const KAYFU_EMOJI = "🤠";
 
+/** На 80% реже: длительности пульса и ротации ×5. */
+const EMOTION_INTERVAL_SCALE = 5;
+
 const EMOTION_CATALOG = {
   stunned:         { emoji: "😵", variants: ["😵‍💫", "🫠", "💫", "😵💢"], priority: 100, shellClass: "emotion-stunned" },
   desperate:       { emoji: "💀", variants: ["☠️", "⚰️", "📉", "💀🔥"], priority: 90, shellClass: "emotion-desperate" },
@@ -54,28 +57,28 @@ function moodPulseRand(team, cycleIndex, part) {
 
 function computeMoodPulseSegment(elapsed, durationPhase, team, cycleIndex, willBeVisible) {
   const mins = (elapsed || 0) / 60;
-  let hideMin = 10.8;
-  let hideSpan = 7.6;
+  let hideMin = 10.8 * EMOTION_INTERVAL_SCALE;
+  let hideSpan = 7.6 * EMOTION_INTERVAL_SCALE;
   if (mins >= 2) {
-    hideMin = 6.8;
-    hideSpan = 4.4;
+    hideMin = 6.8 * EMOTION_INTERVAL_SCALE;
+    hideSpan = 4.4 * EMOTION_INTERVAL_SCALE;
   } else if (mins >= 1) {
-    hideMin = 8.4;
-    hideSpan = 5.2;
+    hideMin = 8.4 * EMOTION_INTERVAL_SCALE;
+    hideSpan = 5.2 * EMOTION_INTERVAL_SCALE;
   } else if (mins >= 0.5) {
-    hideMin = 9.6;
-    hideSpan = 6.0;
+    hideMin = 9.6 * EMOTION_INTERVAL_SCALE;
+    hideSpan = 6.0 * EMOTION_INTERVAL_SCALE;
   }
   if (durationPhase?.sec >= 120) {
-    hideMin -= 1.2;
-    hideSpan -= 0.7;
+    hideMin -= 1.2 * EMOTION_INTERVAL_SCALE;
+    hideSpan -= 0.7 * EMOTION_INTERVAL_SCALE;
   } else if (durationPhase?.sec >= 60) {
-    hideMin -= 0.6;
-    hideSpan -= 0.4;
+    hideMin -= 0.6 * EMOTION_INTERVAL_SCALE;
+    hideSpan -= 0.4 * EMOTION_INTERVAL_SCALE;
   }
 
-  const showMin = 1.6;
-  const showSpan = 0.9 + moodPulseRand(team, cycleIndex, 9) * 1.1;
+  const showMin = 1.6 * EMOTION_INTERVAL_SCALE;
+  const showSpan = (0.9 + moodPulseRand(team, cycleIndex, 9) * 1.1) * EMOTION_INTERVAL_SCALE;
   const r = moodPulseRand(team, cycleIndex, willBeVisible ? 2 : 3);
 
   if (willBeVisible) return showMin + r * showSpan;
@@ -122,14 +125,14 @@ function pickEmotionVariant(def, key, elapsed, teamSlot = 0) {
   const pool = def?.variants?.length ? def.variants : [def?.emoji || "✨"];
   let h = 0;
   for (let i = 0; i < String(key).length; i += 1) h = (h * 33 + key.charCodeAt(i)) % 1000;
-  const idx = Math.floor(((elapsed || 0) + teamSlot) / 4.2 + h * 0.17) % pool.length;
+  const idx = Math.floor(((elapsed || 0) + teamSlot) / (4.2 * EMOTION_INTERVAL_SCALE) + h * 0.17) % pool.length;
   return pool[idx];
 }
 
 function pickMoodEmoji(mood, elapsed, team) {
   const pool = MOOD_VARIANTS[mood?.id] || [mood?.emoji || "🙂"];
   const slot = EMOTION_ORBIT_PHASE[team] || 0;
-  const idx = Math.floor(((elapsed || 0) + slot) / 6.6) % pool.length;
+  const idx = Math.floor(((elapsed || 0) + slot) / (6.6 * EMOTION_INTERVAL_SCALE)) % pool.length;
   return pool[idx];
 }
 
@@ -152,7 +155,7 @@ function pickRotatingEmotion(flags, elapsed, slot = 0) {
   if (!flags.length) return { key: "healthy", def: EMOTION_CATALOG.healthy };
   const topTier = EMOTION_CATALOG[flags[0]].priority;
   const tier = flags.filter((k) => EMOTION_CATALOG[k].priority >= topTier - 5);
-  const idx = Math.floor((elapsed + slot * 1.3) / 4.4) % tier.length;
+  const idx = Math.floor((elapsed + slot * 1.3) / (4.4 * EMOTION_INTERVAL_SCALE)) % tier.length;
   const key = tier[idx] || flags[0];
   return { key, def: EMOTION_CATALOG[key] };
 }
@@ -272,7 +275,7 @@ function hashEffectSlot(key, team) {
 
 function layoutEffectHop(el, key, team, tick) {
   const h = hashEffectSlot(key, team);
-  const jumpEvery = 2.8 + (h % 10) * 0.26;
+  const jumpEvery = (2.8 + (h % 10) * 0.26) * EMOTION_INTERVAL_SCALE;
   const jumpPhase = Math.floor(tick / jumpEvery);
   const rnd = (n) => {
     const x = Math.sin((h + 1) * 928371 + n * 2654435761 + jumpPhase * 1337) * 10000;
