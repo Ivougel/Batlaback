@@ -1951,6 +1951,26 @@ function tickFatigue(state, dt) {
   });
 }
 
+function triggerOnActivateListeners(state, sourceItem, self, foe, team) {
+  if (!self?.items || !sourceItem) return;
+  const sourceDef = ITEM_CATALOG[sourceItem.itemId];
+  if (!itemHasActivatableEffects(sourceDef)) return;
+
+  self.items.forEach((listenerItem) => {
+    const listenerDef = ITEM_CATALOG[listenerItem.itemId];
+    const effects = typeof getBattleEffectsForItem === "function"
+      ? getBattleEffectsForItem(listenerItem)
+      : (listenerDef?.effects || []);
+    const rt = listenerItem.runtime || createRuntimeState(listenerItem);
+    effects.forEach((effect) => {
+      if (effect.type !== "onActivate") return;
+      if (effect.chance != null && !rollEffectChance(self, effect.chance)) return;
+      if (effect.gainStack) applyGainStackEffect(state, effect.gainStack, listenerItem, self, team);
+      if (effect.heal) executeEffect(state, { type: "heal", value: effect.heal }, listenerItem, self, foe, rt, team);
+    });
+  });
+}
+
 function activateItem(state, item, self, foe, team) {
   const def = ITEM_CATALOG[item.itemId];
   const rt = item.runtime || createRuntimeState(item);
@@ -1969,12 +1989,6 @@ function activateItem(state, item, self, foe, team) {
     const tr = effect.trigger || effect.phase;
     if (tr === "on_hit" || tr === "on_block" || tr === "battle_start" || tr === "passive" || tr === "on_miss") return;
     applySpendStackEffect(state, effect, item, self, foe, rt, team);
-  });
-  allEffects.forEach((effect) => {
-    if (effect.type !== "onActivate") return;
-    if (effect.chance != null && !rollEffectChance(self, effect.chance)) return;
-    if (effect.gainStack) applyGainStackEffect(state, effect.gainStack, item, self, team);
-    if (effect.heal) executeEffect(state, { type: "heal", value: effect.heal }, item, self, foe, rt, team);
   });
   const activeEffects = allEffects.filter((e) => {
     const tr = e.trigger || e.phase;
@@ -2060,6 +2074,8 @@ function activateItem(state, item, self, foe, team) {
       triggerProfileAvatarCritFlip(victimTeam);
     }
   }
+
+  triggerOnActivateListeners(state, item, self, foe, team);
 }
 
 function ensureItemStat(state, item, team) {

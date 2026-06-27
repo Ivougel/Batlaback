@@ -1058,9 +1058,38 @@ function isContainerAvailableInShop(item, round = 1) {
   return (item.minShopRound || 1) <= round;
 }
 
+const COOLDOWN_ACTIVATION_EFFECT_TYPES = new Set([
+  "damage",
+  "heal",
+  "block",
+  "poison",
+  "slow",
+  "buffTimed",
+  "lifesteal",
+  "onHitCapBonus",
+  "breakBlockOnHit",
+  "selfPoison",
+]);
+
+const COOLDOWN_ACTIVATION_SKIP_TRIGGERS = new Set([
+  "passive",
+  "battle_start",
+  "on_hit",
+  "on_block",
+  "on_miss",
+  "on_defend",
+  "on_revive",
+  "on_foe_heal",
+]);
+
+function effectParticipatesInCooldownActivation(effect) {
+  if (!effect?.type || !COOLDOWN_ACTIVATION_EFFECT_TYPES.has(effect.type)) return false;
+  const trigger = effect.trigger || effect.phase;
+  if (trigger && COOLDOWN_ACTIVATION_SKIP_TRIGGERS.has(trigger)) return false;
+  return true;
+}
+
 function itemHasActivatableEffects(def) {
-  return (def.effects || []).some((e) => e.trigger !== "passive" && e.type !== "passiveDefense"
-    && e.type !== "statMult" && e.type !== "passiveMaxHp" && e.type !== "lifesteal"
-    && e.type !== "shieldBlockMult" && e.type !== "shieldBreakBonus" && e.type !== "crit"
-    && e.type !== "dodgePeriodic" && e.type !== "groundFire" && e.type !== "repeatCast");
+  if (!def) return false;
+  return (def.effects || []).some(effectParticipatesInCooldownActivation);
 }
