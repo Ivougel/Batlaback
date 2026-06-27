@@ -5,8 +5,10 @@
 
 const KAYFU_EMOJI = "🤠";
 
-/** Замедление прыгающих эффектов на орбите. */
+/** Замедление прыгающих эффектов на орбите (не mood/reaction). */
 const EMOTION_INTERVAL_SCALE = 5;
+/** Бафф/дебафф-хопы — заметнее, чем общий scale. */
+const EFFECT_HOP_INTERVAL_SCALE = 1.15;
 /** Быстрый цикл mood/reaction — эмоции должны быть заметны каждые 1–3 с. */
 const MOOD_PULSE_INTERVAL_SCALE = 0.52;
 /** Минимальный интервал между реакциями (сек). */
@@ -268,7 +270,7 @@ function hashEffectSlot(key, team) {
 
 function layoutEffectHop(el, key, team, tick) {
   const h = hashEffectSlot(key, team);
-  const jumpEvery = (2.8 + (h % 10) * 0.26) * EMOTION_INTERVAL_SCALE;
+  const jumpEvery = (2.8 + (h % 10) * 0.26) * EFFECT_HOP_INTERVAL_SCALE;
   const jumpPhase = Math.floor(tick / jumpEvery);
   const rnd = (n) => {
     const x = Math.sin((h + 1) * 928371 + n * 2654435761 + jumpPhase * 1337) * 10000;
@@ -461,8 +463,13 @@ function clearBattleEmotions() {
     Object.values(EMOTION_CATALOG).forEach((d) => {
       if (d.shellClass) shell.classList.remove(d.shellClass);
     });
-    shell.querySelector(".avatar-emotion-orbit")?.remove();
-    shell.querySelector(".avatar-effect-orbit")?.remove();
+    shell.querySelectorAll(".avatar-emotion-float").forEach((el) => {
+      el.textContent = "";
+      el.hidden = true;
+    });
+    shell.querySelector(".avatar-effect-orbit")?.replaceChildren();
+    shell.removeAttribute("data-emotion-state");
+    shell.removeAttribute("data-mood-state");
   });
 }
 

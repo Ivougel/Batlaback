@@ -2068,6 +2068,9 @@ function startBattle() {
       renderBattleStats();
       renderPlayerProfiles();
       renderFightButton();
+      if (typeof tickBattleEmotions === "function" && battleState) {
+        tickBattleEmotions(battleState);
+      }
     } catch (err) {
       console.error("startBattle failed:", err);
       battleState = null;
@@ -4433,6 +4436,7 @@ function renderPlayerProfiles() {
   if (liveBattle && battleState) {
     battleState._heroProfiles = { player: playerProfile, enemy: enemyProfile };
     syncAllAvatarHeroEffects(playerProfile, enemyProfile, battleState);
+    if (typeof tickBattleEmotions === "function") tickBattleEmotions(battleState);
   }
   syncBattleArenaLayout();
 }

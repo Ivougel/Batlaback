@@ -170,18 +170,6 @@ function buildSideBattleState(team, metrics, foeMetrics, state) {
   else if (metrics.hpPct >= 0.65) flags.push("healthy");
   if (durationPhase) flags.push(durationPhase.emotion);
 
-  const visualElapsed = getBattleVisualNow(state);
-  const ambient = Math.sin(visualElapsed * 0.094 + (team === "player" ? 0.9 : 2.4));
-  if (ambient > 0.86) flags.push("rizz");
-  else if (ambient > 0.72) flags.push("vibing");
-  else if (ambient > 0.58) flags.push("sigma");
-  else if (ambient < -0.86 && metrics.hpPct < 0.35) flags.push("cooked");
-  else if (ambient < -0.72 && metrics.hpPct < 0.5) flags.push("touch_grass");
-  else if (ambient < -0.58 && winProb >= 0.55) flags.push("delulu");
-  else if (Math.abs(Math.sin(visualElapsed * 0.038 + team.length)) > 0.94) flags.push("no_cap");
-  else if (Math.abs(Math.cos(visualElapsed * 0.062 + (team === "player" ? 1 : 3))) > 0.96) flags.push("skibidi");
-  else if (Math.abs(Math.sin(visualElapsed * 0.046)) > 0.97) flags.push("based");
-
   if (metrics.hpLost >= metrics.maxHp * 0.12) {
     pushTransientReaction(state, team, "big_hit", 0.55);
   }

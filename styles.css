@@ -1754,9 +1754,18 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 }
 
 @keyframes avatar-emotion-pop {
-  0% { transform: scale(0.5); opacity: 0; }
-  55% { transform: scale(1.18); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: translate(-50%, -50%) rotate(var(--emo-rot, 0deg)) scale(0.5);
+    opacity: 0;
+  }
+  55% {
+    transform: translate(-50%, -50%) rotate(var(--emo-rot, 0deg)) scale(1.18);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(var(--emo-rot, 0deg)) scale(1);
+    opacity: 1;
+  }
 }
 
 .avatar-hero-shell.avatar-mood-pulse .profile-avatar {
@@ -6761,7 +6770,7 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
   position: relative;
   min-height: 0;
   height: 100%;
-  overflow: hidden;
+  overflow: visible;
 }
 
 #app[data-phase="battle"] .prep-field-column,
@@ -6770,7 +6779,7 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
   width: 100%;
   height: 100%;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
   --battle-scene-offset-x: max(0px, calc((100% - var(--battle-canvas-w)) / 2));
   --battle-enemy-slot-left: calc(var(--battle-scene-offset-x) + var(--prep-canvas-w) + var(--grid-gap));
   --battle-scene-center-x: calc(var(--battle-scene-offset-x) + var(--battle-canvas-w) / 2);
@@ -6801,19 +6810,22 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 3;
+  z-index: 8;
+  overflow: visible;
 }
 
 #app[data-phase="battle"] .battle-scene-ui .battle-scene-avatar,
 #app[data-phase="replay"] .battle-scene-ui .battle-scene-avatar {
   position: absolute;
-  top: var(--prep-character-top);
-  height: var(--battle-avatar-h);
+  top: calc(var(--prep-character-top) - 36px * var(--ui-scale));
+  height: calc(var(--battle-scene-avatar-h) + 36px * var(--ui-scale));
   width: var(--prep-canvas-w);
   display: flex;
   align-items: flex-end;
   pointer-events: auto;
   z-index: 12;
+  overflow: visible;
+  padding-top: calc(28px * var(--ui-scale));
 }
 
 #app[data-phase="battle"],
@@ -6846,7 +6858,8 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
 #app[data-phase="replay"] .avatar-hero-stage {
   flex: 0 0 auto;
   height: var(--battle-hero-img-h);
-  min-height: 0;
+  min-height: var(--battle-hero-img-h);
+  overflow: visible;
 }
 
 #app[data-phase="battle"] .battle-scene-ui .profile-avatar,
@@ -6858,7 +6871,32 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
 
 #app[data-phase="battle"] .avatar-emotion-float,
 #app[data-phase="replay"] .avatar-emotion-float {
-  font-size: calc(2.85rem * var(--ui-scale));
+  font-size: calc(3.1rem * var(--ui-scale));
+  z-index: 20;
+  pointer-events: none;
+}
+
+#app[data-phase="battle"] .avatar-emotion-orbit,
+#app[data-phase="replay"] .avatar-emotion-orbit,
+#app[data-phase="battle"] .avatar-effect-orbit,
+#app[data-phase="replay"] .avatar-effect-orbit {
+  overflow: visible;
+}
+
+#app[data-phase="battle"] .avatar-hero-shell,
+#app[data-phase="replay"] .avatar-hero-shell {
+  overflow: visible;
+}
+
+#app[data-phase="battle"] .avatar-effect-hop,
+#app[data-phase="replay"] .avatar-effect-hop {
+  font-size: calc(2.2rem * var(--ui-scale));
+  z-index: 18;
+}
+
+#app[data-phase="battle"] .battle-scene-ui .field-avatar-slot,
+#app[data-phase="replay"] .battle-scene-ui .field-avatar-slot {
+  overflow: visible;
 }
 
 #app[data-phase="battle"] .avatar-hero-footer,
@@ -6946,9 +6984,9 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
 #app[data-phase="battle"] .battle-scene-ui .profile-avatar,
 #app[data-phase="replay"] .battle-scene-ui .profile-avatar {
   width: var(--battle-avatar-w);
-  height: var(--battle-avatar-h);
+  height: var(--battle-hero-img-h);
   max-width: 100%;
-  max-height: min(100%, var(--battle-avatar-h));
+  max-height: var(--battle-hero-img-h);
   border: none !important;
   background: transparent !important;
   padding: 0 !important;
