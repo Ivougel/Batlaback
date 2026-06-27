@@ -3,8 +3,9 @@
  */
 
 const BATTLE_COUNTDOWN_SEC = 3;
-const DAMAGE_FLIGHT_MIN = 0.42;
-const DAMAGE_FLIGHT_MAX = 0.72;
+const DAMAGE_FLIGHT_MIN = 0.78;
+const DAMAGE_FLIGHT_MAX = 1.38;
+const DAMAGE_FLIGHT_REPEAT_MULT = 1.22;
 const DAMAGE_FLIGHT_MAX_ACTIVE = 64;
 const DAMAGE_STACK_BOUNCE_SEC = 0.38;
 
@@ -18,6 +19,7 @@ function initBattleCountdown(state) {
     remaining: BATTLE_COUNTDOWN_SEC,
     label: "3",
   };
+  state.visualElapsed = 0;
 }
 
 function tickBattleCountdown(state, dt) {
@@ -27,7 +29,9 @@ function tickBattleCountdown(state, dt) {
   state.countdown.label = left > 0 ? String(left) : null;
   if (state.countdown.remaining <= 0) {
     state.countdown.active = false;
+    state.countdown.remaining = 0;
     state.countdown.label = null;
+    hideBattleCountdownOverlay();
   }
 }
 
@@ -75,6 +79,83 @@ function flightRand(team, uid, n) {
   return x - Math.floor(x);
 }
 
+function getFirstDamageArcControl(from, to, sourceTeam, targetTeam) {
+  if (typeof getWeaponControlPoint === "function") {
+    return getWeaponControlPoint(from, to, targetTeam);
+  }
+  const midX = (from.x + to.x) / 2;
+  const midY = (from.y + to.y) / 2;
+  const dist = Math.hypot(to.x - from.x, to.y - from.y) || 1;
+  return {
+    x: midX,
+    y: midY - Math.max(32, dist * 0.14),
+  };
+}
+
+/** Дуга повторной атаки: от стека над HP через центр арены обратно на стек. */
+function getRepeatStackArcControls(from, to, sourceTeam) {
+  const center = typeof getBattlefieldCenterViewport === "function"
+    ? getBattlefieldCenterViewport()
+    : { x: (from.x + to.x) / 2, y: Math.min(from.y, to.y) - 140 };
+  const towardSource = sourceTeam === "player" ? -1 : 1;
+  const spread = Math.max(72, Math.abs(from.x - center.x) * 0.42, window.innerWidth * 0.06);
+  const lift = Math.max(88, window.innerHeight * 0.1);
+  return {
+    c1: {
+      x: from.x + towardSource * spread * 0.62,
+      y: from.y - lift * 0.42,
+    },
+    c2: {
+      x: center.x + towardSource * spread * 0.08,
+      y: center.y - lift * 0.18,
+    },
+  };
+}
+
+function buildDamageFlightPath(state, targetTeam, sourceTeam, item, slotIndex, total, priorDamage) {
+  const to = getDamageStackSlotViewport(targetTeam, slotIndex, total);
+  const isRepeat = priorDamage > 0;
+
+  if (isRepeat) {
+    const from = getDamageStackSlotViewport(targetTeam, slotIndex, total);
+    const { c1, c2 } = getRepeatStackArcControls(from, to, sourceTeam);
+    const dist = Math.max(120, Math.hypot(c2.x - from.x, c2.y - from.y) + Math.hypot(to.x - c2.x, to.y - c2.y));
+    const duration = (DAMAGE_FLIGHT_MIN + Math.min(1, dist / 780) * (DAMAGE_FLIGHT_MAX - DAMAGE_FLIGHT_MIN))
+      * DAMAGE_FLIGHT_REPEAT_MULT;
+    return {
+      arcStyle: "repeat",
+      fromX: from.x,
+      fromY: from.y,
+      toX: to.x,
+      toY: to.y,
+      cp1X: c1.x,
+      cp1Y: c1.y,
+      cp2X: c2.x,
+      cp2Y: c2.y,
+      duration,
+      spin: (flightRand(sourceTeam, item.uid, 3) - 0.5) * 420,
+    };
+  }
+
+  const from = typeof getItemViewportCenter === "function"
+    ? getItemViewportCenter(item, sourceTeam)
+    : { x: 0, y: 0 };
+  const cp = getFirstDamageArcControl(from, to, sourceTeam, targetTeam);
+  const dist = Math.hypot(to.x - from.x, to.y - from.y) || 1;
+  const duration = DAMAGE_FLIGHT_MIN + Math.min(1, dist / 900) * (DAMAGE_FLIGHT_MAX - DAMAGE_FLIGHT_MIN);
+  return {
+    arcStyle: "first",
+    fromX: from.x,
+    fromY: from.y,
+    toX: to.x,
+    toY: to.y,
+    cpX: cp.x,
+    cpY: cp.y,
+    duration,
+    spin: (flightRand(sourceTeam, item.uid, 3) - 0.5) * 540,
+  };
+}
+
 function ensureStackEntry(store, uid, item) {
   if (store.byUid[uid]) return store.byUid[uid];
   const def = item?.itemId ? ITEM_CATALOG[item.itemId] : null;
@@ -98,42 +179,36 @@ function recordIncomingDamage(state, targetTeam, sourceTeam, item, damage) {
   initBattleDamageTracker(state);
   const store = state.damageStacks[targetTeam];
   const entry = ensureStackEntry(store, item.uid, item);
+  const priorDamage = entry.damage;
   entry.damage += amount;
   entry.bounceUntil = (state.elapsed || 0) + DAMAGE_STACK_BOUNCE_SEC;
   stackBounceTimers.set(`${targetTeam}:${item.uid}`, entry.bounceUntil);
 
   const slotIndex = store.order.indexOf(item.uid);
-  const from = typeof getItemViewportCenter === "function"
-    ? getItemViewportCenter(item, sourceTeam)
-    : { x: 0, y: 0 };
-  const to = getDamageStackSlotViewport(targetTeam, slotIndex, store.order.length);
-
-  const dist = Math.hypot(to.x - from.x, to.y - from.y) || 1;
-  const duration = DAMAGE_FLIGHT_MIN
-    + Math.min(1, dist / 900) * (DAMAGE_FLIGHT_MAX - DAMAGE_FLIGHT_MIN);
+  const path = buildDamageFlightPath(
+    state,
+    targetTeam,
+    sourceTeam,
+    item,
+    slotIndex,
+    store.order.length,
+    priorDamage,
+  );
 
   state._damageFlightUid += 1;
-  const cpLift = 40 + flightRand(sourceTeam, item.uid, 1) * 120;
-  const cpSide = (flightRand(sourceTeam, item.uid, 2) - 0.5) * dist * 0.35;
 
   if (state.damageFlights.length >= DAMAGE_FLIGHT_MAX_ACTIVE) state.damageFlights.shift();
   state.damageFlights.push({
     id: `dmgfx-${state._damageFlightUid}`,
     itemUid: item.uid,
     targetTeam,
+    sourceTeam,
     icon: entry.icon,
     damage: amount,
     age: 0,
-    duration,
-    fromX: from.x,
-    fromY: from.y,
-    toX: to.x,
-    toY: to.y,
-    cpX: (from.x + to.x) / 2 + cpSide,
-    cpY: Math.min(from.y, to.y) - cpLift,
-    spin: (flightRand(sourceTeam, item.uid, 3) - 0.5) * 720,
-    scale: damageFlightScale(amount),
     landed: false,
+    scale: damageFlightScale(amount),
+    ...path,
   });
   syncDamageStackDisplay(targetTeam, state);
 }
@@ -176,25 +251,40 @@ function tickDamageFlights(state, dt) {
   });
 }
 
-function easeOutBack(t) {
-  const c1 = 1.70158;
-  const c3 = c1 + 1;
-  return 1 + c3 * (t - 1) ** 3 + c1 * (t - 1) ** 2;
+function easeOutCubic(t) {
+  return 1 - (1 - t) ** 3;
+}
+
+function easeInOutCubic(t) {
+  return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
 }
 
 function sampleDamageFlight(fx, t) {
-  const u = easeOutBack(Math.min(1, Math.max(0, t)));
+  const eased = fx.arcStyle === "repeat"
+    ? easeInOutCubic(Math.min(1, Math.max(0, t)))
+    : easeOutCubic(Math.min(1, Math.max(0, t)));
+
+  if (fx.arcStyle === "repeat" && typeof cubicBezier === "function") {
+    return cubicBezier(
+      { x: fx.fromX, y: fx.fromY },
+      { x: fx.cp1X, y: fx.cp1Y },
+      { x: fx.cp2X, y: fx.cp2Y },
+      { x: fx.toX, y: fx.toY },
+      eased,
+    );
+  }
+
   if (typeof quadraticBezier === "function") {
     return quadraticBezier(
       { x: fx.fromX, y: fx.fromY },
       { x: fx.cpX, y: fx.cpY },
       { x: fx.toX, y: fx.toY },
-      u,
+      eased,
     );
   }
   return {
-    x: fx.fromX + (fx.toX - fx.fromX) * u,
-    y: fx.fromY + (fx.toY - fx.fromY) * u,
+    x: fx.fromX + (fx.toX - fx.fromX) * eased,
+    y: fx.fromY + (fx.toY - fx.fromY) * eased,
   };
 }
 
@@ -250,13 +340,16 @@ function renderDamageFlights(state) {
 
     const t = fx.age / fx.duration;
     const pt = sampleDamageFlight(fx, t);
-    const spin = fx.spin * t;
-    const alpha = t < 0.06 ? t / 0.06 : t > 0.92 ? Math.max(0, 1 - (t - 0.92) / 0.08) : 1;
+    const spin = fx.spin * (fx.arcStyle === "repeat"
+      ? Math.sin(t * Math.PI) * 0.65
+      : t);
+    const alpha = t < 0.08 ? t / 0.08 : t > 0.9 ? Math.max(0, 1 - (t - 0.9) / 0.1) : 1;
+    const flightScale = fx.scale * (fx.arcStyle === "repeat" ? 1 + Math.sin(t * Math.PI) * 0.12 : 1);
 
     let el = damageFlightActive.get(fx.id);
     if (!el) {
       el = acquireDamageFlightEl();
-      el.className = `battle-damage-flight battle-damage-flight-${fx.targetTeam}`;
+      el.className = `battle-damage-flight battle-damage-flight-${fx.targetTeam} battle-damage-flight-${fx.arcStyle || "first"}`;
       el.dataset.fxId = fx.id;
       el.textContent = fx.icon;
       layer.appendChild(el);
@@ -264,10 +357,10 @@ function renderDamageFlights(state) {
     }
 
     const uiScale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--ui-scale")) || 1;
-    const size = 22 * fx.scale * uiScale;
+    const size = 22 * flightScale * uiScale;
     el.style.fontSize = `${size}px`;
     el.style.opacity = String(alpha);
-    el.style.transform = `translate3d(${pt.x}px, ${pt.y}px, 0) translate(-50%, -50%) rotate(${spin}deg) scale(${fx.scale})`;
+    el.style.transform = `translate3d(${pt.x}px, ${pt.y}px, 0) translate(-50%, -50%) rotate(${spin}deg) scale(${flightScale})`;
   });
 
   damageFlightActive.forEach((el, id) => {
@@ -347,6 +440,19 @@ function syncAllDamageSummaryDisplays(state) {
   syncDamageStackDisplay("enemy", state);
 }
 
+function hideBattleCountdownOverlay() {
+  const overlay = document.getElementById("battle-countdown-overlay");
+  if (!overlay) return;
+  overlay.hidden = true;
+  overlay.style.display = "none";
+  overlay.classList.remove("battle-countdown-overlay-visible");
+  const digit = overlay.querySelector(".battle-countdown-digit");
+  if (digit) {
+    digit.textContent = "";
+    digit.classList.remove("battle-countdown-pop");
+  }
+}
+
 function ensureCountdownOverlay() {
   let el = document.getElementById("battle-countdown-overlay");
   if (!el) {
@@ -355,18 +461,22 @@ function ensureCountdownOverlay() {
     el.className = "battle-countdown-overlay";
     el.setAttribute("aria-hidden", "true");
     el.innerHTML = `<span class="battle-countdown-digit"></span>`;
+    el.style.display = "none";
+    el.hidden = true;
     document.body.appendChild(el);
   }
   return el;
 }
 
 function renderBattleCountdown(state) {
-  const overlay = ensureCountdownOverlay();
   if (!state?.countdown?.active || !state.countdown.label) {
-    overlay.hidden = true;
+    hideBattleCountdownOverlay();
     return;
   }
+  const overlay = ensureCountdownOverlay();
   overlay.hidden = false;
+  overlay.style.display = "flex";
+  overlay.classList.add("battle-countdown-overlay-visible");
   const digit = overlay.querySelector(".battle-countdown-digit");
   if (digit && digit.textContent !== state.countdown.label) {
     digit.textContent = state.countdown.label;
@@ -387,8 +497,7 @@ function clearBattleDamageSummary(state) {
   }
   clearDamageFlightLayer();
   stackBounceTimers.clear();
-  const overlay = document.getElementById("battle-countdown-overlay");
-  if (overlay) overlay.hidden = true;
+  hideBattleCountdownOverlay();
   ["player", "enemy"].forEach((team) => {
     const slot = typeof getAvatarSlotEl === "function" ? getAvatarSlotEl(team) : null;
     const stacks = slot?.querySelector(".avatar-damage-stacks");

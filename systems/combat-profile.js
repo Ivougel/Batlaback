@@ -718,7 +718,7 @@ function renderBattleStatsCompareHTML(playerProfile, enemyProfile, options = {})
           </div>
         </div>
       </div>
-      <div class="battle-stats-section battle-stats-section-debuff">
+      <div class="battle-stats-section battle-stats-section-debuff${liveBattle ? " battle-stats-section-hidden" : ""}">
         <div class="battle-stats-section-title battle-stats-section-title-debuff">${liveBattle ? "Дебаффы" : "ДЕБА"}</div>
         <div class="battle-stats-effects">
           <div class="stats-effects-col stats-col-player">

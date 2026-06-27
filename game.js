@@ -821,6 +821,8 @@ function init() {
   document.getElementById("btn-battle-continue")?.addEventListener("click", () => {
     transitionToPhase("prep", () => {
       hideBattleResultPopup();
+      if (typeof hideBattleTimerDisplay === "function") hideBattleTimerDisplay();
+      if (typeof hideBattleCountdownOverlay === "function") hideBattleCountdownOverlay();
       if (pendingGameOver) {
         showRunComplete();
         pendingGameOver = false;
@@ -1897,6 +1899,7 @@ function finishBattleReplay() {
   battleState = null;
   clearBattleFloatLayer();
   if (typeof clearBattleEmotions === "function") clearBattleEmotions();
+  if (typeof hideBattleTimerDisplay === "function") hideBattleTimerDisplay();
   replayPlayback = null;
   resetBattlePause();
   setBattleControlsVisible(false);
@@ -1912,6 +1915,10 @@ function tickReplay(rawDt) {
   const animDt = getBattleAnimDt(rawDt);
   if (animDt > 0) {
     tickBattleAnimations(battleState, animDt);
+  }
+  const emotionDt = typeof getBattleEmotionDt === "function" ? getBattleEmotionDt(rawDt) : rawDt;
+  if (emotionDt > 0) {
+    battleState.visualElapsed = (battleState.visualElapsed || 0) + emotionDt;
   }
 
   if (!replayPlayback.playing) return;
@@ -1982,6 +1989,7 @@ function startBattle() {
           enemy: { pendingShopBuffs: enemyPendingShopBuffs },
         },
       );
+      if (typeof hideBattleCountdownOverlay === "function") hideBattleCountdownOverlay();
       if (typeof initBattleCountdown === "function") initBattleCountdown(battleState);
       if (typeof initBattleDamageTracker === "function") initBattleDamageTracker(battleState);
       playerPendingShopBuffs = 0;
@@ -2021,6 +2029,8 @@ function endBattle() {
   clearBattleFloatLayer();
   if (typeof clearBattleDamageSummary === "function") clearBattleDamageSummary(finishedState);
   if (typeof clearBattleEmotions === "function") clearBattleEmotions();
+  if (typeof hideBattleTimerDisplay === "function") hideBattleTimerDisplay();
+  if (typeof hideBattleCountdownOverlay === "function") hideBattleCountdownOverlay();
 
   let battleSummary;
   try {
@@ -2195,8 +2205,18 @@ function gameLoop(ts) {
   }
 
   if (phase === "battle" && battleState && !battleState.finished) {
+    const countdownDt = typeof getBattleCountdownDt === "function" ? getBattleCountdownDt(dt) : dt;
+    if (countdownDt > 0 && typeof tickBattleCountdown === "function") {
+      tickBattleCountdown(battleState, countdownDt);
+    }
+    const emotionDt = typeof getBattleEmotionDt === "function" ? getBattleEmotionDt(dt) : dt;
+    if (emotionDt > 0) {
+      battleState.visualElapsed = (battleState.visualElapsed || 0) + emotionDt;
+    }
     const simDt = getBattleSimDt(dt);
-    if (simDt > 0) {
+    const countdownActive = typeof isBattleCountdownActive === "function"
+      && isBattleCountdownActive(battleState);
+    if (simDt > 0 && !countdownActive) {
       try {
         battleTick(battleState, simDt);
       } catch (err) {
@@ -2719,13 +2739,15 @@ function draw() {
     if (typeof syncLiveAvatarHeroFrame === "function") syncLiveAvatarHeroFrame(battleState);
     if (typeof renderDamageFlights === "function") renderDamageFlights(battleState);
     if (typeof renderBattleCountdown === "function") renderBattleCountdown(battleState);
-    if (typeof tickBattleEmotions === "function") tickBattleEmotions(battleState, lastGameLoopDt || 0.016);
+    if (typeof tickBattleEmotions === "function") tickBattleEmotions(battleState);
   } else {
     clearBattleFloatLayer();
     if (typeof clearAttackFxLayer === "function") clearAttackFxLayer();
     if (typeof clearBattleDamageSummary === "function") clearBattleDamageSummary(battleState);
     if (typeof clearDamageFlightLayer === "function") clearDamageFlightLayer();
     if (typeof clearBattleEmotions === "function") clearBattleEmotions();
+    if (typeof hideBattleTimerDisplay === "function") hideBattleTimerDisplay();
+    if (typeof hideBattleCountdownOverlay === "function") hideBattleCountdownOverlay();
   }
 }
 

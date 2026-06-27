@@ -1518,6 +1518,7 @@ function createBattleState(playerItems, enemyItems, playerClassId = null, enemyC
     finished: false,
     winner: null,
     elapsed: 0,
+    visualElapsed: 0,
     floatingNumbers: [],
     itemDamageStats: {},
   };
@@ -1617,9 +1618,6 @@ function checkHeartThresholdEffects(state, side, foe, team) {
 
 function battleTick(state, dt) {
   if (state.finished) return;
-
-  if (typeof tickBattleCountdown === "function") tickBattleCountdown(state, dt);
-  if (typeof isBattleCountdownActive === "function" && isBattleCountdownActive(state)) return;
 
   state.elapsed += dt;
   tickStatusEffects(state, dt);
@@ -1955,14 +1953,7 @@ function tickFatigue(state, dt) {
         target: team,
         message: `${battleTeamLabel(team)}: усталость −${FATIGUE_HP_DRAIN_PER_SEC} HP`,
       });
-      spawnBattleFloat(state, `-${FATIGUE_HP_DRAIN_PER_SEC}⏳`, "#d29922", {
-        targetTeam: team,
-        kind: "debuff",
-        trajectory: "fatigue",
-        maxAge: 1.4,
-      });
       triggerProfileAvatarHitShake(team);
-      triggerProfileAvatarFatigueMirror(team);
     }
   });
 }
@@ -2680,6 +2671,11 @@ function recordBattleFrame(state) {
 }
 
 function fastForwardBattle(state) {
+  if (state.countdown?.active) {
+    state.countdown.active = false;
+    state.countdown.remaining = 0;
+    state.countdown.label = null;
+  }
   state.recording = true;
   state.replayFrames = [captureBattleFrame(state)];
   state.lastRecordAt = 0;

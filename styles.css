@@ -1470,17 +1470,30 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
   line-height: 1;
   will-change: transform, opacity;
   filter: drop-shadow(0 0 10px rgba(248, 81, 73, 0.45));
+  transition: filter 0.15s ease;
+}
+
+.battle-damage-flight-repeat {
+  filter:
+    drop-shadow(0 0 14px rgba(248, 81, 73, 0.55))
+    drop-shadow(0 0 28px rgba(210, 153, 34, 0.22));
+  z-index: 93;
 }
 
 .battle-countdown-overlay {
   position: fixed;
   inset: 0;
-  display: flex;
-  align-items: center;
+  display: none;
+  align-items: flex-start;
   justify-content: center;
+  padding-top: min(14vh, 128px);
   pointer-events: none;
   z-index: 120;
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.battle-countdown-overlay.battle-countdown-overlay-visible {
+  display: flex;
 }
 
 .battle-countdown-digit {
@@ -1543,6 +1556,10 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
   0%, 100% { transform: translate(-50%, -50%) rotate(var(--fx-rot, 0deg)) scale(1); }
   35% { transform: translate(-50%, calc(-50% - 1.1vh)) rotate(calc(var(--fx-rot, 0deg) + 8deg)) scale(1.12); }
   70% { transform: translate(-50%, calc(-50% + 0.4vh)) rotate(calc(var(--fx-rot, 0deg) - 4deg)) scale(0.96); }
+}
+
+.avatar-battle-timer[hidden] {
+  display: none !important;
 }
 
 .avatar-battle-timer {

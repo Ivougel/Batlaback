@@ -36,7 +36,7 @@ function renderAvatarHeroHTML(profile, team) {
           <span class="avatar-emotion-float avatar-emotion-kayfu avatar-emotion-kayfu-active" aria-hidden="true">🤠</span>
           <span class="avatar-emotion-float avatar-emotion-mood" aria-hidden="true"></span>
           <span class="avatar-emotion-float avatar-emotion-reaction" hidden></span>
-          <span class="avatar-battle-timer">0:00</span>
+          <span class="avatar-battle-timer" hidden aria-hidden="true">0:00</span>
         </div>
         <div class="avatar-effect-orbit" data-team="${team}" aria-hidden="true"></div>
         <div class="avatar-beads avatar-beads-positive" aria-hidden="true" hidden></div>

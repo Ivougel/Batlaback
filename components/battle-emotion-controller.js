@@ -86,7 +86,7 @@ function ensureMoodPulseState(state, team) {
   if (!state.moodPulse) state.moodPulse = {};
   if (state.moodPulse[team]) return state.moodPulse[team];
 
-  const elapsed = state.elapsed || 0;
+  const elapsed = state.visualElapsed ?? state.elapsed ?? 0;
   const firstWait = computeMoodPulseSegment(elapsed, null, team, 0, false);
   state.moodPulse[team] = {
     visible: false,
@@ -98,7 +98,7 @@ function ensureMoodPulseState(state, team) {
 
 function resolveMoodPulseVisible(state, team) {
   if (!state) return false;
-  const elapsed = state.elapsed || 0;
+  const elapsed = state.visualElapsed ?? state.elapsed ?? 0;
   const pulse = ensureMoodPulseState(state, team);
   const sideState = team === "player" ? state.commentary?.playerState : state.commentary?.enemyState;
 
@@ -163,29 +163,32 @@ function resolveEmotionPresentation(battleState, team) {
     : battleState.commentary?.enemyState;
   if (!sideState) return null;
 
+  const visualElapsed = battleState.visualElapsed ?? sideState.elapsed ?? 0;
   const flags = collectRankedEmotionFlags(sideState, battleState);
-  const primary = pickRotatingEmotion(flags, sideState.elapsed || 0, EMOTION_ORBIT_PHASE[team] || 0);
+  const primary = pickRotatingEmotion(flags, visualElapsed, EMOTION_ORBIT_PHASE[team] || 0);
   const mood = sideState.mood;
-  const elapsed = sideState.elapsed || 0;
   const teamSlot = EMOTION_ORBIT_PHASE[team] || 0;
   const secondary = flags.find((k) => k !== primary.key && EMOTION_CATALOG[k]?.emoji !== mood?.emoji);
   const secondaryDef = secondary ? EMOTION_CATALOG[secondary] : null;
+  const countdownActive = typeof isBattleCountdownActive === "function"
+    && isBattleCountdownActive(battleState);
 
   return {
     team,
     mood,
     primaryKey: primary.key,
-    primaryEmoji: pickEmotionVariant(primary.def, primary.key, elapsed, teamSlot),
+    primaryEmoji: pickEmotionVariant(primary.def, primary.key, visualElapsed, teamSlot),
     secondaryEmoji: secondaryDef
-      ? pickEmotionVariant(secondaryDef, secondary, elapsed + 1.1, teamSlot)
+      ? pickEmotionVariant(secondaryDef, secondary, visualElapsed + 1.1, teamSlot)
       : null,
-    moodEmoji: pickMoodEmoji(mood, elapsed, team),
+    moodEmoji: pickMoodEmoji(mood, visualElapsed, team),
     shellClass: primary.def.shellClass || "",
     brightness: mood.brightness ?? 1,
     pulse: !!mood.pulse || primary.key === "desperate" || primary.key === "losing",
     durationPhase: sideState.durationPhase,
     elapsedLabel: formatBattleElapsed(sideState.elapsed),
-    floatPhase: (sideState.elapsed || 0) + (EMOTION_ORBIT_PHASE[team] || 0),
+    floatPhase: visualElapsed + (EMOTION_ORBIT_PHASE[team] || 0),
+    showTimer: !battleState.finished && !countdownActive,
   };
 }
 
@@ -199,7 +202,7 @@ function ensureEmotionOrbit(shell, team) {
       <span class="avatar-emotion-float avatar-emotion-kayfu avatar-emotion-kayfu-active" aria-hidden="true">${KAYFU_EMOJI}</span>
       <span class="avatar-emotion-float avatar-emotion-mood" aria-hidden="true"></span>
       <span class="avatar-emotion-float avatar-emotion-reaction" aria-hidden="true"></span>
-      <span class="avatar-battle-timer" aria-hidden="true"></span>
+      <span class="avatar-battle-timer" aria-hidden="true" hidden></span>
     `;
     const stage = shell.querySelector(".avatar-hero-stage");
     if (stage) stage.prepend(orbit);
@@ -338,6 +341,7 @@ function collectEffectOrbitItems(profile) {
     });
   });
   (profile?.debuffs || []).forEach((chip) => {
+    if (chip.id === "arena-fatigue") return;
     items.push({
       key: `debuff-${chip.id}`,
       icon: normalizeEffectOrbitIcon(chip),
@@ -403,7 +407,10 @@ function applyEmotionPresentation(team, presentation, profile, state) {
     : (presentation.secondaryEmoji || null);
   layoutEmotionFloat(reactionEl, reactionEmoji, presentation.floatPhase + 0.8, 1);
 
-  if (timerEl) timerEl.textContent = presentation.elapsedLabel;
+  if (timerEl) {
+    timerEl.textContent = presentation.showTimer ? presentation.elapsedLabel : "";
+    timerEl.hidden = !presentation.showTimer;
+  }
 
   shell.style.setProperty("--avatar-mood-brightness", String(presentation.brightness));
   shell.classList.toggle("avatar-mood-pulse", presentation.pulse);
@@ -435,7 +442,17 @@ function updateBattleEmotions(state) {
   applyEmotionPresentation("enemy", resolveEmotionPresentation(state, "enemy"), enemyProfile, state);
 }
 
+function hideBattleTimerDisplay() {
+  document.querySelectorAll(".avatar-battle-timer").forEach((el) => {
+    el.textContent = "";
+    el.hidden = true;
+  });
+  const overlay = document.getElementById("battle-countdown-overlay");
+  if (overlay) overlay.hidden = true;
+}
+
 function clearBattleEmotions() {
+  hideBattleTimerDisplay();
   ["player", "enemy"].forEach((team) => {
     const slot = typeof getAvatarSlotEl === "function" ? getAvatarSlotEl(team) : null;
     const shell = slot?.querySelector(".avatar-hero-shell");
@@ -450,8 +467,8 @@ function clearBattleEmotions() {
   });
 }
 
-function tickBattleEmotions(state, dt) {
+function tickBattleEmotions(state) {
   if (!state || state.finished) return;
-  updateBattleAnalyzer(state, dt);
+  updateBattleAnalyzer(state, 0);
   updateBattleEmotions(state);
 }

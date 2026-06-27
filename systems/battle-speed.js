@@ -35,7 +35,24 @@ function getBattleSimDt(rawDt) {
   return rawDt * battleSpeedMultiplier;
 }
 
-/** dt для анимаций во время боя / replay. */
+/** dt для отсчёта 3-2-1 — всегда реальное время, без ускорения. */
+function getBattleCountdownDt(rawDt) {
+  if (battlePaused) return 0;
+  if (typeof phase !== "undefined" && phase === "replay") return 0;
+  return rawDt;
+}
+
+/** dt для эмоций/орбиты — не ускоряется вместе с симуляцией боя. */
+function getBattleEmotionDt(rawDt) {
+  if (battlePaused && phase !== "replay") return 0;
+  if (typeof phase !== "undefined" && phase === "replay") {
+    return battlePaused ? 0 : rawDt;
+  }
+  if (battlePaused) return 0;
+  return rawDt;
+}
+
+/** dt для анимаций ударов/предметов во время боя / replay. */
 function getBattleAnimDt(rawDt) {
   if (battlePaused && phase !== "replay") return 0;
   if (typeof phase !== "undefined" && phase === "replay" && replayPlayback) {
