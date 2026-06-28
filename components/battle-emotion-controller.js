@@ -7,12 +7,14 @@ const KAYFU_EMOJI = "🤠";
 
 /** Замедление прыгающих эффектов на орбите (не mood/reaction). */
 const EMOTION_INTERVAL_SCALE = 5;
-/** Бафф/дебафф-хопы — заметнее, чем общий scale. */
-const EFFECT_HOP_INTERVAL_SCALE = 1.15;
-/** Множитель только для пауз mood-пульса (show-сегменты без scale — заметнее). */
-const MOOD_PULSE_HIDE_SCALE = 0.58;
-/** Минимальный интервал между реакциями (сек). */
-const EMOTION_DISPLAY_ROTATION_SEC = 2.2;
+/** Бафф/дебафф-хопы — чаще прыгают вокруг героя. */
+const EFFECT_HOP_INTERVAL_SCALE = 0.72;
+/** Паузы mood-пульса (show ~1–2 с, hide ~1.2–2.5 с в начале боя). */
+const MOOD_PULSE_HIDE_SCALE = 0.32;
+/** Ротация вариантов эмодзи. */
+const EMOTION_DISPLAY_ROTATION_SEC = 1.6;
+/** Первый mood-всплеск через N с после старта боя. */
+const MOOD_PULSE_FIRST_SHOW_SEC = 0.45;
 
 const EMOTION_CATALOG = {
   stunned:         { emoji: "😵", variants: ["😵‍💫", "🫠", "💫", "😵💢"], priority: 100, shellClass: "emotion-stunned" },
@@ -83,8 +85,8 @@ function computeMoodPulseSegment(elapsed, durationPhase, team, cycleIndex, willB
     hideSpan -= 0.2 * MOOD_PULSE_HIDE_SCALE;
   }
 
-  const showMin = 0.8;
-  const showSpan = 0.45 + moodPulseRand(team, cycleIndex, 9) * 0.55;
+  const showMin = 1.0;
+  const showSpan = 0.35 + moodPulseRand(team, cycleIndex, 9) * 0.75;
   const r = moodPulseRand(team, cycleIndex, willBeVisible ? 2 : 3);
 
   if (willBeVisible) return showMin + r * showSpan;
@@ -96,11 +98,12 @@ function ensureMoodPulseState(state, team) {
   if (state.moodPulse[team]) return state.moodPulse[team];
 
   const elapsed = state.visualElapsed ?? state.elapsed ?? 0;
-  const firstWait = computeMoodPulseSegment(elapsed, null, team, 0, false);
+  const firstShow = MOOD_PULSE_FIRST_SHOW_SEC
+    + moodPulseRand(team, 0, 1) * 0.35;
   state.moodPulse[team] = {
-    visible: false,
+    visible: true,
     cycleIndex: 0,
-    nextFlipAt: elapsed + firstWait,
+    nextFlipAt: elapsed + firstShow,
   };
   return state.moodPulse[team];
 }
@@ -129,11 +132,19 @@ function resolveMoodPulseVisible(state, team) {
 
 /** Бой или replay — единственные фазы, где работает «диалог боя». */
 function isBattleEmotionPhaseActive() {
+  const app = document.getElementById("app");
+  const appPhase = app?.dataset?.phase;
+  if (appPhase === "battle" || appPhase === "replay") return true;
+  const sceneUi = document.getElementById("battle-scene-ui");
+  if (sceneUi && getComputedStyle(sceneUi).display !== "none") return true;
+  if (typeof getGamePhase === "function") {
+    const p = getGamePhase();
+    return p === "battle" || p === "replay";
+  }
   if (typeof phase !== "undefined") {
     return phase === "battle" || phase === "replay";
   }
-  const appPhase = document.getElementById("app")?.dataset?.phase;
-  return appPhase === "battle" || appPhase === "replay";
+  return false;
 }
 
 /** Слоты «диалога боя»: mood пульсирует, reaction — события, без дублей. */
@@ -166,6 +177,10 @@ function resolveBattleDialogueSlots(state, team, presentation) {
   }
 
   if (reactionEmoji === moodEmoji) reactionEmoji = null;
+
+  if (!reactionEmoji && !moodEmoji) {
+    reactionEmoji = presentation.primaryEmoji || presentation.secondaryEmoji || null;
+  }
 
   let secondaryEmoji = presentation.secondaryEmoji;
   if (!secondaryEmoji
@@ -397,6 +412,33 @@ function ensureBattleCommentaryLayer() {
   return layer;
 }
 
+function resolveCommentaryAnchorRect(team) {
+  if (typeof getAvatarHeroStageRect === "function") {
+    const rect = getAvatarHeroStageRect(team);
+    if (rect?.width > 0) return rect;
+  }
+  const panel = document.getElementById(team === "player" ? "player-avatar-panel" : "enemy-avatar-panel");
+  if (panel) {
+    const panelRect = panel.getBoundingClientRect();
+    if (panelRect.width > 0) return panelRect;
+  }
+  if (typeof getProfileAvatarViewportCenter === "function") {
+    const center = getProfileAvatarViewportCenter(team);
+    if (center?.x != null && center?.y != null) {
+      const scale = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--ui-scale")) || 1;
+      const w = 188 * scale;
+      const h = 152 * scale;
+      return {
+        left: center.x - w / 2,
+        top: center.y - h / 2,
+        width: w,
+        height: h,
+      };
+    }
+  }
+  return null;
+}
+
 function clearBattleCommentaryOverlay() {
   battleCommentaryDomPool.forEach((el) => el.remove());
   battleCommentaryDomPool.clear();
@@ -460,7 +502,7 @@ function renderBattleCommentaryOverlay(state) {
 
   ["player", "enemy"].forEach((team) => {
     const presentation = resolveEmotionPresentation(state, team);
-    const rect = typeof getAvatarHeroStageRect === "function" ? getAvatarHeroStageRect(team) : null;
+    const rect = resolveCommentaryAnchorRect(team);
     if (!presentation || !rect?.width) return;
 
     const profile = state._heroProfiles?.[team]

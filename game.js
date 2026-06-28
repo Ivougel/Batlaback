@@ -934,6 +934,10 @@ function init() {
   requestAnimationFrame(gameLoop);
 }
 
+function getGamePhase() {
+  return phase;
+}
+
 function isBattleUiPhase() {
   return phase === "battle" || phase === "replay";
 }

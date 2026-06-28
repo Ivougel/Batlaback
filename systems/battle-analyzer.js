@@ -6,8 +6,8 @@
 const BATTLE_ANALYZER_WINDOW_SEC = 5;
 /** На 80% реже: интервалы и фазы ×5 (частота 20% от базовой). */
 const EMOTION_INTERVAL_SCALE = 5;
-/** Минимальный интервал между реакциями — визуальное время. */
-const EMOTION_REACTION_MIN_GAP = 1.15;
+/** Минимальный интервал между transient-реакциями (сек). */
+const EMOTION_REACTION_MIN_GAP = 0.85;
 
 function getBattleVisualNow(state) {
   return state?.visualElapsed ?? state?.elapsed ?? 0;

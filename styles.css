@@ -1954,6 +1954,11 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
   display: none !important;
 }
 
+#app[data-phase="battle"] #battle-commentary-layer,
+#app[data-phase="replay"] #battle-commentary-layer {
+  display: block !important;
+}
+
 .avatar-bead-positive {
   position: absolute;
   left: calc(50% + (var(--bead-i) - (var(--bead-n) - 1) / 2) * calc(26px * var(--ui-scale)));
