@@ -652,9 +652,10 @@ html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-ui {
 
 html[data-prep-layout="mobile"] #app[data-phase="battle"],
 html[data-prep-layout="mobile"] #app[data-phase="replay"] {
-  --battle-scene-avatar-h: min(260px, 34vh);
-  --battle-hero-img-h: min(168px, 22vh);
-  --battle-avatar-w: min(168px, 38vw);
+  --battle-scene-avatar-h: min(318px, 40vh);
+  --battle-hero-img-h: min(248px, 31vh);
+  --battle-avatar-w: min(200px, 42vw);
+  --battle-emotion-strip-w: min(44px, 10vw);
 }
 
 html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-ui .battle-scene-avatar,

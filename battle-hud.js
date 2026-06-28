@@ -35,10 +35,13 @@ window.HERO_ANCHOR = {
   AVATAR_R: HUD_AVATAR_R,
   EMOJI_GAP: 30,
   getEmojiOffset(team) {
-    const d = HUD_AVATAR_R + 30;
-    return team === "player" ? { x: -d, y: 0 } : { x: d, y: 0 };
+    return { x: 0, y: 0 };
   },
   getViewportCenter(team) {
+    if (typeof getProfileAvatarViewportCenter === "function") {
+      const pt = getProfileAvatarViewportCenter(team);
+      if (pt?.x != null && pt?.y != null) return pt;
+    }
     return hudViewportPoint(team, "avatar");
   },
 };
@@ -417,32 +420,6 @@ function drawStatusPanel(ctx, layout, effects) {
   }
 }
 
-function ensureEmotionMounts() {
-  const wrap = getCanvasEl()?.parentElement;
-  if (!wrap) return;
-  ["player", "enemy"].forEach((team) => {
-    const id = `${team}-hud-emotion-mount`;
-    if (document.getElementById(id)) return;
-    const mount = document.createElement("div");
-    mount.id = id;
-    mount.className = "avatar-hero-stage battle-hud-emotion-mount";
-    mount.dataset.team = team;
-    mount.setAttribute("aria-hidden", "true");
-    mount.style.cssText = "position:fixed;width:1px;height:1px;pointer-events:none;z-index:96;overflow:visible;";
-    document.body.appendChild(mount);
-  });
-}
-
-function syncEmotionMounts(battleState) {
-  ["player", "enemy"].forEach((team) => {
-    const mount = document.getElementById(`${team}-hud-emotion-mount`);
-    if (!mount) return;
-    const pt = hudViewportPoint(team, "avatar");
-    mount.style.left = `${pt.x}px`;
-    mount.style.top = `${pt.y}px`;
-  });
-}
-
 function drawHeroHud(ctx, team, side, _battleState, canvasW) {
   const layout = getHudLayout(team, canvasW);
   const hp = Math.max(0, side.hp || 0);
@@ -561,12 +538,10 @@ function initBattleHud() {
   hudCollapseBbox.player = null;
   hudCollapseBbox.enemy = null;
   closeHudPopup();
-  ensureEmotionMounts();
 }
 
 function closeBattleHudPopups() {
   closeHudPopup();
-  document.querySelectorAll(".battle-hud-emotion-mount").forEach((el) => el.remove());
 }
 
 function drawBattleHud(ctx, battleState) {
@@ -579,6 +554,4 @@ function drawBattleHud(ctx, battleState) {
 
   drawHeroHud(ctx, "player", battleState.player, battleState, canvasW);
   drawHeroHud(ctx, "enemy", battleState.enemy, battleState, canvasW);
-
-  syncEmotionMounts(battleState);
 }

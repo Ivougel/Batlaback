@@ -96,11 +96,6 @@ function clearEmotionLayer() {
 }
 
 function getEmotionMount(side) {
-  const appPhase = document.getElementById("app")?.dataset?.phase;
-  if (appPhase === "battle") {
-    const hudMount = document.getElementById(`${side}-hud-emotion-mount`);
-    if (hudMount) return hudMount;
-  }
   const panelId = side === "player" ? "player-avatar-panel" : "enemy-avatar-panel";
   return document.querySelector(`#${panelId} .avatar-hero-stage`)
     || document.querySelector(`#${panelId} .profile-avatar`);
@@ -112,11 +107,15 @@ function ensureEmotionMount(side) {
   let mount = stage.querySelector(":scope > .avatar-emotion-mount");
   if (!mount) {
     mount = document.createElement("div");
-    mount.className = "avatar-emotion-mount";
+    mount.className = `avatar-emotion-mount avatar-emotion-mount-${side}`;
     mount.dataset.team = side;
     mount.setAttribute("aria-hidden", "true");
-    mount.style.cssText = "position:absolute;inset:0;pointer-events:none;z-index:30;overflow:visible;";
-    stage.appendChild(mount);
+    const avatar = stage.querySelector(":scope > .profile-avatar");
+    if (side === "player") {
+      stage.insertBefore(mount, avatar);
+    } else {
+      stage.appendChild(mount);
+    }
   }
   return mount;
 }
@@ -124,7 +123,12 @@ function ensureEmotionMount(side) {
 /** Локальное смещение над головой (px от центра stage). */
 function getHeadOffset(side) {
   const appPhase = document.getElementById("app")?.dataset?.phase;
-  if (appPhase === "battle" && typeof window.HERO_ANCHOR?.getEmojiOffset === "function") {
+  if (appPhase === "battle" || appPhase === "replay") {
+    const mount = ensureEmotionMount(side);
+    const h = mount?.getBoundingClientRect().height || 0;
+    return { x: 0, y: h > 0 ? -h * 0.12 : -28 };
+  }
+  if (typeof window.HERO_ANCHOR?.getEmojiOffset === "function") {
     return window.HERO_ANCHOR.getEmojiOffset(side);
   }
   return {
@@ -172,6 +176,14 @@ function getHeroAnchor(side) {
 }
 
 function getSideAnchor(side) {
+  const stage = getEmotionMount(side);
+  const mount = stage?.querySelector(":scope > .avatar-emotion-mount");
+  if (mount) {
+    const rect = mount.getBoundingClientRect();
+    if (rect.width > 0 && rect.height > 0) {
+      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    }
+  }
   const hero = getHeroAnchor(side);
   const offsetX = side === "player" ? EMOJI_SIDE_OFFSET_X : -EMOJI_SIDE_OFFSET_X;
   return { x: hero.x + offsetX, y: hero.y + EMOJI_HEAD_OFFSET_Y };
@@ -610,7 +622,7 @@ function renderEmotionDom(anim, side) {
   el.style.top = "50%";
   el.style.transform = `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px)) rotate(${rotation}rad) scale(${scale})`;
   el.style.opacity = String(Math.max(0.15, 1 - progress * 0.12));
-  el.style.fontSize = `${42 * scale}px`;
+  el.style.fontSize = `${48 * scale}px`;
   el.style.lineHeight = "1";
   el.style.filter = "drop-shadow(0 4px 14px rgba(0,0,0,0.55))";
   el.style.transition = "none";

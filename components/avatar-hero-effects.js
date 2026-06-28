@@ -370,7 +370,7 @@ function getAvatarHeroStageRect(team) {
     const center = getProfileAvatarViewportCenter(team);
     if (center?.x != null && center?.y != null) {
       const scale = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--ui-scale")) || 1;
-      const size = 152 * scale;
+      const size = 228 * scale;
       return {
         left: center.x - size / 2,
         top: center.y - size / 2,

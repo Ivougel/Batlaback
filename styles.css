@@ -6945,9 +6945,10 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
 #app[data-phase="battle"],
 #app[data-phase="replay"] {
   --prep-character-gap: 2px;
-  --battle-scene-avatar-h: calc(248px * var(--ui-scale));
-  --battle-hero-img-h: calc(152px * var(--ui-scale));
-  --battle-avatar-w: calc(188px * var(--ui-scale));
+  --battle-scene-avatar-h: calc(318px * var(--ui-scale));
+  --battle-hero-img-h: calc(248px * var(--ui-scale));
+  --battle-avatar-w: calc(210px * var(--ui-scale));
+  --battle-emotion-strip-w: calc(52px * var(--ui-scale));
 }
 
 #app[data-phase="battle"] .game-layout,
@@ -6968,6 +6969,11 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
   flex-shrink: 0;
 }
 
+#app[data-phase="battle"] .battle-scene-ui .avatar-hero-shell,
+#app[data-phase="replay"] .battle-scene-ui .avatar-hero-shell {
+  width: calc(var(--battle-avatar-w) + var(--battle-emotion-strip-w) + 6px * var(--ui-scale));
+}
+
 #app[data-phase="battle"] .avatar-hero-name,
 #app[data-phase="replay"] .avatar-hero-name {
   margin-bottom: calc(1px * var(--ui-scale));
@@ -6982,6 +6988,48 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
   min-height: var(--battle-hero-img-h);
   max-height: var(--battle-hero-img-h);
   overflow: visible;
+}
+
+#app[data-phase="battle"] .battle-scene-ui .avatar-hero-stage,
+#app[data-phase="replay"] .battle-scene-ui .avatar-hero-stage {
+  display: flex;
+  align-items: center;
+  gap: calc(6px * var(--ui-scale));
+  width: calc(var(--battle-avatar-w) + var(--battle-emotion-strip-w) + 6px * var(--ui-scale));
+  animation: none;
+}
+
+#app[data-phase="battle"] .battle-scene-avatar-player .avatar-hero-stage,
+#app[data-phase="replay"] .battle-scene-avatar-player .avatar-hero-stage {
+  flex-direction: row;
+  justify-content: flex-start;
+}
+
+#app[data-phase="battle"] .battle-scene-avatar-enemy .avatar-hero-stage,
+#app[data-phase="replay"] .battle-scene-avatar-enemy .avatar-hero-stage {
+  flex-direction: row;
+  justify-content: flex-end;
+}
+
+#app[data-phase="battle"] .battle-scene-ui .avatar-hero-stage .profile-avatar,
+#app[data-phase="replay"] .battle-scene-ui .avatar-hero-stage .profile-avatar {
+  animation: avatar-hero-idle-sway 3.6s ease-in-out infinite;
+}
+
+#app[data-phase="battle"] .battle-scene-ui .avatar-emotion-mount,
+#app[data-phase="replay"] .battle-scene-ui .avatar-emotion-mount {
+  position: relative;
+  flex: 0 0 var(--battle-emotion-strip-w);
+  width: var(--battle-emotion-strip-w);
+  height: var(--battle-hero-img-h);
+  pointer-events: none;
+  z-index: 30;
+  overflow: visible;
+}
+
+#app[data-phase="battle"] .battle-scene-ui .avatar-emotion-mount .battle-emotion-float,
+#app[data-phase="replay"] .battle-scene-ui .avatar-emotion-mount .battle-emotion-float {
+  white-space: nowrap;
 }
 
 #app[data-phase="battle"] .avatar-hero-footer,
