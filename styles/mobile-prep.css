@@ -776,7 +776,8 @@ html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-ui {
 
 html[data-prep-layout="mobile"] #app[data-phase="battle"],
 html[data-prep-layout="mobile"] #app[data-phase="replay"] {
-  --battle-scene-avatar-h: min(318px, 40vh);
+  --mobile-battle-hero-zone-h: calc(var(--viewport-h, 100dvh) * 0.52);
+  --battle-scene-avatar-h: var(--mobile-battle-hero-zone-h);
   --battle-hero-img-h: min(248px, 31vh);
   --battle-avatar-w: min(200px, 42vw);
   --battle-emotion-strip-w: min(44px, 10vw);
@@ -785,16 +786,17 @@ html[data-prep-layout="mobile"] #app[data-phase="replay"] {
 html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-ui .battle-scene-avatar,
 html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-ui .battle-scene-avatar {
   position: absolute;
-  top: 50%;
-  bottom: auto;
-  transform: translate(-50%, -50%);
+  top: auto;
+  bottom: 0;
+  transform: translateX(-50%);
   width: min(42vw, 184px);
   max-width: none;
-  height: var(--battle-scene-avatar-h);
+  height: var(--mobile-battle-hero-zone-h);
   padding-top: 0;
   display: flex;
   align-items: flex-end;
   justify-content: center;
+  overflow: visible;
 }
 
 html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-avatar-player,
@@ -815,9 +817,124 @@ html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-avatar-p
 html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-avatar-player .field-avatar-slot,
 html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-avatar-enemy .field-avatar-slot,
 html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-avatar-enemy .field-avatar-slot {
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
   width: 100%;
+  height: var(--mobile-battle-hero-zone-h);
+  max-height: var(--mobile-battle-hero-zone-h);
+  position: relative;
+  overflow: visible;
+}
+
+/* Stable hero zone: shell fixed height, chips float above portrait (no layout shift) */
+html[data-prep-layout="mobile"] #app[data-phase="battle"] #player-avatar-slot > .avatar-hero-shell,
+html[data-prep-layout="mobile"] #app[data-phase="battle"] #enemy-avatar-slot > .avatar-hero-shell,
+html[data-prep-layout="mobile"] #app[data-phase="replay"] #player-avatar-slot > .avatar-hero-shell,
+html[data-prep-layout="mobile"] #app[data-phase="replay"] #enemy-avatar-slot > .avatar-hero-shell {
+  position: relative !important;
+  inset: auto !important;
+  width: 100%;
+  height: var(--mobile-battle-hero-zone-h) !important;
+  min-height: var(--mobile-battle-hero-zone-h) !important;
+  max-height: var(--mobile-battle-hero-zone-h) !important;
+  overflow: visible;
+  justify-content: flex-end;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-ui .avatar-hero-shell,
+html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-ui .avatar-hero-shell {
+  width: 100%;
+  max-width: 100%;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-footer,
+html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-footer {
+  position: static;
+  flex-shrink: 0;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-anchor,
+html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-anchor {
+  position: static;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-damage-stacks,
+html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-damage-stacks,
+html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-benefit-stacks,
+html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-benefit-stacks,
+html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-dot-stacks,
+html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-dot-stacks {
+  position: absolute;
+  top: 8px;
+  left: 0;
+  width: 100%;
+  bottom: auto;
+  transform: none;
+  pointer-events: none;
+  z-index: 12;
+  margin: 0;
+  min-height: 0;
+  max-width: none;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-damage-stack,
+html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-damage-stack,
+html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-benefit-stack,
+html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-benefit-stack,
+html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-dot-stack,
+html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-dot-stack {
+  pointer-events: auto;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-status-zones,
+html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-status-zones {
+  position: absolute;
+  top: 40px;
+  left: 0;
+  width: 100%;
+  bottom: auto;
+  z-index: 11;
+  pointer-events: none;
+  margin: 0;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-status-zone-buffs .avatar-benefit-stacks,
+html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-status-zone-buffs .avatar-benefit-stacks,
+html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-status-zone-debuffs .avatar-dot-stacks,
+html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-status-zone-debuffs .avatar-dot-stacks,
+html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-status-zone-buffs .avatar-beads,
+html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-status-zone-buffs .avatar-beads,
+html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-status-zone-debuffs .avatar-hero-debuff-row,
+html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-status-zone-debuffs .avatar-hero-debuff-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+  position: static;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-status-zone-buffs .avatar-bead-positive,
+html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-status-zone-buffs .avatar-bead-positive,
+html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-status-zone-debuffs .avatar-bead-debuff,
+html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-status-zone-debuffs .avatar-bead-debuff {
+  position: static;
+  transform: none;
+  animation: none;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-stage,
+html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-stage {
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-ui .avatar-emotion-mount,
+html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-ui .avatar-emotion-mount {
+  z-index: 13;
 }
 
 html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-avatar-player .profile-avatar,

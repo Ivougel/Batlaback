@@ -544,13 +544,22 @@ function closeBattleHudPopups() {
   closeHudPopup();
 }
 
+function isMobilePortraitBattleHud() {
+  return document.documentElement.dataset.prepLayout === "mobile";
+}
+
 function drawBattleHud(ctx, battleState) {
   if (!ctx || !battleState) return;
   tickHudLog(battleState);
   const canvasW = ctx.canvas?.width || getCanvasEl()?.width || 920;
 
-  hudCollapseBbox.player = drawHudChipRow(ctx, "player", getHudLayout("player", canvasW));
-  hudCollapseBbox.enemy = drawHudChipRow(ctx, "enemy", getHudLayout("enemy", canvasW));
+  if (isMobilePortraitBattleHud()) {
+    hudCollapseBbox.player = null;
+    hudCollapseBbox.enemy = null;
+  } else {
+    hudCollapseBbox.player = drawHudChipRow(ctx, "player", getHudLayout("player", canvasW));
+    hudCollapseBbox.enemy = drawHudChipRow(ctx, "enemy", getHudLayout("enemy", canvasW));
+  }
 
   drawHeroHud(ctx, "player", battleState.player, battleState, canvasW);
   drawHeroHud(ctx, "enemy", battleState.enemy, battleState, canvasW);
