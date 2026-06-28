@@ -205,10 +205,15 @@
   function clearTabletSideVars() {
     const root = document.documentElement;
     const fieldCol = document.getElementById("prep-field-column");
-    TABLET_BATTLE_AVATAR_VAR_NAMES.forEach((name) => root.style.removeProperty(name));
+    const sceneUi = document.getElementById("battle-scene-ui");
+    TABLET_BATTLE_AVATAR_VAR_NAMES.forEach((name) => {
+      root.style.removeProperty(name);
+      sceneUi?.style.removeProperty(name);
+    });
     TABLET_BATTLE_FIELD_COL_VAR_NAMES.forEach((name) => {
       root.style.removeProperty(name);
       fieldCol?.style.removeProperty(name);
+      sceneUi?.style.removeProperty(name);
     });
     root.style.removeProperty("--tablet-battle-player-x");
     root.style.removeProperty("--tablet-battle-enemy-x");
@@ -236,34 +241,47 @@
     document.documentElement.style.removeProperty("--tablet-battle-enemy-x");
   }
 
-  /** Слоты героев: левый/правый рюкзак на масштабированном canvas (после layout — через getBoundingClientRect). */
-  function setTabletBattleAvatarPositions(root, displayCanvasW, fieldCol, stage) {
-    const logicalBattleW = readCssPx("--battle-canvas-w", displayCanvasW);
-    const scale = displayCanvasW / logicalBattleW;
-    const fieldW = readCssPx("--prep-canvas-w", 200) * scale;
-    const gap = readCssPx("--grid-gap", 36) * scale;
+  /** Левый край canvas относительно battle-scene-ui; fallback — центрирование в колонке. */
+  function measureTabletBattlePlayerLeft(sceneUi, canvas, columnW, displayCanvasW) {
+    const columnOffset = Math.max(0, (columnW - displayCanvasW) / 2);
+    if (!sceneUi) return columnOffset;
 
+    const sceneRect = sceneUi.getBoundingClientRect();
+    if (sceneRect.width <= 0) return columnOffset;
+
+    const canvasRect = canvas?.getBoundingClientRect();
+    const renderedCanvasW = canvasRect?.width > 0 ? canvasRect.width : displayCanvasW;
+    const centerOffset = Math.max(0, (columnW - renderedCanvasW) / 2);
+
+    if (!canvasRect || canvasRect.width <= 0) return centerOffset;
+
+    const fromCanvas = Math.max(0, canvasRect.left - sceneRect.left);
+    // island/full-bleed даёт ~0 — не доверяем, если колонка шире canvas.
+    if (fromCanvas < 4 && centerOffset >= 8) return centerOffset;
+    return fromCanvas;
+  }
+
+  /** Слоты героев под левым/правым рюкзаком — якорь #game-canvas, vars на battle-scene-ui. */
+  function setTabletBattleAvatarPositions(root, displayCanvasW, fieldCol, stage) {
+    const canvas = document.getElementById("game-canvas");
     const sceneUi = document.getElementById("battle-scene-ui");
-    const island = document.getElementById("prep-field-island");
     const columnW = fieldCol?.clientWidth
       ?? sceneUi?.parentElement?.clientWidth
       ?? stage?.clientWidth
       ?? 0;
 
-    let playerLeft = Math.max(0, (columnW - displayCanvasW) / 2);
-    let enemyLeft = playerLeft + fieldW + gap;
+    const canvasRect = canvas?.getBoundingClientRect();
+    const renderedCanvasW = canvasRect?.width > 0 ? canvasRect.width : displayCanvasW;
+    const logicalBattleW = readCssPx("--battle-canvas-w", renderedCanvasW);
+    const scale = renderedCanvasW / logicalBattleW;
+    const fieldW = readCssPx("--prep-canvas-w", 200) * scale;
+    const gap = readCssPx("--grid-gap", 36) * scale;
 
-    if (sceneUi && island) {
-      const sceneRect = sceneUi.getBoundingClientRect();
-      const islandRect = island.getBoundingClientRect();
-      if (sceneRect.width > 0 && islandRect.width > 0) {
-        playerLeft = Math.max(0, islandRect.left - sceneRect.left);
-        enemyLeft = playerLeft + fieldW + gap;
-      }
-    }
+    const playerLeft = measureTabletBattlePlayerLeft(sceneUi, canvas, columnW, renderedCanvasW);
+    const enemyLeft = playerLeft + fieldW + gap;
 
     applyTabletBattleAvatarVars(
-      [root, fieldCol].filter(Boolean),
+      [sceneUi, fieldCol, root].filter(Boolean),
       playerLeft,
       enemyLeft,
       fieldW,
@@ -274,7 +292,11 @@
   function syncTabletBattleAvatarPositions() {
     const root = document.documentElement;
     if (root.dataset.tabletSideFit !== "true" || !isBattleUiPhase()) return;
-    const displayCanvasW = readCssPx("--battle-canvas-display-w", 0);
+    const canvas = document.getElementById("game-canvas");
+    let displayCanvasW = readCssPx("--battle-canvas-display-w", 0);
+    if (displayCanvasW <= 0 && canvas) {
+      displayCanvasW = canvas.getBoundingClientRect().width;
+    }
     if (displayCanvasW <= 0) return;
     const fieldCol = document.getElementById("prep-field-column");
     const stage = document.querySelector(".battle-canvas-stage");
@@ -411,6 +433,7 @@
             setTabletBattleAvatarPositions(root, w, fieldCol, stage);
             requestAnimationFrame(() => {
               setTabletBattleAvatarPositions(root, w, fieldCol, stage);
+              requestAnimationFrame(() => syncTabletBattleAvatarPositions());
             });
             syncMobileShopFabPosition();
             return;
@@ -718,12 +741,17 @@
       new ResizeObserver(scheduleCanvasFit).observe(prepFieldCol);
     }
     const battleSceneUi = document.getElementById("battle-scene-ui");
-    if (battleSceneUi && typeof ResizeObserver !== "undefined") {
-      new ResizeObserver(() => {
-        if (document.documentElement.dataset.tabletSideFit === "true" && isBattleUiPhase()) {
-          syncTabletBattleAvatarPositions();
-        }
-      }).observe(battleSceneUi);
+    const gameCanvas = document.getElementById("game-canvas");
+    const prepFieldIsland = document.getElementById("prep-field-island");
+    const syncTabletAvatarsOnResize = () => {
+      if (document.documentElement.dataset.tabletSideFit === "true" && isBattleUiPhase()) {
+        syncTabletBattleAvatarPositions();
+      }
+    };
+    if (typeof ResizeObserver !== "undefined") {
+      if (battleSceneUi) new ResizeObserver(syncTabletAvatarsOnResize).observe(battleSceneUi);
+      if (gameCanvas) new ResizeObserver(syncTabletAvatarsOnResize).observe(gameCanvas);
+      if (prepFieldIsland) new ResizeObserver(syncTabletAvatarsOnResize).observe(prepFieldIsland);
     }
     const hud = document.getElementById("gamepad-hints-bar");
     if (hud) {

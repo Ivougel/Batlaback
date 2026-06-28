@@ -209,6 +209,15 @@ html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-ui {
   inset: auto !important;
   overflow: visible;
   pointer-events: none;
+  --battle-scene-offset-x: max(
+    0px,
+    calc((100% - var(--battle-canvas-display-w, var(--battle-canvas-w))) / 2)
+  );
+  --battle-enemy-slot-left: calc(
+    var(--battle-scene-offset-x)
+    + var(--tablet-battle-field-display-w, var(--battle-field-display-w, var(--prep-canvas-w)))
+    + var(--battle-grid-gap-display, var(--grid-gap))
+  );
 }
 
 html[data-tablet-side-fit="true"] #app[data-phase="battle"] .battle-scene-ui .battle-scene-avatar,

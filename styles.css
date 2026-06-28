@@ -7892,12 +7892,12 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .btn-refresh-shop {
 
 /* --- Battle avatars (portrait) --- */
 
-html[data-prep-viewport-fit="true"] #app[data-phase="battle"] .prep-field-column {
+html:not([data-tablet-side-fit="true"])[data-prep-viewport-fit="true"] #app[data-phase="battle"] .prep-field-column {
   --battle-enemy-slot-left: calc(var(--prep-canvas-w) + var(--grid-gap));
 }
 
-html[data-prep-layout="stacked"] #app[data-phase="battle"] .battle-scene-ui .battle-scene-avatar,
-html[data-prep-viewport-fit="true"] #app[data-phase="battle"] .battle-scene-ui .battle-scene-avatar {
+html[data-prep-layout="stacked"]:not([data-tablet-side-fit="true"]) #app[data-phase="battle"] .battle-scene-ui .battle-scene-avatar,
+html:not([data-tablet-side-fit="true"])[data-prep-viewport-fit="true"] #app[data-phase="battle"] .battle-scene-ui .battle-scene-avatar {
   position: absolute;
   top: 0;
   height: auto;
@@ -7911,18 +7911,18 @@ html[data-prep-viewport-fit="true"] #app[data-phase="battle"] .battle-scene-ui .
   padding-top: 0;
 }
 
-html[data-prep-layout="stacked"] #app[data-phase="battle"] .battle-scene-avatar-player,
-html[data-prep-viewport-fit="true"] #app[data-phase="battle"] .battle-scene-avatar-player {
+html[data-prep-layout="stacked"]:not([data-tablet-side-fit="true"]) #app[data-phase="battle"] .battle-scene-avatar-player,
+html:not([data-tablet-side-fit="true"])[data-prep-viewport-fit="true"] #app[data-phase="battle"] .battle-scene-avatar-player {
   left: 0;
 }
 
-html[data-prep-layout="stacked"] #app[data-phase="battle"] .battle-scene-avatar-enemy,
-html[data-prep-viewport-fit="true"] #app[data-phase="battle"] .battle-scene-avatar-enemy {
+html[data-prep-layout="stacked"]:not([data-tablet-side-fit="true"]) #app[data-phase="battle"] .battle-scene-avatar-enemy,
+html:not([data-tablet-side-fit="true"])[data-prep-viewport-fit="true"] #app[data-phase="battle"] .battle-scene-avatar-enemy {
   left: var(--battle-enemy-slot-left);
 }
 
-html[data-prep-layout="stacked"] #app[data-phase="battle"] .battle-scene-ui .avatar-hero-shell,
-html[data-prep-viewport-fit="true"] #app[data-phase="battle"] .battle-scene-ui .avatar-hero-shell {
+html[data-prep-layout="stacked"]:not([data-tablet-side-fit="true"]) #app[data-phase="battle"] .battle-scene-ui .avatar-hero-shell,
+html:not([data-tablet-side-fit="true"])[data-prep-viewport-fit="true"] #app[data-phase="battle"] .battle-scene-ui .avatar-hero-shell {
   --battle-hero-img-h: calc(160px * var(--ui-scale));
   --battle-avatar-w: calc(140px * var(--ui-scale));
   --avatar-effects-panel-h: calc(56px * var(--ui-scale));
