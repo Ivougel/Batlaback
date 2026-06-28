@@ -28,6 +28,7 @@
 
   /* Avatar */
   --profile-avatar-size: calc(148px * var(--ui-scale));
+  --battle-portrait-zoom: 1.0;
   --profile-avatar-height: calc(192px * var(--ui-scale));
   --prep-scene-avatar-h: calc(152px * var(--ui-scale));
   --prep-scene-avatar-w: calc(120px * var(--ui-scale));

@@ -146,7 +146,7 @@ html[data-tablet-side-fit="true"] #app[data-phase="replay"] {
   --battle-hero-img-h: var(--tablet-battle-hero-img-h, min(180px, 26vh));
   --battle-avatar-w: var(--tablet-battle-slot-w, min(200px, calc(var(--prep-canvas-w) * 0.92)));
   --battle-emotion-strip-w: min(36px, 7vw);
-  --battle-portrait-zoom: 1.45;
+  --battle-portrait-zoom: 1.0;
 }
 
 html[data-tablet-side-fit="true"] #app[data-phase="battle"] .prep-left-column,
@@ -293,8 +293,8 @@ html[data-tablet-side-fit="true"] #app[data-phase="replay"] #enemy-avatar-slot >
   width: 100%;
   height: auto !important;
   min-height: 0 !important;
-  max-height: none !important;
-  overflow: visible;
+  max-height: min(45dvh, calc(320px * var(--ui-scale))) !important;
+  overflow: hidden;
   justify-content: flex-start !important;
 }
 
@@ -363,11 +363,12 @@ html[data-tablet-side-fit="true"] #app[data-phase="battle"] .avatar-hero-shell .
 html[data-tablet-side-fit="true"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-stage {
   position: relative;
   z-index: 2;
-  flex-shrink: 0;
+  flex: 0 1 auto;
   width: 100%;
-  height: var(--tablet-battle-hero-img-h, var(--battle-hero-img-h));
-  min-height: var(--tablet-battle-hero-img-h, var(--battle-hero-img-h));
-  max-height: var(--tablet-battle-hero-img-h, var(--battle-hero-img-h));
+  height: auto;
+  min-height: calc(80px * var(--ui-scale));
+  max-height: calc(220px * var(--ui-scale));
+  overflow: visible;
   animation: none;
 }
 
@@ -379,9 +380,9 @@ html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-ui .av
 html[data-tablet-side-fit="true"] #app[data-phase="battle"] .battle-scene-ui .profile-avatar,
 html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-ui .profile-avatar {
   width: 100%;
-  height: var(--tablet-battle-hero-img-h, var(--battle-hero-img-h));
-  max-height: var(--tablet-battle-hero-img-h, var(--battle-hero-img-h));
-  overflow: hidden;
+  height: auto;
+  max-height: calc(220px * var(--ui-scale));
+  overflow: visible;
   align-items: flex-start;
   justify-content: center;
 }

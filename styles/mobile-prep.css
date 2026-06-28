@@ -821,7 +821,7 @@ html[data-prep-layout="mobile"] #app[data-phase="replay"] {
   --battle-hero-img-h: var(--mobile-battle-hero-img-h, min(150px, 24dvh));
   --battle-avatar-w: min(168px, 38vw);
   --battle-emotion-strip-w: min(36px, 9vw);
-  --battle-portrait-zoom: 1.4;
+  --battle-portrait-zoom: 1.0;
 }
 
 html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-ui .battle-scene-avatar,
@@ -945,11 +945,12 @@ html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .av
 html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-stage {
   position: relative;
   z-index: 2;
-  flex-shrink: 0;
+  flex: 0 1 auto;
   width: 100%;
-  height: var(--mobile-battle-hero-img-h, var(--battle-hero-img-h));
-  min-height: var(--mobile-battle-hero-img-h, var(--battle-hero-img-h));
-  max-height: var(--mobile-battle-hero-img-h, var(--battle-hero-img-h));
+  height: auto;
+  min-height: calc(80px * var(--ui-scale));
+  max-height: calc(220px * var(--ui-scale));
+  overflow: visible;
 }
 
 html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-ui .avatar-hero-stage,
@@ -961,9 +962,9 @@ html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-ui .avat
 html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-ui .profile-avatar,
 html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-ui .profile-avatar {
   width: var(--battle-avatar-w);
-  height: var(--mobile-battle-hero-img-h, var(--battle-hero-img-h));
-  max-height: var(--mobile-battle-hero-img-h, var(--battle-hero-img-h));
-  overflow: hidden;
+  height: auto;
+  max-height: calc(220px * var(--ui-scale));
+  overflow: visible;
   align-items: flex-start;
   justify-content: center;
 }
