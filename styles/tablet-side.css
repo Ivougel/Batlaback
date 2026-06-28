@@ -294,7 +294,7 @@ html[data-tablet-side-fit="true"] #app[data-phase="replay"] #enemy-avatar-slot >
   height: auto !important;
   min-height: 0 !important;
   max-height: min(45dvh, calc(320px * var(--ui-scale))) !important;
-  overflow: hidden;
+  overflow: visible;
   justify-content: flex-start !important;
 }
 

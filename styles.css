@@ -1449,20 +1449,25 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 .avatar-emotion-mount {
   position: absolute;
   top: calc(8px * var(--ui-scale));
-  font-size: calc(2rem * var(--ui-scale));
+  font-size: calc(2.4rem * var(--ui-scale));
   line-height: 1;
   pointer-events: none;
-  z-index: 10;
+  z-index: 14;
   transition: opacity 0.2s;
   filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.55));
 }
 
+/* Inward toward the fight gap — avoids clipping at screen/column edges */
 .avatar-emotion-mount-player {
-  left: calc(-48px * var(--ui-scale));
+  left: 100%;
+  right: auto;
+  margin-left: calc(4px * var(--ui-scale));
 }
 
 .avatar-emotion-mount-enemy {
-  right: calc(-48px * var(--ui-scale));
+  right: 100%;
+  left: auto;
+  margin-right: calc(4px * var(--ui-scale));
 }
 
 @keyframes emotion-pulse {

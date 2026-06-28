@@ -269,6 +269,17 @@ function queueDamageDialog(victim, attacker, amount) {
       animation: "bounce",
       duration: 1100,
     }));
+    return;
+  }
+
+  if (amount > 2) {
+    tryQueueEvent(victim, createDialogEvent({
+      side: victim,
+      emoji: "😮",
+      replyTo: attacker,
+      animation: "shake",
+      duration: 1000,
+    }));
   }
 }
 
