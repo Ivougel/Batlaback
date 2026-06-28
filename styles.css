@@ -2707,6 +2707,25 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
   touch-action: none;
 }
 
+html[data-touch="true"] #app[data-phase="prep"] #shop-panel .shop-card:not(.empty),
+html[data-touch="true"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-card:not(.empty) {
+  position: relative;
+}
+
+html[data-touch="true"] #app[data-phase="prep"] #shop-panel .shop-card:not(.empty)::before,
+html[data-touch="true"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-card:not(.empty)::before {
+  content: "";
+  position: absolute;
+  inset: -16px;
+  z-index: 0;
+}
+
+html[data-touch="true"] #app[data-phase="prep"] #shop-panel .shop-card:not(.empty) > *,
+html[data-touch="true"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-card:not(.empty) > * {
+  position: relative;
+  z-index: 1;
+}
+
 #app[data-phase="prep"] #shop-panel .bench-panel .bench-card:not(.empty) {
   justify-content: center;
   overflow: hidden;
