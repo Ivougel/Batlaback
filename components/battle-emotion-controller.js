@@ -132,19 +132,37 @@ function resolveMoodPulseVisible(state, team) {
 
 /** Бой или replay — единственные фазы, где работает «диалог боя». */
 function isBattleEmotionPhaseActive() {
-  const app = document.getElementById("app");
-  const appPhase = app?.dataset?.phase;
-  if (appPhase === "battle" || appPhase === "replay") return true;
-  const sceneUi = document.getElementById("battle-scene-ui");
-  if (sceneUi && getComputedStyle(sceneUi).display !== "none") return true;
   if (typeof getGamePhase === "function") {
     const p = getGamePhase();
-    return p === "battle" || p === "replay";
+    if (p === "battle" || p === "replay") return true;
+    if (p === "prep" || p === "classSelect") return false;
   }
-  if (typeof phase !== "undefined") {
-    return phase === "battle" || phase === "replay";
-  }
-  return false;
+  const appPhase = document.getElementById("app")?.dataset?.phase;
+  if (appPhase === "prep" || appPhase === "classSelect") return false;
+  return appPhase === "battle" || appPhase === "replay";
+}
+
+const STAMINA_MOOD_VARIANTS = {
+  spend: ["⚡", "💨", "✨", "⚡😤"],
+  full: ["🙂", "😌", "⚡", "💪"],
+  ok: ["😐", "😮‍💨", "🙂‍↔️", "👍"],
+  low: ["🥵", "🪫", "😮‍💨", "🔋"],
+  empty: ["😵", "💤", "🪫", "😵‍💫"],
+};
+
+function resolveStaminaMood(staminaPct, spendFlash = 0) {
+  if (spendFlash > 0) return { id: "spend", emoji: "⚡", pulse: true };
+  if (staminaPct <= 0.05) return { id: "empty", emoji: "😵", pulse: true };
+  if (staminaPct <= 0.22) return { id: "low", emoji: "🥵", pulse: true };
+  if (staminaPct <= 0.5) return { id: "ok", emoji: "😐", pulse: false };
+  return { id: "full", emoji: "🙂", pulse: false };
+}
+
+function pickStaminaMoodEmoji(staminaMood, elapsed, team) {
+  const pool = STAMINA_MOOD_VARIANTS[staminaMood?.id] || [staminaMood?.emoji || "🙂"];
+  const slot = EMOTION_ORBIT_PHASE[team] || 0;
+  const idx = Math.floor(((elapsed || 0) + slot) / (EMOTION_DISPLAY_ROTATION_SEC * 1.2)) % pool.length;
+  return pool[idx];
 }
 
 /** Слоты «диалога боя»: mood пульсирует, reaction — события, без дублей. */
@@ -249,19 +267,23 @@ function resolveEmotionPresentation(battleState, team) {
   const secondaryDef = secondary ? EMOTION_CATALOG[secondary] : null;
   const countdownActive = typeof isBattleCountdownActive === "function"
     && isBattleCountdownActive(battleState);
+  const battleSide = team === "player" ? battleState.player : battleState.enemy;
+  const staminaPct = Math.max(0, (battleSide?.stamina ?? 0) / Math.max(1, battleSide?.maxStamina ?? 40));
+  const staminaMood = resolveStaminaMood(staminaPct, battleSide?.staminaSpendFlash ?? 0);
 
   return {
     team,
     mood,
+    staminaMood,
     primaryKey: primary.key,
     primaryEmoji: pickEmotionVariant(primary.def, primary.key, visualElapsed, teamSlot),
     secondaryEmoji: secondaryDef
       ? pickEmotionVariant(secondaryDef, secondary, visualElapsed + 1.1, teamSlot)
       : null,
-    moodEmoji: pickMoodEmoji(mood, visualElapsed, team),
+    moodEmoji: pickStaminaMoodEmoji(staminaMood, visualElapsed, team),
     shellClass: primary.def.shellClass || "",
     brightness: mood.brightness ?? 1,
-    pulse: !!mood.pulse || primary.key === "desperate" || primary.key === "losing",
+    pulse: !!staminaMood.pulse || !!mood.pulse || primary.key === "desperate" || primary.key === "losing",
     durationPhase: sideState.durationPhase,
     elapsedLabel: formatBattleElapsed(sideState.elapsed),
     floatPhase: visualElapsed + (EMOTION_ORBIT_PHASE[team] || 0),
@@ -456,29 +478,32 @@ function ensureBattleCommentaryLayer() {
 }
 
 function resolveCommentaryAnchorRect(team) {
+  if (!isBattleEmotionPhaseActive()) return null;
+
+  const panelId = team === "player" ? "player-avatar-panel" : "enemy-avatar-panel";
+  const img = document.querySelector(`#${panelId} .profile-avatar-img`);
+  if (img) {
+    const imgRect = img.getBoundingClientRect();
+    if (imgRect.width > 0 && imgRect.height > 0) return imgRect;
+  }
+
+  const avatar = document.querySelector(`#${panelId} .profile-avatar, #${panelId} .avatar-hero-stage`);
+  if (avatar) {
+    const avatarRect = avatar.getBoundingClientRect();
+    if (avatarRect.width > 0 && avatarRect.height > 0) return avatarRect;
+  }
+
   if (typeof getAvatarHeroStageRect === "function") {
     const rect = getAvatarHeroStageRect(team);
     if (rect?.width > 0) return rect;
   }
-  const panel = document.getElementById(team === "player" ? "player-avatar-panel" : "enemy-avatar-panel");
+
+  const panel = document.getElementById(panelId);
   if (panel) {
     const panelRect = panel.getBoundingClientRect();
     if (panelRect.width > 0) return panelRect;
   }
-  if (typeof getProfileAvatarViewportCenter === "function") {
-    const center = getProfileAvatarViewportCenter(team);
-    if (center?.x != null && center?.y != null) {
-      const scale = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--ui-scale")) || 1;
-      const w = 188 * scale;
-      const h = 152 * scale;
-      return {
-        left: center.x - w / 2,
-        top: center.y - h / 2,
-        width: w,
-        height: h,
-      };
-    }
-  }
+
   return null;
 }
 
@@ -760,7 +785,7 @@ function updateBattleEmotions(state) {
     return;
   }
   if (!state) return;
-  if (!state.commentary?.playerState && typeof updateBattleAnalyzer === "function") {
+  if (typeof updateBattleAnalyzer === "function") {
     updateBattleAnalyzer(state, 0);
   }
   if (!state.commentary?.playerState) return;
@@ -825,7 +850,6 @@ function tickBattleEmotions(state) {
     return;
   }
   if (!state || state.finished) return;
-  updateBattleAnalyzer(state, 0);
   updateBattleEmotions(state);
   if (typeof syncIncomingDpsTooltip === "function") {
     syncIncomingDpsTooltip("player", state);

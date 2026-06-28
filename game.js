@@ -1014,6 +1014,10 @@ function renderPhase() {
   }
   renderFightButton();
   if (phase !== "prep") closeAllFighterCharacteristicsPopups();
+  if (phase === "prep") {
+    if (typeof clearBattleEmotions === "function") clearBattleEmotions();
+    if (typeof hidePrepEmotionBadge === "function") hidePrepEmotionBadge();
+  }
   if (typeof applyUiLayout === "function") scheduleLayoutAfterPhase();
 }
 
@@ -3177,7 +3181,7 @@ function describeEffect(e) {
       return `📊 ${parts.join(", ")}`;
     }
     case "periodic": return `⏱ Каждые ${e.interval || 3}с: особый эффект`;
-    case "tagScaledStack": return `📌 +${e.perTag || e.value || 1} ${e.stack || "блок"} за предмет «${e.tag || "armor"}»`;
+    case "tagScaledStack": return `📌 +${e.perTag || e.value || 1} ${e.stack || "блок"} за предмет «${formatTagLabel(e.tag || "armor")}»`;
     case "convertHp": return `❤️ −${e.hpCost || e.from} HP → +${e.stackGain || e.toStacks} ${e.stack || "regen"}`;
     case "timedDamageReduction": return `🛡 −${Math.round((e.value || 0.25) * 100)}% урона на ${e.duration || 3}с`;
     case "cooldownStartMult": return `⚡ Предметы на ${Math.round((e.value || 0) * 100)}% быстрее`;
@@ -3191,7 +3195,7 @@ function describeEffect(e) {
     case "cleanseDebuffs": return `✨ Снять ${e.value || 1} дебафф(ов)`;
     case "stealWeaponDamage": return `🗡 Украсть ${e.value || 1} урона с оружия противника`;
     case "damagePerFoeDebuff": return `☠ +${e.value || 0.5} урона за дебафф противника`;
-    case "damagePerTag": return `🏷 +${e.value || 1} урона за предмет «${e.tag || "food"}»`;
+    case "damagePerTag": return `🏷 +${e.value || 1} урона за предмет «${formatTagLabel(e.tag || "food")}»`;
     case "hpThreshold": {
       const pct = Math.round((e.threshold || 0.7) * 100);
       const dir = e.direction === "above" ? "выше" : "ниже";
@@ -3206,15 +3210,29 @@ function describeEffect(e) {
       const label = typeof getStackLabel === "function" ? getStackLabel(stack, 2) : stack;
       return `🎯 +${Math.round((e.value || 0.05) * 100)}% крит за ${label}`;
     }
-    case "cooldownMultPerTag": return `⚡ На ${Math.round((e.perTag || 0.15) * 100)}% быстрее за питомца/еду`;
+    case "cooldownMultPerTag": {
+      const tags = (e.tags || [e.tag || "pet"]).map(formatTagLabel).join(" / ");
+      return `⚡ На ${Math.round((e.perTag || 0.15) * 100)}% быстрее за «${tags}»`;
+    }
+    case "cooldownMultPerAdjacent":
+      return `⚡ На ${Math.round((e.perAdjacent || 0.10) * 100)}% быстрее за соседа (до ${Math.round((e.maxBonus || 0.60) * 100)}%)`;
+    case "cooldownMultPerItemCost":
+      return `⚡ На ${Math.round((e.perCost || 0.01) * 100)}% быстрее за стоимость предметов`;
+    case "cooldownMultPerSocket":
+      return `⚡ Атаки на ${Math.round((e.perSocket || 0.03) * 100)}% быстрее за сокет (до ${Math.round((e.maxBonus || 0.60) * 100)}%)`;
+    case "cooldownMultPerTotalStacks":
+      return `⚡ На ${Math.round((e.perStack || 0.05) * 100)}% быстрее за каждый стак${e.maxStacks ? ` (макс. ${e.maxStacks})` : ""}`;
     case "heartThreshold": return `💖 При ${e.count || 7} сердцах: особый эффект`;
     case "tagScaledMaxHp": return `❤️ +${e.perTag || 40} макс. HP за «${e.tag || "pet"}»`;
     case "passiveMaxStamina": return `⚡ +${e.value || 1} макс. выносливости`;
     case "onRevive": return `🔄 При перерождении: урон/яд по тегам`;
     case "onFoeHeal": return `☠ При лечении противника: яд`;
     case "critPerFoeDebuff": return `🎯 +${Math.round((e.value || 0.01) * 100)}% крит за дебафф противника`;
-    case "lifestealPerTag": return `🩸 +${Math.round((e.value || 0.15) * 100)}% вампиризм за «${e.tag || "cold"}»`;
-    case "healPerTag": return `❤ +${e.value || 1} лечения за «${e.tag || "vampiric"}»`;
+    case "lifestealPerTag": return `🩸 +${Math.round((e.value || 0.15) * 100)}% вампиризм за «${formatTagLabel(e.tag || "cold")}»`;
+    case "healPerTag": {
+      const scope = e.adjacent ? "соседний " : "";
+      return `❤ +${e.value || 1} лечения за ${scope}предмет «${formatTagLabel(e.tag || "vampiric")}»`;
+    }
     case "gainWeakestStack": return `📊 +${e.value || 1} к самому слабому стаку`;
     case "onHitCapBonus": return `⚔ При попадании: +${e.value || 1} урона (до ${e.cap || 7})`;
     case "breakBlockOnHit": return `🛡 Снять ${e.value || 4} блока при попадании`;

@@ -1906,6 +1906,7 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 .battle-commentary-mood {
   opacity: 0.96;
   z-index: 4;
+  font-size: min(7vh, calc(3.8rem * var(--ui-scale)));
 }
 
 .battle-commentary-reaction {
@@ -7690,6 +7691,10 @@ html[data-prep-side-fit="true"] #app[data-phase="prep"] .prep-field-island {
   filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.45));
   transition: transform 180ms ease, opacity 180ms ease;
   pointer-events: none;
+}
+
+.prep-emotion-badge {
+  display: none !important;
 }
 
 .prep-emotion-badge.hidden {

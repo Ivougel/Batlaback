@@ -92,47 +92,30 @@ const PrepEmotionController = (() => {
     return { emoji: "🙂", mood: "neutral" };
   }
 
-  function sync(side) {
-    if (typeof phase !== "undefined" && phase !== "prep") {
-      badgeEl?.classList.add("hidden");
-      return;
-    }
-
-    const el = ensureBadge();
-    if (!el) return;
-
-    const { emoji, mood } = analyze(side);
-    if (mood !== currentMood) {
-      currentMood = mood;
-      el.dataset.mood = mood;
-      el.classList.add("prep-emotion-pop");
-      window.setTimeout(() => el.classList.remove("prep-emotion-pop"), 260);
-    }
-    if (emoji !== displayEmoji) {
-      displayEmoji = emoji;
-      el.textContent = emoji;
-    }
-    el.classList.remove("hidden");
+  function sync() {
+    hidePrepEmotionBadge();
   }
 
-  function tick(dt, side) {
-    pulseT += dt;
-    const el = ensureBadge();
-    if (!el || el.classList.contains("hidden")) return;
-    const pulse = 1 + Math.sin(pulseT * 3.5) * 0.06;
-    el.style.setProperty("--prep-emotion-scale", String(pulse));
-    if (typeof phase !== "undefined" && phase === "prep") sync(side);
+  function tick() {
+    hidePrepEmotionBadge();
   }
 
   return { sync, tick, analyze };
 })();
 
-function syncPrepEmotion(side) {
-  PrepEmotionController.sync(side);
+function hidePrepEmotionBadge() {
+  const el = document.getElementById("prep-emotion-badge");
+  if (!el) return;
+  el.textContent = "";
+  el.classList.add("hidden");
 }
 
-function tickPrepEmotionController(dt, side) {
-  PrepEmotionController.tick(dt, side);
+function syncPrepEmotion(_side) {
+  hidePrepEmotionBadge();
+}
+
+function tickPrepEmotionController(_dt, _side) {
+  hidePrepEmotionBadge();
 }
 
 function analyzePrepEmotion(side) {
