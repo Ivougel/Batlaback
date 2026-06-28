@@ -655,12 +655,12 @@ function syncPrepTooltipDockVisibility() {
   }
 
   if (isMobilePrepPortrait()) {
-    dock.classList.remove("hidden");
     const hasItemTip = el && !el.classList.contains("hidden");
-    mobileHint?.classList.toggle("hidden", hasItemTip);
-    mobileHint?.setAttribute("aria-hidden", hasItemTip ? "true" : "false");
+    mobileHint?.classList.add("hidden");
+    mobileHint?.setAttribute("aria-hidden", "true");
+    dock.classList.toggle("hidden", !hasItemTip);
     dock.classList.toggle("prep-tooltip-dock--item", hasItemTip);
-    positionPrepTooltipDock();
+    if (hasItemTip) positionPrepTooltipDock();
     return;
   }
 
@@ -688,7 +688,7 @@ function positionMobilePrepTooltipDock(dock) {
 
   const islandRect = island?.getBoundingClientRect();
   const toolbarRect = toolbar?.getBoundingClientRect();
-  let top = (islandRect?.bottom ?? margin) + margin;
+  const top = (islandRect?.bottom ?? margin) + margin;
   let bottomLimit = (toolbarRect?.top ?? window.innerHeight) - margin;
 
   if (shopOpen && shopPanel) {
@@ -696,14 +696,13 @@ function positionMobilePrepTooltipDock(dock) {
     if (shopRect.top < bottomLimit) bottomLimit = shopRect.top - margin;
   }
 
-  const height = Math.max(52, bottomLimit - top);
-  top = Math.max(margin, Math.min(top, bottomLimit - 52));
+  const maxHeight = Math.max(100, Math.min(220, bottomLimit - top));
 
   dock.style.left = `${viewLeft + margin}px`;
   dock.style.width = `${Math.max(120, viewWidth - margin * 2)}px`;
-  dock.style.top = `${top}px`;
-  dock.style.maxHeight = `${height}px`;
-  dock.style.height = `${height}px`;
+  dock.style.top = `${Math.max(margin, top)}px`;
+  dock.style.maxHeight = `${maxHeight}px`;
+  dock.style.height = "auto";
 }
 
 function positionPrepTooltipDock() {
@@ -5196,18 +5195,6 @@ function log(msg) {
     window.clearTimeout(log.craftTimer);
     log.craftTimer = window.setTimeout(() => {
       hint.textContent = hint.dataset.defaultHint || hint.textContent;
-    }, 3500);
-  }
-
-  const mobileBody = document.getElementById("prep-mobile-hint-body");
-  if (isMobilePrepPortrait() && mobileBody) {
-    if (!mobileBody.dataset.defaultHint) syncPrepMobileHintDefault();
-    mobileBody.textContent = msg;
-    mobileBody.dataset.craftActive = "1";
-    window.clearTimeout(log.mobileTimer);
-    log.mobileTimer = window.setTimeout(() => {
-      mobileBody.dataset.craftActive = "";
-      mobileBody.textContent = mobileBody.dataset.defaultHint || mobileBody.textContent;
     }, 3500);
   }
 }

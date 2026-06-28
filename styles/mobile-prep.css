@@ -111,14 +111,14 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-character-emoji {
   font-size: clamp(3.4rem, 18vh, 5.5rem);
 }
 
-/* ─── FAB магазина: overlay справа под полем ─── */
+/* ─── FAB магазина: overlay справа под полем (вне #app — не обрезается overflow) ─── */
 
-html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-mobile-shop-btn {
+html[data-prep-layout="mobile"][data-game-phase="prep"] .prep-mobile-shop-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   position: fixed;
-  z-index: 9050;
+  z-index: 9260;
   top: var(--prep-shop-fab-top, auto);
   right: var(--prep-shop-fab-right, max(12px, env(safe-area-inset-right)));
   bottom: auto;
@@ -137,14 +137,15 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-mobile-shop-btn {
   touch-action: manipulation;
 }
 
-html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-mobile-shop-btn[aria-expanded="true"] {
+html[data-prep-layout="mobile"][data-game-phase="prep"] .prep-mobile-shop-btn[aria-expanded="true"] {
   border-color: #58a6ff;
   background: rgba(88, 166, 255, 0.18);
   box-shadow: 0 6px 28px rgba(88, 166, 255, 0.25);
 }
 
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .prep-mobile-shop-btn,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .prep-mobile-shop-btn {
+html[data-prep-layout="mobile"][data-game-phase="battle"] .prep-mobile-shop-btn,
+html[data-prep-layout="mobile"][data-game-phase="replay"] .prep-mobile-shop-btn,
+html[data-prep-layout="mobile"]:not([data-game-phase="prep"]) .prep-mobile-shop-btn {
   display: none !important;
 }
 
@@ -408,17 +409,7 @@ html[data-prep-layout="mobile"][data-game-phase="prep"] #prep-tooltip-dock .side
 }
 
 html[data-prep-layout="mobile"] .prep-mobile-hint {
-  display: flex;
-  flex: 1 1 auto;
-  align-items: center;
-  justify-content: center;
-  min-height: 0;
-  padding: 2px 6px;
-  overflow: hidden;
-}
-
-html[data-prep-layout="mobile"] .prep-mobile-hint.hidden {
-  display: none;
+  display: none !important;
 }
 
 html[data-prep-layout="mobile"] .prep-mobile-hint-body {
