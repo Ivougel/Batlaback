@@ -1341,7 +1341,7 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  justify-content: flex-end;
+  justify-content: flex-start;
   width: var(--battle-avatar-card-w, var(--battle-avatar-w, 100%));
   max-width: 100%;
   gap: 0;
@@ -1362,11 +1362,13 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 }
 
 .avatar-hero-bars {
+  flex: 0 0 auto;
+  position: relative;
   width: 100%;
   display: flex;
   justify-content: center;
-  flex-shrink: 0;
   pointer-events: none;
+  z-index: auto;
 }
 
 .avatar-hero-effects-panel,
@@ -1431,13 +1433,13 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 .avatar-hero-stage {
   position: relative;
   width: 100%;
-  flex: 0 1 auto;
+  flex: 0 0 auto;
   min-height: calc(140px * var(--ui-scale));
   max-height: calc(220px * var(--ui-scale));
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: visible;
+  overflow: hidden;
   animation: avatar-hero-idle-sway 3.6s ease-in-out infinite;
 }
 
@@ -7045,11 +7047,11 @@ html:not([data-tablet-side-fit="true"]):not([data-tablet-prep-hero="true"]) #app
 
 #app[data-phase="battle"] .avatar-hero-stage,
 #app[data-phase="replay"] .avatar-hero-stage {
-  flex: 0 1 auto;
+  flex: 0 0 auto;
   min-height: calc(140px * var(--ui-scale));
   max-height: calc(220px * var(--ui-scale));
   height: auto;
-  overflow: visible;
+  overflow: hidden;
 }
 
 #app[data-phase="battle"] .battle-scene-ui .avatar-hero-stage,
@@ -7182,8 +7184,9 @@ html[data-tablet-side-fit="true"] #app[data-phase="battle"] .avatar-hero-shell .
 html[data-tablet-side-fit="true"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-stage,
 html[data-tablet-prep-hero="true"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-stage,
 html[data-tablet-prep-hero="true"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-stage {
+  flex: 0 0 auto;
   min-height: calc(140px * var(--ui-scale));
-  overflow: visible;
+  overflow: hidden;
 }
 
 #app[data-phase="battle"] .avatar-damage-stacks,

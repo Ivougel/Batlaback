@@ -363,12 +363,12 @@ html[data-tablet-side-fit="true"] #app[data-phase="battle"] .avatar-hero-shell .
 html[data-tablet-side-fit="true"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-stage {
   position: relative;
   z-index: 2;
-  flex: 0 1 auto;
+  flex: 0 0 auto;
   width: 100%;
   height: auto;
-  min-height: calc(80px * var(--ui-scale));
+  min-height: calc(140px * var(--ui-scale));
   max-height: calc(220px * var(--ui-scale));
-  overflow: visible;
+  overflow: hidden;
   animation: none;
 }
 
