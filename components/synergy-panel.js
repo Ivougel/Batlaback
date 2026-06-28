@@ -29,6 +29,7 @@ function showSynergyTooltip(e, synergy) {
   el.innerHTML = buildSynergyTooltipHtml(synergy);
   el.classList.remove("hidden");
   el.classList.add("synergy-tooltip");
+  if (typeof syncPrepTooltipDockVisibility === "function") syncPrepTooltipDockVisibility();
   moveSidebarTooltip(e);
 }
 

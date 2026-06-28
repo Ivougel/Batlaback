@@ -572,16 +572,85 @@ function cancelScheduledTooltipHide() {
 function hideSidebarTooltip() {
   cancelScheduledTooltipHide();
   const el = document.getElementById("sidebar-tooltip");
+  const dock = document.getElementById("prep-tooltip-dock");
   const wasCombatFeed = sidebarTooltipSource === "combat-feed";
   if (el) {
     el.classList.add("hidden");
     el.classList.remove("combat-feed-hint-tooltip");
   }
+  dock?.classList.toggle("hidden", phase === "prep");
   fieldTooltipVisible = false;
-  sidebarTooltipSource = null;
-  if (wasCombatFeed && typeof CombatLog?.onExternalTooltipHide === "function") {
-    CombatLog.onExternalTooltipHide();
+  if (wasCombatFeed) {
+    clearCombatFeedTooltipActive();
+    if (typeof CombatLog?.onExternalTooltipHide === "function") {
+      CombatLog.onExternalTooltipHide();
+    }
   }
+}
+
+function syncPrepTooltipDockVisibility() {
+  const el = document.getElementById("sidebar-tooltip");
+  const dock = document.getElementById("prep-tooltip-dock");
+  if (!dock || !el) return;
+  if (phase !== "prep") {
+    dock.classList.remove("hidden");
+    return;
+  }
+  dock.classList.toggle("hidden", el.classList.contains("hidden"));
+}
+
+function shouldUsePrepTooltipDock() {
+  return phase === "prep";
+}
+
+function positionPrepTooltipDock() {
+  const dock = document.getElementById("prep-tooltip-dock");
+  if (!dock) return;
+
+  const margin = 10;
+  const corridor = getTooltipCorridorBounds(margin, 8);
+  const vv = window.visualViewport;
+  const viewLeft = vv?.offsetLeft ?? 0;
+  const viewTop = vv?.offsetTop ?? 0;
+  const viewWidth = vv?.width ?? window.innerWidth;
+  const viewHeight = vv?.height ?? window.innerHeight;
+
+  let left;
+  let width;
+  let top;
+  let maxHeight;
+
+  if (corridor) {
+    width = Math.min(360, Math.max(240, corridor.right - corridor.left - margin * 2));
+    left = corridor.left + (corridor.right - corridor.left - width) / 2;
+  } else {
+    width = Math.min(340, Math.max(240, viewWidth * 0.42));
+    left = viewLeft + (viewWidth - width) / 2;
+  }
+
+  const toolbar = document.getElementById("prep-toolbar");
+  const combatFeedBtn = document.getElementById("btn-combat-feed");
+  const feedPanel = document.getElementById("combat-feed-panel");
+  const toolbarRect = toolbar?.getBoundingClientRect();
+  const feedBtnRect = combatFeedBtn?.getBoundingClientRect();
+  const feedOpen = feedPanel?.classList.contains("combat-feed-panel--open");
+
+  let bottomLimit = (toolbarRect?.top ?? viewTop + viewHeight) - margin;
+  if (feedOpen && feedPanel) {
+    const feedRect = feedPanel.getBoundingClientRect();
+    bottomLimit = Math.min(bottomLimit, feedRect.top - margin);
+  } else if (feedBtnRect) {
+    bottomLimit = Math.min(bottomLimit, feedBtnRect.top - margin);
+  }
+
+  const topLimit = (corridor?.top ?? viewTop) + margin;
+  maxHeight = Math.min(360, Math.max(160, bottomLimit - topLimit - margin));
+  top = Math.max(topLimit, bottomLimit - maxHeight);
+
+  dock.style.left = `${left}px`;
+  dock.style.top = `${top}px`;
+  dock.style.width = `${width}px`;
+  dock.style.maxHeight = `${maxHeight}px`;
 }
 
 function scheduleHideSidebarTooltip() {
@@ -1006,6 +1075,16 @@ function init() {
   window.addEventListener("resize", syncBattleArenaLayout);
   window.addEventListener("resize", () => {
     requestAnimationFrame(applyGridMetricsFromCss);
+    if (shouldUsePrepTooltipDock()) {
+      const tip = document.getElementById("sidebar-tooltip");
+      if (tip && !tip.classList.contains("hidden")) positionPrepTooltipDock();
+    }
+  });
+  window.visualViewport?.addEventListener("resize", () => {
+    if (shouldUsePrepTooltipDock()) {
+      const tip = document.getElementById("sidebar-tooltip");
+      if (tip && !tip.classList.contains("hidden")) positionPrepTooltipDock();
+    }
   });
   showClassSelect();
   requestAnimationFrame(gameLoop);
@@ -3747,7 +3826,7 @@ function isPointerOverPrepSidebar(clientX, clientY) {
   const hit = document.elementFromPoint(clientX, clientY);
   if (!hit) return false;
   return !!hit.closest(
-    "#shop-panel, .run-stats-anchor, #prep-run-stats-anchor, #run-stats-popover, #sidebar-tooltip, #recipe-book-overlay, #combat-feed-dock, #combat-feed-panel, #combat-feed-scroll",
+    "#shop-panel, .run-stats-anchor, #prep-run-stats-anchor, #run-stats-popover, #sidebar-tooltip, #prep-tooltip-dock, #recipe-book-overlay, #combat-feed-dock, #combat-feed-panel, #combat-feed-scroll",
   );
 }
 
@@ -3867,7 +3946,19 @@ function getCorridorTooltipPosition(placement, clientX, clientY, tipW, tipH, mar
 
 function positionSidebarTooltip(clientX, clientY, boundsKind = "viewport", placement = "auto") {
   const el = document.getElementById("sidebar-tooltip");
+  const dock = document.getElementById("prep-tooltip-dock");
   if (!el || el.classList.contains("hidden")) return;
+
+  if (shouldUsePrepTooltipDock()) {
+    positionPrepTooltipDock();
+    el.style.left = "";
+    el.style.top = "";
+    el.style.visibility = "";
+    syncPrepTooltipDockVisibility();
+    return;
+  }
+
+  dock?.classList.remove("hidden");
 
   const bounds = getTooltipBounds(boundsKind);
   const margin = 10;
@@ -4204,6 +4295,7 @@ function showSidebarTooltipAt(clientX, clientY, itemId, contentItem, context = "
   }
   el.style.borderColor = RARITY_COLORS[def.rarity] || "#30363d";
   el.classList.remove("hidden");
+  syncPrepTooltipDockVisibility();
   const boundsKind = context === "shop" ? "shop" : context === "bench" ? "bench" : context === "field" ? "field" : "viewport";
   positionSidebarTooltip(clientX, clientY, boundsKind, context);
 }
@@ -4213,6 +4305,11 @@ function showSidebarTooltip(e, itemId, contentItem, context = "shop") {
 }
 
 function moveSidebarTooltip(e, boundsKind = "viewport", placement = "auto") {
+  if (shouldUsePrepTooltipDock()) {
+    positionPrepTooltipDock();
+    syncPrepTooltipDockVisibility();
+    return;
+  }
   positionSidebarTooltip(e.clientX, e.clientY, boundsKind, placement);
 }
 

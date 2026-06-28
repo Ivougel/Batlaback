@@ -111,13 +111,16 @@ const CombatLog = (() => {
 
   function hideFeedHint() {
     if (!feedTooltipActive) return;
-    feedTooltipActive = false;
     const el = document.getElementById("sidebar-tooltip");
     el?.classList.remove("combat-feed-hint-tooltip");
-    if (typeof clearCombatFeedTooltipActive === "function") {
-      clearCombatFeedTooltipActive();
+    if (typeof hideSidebarTooltip === "function") {
+      hideSidebarTooltip();
+      return;
     }
+    feedTooltipActive = false;
     el?.classList.add("hidden");
+    if (typeof clearCombatFeedTooltipActive === "function") clearCombatFeedTooltipActive();
+    if (typeof syncPrepTooltipDockVisibility === "function") syncPrepTooltipDockVisibility();
   }
 
   function onExternalTooltipHide() {
@@ -300,6 +303,12 @@ const CombatLog = (() => {
     collapsed = !!next;
     syncCollapsedUi();
     if (!collapsed) scrollToBottomIfNeeded();
+    if (typeof positionPrepTooltipDock === "function") {
+      requestAnimationFrame(() => {
+        const tip = document.getElementById("sidebar-tooltip");
+        if (tip && !tip.classList.contains("hidden")) positionPrepTooltipDock();
+      });
+    }
   }
 
   function toggleCollapsed() {
