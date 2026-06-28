@@ -1,7 +1,6 @@
 /**
  * EmotionEngine — «живой диалог» между персонажами во время боя (только визуал).
- * BattleAnalyzer → DialogEvent → AnimationQueue → drawEmotionLayer()
- * Таймлайн — реальное время (не dt), но на паузе боя замирает; эмодзи слегка левитируют.
+ * BattleAnalyzer → DialogEvent → parked emoji slots beside hero cards.
  */
 
 const EMOTION_ANALYZE_INTERVAL_MS = 500;
@@ -62,15 +61,6 @@ function emotionEffectiveNow() {
   return Date.now() - frozenMs;
 }
 
-function applyPauseLevitation(offsetX, offsetY, rotation) {
-  const t = Date.now() / 1000;
-  return {
-    offsetX: offsetX + Math.sin(t * 1.7 + 1) * 2,
-    offsetY: offsetY + Math.sin(t * 2.2) * 5,
-    rotation: rotation + Math.sin(t * 1.3) * 0.04,
-  };
-}
-
 function resetEmotionEngine() {
   emotionEngine = createEmotionEngineState();
   emotionActiveBattle = null;
@@ -79,10 +69,6 @@ function resetEmotionEngine() {
 
 function foeOf(side) {
   return side === "player" ? "enemy" : "player";
-}
-
-function lerp(a, b, t) {
-  return a + (b - a) * t;
 }
 
 function clamp01(t) {
@@ -102,122 +88,45 @@ function getEmojiPriority(emoji, hint = "normal") {
   return EMOTION_PRIORITY.normal;
 }
 
-/** Смещение эмодзи от центра аватара (viewport px). */
-const EMOJI_SIDE_OFFSET_X = 60;
-const EMOJI_HEAD_OFFSET_Y = -80;
-
-const emotionDomPool = new Map();
-
-function ensureEmotionLayer() {
-  let layer = document.getElementById("battle-emotion-layer");
-  if (!layer) {
-    layer = document.createElement("div");
-    layer.id = "battle-emotion-layer";
-    layer.className = "battle-emotion-layer";
-    layer.setAttribute("aria-hidden", "true");
-    layer.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:96;overflow:visible;";
-    document.body.appendChild(layer);
-  }
-  return layer;
+function queryEmotionMount(side) {
+  const slotId = side === "player" ? "player-avatar-slot" : "enemy-avatar-slot";
+  return document.querySelector(`#${slotId} .avatar-hero-shell > .avatar-emotion-mount`);
 }
 
 function clearEmotionLayer() {
-  emotionDomPool.forEach((el) => el.remove());
-  emotionDomPool.clear();
   document.querySelectorAll(".avatar-emotion-mount").forEach((mount) => {
-    mount.replaceChildren();
+    mount.textContent = "";
+    mount.classList.remove("emotion-pulse");
   });
-  document.getElementById("battle-emotion-layer")?.replaceChildren();
+  document.getElementById("battle-emotion-layer")?.remove();
 }
 
-function getEmotionMount(side) {
-  const panelId = side === "player" ? "player-avatar-panel" : "enemy-avatar-panel";
-  return document.querySelector(`#${panelId} .avatar-hero-stage`)
-    || document.querySelector(`#${panelId} .profile-avatar`);
+function clearEmotionMount(side) {
+  const mount = queryEmotionMount(side);
+  if (!mount) return;
+  mount.textContent = "";
+  mount.classList.remove("emotion-pulse");
 }
 
 function ensureEmotionMount(side) {
-  const stage = getEmotionMount(side);
-  if (!stage) return null;
-  let mount = stage.querySelector(":scope > .avatar-emotion-mount");
+  const slotId = side === "player" ? "player-avatar-slot" : "enemy-avatar-slot";
+  const shell = document.querySelector(`#${slotId} .avatar-hero-shell`);
+  if (!shell) return null;
+  let mount = shell.querySelector(":scope > .avatar-emotion-mount");
   if (!mount) {
-    mount = document.createElement("div");
-    mount.className = `avatar-emotion-mount avatar-emotion-mount-${side}`;
-    mount.dataset.team = side;
-    mount.setAttribute("aria-hidden", "true");
-    stage.appendChild(mount);
+    const legacy = shell.querySelector(".avatar-hero-stage > .avatar-emotion-mount");
+    if (legacy) {
+      mount = legacy;
+      shell.appendChild(mount);
+    } else {
+      mount = document.createElement("div");
+      mount.className = `avatar-emotion-mount avatar-emotion-mount-${side}`;
+      mount.dataset.team = side;
+      mount.setAttribute("aria-hidden", "true");
+      shell.appendChild(mount);
+    }
   }
-  mount.style.cssText = "position:absolute;inset:0;pointer-events:none;";
   return mount;
-}
-
-/** Локальное смещение над головой (px от центра stage). */
-function getHeadOffset(side) {
-  const appPhase = document.getElementById("app")?.dataset?.phase;
-  if (appPhase === "battle" || appPhase === "replay") {
-    const mount = ensureEmotionMount(side);
-    const h = mount?.getBoundingClientRect().height || 0;
-    return { x: 0, y: h > 0 ? -h * 0.12 : -28 };
-  }
-  if (typeof window.HERO_ANCHOR?.getEmojiOffset === "function") {
-    return window.HERO_ANCHOR.getEmojiOffset(side);
-  }
-  return {
-    x: side === "player" ? EMOJI_SIDE_OFFSET_X : -EMOJI_SIDE_OFFSET_X,
-    y: EMOJI_HEAD_OFFSET_Y,
-  };
-}
-
-function getMountCenterViewport(mount) {
-  const rect = mount.getBoundingClientRect();
-  return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-}
-
-function getHeroAnchor(side) {
-  const appPhase = document.getElementById("app")?.dataset?.phase;
-  if (appPhase === "battle" && typeof window.HERO_ANCHOR?.getViewportCenter === "function") {
-    const pt = window.HERO_ANCHOR.getViewportCenter(side);
-    if (pt?.x != null && pt?.y != null) return pt;
-  }
-  if (typeof getProfileAvatarViewportCenter === "function") {
-    const pt = getProfileAvatarViewportCenter(side);
-    if (pt?.x != null && pt?.y != null) return { x: pt.x, y: pt.y };
-  }
-  if (typeof getAvatarHeroStageRect === "function") {
-    const rect = getAvatarHeroStageRect(side);
-    if (rect?.width > 0) {
-      return {
-        x: rect.left + rect.width / 2,
-        y: rect.top + rect.height / 2,
-      };
-    }
-  }
-  const panelId = side === "player" ? "player-avatar-panel" : "enemy-avatar-panel";
-  const avatar = document.querySelector(`#${panelId} .profile-avatar-img, #${panelId} .profile-avatar`);
-  if (avatar) {
-    const rect = avatar.getBoundingClientRect();
-    if (rect.width > 0) {
-      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-    }
-  }
-  return {
-    x: window.innerWidth * (side === "player" ? 0.22 : 0.78),
-    y: window.innerHeight * 0.68,
-  };
-}
-
-function getSideAnchor(side) {
-  const stage = getEmotionMount(side);
-  const mount = stage?.querySelector(":scope > .avatar-emotion-mount");
-  if (mount) {
-    const rect = mount.getBoundingClientRect();
-    if (rect.width > 0 && rect.height > 0) {
-      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-    }
-  }
-  const hero = getHeroAnchor(side);
-  const offsetX = side === "player" ? EMOJI_SIDE_OFFSET_X : -EMOJI_SIDE_OFFSET_X;
-  return { x: hero.x + offsetX, y: hero.y + EMOJI_HEAD_OFFSET_Y };
 }
 
 function createDialogEvent({
@@ -526,163 +435,21 @@ function analyzeBattleState(battleState, elapsedReal) {
   emotionEngine.snapshot = snap;
 }
 
-function animProgress(anim) {
-  return clamp01((emotionEffectiveNow() - anim.startedAt) / anim.duration);
-}
-
-function resolveAnimOffset(anim, side, paused = false) {
-  const progress = animProgress(anim);
-  const head = getHeadOffset(side);
-  const tSec = (emotionEffectiveNow() - anim.startedAt) / 1000;
-
-  if (anim.animation === "fly" && anim.flyTo) {
-    const mount = ensureEmotionMount(anim.flyFrom || side);
-    const dst = getSideAnchor(anim.flyTo);
-    const t = progress;
-    let offsetX = head.x;
-    let offsetY = head.y;
-    if (mount && dst) {
-      const center = getMountCenterViewport(mount);
-      const endX = dst.x - center.x;
-      const endY = dst.y - center.y;
-      offsetX = lerp(head.x, endX, t);
-      offsetY = lerp(head.y, endY, t) + Math.sin(t * Math.PI) * -80;
-    }
-    if (paused) {
-      return { ...applyPauseLevitation(offsetX, offsetY, 0), progress, scale: 1 };
-    }
-    return { offsetX, offsetY, progress, rotation: 0, scale: 1 };
-  }
-
-  let offsetX = head.x;
-  let offsetY = head.y;
-  let rotation = 0;
-  let scale = 1;
-
-  switch (anim.animation) {
-    case "shake": {
-      offsetX += Math.sin(tSec * 40) * 5 * (1 - progress);
-      if (anim.emoji.includes("🛡")) {
-        rotation = Math.sin(tSec * 18) * 0.35 * (1 - progress);
-      }
-      break;
-    }
-    case "bounce":
-      offsetY += -Math.sin(progress * Math.PI) * 30;
-      break;
-    case "grow":
-      scale = 1 + Math.sin(progress * Math.PI) * 2;
-      break;
-    case "nod":
-      rotation = Math.sin(tSec * 3) * 0.15;
-      break;
-    case "particles":
-      break;
-    default:
-      offsetX += Math.sin(tSec * 40) * 5 * (1 - progress);
-  }
-
-  if (paused) {
-    return { ...applyPauseLevitation(offsetX, offsetY, rotation), progress, scale };
-  }
-
-  return { offsetX, offsetY, progress, rotation, scale };
-}
-
-function particleColor(emoji) {
-  const e = String(emoji || "");
-  if (e.includes("🤢")) return "#3fb950";
-  if (e.includes("🔥")) return "#ffa657";
-  return "#58a6ff";
-}
-
 function upsertEmotionEl(uid, side, anim) {
-  let el = emotionDomPool.get(uid);
-  const layer = ensureEmotionLayer();
-  ensureEmotionMount(side);
-  if (!layer) return null;
-  if (!el) {
-    el = document.createElement("div");
-    el.className = `battle-emotion-float battle-emotion-team-${side} battle-emotion-${anim.animation}`;
-    el.dataset.emotionUid = uid;
-    emotionDomPool.set(uid, el);
-    layer.appendChild(el);
-  } else if (el.parentElement !== layer) {
-    layer.appendChild(el);
-  }
-  return el;
-}
-
-function renderParticlesDom(el, anim, centerX, centerY) {
-  el.querySelectorAll(".battle-emotion-particle").forEach((node) => node.remove());
-  const progress = animProgress(anim);
-  const count = 6;
-  const color = particleColor(anim.emoji);
-  for (let i = 0; i < count; i += 1) {
-    const angle = (i / count) * Math.PI;
-    const px = Math.cos(angle) * progress * 40;
-    const py = -Math.sin(angle) * progress * 50;
-    const alpha = 1 - progress;
-    if (alpha <= 0) continue;
-    const dot = document.createElement("span");
-    dot.className = "battle-emotion-particle";
-    dot.style.cssText = [
-      "position:absolute",
-      "left:50%",
-      "top:50%",
-      `transform:translate(calc(-50% + ${px}px), calc(-50% + ${py}px))`,
-      `width:${6 + (1 - progress) * 4}px`,
-      `height:${6 + (1 - progress) * 4}px`,
-      "border-radius:50%",
-      `background:${color}`,
-      `opacity:${alpha}`,
-    ].join(";");
-    el.appendChild(dot);
-  }
-}
-
-function renderEmotionDom(anim, side, paused = false) {
-  const uid = `emotion-${side}`;
-  const { offsetX, offsetY, progress, rotation, scale } = resolveAnimOffset(anim, side, paused);
-  if (progress >= 1) {
-    const el = emotionDomPool.get(uid);
-    if (el) {
-      el.remove();
-      emotionDomPool.delete(uid);
-    }
-    return;
-  }
-
-  const el = upsertEmotionEl(uid, side, anim);
-  if (!el) return;
-
   const mount = ensureEmotionMount(side);
-  if (!mount) return;
-  const anchor = getMountCenterViewport(mount);
-  const x = anchor.x + offsetX;
-  const y = anchor.y + offsetY;
-
-  el.style.position = "absolute";
-  el.style.left = `${x}px`;
-  el.style.top = `${y}px`;
-  el.style.transform = `translate(-50%, -50%) rotate(${rotation}rad) scale(${scale})`;
-  el.style.opacity = String(Math.max(0.15, 1 - progress * 0.12));
-  el.style.fontSize = `${48 * scale}px`;
-  el.style.lineHeight = "1";
-  el.style.filter = "drop-shadow(0 4px 14px rgba(0,0,0,0.55))";
-  el.style.transition = "none";
-  el.style.willChange = "transform";
-  el.classList.toggle("battle-emotion-levitate", paused);
-
-  if (anim.animation === "particles") {
-    renderParticlesDom(el, anim, offsetX, offsetY);
-    el.textContent = progress < 0.85 ? anim.emoji : "";
-    el.style.opacity = String(Math.max(0.2, 1 - progress * 0.35));
-    return;
+  if (!mount) return null;
+  const next = anim.emoji || "";
+  if (mount.textContent !== next) {
+    mount.textContent = next;
+    mount.classList.remove("emotion-pulse");
+    void mount.offsetWidth;
+    mount.classList.add("emotion-pulse");
   }
+  return mount;
+}
 
-  el.querySelectorAll(".battle-emotion-particle").forEach((node) => node.remove());
-  el.textContent = anim.emoji;
+function renderEmotionDom(anim, side) {
+  upsertEmotionEl(`emotion-${side}`, side, anim);
 }
 
 function pruneFinishedAnimations() {
@@ -719,21 +486,16 @@ function drawEmotionLayer(_ctx, battleState, elapsedReal) {
   }
   pruneFinishedAnimations();
 
-  const active = new Set();
   if (emotionEngine.playerAnim) {
-    active.add("emotion-player");
-    renderEmotionDom(emotionEngine.playerAnim, "player", paused);
+    renderEmotionDom(emotionEngine.playerAnim, "player");
+  } else {
+    clearEmotionMount("player");
   }
   if (emotionEngine.enemyAnim) {
-    active.add("emotion-enemy");
-    renderEmotionDom(emotionEngine.enemyAnim, "enemy", paused);
+    renderEmotionDom(emotionEngine.enemyAnim, "enemy");
+  } else {
+    clearEmotionMount("enemy");
   }
-
-  emotionDomPool.forEach((el, uid) => {
-    if (active.has(uid)) return;
-    el.remove();
-    emotionDomPool.delete(uid);
-  });
 
   emotionEngine.lastRenderAt = Date.now();
 }

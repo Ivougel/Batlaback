@@ -1448,8 +1448,31 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 
 .avatar-emotion-mount {
   position: absolute;
-  inset: 0;
+  top: calc(8px * var(--ui-scale));
+  font-size: calc(2rem * var(--ui-scale));
+  line-height: 1;
   pointer-events: none;
+  z-index: 10;
+  transition: opacity 0.2s;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.55));
+}
+
+.avatar-emotion-mount-player {
+  left: calc(-48px * var(--ui-scale));
+}
+
+.avatar-emotion-mount-enemy {
+  right: calc(-48px * var(--ui-scale));
+}
+
+@keyframes emotion-pulse {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+
+.avatar-emotion-mount.emotion-pulse {
+  animation: emotion-pulse 0.4s ease-out both;
 }
 
 @keyframes avatar-hero-idle-sway {
@@ -7081,7 +7104,7 @@ html:not([data-tablet-side-fit="true"]):not([data-tablet-prep-hero="true"]) #app
 }
 
 .battle-emotion-layer .battle-emotion-float {
-  white-space: nowrap;
+  display: none !important;
 }
 
 #app[data-phase="battle"] .avatar-hero-effects-panel,

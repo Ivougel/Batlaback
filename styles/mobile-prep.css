@@ -972,17 +972,6 @@ html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-ui .prof
 html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-ui .avatar-emotion-mount,
 html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-ui .avatar-emotion-mount {
   z-index: 13;
-  top: 0;
-}
-
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-avatar-player .avatar-emotion-mount,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-avatar-player .avatar-emotion-mount {
-  right: calc(100% + 2px);
-}
-
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-avatar-enemy .avatar-emotion-mount,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-avatar-enemy .avatar-emotion-mount {
-  left: calc(100% + 2px);
 }
 
 html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-avatar-player .profile-avatar,
