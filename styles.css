@@ -545,6 +545,51 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
   justify-content: center;
 }
 
+#app[data-phase="battle"] #player-avatar-slot,
+#app[data-phase="battle"] #enemy-avatar-slot,
+#app[data-phase="replay"] #player-avatar-slot,
+#app[data-phase="replay"] #enemy-avatar-slot {
+  position: relative;
+}
+
+#app[data-phase="battle"] #player-avatar-slot > .avatar-hero-shell,
+#app[data-phase="battle"] #enemy-avatar-slot > .avatar-hero-shell,
+#app[data-phase="replay"] #player-avatar-slot > .avatar-hero-shell,
+#app[data-phase="replay"] #enemy-avatar-slot > .avatar-hero-shell {
+  position: absolute;
+  inset: 0;
+}
+
+.portrait-zoom-clip {
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
+
+.portrait-zoom-clip img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform-origin: top center;
+  transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: scale(1);
+}
+
+#app[data-phase="battle"] .portrait-zoom-clip img,
+#app[data-phase="replay"] .portrait-zoom-clip img {
+  transform: scale(1.85);
+}
+
+@keyframes hero-hit {
+  0%, 100% { transform: translateX(0); }
+  30% { transform: translateX(-7px); }
+  70% { transform: translateX(7px); }
+}
+
+.avatar-hero-shell.hero-taking-hit {
+  animation: hero-hit 0.3s ease;
+}
+
 .player-characteristics-popup {
   position: absolute;
   left: 50%;
@@ -7194,22 +7239,8 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
   object-fit: contain;
   filter: none;
   background: none;
-  transform: scale(1);
-  transform-origin: top center;
-  transition: transform 0.6s ease-in-out;
   transform-style: preserve-3d;
   backface-visibility: visible;
-}
-
-#app[data-phase="battle"] .battle-scene-ui .profile-avatar.profile-avatar-battle-zoom-clip,
-#app[data-phase="replay"] .battle-scene-ui .profile-avatar.profile-avatar-battle-zoom-clip {
-  overflow: hidden;
-}
-
-#app[data-phase="battle"] .battle-scene-ui .profile-avatar-img.profile-avatar-battle-zoom,
-#app[data-phase="replay"] .battle-scene-ui .profile-avatar-img.profile-avatar-battle-zoom {
-  transform: scale(1.9);
-  transform-origin: top center;
 }
 
 #app[data-phase="battle"] .battle-scene-avatar-player .profile-avatar-img,

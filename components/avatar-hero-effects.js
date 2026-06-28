@@ -16,10 +16,37 @@ function getAvatarSlotEl(team) {
   return document.getElementById(team === "player" ? "player-avatar-slot" : "enemy-avatar-slot");
 }
 
+const lastSyncedHeroHp = { player: null, enemy: null };
+const heroHitAnimTimers = { player: null, enemy: null };
+
+function resetHeroHpTracking(team) {
+  lastSyncedHeroHp[team] = null;
+  if (heroHitAnimTimers[team]) {
+    clearTimeout(heroHitAnimTimers[team]);
+    heroHitAnimTimers[team] = null;
+  }
+}
+
+function maybeTriggerHeroTakingHit(team, shell, hpCurrent) {
+  if (!shell) return;
+  const prev = lastSyncedHeroHp[team];
+  if (prev != null && hpCurrent < prev - 0.01) {
+    shell.classList.remove("hero-taking-hit");
+    void shell.offsetWidth;
+    shell.classList.add("hero-taking-hit");
+    if (heroHitAnimTimers[team]) clearTimeout(heroHitAnimTimers[team]);
+    heroHitAnimTimers[team] = window.setTimeout(() => {
+      shell.classList.remove("hero-taking-hit");
+      heroHitAnimTimers[team] = null;
+    }, 300);
+  }
+  lastSyncedHeroHp[team] = hpCurrent;
+}
+
 function renderAvatarHeroHTML(profile, team) {
   const className = escapeProfileHtml(profile.className || "—");
   const icon = profile.classIconSrc
-    ? `<img class="profile-avatar-img" src="${escapeProfileHtml(profile.classIconSrc)}" alt="${className}" draggable="false">`
+    ? `<div class="portrait-zoom-clip"><img class="profile-avatar-img" src="${escapeProfileHtml(profile.classIconSrc)}" alt="${className}" draggable="false"></div>`
     : escapeProfileHtml(profile.classIcon || "❓");
   const gold = profile.gold ?? 0;
   const tooltipDesc = escapeProfileHtml(`💰 ${gold} золота`);
@@ -180,6 +207,8 @@ function syncAvatarHeroResourceBars(team, state) {
   const staminaPct = Math.max(0, Math.min(100, (staminaCurrent / Math.max(1, staminaMax)) * 100));
   const metrics = getSideBattleMetrics(state, team);
 
+  maybeTriggerHeroTakingHit(team, shell, hpCurrent);
+
   const hpFill = shell.querySelector(".avatar-hero-hp-fill");
   const hpLabel = shell.querySelector(".avatar-hero-hp-label");
   const staminaFill = shell.querySelector(".avatar-hero-stamina-fill");
@@ -196,6 +225,7 @@ function syncAvatarHeroHpOnly(team, hpCurrent, hpMax, state = null) {
   const slot = getAvatarSlotEl(team);
   const shell = slot?.querySelector(".avatar-hero-shell");
   if (!shell) return;
+  maybeTriggerHeroTakingHit(team, shell, hpCurrent);
   const hpPct = Math.max(0, Math.min(100, (hpCurrent / Math.max(1, hpMax)) * 100));
   const hpFill = shell.querySelector(".avatar-hero-hp-fill");
   const hpLabel = shell.querySelector(".avatar-hero-hp-label");
@@ -258,6 +288,8 @@ function syncAvatarHeroEffects(team, profile, state) {
   const staminaPct = Math.max(0, Math.min(100, (staminaCurrent / Math.max(1, staminaMax)) * 100));
   const metrics = getSideBattleMetrics(state, team);
 
+  maybeTriggerHeroTakingHit(team, shell, hpCurrent);
+
   const hpFill = shell.querySelector(".avatar-hero-hp-fill");
   const hpLabel = shell.querySelector(".avatar-hero-hp-label");
   const staminaFill = shell.querySelector(".avatar-hero-stamina-fill");
@@ -307,6 +339,7 @@ function ensureBattleHeroShells(state, playerProfile, enemyProfile) {
     const profile = team === "player" ? playerProfile : enemyProfile;
     if (!slot.querySelector(".avatar-hero-shell")) {
       slot.innerHTML = renderAvatarHeroHTML(profile, team);
+      resetHeroHpTracking(team);
     }
   });
 }

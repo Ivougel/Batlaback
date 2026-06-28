@@ -5170,7 +5170,6 @@ function renderPlayerProfiles() {
     battleState._heroProfiles = { player: playerProfile, enemy: enemyProfile };
     syncAllAvatarHeroEffects(playerProfile, enemyProfile, battleState);
     if (typeof updateBattleAnalyzer === "function") updateBattleAnalyzer(battleState, 0);
-    if (typeof applyBattlePortraitZoom === "function") applyBattlePortraitZoom();
   }
   syncBattleArenaLayout();
 }
