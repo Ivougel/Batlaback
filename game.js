@@ -3012,10 +3012,13 @@ function drawLoadoutItems(items, team, dimmed) {
 function drawPlacedItems(items, team, dimmed, animated) {
   if (!items?.length) return;
   if (animated && battleState) {
+    drawLoadoutItems(items, team, dimmed);
     items.forEach((item) => {
       const def = ITEM_CATALOG[item.itemId];
       if (!def) return;
-      drawBattleItemWithAnimation(ctx, item, team, def, cellRect, roundRect, battleState);
+      if (typeof drawBattleItemOverlays === "function") {
+        drawBattleItemOverlays(ctx, item, team, def, battleState);
+      }
     });
     if (typeof drawAllPrepItemIdleEffects === "function") {
       drawAllPrepItemIdleEffects(ctx, items, team, synergyAnimTime);

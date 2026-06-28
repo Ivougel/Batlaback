@@ -24,7 +24,9 @@ function drawCellEmojiAt(ctx, icon, cx, cy, innerSize) {
   const hasBBox = m.actualBoundingBoxAscent != null
     && m.actualBoundingBoxDescent != null
     && m.actualBoundingBoxLeft != null
-    && m.actualBoundingBoxRight != null;
+    && m.actualBoundingBoxRight != null
+    && (m.actualBoundingBoxLeft + m.actualBoundingBoxRight) > 0
+    && (m.actualBoundingBoxAscent + m.actualBoundingBoxDescent) > 0;
 
   if (hasBBox) {
     // Safari/iOS: center/middle ломает позицию цветных emoji — центрируем по ink bbox.
@@ -297,6 +299,27 @@ const TAG_LABELS = {
   food: "еда",
   nature: "природа",
   fire: "огонь",
+  cold: "лёд",
+  holy: "святой",
+  dark: "тёмный",
+  vampiric: "вампирский",
+  luck: "удача",
+  pet: "питомец",
+  potion: "зелье",
+  debuff: "дебафф",
+  melee: "ближний",
+  ranged: "дальний",
+  spikes: "шипы",
+  stun: "оглушение",
+  accessory: "аксессуар",
+  gloves: "перчатки",
+  shoes: "обувь",
+  helmet: "шлем",
+  musical: "музыка",
+  consumable: "расходник",
+  card: "карта",
+  treasure: "сокровище",
+  heal: "лечение",
   bag: "сумка",
   utility: "универсальный",
   craft: "крафт",
