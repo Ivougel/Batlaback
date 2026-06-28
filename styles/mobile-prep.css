@@ -34,7 +34,7 @@ html[data-prep-layout="mobile"] .class-modal .class-grid {
   gap: 12px;
 }
 
-html[data-prep-layout="mobile"] .class-modal .glass-card {
+html[data-prep-layout="mobile"] .class-modal .game-mode-card.glass-card {
   padding: 16px 20px;
 }
 
@@ -47,22 +47,22 @@ html[data-prep-layout="mobile"] .class-modal .class-bonus {
   font-size: 0.85rem;
 }
 
-html[data-prep-layout="mobile"] .class-modal .glass-card-icon--class,
 html[data-prep-layout="mobile"] .class-modal .game-mode-card .glass-card-icon {
-  width: 100%;
-  height: 110px;
+  width: 72px;
+  height: 72px;
   margin-bottom: 10px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
 }
 
-html[data-prep-layout="mobile"] .class-modal .glass-card-icon .class-sticker {
-  width: auto;
-  height: 110px;
-  max-width: 100%;
-  object-fit: contain;
-  object-position: center bottom;
+html[data-prep-layout="mobile"] #class-overlay .class-modal .class-card.glass-card[data-class],
+html[data-prep-layout="mobile"] #class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class] {
+  --class-pick-hero-min-h: clamp(180px, 32vh, 280px);
+  --class-pick-card-min-h: clamp(300px, 48vh, 420px);
+  padding-bottom: 14px;
+}
+
+html[data-prep-layout="mobile"] #class-overlay .class-modal .class-card.glass-card[data-class] .glass-card-icon--class .class-sticker,
+html[data-prep-layout="mobile"] #class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class] .glass-card-icon--class .class-sticker {
+  max-height: min(36vh, 300px);
 }
 
 html[data-prep-layout="mobile"] .class-mobile-dock .btn-glass-start,
@@ -710,8 +710,8 @@ html[data-prep-layout="mobile"] #class-step-opponent:not(.hidden) .class-step-su
   margin-bottom: 10px;
 }
 
-html[data-prep-layout="mobile"] #class-step-opponent:not(.hidden) .glass-card {
-  padding: 16px 20px;
+html[data-prep-layout="mobile"] #class-step-opponent:not(.hidden) .opponent-class-card.glass-card[data-opponent-class] {
+  padding-bottom: 14px;
 }
 
 /* ─── Prep: «В бой!» в toolbar справа ─── */

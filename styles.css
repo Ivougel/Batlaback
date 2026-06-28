@@ -4239,6 +4239,74 @@ body:has(#overlay:not(.hidden)) {
   object-fit: contain;
 }
 
+/* Class pick cards: hero-dominant layout (class overlay only — not prep/battle) */
+#class-overlay .class-modal .class-card.glass-card[data-class],
+#class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class] {
+  --class-pick-hero-min-h: clamp(168px, 30vh, 260px);
+  --class-pick-card-min-h: clamp(280px, 46vh, 400px);
+  padding: 0 0 calc(14px * var(--ui-scale));
+  overflow: hidden;
+  align-items: stretch;
+  min-height: var(--class-pick-card-min-h);
+}
+
+#class-overlay .class-modal .class-card.glass-card[data-class] .glass-card-icon--class,
+#class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class] .glass-card-icon--class {
+  width: 100%;
+  height: auto;
+  flex: 1 1 auto;
+  min-height: var(--class-pick-hero-min-h);
+  margin-bottom: 0;
+  padding: calc(12px * var(--ui-scale)) calc(8px * var(--ui-scale)) calc(4px * var(--ui-scale));
+  border-radius: 20px 20px 0 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 100%);
+  align-items: flex-end;
+  justify-content: center;
+  overflow: visible;
+}
+
+#class-overlay .class-modal .class-card.glass-card[data-class] .class-icon,
+#class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class] .class-icon {
+  width: 100%;
+  height: auto;
+  min-height: var(--class-pick-hero-min-h);
+}
+
+#class-overlay .class-modal .class-card.glass-card[data-class] .glass-card-icon--class .class-sticker,
+#class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class] .glass-card-icon--class .class-sticker {
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  max-height: min(34vh, 280px);
+  object-fit: contain;
+  object-position: center bottom;
+}
+
+#class-overlay .class-modal .class-card.glass-card[data-class] .class-name,
+#class-overlay .class-modal .class-card.glass-card[data-class] .class-desc,
+#class-overlay .class-modal .class-card.glass-card[data-class] .class-bonus,
+#class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class] .class-name,
+#class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class] .class-desc {
+  flex-shrink: 0;
+  padding-left: calc(16px * var(--ui-scale));
+  padding-right: calc(16px * var(--ui-scale));
+}
+
+#class-overlay .class-modal .class-card.glass-card[data-class] .class-name,
+#class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class] .class-name {
+  margin-top: calc(10px * var(--ui-scale));
+  margin-bottom: calc(4px * var(--ui-scale));
+}
+
+#class-overlay .class-modal .class-card.glass-card[data-class] .class-desc,
+#class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class] .class-desc {
+  margin-bottom: calc(6px * var(--ui-scale));
+}
+
+#class-overlay .class-modal .class-card.glass-card[data-class] .class-bonus {
+  margin-bottom: 0;
+}
+
 .class-modal .class-name {
   display: block;
   font-size: var(--font-lg);
@@ -4407,7 +4475,7 @@ body:has(#overlay:not(.hidden)) {
   color: var(--gold);
 }
 
-.class-modal .glass-card .glass-card-icon {
+.class-modal .game-mode-card.glass-card .glass-card-icon {
   width: 72px;
   height: 72px;
 }
@@ -4637,10 +4705,14 @@ html[data-touch="true"] .sidebar-tooltip.synergy-tooltip .synergy-tt-source {
 }
 
 @media (max-width: 520px) {
-  .class-modal .game-mode-grid,
-  .class-modal .class-grid {
+  .class-modal .game-mode-grid {
     grid-template-columns: 1fr;
     max-width: 320px;
+  }
+
+  .class-modal .class-grid {
+    grid-template-columns: 1fr;
+    max-width: min(100%, 420px);
   }
 }
 
@@ -5918,15 +5990,21 @@ html[data-ui-compact="true"] .class-modal .class-grid {
   gap: 12px;
 }
 
-html[data-ui-compact="true"] .class-modal .glass-card {
+html[data-ui-compact="true"] .class-modal .game-mode-card.glass-card {
   padding: 18px 16px;
 }
 
-html[data-ui-compact="true"] .glass-card-icon,
-html[data-ui-compact="true"] .class-modal .glass-card .glass-card-icon {
+html[data-ui-compact="true"] .class-modal .game-mode-card .glass-card-icon {
   width: 64px;
   height: 64px;
   margin-bottom: 10px;
+}
+
+html[data-ui-compact="true"] #class-overlay .class-modal .class-card.glass-card[data-class],
+html[data-ui-compact="true"] #class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class] {
+  --class-pick-hero-min-h: clamp(148px, 26vh, 220px);
+  --class-pick-card-min-h: clamp(250px, 42vh, 360px);
+  padding-bottom: calc(12px * var(--ui-scale));
 }
 
 html[data-ui-compact="true"] .class-modal .class-name {
