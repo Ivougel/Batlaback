@@ -2516,7 +2516,7 @@ function applyPostBattlePrep(battleWinner) {
     return;
   }
 
-  const playerBag = grantBagReward(playerContainers, round, GRID_COLS, GRID_ROWS);
+  const playerBag = grantBagReward(playerContainers, round, GRID_COLS, GRID_ROWS, playerItems);
   if (playerBag.granted) {
     playerContainers = playerBag.containers;
     const bagName = ITEM_CATALOG[playerBag.bagId]?.name || "Сумка";
@@ -2526,7 +2526,7 @@ function applyPostBattlePrep(battleWinner) {
     }
   }
 
-  const enemyBag = grantBagReward(enemyContainers, round, GRID_COLS, GRID_ROWS);
+  const enemyBag = grantBagReward(enemyContainers, round, GRID_COLS, GRID_ROWS, enemyItems);
   if (enemyBag.granted) {
     enemyContainers = enemyBag.containers;
   }
@@ -2735,6 +2735,15 @@ function isDropOnSell(e) {
 function isDropOnBench(e) {
   const panel = document.getElementById("bench-panel");
   if (!panel || !e) return false;
+  if (canvas && phase === "prep") {
+    const side = dragFrom?.side || prepViewSide;
+    const { x: mx, y: my } = canvasCoordsFromClient(e.clientX, e.clientY);
+    if (isOnBoard(mx, my, side)) {
+      const col = xToCol(mx, side);
+      const row = yToRow(my, side);
+      if (isSlotCell(getSideState(side).containers, col, row)) return false;
+    }
+  }
   if (e.target?.closest?.("#bench-panel")) return true;
   const r = panel.getBoundingClientRect();
   const pad = isTouchUi() ? 14 : 0;
@@ -3243,16 +3252,7 @@ function gridCellFill(available, row, col) {
 }
 
 function getActiveExpansionDragItemId() {
-  if (dragPayload?.itemId) return dragPayload.itemId;
-  if (pendingShopDrag) {
-    const st = getSideState(pendingShopDrag.side || prepViewSide);
-    return st.shop[pendingShopDrag.index] || null;
-  }
-  if (pendingBenchDrag) {
-    const st = getSideState(pendingBenchDrag.side || prepViewSide);
-    return st.bench[pendingBenchDrag.index]?.itemId || null;
-  }
-  return null;
+  return dragPayload?.itemId ?? null;
 }
 
 function shouldShowFullContainerPlacementGrid() {
@@ -3445,6 +3445,7 @@ function drawDropPreview() {
       GRID_ROWS,
       st.containers,
       excludeUid,
+      st.items,
     );
     rotateShape(ITEM_CATALOG[dragPayload.itemId].shape, dragPayload.rotation || 0).forEach(([dx, dy]) => {
       const { x, y, w, h } = cellRect(team, hoverCell.col + dx, hoverCell.row + dy);
@@ -4677,8 +4678,12 @@ function finishDragDrop(e) {
   }
 
   const dropOnSell = isDropOnSell(dropE);
-  const dropOnBench = isDropOnBench(dropE);
   const { x: mx, y: my } = canvasCoordsFromClient(dropClientX, dropClientY);
+  const onBoard = isOnBoard(mx, my, side);
+  const boardCol = onBoard ? xToCol(mx, side) : null;
+  const boardRow = onBoard ? yToRow(my, side) : null;
+  const onBackpackSlot = onBoard && isSlotCell(st.containers, boardCol, boardRow);
+  const dropOnBench = !onBackpackSlot && isDropOnBench(dropE);
 
   if (dropOnSell && sellDraggedItem(side)) {
     clearDragUiState();
@@ -4737,7 +4742,17 @@ function finishDragDrop(e) {
         GRID_COLS,
         GRID_ROWS,
       )
-      : canPlaceContainer(dragPayload.itemId, col, row, dragPayload.rotation || 0, GRID_COLS, GRID_ROWS, st.containers, excludeUid);
+      : canPlaceContainer(
+        dragPayload.itemId,
+        col,
+        row,
+        dragPayload.rotation || 0,
+        GRID_COLS,
+        GRID_ROWS,
+        st.containers,
+        excludeUid,
+        st.items,
+      );
 
     if (canMove) {
       if (dragFrom.type === "bench") {

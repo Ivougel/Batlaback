@@ -78,8 +78,8 @@ function createPlacedItem(itemId, col, row, rotation = 0) {
   const item = {
     uid: `item-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     itemId,
-    col,
-    row,
+    col: Number(col) || 0,
+    row: Number(row) || 0,
     rotation: rotation || 0,
     runtime: null,
   };
@@ -90,8 +90,8 @@ function createContainer(itemId, col, row, rotation = 0) {
   return {
     uid: `container-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     itemId,
-    col,
-    row,
+    col: Number(col) || 0,
+    row: Number(row) || 0,
     rotation: rotation || 0,
   };
 }
@@ -114,13 +114,10 @@ function buildSlotSet(containers) {
   return set;
 }
 
-/** Клетки, которые рисуем в компактном режиме: слоты сумок + занятые предметами. */
+/** Клетки, которые рисуем в компактном режиме: только слоты контейнеров. */
 function buildActiveVisualCellSet(containers, items) {
-  const set = buildSlotSet(containers);
-  (items || []).forEach((item) => {
-    getItemCells(item).forEach(([c, r]) => set.add(`${c},${r}`));
-  });
-  return set;
+  void items;
+  return buildSlotSet(containers);
 }
 
 /** Контейнер из магазина, расширяющий поле (не стартовая сумка). */
@@ -151,16 +148,19 @@ function buildContainerOccupancyMap(containers, excludeUid = null) {
   return map;
 }
 
-function canPlaceContainer(itemId, col, row, rotation, gridW, gridH, containers, excludeUid = null) {
+function canPlaceContainer(itemId, col, row, rotation, gridW, gridH, containers, excludeUid = null, items = null) {
   const def = ITEM_CATALOG[itemId];
   if (!def?.isContainer) return false;
   const shape = rotateShape(def.shape, rotation || 0);
   const occupied = buildContainerOccupancyMap(containers, excludeUid);
+  const itemOccupied = items ? buildItemOccupancyMap(items) : null;
   return shape.every(([dx, dy]) => {
     const c = col + dx;
     const r = row + dy;
     if (!isBoardCellAvailable(c, r, gridW, gridH)) return false;
-    return !occupied.has(`${c},${r}`);
+    if (occupied.has(`${c},${r}`)) return false;
+    if (itemOccupied?.has(`${c},${r}`)) return false;
+    return true;
   });
 }
 
@@ -494,11 +494,11 @@ function getEffectiveCooldown(item) {
   return (def.cooldown || 0) * (item.runtime?.cooldownMult ?? 1);
 }
 
-function findContainerPlacement(gridW, gridH, containers, itemId) {
+function findContainerPlacement(gridW, gridH, containers, itemId, items = null) {
   for (let rotation = 0; rotation < 4; rotation++) {
     for (let row = 0; row < gridH; row++) {
       for (let col = 0; col < gridW; col++) {
-        if (canPlaceContainer(itemId, col, row, rotation, gridW, gridH, containers)) {
+        if (canPlaceContainer(itemId, col, row, rotation, gridW, gridH, containers, null, items)) {
           return { col, row, rotation };
         }
       }
@@ -508,8 +508,8 @@ function findContainerPlacement(gridW, gridH, containers, itemId) {
 }
 
 /** Лучшее место рядом с кластером контейнеров (как в Backpack Battles). */
-function findAdjacentContainerSpot(containers, gridW, gridH, itemId) {
-  if (!containers.length) return findContainerPlacement(gridW, gridH, containers, itemId);
+function findAdjacentContainerSpot(containers, gridW, gridH, itemId, items = null) {
+  if (!containers.length) return findContainerPlacement(gridW, gridH, containers, itemId, items);
 
   const tried = new Set();
   const candidates = [];
@@ -529,13 +529,13 @@ function findAdjacentContainerSpot(containers, gridW, gridH, itemId) {
       const key = `${spot.col},${spot.row},${spot.rotation}`;
       if (tried.has(key)) return;
       tried.add(key);
-      if (canPlaceContainer(itemId, spot.col, spot.row, spot.rotation, gridW, gridH, containers)) {
+      if (canPlaceContainer(itemId, spot.col, spot.row, spot.rotation, gridW, gridH, containers, null, items)) {
         candidates.push(spot);
       }
     });
   });
 
-  if (!candidates.length) return findContainerPlacement(gridW, gridH, containers, itemId);
+  if (!candidates.length) return findContainerPlacement(gridW, gridH, containers, itemId, items);
 
   const clusterBounds = getSlotBounds(containers);
   candidates.sort((a, b) => {
@@ -576,11 +576,11 @@ function findLoadoutItemPlacement(containers, items, itemId, rotation) {
 }
 
 /** Награда после раунда: автоматически ставит сумку рядом с инвентарём. */
-function grantBagReward(containers, roundNum, gridW, gridH) {
+function grantBagReward(containers, roundNum, gridW, gridH, items = []) {
   if (!shouldGrantBagReward(roundNum)) return { granted: false, containers, bagId: null };
 
   const bagId = pickBagRewardId(roundNum);
-  const spot = findAdjacentContainerSpot(containers, gridW, gridH, bagId);
+  const spot = findAdjacentContainerSpot(containers, gridW, gridH, bagId, items);
   if (!spot) return { granted: false, containers, bagId: null };
 
   return {

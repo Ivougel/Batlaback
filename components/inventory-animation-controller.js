@@ -236,6 +236,7 @@ const InventoryAnimationController = (() => {
         GRID_ROWS,
         st.containers,
         excludeUid,
+        st.items,
       );
       rotateShape(ITEM_CATALOG[dragPayload.itemId].shape, dragPayload.rotation || 0).forEach(([dx, dy]) => {
         const { x, y, w, h } = cellRect(team, hoverCell.col + dx, hoverCell.row + dy);
