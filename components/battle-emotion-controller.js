@@ -9,8 +9,8 @@ const KAYFU_EMOJI = "🤠";
 const EMOTION_INTERVAL_SCALE = 5;
 /** Бафф/дебафф-хопы — заметнее, чем общий scale. */
 const EFFECT_HOP_INTERVAL_SCALE = 1.15;
-/** Быстрый цикл mood/reaction — эмоции должны быть заметны каждые 1–3 с. */
-const MOOD_PULSE_INTERVAL_SCALE = 0.52;
+/** Множитель только для пауз mood-пульса (show-сегменты без scale — заметнее). */
+const MOOD_PULSE_HIDE_SCALE = 0.58;
 /** Минимальный интервал между реакциями (сек). */
 const EMOTION_DISPLAY_ROTATION_SEC = 2.2;
 
@@ -63,28 +63,28 @@ function moodPulseRand(team, cycleIndex, part) {
 
 function computeMoodPulseSegment(elapsed, durationPhase, team, cycleIndex, willBeVisible) {
   const mins = (elapsed || 0) / 60;
-  let hideMin = 2.4 * MOOD_PULSE_INTERVAL_SCALE;
-  let hideSpan = 1.6 * MOOD_PULSE_INTERVAL_SCALE;
+  let hideMin = 5.4 * MOOD_PULSE_HIDE_SCALE;
+  let hideSpan = 3.8 * MOOD_PULSE_HIDE_SCALE;
   if (mins >= 2) {
-    hideMin = 6.8 * MOOD_PULSE_INTERVAL_SCALE;
-    hideSpan = 4.4 * MOOD_PULSE_INTERVAL_SCALE;
+    hideMin = 3.4 * MOOD_PULSE_HIDE_SCALE;
+    hideSpan = 2.2 * MOOD_PULSE_HIDE_SCALE;
   } else if (mins >= 1) {
-    hideMin = 8.4 * MOOD_PULSE_INTERVAL_SCALE;
-    hideSpan = 5.2 * MOOD_PULSE_INTERVAL_SCALE;
+    hideMin = 4.2 * MOOD_PULSE_HIDE_SCALE;
+    hideSpan = 2.6 * MOOD_PULSE_HIDE_SCALE;
   } else if (mins >= 0.5) {
-    hideMin = 9.6 * MOOD_PULSE_INTERVAL_SCALE;
-    hideSpan = 6.0 * MOOD_PULSE_INTERVAL_SCALE;
+    hideMin = 4.8 * MOOD_PULSE_HIDE_SCALE;
+    hideSpan = 3.0 * MOOD_PULSE_HIDE_SCALE;
   }
   if (durationPhase?.sec >= 120) {
-    hideMin -= 1.2 * MOOD_PULSE_INTERVAL_SCALE;
-    hideSpan -= 0.7 * MOOD_PULSE_INTERVAL_SCALE;
+    hideMin -= 0.6 * MOOD_PULSE_HIDE_SCALE;
+    hideSpan -= 0.35 * MOOD_PULSE_HIDE_SCALE;
   } else if (durationPhase?.sec >= 60) {
-    hideMin -= 0.6 * MOOD_PULSE_INTERVAL_SCALE;
-    hideSpan -= 0.4 * MOOD_PULSE_INTERVAL_SCALE;
+    hideMin -= 0.3 * MOOD_PULSE_HIDE_SCALE;
+    hideSpan -= 0.2 * MOOD_PULSE_HIDE_SCALE;
   }
 
-  const showMin = 0.55 * MOOD_PULSE_INTERVAL_SCALE;
-  const showSpan = (0.45 + moodPulseRand(team, cycleIndex, 9) * 0.55) * MOOD_PULSE_INTERVAL_SCALE;
+  const showMin = 0.8;
+  const showSpan = 0.45 + moodPulseRand(team, cycleIndex, 9) * 0.55;
   const r = moodPulseRand(team, cycleIndex, willBeVisible ? 2 : 3);
 
   if (willBeVisible) return showMin + r * showSpan;
@@ -96,9 +96,9 @@ function ensureMoodPulseState(state, team) {
   if (state.moodPulse[team]) return state.moodPulse[team];
 
   const elapsed = state.visualElapsed ?? state.elapsed ?? 0;
-  const firstWait = computeMoodPulseSegment(elapsed, null, team, 0, true);
+  const firstWait = computeMoodPulseSegment(elapsed, null, team, 0, false);
   state.moodPulse[team] = {
-    visible: true,
+    visible: false,
     cycleIndex: 0,
     nextFlipAt: elapsed + firstWait,
   };
@@ -125,6 +125,29 @@ function resolveMoodPulseVisible(state, team) {
   }
 
   return pulse.visible;
+}
+
+/** Слоты «диалога боя»: mood пульсирует, reaction — события, без дублей. */
+function resolveBattleDialogueSlots(state, team, presentation) {
+  if (!presentation) {
+    return { moodEmoji: null, reactionEmoji: null, secondaryEmoji: null, moodVisible: false };
+  }
+  const moodVisible = resolveMoodPulseVisible(state, team);
+  const moodEmoji = moodVisible ? presentation.moodEmoji : null;
+  let reactionEmoji = presentation.primaryEmoji !== presentation.moodEmoji
+    ? presentation.primaryEmoji
+    : (presentation.secondaryEmoji || null);
+  if (reactionEmoji === presentation.moodEmoji || reactionEmoji === moodEmoji) {
+    reactionEmoji = null;
+  }
+  let secondaryEmoji = presentation.secondaryEmoji;
+  if (!secondaryEmoji
+    || secondaryEmoji === reactionEmoji
+    || secondaryEmoji === presentation.moodEmoji
+    || secondaryEmoji === moodEmoji) {
+    secondaryEmoji = null;
+  }
+  return { moodEmoji, reactionEmoji, secondaryEmoji, moodVisible };
 }
 
 function pickEmotionVariant(def, key, elapsed, teamSlot = 0) {
@@ -262,7 +285,7 @@ function layoutEmotionFloat(el, emoji, phase, slotIndex, options = {}) {
   }
   el.hidden = !show;
   if (options.moodPulse) {
-    el.classList.toggle("avatar-emotion-mood-active", show);
+    el.classList.toggle("avatar-emotion-mood-active", show && options.pulseActive !== false);
   }
 }
 
@@ -382,6 +405,9 @@ function upsertBattleCommentaryEl(uid, className, content, asHtml = false) {
     if (el.innerHTML !== content) el.innerHTML = content;
   } else if (el.textContent !== content) {
     el.textContent = content;
+    el.classList.remove("battle-commentary-pop");
+    void el.offsetWidth;
+    el.classList.add("battle-commentary-pop");
   }
   return el;
 }
@@ -421,11 +447,12 @@ function renderBattleCommentaryOverlay(state) {
         )
         : null);
 
+    const dialogue = resolveBattleDialogueSlots(state, team, presentation);
     const emojiSlots = [
       { uid: `${team}-kayfu`, emoji: KAYFU_EMOJI, slot: -1, kind: "kayfu" },
-      { uid: `${team}-mood`, emoji: presentation.moodEmoji, slot: 0, kind: "mood" },
-      { uid: `${team}-reaction`, emoji: presentation.primaryEmoji, slot: 1, kind: "reaction" },
-      { uid: `${team}-secondary`, emoji: presentation.secondaryEmoji, slot: 2, kind: "secondary" },
+      { uid: `${team}-mood`, emoji: dialogue.moodEmoji, slot: 0, kind: "mood" },
+      { uid: `${team}-reaction`, emoji: dialogue.reactionEmoji, slot: 1, kind: "reaction" },
+      { uid: `${team}-secondary`, emoji: dialogue.secondaryEmoji, slot: 2, kind: "secondary" },
     ];
 
     emojiSlots.forEach(({ uid, emoji, slot, kind }) => {
@@ -579,21 +606,16 @@ function applyEmotionPresentation(team, presentation, profile, state) {
 
   layoutKayfuFloat(kayfuEl, presentation.floatPhase, team);
 
+  const dialogue = resolveBattleDialogueSlots(state, team, presentation);
   layoutEmotionFloat(
     moodEl,
-    presentation.moodEmoji,
+    dialogue.moodEmoji,
     presentation.floatPhase,
     0,
-    { moodPulse: true },
+    { moodPulse: true, pulseActive: dialogue.moodVisible },
   );
-
-  layoutEmotionFloat(reactionEl, presentation.primaryEmoji, presentation.floatPhase + 0.85, 1);
-
-  const secondaryEmoji = presentation.secondaryEmoji
-    && presentation.secondaryEmoji !== presentation.primaryEmoji
-    ? presentation.secondaryEmoji
-    : null;
-  layoutEmotionFloat(secondaryEl, secondaryEmoji, presentation.floatPhase + 1.55, 2);
+  layoutEmotionFloat(reactionEl, dialogue.reactionEmoji, presentation.floatPhase + 0.85, 1);
+  layoutEmotionFloat(secondaryEl, dialogue.secondaryEmoji, presentation.floatPhase + 1.55, 2);
 
   if (timerEl) {
     timerEl.textContent = presentation.showTimer ? presentation.elapsedLabel : "";
@@ -657,10 +679,15 @@ function clearBattleEmotions() {
     Object.values(EMOTION_CATALOG).forEach((d) => {
       if (d.shellClass) shell.classList.remove(d.shellClass);
     });
-    shell.querySelectorAll(".avatar-emotion-float").forEach((el) => {
+    shell.querySelectorAll(".avatar-emotion-float:not(.avatar-emotion-kayfu)").forEach((el) => {
       el.textContent = "";
       el.hidden = true;
     });
+    const kayfuEl = shell.querySelector(".avatar-emotion-kayfu");
+    if (kayfuEl) {
+      kayfuEl.textContent = KAYFU_EMOJI;
+      kayfuEl.hidden = false;
+    }
     shell.querySelector(".avatar-effect-orbit")?.replaceChildren();
     shell.removeAttribute("data-emotion-state");
     shell.removeAttribute("data-mood-state");

@@ -45,6 +45,7 @@ function createSideCommentaryTracker() {
 function clearBattleCommentary(state) {
   if (!state?.commentary) return;
   state.commentary = null;
+  state.moodPulse = null;
 }
 
 function sampleSideMetrics(side, team, state, tracker) {
