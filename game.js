@@ -3305,6 +3305,156 @@ function describeEffect(e) {
   }
 }
 
+function escapeTooltipHtml(text) {
+  return String(text ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function formatTooltipCooldownSec(sec) {
+  const n = Math.max(0, Number(sec) || 0);
+  const rounded = Math.round(n * 10) / 10;
+  return Number.isInteger(rounded) ? `${rounded}с` : `${rounded.toFixed(1)}с`;
+}
+
+function getItemTooltipAdjustments(contentItem) {
+  if (!contentItem) return null;
+  const rt = contentItem.runtime;
+  const hasGems = contentItem.socketedGems?.some(Boolean);
+  if (!rt && !hasGems) return null;
+
+  const adj = {
+    cooldownMult: rt?.cooldownMult ?? 1,
+    damageBonus: rt?.damageBonus ?? 0,
+    healBonus: rt?.healBonus ?? 0,
+    blockBonus: rt?.blockBonus ?? 0,
+    poisonBonus: rt?.poisonBonus ?? 0,
+    passiveMaxHp: 0,
+    passiveDefense: 0,
+    passiveLuck: 0,
+  };
+
+  if (typeof getSocketBattleEffects === "function") {
+    getSocketBattleEffects(contentItem).forEach((e) => {
+      if (e.type === "statMult" && e.stat === "cooldown") {
+        adj.cooldownMult *= 1 + (e.value || 0);
+      }
+      if (e.type === "heal") adj.healBonus += e.value || 0;
+      if (e.type === "block") adj.blockBonus += e.value || 0;
+      if (e.type === "damage") adj.damageBonus += e.value || 0;
+      if (e.type === "passiveMaxHp") adj.passiveMaxHp += e.value || 0;
+      if (e.type === "passiveDefense") adj.passiveDefense += e.value || 0;
+      if (e.type === "passiveLuck") adj.passiveLuck += e.value || 0;
+    });
+  }
+
+  if (typeof clampCooldownMult === "function") {
+    adj.cooldownMult = clampCooldownMult(adj.cooldownMult);
+  }
+
+  return adj;
+}
+
+function applyDamageBonusToEffect(effect, bonus, def) {
+  if (!bonus) return effect;
+  const { min, max } = resolveDamageRange(effect, def);
+  const nextMin = min + bonus;
+  const nextMax = max + bonus;
+  return {
+    ...effect,
+    valueMin: nextMin,
+    valueMax: nextMax,
+    value: Math.round((nextMin + nextMax) / 2),
+  };
+}
+
+function makeStatDeltaLine(prefix, baseFormatted, effectiveFormatted, options = {}) {
+  const { color = "#e6edf3", buffColor = "green", suffix = "" } = options;
+  const base = `${baseFormatted}${suffix}`;
+  const effective = `${effectiveFormatted}${suffix}`;
+  if (base === effective) {
+    return { text: `${prefix} ${base}`, style: "normal", color };
+  }
+  return {
+    text: prefix,
+    style: "normal",
+    color,
+    statDelta: { from: baseFormatted, to: effectiveFormatted, suffix, buffColor },
+  };
+}
+
+function describeTooltipEffectLine(e, def, adj) {
+  if (!adj) {
+    return { text: describeEffect(e), style: "normal", color: "#e6edf3" };
+  }
+
+  switch (e.type) {
+    case "damage": {
+      if (adj.damageBonus <= 0) break;
+      const typeSuffix = e.damageType ? ` (${formatDamageType(e.damageType)})` : "";
+      const baseRange = formatDamageRangeText(e, def);
+      const modRange = formatDamageRangeText(applyDamageBonusToEffect(e, adj.damageBonus, def), def);
+      return makeStatDeltaLine("⚔ Урон:", baseRange, modRange, { suffix: typeSuffix, buffColor: "green" });
+    }
+    case "heal": {
+      if (adj.healBonus <= 0) break;
+      const base = String(e.value ?? 0);
+      const mod = String((e.value ?? 0) + adj.healBonus);
+      return makeStatDeltaLine("❤ Лечение:", base, mod, { buffColor: "green" });
+    }
+    case "block": {
+      if (adj.blockBonus <= 0) break;
+      const base = String(e.value ?? 0);
+      const mod = String((e.value ?? 0) + adj.blockBonus);
+      return makeStatDeltaLine("🛡 Блок:", base, mod, { buffColor: "green" });
+    }
+    case "poison": {
+      if (adj.poisonBonus <= 0) break;
+      const base = String(e.value ?? 0);
+      const mod = String((e.value ?? 0) + adj.poisonBonus);
+      return makeStatDeltaLine("☠ Яд:", base, mod, { buffColor: "green" });
+    }
+    case "passiveDefense": {
+      if (adj.passiveDefense <= 0) break;
+      const base = String(e.value ?? 0);
+      const mod = String((e.value ?? 0) + adj.passiveDefense);
+      return makeStatDeltaLine("🦺 Защита:", `+${base}`, `+${mod}`, { buffColor: "green" });
+    }
+    case "passiveMaxHp": {
+      if (adj.passiveMaxHp <= 0) break;
+      const base = String(e.value ?? 0);
+      const mod = String((e.value ?? 0) + adj.passiveMaxHp);
+      return makeStatDeltaLine("❤ Макс. HP:", `+${base}`, `+${mod}`, { buffColor: "green" });
+    }
+    case "passiveLuck": {
+      if (adj.passiveLuck <= 0) break;
+      const base = String(e.value ?? 0);
+      const mod = String((e.value ?? 0) + adj.passiveLuck);
+      return makeStatDeltaLine("🍀 Удача:", `+${base}`, `+${mod}`, { buffColor: "green" });
+    }
+    default:
+      break;
+  }
+
+  return { text: describeEffect(e), style: "normal", color: "#e6edf3" };
+}
+
+function renderTooltipLinesHtml(lines) {
+  return lines
+    .filter((l) => !l.sep)
+    .map((l) => {
+      const color = l.color ? ` style="color:${l.color}"` : "";
+      if (l.statDelta) {
+        const buffClass = l.statDelta.buffColor === "purple" ? " tt-stat-buff--purple" : "";
+        const suffix = l.statDelta.suffix ? escapeTooltipHtml(l.statDelta.suffix) : "";
+        return `<div class="tt-line tt-line-stat tt-${l.style || "normal"}"${color}>${l.text} <span class="tt-stat-base">${escapeTooltipHtml(l.statDelta.from)}</span><span class="tt-stat-arrow">→</span><span class="tt-stat-buff${buffClass}">${escapeTooltipHtml(l.statDelta.to)}</span>${suffix}</div>`;
+      }
+      return `<div class="tt-line tt-${l.style || "normal"}"${color}>${l.text}</div>`;
+    })
+    .join("");
+}
+
 /** context: shop — магазин; bench — скамейка; field — предмет на поле / canvas */
 function buildItemTooltipLines(def, contentItem, rotation, context = "field") {
   const lines = [];
@@ -3382,18 +3532,44 @@ function buildItemTooltipLines(def, contentItem, rotation, context = "field") {
     lines.push({ text: `💰 +${def.goldPerRound} золота за раунд`, style: "normal", color: "#f0c14b" });
   }
 
+  const adj = context === "field" ? getItemTooltipAdjustments(contentItem) : null;
+
   if (def.effects?.length) {
     def.effects.forEach((e) => {
-      lines.push({ text: describeEffect(e), style: "normal", color: "#e6edf3" });
+      lines.push(describeTooltipEffectLine(e, def, adj));
     });
     if (def.cooldown > 0) {
-      lines.push({ text: `⏱ Перезарядка: ${def.cooldown}с`, style: "normal", color: "#8b949e" });
+      if (adj && adj.cooldownMult < 0.999) {
+        const effective = def.cooldown * adj.cooldownMult;
+        lines.push(makeStatDeltaLine(
+          "⏱ Перезарядка:",
+          formatTooltipCooldownSec(def.cooldown),
+          formatTooltipCooldownSec(effective),
+          { color: "#8b949e", buffColor: "purple" },
+        ));
+      } else {
+        lines.push({
+          text: `⏱ Перезарядка: ${formatTooltipCooldownSec(def.cooldown)}`,
+          style: "normal",
+          color: "#8b949e",
+        });
+      }
     } else if (def.effects.every((e) => e.trigger === "passive" || e.type.startsWith("passive"))) {
       lines.push({ text: "Пассивный", style: "normal", color: "#8b949e" });
     }
     const staminaCost = typeof getItemStaminaCost === "function" ? getItemStaminaCost(def) : (def.staminaCost || 0);
     if (staminaCost > 0) {
       lines.push({ text: `⚡ Выносливость: ${staminaCost}`, style: "normal", color: "#d29922" });
+    }
+  } else if (adj && (adj.passiveMaxHp > 0 || adj.passiveDefense > 0 || adj.passiveLuck > 0)) {
+    if (adj.passiveDefense > 0 && !def.effects?.some((e) => e.type === "passiveDefense")) {
+      lines.push(makeStatDeltaLine("🦺 Защита:", "+0", `+${adj.passiveDefense}`, { buffColor: "green" }));
+    }
+    if (adj.passiveMaxHp > 0 && !def.effects?.some((e) => e.type === "passiveMaxHp")) {
+      lines.push(makeStatDeltaLine("❤ Макс. HP:", "+0", `+${adj.passiveMaxHp}`, { buffColor: "green" }));
+    }
+    if (adj.passiveLuck > 0 && !def.effects?.some((e) => e.type === "passiveLuck")) {
+      lines.push(makeStatDeltaLine("🍀 Удача:", "+0", `+${adj.passiveLuck}`, { buffColor: "green" }));
     }
   }
 
@@ -3414,10 +3590,6 @@ function buildItemTooltipLines(def, contentItem, rotation, context = "field") {
   if (context === "field" && contentItem?.runtime) {
     const rt = contentItem.runtime;
     const bonuses = [];
-    if (rt.damageBonus > 0) bonuses.push(`+${rt.damageBonus} урона`);
-    if (rt.healBonus > 0) bonuses.push(`+${rt.healBonus} лечения`);
-    if (rt.blockBonus > 0) bonuses.push(`+${rt.blockBonus} блока`);
-    if (rt.poisonBonus > 0) bonuses.push(`+${rt.poisonBonus} яда`);
     if (rt.poisonSourceEfficiency != null && rt.poisonSourceEfficiency < 1) {
       bonuses.push(`${Math.round(rt.poisonSourceEfficiency * 100)}% эффективности яда (стак)`);
     }
@@ -3430,10 +3602,9 @@ function buildItemTooltipLines(def, contentItem, rotation, context = "field") {
     if (rt.grantBlockBuff && rt.grantBlockBuffEfficiency != null && rt.grantBlockBuffEfficiency < 1) {
       bonuses.push(`${Math.round(rt.grantBlockBuffEfficiency * 100)}% баффа оружия при блоке`);
     }
-    if (rt.cooldownMult < 1) bonuses.push(`−${Math.round((1 - rt.cooldownMult) * 100)}% кулдаун`);
     if (bonuses.length) {
       lines.push({ sep: true });
-      lines.push({ text: "Сейчас:", style: "label", color: "#a371f7" });
+      lines.push({ text: "Модификаторы:", style: "label", color: "#a371f7" });
       bonuses.forEach((b) => lines.push({ text: b, style: "normal", color: "#a371f7" }));
     }
     if (rt.activeSynergies?.length) {
@@ -3668,13 +3839,7 @@ function syncFieldTooltip() {
     el.classList.remove("synergy-tooltip");
     el.style.borderColor = RARITY_COLORS[def.rarity] || "#30363d";
     const lines = buildItemTooltipLines(def, contentItem, rotation || 0, "field");
-    el.innerHTML = lines
-      .filter((l) => !l.sep)
-      .map((l) => {
-        const color = l.color ? ` style="color:${l.color}"` : "";
-        return `<div class="tt-line tt-${l.style || "normal"}"${color}>${l.text}</div>`;
-      })
-      .join("");
+    el.innerHTML = renderTooltipLinesHtml(lines);
     el.classList.remove("hidden");
     fieldTooltipVisible = true;
 
@@ -3853,10 +4018,7 @@ function showSidebarTooltipAt(clientX, clientY, itemId, contentItem, context = "
     el.innerHTML = `<div class="tt-line tt-title">Недостаточно золота</div><div class="tt-line tt-sub">${def.cost}💰 · у вас ${sideGold}💰</div>`;
   } else {
     const lines = buildItemTooltipLines(def, contentItem, 0, context);
-    el.innerHTML = lines
-      .filter((l) => !l.sep)
-      .map((l) => `<div class="tt-line tt-${l.style || "normal"}">${l.text}</div>`)
-      .join("");
+    el.innerHTML = renderTooltipLinesHtml(lines);
   }
   el.style.borderColor = RARITY_COLORS[def.rarity] || "#30363d";
   el.classList.remove("hidden");
