@@ -659,9 +659,12 @@ function syncPrepTooltipDockVisibility() {
     const hasItemTip = el && !el.classList.contains("hidden");
     mobileHint?.classList.toggle("hidden", hasItemTip);
     mobileHint?.setAttribute("aria-hidden", hasItemTip ? "true" : "false");
+    dock.classList.toggle("prep-tooltip-dock--item", hasItemTip);
     positionPrepTooltipDock();
     return;
   }
+
+  dock?.classList.remove("prep-tooltip-dock--item");
 
   if (!el) return;
   dock.classList.toggle("hidden", el.classList.contains("hidden"));
@@ -1259,9 +1262,13 @@ function getEnemyCharacteristicsState() {
 
 function renderPhase() {
   const app = document.getElementById("app");
+  const root = document.documentElement;
   if (app) {
     app.dataset.phase = getAppDataPhase();
     if (phase === "prep") app.dataset.prepSide = prepViewSide;
+  }
+  if (root) {
+    root.dataset.gamePhase = phase === "battle" || phase === "replay" ? phase : phase === "prep" ? "prep" : "";
   }
   applyPhaseCanvasLayout();
   setBattleControlsVisible(isBattleUiPhase());
@@ -4117,7 +4124,11 @@ function positionSidebarTooltip(clientX, clientY, boundsKind = "viewport", place
     positionPrepTooltipDock();
     el.style.left = "";
     el.style.top = "";
+    el.style.right = "";
+    el.style.bottom = "";
     el.style.visibility = "";
+    el.style.position = "";
+    el.style.zIndex = "";
     syncPrepTooltipDockVisibility();
     return;
   }
@@ -4462,6 +4473,12 @@ function showSidebarTooltipAt(clientX, clientY, itemId, contentItem, context = "
   syncPrepTooltipDockVisibility();
   const boundsKind = context === "shop" ? "shop" : context === "bench" ? "bench" : context === "field" ? "field" : "viewport";
   positionSidebarTooltip(clientX, clientY, boundsKind, context);
+  if (isMobilePrepPortrait() && (context === "shop" || context === "bench")) {
+    requestAnimationFrame(() => {
+      positionPrepTooltipDock();
+      syncPrepTooltipDockVisibility();
+    });
+  }
 }
 
 function showSidebarTooltip(e, itemId, contentItem, context = "shop") {

@@ -258,7 +258,7 @@ html[data-touch="true"] .combat-feed-msg-text--hinted {
   z-index: 10000;
 }
 
-#app[data-phase="prep"] .prep-tooltip-dock .sidebar-tooltip.combat-feed-hint-tooltip {
+html[data-game-phase="prep"] #prep-tooltip-dock .sidebar-tooltip.combat-feed-hint-tooltip {
   max-width: none;
   z-index: auto;
 }

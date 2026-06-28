@@ -4388,8 +4388,8 @@ body:has(#overlay:not(.hidden)) {
   display: none !important;
 }
 
-#app[data-phase="battle"] #prep-tooltip-dock,
-#app[data-phase="replay"] #prep-tooltip-dock {
+html[data-game-phase="battle"] #prep-tooltip-dock,
+html[data-game-phase="replay"] #prep-tooltip-dock {
   display: contents;
   position: static;
   padding: 0;
@@ -4402,8 +4402,8 @@ body:has(#overlay:not(.hidden)) {
   pointer-events: none;
 }
 
-#app[data-phase="battle"] #prep-tooltip-dock .sidebar-tooltip,
-#app[data-phase="replay"] #prep-tooltip-dock .sidebar-tooltip {
+html[data-game-phase="battle"] #prep-tooltip-dock .sidebar-tooltip,
+html[data-game-phase="replay"] #prep-tooltip-dock .sidebar-tooltip {
   position: fixed;
   width: auto;
   max-width: calc(320px * var(--ui-scale));
@@ -4417,7 +4417,7 @@ body:has(#overlay:not(.hidden)) {
   overflow: visible;
 }
 
-#app[data-phase="prep"] .prep-tooltip-dock:not(.hidden) {
+html[data-game-phase="prep"] #prep-tooltip-dock:not(.hidden) {
   padding: calc(10px * var(--ui-scale));
   background: rgba(14, 17, 22, 0.94);
   border: 1px solid rgba(88, 166, 255, 0.22);
@@ -4431,10 +4431,12 @@ body:has(#overlay:not(.hidden)) {
   overflow: hidden;
 }
 
-#app[data-phase="prep"] .prep-tooltip-dock .sidebar-tooltip {
-  position: relative;
+html[data-game-phase="prep"] #prep-tooltip-dock .sidebar-tooltip {
+  position: relative !important;
   left: auto !important;
   top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
   visibility: visible !important;
   width: 100%;
   max-width: none;
@@ -4445,13 +4447,14 @@ body:has(#overlay:not(.hidden)) {
   border-radius: 0;
   box-shadow: none;
   pointer-events: auto;
+  z-index: auto;
   max-height: min(38vh, 340px);
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
 
-#app[data-phase="prep"] .prep-tooltip-dock .sidebar-tooltip.hidden {
+html[data-game-phase="prep"] #prep-tooltip-dock .sidebar-tooltip.hidden {
   display: none;
 }
 
