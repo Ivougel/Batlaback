@@ -33,6 +33,8 @@
   --prep-scene-avatar-w: calc(120px * var(--ui-scale));
   --avatar-prep-size: var(--prep-scene-avatar-h);
   --avatar-battle-size: calc(282px * var(--ui-scale));
+  --avatar-effects-panel-h: calc(68px * var(--ui-scale));
+  --battle-avatar-card-w: calc(210px * var(--ui-scale));
 
   --combatant-icon-gap: calc(36px * var(--ui-scale));
   --class-sticker-size: calc(160px * var(--ui-scale));

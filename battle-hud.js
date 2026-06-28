@@ -496,7 +496,7 @@ function drawStatusChips(ctx, side, anchorX, anchorY, align) {
 }
 
 function drawBattleHudSide(_ctx, _team, _side, _canvasW) {
-  // Status chips and HP/stamina bars render in DOM (.avatar-hero-footer).
+  // Status chips and HP/stamina bars render in DOM (.avatar-hero-upper / .avatar-hero-effects-panel).
 }
 
 function ensureHudPopup() {

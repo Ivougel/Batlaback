@@ -491,21 +491,34 @@ function renderDamageFlights(state) {
 }
 
 function ensureDamageStacksEl(shell) {
-  const floatLayer = shell.querySelector(".avatar-effects-float")
+  const buffZone = shell.querySelector(".avatar-status-zone-buffs");
+  if (buffZone) {
+    let stacks = buffZone.querySelector(".avatar-damage-stacks");
+    if (!stacks) {
+      stacks = document.createElement("div");
+      stacks.className = "avatar-damage-stacks";
+      stacks.setAttribute("aria-hidden", "true");
+      buffZone.insertBefore(stacks, buffZone.firstChild);
+    }
+    return stacks;
+  }
+  const panel = shell.querySelector(".avatar-hero-effects-panel")
+    || shell.querySelector(".avatar-effects-float")
     || shell.querySelector(".avatar-hero-footer")
     || shell;
-  let stacks = floatLayer.querySelector(".avatar-damage-stacks");
+  let stacks = panel.querySelector(".avatar-damage-stacks");
   if (!stacks) {
     stacks = document.createElement("div");
     stacks.className = "avatar-damage-stacks";
     stacks.setAttribute("aria-hidden", "true");
-    floatLayer.insertBefore(stacks, floatLayer.firstChild);
+    panel.insertBefore(stacks, panel.firstChild);
   }
   return stacks;
 }
 
 function ensureBenefitStacksEl(shell) {
   const buffZone = shell.querySelector(".avatar-status-zone-buffs")
+    || shell.querySelector(".avatar-hero-effects-panel")
     || shell.querySelector(".avatar-hero-footer");
   if (!buffZone) return null;
   let stacks = buffZone.querySelector(".avatar-benefit-stacks");
@@ -520,6 +533,7 @@ function ensureBenefitStacksEl(shell) {
 
 function ensureDotStacksEl(shell) {
   const debuffZone = shell.querySelector(".avatar-status-zone-debuffs")
+    || shell.querySelector(".avatar-hero-effects-panel")
     || shell.querySelector(".avatar-hero-footer");
   if (!debuffZone) return null;
   let stacks = debuffZone.querySelector(".avatar-dot-stacks");

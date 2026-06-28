@@ -60,16 +60,16 @@ function renderAvatarHeroHTML(profile, team) {
 
   return `
     <div class="avatar-hero-shell avatar-hero-shell-${team}" data-team="${team}">
-      <div class="avatar-hero-name">${displayName}</div>
-      <div class="avatar-hero-stage">
-        <div class="profile-avatar profile-avatar-${team}"
-             data-status-title="${className}"
-             data-status-desc="${tooltipDesc}"
-             tabindex="0"
-             aria-label="${className}">${icon}</div>
-      </div>
-      <div class="avatar-hero-footer">
-        <div class="avatar-hero-anchor">
+      <div class="avatar-hero-upper">
+        <div class="avatar-hero-name">${displayName}</div>
+        <div class="avatar-hero-stage">
+          <div class="profile-avatar profile-avatar-${team}"
+               data-status-title="${className}"
+               data-status-desc="${tooltipDesc}"
+               tabindex="0"
+               aria-label="${className}">${icon}</div>
+        </div>
+        <div class="avatar-hero-bars">
           <div class="avatar-hero-bars-col">
             <div class="avatar-hero-hp-bar">
               <div class="avatar-hero-hp-track">
@@ -86,17 +86,17 @@ function renderAvatarHeroHTML(profile, team) {
             </div>
           </div>
         </div>
-        <div class="avatar-effects-float" aria-hidden="true">
-          <div class="avatar-damage-stacks" aria-hidden="true" hidden></div>
-          <div class="avatar-hero-status-zones" aria-hidden="true">
-            <div class="avatar-status-zone avatar-status-zone-buffs">
-              <div class="avatar-beads avatar-beads-positive avatar-status-stack" aria-hidden="true"></div>
-              <div class="avatar-benefit-stacks" aria-hidden="true" hidden></div>
-            </div>
-            <div class="avatar-status-zone avatar-status-zone-debuffs">
-              <div class="avatar-hero-debuff-row" hidden></div>
-              <div class="avatar-dot-stacks" aria-hidden="true" hidden></div>
-            </div>
+      </div>
+      <div class="avatar-hero-effects-panel avatar-effects-float" aria-hidden="true">
+        <div class="avatar-hero-status-zones" aria-hidden="true">
+          <div class="avatar-status-zone avatar-status-zone-buffs">
+            <div class="avatar-damage-stacks" aria-hidden="true" hidden></div>
+            <div class="avatar-beads avatar-beads-positive avatar-status-stack" aria-hidden="true"></div>
+            <div class="avatar-benefit-stacks" aria-hidden="true" hidden></div>
+          </div>
+          <div class="avatar-status-zone avatar-status-zone-debuffs">
+            <div class="avatar-hero-debuff-row" hidden></div>
+            <div class="avatar-dot-stacks" aria-hidden="true" hidden></div>
           </div>
         </div>
       </div>

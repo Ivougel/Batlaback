@@ -779,6 +779,7 @@ html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-ui {
 html[data-prep-layout="mobile"] #app[data-phase="battle"],
 html[data-prep-layout="mobile"] #app[data-phase="replay"] {
   --mobile-battle-hero-zone-h: calc(var(--viewport-h, 100dvh) * 0.52);
+  --avatar-effects-panel-h: min(calc(56px * var(--ui-scale)), 8vh);
   --battle-scene-avatar-h: var(--mobile-battle-hero-zone-h);
   --battle-hero-img-h: min(248px, 31vh);
   --battle-avatar-w: min(200px, 42vw);
@@ -849,21 +850,24 @@ html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-ui .avat
   max-width: 100%;
 }
 
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-footer,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-footer {
+html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-bars,
+html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-bars {
   position: static;
   flex-shrink: 0;
 }
 
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-anchor,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-anchor {
-  position: static;
+html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-upper,
+html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-upper {
+  flex-shrink: 0;
 }
 
+html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-effects-panel,
+html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-effects-panel,
 html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-effects-float,
 html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-effects-float {
   gap: 4px;
   z-index: 12;
+  min-height: var(--avatar-effects-panel-h, calc(56px * var(--ui-scale)));
 }
 
 html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-damage-stack,
