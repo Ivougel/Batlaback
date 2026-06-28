@@ -821,6 +821,7 @@ html[data-prep-layout="mobile"] #app[data-phase="replay"] {
   --battle-hero-img-h: var(--mobile-battle-hero-img-h, min(150px, 24dvh));
   --battle-avatar-w: min(168px, 38vw);
   --battle-emotion-strip-w: min(36px, 9vw);
+  --battle-portrait-zoom: 1.4;
 }
 
 html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-ui .battle-scene-avatar,
@@ -962,6 +963,9 @@ html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-ui .prof
   width: var(--battle-avatar-w);
   height: var(--mobile-battle-hero-img-h, var(--battle-hero-img-h));
   max-height: var(--mobile-battle-hero-img-h, var(--battle-hero-img-h));
+  overflow: hidden;
+  align-items: flex-start;
+  justify-content: center;
 }
 
 html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-ui .avatar-emotion-mount,
@@ -984,6 +988,7 @@ html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-avatar-p
 html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-avatar-player .profile-avatar,
 html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-avatar-enemy .profile-avatar,
 html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-avatar-enemy .profile-avatar {
+  align-items: flex-start;
   justify-content: center;
 }
 

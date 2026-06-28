@@ -146,6 +146,7 @@ html[data-tablet-side-fit="true"] #app[data-phase="replay"] {
   --battle-hero-img-h: var(--tablet-battle-hero-img-h, min(180px, 26vh));
   --battle-avatar-w: var(--tablet-battle-slot-w, min(200px, calc(var(--prep-canvas-w) * 0.92)));
   --battle-emotion-strip-w: min(36px, 7vw);
+  --battle-portrait-zoom: 1.45;
 }
 
 html[data-tablet-side-fit="true"] #app[data-phase="battle"] .prep-left-column,
@@ -381,6 +382,7 @@ html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-ui .pr
   height: var(--tablet-battle-hero-img-h, var(--battle-hero-img-h));
   max-height: var(--tablet-battle-hero-img-h, var(--battle-hero-img-h));
   overflow: hidden;
+  align-items: flex-start;
   justify-content: center;
 }
 
@@ -389,16 +391,7 @@ html[data-tablet-side-fit="true"] #app[data-phase="replay"] .portrait-zoom-clip 
   width: 100%;
   height: 100%;
   overflow: hidden;
-}
-
-html[data-tablet-side-fit="true"] #app[data-phase="battle"] .portrait-zoom-clip img,
-html[data-tablet-side-fit="true"] #app[data-phase="replay"] .portrait-zoom-clip img {
-  width: 100%;
-  height: auto;
-  min-height: 300%;
-  object-fit: cover;
-  object-position: center 8%;
-  transform: none;
+  transform-origin: top center;
 }
 
 html[data-tablet-side-fit="true"] #app[data-phase="battle"] .battle-scene-ui .avatar-emotion-mount,

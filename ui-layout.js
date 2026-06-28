@@ -334,7 +334,7 @@
 
     if (phase === "battle" || phase === "replay") {
       const heroZone = Math.min(360, Math.max(240, Math.round((h - measureBattleHudReserve()) * 0.42)));
-      const heroImgH = Math.round(Math.min(200, Math.max(128, heroZone * 0.42)));
+      const heroImgH = Math.round(Math.min(220, Math.max(140, heroZone * 0.46)));
       root.style.setProperty("--tablet-battle-hero-zone-h", `${heroZone}px`);
       root.style.setProperty("--tablet-battle-hero-img-h", `${heroImgH}px`);
     }
@@ -367,7 +367,7 @@
             const scale = Math.min(stageW / cssW, maxH / cssH, 1);
             const w = Math.max(1, Math.floor(cssW * scale));
             const h = Math.max(1, Math.floor(cssH * scale));
-            const heroImgH = Math.round(Math.min(168, Math.max(108, avatarZone * 0.46)));
+            const heroImgH = Math.round(Math.min(184, Math.max(120, avatarZone * 0.48)));
             root.style.setProperty("--mobile-battle-hero-zone-h", `${avatarZone}px`);
             root.style.setProperty("--mobile-battle-hero-img-h", `${heroImgH}px`);
             setCanvasDisplaySize(canvas, w, h);
@@ -391,7 +391,7 @@
             const scale = Math.min(stageW / cssW, maxH / cssH, 1);
             const w = Math.max(1, Math.floor(cssW * scale));
             const ch = Math.max(1, Math.floor(cssH * scale));
-            const heroImgH = Math.round(Math.min(200, Math.max(128, heroZone * 0.42)));
+            const heroImgH = Math.round(Math.min(220, Math.max(140, heroZone * 0.46)));
             root.style.setProperty("--tablet-battle-hero-zone-h", `${heroZone}px`);
             root.style.setProperty("--tablet-battle-hero-img-h", `${heroImgH}px`);
             root.style.setProperty("--tablet-battle-chrome-bottom", `${measureBattleHudReserve()}px`);
