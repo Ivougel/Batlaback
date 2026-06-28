@@ -266,11 +266,6 @@ function queueHitAnimation(state, item, team, text, color) {
   const aggregatedDamage = typeof isAggregatedWeaponDamage === "function"
     && isAggregatedWeaponDamage(text, color, kind);
 
-  if (aggregatedDamage && typeof recordIncomingDamage === "function") {
-    const damage = parseFloatingMagnitude(text);
-    recordIncomingDamage(state, targetTeam, team, item, damage);
-  }
-
   if (kind === "positive" && item && typeof recordBenefitEffect === "function") {
     const match = String(text).match(/(\d+(?:\.\d+)?)/);
     if (match) {

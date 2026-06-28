@@ -632,53 +632,13 @@ function syncBenefitStackDisplay(team, state) {
   });
 }
 
-function syncDamageStackDisplay(team, state) {
+function syncDamageStackDisplay(team) {
   const slot = typeof getAvatarSlotEl === "function" ? getAvatarSlotEl(team) : null;
-  const shell = slot?.querySelector(".avatar-hero-shell");
-  if (!shell) return;
-
-  const stacksEl = ensureDamageStacksEl(shell);
-  if (!stacksEl) return;
-
-  const store = state?.damageStacks?.[team];
-  const now = state?.elapsed || 0;
-  if (!store?.order?.length) {
+  const stacksEl = slot?.querySelector(".avatar-damage-stacks");
+  if (stacksEl) {
     stacksEl.innerHTML = "";
     stacksEl.hidden = true;
-    return;
   }
-
-  stacksEl.hidden = false;
-  const activeUids = new Set(store.order.filter((uid) => store.byUid[uid]?.damage > 0));
-
-  stacksEl.querySelectorAll(".avatar-damage-stack").forEach((el) => {
-    if (!activeUids.has(el.dataset.stackUid)) el.remove();
-  });
-
-  store.order.forEach((uid, slotIndex) => {
-    const entry = store.byUid[uid];
-    if (!entry || entry.damage <= 0) return;
-
-    let el = stacksEl.querySelector(`[data-stack-uid="${CSS.escape(uid)}"]`);
-    if (!el) {
-      el = document.createElement("div");
-      el.className = "avatar-damage-stack";
-      el.dataset.stackUid = uid;
-      el.dataset.slot = String(slotIndex);
-      el.innerHTML = `<span class="avatar-damage-stack-icon"></span><span class="avatar-damage-stack-value"></span>`;
-      stacksEl.appendChild(el);
-    }
-
-    el.dataset.slot = String(slotIndex);
-    const iconEl = el.querySelector(".avatar-damage-stack-icon");
-    const valEl = el.querySelector(".avatar-damage-stack-value");
-    if (iconEl) iconEl.textContent = entry.icon;
-    if (valEl) valEl.textContent = `−${Math.round(entry.damage)}`;
-
-    const bouncing = entry.bounceUntil > now;
-    el.classList.toggle("avatar-damage-stack-bounce", bouncing);
-    applyStackTooltipMeta(el, formatDamageStackTooltipMeta(entry));
-  });
 }
 
 function formatIncomingDpsTooltip(dps) {
@@ -713,8 +673,8 @@ function syncIncomingDpsTooltip(team, state) {
 
 function syncAllDamageSummaryDisplays(state) {
   if (!state) return;
-  syncDamageStackDisplay("player", state);
-  syncDamageStackDisplay("enemy", state);
+  syncDamageStackDisplay("player");
+  syncDamageStackDisplay("enemy");
   syncBenefitStackDisplay("player", state);
   syncBenefitStackDisplay("enemy", state);
   syncDotStackDisplay("player", state);
