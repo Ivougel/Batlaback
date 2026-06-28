@@ -3396,12 +3396,12 @@ const BB_ITEM_CATALOG_RAW = {
     effects: [
       { type: "passiveLuck", value: 12, trigger: "passive" },
       { type: "buffTimed", stat: "damage", value: 0.15, duration: 3 },
-      { type: "periodic", interval: 4, trigger: "passive", randomPick: [{"gainStack":{"stack":"luck","value":1}},{"foePoison":1},{"heal":5}] }
+      { type: "periodic", interval: 4, trigger: "passive", randomPick: [{"gainStack":{"stack":"luck","value":1}},{"foePoison":1},{"heal":5},{"cleanseDebuffs":1}] }
     ],
     metaEffects: [
       { phase: "shop_enter", type: "consume_recombo", target: "self" }
     ],
-    description: "При входе в магазин: Использовать этот предмет и предметы. Создать другого предметы по на суммарная стоимость. Каждые 4с: Получить 1 случайный бафф и снять 1 дебафф удачи",
+    description: "При входе в магазин: съедает себя и соседние предметы, создаёт новые на их суммарную стоимость. +12 удачи. Каждые 4с: +15% урона на 3с; случайно +1 удача, 1 яд врагу, +5 HP или снятие 1 дебаффа.",
     buildHints: "Универсальный / автономный",
   },
   stable_recombobulator: {
@@ -3421,7 +3421,7 @@ const BB_ITEM_CATALOG_RAW = {
     metaEffects: [
       { phase: "shop_enter", type: "consume_recombo", target: "inside" }
     ],
-    description: "При входе в магазин: Использовать предметы. Создать другого предметы по на суммарная стоимость. Каждые 2.5с: Получить 1 случайный бафф и снять 1 дебафф стака",
+    description: "При входе в магазин: съедает предметы внутри сумки (кроме себя), создаёт новые на их суммарную стоимость. +10% урона. Каждые 2.5с: +1 к самому слабому стаку и снятие 1 дебаффа.",
     buildHints: "Универсальный / автономный",
   },
   prismatic_orb: {

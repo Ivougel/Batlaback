@@ -1068,6 +1068,9 @@ function tickPeriodicItemEffects(state, dt) {
           if (pick.block) executeEffect(state, { type: "block", value: pick.block }, item, self, foe, rt, team);
           if (pick.gainStack) applyGainStackEffect(state, pick.gainStack, item, self, team);
           if (pick.foePoison && foe) executeEffect(state, { type: "poison", value: pick.foePoison }, item, self, foe, rt, team);
+          if (pick.cleanseDebuffs && typeof cleanseSideDebuffs === "function") {
+            cleanseSideDebuffs(self, pick.cleanseDebuffs);
+          }
           if (pick.restoreStamina) {
             self.stamina = Math.min(self.maxStamina, self.stamina + Number(pick.restoreStamina || 0));
           }

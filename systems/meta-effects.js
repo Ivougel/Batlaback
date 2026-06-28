@@ -180,10 +180,178 @@ const POTION_UPGRADE_MAP = {
   vampiric_potion: "strong_vampiric_potion",
 };
 
+function getItemGoldCost(itemId) {
+  const def = ITEM_CATALOG[itemId];
+  return Math.max(0, Number(def?.cost) || 0);
+}
+
+function canConsumeInRecombo(itemId) {
+  const def = ITEM_CATALOG[itemId];
+  if (!def || def.isContainer || def.protected || def.craftOnly) return false;
+  return true;
+}
+
+function getContainersHostingItem(containers, item) {
+  if (!item || typeof getItemCells !== "function") return [];
+  const cells = new Set(getItemCells(item).map(([c, r]) => `${c},${r}`));
+  return (containers || []).filter((container) =>
+    getItemCells(container).some(([c, r]) => cells.has(`${c},${r}`)),
+  );
+}
+
+function getItemsFullyInsideContainer(container, items) {
+  const slotSet = new Set(getItemCells(container).map(([c, r]) => `${c},${r}`));
+  return (items || []).filter((item) => {
+    const cells = getItemCells(item);
+    return cells.length > 0 && cells.every(([c, r]) => slotSet.has(`${c},${r}`));
+  });
+}
+
+function collectRecomboVictims(items, containers, sourceItem, target = "self") {
+  if (!sourceItem) return [];
+  const mode = String(target || "self").toLowerCase();
+
+  if (mode === "inside") {
+    const hosts = getContainersHostingItem(containers, sourceItem);
+    const victimMap = new Map();
+    hosts.forEach((container) => {
+      getItemsFullyInsideContainer(container, items).forEach((item) => {
+        if (item.uid === sourceItem.uid) return;
+        if (canConsumeInRecombo(item.itemId)) victimMap.set(item.uid, item);
+      });
+    });
+    return [...victimMap.values()];
+  }
+
+  const victims = new Map();
+  if (canConsumeInRecombo(sourceItem.itemId)) victims.set(sourceItem.uid, sourceItem);
+  if (typeof getAdjacentItems === "function") {
+    getAdjacentItems(items, sourceItem).forEach((entry) => {
+      if (canConsumeInRecombo(entry.item.itemId)) victims.set(entry.item.uid, entry.item);
+    });
+  }
+  return [...victims.values()];
+}
+
+function rollRecomboRewardIds(totalCost, ctx) {
+  const budget = Math.max(0, Math.floor(Number(totalCost) || 0));
+  if (budget <= 0) return [];
+
+  const pool = (typeof getExpandedShopPool === "function"
+    ? getExpandedShopPool(ctx)
+    : (typeof getBaseShopPool === "function" ? getBaseShopPool(ctx.playerClass, ctx.round) : []))
+    .filter((item) => item && !item.craftOnly && getItemGoldCost(item.id) > 0);
+
+  if (!pool.length) return [];
+
+  const rewards = [];
+  let remaining = budget;
+  let guard = 0;
+  while (remaining > 0 && guard < 16) {
+    guard += 1;
+    const candidates = pool.filter((item) => getItemGoldCost(item.id) <= remaining);
+    if (!candidates.length) break;
+    const maxCost = Math.max(...candidates.map((item) => getItemGoldCost(item.id)));
+    const top = candidates.filter((item) => getItemGoldCost(item.id) >= maxCost * 0.8);
+    const pick = top[Math.floor(Math.random() * top.length)];
+    rewards.push(pick.id);
+    remaining -= getItemGoldCost(pick.id);
+  }
+  return rewards;
+}
+
+function placeRecomboReward(st, itemId, ctx, logFn, sourceName) {
+  const def = ITEM_CATALOG[itemId];
+  if (!def || !st) return false;
+
+  if (typeof findLoadoutItemPlacement === "function" && typeof createPlacedItem === "function") {
+    const placement = findLoadoutItemPlacement(st.containers, st.items, itemId, 0);
+    if (placement) {
+      st.items.push(createPlacedItem(itemId, placement.col, placement.row, placement.rotation));
+      if (typeof logFn === "function") {
+        const label = typeof getItemDisplayName === "function" ? getItemDisplayName(def) : def.name;
+        logFn(`🎰 ${sourceName}: получен ${label}`);
+      }
+      return true;
+    }
+  }
+
+  return addItemToBenchOrShop(st, itemId, ctx, logFn, sourceName);
+}
+
+function logRecomboFeed(text, mergeKey) {
+  if (typeof CombatLog?.addEvent !== "function") return;
+  CombatLog.addEvent({
+    type: "craft",
+    text,
+    mergeKey: mergeKey || text,
+    icon: "🎰",
+  });
+}
+
+function applyConsumeRecombo(st, effect, ctx, logFn, consumedUids) {
+  if (!st || !effect?.sourceUid) return false;
+  const source = st.items.find((item) => item.uid === effect.sourceUid);
+  if (!source || consumedUids.has(source.uid)) return false;
+
+  const target = effect.target || "self";
+  let victims = collectRecomboVictims(st.items, st.containers, source, target);
+  victims = victims.filter((item) => !consumedUids.has(item.uid));
+
+  if (target === "inside" && !victims.length) {
+    if (typeof logFn === "function") {
+      logFn(`🎰 ${effect.sourceName}: в сумке нечего перекомбинировать`);
+    }
+    return false;
+  }
+  if (!victims.length) return false;
+
+  const totalCost = victims.reduce((sum, item) => sum + getItemGoldCost(item.itemId), 0);
+  if (totalCost <= 0) return false;
+
+  const rewardIds = rollRecomboRewardIds(totalCost, ctx);
+  if (!rewardIds.length) {
+    if (typeof logFn === "function") {
+      logFn(`🎰 ${effect.sourceName}: не удалось создать предмет (${totalCost}💰)`);
+    }
+    return false;
+  }
+
+  const consumedNames = victims
+    .map((item) => (typeof getItemDisplayName === "function"
+      ? getItemDisplayName(ITEM_CATALOG[item.itemId])
+      : ITEM_CATALOG[item.itemId]?.name))
+    .filter(Boolean);
+  const removeSet = new Set(victims.map((item) => item.uid));
+  st.items = st.items.filter((item) => !removeSet.has(item.uid));
+  victims.forEach((item) => consumedUids.add(item.uid));
+
+  const rewardNames = rewardIds
+    .map((id) => (typeof getItemDisplayName === "function"
+      ? getItemDisplayName(ITEM_CATALOG[id])
+      : ITEM_CATALOG[id]?.name))
+    .filter(Boolean);
+
+  if (typeof logFn === "function") {
+    logFn(`🔄 ${effect.sourceName}: ${consumedNames.join(", ")} (${totalCost}💰) → ${rewardNames.join(", ")}`);
+  }
+  logRecomboFeed(
+    `Перекомбинация: ${consumedNames.join(", ")} → ${rewardNames.join(", ")} (${totalCost}💰)`,
+    `recombo:${effect.sourceUid}:${ctx.round}:${rewardIds.join("+")}`,
+  );
+
+  rewardIds.forEach((itemId) => {
+    placeRecomboReward(st, itemId, ctx, logFn, effect.sourceName);
+  });
+  return true;
+}
+
 function applyShopEnterMeta(side, items, logFn) {
   const st = typeof getSideState === "function" ? getSideState(side) : null;
-  if (!st) return;
+  if (!st) return false;
   const ctx = typeof getShopContextForSide === "function" ? getShopContextForSide(side) : { round: 1 };
+  const consumedUids = new Set();
+  let loadoutChanged = false;
 
   filterMetaEffects(collectMetaEffectsFromItems(items), "shop_enter").forEach((effect) => {
     switch (effect.type) {
@@ -246,9 +414,7 @@ function applyShopEnterMeta(side, items, logFn) {
         break;
       }
       case "consume_recombo":
-        if (typeof logFn === "function") {
-          logFn(`🔄 ${effect.sourceName}: перекомбинирует предметы по стоимости`);
-        }
+        if (applyConsumeRecombo(st, effect, ctx, logFn, consumedUids)) loadoutChanged = true;
         break;
       case "consume_inside_flame":
         if (typeof logFn === "function") {
@@ -267,6 +433,8 @@ function applyShopEnterMeta(side, items, logFn) {
         break;
     }
   });
+
+  return loadoutChanged;
 }
 
 function pickHigherTierItemId(itemId, ctx) {

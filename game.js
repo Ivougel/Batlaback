@@ -307,7 +307,13 @@ function resetShopForNewRoundForSide(side = prepViewSide) {
   const wasNewRound = st.shopReadyForRound !== round;
   refreshShopSlotsForSide(side);
   if (wasNewRound && typeof applyShopEnterMeta === "function") {
-    applyShopEnterMeta(side, st.items, (msg) => log(msg));
+    const loadoutChanged = applyShopEnterMeta(side, st.items, (msg) => log(msg));
+    if (loadoutChanged && side === prepViewSide) {
+      recalcSynergies();
+      draw();
+      renderBench();
+      renderShop();
+    }
   }
   getSideState(side).shopReadyForRound = round;
 }
@@ -4992,7 +4998,7 @@ function renderRunStats() {
 function log(msg) {
   if (!msg || phase !== "prep") return;
   const hint = document.getElementById("shop-panel-hint");
-  if (!hint || !msg.includes("Крафт")) return;
+  if (!hint || (!msg.includes("Крафт") && !msg.includes("🔄") && !msg.includes("🎰"))) return;
   if (!hint.dataset.defaultHint) hint.dataset.defaultHint = hint.textContent;
   hint.textContent = msg;
   window.clearTimeout(log.craftTimer);
