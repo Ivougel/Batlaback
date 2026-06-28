@@ -6527,12 +6527,19 @@ html[data-prep-side-fit="true"] #app[data-phase="prep"] #shop-panel .bench-panel
   justify-self: start;
 }
 
-#app[data-phase="prep"] #prep-toolbar .combat-feed-dock {
+#app[data-phase="prep"] #prep-toolbar .prep-toolbar-feed-home {
   position: absolute;
   left: 50%;
   bottom: 8px;
   transform: translateX(-50%);
   z-index: 3;
+}
+
+#app[data-phase="prep"] #prep-toolbar .prep-toolbar-feed-home .combat-feed-dock {
+  position: relative;
+  left: auto;
+  bottom: auto;
+  transform: none;
 }
 
 #app[data-phase="prep"] #prep-toolbar .prep-toolbar-hints {
@@ -7715,7 +7722,7 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #prep-toolbar .prep-
   order: 1;
 }
 
-html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #prep-toolbar .combat-feed-dock {
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #prep-toolbar .prep-toolbar-feed-home {
   order: 2;
   position: static;
   transform: none;

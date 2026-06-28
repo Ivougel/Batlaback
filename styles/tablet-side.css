@@ -142,9 +142,9 @@ html[data-tablet-prep-hero="true"] #app[data-phase="prep"] .prep-stats-stack {
 html[data-tablet-side-fit="true"] #app[data-phase="battle"],
 html[data-tablet-side-fit="true"] #app[data-phase="replay"] {
   --avatar-effects-panel-h: min(calc(52px * var(--ui-scale)), 8vh);
-  --battle-scene-avatar-h: var(--tablet-battle-hero-zone-h, min(240px, 32vh));
-  --battle-hero-img-h: var(--tablet-battle-hero-img-h, min(150px, 22vh));
-  --battle-avatar-w: min(168px, calc(var(--prep-canvas-w) * 0.72));
+  --battle-scene-avatar-h: var(--tablet-battle-hero-zone-h, min(280px, 36vh));
+  --battle-hero-img-h: var(--tablet-battle-hero-img-h, min(220px, 30vh));
+  --battle-avatar-w: min(var(--tablet-battle-field-display-w, 200px), calc(var(--prep-canvas-w) * 0.92));
   --battle-emotion-strip-w: min(40px, 8vw);
 }
 
@@ -200,12 +200,12 @@ html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-ui {
 html[data-tablet-side-fit="true"] #app[data-phase="battle"] .battle-scene-ui .battle-scene-avatar,
 html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-ui .battle-scene-avatar {
   position: absolute !important;
-  top: auto !important;
+  top: 0 !important;
   bottom: 0 !important;
   height: 100% !important;
   max-height: 100% !important;
-  width: min(40vw, 168px);
-  max-width: none;
+  width: var(--tablet-battle-field-display-w, min(40vw, 200px)) !important;
+  max-width: var(--tablet-battle-field-display-w, 200px);
   padding-top: 0 !important;
   display: flex;
   align-items: flex-end;
@@ -216,38 +216,42 @@ html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-ui .ba
 
 html[data-tablet-side-fit="true"] #app[data-phase="battle"] .battle-scene-avatar-player,
 html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-avatar-player {
-  left: 27% !important;
+  left: var(--tablet-battle-player-x, 25%) !important;
   right: auto !important;
 }
 
 html[data-tablet-side-fit="true"] #app[data-phase="battle"] .battle-scene-avatar-enemy,
 html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-avatar-enemy {
-  left: 73% !important;
+  left: var(--tablet-battle-enemy-x, 75%) !important;
   right: auto !important;
 }
 
 html[data-tablet-side-fit="true"] #app[data-phase="battle"] .battle-scene-ui .avatar-hero-shell,
 html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-ui .avatar-hero-shell {
-  --battle-hero-img-h: var(--tablet-battle-hero-img-h, min(150px, 22vh));
-  --battle-avatar-w: min(168px, calc(var(--prep-canvas-w) * 0.72));
+  --battle-hero-img-h: var(--tablet-battle-hero-img-h, min(220px, 30vh));
+  --battle-avatar-w: min(var(--tablet-battle-field-display-w, 200px), calc(var(--prep-canvas-w) * 0.92));
   --avatar-effects-panel-h: min(calc(52px * var(--ui-scale)), 8vh);
-  width: var(--battle-avatar-w);
+  width: 100%;
   max-width: 100%;
+  height: 100%;
+  justify-content: flex-end;
 }
 
 html[data-tablet-side-fit="true"] #app[data-phase="battle"] .battle-scene-ui .avatar-hero-stage,
 html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-ui .avatar-hero-stage {
-  height: var(--tablet-battle-hero-img-h, var(--battle-hero-img-h));
+  flex: 1 1 auto;
+  height: auto !important;
   min-height: var(--tablet-battle-hero-img-h, var(--battle-hero-img-h));
-  max-height: var(--tablet-battle-hero-img-h, var(--battle-hero-img-h));
-  width: var(--battle-avatar-w);
+  max-height: none !important;
+  width: 100%;
 }
 
 html[data-tablet-side-fit="true"] #app[data-phase="battle"] .battle-scene-ui .profile-avatar,
 html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-ui .profile-avatar {
-  width: var(--battle-avatar-w);
-  height: var(--tablet-battle-hero-img-h, var(--battle-hero-img-h));
-  max-height: var(--tablet-battle-hero-img-h, var(--battle-hero-img-h));
+  width: 100%;
+  height: 100%;
+  max-height: none !important;
+  min-height: var(--tablet-battle-hero-img-h, var(--battle-hero-img-h));
 }
 
 html[data-tablet-side-fit="true"] #app[data-phase="battle"] .battle-scene-ui .battle-scene-avatar .field-avatar-slot,
@@ -268,10 +272,53 @@ html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-stats 
 
 html[data-tablet-side-fit="true"] #app[data-phase="battle"] .battle-build-stats-anchor,
 html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-build-stats-anchor {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: auto;
-  z-index: 14;
+  display: none;
+}
+
+/* ─── Battle HUD: «События» на нижней панели, без подсказок геймпада ─── */
+
+html[data-tablet-side-fit="true"] body:has(#app[data-phase="battle"]) .gamepad-hints-bar,
+html[data-tablet-side-fit="true"] body:has(#app[data-phase="replay"]) .gamepad-hints-bar {
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+html[data-tablet-side-fit="true"] body:has(#app[data-phase="battle"]) .gamepad-hints-bar .gamepad-hints-status,
+html[data-tablet-side-fit="true"] body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-status,
+html[data-tablet-side-fit="true"] body:has(#app[data-phase="battle"]) .gamepad-hints-bar .gamepad-hints-list,
+html[data-tablet-side-fit="true"] body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list,
+html[data-tablet-side-fit="true"] body:has(#app[data-phase="battle"]) .battle-controls-hint,
+html[data-tablet-side-fit="true"] body:has(#app[data-phase="replay"]) .battle-controls-hint {
+  display: none !important;
+}
+
+html[data-tablet-side-fit="true"] #battle-hud-feed-slot:not([hidden]) {
+  display: flex;
+  flex: 1 1 auto;
+  justify-content: flex-end;
+  align-items: center;
+  align-self: stretch;
+  min-width: 0;
+  pointer-events: none;
+  padding-top: 6px;
+  padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+  margin-bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
+}
+
+html[data-tablet-side-fit="true"] #battle-hud-feed-slot[hidden] {
+  display: none !important;
+}
+
+html[data-tablet-side-fit="true"] #battle-hud-feed-slot .combat-feed-dock {
+  position: relative;
+  pointer-events: auto;
+}
+
+html[data-tablet-side-fit="true"] #battle-hud-feed-slot .combat-feed {
+  left: auto;
+  right: 0;
+  transform: none;
+  bottom: calc(100% + 8px);
+  width: min(420px, calc(100vw - 24px));
 }

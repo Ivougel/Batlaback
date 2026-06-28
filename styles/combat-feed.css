@@ -295,10 +295,15 @@ html[data-game-phase="prep"] #prep-tooltip-dock .sidebar-tooltip.combat-feed-hin
   display: none;
 }
 
-#app[data-phase="battle"] #prep-toolbar .combat-feed-dock,
-#app[data-phase="replay"] #prep-toolbar .combat-feed-dock {
+#app[data-phase="battle"] #prep-toolbar .prep-toolbar-feed-home,
+#app[data-phase="replay"] #prep-toolbar .prep-toolbar-feed-home {
   grid-column: 2;
   pointer-events: auto;
+}
+
+html[data-battle-feed-hud="true"] #app[data-phase="battle"] #prep-toolbar,
+html[data-battle-feed-hud="true"] #app[data-phase="replay"] #prep-toolbar {
+  display: none !important;
 }
 
 @media (max-width: 720px) {

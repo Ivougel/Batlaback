@@ -9,8 +9,8 @@
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="styles/combat-feed.css">
   <link rel="stylesheet" href="styles/mobile-prep.css">
-  <link rel="stylesheet" href="styles/tablet-side.css?v=3">
-  <script src="ui-layout.js?v=3"></script>
+  <link rel="stylesheet" href="styles/tablet-side.css?v=4">
+  <script src="ui-layout.js?v=4"></script>
 </head>
 <body>
   <div id="app" data-phase="prep">
@@ -102,22 +102,24 @@
             <button type="button" class="btn-secondary prep-side-btn" id="btn-prep-enemy" data-prep-side="enemy">🤖 Противник</button>
             <button type="button" class="btn-secondary prep-settings-btn" id="btn-settings" aria-label="Настройки" aria-expanded="false" aria-controls="settings-overlay">⚙️</button>
           </div>
-          <div class="combat-feed-dock" id="combat-feed-dock">
-            <div id="combat-feed" class="combat-feed" aria-live="polite" aria-label="Журнал событий">
-              <div class="combat-feed-panel combat-feed-panel--collapsed" id="combat-feed-panel">
-                <header class="combat-feed-header" id="combat-feed-header">
-                  <span class="combat-feed-title">📜 События</span>
-                  <button type="button" class="combat-feed-toggle" id="combat-feed-toggle" aria-expanded="false" aria-label="Развернуть журнал">▾</button>
-                </header>
-                <div class="combat-feed-body" id="combat-feed-body">
-                  <div class="combat-feed-scroll" id="combat-feed-scroll"></div>
+          <div class="prep-toolbar-feed-home" id="prep-toolbar-feed-home">
+            <div class="combat-feed-dock" id="combat-feed-dock">
+              <div id="combat-feed" class="combat-feed" aria-live="polite" aria-label="Журнал событий">
+                <div class="combat-feed-panel combat-feed-panel--collapsed" id="combat-feed-panel">
+                  <header class="combat-feed-header" id="combat-feed-header">
+                    <span class="combat-feed-title">📜 События</span>
+                    <button type="button" class="combat-feed-toggle" id="combat-feed-toggle" aria-expanded="false" aria-label="Развернуть журнал">▾</button>
+                  </header>
+                  <div class="combat-feed-body" id="combat-feed-body">
+                    <div class="combat-feed-scroll" id="combat-feed-scroll"></div>
+                  </div>
                 </div>
               </div>
+              <button type="button" class="btn-secondary btn-combat-feed" id="btn-combat-feed" aria-expanded="false" aria-controls="combat-feed-panel">
+                <span class="btn-combat-feed-label">📜 События</span>
+                <span class="btn-combat-feed-chevron" aria-hidden="true">▾</span>
+              </button>
             </div>
-            <button type="button" class="btn-secondary btn-combat-feed" id="btn-combat-feed" aria-expanded="false" aria-controls="combat-feed-panel">
-              <span class="btn-combat-feed-label">📜 События</span>
-              <span class="btn-combat-feed-chevron" aria-hidden="true">▾</span>
-            </button>
           </div>
           <div class="prep-toolbar-hints" id="prep-toolbar-hints" aria-label="Управление"></div>
           <div class="prep-toolbar-right prep-toolbar-actions">
@@ -330,6 +332,7 @@
       <button type="button" class="bc-btn bc-skip" id="btn-battle-skip">⏩ Пропустить</button>
       <span class="battle-controls-hint">Start — пауза · A — пропуск · LB/RB — скорость</span>
     </div>
+    <div class="battle-hud-feed-slot" id="battle-hud-feed-slot" hidden></div>
     <span class="gamepad-hints-status" id="gamepad-status">🎮 Кликните по игре и нажмите кнопку на геймпаде</span>
     <div class="gamepad-hints-list" id="gamepad-hints-list"></div>
   </div>

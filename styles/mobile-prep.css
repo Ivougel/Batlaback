@@ -307,7 +307,7 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] #prep-toolbar .prep-tool
   flex-wrap: nowrap;
 }
 
-html[data-prep-layout="mobile"] #app[data-phase="prep"] #prep-toolbar .combat-feed-dock {
+html[data-prep-layout="mobile"] #app[data-phase="prep"] #prep-toolbar .prep-toolbar-feed-home {
   position: static;
   transform: none;
   grid-column: 2;

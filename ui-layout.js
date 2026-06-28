@@ -187,11 +187,42 @@
       "--tablet-battle-hero-zone-h",
       "--tablet-battle-hero-img-h",
       "--tablet-battle-chrome-bottom",
+      "--tablet-battle-player-x",
+      "--tablet-battle-enemy-x",
+      "--tablet-battle-field-display-w",
       "--prep-canvas-display-w",
       "--prep-canvas-display-h",
       "--battle-canvas-display-w",
       "--battle-canvas-display-h",
     ].forEach((name) => root.style.removeProperty(name));
+  }
+
+  function setTabletBattleAvatarPositions(root, displayCanvasW, fieldColW) {
+    const scale = displayCanvasW / readCssPx("--battle-canvas-w", displayCanvasW);
+    const fieldW = readCssPx("--prep-canvas-w", 200) * scale;
+    const gap = readCssPx("--grid-gap", 36) * scale;
+    const offsetX = Math.max(0, (fieldColW - displayCanvasW) / 2);
+    root.style.setProperty("--tablet-battle-field-display-w", `${Math.round(fieldW)}px`);
+    root.style.setProperty("--tablet-battle-player-x", `${Math.round(offsetX + fieldW * 0.5)}px`);
+    root.style.setProperty("--tablet-battle-enemy-x", `${Math.round(offsetX + fieldW + gap + fieldW * 0.5)}px`);
+  }
+
+  function syncBattleHudFeedDock() {
+    const dock = document.getElementById("combat-feed-dock");
+    const prepHome = document.getElementById("prep-toolbar-feed-home");
+    const hudSlot = document.getElementById("battle-hud-feed-slot");
+    if (!dock || !prepHome) return;
+
+    const useHudBar = document.documentElement.dataset.tabletSideFit === "true" && isBattleUiPhase();
+    document.documentElement.dataset.battleFeedHud = useHudBar ? "true" : "false";
+
+    if (useHudBar && hudSlot) {
+      hudSlot.hidden = false;
+      if (dock.parentElement !== hudSlot) hudSlot.appendChild(dock);
+    } else {
+      if (hudSlot) hudSlot.hidden = true;
+      if (dock.parentElement !== prepHome) prepHome.appendChild(dock);
+    }
   }
 
   function measureBattleHudReserve() {
@@ -238,8 +269,8 @@
     }
 
     if (phase === "battle" || phase === "replay") {
-      const heroZone = Math.min(260, Math.max(170, Math.round((h - measureBattleHudReserve()) * 0.34)));
-      const heroImgH = Math.round(Math.min(150, Math.max(96, heroZone * 0.54)));
+      const heroZone = Math.min(300, Math.max(190, Math.round((h - measureBattleHudReserve()) * 0.38)));
+      const heroImgH = Math.round(Math.min(260, Math.max(150, heroZone * 0.82)));
       root.style.setProperty("--tablet-battle-hero-zone-h", `${heroZone}px`);
       root.style.setProperty("--tablet-battle-hero-img-h", `${heroImgH}px`);
     }
@@ -291,17 +322,18 @@
             const hudH = isHudVisible() ? (document.getElementById("gamepad-hints-bar")?.offsetHeight ?? 0) : 0;
             const cssW = readCssPx("--battle-canvas-w", canvas.width);
             const cssH = readCssPx("--battle-canvas-h", canvas.height);
-            const heroZone = Math.min(260, Math.max(170, Math.round((vh - measureBattleHudReserve()) * 0.34)));
+            const heroZone = Math.min(300, Math.max(190, Math.round((vh - measureBattleHudReserve()) * 0.38)));
             const maxH = Math.max(120, vh - measureBattleHudReserve() - heroZone - 16);
             const scale = Math.min(stageW / cssW, maxH / cssH, 1);
             const w = Math.max(1, Math.floor(cssW * scale));
             const ch = Math.max(1, Math.floor(cssH * scale));
-            const heroImgH = Math.round(Math.min(150, Math.max(96, heroZone * 0.54)));
+            const heroImgH = Math.round(Math.min(260, Math.max(150, heroZone * 0.82)));
             root.style.setProperty("--tablet-battle-hero-zone-h", `${heroZone}px`);
             root.style.setProperty("--tablet-battle-hero-img-h", `${heroImgH}px`);
             root.style.setProperty("--tablet-battle-chrome-bottom", `${measureBattleHudReserve()}px`);
             root.style.setProperty("--battle-canvas-display-w", `${w}px`);
             root.style.setProperty("--battle-canvas-display-h", `${ch}px`);
+            setTabletBattleAvatarPositions(root, w, stageW);
             setCanvasDisplaySize(canvas, w, ch);
             syncMobileShopFabPosition();
             return;
@@ -566,6 +598,8 @@
       window.syncShopHintsVisibility();
     }
 
+    syncBattleHudFeedDock();
+
     scheduleCanvasFit();
     syncMobileShopFabPosition();
 
@@ -635,4 +669,5 @@
   window.fitPrepCanvasToStage = fitCanvasDisplaySize;
   window.scheduleCanvasFit = scheduleCanvasFit;
   window.syncMobileShopFabPosition = syncMobileShopFabPosition;
+  window.syncBattleHudFeedDock = syncBattleHudFeedDock;
 })();
