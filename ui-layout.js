@@ -187,8 +187,9 @@
       "--tablet-battle-hero-zone-h",
       "--tablet-battle-hero-img-h",
       "--tablet-battle-chrome-bottom",
-      "--tablet-battle-player-x",
-      "--tablet-battle-enemy-x",
+      "--tablet-battle-scene-offset-x",
+      "--tablet-battle-enemy-slot-left",
+      "--tablet-battle-slot-w",
       "--tablet-battle-field-display-w",
       "--prep-canvas-display-w",
       "--prep-canvas-display-h",
@@ -202,9 +203,13 @@
     const fieldW = readCssPx("--prep-canvas-w", 200) * scale;
     const gap = readCssPx("--grid-gap", 36) * scale;
     const offsetX = Math.max(0, (fieldColW - displayCanvasW) / 2);
-    root.style.setProperty("--tablet-battle-field-display-w", `${Math.round(fieldW)}px`);
-    root.style.setProperty("--tablet-battle-player-x", `${Math.round(offsetX + fieldW * 0.5)}px`);
-    root.style.setProperty("--tablet-battle-enemy-x", `${Math.round(offsetX + fieldW + gap + fieldW * 0.5)}px`);
+    const slotW = Math.round(fieldW);
+    root.style.setProperty("--tablet-battle-field-display-w", `${slotW}px`);
+    root.style.setProperty("--tablet-battle-slot-w", `${slotW}px`);
+    root.style.setProperty("--tablet-battle-scene-offset-x", `${Math.round(offsetX)}px`);
+    root.style.setProperty("--tablet-battle-enemy-slot-left", `${Math.round(offsetX + fieldW + gap)}px`);
+    root.style.removeProperty("--tablet-battle-player-x");
+    root.style.removeProperty("--tablet-battle-enemy-x");
   }
 
   function syncBattleHudFeedDock() {
@@ -269,8 +274,8 @@
     }
 
     if (phase === "battle" || phase === "replay") {
-      const heroZone = Math.min(300, Math.max(190, Math.round((h - measureBattleHudReserve()) * 0.38)));
-      const heroImgH = Math.round(Math.min(260, Math.max(150, heroZone * 0.82)));
+      const heroZone = Math.min(360, Math.max(240, Math.round((h - measureBattleHudReserve()) * 0.42)));
+      const heroImgH = Math.round(Math.min(200, Math.max(128, heroZone * 0.42)));
       root.style.setProperty("--tablet-battle-hero-zone-h", `${heroZone}px`);
       root.style.setProperty("--tablet-battle-hero-img-h", `${heroImgH}px`);
     }
@@ -322,12 +327,12 @@
             const hudH = isHudVisible() ? (document.getElementById("gamepad-hints-bar")?.offsetHeight ?? 0) : 0;
             const cssW = readCssPx("--battle-canvas-w", canvas.width);
             const cssH = readCssPx("--battle-canvas-h", canvas.height);
-            const heroZone = Math.min(300, Math.max(190, Math.round((vh - measureBattleHudReserve()) * 0.38)));
+            const heroZone = Math.min(360, Math.max(240, Math.round((vh - measureBattleHudReserve()) * 0.42)));
             const maxH = Math.max(120, vh - measureBattleHudReserve() - heroZone - 16);
             const scale = Math.min(stageW / cssW, maxH / cssH, 1);
             const w = Math.max(1, Math.floor(cssW * scale));
             const ch = Math.max(1, Math.floor(cssH * scale));
-            const heroImgH = Math.round(Math.min(260, Math.max(150, heroZone * 0.82)));
+            const heroImgH = Math.round(Math.min(200, Math.max(128, heroZone * 0.42)));
             root.style.setProperty("--tablet-battle-hero-zone-h", `${heroZone}px`);
             root.style.setProperty("--tablet-battle-hero-img-h", `${heroImgH}px`);
             root.style.setProperty("--tablet-battle-chrome-bottom", `${measureBattleHudReserve()}px`);
