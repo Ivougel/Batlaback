@@ -1171,6 +1171,7 @@ function renderPhase() {
   }
   renderFightButton();
   if (phase !== "prep") closeAllFighterCharacteristicsPopups();
+  if (phase !== "prep" && typeof closeMobilePrepShop === "function") closeMobilePrepShop();
   if (typeof applyUiLayout === "function") scheduleLayoutAfterPhase();
 }
 

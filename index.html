@@ -3,9 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
   <title>Backpack Battles — Автобатлер</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="styles/combat-feed.css">
+  <link rel="stylesheet" href="styles/mobile-prep.css">
   <script src="ui-layout.js"></script>
 </head>
 <body>
@@ -74,6 +76,7 @@
                 <span class="shop-gold-stat" id="shop-gold-stat">💰 12 · Игрок 1</span>
               </div>
               <button type="button" class="btn-secondary btn-refresh-shop" id="btn-refresh">🔄 Обновить (1💰)</button>
+              <button type="button" class="prep-shop-drawer-close" id="btn-prep-shop-close" aria-label="Закрыть магазин">✕</button>
             </div>
             <p class="shop-hint" id="shop-panel-hint">✚ — навигация · A — выбрать · ← — доска · 📍 — заморозить</p>
             <p class="shop-hint shop-hint-touch">Зажать — подсказка · перетащите на поле · 📍 — закрепить · два пальца — поворот</p>
@@ -96,6 +99,7 @@
             <button type="button" class="btn-secondary prep-side-btn active" id="btn-prep-player" data-prep-side="player">🧑 Мой стол</button>
             <button type="button" class="btn-secondary prep-side-btn" id="btn-prep-enemy" data-prep-side="enemy">🤖 Противник</button>
             <button type="button" class="btn-secondary prep-settings-btn" id="btn-settings" aria-label="Настройки" aria-expanded="false" aria-controls="settings-overlay">⚙️</button>
+            <button type="button" class="btn-secondary prep-mobile-shop-btn" id="btn-mobile-shop" aria-expanded="false" aria-controls="shop-panel" aria-label="Магазин и скамейка">🛒</button>
           </div>
           <div class="combat-feed-dock" id="combat-feed-dock">
             <div id="combat-feed" class="combat-feed" aria-live="polite" aria-label="Журнал событий">
@@ -322,6 +326,12 @@
     <span class="gamepad-hints-status" id="gamepad-status">🎮 Кликните по игре и нажмите кнопку на геймпаде</span>
     <div class="gamepad-hints-list" id="gamepad-hints-list"></div>
   </div>
+  <div id="prep-shop-backdrop" class="prep-shop-backdrop hidden" aria-hidden="true"></div>
+  <div id="mobile-rotate-prompt" class="mobile-rotate-prompt hidden" aria-live="polite" aria-hidden="true">
+    <span class="mobile-rotate-prompt-icon" aria-hidden="true">📱</span>
+    <p class="mobile-rotate-prompt-title">Поверните устройство вертикально</p>
+    <p class="mobile-rotate-prompt-sub">Игра оптимизирована для портретной ориентации</p>
+  </div>
   <div id="gamepad-cursor" class="gamepad-cursor hidden" aria-hidden="true"></div>
   <canvas id="ui-drag-ghost" class="ui-drag-ghost hidden" aria-hidden="true"></canvas>
   <div id="prep-tooltip-dock" class="prep-tooltip-dock hidden" aria-live="polite" aria-label="Подсказка к предмету">
@@ -355,6 +365,7 @@
   <script src="components/recipe-book.js"></script>
   <script src="components/settings.js"></script>
   <script src="components/combat-feed.js"></script>
+  <script src="components/mobile-prep-ui.js"></script>
   <script src="components/battle-result.js"></script>
   <script src="components/synergy-effect.js"></script>
   <script src="components/synergy-panel.js"></script>

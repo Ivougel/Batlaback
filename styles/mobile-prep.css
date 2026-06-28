@@ -1,0 +1,367 @@
+/**
+ * Портретный мобильный режим: одно поле на экране, магазин — bottom-sheet.
+ */
+
+.prep-mobile-shop-btn,
+.prep-shop-drawer-close,
+.prep-shop-backdrop,
+.mobile-rotate-prompt {
+  display: none;
+}
+
+/* ─── Портрет: один экран ─── */
+
+html[data-prep-layout="mobile"] body {
+  overflow: hidden;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] {
+  height: var(--app-h);
+  max-height: var(--app-h);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding:
+    max(4px, env(safe-area-inset-top))
+    max(4px, env(safe-area-inset-right))
+    max(4px, env(safe-area-inset-bottom))
+    max(4px, env(safe-area-inset-left));
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .game-layout {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .board-section,
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .battle-arena {
+  display: contents;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-left-column {
+  grid-column: 1;
+  grid-row: 1;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-field-column {
+  height: 100%;
+  min-height: 0;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-field-island,
+html[data-prep-mobile-fit="true"] #app[data-phase="prep"] .prep-field-island {
+  position: absolute !important;
+  top: calc(var(--prep-scene-top) + var(--field-offset-y)) !important;
+  left: calc(var(--field-base-x) + var(--field-offset-x)) !important;
+  width: var(--prep-canvas-w) !important;
+  height: var(--prep-canvas-h) !important;
+  max-width: var(--prep-canvas-w) !important;
+  min-height: 0 !important;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .battle-canvas-stage {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  overflow: hidden;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] #game-canvas {
+  display: block;
+  flex-shrink: 0;
+  touch-action: none;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-stats-stack {
+  z-index: 4;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-stats-hud {
+  max-width: min(168px, 46vw);
+  font-size: 0.72rem;
+  padding: 6px 8px;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-character-layer {
+  --prep-hero-slot-height: min(280px, 32vh);
+}
+
+/* ─── Toolbar ─── */
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] #prep-toolbar {
+  grid-column: 1;
+  grid-row: 2;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  padding: 4px 6px calc(6px + env(safe-area-inset-bottom, 0px));
+  gap: 4px 6px;
+  min-height: 44px;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] #prep-toolbar .prep-toolbar-hints {
+  display: none !important;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] #prep-toolbar .combat-feed-dock {
+  position: static;
+  transform: none;
+  grid-column: 2;
+  justify-self: center;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] #prep-toolbar .prep-toolbar-left {
+  gap: 4px;
+  flex-wrap: nowrap;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] #prep-toolbar .prep-side-btn {
+  max-width: 64px;
+  padding: 8px 6px;
+  font-size: 0.68rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] #prep-toolbar .btn-fight-header {
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+html[data-prep-layout="mobile"] .prep-mobile-shop-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 10px;
+  font-size: 1.1rem;
+}
+
+html[data-prep-layout="mobile"] .prep-mobile-shop-btn[aria-expanded="true"] {
+  border-color: #58a6ff;
+  background: rgba(88, 166, 255, 0.12);
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] #btn-combat-feed {
+  min-height: 40px;
+  padding: 6px 10px;
+  font-size: 0.78rem;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .btn-combat-feed-label {
+  display: none;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .btn-combat-feed-chevron {
+  display: none;
+}
+
+/* ─── Магазин: bottom-sheet ─── */
+
+html[data-prep-layout="mobile"] .prep-shop-backdrop {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 9100;
+  background: rgba(0, 0, 0, 0.52);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease;
+}
+
+html[data-prep-layout="mobile"][data-prep-shop-open] .prep-shop-backdrop:not(.hidden) {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] #shop-panel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: auto;
+  z-index: 9200;
+  grid-column: auto;
+  grid-row: auto;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  max-height: min(78dvh, calc(var(--app-h, 100dvh) - 56px));
+  margin: 0;
+  padding: calc(8px * var(--ui-scale)) calc(10px * var(--ui-scale))
+    calc(10px * var(--ui-scale) + env(safe-area-inset-bottom, 0px));
+  border: none;
+  border-radius: 14px 14px 0 0;
+  border-top: 1px solid rgba(88, 166, 255, 0.25);
+  background: rgba(14, 17, 22, 0.98);
+  box-shadow: 0 -16px 48px rgba(0, 0, 0, 0.55);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: translateY(105%);
+  visibility: hidden;
+  pointer-events: none;
+  transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1), visibility 0.28s;
+}
+
+html[data-prep-layout="mobile"][data-prep-shop-open] #app[data-phase="prep"] #shop-panel {
+  transform: translateY(0);
+  visibility: visible;
+  pointer-events: auto;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .shop-panel-header {
+  flex-shrink: 0;
+  gap: 6px;
+  padding-right: 36px;
+  position: relative;
+}
+
+html[data-prep-layout="mobile"] .prep-shop-drawer-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #e6edf3;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .shop-hint,
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .shop-hint-touch {
+  flex-shrink: 0;
+  font-size: 0.65rem;
+  line-height: 1.25;
+  margin: 0 0 4px;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .shop-panel .shop-slots {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: calc(88px * var(--ui-scale));
+  max-height: none;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .shop-panel .shop-card,
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .shop-panel .shop-card.empty {
+  height: calc(88px * var(--ui-scale));
+  min-height: calc(88px * var(--ui-scale));
+  max-height: calc(88px * var(--ui-scale));
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] {
+  --shop-item-icon-size: calc(52px * var(--ui-scale, 1));
+  --shop-item-icon-font: calc(42px * var(--ui-scale, 1));
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] #shop-panel .shop-sell-zone {
+  flex-shrink: 0;
+  margin-top: calc(4px * var(--ui-scale));
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] #shop-panel .bench-panel {
+  flex-shrink: 0;
+  margin-top: calc(4px * var(--ui-scale));
+  padding-top: calc(6px * var(--ui-scale));
+  border-top: 1px solid var(--border);
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-slots {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-card {
+  min-height: calc(40px * var(--ui-scale));
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] #shop-panel .shop-action-row .btn-secondary {
+  min-height: 40px;
+  font-size: 0.8rem;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .btn-refresh-shop {
+  font-size: 0.72rem;
+  padding: 6px 8px;
+  white-space: nowrap;
+}
+
+/* Tooltip dock — над toolbar */
+html[data-prep-layout="mobile"] .prep-tooltip-dock:not(.hidden) {
+  left: 8px !important;
+  right: 8px !important;
+  width: auto !important;
+  max-width: none;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .combat-feed-panel {
+  max-width: min(360px, calc(100vw - 16px));
+}
+
+/* ─── Landscape: просьба повернуть ─── */
+
+html[data-prep-layout="mobile"] .mobile-rotate-prompt {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+  background: #0d1117;
+  color: #e6edf3;
+}
+
+html[data-prep-layout="mobile"] .mobile-rotate-prompt:not(.hidden) {
+  display: flex;
+}
+
+html[data-prep-layout="mobile"][data-orientation="landscape"] .mobile-rotate-prompt:not(.hidden) {
+  display: flex;
+}
+
+html[data-prep-layout="mobile"][data-orientation="landscape"] #app {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.mobile-rotate-prompt-icon {
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.mobile-rotate-prompt-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.mobile-rotate-prompt-sub {
+  font-size: 0.88rem;
+  color: #8b949e;
+  max-width: 280px;
+}

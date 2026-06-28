@@ -47,8 +47,16 @@
       && !window.matchMedia("(pointer: fine)").matches;
   }
 
-  /** Stacked только на телефонах (<600px). Планшеты 600–1100px — side (поле | магазин). */
+  /** Stacked — планшет landscape / узкий desktop. Портрет телефона — mobile (drawer). */
+  function shouldUseMobilePrepLayout(w, h) {
+    if (w > h) return false;
+    if (!isTouchDevice() && !isCoarsePointerOnly()) return false;
+    return w <= 768;
+  }
+
   function shouldUseStackedPrep(w, h) {
+    if (shouldUseMobilePrepLayout(w, h)) return false;
+
     if (w >= 600 && w <= 1200) return false;
 
     const landscape = w > h;
@@ -123,6 +131,7 @@
     }
 
     const sideFit = root.dataset.prepSideFit === "true";
+    const mobileFit = root.dataset.prepMobileFit === "true";
     const viewportFit = root.dataset.prepViewportFit === "true";
     const vw = window.visualViewport?.width ?? window.innerWidth;
     const sideBySidePrep = root.dataset.prepLayout === "side" && vw >= 600;
@@ -137,7 +146,7 @@
       return;
     }
 
-    if (sideFit || viewportFit) {
+    if (sideFit || mobileFit || viewportFit) {
       const stage = canvas.closest(".battle-canvas-stage");
       if (!stage) return;
 
@@ -146,9 +155,9 @@
 
       let maxH = canvas.height;
       const maxW = canvas.width;
-      if (sideFit) {
+      if (sideFit || mobileFit) {
         const avail = window.visualViewport?.height ?? window.innerHeight;
-        maxH = Math.max(180, avail - 200);
+        maxH = Math.max(180, avail - measurePrepChromeHeight() - (mobileFit ? 24 : 200));
       } else if (viewportFit) {
         const cssMax = getComputedStyle(root).getPropertyValue("--prep-canvas-max-h").trim();
         if (cssMax) maxH = parseFloat(cssMax) || maxH;
@@ -184,12 +193,20 @@
   function applyPrepLayoutFit(w, h, prepLayout, baseScale, touchDev) {
     document.documentElement.dataset.prepViewportFit = "false";
     document.documentElement.dataset.prepSideFit = "false";
+    document.documentElement.dataset.prepMobileFit = "false";
     document.documentElement.style.removeProperty("--prep-canvas-max-h");
     document.documentElement.style.removeProperty("--prep-shop-row-h");
 
     const hudH = isModalOpen() || !isHudVisible() ? 0 : (document.getElementById("gamepad-hints-bar")?.offsetHeight ?? 0);
     const chromeH = measurePrepChromeHeight() + hudH;
     const available = Math.max(400, h - chromeH);
+
+    if (prepLayout === "mobile") {
+      document.documentElement.dataset.prepMobileFit = "true";
+      let fitScale = Math.min(baseScale, available / 380, w / (DESIGN_W * 0.42));
+      fitScale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, fitScale));
+      return Math.round(fitScale * 1000) / 1000;
+    }
 
     if (prepLayout === "stacked") {
       document.documentElement.dataset.prepViewportFit = "true";
@@ -264,7 +281,9 @@
     const compact = tier !== "desktop" || h <= 820;
     document.documentElement.dataset.uiCompact = compact ? "true" : "false";
 
-    const prepLayout = shouldUseStackedPrep(w, h) ? "stacked" : "side";
+    const prepLayout = shouldUseMobilePrepLayout(w, h)
+      ? "mobile"
+      : (shouldUseStackedPrep(w, h) ? "stacked" : "side");
     document.documentElement.dataset.prepLayout = prepLayout;
     clamped = applyPrepLayoutFit(w, h, prepLayout, clamped, touchDev);
 
