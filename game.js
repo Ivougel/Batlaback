@@ -216,8 +216,14 @@ function isVersusMode() {
   return gameMode === "versus";
 }
 
+function isHardBotMode() {
+  return gameMode === "hardbot";
+}
+
 function getEnemyDisplayName() {
-  return isVersusMode() ? "Игрок 2" : "ИИ";
+  if (isVersusMode()) return "Игрок 2";
+  if (isHardBotMode()) return "Сложный бот";
+  return "ИИ";
 }
 
 function getPlayerProfileName() {
@@ -424,7 +430,7 @@ function showGameModeStep() {
   document.getElementById("class-step-player")?.classList.add("hidden");
   document.getElementById("class-step-opponent")?.classList.add("hidden");
   document.getElementById("class-modal-title").textContent = "Режим игры";
-  document.getElementById("class-modal-subtitle").textContent = "Выберите формат — одиночный или с другом";
+  document.getElementById("class-modal-subtitle").textContent = "Выберите формат — против бота, сложного бота или с другом";
 }
 
 function showPlayerClassStep() {
@@ -462,6 +468,10 @@ function showSecondClassStep() {
     document.getElementById("class-modal-title").textContent = "Игрок 2 — класс";
     document.getElementById("class-modal-subtitle").textContent = `Игрок 1: ${getClassById(pendingPlayerClass)?.name || pendingPlayerClass}`;
     if (hint) hint.textContent = "Перед боем оба игрока по очереди покупают в магазине (Tab или кнопки внизу).";
+  } else if (selectedGameMode === "hardbot") {
+    document.getElementById("class-modal-title").textContent = "Класс сложного бота";
+    document.getElementById("class-modal-subtitle").textContent = `Ваш класс: ${getClassById(pendingPlayerClass)?.name || pendingPlayerClass}`;
+    if (hint) hint.textContent = "Каждый раунд бот подбирает лучшую экипировку из всего пула. Legendary и godly не дублируются. Сила рюкзака бота — чуть выше вашей.";
   } else {
     document.getElementById("class-modal-title").textContent = "Класс бота";
     document.getElementById("class-modal-subtitle").textContent = `Ваш класс: ${getClassById(pendingPlayerClass)?.name || pendingPlayerClass}`;
@@ -495,9 +505,9 @@ function selectPlayerClass(classId) {
 }
 
 function selectGameMode(mode) {
-  if (mode !== "solo" && mode !== "versus") return;
+  if (mode !== "solo" && mode !== "versus" && mode !== "hardbot") return;
   selectedGameMode = mode;
-  selectedOpponentMode = mode === "versus" ? "manual" : "ai";
+  selectedOpponentMode = mode === "versus" ? "manual" : mode === "hardbot" ? "hardbot" : "ai";
   document.querySelectorAll(".game-mode-card").forEach((card) => {
     card.classList.toggle("selected", card.dataset.gameMode === mode);
   });
@@ -1436,7 +1446,7 @@ function startRunFromOverlay() {
   if (!pendingPlayerClass || !selectedEnemyClass) return;
   gameMode = selectedGameMode;
   playerClass = pendingPlayerClass;
-  opponentMode = gameMode === "versus" ? "manual" : "ai";
+  opponentMode = gameMode === "versus" ? "manual" : gameMode === "hardbot" ? "hardbot" : "ai";
   enemyClass = selectedEnemyClass;
   enemyArchetype = AI_ARCHETYPES[selectedEnemyClass] || AI_ARCHETYPES.warrior;
   prepViewSide = "player";
@@ -1478,7 +1488,18 @@ function restartGame() {
   }
   enemyGold = START_GOLD;
   enemyBench = [];
-  if (opponentMode === "ai") {
+  if (opponentMode === "hardbot") {
+    const enemyState = createInitialHardBotState(round, GRID_COLS, GRID_ROWS, playerItems, playerClass, enemyClass);
+    enemyArchetype = enemyState.archetype;
+    enemyClass = enemyState.classId;
+    enemyGold = enemyState.gold;
+    enemyContainers = enemyState.containers;
+    enemyItems = enemyState.items;
+    enemyBench = enemyState.bench || [];
+    enemyShop = Array(MAX_SHOP).fill(null);
+    enemyShopFrozen = Array(MAX_SHOP).fill(false);
+    enemyShopReadyForRound = 0;
+  } else if (opponentMode === "ai") {
     const enemyState = createInitialEnemyState(round, GRID_COLS, GRID_ROWS, playerItems, playerClass);
     enemyArchetype = enemyState.archetype;
     enemyClass = enemyState.classId;
@@ -1530,7 +1551,9 @@ function restartGame() {
   });
   log(isVersusMode()
     ? "Режим противостояния: Tab или кнопки — переключить магазин между игроками."
-    : "Расставьте предметы и в бой! Tab — посмотреть билд бота.");
+    : isHardBotMode()
+      ? "Сложный бот: каждый раунд подбирает лучшую экипировку. Расставьте предметы и в бой!"
+      : "Расставьте предметы и в бой! Tab — посмотреть билд бота.");
 }
 
 function refillShopSlots() {
@@ -2329,6 +2352,15 @@ function endBattle() {
       goldReward,
     });
 
+    if (typeof CombatLog !== "undefined" && battleSummary.classWinnerLine) {
+      CombatLog.addEvent({
+        type: battleWinner === "player" ? "win" : battleWinner === "enemy" ? "loss" : "neutral",
+        text: battleSummary.classWinnerLine,
+        mergeKey: `battle:class:${round}`,
+        icon: battleWinner === "player" ? "🏆" : battleWinner === "enemy" ? "💀" : "🤝",
+      });
+    }
+
     lastBattleReplay = {
       frames: finishedState.replayFrames || [],
       log: [...finishedState.log],
@@ -2391,7 +2423,30 @@ function applyPostBattlePrep(battleWinner) {
   }
 
   const enemyBattleWon = battleWinner === "enemy" ? true : battleWinner === "player" ? false : null;
-  if (opponentMode === "ai") {
+  if (opponentMode === "hardbot") {
+    const enemyPrep = hardBotPrepPhase(
+      {
+        classId: enemyClass,
+        gold: enemyGold,
+        containers: enemyContainers,
+        items: enemyItems,
+        bench: enemyBench,
+      },
+      round,
+      GRID_COLS,
+      GRID_ROWS,
+      enemyBattleWon,
+      playerContainers,
+      playerItems,
+      playerClass,
+    );
+    enemyArchetype = enemyPrep.archetype;
+    enemyClass = enemyPrep.classId;
+    enemyGold = enemyPrep.gold;
+    enemyContainers = enemyPrep.containers;
+    enemyItems = enemyPrep.items;
+    enemyBench = enemyPrep.bench;
+  } else if (opponentMode === "ai") {
     const enemyPrep = aiEnemyPrepPhase(
       {
         archetype: enemyArchetype,

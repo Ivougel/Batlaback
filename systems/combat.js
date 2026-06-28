@@ -109,6 +109,21 @@ function buildBattleSummary(state, meta) {
       });
 
   const titles = { player: "Победа!", enemy: "Поражение", draw: "Ничья" };
+  const playerClassName = typeof getClassById === "function"
+    ? (getClassById(state.player.classId)?.name || state.player.classId || "Игрок")
+    : "Игрок";
+  const enemyClassName = typeof getClassById === "function"
+    ? (getClassById(state.enemy.classId)?.name || state.enemy.classId || "Противник")
+    : "Противник";
+
+  let classWinnerLine = "";
+  if (state.winner === "player") {
+    classWinnerLine = `Победил класс «${playerClassName}»`;
+  } else if (state.winner === "enemy") {
+    classWinnerLine = `Победил класс «${enemyClassName}»`;
+  } else {
+    classWinnerLine = `Ничья: «${playerClassName}» vs «${enemyClassName}»`;
+  }
 
   return {
     winner: state.winner,
@@ -116,6 +131,9 @@ function buildBattleSummary(state, meta) {
     roundNum: meta.roundNum,
     goldReward: meta.goldReward,
     battleTime: state.elapsed,
+    playerClassName,
+    enemyClassName,
+    classWinnerLine,
     player: {
       hp: Math.ceil(state.player.hp),
       maxHp: state.player.maxHp,

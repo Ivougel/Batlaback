@@ -130,6 +130,7 @@ function showBattleResultPopup(summary, battleLog = []) {
   if (summary.winner === "player") subtitle += " · Победа в бою";
   else if (summary.winner === "enemy") subtitle += " · Поражение в бою";
   else subtitle += " · Ничья";
+  if (summary.classWinnerLine) subtitle += ` · ${summary.classWinnerLine}`;
   document.getElementById("battle-result-subtitle").textContent = subtitle;
 
   const accordionsEl = document.getElementById("battle-result-accordions");

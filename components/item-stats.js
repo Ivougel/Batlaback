@@ -225,10 +225,13 @@ function renderBattleResultBlock(summary) {
   const goldLine = summary.goldReward > 0
     ? `<div class="br-gold">+${summary.goldReward} 💰 за раунд</div>`
     : "";
+  const classWinnerLine = summary.classWinnerLine
+    ? `<div class="br-class-winner">${escapeHtml(summary.classWinnerLine)}</div>`
+    : "";
 
   return `
     <div class="br-side br-side-player">
-      <div class="br-side-title">${escapeHtml(playerName)}</div>
+      <div class="br-side-title">${escapeHtml(playerName)}${summary.playerClassName ? ` · ${escapeHtml(summary.playerClassName)}` : ""}</div>
       <div class="br-stat">❤️ ${p.hp}/${p.maxHp} HP</div>
       <div class="br-stat">⚔ ${formatStatNumber(p.damage)} урона по HP</div>
       <div class="br-stat br-stat-sub">${formatDamageTypeSplit(p.physicalDamage, p.magicDamage)}</div>
@@ -237,13 +240,14 @@ function renderBattleResultBlock(summary) {
       <div class="br-stat">⏱ ${formatBattleTime(summary.battleTime)}</div>
     </div>
     <div class="br-side br-side-enemy">
-      <div class="br-side-title">${escapeHtml(enemyName)}</div>
+      <div class="br-side-title">${escapeHtml(enemyName)}${summary.enemyClassName ? ` · ${escapeHtml(summary.enemyClassName)}` : ""}</div>
       <div class="br-stat">${e.hp <= 0 ? "💀" : "❤️"} ${e.hp}/${e.maxHp} HP</div>
       <div class="br-stat">⚔ ${formatStatNumber(e.damage)} урона по HP</div>
       <div class="br-stat br-stat-sub">${formatDamageTypeSplit(e.physicalDamage, e.magicDamage)}</div>
       <div class="br-stat">❤ ${formatStatNumber(e.heal)} лечения</div>
       <div class="br-stat">🛡 ${formatStatNumber(e.block)} блока</div>
     </div>
+    ${classWinnerLine}
     ${goldLine}
   `;
 }
