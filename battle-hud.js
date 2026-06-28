@@ -4,11 +4,26 @@
  */
 
 const HUD_AVATAR_R = 38;
-const HUD_HP_BAR_W = 180;
+const HUD_HP_BAR_W = 200;
 const HUD_HP_BAR_H = 10;
 const HUD_STAM_BAR_H = 7;
 const HUD_EXTRA_H = 168;
 const HUD_TOP_GAP = 20;
+
+const STATUS_CHIP_H = 16;
+const STATUS_CHIP_FONT = "10px sans-serif";
+const STATUS_CHIP_PAD_X = 4;
+const STATUS_CHIP_ICON_GAP = 3;
+const STATUS_CHIP_GAP = 4;
+const STATUS_CHIP_RADIUS = 4;
+
+const STATUS_CHIP_THEMES = {
+  block: { fg: "#79c0ff", bg: "rgba(88,166,255,0.15)", border: "rgba(88,166,255,0.45)" },
+  poison: { fg: "#ff7b72", bg: "rgba(248,81,73,0.15)", border: "rgba(248,81,73,0.45)" },
+  damage: { fg: "#3fb950", bg: "rgba(63,185,80,0.15)", border: "rgba(63,185,80,0.45)" },
+  heal: { fg: "#3fb950", bg: "rgba(63,185,80,0.12)", border: "rgba(63,185,80,0.4)" },
+  synergy: { fg: "#d2a8ff", bg: "rgba(210,168,255,0.12)", border: "rgba(210,168,255,0.4)" },
+};
 
 const HUD_CHIP_COLORS = {
   damage: "#f85149",
@@ -360,93 +375,133 @@ function drawHudBar(ctx, cx, y, w, h, ratio, color, bg = "rgba(255,255,255,0.08)
   ctx.stroke();
 }
 
-function collectStatusEffects(side) {
-  if (!side) return [];
-  const out = [];
-  if (side.block > 0) out.push({ icon: "🛡", text: `+${Math.round(side.block)}` });
-  if (side.poisonStacks > 0) out.push({ icon: "☠", text: String(Math.round(side.poisonStacks)) });
-  if (side.groundFire > 0) out.push({ icon: "🔥", text: String(Math.round(side.groundFire)) });
-  if (side.slowTimer > 0 && side.slowDebuff > 0) {
-    out.push({ icon: "🐌", text: String(Math.round(side.slowDebuff * 100)) });
+function sumSideRuntime(side, pick) {
+  let total = 0;
+  for (const item of side?.items || []) {
+    total += pick(item.runtime || {});
   }
-  if (side.stunTimer > 0) out.push({ icon: "💫", text: String(Math.ceil(side.stunTimer * 10) / 10) });
-  if (side.invulnerableTimer > 0) out.push({ icon: "✨", text: String(Math.ceil(side.invulnerableTimer * 10) / 10) });
-  if (side.dodgeReady) out.push({ icon: "💨", text: "✓" });
-  const spikes = side.stacks?.spikes || 0;
-  if (spikes > 0) out.push({ icon: "🌵", text: String(Math.round(spikes)) });
-  return out;
+  return total;
 }
 
-function drawStatusPanel(ctx, layout, effects) {
-  if (!effects.length) return;
-  const maxVisible = 4;
-  const visible = effects.slice(0, maxVisible);
-  const extra = effects.length - maxVisible;
+function buildStatusChipEntries(side) {
+  if (!side) return [];
+  const chips = [];
 
-  ctx.font = "11px sans-serif";
-  const itemW = 52;
-  const itemH = 24;
-  const gap = 6;
-  const count = visible.length + (extra > 0 ? 1 : 0);
-  const panelW = count * itemW + (count - 1) * gap + 16;
-  const panelH = itemH + 12;
-  const px = layout.cx - panelW / 2;
-  const py = layout.statusY;
+  const block = side.block || 0;
+  if (block > 0) {
+    chips.push({
+      icon: "🛡",
+      label: String(Math.round(block)),
+      theme: STATUS_CHIP_THEMES.block,
+    });
+  }
 
-  ctx.fillStyle = "rgba(255,255,255,0.04)";
-  drawRoundRect(ctx, px, py, panelW, panelH, 7);
+  const poison = side.poisonStacks || 0;
+  if (poison > 0) {
+    chips.push({
+      icon: "☠",
+      label: String(Math.round(poison)),
+      theme: STATUS_CHIP_THEMES.poison,
+    });
+  }
+
+  const damageBonus = sumSideRuntime(side, (rt) => (rt.damageBonus || 0) + (rt.pendingAttackBuff || 0));
+  if (damageBonus > 0) {
+    chips.push({
+      icon: "⚔",
+      label: String(Math.round(damageBonus)),
+      theme: STATUS_CHIP_THEMES.damage,
+    });
+  }
+
+  const healBonus = sumSideRuntime(side, (rt) => rt.healBonus || 0);
+  if (healBonus > 0) {
+    chips.push({
+      icon: "🌿",
+      label: String(Math.round(healBonus)),
+      theme: STATUS_CHIP_THEMES.heal,
+    });
+  }
+
+  const synergyCount = sumSideRuntime(side, (rt) => (rt.activeSynergies || []).length);
+  if (synergyCount > 0) {
+    chips.push({
+      icon: "✦",
+      label: String(Math.round(synergyCount)),
+      theme: STATUS_CHIP_THEMES.synergy,
+    });
+  }
+
+  return chips;
+}
+
+function measureStatusChip(ctx, icon, label) {
+  ctx.font = STATUS_CHIP_FONT;
+  const iconW = ctx.measureText(icon).width;
+  const labelW = ctx.measureText(label).width;
+  const w = STATUS_CHIP_PAD_X * 2 + iconW + STATUS_CHIP_ICON_GAP + labelW;
+  return { w, h: STATUS_CHIP_H, iconW, labelW };
+}
+
+function drawSingleStatusChip(ctx, x, y, icon, label, theme) {
+  const { w, h, iconW } = measureStatusChip(ctx, icon, label);
+
+  ctx.fillStyle = theme.bg;
+  drawRoundRect(ctx, x, y, w, h, STATUS_CHIP_RADIUS);
   ctx.fill();
-  ctx.strokeStyle = "rgba(255,255,255,0.08)";
+  ctx.strokeStyle = theme.border;
   ctx.lineWidth = 1;
   ctx.stroke();
 
-  let ix = px + 8;
-  const iy = py + panelH / 2;
-  visible.forEach((eff) => {
-    ctx.textAlign = "left";
-    ctx.textBaseline = "middle";
-    ctx.font = "13px sans-serif";
-    ctx.fillStyle = "#e6edf3";
-    ctx.fillText(eff.icon, ix, iy);
-    ctx.font = "bold 11px sans-serif";
-    ctx.fillStyle = "#c9d1d9";
-    ctx.fillText(eff.text, ix + 18, iy);
-    ix += itemW + gap;
-  });
-  if (extra > 0) {
-    ctx.font = "bold 11px sans-serif";
-    ctx.fillStyle = "#8b949e";
-    ctx.fillText(`+${extra}`, ix + 8, iy);
-  }
+  ctx.font = STATUS_CHIP_FONT;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = theme.fg;
+  ctx.fillText(icon, x + STATUS_CHIP_PAD_X, y + h / 2);
+  ctx.fillText(label, x + STATUS_CHIP_PAD_X + iconW + STATUS_CHIP_ICON_GAP, y + h / 2);
+  return w;
 }
 
-function drawHeroHud(ctx, team, side, _battleState, canvasW) {
+function drawStatusChips(ctx, side, anchorX, anchorY, align) {
+  const chips = buildStatusChipEntries(side);
+  if (!chips.length) {
+    ctx.textBaseline = "alphabetic";
+    return;
+  }
+
+  ctx.save();
+  ctx.font = STATUS_CHIP_FONT;
+
+  const sizes = chips.map((chip) => measureStatusChip(ctx, chip.icon, chip.label));
+  const totalW = sizes.reduce((sum, size) => sum + size.w, 0)
+    + STATUS_CHIP_GAP * Math.max(0, chips.length - 1);
+
+  let x = align === "right" ? anchorX - totalW : anchorX;
+  chips.forEach((chip, index) => {
+    const w = drawSingleStatusChip(ctx, x, anchorY, chip.icon, chip.label, chip.theme);
+    x += w + STATUS_CHIP_GAP;
+  });
+
+  ctx.textBaseline = "alphabetic";
+  ctx.restore();
+}
+
+function drawBattleHudSide(ctx, team, side, canvasW, skipChips) {
   const layout = getHudLayout(team, canvasW);
-  const hp = Math.max(0, side.hp || 0);
-  const maxHp = Math.max(1, side.maxHp || 1);
-  const stamina = Math.max(0, side.stamina || 0);
-  const maxStamina = Math.max(1, side.maxStamina || 1);
+  const hp = Math.max(0, side?.hp || 0);
+  const maxHp = Math.max(1, side?.maxHp || 1);
   const hpRatio = hp / maxHp;
-  const stamRatio = stamina / maxStamina;
   const accent = hpAccentColor(hpRatio);
-
-  /* Резерв под DOM-аватар героя (HUD_AVATAR_R * 2) — canvas-аватар не рисуем. */
-
-  ctx.font = "11px sans-serif";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "bottom";
-  ctx.fillStyle = "#c9d1d9";
-  ctx.fillText(`${Math.ceil(hp)} / ${maxHp}`, layout.cx, layout.hpLabelY);
+  const barX = layout.cx - HUD_HP_BAR_W / 2;
+  const chipY = layout.hpBarY + HUD_HP_BAR_H + 6;
 
   drawHudBar(ctx, layout.cx, layout.hpBarY, HUD_HP_BAR_W, HUD_HP_BAR_H, hpRatio, accent);
-  drawHudBar(ctx, layout.cx, layout.stamBarY, HUD_HP_BAR_W, HUD_STAM_BAR_H, stamRatio, "#58a6ff");
 
-  ctx.textAlign = "center";
-  ctx.textBaseline = "top";
-  ctx.fillStyle = "#8b949e";
-  ctx.fillText(`${Math.ceil(stamina)} / ${maxStamina}`, layout.cx, layout.stamBarY + HUD_STAM_BAR_H + 3);
-
-  drawStatusPanel(ctx, layout, collectStatusEffects(side));
+  if (!skipChips) {
+    const align = team === "player" ? "left" : "right";
+    const anchorX = team === "player" ? barX : barX + HUD_HP_BAR_W;
+    drawStatusChips(ctx, side, anchorX, chipY, align);
+  }
 }
 
 function ensureHudPopup() {
@@ -550,17 +605,12 @@ function isMobilePortraitBattleHud() {
 
 function drawBattleHud(ctx, battleState) {
   if (!ctx || !battleState) return;
-  tickHudLog(battleState);
   const canvasW = ctx.canvas?.width || getCanvasEl()?.width || 920;
+  const skipChips = isMobilePortraitBattleHud();
 
-  if (isMobilePortraitBattleHud()) {
-    hudCollapseBbox.player = null;
-    hudCollapseBbox.enemy = null;
-  } else {
-    hudCollapseBbox.player = drawHudChipRow(ctx, "player", getHudLayout("player", canvasW));
-    hudCollapseBbox.enemy = drawHudChipRow(ctx, "enemy", getHudLayout("enemy", canvasW));
-  }
+  hudCollapseBbox.player = null;
+  hudCollapseBbox.enemy = null;
 
-  drawHeroHud(ctx, "player", battleState.player, battleState, canvasW);
-  drawHeroHud(ctx, "enemy", battleState.enemy, battleState, canvasW);
+  drawBattleHudSide(ctx, "player", battleState.player, canvasW, skipChips);
+  drawBattleHudSide(ctx, "enemy", battleState.enemy, canvasW, skipChips);
 }
