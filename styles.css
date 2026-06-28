@@ -21,6 +21,8 @@
   --ui-scale: 1;
   --profile-avatar-size: calc(148px * var(--ui-scale));
   --profile-avatar-height: calc(192px * var(--ui-scale));
+  --prep-scene-avatar-h: calc(152px * var(--ui-scale));
+  --prep-scene-avatar-w: calc(120px * var(--ui-scale));
   --combatant-icon-gap: calc(36px * var(--ui-scale));
   --class-sticker-size: calc(160px * var(--ui-scale));
   --game-item-icon-size: calc(54px * var(--ui-scale));
@@ -543,6 +545,42 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 .field-avatar-slot {
   display: flex;
   justify-content: center;
+  align-items: flex-end;
+  overflow: visible;
+}
+
+#app[data-phase="prep"] .field-avatar-wrap.battle-scene-avatar {
+  overflow: visible;
+}
+
+#app[data-phase="prep"] .battle-scene-avatar .field-avatar-slot,
+#app[data-phase="prep"] #player-avatar-slot,
+#app[data-phase="prep"] #enemy-avatar-slot {
+  width: var(--prep-scene-avatar-w);
+  min-width: var(--prep-scene-avatar-w);
+  min-height: var(--prep-scene-avatar-h);
+  height: var(--prep-scene-avatar-h);
+  overflow: visible;
+}
+
+#app[data-phase="prep"] #player-avatar-slot .profile-avatar,
+#app[data-phase="prep"] #enemy-avatar-slot .profile-avatar {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: calc(4px * var(--ui-scale));
+}
+
+#app[data-phase="prep"] #player-avatar-slot .profile-avatar-img,
+#app[data-phase="prep"] #enemy-avatar-slot .profile-avatar-img,
+#app[data-phase="prep"] #player-avatar-slot .class-sticker,
+#app[data-phase="prep"] #enemy-avatar-slot .class-sticker {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
 }
 
 #app[data-phase="battle"] #player-avatar-slot,
@@ -5897,6 +5935,13 @@ html[data-input-mode="gamepad"] .gamepad-focus {
   }
 }
 
+@media (max-width: 600px) {
+  :root {
+    --prep-scene-avatar-h: calc(120px * var(--ui-scale));
+    --prep-scene-avatar-w: calc(100px * var(--ui-scale));
+  }
+}
+
 /* ─── Adaptive layout (ui-layout.js → data-ui-tier / data-ui-compact) ─── */
 
 html[data-ui-compact="true"] {
@@ -6392,8 +6437,39 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #board-hint {
 }
 
 html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #prep-toolbar {
-  display: grid !important;
+  display: flex !important;
+  flex-wrap: wrap;
+  gap: 4px 6px;
   flex-shrink: 0;
+}
+
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #prep-toolbar .prep-toolbar-side-switch {
+  flex: 1 1 auto;
+  order: 1;
+}
+
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #prep-toolbar .combat-feed-dock {
+  order: 2;
+  position: static;
+  transform: none;
+  left: auto;
+  bottom: auto;
+}
+
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #prep-toolbar .prep-toolbar-hints {
+  display: none;
+}
+
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #prep-toolbar .prep-toolbar-actions {
+  flex: 0 0 100%;
+  order: 3;
+  margin-left: 0;
+}
+
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #prep-toolbar .btn-fight-header {
+  width: 100%;
+  padding: 10px;
+  font-size: 1rem;
 }
 
 html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .battle-arena {
@@ -6535,7 +6611,7 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .btn-refresh-shop {
   position: relative;
   min-height: 0;
   height: 100%;
-  overflow: hidden;
+  overflow: visible;
 }
 
 #app[data-phase="prep"] #shop-panel {
@@ -6686,7 +6762,7 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
   width: 100%;
   height: 100%;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
   background:
     radial-gradient(ellipse 90% 70% at 28% 72%, rgba(62, 48, 36, 0.55) 0%, transparent 62%),
     radial-gradient(ellipse 55% 45% at 72% 18%, rgba(48, 40, 32, 0.4) 0%, transparent 58%),
@@ -6737,26 +6813,36 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
 /* Prep shop: герой в фиксированном слоте (макет), stats HUD остаётся слева внизу */
 #app[data-phase="prep"] .prep-character-layer {
   left: var(--prep-hero-slot-left);
-  width: var(--prep-hero-slot-width);
+  width: max(var(--prep-scene-avatar-w), var(--prep-hero-slot-width));
+  min-width: var(--prep-scene-avatar-w);
   top: auto;
   bottom: var(--prep-hero-slot-bottom);
-  height: var(--prep-hero-slot-height);
+  height: max(var(--prep-scene-avatar-h), var(--prep-hero-slot-height));
+  min-height: var(--prep-scene-avatar-h);
   justify-content: center;
+  overflow: visible;
+  z-index: 3;
 }
 
 #app[data-phase="prep"][data-prep-side="enemy"] .prep-character-layer {
   left: auto;
   right: var(--prep-hero-slot-left);
-  width: var(--prep-hero-slot-width);
+  width: max(var(--prep-scene-avatar-w), var(--prep-hero-slot-width));
+  min-width: var(--prep-scene-avatar-w);
   justify-content: center;
 }
 
 #app[data-phase="prep"] .prep-character,
 #app[data-phase="prep"][data-prep-side="enemy"] .prep-character {
   justify-content: center;
+  overflow: visible;
 }
 
 #app[data-phase="prep"] .prep-character-img {
+  height: var(--prep-scene-avatar-h);
+  width: auto;
+  max-width: var(--prep-scene-avatar-w);
+  object-fit: contain;
   object-position: center bottom;
 }
 

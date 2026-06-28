@@ -193,18 +193,20 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"][data-prep-side="enemy"] 
   left: 50% !important;
   right: auto !important;
   transform: translateX(-50%);
-  width: min(48vw, 170px);
-  min-height: 160px;
-  height: min(160px, 20vh);
+  width: min(48vw, var(--prep-scene-avatar-w));
+  min-width: var(--prep-scene-avatar-w);
+  min-height: var(--prep-scene-avatar-h);
+  height: auto;
   justify-content: center;
   align-items: flex-end;
+  overflow: visible;
 }
 
 html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-character-img,
 html[data-prep-layout="mobile"] #app[data-phase="prep"] .profile-avatar-img {
-  height: 110px;
+  height: var(--prep-scene-avatar-h);
   width: auto;
-  max-width: 100%;
+  max-width: min(100%, var(--prep-scene-avatar-w));
   object-fit: contain;
   object-position: center bottom;
   margin: 0 auto;
