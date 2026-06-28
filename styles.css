@@ -484,7 +484,7 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
   display: flex;
   justify-content: center;
   align-items: flex-end;
-  overflow: visible;
+  overflow: hidden;
 }
 
 #app[data-phase="prep"] .field-avatar-wrap.battle-scene-avatar {
@@ -526,6 +526,7 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 #app[data-phase="replay"] #player-avatar-slot,
 #app[data-phase="replay"] #enemy-avatar-slot {
   position: relative;
+  overflow: visible;
 }
 
 #app[data-phase="battle"] #player-avatar-slot > .avatar-hero-shell,
@@ -540,11 +541,10 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 }
 
 .portrait-zoom-clip {
-  overflow: visible;
+  overflow: hidden;
   width: 100%;
   height: 100%;
   transform-origin: top center;
-  padding-bottom: calc((var(--battle-portrait-zoom, 1.65) - 1) * 100%);
   transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -562,8 +562,7 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 #app[data-phase="battle"] .portrait-zoom-clip,
 #app[data-phase="replay"] .portrait-zoom-clip {
   transform: scale(var(--battle-portrait-zoom, 1.0));
-  overflow: visible;
-  padding-bottom: calc((var(--battle-portrait-zoom, 1.65) - 1) * 100%);
+  overflow: hidden;
 }
 
 @keyframes hero-hit {
@@ -1388,7 +1387,7 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
   align-items: stretch;
   justify-content: flex-start;
   gap: calc(4px * var(--ui-scale));
-  z-index: 10;
+  z-index: auto;
   overflow: hidden;
 }
 
@@ -7111,7 +7110,7 @@ html:not([data-tablet-side-fit="true"]):not([data-tablet-prep-hero="true"]) #app
   min-height: 0;
   margin-top: 0;
   overflow: hidden;
-  z-index: 10;
+  z-index: auto;
 }
 
 #app[data-phase="battle"] .avatar-hero-effects-panel .avatar-hero-status-zones,
@@ -7156,11 +7155,6 @@ html:not([data-tablet-side-fit="true"]):not([data-tablet-prep-hero="true"]) #app
   max-height: calc(220px * var(--ui-scale));
 }
 
-#app[data-phase="battle"] .battle-scene-ui .field-avatar-slot,
-#app[data-phase="replay"] .battle-scene-ui .field-avatar-slot {
-  overflow: visible;
-}
-
 /* Battle portraits: iPad landscape — cap stage height, reduce zoom */
 @media (min-width: 900px) and (max-width: 1200px) {
   .avatar-hero-stage {
@@ -7175,15 +7169,6 @@ html:not([data-tablet-side-fit="true"]):not([data-tablet-prep-hero="true"]) #app
   #app[data-phase="replay"] {
     --battle-portrait-zoom: 1.3;
   }
-}
-
-/* Tablet side-fit: undo overflow clipping from tablet-side.css */
-html[data-tablet-side-fit="true"] #app[data-phase="battle"] .portrait-zoom-clip,
-html[data-tablet-side-fit="true"] #app[data-phase="replay"] .portrait-zoom-clip,
-html[data-tablet-prep-hero="true"] #app[data-phase="battle"] .portrait-zoom-clip,
-html[data-tablet-prep-hero="true"] #app[data-phase="replay"] .portrait-zoom-clip {
-  overflow: visible;
-  padding-bottom: calc((var(--battle-portrait-zoom, 1.65) - 1) * 100%);
 }
 
 html[data-tablet-side-fit="true"] #app[data-phase="battle"] .avatar-hero-shell,
