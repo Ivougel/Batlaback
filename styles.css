@@ -7670,3 +7670,41 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .btn-refresh-shop {
   padding: calc(6px * var(--ui-scale)) calc(10px * var(--ui-scale));
   font-size: var(--font-sm);
 }
+
+/* --- Battle avatars (portrait) --- */
+
+html[data-prep-viewport-fit="true"] #app[data-phase="battle"] .prep-field-column {
+  --battle-enemy-slot-left: calc(var(--prep-canvas-w) + var(--grid-gap));
+}
+
+html[data-prep-layout="stacked"] #app[data-phase="battle"] .battle-scene-ui .battle-scene-avatar,
+html[data-prep-viewport-fit="true"] #app[data-phase="battle"] .battle-scene-ui .battle-scene-avatar {
+  position: absolute;
+  top: 0;
+  height: auto;
+  max-height: 52dvh;
+  width: var(--prep-canvas-w);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  overflow: visible;
+  padding-top: 0;
+}
+
+html[data-prep-layout="stacked"] #app[data-phase="battle"] .battle-scene-avatar-player,
+html[data-prep-viewport-fit="true"] #app[data-phase="battle"] .battle-scene-avatar-player {
+  left: 0;
+}
+
+html[data-prep-layout="stacked"] #app[data-phase="battle"] .battle-scene-avatar-enemy,
+html[data-prep-viewport-fit="true"] #app[data-phase="battle"] .battle-scene-avatar-enemy {
+  left: var(--battle-enemy-slot-left);
+}
+
+html[data-prep-layout="stacked"] #app[data-phase="battle"] .battle-scene-ui .avatar-hero-shell,
+html[data-prep-viewport-fit="true"] #app[data-phase="battle"] .battle-scene-ui .avatar-hero-shell {
+  --battle-hero-img-h: calc(160px * var(--ui-scale));
+  --battle-avatar-w: calc(140px * var(--ui-scale));
+  max-height: 46dvh;
+}
