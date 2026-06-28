@@ -63,6 +63,7 @@ function renderAvatarHeroHTML(profile, team) {
       <div class="avatar-hero-upper">
         <div class="avatar-hero-name">${displayName}</div>
         <div class="avatar-hero-stage">
+          <div class="avatar-emotion-mount avatar-emotion-mount-${team}" data-team="${team}" aria-hidden="true"></div>
           <div class="profile-avatar profile-avatar-${team}"
                data-status-title="${className}"
                data-status-desc="${tooltipDesc}"

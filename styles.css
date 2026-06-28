@@ -6917,7 +6917,7 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
 
 #app[data-phase="battle"] .battle-scene-ui .avatar-hero-shell,
 #app[data-phase="replay"] .battle-scene-ui .avatar-hero-shell {
-  width: calc(var(--battle-avatar-w) + var(--battle-emotion-strip-w) + 6px * var(--ui-scale));
+  width: var(--battle-avatar-w);
 }
 
 #app[data-phase="battle"] .avatar-hero-name,
@@ -6940,21 +6940,9 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
 #app[data-phase="replay"] .battle-scene-ui .avatar-hero-stage {
   display: flex;
   align-items: center;
-  gap: calc(6px * var(--ui-scale));
-  width: calc(var(--battle-avatar-w) + var(--battle-emotion-strip-w) + 6px * var(--ui-scale));
+  justify-content: center;
+  width: var(--battle-avatar-w);
   animation: none;
-}
-
-#app[data-phase="battle"] .battle-scene-avatar-player .avatar-hero-stage,
-#app[data-phase="replay"] .battle-scene-avatar-player .avatar-hero-stage {
-  flex-direction: row;
-  justify-content: flex-start;
-}
-
-#app[data-phase="battle"] .battle-scene-avatar-enemy .avatar-hero-stage,
-#app[data-phase="replay"] .battle-scene-avatar-enemy .avatar-hero-stage {
-  flex-direction: row;
-  justify-content: flex-end;
 }
 
 #app[data-phase="battle"] .battle-scene-ui .avatar-hero-stage .profile-avatar,
@@ -6964,13 +6952,29 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
 
 #app[data-phase="battle"] .battle-scene-ui .avatar-emotion-mount,
 #app[data-phase="replay"] .battle-scene-ui .avatar-emotion-mount {
-  position: relative;
-  flex: 0 0 var(--battle-emotion-strip-w);
+  position: absolute;
+  top: calc(4px * var(--ui-scale));
   width: var(--battle-emotion-strip-w);
-  height: var(--battle-hero-img-h);
+  min-height: var(--battle-emotion-strip-w);
+  height: auto;
   pointer-events: none;
   z-index: 30;
   overflow: visible;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#app[data-phase="battle"] .battle-scene-avatar-player .avatar-emotion-mount,
+#app[data-phase="replay"] .battle-scene-avatar-player .avatar-emotion-mount {
+  right: calc(100% + 4px * var(--ui-scale));
+  left: auto;
+}
+
+#app[data-phase="battle"] .battle-scene-avatar-enemy .avatar-emotion-mount,
+#app[data-phase="replay"] .battle-scene-avatar-enemy .avatar-emotion-mount {
+  left: calc(100% + 4px * var(--ui-scale));
+  right: auto;
 }
 
 #app[data-phase="battle"] .battle-scene-ui .avatar-emotion-mount .battle-emotion-float,

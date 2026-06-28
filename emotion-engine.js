@@ -110,12 +110,7 @@ function ensureEmotionMount(side) {
     mount.className = `avatar-emotion-mount avatar-emotion-mount-${side}`;
     mount.dataset.team = side;
     mount.setAttribute("aria-hidden", "true");
-    const avatar = stage.querySelector(":scope > .profile-avatar");
-    if (side === "player") {
-      stage.insertBefore(mount, avatar);
-    } else {
-      stage.appendChild(mount);
-    }
+    stage.appendChild(mount);
   }
   return mount;
 }

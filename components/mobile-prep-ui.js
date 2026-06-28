@@ -54,7 +54,7 @@
   function bind() {
     document.getElementById("btn-mobile-shop")?.addEventListener("click", toggleMobilePrepShop);
     document.getElementById("btn-prep-shop-close")?.addEventListener("click", closeMobilePrepShop);
-    document.getElementById("prep-shop-backdrop")?.addEventListener("click", closeMobilePrepShop);
+    /* Backdrop is visual-only (pointer-events: none) — field stays interactive while shop is open. */
 
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") closeMobilePrepShop();

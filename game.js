@@ -4012,11 +4012,9 @@ function isPointerOverShopDrawer(clientX, clientY) {
 
 function syncPrepShopDragBackdrop(clientX, clientY) {
   const root = document.documentElement;
-  const sidebarDrag = !!(dragPayload && (dragFrom?.type === "shop" || dragFrom?.type === "bench"))
-    || pendingShopDrag
-    || pendingBenchDrag;
+  const dragActive = !!(dragPayload || pendingShopDrag || pendingBenchDrag);
   const targetsBoard = root.hasAttribute("data-prep-shop-open")
-    && sidebarDrag
+    && dragActive
     && !isPointerOverShopDrawer(clientX, clientY);
   root.toggleAttribute("data-prep-drag-targets-board", targetsBoard);
 }
