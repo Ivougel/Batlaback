@@ -962,6 +962,7 @@ function applyPhaseCanvasLayout() {
     canvas.height = BATTLE_CANVAS_H;
   }
   layoutCanvasH = canvas.height;
+  if (typeof warmupCellEmojiMetrics === "function") warmupCellEmojiMetrics(ctx);
   if (typeof window.fitCanvasDisplaySize === "function") {
     window.fitCanvasDisplaySize();
   }

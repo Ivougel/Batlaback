@@ -13,37 +13,65 @@ function uiPx(value) {
 /** Отступ цветной плитки предмета внутри клетки (совпадает с roundRect в drawLoadoutItems). */
 const CELL_TILE_PAD = 3;
 
+const CELL_EMOJI_FONT = '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+const EMOJI_WARMUP_GLYPHS = ["🗡️", "🛡️", "🔮", "🥚", "👢"];
+
+let cellEmojiWarmupKey = "";
+
+/** Прогрев TextMetrics после смены bitmap canvas (первый кадр боя иначе без ink bbox). */
+function warmupCellEmojiMetrics(ctx) {
+  if (!ctx) return;
+  ctx.save();
+  EMOJI_WARMUP_GLYPHS.forEach((glyph) => {
+    [14, 24, 28].forEach((px) => {
+      ctx.font = `${px}px ${CELL_EMOJI_FONT}`;
+      ctx.measureText(glyph);
+    });
+  });
+  ctx.restore();
+  const c = ctx.canvas;
+  cellEmojiWarmupKey = c ? `${c.width}x${c.height}` : "default";
+}
+
+function ensureCellEmojiMetrics(ctx) {
+  if (!ctx) return;
+  const c = ctx.canvas;
+  const key = c ? `${c.width}x${c.height}` : "default";
+  if (key === cellEmojiWarmupKey) return;
+  warmupCellEmojiMetrics(ctx);
+}
+
 /** Рисует emoji в точке (cx, cy) внутри квадрата innerSize×innerSize. */
 function drawCellEmojiAt(ctx, icon, cx, cy, innerSize) {
+  ensureCellEmojiMetrics(ctx);
   const size = Math.max(14, Math.round(Math.max(1, innerSize) * 0.62));
   ctx.save();
-  ctx.font = `${size}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+  ctx.font = `${size}px ${CELL_EMOJI_FONT}`;
   ctx.fillStyle = "#ffffff";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
 
   const m = ctx.measureText(icon);
-  const hasBBox = m.actualBoundingBoxAscent != null
-    && m.actualBoundingBoxDescent != null
-    && m.actualBoundingBoxLeft != null
-    && m.actualBoundingBoxRight != null
-    && (m.actualBoundingBoxLeft + m.actualBoundingBoxRight) > 0
-    && (m.actualBoundingBoxAscent + m.actualBoundingBoxDescent) > 0;
+  const inkW = (m.actualBoundingBoxLeft ?? 0) + (m.actualBoundingBoxRight ?? 0);
+  const inkH = (m.actualBoundingBoxAscent ?? 0) + (m.actualBoundingBoxDescent ?? 0);
+  const hasBBox = inkW > 0 && inkH > 0;
 
+  let drawX;
+  let drawY;
   if (hasBBox) {
-    // Safari/iOS: center/middle ломает позицию цветных emoji — центрируем по ink bbox.
-    const left = m.actualBoundingBoxLeft;
-    const right = m.actualBoundingBoxRight;
-    const ascent = m.actualBoundingBoxAscent;
-    const descent = m.actualBoundingBoxDescent;
-    const centerOffsetX = (left + right) / 2;
-    const centerOffsetY = (descent - ascent) / 2;
-    ctx.textAlign = "left";
-    ctx.textBaseline = "alphabetic";
-    ctx.fillText(icon, cx - centerOffsetX, cy - centerOffsetY);
+    // Safari/iOS: center/middle ломает цветные emoji — центрируем по ink bbox.
+    const centerOffsetX = ((m.actualBoundingBoxLeft ?? 0) + (m.actualBoundingBoxRight ?? 0)) / 2;
+    const centerOffsetY = ((m.actualBoundingBoxDescent ?? 0) - (m.actualBoundingBoxAscent ?? 0)) / 2;
+    drawX = cx - centerOffsetX;
+    drawY = cy - centerOffsetY;
   } else {
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(icon, cx, cy);
+    const textW = m.width > 0 ? m.width : size;
+    const ascent = m.emHeightAscent ?? size * 0.85;
+    const descent = m.emHeightDescent ?? size * 0.15;
+    drawX = cx - textW / 2;
+    drawY = cy + (descent - ascent) / 2;
   }
+  ctx.fillText(icon, drawX, drawY);
   ctx.restore();
 }
 
