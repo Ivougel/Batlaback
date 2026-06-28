@@ -27,9 +27,9 @@ const CLASS_CATALOG = {
     name: "Маг",
     icon: "🔮",
     iconSrc: "img/stickermage.webp",
-    desc: "+10% магический урон",
+    desc: "+15% магический урон · мана-стаки +50% к урону",
     starterItems: ["apprentice_staff", "mana_crystal"],
-    combatBonus: { type: "magicDamageMult", value: 0.1 },
+    combatBonus: { type: "magicDamageMult", value: 0.15 },
     priorityTags: ["magic", "gem", "fire"],
   },
   priest: {

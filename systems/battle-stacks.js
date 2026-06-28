@@ -177,6 +177,23 @@ function isMeleeDamageType(damageType) {
   return damageType !== "magic" && damageType !== "fire";
 }
 
+/** Плоский бонус за стаки усиление/жар/мана — общий потолок за удар. */
+const STACK_GLOBAL_FLAT_DAMAGE_CAP = 8;
+const STACK_GLOBAL_DAMAGE_PER = 1;
+/** Маг: мана-стаки сильнее вносят вклад в урон. */
+const MAGE_MANA_STACK_DAMAGE_MULT = 1.5;
+
+function getGlobalStackFlatDamageBonus(side) {
+  let bonus = getSideStack(side, "empower") * STACK_GLOBAL_DAMAGE_PER;
+  bonus += getSideStack(side, "heat") * STACK_GLOBAL_DAMAGE_PER;
+  const manaStacks = getSideStack(side, "mana");
+  const manaPer = side?.classId === "mage"
+    ? STACK_GLOBAL_DAMAGE_PER * MAGE_MANA_STACK_DAMAGE_MULT
+    : STACK_GLOBAL_DAMAGE_PER;
+  bonus += manaStacks * manaPer;
+  return Math.min(STACK_GLOBAL_FLAT_DAMAGE_CAP, bonus);
+}
+
 function getDamageBonusFromStacks(side, item, effects = []) {
   let bonus = 0;
   effects.forEach((effect) => {
@@ -191,9 +208,7 @@ function getDamageBonusFromStacks(side, item, effects = []) {
   if (def?.tags?.includes("spikes") && !effects.some((e) => e.type === "damagePerStack")) {
     bonus += getSideStack(side, "spikes");
   }
-  bonus += getSideStack(side, "empower") * 1;
-  bonus += getSideStack(side, "heat") * 1;
-  bonus += getSideStack(side, "mana") * 1;
+  bonus += getGlobalStackFlatDamageBonus(side);
   return Math.floor(bonus);
 }
 
@@ -266,7 +281,9 @@ function collectStackStatusChips(side, buffs, debuffs, seen, pushFn) {
     } else if (stackType === "heat") {
       lines.push("+1 урона за каждый жар");
     } else if (stackType === "mana") {
-      lines.push("+1 урона за каждую ману");
+      lines.push(side?.classId === "mage"
+        ? "+1.5 урона за каждую ману (класс мага)"
+        : "+1 урона за каждую ману");
     }
     pushFn(buffs, {
       id: `stack-${stackType}`,

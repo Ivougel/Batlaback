@@ -2917,11 +2917,11 @@ const BB_ITEM_CATALOG_RAW = {
     effects: [
       { type: "statMult", stat: "damage", value: 0.08, trigger: "passive" },
       { type: "groundFire", value: 1, trigger: "passive" },
-      { type: "onHitCapBonus", value: 1, cap: 99, chance: 0.7, trigger: "on_hit" },
-      { type: "gainStack", stack: "heat", value: 8, trigger: "battle_start" },
-      { type: "periodic", interval: 3, trigger: "passive", gainWeakestStack: true }
+      { type: "onHitCapBonus", value: 1, cap: 7, chance: 0.7, trigger: "on_hit" },
+      { type: "gainStack", stack: "heat", value: 4, trigger: "battle_start" },
+      { type: "periodic", interval: 4, trigger: "passive", gainWeakestStack: true }
     ],
-    description: "70% +1 урона при атаке. В начале боя: +8 жара. Каждые 3с: случайный стак.",
+    description: "70% +1 урона при атаке (до +7). В начале боя: +4 жара. Каждые 4с: случайный стак.",
     buildHints: "Билд: огонь / Pyromancer · Пары: Draconic Orb, Oil Lamp, Flame-крафты",
   },
   burning_coal: {

@@ -546,10 +546,14 @@ function enrichDamageEffect(effect, rarity) {
 }
 
 /**
- * Стоимость выносливости только для оружия (тег weapon).
+ * Стоимость выносливости: оружие и активные гемы.
  * Подогнано под пул 40 и regen 5+1/оружие: быстрые клинки платят по CD-floor.
  */
 const STAMINA_COST_SCALE = 1.05;
+/** Скидка на оружие после баланса (посох и т.д. реже «ломаются» без стamina). */
+const STAMINA_WEAPON_COST_MULT = 0.75;
+/** Активные гемы (кристалл и т.п.) делят пул с оружием. */
+const GEM_ACTIVATION_STAMINA_COST = 3;
 /** Бенчмарк: STAMINA_REGEN_PER_SEC (5) + бонус за одно оружие (1). */
 const STAMINA_COST_REGEN_BENCHMARK = 6;
 
@@ -573,15 +577,20 @@ function computeItemStaminaCostFromOpts(opts) {
   const cd = opts.cooldown ?? 2.5;
   const cdFloor = Math.ceil(STAMINA_COST_REGEN_BENCHMARK * cd * 0.95);
   cost = Math.max(cost, cdFloor);
-  return Math.max(1, Math.ceil(cost * STAMINA_COST_SCALE));
+  return Math.max(1, Math.ceil(cost * STAMINA_COST_SCALE * STAMINA_WEAPON_COST_MULT));
 }
 
 function getItemStaminaCost(def) {
-  if (!def) return 0;
-  if (!def.tags?.includes("weapon")) return 0;
+  if (!def || !itemHasActivatableEffects(def)) return 0;
+  if (def.tags?.includes("weapon")) {
+    if (typeof def.staminaCost === "number" && def.staminaCost > 0) {
+      return Math.max(1, Math.ceil(def.staminaCost * STAMINA_WEAPON_COST_MULT));
+    }
+    return computeItemStaminaCostFromOpts(def);
+  }
+  if (def.tags?.includes("gem")) return GEM_ACTIVATION_STAMINA_COST;
   if (typeof def.staminaCost === "number" && def.staminaCost > 0) return def.staminaCost;
-  if (!itemHasActivatableEffects(def)) return 0;
-  return computeItemStaminaCostFromOpts(def);
+  return 0;
 }
 
 function defItem(opts) {
