@@ -1,7 +1,6 @@
 /**
  * Портретный мобильный режим (только html[data-prep-layout="mobile"]):
- * одно поле на экране, магазин — bottom-sheet, FAB поверх поля.
- * Thumb-zone: основные действия ≥48dp, FAB 56×56, нижняя треть — управление.
+ * одно поле на экране, герой под canvas, магазин — FAB справа по центру hero-зоны.
  */
 
 .prep-mobile-shop-btn,
@@ -99,6 +98,9 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  --prep-mobile-canvas-cap: min(var(--prep-canvas-display-h, var(--prep-canvas-h)), 38vh);
+  --prep-mobile-hero-top: calc(var(--prep-scene-top) + var(--prep-mobile-canvas-cap) + 6px);
+  --prep-mobile-hero-bottom: calc(64px + max(8px, env(safe-area-inset-bottom, 0px)));
   padding:
     max(6px, env(safe-area-inset-top))
     max(6px, env(safe-area-inset-right))
@@ -190,43 +192,63 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-stats-row {
 
 html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-character-layer,
 html[data-prep-layout="mobile"] #app[data-phase="prep"][data-prep-side="enemy"] .prep-character-layer {
-  left: 50% !important;
+  top: var(--prep-mobile-hero-top) !important;
+  bottom: var(--prep-mobile-hero-bottom) !important;
+  left: max(6px, env(safe-area-inset-left)) !important;
   right: auto !important;
-  transform: translateX(-50%);
-  width: min(48vw, var(--prep-scene-avatar-w));
-  min-width: var(--prep-scene-avatar-w);
-  min-height: var(--prep-scene-avatar-h);
+  transform: none;
+  width: min(56vw, 280px);
+  min-width: 0;
+  min-height: 0;
   height: auto;
   justify-content: center;
   align-items: flex-end;
   overflow: visible;
+  z-index: 3;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"][data-prep-side="enemy"] .prep-character-layer {
+  left: auto !important;
+  right: max(6px, env(safe-area-inset-right)) !important;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-character,
+html[data-prep-layout="mobile"] #app[data-phase="prep"][data-prep-side="enemy"] .prep-character {
+  width: 100%;
+  height: 100%;
+  justify-content: center;
+  align-items: flex-end;
 }
 
 html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-character-img,
 html[data-prep-layout="mobile"] #app[data-phase="prep"] .profile-avatar-img {
-  height: var(--prep-scene-avatar-h);
+  height: 100%;
   width: auto;
-  max-width: min(100%, var(--prep-scene-avatar-w));
+  max-width: 100%;
+  max-height: 100%;
+  min-height: min(32vh, 240px);
   object-fit: contain;
   object-position: center bottom;
   margin: 0 auto;
 }
 
 html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-character-emoji {
-  font-size: clamp(3.4rem, 18vh, 5.5rem);
+  font-size: clamp(4rem, 34vh, 7rem);
+  line-height: 1;
+  align-self: flex-end;
 }
 
-/* ─── FAB магазина: overlay справа под полем (вне #app — не обрезается overflow) ─── */
+/* ─── FAB магазина: справа по центру hero-зоны (между полем и toolbar) ─── */
 
 html[data-prep-layout="mobile"][data-game-phase="prep"] .prep-mobile-shop-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   position: fixed;
-  z-index: 9260;
-  top: auto;
-  right: 16px;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+  z-index: 9050;
+  top: var(--prep-shop-fab-top, calc(var(--prep-mobile-hero-top, 42vh) + 12vh));
+  bottom: auto;
+  right: var(--prep-shop-fab-right, 12px);
   left: auto;
   width: 56px;
   height: 56px;
@@ -363,6 +385,18 @@ html[data-prep-layout="mobile"] .prep-shop-backdrop {
 html[data-prep-layout="mobile"][data-prep-shop-open] .prep-shop-backdrop:not(.hidden) {
   opacity: 1;
   pointer-events: auto;
+}
+
+html[data-prep-layout="mobile"][data-prep-shop-open][data-prep-drag-targets-board] .prep-shop-backdrop:not(.hidden) {
+  opacity: 0;
+  pointer-events: none;
+}
+
+html[data-prep-layout="mobile"][data-prep-drag-targets-board] #app[data-phase="prep"] .prep-field-island .canvas-scale-wrap {
+  box-shadow:
+    0 16px 46px rgba(0, 0, 0, 0.42),
+    0 0 0 2px rgba(88, 166, 255, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 html[data-prep-layout="mobile"] #app[data-phase="prep"] #shop-panel {

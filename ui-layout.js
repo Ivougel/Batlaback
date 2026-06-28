@@ -146,15 +146,17 @@
     const phase = document.getElementById("app")?.dataset.phase;
     if (phase !== "prep") return;
     const island = document.getElementById("prep-field-island");
-    if (!island) return;
-    const rect = island.getBoundingClientRect();
     const toolbar = document.getElementById("prep-toolbar");
-    const toolbarTop = toolbar?.getBoundingClientRect().top ?? window.innerHeight;
+    if (!island || !toolbar) return;
+    const rect = island.getBoundingClientRect();
+    const toolbarTop = toolbar.getBoundingClientRect().top;
     const fabSize = 56;
-    const top = Math.min(Math.round(rect.bottom + 8), Math.round(toolbarTop - fabSize - 8));
-    const right = Math.max(10, Math.round(window.innerWidth - rect.right + 6));
-    root.style.setProperty("--prep-shop-fab-top", `${Math.max(8, top)}px`);
-    root.style.setProperty("--prep-shop-fab-right", `${right}px`);
+    const zoneTop = rect.bottom + 8;
+    const zoneBottom = toolbarTop - 8;
+    const centeredTop = Math.round((zoneTop + zoneBottom) / 2 - fabSize / 2);
+    const top = Math.max(zoneTop, Math.min(centeredTop, zoneBottom - fabSize));
+    root.style.setProperty("--prep-shop-fab-top", `${top}px`);
+    root.style.setProperty("--prep-shop-fab-right", "12px");
     if (typeof window.positionPrepTooltipDock === "function") {
       window.positionPrepTooltipDock();
     }

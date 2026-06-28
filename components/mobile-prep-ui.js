@@ -11,6 +11,7 @@
   function setShopOpen(open) {
     const next = !!open;
     document.documentElement.toggleAttribute(OPEN_ATTR, next);
+    if (!next) document.documentElement.removeAttribute("data-prep-drag-targets-board");
     const toggle = document.getElementById("btn-mobile-shop");
     const closeBtn = document.getElementById("btn-prep-shop-close");
     toggle?.setAttribute("aria-expanded", next ? "true" : "false");

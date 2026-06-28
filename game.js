@@ -2135,6 +2135,7 @@ function syncUiDragState() {
     tooltipItem = null;
     hideSidebarTooltip();
   }
+  syncPrepShopDragBackdrop(lastPointerClient.x, lastPointerClient.y);
   if (typeof refreshGamepadHints === "function") refreshGamepadHints();
 }
 
@@ -3001,6 +3002,7 @@ function updatePointerFromClient(clientX, clientY) {
         !!(dragPayload && dragFrom?.type !== "shop" && isDropOnSell(synthetic)),
       );
     }
+    syncPrepShopDragBackdrop(clientX, clientY);
   } else if ((phase === "battle" || phase === "replay") && battleState) {
     updateTooltip(mousePos.x, mousePos.y);
   }
@@ -3999,6 +4001,24 @@ function isPointerOverPrepSidebar(clientX, clientY) {
   return !!hit.closest(
     "#shop-panel, .run-stats-anchor, #prep-run-stats-anchor, #run-stats-popover, #sidebar-tooltip, #prep-tooltip-dock, #recipe-book-overlay, #combat-feed-dock, #combat-feed-panel, #combat-feed-scroll",
   );
+}
+
+function isPointerOverShopDrawer(clientX, clientY) {
+  if (clientX == null || clientY == null) return false;
+  const hit = document.elementFromPoint(clientX, clientY);
+  if (!hit) return false;
+  return !!hit.closest("#shop-panel");
+}
+
+function syncPrepShopDragBackdrop(clientX, clientY) {
+  const root = document.documentElement;
+  const sidebarDrag = !!(dragPayload && (dragFrom?.type === "shop" || dragFrom?.type === "bench"))
+    || pendingShopDrag
+    || pendingBenchDrag;
+  const targetsBoard = root.hasAttribute("data-prep-shop-open")
+    && sidebarDrag
+    && !isPointerOverShopDrawer(clientX, clientY);
+  root.toggleAttribute("data-prep-drag-targets-board", targetsBoard);
 }
 
 function isPointerOverCombatFeed(clientX, clientY) {
