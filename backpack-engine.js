@@ -6,16 +6,6 @@
 const STRONG_OFFSETS = [[0, -1], [0, 1], [-1, 0], [1, 0]];
 const WEAK_OFFSETS = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
 
-const BOARD_PLACEMENT_MASK = [
-  [0, 0, 1, 1, 1, 1, 1, 0, 0],
-  [0, 1, 1, 1, 1, 1, 1, 1, 0],
-  [1, 1, 1, 1, 1, 1, 1, 1, 1],
-  [1, 1, 1, 1, 1, 1, 1, 1, 1],
-  [1, 1, 1, 1, 1, 1, 1, 1, 1],
-  [0, 1, 1, 1, 1, 1, 1, 1, 0],
-  [0, 0, 1, 1, 1, 1, 1, 0, 0],
-];
-
 function getStarterBagOrigin(gridW = 9, gridH = 7, bagW = 3, bagH = 3) {
   return {
     col: Math.floor((gridW - bagW) / 2),
@@ -24,8 +14,7 @@ function getStarterBagOrigin(gridW = 9, gridH = 7, bagW = 3, bagH = 3) {
 }
 
 function isBoardCellAvailable(col, row, gridW, gridH) {
-  if (col < 0 || col >= gridW || row < 0 || row >= gridH) return false;
-  return BOARD_PLACEMENT_MASK[row]?.[col] === 1;
+  return col >= 0 && col < gridW && row >= 0 && row < gridH;
 }
 
 function isContainerItem(itemId) {

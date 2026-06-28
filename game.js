@@ -2881,7 +2881,7 @@ function gridCellFill(available, row, col) {
 function shouldShowFullContainerPlacementGrid() {
   return phase === "prep"
     && !!dragPayload
-    && isShopExpansionContainer(dragPayload.itemId);
+    && isContainerItem(dragPayload.itemId);
 }
 
 function drawBackpackFrame(team, options = {}) {
@@ -2890,7 +2890,8 @@ function drawBackpackFrame(team, options = {}) {
     containers = [],
     items = [],
   } = options;
-  const activeCells = showFullPlacementGrid ? null : buildActiveVisualCellSet(containers, items);
+  const revealAllBoardCells = phase === "prep" || showFullPlacementGrid;
+  const activeCells = revealAllBoardCells ? null : buildActiveVisualCellSet(containers, items);
 
   for (let row = 0; row < GRID_ROWS; row++) {
     for (let col = 0; col < GRID_COLS; col++) {
@@ -2898,7 +2899,7 @@ function drawBackpackFrame(team, options = {}) {
       if (!available) continue;
 
       const key = `${col},${row}`;
-      if (!showFullPlacementGrid && activeCells && !activeCells.has(key)) continue;
+      if (!revealAllBoardCells && activeCells && !activeCells.has(key)) continue;
 
       const { x: cx, y: cy, w: cw, h: ch } = cellRect(team, col, row);
       ctx.fillStyle = gridCellFill(true, row, col);
