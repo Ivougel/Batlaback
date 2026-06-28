@@ -123,6 +123,7 @@ function getHudLayout(team, canvasW) {
   const hpLabelY = avatarY + HUD_AVATAR_R + 12;
   const hpBarY = hpLabelY + 14;
   const stamBarY = hpBarY + HUD_HP_BAR_H + 10;
+  const chipStatusY = stamBarY + HUD_STAM_BAR_H + 8;
   const statusY = stamBarY + HUD_STAM_BAR_H + 18;
   return {
     cx,
@@ -131,6 +132,7 @@ function getHudLayout(team, canvasW) {
     hpLabelY,
     hpBarY,
     stamBarY,
+    chipStatusY,
     statusY,
   };
 }
@@ -476,7 +478,14 @@ function drawStatusChips(ctx, side, anchorX, anchorY, align) {
   const totalW = sizes.reduce((sum, size) => sum + size.w, 0)
     + STATUS_CHIP_GAP * Math.max(0, chips.length - 1);
 
-  let x = align === "right" ? anchorX - totalW : anchorX;
+  let x;
+  if (align === "center") {
+    x = anchorX - totalW / 2;
+  } else if (align === "right") {
+    x = anchorX - totalW;
+  } else {
+    x = anchorX;
+  }
   chips.forEach((chip, index) => {
     const w = drawSingleStatusChip(ctx, x, anchorY, chip.icon, chip.label, chip.theme);
     x += w + STATUS_CHIP_GAP;
@@ -486,20 +495,17 @@ function drawStatusChips(ctx, side, anchorX, anchorY, align) {
   ctx.restore();
 }
 
-function drawBattleHudSide(ctx, team, side, canvasW, skipChips) {
+function drawBattleHudSide(ctx, team, side, canvasW) {
   const layout = getHudLayout(team, canvasW);
   const hp = Math.max(0, side?.hp || 0);
   const maxHp = Math.max(1, side?.maxHp || 1);
   const hpRatio = hp / maxHp;
   const accent = hpAccentColor(hpRatio);
-  const barX = layout.cx - HUD_HP_BAR_W / 2;
 
   drawHudBar(ctx, layout.cx, layout.hpBarY, HUD_HP_BAR_W, HUD_HP_BAR_H, hpRatio, accent);
 
-  const align = team === "player" ? "left" : "right";
-  const anchorX = team === "player" ? barX : barX + HUD_HP_BAR_W;
-  const chipY = layout.hpBarY + HUD_HP_BAR_H + 4;
-  drawStatusChips(ctx, side, anchorX, chipY, align);
+  const anchorX = layout.cx;
+  drawStatusChips(ctx, side, anchorX, layout.chipStatusY, "center");
 }
 
 function ensureHudPopup() {
@@ -605,11 +611,10 @@ function isMobilePortraitBattleHud() {
 function drawBattleHud(ctx, battleState) {
   if (!ctx || !battleState) return;
   const canvasW = ctx.canvas?.width || getCanvasEl()?.width || 920;
-  const skipChips = isMobilePortraitBattleHud();
 
   hudCollapseBbox.player = null;
   hudCollapseBbox.enemy = null;
 
-  drawBattleHudSide(ctx, "player", battleState.player, canvasW, skipChips);
-  drawBattleHudSide(ctx, "enemy", battleState.enemy, canvasW, skipChips);
+  drawBattleHudSide(ctx, "player", battleState.player, canvasW);
+  drawBattleHudSide(ctx, "enemy", battleState.enemy, canvasW);
 }
