@@ -85,22 +85,17 @@ function hudViewportPoint(team, anchor = "avatar") {
 }
 
 function getHudCx(team, canvasW) {
-  const cols = typeof BACKPACK_COLS !== "undefined" ? BACKPACK_COLS : 9;
-  const cell = typeof CELL !== "undefined" ? CELL : 46;
-  const playerX = typeof PLAYER_X !== "undefined" ? PLAYER_X : 0;
+  const cols = typeof BACKPACK_COLS !== "undefined" ? BACKPACK_COLS : 7;
+  const cell = typeof CELL !== "undefined" ? CELL : 50;
+  const playerX = typeof PLAYER_X !== "undefined" ? PLAYER_X : 36;
   const enemyX = typeof ENEMY_X !== "undefined" ? ENEMY_X : 0;
-  const raw = team === "player"
+  return team === "player"
     ? playerX + (cols * cell) / 2
     : enemyX + (cols * cell) / 2;
-  if (team === "enemy") return Math.min(raw, canvasW - HUD_HP_BAR_W / 2 - 8);
-  return Math.max(raw, HUD_HP_BAR_W / 2 + 8);
 }
 
 function getHudYTop() {
-  const rows = typeof BACKPACK_ROWS !== "undefined" ? BACKPACK_ROWS : 7;
-  const cell = typeof CELL !== "undefined" ? CELL : 46;
-  const backpackY = typeof BACKPACK_Y !== "undefined" ? BACKPACK_Y : 0;
-  return backpackY + rows * cell + HUD_TOP_GAP;
+  return 380;
 }
 
 function getHudLayout(team, canvasW) {
@@ -226,10 +221,41 @@ function parseHudLogEntry(entry, battleState) {
 
 function tickHudLog(battleState) {
   const log = battleState?.log;
-  if (!log) return;
+  if (!Array.isArray(log)) return;
   while (hudLastLogIndex < log.length) {
-    parseHudLogEntry(log[hudLastLogIndex], battleState);
+    const line = log[hudLastLogIndex];
     hudLastLogIndex += 1;
+    if (typeof line !== "string") continue;
+
+    const nameMatch = line.match(/^([^:]+):/);
+    if (!nameMatch) continue;
+    const itemName = nameMatch[1].trim();
+
+    let meta = null;
+    for (const t of ["player", "enemy"]) {
+      for (const item of battleState[t]?.items || []) {
+        const def = typeof ITEM_CATALOG !== "undefined" ? ITEM_CATALOG[item.itemId] : null;
+        if (def?.name === itemName) {
+          meta = { uid: item.uid, icon: def.icon, name: def.name, team: t };
+          break;
+        }
+      }
+      if (meta) break;
+    }
+    if (!meta) continue;
+
+    const victim = meta.team === "player" ? "enemy" : "player";
+
+    const dmgM = line.match(/[−\-](\d+(?:\.\d+)?)\s*HP/);
+    if (dmgM) { hudAccumulate(victim, meta, "damage", -parseFloat(dmgM[1])); continue; }
+
+    const healM = line.match(/\+(\d+(?:\.\d+)?)\s*HP/);
+    if (healM) { hudAccumulate(meta.team, meta, "heal", parseFloat(healM[1])); continue; }
+
+    const blockM = line.match(/\+(\d+(?:\.\d+)?)\s*блок/);
+    if (blockM) { hudAccumulate(meta.team, meta, "block", parseFloat(blockM[1])); continue; }
+
+    if (line.includes("яд")) { hudAccumulate(victim, meta, "poison", -1); continue; }
   }
 }
 

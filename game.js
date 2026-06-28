@@ -2878,10 +2878,23 @@ function gridCellFill(available, row, col) {
   return (row + col) % 2 === 0 ? "#4a4038" : "#403830";
 }
 
+function getActiveExpansionDragItemId() {
+  if (dragPayload?.itemId) return dragPayload.itemId;
+  if (pendingShopDrag) {
+    const st = getSideState(pendingShopDrag.side || prepViewSide);
+    return st.shop[pendingShopDrag.index] || null;
+  }
+  if (pendingBenchDrag) {
+    const st = getSideState(pendingBenchDrag.side || prepViewSide);
+    return st.bench[pendingBenchDrag.index]?.itemId || null;
+  }
+  return null;
+}
+
 function shouldShowFullContainerPlacementGrid() {
-  return phase === "prep"
-    && !!dragPayload
-    && isContainerItem(dragPayload.itemId);
+  if (phase !== "prep") return false;
+  const itemId = getActiveExpansionDragItemId();
+  return itemId != null && isShopExpansionContainer(itemId);
 }
 
 function drawBackpackFrame(team, options = {}) {
@@ -2890,7 +2903,7 @@ function drawBackpackFrame(team, options = {}) {
     containers = [],
     items = [],
   } = options;
-  const revealAllBoardCells = phase === "prep" || showFullPlacementGrid;
+  const revealAllBoardCells = showFullPlacementGrid;
   const activeCells = revealAllBoardCells ? null : buildActiveVisualCellSet(containers, items);
 
   for (let row = 0; row < GRID_ROWS; row++) {
