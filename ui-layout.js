@@ -180,36 +180,105 @@
     }
   }
 
+  const TABLET_BATTLE_AVATAR_VAR_NAMES = [
+    "--tablet-prep-hero-h",
+    "--tablet-battle-hero-zone-h",
+    "--tablet-battle-hero-img-h",
+    "--tablet-battle-chrome-bottom",
+    "--tablet-battle-scene-offset-x",
+    "--tablet-battle-enemy-slot-left",
+    "--tablet-battle-slot-w",
+    "--tablet-battle-field-display-w",
+    "--prep-canvas-display-w",
+    "--prep-canvas-display-h",
+    "--battle-canvas-display-w",
+    "--battle-canvas-display-h",
+    "--battle-field-display-w",
+    "--battle-grid-gap-display",
+  ];
+
+  const TABLET_BATTLE_FIELD_COL_VAR_NAMES = [
+    "--battle-scene-offset-x",
+    "--battle-enemy-slot-left",
+  ];
+
   function clearTabletSideVars() {
     const root = document.documentElement;
-    [
-      "--tablet-prep-hero-h",
-      "--tablet-battle-hero-zone-h",
-      "--tablet-battle-hero-img-h",
-      "--tablet-battle-chrome-bottom",
-      "--tablet-battle-scene-offset-x",
-      "--tablet-battle-enemy-slot-left",
-      "--tablet-battle-slot-w",
-      "--tablet-battle-field-display-w",
-      "--prep-canvas-display-w",
-      "--prep-canvas-display-h",
-      "--battle-canvas-display-w",
-      "--battle-canvas-display-h",
-    ].forEach((name) => root.style.removeProperty(name));
-  }
-
-  function setTabletBattleAvatarPositions(root, displayCanvasW, fieldColW) {
-    const scale = displayCanvasW / readCssPx("--battle-canvas-w", displayCanvasW);
-    const fieldW = readCssPx("--prep-canvas-w", 200) * scale;
-    const gap = readCssPx("--grid-gap", 36) * scale;
-    const offsetX = Math.max(0, (fieldColW - displayCanvasW) / 2);
-    const slotW = Math.round(fieldW);
-    root.style.setProperty("--tablet-battle-field-display-w", `${slotW}px`);
-    root.style.setProperty("--tablet-battle-slot-w", `${slotW}px`);
-    root.style.setProperty("--tablet-battle-scene-offset-x", `${Math.round(offsetX)}px`);
-    root.style.setProperty("--tablet-battle-enemy-slot-left", `${Math.round(offsetX + fieldW + gap)}px`);
+    const fieldCol = document.getElementById("prep-field-column");
+    TABLET_BATTLE_AVATAR_VAR_NAMES.forEach((name) => root.style.removeProperty(name));
+    TABLET_BATTLE_FIELD_COL_VAR_NAMES.forEach((name) => {
+      root.style.removeProperty(name);
+      fieldCol?.style.removeProperty(name);
+    });
     root.style.removeProperty("--tablet-battle-player-x");
     root.style.removeProperty("--tablet-battle-enemy-x");
+  }
+
+  function applyTabletBattleAvatarVars(targets, playerLeft, enemyLeft, fieldW, gap) {
+    const slotW = Math.round(fieldW);
+    const playerPx = `${Math.round(playerLeft)}px`;
+    const enemyPx = `${Math.round(enemyLeft)}px`;
+    const gapPx = `${Math.round(gap)}px`;
+    for (const el of targets) {
+      if (!el) continue;
+      el.style.setProperty("--tablet-battle-field-display-w", `${slotW}px`);
+      el.style.setProperty("--tablet-battle-slot-w", `${slotW}px`);
+      el.style.setProperty("--tablet-battle-scene-offset-x", playerPx);
+      el.style.setProperty("--tablet-battle-enemy-slot-left", enemyPx);
+      el.style.setProperty("--battle-field-display-w", `${slotW}px`);
+      el.style.setProperty("--battle-grid-gap-display", gapPx);
+      if (el.id === "prep-field-column") {
+        el.style.setProperty("--battle-scene-offset-x", playerPx);
+        el.style.setProperty("--battle-enemy-slot-left", enemyPx);
+      }
+    }
+    document.documentElement.style.removeProperty("--tablet-battle-player-x");
+    document.documentElement.style.removeProperty("--tablet-battle-enemy-x");
+  }
+
+  /** Слоты героев: левый/правый рюкзак на масштабированном canvas (после layout — через getBoundingClientRect). */
+  function setTabletBattleAvatarPositions(root, displayCanvasW, fieldCol, stage) {
+    const logicalBattleW = readCssPx("--battle-canvas-w", displayCanvasW);
+    const scale = displayCanvasW / logicalBattleW;
+    const fieldW = readCssPx("--prep-canvas-w", 200) * scale;
+    const gap = readCssPx("--grid-gap", 36) * scale;
+
+    const sceneUi = document.getElementById("battle-scene-ui");
+    const island = document.getElementById("prep-field-island");
+    const columnW = fieldCol?.clientWidth
+      ?? sceneUi?.parentElement?.clientWidth
+      ?? stage?.clientWidth
+      ?? 0;
+
+    let playerLeft = Math.max(0, (columnW - displayCanvasW) / 2);
+    let enemyLeft = playerLeft + fieldW + gap;
+
+    if (sceneUi && island) {
+      const sceneRect = sceneUi.getBoundingClientRect();
+      const islandRect = island.getBoundingClientRect();
+      if (sceneRect.width > 0 && islandRect.width > 0) {
+        playerLeft = Math.max(0, islandRect.left - sceneRect.left);
+        enemyLeft = playerLeft + fieldW + gap;
+      }
+    }
+
+    applyTabletBattleAvatarVars(
+      [root, fieldCol].filter(Boolean),
+      playerLeft,
+      enemyLeft,
+      fieldW,
+      gap,
+    );
+  }
+
+  function syncTabletBattleAvatarPositions() {
+    const root = document.documentElement;
+    if (root.dataset.tabletSideFit !== "true" || !isBattleUiPhase()) return;
+    const displayCanvasW = readCssPx("--battle-canvas-display-w", 0);
+    if (displayCanvasW <= 0) return;
+    const fieldCol = document.getElementById("prep-field-column");
+    const stage = document.querySelector(".battle-canvas-stage");
+    setTabletBattleAvatarPositions(root, displayCanvasW, fieldCol, stage);
   }
 
   function syncBattleHudFeedDock() {
@@ -338,8 +407,11 @@
             root.style.setProperty("--tablet-battle-chrome-bottom", `${measureBattleHudReserve()}px`);
             root.style.setProperty("--battle-canvas-display-w", `${w}px`);
             root.style.setProperty("--battle-canvas-display-h", `${ch}px`);
-            setTabletBattleAvatarPositions(root, w, stageW);
             setCanvasDisplaySize(canvas, w, ch);
+            setTabletBattleAvatarPositions(root, w, fieldCol, stage);
+            requestAnimationFrame(() => {
+              setTabletBattleAvatarPositions(root, w, fieldCol, stage);
+            });
             syncMobileShopFabPosition();
             return;
           }
@@ -624,6 +696,7 @@
           const { h } = viewportSize();
           syncTabletSideLayoutVars(h, document.getElementById("app")?.dataset.phase ?? "prep");
           fitCanvasDisplaySize();
+          requestAnimationFrame(syncTabletBattleAvatarPositions);
         }
       });
     });
@@ -643,6 +716,14 @@
     const prepFieldCol = document.getElementById("prep-field-column");
     if (prepFieldCol && typeof ResizeObserver !== "undefined") {
       new ResizeObserver(scheduleCanvasFit).observe(prepFieldCol);
+    }
+    const battleSceneUi = document.getElementById("battle-scene-ui");
+    if (battleSceneUi && typeof ResizeObserver !== "undefined") {
+      new ResizeObserver(() => {
+        if (document.documentElement.dataset.tabletSideFit === "true" && isBattleUiPhase()) {
+          syncTabletBattleAvatarPositions();
+        }
+      }).observe(battleSceneUi);
     }
     const hud = document.getElementById("gamepad-hints-bar");
     if (hud) {
@@ -675,4 +756,5 @@
   window.scheduleCanvasFit = scheduleCanvasFit;
   window.syncMobileShopFabPosition = syncMobileShopFabPosition;
   window.syncBattleHudFeedDock = syncBattleHudFeedDock;
+  window.syncTabletBattleAvatarPositions = syncTabletBattleAvatarPositions;
 })();

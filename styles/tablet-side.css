@@ -164,6 +164,15 @@ html[data-tablet-side-fit="true"] #app[data-phase="replay"] .prep-field-column {
   overflow: visible;
   padding-bottom: var(--tablet-battle-chrome-bottom, 72px);
   box-sizing: border-box;
+  --battle-scene-offset-x: max(
+    0px,
+    calc((100% - var(--battle-canvas-display-w, var(--battle-canvas-w))) / 2)
+  );
+  --battle-enemy-slot-left: calc(
+    var(--battle-scene-offset-x)
+    + var(--tablet-battle-field-display-w, var(--battle-field-display-w, var(--prep-canvas-w)))
+    + var(--battle-grid-gap-display, var(--grid-gap))
+  );
 }
 
 html[data-tablet-side-fit="true"] #app[data-phase="battle"] .prep-field-island,
