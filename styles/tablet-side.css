@@ -362,7 +362,7 @@ html[data-tablet-side-fit="true"] #app[data-phase="replay"] .avatar-hero-shell .
 html[data-tablet-side-fit="true"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-stage,
 html[data-tablet-side-fit="true"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-stage {
   position: relative;
-  z-index: 2;
+  z-index: auto;
   flex: 0 0 auto;
   width: 100%;
   height: auto;
@@ -392,23 +392,7 @@ html[data-tablet-side-fit="true"] #app[data-phase="replay"] .portrait-zoom-clip 
   width: 100%;
   height: 100%;
   overflow: hidden;
-  transform-origin: top center;
-}
-
-html[data-tablet-side-fit="true"] #app[data-phase="battle"] .battle-scene-ui .avatar-emotion-mount,
-html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-ui .avatar-emotion-mount {
-  z-index: 13;
-  top: 0;
-}
-
-html[data-tablet-side-fit="true"] #app[data-phase="battle"] .battle-scene-avatar-player .avatar-emotion-mount,
-html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-avatar-player .avatar-emotion-mount {
-  right: calc(100% + 2px);
-}
-
-html[data-tablet-side-fit="true"] #app[data-phase="battle"] .battle-scene-avatar-enemy .avatar-emotion-mount,
-html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-avatar-enemy .avatar-emotion-mount {
-  left: calc(100% + 2px);
+  transform-origin: center bottom;
 }
 
 /* ─── Battle HUD: «События» на нижней панели, без подсказок геймпада ─── */

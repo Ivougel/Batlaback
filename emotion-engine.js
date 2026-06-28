@@ -147,6 +147,7 @@ function ensureEmotionMount(side) {
     mount.setAttribute("aria-hidden", "true");
     stage.appendChild(mount);
   }
+  mount.style.cssText = "position:absolute;inset:0;pointer-events:none;";
   return mount;
 }
 
@@ -597,16 +598,17 @@ function particleColor(emoji) {
 
 function upsertEmotionEl(uid, side, anim) {
   let el = emotionDomPool.get(uid);
-  const mount = ensureEmotionMount(side);
-  if (!mount) return null;
+  const layer = ensureEmotionLayer();
+  ensureEmotionMount(side);
+  if (!layer) return null;
   if (!el) {
     el = document.createElement("div");
     el.className = `battle-emotion-float battle-emotion-team-${side} battle-emotion-${anim.animation}`;
     el.dataset.emotionUid = uid;
     emotionDomPool.set(uid, el);
-    mount.appendChild(el);
-  } else if (el.parentElement !== mount) {
-    mount.appendChild(el);
+    layer.appendChild(el);
+  } else if (el.parentElement !== layer) {
+    layer.appendChild(el);
   }
   return el;
 }
@@ -654,10 +656,16 @@ function renderEmotionDom(anim, side, paused = false) {
   const el = upsertEmotionEl(uid, side, anim);
   if (!el) return;
 
+  const mount = ensureEmotionMount(side);
+  if (!mount) return;
+  const anchor = getMountCenterViewport(mount);
+  const x = anchor.x + offsetX;
+  const y = anchor.y + offsetY;
+
   el.style.position = "absolute";
-  el.style.left = "50%";
-  el.style.top = "50%";
-  el.style.transform = `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px)) rotate(${rotation}rad) scale(${scale})`;
+  el.style.left = `${x}px`;
+  el.style.top = `${y}px`;
+  el.style.transform = `translate(-50%, -50%) rotate(${rotation}rad) scale(${scale})`;
   el.style.opacity = String(Math.max(0.15, 1 - progress * 0.12));
   el.style.fontSize = `${48 * scale}px`;
   el.style.lineHeight = "1";

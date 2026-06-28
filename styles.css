@@ -544,7 +544,7 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
   overflow: hidden;
   width: 100%;
   height: 100%;
-  transform-origin: top center;
+  transform-origin: center bottom;
   transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -553,9 +553,9 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
   height: auto;
   max-height: none;
   object-fit: contain;
-  object-position: top center;
+  object-position: center bottom;
   display: block;
-  transform-origin: top center;
+  transform-origin: center bottom;
   transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -563,6 +563,7 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 #app[data-phase="replay"] .portrait-zoom-clip {
   transform: scale(var(--battle-portrait-zoom, 1.0));
   overflow: hidden;
+  transform-origin: center bottom;
 }
 
 @keyframes hero-hit {
@@ -1347,6 +1348,8 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
   gap: 0;
   pointer-events: none;
   overflow: visible;
+  z-index: auto;
+  isolation: auto;
 }
 
 .avatar-hero-upper {
@@ -1441,6 +1444,12 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
   justify-content: center;
   overflow: hidden;
   animation: avatar-hero-idle-sway 3.6s ease-in-out infinite;
+}
+
+.avatar-emotion-mount {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 }
 
 @keyframes avatar-hero-idle-sway {
@@ -7066,37 +7075,12 @@ html:not([data-tablet-side-fit="true"]):not([data-tablet-prep-hero="true"]) #app
 #app[data-phase="battle"] .battle-scene-ui .avatar-hero-stage .profile-avatar,
 #app[data-phase="replay"] .battle-scene-ui .avatar-hero-stage .profile-avatar {
   animation: avatar-hero-idle-sway 3.6s ease-in-out infinite;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
 }
 
-#app[data-phase="battle"] .battle-scene-ui .avatar-emotion-mount,
-#app[data-phase="replay"] .battle-scene-ui .avatar-emotion-mount {
-  position: absolute;
-  top: calc(4px * var(--ui-scale));
-  width: var(--battle-emotion-strip-w);
-  min-height: var(--battle-emotion-strip-w);
-  height: auto;
-  pointer-events: none;
-  z-index: 30;
-  overflow: visible;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-#app[data-phase="battle"] .battle-scene-avatar-player .avatar-emotion-mount,
-#app[data-phase="replay"] .battle-scene-avatar-player .avatar-emotion-mount {
-  right: calc(100% + 4px * var(--ui-scale));
-  left: auto;
-}
-
-#app[data-phase="battle"] .battle-scene-avatar-enemy .avatar-emotion-mount,
-#app[data-phase="replay"] .battle-scene-avatar-enemy .avatar-emotion-mount {
-  left: calc(100% + 4px * var(--ui-scale));
-  right: auto;
-}
-
-#app[data-phase="battle"] .battle-scene-ui .avatar-emotion-mount .battle-emotion-float,
-#app[data-phase="replay"] .battle-scene-ui .avatar-emotion-mount .battle-emotion-float {
+.battle-emotion-layer .battle-emotion-float {
   white-space: nowrap;
 }
 
