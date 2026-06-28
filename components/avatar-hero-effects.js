@@ -60,19 +60,6 @@ function renderAvatarHeroHTML(profile, team) {
 
   return `
     <div class="avatar-hero-shell avatar-hero-shell-${team}" data-team="${team}">
-      <div class="avatar-effects-float" aria-hidden="true">
-        <div class="avatar-damage-stacks" aria-hidden="true" hidden></div>
-        <div class="avatar-hero-status-zones" aria-hidden="true">
-          <div class="avatar-status-zone avatar-status-zone-buffs">
-            <div class="avatar-beads avatar-beads-positive avatar-status-stack" aria-hidden="true"></div>
-            <div class="avatar-benefit-stacks" aria-hidden="true" hidden></div>
-          </div>
-          <div class="avatar-status-zone avatar-status-zone-debuffs">
-            <div class="avatar-hero-debuff-row" hidden></div>
-            <div class="avatar-dot-stacks" aria-hidden="true" hidden></div>
-          </div>
-        </div>
-      </div>
       <div class="avatar-hero-name">${displayName}</div>
       <div class="avatar-hero-stage">
         <div class="profile-avatar profile-avatar-${team}"
@@ -96,6 +83,19 @@ function renderAvatarHeroHTML(profile, team) {
                 <div class="avatar-hero-stamina-fill avatar-hero-stamina-fill-${team}" style="width:${staminaPct}%"></div>
               </div>
               <span class="avatar-hero-stamina-label">${Math.ceil(staminaCurrent)}/${staminaMax}</span>
+            </div>
+          </div>
+        </div>
+        <div class="avatar-effects-float" aria-hidden="true">
+          <div class="avatar-damage-stacks" aria-hidden="true" hidden></div>
+          <div class="avatar-hero-status-zones" aria-hidden="true">
+            <div class="avatar-status-zone avatar-status-zone-buffs">
+              <div class="avatar-beads avatar-beads-positive avatar-status-stack" aria-hidden="true"></div>
+              <div class="avatar-benefit-stacks" aria-hidden="true" hidden></div>
+            </div>
+            <div class="avatar-status-zone avatar-status-zone-debuffs">
+              <div class="avatar-hero-debuff-row" hidden></div>
+              <div class="avatar-dot-stacks" aria-hidden="true" hidden></div>
             </div>
           </div>
         </div>

@@ -495,17 +495,8 @@ function drawStatusChips(ctx, side, anchorX, anchorY, align) {
   ctx.restore();
 }
 
-function drawBattleHudSide(ctx, team, side, canvasW) {
-  const layout = getHudLayout(team, canvasW);
-  const hp = Math.max(0, side?.hp || 0);
-  const maxHp = Math.max(1, side?.maxHp || 1);
-  const hpRatio = hp / maxHp;
-  const accent = hpAccentColor(hpRatio);
-
-  drawHudBar(ctx, layout.cx, layout.hpBarY, HUD_HP_BAR_W, HUD_HP_BAR_H, hpRatio, accent);
-
-  const anchorX = layout.cx;
-  drawStatusChips(ctx, side, anchorX, layout.chipStatusY, "center");
+function drawBattleHudSide(_ctx, _team, _side, _canvasW) {
+  // Status chips and HP/stamina bars render in DOM (.avatar-hero-footer).
 }
 
 function ensureHudPopup() {

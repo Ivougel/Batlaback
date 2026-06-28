@@ -862,7 +862,6 @@ html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .av
 
 html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-effects-float,
 html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-effects-float {
-  min-height: 72px;
   gap: 4px;
   z-index: 12;
 }

@@ -1344,15 +1344,15 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 
 .avatar-effects-float {
   position: absolute;
-  bottom: 100%;
+  top: 100%;
   left: 0;
   width: 100%;
-  min-height: calc(80px * var(--ui-scale));
+  margin-top: calc(4px * var(--ui-scale));
   pointer-events: none;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: calc(4px * var(--ui-scale));
   z-index: 10;
 }
