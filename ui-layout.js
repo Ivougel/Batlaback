@@ -63,6 +63,15 @@
     return false;
   }
 
+  function usesTabletPrepHeroLayout(root = document.documentElement) {
+    return root.dataset.tabletPrepHero === "true";
+  }
+
+  function computeTabletPrepHeroHeight(columnH, sceneTop = 14) {
+    const usable = Math.max(280, columnH - sceneTop - 12);
+    return Math.round(Math.min(440, Math.max(240, usable * 0.48)));
+  }
+
   function shouldUseStackedPrep(w, h) {
     if (shouldUseMobilePrepLayout(w, h)) return false;
 
@@ -210,7 +219,8 @@
 
   function syncTabletSideLayoutVars(h, phase) {
     const root = document.documentElement;
-    if (root.dataset.tabletSideFit !== "true") {
+    const tabletPrep = root.dataset.tabletPrepHero === "true";
+    if (root.dataset.tabletSideFit !== "true" && !tabletPrep) {
       clearTabletSideVars();
       return;
     }
@@ -220,12 +230,10 @@
     root.style.setProperty("--tablet-battle-chrome-bottom", `${Math.max(hudReserve, hudH + 12)}px`);
 
     if (phase === "prep") {
-      const chrome = measurePrepChromeHeight() + hudH;
-      const avail = Math.max(240, h - chrome);
-      const canvasH = readCssPx("--prep-canvas-h", 400);
+      const fieldCol = document.getElementById("prep-field-column");
       const sceneTop = readCssPx("--prep-scene-top", 14);
-      const heroH = Math.round(Math.min(360, Math.max(200, avail - canvasH - sceneTop - 24)));
-      root.style.setProperty("--tablet-prep-hero-h", `${heroH}px`);
+      const columnH = fieldCol?.clientHeight > 0 ? fieldCol.clientHeight : Math.max(320, h - measurePrepChromeHeight() - hudH);
+      root.style.setProperty("--tablet-prep-hero-h", `${computeTabletPrepHeroHeight(columnH, sceneTop)}px`);
       return;
     }
 
@@ -339,18 +347,18 @@
     const hasFieldColumn = !!document.querySelector(".prep-field-column");
 
     if (sideBySidePrep && hasFieldColumn) {
-      if (root.dataset.tabletSideFit === "true") {
+      if (usesTabletPrepHeroLayout(root)) {
         const stage = canvas.closest(".battle-canvas-stage");
         const fieldCol = canvas.closest(".prep-field-column");
         const stageW = fieldCol?.clientWidth ?? stage?.clientWidth ?? canvas.width;
         if (stageW > 0) {
-          const vh = window.visualViewport?.height ?? window.innerHeight;
-          const hudH = isHudVisible() ? (document.getElementById("gamepad-hints-bar")?.offsetHeight ?? 0) : 0;
-          const chrome = measurePrepChromeHeight() + hudH;
           const sceneTop = readCssPx("--prep-scene-top", 14);
-          const heroH = Math.round(Math.min(360, Math.max(200, (vh - chrome) * 0.36)));
+          const columnH = fieldCol?.clientHeight > 0
+            ? fieldCol.clientHeight
+            : Math.max(320, (window.visualViewport?.height ?? window.innerHeight) - measurePrepChromeHeight());
+          const heroH = computeTabletPrepHeroHeight(columnH, sceneTop);
           root.style.setProperty("--tablet-prep-hero-h", `${heroH}px`);
-          const maxH = Math.max(140, vh - chrome - heroH - sceneTop - 12);
+          const maxH = Math.max(120, columnH - heroH - sceneTop - 20);
           const scale = Math.min(stageW / canvas.width, maxH / canvas.height, 1);
           const w = Math.max(1, Math.floor(canvas.width * scale));
           const ch = Math.max(1, Math.floor(canvas.height * scale));
@@ -519,8 +527,12 @@
       ? "mobile"
       : (shouldUseStackedPrep(w, h) ? "stacked" : "side");
     document.documentElement.dataset.prepLayout = prepLayout;
-    document.documentElement.dataset.tabletSideFit = shouldUseTabletSideFit(w, h, prepLayout, touchDev, tier) ? "true" : "false";
-    if (document.documentElement.dataset.tabletSideFit !== "true") {
+    const tabletSideFit = shouldUseTabletSideFit(w, h, prepLayout, touchDev, tier);
+    const tabletPrepHero = tabletSideFit
+      || (prepLayout === "side" && w > h && (tier === "tablet" || touchDev));
+    document.documentElement.dataset.tabletSideFit = tabletSideFit ? "true" : "false";
+    document.documentElement.dataset.tabletPrepHero = tabletPrepHero ? "true" : "false";
+    if (!tabletSideFit && !tabletPrepHero) {
       clearTabletSideVars();
     }
     if (prepLayout !== "mobile") {
@@ -588,6 +600,10 @@
     const stage = document.querySelector(".battle-canvas-stage");
     if (stage && typeof ResizeObserver !== "undefined") {
       new ResizeObserver(scheduleCanvasFit).observe(stage);
+    }
+    const prepFieldCol = document.getElementById("prep-field-column");
+    if (prepFieldCol && typeof ResizeObserver !== "undefined") {
+      new ResizeObserver(scheduleCanvasFit).observe(prepFieldCol);
     }
     const hud = document.getElementById("gamepad-hints-bar");
     if (hud) {

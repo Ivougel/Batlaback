@@ -49,63 +49,91 @@ html[data-tablet-side-fit="true"] #app[data-phase="replay"] .prep-left-column {
   overflow: hidden;
 }
 
-html[data-tablet-side-fit="true"] #app[data-phase="prep"] .prep-field-column {
+html[data-tablet-side-fit="true"] #app[data-phase="prep"] .prep-field-column,
+html[data-tablet-prep-hero="true"] #app[data-phase="prep"] .prep-field-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
   min-height: 0;
   height: 100%;
-  overflow: visible;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
-/* ─── Prep: крупный герой в зоне под полем ─── */
+/* ─── Prep: крупный герой в зоне под полем (flex) ─── */
 
-html[data-tablet-side-fit="true"] #app[data-phase="prep"] .prep-field-island {
-  top: calc(var(--prep-scene-top) + var(--field-offset-y)) !important;
+html[data-tablet-prep-hero="true"] #app[data-phase="prep"] .prep-field-island {
+  position: relative !important;
+  flex: 0 0 auto;
+  align-self: center;
+  left: auto !important;
+  top: auto !important;
+  order: 1;
+  margin: calc(var(--prep-scene-top) + var(--field-offset-y)) auto 0;
+  width: var(--prep-canvas-display-w, var(--prep-canvas-w)) !important;
+  height: var(--prep-canvas-display-h, var(--prep-canvas-h)) !important;
+  max-width: calc(100% - 16px) !important;
 }
 
-html[data-tablet-side-fit="true"] #app[data-phase="prep"] .prep-character-layer {
-  left: calc(var(--field-base-x) + var(--field-offset-x)) !important;
+html[data-tablet-prep-hero="true"] #app[data-phase="prep"] .battle-canvas-stage {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+html[data-tablet-prep-hero="true"] #app[data-phase="prep"] .prep-character-layer {
+  position: relative !important;
+  flex: 1 1 auto;
+  align-self: center;
+  order: 2;
+  left: auto !important;
   right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
   width: min(
-    calc(var(--prep-canvas-display-w, var(--prep-canvas-w)) + 56px),
-    calc(100% - var(--field-base-x) - var(--field-offset-x) - 8px)
+    calc(var(--prep-canvas-display-w, var(--prep-canvas-w)) + 96px),
+    92%
   ) !important;
-  min-width: 0 !important;
-  top: calc(
-    var(--prep-scene-top) + var(--field-offset-y)
-    + var(--prep-canvas-display-h, var(--prep-canvas-h)) + 6px
-  ) !important;
-  bottom: 8px !important;
-  height: auto !important;
-  min-height: min(var(--tablet-prep-hero-h, 200px), 36vh) !important;
+  min-width: min(var(--prep-canvas-display-w, var(--prep-canvas-w)), 100%) !important;
+  min-height: var(--tablet-prep-hero-h, 240px) !important;
   max-height: none !important;
+  height: auto !important;
+  margin-top: 8px;
+  margin-bottom: 4px;
   justify-content: center;
   align-items: flex-end;
   overflow: visible;
   z-index: 3;
 }
 
-html[data-tablet-side-fit="true"] #app[data-phase="prep"][data-prep-side="enemy"] .prep-character-layer {
-  left: auto !important;
-  right: calc(var(--field-base-x) + var(--field-offset-x)) !important;
+html[data-tablet-prep-hero="true"] #app[data-phase="prep"][data-prep-side="enemy"] .prep-character-layer {
+  align-self: center;
 }
 
-html[data-tablet-side-fit="true"] #app[data-phase="prep"] .prep-character,
-html[data-tablet-side-fit="true"] #app[data-phase="prep"][data-prep-side="enemy"] .prep-character {
+html[data-tablet-prep-hero="true"] #app[data-phase="prep"] .prep-character,
+html[data-tablet-prep-hero="true"] #app[data-phase="prep"][data-prep-side="enemy"] .prep-character {
   width: 100%;
   height: 100%;
+  min-height: var(--tablet-prep-hero-h, 240px);
   justify-content: center;
   align-items: flex-end;
 }
 
-html[data-tablet-side-fit="true"] #app[data-phase="prep"] .prep-character-img {
+html[data-tablet-prep-hero="true"] #app[data-phase="prep"] .prep-character-img {
   height: 100% !important;
   width: auto !important;
   max-width: 100% !important;
-  max-height: 100% !important;
+  max-height: none !important;
+  min-height: calc(var(--tablet-prep-hero-h, 240px) - 8px) !important;
   object-fit: contain;
   object-position: center bottom;
 }
 
-html[data-tablet-side-fit="true"] #app[data-phase="prep"] .prep-stats-stack {
+html[data-tablet-prep-hero="true"] #app[data-phase="prep"] .prep-stats-stack {
+  order: 3;
   z-index: 4;
 }
 
