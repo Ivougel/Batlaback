@@ -198,10 +198,30 @@ html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-canvas-stage
 }
 
 html[data-tablet-side-fit="true"] #app[data-phase="battle"] .battle-scene-ui,
-html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-ui {
+html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-ui,
+html[data-tablet-prep-hero="true"] #app[data-phase="battle"] .battle-scene-ui,
+html[data-tablet-prep-hero="true"] #app[data-phase="replay"] .battle-scene-ui {
   position: relative !important;
+  display: grid !important;
+  grid-template-areas: "player gap enemy";
+  grid-template-columns:
+    minmax(0, var(--tablet-battle-slot-w, var(--battle-field-display-w, var(--prep-canvas-w))))
+    minmax(0, var(--battle-grid-gap-display, var(--grid-gap)))
+    minmax(0, var(--tablet-battle-slot-w, var(--battle-field-display-w, var(--prep-canvas-w))));
+  width: min(
+    100%,
+    var(
+      --tablet-battle-canvas-display-w,
+      calc(
+        2 * var(--tablet-battle-slot-w, var(--battle-field-display-w, var(--prep-canvas-w)))
+        + var(--battle-grid-gap-display, var(--grid-gap))
+      )
+    )
+  );
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
   flex: 1 1 auto;
-  width: 100%;
   min-height: var(--tablet-battle-hero-zone-h, min(260px, 34vh));
   max-height: none;
   margin-top: 4px;
@@ -209,26 +229,25 @@ html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-ui {
   inset: auto !important;
   overflow: visible;
   pointer-events: none;
-  --battle-scene-offset-x: max(
-    0px,
-    calc((100% - var(--battle-canvas-display-w, var(--battle-canvas-w))) / 2)
-  );
-  --battle-enemy-slot-left: calc(
-    var(--battle-scene-offset-x)
-    + var(--tablet-battle-field-display-w, var(--battle-field-display-w, var(--prep-canvas-w)))
-    + var(--battle-grid-gap-display, var(--grid-gap))
-  );
+  align-content: end;
+  align-items: end;
+  justify-content: center;
+  column-gap: 0;
 }
 
 html[data-tablet-side-fit="true"] #app[data-phase="battle"] .battle-scene-ui .battle-scene-avatar,
-html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-ui .battle-scene-avatar {
-  position: absolute !important;
+html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-ui .battle-scene-avatar,
+html[data-tablet-prep-hero="true"] #app[data-phase="battle"] .battle-scene-ui .battle-scene-avatar,
+html[data-tablet-prep-hero="true"] #app[data-phase="replay"] .battle-scene-ui .battle-scene-avatar {
+  position: relative !important;
   top: auto !important;
-  bottom: 0 !important;
+  bottom: auto !important;
+  left: auto !important;
+  right: auto !important;
   height: auto !important;
   max-height: 100% !important;
-  width: var(--tablet-battle-slot-w, var(--battle-avatar-w)) !important;
-  max-width: var(--tablet-battle-slot-w, var(--battle-avatar-w));
+  width: 100% !important;
+  max-width: 100% !important;
   padding-top: 0 !important;
   display: flex;
   align-items: flex-end;
@@ -237,17 +256,30 @@ html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-ui .ba
 }
 
 html[data-tablet-side-fit="true"] #app[data-phase="battle"] .battle-scene-avatar-player,
-html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-avatar-player {
-  left: var(--tablet-battle-scene-offset-x, var(--battle-scene-offset-x)) !important;
-  right: auto !important;
+html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-avatar-player,
+html[data-tablet-prep-hero="true"] #app[data-phase="battle"] .battle-scene-avatar-player,
+html[data-tablet-prep-hero="true"] #app[data-phase="replay"] .battle-scene-avatar-player {
+  grid-area: player !important;
   justify-content: flex-start !important;
 }
 
 html[data-tablet-side-fit="true"] #app[data-phase="battle"] .battle-scene-avatar-enemy,
-html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-avatar-enemy {
-  left: var(--tablet-battle-enemy-slot-left, var(--battle-enemy-slot-left)) !important;
-  right: auto !important;
+html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-avatar-enemy,
+html[data-tablet-prep-hero="true"] #app[data-phase="battle"] .battle-scene-avatar-enemy,
+html[data-tablet-prep-hero="true"] #app[data-phase="replay"] .battle-scene-avatar-enemy {
+  grid-area: enemy !important;
   justify-content: flex-end !important;
+}
+
+html[data-tablet-side-fit="true"] #app[data-phase="battle"] .battle-scene-ui .battle-scene-stats,
+html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-ui .battle-scene-stats,
+html[data-tablet-prep-hero="true"] #app[data-phase="battle"] .battle-scene-ui .battle-scene-stats,
+html[data-tablet-prep-hero="true"] #app[data-phase="replay"] .battle-scene-ui .battle-scene-stats,
+html[data-tablet-side-fit="true"] #app[data-phase="battle"] .battle-scene-ui .battle-build-stats-anchor,
+html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-ui .battle-build-stats-anchor,
+html[data-tablet-prep-hero="true"] #app[data-phase="battle"] .battle-scene-ui .battle-build-stats-anchor,
+html[data-tablet-prep-hero="true"] #app[data-phase="replay"] .battle-scene-ui .battle-build-stats-anchor {
+  display: none !important;
 }
 
 html[data-tablet-side-fit="true"] #app[data-phase="battle"] .battle-scene-ui .battle-scene-avatar .field-avatar-slot,
@@ -393,16 +425,6 @@ html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-avatar
 html[data-tablet-side-fit="true"] #app[data-phase="battle"] .battle-scene-avatar-enemy .avatar-emotion-mount,
 html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-avatar-enemy .avatar-emotion-mount {
   left: calc(100% + 2px);
-}
-
-html[data-tablet-side-fit="true"] #app[data-phase="battle"] .battle-scene-stats,
-html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-stats {
-  display: none;
-}
-
-html[data-tablet-side-fit="true"] #app[data-phase="battle"] .battle-build-stats-anchor,
-html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-build-stats-anchor {
-  display: none;
 }
 
 /* ─── Battle HUD: «События» на нижней панели, без подсказок геймпада ─── */

@@ -187,8 +187,9 @@
     "--tablet-battle-chrome-bottom",
     "--tablet-battle-scene-offset-x",
     "--tablet-battle-enemy-slot-left",
-    "--tablet-battle-slot-w",
-    "--tablet-battle-field-display-w",
+      "--tablet-battle-slot-w",
+      "--tablet-battle-field-display-w",
+      "--tablet-battle-canvas-display-w",
     "--prep-canvas-display-w",
     "--prep-canvas-display-h",
     "--battle-canvas-display-w",
@@ -215,92 +216,57 @@
       fieldCol?.style.removeProperty(name);
       sceneUi?.style.removeProperty(name);
     });
+    sceneUi?.style.removeProperty("width");
+    sceneUi?.style.removeProperty("max-width");
     root.style.removeProperty("--tablet-battle-player-x");
     root.style.removeProperty("--tablet-battle-enemy-x");
   }
 
-  function applyTabletBattleAvatarVars(targets, playerLeft, enemyLeft, fieldW, gap) {
-    const slotW = Math.round(fieldW);
-    const playerPx = `${Math.round(playerLeft)}px`;
-    const enemyPx = `${Math.round(enemyLeft)}px`;
-    const gapPx = `${Math.round(gap)}px`;
-    for (const el of targets) {
-      if (!el) continue;
-      el.style.setProperty("--tablet-battle-field-display-w", `${slotW}px`);
-      el.style.setProperty("--tablet-battle-slot-w", `${slotW}px`);
-      el.style.setProperty("--tablet-battle-scene-offset-x", playerPx);
-      el.style.setProperty("--tablet-battle-enemy-slot-left", enemyPx);
-      el.style.setProperty("--battle-field-display-w", `${slotW}px`);
-      el.style.setProperty("--battle-grid-gap-display", gapPx);
-      if (el.id === "prep-field-column") {
-        el.style.setProperty("--battle-scene-offset-x", playerPx);
-        el.style.setProperty("--battle-enemy-slot-left", enemyPx);
-      }
-    }
-    document.documentElement.style.removeProperty("--tablet-battle-player-x");
-    document.documentElement.style.removeProperty("--tablet-battle-enemy-x");
-  }
-
-  /** Левый край canvas относительно battle-scene-ui; fallback — центрирование в колонке. */
-  function measureTabletBattlePlayerLeft(sceneUi, canvas, columnW, displayCanvasW) {
-    const columnOffset = Math.max(0, (columnW - displayCanvasW) / 2);
-    if (!sceneUi) return columnOffset;
-
-    const sceneRect = sceneUi.getBoundingClientRect();
-    if (sceneRect.width <= 0) return columnOffset;
-
-    const canvasRect = canvas?.getBoundingClientRect();
-    const renderedCanvasW = canvasRect?.width > 0 ? canvasRect.width : displayCanvasW;
-    const centerOffset = Math.max(0, (columnW - renderedCanvasW) / 2);
-
-    if (!canvasRect || canvasRect.width <= 0) return centerOffset;
-
-    const fromCanvas = Math.max(0, canvasRect.left - sceneRect.left);
-    // island/full-bleed даёт ~0 — не доверяем, если колонка шире canvas.
-    if (fromCanvas < 4 && centerOffset >= 8) return centerOffset;
-    return fromCanvas;
-  }
-
-  /** Слоты героев под левым/правым рюкзаком — якорь #game-canvas, vars на battle-scene-ui. */
-  function setTabletBattleAvatarPositions(root, displayCanvasW, fieldCol, stage) {
+  /** Масштаб полей боя для grid карточек (2× рюкзак + gap), без left в px. */
+  function setTabletBattleFieldMetrics(root, displayCanvasW) {
     const canvas = document.getElementById("game-canvas");
     const sceneUi = document.getElementById("battle-scene-ui");
-    const columnW = fieldCol?.clientWidth
-      ?? sceneUi?.parentElement?.clientWidth
-      ?? stage?.clientWidth
-      ?? 0;
-
     const canvasRect = canvas?.getBoundingClientRect();
     const renderedCanvasW = canvasRect?.width > 0 ? canvasRect.width : displayCanvasW;
+    if (renderedCanvasW <= 0) return;
+
     const logicalBattleW = readCssPx("--battle-canvas-w", renderedCanvasW);
     const scale = renderedCanvasW / logicalBattleW;
     const fieldW = readCssPx("--prep-canvas-w", 200) * scale;
     const gap = readCssPx("--grid-gap", 36) * scale;
+    const slotW = Math.round(fieldW);
+    const gapPx = `${Math.round(gap)}px`;
+    const canvasPx = `${Math.round(renderedCanvasW)}px`;
 
-    const playerLeft = measureTabletBattlePlayerLeft(sceneUi, canvas, columnW, renderedCanvasW);
-    const enemyLeft = playerLeft + fieldW + gap;
-
-    applyTabletBattleAvatarVars(
-      [sceneUi, fieldCol, root].filter(Boolean),
-      playerLeft,
-      enemyLeft,
-      fieldW,
-      gap,
-    );
+    const targets = [sceneUi, root].filter(Boolean);
+    for (const el of targets) {
+      el.style.setProperty("--tablet-battle-field-display-w", `${slotW}px`);
+      el.style.setProperty("--tablet-battle-slot-w", `${slotW}px`);
+      el.style.setProperty("--tablet-battle-canvas-display-w", canvasPx);
+      el.style.setProperty("--battle-field-display-w", `${slotW}px`);
+      el.style.setProperty("--battle-grid-gap-display", gapPx);
+    }
+    if (sceneUi) {
+      sceneUi.style.width = canvasPx;
+      sceneUi.style.maxWidth = "100%";
+    }
+    root.style.removeProperty("--tablet-battle-scene-offset-x");
+    root.style.removeProperty("--tablet-battle-enemy-slot-left");
+    sceneUi?.style.removeProperty("--tablet-battle-scene-offset-x");
+    sceneUi?.style.removeProperty("--tablet-battle-enemy-slot-left");
   }
 
   function syncTabletBattleAvatarPositions() {
     const root = document.documentElement;
-    if (root.dataset.tabletSideFit !== "true" || !isBattleUiPhase()) return;
+    if (root.dataset.tabletSideFit !== "true" && root.dataset.tabletPrepHero !== "true") return;
+    if (!isBattleUiPhase()) return;
     const canvas = document.getElementById("game-canvas");
     let displayCanvasW = readCssPx("--battle-canvas-display-w", 0);
     if (displayCanvasW <= 0 && canvas) {
       displayCanvasW = canvas.getBoundingClientRect().width;
     }
     if (displayCanvasW <= 0) return;
-    const fieldCol = document.getElementById("prep-field-column");
-    const stage = document.querySelector(".battle-canvas-stage");
-    setTabletBattleAvatarPositions(root, displayCanvasW, fieldCol, stage);
+    setTabletBattleFieldMetrics(root, displayCanvasW);
   }
 
   function syncBattleHudFeedDock() {
@@ -408,7 +374,7 @@
             return;
           }
         }
-      } else if (tabletSide) {
+      } else if (tabletSide || root.dataset.tabletPrepHero === "true") {
         const stage = canvas.closest(".battle-canvas-stage");
         const fieldCol = canvas.closest(".prep-field-column");
         if (stage) {
@@ -430,9 +396,9 @@
             root.style.setProperty("--battle-canvas-display-w", `${w}px`);
             root.style.setProperty("--battle-canvas-display-h", `${ch}px`);
             setCanvasDisplaySize(canvas, w, ch);
-            setTabletBattleAvatarPositions(root, w, fieldCol, stage);
+            setTabletBattleFieldMetrics(root, w);
             requestAnimationFrame(() => {
-              setTabletBattleAvatarPositions(root, w, fieldCol, stage);
+              setTabletBattleFieldMetrics(root, w);
               requestAnimationFrame(() => syncTabletBattleAvatarPositions());
             });
             syncMobileShopFabPosition();
@@ -715,7 +681,11 @@
         if (document.documentElement.dataset.battleHudPin === "true") {
           applyBattleHudPin(true, true);
         }
-        if (document.documentElement.dataset.tabletSideFit === "true" && isBattleUiPhase()) {
+        if (
+          (document.documentElement.dataset.tabletSideFit === "true"
+            || document.documentElement.dataset.tabletPrepHero === "true")
+          && isBattleUiPhase()
+        ) {
           const { h } = viewportSize();
           syncTabletSideLayoutVars(h, document.getElementById("app")?.dataset.phase ?? "prep");
           fitCanvasDisplaySize();
@@ -744,7 +714,11 @@
     const gameCanvas = document.getElementById("game-canvas");
     const prepFieldIsland = document.getElementById("prep-field-island");
     const syncTabletAvatarsOnResize = () => {
-      if (document.documentElement.dataset.tabletSideFit === "true" && isBattleUiPhase()) {
+      if (
+        (document.documentElement.dataset.tabletSideFit === "true"
+          || document.documentElement.dataset.tabletPrepHero === "true")
+        && isBattleUiPhase()
+      ) {
         syncTabletBattleAvatarPositions();
       }
     };

@@ -6968,8 +6968,8 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
   background: transparent;
 }
 
-#app[data-phase="battle"] .battle-scene-ui,
-#app[data-phase="replay"] .battle-scene-ui {
+html:not([data-tablet-side-fit="true"]):not([data-tablet-prep-hero="true"]) #app[data-phase="battle"] .battle-scene-ui,
+html:not([data-tablet-side-fit="true"]):not([data-tablet-prep-hero="true"]) #app[data-phase="replay"] .battle-scene-ui {
   position: absolute;
   inset: 0;
   pointer-events: none;
@@ -6977,8 +6977,8 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
   overflow: visible;
 }
 
-#app[data-phase="battle"] .battle-scene-ui .battle-scene-avatar,
-#app[data-phase="replay"] .battle-scene-ui .battle-scene-avatar {
+html:not([data-tablet-side-fit="true"]):not([data-tablet-prep-hero="true"]) #app[data-phase="battle"] .battle-scene-ui .battle-scene-avatar,
+html:not([data-tablet-side-fit="true"]):not([data-tablet-prep-hero="true"]) #app[data-phase="replay"] .battle-scene-ui .battle-scene-avatar {
   position: absolute;
   top: calc(var(--prep-character-top) - 36px * var(--ui-scale));
   height: calc(var(--battle-scene-avatar-h) + var(--avatar-effects-panel-h) + 36px * var(--ui-scale));
@@ -7196,14 +7196,14 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
   font-size: calc(1.45rem * var(--ui-scale));
 }
 
-#app[data-phase="battle"] .battle-scene-avatar-player,
-#app[data-phase="replay"] .battle-scene-avatar-player {
+html:not([data-tablet-side-fit="true"]):not([data-tablet-prep-hero="true"]) #app[data-phase="battle"] .battle-scene-avatar-player,
+html:not([data-tablet-side-fit="true"]):not([data-tablet-prep-hero="true"]) #app[data-phase="replay"] .battle-scene-avatar-player {
   left: var(--battle-scene-offset-x);
   justify-content: flex-start;
 }
 
-#app[data-phase="battle"] .battle-scene-avatar-enemy,
-#app[data-phase="replay"] .battle-scene-avatar-enemy {
+html:not([data-tablet-side-fit="true"]):not([data-tablet-prep-hero="true"]) #app[data-phase="battle"] .battle-scene-avatar-enemy,
+html:not([data-tablet-side-fit="true"]):not([data-tablet-prep-hero="true"]) #app[data-phase="replay"] .battle-scene-avatar-enemy {
   left: var(--battle-enemy-slot-left);
   justify-content: flex-end;
 }
