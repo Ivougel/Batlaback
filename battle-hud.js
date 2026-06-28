@@ -493,15 +493,13 @@ function drawBattleHudSide(ctx, team, side, canvasW, skipChips) {
   const hpRatio = hp / maxHp;
   const accent = hpAccentColor(hpRatio);
   const barX = layout.cx - HUD_HP_BAR_W / 2;
-  const chipY = layout.hpBarY + HUD_HP_BAR_H + 6;
 
   drawHudBar(ctx, layout.cx, layout.hpBarY, HUD_HP_BAR_W, HUD_HP_BAR_H, hpRatio, accent);
 
-  if (!skipChips) {
-    const align = team === "player" ? "left" : "right";
-    const anchorX = team === "player" ? barX : barX + HUD_HP_BAR_W;
-    drawStatusChips(ctx, side, anchorX, chipY, align);
-  }
+  const align = team === "player" ? "left" : "right";
+  const anchorX = team === "player" ? barX : barX + HUD_HP_BAR_W;
+  const chipY = layout.hpBarY + HUD_HP_BAR_H + 4;
+  drawStatusChips(ctx, side, anchorX, chipY, align);
 }
 
 function ensureHudPopup() {
@@ -600,7 +598,8 @@ function closeBattleHudPopups() {
 }
 
 function isMobilePortraitBattleHud() {
-  return document.documentElement.dataset.prepLayout === "mobile";
+  // TODO: implement HTML chip fallback for mobile portrait
+  return false;
 }
 
 function drawBattleHud(ctx, battleState) {
