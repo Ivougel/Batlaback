@@ -115,6 +115,8 @@
       "--battle-canvas-display-h",
       "--battle-field-display-w",
       "--battle-grid-gap-display",
+      "--mobile-battle-hero-zone-h",
+      "--mobile-battle-hero-img-h",
       "--prep-canvas-display-w",
       "--prep-canvas-display-h",
       "--prep-shop-fab-top",
@@ -184,6 +186,9 @@
             const scale = Math.min(stageW / cssW, maxH / cssH, 1);
             const w = Math.max(1, Math.floor(cssW * scale));
             const h = Math.max(1, Math.floor(cssH * scale));
+            const heroImgH = Math.round(Math.min(168, Math.max(108, avatarZone * 0.46)));
+            root.style.setProperty("--mobile-battle-hero-zone-h", `${avatarZone}px`);
+            root.style.setProperty("--mobile-battle-hero-img-h", `${heroImgH}px`);
             setCanvasDisplaySize(canvas, w, h);
             setMobileBattleDisplayVars(w, h, cssW);
             syncMobileShopFabPosition();
