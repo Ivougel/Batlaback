@@ -11,6 +11,82 @@
   display: none;
 }
 
+/* ─── Global mobile typography (393×851 and similar) ─── */
+
+html[data-prep-layout="mobile"] {
+  font-size: 15px;
+}
+
+html[data-prep-layout="mobile"] h3,
+html[data-prep-layout="mobile"] #shop-panel-title {
+  font-size: 0.88rem;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] #prep-toolbar .stat-round,
+html[data-prep-layout="mobile"] #app[data-phase="prep"] #prep-toolbar .phase-label,
+html[data-prep-layout="mobile"] #app[data-phase="prep"] #shop-panel .shop-gold-stat {
+  font-size: 0.85rem;
+}
+
+/* ─── Screens 1–3: mode & class selection ─── */
+
+html[data-prep-layout="mobile"] .class-modal .game-mode-grid,
+html[data-prep-layout="mobile"] .class-modal .class-grid {
+  gap: 12px;
+}
+
+html[data-prep-layout="mobile"] .class-modal .glass-card {
+  padding: 16px 20px;
+}
+
+html[data-prep-layout="mobile"] .class-modal .class-name {
+  font-size: 1.15rem;
+}
+
+html[data-prep-layout="mobile"] .class-modal .class-desc,
+html[data-prep-layout="mobile"] .class-modal .class-bonus {
+  font-size: 0.85rem;
+}
+
+html[data-prep-layout="mobile"] .class-modal .glass-card-icon--class,
+html[data-prep-layout="mobile"] .class-modal .game-mode-card .glass-card-icon {
+  width: 100%;
+  height: 110px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+html[data-prep-layout="mobile"] .class-modal .glass-card-icon .class-sticker {
+  width: auto;
+  height: 110px;
+  max-width: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+}
+
+html[data-prep-layout="mobile"] .class-mobile-dock .btn-glass-start,
+html[data-prep-layout="mobile"] .class-mobile-dock .btn-glass-back {
+  font-size: 1rem;
+  padding: 14px;
+  width: 100%;
+  max-width: none;
+  min-height: 48px;
+}
+
+html[data-prep-layout="mobile"] .class-mobile-dock:not(.hidden) {
+  flex-direction: column;
+  gap: 10px;
+}
+
+html[data-prep-layout="mobile"] .class-modal .class-step-actions .btn-secondary,
+html[data-prep-layout="mobile"] .class-modal .class-step-actions .btn-primary {
+  font-size: 1rem;
+  padding: 14px;
+  width: 100%;
+}
+
 /* ─── Портрет: один экран ─── */
 
 html[data-prep-layout="mobile"] body {
@@ -64,8 +140,9 @@ html[data-prep-mobile-fit="true"] #app[data-phase="prep"] .prep-field-island {
   top: calc(var(--prep-scene-top) + var(--field-offset-y)) !important;
   left: calc(var(--field-base-x) + var(--field-offset-x)) !important;
   width: var(--prep-canvas-display-w, var(--prep-canvas-w)) !important;
-  height: var(--prep-canvas-display-h, var(--prep-canvas-h)) !important;
+  height: min(var(--prep-canvas-display-h, var(--prep-canvas-h)), 38vh) !important;
   max-width: calc(100% - 2 * var(--field-base-x)) !important;
+  max-height: 38vh !important;
   min-height: 0 !important;
 }
 
@@ -75,7 +152,7 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] .battle-canvas-stage {
   justify-content: center;
   width: 100%;
   height: 100%;
-  max-height: none;
+  max-height: 38vh;
   overflow: hidden;
 }
 
@@ -92,19 +169,45 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-stats-stack {
 }
 
 html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-stats-hud {
-  max-width: min(210px, 58vw);
-  font-size: 0.82rem;
+  max-width: min(280px, 72vw);
+  font-size: 0.9rem;
   padding: 8px 10px;
   min-height: 48px;
 }
 
 html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-stats-class {
-  font-size: 0.88rem;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-character-layer {
-  --prep-hero-slot-height: min(320px, 36vh);
-  --prep-hero-slot-width: 22%;
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-stats-row {
+  gap: 12px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-character-layer,
+html[data-prep-layout="mobile"] #app[data-phase="prep"][data-prep-side="enemy"] .prep-character-layer {
+  left: 50% !important;
+  right: auto !important;
+  transform: translateX(-50%);
+  width: min(48vw, 170px);
+  min-height: 160px;
+  height: min(160px, 20vh);
+  justify-content: center;
+  align-items: flex-end;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-character-img,
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .profile-avatar-img {
+  height: 110px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  margin: 0 auto;
 }
 
 html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-character-emoji {
@@ -119,9 +222,9 @@ html[data-prep-layout="mobile"][data-game-phase="prep"] .prep-mobile-shop-btn {
   justify-content: center;
   position: fixed;
   z-index: 9260;
-  top: var(--prep-shop-fab-top, auto);
-  right: var(--prep-shop-fab-right, max(12px, env(safe-area-inset-right)));
-  bottom: auto;
+  top: auto;
+  right: 16px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
   left: auto;
   width: 56px;
   height: 56px;
@@ -208,7 +311,7 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] #prep-toolbar .prep-side
   max-width: 84px;
   min-height: 44px;
   padding: 8px 6px;
-  font-size: 0.68rem;
+  font-size: 0.85rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -272,7 +375,7 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] #shop-panel {
   width: 100%;
   min-width: 0;
   max-width: none;
-  max-height: min(78dvh, calc(var(--app-h, 100dvh) - 56px));
+  max-height: 62vh;
   margin: 0;
   padding: calc(8px * var(--ui-scale)) calc(10px * var(--ui-scale))
     calc(10px * var(--ui-scale) + env(safe-area-inset-bottom, 0px));
@@ -335,20 +438,36 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] .shop-panel .shop-slots 
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-auto-rows: calc(96px * var(--ui-scale));
+  grid-auto-rows: minmax(calc(88px * var(--ui-scale)), auto);
   max-height: none;
 }
 
 html[data-prep-layout="mobile"] #app[data-phase="prep"] .shop-panel .shop-card,
 html[data-prep-layout="mobile"] #app[data-phase="prep"] .shop-panel .shop-card.empty {
-  height: calc(96px * var(--ui-scale));
-  min-height: calc(96px * var(--ui-scale));
-  max-height: calc(96px * var(--ui-scale));
+  height: auto;
+  min-height: calc(88px * var(--ui-scale));
+  max-height: none;
 }
 
 html[data-prep-layout="mobile"] #app[data-phase="prep"] {
-  --shop-item-icon-size: calc(58px * var(--ui-scale, 1));
-  --shop-item-icon-font: calc(46px * var(--ui-scale, 1));
+  --shop-item-icon-size: 40px;
+  --shop-item-icon-font: 32px;
+  --shop-item-icon-duo-width: 72px;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] #shop-panel .shop-item-visual {
+  overflow: visible;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] #shop-panel .shop-card .name {
+  font-size: 0.82rem;
+  line-height: 1.2;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] #shop-panel .shop-item-visual .cost {
+  right: 0;
+  bottom: 0;
+  z-index: 3;
 }
 
 html[data-prep-layout="mobile"] #app[data-phase="prep"] #shop-panel .shop-sell-zone {
@@ -361,6 +480,7 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] #shop-panel .bench-panel
   margin-top: calc(4px * var(--ui-scale));
   padding-top: calc(6px * var(--ui-scale));
   border-top: 1px solid var(--border);
+  font-size: 0.78rem;
 }
 
 html[data-prep-layout="mobile"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-slots {
@@ -368,12 +488,21 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] #shop-panel .bench-panel
 }
 
 html[data-prep-layout="mobile"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-card {
-  min-height: calc(48px * var(--ui-scale));
+  min-height: 48px;
+  height: 48px;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] #shop-panel .shop-action-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
 }
 
 html[data-prep-layout="mobile"] #app[data-phase="prep"] #shop-panel .shop-action-row .btn-secondary {
   min-height: 48px;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
+  padding: 12px 0;
+  width: 100%;
 }
 
 html[data-prep-layout="mobile"] #app[data-phase="prep"] .btn-refresh-shop {
@@ -547,12 +676,7 @@ html[data-prep-layout="mobile"] #class-step-opponent:not(.hidden) .class-step-su
 }
 
 html[data-prep-layout="mobile"] #class-step-opponent:not(.hidden) .glass-card {
-  padding: 16px 14px;
-}
-
-html[data-prep-layout="mobile"] #class-step-opponent:not(.hidden) .glass-card-icon {
-  width: 64px;
-  height: 64px;
+  padding: 16px 20px;
 }
 
 /* ─── Prep: «В бой!» в toolbar справа ─── */
