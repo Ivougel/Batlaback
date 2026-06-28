@@ -96,6 +96,11 @@ function clearEmotionLayer() {
 }
 
 function getEmotionMount(side) {
+  const appPhase = document.getElementById("app")?.dataset?.phase;
+  if (appPhase === "battle") {
+    const hudMount = document.getElementById(`${side}-hud-emotion-mount`);
+    if (hudMount) return hudMount;
+  }
   const panelId = side === "player" ? "player-avatar-panel" : "enemy-avatar-panel";
   return document.querySelector(`#${panelId} .avatar-hero-stage`)
     || document.querySelector(`#${panelId} .profile-avatar`);
@@ -118,6 +123,10 @@ function ensureEmotionMount(side) {
 
 /** Локальное смещение над головой (px от центра stage). */
 function getHeadOffset(side) {
+  const appPhase = document.getElementById("app")?.dataset?.phase;
+  if (appPhase === "battle" && typeof window.HERO_ANCHOR?.getEmojiOffset === "function") {
+    return window.HERO_ANCHOR.getEmojiOffset(side);
+  }
   return {
     x: side === "player" ? EMOJI_SIDE_OFFSET_X : -EMOJI_SIDE_OFFSET_X,
     y: EMOJI_HEAD_OFFSET_Y,
@@ -130,6 +139,11 @@ function getMountCenterViewport(mount) {
 }
 
 function getHeroAnchor(side) {
+  const appPhase = document.getElementById("app")?.dataset?.phase;
+  if (appPhase === "battle" && typeof window.HERO_ANCHOR?.getViewportCenter === "function") {
+    const pt = window.HERO_ANCHOR.getViewportCenter(side);
+    if (pt?.x != null && pt?.y != null) return pt;
+  }
   if (typeof getProfileAvatarViewportCenter === "function") {
     const pt = getProfileAvatarViewportCenter(side);
     if (pt?.x != null && pt?.y != null) return { x: pt.x, y: pt.y };

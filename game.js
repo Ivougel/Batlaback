@@ -767,8 +767,8 @@ function init() {
   canvas.addEventListener("mousedown", (e) => {
     if (isSyntheticMouseFromTouch()) return;
     markMouseInteraction();
-    if (phase === "battle" && typeof handleDmgChipCanvasClick === "function") {
-      handleDmgChipCanvasClick(e.clientX, e.clientY);
+    if (phase === "battle" && typeof handleBattleHudClick === "function") {
+      handleBattleHudClick(e.clientX, e.clientY);
     }
     onMouseDown(e);
   });
@@ -2057,7 +2057,7 @@ function startBattle() {
       );
       battleStartTime = Date.now();
       if (typeof resetEmotionEngine === "function") resetEmotionEngine();
-      if (typeof resetRoundDamage === "function") resetRoundDamage();
+      if (typeof initBattleHud === "function") initBattleHud();
       if (typeof hideBattleCountdownOverlay === "function") hideBattleCountdownOverlay();
       if (typeof initBattleCountdown === "function") initBattleCountdown(battleState);
       if (typeof initBattleDamageTracker === "function") initBattleDamageTracker(battleState);
@@ -2099,7 +2099,7 @@ function endBattle() {
   const finishedState = battleState;
   battleState = null;
   clearBattleFloatLayer();
-  if (typeof closeDmgPopup === "function") closeDmgPopup();
+  if (typeof closeBattleHudPopups === "function") closeBattleHudPopups();
   if (typeof clearBattleDamageSummary === "function") clearBattleDamageSummary(finishedState);
   if (typeof hideBattleCountdownOverlay === "function") hideBattleCountdownOverlay();
 
@@ -2802,33 +2802,11 @@ function draw() {
     }
   }
   if (isBattleUiPhase() && battleState) {
-    battleState.player.items.forEach((item) => {
-      drawBattleItemWithAnimation(
-        ctx,
-        item,
-        "player",
-        ITEM_CATALOG[item.itemId],
-        cellRect,
-        roundRect,
-        battleState,
-      );
-    });
-    battleState.enemy.items.forEach((item) => {
-      drawBattleItemWithAnimation(
-        ctx,
-        item,
-        "enemy",
-        ITEM_CATALOG[item.itemId],
-        cellRect,
-        roundRect,
-        battleState,
-      );
-    });
+    drawPlacedItems(battleState.player.items, "player", false, true);
+    drawPlacedItems(battleState.enemy.items, "enemy", true, true);
     drawAttackAnimations(ctx, battleState);
     renderBattleEffectsOverlay(battleState);
     if (typeof updateBattleAnalyzer === "function") updateBattleAnalyzer(battleState, 0);
-    if (typeof syncAllDamageSummaryDisplays === "function") syncAllDamageSummaryDisplays(battleState);
-    if (typeof syncLiveAvatarHeroFrame === "function") syncLiveAvatarHeroFrame(battleState);
     if (typeof renderBattleCountdown === "function") renderBattleCountdown(battleState);
     if (isBattleUiPhase() && typeof drawEmotionLayer === "function") {
       drawEmotionLayer(ctx, battleState, (Date.now() - battleStartTime) / 1000);
@@ -2841,8 +2819,8 @@ function draw() {
     if (typeof clearDamageFlightLayer === "function") clearDamageFlightLayer();
     if (typeof hideBattleCountdownOverlay === "function") hideBattleCountdownOverlay();
   }
-  if (phase === "battle" && battleState && typeof drawDamageChips === "function") {
-    drawDamageChips(ctx, battleState);
+  if (phase === "battle" && battleState && typeof drawBattleHud === "function") {
+    drawBattleHud(ctx, battleState);
   }
 }
 
@@ -3029,6 +3007,22 @@ function drawLoadoutItems(items, team, dimmed) {
     ctx.globalAlpha = 1;
     ctx.restore();
   });
+}
+
+function drawPlacedItems(items, team, dimmed, animated) {
+  if (!items?.length) return;
+  if (animated && battleState) {
+    items.forEach((item) => {
+      const def = ITEM_CATALOG[item.itemId];
+      if (!def) return;
+      drawBattleItemWithAnimation(ctx, item, team, def, cellRect, roundRect, battleState);
+    });
+    if (typeof drawAllPrepItemIdleEffects === "function") {
+      drawAllPrepItemIdleEffects(ctx, items, team, synergyAnimTime);
+    }
+    return;
+  }
+  drawLoadoutItems(items, team, dimmed);
 }
 
 function drawItemPreview(x, y, def, itemId, selected, rotation, targetCtx = ctx) {
