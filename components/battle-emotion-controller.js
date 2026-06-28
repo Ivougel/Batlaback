@@ -181,6 +181,9 @@ function resolveBattleDialogueSlots(state, team, presentation) {
   if (!reactionEmoji && !moodEmoji) {
     reactionEmoji = presentation.primaryEmoji || presentation.secondaryEmoji || null;
   }
+  if (!reactionEmoji) {
+    reactionEmoji = presentation.primaryEmoji || null;
+  }
 
   let secondaryEmoji = presentation.secondaryEmoji;
   if (!secondaryEmoji
@@ -356,6 +359,46 @@ function kayfuPointFromRect(rect, phase, team) {
   };
 }
 
+/** Все диалоговые эмодзи — кластером рядом с кайфушником (тот же fixed-overlay). */
+function commentaryPointNearKayfu(rect, kayfuPt, kind, team, slotIndex = 0, phase = 0) {
+  if (!kayfuPt || !rect?.width) return null;
+  const side = team === "player" ? -1 : 1;
+  const wobbleX = Math.sin(phase * 0.9 + slotIndex * 1.4) * rect.width * 0.018;
+  const wobbleY = Math.cos(phase * 0.65 + slotIndex * 0.9) * rect.height * 0.012;
+  const offsets = {
+    kayfu: { rx: 0, ry: 0, rot: kayfuPt.rot, scale: 1 },
+    mood: { rx: side * rect.width * -0.30, ry: rect.height * -0.20, rot: -10, scale: 1 },
+    reaction: { rx: side * rect.width * 0.32, ry: rect.height * -0.26, rot: 12, scale: 1.06 },
+    secondary: { rx: side * rect.width * 0.04, ry: rect.height * -0.40, rot: -5, scale: 0.95 },
+  };
+  const off = offsets[kind] || offsets.reaction;
+  return {
+    x: kayfuPt.x + off.rx + wobbleX,
+    y: kayfuPt.y + off.ry + wobbleY,
+    rot: off.rot + Math.sin(phase * 0.55 + slotIndex) * 5,
+    scale: off.scale,
+  };
+}
+
+function hopPointNearKayfu(rect, kayfuPt, key, team, tick) {
+  if (!kayfuPt || !rect?.width) return null;
+  const h = hashEffectSlot(key, team);
+  const jumpEvery = (2.8 + (h % 10) * 0.26) * EFFECT_HOP_INTERVAL_SCALE;
+  const jumpPhase = Math.floor(tick / jumpEvery);
+  const rnd = (n) => {
+    const x = Math.sin((h + 1) * 928371 + n * 2654435761 + jumpPhase * 1337) * 10000;
+    return x - Math.floor(x);
+  };
+  const angle = rnd(1) * Math.PI * 2;
+  const radius = rect.width * (0.20 + rnd(2) * 0.24);
+  return {
+    x: kayfuPt.x + Math.cos(angle) * radius,
+    y: kayfuPt.y + Math.sin(angle) * radius * 0.72 - rect.height * 0.06,
+    rot: -18 + rnd(3) * 36,
+    scale: 0.88,
+  };
+}
+
 function hashEffectSlot(key, team) {
   let h = team === "enemy" ? 17 : 3;
   for (let i = 0; i < key.length; i += 1) h = (h * 31 + key.charCodeAt(i)) % 997;
@@ -516,35 +559,33 @@ function renderBattleCommentaryOverlay(state) {
         : null);
 
     const dialogue = resolveBattleDialogueSlots(state, team, presentation);
+    const kayfuPt = kayfuPointFromRect(rect, presentation.floatPhase, team);
+    if (!kayfuPt) return;
+
     const emojiSlots = [
-      { uid: `${team}-kayfu`, emoji: KAYFU_EMOJI, slot: -1, kind: "kayfu" },
-      { uid: `${team}-mood`, emoji: dialogue.moodEmoji, slot: 0, kind: "mood" },
-      { uid: `${team}-reaction`, emoji: dialogue.reactionEmoji, slot: 1, kind: "reaction" },
-      { uid: `${team}-secondary`, emoji: dialogue.secondaryEmoji, slot: 2, kind: "secondary" },
+      { uid: `${team}-kayfu`, emoji: KAYFU_EMOJI, kind: "kayfu" },
+      { uid: `${team}-mood`, emoji: dialogue.moodEmoji, kind: "mood", slot: 0 },
+      { uid: `${team}-reaction`, emoji: dialogue.reactionEmoji, kind: "reaction", slot: 1 },
+      { uid: `${team}-secondary`, emoji: dialogue.secondaryEmoji, kind: "secondary", slot: 2 },
     ];
 
-    emojiSlots.forEach(({ uid, emoji, slot, kind }) => {
+    emojiSlots.forEach(({ uid, emoji, kind, slot = 0 }) => {
       if (!emoji) return;
       active.add(uid);
-      let pt;
-      if (kind === "kayfu") {
-        pt = kayfuPointFromRect(rect, presentation.floatPhase, team);
-      } else {
-        pt = orbitPointFromRect(rect, presentation.floatPhase + slot * 0.85, slot);
-      }
+      const pt = commentaryPointNearKayfu(rect, kayfuPt, kind, team, slot, presentation.floatPhase);
       if (!pt) return;
       const el = upsertBattleCommentaryEl(
         uid,
         `battle-commentary-emoji battle-commentary-${kind} battle-commentary-team-${team}`,
         emoji,
       );
-      placeCommentaryEl(el, pt.x, pt.y, pt.rot);
+      placeCommentaryEl(el, pt.x, pt.y, pt.rot, pt.scale ?? 1);
     });
 
     collectEffectOrbitItems(profile).forEach((item) => {
       const uid = `${team}-fx-${item.key}`;
       active.add(uid);
-      const pt = hopPointFromRect(rect, item.key, team, presentation.floatPhase);
+      const pt = hopPointNearKayfu(rect, kayfuPt, item.key, team, presentation.floatPhase);
       if (!pt) return;
       const countHtml = item.count > 1 ? `<span class="battle-commentary-fx-count">×${item.count}</span>` : "";
       const el = upsertBattleCommentaryEl(
@@ -553,7 +594,7 @@ function renderBattleCommentaryOverlay(state) {
         `${item.icon}${countHtml}`,
         true,
       );
-      placeCommentaryEl(el, pt.x, pt.y, pt.rot, item.dotActive ? 1.08 : 1);
+      placeCommentaryEl(el, pt.x, pt.y, pt.rot, item.dotActive ? 1.08 : (pt.scale ?? 0.88));
     });
   });
 
@@ -685,6 +726,11 @@ function applyEmotionPresentation(team, presentation, profile, state) {
   layoutEmotionFloat(reactionEl, dialogue.reactionEmoji, presentation.floatPhase + 0.85, 1);
   layoutEmotionFloat(secondaryEl, dialogue.secondaryEmoji, presentation.floatPhase + 1.55, 2);
 
+  // Визуал — только fixed-overlay у головы; in-shell слой обрезается layout.
+  [kayfuEl, moodEl, reactionEl, secondaryEl].forEach((el) => {
+    if (el) el.hidden = true;
+  });
+
   if (timerEl) {
     timerEl.textContent = presentation.showTimer ? presentation.elapsedLabel : "";
     timerEl.hidden = !presentation.showTimer;
@@ -703,6 +749,9 @@ function applyEmotionPresentation(team, presentation, profile, state) {
   shell.dataset.moodState = presentation.mood?.id || "calm";
 
   syncEffectOrbit(team, profile, presentation.floatPhase);
+  shell.querySelectorAll(".avatar-effect-hop").forEach((el) => {
+    el.hidden = true;
+  });
 }
 
 function updateBattleEmotions(state) {
