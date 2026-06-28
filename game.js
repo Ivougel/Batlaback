@@ -939,7 +939,8 @@ function isBattleUiPhase() {
 }
 
 function getAppDataPhase() {
-  return isBattleUiPhase() ? "battle" : "prep";
+  if (phase === "battle" || phase === "replay") return phase;
+  return "prep";
 }
 
 function applyPhaseCanvasLayout() {
@@ -2802,7 +2803,7 @@ function draw() {
       drawBackpackFrame("enemy", { containers: enemyContainers, items: enemyItems });
     }
   }
-  if (phase !== "prep" && battleState) {
+  if (isBattleUiPhase() && battleState) {
     battleState.player.items.forEach((item) => {
       drawBattleItemWithAnimation(
         ctx,

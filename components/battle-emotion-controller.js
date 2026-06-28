@@ -127,6 +127,15 @@ function resolveMoodPulseVisible(state, team) {
   return pulse.visible;
 }
 
+/** Бой или replay — единственные фазы, где работает «диалог боя». */
+function isBattleEmotionPhaseActive() {
+  if (typeof phase !== "undefined") {
+    return phase === "battle" || phase === "replay";
+  }
+  const appPhase = document.getElementById("app")?.dataset?.phase;
+  return appPhase === "battle" || appPhase === "replay";
+}
+
 /** Слоты «диалога боя»: mood пульсирует, reaction — события, без дублей. */
 function resolveBattleDialogueSlots(state, team, presentation) {
   if (!presentation) {
@@ -134,17 +143,35 @@ function resolveBattleDialogueSlots(state, team, presentation) {
   }
   const moodVisible = resolveMoodPulseVisible(state, team);
   const moodEmoji = moodVisible ? presentation.moodEmoji : null;
-  let reactionEmoji = presentation.primaryEmoji !== presentation.moodEmoji
-    ? presentation.primaryEmoji
-    : (presentation.secondaryEmoji || null);
-  if (reactionEmoji === presentation.moodEmoji || reactionEmoji === moodEmoji) {
-    reactionEmoji = null;
+  const teamSlot = EMOTION_ORBIT_PHASE[team] || 0;
+  const visualElapsed = state.visualElapsed ?? state.elapsed ?? 0;
+  const tracker = state.commentary?.[team];
+  const transientActive = tracker?.activeReactionKey
+    && tracker.activeReactionUntil > visualElapsed;
+
+  let reactionEmoji = null;
+  if (transientActive && EMOTION_CATALOG[tracker.activeReactionKey]) {
+    reactionEmoji = pickEmotionVariant(
+      EMOTION_CATALOG[tracker.activeReactionKey],
+      tracker.activeReactionKey,
+      visualElapsed,
+      teamSlot,
+    );
+  } else if (!moodVisible) {
+    reactionEmoji = presentation.primaryEmoji || presentation.secondaryEmoji || null;
+  } else if (presentation.primaryEmoji !== presentation.moodEmoji) {
+    reactionEmoji = presentation.primaryEmoji;
+  } else {
+    reactionEmoji = presentation.secondaryEmoji || null;
   }
+
+  if (reactionEmoji === moodEmoji) reactionEmoji = null;
+
   let secondaryEmoji = presentation.secondaryEmoji;
   if (!secondaryEmoji
     || secondaryEmoji === reactionEmoji
-    || secondaryEmoji === presentation.moodEmoji
-    || secondaryEmoji === moodEmoji) {
+    || secondaryEmoji === moodEmoji
+    || (moodVisible && secondaryEmoji === presentation.moodEmoji)) {
     secondaryEmoji = null;
   }
   return { moodEmoji, reactionEmoji, secondaryEmoji, moodVisible };
@@ -419,8 +446,7 @@ function placeCommentaryEl(el, x, y, rot = 0, scale = 1) {
 }
 
 function isBattleCommentaryPhaseActive() {
-  const appPhase = document.getElementById("app")?.dataset?.phase;
-  return appPhase === "battle" || appPhase === "replay";
+  return isBattleEmotionPhaseActive();
 }
 
 function renderBattleCommentaryOverlay(state) {
@@ -592,7 +618,7 @@ function syncEffectOrbit(team, profile, tick) {
 }
 
 function applyEmotionPresentation(team, presentation, profile, state) {
-  if (!presentation) return;
+  if (!presentation || !isBattleEmotionPhaseActive()) return;
   const slot = typeof getAvatarSlotEl === "function" ? getAvatarSlotEl(team) : null;
   const shell = slot?.querySelector(".avatar-hero-shell");
   if (!shell) return;
@@ -638,7 +664,15 @@ function applyEmotionPresentation(team, presentation, profile, state) {
 }
 
 function updateBattleEmotions(state) {
-  if (!state?.commentary?.playerState) return;
+  if (!isBattleEmotionPhaseActive()) {
+    clearBattleCommentaryOverlay();
+    return;
+  }
+  if (!state) return;
+  if (!state.commentary?.playerState && typeof updateBattleAnalyzer === "function") {
+    updateBattleAnalyzer(state, 0);
+  }
+  if (!state.commentary?.playerState) return;
   let playerProfile = state._heroProfiles?.player;
   let enemyProfile = state._heroProfiles?.enemy;
   if (typeof computeCombatProfileFromBattleSide === "function") {
@@ -695,6 +729,10 @@ function clearBattleEmotions() {
 }
 
 function tickBattleEmotions(state) {
+  if (!isBattleEmotionPhaseActive()) {
+    clearBattleEmotions();
+    return;
+  }
   if (!state || state.finished) return;
   updateBattleAnalyzer(state, 0);
   updateBattleEmotions(state);
