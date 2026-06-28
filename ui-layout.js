@@ -176,7 +176,8 @@
             const hudH = isHudVisible() ? (document.getElementById("gamepad-hints-bar")?.offsetHeight ?? 0) : 0;
             const cssW = readCssPx("--battle-canvas-w", canvas.width);
             const cssH = readCssPx("--battle-canvas-h", canvas.height);
-            const maxH = Math.max(140, vh - hudH - 48);
+            const avatarZone = Math.min(300, Math.max(190, Math.round(vh * 0.34)));
+            const maxH = Math.max(120, vh - hudH - avatarZone - 16);
             const scale = Math.min(stageW / cssW, maxH / cssH, 1);
             const w = Math.max(1, Math.floor(cssW * scale));
             const h = Math.max(1, Math.floor(cssH * scale));
