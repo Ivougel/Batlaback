@@ -388,10 +388,6 @@ body:has(#app[data-phase="prep"]) #battle-controls {
   display: none;
 }
 
-#app[data-phase="battle"] #prep-toolbar {
-  display: none;
-}
-
 #app[data-phase="battle"] #shop-panel {
   display: none;
 }
@@ -6321,6 +6317,7 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .btn-refresh-shop {
   grid-column: 1 / -1;
   grid-row: 2;
   flex-shrink: 0;
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, auto) minmax(0, 1fr) minmax(0, auto);
   align-items: center;
@@ -6337,8 +6334,17 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .btn-refresh-shop {
   background: #14110e;
 }
 
-#app[data-phase="prep"] #prep-toolbar .prep-toolbar-side-switch {
+#app[data-phase="prep"] #prep-toolbar .prep-toolbar-left {
   grid-column: 1;
+  justify-self: start;
+}
+
+#app[data-phase="prep"] #prep-toolbar .combat-feed-dock {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  z-index: 3;
 }
 
 #app[data-phase="prep"] #prep-toolbar .prep-toolbar-hints {
@@ -6349,10 +6355,12 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .btn-refresh-shop {
   justify-content: center;
   gap: 6px 10px;
   min-width: 0;
+  padding: 0 clamp(120px, 14vw, 160px);
 }
 
-#app[data-phase="prep"] #prep-toolbar .prep-toolbar-actions {
+#app[data-phase="prep"] #prep-toolbar .prep-toolbar-right {
   grid-column: 3;
+  justify-self: end;
   margin-left: 0;
 }
 
@@ -6405,6 +6413,8 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
   white-space: nowrap;
 }
 
+#app[data-phase="prep"] #prep-toolbar .prep-toolbar-left,
+#app[data-phase="prep"] #prep-toolbar .prep-toolbar-right,
 #app[data-phase="prep"] #prep-toolbar .prep-toolbar-side-switch,
 #app[data-phase="prep"] #prep-toolbar .prep-toolbar-actions {
   flex-wrap: nowrap;

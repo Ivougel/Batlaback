@@ -852,6 +852,7 @@ function init() {
   initBoardPreviewControls();
   initRecipeBookControls();
   initSettingsControls();
+  if (typeof initCombatFeedControls === "function") initCombatFeedControls();
   initMusic();
   initGamepadControls({
     getPhase: () => phase,
@@ -1752,6 +1753,9 @@ function buyFromShop(index, side = prepViewSide) {
   const itemId = commitShopPurchase(index, side);
   if (!itemId) return;
   st.bench.push({ itemId, uid: `bench-${Date.now()}-${Math.random().toString(36).slice(2, 5)}` });
+  if (side === prepViewSide && typeof CombatLog !== "undefined") {
+    CombatLog.notifyPurchase(ITEM_CATALOG[itemId]);
+  }
   renderShop();
   renderBench();
   updateUI();
@@ -1776,7 +1780,11 @@ function getLoadoutGoldPerRoundBonus(items) {
 
 function creditItemSale(itemId, side = prepViewSide) {
   if (!itemId) return;
-  getSideState(side).gold += getSellRefund(itemId);
+  const refund = getSellRefund(itemId, side);
+  getSideState(side).gold += refund;
+  if (side === prepViewSide && typeof CombatLog !== "undefined") {
+    CombatLog.notifySell(ITEM_CATALOG[itemId], refund);
+  }
 }
 
 function sellBenchEntry(index, side = prepViewSide) {
@@ -1847,7 +1855,12 @@ function applyCraftingForSide(side = prepViewSide) {
   st.items = result.items;
   result.crafted.forEach((recipe) => {
     const out = ITEM_CATALOG[recipe.output];
-    if (out) log(`⚗️ Крафт: ${out.icon} ${out.name}`);
+    if (out) {
+      log(`⚗️ Крафт: ${out.icon} ${out.name}`);
+      if (side === prepViewSide && typeof CombatLog !== "undefined") {
+        CombatLog.notifyCraft(out);
+      }
+    }
   });
   return true;
 }
@@ -1903,6 +1916,9 @@ function recalcSynergies() {
   applySynergyModifiersToContainers(playerContainers, playerItems);
   applySynergyModifiersToContainers(enemyContainers, enemyItems);
   refreshActiveSynergies(playerItems, enemyItems);
+  if (prepViewSide === "player" && typeof CombatLog !== "undefined") {
+    CombatLog.trackSynergies(playerItems);
+  }
   if (typeof onPrepSynergiesUpdated === "function") {
     onPrepSynergiesUpdated(prepViewSide);
   }
@@ -2132,12 +2148,21 @@ function endBattle() {
     if (battleWinner === "player") {
       recentBattleResults.push("win");
       log(`Победа в бою! +${goldReward}💰`);
+      if (typeof CombatLog !== "undefined") {
+        CombatLog.addEvent({ type: "win", text: `Победа! +${goldReward}💰`, mergeKey: "battle:win" });
+      }
     } else if (battleWinner === "enemy") {
       recentBattleResults.push("loss");
       log(`Поражение в бою. +${goldReward}💰`);
+      if (typeof CombatLog !== "undefined") {
+        CombatLog.addEvent({ type: "loss", text: `Поражение. +${goldReward}💰`, mergeKey: "battle:loss" });
+      }
     } else {
       recentBattleResults.push("draw");
       log(`Ничья. +${goldReward}💰`);
+      if (typeof CombatLog !== "undefined") {
+        CombatLog.addEvent({ type: "neutral", text: `Ничья. +${goldReward}💰`, mergeKey: "battle:draw" });
+      }
     }
 
     battleSummary = buildBattleSummary(finishedState, {
@@ -2196,6 +2221,9 @@ function applyPostBattlePrep(battleWinner) {
     playerContainers = playerBag.containers;
     const bagName = ITEM_CATALOG[playerBag.bagId]?.name || "Сумка";
     log(`🎒 Новая сумка: ${bagName}! Инвентарь расширен.`);
+    if (typeof CombatLog !== "undefined") {
+      CombatLog.notifyBackpack(ITEM_CATALOG[playerBag.bagId]);
+    }
   }
 
   const enemyBag = grantBagReward(enemyContainers, round, GRID_COLS, GRID_ROWS);
@@ -3265,6 +3293,14 @@ function describeEffect(e) {
     case "stackGainMult": return `📊 +${Math.round((e.value || 1) * 100)}% к получению стаков`;
     case "cooldownMultPerTotalStacks": return `⚡ На ${Math.round((e.perStack || 0.05) * 100)}% быстрее за каждый стак`;
     case "maxHpPercentStart": return `❤ +${Math.round((e.value || 0.12) * 100)}% макс. HP в начале боя`;
+    case "stonesMultiThrow": return `🪨 Камни можно метать многократно`;
+    case "onFatigueStart": return `⏳ При усталости: особый эффект`;
+    case "fatigueDamageOnHit": return `💀 Урон от усталости при попадании`;
+    case "critPerFoeFatigue": return `🎯 +${Math.round((e.value || 0.07) * 100)}% крит за усталость противника`;
+    case "cardScaledBonus": return `🃏 +${e.perCard || 5} ${e.stack || "стака"} за каждую карту`;
+    case "cardScaledDamage": return `🃏 ${e.base || 12} (+${e.perCard || 4}/карта) маг. урона`;
+    case "neutralScaledStack": return `📦 +${e.perItem || 8} ${e.stack || "жара"} за нейтральный предмет`;
+    case "selfPoisonStart": return `☠ В начале боя: +${e.value || 3} яда себе`;
     default: return `${typeof localizeBbDescription === "function" ? localizeBbDescription(e.type) : e.type}${e.value != null ? `: ${e.value}` : ""}`;
   }
 }
@@ -3953,6 +3989,9 @@ function tryGemSocketDrop(st, dragFrom, dragPayload, col, row, side) {
   const gemName = ITEM_CATALOG[gemId]?.name || gemId;
   const hostName = ITEM_CATALOG[host.itemId]?.name || host.itemId;
   log(`💎 ${gemName} вставлен в ${hostName}`);
+  if (side === prepViewSide && typeof CombatLog !== "undefined") {
+    CombatLog.notifyGemSocketed(gemId, host.itemId);
+  }
   return true;
 }
 
@@ -4112,6 +4151,9 @@ function finishDragDrop(e) {
       }
       if (typeof notifyPrepHeavyDrop === "function") {
         notifyPrepHeavyDrop(ITEM_CATALOG[dragPayload.itemId]);
+      }
+      if (side === prepViewSide && typeof CombatLog !== "undefined" && isShopExpansionContainer(dragPayload.itemId)) {
+        CombatLog.notifyBackpack(ITEM_CATALOG[dragPayload.itemId]);
       }
       if (dragFrom.type === "container" && dragFrom.carriedItems?.length) {
         dragFrom.carriedItems.forEach((item) => {

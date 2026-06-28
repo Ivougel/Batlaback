@@ -1,0 +1,75 @@
+{
+  "comment": "Элементальные теги по Backpack Battles Wiki (Holy, Nature и др.)",
+  "addTags": {
+    "holy": [
+      "shiny_shell",
+      "shell_totem",
+      "shelly",
+      "eggscalibur",
+      "glowing_crown",
+      "king_crown",
+      "heart_container",
+      "hyper_hedgehog",
+      "king_goobert",
+      "light_goobert",
+      "maneki_neko",
+      "moon_shield",
+      "paradise_birb",
+      "prismatic_orb",
+      "shield_of_valor",
+      "sun_shield",
+      "lightsaber",
+      "star_of_courage"
+    ],
+    "nature": [
+      "shiny_shell",
+      "banana",
+      "garlic",
+      "healing_herbs",
+      "pocket_sand",
+      "lucky_clover",
+      "acorn_collar",
+      "stone",
+      "bag_of_stones",
+      "walrus_tusk",
+      "pineapple",
+      "fly_agaric",
+      "leaf_badge",
+      "strong_health_potion",
+      "health_potion",
+      "present"
+    ]
+  },
+  "removeTags": {
+    "shiny_shell": ["luck"]
+  },
+  "itemEffects": {
+    "shiny_shell": {
+      "tags": ["accessory", "holy", "nature"],
+      "cooldown": 5,
+      "effects": [
+        {
+          "type": "healPerTag",
+          "tag": "holy",
+          "value": 3,
+          "trigger": "passive",
+          "adjacent": true
+        },
+        {
+          "type": "periodic",
+          "interval": 5,
+          "trigger": "passive",
+          "heal": 5
+        }
+      ],
+      "description": "Через 5с: лечение на 5 + 3 за каждый соседний предмет с тегом «святой».",
+      "buildHints": "Билд: святой / Ranger · Крафт: Shelly, Shell Totem · Пары: Holy Armor, Divine Potion"
+    },
+    "shell_totem": {
+      "addTags": ["holy"]
+    },
+    "shelly": {
+      "addTags": ["holy"]
+    }
+  }
+}

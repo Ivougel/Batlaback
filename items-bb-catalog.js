@@ -18,9 +18,10 @@ const BB_ITEM_CATALOG_RAW = {
     cooldown: 1.4,
     staminaCost: 1,
     effects: [
-      { type: "damage", value: 2, valueMin: 1, valueMax: 3 }
+      { type: "damage", value: 2, valueMin: 1, valueMax: 3 },
+      { type: "onHitCapBonus", value: 1, cap: 2, chance: 0.25, trigger: "on_hit" }
     ],
-    description: "Стартовый меч Рейнджер, слабый урон за стамину",
+    description: "25% +1 урона (до 2).",
     buildHints: "Старт Ranger · Крафт: → Hero Sword · Пары: Whetstone для раннего апгрейда",
     sockets: 1,
   },
@@ -138,7 +139,7 @@ const BB_ITEM_CATALOG_RAW = {
     shape: shapeRect(1, 2),
     rarity: "godly",
     cost: 9,
-    tags: ["weapon","debuff","melee"],
+    tags: ["weapon","debuff","melee","holy"],
     damage: 10,
     cooldown: 1.5,
     staminaCost: 1.2,
@@ -166,9 +167,10 @@ const BB_ITEM_CATALOG_RAW = {
     staminaCost: 1,
     craftOnly: true,
     effects: [
-      { type: "damage", value: 2, valueMin: 2, valueMax: 3 }
+      { type: "damage", value: 2, valueMin: 2, valueMax: 3 },
+      { type: "onHitCapBonus", value: 1, cap: 3, trigger: "on_hit" }
     ],
-    description: "Дальнобойное оружие Рейнджер",
+    description: "При попадании: +1 урона (до 3).",
     buildHints: "Билд: Ranger дальний бой · Пары: Whetstone, Gloves of Haste",
     sockets: 1,
   },
@@ -478,7 +480,6 @@ const BB_ITEM_CATALOG_RAW = {
     staminaCost: 1,
     craftOnly: true,
     effects: [
-      { type: "heal", value: 20 },
       { type: "damage", value: 10, valueMin: 10, valueMax: 10, damageType: "magic" },
       { type: "periodic", interval: 2, trigger: "passive", heal: 20 }
     ],
@@ -1049,7 +1050,7 @@ const BB_ITEM_CATALOG_RAW = {
     cost: 13,
     tags: ["armor","craft"],
     defense: 4,
-    cooldown: 0,
+    cooldown: 4,
     craftOnly: true,
     effects: [
       { type: "passiveDefense", value: 4, trigger: "passive" },
@@ -1183,7 +1184,6 @@ const BB_ITEM_CATALOG_RAW = {
     craftOnly: true,
     effects: [
       { type: "passiveDefense", value: 4, trigger: "passive" },
-      { type: "heal", value: 1 },
       { type: "gainStack", stack: "block", value: 70, trigger: "battle_start" },
       { type: "tagScaledStack", stack: "block", perTag: 1, tag: "armor", trigger: "battle_start" },
       { type: "periodic", interval: 3, trigger: "passive", spendStack: {"stack":"block","value":1}, heal: 12, cleanseDebuffs: 2 }
@@ -1224,7 +1224,7 @@ const BB_ITEM_CATALOG_RAW = {
     cost: 16,
     tags: ["armor"],
     defense: 4,
-    cooldown: 0,
+    cooldown: 3,
     effects: [
       { type: "passiveDefense", value: 4, trigger: "passive" },
       { type: "slow", value: 0.18, duration: 2 },
@@ -1244,7 +1244,7 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "common",
     cost: 4,
     tags: ["shield","armor"],
-    cooldown: 0,
+    cooldown: 3,
     effects: [
       { type: "block", value: 5 },
       { type: "onDefend", chance: 0.3, trigger: "passive", preventDamage: 7, drainStamina: 0.3 }
@@ -1262,7 +1262,7 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "rare",
     cost: 8,
     tags: ["shield","armor","spikes","craft"],
-    cooldown: 0,
+    cooldown: 3,
     craftOnly: true,
     effects: [
       { type: "block", value: 5 },
@@ -1282,11 +1282,10 @@ const BB_ITEM_CATALOG_RAW = {
     shape: shapeRect(2, 1),
     rarity: "legendary",
     cost: 11,
-    tags: ["shield","armor","craft"],
+    tags: ["shield","armor","craft","holy"],
     cooldown: 0,
     effects: [
       { type: "passiveDefense", value: 2, trigger: "passive" },
-      { type: "block", value: 5 },
       { type: "shieldBlockMult", value: 0.3, trigger: "passive" },
       { type: "onDefend", chance: 0.3, trigger: "passive", preventDamage: 14, drainStamina: 0.7 }
     ],
@@ -1302,12 +1301,11 @@ const BB_ITEM_CATALOG_RAW = {
     shape: shapeRect(2, 1),
     rarity: "godly",
     cost: 18,
-    tags: ["shield","armor","magic","craft"],
+    tags: ["shield","armor","magic","craft","holy"],
     cooldown: 0,
     craftOnly: true,
     effects: [
       { type: "passiveDefense", value: 2, trigger: "passive" },
-      { type: "block", value: 5 },
       { type: "shieldBlockMult", value: 0.3, trigger: "passive" },
       { type: "gainStack", stack: "block", value: 5, trigger: "battle_start" }
     ],
@@ -1323,11 +1321,10 @@ const BB_ITEM_CATALOG_RAW = {
     shape: shapeRect(2, 1),
     rarity: "godly",
     cost: 14,
-    tags: ["shield","armor","fire","craft"],
-    cooldown: 0,
+    tags: ["shield","armor","fire","craft","holy"],
+    cooldown: 3,
     craftOnly: true,
     effects: [
-      { type: "damage", value: 3, damageType: "fire" },
       { type: "groundFire", value: 1 },
       { type: "groundFire", value: 2 },
       { type: "block", value: 5 },
@@ -1347,12 +1344,11 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "epic",
     cost: 8,
     tags: ["shield","armor","cold","craft"],
-    cooldown: 0,
+    cooldown: 3,
     craftOnly: true,
     effects: [
       { type: "slow", value: 0.12, duration: 4 },
       { type: "groundFire", value: 2 },
-      { type: "block", value: 5 },
       { type: "shieldBlockMult", value: 0.15, trigger: "passive" },
       { type: "gainStack", stack: "block", value: 3, trigger: "on_block", chance: 0.3 },
       { type: "onDefend", chance: 0.3, trigger: "passive", preventDamage: 12, drainStamina: 0.9, foePoison: 1 }
@@ -1435,7 +1431,7 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "godly",
     cost: 12,
     tags: ["gloves","accessory","vampiric","craft"],
-    cooldown: 0,
+    cooldown: 4,
     craftOnly: true,
     effects: [
       { type: "lifesteal", value: 0.05, trigger: "passive" },
@@ -1453,7 +1449,7 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "legendary",
     cost: 10,
     tags: ["gloves","accessory","craft"],
-    cooldown: 0,
+    cooldown: 3,
     craftOnly: true,
     effects: [
       { type: "slow", value: 0.12, duration: 3 },
@@ -1513,7 +1509,7 @@ const BB_ITEM_CATALOG_RAW = {
     shape: shapeRect(1, 2),
     rarity: "godly",
     cost: 12,
-    tags: ["armor","helmet"],
+    tags: ["armor","helmet","holy"],
     cooldown: 2.4,
     effects: [
       { type: "periodic", interval: 2.4, trigger: "passive", cleanseDebuffs: 1, heal: 5 },
@@ -1534,7 +1530,7 @@ const BB_ITEM_CATALOG_RAW = {
     shape: shapeRect(1, 2),
     rarity: "godly",
     cost: 17,
-    tags: ["armor","helmet"],
+    tags: ["armor","helmet","holy"],
     cooldown: 2.4,
     effects: [
       { type: "periodic", interval: 2.4, trigger: "passive", heal: 8 },
@@ -1615,7 +1611,7 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "epic",
     cost: 6,
     tags: ["shoes","armor","luck"],
-    cooldown: 0,
+    cooldown: 3,
     effects: [
       { type: "block", value: 5 },
       { type: "hpThreshold", threshold: 0.7, direction: "below", once: true, trigger: "passive", gainStack: {"stack":"luck","value":1}, gainBlock: 15 }
@@ -1633,7 +1629,7 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "godly",
     cost: 13,
     tags: ["shoes","armor","holy","craft"],
-    cooldown: 0,
+    cooldown: 3,
     craftOnly: true,
     effects: [
       { type: "heal", value: 4 },
@@ -1675,7 +1671,7 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "epic",
     cost: 6,
     tags: ["shoes","armor","melee","pet","craft"],
-    cooldown: 0,
+    cooldown: 3,
     craftOnly: true,
     effects: [
       { type: "passiveDefense", value: 3, trigger: "passive" },
@@ -1696,7 +1692,7 @@ const BB_ITEM_CATALOG_RAW = {
     shape: [[0, 0]],
     rarity: "rare",
     cost: 4,
-    tags: ["potion","consumable","heal"],
+    tags: ["potion","consumable","heal","nature"],
     cooldown: 3,
     effects: [
       { type: "heal", value: 6 },
@@ -1879,6 +1875,8 @@ const BB_ITEM_CATALOG_RAW = {
     effects: [
       { type: "buffTimed", stat: "damage", value: 0.1, duration: 6 },
       { type: "lifesteal", value: 0.05, trigger: "passive" },
+      { type: "mutualHpThreshold", threshold: 0.8, once: true, trigger: "passive", gainStack: {"stack":"mana","value":3}, damage: 15, damageType: "magic", lifesteal: 1 },
+      { type: "mutualHpThreshold", threshold: 0.8, once: true, trigger: "passive", gainStack: {"stack":"mana","value":3}, damage: 15, damageType: "magic", lifesteal: 1 },
       { type: "mutualHpThreshold", threshold: 0.8, once: true, trigger: "passive", gainStack: {"stack":"mana","value":3}, damage: 15, damageType: "magic", lifesteal: 1 }
     ],
     description: "Оба ниже 80% HP: +3 маны, 15 маг. урона с 100% вампиризмом.",
@@ -1897,6 +1895,8 @@ const BB_ITEM_CATALOG_RAW = {
     craftOnly: true,
     effects: [
       { type: "lifesteal", value: 0.05, trigger: "passive" },
+      { type: "mutualHpThreshold", threshold: 0.8, once: true, trigger: "passive", gainStack: {"stack":"mana","value":5}, damage: 20, damageType: "magic", lifesteal: 1 },
+      { type: "mutualHpThreshold", threshold: 0.8, once: true, trigger: "passive", gainStack: {"stack":"mana","value":5}, damage: 20, damageType: "magic", lifesteal: 1 },
       { type: "mutualHpThreshold", threshold: 0.8, once: true, trigger: "passive", gainStack: {"stack":"mana","value":5}, damage: 20, damageType: "magic", lifesteal: 1 }
     ],
     description: "Оба ниже 80% HP: +5 маны, 20 маг. урона с 100% вампиризмом.",
@@ -2021,7 +2021,6 @@ const BB_ITEM_CATALOG_RAW = {
     cooldown: 0,
     craftOnly: true,
     effects: [
-      { type: "damage", value: 2, valueMin: 1, valueMax: 3 },
       { type: "activationThreshold", count: 6, once: true, trigger: "passive", weaponDamageStart: 2, gainStack: {"stack":"block","value":16} }
     ],
     synergies: [
@@ -2038,8 +2037,8 @@ const BB_ITEM_CATALOG_RAW = {
     shape: [[0, 0]],
     rarity: "godly",
     cost: 18,
-    tags: ["pet","debuff","craft"],
-    cooldown: 0,
+    tags: ["pet","debuff","craft","holy"],
+    cooldown: 3,
     craftOnly: true,
     effects: [
       { type: "slow", value: 0.18, duration: 2 },
@@ -2060,7 +2059,6 @@ const BB_ITEM_CATALOG_RAW = {
     cooldown: 0,
     craftOnly: true,
     effects: [
-      { type: "damage", value: 2, valueMin: 1, valueMax: 3 },
       { type: "activationThreshold", count: 5, once: true, trigger: "passive", heal: 9, foePoison: 4 }
     ],
     description: "После 5 активаций: +9 HP и +4 яда.",
@@ -2075,7 +2073,7 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "epic",
     cost: 12,
     tags: ["pet","nature","craft"],
-    cooldown: 0,
+    cooldown: 3,
     craftOnly: true,
     effects: [
       { type: "damage", value: 12, valueMin: 12, valueMax: 12 },
@@ -2096,7 +2094,6 @@ const BB_ITEM_CATALOG_RAW = {
     cooldown: 0,
     craftOnly: true,
     effects: [
-      { type: "damage", value: 3, damageType: "fire" },
       { type: "groundFire", value: 1 },
       { type: "activationThreshold", count: 6, once: true, trigger: "passive", heal: 12, gainStack: {"stack":"heat","value":2} }
     ],
@@ -2111,11 +2108,10 @@ const BB_ITEM_CATALOG_RAW = {
     shape: [[0, 0]],
     rarity: "godly",
     cost: 23,
-    tags: ["pet","craft"],
+    tags: ["pet","craft","holy"],
     cooldown: 0,
     craftOnly: true,
     effects: [
-      { type: "damage", value: 2, valueMin: 1, valueMax: 3 },
       { type: "activationThreshold", count: 6, heal: 35, once: true, trigger: "passive" },
       { type: "invulnOnStaminaSpend", staminaCost: 4, duration: 1.5, trigger: "passive" }
     ],
@@ -2135,7 +2131,6 @@ const BB_ITEM_CATALOG_RAW = {
     cooldown: 0,
     craftOnly: true,
     effects: [
-      { type: "damage", value: 2, valueMin: 1, valueMax: 3 },
       { type: "activationThreshold", count: 9, once: true, trigger: "passive", heal: 40, restoreStamina: 2, gainStack: {"stack":"block","value":20}, maxHp: 20, weaponDamageStart: 4, foePoison: 3 }
     ],
     description: "После 9 активаций: +40 HP, +2 выносливости, +20 блока, +20 HP, оружие +4, +3 яда.",
@@ -2208,7 +2203,7 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "godly",
     cost: 18,
     tags: ["pet","fire","magic","craft"],
-    cooldown: 0,
+    cooldown: 3,
     craftOnly: true,
     effects: [
       { type: "damage", value: 13, valueMin: 11, valueMax: 16, damageType: "magic" },
@@ -2227,7 +2222,7 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "godly",
     cost: 15,
     tags: ["pet","cold","craft"],
-    cooldown: 0,
+    cooldown: 3,
     craftOnly: true,
     effects: [
       { type: "damage", value: 17, valueMin: 15, valueMax: 20 },
@@ -2248,14 +2243,16 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "godly",
     cost: 14,
     tags: ["pet","poison","craft"],
-    cooldown: 0,
+    cooldown: 3,
     craftOnly: true,
     effects: [
       { type: "statMult", stat: "damage", value: 0.08, trigger: "passive" },
       { type: "damage", value: 7, valueMin: 5, valueMax: 10 },
-      { type: "gainStack", stack: "spikes", value: 3, trigger: "battle_start" }
+      { type: "gainStack", stack: "spikes", value: 3, trigger: "battle_start" },
+      { type: "selfPoisonStart", value: 3, trigger: "battle_start" },
+      { type: "poison", value: 3, trigger: "on_hit" }
     ],
-    description: "В начале боя: Получить 3 стака яда При попадании: Наложить 3 стака яда",
+    description: "В начале боя: +3 яда себе. При попадании: +3 яда противнику.",
     buildHints: "Билд: яд / DoT, питомцы · Пары: Pestilence Flask, Death Scythe, ядовитые питомцы",
     sockets: 1,
   },
@@ -2268,14 +2265,16 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "godly",
     cost: 14,
     tags: ["pet","cold","craft"],
-    cooldown: 0,
+    cooldown: 3,
     craftOnly: true,
     effects: [
       { type: "statMult", stat: "damage", value: 0.08, trigger: "passive" },
       { type: "damage", value: 7, valueMin: 5, valueMax: 10 },
-      { type: "gainStack", stack: "block", value: 6, trigger: "battle_start" }
+      { type: "gainStack", stack: "block", value: 6, trigger: "battle_start" },
+      { type: "spendStack", stack: "block", value: 1, trigger: "on_hit", gainStack: {"stack":"block","value":10} },
+      { type: "gainWeakestStack", value: 1, trigger: "on_hit" }
     ],
-    description: "В начале боя: Получить 6 стаков При попадании: Потратить 1, чтобы получить 10 и случайный прочие бафф стака",
+    description: "В начале боя: +6 блока. При попадании: −1 блок → +10 блока и случайный стак.",
     buildHints: "Билд: лёд, питомцы",
     sockets: 1,
   },
@@ -2309,10 +2308,9 @@ const BB_ITEM_CATALOG_RAW = {
     shape: [[0, 0]],
     rarity: "rare",
     cost: 6,
-    tags: ["pet"],
+    tags: ["pet","holy"],
     cooldown: 13,
     effects: [
-      { type: "heal", value: 6 },
       { type: "periodic", interval: 13, trigger: "passive", cleanseDebuffs: 6, heal: 40 },
       { type: "procChanceBonus", value: 0.25, trigger: "passive" },
       { type: "cooldownMultPerTag", tags: ["potion"], perTag: 0.2, trigger: "passive" }
@@ -2349,7 +2347,7 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "legendary",
     cost: 10,
     tags: ["pet","craft"],
-    cooldown: 0,
+    cooldown: 3,
     craftOnly: true,
     effects: [
       { type: "damage", value: 17, valueMin: 15, valueMax: 20 },
@@ -2370,10 +2368,9 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "common",
     cost: 4,
     tags: ["pet","craft"],
-    cooldown: 0,
+    cooldown: 3.3,
     craftOnly: true,
     effects: [
-      { type: "damage", value: 2, valueMin: 1, valueMax: 3 },
       { type: "periodic", interval: 3.3, trigger: "passive", damage: 5, damageType: "magic", foePoison: 1, chance: 0.75 },
       { type: "cooldownMultPerTag", tags: ["pet","food"], perTag: 0.15, trigger: "passive" }
     ],
@@ -2390,10 +2387,9 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "rare",
     cost: 5,
     tags: ["pet","craft"],
-    cooldown: 0,
+    cooldown: 4,
     craftOnly: true,
     effects: [
-      { type: "damage", value: 2, valueMin: 1, valueMax: 3 },
       { type: "periodic", interval: 4, trigger: "passive", stealWeaponDamage: 1 },
       { type: "cooldownMultPerTag", tags: ["pet","food"], perTag: 0.15, trigger: "passive" }
     ],
@@ -2410,7 +2406,7 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "epic",
     cost: 6,
     tags: ["pet","spikes","craft"],
-    cooldown: 0,
+    cooldown: 5,
     craftOnly: true,
     effects: [
       { type: "poison", value: 1 },
@@ -2454,7 +2450,6 @@ const BB_ITEM_CATALOG_RAW = {
     cooldown: 0,
     craftOnly: true,
     effects: [
-      { type: "damage", value: 2, valueMin: 2, valueMax: 3 },
       { type: "stealWeaponDamage", value: 1, trigger: "on_hit" },
       { type: "cooldownMultPerTag", tags: ["pet","food"], perTag: 0.15, trigger: "passive" }
     ],
@@ -2469,8 +2464,8 @@ const BB_ITEM_CATALOG_RAW = {
     shape: [[0, 0]],
     rarity: "godly",
     cost: 12,
-    tags: ["pet","spikes","craft"],
-    cooldown: 0,
+    tags: ["pet","spikes","craft","holy"],
+    cooldown: 5,
     craftOnly: true,
     effects: [
       { type: "poison", value: 1 },
@@ -2532,7 +2527,7 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "unique",
     cost: 10,
     tags: ["pet","poison","dark","craft"],
-    cooldown: 0,
+    cooldown: 2.2,
     craftOnly: true,
     effects: [
       { type: "passiveMaxHp", value: 40, trigger: "passive" },
@@ -2590,10 +2585,9 @@ const BB_ITEM_CATALOG_RAW = {
     shape: [[0, 0]],
     rarity: "godly",
     cost: 20,
-    tags: ["pet"],
+    tags: ["pet","holy"],
     cooldown: 2.7,
     effects: [
-      { type: "damage", value: 2, valueMin: 1, valueMax: 3 },
       { type: "periodic", interval: 2.7, trigger: "passive", gainStack: {"stack":"empower","value":1}, chance: 0.07 },
       { type: "procChanceBonus", value: 0.07, trigger: "passive" },
       { type: "statMult", stat: "heal", value: 0.07, trigger: "passive" },
@@ -2611,11 +2605,12 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "unique",
     cost: 8,
     tags: ["pet","dark"],
-    cooldown: 0,
+    cooldown: 3.3,
     effects: [
-      { type: "damage", value: 2, valueMin: 1, valueMax: 3 },
       { type: "periodic", interval: 3.3, trigger: "passive", damage: 10, damageType: "magic", lifesteal: 1, gainWeakestStack: true },
-      { type: "cooldownMultPerTag", tags: ["food"], perTag: 0.15, trigger: "passive" }
+      { type: "cooldownMultPerTag", tags: ["food"], perTag: 0.15, trigger: "passive" },
+      { type: "periodic", interval: 3.3, trigger: "passive", damage: 10, damageType: "magic", lifesteal: 1, gainWeakestStack: true },
+      { type: "periodic", interval: 3.3, trigger: "passive", damage: 10, damageType: "magic", lifesteal: 1, gainWeakestStack: true }
     ],
     description: "Каждые 3.3с: 10 маг. урона с вампиризмом и случайный стак. Быстрее за еду.",
     buildHints: "Билд: Reaper дебаффы, питомцы",
@@ -2631,7 +2626,6 @@ const BB_ITEM_CATALOG_RAW = {
     tags: ["pet"],
     cooldown: 0,
     effects: [
-      { type: "damage", value: 2, valueMin: 1, valueMax: 3 },
       { type: "statMult", stat: "damage", value: 0.05, trigger: "passive" },
       { type: "stealRandomStack", value: 1, chance: 0.5, trigger: "on_hit" },
       { type: "foeHpThreshold", threshold: 0.3, once: true, trigger: "passive", heal: 50, gainDominantStack: 5 }
@@ -2706,7 +2700,7 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "epic",
     cost: 7,
     tags: ["accessory","dark"],
-    cooldown: 0,
+    cooldown: 3.9,
     effects: [
       { type: "statMult", stat: "damage", value: 0.05, trigger: "passive" },
       { type: "statMult", stat: "magicDamage", value: 0.08, trigger: "passive" },
@@ -2725,7 +2719,7 @@ const BB_ITEM_CATALOG_RAW = {
     shape: [[0, 0]],
     rarity: "common",
     cost: 4,
-    tags: ["accessory","spikes"],
+    tags: ["accessory","spikes","nature"],
     cooldown: 0,
     effects: [
       { type: "statMult", stat: "damage", value: 0.08, trigger: "passive" },
@@ -2765,7 +2759,7 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "rare",
     cost: 4,
     tags: ["accessory","cold","craft"],
-    cooldown: 0,
+    cooldown: 3,
     craftOnly: true,
     effects: [
       { type: "slow", value: 0.12, duration: 4 },
@@ -2784,7 +2778,7 @@ const BB_ITEM_CATALOG_RAW = {
     shape: [[0, 0]],
     rarity: "godly",
     cost: 11,
-    tags: ["accessory"],
+    tags: ["accessory","holy"],
     cooldown: 3,
     effects: [
       { type: "buffTimed", stat: "heart", value: 1, duration: 3 },
@@ -2807,7 +2801,7 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "godly",
     cost: 19,
     tags: ["accessory","dark","craft"],
-    cooldown: 0,
+    cooldown: 4,
     craftOnly: true,
     effects: [
       { type: "passiveMaxHp", value: 100, trigger: "passive", bbUseCost: 7, bbUseStat: "heart" },
@@ -2878,12 +2872,14 @@ const BB_ITEM_CATALOG_RAW = {
     cost: 4,
     tags: ["accessory","treasure"],
     cooldown: 0,
-    effects: [],
+    effects: [
+      { type: "procChanceBonus", value: 0.1, trigger: "passive" }
+    ],
     metaEffects: [
       { phase: "shop_refresh", type: "rarity_up", value: 1 },
       { phase: "shop_refresh", type: "trade_offer", chance: 0.1, value: 3 }
     ],
-    description: "При обновлении магазина: Повысить редкость 1 предмета. 10% шанс торгового предложения.",
+    description: "Магазин: повышение редкости. +10% к прокам.",
     buildHints: "Билд: экономика / золото",
   },
   platinum_customer_card: {
@@ -2895,7 +2891,7 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "epic",
     cost: 8,
     tags: ["accessory","treasure","craft"],
-    cooldown: 0,
+    cooldown: 4,
     craftOnly: true,
     effects: [
       { type: "procChanceBonus", value: 0.1, trigger: "passive" },
@@ -2917,7 +2913,7 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "common",
     cost: 2,
     tags: ["accessory","fire"],
-    cooldown: 0,
+    cooldown: 3,
     effects: [
       { type: "statMult", stat: "damage", value: 0.08, trigger: "passive" },
       { type: "groundFire", value: 1, trigger: "passive" },
@@ -2937,11 +2933,10 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "rare",
     cost: 2,
     tags: ["accessory","fire","craft"],
-    cooldown: 0,
+    cooldown: 5,
     craftOnly: true,
     effects: [
       { type: "statMult", stat: "damage", value: 0.08, trigger: "passive" },
-      { type: "damage", value: 2, valueMin: 1, valueMax: 3 },
       { type: "gainStack", stack: "heat", value: 12, trigger: "battle_start" },
       { type: "bonusDamageOnHit", value: 6, chance: 0.12, trigger: "on_hit", gainStack: {"stack":"heat","value":1} },
       { type: "periodic", interval: 5, trigger: "passive", gainStack: {"stack":"heat","value":2}, cleanseDebuffs: 3 }
@@ -2962,7 +2957,6 @@ const BB_ITEM_CATALOG_RAW = {
     cooldown: 2,
     craftOnly: true,
     effects: [
-      { type: "damage", value: 2, valueMin: 2, valueMax: 3 },
       { type: "gainStack", stack: "empower", value: 1, trigger: "on_hit", chance: 0.25 }
     ],
     description: "При попадании: 25% +1 усиление.",
@@ -2983,7 +2977,6 @@ const BB_ITEM_CATALOG_RAW = {
     craftOnly: true,
     effects: [
       { type: "statMult", stat: "damage", value: 0.08, trigger: "passive" },
-      { type: "damage", value: 2, valueMin: 2, valueMax: 3 },
       { type: "gainStack", stack: "heat", value: 2, trigger: "battle_start" },
       { type: "gainStack", stack: "empower", value: 1, trigger: "on_hit", chance: 0.3 }
     ],
@@ -3000,7 +2993,7 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "legendary",
     cost: 11,
     tags: ["accessory","fire","magic","craft"],
-    cooldown: 0,
+    cooldown: 3,
     craftOnly: true,
     effects: [
       { type: "damage", value: 4, valueMin: 3, valueMax: 6, damageType: "magic" },
@@ -3019,7 +3012,7 @@ const BB_ITEM_CATALOG_RAW = {
     classRestriction: "rogue",
     rarity: "epic",
     cost: 8,
-    tags: ["accessory","luck","craft"],
+    tags: ["accessory","luck","craft","nature"],
     cooldown: 0,
     craftOnly: true,
     effects: [
@@ -3057,7 +3050,7 @@ const BB_ITEM_CATALOG_RAW = {
     classRestriction: "rogue",
     rarity: "rare",
     cost: 2,
-    tags: ["accessory","luck","ranger"],
+    tags: ["accessory","luck","ranger","nature"],
     cooldown: 0,
     craftOnly: true,
     effects: [
@@ -3078,13 +3071,15 @@ const BB_ITEM_CATALOG_RAW = {
     shape: [[0, 0]],
     rarity: "legendary",
     cost: 10,
-    tags: ["accessory","luck"],
+    tags: ["accessory","luck","holy"],
     cooldown: 0,
     effects: [
       { type: "passiveDefense", value: 3, trigger: "passive" },
-      { type: "passiveLuck", value: 15, trigger: "passive" }
+      { type: "passiveLuck", value: 15, trigger: "passive" },
+      { type: "procChanceBonus", value: 0.03, trigger: "passive" },
+      { type: "passiveLuck", value: 1, trigger: "passive" }
     ],
-    description: "Продажа шанс +3%. Стоимость предметы > 20 15% шанс сопротивляться критические удары удачи Стоимость предметы > 40 Божественный и Уникальный предметы срабатывают на 15% быстрее.",
+    description: "+1 удача и +3% к прокам.",
     buildHints: "Билд: крит / Luck",
   },
   forging_hammer: {
@@ -3202,7 +3197,7 @@ const BB_ITEM_CATALOG_RAW = {
     shape: [[0, 0]],
     rarity: "common",
     cost: 2,
-    tags: ["accessory","debuff"],
+    tags: ["accessory","debuff","nature"],
     cooldown: 0,
     effects: [
       { type: "statMult", stat: "damage", value: 0.08, trigger: "passive" },
@@ -3260,7 +3255,7 @@ const BB_ITEM_CATALOG_RAW = {
     shape: [[0, 0]],
     rarity: "common",
     cost: 1,
-    tags: ["accessory"],
+    tags: ["accessory","nature"],
     damage: 3,
     cooldown: 4,
     staminaCost: 0,
@@ -3280,12 +3275,13 @@ const BB_ITEM_CATALOG_RAW = {
     shape: [[0, 0]],
     rarity: "rare",
     cost: 3,
-    tags: ["accessory"],
+    tags: ["accessory","nature"],
     cooldown: 0,
     effects: [
-      { type: "repeatCast", magicOnly: false, trigger: "passive" }
+      { type: "repeatCast", magicOnly: false, trigger: "passive" },
+      { type: "stonesMultiThrow", trigger: "passive" }
     ],
-    description: "Камни выше можно метать многократно.",
+    description: "Камни можно метать многократно.",
     buildHints: "Универсальный / автономный",
   },
   snowball: {
@@ -3314,12 +3310,13 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "epic",
     cost: 8,
     tags: ["accessory","cold"],
-    cooldown: 0,
+    cooldown: 3,
     effects: [
       { type: "slow", value: 0.12, duration: 4 },
-      { type: "buffTimed", stat: "damage", value: 0.1, duration: 6 }
+      { type: "buffTimed", stat: "damage", value: 0.1, duration: 6 },
+      { type: "slow", value: 0.12, duration: 4, trigger: "on_hit", chance: 0.5 }
     ],
-    description: "При покупке: разделиться на 2 снежка.",
+    description: "50% замедление при попадании.",
     buildHints: "Билд: лёд",
   },
   snowmaster: {
@@ -3331,7 +3328,7 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "legendary",
     cost: 9,
     tags: ["accessory","cold"],
-    cooldown: 0,
+    cooldown: 1.3,
     effects: [
       { type: "slow", value: 0.12, duration: 4 },
       { type: "periodic", interval: 1.3, trigger: "passive", applyColdOrSelf: true, coldThreshold: 10, cleanseDebuffs: 1 },
@@ -3375,14 +3372,14 @@ const BB_ITEM_CATALOG_RAW = {
     cooldown: 4,
     staminaCost: 0.5,
     effects: [
-      { type: "lifesteal", value: 0.05, trigger: "passive" },
-      { type: "cooldownMultPerTotalStacks", perStack: 0.05, trigger: "passive" },
+      { type: "stackGainMult", value: 1, trigger: "passive" },
+      { type: "cooldownMultPerTotalStacks", perStack: 0.05, maxStacks: 40, trigger: "passive" },
       { type: "stackGainMult", value: 1, trigger: "passive" }
     ],
     synergies: [
       { id: "migrated_heal_2_per_neighbor", adjacency: "strong", neighborTags: ["vampiric"], target: "self", apply: { type: "healBonus", value: 2 }, desc: "+2 лечения" }
     ],
-    description: "Стаки на 100% эффективнее. Предметы на 5% быстрее за каждый стак.",
+    description: "Стаки на 100% эффективнее. Предметы на 5% быстрее за каждый стак (макс. +200%).",
     buildHints: "Билд: вампиризм · Пары: Blood Amulet, Hungry Blade, Blood Goobert",
     sockets: 3,
   },
@@ -3398,7 +3395,8 @@ const BB_ITEM_CATALOG_RAW = {
     cooldown: 4,
     effects: [
       { type: "passiveLuck", value: 12, trigger: "passive" },
-      { type: "buffTimed", stat: "damage", value: 0.15, duration: 3 }
+      { type: "buffTimed", stat: "damage", value: 0.15, duration: 3 },
+      { type: "periodic", interval: 4, trigger: "passive", randomPick: [{"gainStack":{"stack":"luck","value":1}},{"foePoison":1},{"heal":5}] }
     ],
     metaEffects: [
       { phase: "shop_enter", type: "consume_recombo", target: "self" }
@@ -3417,7 +3415,8 @@ const BB_ITEM_CATALOG_RAW = {
     tags: ["accessory"],
     cooldown: 2.5,
     effects: [
-      { type: "statMult", stat: "damage", value: 0.1, trigger: "passive" }
+      { type: "statMult", stat: "damage", value: 0.1, trigger: "passive" },
+      { type: "periodic", interval: 2.5, trigger: "passive", gainWeakestStack: {"value":1,"count":1}, cleanseDebuffs: 1 }
     ],
     metaEffects: [
       { phase: "shop_enter", type: "consume_recombo", target: "inside" }
@@ -3433,7 +3432,7 @@ const BB_ITEM_CATALOG_RAW = {
     shape: [[0, 0]],
     rarity: "godly",
     cost: 14,
-    tags: ["accessory","magic"],
+    tags: ["accessory","magic","holy"],
     cooldown: 8,
     effects: [
       { type: "heal", value: 2 },
@@ -3457,7 +3456,6 @@ const BB_ITEM_CATALOG_RAW = {
     tags: ["accessory"],
     cooldown: 3,
     effects: [
-      { type: "heal", value: 12 },
       { type: "slow", value: 0.08, duration: 3 },
       { type: "healAsDamageMult", value: 0.3, trigger: "passive" },
       { type: "periodic", interval: 3, trigger: "passive", spendRandomStack: 1, heal: 12 }
@@ -3474,7 +3472,7 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "unique",
     cost: 8,
     tags: ["accessory"],
-    cooldown: 0,
+    cooldown: 1,
     effects: [
       { type: "slow", value: 0.12, duration: 3 },
       { type: "statMult", stat: "cooldown", value: -0.08, trigger: "passive" },
@@ -3503,7 +3501,7 @@ const BB_ITEM_CATALOG_RAW = {
     cooldown: 0,
     effects: [],
     synergies: [],
-    description: "+4 слота рюкзака. При использовании первого зелья внутри: получить случайный бафф. При использовании 4 зелий внутри: снять 10 дебаффов.",
+    description: "+8% к прокам. После 4 зелий: снять 10 дебаффов.",
     buildHints: "Универсальный / автономный",
     _isContainerEntry: true,
   },
@@ -3596,7 +3594,7 @@ const BB_ITEM_CATALOG_RAW = {
     shape: [[0, 0]],
     rarity: "rare",
     cost: 1,
-    tags: ["accessory"],
+    tags: ["accessory","holy"],
     cooldown: 0,
     effects: [],
     synergies: [
@@ -3653,10 +3651,9 @@ const BB_ITEM_CATALOG_RAW = {
     shape: [[0, 0]],
     rarity: "common",
     cost: 3,
-    tags: ["food"],
+    tags: ["food","nature"],
     cooldown: 5,
     effects: [
-      { type: "heal", value: 4 },
       { type: "periodic", interval: 5, trigger: "passive", heal: 4, restoreStamina: 1 }
     ],
     description: "Каждые 5с: +4 HP и +1 выносливости.",
@@ -3670,7 +3667,7 @@ const BB_ITEM_CATALOG_RAW = {
     shape: [[0, 0]],
     rarity: "common",
     cost: 2,
-    tags: ["food","poison"],
+    tags: ["food","poison","nature"],
     cooldown: 4,
     effects: [
       { type: "heal", value: 2 },
@@ -3723,10 +3720,9 @@ const BB_ITEM_CATALOG_RAW = {
     shape: [[0, 0]],
     rarity: "legendary",
     cost: 6,
-    tags: ["food"],
+    tags: ["food","nature"],
     cooldown: 2.9,
     effects: [
-      { type: "heal", value: 3 },
       { type: "periodic", interval: 2.9, trigger: "passive", gainStack: {"stack":"luck","value":1}, heal: 4 },
       { type: "cooldownMultPerTag", tags: ["food"], perTag: 0.1, trigger: "passive" }
     ],
@@ -3746,7 +3742,6 @@ const BB_ITEM_CATALOG_RAW = {
     cooldown: 4.5,
     craftOnly: true,
     effects: [
-      { type: "heal", value: 3 },
       { type: "periodic", interval: 4.5, trigger: "passive", gainStack: {"stack":"heat","value":1}, heal: 5 },
       { type: "stackThreshold", stack: "heat", threshold: 10, trigger: "passive", cleanseDebuffs: 1, once: false }
     ],
@@ -3761,7 +3756,7 @@ const BB_ITEM_CATALOG_RAW = {
     shape: [[0, 0]],
     rarity: "rare",
     cost: 3,
-    tags: ["food","poison"],
+    tags: ["food","poison","nature"],
     cooldown: 4,
     effects: [
       { type: "buffTimed", stat: "damage", value: 0.15, duration: 5 },
@@ -3904,7 +3899,7 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "common",
     cost: 1,
     tags: ["gem","cold","craft"],
-    cooldown: 0,
+    cooldown: 3,
     effects: [
       { type: "slow", value: 0.1, duration: 3 },
       { type: "statMult", stat: "cooldown", value: -0.05, trigger: "passive" }
@@ -3921,7 +3916,7 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "rare",
     cost: 2,
     tags: ["gem","cold","craft"],
-    cooldown: 0,
+    cooldown: 3,
     craftOnly: true,
     effects: [
       { type: "slow", value: 0.1, duration: 3 },
@@ -3939,7 +3934,7 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "epic",
     cost: 4,
     tags: ["gem","cold","craft"],
-    cooldown: 0,
+    cooldown: 3,
     craftOnly: true,
     effects: [
       { type: "slow", value: 0.1, duration: 3 },
@@ -3957,7 +3952,7 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "legendary",
     cost: 8,
     tags: ["gem","cold","craft"],
-    cooldown: 0,
+    cooldown: 3,
     craftOnly: true,
     effects: [
       { type: "slow", value: 0.1, duration: 3 },
@@ -3975,7 +3970,7 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "godly",
     cost: 16,
     tags: ["gem","cold","craft"],
-    cooldown: 0,
+    cooldown: 3,
     craftOnly: true,
     effects: [
       { type: "slow", value: 0.1, duration: 3 },
@@ -3993,7 +3988,7 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "common",
     cost: 1,
     tags: ["gem","nature","craft"],
-    cooldown: 0,
+    cooldown: 3,
     effects: [
       { type: "heal", value: 3 },
       { type: "passiveMaxHp", value: 5, trigger: "passive" }
@@ -4010,7 +4005,7 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "rare",
     cost: 2,
     tags: ["gem","poison","craft"],
-    cooldown: 0,
+    cooldown: 3,
     craftOnly: true,
     effects: [
       { type: "heal", value: 3 },
@@ -4028,7 +4023,7 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "epic",
     cost: 4,
     tags: ["gem","poison","craft"],
-    cooldown: 0,
+    cooldown: 3,
     craftOnly: true,
     effects: [
       { type: "heal", value: 3 },
@@ -4046,7 +4041,7 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "legendary",
     cost: 8,
     tags: ["gem","poison","craft"],
-    cooldown: 0,
+    cooldown: 3,
     craftOnly: true,
     effects: [
       { type: "heal", value: 3 },
@@ -4064,7 +4059,7 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "godly",
     cost: 16,
     tags: ["gem","poison","craft"],
-    cooldown: 0,
+    cooldown: 3,
     craftOnly: true,
     effects: [
       { type: "heal", value: 3 },
@@ -4259,7 +4254,7 @@ const BB_ITEM_CATALOG_RAW = {
     cooldown: 0,
     effects: [],
     synergies: [],
-    description: "+4 слот рюкзака.",
+    description: "+4 слота рюкзака.",
     buildHints: "Расширение инвентаря · Ветка: Fanny Pack → Holdall",
     _isContainerEntry: true,
   },
@@ -4281,7 +4276,7 @@ const BB_ITEM_CATALOG_RAW = {
     cooldown: 0,
     effects: [],
     synergies: [],
-    description: "+2 слот рюкзака. Предметы внутри срабатывает 10% быстрее.",
+    description: "Предметы внутри на 10% быстрее.",
     buildHints: "Универсальный / автономный",
     _isContainerEntry: true,
   },
@@ -4302,7 +4297,7 @@ const BB_ITEM_CATALOG_RAW = {
     cooldown: 0,
     effects: [],
     synergies: [],
-    description: "+6 слотов рюкзака. В начале боя: получить 8 за каждый нейтральный предмет внутри.",
+    description: "В начале боя: +8 жара за нейтральный предмет внутри.",
     buildHints: "Универсальный / автономный",
     _isContainerEntry: true,
   },
@@ -4327,7 +4322,7 @@ const BB_ITEM_CATALOG_RAW = {
     synergies: [
       { id: "migrated_crit_per_luck_5_", adjacency: "strong", neighborTags: ["ranged"], target: "neighbor", apply: { type: "damageBonus", value: 1 }, desc: "Бонус к криту" }
     ],
-    description: "+6 слот рюкзака. Предметы внутри получить 10% шанс критического удара +3% за каждый стака",
+    description: "Внутри: +10% крит и +3% за стак.",
     buildHints: "Билд: Ranger · Кладём Shortbow / стрелы внутрь",
     _isContainerEntry: true,
   },
@@ -4350,7 +4345,7 @@ const BB_ITEM_CATALOG_RAW = {
     effects: [],
     craftOnly: true,
     synergies: [],
-    description: "+9 слотов рюкзака. Лечение усилено на 10% + 3% за предмет с тегом внутри. В раундах 1 и 10 шанс распродажи увеличен на 20%.",
+    description: "+10% лечения и +3% за предмет природы внутри.",
     buildHints: "Универсальный / автономный",
     _isContainerEntry: true,
   },
@@ -4373,7 +4368,7 @@ const BB_ITEM_CATALOG_RAW = {
     effects: [],
     craftOnly: true,
     synergies: [],
-    description: "+8 слот рюкзака. Предмет внутри активируется: 22% шанс наложить 1 стак",
+    description: "При активации предмета внутри: 22% +1 яд.",
     buildHints: "Билд: Reaper / тёмные предметы · Пары: Demonic Flask, яд",
     _isContainerEntry: true,
   },
@@ -4394,7 +4389,7 @@ const BB_ITEM_CATALOG_RAW = {
     cooldown: 0,
     effects: [],
     synergies: [],
-    description: "+4 слот рюкзака. Каждые 2.5с: Оружие внутри Даёт +5% урон и потратить -5% выносливости.",
+    description: "Каждые 2.5с: оружие внутри +1 урона.",
     buildHints: "Универсальный / автономный",
     _isContainerEntry: true,
   },
@@ -4417,7 +4412,7 @@ const BB_ITEM_CATALOG_RAW = {
     effects: [],
     craftOnly: true,
     synergies: [],
-    description: "+6 слот рюкзака. Когда здоровье падает ниже 50%: Вход боевая ярость на 5с (один раз). Во время боевой ярости: Предметы внутри срабатывает 30% быстрее. Вы получить 20% снижен урон.",
+    description: "При HP <50%: боевая ярость, −20% урона, +20 блока.",
     buildHints: "Универсальный / автономный",
     _isContainerEntry: true,
   },
@@ -4439,7 +4434,7 @@ const BB_ITEM_CATALOG_RAW = {
     cooldown: 0,
     effects: [],
     synergies: [],
-    description: "+8 слот рюкзака. Оружие внутри Даёт +30% урон но атакуете на 30% медленнее. Через 5с: Вход боевая ярость на 6с. Во время боевой ярости: +35% вампиризм.",
+    description: "Оружие внутри: +30% урона, −30% скорости. +35% вампиризм.",
     buildHints: "Универсальный / автономный",
     _isContainerEntry: true,
   },
@@ -4454,12 +4449,14 @@ const BB_ITEM_CATALOG_RAW = {
     tags: ["accessory","card","luck"],
     cooldown: 0,
     effects: [
-      { type: "statMult", stat: "damage", value: 0.08, trigger: "passive" }
+      { type: "statMult", stat: "damage", value: 0.08, trigger: "passive" },
+      { type: "gainStack", stack: "luck", value: 2, trigger: "battle_start" },
+      { type: "procChanceBonus", value: 0.05, trigger: "passive" }
     ],
     metaEffects: [
       { phase: "shop_pool", type: "offer_tag", tag: "card" }
     ],
-    description: "Игральные карты появляются в магазине. В начале боя: получить 2. Начать открытие игральной карты.",
+    description: "В начале боя: +2 удачи. +5% к прокам.",
     buildHints: "RNG / карточные эффекты · Ветка: Ace of Spades, The Fool, драконы",
   },
   ace_of_spades: {
@@ -4471,12 +4468,13 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "rare",
     cost: 3,
     tags: ["card","craft"],
-    cooldown: 0,
+    cooldown: 3,
     craftOnly: true,
     effects: [
-      { type: "buffTimed", stat: "damage", value: 0.25, duration: 4 }
+      { type: "buffTimed", stat: "damage", value: 0.25, duration: 4 },
+      { type: "buffTimed", stat: "damage", value: 0.15, duration: 4, trigger: "on_hit", chance: 0.5 }
     ],
-    description: "При открытии: следующий удар критический. Если количество карт перед ней нечётное: получить 2 и 3.",
+    description: "При попадании: 50% +15% урона на 4с.",
     buildHints: "Универсальный / автономный",
   },
   the_lovers: {
@@ -4488,13 +4486,14 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "common",
     cost: 3,
     tags: ["card","craft"],
-    cooldown: 0,
+    cooldown: 3,
     craftOnly: true,
     effects: [
       { type: "heal", value: 4 },
-      { type: "buffTimed", stat: "damage", value: 0.25, duration: 4 }
+      { type: "buffTimed", stat: "damage", value: 0.25, duration: 4 },
+      { type: "heal", value: 3, trigger: "battle_start" }
     ],
-    description: "На открыть: Нанести 7 маг. Урона с 100% вампиризмом. Если количество карты перед даже, получить 2 и ваше лечение усилено на 6%.",
+    description: "В начале боя: +3 HP.",
     buildHints: "Универсальный / автономный",
   },
   the_fool: {
@@ -4506,14 +4505,15 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "epic",
     cost: 1,
     tags: ["card","craft"],
-    cooldown: 0,
+    cooldown: 3,
     craftOnly: true,
     effects: [
       { type: "buffTimed", stat: "damage", value: 0.25, duration: 4 },
       { type: "buffTimed", stat: "damage", value: 0.3, duration: 5 },
-      { type: "passiveLuck", value: 10, trigger: "passive" }
+      { type: "passiveLuck", value: 10, trigger: "passive" },
+      { type: "gainStack", stack: "luck", value: 1, trigger: "battle_start" }
     ],
-    description: "При открытии: карты открываются на 50% быстрее. Если это первая карта в цепочке: получить 1.",
+    description: "В начале боя: +1 удача.",
     buildHints: "Универсальный / автономный",
   },
   reverse: {
@@ -4525,12 +4525,13 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "rare",
     cost: 3,
     tags: ["card","craft"],
-    cooldown: 0,
+    cooldown: 3,
     craftOnly: true,
     effects: [
-      { type: "buffTimed", stat: "damage", value: 0.25, duration: 4 }
+      { type: "buffTimed", stat: "damage", value: 0.25, duration: 4 },
+      { type: "gainStack", stack: "empower", value: 2, trigger: "battle_start" }
     ],
-    description: "При открытии: отразить 3 дебаффа. Если перед ней нет одинаковых карт: украсть 3 баффа.",
+    description: "В начале боя: +2 усиления.",
     buildHints: "Универсальный / автономный",
   },
   white_eyes_blue_dragon: {
@@ -4542,14 +4543,17 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "epic",
     cost: 5,
     tags: ["card","pet","craft"],
-    cooldown: 0,
+    cooldown: 3,
     craftOnly: true,
     effects: [
       { type: "buffTimed", stat: "damage", value: 0.25, duration: 4 },
       { type: "groundFire", value: 4 },
-      { type: "statMult", stat: "damage", value: 0.15, trigger: "passive" }
+      { type: "statMult", stat: "damage", value: 0.15, trigger: "passive" },
+      { type: "gainStack", stack: "luck", value: 12, trigger: "battle_start" },
+      { type: "cardScaledBonus", stack: "luck", perCard: 5, trigger: "battle_start" },
+      { type: "gainStack", stack: "cold", value: 3, targetSide: "foe", trigger: "battle_start" }
     ],
-    description: "На открыть: Получить 12 + 5 за каждый карта перед. Наложить 3 стака",
+    description: "При открытии: +12 удачи (+5 за карту). +3 холода противнику.",
     buildHints: "Билд: питомцы",
   },
   holo_fire_lizard: {
@@ -4561,14 +4565,17 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "legendary",
     cost: 5,
     tags: ["card","fire","pet","craft"],
-    cooldown: 0,
+    cooldown: 3,
     craftOnly: true,
     effects: [
       { type: "buffTimed", stat: "damage", value: 0.25, duration: 4 },
       { type: "groundFire", value: 2 },
-      { type: "statMult", stat: "damage", value: 0.08, trigger: "passive" }
+      { type: "statMult", stat: "damage", value: 0.08, trigger: "passive" },
+      { type: "statMult", stat: "magicDamage", value: 0.08, trigger: "battle_start" },
+      { type: "cardScaledDamage", base: 12, perCard: 4, damageType: "magic", trigger: "battle_start" },
+      { type: "gainStack", stack: "heat", value: 4, trigger: "battle_start" }
     ],
-    description: "На открыть: Повысить маг. Урона 8%. Нанести 12 маг. Урона + 4 за каждый карта перед. Получить 4 жара",
+    description: "При открытии: +8% маг. урона, 12 (+4/карта) маг. урона, +4 жара.",
     buildHints: "Билд: огонь / Pyromancer, питомцы · Пары: Draconic Orb, Oil Lamp, Flame-крафты",
   },
   jimbo: {
@@ -4580,13 +4587,16 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "godly",
     cost: 4,
     tags: ["card","craft"],
-    cooldown: 0,
+    cooldown: 3,
     craftOnly: true,
     effects: [
       { type: "passiveLuck", value: 20, trigger: "passive" },
-      { type: "heal", value: 5 }
+      { type: "heal", value: 5 },
+      { type: "gainWeakestStack", value: 1, count: 7, trigger: "battle_start" },
+      { type: "procChanceBonus", value: 0.1, trigger: "passive" },
+      { type: "passiveDefense", value: 2, trigger: "passive" }
     ],
-    description: "При открытии: получить 7 случайных баффов. За каждую пару перед ней: сопротивление 1 криту. За каждую тройку: оружие тратит на 25% меньше выносливости. За каждое каре: активировать 2 случайные открытые карты (кроме Джимбо).",
+    description: "При открытии: +7 случайных стаков. +10% к прокам.",
     buildHints: "Универсальный / автономный",
   },
   darkest_lotus: {
@@ -4598,12 +4608,15 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "godly",
     cost: 5,
     tags: ["card","poison","dark","craft"],
-    cooldown: 0,
+    cooldown: 3,
     craftOnly: true,
     effects: [
-      { type: "buffTimed", stat: "damage", value: 0.25, duration: 4 }
+      { type: "buffTimed", stat: "damage", value: 0.25, duration: 4 },
+      { type: "cardScaledBonus", stack: "empower", perCard: 4, trigger: "battle_start" },
+      { type: "gainStack", stack: "empower", value: 4, trigger: "battle_start" },
+      { type: "stealRandomStack", value: 3, trigger: "battle_start" }
     ],
-    description: "На открыть: За каждый карта перед, получить 4 и Снять 3 случайный баффы от противника.",
+    description: "При открытии: +4 усиления (+4/карта). Украсть 3 стака.",
     buildHints: "Билд: яд / DoT, Reaper дебаффы · Пары: Pestilence Flask, Death Scythe, ядовитые питомцы",
   },
   rainbow_badge: {
@@ -4615,9 +4628,11 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "unique",
     cost: 5,
     tags: ["accessory","ranged","craft"],
-    cooldown: 0,
+    cooldown: 7,
     craftOnly: true,
-    effects: [],
+    effects: [
+      { type: "periodic", interval: 7, trigger: "passive", gainWeakestStack: {"value":1,"count":3} }
+    ],
     metaEffects: [
       { phase: "shop_pool", type: "offer_class", classId: "all" }
     ],
@@ -4636,7 +4651,8 @@ const BB_ITEM_CATALOG_RAW = {
     cooldown: 3,
     craftOnly: true,
     effects: [
-      { type: "heal", value: 2 }
+      { type: "heal", value: 2 },
+      { type: "periodic", interval: 3, trigger: "passive", gainStack: {"stack":"block","value":1} }
     ],
     synergies: [
       { id: "migrated_block_1", adjacency: "strong", neighborTags: ["weapon","pet","food","potion","gem","magic","armor","shield","accessory"], target: "neighbor", apply: { type: "blockBonus", value: 1 }, desc: "+1 блока" }
@@ -4656,11 +4672,12 @@ const BB_ITEM_CATALOG_RAW = {
     shape: [[0, 0]],
     rarity: "unique",
     cost: 5,
-    tags: ["accessory","craft"],
+    tags: ["accessory","craft","nature"],
     cooldown: 2.2,
     craftOnly: true,
     effects: [
-      { type: "heal", value: 2 }
+      { type: "heal", value: 2 },
+      { type: "periodic", interval: 2.2, trigger: "passive", gainWeakestStack: {"value":1,"count":1} }
     ],
     synergies: [
       { id: "leaf_badge_regen", adjacency: "strong", neighborTags: ["food","potion","weapon","pet"], target: "neighbor", apply: { type: "healBonus", value: 2 }, desc: "Regen соседним предметам" }
@@ -4683,7 +4700,8 @@ const BB_ITEM_CATALOG_RAW = {
     cooldown: 1.5,
     craftOnly: true,
     effects: [
-      { type: "poison", value: 1 }
+      { type: "poison", value: 1 },
+      { type: "periodic", interval: 1.5, trigger: "passive", foePoison: 1 }
     ],
     metaEffects: [
       { phase: "shop_pool", type: "offer_tag", tag: "reaper" }
@@ -4703,7 +4721,9 @@ const BB_ITEM_CATALOG_RAW = {
     cooldown: 0,
     craftOnly: true,
     effects: [
-      { type: "battleRageLowHp", duration: 5, cooldownBoost: 0.25, damageReduction: 0.2, trigger: "passive" }
+      { type: "battleRageLowHp", duration: 5, cooldownBoost: 0.25, damageReduction: 0.2, trigger: "passive" },
+      { type: "hpThreshold", threshold: 0.5, direction: "below", once: true, trigger: "passive", cooldownBoost: 0.25 },
+      { type: "battleRageLowHp", trigger: "passive", cooldownBoost: 0.25 }
     ],
     synergies: [
       { id: "migrated_damage_1", adjacency: "strong", neighborTags: ["weapon"], target: "neighbor", apply: { type: "damageBonus", value: 1 }, desc: "+1 урона соседям" }
@@ -4711,7 +4731,7 @@ const BB_ITEM_CATALOG_RAW = {
     metaEffects: [
       { phase: "shop_pool", type: "offer_tag", tag: "berserker" }
     ],
-    description: "Берсерк предметы появляется в магазине. Когда здоровье падает ниже 50%: Вход боевая ярость на 5с (один раз). Во время боевой ярости: Предметы срабатывают на 25% быстрее. Вы получить 20% снижен урон.",
+    description: "При HP <50%: боевая ярость на 5с (раз).",
     buildHints: "Универсальный / автономный",
   },
   flame_badge: {
@@ -4727,13 +4747,14 @@ const BB_ITEM_CATALOG_RAW = {
     craftOnly: true,
     effects: [
       { type: "statMult", stat: "damage", value: 0.08, trigger: "passive" },
-      { type: "groundFire", value: 6, trigger: "passive" }
+      { type: "groundFire", value: 6, trigger: "passive" },
+      { type: "procChanceBonus", value: 0.05, trigger: "passive" }
     ],
     metaEffects: [
       { phase: "shop_pool", type: "offer_tag", tag: "pyromancer" },
       { phase: "shop_enter", type: "generate_flame", chance: 0.65 }
     ],
-    description: "Предметы пироманта появляются в магазине. При входе в магазин: 65% шанс потратить 1 и создать Пламя. В начале боя: получить 6.",
+    description: "Магазин: предметы пироманта. +5% к прокам.",
     buildHints: "Билд: огонь / Pyromancer · Пары: Draconic Orb, Oil Lamp, Flame-крафты",
   },
   magic_badge: {
@@ -4749,12 +4770,14 @@ const BB_ITEM_CATALOG_RAW = {
     craftOnly: true,
     effects: [
       { type: "statMult", stat: "damage", value: 0.08, trigger: "passive" },
-      { type: "statMult", stat: "magicDamage", value: 0.25, trigger: "passive" }
+      { type: "statMult", stat: "magicDamage", value: 0.25, trigger: "passive" },
+      { type: "gainStack", stack: "mana", value: 5, trigger: "battle_start" },
+      { type: "procChanceBonus", value: 0.3, trigger: "passive" }
     ],
     metaEffects: [
       { phase: "shop_pool", type: "offer_class", classId: "mage" }
     ],
-    description: "Предметы мага появляются в магазине. В начале боя: получить 5. Предметы получают 30% шанс продублировать полученные эффекты.",
+    description: "В начале боя: +5 маны. +30% к дублированию баффов.",
     buildHints: "Универсальный / автономный",
   },
   puzzle_badge: {
@@ -4766,9 +4789,12 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "unique",
     cost: 5,
     tags: ["accessory","luck","craft"],
-    cooldown: 0,
+    cooldown: 5,
     craftOnly: true,
-    effects: [],
+    effects: [
+      { type: "statMult", stat: "cooldown", value: 0.2, trigger: "passive" },
+      { type: "periodic", interval: 5, trigger: "passive", cooldownBoostItem: 0.5 }
+    ],
     metaEffects: [
       { phase: "shop_buy", type: "restock_bag", chance: 0.35 }
     ],
@@ -4786,7 +4812,9 @@ const BB_ITEM_CATALOG_RAW = {
     tags: ["accessory","craft"],
     cooldown: 0,
     craftOnly: true,
-    effects: [],
+    effects: [
+      { type: "procChanceBonus", value: 0.05, trigger: "passive" }
+    ],
     synergies: [
       { id: "twine_badge_haste", adjacency: "strong", neighborTags: ["weapon","pet","potion","food"], target: "neighbor", apply: { type: "cooldownReduction", value: 0.15 }, desc: "Ускорение соседних предметов" }
     ],
@@ -4794,7 +4822,7 @@ const BB_ITEM_CATALOG_RAW = {
       { phase: "shop_pool", type: "offer_tag", tag: "adventurer" },
       { phase: "shop_buy", type: "restock_tag", tag: "treasure", chance: 0.4 }
     ],
-    description: "Предметы авантюриста появляются в магазине. При покупке бечёвки: 40% шанс пополнить ещё одной. Скрафченные предметы срабатывают на 20% быстрее и имеют 20% шанс продублировать свои баффы.",
+    description: "Магазин: предметы авантюриста. +5% к прокам.",
     buildHints: "Универсальный / автономный",
   },
   artifact_stone_cold: {
@@ -4810,9 +4838,12 @@ const BB_ITEM_CATALOG_RAW = {
     cooldown: 4,
     staminaCost: 0,
     effects: [
-      { type: "damage", value: 3, valueMin: 2, valueMax: 4 }
+      { type: "damage", value: 3, valueMin: 2, valueMax: 4 },
+      { type: "periodic", interval: 5, trigger: "passive", gainStack: {"stack":"cold","value":1,"targetSide":"foe"}, heal: 4 },
+      { type: "activationLimit", base: 1, trigger: "passive" },
+      { type: "gainStack", stack: "cold", value: 3, targetSide: "foe", trigger: "on_hit" }
     ],
-    description: "Можно только метнуть раз за бой. При попадании: Наложить 3 стака Попадания оружия: Наложить 1 стак",
+    description: "1 бросок. При попадании: +3 холода. Каждые 5с: +1 холод и +4 HP.",
     buildHints: "Билд: лёд",
   },
   artifact_stone_heat: {
@@ -4827,9 +4858,12 @@ const BB_ITEM_CATALOG_RAW = {
     damage: 5,
     cooldown: 2,
     effects: [
-      { type: "damage", value: 5, valueMin: 4, valueMax: 6 }
+      { type: "damage", value: 5, valueMin: 4, valueMax: 6 },
+      { type: "activationLimit", base: 1, trigger: "passive" },
+      { type: "gainStack", stack: "heat", value: 3, trigger: "on_hit" },
+      { type: "stackThreshold", stack: "heat", threshold: 10, once: true, trigger: "passive", weaponDamage: 8 }
     ],
-    description: "Можно только метнуть раз за бой. При попадании: Получить 3 жара При накоплении 10: Оружие получить 8 урона.",
+    description: "1 бросок. При попадании: +3 жара. При 10 жара: оружие +8 урона.",
     buildHints: "Билд: огонь / Pyromancer · Пары: Draconic Orb, Oil Lamp, Flame-крафты",
   },
   artifact_stone_death: {
@@ -4845,9 +4879,12 @@ const BB_ITEM_CATALOG_RAW = {
     cooldown: 2,
     effects: [
       { type: "damage", value: 8, valueMin: 7, valueMax: 9 },
-      { type: "poison", value: 2 }
+      { type: "poison", value: 2 },
+      { type: "activationLimit", base: 1, trigger: "passive" },
+      { type: "fatigueDamageOnHit", value: 1, poison: 2, trigger: "on_hit" },
+      { type: "critPerFoeFatigue", value: 0.07, trigger: "passive" }
     ],
-    description: "Можно метнуть только раз за бой. При попадании: наложить урон от усталости. Предметы имеют +7% шанс крита за уровень Усталости противника.",
+    description: "1 бросок. Урон от усталости при попадании. +7% крит за уровень усталости противника.",
     buildHints: "Билд: яд / DoT · Пары: Pestilence Flask, Death Scythe, ядовитые питомцы",
   },
   present: {
@@ -4858,17 +4895,19 @@ const BB_ITEM_CATALOG_RAW = {
     shape: [[0, 0]],
     rarity: "unique",
     cost: 10,
-    tags: ["accessory","craft"],
+    tags: ["accessory","craft","nature"],
     cooldown: 0,
     craftOnly: true,
     effects: [
       { type: "statMult", stat: "damage", value: 0.08, trigger: "passive" },
-      { type: "passiveLuck", value: 15, trigger: "passive" }
+      { type: "passiveLuck", value: 15, trigger: "passive" },
+      { type: "gainStack", stack: "luck", value: 5, trigger: "battle_start" },
+      { type: "heal", value: 15, trigger: "battle_start" }
     ],
     metaEffects: [
       { phase: "shop_enter", type: "items_not_gold" }
     ],
-    description: "При входе в магазин: вместо золота вы получаете предметы большей стоимости. В начале боя: получить 5 случайных баффов.",
+    description: "В начале боя: +5 удачи и +15 HP.",
     buildHints: "Универсальный / автономный",
   },
   gingerbread_jerry: {
@@ -4884,7 +4923,9 @@ const BB_ITEM_CATALOG_RAW = {
     craftOnly: true,
     effects: [
       { type: "heal", value: 1 },
-      { type: "passiveMaxHp", value: 40, trigger: "passive" }
+      { type: "passiveMaxHp", value: 40, trigger: "passive" },
+      { type: "periodic", interval: 3, trigger: "passive", spendStack: {"stack":"heat","value":1}, gainStack: {"stack":"empower","value":1}, gainHeart: 1 },
+      { type: "cooldownMultPerTag", tags: ["food"], perTag: 0.1, trigger: "passive" }
     ],
     description: "В начале боя: +40 макс. здоровья. Каждые 3с: потратить 1, 1 и 1: получить 1, 3 и +20 макс. здоровья. Еда: срабатывает на 10% быстрее за каждую еду другого типа (кроме Пряничного Джерри).",
     buildHints: "Билд: питомцы",
@@ -4902,9 +4943,12 @@ const BB_ITEM_CATALOG_RAW = {
     staminaCost: 0,
     craftOnly: true,
     effects: [
-      { type: "slow", value: 0.18, duration: 2 }
+      { type: "slow", value: 0.18, duration: 2 },
+      { type: "applyStun", duration: 0.5, chance: 0.5, trigger: "on_hit" },
+      { type: "onFatigueStart", gainStack: {"stack":"heat","value":10}, trigger: "passive" },
+      { type: "cooldownMultPerTag", tags: ["food"], perTag: 0.1, trigger: "passive" }
     ],
-    description: "При попадании: 50% шанс оглушить на 0.5с. При начале усталости: получить 10. Еда: срабатывает на 10% быстрее за каждую еду другого типа (кроме Тыквы).",
+    description: "50% оглушение. При усталости: +10 жара. Быстрее за еду.",
     buildHints: "Билд: огонь / Pyromancer, еда / Pan · Пары: Draconic Orb, Oil Lamp, Flame-крафты · Синергия: стан → Dagger extra attack",
     sockets: 2,
   },
@@ -4917,11 +4961,12 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "unique",
     cost: 7,
     tags: ["accessory"],
-    cooldown: 0,
+    cooldown: 12,
     effects: [
-      { type: "buffTimed", stat: "damage", value: 0.15, duration: 4 }
+      { type: "buffTimed", stat: "damage", value: 0.15, duration: 4 },
+      { type: "periodic", interval: 12, trigger: "passive", damage: 20, damageType: "magic" }
     ],
-    description: "Через 12с: потратить все баффы, противник получает +4% урона за каждый использованный бафф. Нанести 30 маг. урона.",
+    description: "Каждые 12с: 20 маг. урона.",
     buildHints: "Универсальный / автономный",
   },
   pop: {
@@ -4933,11 +4978,12 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "unique",
     cost: 6,
     tags: ["accessory"],
-    cooldown: 0,
+    cooldown: 8,
     effects: [
-      { type: "slow", value: 0.25, duration: 2 }
+      { type: "periodic", interval: 8, trigger: "passive", foePoison: 3 },
+      { type: "cooldownMultPerSocket", perSocket: 0.03, maxBonus: 0.6, trigger: "passive" }
     ],
-    description: "Атаки 3% быстрее за каждый (до 60%).",
+    description: "Каждые 8с: +3 яда. Атаки на 3% быстрее за каждый заполненный сокет (до 60%).",
     buildHints: "Универсальный / автономный",
     sockets: 4,
   },
@@ -4952,12 +4998,13 @@ const BB_ITEM_CATALOG_RAW = {
     tags: ["pet"],
     cooldown: 6,
     effects: [
-      { type: "heal", value: 2 }
+      { type: "periodic", interval: 6, trigger: "passive", gainDominantStack: 3 },
+      { type: "cooldownMultPerItemCost", perCost: 0.01, trigger: "passive" }
     ],
     metaEffects: [
       { phase: "shop_refresh", type: "trade_offer", chance: 0.4, value: 3 }
     ],
-    description: "При обновлении магазина: 40% шанс торгового предложения Каждые 6с: Получить 3 баффы типа, которого у вас больше всего. Срабатывает на 1% быстрее за каждый стоимость предметов.",
+    description: "При обновлении магазина: 40% торговое предложение. Каждые 6с: +3 к сильнейшему стаку. На 1% быстрее за стоимость предметов.",
     buildHints: "Билд: питомцы",
   },
   shiny_shell: {
@@ -4968,13 +5015,14 @@ const BB_ITEM_CATALOG_RAW = {
     shape: [[0, 0]],
     rarity: "common",
     cost: 2,
-    tags: ["accessory","luck"],
-    cooldown: 0,
+    tags: ["accessory","holy","nature"],
+    cooldown: 5,
     effects: [
-      { type: "heal", value: 4 }
+      { type: "healPerTag", tag: "holy", value: 3, trigger: "passive", adjacent: true },
+      { type: "periodic", interval: 5, trigger: "passive", heal: 5 }
     ],
-    description: "Через 5с: Лечение на 5 + 3 за каждый предмет с тегом.",
-    buildHints: "Билд: крит / Luck",
+    description: "Каждые 5с: +5 HP и +3 за соседний святой предмет.",
+    buildHints: "Билд: святой / Ranger · Крафт: Shelly, Shell Totem · Пары: Holy Armor, Divine Potion",
   },
   shell_totem: {
     id: "shell_totem",
@@ -4984,16 +5032,17 @@ const BB_ITEM_CATALOG_RAW = {
     shape: [[0, 0]],
     rarity: "rare",
     cost: 5,
-    tags: ["accessory","craft"],
+    tags: ["accessory","craft","holy"],
     cooldown: 3.4,
     craftOnly: true,
     effects: [
-      { type: "damage", value: 2, valueMin: 1, valueMax: 3 }
+      { type: "periodic", interval: 3.4, trigger: "passive", hpThreshold: 0.7, healIfBelow: 8, gainStackIfAbove: {"stack":"empower","value":1} },
+      { type: "cooldownMultPerTag", tags: ["holy"], perTag: 0.15, trigger: "passive" }
     ],
     synergies: [
       { id: "migrated_block_1", adjacency: "strong", neighborTags: ["weapon","pet","food","potion","gem","magic","armor","shield","accessory"], target: "neighbor", apply: { type: "blockBonus", value: 1 }, desc: "+1 блока" }
     ],
-    description: "Каждые 3.4с: если здоровье выше 70% — получить 1, иначе лечение на 8. Тратит на 15% меньше выносливости за каждый предмет с тегом.",
+    description: "Каждые 3.4с: +8 HP при HP <70%, иначе +1 усиление. Быстрее за святой предмет.",
     buildHints: "Крафт: Shiny Shell + Shell Totem",
   },
   flute: {
@@ -5007,9 +5056,10 @@ const BB_ITEM_CATALOG_RAW = {
     tags: ["accessory","musical"],
     cooldown: 4.7,
     effects: [
-      { type: "heal", value: 2 }
+      { type: "periodic", interval: 4.7, trigger: "passive", randomPick: [{"block":14},{"restoreStamina":2},{"gainStack":{"stack":"luck","value":2}}] },
+      { type: "cooldownMultPerAdjacent", perAdjacent: 0.1, maxBonus: 0.6, trigger: "passive" }
     ],
-    description: "Каждые 4.7с: Случайно получить 14 или 2 выносливости или 2 стака Срабатывает на 10% быстрее за каждый предмет.",
+    description: "Каждые 4.7с: +14 блока, +2 выносливости или +2 удачи (случайно). На 10% быстрее за соседа (до 60%).",
     buildHints: "Билд: Musical · Пары: Fanfare, Dancing Dragon",
   },
   fanfare: {
@@ -5023,9 +5073,9 @@ const BB_ITEM_CATALOG_RAW = {
     tags: ["accessory","musical"],
     cooldown: 3,
     effects: [
-      { type: "heal", value: 2 }
+      { type: "periodic", interval: 3, trigger: "passive", drainFoeStamina: 1, cooldownPenalty: 0.8, stunEvery: 5, stunDuration: 1 }
     ],
-    description: "Каждые 3с: Случайно получить 1 или получить 3 и Снять 2 от противник или снять 1 выносливости у противника. Срабатывает на 10% быстрее за каждый предмет.",
+    description: "Каждые 3с: −1 выносливости противнику. Каждые 5 срабатываний: оглушение 1с.",
     buildHints: "Синергия: стан → Dagger extra attack",
   },
   repeater: {
@@ -5037,9 +5087,10 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "unique",
     cost: 8,
     tags: ["accessory"],
-    cooldown: 0,
+    cooldown: 12,
     effects: [
-      { type: "repeatCast", magicOnly: true, trigger: "passive" }
+      { type: "repeatCast", magicOnly: true, trigger: "passive" },
+      { type: "periodic", interval: 12, trigger: "passive", gainWeakestStack: {"value":1,"count":2} }
     ],
     description: "Через 12с: повторить эффекты начала боя предметов.",
     buildHints: "Универсальный / автономный",
@@ -5053,9 +5104,9 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "unique",
     cost: 8,
     tags: ["pet"],
-    cooldown: 0,
+    cooldown: 4,
     effects: [
-      { type: "damage", value: 2, valueMin: 1, valueMax: 3 }
+      { type: "periodic", interval: 4, trigger: "passive", gainStack: {"stack":"cold","value":1,"targetSide":"foe"} }
     ],
     description: "Активируется: 35% шанс получить 1 стак активируется: 30% шанс Потратить 1, чтобы получить 1 стак",
     buildHints: "Билд: питомцы",
@@ -5069,9 +5120,9 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "unique",
     cost: 10,
     tags: ["pet"],
-    cooldown: 0,
+    cooldown: 3,
     effects: [
-      { type: "damage", value: 2, valueMin: 1, valueMax: 3 }
+      { type: "periodic", interval: 3, trigger: "passive", damage: 4, damageType: "magic" }
     ],
     metaEffects: [
       { phase: "shop_pool", type: "offer_tag", tag: "pet" }
@@ -5088,11 +5139,12 @@ const BB_ITEM_CATALOG_RAW = {
     rarity: "legendary",
     cost: 7,
     tags: ["pet"],
-    cooldown: 0,
+    cooldown: 4.7,
     effects: [
-      { type: "damage", value: 2, valueMin: 1, valueMax: 3 }
+      { type: "periodic", interval: 4.7, trigger: "passive", stripFoeStacksOnceEach: true },
+      { type: "cooldownMultPerTag", tags: ["dark"], perTag: 0.1, trigger: "passive" }
     ],
-    description: "Каждые 4.7с: Снять 1 бафф каждый тип от противника. Срабатывает на 10% быстрее за каждый предмет с тегом.",
+    description: "Каждые 4.7с: снять по 1 стаку каждого типа у противника. На 10% быстрее за тёмный предмет.",
     buildHints: "Билд: питомцы",
   }
 };

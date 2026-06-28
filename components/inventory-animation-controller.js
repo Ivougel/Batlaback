@@ -374,6 +374,7 @@ function applyPrepDragGhostStyles(el) {
 
 function notifyPrepItemPlaced(item, def) {
   InventoryAnimationController.notifyItemPlaced(item, def);
+  if (typeof CombatLog !== "undefined" && def) CombatLog.notifyItemPlaced(def);
 }
 
 function notifyPrepPlacementRejected(item) {

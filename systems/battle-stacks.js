@@ -222,6 +222,21 @@ function getTotalSideStacks(side) {
   return types.reduce((sum, t) => sum + getSideStack(side, t), 0);
 }
 
+/** Снять по 1 стаку каждого типа (баффы противника). */
+function stripOneStackPerType(side) {
+  if (!side) return 0;
+  let stripped = 0;
+  RANDOM_STACK_TYPES.forEach((stackType) => {
+    if (getSideStack(side, stackType) > 0 && spendSideStack(side, stackType, 1)) {
+      stripped += 1;
+      if (stackType === "block" && typeof syncStackResourceSpend === "function") {
+        syncStackResourceSpend(side, stackType, 1);
+      }
+    }
+  });
+  return stripped;
+}
+
 function getStackThresholdKey(item, effect) {
   return `${item?.uid || item?.itemId}:${effect.stack || "?"}:${effect.threshold}:${effect.targetSide || "self"}`;
 }

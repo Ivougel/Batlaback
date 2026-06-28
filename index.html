@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Backpack Battles — Автобатлер</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles/combat-feed.css">
   <script src="ui-layout.js"></script>
 </head>
 <body>
@@ -91,13 +92,30 @@
           </div>
         </div>
         <div class="prep-toolbar" id="prep-toolbar">
-          <div class="prep-toolbar-side-switch">
+          <div class="prep-toolbar-left prep-toolbar-side-switch">
             <button type="button" class="btn-secondary prep-side-btn active" id="btn-prep-player" data-prep-side="player">🧑 Мой стол</button>
             <button type="button" class="btn-secondary prep-side-btn" id="btn-prep-enemy" data-prep-side="enemy">🤖 Противник</button>
             <button type="button" class="btn-secondary prep-settings-btn" id="btn-settings" aria-label="Настройки" aria-expanded="false" aria-controls="settings-overlay">⚙️</button>
           </div>
+          <div class="combat-feed-dock" id="combat-feed-dock">
+            <div id="combat-feed" class="combat-feed" aria-live="polite" aria-label="Журнал событий">
+              <div class="combat-feed-panel combat-feed-panel--collapsed" id="combat-feed-panel">
+                <header class="combat-feed-header" id="combat-feed-header">
+                  <span class="combat-feed-title">📜 События</span>
+                  <button type="button" class="combat-feed-toggle" id="combat-feed-toggle" aria-expanded="false" aria-label="Развернуть журнал">▾</button>
+                </header>
+                <div class="combat-feed-body" id="combat-feed-body">
+                  <div class="combat-feed-scroll" id="combat-feed-scroll"></div>
+                </div>
+              </div>
+            </div>
+            <button type="button" class="btn-secondary btn-combat-feed" id="btn-combat-feed" aria-expanded="false" aria-controls="combat-feed-panel">
+              <span class="btn-combat-feed-label">📜 События</span>
+              <span class="btn-combat-feed-chevron" aria-hidden="true">▾</span>
+            </button>
+          </div>
           <div class="prep-toolbar-hints" id="prep-toolbar-hints" aria-label="Управление"></div>
-          <div class="prep-toolbar-actions">
+          <div class="prep-toolbar-right prep-toolbar-actions">
             <button class="btn-primary btn-fight-header" id="btn-fight" type="button">⚔️ В бой!</button>
           </div>
         </div>
@@ -284,6 +302,10 @@
           <label class="settings-label settings-checkbox-label" for="settings-negrov-enabled">Негры</label>
           <input type="checkbox" id="settings-negrov-enabled" class="settings-checkbox" aria-label="Негры">
         </div>
+        <div class="settings-row settings-row-checkbox">
+          <label class="settings-label settings-checkbox-label" for="settings-combat-feed-enabled">Показывать журнал событий</label>
+          <input type="checkbox" id="settings-combat-feed-enabled" class="settings-checkbox" checked aria-label="Показывать журнал событий">
+        </div>
       </div>
     </div>
   </div>
@@ -303,6 +325,7 @@
   <div id="gamepad-cursor" class="gamepad-cursor hidden" aria-hidden="true"></div>
   <canvas id="ui-drag-ghost" class="ui-drag-ghost hidden" aria-hidden="true"></canvas>
   <div id="sidebar-tooltip" class="sidebar-tooltip hidden"></div>
+
   <script src="classes.js"></script>
   <script src="items.js"></script>
   <script src="items-bb-catalog.js"></script>
@@ -329,6 +352,7 @@
   <script src="components/board-preview.js"></script>
   <script src="components/recipe-book.js"></script>
   <script src="components/settings.js"></script>
+  <script src="components/combat-feed.js"></script>
   <script src="components/battle-result.js"></script>
   <script src="components/synergy-effect.js"></script>
   <script src="components/synergy-panel.js"></script>

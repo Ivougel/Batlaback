@@ -379,6 +379,8 @@ function createBattleSide(items, classId, prepMeta = {}) {
     procChanceBonus: 0,
     healAsDamageMult: 0,
     stackGainMult: 0,
+    stonesMultiThrow: false,
+    fatigueLevel: 0,
     battleRageTimer: 0,
     battleRageUsed: false,
     battleRageDamageReduction: 0,
@@ -1063,9 +1065,56 @@ function tickPeriodicItemEffects(state, dt) {
         if (effect.randomPick?.length) {
           const pick = effect.randomPick[Math.floor(Math.random() * effect.randomPick.length)];
           if (pick.heal) executeEffect(state, { type: "heal", value: pick.heal }, item, self, foe, rt, team);
+          if (pick.block) executeEffect(state, { type: "block", value: pick.block }, item, self, foe, rt, team);
           if (pick.gainStack) applyGainStackEffect(state, pick.gainStack, item, self, team);
           if (pick.foePoison && foe) executeEffect(state, { type: "poison", value: pick.foePoison }, item, self, foe, rt, team);
+          if (pick.restoreStamina) {
+            self.stamina = Math.min(self.maxStamina, self.stamina + Number(pick.restoreStamina || 0));
+          }
           return;
+        }
+        if (effect.stripFoeStacksOnceEach && foe && typeof stripOneStackPerType === "function") {
+          const stripped = stripOneStackPerType(foe);
+          const def = ITEM_CATALOG[item.itemId];
+          if (state && def && stripped > 0) {
+            pushBattleLog(state, {
+              actor: team,
+              type: "debuff",
+              source: def.name,
+              message: `${battleTeamLabel(team)} · ${def.name}: снято ${stripped} стак(ов) у противника`,
+            });
+          }
+        }
+        if (effect.drainFoeStamina && foe) {
+          const drain = Number(effect.drainFoeStamina) || 0;
+          if (drain > 0) {
+            foe.stamina = Math.max(0, (foe.stamina || 0) - drain);
+            const def = ITEM_CATALOG[item.itemId];
+            if (state && def) {
+              pushBattleLog(state, {
+                actor: team,
+                type: "debuff",
+                source: def.name,
+                message: `${battleTeamLabel(team)} · ${def.name}: −${drain} выносливости противнику`,
+              });
+            }
+          }
+        }
+        rt.periodicTriggerCount = (rt.periodicTriggerCount || 0) + 1;
+        if (effect.stunEvery && foe && rt.periodicTriggerCount % Number(effect.stunEvery) === 0) {
+          foe.stunTimer = Math.max(foe.stunTimer || 0, Number(effect.stunDuration) || 1);
+          const def = ITEM_CATALOG[item.itemId];
+          if (state && def) {
+            pushBattleLog(state, {
+              actor: team,
+              type: "debuff",
+              source: def.name,
+              message: `${battleTeamLabel(team)} · ${def.name}: оглушение ${Number(effect.stunDuration) || 1}с`,
+            });
+          }
+        }
+        if (effect.cooldownPenalty) {
+          item.currentCooldown = (item.currentCooldown || 0) + Number(effect.cooldownPenalty);
         }
         if (effect.stealFoeStack && foe && typeof spendSideStack === "function" && typeof addSideStack === "function") {
           const sf = effect.stealFoeStack;
@@ -1075,7 +1124,16 @@ function tickPeriodicItemEffects(state, dt) {
             applyGainStackEffect(state, { stack, value: amt }, item, self, team);
           }
         }
-        if (effect.gainStack) {
+        const hpRatio = self.maxHp > 0 ? self.hp / self.maxHp : 1;
+        const hasHpBranch = effect.hpThreshold != null;
+        if (hasHpBranch) {
+          const threshold = Number(effect.hpThreshold) || 0.7;
+          if (hpRatio >= threshold && effect.gainStackIfAbove) {
+            applyGainStackEffect(state, effect.gainStackIfAbove, item, self, team, foe);
+          } else if (hpRatio < threshold && effect.healIfBelow) {
+            executeEffect(state, { type: "heal", value: effect.healIfBelow }, item, self, foe, rt, team);
+          }
+        } else if (effect.gainStack) {
           if (effect.chance == null || rollEffectChance(self, effect.chance)) {
             const gs = typeof effect.gainStack === "object" ? effect.gainStack : { stack: effect.gainStack, value: 1 };
             applyGainStackEffect(state, gs, item, self, team, foe);
@@ -1126,7 +1184,7 @@ function tickPeriodicItemEffects(state, dt) {
             cleanseSideDebuffs(self, effect.cleanseDebuffs);
           }
         }
-        if (effect.heal) {
+        if (!hasHpBranch && effect.heal) {
           executeEffect(state, { type: "heal", value: effect.heal }, item, self, foe, rt, team);
         }
         if (effect.spendRandomStack && typeof spendRandomSelfStack === "function") {
@@ -1298,11 +1356,18 @@ function checkHpThresholdEffects(state, side, foe, team) {
         side.hp = Math.min(side.maxHp, side.hp + Number(effect.maxHp));
       }
       if (effect.gainBlock) applyGainStackEffect(state, { stack: "block", value: effect.gainBlock }, item, side, team);
+      if (effect.cooldownBoost) {
+        side.cooldownMult *= Math.max(0.35, 1 - Number(effect.cooldownBoost));
+        finalizeSideCombatStats(side);
+      }
       if (effect.timedDamageReduction) {
+        const tdr = typeof effect.timedDamageReduction === "object"
+          ? effect.timedDamageReduction
+          : { value: effect.timedDamageReduction, duration: 5 };
         side.timedBuffs.push({
-          stat: effect.timedDamageReduction.stat || "damageTaken",
-          value: -(Number(effect.timedDamageReduction.value) || 0.35),
-          remaining: Number(effect.timedDamageReduction.duration) || 7,
+          stat: "damageTaken",
+          value: -(Number(tdr.value) || 0.20),
+          remaining: Number(tdr.duration) || 5,
         });
       }
       if (state && def) {
@@ -1498,6 +1563,38 @@ function applyMaxHpPercentStart(side, ratio) {
   side.maxHp += bonus;
 }
 
+function countCardItemsOnSide(side) {
+  return typeof countTaggedItemsOnSide === "function"
+    ? countTaggedItemsOnSide(side, "card")
+    : 0;
+}
+
+function countNeutralItemsOnSide(side) {
+  return (side?.items || []).filter((item) => {
+    const def = ITEM_CATALOG[item.itemId];
+    return def && !def.isContainer && !def.classRestriction;
+  }).length;
+}
+
+function isStoneItemId(itemId) {
+  return itemId === "stone"
+    || (typeof itemId === "string" && itemId.startsWith("artifact_stone_"));
+}
+
+function triggerOnFatigueStartEffects(state) {
+  [
+    { side: state.player, team: "player" },
+    { side: state.enemy, team: "enemy" },
+  ].forEach(({ side, team }) => {
+    side.items.forEach((item) => {
+      collectItemBattleEffects(item).forEach((effect) => {
+        if (effect.type !== "onFatigueStart") return;
+        if (effect.gainStack) applyGainStackEffect(state, effect.gainStack, item, side, team);
+      });
+    });
+  });
+}
+
 function applyCrossSideBattleStartEffects(state) {
   [
     { self: state.player, foe: state.enemy, team: "player" },
@@ -1519,6 +1616,23 @@ function applyCrossSideBattleStartEffects(state) {
         }
         if (effect.targetSide === "foe" && effect.type === "gainStack") {
           applyGainStackEffect(state, effect, item, self, team, foe);
+        }
+        if (effect.type === "stealRandomStack" && effect.trigger === "battle_start" && foe) {
+          const times = Number(effect.value) || 1;
+          for (let i = 0; i < times; i += 1) {
+            stealRandomStackFromFoe(state, item, self, foe, team, 1);
+          }
+        }
+        if (effect.type === "cardScaledDamage" && foe) {
+          const cards = countCardItemsOnSide(self);
+          const dmg = (Number(effect.base) || 0) + Math.max(0, cards - 1) * (Number(effect.perCard) || 0);
+          if (dmg > 0) {
+            executeEffect(state, {
+              type: "damage",
+              value: dmg,
+              damageType: effect.damageType || "magic",
+            }, item, self, foe, rt, team);
+          }
         }
       });
     });
@@ -1550,6 +1664,27 @@ function applyBattleStartItemEffects(side) {
         for (let i = 0; i < times; i += 1) {
           applyGainWeakestStack(null, side, item, null, { value: effect.value || 1 });
         }
+      }
+      if (effect.type === "cardScaledBonus") {
+        const cards = countCardItemsOnSide(side);
+        const bonus = Math.max(0, cards - 1) * (Number(effect.perCard) || 5);
+        if (bonus > 0 && effect.stack) {
+          applyGainStackEffect(null, { stack: effect.stack, value: bonus }, item, side, null);
+        }
+      }
+      if (effect.type === "neutralScaledStack") {
+        const count = countNeutralItemsOnSide(side);
+        const per = Number(effect.perItem ?? effect.value) || 8;
+        if (count > 0 && effect.stack) {
+          applyGainStackEffect(null, { stack: effect.stack, value: count * per }, item, side, null);
+        }
+      }
+      if (effect.type === "selfPoisonStart") {
+        side.poisonStacks = (side.poisonStacks || 0) + (Number(effect.value) || 1);
+      }
+      if (effect.type === "heal" && Number(effect.value) > 0) {
+        const rt = item.runtime || createRuntimeState(item);
+        executeEffect(null, { type: "heal", value: effect.value }, item, side, null, rt, null);
       }
     });
   });
@@ -1738,6 +1873,13 @@ function processOnHitItemEffects(state, item, self, foe, team) {
       executeEffect(state, { type: "damage", value: Number(effect.value) || 1 }, item, self, foe, rt, team, { skipOnHit: true });
       if (effect.gainStack) applyGainStackEffect(state, effect.gainStack, item, self, team, foe);
     }
+    if (effect.type === "fatigueDamageOnHit" && foe && typeof isFatigueActive === "function" && isFatigueActive(state)) {
+      foe.fatigueLevel = (foe.fatigueLevel || 0) + (Number(effect.value) || 1);
+      executeEffect(state, { type: "poison", value: Number(effect.poison) || 2 }, item, self, foe, rt, team, { skipOnHit: true });
+    }
+    if (effect.type === "gainWeakestStack" && typeof applyGainWeakestStack === "function") {
+      applyGainWeakestStack(state, self, item, team, effect.gainWeakestStack === true ? {} : effect);
+    }
   });
   checkStackThresholds(state, self, foe, team, item);
 }
@@ -1804,6 +1946,46 @@ function applyPassiveEffect(side, item, effect) {
     case "cooldownMultPerTag":
       applyTagCooldownMult(side, effect);
       break;
+    case "cooldownMultPerAdjacent": {
+      if (typeof getAdjacentItems !== "function") break;
+      const neighbors = getAdjacentItems(side.items, item);
+      const per = Number(effect.perAdjacent ?? effect.perTag ?? 0.10);
+      const maxBonus = Number(effect.maxBonus ?? 0.60);
+      const bonus = Math.min(maxBonus, per * neighbors.size);
+      if (bonus > 0) {
+        item.runtime = item.runtime || createRuntimeState(item);
+        item.runtime.cooldownMult = clampCooldownMult((item.runtime.cooldownMult || 1) * (1 - bonus));
+      }
+      break;
+    }
+    case "cooldownMultPerItemCost": {
+      let totalCost = 0;
+      side.items.forEach((it) => {
+        const d = ITEM_CATALOG[it.itemId];
+        if (d && !d.isContainer) totalCost += Number(d.cost) || 0;
+      });
+      const per = Number(effect.perCost ?? 0.01);
+      const maxBonus = Number(effect.maxBonus ?? 0.99);
+      const bonus = Math.min(maxBonus, per * totalCost);
+      if (bonus > 0) {
+        item.runtime = item.runtime || createRuntimeState(item);
+        item.runtime.cooldownMult = clampCooldownMult((item.runtime.cooldownMult || 1) * (1 - bonus));
+      }
+      break;
+    }
+    case "cooldownMultPerSocket": {
+      let filled = 0;
+      side.items.forEach((it) => {
+        filled += (it.socketedGems?.filter(Boolean).length || 0);
+      });
+      const per = Number(effect.perSocket ?? 0.03);
+      const maxBonus = Number(effect.maxBonus ?? 0.60);
+      const bonus = Math.min(maxBonus, per * filled);
+      if (bonus > 0) {
+        side.cooldownMult = clampCooldownMult(side.cooldownMult * (1 - bonus));
+      }
+      break;
+    }
     case "passiveMaxStamina":
       side.maxStamina += Number(effect.value) || 1;
       side.stamina += Number(effect.value) || 1;
@@ -1816,6 +1998,9 @@ function applyPassiveEffect(side, item, effect) {
       break;
     case "stackGainMult":
       side.stackGainMult = (side.stackGainMult || 0) + (Number(effect.value) || 0);
+      break;
+    case "stonesMultiThrow":
+      side.stonesMultiThrow = true;
       break;
     case "staminaRegenPerStack":
       if (typeof getTotalSideStacks === "function") {
@@ -1858,7 +2043,6 @@ function createBattleState(playerItems, enemyItems, playerClassId = null, enemyC
     finished: false,
     winner: null,
     elapsed: 0,
-    visualElapsed: 0,
     floatingNumbers: [],
     itemDamageStats: {},
   };
@@ -1892,7 +2076,11 @@ function getSideCooldownMult(side) {
     collectItemBattleEffects(item).forEach((effect) => {
       if (effect.type === "cooldownMultPerTotalStacks" && typeof getTotalSideStacks === "function") {
         const perStack = Number(effect.perStack ?? effect.value) || 0.05;
-        mult *= Math.max(0.35, 1 - perStack * getTotalSideStacks(side));
+        const stackCount = Math.min(
+          Number(effect.maxStacks) || 999,
+          getTotalSideStacks(side),
+        );
+        mult *= Math.max(0.35, 1 - perStack * stackCount);
       }
     });
   });
@@ -1928,6 +2116,9 @@ function getEffectiveCritChance(side, item, foe) {
       }
       if (effect.type === "critPerFoeDebuff" && foe && typeof countSideDebuffs === "function") {
         crit += countSideDebuffs(foe) * (Number(effect.value) || 0.01);
+      }
+      if (effect.type === "critPerFoeFatigue" && foe) {
+        crit += (foe.fatigueLevel || 0) * (Number(effect.value) || 0.07);
       }
     });
   });
@@ -2279,6 +2470,7 @@ function tickFatigue(state, dt) {
       type: "info",
       message: `⏳ Усталость арены (раунд ${state.battleRound}): входящий урон +${pct}%`,
     });
+    if (typeof triggerOnFatigueStartEffects === "function") triggerOnFatigueStartEffects(state);
   }
 
   const activeSec = getFatigueSecondsActive(state);
@@ -2324,6 +2516,9 @@ function triggerOnActivateListeners(state, sourceItem, self, foe, team) {
       }
       if (effect.gainStack) applyGainStackEffect(state, effect.gainStack, listenerItem, self, team);
       if (effect.heal) executeEffect(state, { type: "heal", value: effect.heal }, listenerItem, self, foe, rt, team);
+      if (effect.foePoison && foe && rollEffectChance(self, effect.chance ?? 1)) {
+        executeEffect(state, { type: "poison", value: effect.foePoison }, listenerItem, self, foe, rt, team);
+      }
     });
   });
 }
@@ -2376,6 +2571,8 @@ function activateItem(state, item, self, foe, team) {
       || effect.type === "hpLossRatio" || effect.type === "revive"
       || effect.type === "extraAttackOnStun" || effect.type === "critPerStack"
       || effect.type === "cooldownMultPerTag" || effect.type === "heartThreshold"
+      || effect.type === "cooldownMultPerAdjacent" || effect.type === "cooldownMultPerItemCost"
+      || effect.type === "cooldownMultPerSocket" || effect.type === "cooldownMultPerTotalStacks"
       || effect.type === "tagScaledMaxHp" || effect.type === "passiveMaxStamina"
       || effect.type === "onRevive" || effect.type === "onFoeHeal" || effect.type === "critPerFoeDebuff"
       || effect.type === "lifestealPerTag" || effect.type === "healPerTag"
@@ -2404,7 +2601,10 @@ function activateItem(state, item, self, foe, team) {
   }
 
   if (rt.activationsLeft != null) {
-    rt.activationsLeft = Math.max(0, rt.activationsLeft - 1);
+    const skipStoneLimit = self.stonesMultiThrow && isStoneItemId(def?.id);
+    if (!skipStoneLimit) {
+      rt.activationsLeft = Math.max(0, rt.activationsLeft - 1);
+    }
   }
 
   if (def.id === "mana_orb" && magicEffects.length > 0) {
@@ -2608,7 +2808,14 @@ function executeEffect(state, effect, item, self, foe, rt, team, execOptions = {
       let amount = effect.value + (rt.healBonus || 0);
       if (typeof getTagDamageBonus === "function") {
         const healPerTagFx = collectItemBattleEffects(item).find((e) => e.type === "healPerTag");
-        if (healPerTagFx) amount += getTagDamageBonus(self, healPerTagFx.tag, healPerTagFx.value);
+        if (healPerTagFx) {
+          amount += getTagDamageBonus(
+            self,
+            healPerTagFx.tag,
+            healPerTagFx.value,
+            healPerTagFx.adjacent ? item : null,
+          );
+        }
       }
       const beforePoison = amount;
       amount = getHealAmountUnderPoison(amount, self.poisonStacks);
@@ -2955,6 +3162,9 @@ function pushBattleLog(state, entry) {
   };
   state.log.push(row);
   if (state.log.length > BATTLE_LOG_MAX) state.log.shift();
+  if (typeof CombatLog !== "undefined" && typeof CombatLog.ingestBattleLog === "function") {
+    CombatLog.ingestBattleLog(row);
+  }
 }
 
 /** @deprecated — используйте pushBattleLog */

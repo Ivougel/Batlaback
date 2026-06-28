@@ -101,6 +101,103 @@ function getGemSocketBattleEffects(gemId, hostDef) {
   return [];
 }
 
+function formatGemSocketEffectLine(effect) {
+  if (!effect) return "";
+  const v = effect.value;
+  switch (effect.type) {
+    case "groundFire":
+      return `Жар на попадание (${Math.round(v)})`;
+    case "slow":
+      return `Замедление ${Math.round(Math.abs(v) * 100)}% на ${effect.duration || 3}с`;
+    case "heal":
+      return `Лечение +${Math.round(v)} HP`;
+    case "damage":
+      return `Маг. урон +${Math.round(v)}`;
+    case "block":
+      return `Блок +${Math.round(v)}`;
+    case "passiveDefense":
+      return `Защита +${Math.round(v)}`;
+    case "passiveMaxHp":
+      return `Макс. HP +${Math.round(v)}`;
+    case "passiveLuck":
+      return `Удача +${Math.round(v)}`;
+    case "statMult": {
+      if (effect.stat === "cooldown") {
+        return `Перезарядка −${Math.round(Math.abs(v) * 100)}%`;
+      }
+      if (effect.stat === "damage") {
+        return `Урон +${Math.round(v * 100)}%`;
+      }
+      if (effect.stat === "magicDamage") {
+        return `Маг. урон +${Math.round(v * 100)}%`;
+      }
+      return `${effect.stat} ${v}`;
+    }
+    default:
+      return effect.type || "";
+  }
+}
+
+function describeGemSocketEffects(gemId, hostItemId) {
+  const hostDef = ITEM_CATALOG[hostItemId];
+  const effects = getGemSocketBattleEffects(gemId, hostDef);
+  return effects.map(formatGemSocketEffectLine).filter(Boolean).join(" · ");
+}
+
+function getGemSocketCategoryLabel(hostDef) {
+  const cat = getSocketCategory(hostDef);
+  if (cat === "weapon") return "оружие";
+  if (cat === "armor") return "броня";
+  return "аксессуар";
+}
+
+function getGemSocketHintFromDescription(gemId, hostItemId) {
+  const gemDef = ITEM_CATALOG[gemId];
+  const hostDef = ITEM_CATALOG[hostItemId];
+  if (!gemDef || !hostDef) return describeGemSocketEffects(gemId, hostItemId);
+
+  const desc = gemDef.description || "";
+  const cat = getSocketCategory(hostDef);
+  const prefixByCat = {
+    weapon: "Сокет оружия",
+    armor: "Сокет брони",
+    accessory: "Сокет аксессуара",
+  };
+  const prefix = prefixByCat[cat] || "Сокет";
+  const segment = desc.split(/\.\s+/).find((part) => part.includes(prefix));
+  if (segment) {
+    const colon = segment.indexOf(":");
+    const tail = colon >= 0 ? segment.slice(colon + 1).trim() : segment.trim();
+    if (tail) return tail;
+  }
+
+  const effectLine = describeGemSocketEffects(gemId, hostItemId);
+  if (effectLine) return effectLine;
+  return desc || "";
+}
+
+function getGemSocketFeedHint(gemId, hostItemId) {
+  const hostDef = ITEM_CATALOG[hostItemId];
+  const gemDef = ITEM_CATALOG[gemId];
+  const hostName = hostDef?.name || hostItemId;
+  const gemName = gemDef?.name || gemId;
+  const category = getGemSocketCategoryLabel(hostDef);
+  const effectLine = describeGemSocketEffects(gemId, hostItemId);
+  const catalogHint = getGemSocketHintFromDescription(gemId, hostItemId);
+  const buildHints = typeof getItemBuildHints === "function"
+    ? getItemBuildHints(gemDef)
+    : (gemDef?.buildHints || "");
+
+  const lines = [
+    `${gemName} → [${hostName}] (${category})`,
+    effectLine ? `Эффект: ${effectLine}` : null,
+    catalogHint && catalogHint !== effectLine ? catalogHint : null,
+    buildHints || null,
+  ].filter(Boolean);
+
+  return lines.join("\n");
+}
+
 function getSocketBattleEffects(item) {
   const hostDef = ITEM_CATALOG[item?.itemId];
   const socketCount = getItemSocketCount(item?.itemId);

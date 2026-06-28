@@ -90,13 +90,18 @@ function getFoeDebuffDamageBonus(foe, perDebuff = 0.5) {
   return Math.floor(countSideDebuffs(foe) * (Number(perDebuff) || 0.5));
 }
 
-function getTagDamageBonus(side, tag, perItem = 1) {
+function getTagDamageBonus(side, tag, perItem = 1, sourceItem = null) {
   if (!side || !tag) return 0;
-  const count = (side.items || []).filter((item) => {
+  let matched = (side.items || []).filter((item) => {
     const def = ITEM_CATALOG[item.itemId];
     return def && !def.isContainer && def.tags?.includes(tag);
-  }).length;
-  return Math.floor(count * (Number(perItem) || 1));
+  });
+  if (sourceItem && typeof getAdjacentItems === "function") {
+    const neighbors = getAdjacentItems(side.items, sourceItem);
+    const neighborUids = new Set([...neighbors.keys()]);
+    matched = matched.filter((item) => neighborUids.has(item.uid));
+  }
+  return Math.floor(matched.length * (Number(perItem) || 1));
 }
 
 function stealFoeWeaponDamage(foe, amount = 1) {

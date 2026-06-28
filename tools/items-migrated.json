@@ -80,13 +80,20 @@
           "valueMin": 1,
           "valueMax": 3,
           "damageType": null
+        },
+        {
+          "type": "onHitCapBonus",
+          "value": 1,
+          "cap": 2,
+          "chance": 0.25,
+          "trigger": "on_hit"
         }
       ],
       "synergies": [],
-      "description": "Стартовый меч Рейнджер, слабый урон за стамину",
+      "description": "25% +1 урона (до 2).",
       "goldPerRound": 0,
       "buildHints": "Старт Ranger · Крафт: → Hero Sword · Пары: Whetstone для раннего апгрейда",
-      "staminaCost": 1.0,
+      "staminaCost": 1,
       "damage": 2,
       "sockets": 1,
       "protected": false
@@ -157,7 +164,7 @@
         "food",
         "craft"
       ],
-      "cooldown": 2.0,
+      "cooldown": 2,
       "craftOnly": false,
       "effects": [
         {
@@ -192,7 +199,7 @@
       "description": "+1 урона за каждый предмет с тегом «еда».",
       "goldPerRound": 0,
       "buildHints": "Билд: еда / Pan · Ветка: Eggscalibur, Pandamonium, Shovel · Пары: любая еда (⭐)",
-      "staminaCost": 2.0,
+      "staminaCost": 2,
       "damage": 5,
       "sockets": 1,
       "protected": false
@@ -234,7 +241,7 @@
       "description": "При попадании: снять 4 блока у противника.",
       "goldPerRound": 0,
       "buildHints": "Билд: анти-блок · Оставлять пустые клетки впереди · Ветка: Poison / Holy / Molten Spear",
-      "staminaCost": 1.0,
+      "staminaCost": 1,
       "damage": 5,
       "sockets": 1,
       "protected": false
@@ -275,7 +282,7 @@
       "description": "При оглушении противника: дополнительная атака.",
       "goldPerRound": 0,
       "buildHints": "Билд: стан-комбо · Ветка: Poison / Spectral / Bloody · Пары: Hammer, Brass Knuckles (стан)",
-      "staminaCost": 0.0,
+      "staminaCost": 0,
       "damage": 3,
       "sockets": 1,
       "protected": true
@@ -297,7 +304,7 @@
         "melee",
         "stun"
       ],
-      "cooldown": 2.0,
+      "cooldown": 2,
       "craftOnly": false,
       "effects": [
         {
@@ -322,7 +329,7 @@
       "description": "При попадании: 45% шанс оглушить на 0.5с.",
       "goldPerRound": 0,
       "buildHints": "Билд: стан · Пары: Dagger (extra attack) · Утилита: Piggybank → монеты",
-      "staminaCost": 3.0,
+      "staminaCost": 3,
       "damage": 11,
       "sockets": 2,
       "protected": false
@@ -392,7 +399,8 @@
       "tags": [
         "weapon",
         "debuff",
-        "melee"
+        "melee",
+        "holy"
       ],
       "cooldown": 1.5,
       "craftOnly": false,
@@ -453,13 +461,19 @@
           "valueMin": 2,
           "valueMax": 3,
           "damageType": null
+        },
+        {
+          "type": "onHitCapBonus",
+          "value": 1,
+          "cap": 3,
+          "trigger": "on_hit"
         }
       ],
       "synergies": [],
-      "description": "Дальнобойное оружие Рейнджер",
+      "description": "При попадании: +1 урона (до 3).",
       "goldPerRound": 0,
       "buildHints": "Билд: Ranger дальний бой · Пары: Whetstone, Gloves of Haste",
-      "staminaCost": 1.0,
+      "staminaCost": 1,
       "damage": 2,
       "sockets": 1,
       "protected": false
@@ -564,7 +578,7 @@
       "description": "В начале боя: +1 шип. При попадании: +1 шип. +1 урона за шип.",
       "goldPerRound": 0,
       "buildHints": "Билд: вампиризм · Ветка: Manathirst / Bloodthorne / Frostbite · Пары: Healing Herbs, реген",
-      "staminaCost": 1.0,
+      "staminaCost": 1,
       "damage": 4,
       "sockets": 1,
       "protected": false
@@ -656,7 +670,7 @@
       "description": "При попадании: −3 удачи → +3 урона. При промахе: +3 удачи.",
       "goldPerRound": 0,
       "buildHints": "Билд: крит / Luck · Пары: Whetstone, Gloves of Haste",
-      "staminaCost": 1.0,
+      "staminaCost": 1,
       "damage": 13,
       "sockets": 1,
       "protected": false
@@ -677,7 +691,7 @@
         "weapon",
         "melee"
       ],
-      "cooldown": 5.0,
+      "cooldown": 5,
       "craftOnly": false,
       "effects": [
         {
@@ -704,7 +718,7 @@
       "description": "При 5+ жара: +1 усиление.",
       "goldPerRound": 0,
       "buildHints": "Пары: Whetstone, Gloves of Haste",
-      "staminaCost": 5.0,
+      "staminaCost": 5,
       "damage": 45,
       "sockets": 4,
       "protected": false
@@ -832,7 +846,7 @@
       "description": "В начале боя: всё оружие получает +3 урона.",
       "goldPerRound": 0,
       "buildHints": "Билд: carry-оружие · Ветка: → Crossblades · Пары: Falcon Blade",
-      "staminaCost": 1.0,
+      "staminaCost": 1,
       "damage": 9,
       "sockets": 2,
       "protected": true
@@ -906,7 +920,7 @@
       "description": "В начале боя: предметы на 40% быстрее. Атакует дважды.",
       "goldPerRound": 0,
       "buildHints": "Билд: быстрый DPS · Крафт: Hero Sword + 2× Gloves of Haste · Пары: любые ⭐-активаторы",
-      "staminaCost": 1.0,
+      "staminaCost": 1,
       "damage": 4,
       "sockets": 2,
       "protected": true
@@ -992,7 +1006,7 @@
       "description": "В начале боя: всё оружие получает +10 урона.",
       "goldPerRound": 0,
       "buildHints": "Билд: лейт-физика · Крафт: Hero Longsword + Falcon Blade",
-      "staminaCost": 1.0,
+      "staminaCost": 1,
       "damage": 9,
       "sockets": 3,
       "protected": true
@@ -1043,7 +1057,7 @@
       "description": "При попадании: +2 яда. При оглушении: доп. атака.",
       "goldPerRound": 0,
       "buildHints": "Билд: яд / DoT · Крафт: Dagger + Pestilence Flask · Пары: Death Scythe, яд-фласки",
-      "staminaCost": 0.0,
+      "staminaCost": 0,
       "damage": 6,
       "sockets": 1,
       "protected": true
@@ -1115,7 +1129,7 @@
       "description": "При попадании: +1 усиление. +4 лечения за вампирский предмет. Доп. атака при оглушении.",
       "goldPerRound": 0,
       "buildHints": "Билд: вампиризм · Крафт: Dagger + Blood Amulet",
-      "staminaCost": 0.0,
+      "staminaCost": 0,
       "damage": 6,
       "sockets": 1,
       "protected": false
@@ -1164,7 +1178,7 @@
       "description": "При атаке: −1 мана → +6 урона. При оглушении: доп. атака.",
       "goldPerRound": 0,
       "buildHints": "Билд: мана-урон · Крафт: Dagger + Mana Orb · Пары: Mana Potion, посохи",
-      "staminaCost": 0.0,
+      "staminaCost": 0,
       "damage": 2,
       "sockets": 1,
       "protected": true
@@ -1220,7 +1234,7 @@
       "description": "Доп. атака при оглушении. +2 яда. +1% крит за дебафф противника.",
       "goldPerRound": 0,
       "buildHints": "Билд: Reaper дебаффы · Крафт: Dagger + Corrupted Crystal · Пары: Whetstone, Gloves of Haste",
-      "staminaCost": 0.0,
+      "staminaCost": 0,
       "damage": 5,
       "sockets": 1,
       "protected": false
@@ -1496,7 +1510,7 @@
       "description": "+1 урона за яд у противника. Когда у противника 30 яда: +12 HP (раз).",
       "goldPerRound": 0,
       "buildHints": "Билд: лёд, вампиризм · Крафт: Hungry Blade + Spell Scroll: Frostbolt · Пары: Whetstone, Gloves of Haste",
-      "staminaCost": 1.0,
+      "staminaCost": 1,
       "damage": 5,
       "sockets": 2,
       "protected": false
@@ -1519,7 +1533,7 @@
         "ranged",
         "craft"
       ],
-      "cooldown": 2.0,
+      "cooldown": 2,
       "craftOnly": true,
       "effects": [
         {
@@ -1556,7 +1570,7 @@
       "description": "При атаке: −3 маны → +6 урона и +2 урона навсегда.",
       "goldPerRound": 0,
       "buildHints": "Билд: мана-маг · Ветка: Staff of Fire, Critwood, Unhealing · Пары: Mana Orb, Broom",
-      "staminaCost": 1.0,
+      "staminaCost": 1,
       "damage": 7,
       "sockets": 1,
       "protected": false
@@ -1580,7 +1594,7 @@
         "craft",
         "melee"
       ],
-      "cooldown": 2.0,
+      "cooldown": 2,
       "craftOnly": true,
       "effects": [
         {
@@ -1635,10 +1649,6 @@
       "craftOnly": true,
       "effects": [
         {
-          "type": "heal",
-          "value": 20
-        },
-        {
           "type": "damage",
           "value": 10,
           "valueMin": 10,
@@ -1656,7 +1666,7 @@
       "description": "Каждые 2с: +20 HP.",
       "goldPerRound": 0,
       "buildHints": "Билд: мана / магия, Reaper дебаффы · Крафт: Magic Staff + Demonic Flask · Пары: Whetstone, Gloves of Haste",
-      "staminaCost": 1.0,
+      "staminaCost": 1,
       "damage": 10,
       "protected": false
     },
@@ -1680,7 +1690,7 @@
         "melee",
         "craft"
       ],
-      "cooldown": 2.0,
+      "cooldown": 2,
       "craftOnly": true,
       "effects": [
         {
@@ -1704,7 +1714,7 @@
       "description": "При атаке: −4 маны → +2 урона и +1 яд (40% дубль).",
       "goldPerRound": 0,
       "buildHints": "Билд: яд / DoT, мана / магия, Reaper дебаффы · Пары: Pestilence Flask, Death Scythe, ядовитые питомцы",
-      "staminaCost": 1.0,
+      "staminaCost": 1,
       "damage": 9,
       "sockets": 1,
       "protected": false
@@ -1750,7 +1760,7 @@
       "description": "При атаке: −3 маны → +7 урона и гарантированный крит 1.5с.",
       "goldPerRound": 0,
       "buildHints": "Билд: мана / магия · Крафт: Magic Staff + Acorn Collar · Пары: Whetstone, Gloves of Haste",
-      "staminaCost": 1.0,
+      "staminaCost": 1,
       "damage": 7,
       "sockets": 1,
       "protected": false
@@ -1797,7 +1807,7 @@
       "description": "При попадании: +3 яда противнику и +2 себе.",
       "goldPerRound": 0,
       "buildHints": "Билд: лёд · Пары: Whetstone, Gloves of Haste",
-      "staminaCost": 1.0,
+      "staminaCost": 1,
       "damage": 7,
       "sockets": 1,
       "protected": false
@@ -1848,7 +1858,7 @@
       "description": "При атаке: потратить 1 ману → +1 яд противнику. +0.5 урона за каждый дебафф противника.",
       "goldPerRound": 0,
       "buildHints": "Билд: Reaper дебаффы · Крафт: Lightsaber + Corrupted Crystal · Пары: Whetstone, Gloves of Haste",
-      "staminaCost": 1.0,
+      "staminaCost": 1,
       "damage": 14,
       "sockets": 2,
       "protected": false
@@ -1915,7 +1925,7 @@
       "description": "При попадании: 60% +1 жар. При 7 жара: оружие +1 урона.",
       "goldPerRound": 0,
       "buildHints": "Билд: огонь / Pyromancer · Ветка: → Burning Blade · Пары: Draconic Orb, Oil Lamp",
-      "staminaCost": 1.0,
+      "staminaCost": 1,
       "damage": 3,
       "sockets": 1,
       "protected": false
@@ -2020,7 +2030,7 @@
       "description": "При атаке: −1 жар → +2 урона. Доп. атака при оглушении.",
       "goldPerRound": 0,
       "buildHints": "Билд: огонь / Pyromancer · Крафт: Dagger + 2× Flame · Пары: Whetstone, Gloves of Haste",
-      "staminaCost": 0.0,
+      "staminaCost": 0,
       "damage": 5,
       "sockets": 1,
       "protected": false
@@ -2181,7 +2191,7 @@
       "description": "При попадании: −2 жара → +4 жара. При 5+ жара: +1 усиление.",
       "goldPerRound": 0,
       "buildHints": "Билд: огонь / Pyromancer · Пары: Whetstone, Gloves of Haste",
-      "staminaCost": 3.0,
+      "staminaCost": 3,
       "damage": 45,
       "sockets": 4,
       "protected": false
@@ -2232,7 +2242,7 @@
       "description": "При попадании: 50% шанс +1 шип. +1 урона за шип.",
       "goldPerRound": 0,
       "buildHints": "Билд: Ranger дальний бой, шипы / отражение · Крафт: Shortbow + Walrus Tusk · Пары: Whetstone, Gloves of Haste",
-      "staminaCost": 1.0,
+      "staminaCost": 1,
       "damage": 2,
       "sockets": 1,
       "protected": false
@@ -2386,7 +2396,7 @@
       "description": "При попадании: 70% шанс +2 яда.",
       "goldPerRound": 0,
       "buildHints": "Билд: яд / DoT, Ranger дальний бой · Крафт: Shortbow + Pestilence Flask · Пары: Pestilence Flask, Death Scythe, ядовитые питомцы",
-      "staminaCost": 1.0,
+      "staminaCost": 1,
       "damage": 7,
       "sockets": 1,
       "protected": false
@@ -2479,7 +2489,7 @@
       "description": "При попадании: 75% шанс +1 удача.",
       "goldPerRound": 0,
       "buildHints": "Билд: Ranger дальний бой, крит / Luck · Крафт: Shortbow + 2× Lucky Clover · Пары: Whetstone, Gloves of Haste",
-      "staminaCost": 1.0,
+      "staminaCost": 1,
       "damage": 3,
       "sockets": 1,
       "protected": false
@@ -2600,7 +2610,7 @@
         "dark",
         "craft"
       ],
-      "cooldown": 2.0,
+      "cooldown": 2,
       "craftOnly": true,
       "effects": [
         {
@@ -2651,7 +2661,8 @@
       "tags": [
         "weapon",
         "melee",
-        "craft"
+        "craft",
+        "holy"
       ],
       "cooldown": 1.5,
       "craftOnly": true,
@@ -2789,7 +2800,7 @@
         "melee",
         "craft"
       ],
-      "cooldown": 2.0,
+      "cooldown": 2,
       "craftOnly": true,
       "effects": [
         {
@@ -2823,7 +2834,7 @@
       "description": "Каждые 3с: −1 жар → +2 жара. При 20 жара: 100 маг. урона.",
       "goldPerRound": 0,
       "buildHints": "Билд: огонь / Pyromancer · Пары: Whetstone, Gloves of Haste",
-      "staminaCost": 2.0,
+      "staminaCost": 2,
       "protected": false
     },
     {
@@ -2864,7 +2875,7 @@
       "description": "При попадании: +1 усиление.",
       "goldPerRound": 0,
       "buildHints": "Пары: Whetstone, Gloves of Haste",
-      "staminaCost": 2.0,
+      "staminaCost": 2,
       "damage": 4,
       "sockets": 2,
       "protected": false
@@ -3115,7 +3126,7 @@
         "armor",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 4,
       "craftOnly": true,
       "effects": [
         {
@@ -3432,17 +3443,13 @@
         "holy",
         "craft"
       ],
-      "cooldown": 3.0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
           "type": "passiveDefense",
           "value": 4,
           "trigger": "passive"
-        },
-        {
-          "type": "heal",
-          "value": 1
         },
         {
           "type": "gainStack",
@@ -3542,7 +3549,7 @@
       "tags": [
         "armor"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": false,
       "effects": [
         {
@@ -3592,7 +3599,7 @@
         "shield",
         "armor"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": false,
       "effects": [
         {
@@ -3632,7 +3639,7 @@
         "spikes",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -3685,7 +3692,8 @@
       "tags": [
         "shield",
         "armor",
-        "craft"
+        "craft",
+        "holy"
       ],
       "cooldown": 0,
       "craftOnly": false,
@@ -3694,10 +3702,6 @@
           "type": "passiveDefense",
           "value": 2,
           "trigger": "passive"
-        },
-        {
-          "type": "block",
-          "value": 5
         },
         {
           "type": "shieldBlockMult",
@@ -3735,7 +3739,8 @@
         "shield",
         "armor",
         "magic",
-        "craft"
+        "craft",
+        "holy"
       ],
       "cooldown": 0,
       "craftOnly": true,
@@ -3744,10 +3749,6 @@
           "type": "passiveDefense",
           "value": 2,
           "trigger": "passive"
-        },
-        {
-          "type": "block",
-          "value": 5
         },
         {
           "type": "shieldBlockMult",
@@ -3784,16 +3785,12 @@
         "shield",
         "armor",
         "fire",
-        "craft"
+        "craft",
+        "holy"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
-        {
-          "type": "damage",
-          "value": 3,
-          "damageType": "fire"
-        },
         {
           "type": "groundFire",
           "value": 1
@@ -3853,7 +3850,7 @@
         "cold",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -3864,10 +3861,6 @@
         {
           "type": "groundFire",
           "value": 2
-        },
-        {
-          "type": "block",
-          "value": 5
         },
         {
           "type": "shieldBlockMult",
@@ -4075,7 +4068,7 @@
         "vampiric",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 4,
       "craftOnly": true,
       "effects": [
         {
@@ -4114,7 +4107,7 @@
         "accessory",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -4273,7 +4266,8 @@
       "cost": 12,
       "tags": [
         "armor",
-        "helmet"
+        "helmet",
+        "holy"
       ],
       "cooldown": 2.4,
       "craftOnly": false,
@@ -4330,7 +4324,8 @@
       "cost": 17,
       "tags": [
         "armor",
-        "helmet"
+        "helmet",
+        "holy"
       ],
       "cooldown": 2.4,
       "craftOnly": false,
@@ -4480,7 +4475,7 @@
         "dark",
         "craft"
       ],
-      "cooldown": 4.0,
+      "cooldown": 4,
       "craftOnly": true,
       "effects": [
         {
@@ -4521,7 +4516,7 @@
         "armor",
         "luck"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": false,
       "effects": [
         {
@@ -4566,7 +4561,7 @@
         "holy",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -4676,7 +4671,7 @@
         "pet",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -4731,9 +4726,10 @@
       "tags": [
         "potion",
         "consumable",
-        "heal"
+        "heal",
+        "nature"
       ],
-      "cooldown": 3.0,
+      "cooldown": 3,
       "craftOnly": false,
       "effects": [
         {
@@ -4774,7 +4770,7 @@
         "nature",
         "craft"
       ],
-      "cooldown": 3.0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -4817,7 +4813,7 @@
         "potion",
         "consumable"
       ],
-      "cooldown": 3.0,
+      "cooldown": 3,
       "craftOnly": false,
       "effects": [
         {
@@ -4862,7 +4858,7 @@
         "consumable",
         "craft"
       ],
-      "cooldown": 3.0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -4911,7 +4907,7 @@
         "consumable",
         "stamina"
       ],
-      "cooldown": 3.0,
+      "cooldown": 3,
       "craftOnly": false,
       "effects": [
         {
@@ -4953,7 +4949,7 @@
         "consumable",
         "craft"
       ],
-      "cooldown": 3.0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -4996,7 +4992,7 @@
         "magic",
         "craft"
       ],
-      "cooldown": 3.0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -5042,7 +5038,7 @@
         "magic",
         "craft"
       ],
-      "cooldown": 3.0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -5088,7 +5084,7 @@
         "consumable",
         "craft"
       ],
-      "cooldown": 3.0,
+      "cooldown": 3,
       "craftOnly": false,
       "effects": [
         {
@@ -5126,7 +5122,7 @@
         "poison",
         "craft"
       ],
-      "cooldown": 3.0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -5175,7 +5171,7 @@
         "consumable",
         "vampiric"
       ],
-      "cooldown": 3.0,
+      "cooldown": 3,
       "craftOnly": false,
       "effects": [
         {
@@ -5188,6 +5184,32 @@
           "type": "lifesteal",
           "value": 0.05,
           "trigger": "passive"
+        },
+        {
+          "type": "mutualHpThreshold",
+          "threshold": 0.8,
+          "once": true,
+          "trigger": "passive",
+          "gainStack": {
+            "stack": "mana",
+            "value": 3
+          },
+          "damage": 15,
+          "damageType": "magic",
+          "lifesteal": 1
+        },
+        {
+          "type": "mutualHpThreshold",
+          "threshold": 0.8,
+          "once": true,
+          "trigger": "passive",
+          "gainStack": {
+            "stack": "mana",
+            "value": 3
+          },
+          "damage": 15,
+          "damageType": "magic",
+          "lifesteal": 1
         },
         {
           "type": "mutualHpThreshold",
@@ -5227,13 +5249,39 @@
         "vampiric",
         "craft"
       ],
-      "cooldown": 3.0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
           "type": "lifesteal",
           "value": 0.05,
           "trigger": "passive"
+        },
+        {
+          "type": "mutualHpThreshold",
+          "threshold": 0.8,
+          "once": true,
+          "trigger": "passive",
+          "gainStack": {
+            "stack": "mana",
+            "value": 5
+          },
+          "damage": 20,
+          "damageType": "magic",
+          "lifesteal": 1
+        },
+        {
+          "type": "mutualHpThreshold",
+          "threshold": 0.8,
+          "once": true,
+          "trigger": "passive",
+          "gainStack": {
+            "stack": "mana",
+            "value": 5
+          },
+          "damage": 20,
+          "damageType": "magic",
+          "lifesteal": 1
         },
         {
           "type": "mutualHpThreshold",
@@ -5272,7 +5320,7 @@
         "consumable",
         "holy"
       ],
-      "cooldown": 3.0,
+      "cooldown": 3,
       "craftOnly": false,
       "effects": [
         {
@@ -5311,7 +5359,7 @@
         "holy",
         "craft"
       ],
-      "cooldown": 3.0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -5353,7 +5401,7 @@
         "dark",
         "craft"
       ],
-      "cooldown": 3.0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -5395,7 +5443,7 @@
         "dark",
         "craft"
       ],
-      "cooldown": 3.0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -5436,7 +5484,7 @@
         "pet",
         "craft"
       ],
-      "cooldown": 5.0,
+      "cooldown": 5,
       "craftOnly": false,
       "effects": [
         {
@@ -5521,12 +5569,6 @@
       "craftOnly": true,
       "effects": [
         {
-          "type": "damage",
-          "value": 2,
-          "valueMin": 1,
-          "valueMax": 3
-        },
-        {
           "type": "activationThreshold",
           "count": 6,
           "once": true,
@@ -5573,9 +5615,10 @@
       "tags": [
         "pet",
         "debuff",
-        "craft"
+        "craft",
+        "holy"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -5619,12 +5662,6 @@
       "craftOnly": true,
       "effects": [
         {
-          "type": "damage",
-          "value": 2,
-          "valueMin": 1,
-          "valueMax": 3
-        },
-        {
           "type": "activationThreshold",
           "count": 5,
           "once": true,
@@ -5656,7 +5693,7 @@
         "nature",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -5705,11 +5742,6 @@
       "craftOnly": true,
       "effects": [
         {
-          "type": "damage",
-          "value": 3,
-          "damageType": "fire"
-        },
-        {
           "type": "groundFire",
           "value": 1
         },
@@ -5745,17 +5777,12 @@
       "cost": 23,
       "tags": [
         "pet",
-        "craft"
+        "craft",
+        "holy"
       ],
       "cooldown": 0,
       "craftOnly": true,
       "effects": [
-        {
-          "type": "damage",
-          "value": 2,
-          "valueMin": 1,
-          "valueMax": 3
-        },
         {
           "type": "activationThreshold",
           "count": 6,
@@ -5800,12 +5827,6 @@
       "cooldown": 0,
       "craftOnly": true,
       "effects": [
-        {
-          "type": "damage",
-          "value": 2,
-          "valueMin": 1,
-          "valueMax": 3
-        },
         {
           "type": "activationThreshold",
           "count": 9,
@@ -5901,7 +5922,7 @@
       "description": "В начале боя: Получить 5 жаров Отражает 3 дебаффов жара",
       "goldPerRound": 0,
       "buildHints": "Билд: огонь / драконы · Ветка: Ruby Chonk → Obsidian Dragon",
-      "staminaCost": 0.0,
+      "staminaCost": 0,
       "sockets": 1,
       "protected": false
     },
@@ -5948,7 +5969,7 @@
       "description": "При попадании: +1 жар. При <12 выносливости: 30% оглушение 0.4с.",
       "goldPerRound": 0,
       "buildHints": "Билд: огонь / Pyromancer, питомцы · Крафт: Ruby Whelp + Holo Fire Lizard · Пары: Draconic Orb, Oil Lamp, Flame-крафты · Синергия: стан → Dagger extra attack",
-      "staminaCost": 0.0,
+      "staminaCost": 0,
       "sockets": 2,
       "protected": false
     },
@@ -5970,7 +5991,7 @@
         "magic",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -6014,7 +6035,7 @@
         "cold",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -6071,7 +6092,7 @@
         "poison",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -6092,10 +6113,20 @@
           "stack": "spikes",
           "value": 3,
           "trigger": "battle_start"
+        },
+        {
+          "type": "selfPoisonStart",
+          "value": 3,
+          "trigger": "battle_start"
+        },
+        {
+          "type": "poison",
+          "value": 3,
+          "trigger": "on_hit"
         }
       ],
       "synergies": [],
-      "description": "В начале боя: Получить 3 стака яда При попадании: Наложить 3 стака яда",
+      "description": "В начале боя: +3 яда себе. При попадании: +3 яда противнику.",
       "goldPerRound": 0,
       "buildHints": "Билд: яд / DoT, питомцы · Пары: Pestilence Flask, Death Scythe, ядовитые питомцы",
       "sockets": 1,
@@ -6118,7 +6149,7 @@
         "cold",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -6139,10 +6170,25 @@
           "stack": "block",
           "value": 6,
           "trigger": "battle_start"
+        },
+        {
+          "type": "spendStack",
+          "stack": "block",
+          "value": 1,
+          "trigger": "on_hit",
+          "gainStack": {
+            "stack": "block",
+            "value": 10
+          }
+        },
+        {
+          "type": "gainWeakestStack",
+          "value": 1,
+          "trigger": "on_hit"
         }
       ],
       "synergies": [],
-      "description": "В начале боя: Получить 6 стаков При попадании: Потратить 1, чтобы получить 10 и случайный прочие бафф стака",
+      "description": "В начале боя: +6 блока. При попадании: −1 блок → +10 блока и случайный стак.",
       "goldPerRound": 0,
       "buildHints": "Билд: лёд, питомцы",
       "sockets": 1,
@@ -6165,7 +6211,7 @@
         "magic",
         "craft"
       ],
-      "cooldown": 2.0,
+      "cooldown": 2,
       "craftOnly": true,
       "effects": [
         {
@@ -6214,15 +6260,12 @@
       "rarity": "rare",
       "cost": 6,
       "tags": [
-        "pet"
+        "pet",
+        "holy"
       ],
-      "cooldown": 13.0,
+      "cooldown": 13,
       "craftOnly": false,
       "effects": [
-        {
-          "type": "heal",
-          "value": 6
-        },
         {
           "type": "periodic",
           "interval": 13,
@@ -6266,7 +6309,7 @@
         "pet",
         "luck"
       ],
-      "cooldown": 5.0,
+      "cooldown": 5,
       "craftOnly": false,
       "effects": [
         {
@@ -6319,7 +6362,7 @@
         "pet",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -6363,15 +6406,9 @@
         "pet",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 3.3,
       "craftOnly": true,
       "effects": [
-        {
-          "type": "damage",
-          "value": 2,
-          "valueMin": 1,
-          "valueMax": 3
-        },
         {
           "type": "periodic",
           "interval": 3.3,
@@ -6413,15 +6450,9 @@
         "pet",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 4,
       "craftOnly": true,
       "effects": [
-        {
-          "type": "damage",
-          "value": 2,
-          "valueMin": 1,
-          "valueMax": 3
-        },
         {
           "type": "periodic",
           "interval": 4,
@@ -6461,7 +6492,7 @@
         "spikes",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 5,
       "craftOnly": true,
       "effects": [
         {
@@ -6529,7 +6560,7 @@
         "pet",
         "craft"
       ],
-      "cooldown": 7.0,
+      "cooldown": 7,
       "craftOnly": true,
       "effects": [
         {
@@ -6590,13 +6621,6 @@
       "craftOnly": true,
       "effects": [
         {
-          "type": "damage",
-          "value": 2,
-          "valueMin": 2,
-          "valueMax": 3,
-          "damageType": null
-        },
-        {
           "type": "stealWeaponDamage",
           "value": 1,
           "trigger": "on_hit"
@@ -6632,9 +6656,10 @@
       "tags": [
         "pet",
         "spikes",
-        "craft"
+        "craft",
+        "holy"
       ],
-      "cooldown": 0,
+      "cooldown": 5,
       "craftOnly": true,
       "effects": [
         {
@@ -6754,7 +6779,7 @@
         "dark",
         "craft"
       ],
-      "cooldown": 3.0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -6801,7 +6826,7 @@
         "dark",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 2.2,
       "craftOnly": true,
       "effects": [
         {
@@ -6939,17 +6964,12 @@
       "rarity": "godly",
       "cost": 20,
       "tags": [
-        "pet"
+        "pet",
+        "holy"
       ],
       "cooldown": 2.7,
       "craftOnly": false,
       "effects": [
-        {
-          "type": "damage",
-          "value": 2,
-          "valueMin": 1,
-          "valueMax": 3
-        },
         {
           "type": "periodic",
           "interval": 2.7,
@@ -7002,22 +7022,16 @@
         "pet",
         "dark"
       ],
-      "cooldown": 0,
+      "cooldown": 3.3,
       "craftOnly": false,
       "effects": [
-        {
-          "type": "damage",
-          "value": 2,
-          "valueMin": 1,
-          "valueMax": 3
-        },
         {
           "type": "periodic",
           "interval": 3.3,
           "trigger": "passive",
           "damage": 10,
           "damageType": "magic",
-          "lifesteal": 1.0,
+          "lifesteal": 1,
           "gainWeakestStack": true
         },
         {
@@ -7027,6 +7041,24 @@
           ],
           "perTag": 0.15,
           "trigger": "passive"
+        },
+        {
+          "type": "periodic",
+          "interval": 3.3,
+          "trigger": "passive",
+          "damage": 10,
+          "damageType": "magic",
+          "lifesteal": 1,
+          "gainWeakestStack": true
+        },
+        {
+          "type": "periodic",
+          "interval": 3.3,
+          "trigger": "passive",
+          "damage": 10,
+          "damageType": "magic",
+          "lifesteal": 1.0,
+          "gainWeakestStack": true
         }
       ],
       "synergies": [],
@@ -7053,12 +7085,6 @@
       "cooldown": 0,
       "craftOnly": false,
       "effects": [
-        {
-          "type": "damage",
-          "value": 2,
-          "valueMin": 1,
-          "valueMax": 3
-        },
         {
           "type": "statMult",
           "stat": "damage",
@@ -7255,7 +7281,7 @@
         "accessory",
         "dark"
       ],
-      "cooldown": 0,
+      "cooldown": 3.9,
       "craftOnly": false,
       "effects": [
         {
@@ -7311,7 +7337,8 @@
       "cost": 4,
       "tags": [
         "accessory",
-        "spikes"
+        "spikes",
+        "nature"
       ],
       "cooldown": 0,
       "craftOnly": false,
@@ -7406,7 +7433,7 @@
         "cold",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -7457,7 +7484,8 @@
       "rarity": "godly",
       "cost": 11,
       "tags": [
-        "accessory"
+        "accessory",
+        "holy"
       ],
       "cooldown": 3,
       "craftOnly": false,
@@ -7466,7 +7494,7 @@
           "type": "buffTimed",
           "stat": "heart",
           "value": 1,
-          "duration": 3.0
+          "duration": 3
         },
         {
           "type": "passiveMaxHp",
@@ -7527,7 +7555,7 @@
         "dark",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 4,
       "craftOnly": true,
       "effects": [
         {
@@ -7716,9 +7744,15 @@
       ],
       "cooldown": 0,
       "craftOnly": false,
-      "effects": [],
+      "effects": [
+        {
+          "type": "procChanceBonus",
+          "value": 0.1,
+          "trigger": "passive"
+        }
+      ],
       "synergies": [],
-      "description": "При обновлении магазина: Повысить редкость 1 предмета. 10% шанс торгового предложения.",
+      "description": "Магазин: повышение редкости. +10% к прокам.",
       "goldPerRound": 0,
       "metaEffects": [
         {
@@ -7753,7 +7787,7 @@
         "treasure",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 4,
       "craftOnly": true,
       "effects": [
         {
@@ -7802,7 +7836,7 @@
         "accessory",
         "fire"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": false,
       "effects": [
         {
@@ -7859,7 +7893,7 @@
         "fire",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 5,
       "craftOnly": true,
       "effects": [
         {
@@ -7867,12 +7901,6 @@
           "stat": "damage",
           "value": 0.08,
           "trigger": "passive"
-        },
-        {
-          "type": "damage",
-          "value": 2,
-          "valueMin": 1,
-          "valueMax": 3
         },
         {
           "type": "gainStack",
@@ -7925,16 +7953,9 @@
         "melee",
         "craft"
       ],
-      "cooldown": 2.0,
+      "cooldown": 2,
       "craftOnly": true,
       "effects": [
-        {
-          "type": "damage",
-          "value": 2,
-          "valueMin": 2,
-          "valueMax": 3,
-          "damageType": null
-        },
         {
           "type": "gainStack",
           "stack": "empower",
@@ -7968,7 +7989,7 @@
         "fire",
         "craft"
       ],
-      "cooldown": 2.0,
+      "cooldown": 2,
       "craftOnly": true,
       "effects": [
         {
@@ -7976,13 +7997,6 @@
           "stat": "damage",
           "value": 0.08,
           "trigger": "passive"
-        },
-        {
-          "type": "damage",
-          "value": 2,
-          "valueMin": 2,
-          "valueMax": 3,
-          "damageType": null
         },
         {
           "type": "gainStack",
@@ -8024,7 +8038,7 @@
         "magic",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -8064,7 +8078,8 @@
       "tags": [
         "accessory",
         "luck",
-        "craft"
+        "craft",
+        "nature"
       ],
       "cooldown": 0,
       "craftOnly": true,
@@ -8140,7 +8155,8 @@
       "tags": [
         "accessory",
         "luck",
-        "ranger"
+        "ranger",
+        "nature"
       ],
       "cooldown": 0,
       "craftOnly": true,
@@ -8200,7 +8216,8 @@
       "cost": 10,
       "tags": [
         "accessory",
-        "luck"
+        "luck",
+        "holy"
       ],
       "cooldown": 0,
       "craftOnly": false,
@@ -8214,10 +8231,20 @@
           "type": "passiveLuck",
           "value": 15,
           "trigger": "passive"
+        },
+        {
+          "type": "procChanceBonus",
+          "value": 0.03,
+          "trigger": "passive"
+        },
+        {
+          "type": "passiveLuck",
+          "value": 1,
+          "trigger": "passive"
         }
       ],
       "synergies": [],
-      "description": "Продажа шанс +3%. Стоимость предметы > 20 15% шанс сопротивляться критические удары удачи Стоимость предметы > 40 Божественный и Уникальный предметы срабатывают на 15% быстрее.",
+      "description": "+1 удача и +3% к прокам.",
       "goldPerRound": 0,
       "buildHints": "Билд: крит / Luck",
       "protected": false
@@ -8239,7 +8266,7 @@
         "melee",
         "craft"
       ],
-      "cooldown": 2.0,
+      "cooldown": 2,
       "craftOnly": true,
       "effects": [
         {
@@ -8503,7 +8530,8 @@
       "cost": 2,
       "tags": [
         "accessory",
-        "debuff"
+        "debuff",
+        "nature"
       ],
       "cooldown": 0,
       "craftOnly": false,
@@ -8633,9 +8661,10 @@
       "rarity": "common",
       "cost": 1,
       "tags": [
-        "accessory"
+        "accessory",
+        "nature"
       ],
-      "cooldown": 4.0,
+      "cooldown": 4,
       "craftOnly": false,
       "effects": [
         {
@@ -8660,7 +8689,7 @@
       "description": "1 бросок за бой. При попадании: уничтожить 4 стака противника.",
       "goldPerRound": 0,
       "buildHints": "Универсальный / автономный",
-      "staminaCost": 0.0,
+      "staminaCost": 0,
       "damage": 3,
       "protected": false
     },
@@ -8677,7 +8706,8 @@
       "rarity": "rare",
       "cost": 3,
       "tags": [
-        "accessory"
+        "accessory",
+        "nature"
       ],
       "cooldown": 0,
       "craftOnly": false,
@@ -8686,10 +8716,14 @@
           "type": "repeatCast",
           "magicOnly": false,
           "trigger": "passive"
+        },
+        {
+          "type": "stonesMultiThrow",
+          "trigger": "passive"
         }
       ],
       "synergies": [],
-      "description": "Камни выше можно метать многократно.",
+      "description": "Камни можно метать многократно.",
       "goldPerRound": 0,
       "buildHints": "Универсальный / автономный",
       "protected": false
@@ -8750,7 +8784,7 @@
         "accessory",
         "cold"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": false,
       "effects": [
         {
@@ -8763,10 +8797,17 @@
           "stat": "damage",
           "value": 0.1,
           "duration": 6
+        },
+        {
+          "type": "slow",
+          "value": 0.12,
+          "duration": 4,
+          "trigger": "on_hit",
+          "chance": 0.5
         }
       ],
       "synergies": [],
-      "description": "При покупке: разделиться на 2 снежка.",
+      "description": "50% замедление при попадании.",
       "goldPerRound": 0,
       "buildHints": "Билд: лёд",
       "protected": false
@@ -8787,7 +8828,7 @@
         "accessory",
         "cold"
       ],
-      "cooldown": 0,
+      "cooldown": 1.3,
       "craftOnly": false,
       "effects": [
         {
@@ -8904,17 +8945,18 @@
         "vampiric",
         "craft"
       ],
-      "cooldown": 4.0,
+      "cooldown": 4,
       "craftOnly": false,
       "effects": [
         {
-          "type": "lifesteal",
-          "value": 0.05,
+          "type": "stackGainMult",
+          "value": 1,
           "trigger": "passive"
         },
         {
           "type": "cooldownMultPerTotalStacks",
           "perStack": 0.05,
+          "maxStacks": 40,
           "trigger": "passive"
         },
         {
@@ -8938,7 +8980,7 @@
           "desc": "+2 лечения"
         }
       ],
-      "description": "Стаки на 100% эффективнее. Предметы на 5% быстрее за каждый стак.",
+      "description": "Стаки на 100% эффективнее. Предметы на 5% быстрее за каждый стак (макс. +200%).",
       "goldPerRound": 0,
       "buildHints": "Билд: вампиризм · Пары: Blood Amulet, Hungry Blade, Blood Goobert",
       "staminaCost": 0.5,
@@ -8960,7 +9002,7 @@
       "tags": [
         "accessory"
       ],
-      "cooldown": 4.0,
+      "cooldown": 4,
       "craftOnly": false,
       "effects": [
         {
@@ -8973,6 +9015,25 @@
           "stat": "damage",
           "value": 0.15,
           "duration": 3
+        },
+        {
+          "type": "periodic",
+          "interval": 4,
+          "trigger": "passive",
+          "randomPick": [
+            {
+              "gainStack": {
+                "stack": "luck",
+                "value": 1
+              }
+            },
+            {
+              "foePoison": 1
+            },
+            {
+              "heal": 5
+            }
+          ]
         }
       ],
       "synergies": [],
@@ -9011,6 +9072,16 @@
           "stat": "damage",
           "value": 0.1,
           "trigger": "passive"
+        },
+        {
+          "type": "periodic",
+          "interval": 2.5,
+          "trigger": "passive",
+          "gainWeakestStack": {
+            "value": 1,
+            "count": 1
+          },
+          "cleanseDebuffs": 1
         }
       ],
       "synergies": [],
@@ -9040,9 +9111,10 @@
       "cost": 14,
       "tags": [
         "accessory",
-        "magic"
+        "magic",
+        "holy"
       ],
-      "cooldown": 8.0,
+      "cooldown": 8,
       "craftOnly": false,
       "effects": [
         {
@@ -9104,13 +9176,9 @@
       "tags": [
         "accessory"
       ],
-      "cooldown": 3.0,
+      "cooldown": 3,
       "craftOnly": false,
       "effects": [
-        {
-          "type": "heal",
-          "value": 12
-        },
         {
           "type": "slow",
           "value": 0.08,
@@ -9150,7 +9218,7 @@
       "tags": [
         "accessory"
       ],
-      "cooldown": 0,
+      "cooldown": 1,
       "craftOnly": false,
       "effects": [
         {
@@ -9220,9 +9288,22 @@
       ],
       "cooldown": 0,
       "craftOnly": false,
-      "effects": [],
+      "effects": [
+        {
+          "type": "procChanceBonus",
+          "value": 0.08,
+          "trigger": "passive"
+        },
+        {
+          "type": "debuffThreshold",
+          "threshold": 4,
+          "once": true,
+          "trigger": "passive",
+          "cleanseDebuffs": 10
+        }
+      ],
       "synergies": [],
-      "description": "+4 слота рюкзака. При использовании первого зелья внутри: получить случайный бафф. При использовании 4 зелий внутри: снять 10 дебаффов.",
+      "description": "+8% к прокам. После 4 зелий: снять 10 дебаффов.",
       "goldPerRound": 0,
       "buildHints": "Универсальный / автономный",
       "isContainer": true,
@@ -9416,7 +9497,8 @@
       "rarity": "rare",
       "cost": 1,
       "tags": [
-        "accessory"
+        "accessory",
+        "holy"
       ],
       "cooldown": 0,
       "craftOnly": false,
@@ -9577,15 +9659,12 @@
       "rarity": "common",
       "cost": 3,
       "tags": [
-        "food"
+        "food",
+        "nature"
       ],
-      "cooldown": 5.0,
+      "cooldown": 5,
       "craftOnly": false,
       "effects": [
-        {
-          "type": "heal",
-          "value": 4
-        },
         {
           "type": "periodic",
           "interval": 5,
@@ -9614,9 +9693,10 @@
       "cost": 2,
       "tags": [
         "food",
-        "poison"
+        "poison",
+        "nature"
       ],
-      "cooldown": 4.0,
+      "cooldown": 4,
       "craftOnly": false,
       "effects": [
         {
@@ -9657,7 +9737,7 @@
         "food",
         "nature"
       ],
-      "cooldown": 4.0,
+      "cooldown": 4,
       "craftOnly": false,
       "effects": [
         {
@@ -9735,15 +9815,12 @@
       "rarity": "legendary",
       "cost": 6,
       "tags": [
-        "food"
+        "food",
+        "nature"
       ],
       "cooldown": 2.9,
       "craftOnly": false,
       "effects": [
-        {
-          "type": "heal",
-          "value": 3
-        },
         {
           "type": "periodic",
           "interval": 2.9,
@@ -9790,10 +9867,6 @@
       "craftOnly": true,
       "effects": [
         {
-          "type": "heal",
-          "value": 3
-        },
-        {
           "type": "periodic",
           "interval": 4.5,
           "trigger": "passive",
@@ -9832,9 +9905,10 @@
       "cost": 3,
       "tags": [
         "food",
-        "poison"
+        "poison",
+        "nature"
       ],
-      "cooldown": 4.0,
+      "cooldown": 4,
       "craftOnly": false,
       "effects": [
         {
@@ -9909,7 +9983,7 @@
         "food",
         "cold"
       ],
-      "cooldown": 4.0,
+      "cooldown": 4,
       "craftOnly": false,
       "effects": [
         {
@@ -10151,7 +10225,7 @@
         "cold",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": false,
       "effects": [
         {
@@ -10189,7 +10263,7 @@
         "cold",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -10227,7 +10301,7 @@
         "cold",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -10265,7 +10339,7 @@
         "cold",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -10303,7 +10377,7 @@
         "cold",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -10341,7 +10415,7 @@
         "nature",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": false,
       "effects": [
         {
@@ -10377,7 +10451,7 @@
         "poison",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -10413,7 +10487,7 @@
         "poison",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -10449,7 +10523,7 @@
         "poison",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -10485,7 +10559,7 @@
         "poison",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -10851,9 +10925,18 @@
       ],
       "cooldown": 0,
       "craftOnly": false,
-      "effects": [],
+      "effects": [
+        {
+          "type": "cooldownMultPerTag",
+          "tags": [
+            "accessory"
+          ],
+          "perTag": 0.05,
+          "trigger": "passive"
+        }
+      ],
       "synergies": [],
-      "description": "+4 слот рюкзака.",
+      "description": "+4 слота рюкзака.",
       "goldPerRound": 0,
       "buildHints": "Расширение инвентаря · Ветка: Fanny Pack → Holdall",
       "isContainer": true,
@@ -10886,9 +10969,18 @@
       ],
       "cooldown": 0,
       "craftOnly": false,
-      "effects": [],
+      "effects": [
+        {
+          "type": "cooldownMultPerTag",
+          "tags": [
+            "bag"
+          ],
+          "perTag": 0.1,
+          "trigger": "passive"
+        }
+      ],
       "synergies": [],
-      "description": "+2 слот рюкзака. Предметы внутри срабатывает 10% быстрее.",
+      "description": "Предметы внутри на 10% быстрее.",
       "goldPerRound": 0,
       "buildHints": "Универсальный / автономный",
       "isContainer": true,
@@ -10915,9 +11007,16 @@
       ],
       "cooldown": 0,
       "craftOnly": false,
-      "effects": [],
+      "effects": [
+        {
+          "type": "neutralScaledStack",
+          "stack": "heat",
+          "perItem": 8,
+          "trigger": "battle_start"
+        }
+      ],
       "synergies": [],
-      "description": "+6 слотов рюкзака. В начале боя: получить 8 за каждый нейтральный предмет внутри.",
+      "description": "В начале боя: +8 жара за нейтральный предмет внутри.",
       "goldPerRound": 0,
       "buildHints": "Универсальный / автономный",
       "isContainer": true,
@@ -10946,7 +11045,19 @@
       ],
       "cooldown": 0,
       "craftOnly": true,
-      "effects": [],
+      "effects": [
+        {
+          "type": "crit",
+          "chance": 0.1,
+          "trigger": "passive"
+        },
+        {
+          "type": "critPerStack",
+          "stack": "luck",
+          "value": 0.03,
+          "trigger": "passive"
+        }
+      ],
       "synergies": [
         {
           "id": "migrated_crit_per_luck_5_",
@@ -10962,7 +11073,7 @@
           "desc": "Бонус к криту"
         }
       ],
-      "description": "+6 слот рюкзака. Предметы внутри получить 10% шанс критического удара +3% за каждый стака",
+      "description": "Внутри: +10% крит и +3% за стак.",
       "goldPerRound": 0,
       "buildHints": "Билд: Ranger · Кладём Shortbow / стрелы внутрь",
       "isContainer": true,
@@ -10991,9 +11102,22 @@
       ],
       "cooldown": 0,
       "craftOnly": true,
-      "effects": [],
+      "effects": [
+        {
+          "type": "statMult",
+          "stat": "heal",
+          "value": 0.1,
+          "trigger": "passive"
+        },
+        {
+          "type": "healPerTag",
+          "tag": "nature",
+          "value": 0.03,
+          "trigger": "passive"
+        }
+      ],
       "synergies": [],
-      "description": "+9 слотов рюкзака. Лечение усилено на 10% + 3% за предмет с тегом внутри. В раундах 1 и 10 шанс распродажи увеличен на 20%.",
+      "description": "+10% лечения и +3% за предмет природы внутри.",
       "goldPerRound": 0,
       "buildHints": "Универсальный / автономный",
       "isContainer": true,
@@ -11022,9 +11146,16 @@
       ],
       "cooldown": 0,
       "craftOnly": true,
-      "effects": [],
+      "effects": [
+        {
+          "type": "onActivate",
+          "foePoison": 1,
+          "chance": 0.22,
+          "trigger": "passive"
+        }
+      ],
       "synergies": [],
-      "description": "+8 слот рюкзака. Предмет внутри активируется: 22% шанс наложить 1 стак",
+      "description": "При активации предмета внутри: 22% +1 яд.",
       "goldPerRound": 0,
       "buildHints": "Билд: Reaper / тёмные предметы · Пары: Demonic Flask, яд",
       "isContainer": true,
@@ -11051,9 +11182,16 @@
       ],
       "cooldown": 0,
       "craftOnly": false,
-      "effects": [],
+      "effects": [
+        {
+          "type": "periodic",
+          "interval": 2.5,
+          "trigger": "passive",
+          "weaponDamageBonus": 1
+        }
+      ],
       "synergies": [],
-      "description": "+4 слот рюкзака. Каждые 2.5с: Оружие внутри Даёт +5% урон и потратить -5% выносливости.",
+      "description": "Каждые 2.5с: оружие внутри +1 урона.",
       "goldPerRound": 0,
       "buildHints": "Универсальный / автономный",
       "isContainer": true,
@@ -11081,9 +11219,28 @@
       ],
       "cooldown": 0,
       "craftOnly": true,
-      "effects": [],
+      "effects": [
+        {
+          "type": "hpThreshold",
+          "threshold": 0.5,
+          "direction": "below",
+          "once": true,
+          "trigger": "passive",
+          "gainBlock": 20,
+          "cooldownBoost": 0.3,
+          "timedDamageReduction": {
+            "value": 0.2,
+            "duration": 5
+          }
+        },
+        {
+          "type": "battleRageLowHp",
+          "trigger": "passive",
+          "cooldownBoost": 0.3
+        }
+      ],
       "synergies": [],
-      "description": "+6 слот рюкзака. Когда здоровье падает ниже 50%: Вход боевая ярость на 5с (один раз). Во время боевой ярости: Предметы внутри срабатывает 30% быстрее. Вы получить 20% снижен урон.",
+      "description": "При HP <50%: боевая ярость, −20% урона, +20 блока.",
       "goldPerRound": 0,
       "buildHints": "Универсальный / автономный",
       "isContainer": true,
@@ -11110,9 +11267,33 @@
       ],
       "cooldown": 0,
       "craftOnly": false,
-      "effects": [],
+      "effects": [
+        {
+          "type": "statMult",
+          "stat": "damage",
+          "value": 0.3,
+          "trigger": "passive"
+        },
+        {
+          "type": "statMult",
+          "stat": "cooldown",
+          "value": 0.3,
+          "trigger": "passive"
+        },
+        {
+          "type": "periodic",
+          "interval": 5,
+          "trigger": "passive",
+          "cooldownBoostItem": 0.35
+        },
+        {
+          "type": "lifesteal",
+          "value": 0.35,
+          "trigger": "passive"
+        }
+      ],
       "synergies": [],
-      "description": "+8 слот рюкзака. Оружие внутри Даёт +30% урон но атакуете на 30% медленнее. Через 5с: Вход боевая ярость на 6с. Во время боевой ярости: +35% вампиризм.",
+      "description": "Оружие внутри: +30% урона, −30% скорости. +35% вампиризм.",
       "goldPerRound": 0,
       "buildHints": "Универсальный / автономный",
       "isContainer": true,
@@ -11147,10 +11328,21 @@
           "stat": "damage",
           "value": 0.08,
           "trigger": "passive"
+        },
+        {
+          "type": "gainStack",
+          "stack": "luck",
+          "value": 2,
+          "trigger": "battle_start"
+        },
+        {
+          "type": "procChanceBonus",
+          "value": 0.05,
+          "trigger": "passive"
         }
       ],
       "synergies": [],
-      "description": "Игральные карты появляются в магазине. В начале боя: получить 2. Начать открытие игральной карты.",
+      "description": "В начале боя: +2 удачи. +5% к прокам.",
       "goldPerRound": 0,
       "metaEffects": [
         {
@@ -11178,7 +11370,7 @@
         "card",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -11186,10 +11378,18 @@
           "stat": "damage",
           "value": 0.25,
           "duration": 4
+        },
+        {
+          "type": "buffTimed",
+          "stat": "damage",
+          "value": 0.15,
+          "duration": 4,
+          "trigger": "on_hit",
+          "chance": 0.5
         }
       ],
       "synergies": [],
-      "description": "При открытии: следующий удар критический. Если количество карт перед ней нечётное: получить 2 и 3.",
+      "description": "При попадании: 50% +15% урона на 4с.",
       "goldPerRound": 0,
       "buildHints": "Универсальный / автономный",
       "protected": false
@@ -11210,7 +11410,7 @@
         "card",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -11222,10 +11422,15 @@
           "stat": "damage",
           "value": 0.25,
           "duration": 4
+        },
+        {
+          "type": "heal",
+          "value": 3,
+          "trigger": "battle_start"
         }
       ],
       "synergies": [],
-      "description": "На открыть: Нанести 7 маг. Урона с 100% вампиризмом. Если количество карты перед даже, получить 2 и ваше лечение усилено на 6%.",
+      "description": "В начале боя: +3 HP.",
       "goldPerRound": 0,
       "buildHints": "Универсальный / автономный",
       "protected": false
@@ -11246,7 +11451,7 @@
         "card",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -11265,10 +11470,16 @@
           "type": "passiveLuck",
           "value": 10,
           "trigger": "passive"
+        },
+        {
+          "type": "gainStack",
+          "stack": "luck",
+          "value": 1,
+          "trigger": "battle_start"
         }
       ],
       "synergies": [],
-      "description": "При открытии: карты открываются на 50% быстрее. Если это первая карта в цепочке: получить 1.",
+      "description": "В начале боя: +1 удача.",
       "goldPerRound": 0,
       "buildHints": "Универсальный / автономный",
       "protected": false
@@ -11289,7 +11500,7 @@
         "card",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -11297,10 +11508,16 @@
           "stat": "damage",
           "value": 0.25,
           "duration": 4
+        },
+        {
+          "type": "gainStack",
+          "stack": "empower",
+          "value": 2,
+          "trigger": "battle_start"
         }
       ],
       "synergies": [],
-      "description": "При открытии: отразить 3 дебаффа. Если перед ней нет одинаковых карт: украсть 3 баффа.",
+      "description": "В начале боя: +2 усиления.",
       "goldPerRound": 0,
       "buildHints": "Универсальный / автономный",
       "protected": false
@@ -11322,7 +11539,7 @@
         "pet",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -11340,10 +11557,29 @@
           "stat": "damage",
           "value": 0.15,
           "trigger": "passive"
+        },
+        {
+          "type": "gainStack",
+          "stack": "luck",
+          "value": 12,
+          "trigger": "battle_start"
+        },
+        {
+          "type": "cardScaledBonus",
+          "stack": "luck",
+          "perCard": 5,
+          "trigger": "battle_start"
+        },
+        {
+          "type": "gainStack",
+          "stack": "cold",
+          "value": 3,
+          "targetSide": "foe",
+          "trigger": "battle_start"
         }
       ],
       "synergies": [],
-      "description": "На открыть: Получить 12 + 5 за каждый карта перед. Наложить 3 стака",
+      "description": "При открытии: +12 удачи (+5 за карту). +3 холода противнику.",
       "goldPerRound": 0,
       "buildHints": "Билд: питомцы",
       "protected": false
@@ -11366,7 +11602,7 @@
         "pet",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -11384,10 +11620,29 @@
           "stat": "damage",
           "value": 0.08,
           "trigger": "passive"
+        },
+        {
+          "type": "statMult",
+          "stat": "magicDamage",
+          "value": 0.08,
+          "trigger": "battle_start"
+        },
+        {
+          "type": "cardScaledDamage",
+          "base": 12,
+          "perCard": 4,
+          "damageType": "magic",
+          "trigger": "battle_start"
+        },
+        {
+          "type": "gainStack",
+          "stack": "heat",
+          "value": 4,
+          "trigger": "battle_start"
         }
       ],
       "synergies": [],
-      "description": "На открыть: Повысить маг. Урона 8%. Нанести 12 маг. Урона + 4 за каждый карта перед. Получить 4 жара",
+      "description": "При открытии: +8% маг. урона, 12 (+4/карта) маг. урона, +4 жара.",
       "goldPerRound": 0,
       "buildHints": "Билд: огонь / Pyromancer, питомцы · Пары: Draconic Orb, Oil Lamp, Flame-крафты",
       "protected": false
@@ -11408,7 +11663,7 @@
         "card",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -11419,10 +11674,26 @@
         {
           "type": "heal",
           "value": 5
+        },
+        {
+          "type": "gainWeakestStack",
+          "value": 1,
+          "count": 7,
+          "trigger": "battle_start"
+        },
+        {
+          "type": "procChanceBonus",
+          "value": 0.1,
+          "trigger": "passive"
+        },
+        {
+          "type": "passiveDefense",
+          "value": 2,
+          "trigger": "passive"
         }
       ],
       "synergies": [],
-      "description": "При открытии: получить 7 случайных баффов. За каждую пару перед ней: сопротивление 1 криту. За каждую тройку: оружие тратит на 25% меньше выносливости. За каждое каре: активировать 2 случайные открытые карты (кроме Джимбо).",
+      "description": "При открытии: +7 случайных стаков. +10% к прокам.",
       "goldPerRound": 0,
       "buildHints": "Универсальный / автономный",
       "protected": false
@@ -11445,7 +11716,7 @@
         "dark",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -11453,10 +11724,27 @@
           "stat": "damage",
           "value": 0.25,
           "duration": 4
+        },
+        {
+          "type": "cardScaledBonus",
+          "stack": "empower",
+          "perCard": 4,
+          "trigger": "battle_start"
+        },
+        {
+          "type": "gainStack",
+          "stack": "empower",
+          "value": 4,
+          "trigger": "battle_start"
+        },
+        {
+          "type": "stealRandomStack",
+          "value": 3,
+          "trigger": "battle_start"
         }
       ],
       "synergies": [],
-      "description": "На открыть: За каждый карта перед, получить 4 и Снять 3 случайный баффы от противника.",
+      "description": "При открытии: +4 усиления (+4/карта). Украсть 3 стака.",
       "goldPerRound": 0,
       "buildHints": "Билд: яд / DoT, Reaper дебаффы · Пары: Pestilence Flask, Death Scythe, ядовитые питомцы",
       "protected": false
@@ -11478,9 +11766,19 @@
         "ranged",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 7,
       "craftOnly": true,
-      "effects": [],
+      "effects": [
+        {
+          "type": "periodic",
+          "interval": 7,
+          "trigger": "passive",
+          "gainWeakestStack": {
+            "value": 1,
+            "count": 3
+          }
+        }
+      ],
       "synergies": [],
       "description": "Предметы всех классов появляются в магазине. Через 7с: получить по 1 баффу каждого типа.",
       "goldPerRound": 0,
@@ -11510,12 +11808,21 @@
         "accessory",
         "craft"
       ],
-      "cooldown": 3.0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
           "type": "heal",
           "value": 2
+        },
+        {
+          "type": "periodic",
+          "interval": 3,
+          "trigger": "passive",
+          "gainStack": {
+            "stack": "block",
+            "value": 1
+          }
         }
       ],
       "synergies": [
@@ -11571,7 +11878,8 @@
       "cost": 5,
       "tags": [
         "accessory",
-        "craft"
+        "craft",
+        "nature"
       ],
       "cooldown": 2.2,
       "craftOnly": true,
@@ -11579,6 +11887,15 @@
         {
           "type": "heal",
           "value": 2
+        },
+        {
+          "type": "periodic",
+          "interval": 2.2,
+          "trigger": "passive",
+          "gainWeakestStack": {
+            "value": 1,
+            "count": 1
+          }
         }
       ],
       "synergies": [
@@ -11634,6 +11951,12 @@
         {
           "type": "poison",
           "value": 1
+        },
+        {
+          "type": "periodic",
+          "interval": 1.5,
+          "trigger": "passive",
+          "foePoison": 1
         }
       ],
       "synergies": [],
@@ -11674,6 +11997,19 @@
           "cooldownBoost": 0.25,
           "damageReduction": 0.2,
           "trigger": "passive"
+        },
+        {
+          "type": "hpThreshold",
+          "threshold": 0.5,
+          "direction": "below",
+          "once": true,
+          "trigger": "passive",
+          "cooldownBoost": 0.25
+        },
+        {
+          "type": "battleRageLowHp",
+          "trigger": "passive",
+          "cooldownBoost": 0.25
         }
       ],
       "synergies": [
@@ -11691,7 +12027,7 @@
           "desc": "+1 урона соседям"
         }
       ],
-      "description": "Берсерк предметы появляется в магазине. Когда здоровье падает ниже 50%: Вход боевая ярость на 5с (один раз). Во время боевой ярости: Предметы срабатывают на 25% быстрее. Вы получить 20% снижен урон.",
+      "description": "При HP <50%: боевая ярость на 5с (раз).",
       "goldPerRound": 0,
       "metaEffects": [
         {
@@ -11733,10 +12069,15 @@
           "type": "groundFire",
           "value": 6,
           "trigger": "passive"
+        },
+        {
+          "type": "procChanceBonus",
+          "value": 0.05,
+          "trigger": "passive"
         }
       ],
       "synergies": [],
-      "description": "Предметы пироманта появляются в магазине. При входе в магазин: 65% шанс потратить 1 и создать Пламя. В начале боя: получить 6.",
+      "description": "Магазин: предметы пироманта. +5% к прокам.",
       "goldPerRound": 0,
       "metaEffects": [
         {
@@ -11783,10 +12124,21 @@
           "stat": "magicDamage",
           "value": 0.25,
           "trigger": "passive"
+        },
+        {
+          "type": "gainStack",
+          "stack": "mana",
+          "value": 5,
+          "trigger": "battle_start"
+        },
+        {
+          "type": "procChanceBonus",
+          "value": 0.3,
+          "trigger": "passive"
         }
       ],
       "synergies": [],
-      "description": "Предметы мага появляются в магазине. В начале боя: получить 5. Предметы получают 30% шанс продублировать полученные эффекты.",
+      "description": "В начале боя: +5 маны. +30% к дублированию баффов.",
       "goldPerRound": 0,
       "metaEffects": [
         {
@@ -11815,9 +12167,22 @@
         "luck",
         "craft"
       ],
-      "cooldown": 0,
+      "cooldown": 5,
       "craftOnly": true,
-      "effects": [],
+      "effects": [
+        {
+          "type": "statMult",
+          "stat": "cooldown",
+          "value": 0.2,
+          "trigger": "passive"
+        },
+        {
+          "type": "periodic",
+          "interval": 5,
+          "trigger": "passive",
+          "cooldownBoostItem": 0.5
+        }
+      ],
       "synergies": [],
       "description": "Предмет срабатывает на 20% медленнее. Через 5с: срабатывает на 50% быстрее вместо этого. При покупке сумки: 35% шанс пополнить сумкой-головоломкой.",
       "goldPerRound": 0,
@@ -11849,7 +12214,13 @@
       ],
       "cooldown": 0,
       "craftOnly": true,
-      "effects": [],
+      "effects": [
+        {
+          "type": "procChanceBonus",
+          "value": 0.05,
+          "trigger": "passive"
+        }
+      ],
       "synergies": [
         {
           "id": "twine_badge_haste",
@@ -11868,7 +12239,7 @@
           "desc": "Ускорение соседних предметов"
         }
       ],
-      "description": "Предметы авантюриста появляются в магазине. При покупке бечёвки: 40% шанс пополнить ещё одной. Скрафченные предметы срабатывают на 20% быстрее и имеют 20% шанс продублировать свои баффы.",
+      "description": "Магазин: предметы авантюриста. +5% к прокам.",
       "goldPerRound": 0,
       "metaEffects": [
         {
@@ -11902,7 +12273,7 @@
         "accessory",
         "cold"
       ],
-      "cooldown": 4.0,
+      "cooldown": 4,
       "craftOnly": false,
       "effects": [
         {
@@ -11911,13 +12282,36 @@
           "valueMin": 2,
           "valueMax": 4,
           "damageType": null
+        },
+        {
+          "type": "periodic",
+          "interval": 5,
+          "trigger": "passive",
+          "gainStack": {
+            "stack": "cold",
+            "value": 1,
+            "targetSide": "foe"
+          },
+          "heal": 4
+        },
+        {
+          "type": "activationLimit",
+          "base": 1,
+          "trigger": "passive"
+        },
+        {
+          "type": "gainStack",
+          "stack": "cold",
+          "value": 3,
+          "targetSide": "foe",
+          "trigger": "on_hit"
         }
       ],
       "synergies": [],
-      "description": "Можно только метнуть раз за бой. При попадании: Наложить 3 стака Попадания оружия: Наложить 1 стак",
+      "description": "1 бросок. При попадании: +3 холода. Каждые 5с: +1 холод и +4 HP.",
       "goldPerRound": 0,
       "buildHints": "Билд: лёд",
-      "staminaCost": 0.0,
+      "staminaCost": 0,
       "damage": 3,
       "protected": false
     },
@@ -11937,7 +12331,7 @@
         "accessory",
         "fire"
       ],
-      "cooldown": 2.0,
+      "cooldown": 2,
       "craftOnly": false,
       "effects": [
         {
@@ -11946,10 +12340,29 @@
           "valueMin": 4,
           "valueMax": 6,
           "damageType": null
+        },
+        {
+          "type": "activationLimit",
+          "base": 1,
+          "trigger": "passive"
+        },
+        {
+          "type": "gainStack",
+          "stack": "heat",
+          "value": 3,
+          "trigger": "on_hit"
+        },
+        {
+          "type": "stackThreshold",
+          "stack": "heat",
+          "threshold": 10,
+          "once": true,
+          "trigger": "passive",
+          "weaponDamage": 8
         }
       ],
       "synergies": [],
-      "description": "Можно только метнуть раз за бой. При попадании: Получить 3 жара При накоплении 10: Оружие получить 8 урона.",
+      "description": "1 бросок. При попадании: +3 жара. При 10 жара: оружие +8 урона.",
       "goldPerRound": 0,
       "buildHints": "Билд: огонь / Pyromancer · Пары: Draconic Orb, Oil Lamp, Flame-крафты",
       "damage": 5,
@@ -11971,7 +12384,7 @@
         "accessory",
         "poison"
       ],
-      "cooldown": 2.0,
+      "cooldown": 2,
       "craftOnly": false,
       "effects": [
         {
@@ -11984,10 +12397,26 @@
         {
           "type": "poison",
           "value": 2
+        },
+        {
+          "type": "activationLimit",
+          "base": 1,
+          "trigger": "passive"
+        },
+        {
+          "type": "fatigueDamageOnHit",
+          "value": 1,
+          "poison": 2,
+          "trigger": "on_hit"
+        },
+        {
+          "type": "critPerFoeFatigue",
+          "value": 0.07,
+          "trigger": "passive"
         }
       ],
       "synergies": [],
-      "description": "Можно метнуть только раз за бой. При попадании: наложить урон от усталости. Предметы имеют +7% шанс крита за уровень Усталости противника.",
+      "description": "1 бросок. Урон от усталости при попадании. +7% крит за уровень усталости противника.",
       "goldPerRound": 0,
       "buildHints": "Билд: яд / DoT · Пары: Pestilence Flask, Death Scythe, ядовитые питомцы",
       "damage": 8,
@@ -12007,7 +12436,8 @@
       "cost": 10,
       "tags": [
         "accessory",
-        "craft"
+        "craft",
+        "nature"
       ],
       "cooldown": 0,
       "craftOnly": true,
@@ -12022,10 +12452,21 @@
           "type": "passiveLuck",
           "value": 15,
           "trigger": "passive"
+        },
+        {
+          "type": "gainStack",
+          "stack": "luck",
+          "value": 5,
+          "trigger": "battle_start"
+        },
+        {
+          "type": "heal",
+          "value": 15,
+          "trigger": "battle_start"
         }
       ],
       "synergies": [],
-      "description": "При входе в магазин: вместо золота вы получаете предметы большей стоимости. В начале боя: получить 5 случайных баффов.",
+      "description": "В начале боя: +5 удачи и +15 HP.",
       "goldPerRound": 0,
       "metaEffects": [
         {
@@ -12052,7 +12493,7 @@
         "pet",
         "craft"
       ],
-      "cooldown": 3.0,
+      "cooldown": 3,
       "craftOnly": true,
       "effects": [
         {
@@ -12062,6 +12503,28 @@
         {
           "type": "passiveMaxHp",
           "value": 40,
+          "trigger": "passive"
+        },
+        {
+          "type": "periodic",
+          "interval": 3,
+          "trigger": "passive",
+          "spendStack": {
+            "stack": "heat",
+            "value": 1
+          },
+          "gainStack": {
+            "stack": "empower",
+            "value": 1
+          },
+          "gainHeart": 1
+        },
+        {
+          "type": "cooldownMultPerTag",
+          "tags": [
+            "food"
+          ],
+          "perTag": 0.1,
           "trigger": "passive"
         }
       ],
@@ -12088,20 +12551,42 @@
         "fire",
         "craft"
       ],
-      "cooldown": 5.0,
+      "cooldown": 5,
       "craftOnly": true,
       "effects": [
         {
           "type": "slow",
           "value": 0.18,
           "duration": 2
+        },
+        {
+          "type": "applyStun",
+          "duration": 0.5,
+          "chance": 0.5,
+          "trigger": "on_hit"
+        },
+        {
+          "type": "onFatigueStart",
+          "gainStack": {
+            "stack": "heat",
+            "value": 10
+          },
+          "trigger": "passive"
+        },
+        {
+          "type": "cooldownMultPerTag",
+          "tags": [
+            "food"
+          ],
+          "perTag": 0.1,
+          "trigger": "passive"
         }
       ],
       "synergies": [],
-      "description": "При попадании: 50% шанс оглушить на 0.5с. При начале усталости: получить 10. Еда: срабатывает на 10% быстрее за каждую еду другого типа (кроме Тыквы).",
+      "description": "50% оглушение. При усталости: +10 жара. Быстрее за еду.",
       "goldPerRound": 0,
       "buildHints": "Билд: огонь / Pyromancer, еда / Pan · Пары: Draconic Orb, Oil Lamp, Flame-крафты · Синергия: стан → Dagger extra attack",
-      "staminaCost": 0.0,
+      "staminaCost": 0,
       "sockets": 2,
       "protected": false
     },
@@ -12120,7 +12605,7 @@
       "tags": [
         "accessory"
       ],
-      "cooldown": 0,
+      "cooldown": 12,
       "craftOnly": false,
       "effects": [
         {
@@ -12128,10 +12613,17 @@
           "stat": "damage",
           "value": 0.15,
           "duration": 4
+        },
+        {
+          "type": "periodic",
+          "interval": 12,
+          "trigger": "passive",
+          "damage": 20,
+          "damageType": "magic"
         }
       ],
       "synergies": [],
-      "description": "Через 12с: потратить все баффы, противник получает +4% урона за каждый использованный бафф. Нанести 30 маг. урона.",
+      "description": "Каждые 12с: 20 маг. урона.",
       "goldPerRound": 0,
       "buildHints": "Универсальный / автономный",
       "protected": false
@@ -12151,17 +12643,24 @@
       "tags": [
         "accessory"
       ],
-      "cooldown": 0,
+      "cooldown": 8,
       "craftOnly": false,
       "effects": [
         {
-          "type": "slow",
-          "value": 0.25,
-          "duration": 2
+          "type": "periodic",
+          "interval": 8,
+          "trigger": "passive",
+          "foePoison": 3
+        },
+        {
+          "type": "cooldownMultPerSocket",
+          "perSocket": 0.03,
+          "maxBonus": 0.6,
+          "trigger": "passive"
         }
       ],
       "synergies": [],
-      "description": "Атаки 3% быстрее за каждый (до 60%).",
+      "description": "Каждые 8с: +3 яда. Атаки на 3% быстрее за каждый заполненный сокет (до 60%).",
       "goldPerRound": 0,
       "buildHints": "Универсальный / автономный",
       "sockets": 4,
@@ -12182,16 +12681,23 @@
       "tags": [
         "pet"
       ],
-      "cooldown": 6.0,
+      "cooldown": 6,
       "craftOnly": false,
       "effects": [
         {
-          "type": "heal",
-          "value": 2
+          "type": "periodic",
+          "interval": 6,
+          "trigger": "passive",
+          "gainDominantStack": 3
+        },
+        {
+          "type": "cooldownMultPerItemCost",
+          "perCost": 0.01,
+          "trigger": "passive"
         }
       ],
       "synergies": [],
-      "description": "При обновлении магазина: 40% шанс торгового предложения Каждые 6с: Получить 3 баффы типа, которого у вас больше всего. Срабатывает на 1% быстрее за каждый стоимость предметов.",
+      "description": "При обновлении магазина: 40% торговое предложение. Каждые 6с: +3 к сильнейшему стаку. На 1% быстрее за стоимость предметов.",
       "goldPerRound": 0,
       "metaEffects": [
         {
@@ -12218,20 +12724,30 @@
       "cost": 2,
       "tags": [
         "accessory",
-        "luck"
+        "holy",
+        "nature"
       ],
-      "cooldown": 0,
+      "cooldown": 5,
       "craftOnly": false,
       "effects": [
         {
-          "type": "heal",
-          "value": 4
+          "type": "healPerTag",
+          "tag": "holy",
+          "value": 3,
+          "trigger": "passive",
+          "adjacent": true
+        },
+        {
+          "type": "periodic",
+          "interval": 5,
+          "trigger": "passive",
+          "heal": 5
         }
       ],
       "synergies": [],
-      "description": "Через 5с: Лечение на 5 + 3 за каждый предмет с тегом.",
+      "description": "Каждые 5с: +5 HP и +3 за соседний святой предмет.",
       "goldPerRound": 0,
-      "buildHints": "Билд: крит / Luck",
+      "buildHints": "Билд: святой / Ranger · Крафт: Shelly, Shell Totem · Пары: Holy Armor, Divine Potion",
       "protected": false
     },
     {
@@ -12248,16 +12764,30 @@
       "cost": 5,
       "tags": [
         "accessory",
-        "craft"
+        "craft",
+        "holy"
       ],
       "cooldown": 3.4,
       "craftOnly": true,
       "effects": [
         {
-          "type": "damage",
-          "value": 2,
-          "valueMin": 1,
-          "valueMax": 3
+          "type": "periodic",
+          "interval": 3.4,
+          "trigger": "passive",
+          "hpThreshold": 0.7,
+          "healIfBelow": 8,
+          "gainStackIfAbove": {
+            "stack": "empower",
+            "value": 1
+          }
+        },
+        {
+          "type": "cooldownMultPerTag",
+          "tags": [
+            "holy"
+          ],
+          "perTag": 0.15,
+          "trigger": "passive"
         }
       ],
       "synergies": [
@@ -12283,7 +12813,7 @@
           "desc": "+1 блока"
         }
       ],
-      "description": "Каждые 3.4с: если здоровье выше 70% — получить 1, иначе лечение на 8. Тратит на 15% меньше выносливости за каждый предмет с тегом.",
+      "description": "Каждые 3.4с: +8 HP при HP <70%, иначе +1 усиление. Быстрее за святой предмет.",
       "goldPerRound": 0,
       "buildHints": "Крафт: Shiny Shell + Shell Totem",
       "protected": false
@@ -12308,12 +12838,33 @@
       "craftOnly": false,
       "effects": [
         {
-          "type": "heal",
-          "value": 2
+          "type": "periodic",
+          "interval": 4.7,
+          "trigger": "passive",
+          "randomPick": [
+            {
+              "block": 14
+            },
+            {
+              "restoreStamina": 2
+            },
+            {
+              "gainStack": {
+                "stack": "luck",
+                "value": 2
+              }
+            }
+          ]
+        },
+        {
+          "type": "cooldownMultPerAdjacent",
+          "perAdjacent": 0.1,
+          "maxBonus": 0.6,
+          "trigger": "passive"
         }
       ],
       "synergies": [],
-      "description": "Каждые 4.7с: Случайно получить 14 или 2 выносливости или 2 стака Срабатывает на 10% быстрее за каждый предмет.",
+      "description": "Каждые 4.7с: +14 блока, +2 выносливости или +2 удачи (случайно). На 10% быстрее за соседа (до 60%).",
       "goldPerRound": 0,
       "buildHints": "Билд: Musical · Пары: Fanfare, Dancing Dragon",
       "protected": false
@@ -12334,16 +12885,21 @@
         "accessory",
         "musical"
       ],
-      "cooldown": 3.0,
+      "cooldown": 3,
       "craftOnly": false,
       "effects": [
         {
-          "type": "heal",
-          "value": 2
+          "type": "periodic",
+          "interval": 3,
+          "trigger": "passive",
+          "drainFoeStamina": 1,
+          "cooldownPenalty": 0.8,
+          "stunEvery": 5,
+          "stunDuration": 1
         }
       ],
       "synergies": [],
-      "description": "Каждые 3с: Случайно получить 1 или получить 3 и Снять 2 от противник или снять 1 выносливости у противника. Срабатывает на 10% быстрее за каждый предмет.",
+      "description": "Каждые 3с: −1 выносливости противнику. Каждые 5 срабатываний: оглушение 1с.",
       "goldPerRound": 0,
       "buildHints": "Синергия: стан → Dagger extra attack",
       "protected": false
@@ -12363,13 +12919,22 @@
       "tags": [
         "accessory"
       ],
-      "cooldown": 0,
+      "cooldown": 12,
       "craftOnly": false,
       "effects": [
         {
           "type": "repeatCast",
           "magicOnly": true,
           "trigger": "passive"
+        },
+        {
+          "type": "periodic",
+          "interval": 12,
+          "trigger": "passive",
+          "gainWeakestStack": {
+            "value": 1,
+            "count": 2
+          }
         }
       ],
       "synergies": [],
@@ -12393,14 +12958,18 @@
       "tags": [
         "pet"
       ],
-      "cooldown": 0,
+      "cooldown": 4,
       "craftOnly": false,
       "effects": [
         {
-          "type": "damage",
-          "value": 2,
-          "valueMin": 1,
-          "valueMax": 3
+          "type": "periodic",
+          "interval": 4,
+          "trigger": "passive",
+          "gainStack": {
+            "stack": "cold",
+            "value": 1,
+            "targetSide": "foe"
+          }
         }
       ],
       "synergies": [],
@@ -12424,14 +12993,15 @@
       "tags": [
         "pet"
       ],
-      "cooldown": 0,
+      "cooldown": 3,
       "craftOnly": false,
       "effects": [
         {
-          "type": "damage",
-          "value": 2,
-          "valueMin": 1,
-          "valueMax": 3
+          "type": "periodic",
+          "interval": 3,
+          "trigger": "passive",
+          "damage": 4,
+          "damageType": "magic"
         }
       ],
       "synergies": [],
@@ -12462,18 +13032,26 @@
       "tags": [
         "pet"
       ],
-      "cooldown": 0,
+      "cooldown": 4.7,
       "craftOnly": false,
       "effects": [
         {
-          "type": "damage",
-          "value": 2,
-          "valueMin": 1,
-          "valueMax": 3
+          "type": "periodic",
+          "interval": 4.7,
+          "trigger": "passive",
+          "stripFoeStacksOnceEach": true
+        },
+        {
+          "type": "cooldownMultPerTag",
+          "tags": [
+            "dark"
+          ],
+          "perTag": 0.1,
+          "trigger": "passive"
         }
       ],
       "synergies": [],
-      "description": "Каждые 4.7с: Снять 1 бафф каждый тип от противника. Срабатывает на 10% быстрее за каждый предмет с тегом.",
+      "description": "Каждые 4.7с: снять по 1 стаку каждого типа у противника. На 10% быстрее за тёмный предмет.",
       "goldPerRound": 0,
       "buildHints": "Билд: питомцы",
       "protected": false

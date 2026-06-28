@@ -856,8 +856,8 @@ BATTLE_EFFECT_PATCHES = {
         {"type": "critDamageMult", "value": 0.02, "trigger": "passive"},
     ],
     "blood_harvester": [
-        {"type": "cooldownMultPerTotalStacks", "perStack": 0.05, "trigger": "passive"},
         {"type": "stackGainMult", "value": 1.0, "trigger": "passive"},
+        {"type": "cooldownMultPerTotalStacks", "perStack": 0.05, "maxStacks": 40, "trigger": "passive"},
     ],
     "prismatic_orb": [
         {"type": "tagScaledStack", "stack": "mana", "tag": "magic", "perTag": 2, "trigger": "battle_start"},
@@ -898,6 +898,226 @@ BATTLE_EFFECT_PATCHES = {
     "platinum_customer_card": [
         {"type": "procChanceBonus", "value": 0.10, "trigger": "passive"},
         {"type": "periodic", "interval": 4, "trigger": "passive", "cleanseDebuffs": 2},
+    ],
+    # --- Этап 10: предметы без патчей (миграция) ---
+    "shell_totem": [
+        {"type": "periodic", "interval": 3.4, "trigger": "passive", "hpThreshold": 0.7,
+         "healIfBelow": 8, "gainStackIfAbove": {"stack": "empower", "value": 1}},
+        {"type": "cooldownMultPerTag", "tags": ["holy"], "perTag": 0.15, "trigger": "passive"},
+    ],
+    "flute": [
+        {"type": "periodic", "interval": 4.7, "trigger": "passive",
+         "randomPick": [{"block": 14}, {"restoreStamina": 2}, {"gainStack": {"stack": "luck", "value": 2}}]},
+        {"type": "cooldownMultPerAdjacent", "perAdjacent": 0.10, "maxBonus": 0.60, "trigger": "passive"},
+    ],
+    "fanfare": [
+        {"type": "periodic", "interval": 3, "trigger": "passive",
+         "drainFoeStamina": 1, "cooldownPenalty": 0.8, "stunEvery": 5, "stunDuration": 1},
+    ],
+    "leaf_badge": [
+        {"type": "periodic", "interval": 2.2, "trigger": "passive", "gainWeakestStack": {"value": 1, "count": 1}},
+    ],
+    "skull_badge": [
+        {"type": "periodic", "interval": 1.5, "trigger": "passive", "foePoison": 1},
+    ],
+    "stone_badge": [
+        {"type": "periodic", "interval": 3, "trigger": "passive", "gainStack": {"stack": "block", "value": 1}},
+    ],
+    "rainbow_badge": [
+        {"type": "periodic", "interval": 7, "trigger": "passive", "gainWeakestStack": {"value": 1, "count": 3}},
+    ],
+    "puzzle_badge": [
+        {"type": "statMult", "stat": "cooldown", "value": 0.20, "trigger": "passive"},
+        {"type": "periodic", "interval": 5, "trigger": "passive", "cooldownBoostItem": 0.50},
+    ],
+    "stable_recombobulator": [
+        {"type": "periodic", "interval": 2.5, "trigger": "passive",
+         "gainWeakestStack": {"value": 1, "count": 1}, "cleanseDebuffs": 1},
+    ],
+    "unstable_recombobulator": [
+        {"type": "periodic", "interval": 4, "trigger": "passive",
+         "randomPick": [{"gainStack": {"stack": "luck", "value": 1}}, {"foePoison": 1}, {"heal": 5}]},
+    ],
+    "lil_chestnut": [
+        {"type": "periodic", "interval": 6, "trigger": "passive", "gainDominantStack": 3},
+        {"type": "cooldownMultPerItemCost", "perCost": 0.01, "trigger": "passive"},
+    ],
+    "gingerbread_jerry": [
+        {"type": "periodic", "interval": 3, "trigger": "passive",
+         "spendStack": {"stack": "heat", "value": 1},
+         "gainStack": {"stack": "empower", "value": 1}, "gainHeart": 1},
+        {"type": "cooldownMultPerTag", "tags": ["food"], "perTag": 0.10, "trigger": "passive"},
+    ],
+    "repeater": [
+        {"type": "periodic", "interval": 12, "trigger": "passive", "gainWeakestStack": {"value": 1, "count": 2}},
+    ],
+    "mr_struggles": [
+        {"type": "periodic", "interval": 3, "trigger": "passive", "damage": 4, "damageType": "magic"},
+    ],
+    "mrs_struggles": [
+        {"type": "periodic", "interval": 4.7, "trigger": "passive", "stripFoeStacksOnceEach": True},
+        {"type": "cooldownMultPerTag", "tags": ["dark"], "perTag": 0.10, "trigger": "passive"},
+    ],
+    "happy_bomb": [
+        {"type": "periodic", "interval": 12, "trigger": "passive", "damage": 20, "damageType": "magic"},
+    ],
+    "pop": [
+        {"type": "periodic", "interval": 8, "trigger": "passive", "foePoison": 3},
+        {"type": "cooldownMultPerSocket", "perSocket": 0.03, "maxBonus": 0.60, "trigger": "passive"},
+    ],
+    "cubert": [
+        {"type": "periodic", "interval": 4, "trigger": "passive",
+         "gainStack": {"stack": "cold", "value": 1, "targetSide": "foe"}},
+    ],
+    "wonky_snowman": [
+        {"type": "slow", "value": 0.12, "duration": 4, "trigger": "on_hit", "chance": 0.5},
+    ],
+    "ace_of_spades": [
+        {"type": "buffTimed", "stat": "damage", "value": 0.15, "duration": 4, "trigger": "on_hit", "chance": 0.5},
+    ],
+    "the_lovers": [
+        {"type": "heal", "value": 3, "trigger": "battle_start"},
+    ],
+    "the_fool": [
+        {"type": "gainStack", "stack": "luck", "value": 1, "trigger": "battle_start"},
+    ],
+    "reverse": [
+        {"type": "gainStack", "stack": "empower", "value": 2, "trigger": "battle_start"},
+    ],
+    # --- Этап 10 (продолжение): камни, карты, сумки, дракончики ---
+    "artifact_stone_cold": [
+        {"type": "activationLimit", "base": 1, "trigger": "passive"},
+        {"type": "gainStack", "stack": "cold", "value": 3, "targetSide": "foe", "trigger": "on_hit"},
+        {"type": "periodic", "interval": 5, "trigger": "passive",
+         "gainStack": {"stack": "cold", "value": 1, "targetSide": "foe"}, "heal": 4},
+    ],
+    "artifact_stone_heat": [
+        {"type": "activationLimit", "base": 1, "trigger": "passive"},
+        {"type": "gainStack", "stack": "heat", "value": 3, "trigger": "on_hit"},
+        {"type": "stackThreshold", "stack": "heat", "threshold": 10, "once": True,
+         "trigger": "passive", "weaponDamage": 8},
+    ],
+    "artifact_stone_death": [
+        {"type": "activationLimit", "base": 1, "trigger": "passive"},
+        {"type": "fatigueDamageOnHit", "value": 1, "poison": 2, "trigger": "on_hit"},
+        {"type": "critPerFoeFatigue", "value": 0.07, "trigger": "passive"},
+    ],
+    "bag_of_stones": [
+        {"type": "stonesMultiThrow", "trigger": "passive"},
+    ],
+    "pumpkin": [
+        {"type": "applyStun", "duration": 0.5, "chance": 0.5, "trigger": "on_hit"},
+        {"type": "onFatigueStart", "gainStack": {"stack": "heat", "value": 10}, "trigger": "passive"},
+        {"type": "cooldownMultPerTag", "tags": ["food"], "perTag": 0.10, "trigger": "passive"},
+    ],
+    "emerald_whelp": [
+        {"type": "selfPoisonStart", "value": 3, "trigger": "battle_start"},
+        {"type": "poison", "value": 3, "trigger": "on_hit"},
+    ],
+    "sapphire_whelp": [
+        {"type": "gainStack", "stack": "block", "value": 6, "trigger": "battle_start"},
+        {"type": "spendStack", "stack": "block", "value": 1, "trigger": "on_hit",
+         "gainStack": {"stack": "block", "value": 10}},
+        {"type": "gainWeakestStack", "value": 1, "trigger": "on_hit"},
+    ],
+    "deck_of_cards": [
+        {"type": "gainStack", "stack": "luck", "value": 2, "trigger": "battle_start"},
+        {"type": "procChanceBonus", "value": 0.05, "trigger": "passive"},
+    ],
+    "white_eyes_blue_dragon": [
+        {"type": "gainStack", "stack": "luck", "value": 12, "trigger": "battle_start"},
+        {"type": "cardScaledBonus", "stack": "luck", "perCard": 5, "trigger": "battle_start"},
+        {"type": "gainStack", "stack": "cold", "value": 3, "targetSide": "foe", "trigger": "battle_start"},
+    ],
+    "holo_fire_lizard": [
+        {"type": "statMult", "stat": "magicDamage", "value": 0.08, "trigger": "battle_start"},
+        {"type": "cardScaledDamage", "base": 12, "perCard": 4, "damageType": "magic", "trigger": "battle_start"},
+        {"type": "gainStack", "stack": "heat", "value": 4, "trigger": "battle_start"},
+    ],
+    "darkest_lotus": [
+        {"type": "cardScaledBonus", "stack": "empower", "perCard": 4, "trigger": "battle_start"},
+        {"type": "gainStack", "stack": "empower", "value": 4, "trigger": "battle_start"},
+        {"type": "stealRandomStack", "value": 3, "trigger": "battle_start"},
+    ],
+    "jimbo": [
+        {"type": "gainWeakestStack", "value": 1, "count": 7, "trigger": "battle_start"},
+        {"type": "procChanceBonus", "value": 0.10, "trigger": "passive"},
+        {"type": "passiveDefense", "value": 2, "trigger": "passive"},
+    ],
+    "fanny_pack": [
+        {"type": "cooldownMultPerTag", "tags": ["bag"], "perTag": 0.10, "trigger": "passive"},
+    ],
+    "holdall": [
+        {"type": "neutralScaledStack", "stack": "heat", "perItem": 8, "trigger": "battle_start"},
+    ],
+    "ranger_bag": [
+        {"type": "crit", "chance": 0.10, "trigger": "passive"},
+        {"type": "critPerStack", "stack": "luck", "value": 0.03, "trigger": "passive"},
+    ],
+    "duffle_bag": [
+        {"type": "hpThreshold", "threshold": 0.5, "direction": "below", "once": True, "trigger": "passive",
+         "gainBlock": 20, "cooldownBoost": 0.30,
+         "timedDamageReduction": {"value": 0.20, "duration": 5}},
+        {"type": "battleRageLowHp", "trigger": "passive", "cooldownBoost": 0.30},
+    ],
+    "storage_coffin": [
+        {"type": "onActivate", "foePoison": 1, "chance": 0.22, "trigger": "passive"},
+    ],
+    "relic_case": [
+        {"type": "periodic", "interval": 2.5, "trigger": "passive", "weaponDamageBonus": 1},
+    ],
+    "utility_pouch": [
+        {"type": "statMult", "stat": "damage", "value": 0.30, "trigger": "passive"},
+        {"type": "statMult", "stat": "cooldown", "value": 0.30, "trigger": "passive"},
+        {"type": "periodic", "interval": 5, "trigger": "passive", "cooldownBoostItem": 0.35},
+        {"type": "lifesteal", "value": 0.35, "trigger": "passive"},
+    ],
+    "potion_belt": [
+        {"type": "procChanceBonus", "value": 0.08, "trigger": "passive"},
+        {"type": "debuffThreshold", "threshold": 4, "once": True, "trigger": "passive", "cleanseDebuffs": 10},
+    ],
+    "vineweave_basket": [
+        {"type": "statMult", "stat": "heal", "value": 0.10, "trigger": "passive"},
+        {"type": "healPerTag", "tag": "nature", "value": 0.03, "trigger": "passive"},
+    ],
+    "present": [
+        {"type": "gainStack", "stack": "luck", "value": 5, "trigger": "battle_start"},
+        {"type": "heal", "value": 15, "trigger": "battle_start"},
+    ],
+    "maneki_neko": [
+        {"type": "procChanceBonus", "value": 0.03, "trigger": "passive"},
+        {"type": "passiveLuck", "value": 1, "trigger": "passive"},
+    ],
+    "wooden_sword": [
+        {"type": "onHitCapBonus", "value": 1, "cap": 2, "chance": 0.25, "trigger": "on_hit"},
+    ],
+    "shortbow": [
+        {"type": "onHitCapBonus", "value": 1, "cap": 3, "trigger": "on_hit"},
+    ],
+    "shiny_shell": [
+        {"type": "healPerTag", "tag": "holy", "value": 3, "trigger": "passive", "adjacent": True},
+        {"type": "periodic", "interval": 5, "trigger": "passive", "heal": 5},
+    ],
+    "wolf_badge": [
+        {"type": "hpThreshold", "threshold": 0.5, "direction": "below", "once": True, "trigger": "passive",
+         "cooldownBoost": 0.25},
+        {"type": "battleRageLowHp", "trigger": "passive", "cooldownBoost": 0.25},
+    ],
+    "magic_badge": [
+        {"type": "gainStack", "stack": "mana", "value": 5, "trigger": "battle_start"},
+        {"type": "procChanceBonus", "value": 0.30, "trigger": "passive"},
+    ],
+    "flame_badge": [
+        {"type": "procChanceBonus", "value": 0.05, "trigger": "passive"},
+    ],
+    "twine_badge": [
+        {"type": "procChanceBonus", "value": 0.05, "trigger": "passive"},
+    ],
+    "leather_bag": [
+        {"type": "cooldownMultPerTag", "tags": ["accessory"], "perTag": 0.05, "trigger": "passive"},
+    ],
+    "customer_card": [
+        {"type": "procChanceBonus", "value": 0.10, "trigger": "passive"},
     ],
 }
 
@@ -1080,7 +1300,12 @@ DESCRIPTION_OVERRIDES = {
     "snowball": "В начале боя: наложить 2 холода на противника.",
     "snowmaster": "Каждые 1.3с: холод (или себе, если у него <10). Снять 1 дебафф. Быстрее за холод.",
     "frozen_flame": "В начале боя: +8 жара за огонь. При 6 жара: +2 жара противнику. +1.5% крит.",
-    "blood_harvester": "Стаки на 100% эффективнее. Предметы на 5% быстрее за каждый стак.",
+    "blood_harvester": "Стаки на 100% эффективнее. Предметы на 5% быстрее за каждый стак (макс. +200%).",
+    "pop": "Каждые 8с: +3 яда. Атаки на 3% быстрее за каждый заполненный сокет (до 60%).",
+    "lil_chestnut": "При обновлении магазина: 40% торговое предложение. Каждые 6с: +3 к сильнейшему стаку. На 1% быстрее за стоимость предметов.",
+    "flute": "Каждые 4.7с: +14 блока, +2 выносливости или +2 удачи (случайно). На 10% быстрее за соседа (до 60%).",
+    "fanfare": "Каждые 3с: −1 выносливости противнику. Каждые 5 срабатываний: оглушение 1с.",
+    "mrs_struggles": "Каждые 4.7с: снять по 1 стаку каждого типа у противника. На 10% быстрее за тёмный предмет.",
     "prismatic_orb": "В начале боя: мана за магию/огонь. Каждые 8с: +1 ко всем стакам.",
     "unsettling_presence": "+30% лечения как маг. урон. Каждые 3с: −1 стак и +12 HP.",
     "time_dilator": "Предметы на 30% медленнее. Каждую 1с: самый долгий кулдаун −6%.",
@@ -1089,6 +1314,46 @@ DESCRIPTION_OVERRIDES = {
     "pineapple": "Каждые 2.9с: +1 удача и +4 HP. Быстрее за еду.",
     "snowcake": "Каждые 3с: +1 холод. При 10+ холода у противника: +10% маг. урона и 10 маг. урона.",
     "platinum_customer_card": "+10% к прокам. Каждые 4с: снять 2 дебаффа.",
+    # --- Этап 10 ---
+    "shell_totem": "Каждые 3.4с: +8 HP при HP <70%, иначе +1 усиление. Быстрее за святой предмет.",
+    "happy_bomb": "Каждые 12с: 20 маг. урона.",
+    "artifact_stone_cold": "1 бросок. При попадании: +3 холода. Каждые 5с: +1 холод и +4 HP.",
+    "artifact_stone_heat": "1 бросок. При попадании: +3 жара. При 10 жара: оружие +8 урона.",
+    "artifact_stone_death": "1 бросок. Урон от усталости при попадании. +7% крит за уровень усталости противника.",
+    "bag_of_stones": "Камни можно метать многократно.",
+    "pumpkin": "50% оглушение. При усталости: +10 жара. Быстрее за еду.",
+    "emerald_whelp": "В начале боя: +3 яда себе. При попадании: +3 яда противнику.",
+    "sapphire_whelp": "В начале боя: +6 блока. При попадании: −1 блок → +10 блока и случайный стак.",
+    "deck_of_cards": "В начале боя: +2 удачи. +5% к прокам.",
+    "white_eyes_blue_dragon": "При открытии: +12 удачи (+5 за карту). +3 холода противнику.",
+    "holo_fire_lizard": "При открытии: +8% маг. урона, 12 (+4/карта) маг. урона, +4 жара.",
+    "darkest_lotus": "При открытии: +4 усиления (+4/карта). Украсть 3 стака.",
+    "jimbo": "При открытии: +7 случайных стаков. +10% к прокам.",
+    "fanny_pack": "Предметы внутри на 10% быстрее.",
+    "holdall": "В начале боя: +8 жара за нейтральный предмет внутри.",
+    "ranger_bag": "Внутри: +10% крит и +3% за стак.",
+    "duffle_bag": "При HP <50%: боевая ярость, −20% урона, +20 блока.",
+    "storage_coffin": "При активации предмета внутри: 22% +1 яд.",
+    "relic_case": "Каждые 2.5с: оружие внутри +1 урона.",
+    "utility_pouch": "Оружие внутри: +30% урона, −30% скорости. +35% вампиризм.",
+    "potion_belt": "+8% к прокам. После 4 зелий: снять 10 дебаффов.",
+    "vineweave_basket": "+10% лечения и +3% за предмет природы внутри.",
+    "present": "В начале боя: +5 удачи и +15 HP.",
+    "maneki_neko": "+1 удача и +3% к прокам.",
+    "wooden_sword": "25% +1 урона (до 2).",
+    "shortbow": "При попадании: +1 урона (до 3).",
+    "shiny_shell": "Каждые 5с: +5 HP и +3 за соседний святой предмет.",
+    "wolf_badge": "При HP <50%: боевая ярость на 5с (раз).",
+    "magic_badge": "В начале боя: +5 маны. +30% к дублированию баффов.",
+    "flame_badge": "Магазин: предметы пироманта. +5% к прокам.",
+    "twine_badge": "Магазин: предметы авантюриста. +5% к прокам.",
+    "leather_bag": "+4 слота рюкзака.",
+    "customer_card": "Магазин: повышение редкости. +10% к прокам.",
+    "wonky_snowman": "50% замедление при попадании.",
+    "ace_of_spades": "При попадании: 50% +15% урона на 4с.",
+    "the_lovers": "В начале боя: +3 HP.",
+    "the_fool": "В начале боя: +1 удача.",
+    "reverse": "В начале боя: +2 усиления.",
 }
 
 
