@@ -7194,9 +7194,22 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
   object-fit: contain;
   filter: none;
   background: none;
-  transform-origin: center bottom;
+  transform: scale(1);
+  transform-origin: top center;
+  transition: transform 0.6s ease-in-out;
   transform-style: preserve-3d;
   backface-visibility: visible;
+}
+
+#app[data-phase="battle"] .battle-scene-ui .profile-avatar.profile-avatar-battle-zoom-clip,
+#app[data-phase="replay"] .battle-scene-ui .profile-avatar.profile-avatar-battle-zoom-clip {
+  overflow: hidden;
+}
+
+#app[data-phase="battle"] .battle-scene-ui .profile-avatar-img.profile-avatar-battle-zoom,
+#app[data-phase="replay"] .battle-scene-ui .profile-avatar-img.profile-avatar-battle-zoom {
+  transform: scale(1.9);
+  transform-origin: top center;
 }
 
 #app[data-phase="battle"] .battle-scene-avatar-player .profile-avatar-img,

@@ -532,16 +532,38 @@ function handleBattleHudClick(clientX, clientY) {
   return false;
 }
 
+let battlePortraitZoomActive = false;
+
+function applyBattlePortraitZoom() {
+  ["player-avatar-panel", "enemy-avatar-panel"].forEach((panelId) => {
+    const panel = document.getElementById(panelId);
+    if (!panel) return;
+    panel.querySelectorAll(".profile-avatar").forEach((wrap) => {
+      wrap.classList.toggle("profile-avatar-battle-zoom-clip", battlePortraitZoomActive);
+    });
+    panel.querySelectorAll(".profile-avatar-img").forEach((img) => {
+      img.classList.toggle("profile-avatar-battle-zoom", battlePortraitZoomActive);
+    });
+  });
+}
+
+function setBattlePortraitZoom(active) {
+  battlePortraitZoomActive = !!active;
+  applyBattlePortraitZoom();
+}
+
 function initBattleHud() {
   hudRoundAccum = { player: {}, enemy: {} };
   hudLastLogIndex = 0;
   hudCollapseBbox.player = null;
   hudCollapseBbox.enemy = null;
   closeHudPopup();
+  setBattlePortraitZoom(true);
 }
 
 function closeBattleHudPopups() {
   closeHudPopup();
+  setBattlePortraitZoom(false);
 }
 
 function drawBattleHud(ctx, battleState) {
