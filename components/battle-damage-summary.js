@@ -334,8 +334,9 @@ function recordBenefitEffect(state, team, item, amount, benefitKind = "other") {
 
 function getDamageStackSlotViewport(team, slotIndex, total) {
   const slot = typeof getAvatarSlotEl === "function" ? getAvatarSlotEl(team) : null;
-  const anchor = slot?.querySelector(".avatar-hero-anchor") || slot?.querySelector(".avatar-hero-footer");
-  const stacksEl = anchor?.querySelector(".avatar-damage-stacks");
+  const floatLayer = slot?.querySelector(".avatar-effects-float");
+  const stacksEl = floatLayer?.querySelector(".avatar-damage-stacks")
+    || slot?.querySelector(".avatar-damage-stacks");
   if (stacksEl) {
     const existing = stacksEl.querySelector(`[data-stack-uid][data-slot="${slotIndex}"]`);
     if (existing) {
@@ -490,14 +491,15 @@ function renderDamageFlights(state) {
 }
 
 function ensureDamageStacksEl(shell) {
-  const anchor = shell.querySelector(".avatar-hero-anchor") || shell.querySelector(".avatar-hero-footer");
-  if (!anchor) return null;
-  let stacks = anchor.querySelector(".avatar-damage-stacks");
+  const floatLayer = shell.querySelector(".avatar-effects-float")
+    || shell.querySelector(".avatar-hero-footer")
+    || shell;
+  let stacks = floatLayer.querySelector(".avatar-damage-stacks");
   if (!stacks) {
     stacks = document.createElement("div");
     stacks.className = "avatar-damage-stacks";
     stacks.setAttribute("aria-hidden", "true");
-    anchor.insertBefore(stacks, anchor.firstChild);
+    floatLayer.insertBefore(stacks, floatLayer.firstChild);
   }
   return stacks;
 }

@@ -556,8 +556,10 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 #app[data-phase="battle"] #enemy-avatar-slot > .avatar-hero-shell,
 #app[data-phase="replay"] #player-avatar-slot > .avatar-hero-shell,
 #app[data-phase="replay"] #enemy-avatar-slot > .avatar-hero-shell {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  inset: auto;
+  width: 100%;
+  height: 100%;
 }
 
 .portrait-zoom-clip {
@@ -1352,15 +1354,48 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 }
 
 .avatar-hero-shell {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
   width: var(--battle-avatar-w, 100%);
   max-width: 100%;
-  height: 100%;
   gap: calc(6px * var(--ui-scale));
   pointer-events: none;
+  overflow: visible;
+}
+
+.avatar-effects-float {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  width: 100%;
+  min-height: calc(80px * var(--ui-scale));
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: calc(4px * var(--ui-scale));
+  z-index: 10;
+}
+
+.avatar-effects-float .avatar-damage-stacks {
+  position: static;
+  left: auto;
+  bottom: auto;
+  transform: none;
+  width: max-content;
+  max-width: calc(var(--battle-avatar-w) * 1.35);
+}
+
+.avatar-effects-float .avatar-hero-status-zones {
+  position: static;
+  top: auto;
+  left: auto;
+  width: 100%;
+  margin: 0;
 }
 
 .avatar-hero-shell .profile-avatar {
@@ -1402,8 +1437,8 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 
 .avatar-damage-stacks {
   position: absolute;
+  bottom: 100%;
   left: 50%;
-  bottom: calc(100% + calc(2px * var(--ui-scale)));
   transform: translateX(-50%);
   display: flex;
   flex-wrap: wrap;
@@ -1415,7 +1450,7 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
   min-height: 0;
   margin: 0;
   pointer-events: none;
-  z-index: 3;
+  z-index: 10;
 }
 
 .avatar-damage-stack,
@@ -1780,12 +1815,21 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
   z-index: 2;
 }
 
+.avatar-effects-float .avatar-hero-status-zones {
+  position: static;
+  top: auto;
+  overflow: visible;
+}
+
 .avatar-status-zone-buffs {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: calc(5px * var(--ui-scale)) calc(6px * var(--ui-scale));
   align-items: start;
   justify-items: center;
+  position: relative;
+  pointer-events: none;
+  z-index: 9;
 }
 
 .avatar-status-zone-debuffs {
@@ -7075,6 +7119,11 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
 #app[data-phase="battle"] .battle-scene-ui .avatar-emotion-mount .battle-emotion-float,
 #app[data-phase="replay"] .battle-scene-ui .avatar-emotion-mount .battle-emotion-float {
   white-space: nowrap;
+}
+
+#app[data-phase="battle"] .avatar-effects-float,
+#app[data-phase="replay"] .avatar-effects-float {
+  overflow: visible;
 }
 
 #app[data-phase="battle"] .avatar-hero-footer,

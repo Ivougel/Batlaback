@@ -858,26 +858,11 @@ html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .av
   position: static;
 }
 
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-damage-stacks,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-damage-stacks,
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-benefit-stacks,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-benefit-stacks,
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-dot-stacks,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-dot-stacks {
-  position: absolute;
-  top: 8px;
-  left: 0;
-  width: 100%;
-  bottom: auto;
-  transform: none;
-  pointer-events: none;
-  z-index: 12;
-  margin: 0;
-  min-height: 0;
-  max-width: none;
-  justify-content: center;
-  flex-wrap: wrap;
+html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-effects-float,
+html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-effects-float {
+  min-height: 72px;
   gap: 4px;
+  z-index: 12;
 }
 
 html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-damage-stack,
@@ -887,18 +872,6 @@ html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .av
 html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-dot-stack,
 html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-dot-stack {
   pointer-events: auto;
-}
-
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-status-zones,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-status-zones {
-  position: absolute;
-  top: 40px;
-  left: 0;
-  width: 100%;
-  bottom: auto;
-  z-index: 11;
-  pointer-events: none;
-  margin: 0;
 }
 
 html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-status-zone-buffs .avatar-benefit-stacks,
