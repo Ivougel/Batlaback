@@ -19,7 +19,6 @@ function initBattleCountdown(state) {
     remaining: BATTLE_COUNTDOWN_SEC,
     label: "3",
   };
-  state.visualElapsed = 0;
 }
 
 function tickBattleCountdown(state, dt) {

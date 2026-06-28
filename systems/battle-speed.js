@@ -42,16 +42,6 @@ function getBattleCountdownDt(rawDt) {
   return rawDt;
 }
 
-/** dt для эмоций/орбиты — не ускоряется вместе с симуляцией боя. */
-function getBattleEmotionDt(rawDt) {
-  if (battlePaused && phase !== "replay") return 0;
-  if (typeof phase !== "undefined" && phase === "replay") {
-    return battlePaused ? 0 : rawDt;
-  }
-  if (battlePaused) return 0;
-  return rawDt;
-}
-
 /** dt для анимаций ударов/предметов во время боя / replay. */
 function getBattleAnimDt(rawDt) {
   if (battlePaused && phase !== "replay") return 0;

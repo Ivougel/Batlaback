@@ -253,10 +253,6 @@ function shouldThrottleBlockFeedback(state, team) {
   return false;
 }
 
-function notifyBlockEmotion(state, team) {
-  if (typeof pushTransientReaction !== "function" || !state || !team) return;
-  pushTransientReaction(state, team, "shield", 0.9);
-}
 
 function queueHitAnimation(state, item, team, text, color) {
   if (!state.animations) initBattleAnimations(state);
@@ -283,10 +279,6 @@ function queueHitAnimation(state, item, team, text, color) {
           : "other";
       recordBenefitEffect(state, team, item, parseFloat(match[1]), benefitKind);
     }
-  }
-
-  if (blockFx && blockTeam) {
-    notifyBlockEmotion(state, blockTeam);
   }
 
   const skipBlockFloat = blockFx && blockTeam && shouldThrottleBlockFeedback(state, blockTeam);

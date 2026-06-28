@@ -109,6 +109,7 @@ let playerClass = null;
 let goldSpentTotal = 0;
 let goldEarnedTotal = 0;
 let recentBattleResults = [];
+let battleStartTime = 0;
 let battleState = null;
 let dragPayload = null;
 let dragFrom = null;
@@ -821,7 +822,6 @@ function init() {
   document.getElementById("btn-battle-continue")?.addEventListener("click", () => {
     transitionToPhase("prep", () => {
       hideBattleResultPopup();
-      if (typeof hideBattleTimerDisplay === "function") hideBattleTimerDisplay();
       if (typeof hideBattleCountdownOverlay === "function") hideBattleCountdownOverlay();
       if (pendingGameOver) {
         showRunComplete();
@@ -1014,10 +1014,6 @@ function renderPhase() {
   }
   renderFightButton();
   if (phase !== "prep") closeAllFighterCharacteristicsPopups();
-  if (phase === "prep") {
-    if (typeof clearBattleEmotions === "function") clearBattleEmotions();
-    if (typeof hidePrepEmotionBadge === "function") hidePrepEmotionBadge();
-  }
   if (typeof applyUiLayout === "function") scheduleLayoutAfterPhase();
 }
 
@@ -1971,8 +1967,6 @@ function startBattleReplay() {
 function finishBattleReplay() {
   battleState = null;
   clearBattleFloatLayer();
-  if (typeof clearBattleEmotions === "function") clearBattleEmotions();
-  if (typeof hideBattleTimerDisplay === "function") hideBattleTimerDisplay();
   replayPlayback = null;
   resetBattlePause();
   setBattleControlsVisible(false);
@@ -1988,10 +1982,6 @@ function tickReplay(rawDt) {
   const animDt = getBattleAnimDt(rawDt);
   if (animDt > 0) {
     tickBattleAnimations(battleState, animDt);
-  }
-  const emotionDt = typeof getBattleEmotionDt === "function" ? getBattleEmotionDt(rawDt) : rawDt;
-  if (emotionDt > 0) {
-    battleState.visualElapsed = (battleState.visualElapsed || 0) + emotionDt;
   }
 
   if (!replayPlayback.playing) return;
@@ -2062,6 +2052,8 @@ function startBattle() {
           enemy: { pendingShopBuffs: enemyPendingShopBuffs },
         },
       );
+      battleStartTime = Date.now();
+      if (typeof resetEmotionEngine === "function") resetEmotionEngine();
       if (typeof hideBattleCountdownOverlay === "function") hideBattleCountdownOverlay();
       if (typeof initBattleCountdown === "function") initBattleCountdown(battleState);
       if (typeof initBattleDamageTracker === "function") initBattleDamageTracker(battleState);
@@ -2077,8 +2069,8 @@ function startBattle() {
       renderBattleStats();
       renderPlayerProfiles();
       renderFightButton();
-      if (typeof tickBattleEmotions === "function" && battleState) {
-        tickBattleEmotions(battleState);
+      if (typeof updateBattleAnalyzer === "function" && battleState) {
+        updateBattleAnalyzer(battleState, 0);
       }
     } catch (err) {
       console.error("startBattle failed:", err);
@@ -2104,8 +2096,6 @@ function endBattle() {
   battleState = null;
   clearBattleFloatLayer();
   if (typeof clearBattleDamageSummary === "function") clearBattleDamageSummary(finishedState);
-  if (typeof clearBattleEmotions === "function") clearBattleEmotions();
-  if (typeof hideBattleTimerDisplay === "function") hideBattleTimerDisplay();
   if (typeof hideBattleCountdownOverlay === "function") hideBattleCountdownOverlay();
 
   let battleSummary;
@@ -2263,7 +2253,6 @@ function gameLoop(ts) {
   if (phase === "prep") {
     if (typeof tickInventoryAnimationController === "function") tickInventoryAnimationController(dt);
     if (typeof tickSynergyVisualController === "function") tickSynergyVisualController(dt);
-    if (typeof tickPrepEmotionController === "function") tickPrepEmotionController(dt, prepViewSide);
   }
 
   if (phase === "prep" && synergyState.isDragging && dragPayload) {
@@ -2290,10 +2279,6 @@ function gameLoop(ts) {
     const countdownDt = typeof getBattleCountdownDt === "function" ? getBattleCountdownDt(dt) : dt;
     if (countdownDt > 0 && typeof tickBattleCountdown === "function") {
       tickBattleCountdown(battleState, countdownDt);
-    }
-    const emotionDt = typeof getBattleEmotionDt === "function" ? getBattleEmotionDt(dt) : dt;
-    if (emotionDt > 0) {
-      battleState.visualElapsed = (battleState.visualElapsed || 0) + emotionDt;
     }
     const simDt = getBattleSimDt(dt);
     const countdownActive = typeof isBattleCountdownActive === "function"
@@ -2836,17 +2821,20 @@ function draw() {
     });
     drawAttackAnimations(ctx, battleState);
     renderBattleEffectsOverlay(battleState);
-    if (typeof tickBattleEmotions === "function") tickBattleEmotions(battleState);
+    if (typeof updateBattleAnalyzer === "function") updateBattleAnalyzer(battleState, 0);
+    if (typeof syncAllDamageSummaryDisplays === "function") syncAllDamageSummaryDisplays(battleState);
     if (typeof syncLiveAvatarHeroFrame === "function") syncLiveAvatarHeroFrame(battleState);
     if (typeof renderDamageFlights === "function") renderDamageFlights(battleState);
     if (typeof renderBattleCountdown === "function") renderBattleCountdown(battleState);
+    if (isBattleUiPhase() && typeof drawEmotionLayer === "function") {
+      drawEmotionLayer(ctx, battleState, (Date.now() - battleStartTime) / 1000);
+    }
   } else {
     clearBattleFloatLayer();
+    if (typeof clearEmotionLayer === "function") clearEmotionLayer();
     if (typeof clearAttackFxLayer === "function") clearAttackFxLayer();
     if (typeof clearBattleDamageSummary === "function") clearBattleDamageSummary(battleState);
     if (typeof clearDamageFlightLayer === "function") clearDamageFlightLayer();
-    if (typeof clearBattleEmotions === "function") clearBattleEmotions();
-    if (typeof hideBattleTimerDisplay === "function") hideBattleTimerDisplay();
     if (typeof hideBattleCountdownOverlay === "function") hideBattleCountdownOverlay();
   }
 }
@@ -4387,7 +4375,6 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
   fillChar(prepEnemy, enemyProfile);
   prepPlayer?.toggleAttribute("hidden", prepViewSide !== "player");
   prepEnemy?.toggleAttribute("hidden", prepViewSide !== "enemy");
-  if (typeof syncPrepEmotion === "function") syncPrepEmotion(prepViewSide);
 
   const side = prepViewSide;
   const profile = side === "player" ? playerProfile : enemyProfile;
@@ -4482,7 +4469,7 @@ function renderPlayerProfiles() {
   if (liveBattle && battleState) {
     battleState._heroProfiles = { player: playerProfile, enemy: enemyProfile };
     syncAllAvatarHeroEffects(playerProfile, enemyProfile, battleState);
-    if (typeof tickBattleEmotions === "function") tickBattleEmotions(battleState);
+    if (typeof updateBattleAnalyzer === "function") updateBattleAnalyzer(battleState, 0);
   }
   syncBattleArenaLayout();
 }
