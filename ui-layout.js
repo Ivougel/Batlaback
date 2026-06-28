@@ -249,6 +249,8 @@
     if (sceneUi) {
       sceneUi.style.width = canvasPx;
       sceneUi.style.maxWidth = "100%";
+      sceneUi.style.marginLeft = "auto";
+      sceneUi.style.marginRight = "auto";
     }
     root.style.removeProperty("--tablet-battle-scene-offset-x");
     root.style.removeProperty("--tablet-battle-enemy-slot-left");
