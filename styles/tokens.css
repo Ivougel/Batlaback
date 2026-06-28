@@ -1,0 +1,108 @@
+/**
+ * Design tokens — single source for CSS custom properties.
+ * Loaded before styles.css (see index.html).
+ */
+
+:root {
+  /* Colors */
+  --bg: #0d1117;
+  --panel: #161b22;
+  --border: #30363d;
+  --gold: #f0c14b;
+  --hp: #f85149;
+  --accent: #58a6ff;
+  --text: #e6edf3;
+  --muted: #8b949e;
+  --ui-scale: 1;
+
+  /* Typography */
+  --font-sm: 0.78rem;
+  --font-md: 0.88rem;
+  --font-lg: 1rem;
+
+  /* Spacing */
+  --gap-xs: 4px;
+  --gap-sm: 6px;
+  --gap-md: 10px;
+  --gap-lg: 16px;
+
+  /* Avatar */
+  --profile-avatar-size: calc(148px * var(--ui-scale));
+  --profile-avatar-height: calc(192px * var(--ui-scale));
+  --prep-scene-avatar-h: calc(152px * var(--ui-scale));
+  --prep-scene-avatar-w: calc(120px * var(--ui-scale));
+  --avatar-prep-size: var(--prep-scene-avatar-h);
+  --avatar-battle-size: calc(282px * var(--ui-scale));
+
+  --combatant-icon-gap: calc(36px * var(--ui-scale));
+  --class-sticker-size: calc(160px * var(--ui-scale));
+  --game-item-icon-size: calc(54px * var(--ui-scale));
+  --game-item-icon-font: 2.025rem;
+  --game-item-icon-duo-width: calc(var(--game-item-icon-size) * 1.85);
+
+  /* Toolbar */
+  --prep-toolbar-h: 50px;
+  --toolbar-h: var(--prep-toolbar-h);
+  --toolbar-btn-h: var(--gap-md);
+  --toolbar-font: var(--font-sm);
+
+  /* Portrait prep (viewport-fit) */
+  --portrait-toolbar-gap: var(--gap-xs) var(--gap-sm);
+  --portrait-fight-btn-h: var(--gap-md);
+
+  /* Layout contract — FROZEN grid / canvas */
+  --cell-size: 46px;
+  --cell-gap: 1px;
+  --frame-pad: 8px;
+  --frame-title-h: 22px;
+  --grid-gap: 36px;
+  --prep-canvas-w: calc(9 * var(--cell-size) + 8 * var(--cell-gap));
+  --prep-canvas-h: calc(7 * var(--cell-size) + 6 * var(--cell-gap));
+  --battle-canvas-w: calc(2 * (9 * var(--cell-size) + 8 * var(--cell-gap)) + var(--grid-gap));
+  --battle-canvas-h: calc(7 * var(--cell-size) + 6 * var(--cell-gap));
+  --field-base-x: 12px;
+  --field-offset-x: 0px;
+  --field-offset-y: 0px;
+  --prep-scene-top: 14px;
+  --prep-character-gap: 8px;
+  --prep-character-top: calc(var(--prep-scene-top) + var(--prep-canvas-h) + var(--prep-character-gap));
+  --character-slot-h: min(380px, calc(100vh - 480px));
+  --character-scale: 1;
+  --prep-character-slot-h: var(--character-slot-h);
+  --prep-hero-slot-left: 22%;
+  --prep-hero-slot-width: 17%;
+  --prep-hero-slot-bottom: var(--gap-sm);
+  --prep-hero-slot-height: min(400px, 46vh);
+  --shop-panel-w: 320px;
+  --shop-card-row-h: calc(132px * var(--ui-scale, 1));
+  --shop-item-icon-size: calc(72px * var(--ui-scale, 1));
+  --shop-item-icon-font: calc(56px * var(--ui-scale, 1));
+  --shop-item-icon-duo-width: calc(var(--shop-item-icon-size) * 2.05);
+  --fx-float-scale: 1;
+  --fx-projectile-scale: 1;
+  --battle-stats-panel-w: 276px;
+}
+
+@media (max-width: 1100px) {
+  :root {
+    --cell-size: 40px;
+    --grid-gap: 28px;
+    --shop-panel-w: 300px;
+    --shop-card-row-h: calc(112px * var(--ui-scale, 1));
+    --shop-item-icon-size: calc(66px * var(--ui-scale, 1));
+    --shop-item-icon-font: calc(50px * var(--ui-scale, 1));
+    --shop-item-icon-duo-width: calc(var(--shop-item-icon-size) * 2.05);
+    --prep-scene-top: var(--gap-md);
+    --battle-stats-panel-w: 252px;
+    --prep-hero-slot-left: 20%;
+    --prep-hero-slot-width: 19%;
+    --prep-hero-slot-height: min(360px, 44vh);
+  }
+}
+
+@media (max-width: 600px) {
+  :root {
+    --prep-scene-avatar-h: calc(120px * var(--ui-scale));
+    --prep-scene-avatar-w: calc(100px * var(--ui-scale));
+  }
+}
