@@ -192,13 +192,6 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] #prep-toolbar .prep-sett
   font-size: 1rem;
 }
 
-html[data-prep-layout="mobile"] #app[data-phase="prep"] #prep-toolbar .btn-fight-header {
-  min-height: 48px;
-  padding: 10px 16px;
-  font-size: 0.9rem;
-  white-space: nowrap;
-}
-
 html[data-prep-layout="mobile"] #app[data-phase="prep"] #btn-combat-feed {
   min-height: 48px;
   min-width: 48px;
@@ -410,6 +403,123 @@ html[data-prep-layout="mobile"][data-orientation="landscape"] #app {
   font-size: 0.88rem;
   color: #8b949e;
   max-width: 280px;
+}
+
+/* ─── Выбор класса: dock «Начать забег» ─── */
+
+.class-mobile-dock {
+  display: none;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  max-width: 560px;
+  width: 100%;
+  margin: 16px auto 0;
+}
+
+.class-mobile-dock:not(.hidden) {
+  display: flex;
+}
+
+.class-mobile-dock .btn-glass-back {
+  flex: 0 0 auto;
+  min-height: 48px;
+  padding: 10px 16px;
+}
+
+.class-mobile-dock .btn-glass-start {
+  flex: 1 1 auto;
+  min-height: 48px;
+  max-width: 280px;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+html[data-prep-layout="mobile"] #class-overlay:not(.hidden) .class-mobile-dock:not(.hidden) {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10005;
+  margin: 0;
+  max-width: none;
+  width: 100%;
+  padding:
+    12px max(16px, env(safe-area-inset-right))
+    calc(12px + env(safe-area-inset-bottom, 0px))
+    max(16px, env(safe-area-inset-left));
+  background: rgba(13, 17, 23, 0.96);
+  border-top: 1px solid rgba(88, 166, 255, 0.24);
+  box-shadow: 0 -14px 44px rgba(0, 0, 0, 0.48);
+  backdrop-filter: blur(12px);
+}
+
+html[data-prep-layout="mobile"] #class-overlay:not(.hidden) .class-modal {
+  padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+}
+
+html[data-prep-layout="mobile"] #class-overlay:not(.hidden) .class-modal-footer {
+  display: none;
+}
+
+html[data-prep-layout="mobile"] #class-step-opponent:not(.hidden) .class-grid {
+  max-height: calc(100dvh - 230px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding-bottom: 4px;
+}
+
+html[data-prep-layout="mobile"] #class-step-opponent:not(.hidden) .class-step-sub {
+  margin-bottom: 10px;
+}
+
+html[data-prep-layout="mobile"] #class-step-opponent:not(.hidden) .glass-card {
+  padding: 16px 14px;
+}
+
+html[data-prep-layout="mobile"] #class-step-opponent:not(.hidden) .glass-card-icon {
+  width: 64px;
+  height: 64px;
+}
+
+/* ─── Prep: FAB «В бой!» ─── */
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-toolbar-actions {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] #btn-fight {
+  position: fixed;
+  z-index: 9060;
+  left: 50%;
+  bottom: calc(58px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  min-height: 52px;
+  min-width: min(240px, calc(100vw - 96px));
+  padding: 12px 28px;
+  font-size: 1rem;
+  font-weight: 700;
+  border-radius: 999px;
+  box-shadow: 0 8px 32px rgba(248, 81, 73, 0.38);
+  touch-action: manipulation;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] #btn-fight.hidden,
+html[data-prep-layout="mobile"] #app[data-phase="prep"] #btn-fight:disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="battle"] #btn-fight,
+html[data-prep-layout="mobile"] #app[data-phase="replay"] #btn-fight {
+  display: none !important;
 }
 
 /* ─── Бой в портрете: масштаб поля + оба героя на экране ─── */

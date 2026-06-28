@@ -431,6 +431,7 @@ function showGameModeStep() {
   document.getElementById("class-step-opponent")?.classList.add("hidden");
   document.getElementById("class-modal-title").textContent = "Режим игры";
   document.getElementById("class-modal-subtitle").textContent = "Выберите формат — против бота, сложного бота или с другом";
+  syncClassMobileDock();
 }
 
 function showPlayerClassStep() {
@@ -443,6 +444,7 @@ function showPlayerClassStep() {
   document.getElementById("class-modal-subtitle").textContent = selectedGameMode === "versus"
     ? "Первый игрок выбирает класс и стартовый набор."
     : "Каждый класс получает стартовый набор и уникальный бонус на весь забег.";
+  syncClassMobileDock();
 }
 
 function resetClassSelectOverlay() {
@@ -457,6 +459,7 @@ function resetClassSelectOverlay() {
   document.querySelectorAll(".opponent-class-card").forEach((card) => card.classList.remove("selected"));
   showGameModeStep();
   updateStartRunButton();
+  syncClassMobileDock();
 }
 
 function showSecondClassStep() {
@@ -482,7 +485,21 @@ function showSecondClassStep() {
     card.classList.toggle("selected", card.dataset.opponentClass === selectedEnemyClass);
   });
   updateStartRunButton();
+  syncClassMobileDock();
   scrollClassPickerCardIntoView(document.querySelector(`.opponent-class-card[data-opponent-class="${selectedEnemyClass}"]`));
+}
+
+function syncClassMobileDock() {
+  const dock = document.getElementById("class-mobile-dock");
+  const overlay = document.getElementById("class-overlay");
+  const opponentStep = document.getElementById("class-step-opponent");
+  if (!dock) return;
+  const show = !!overlay
+    && !overlay.classList.contains("hidden")
+    && !!opponentStep
+    && !opponentStep.classList.contains("hidden");
+  dock.classList.toggle("hidden", !show);
+  dock.setAttribute("aria-hidden", show ? "false" : "true");
 }
 
 function updateStartRunButton() {
@@ -978,6 +995,8 @@ function init() {
     showPlayerClassStep();
   });
   document.getElementById("btn-start-run")?.addEventListener("click", startRunFromOverlay);
+  window.addEventListener("resize", syncClassMobileDock, { passive: true });
+  window.addEventListener("orientationchange", syncClassMobileDock, { passive: true });
   document.getElementById("btn-prep-player")?.addEventListener("click", () => setPrepViewSide("player"));
   document.getElementById("btn-prep-enemy")?.addEventListener("click", () => setPrepViewSide("enemy"));
   document.getElementById("btn-battle-continue")?.addEventListener("click", () => {
