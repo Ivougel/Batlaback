@@ -153,6 +153,9 @@
     const right = Math.max(10, Math.round(window.innerWidth - rect.right + 6));
     root.style.setProperty("--prep-shop-fab-top", `${Math.max(8, top)}px`);
     root.style.setProperty("--prep-shop-fab-right", `${right}px`);
+    if (typeof window.positionPrepTooltipDock === "function") {
+      window.positionPrepTooltipDock();
+    }
   }
 
   /** Единственный источник display-size #game-canvas (bitmap — game.js applyPhaseCanvasLayout). */

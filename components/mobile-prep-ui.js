@@ -18,8 +18,11 @@
     const backdrop = document.getElementById("prep-shop-backdrop");
     backdrop?.classList.toggle("hidden", !next);
     backdrop?.setAttribute("aria-hidden", next ? "false" : "true");
-    if (next && typeof positionPrepTooltipDock === "function") {
+    if (typeof positionPrepTooltipDock === "function") {
       requestAnimationFrame(() => positionPrepTooltipDock());
+    }
+    if (typeof syncPrepTooltipDockVisibility === "function") {
+      requestAnimationFrame(() => syncPrepTooltipDockVisibility());
     }
     if (typeof window.syncMobileShopFabPosition === "function") {
       requestAnimationFrame(() => window.syncMobileShopFabPosition());

@@ -605,13 +605,12 @@ function cancelScheduledTooltipHide() {
 function hideSidebarTooltip() {
   cancelScheduledTooltipHide();
   const el = document.getElementById("sidebar-tooltip");
-  const dock = document.getElementById("prep-tooltip-dock");
   const wasCombatFeed = sidebarTooltipSource === "combat-feed";
   if (el) {
     el.classList.add("hidden");
     el.classList.remove("combat-feed-hint-tooltip");
   }
-  dock?.classList.toggle("hidden", phase === "prep");
+  syncPrepTooltipDockVisibility();
   fieldTooltipVisible = false;
   if (wasCombatFeed) {
     clearCombatFeedTooltipActive();
@@ -621,25 +620,95 @@ function hideSidebarTooltip() {
   }
 }
 
+function isMobilePrepPortrait() {
+  return document.documentElement.dataset.prepLayout === "mobile" && phase === "prep";
+}
+
+function syncPrepMobileHintDefault() {
+  const body = document.getElementById("prep-mobile-hint-body");
+  if (!body) return;
+  const touchBoard = document.querySelector("#board-hint .hint-touch");
+  const touchShop = document.querySelector("#shop-panel .shop-hint-touch");
+  const parts = [touchBoard?.textContent?.trim(), touchShop?.textContent?.trim()].filter(Boolean);
+  const defaultText = parts.length
+    ? parts.join(" · ")
+    : "Зажмите предмет — описание · перетащите на поле · 🛒 — магазин";
+  body.dataset.defaultHint = defaultText;
+  if (!body.dataset.craftActive) body.textContent = defaultText;
+}
+
 function syncPrepTooltipDockVisibility() {
   const el = document.getElementById("sidebar-tooltip");
   const dock = document.getElementById("prep-tooltip-dock");
-  if (!dock || !el) return;
+  const mobileHint = document.getElementById("prep-mobile-hint");
+  if (!dock) return;
+
   if (phase !== "prep") {
     dock.classList.remove("hidden");
+    mobileHint?.classList.add("hidden");
+    mobileHint?.setAttribute("aria-hidden", "true");
     return;
   }
+
+  if (isMobilePrepPortrait()) {
+    dock.classList.remove("hidden");
+    const hasItemTip = el && !el.classList.contains("hidden");
+    mobileHint?.classList.toggle("hidden", hasItemTip);
+    mobileHint?.setAttribute("aria-hidden", hasItemTip ? "true" : "false");
+    positionPrepTooltipDock();
+    return;
+  }
+
+  if (!el) return;
   dock.classList.toggle("hidden", el.classList.contains("hidden"));
+  mobileHint?.classList.add("hidden");
+  mobileHint?.setAttribute("aria-hidden", "true");
 }
 
 function shouldUsePrepTooltipDock() {
   return phase === "prep";
 }
 
+function positionMobilePrepTooltipDock(dock) {
+  const margin = 8;
+  const island = document.getElementById("prep-field-island");
+  const toolbar = document.getElementById("prep-toolbar");
+  const shopPanel = document.getElementById("shop-panel");
+  const shopOpen = document.documentElement.hasAttribute("data-prep-shop-open");
+  const vv = window.visualViewport;
+  const viewLeft = vv?.offsetLeft ?? 0;
+  const viewWidth = vv?.width ?? window.innerWidth;
+
+  const islandRect = island?.getBoundingClientRect();
+  const toolbarRect = toolbar?.getBoundingClientRect();
+  let top = (islandRect?.bottom ?? margin) + margin;
+  let bottomLimit = (toolbarRect?.top ?? window.innerHeight) - margin;
+
+  if (shopOpen && shopPanel) {
+    const shopRect = shopPanel.getBoundingClientRect();
+    if (shopRect.top < bottomLimit) bottomLimit = shopRect.top - margin;
+  }
+
+  const height = Math.max(52, bottomLimit - top);
+  top = Math.max(margin, Math.min(top, bottomLimit - 52));
+
+  dock.style.left = `${viewLeft + margin}px`;
+  dock.style.width = `${Math.max(120, viewWidth - margin * 2)}px`;
+  dock.style.top = `${top}px`;
+  dock.style.maxHeight = `${height}px`;
+  dock.style.height = `${height}px`;
+}
+
 function positionPrepTooltipDock() {
   const dock = document.getElementById("prep-tooltip-dock");
   if (!dock) return;
 
+  if (isMobilePrepPortrait()) {
+    positionMobilePrepTooltipDock(dock);
+    return;
+  }
+
+  dock.style.height = "";
   const margin = 10;
   const corridor = getTooltipCorridorBounds(margin, 8);
   const vv = window.visualViewport;
@@ -1203,6 +1272,8 @@ function renderPhase() {
     updatePrepSideUI();
     renderShop();
     renderBench();
+    if (isMobilePrepPortrait()) syncPrepMobileHintDefault();
+    syncPrepTooltipDockVisibility();
   }
   renderFightButton();
   if (phase !== "prep") closeAllFighterCharacteristicsPopups();
@@ -5071,14 +5142,30 @@ function renderRunStats() {
 
 function log(msg) {
   if (!msg || phase !== "prep") return;
+  const isCraftMsg = msg.includes("Крафт") || msg.includes("🔄") || msg.includes("🎰");
+  if (!isCraftMsg) return;
+
   const hint = document.getElementById("shop-panel-hint");
-  if (!hint || (!msg.includes("Крафт") && !msg.includes("🔄") && !msg.includes("🎰"))) return;
-  if (!hint.dataset.defaultHint) hint.dataset.defaultHint = hint.textContent;
-  hint.textContent = msg;
-  window.clearTimeout(log.craftTimer);
-  log.craftTimer = window.setTimeout(() => {
-    hint.textContent = hint.dataset.defaultHint || hint.textContent;
-  }, 3500);
+  if (hint) {
+    if (!hint.dataset.defaultHint) hint.dataset.defaultHint = hint.textContent;
+    hint.textContent = msg;
+    window.clearTimeout(log.craftTimer);
+    log.craftTimer = window.setTimeout(() => {
+      hint.textContent = hint.dataset.defaultHint || hint.textContent;
+    }, 3500);
+  }
+
+  const mobileBody = document.getElementById("prep-mobile-hint-body");
+  if (isMobilePrepPortrait() && mobileBody) {
+    if (!mobileBody.dataset.defaultHint) syncPrepMobileHintDefault();
+    mobileBody.textContent = msg;
+    mobileBody.dataset.craftActive = "1";
+    window.clearTimeout(log.mobileTimer);
+    log.mobileTimer = window.setTimeout(() => {
+      mobileBody.dataset.craftActive = "";
+      mobileBody.textContent = mobileBody.dataset.defaultHint || mobileBody.textContent;
+    }, 3500);
+  }
 }
 
 function buildItemCardHTML(def, { cardType = "item-card", extraClasses = "", tagsHtml = "", innerBefore = "", innerAfter = "", dataAttrs = "", showShape = true, shapeSize = "md" } = {}) {
@@ -5231,5 +5318,8 @@ function renderBench(side = prepViewSide) {
 function renderBattleStats() {
   renderRunStats();
 }
+
+window.positionPrepTooltipDock = positionPrepTooltipDock;
+window.syncPrepTooltipDockVisibility = syncPrepTooltipDockVisibility;
 
 init();
