@@ -3227,6 +3227,14 @@ function describeEffect(e) {
     case "debuffThreshold": return `☠ При ${e.threshold || 10}+ дебаффах: особый эффект`;
     case "procChanceBonus": return `🍀 +${Math.round((e.value || 0.12) * 100)}% к шансу эффектов`;
     case "damagePerTotalStacks": return `⚔ +${e.value || 1} урона за каждый стак`;
+    case "staminaSpendOnHit": return `⚡ −${e.staminaCost || 1} выносливости → +${e.itemDamage || 1} урона`;
+    case "stealRandomStack": return `📊 ${Math.round((e.chance ?? 1) * 100)}% украсть случайный стак`;
+    case "destroyFoeStacks": return `💥 Уничтожить ${e.value || 4} стака противника`;
+    case "bonusDamageOnHit": return `⚔ ${Math.round((e.chance ?? 1) * 100)}% +${e.value || 1} урона`;
+    case "healAsDamageMult": return `✨ ${Math.round((e.value || 0.3) * 100)}% лечения как маг. урон`;
+    case "stackGainMult": return `📊 +${Math.round((e.value || 1) * 100)}% к получению стаков`;
+    case "cooldownMultPerTotalStacks": return `⚡ На ${Math.round((e.perStack || 0.05) * 100)}% быстрее за каждый стак`;
+    case "maxHpPercentStart": return `❤ +${Math.round((e.value || 0.12) * 100)}% макс. HP в начале боя`;
     default: return `${typeof localizeBbDescription === "function" ? localizeBbDescription(e.type) : e.type}${e.value != null ? `: ${e.value}` : ""}`;
   }
 }
@@ -4124,21 +4132,12 @@ function finishDragDrop(e) {
           updateUI();
           return;
         }
+        let displacedItems = [];
         if (displaced.length) {
           displaced.forEach((existing) => {
             st.items = st.items.filter((i) => i.uid !== existing.uid);
           });
-          queueDisplaceToBenchAnimations(side, displaced, prepViewSide, (item) => {
-            const benchState = getSideState(side);
-            benchState.bench.push({
-              itemId: item.itemId,
-              uid: item.uid,
-              rotation: item.rotation || 0,
-            });
-            renderBench();
-            recalcSynergies();
-            updateUI();
-          });
+          displacedItems = displaced;
         }
         if (dragFrom.type === "bench") {
           st.bench.splice(dragFrom.index, 1);
@@ -4153,6 +4152,17 @@ function finishDragDrop(e) {
             return;
           }
           dragPayload.itemId = itemId;
+        }
+        if (displacedItems.length) {
+          renderBench(side);
+          queueDisplaceToBenchAnimations(side, displacedItems, prepViewSide, (item) => {
+            const benchState = getSideState(side);
+            benchState.bench.push({
+              itemId: item.itemId,
+              uid: item.uid,
+              rotation: item.rotation || 0,
+            });
+          });
         }
         const placed = createPlacedItem(dragPayload.itemId, placement.col, placement.row, placement.rotation);
         if (dragFrom.type === "item") {
@@ -4185,9 +4195,14 @@ function finishDragDrop(e) {
 
   clearDragUiState();
   if (canEditPrepSide(side)) applyCraftingForSide(side);
-  renderBench();
-  recalcSynergies();
-  updateUI();
+  if (typeof hasActiveDisplaceAnimations === "function" && hasActiveDisplaceAnimations(side)) {
+    recalcSynergies();
+    updateUI();
+  } else {
+    renderBench();
+    recalcSynergies();
+    updateUI();
+  }
   if (!dragPayload && !isPointerOverPrepSidebar(lastPointerClient.x, lastPointerClient.y)) {
     if (prepTooltipsEnabled && !isTouchUi()) {
       try { updateTooltip(mousePos.x, mousePos.y); } catch (err) { console.error("updateTooltip failed:", err); }
@@ -4598,6 +4613,7 @@ function renderBench(side = prepViewSide) {
       cardType: "bench-card",
       extraClasses: i === selectedBench ? "selected" : "",
       shapeSize: "sm",
+      showShape: false,
       dataAttrs: `data-bench="${i}" data-item-id="${b.itemId}"`,
     });
   }).join("");

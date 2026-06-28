@@ -63,6 +63,10 @@ function getStackLabel(stackType, count = 1) {
     if (n >= 2 && n <= 4) return "маны";
     return "маны";
   }
+  if (stackType === "cold") {
+    if (n === 1) return "холод";
+    return "холода";
+  }
   return meta.label.toLowerCase();
 }
 
@@ -74,7 +78,31 @@ function formatStackAmount(stackType, amount) {
 
 function getSideStack(side, stackType) {
   if (stackType === "poison") return side?.poisonStacks || 0;
+  if (stackType === "cold") return side?.coldStacks || 0;
   return ensureSideStacks(side)[stackType] || 0;
+}
+
+const RANDOM_STACK_TYPES = ["spikes", "block", "empower", "regen", "luck", "heat", "mana", "cold"];
+
+function pickRandomPositiveStack(side, types = RANDOM_STACK_TYPES) {
+  const available = types.filter((t) => getSideStack(side, t) > 0);
+  if (!available.length) return null;
+  return available[Math.floor(Math.random() * available.length)];
+}
+
+function destroyRandomSideStacks(side, count = 4) {
+  let left = Math.max(0, Math.floor(Number(count) || 0));
+  while (left > 0) {
+    const stackType = pickRandomPositiveStack(side);
+    if (!stackType) break;
+    const have = getSideStack(side, stackType);
+    const spend = Math.min(have, left);
+    spendSideStack(side, stackType, spend);
+    if (stackType === "block" && typeof syncStackResourceSpend === "function") {
+      syncStackResourceSpend(side, stackType, spend);
+    }
+    left -= spend;
+  }
 }
 
 function getSideStackCap(stackType) {
@@ -103,6 +131,13 @@ function applyGainWeakestStack(state, side, item, team, effect) {
 function addSideStack(side, stackType, amount, cap = null) {
   const delta = Math.max(0, Math.floor(Number(amount) || 0));
   if (delta <= 0) return 0;
+  if (stackType === "cold") {
+    const max = cap ?? 999;
+    const room = Math.max(0, max - (side.coldStacks || 0));
+    const added = Math.min(delta, room);
+    side.coldStacks = (side.coldStacks || 0) + added;
+    return added;
+  }
   if (stackType === "poison") {
     const room = Math.max(0, (cap ?? getSideStackCap("poison")) - (side.poisonStacks || 0));
     const added = Math.min(delta, room);
@@ -124,6 +159,10 @@ function spendSideStack(side, stackType, amount) {
   if (have < need) return false;
   if (stackType === "poison") {
     side.poisonStacks = have - need;
+    return true;
+  }
+  if (stackType === "cold") {
+    side.coldStacks = have - need;
     return true;
   }
   ensureSideStacks(side)[stackType] = have - need;
@@ -179,7 +218,7 @@ function countTaggedItemsOnSide(side, tag) {
 }
 
 function getTotalSideStacks(side) {
-  const types = ["spikes", "block", "empower", "regen", "luck", "heat", "mana"];
+  const types = ["spikes", "block", "empower", "regen", "luck", "heat", "mana", "cold"];
   return types.reduce((sum, t) => sum + getSideStack(side, t), 0);
 }
 

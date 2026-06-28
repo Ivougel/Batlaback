@@ -44,26 +44,29 @@ function getItemVisualCenterClient(item, team) {
   return canvasPointToClient(center.x, center.y);
 }
 
-function getBenchTargetClientPoint(side, slotOffset = 0) {
+function getBenchSlotClientPoint(side, slotIndex) {
   const slotsEl = document.getElementById("bench-slots");
   if (!slotsEl) {
     const fallback = canvasPointToClient(uiPx(48), 320);
     return { x: fallback.x, y: fallback.y };
   }
 
-  const st = getSideState(side);
-  const slotIndex = Math.min(
-    st.bench.length + slotOffset,
-    Math.max(0, (typeof MAX_BENCH !== "undefined" ? MAX_BENCH : 6) - 1),
-  );
+  const maxBench = typeof MAX_BENCH !== "undefined" ? MAX_BENCH : 6;
+  const idx = Math.min(Math.max(0, slotIndex), maxBench - 1);
   const cards = slotsEl.querySelectorAll(".bench-card");
-  const targetEl = cards[slotIndex] || slotsEl;
-  const tr = targetEl.getBoundingClientRect();
+  const targetEl = cards[idx] || slotsEl;
+  const iconEl = targetEl.classList?.contains("empty") ? null : targetEl.querySelector(".icon");
+  const tr = (iconEl || targetEl).getBoundingClientRect();
 
   return {
     x: tr.left + tr.width / 2,
     y: tr.top + tr.height / 2,
   };
+}
+
+function getBenchTargetClientPoint(side, slotOffset = 0) {
+  const st = getSideState(side);
+  return getBenchSlotClientPoint(side, st.bench.length + slotOffset);
 }
 
 function getDisplaceItemEmoji(item) {
@@ -76,22 +79,32 @@ function getDisplaceItemEmoji(item) {
 function queueDisplaceToBenchAnimations(side, items, team, onItemLanded) {
   if (!items?.length || typeof queueItemFlight !== "function") return;
 
-  const { x: scaleX } = getCanvasClientScale();
+  const benchBase = getSideState(side).bench.length;
+  let landedCount = 0;
+  const total = items.length;
 
   items.forEach((item, index) => {
+    const benchSlot = benchBase + index;
     const from = getItemVisualCenterClient(item, team);
-    const to = getBenchTargetClientPoint(side, index);
+    const to = getBenchSlotClientPoint(side, benchSlot);
     queueItemFlight({
       fromX: from.x,
       fromY: from.y,
-      toX: to.x + (index - (items.length - 1) / 2) * uiPx(6) * scaleX,
+      toX: to.x,
       toY: to.y,
       emoji: getDisplaceItemEmoji(item),
       itemId: item.itemId,
+      isDisplace: true,
       delay: index * DISPLACE_STAGGER,
-      meta: { side, team, item },
+      meta: { side, team, item, benchSlot },
       onComplete: () => {
         if (typeof onItemLanded === "function") onItemLanded(item, side);
+        landedCount += 1;
+        if (landedCount >= total) {
+          if (typeof renderBench === "function") renderBench(side);
+          if (typeof recalcSynergies === "function") recalcSynergies();
+          if (typeof updateUI === "function") updateUI();
+        }
       },
     });
   });

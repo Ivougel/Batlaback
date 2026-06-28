@@ -2191,9 +2191,11 @@ const BB_ITEM_CATALOG_RAW = {
     staminaCost: 0,
     craftOnly: true,
     effects: [
-      { type: "slow", value: 0.18, duration: 2 }
+      { type: "slow", value: 0.18, duration: 2 },
+      { type: "gainStack", stack: "heat", value: 1, trigger: "on_hit" },
+      { type: "applyStun", duration: 0.4, chance: 0.3, selfStaminaBelow: 12, trigger: "on_hit" }
     ],
-    description: "При попадании: Получить 1 жар Когда У вас меньше 12: 30% шанс оглушить противника на 0.4с.",
+    description: "При попадании: +1 жар. При <12 выносливости: 30% оглушение 0.4с.",
     buildHints: "Билд: огонь / Pyromancer, питомцы · Крафт: Ruby Whelp + Holo Fire Lizard · Пары: Draconic Orb, Oil Lamp, Flame-крафты · Синергия: стан → Dagger extra attack",
     sockets: 2,
   },
@@ -2228,9 +2230,12 @@ const BB_ITEM_CATALOG_RAW = {
     cooldown: 0,
     craftOnly: true,
     effects: [
-      { type: "damage", value: 17, valueMin: 15, valueMax: 20 }
+      { type: "damage", value: 17, valueMin: 15, valueMax: 20 },
+      { type: "gainStack", stack: "cold", value: 1, targetSide: "foe", trigger: "on_hit" },
+      { type: "stackThreshold", stack: "cold", threshold: 10, targetSide: "foe", once: true, trigger: "passive", gainBlock: 90 },
+      { type: "statMult", stat: "magicDamage", value: -0.2, trigger: "passive" }
     ],
-    description: "При попадании: Наложить 1 стак Когда у противника накоплено 10: Получить 90 стаков Вы получить -20% маг. Урона.",
+    description: "При попадании: +1 холод противнику. При 10 холода у него: +90 блока. −20% маг. урона.",
     buildHints: "Билд: лёд, питомцы · Крафт: Ruby Whelp + White-Eyes Blue Dragon",
     sockets: 2,
   },
@@ -2288,9 +2293,11 @@ const BB_ITEM_CATALOG_RAW = {
     craftOnly: true,
     effects: [
       { type: "statMult", stat: "damage", value: 0.08, trigger: "passive" },
-      { type: "damage", value: 7, valueMin: 5, valueMax: 10, damageType: "magic" }
+      { type: "damage", value: 7, valueMin: 5, valueMax: 10, damageType: "magic" },
+      { type: "gainWeakestStack", value: 1, count: 4, trigger: "battle_start" },
+      { type: "stealRandomStack", value: 1, trigger: "on_hit" }
     ],
-    description: "В начале боя: Наложить 4 случайные дебаффы мана При попадании: Снять случайный бафф от противника.",
+    description: "В начале боя: +4 случайных стака. При попадании: украсть стак у противника.",
     buildHints: "Билд: мана / магия, питомцы · Пары: Mana Orb, Mana Potion, магические посохи",
     sockets: 1,
   },
@@ -2305,9 +2312,12 @@ const BB_ITEM_CATALOG_RAW = {
     tags: ["pet"],
     cooldown: 13,
     effects: [
-      { type: "heal", value: 6 }
+      { type: "heal", value: 6 },
+      { type: "periodic", interval: 13, trigger: "passive", cleanseDebuffs: 6, heal: 40 },
+      { type: "procChanceBonus", value: 0.25, trigger: "passive" },
+      { type: "cooldownMultPerTag", tags: ["potion"], perTag: 0.2, trigger: "passive" }
     ],
-    description: "Снять эффекты имеют 25% шанс снять дополнительное дебафф. Каждые 13с: Снять 6 дебаффы и Лечение на 40. Срабатывает на 20% быстрее за каждый Зелье стака",
+    description: "Каждые 13с: снять 6 дебаффов и +40 HP. +25% к снятию дебаффов.",
     buildHints: "Билд: питомцы",
   },
   wolpertinger: {
@@ -2321,9 +2331,12 @@ const BB_ITEM_CATALOG_RAW = {
     tags: ["pet","luck"],
     cooldown: 5,
     effects: [
-      { type: "heal", value: 2 }
+      { type: "heal", value: 2 },
+      { type: "periodic", interval: 5, trigger: "passive", gainWeakestStack: {"value":1,"count":3} },
+      { type: "staminaRegenPerStack", value: 0.007, trigger: "passive" },
+      { type: "cooldownMultPerTag", tags: ["pet","luck"], perTag: 0.15, trigger: "passive" }
     ],
-    description: "Повысить базовый выносливости регенерация 0.7% за каждый бафф У вас. Каждые 5с: Получить 3 бафф У вас меньше. Срабатывает на 15% быстрее за каждый Питомец удачи",
+    description: "Каждые 5с: +3 к слабейшим стакам. +0.7% реген выносливости за стак.",
     buildHints: "Билд: крит / Luck, питомцы",
   },
   phoenix: {
@@ -2580,9 +2593,13 @@ const BB_ITEM_CATALOG_RAW = {
     tags: ["pet"],
     cooldown: 2.7,
     effects: [
-      { type: "damage", value: 2, valueMin: 1, valueMax: 3 }
+      { type: "damage", value: 2, valueMin: 1, valueMax: 3 },
+      { type: "periodic", interval: 2.7, trigger: "passive", gainStack: {"stack":"empower","value":1}, chance: 0.07 },
+      { type: "procChanceBonus", value: 0.07, trigger: "passive" },
+      { type: "statMult", stat: "heal", value: 0.07, trigger: "passive" },
+      { type: "cooldownMultPerTag", tags: ["pet"], perTag: 0.07, trigger: "passive" }
     ],
-    description: "Каждые 2.7с: Предметы получить 7% шанс продублировать баффы они получить, лечение 7% больше и срабатывает 7% быстрее (до 10 раз(а)).",
+    description: "Каждые 2.7с: 7% шанс +1 усиление, +7% лечения и скорости (до ×10).",
     buildHints: "Билд: питомцы",
   },
   cthulhu: {
@@ -2596,9 +2613,11 @@ const BB_ITEM_CATALOG_RAW = {
     tags: ["pet","dark"],
     cooldown: 0,
     effects: [
-      { type: "damage", value: 2, valueMin: 1, valueMax: 3 }
+      { type: "damage", value: 2, valueMin: 1, valueMax: 3 },
+      { type: "periodic", interval: 3.3, trigger: "passive", damage: 10, damageType: "magic", lifesteal: 1, gainWeakestStack: true },
+      { type: "cooldownMultPerTag", tags: ["food"], perTag: 0.15, trigger: "passive" }
     ],
-    description: "Каждые 3.3с: Нанести 10 маг. Урона с 100% вампиризмом и срабатывает случайный Еда стака Еда получает стака Срабатывает на 15% быстрее за каждый предмет с тегом.",
+    description: "Каждые 3.3с: 10 маг. урона с вампиризмом и случайный стак. Быстрее за еду.",
     buildHints: "Билд: Reaper дебаффы, питомцы",
   },
   tim: {
@@ -2613,9 +2632,11 @@ const BB_ITEM_CATALOG_RAW = {
     cooldown: 0,
     effects: [
       { type: "damage", value: 2, valueMin: 1, valueMax: 3 },
-      { type: "statMult", stat: "damage", value: 0.05, trigger: "passive" }
+      { type: "statMult", stat: "damage", value: 0.05, trigger: "passive" },
+      { type: "stealRandomStack", value: 1, chance: 0.5, trigger: "on_hit" },
+      { type: "foeHpThreshold", threshold: 0.3, once: true, trigger: "passive", heal: 50, gainDominantStack: 5 }
     ],
-    description: "Сокеты оружия: При попадании: 50% шанс украсть случайный бафф стака Сокеты брони и прочие: 25% шанс сопротивляться дебаффы или критические удары стака Рюкзак: Когда здоровье противника падает ниже 30%: Лечение на 50 и получить 5 стаков",
+    description: "При попадании: 50% украсть стак. Противник <30% HP: +50 HP и +5 к сильнейшему стаку.",
     buildHints: "Билд: питомцы",
   },
   whetstone: {
@@ -2688,9 +2709,12 @@ const BB_ITEM_CATALOG_RAW = {
     cooldown: 0,
     effects: [
       { type: "statMult", stat: "damage", value: 0.05, trigger: "passive" },
-      { type: "statMult", stat: "magicDamage", value: 0.08, trigger: "passive" }
+      { type: "statMult", stat: "magicDamage", value: 0.08, trigger: "passive" },
+      { type: "foeHpThreshold", threshold: 0.3, once: false, trigger: "passive", damageMult: 0.5 },
+      { type: "debuffThreshold", threshold: 7, once: true, trigger: "passive", gainDominantStack: 6 },
+      { type: "periodic", interval: 3.9, trigger: "passive", foePoison: 2 }
     ],
-    description: "Сокеты оружия: Когда здоровье противника ниже 30%: Даёт +50% урон. Сокеты брони и прочие: При наложении 7 дебаффов: Получить 6 стаков Рюкзак: Каждые 3.9с: Наложить урон от усталости.",
+    description: "Противник <30% HP: +50% урона. При 7 дебаффах: +6 к сильнейшему стаку. Каждые 3.9с: +2 яда.",
     buildHints: "Билд: Reaper дебаффы",
   },
   walrus_tusk: {
@@ -2873,12 +2897,15 @@ const BB_ITEM_CATALOG_RAW = {
     tags: ["accessory","treasure","craft"],
     cooldown: 0,
     craftOnly: true,
-    effects: [],
+    effects: [
+      { type: "procChanceBonus", value: 0.1, trigger: "passive" },
+      { type: "periodic", interval: 4, trigger: "passive", cleanseDebuffs: 2 }
+    ],
     metaEffects: [
       { phase: "shop_pool", type: "unique_chance_bonus", value: 0.1 },
       { phase: "shop_pool", type: "bonus_unique", value: 1 }
     ],
-    description: "Отражает 2 дебафф за каждый легендарный, божественный или уникальный предмет. Увеличивает шанс найти уникальные предметы на 10%. Можно получить +1 уникальный предмет.",
+    description: "+10% к прокам. Каждые 4с: снять 2 дебаффа.",
     buildHints: "Билд: экономика / золото · Крафт: Customer Card + Customer Card",
   },
   lump_of_coal: {
@@ -2893,9 +2920,12 @@ const BB_ITEM_CATALOG_RAW = {
     cooldown: 0,
     effects: [
       { type: "statMult", stat: "damage", value: 0.08, trigger: "passive" },
-      { type: "groundFire", value: 1, trigger: "passive" }
+      { type: "groundFire", value: 1, trigger: "passive" },
+      { type: "onHitCapBonus", value: 1, cap: 99, chance: 0.7, trigger: "on_hit" },
+      { type: "gainStack", stack: "heat", value: 8, trigger: "battle_start" },
+      { type: "periodic", interval: 3, trigger: "passive", gainWeakestStack: true }
     ],
-    description: "Сокеты оружия: При атаке: 70% шанс Даёт +1 урон. Сокеты брони и прочие: В начале боя: Получить 8 жаров сопротивление 1 дебаффу жара Рюкзак: Через 3с: Получить случайный бафф, наложить случайный дебафф жара",
+    description: "70% +1 урона при атаке. В начале боя: +8 жара. Каждые 3с: случайный стак.",
     buildHints: "Билд: огонь / Pyromancer · Пары: Draconic Orb, Oil Lamp, Flame-крафты",
   },
   burning_coal: {
@@ -2911,9 +2941,12 @@ const BB_ITEM_CATALOG_RAW = {
     craftOnly: true,
     effects: [
       { type: "statMult", stat: "damage", value: 0.08, trigger: "passive" },
-      { type: "damage", value: 2, valueMin: 1, valueMax: 3 }
+      { type: "damage", value: 2, valueMin: 1, valueMax: 3 },
+      { type: "gainStack", stack: "heat", value: 12, trigger: "battle_start" },
+      { type: "bonusDamageOnHit", value: 6, chance: 0.12, trigger: "on_hit", gainStack: {"stack":"heat","value":1} },
+      { type: "periodic", interval: 5, trigger: "passive", gainStack: {"stack":"heat","value":2}, cleanseDebuffs: 3 }
     ],
-    description: "Сокеты оружия: При попадании: 12% шанс Даёт +6 урон и получить 1 жар Сокеты брони и прочие: В начале боя: Получить 12 жаров Сопротивление 7 жаров Рюкзак: Через 5с: Получить 2, снять 3 дебаффы жара",
+    description: "12% +6 урона и +1 жар. В начале боя: +12 жара. Каждые 5с: +2 жара, снять 3 дебаффа.",
     buildHints: "Билд: огонь / Pyromancer · Крафт: Lump of Coal + источник огня · Пары: Draconic Orb, Oil Lamp, Flame-крафты",
   },
   torch: {
@@ -2970,9 +3003,10 @@ const BB_ITEM_CATALOG_RAW = {
     cooldown: 0,
     craftOnly: true,
     effects: [
-      { type: "damage", value: 4, valueMin: 3, valueMax: 6, damageType: "magic" }
+      { type: "damage", value: 4, valueMin: 3, valueMax: 6, damageType: "magic" },
+      { type: "staminaSpendOnHit", staminaCost: 1, itemDamage: 1, weaponDamage: 1, trigger: "on_hit" }
     ],
-    description: "При попадании: Потратить 1 выносливости: Этот предмет и оружие получают 1 урон.",
+    description: "При попадании: −1 выносливости → +1 урона этому предмету и оружию.",
     buildHints: "Билд: огонь / Pyromancer, мана / магия · Крафт: Torch + Mana Potion · Пары: Draconic Orb, Oil Lamp, Flame-крафты",
     sockets: 1,
   },
@@ -3189,9 +3223,11 @@ const BB_ITEM_CATALOG_RAW = {
     cooldown: 0,
     craftOnly: true,
     effects: [
-      { type: "statMult", stat: "damage", value: 0.08, trigger: "passive" }
+      { type: "statMult", stat: "damage", value: 0.08, trigger: "passive" },
+      { type: "timedDamageReduction", value: 0.25, duration: 7, bothSides: true, trigger: "battle_start" },
+      { type: "poison", value: 3, bothSides: true, trigger: "battle_start" }
     ],
-    description: "В начале боя: Оба игрока получить -25% урон на 7с (не стакается). Наложить 3 оба игрока.",
+    description: "В начале боя: оба игрока −25% урона на 7с и +3 яда.",
     buildHints: "Крафт: Pocket Sand + Hero Sword",
   },
   stamina_sack: {
@@ -3229,9 +3265,11 @@ const BB_ITEM_CATALOG_RAW = {
     cooldown: 4,
     staminaCost: 0,
     effects: [
-      { type: "damage", value: 3, valueMin: 2, valueMax: 4 }
+      { type: "damage", value: 3, valueMin: 2, valueMax: 4 },
+      { type: "activationLimit", base: 1, trigger: "passive" },
+      { type: "destroyFoeStacks", value: 4, trigger: "on_hit" }
     ],
-    description: "Можно только метнуть раз за бой. При попадании: Уничтожить 4 стака",
+    description: "1 бросок за бой. При попадании: уничтожить 4 стака противника.",
     buildHints: "Универсальный / автономный",
   },
   bag_of_stones: {
@@ -3261,9 +3299,10 @@ const BB_ITEM_CATALOG_RAW = {
     tags: ["accessory","cold","craft"],
     cooldown: 0,
     effects: [
-      { type: "statMult", stat: "damage", value: 0.08, trigger: "passive" }
+      { type: "statMult", stat: "damage", value: 0.08, trigger: "passive" },
+      { type: "gainStack", stack: "cold", value: 2, targetSide: "foe", trigger: "battle_start" }
     ],
-    description: "В начале боя: Наложить 2 стака противника получает 15% меньше максимального здоровье от предметы.",
+    description: "В начале боя: наложить 2 холода на противника.",
     buildHints: "Билд: лёд",
   },
   wonky_snowman: {
@@ -3294,9 +3333,11 @@ const BB_ITEM_CATALOG_RAW = {
     tags: ["accessory","cold"],
     cooldown: 0,
     effects: [
-      { type: "slow", value: 0.12, duration: 4 }
+      { type: "slow", value: 0.12, duration: 4 },
+      { type: "periodic", interval: 1.3, trigger: "passive", applyColdOrSelf: true, coldThreshold: 10, cleanseDebuffs: 1 },
+      { type: "cooldownMultPerTag", tags: ["cold"], perTag: 0.1, trigger: "passive" }
     ],
-    description: "Каждые 1.3с: Наложить 1 стак Если противника имеет меньше 10, получить 1 вместо. Снять 1 дебафф. Срабатывает на 10% быстрее за каждый предмет.",
+    description: "Каждые 1.3с: холод (или себе, если у него <10). Снять 1 дебафф. Быстрее за холод.",
     buildHints: "Билд: лёд",
   },
   frozen_flame: {
@@ -3310,12 +3351,16 @@ const BB_ITEM_CATALOG_RAW = {
     tags: ["accessory","fire","cold"],
     cooldown: 0,
     effects: [
-      { type: "statMult", stat: "damage", value: 0.08, trigger: "passive" }
+      { type: "statMult", stat: "damage", value: 0.08, trigger: "passive" },
+      { type: "tagScaledStack", stack: "heat", tag: "fire", perTag: 8, trigger: "battle_start" },
+      { type: "stackThreshold", stack: "heat", threshold: 6, once: false, trigger: "passive", gainStack: {"stack":"heat","value":2,"targetSide":"foe"} },
+      { type: "crit", chance: 0.015, trigger: "passive" },
+      { type: "critDamageMult", value: 0.02, trigger: "passive" }
     ],
     metaEffects: [
       { phase: "shop_pool", type: "offer_tag", tag: "fire" }
     ],
-    description: "В начале боя: Получить 8 за каждый предмет с тегом. При накоплении 6: Наложить 2 жара за каждый противника, предмет имеет +1.5% шанс критического удара и +2% критический урон. Дополнительное предмет с тегами появляется в магазине.",
+    description: "В начале боя: +8 жара за огонь. При 6 жара: +2 жара противнику. +1.5% крит.",
     buildHints: "Билд: огонь / Pyromancer, лёд · Пары: Draconic Orb, Oil Lamp, Flame-крафты",
   },
   blood_harvester: {
@@ -3330,12 +3375,14 @@ const BB_ITEM_CATALOG_RAW = {
     cooldown: 4,
     staminaCost: 0.5,
     effects: [
-      { type: "lifesteal", value: 0.05, trigger: "passive" }
+      { type: "lifesteal", value: 0.05, trigger: "passive" },
+      { type: "cooldownMultPerTotalStacks", perStack: 0.05, trigger: "passive" },
+      { type: "stackGainMult", value: 1, trigger: "passive" }
     ],
     synergies: [
       { id: "migrated_heal_2_per_neighbor", adjacency: "strong", neighborTags: ["vampiric"], target: "self", apply: { type: "healBonus", value: 2 }, desc: "+2 лечения" }
     ],
-    description: "Предметы дают +100% стака атаки на 5% быстрее за каждый стака",
+    description: "Стаки на 100% эффективнее. Предметы на 5% быстрее за каждый стак.",
     buildHints: "Билд: вампиризм · Пары: Blood Amulet, Hungry Blade, Blood Goobert",
     sockets: 3,
   },
@@ -3390,9 +3437,13 @@ const BB_ITEM_CATALOG_RAW = {
     cooldown: 8,
     effects: [
       { type: "heal", value: 2 },
-      { type: "statMult", stat: "magicDamage", value: 0.12, trigger: "passive" }
+      { type: "statMult", stat: "magicDamage", value: 0.12, trigger: "passive" },
+      { type: "tagScaledStack", stack: "mana", tag: "magic", perTag: 2, trigger: "battle_start" },
+      { type: "tagScaledStack", stack: "mana", tag: "fire", perTag: 1, trigger: "battle_start" },
+      { type: "statMult", stat: "heal", value: 0.04, trigger: "passive", tag: "cold" },
+      { type: "periodic", interval: 8, trigger: "passive", gainAllStacks: 1 }
     ],
-    description: "В начале боя: За каждый... Предмет с тегом: Получить 2 мана предмет с тегом: Получить 1 ман предмет с тегом: Повысить вашего лечения 4%. Предмет с тегом: Наложить случайный дебафф мана Каждые 8с: Получить 1 каждый тип бафф мана",
+    description: "В начале боя: мана за магию/огонь. Каждые 8с: +1 ко всем стакам.",
     buildHints: "Билд: мана / магия · Пары: Mana Orb, Mana Potion, магические посохи",
   },
   unsettling_presence: {
@@ -3407,9 +3458,11 @@ const BB_ITEM_CATALOG_RAW = {
     cooldown: 3,
     effects: [
       { type: "heal", value: 12 },
-      { type: "slow", value: 0.08, duration: 3 }
+      { type: "slow", value: 0.08, duration: 3 },
+      { type: "healAsDamageMult", value: 0.3, trigger: "passive" },
+      { type: "periodic", interval: 3, trigger: "passive", spendRandomStack: 1, heal: 12 }
     ],
-    description: "Даёт +30% от вашего лечения как маг. Урона. Каждые 3с: Потратить случайный бафф Лечение на 12.",
+    description: "+30% лечения как маг. урон. Каждые 3с: −1 стак и +12 HP.",
     buildHints: "Универсальный / автономный",
   },
   time_dilator: {
@@ -3425,9 +3478,11 @@ const BB_ITEM_CATALOG_RAW = {
     effects: [
       { type: "slow", value: 0.12, duration: 3 },
       { type: "statMult", stat: "cooldown", value: -0.08, trigger: "passive" },
-      { type: "slow", value: 0.12, duration: 4 }
+      { type: "slow", value: 0.12, duration: 4 },
+      { type: "statMult", stat: "cooldown", value: 0.3, trigger: "passive" },
+      { type: "periodic", interval: 1, trigger: "passive", cooldownBoostItem: 0.06 }
     ],
-    description: "Ваше и оружие противника атакуют на 30% медленнее. Каждую 1с: предмет с наибольшей перезарядкой срабатывает на 6% быстрее.",
+    description: "Предметы на 30% медленнее. Каждую 1с: самый долгий кулдаун −6%.",
     buildHints: "Универсальный / автономный",
   },
   potion_belt: {
@@ -3526,9 +3581,11 @@ const BB_ITEM_CATALOG_RAW = {
     effects: [
       { type: "statMult", stat: "damage", value: 0.08, trigger: "passive" },
       { type: "statMult", stat: "damage", value: 0.1, trigger: "passive" },
-      { type: "passiveMaxHp", value: 10, trigger: "passive" }
+      { type: "passiveMaxHp", value: 10, trigger: "passive" },
+      { type: "maxHpPercentStart", value: 0.12, trigger: "battle_start" },
+      { type: "statMult", stat: "damage", value: 0.05, trigger: "passive" }
     ],
-    description: "В начале боя: +12% макс. здоровья. Ваше оружие наносит +5% урона. Всегда появляется в раунде 10.",
+    description: "В начале боя: +12% макс. HP. +5% урона оружия.",
     buildHints: "Универсальный / автономный",
   },
   star_of_courage: {
@@ -3565,9 +3622,10 @@ const BB_ITEM_CATALOG_RAW = {
       { type: "heal", value: 2 },
       { type: "passiveLuck", value: 8, trigger: "passive" },
       { type: "passiveDefense", value: 2, trigger: "passive" },
-      { type: "statMult", stat: "magicDamage", value: 0.1, trigger: "passive" }
+      { type: "statMult", stat: "magicDamage", value: 0.1, trigger: "passive" },
+      { type: "periodic", interval: 1.6, trigger: "passive", randomPick: [{"gainStack":{"stack":"luck","value":1}},{"gainStack":{"stack":"mana","value":1}},{"gainStack":{"stack":"spikes","value":1}}] }
     ],
-    description: "Каждые 1.6с: получить 1, 1 или 1 — в зависимости от того, чего у вас меньше всего. Потратить 7, 7, 7, 7 и 27 здоровья: дать оружию +27 урона (один раз).",
+    description: "Каждые 1.6с: +1 удача, мана или шип (случайно).",
     buildHints: "Билд: мана / магия, крит / Luck, шипы / отражение · Пары: Mana Orb, Mana Potion, магические посохи",
   },
   blueberries: {
@@ -3668,9 +3726,11 @@ const BB_ITEM_CATALOG_RAW = {
     tags: ["food"],
     cooldown: 2.9,
     effects: [
-      { type: "heal", value: 3 }
+      { type: "heal", value: 3 },
+      { type: "periodic", interval: 2.9, trigger: "passive", gainStack: {"stack":"luck","value":1}, heal: 4 },
+      { type: "cooldownMultPerTag", tags: ["food"], perTag: 0.1, trigger: "passive" }
     ],
-    description: "Каждые 2.9с: получить 1 и лечение на 4. Еда: срабатывает на 10% быстрее за каждую еду другого типа (кроме Ананаса).",
+    description: "Каждые 2.9с: +1 удача и +4 HP. Быстрее за еду.",
     buildHints: "Билд: еда / Pan · Синергия: стан → Dagger extra attack",
   },
   chili_pepper: {
@@ -3738,9 +3798,11 @@ const BB_ITEM_CATALOG_RAW = {
     tags: ["food","cold"],
     cooldown: 4,
     effects: [
-      { type: "slow", value: 0.12, duration: 4 }
+      { type: "slow", value: 0.12, duration: 4 },
+      { type: "periodic", interval: 3, trigger: "passive", gainStack: {"stack":"cold","value":1,"targetSide":"foe"}, foeColdBonus: {"threshold":10,"magicDamageMult":0.1,"damage":10,"damageType":"magic"} },
+      { type: "cooldownMultPerTag", tags: ["food"], perTag: 0.1, trigger: "passive" }
     ],
-    description: "Каждые 3с: наложить 1. Если у противника не меньше 10: повысить маг. урон на 10% и нанести 10 маг. урона. Еда: срабатывает на 10% быстрее за каждую еду другого типа (кроме Снежного пирога).",
+    description: "Каждые 3с: +1 холод. При 10+ холода у противника: +10% маг. урона и 10 маг. урона.",
     buildHints: "Билд: лёд, еда / Pan",
   },
   chipped_ruby: {

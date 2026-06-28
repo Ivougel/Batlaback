@@ -770,6 +770,135 @@ BATTLE_EFFECT_PATCHES = {
     "piggybank": [
         {"type": "max_hp_per_start_item", "value": 2, "trigger": "battle_start"},
     ],
+    # --- Этап 9: снег/лёд, уголь, факел, питомцы, аксессуары ---
+    "ruby_chonk": [
+        {"type": "gainStack", "stack": "heat", "value": 1, "trigger": "on_hit"},
+        {"type": "applyStun", "duration": 0.4, "chance": 0.3, "selfStaminaBelow": 12, "trigger": "on_hit"},
+    ],
+    "ice_dragon": [
+        {"type": "gainStack", "stack": "cold", "value": 1, "targetSide": "foe", "trigger": "on_hit"},
+        {"type": "stackThreshold", "stack": "cold", "threshold": 10, "targetSide": "foe", "once": True,
+         "trigger": "passive", "gainBlock": 90},
+        {"type": "statMult", "stat": "magicDamage", "value": -0.2, "trigger": "passive"},
+    ],
+    "amethyst_whelp": [
+        {"type": "gainWeakestStack", "value": 1, "count": 4, "trigger": "battle_start"},
+        {"type": "stealRandomStack", "value": 1, "trigger": "on_hit"},
+    ],
+    "shelly": [
+        {"type": "periodic", "interval": 13, "trigger": "passive", "cleanseDebuffs": 6, "heal": 40},
+        {"type": "procChanceBonus", "value": 0.25, "trigger": "passive"},
+        {"type": "cooldownMultPerTag", "tags": ["potion"], "perTag": 0.20, "trigger": "passive"},
+    ],
+    "wolpertinger": [
+        {"type": "periodic", "interval": 5, "trigger": "passive", "gainWeakestStack": {"value": 1, "count": 3}},
+        {"type": "staminaRegenPerStack", "value": 0.007, "trigger": "passive"},
+        {"type": "cooldownMultPerTag", "tags": ["pet", "luck"], "perTag": 0.15, "trigger": "passive"},
+    ],
+    "paradise_birb": [
+        {"type": "periodic", "interval": 2.7, "trigger": "passive",
+         "gainStack": {"stack": "empower", "value": 1}, "chance": 0.07},
+        {"type": "procChanceBonus", "value": 0.07, "trigger": "passive"},
+        {"type": "statMult", "stat": "heal", "value": 0.07, "trigger": "passive"},
+        {"type": "cooldownMultPerTag", "tags": ["pet"], "perTag": 0.07, "trigger": "passive"},
+    ],
+    "cthulhu": [
+        {"type": "periodic", "interval": 3.3, "trigger": "passive", "damage": 10, "damageType": "magic",
+         "lifesteal": 1.0, "gainWeakestStack": True},
+        {"type": "cooldownMultPerTag", "tags": ["food"], "perTag": 0.15, "trigger": "passive"},
+    ],
+    "tim": [
+        {"type": "stealRandomStack", "value": 1, "chance": 0.5, "trigger": "on_hit"},
+        {"type": "foeHpThreshold", "threshold": 0.3, "once": True, "trigger": "passive",
+         "heal": 50, "gainDominantStack": 5},
+    ],
+    "corrupted_crystal": [
+        {"type": "foeHpThreshold", "threshold": 0.3, "once": False, "trigger": "passive", "damageMult": 0.5},
+        {"type": "debuffThreshold", "threshold": 7, "once": True, "trigger": "passive", "gainDominantStack": 6},
+        {"type": "periodic", "interval": 3.9, "trigger": "passive", "foePoison": 2},
+    ],
+    "lump_of_coal": [
+        {"type": "onHitCapBonus", "value": 1, "cap": 99, "chance": 0.7, "trigger": "on_hit"},
+        {"type": "gainStack", "stack": "heat", "value": 8, "trigger": "battle_start"},
+        {"type": "periodic", "interval": 3, "trigger": "passive", "gainWeakestStack": True},
+    ],
+    "burning_coal": [
+        {"type": "gainStack", "stack": "heat", "value": 12, "trigger": "battle_start"},
+        {"type": "bonusDamageOnHit", "value": 6, "chance": 0.12, "trigger": "on_hit",
+         "gainStack": {"stack": "heat", "value": 1}},
+        {"type": "periodic", "interval": 5, "trigger": "passive", "gainStack": {"stack": "heat", "value": 2},
+         "cleanseDebuffs": 3},
+    ],
+    "magic_torch": [
+        {"type": "staminaSpendOnHit", "staminaCost": 1, "itemDamage": 1, "weaponDamage": 1, "trigger": "on_hit"},
+    ],
+    "sir_sand": [
+        {"type": "timedDamageReduction", "value": 0.25, "duration": 7, "bothSides": True, "trigger": "battle_start"},
+        {"type": "poison", "value": 3, "bothSides": True, "trigger": "battle_start"},
+    ],
+    "stone": [
+        {"type": "activationLimit", "base": 1, "trigger": "passive"},
+        {"type": "destroyFoeStacks", "value": 4, "trigger": "on_hit"},
+    ],
+    "snowball": [
+        {"type": "gainStack", "stack": "cold", "value": 2, "targetSide": "foe", "trigger": "battle_start"},
+    ],
+    "snowmaster": [
+        {"type": "periodic", "interval": 1.3, "trigger": "passive",
+         "applyColdOrSelf": True, "coldThreshold": 10, "cleanseDebuffs": 1},
+        {"type": "cooldownMultPerTag", "tags": ["cold"], "perTag": 0.10, "trigger": "passive"},
+    ],
+    "frozen_flame": [
+        {"type": "tagScaledStack", "stack": "heat", "tag": "fire", "perTag": 8, "trigger": "battle_start"},
+        {"type": "stackThreshold", "stack": "heat", "threshold": 6, "once": False, "trigger": "passive",
+         "gainStack": {"stack": "heat", "value": 2, "targetSide": "foe"}},
+        {"type": "crit", "chance": 0.015, "trigger": "passive"},
+        {"type": "critDamageMult", "value": 0.02, "trigger": "passive"},
+    ],
+    "blood_harvester": [
+        {"type": "cooldownMultPerTotalStacks", "perStack": 0.05, "trigger": "passive"},
+        {"type": "stackGainMult", "value": 1.0, "trigger": "passive"},
+    ],
+    "prismatic_orb": [
+        {"type": "tagScaledStack", "stack": "mana", "tag": "magic", "perTag": 2, "trigger": "battle_start"},
+        {"type": "tagScaledStack", "stack": "mana", "tag": "fire", "perTag": 1, "trigger": "battle_start"},
+        {"type": "statMult", "stat": "heal", "value": 0.04, "trigger": "passive", "tag": "cold"},
+        {"type": "periodic", "interval": 8, "trigger": "passive", "gainAllStacks": 1},
+    ],
+    "unsettling_presence": [
+        {"type": "healAsDamageMult", "value": 0.3, "trigger": "passive"},
+        {"type": "periodic", "interval": 3, "trigger": "passive", "spendRandomStack": 1, "heal": 12},
+    ],
+    "time_dilator": [
+        {"type": "statMult", "stat": "cooldown", "value": 0.30, "trigger": "passive"},
+        {"type": "periodic", "interval": 1, "trigger": "passive", "cooldownBoostItem": 0.06},
+    ],
+    "more_stats": [
+        {"type": "maxHpPercentStart", "value": 0.12, "trigger": "battle_start"},
+        {"type": "statMult", "stat": "damage", "value": 0.05, "trigger": "passive"},
+    ],
+    "djinn_lamp": [
+        {"type": "periodic", "interval": 1.6, "trigger": "passive", "randomPick": [
+            {"gainStack": {"stack": "luck", "value": 1}},
+            {"gainStack": {"stack": "mana", "value": 1}},
+            {"gainStack": {"stack": "spikes", "value": 1}},
+        ]},
+    ],
+    "pineapple": [
+        {"type": "periodic", "interval": 2.9, "trigger": "passive",
+         "gainStack": {"stack": "luck", "value": 1}, "heal": 4},
+        {"type": "cooldownMultPerTag", "tags": ["food"], "perTag": 0.10, "trigger": "passive"},
+    ],
+    "snowcake": [
+        {"type": "periodic", "interval": 3, "trigger": "passive",
+         "gainStack": {"stack": "cold", "value": 1, "targetSide": "foe"},
+         "foeColdBonus": {"threshold": 10, "magicDamageMult": 0.1, "damage": 10, "damageType": "magic"}},
+        {"type": "cooldownMultPerTag", "tags": ["food"], "perTag": 0.10, "trigger": "passive"},
+    ],
+    "platinum_customer_card": [
+        {"type": "procChanceBonus", "value": 0.10, "trigger": "passive"},
+        {"type": "periodic", "interval": 4, "trigger": "passive", "cleanseDebuffs": 2},
+    ],
 }
 
 DESCRIPTION_OVERRIDES = {
@@ -933,6 +1062,33 @@ DESCRIPTION_OVERRIDES = {
     "phoenix": "При атаке: −10 HP. Перерождение с 6% HP.",
     "dragon_claws": "+10% к прокам. Боевая ярость: предметы на 40% быстрее.",
     "offering_bowl": "В начале боя: +1 удача. Контейнер: переработка в магазине.",
+    # --- Этап 9 ---
+    "ruby_chonk": "При попадании: +1 жар. При <12 выносливости: 30% оглушение 0.4с.",
+    "ice_dragon": "При попадании: +1 холод противнику. При 10 холода у него: +90 блока. −20% маг. урона.",
+    "amethyst_whelp": "В начале боя: +4 случайных стака. При попадании: украсть стак у противника.",
+    "shelly": "Каждые 13с: снять 6 дебаффов и +40 HP. +25% к снятию дебаффов.",
+    "wolpertinger": "Каждые 5с: +3 к слабейшим стакам. +0.7% реген выносливости за стак.",
+    "paradise_birb": "Каждые 2.7с: 7% шанс +1 усиление, +7% лечения и скорости (до ×10).",
+    "cthulhu": "Каждые 3.3с: 10 маг. урона с вампиризмом и случайный стак. Быстрее за еду.",
+    "tim": "При попадании: 50% украсть стак. Противник <30% HP: +50 HP и +5 к сильнейшему стаку.",
+    "corrupted_crystal": "Противник <30% HP: +50% урона. При 7 дебаффах: +6 к сильнейшему стаку. Каждые 3.9с: +2 яда.",
+    "lump_of_coal": "70% +1 урона при атаке. В начале боя: +8 жара. Каждые 3с: случайный стак.",
+    "burning_coal": "12% +6 урона и +1 жар. В начале боя: +12 жара. Каждые 5с: +2 жара, снять 3 дебаффа.",
+    "magic_torch": "При попадании: −1 выносливости → +1 урона этому предмету и оружию.",
+    "sir_sand": "В начале боя: оба игрока −25% урона на 7с и +3 яда.",
+    "stone": "1 бросок за бой. При попадании: уничтожить 4 стака противника.",
+    "snowball": "В начале боя: наложить 2 холода на противника.",
+    "snowmaster": "Каждые 1.3с: холод (или себе, если у него <10). Снять 1 дебафф. Быстрее за холод.",
+    "frozen_flame": "В начале боя: +8 жара за огонь. При 6 жара: +2 жара противнику. +1.5% крит.",
+    "blood_harvester": "Стаки на 100% эффективнее. Предметы на 5% быстрее за каждый стак.",
+    "prismatic_orb": "В начале боя: мана за магию/огонь. Каждые 8с: +1 ко всем стакам.",
+    "unsettling_presence": "+30% лечения как маг. урон. Каждые 3с: −1 стак и +12 HP.",
+    "time_dilator": "Предметы на 30% медленнее. Каждую 1с: самый долгий кулдаун −6%.",
+    "more_stats": "В начале боя: +12% макс. HP. +5% урона оружия.",
+    "djinn_lamp": "Каждые 1.6с: +1 удача, мана или шип (случайно).",
+    "pineapple": "Каждые 2.9с: +1 удача и +4 HP. Быстрее за еду.",
+    "snowcake": "Каждые 3с: +1 холод. При 10+ холода у противника: +10% маг. урона и 10 маг. урона.",
+    "platinum_customer_card": "+10% к прокам. Каждые 4с: снять 2 дебаффа.",
 }
 
 

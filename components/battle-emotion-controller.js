@@ -208,6 +208,7 @@ function ensureEmotionOrbit(shell, team) {
     orbit.className = "avatar-emotion-orbit";
     orbit.dataset.team = team;
     orbit.innerHTML = `
+      <span class="avatar-emotion-float avatar-emotion-kayfu avatar-emotion-kayfu-active" aria-hidden="true">${KAYFU_EMOJI}</span>
       <span class="avatar-emotion-float avatar-emotion-mood" aria-hidden="true"></span>
       <span class="avatar-emotion-float avatar-emotion-reaction" aria-hidden="true"></span>
       <span class="avatar-emotion-float avatar-emotion-secondary" aria-hidden="true"></span>
@@ -215,6 +216,13 @@ function ensureEmotionOrbit(shell, team) {
     `;
     const stage = shell.querySelector(".avatar-hero-stage");
     if (stage) stage.prepend(orbit);
+  }
+  if (!orbit.querySelector(".avatar-emotion-kayfu")) {
+    const kayfu = document.createElement("span");
+    kayfu.className = "avatar-emotion-float avatar-emotion-kayfu avatar-emotion-kayfu-active";
+    kayfu.textContent = KAYFU_EMOJI;
+    kayfu.setAttribute("aria-hidden", "true");
+    orbit.prepend(kayfu);
   }
   if (!orbit.querySelector(".avatar-emotion-secondary")) {
     const secondary = document.createElement("span");
@@ -258,8 +266,29 @@ function layoutEmotionFloat(el, emoji, phase, slotIndex, options = {}) {
   }
 }
 
-function layoutKayfuFloat(_el) {
-  /* Ковбой отключён — только каталог эмоций. */
+function layoutKayfuFloat(el, phase, team) {
+  if (!el) return;
+  el.textContent = KAYFU_EMOJI;
+  const side = team === "player" ? -1 : 1;
+  const x = 50 + side * 36 + Math.sin(phase * 0.45 + 0.6) * 5;
+  const y = 44 + Math.cos(phase * 0.38 + 1.2) * 6;
+  el.style.setProperty("--emo-x", `${x}%`);
+  el.style.setProperty("--emo-y", `${y}%`);
+  el.style.setProperty("--emo-rot", `${-6 + Math.sin(phase * 0.55) * 10}deg`);
+  el.hidden = false;
+  el.classList.add("avatar-emotion-kayfu-active");
+}
+
+function kayfuPointFromRect(rect, phase, team) {
+  if (!rect?.width) return null;
+  const side = team === "player" ? -1 : 1;
+  const px = (50 + side * 36 + Math.sin(phase * 0.45 + 0.6) * 5) / 100;
+  const py = (44 + Math.cos(phase * 0.38 + 1.2) * 6) / 100;
+  return {
+    x: rect.left + rect.width * px,
+    y: rect.top + rect.height * py,
+    rot: -6 + Math.sin(phase * 0.55) * 10,
+  };
 }
 
 function hashEffectSlot(key, team) {
@@ -393,6 +422,7 @@ function renderBattleCommentaryOverlay(state) {
         : null);
 
     const emojiSlots = [
+      { uid: `${team}-kayfu`, emoji: KAYFU_EMOJI, slot: -1, kind: "kayfu" },
       { uid: `${team}-mood`, emoji: presentation.moodEmoji, slot: 0, kind: "mood" },
       { uid: `${team}-reaction`, emoji: presentation.primaryEmoji, slot: 1, kind: "reaction" },
       { uid: `${team}-secondary`, emoji: presentation.secondaryEmoji, slot: 2, kind: "secondary" },
@@ -401,7 +431,12 @@ function renderBattleCommentaryOverlay(state) {
     emojiSlots.forEach(({ uid, emoji, slot, kind }) => {
       if (!emoji) return;
       active.add(uid);
-      const pt = orbitPointFromRect(rect, presentation.floatPhase + slot * 0.85, slot);
+      let pt;
+      if (kind === "kayfu") {
+        pt = kayfuPointFromRect(rect, presentation.floatPhase, team);
+      } else {
+        pt = orbitPointFromRect(rect, presentation.floatPhase + slot * 0.85, slot);
+      }
       if (!pt) return;
       const el = upsertBattleCommentaryEl(
         uid,
@@ -536,10 +571,13 @@ function applyEmotionPresentation(team, presentation, profile, state) {
   if (!shell) return;
 
   const { orbit } = ensureEmotionOrbit(shell, team);
+  const kayfuEl = orbit.querySelector(".avatar-emotion-kayfu");
   const moodEl = orbit.querySelector(".avatar-emotion-mood");
   const reactionEl = orbit.querySelector(".avatar-emotion-reaction");
   const secondaryEl = orbit.querySelector(".avatar-emotion-secondary");
   const timerEl = orbit.querySelector(".avatar-battle-timer");
+
+  layoutKayfuFloat(kayfuEl, presentation.floatPhase, team);
 
   layoutEmotionFloat(
     moodEl,
