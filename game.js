@@ -380,6 +380,19 @@ function setPrepViewSide(side) {
   updateUI();
 }
 
+function shouldHideShopHints() {
+  const root = document.documentElement;
+  return root.dataset.tabletSideFit === "true"
+    || (root.dataset.prepLayout === "side" && root.dataset.touch === "true");
+}
+
+function syncShopHintsVisibility() {
+  const hide = shouldHideShopHints();
+  document.getElementById("shop-panel-hint")?.toggleAttribute("hidden", hide);
+  document.querySelector("#shop-panel .shop-hint-touch")?.toggleAttribute("hidden", hide);
+  document.querySelector("#shop-panel .shop-sell-hint")?.toggleAttribute("hidden", hide);
+}
+
 function updatePrepSideUI() {
   document.querySelectorAll(".prep-side-btn").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.prepSide === prepViewSide);
@@ -419,6 +432,7 @@ function updatePrepSideUI() {
     if (hint) hint.textContent = "Перетащите предмет в инвентарь или на скамейку · 📍 — заморозить";
   }
   if (refreshBtn) refreshBtn.disabled = !editable;
+  syncShopHintsVisibility();
   updateShopGoldStat();
 }
 
@@ -5370,5 +5384,6 @@ function renderBattleStats() {
 
 window.positionPrepTooltipDock = positionPrepTooltipDock;
 window.syncPrepTooltipDockVisibility = syncPrepTooltipDockVisibility;
+window.syncShopHintsVisibility = syncShopHintsVisibility;
 
 init();
