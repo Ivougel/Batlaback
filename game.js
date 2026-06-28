@@ -571,6 +571,12 @@ function updateTouchLongPressMove(clientX, clientY) {
   const dy = clientY - touchLongPress.startY;
   if (Math.hypot(dx, dy) < TOUCH_LONG_PRESS_MOVE_PX) return;
   if (touchLongPress.held) {
+    if (sidebarTooltipSource === "combat-feed") {
+      if (typeof moveSidebarTooltip === "function") {
+        moveSidebarTooltip({ clientX, clientY }, "viewport", "auto");
+      }
+      return;
+    }
     hideSidebarTooltip();
     clearTouchLongPress();
     return;
@@ -582,7 +588,7 @@ function updateTouchLongPressMove(clientX, clientY) {
 function finishTouchLongPress() {
   const wasHeld = touchLongPress?.held;
   clearTouchLongPress();
-  if (wasHeld) hideSidebarTooltip();
+  if (wasHeld && sidebarTooltipSource !== "combat-feed") hideSidebarTooltip();
   return wasHeld;
 }
 
@@ -2343,7 +2349,7 @@ function gameLoop(ts) {
   } else {
     tickGamepad(dt);
   }
-  if (phase === "prep" && !dragPayload && !isTouchUi() && !isPointerOverPrepSidebar(lastPointerClient.x, lastPointerClient.y)) {
+  if (phase === "prep" && !dragPayload && !isTouchUi() && !isPointerOverPrepSidebar(lastPointerClient.x, lastPointerClient.y) && !isPointerOverCombatFeed(lastPointerClient.x, lastPointerClient.y)) {
     if (prepTooltipsEnabled) {
       try { updateTooltip(mousePos.x, mousePos.y); } catch (err) { console.error("updateTooltip failed:", err); }
     }
@@ -3661,8 +3667,27 @@ function isPointerOverPrepSidebar(clientX, clientY) {
   const hit = document.elementFromPoint(clientX, clientY);
   if (!hit) return false;
   return !!hit.closest(
-    "#shop-panel, .run-stats-anchor, #prep-run-stats-anchor, #run-stats-popover, #sidebar-tooltip, #recipe-book-overlay",
+    "#shop-panel, .run-stats-anchor, #prep-run-stats-anchor, #run-stats-popover, #sidebar-tooltip, #recipe-book-overlay, #combat-feed-dock, #combat-feed-panel, #combat-feed-scroll",
   );
+}
+
+function isPointerOverCombatFeed(clientX, clientY) {
+  if (clientX == null || clientY == null) return false;
+  const hit = document.elementFromPoint(clientX, clientY);
+  if (!hit) return false;
+  return !!hit.closest(
+    "#combat-feed-dock, #combat-feed-panel, #combat-feed-scroll, .combat-feed-msg-text--hinted",
+  );
+}
+
+function markCombatFeedTooltipActive() {
+  sidebarTooltipSource = "combat-feed";
+  fieldTooltipVisible = false;
+  tooltipItem = null;
+}
+
+function clearCombatFeedTooltipActive() {
+  if (sidebarTooltipSource === "combat-feed") sidebarTooltipSource = null;
 }
 
 function getShopTooltipAnchorY() {
@@ -3824,10 +3849,14 @@ function positionSidebarTooltip(clientX, clientY, boundsKind = "viewport", place
 function syncFieldTooltip() {
   try {
     if (!tooltipItem || dragPayload) {
-      if (fieldTooltipVisible) {
+      if (fieldTooltipVisible && sidebarTooltipSource !== "combat-feed") {
         hideSidebarTooltip();
       }
       return;
+    }
+
+    if (sidebarTooltipSource === "combat-feed") {
+      clearCombatFeedTooltipActive();
     }
 
     sidebarTooltipSource = "field";
@@ -3915,6 +3944,14 @@ function getTooltipBoardSources() {
 }
 
 function updateTooltip(mx, my) {
+  if (isPointerOverCombatFeed(lastPointerClient.x, lastPointerClient.y)) {
+    return;
+  }
+
+  if (sidebarTooltipSource === "combat-feed" && typeof CombatLog?.hideTooltip === "function") {
+    CombatLog.hideTooltip();
+  }
+
   if (dragPayload) {
     tooltipItem = null;
     syncFieldTooltip();
@@ -3924,7 +3961,7 @@ function updateTooltip(mx, my) {
   const sidebarEl = document.getElementById("sidebar-tooltip");
   const sidebarHoverActive = sidebarEl
     && !sidebarEl.classList.contains("hidden")
-    && (sidebarTooltipSource === "shop" || sidebarTooltipSource === "bench");
+    && (sidebarTooltipSource === "shop" || sidebarTooltipSource === "bench" || sidebarTooltipSource === "combat-feed");
   if (sidebarHoverActive) {
     return;
   }
@@ -4036,9 +4073,16 @@ function moveSidebarTooltip(e, boundsKind = "viewport", placement = "auto") {
 
 function hideSidebarTooltip() {
   const el = document.getElementById("sidebar-tooltip");
-  if (el) el.classList.add("hidden");
+  const wasCombatFeed = sidebarTooltipSource === "combat-feed";
+  if (el) {
+    el.classList.add("hidden");
+    el.classList.remove("combat-feed-hint-tooltip");
+  }
   fieldTooltipVisible = false;
   sidebarTooltipSource = null;
+  if (wasCombatFeed && typeof CombatLog?.onExternalTooltipHide === "function") {
+    CombatLog.onExternalTooltipHide();
+  }
 }
 
 function bindItemTooltipEvents(el, itemId, contentItem, context = "shop") {

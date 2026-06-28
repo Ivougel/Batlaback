@@ -238,6 +238,8 @@
   cursor: help;
   text-decoration: underline dotted rgba(255, 255, 255, 0.22);
   text-underline-offset: 2px;
+  pointer-events: auto;
+  touch-action: manipulation;
 }
 
 .combat-feed-msg-text--hinted[data-hint-active] {
@@ -253,6 +255,7 @@ html[data-touch="true"] .combat-feed-msg-text--hinted {
 .sidebar-tooltip.combat-feed-hint-tooltip {
   max-width: min(360px, calc(100vw - 24px));
   pointer-events: none;
+  z-index: 10000;
 }
 
 .sidebar-tooltip.combat-feed-hint-tooltip .tt-sub {

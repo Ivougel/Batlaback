@@ -92,6 +92,9 @@ const CombatLog = (() => {
     const el = document.getElementById("sidebar-tooltip");
     if (!el || !hint) return;
     feedTooltipActive = true;
+    if (typeof markCombatFeedTooltipActive === "function") {
+      markCombatFeedTooltipActive();
+    }
     el.classList.remove("synergy-tooltip");
     el.classList.add("combat-feed-hint-tooltip");
     el.innerHTML = String(hint)
@@ -111,45 +114,52 @@ const CombatLog = (() => {
     feedTooltipActive = false;
     const el = document.getElementById("sidebar-tooltip");
     el?.classList.remove("combat-feed-hint-tooltip");
-    if (typeof hideSidebarTooltip === "function") {
-      hideSidebarTooltip();
-      return;
+    if (typeof clearCombatFeedTooltipActive === "function") {
+      clearCombatFeedTooltipActive();
     }
     el?.classList.add("hidden");
+  }
+
+  function onExternalTooltipHide() {
+    feedTooltipActive = false;
   }
 
   function bindFeedTooltipHandlers() {
     if (!scrollEl || scrollEl.dataset.feedTooltipsBound) return;
     scrollEl.dataset.feedTooltipsBound = "1";
 
-    scrollEl.addEventListener("mouseover", (e) => {
-      const textEl = e.target.closest(".combat-feed-msg-text[data-hint]");
+    const findHintTextEl = (target) => target?.closest?.(".combat-feed-msg-text[data-hint]");
+
+    scrollEl.addEventListener("mouseenter", (e) => {
+      const textEl = findHintTextEl(e.target);
       if (!textEl) return;
       showFeedHintAt(e.clientX, e.clientY, textEl.dataset.hint);
-    });
+    }, true);
 
     scrollEl.addEventListener("mousemove", (e) => {
+      const textEl = findHintTextEl(e.target);
+      if (textEl && !feedTooltipActive) {
+        showFeedHintAt(e.clientX, e.clientY, textEl.dataset.hint);
+      }
       if (!feedTooltipActive) return;
-      const textEl = e.target.closest(".combat-feed-msg-text[data-hint]");
-      if (!textEl) return;
       if (typeof moveSidebarTooltip === "function") {
         moveSidebarTooltip(e, "viewport", "auto");
       } else if (typeof positionSidebarTooltip === "function") {
         positionSidebarTooltip(e.clientX, e.clientY, "viewport", "auto");
       }
-    });
+    }, true);
 
-    scrollEl.addEventListener("mouseout", (e) => {
-      const from = e.target.closest(".combat-feed-msg-text[data-hint]");
-      if (!from) return;
-      const to = e.relatedTarget?.closest?.(".combat-feed-msg-text[data-hint]");
-      if (!to) hideFeedHint();
-    });
+    scrollEl.addEventListener("mouseleave", (e) => {
+      if (!findHintTextEl(e.target)) return;
+      if (findHintTextEl(e.relatedTarget)) return;
+      hideFeedHint();
+    }, true);
 
     scrollEl.addEventListener("click", (e) => {
-      const textEl = e.target.closest(".combat-feed-msg-text[data-hint]");
+      const textEl = findHintTextEl(e.target);
       if (!textEl) return;
       if (typeof isTouchUi === "function" && isTouchUi()) {
+        e.preventDefault();
         e.stopPropagation();
         if (feedTooltipActive && scrollEl.querySelector(".combat-feed-msg-text[data-hint-active]") === textEl) {
           hideFeedHint();
@@ -164,9 +174,38 @@ const CombatLog = (() => {
       }
     });
 
+    scrollEl.addEventListener("touchstart", (e) => {
+      const textEl = findHintTextEl(e.target);
+      if (!textEl || e.touches.length !== 1) return;
+      const t = e.touches[0];
+      if (typeof armTouchLongPress !== "function") return;
+      armTouchLongPress({
+        clientX: t.clientX,
+        clientY: t.clientY,
+        onHold: () => {
+          textEl.dataset.hintActive = "1";
+          showFeedHintAt(t.clientX, t.clientY, textEl.dataset.hint);
+        },
+        onCancel: () => {
+          textEl.removeAttribute("data-hint-active");
+          hideFeedHint();
+        },
+      });
+    }, { passive: true });
+
+    scrollEl.addEventListener("touchmove", (e) => {
+      const t = e.touches[0];
+      if (!t || typeof updateTouchLongPressMove !== "function") return;
+      updateTouchLongPressMove(t.clientX, t.clientY);
+    }, { passive: true });
+
+    scrollEl.addEventListener("touchend", () => {
+      if (typeof finishTouchLongPress === "function") finishTouchLongPress();
+    }, { passive: true });
+
     document.addEventListener("click", (e) => {
       if (!feedTooltipActive) return;
-      if (e.target.closest(".combat-feed-msg-text[data-hint]")) return;
+      if (findHintTextEl(e.target)) return;
       hideFeedHint();
       scrollEl.querySelectorAll(".combat-feed-msg-text[data-hint-active]").forEach((node) => {
         node.removeAttribute("data-hint-active");
@@ -579,6 +618,8 @@ const CombatLog = (() => {
     notifyCraft,
     notifyBackpack,
     notifyGemSocketed,
+    hideTooltip: hideFeedHint,
+    onExternalTooltipHide,
     isEnabled,
     setEnabled,
     init: initCombatFeed,
