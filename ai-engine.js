@@ -1071,6 +1071,7 @@ function aiScoreGemHost(host, gemId, archetype) {
 function aiSocketGems(state) {
   if (typeof socketGemIntoItem !== "function" || typeof canSocketGem !== "function") return;
   if (typeof isGemItem !== "function") return;
+  if (!state.bench) state.bench = [];
 
   const archetype = state.archetype || null;
   let guard = 0;

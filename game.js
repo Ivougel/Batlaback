@@ -405,9 +405,13 @@ function updatePrepSideUI() {
     }
   } else if (prepViewSide === "enemy") {
     if (playerBtn) playerBtn.textContent = "🧑 Мой стол";
-    if (enemyBtn) enemyBtn.textContent = "🤖 Противник";
-    if (title) title.textContent = "🛒 Магазин ИИ (просмотр)";
-    if (hint) hint.textContent = "ИИ управляет этим билдом сам — только просмотр";
+    if (enemyBtn) enemyBtn.textContent = isHardBotMode() ? "💀 Сложный бот" : "🤖 Противник";
+    if (title) title.textContent = isHardBotMode() ? "🛒 Сложный бот (просмотр)" : "🛒 Магазин ИИ (просмотр)";
+    if (hint) {
+      hint.textContent = isHardBotMode()
+        ? "Билд бота обновляется каждый раунд — только просмотр"
+        : "ИИ управляет этим билдом сам — только просмотр";
+    }
   } else {
     if (playerBtn) playerBtn.textContent = "🧑 Мой стол";
     if (enemyBtn) enemyBtn.textContent = "🤖 Противник";
@@ -1579,7 +1583,15 @@ function restartGame() {
   enemyGold = START_GOLD;
   enemyBench = [];
   if (opponentMode === "hardbot") {
-    const enemyState = createInitialHardBotState(round, GRID_COLS, GRID_ROWS, playerItems, playerClass, enemyClass);
+    const enemyState = createInitialHardBotState(
+      round,
+      GRID_COLS,
+      GRID_ROWS,
+      playerContainers,
+      playerItems,
+      playerClass,
+      enemyClass,
+    );
     enemyArchetype = enemyState.archetype;
     enemyClass = enemyState.classId;
     enemyGold = enemyState.gold;

@@ -161,6 +161,23 @@ function hardBotFindBestSwap(containers, items, pool, classId, round, gridW, gri
   return best;
 }
 
+function hardBotAiState(containers, items, classId) {
+  return {
+    containers,
+    items,
+    bench: [],
+    classId,
+    archetype: AI_ARCHETYPES[classId] || AI_ARCHETYPES.warrior,
+  };
+}
+
+function hardBotRunAiOptimize(containers, items, classId) {
+  if (typeof aiOptimizeLoadout !== "function") return items;
+  const state = hardBotAiState(containers, items, classId);
+  aiOptimizeLoadout(state);
+  return state.items;
+}
+
 function buildHardBotOptimalLoadout(containers, items, classId, round, gridW, gridH, targetPower) {
   const pool = hardBotRankPool(getHardBotItemPool(classId, round), containers, items, classId, round, gridW, gridH);
 
@@ -176,7 +193,7 @@ function buildHardBotOptimalLoadout(containers, items, classId, round, gridW, gr
       addition.place.rotation || 0,
     ));
     items = hardBotTryCrafting(containers, items);
-    if (typeof aiOptimizeLoadout === "function") aiOptimizeLoadout({ containers, items });
+    items = hardBotRunAiOptimize(containers, items, classId);
   }
 
   guard = 0;
@@ -186,14 +203,17 @@ function buildHardBotOptimalLoadout(containers, items, classId, round, gridW, gr
     if (!swap) break;
     items = swap.trial;
     items = hardBotTryCrafting(containers, items);
-    if (typeof aiOptimizeLoadout === "function") aiOptimizeLoadout({ containers, items });
+    items = hardBotRunAiOptimize(containers, items, classId);
   }
 
-  if (typeof aiOptimizeLoadout === "function") aiOptimizeLoadout({ containers, items });
+  items = hardBotRunAiOptimize(containers, items, classId);
   items = hardBotTryCrafting(containers, items);
-  if (typeof aiSocketGems === "function") aiSocketGems({ containers, items });
-  if (typeof aiApplyCrafting === "function") aiApplyCrafting({ containers, items });
-  if (typeof aiOptimizeLoadout === "function") aiOptimizeLoadout({ containers, items });
+  const aiState = hardBotAiState(containers, items, classId);
+  if (typeof aiSocketGems === "function") aiSocketGems(aiState);
+  items = aiState.items;
+  if (typeof aiApplyCrafting === "function") aiApplyCrafting(aiState);
+  items = aiState.items;
+  items = hardBotRunAiOptimize(containers, items, classId);
 
   return items;
 }
@@ -225,7 +245,12 @@ function hardBotPrepPhase(state, round, gridW, gridH, battleWon, playerContainer
 
   let gold = state.gold ?? AI_ECON.START_GOLD;
   if (battleWon === true) gold += AI_ECON.ROUND_GOLD + AI_ECON.WIN_GOLD;
-  else gold += AI_ECON.ROUND_GOLD;
+  else if (battleWon === false) gold += AI_ECON.ROUND_GOLD;
+  else if (battleWon === null && round === 1) {
+    // старт игры
+  } else {
+    gold += AI_ECON.ROUND_GOLD;
+  }
 
   const archetype = AI_ARCHETYPES[classId] || AI_ARCHETYPES.warrior;
   return {
@@ -238,7 +263,7 @@ function hardBotPrepPhase(state, round, gridW, gridH, battleWon, playerContainer
   };
 }
 
-function createInitialHardBotState(round, gridW, gridH, playerItems = [], playerClass = null, enemyClassId = "warrior") {
+function createInitialHardBotState(round, gridW, gridH, playerContainers, playerItems, playerClass, enemyClassId = "warrior") {
   const classId = enemyClassId || "warrior";
   const containers = createStartingContainers(gridW, gridH);
   const items = applyClassStarters(containers, [], classId);
@@ -254,7 +279,7 @@ function createInitialHardBotState(round, gridW, gridH, playerItems = [], player
     gridW,
     gridH,
     null,
-    containers,
+    playerContainers,
     playerItems,
     playerClass || "warrior",
   );
