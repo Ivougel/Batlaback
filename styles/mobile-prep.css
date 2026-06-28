@@ -691,19 +691,17 @@ html[data-prep-layout="mobile"] #class-overlay:not(.hidden) .class-mobile-dock:n
 }
 
 html[data-prep-layout="mobile"] #class-overlay:not(.hidden) .class-modal {
+  height: 100dvh;
+  max-height: 100dvh;
   padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+}
+
+html[data-prep-layout="mobile"] #class-overlay .class-modal .class-step:not(.hidden) {
+  padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
 }
 
 html[data-prep-layout="mobile"] #class-overlay:not(.hidden) .class-modal-footer {
   display: none;
-}
-
-html[data-prep-layout="mobile"] #class-step-opponent:not(.hidden) .class-grid {
-  max-height: calc(100dvh - 230px);
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-  padding-bottom: 4px;
 }
 
 html[data-prep-layout="mobile"] #class-step-opponent:not(.hidden) .class-step-sub {

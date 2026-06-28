@@ -4064,8 +4064,46 @@ body:has(#overlay:not(.hidden)) {
 
 #class-overlay {
   background: #080810;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
+#class-overlay .class-modal {
+  position: relative;
+  z-index: 1;
+  width: min(640px, 96vw);
+  max-width: 640px;
+  max-height: calc(
+    100dvh
+    - max(12px, env(safe-area-inset-top))
+    - max(12px, env(safe-area-inset-bottom))
+  );
+  min-height: 0;
+  padding:
+    max(20px, env(safe-area-inset-top))
+    max(16px, env(safe-area-inset-right))
+    max(12px, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  text-align: center;
+}
+
+#class-overlay .class-modal .class-step:not(.hidden) {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 
 .class-overlay-bg {
@@ -4097,26 +4135,9 @@ body:has(#overlay:not(.hidden)) {
   background: radial-gradient(circle, rgba(34, 211, 238, 0.22) 0%, transparent 68%);
 }
 
-#class-overlay .class-modal {
-  position: relative;
-  z-index: 1;
-  width: min(640px, 96vw);
-  max-width: 640px;
-  max-height: var(--overlay-max-h, calc(100dvh - 10px));
-  padding:
-    max(20px, env(safe-area-inset-top))
-    max(16px, env(safe-area-inset-right))
-    max(12px, env(safe-area-inset-bottom))
-    max(16px, env(safe-area-inset-left));
-  display: flex;
-  flex-direction: column;
-  overflow-x: hidden;
-  overflow-y: auto;
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
-  text-align: center;
+#class-overlay .class-modal .class-step:not(.hidden) .class-grid,
+#class-overlay .class-modal .class-step:not(.hidden) .game-mode-grid {
+  padding-bottom: calc(8px * var(--ui-scale));
 }
 
 .class-modal-header {

@@ -162,6 +162,44 @@
     }
   }
 
+  function clearTabletSideVars() {
+    const root = document.documentElement;
+    [
+      "--tablet-prep-hero-h",
+      "--tablet-battle-hero-zone-h",
+      "--tablet-battle-hero-img-h",
+      "--tablet-battle-chrome-bottom",
+    ].forEach((name) => root.style.removeProperty(name));
+  }
+
+  function syncTabletSideLayoutVars(h, phase) {
+    const root = document.documentElement;
+    if (root.dataset.tabletSideFit !== "true") {
+      clearTabletSideVars();
+      return;
+    }
+
+    const hudH = isHudVisible() ? (document.getElementById("gamepad-hints-bar")?.offsetHeight ?? 0) : 0;
+    root.style.setProperty("--tablet-battle-chrome-bottom", `${hudH + 8}px`);
+
+    if (phase === "prep") {
+      const chrome = measurePrepChromeHeight() + hudH;
+      const avail = Math.max(240, h - chrome);
+      const canvasH = readCssPx("--prep-canvas-h", 400);
+      const sceneTop = readCssPx("--prep-scene-top", 14);
+      const heroH = Math.round(Math.min(360, Math.max(200, avail - canvasH - sceneTop - 24)));
+      root.style.setProperty("--tablet-prep-hero-h", `${heroH}px`);
+      return;
+    }
+
+    if (phase === "battle" || phase === "replay") {
+      const heroZone = Math.min(280, Math.max(190, Math.round(h * 0.30)));
+      const heroImgH = Math.round(Math.min(160, Math.max(100, heroZone * 0.52)));
+      root.style.setProperty("--tablet-battle-hero-zone-h", `${heroZone}px`);
+      root.style.setProperty("--tablet-battle-hero-img-h", `${heroImgH}px`);
+    }
+  }
+
   /** Единственный источник display-size #game-canvas (bitmap — game.js applyPhaseCanvasLayout). */
   function fitCanvasDisplaySize() {
     const app = document.getElementById("app");
@@ -173,6 +211,7 @@
 
     if (phase === "battle" || phase === "replay") {
       const mobileLayout = root.dataset.prepLayout === "mobile";
+      const tabletSide = root.dataset.tabletSideFit === "true";
       if (mobileLayout) {
         const stage = canvas.closest(".battle-canvas-stage");
         const fieldCol = canvas.closest(".prep-field-column");
@@ -193,6 +232,30 @@
             root.style.setProperty("--mobile-battle-hero-img-h", `${heroImgH}px`);
             setCanvasDisplaySize(canvas, w, h);
             setMobileBattleDisplayVars(w, h, cssW);
+            syncMobileShopFabPosition();
+            return;
+          }
+        }
+      } else if (tabletSide) {
+        const stage = canvas.closest(".battle-canvas-stage");
+        const fieldCol = canvas.closest(".prep-field-column");
+        if (stage) {
+          const stageW = fieldCol?.clientWidth ?? stage.clientWidth;
+          if (stageW > 0) {
+            const vh = window.visualViewport?.height ?? window.innerHeight;
+            const hudH = isHudVisible() ? (document.getElementById("gamepad-hints-bar")?.offsetHeight ?? 0) : 0;
+            const cssW = readCssPx("--battle-canvas-w", canvas.width);
+            const cssH = readCssPx("--battle-canvas-h", canvas.height);
+            const heroZone = Math.min(280, Math.max(190, Math.round(vh * 0.30)));
+            const maxH = Math.max(120, vh - hudH - heroZone - 20);
+            const scale = Math.min(stageW / cssW, maxH / cssH, 1);
+            const w = Math.max(1, Math.floor(cssW * scale));
+            const ch = Math.max(1, Math.floor(cssH * scale));
+            const heroImgH = Math.round(Math.min(160, Math.max(100, heroZone * 0.52)));
+            root.style.setProperty("--tablet-battle-hero-zone-h", `${heroZone}px`);
+            root.style.setProperty("--tablet-battle-hero-img-h", `${heroImgH}px`);
+            root.style.setProperty("--tablet-battle-chrome-bottom", `${hudH + 8}px`);
+            setCanvasDisplaySize(canvas, w, ch);
             syncMobileShopFabPosition();
             return;
           }
@@ -237,6 +300,26 @@
     const hasFieldColumn = !!document.querySelector(".prep-field-column");
 
     if (sideBySidePrep && hasFieldColumn) {
+      if (root.dataset.tabletSideFit === "true") {
+        const stage = canvas.closest(".battle-canvas-stage");
+        const fieldCol = canvas.closest(".prep-field-column");
+        const stageW = fieldCol?.clientWidth ?? stage?.clientWidth ?? canvas.width;
+        if (stageW > 0) {
+          const vh = window.visualViewport?.height ?? window.innerHeight;
+          const hudH = isHudVisible() ? (document.getElementById("gamepad-hints-bar")?.offsetHeight ?? 0) : 0;
+          const chrome = measurePrepChromeHeight() + hudH;
+          const sceneTop = readCssPx("--prep-scene-top", 14);
+          const heroH = Math.round(Math.min(360, Math.max(200, (vh - chrome) * 0.36)));
+          root.style.setProperty("--tablet-prep-hero-h", `${heroH}px`);
+          const maxH = Math.max(140, vh - chrome - heroH - sceneTop - 12);
+          const scale = Math.min(stageW / canvas.width, maxH / canvas.height, 1);
+          const w = Math.max(1, Math.floor(canvas.width * scale));
+          const ch = Math.max(1, Math.floor(canvas.height * scale));
+          setCanvasDisplaySize(canvas, w, ch);
+          syncMobileShopFabPosition();
+          return;
+        }
+      }
       setCanvasDisplaySize(
         canvas,
         readCssPx("--prep-canvas-w", canvas.width),
@@ -393,6 +476,10 @@
       ? "mobile"
       : (shouldUseStackedPrep(w, h) ? "stacked" : "side");
     document.documentElement.dataset.prepLayout = prepLayout;
+    document.documentElement.dataset.tabletSideFit = (tier === "tablet" && prepLayout === "side") ? "true" : "false";
+    if (document.documentElement.dataset.tabletSideFit !== "true") {
+      clearTabletSideVars();
+    }
     if (prepLayout !== "mobile") {
       clearMobileDisplayVars();
     }
@@ -416,6 +503,9 @@
       "--overlay-max-h",
       "calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 10px)",
     );
+
+    const appPhase = document.getElementById("app")?.dataset.phase ?? "prep";
+    syncTabletSideLayoutVars(h, appPhase);
 
     scheduleCanvasFit();
     syncMobileShopFabPosition();
