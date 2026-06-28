@@ -107,6 +107,54 @@
     canvas.style.maxHeight = `${h}px`;
   }
 
+  function clearMobileDisplayVars() {
+    const root = document.documentElement;
+    root.dataset.battleMobileFit = "false";
+    [
+      "--battle-canvas-display-w",
+      "--battle-canvas-display-h",
+      "--battle-field-display-w",
+      "--battle-grid-gap-display",
+      "--prep-canvas-display-w",
+      "--prep-canvas-display-h",
+      "--prep-shop-fab-top",
+      "--prep-shop-fab-right",
+    ].forEach((name) => root.style.removeProperty(name));
+  }
+
+  function setMobileBattleDisplayVars(displayW, displayH, logicalBattleW) {
+    const root = document.documentElement;
+    const scale = displayW / logicalBattleW;
+    const fieldW = readCssPx("--prep-canvas-w", displayW * 0.45) * scale;
+    const gridGap = readCssPx("--grid-gap", 36) * scale;
+    root.style.setProperty("--battle-canvas-display-w", `${displayW}px`);
+    root.style.setProperty("--battle-canvas-display-h", `${displayH}px`);
+    root.style.setProperty("--battle-field-display-w", `${Math.round(fieldW)}px`);
+    root.style.setProperty("--battle-grid-gap-display", `${Math.round(gridGap)}px`);
+    root.dataset.battleMobileFit = "true";
+  }
+
+  function syncMobileShopFabPosition() {
+    const root = document.documentElement;
+    if (root.dataset.prepLayout !== "mobile") {
+      root.style.removeProperty("--prep-shop-fab-top");
+      root.style.removeProperty("--prep-shop-fab-right");
+      return;
+    }
+    const phase = document.getElementById("app")?.dataset.phase;
+    if (phase !== "prep") return;
+    const island = document.getElementById("prep-field-island");
+    if (!island) return;
+    const rect = island.getBoundingClientRect();
+    const toolbar = document.getElementById("prep-toolbar");
+    const toolbarTop = toolbar?.getBoundingClientRect().top ?? window.innerHeight;
+    const fabSize = 56;
+    const top = Math.min(Math.round(rect.bottom + 8), Math.round(toolbarTop - fabSize - 8));
+    const right = Math.max(10, Math.round(window.innerWidth - rect.right + 6));
+    root.style.setProperty("--prep-shop-fab-top", `${Math.max(8, top)}px`);
+    root.style.setProperty("--prep-shop-fab-right", `${right}px`);
+  }
+
   /** Единственный источник display-size #game-canvas (bitmap — game.js applyPhaseCanvasLayout). */
   function fitCanvasDisplaySize() {
     const app = document.getElementById("app");
@@ -117,18 +165,58 @@
     const root = document.documentElement;
 
     if (phase === "battle" || phase === "replay") {
+      const mobileLayout = root.dataset.prepLayout === "mobile";
+      if (mobileLayout) {
+        const stage = canvas.closest(".battle-canvas-stage");
+        const fieldCol = canvas.closest(".prep-field-column");
+        if (stage) {
+          const stageW = fieldCol?.clientWidth ?? stage.clientWidth;
+          if (stageW > 0) {
+            const vh = window.visualViewport?.height ?? window.innerHeight;
+            const hudH = isHudVisible() ? (document.getElementById("gamepad-hints-bar")?.offsetHeight ?? 0) : 0;
+            const cssW = readCssPx("--battle-canvas-w", canvas.width);
+            const cssH = readCssPx("--battle-canvas-h", canvas.height);
+            const maxH = Math.max(140, vh - hudH - 48);
+            const scale = Math.min(stageW / cssW, maxH / cssH, 1);
+            const w = Math.max(1, Math.floor(cssW * scale));
+            const h = Math.max(1, Math.floor(cssH * scale));
+            setCanvasDisplaySize(canvas, w, h);
+            setMobileBattleDisplayVars(w, h, cssW);
+            syncMobileShopFabPosition();
+            return;
+          }
+        }
+      } else {
+        root.dataset.battleMobileFit = "false";
+        [
+          "--battle-canvas-display-w",
+          "--battle-canvas-display-h",
+          "--battle-field-display-w",
+          "--battle-grid-gap-display",
+        ].forEach((name) => root.style.removeProperty(name));
+      }
       setCanvasDisplaySize(
         canvas,
         readCssPx("--battle-canvas-w", canvas.width),
         readCssPx("--battle-canvas-h", canvas.height),
       );
+      syncMobileShopFabPosition();
       return;
     }
 
     if (phase !== "prep") {
       clearCanvasDisplaySize();
+      syncMobileShopFabPosition();
       return;
     }
+
+    root.dataset.battleMobileFit = "false";
+    [
+      "--battle-canvas-display-w",
+      "--battle-canvas-display-h",
+      "--battle-field-display-w",
+      "--battle-grid-gap-display",
+    ].forEach((name) => root.style.removeProperty(name));
 
     const sideFit = root.dataset.prepSideFit === "true";
     const mobileFit = root.dataset.prepMobileFit === "true";
@@ -148,9 +236,10 @@
 
     if (sideFit || mobileFit || viewportFit) {
       const stage = canvas.closest(".battle-canvas-stage");
+      const fieldCol = canvas.closest(".prep-field-column");
       if (!stage) return;
 
-      const stageW = stage.clientWidth;
+      const stageW = (mobileFit && fieldCol?.clientWidth) ? fieldCol.clientWidth : stage.clientWidth;
       if (stageW <= 0) return;
 
       let maxH = canvas.height;
@@ -169,6 +258,14 @@
       const w = Math.max(1, Math.floor(canvas.width * scale));
       const h = Math.max(1, Math.floor(canvas.height * scale));
       setCanvasDisplaySize(canvas, w, h);
+      if (mobileFit) {
+        root.style.setProperty("--prep-canvas-display-w", `${w}px`);
+        root.style.setProperty("--prep-canvas-display-h", `${h}px`);
+      } else {
+        root.style.removeProperty("--prep-canvas-display-w");
+        root.style.removeProperty("--prep-canvas-display-h");
+      }
+      syncMobileShopFabPosition();
       return;
     }
 
@@ -203,8 +300,8 @@
 
     if (prepLayout === "mobile") {
       document.documentElement.dataset.prepMobileFit = "true";
-      let fitScale = Math.min(baseScale, available / 380, w / (DESIGN_W * 0.42));
-      fitScale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, fitScale));
+      let fitScale = Math.min(baseScale, available / 340, w / (DESIGN_W * 0.36));
+      fitScale = Math.max(0.58, Math.min(SCALE_MAX, fitScale));
       return Math.round(fitScale * 1000) / 1000;
     }
 
@@ -285,6 +382,9 @@
       ? "mobile"
       : (shouldUseStackedPrep(w, h) ? "stacked" : "side");
     document.documentElement.dataset.prepLayout = prepLayout;
+    if (prepLayout !== "mobile") {
+      clearMobileDisplayVars();
+    }
     clamped = applyPrepLayoutFit(w, h, prepLayout, clamped, touchDev);
 
     document.documentElement.style.setProperty("--ui-scale", String(clamped));
@@ -307,6 +407,7 @@
     );
 
     scheduleCanvasFit();
+    syncMobileShopFabPosition();
 
     if (typeof window.applyGridMetricsFromCss === "function") {
       window.applyGridMetricsFromCss();
@@ -364,4 +465,5 @@
   window.fitCanvasDisplaySize = fitCanvasDisplaySize;
   window.fitPrepCanvasToStage = fitCanvasDisplaySize;
   window.scheduleCanvasFit = scheduleCanvasFit;
+  window.syncMobileShopFabPosition = syncMobileShopFabPosition;
 })();

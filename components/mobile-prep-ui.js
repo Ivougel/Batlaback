@@ -21,6 +21,9 @@
     if (next && typeof positionPrepTooltipDock === "function") {
       requestAnimationFrame(() => positionPrepTooltipDock());
     }
+    if (typeof window.syncMobileShopFabPosition === "function") {
+      requestAnimationFrame(() => window.syncMobileShopFabPosition());
+    }
     if (typeof scheduleCanvasFit === "function") scheduleCanvasFit();
   }
 
