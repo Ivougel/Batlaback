@@ -55,3 +55,7 @@ function getBattleAnimDt(rawDt) {
 function resetBattlePause() {
   battlePaused = false;
 }
+
+function isBattlePaused() {
+  return battlePaused;
+}

@@ -796,7 +796,7 @@ const ITEM_CATALOG = {
   }),
   lucky_charm: defItem({
     id: "lucky_charm", name: "Талисман", icon: "🍀", color: "#3fb950",
-    shape: [[0, 0]], rarity: "common", cost: 2, tags: ["utility", "gem"], cooldown: 0,
+    shape: shapeRect(2, 2), rarity: "common", cost: 2, tags: ["utility", "gem"], cooldown: 0,
     effects: [{ type: "passiveLuck", value: 35, trigger: "passive" }],
   }),
   cork_charm: defItem({

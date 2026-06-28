@@ -1,7 +1,7 @@
 /**
  * EmotionEngine — «живой диалог» между персонажами во время боя (только визуал).
  * BattleAnalyzer → DialogEvent → AnimationQueue → drawEmotionLayer()
- * Все анимации — реальное время через Date.now(), не dt / gameSpeed.
+ * Таймлайн — реальное время (не dt), но на паузе боя замирает; эмодзи слегка левитируют.
  */
 
 const EMOTION_ANALYZE_INTERVAL_MS = 500;
@@ -33,6 +33,41 @@ function createEmotionEngineState() {
     seenFloatIds: new Set(),
     recentDamage: [],
     durationFlags: { t30: false, t60: false, t120: false },
+    pauseTotalMs: 0,
+    pauseStartedAt: null,
+  };
+}
+
+function isEmotionBattlePaused() {
+  return typeof isBattlePaused === "function" ? isBattlePaused() : !!battlePaused;
+}
+
+function syncEmotionPauseClock() {
+  const paused = isEmotionBattlePaused();
+  if (paused && emotionEngine.pauseStartedAt == null) {
+    emotionEngine.pauseStartedAt = Date.now();
+  } else if (!paused && emotionEngine.pauseStartedAt != null) {
+    emotionEngine.pauseTotalMs += Date.now() - emotionEngine.pauseStartedAt;
+    emotionEngine.pauseStartedAt = null;
+  }
+  return paused;
+}
+
+/** «Игровые» часы эмодзи — без времени, проведённого на паузе. */
+function emotionEffectiveNow() {
+  let frozenMs = emotionEngine.pauseTotalMs || 0;
+  if (emotionEngine.pauseStartedAt != null) {
+    frozenMs += Date.now() - emotionEngine.pauseStartedAt;
+  }
+  return Date.now() - frozenMs;
+}
+
+function applyPauseLevitation(offsetX, offsetY, rotation) {
+  const t = Date.now() / 1000;
+  return {
+    offsetX: offsetX + Math.sin(t * 1.7 + 1) * 2,
+    offsetY: offsetY + Math.sin(t * 2.2) * 5,
+    rotation: rotation + Math.sin(t * 1.3) * 0.04,
   };
 }
 
@@ -491,13 +526,13 @@ function analyzeBattleState(battleState, elapsedReal) {
 }
 
 function animProgress(anim) {
-  return clamp01((Date.now() - anim.startedAt) / anim.duration);
+  return clamp01((emotionEffectiveNow() - anim.startedAt) / anim.duration);
 }
 
-function resolveAnimOffset(anim, side) {
+function resolveAnimOffset(anim, side, paused = false) {
   const progress = animProgress(anim);
   const head = getHeadOffset(side);
-  const tSec = (Date.now() - anim.startedAt) / 1000;
+  const tSec = (emotionEffectiveNow() - anim.startedAt) / 1000;
 
   if (anim.animation === "fly" && anim.flyTo) {
     const mount = ensureEmotionMount(anim.flyFrom || side);
@@ -511,6 +546,9 @@ function resolveAnimOffset(anim, side) {
       const endY = dst.y - center.y;
       offsetX = lerp(head.x, endX, t);
       offsetY = lerp(head.y, endY, t) + Math.sin(t * Math.PI) * -80;
+    }
+    if (paused) {
+      return { ...applyPauseLevitation(offsetX, offsetY, 0), progress, scale: 1 };
     }
     return { offsetX, offsetY, progress, rotation: 0, scale: 1 };
   }
@@ -541,6 +579,10 @@ function resolveAnimOffset(anim, side) {
       break;
     default:
       offsetX += Math.sin(tSec * 40) * 5 * (1 - progress);
+  }
+
+  if (paused) {
+    return { ...applyPauseLevitation(offsetX, offsetY, rotation), progress, scale };
   }
 
   return { offsetX, offsetY, progress, rotation, scale };
@@ -597,9 +639,9 @@ function renderParticlesDom(el, anim, centerX, centerY) {
   }
 }
 
-function renderEmotionDom(anim, side) {
+function renderEmotionDom(anim, side, paused = false) {
   const uid = `emotion-${side}`;
-  const { offsetX, offsetY, progress, rotation, scale } = resolveAnimOffset(anim, side);
+  const { offsetX, offsetY, progress, rotation, scale } = resolveAnimOffset(anim, side, paused);
   if (progress >= 1) {
     const el = emotionDomPool.get(uid);
     if (el) {
@@ -622,6 +664,7 @@ function renderEmotionDom(anim, side) {
   el.style.filter = "drop-shadow(0 4px 14px rgba(0,0,0,0.55))";
   el.style.transition = "none";
   el.style.willChange = "transform";
+  el.classList.toggle("battle-emotion-levitate", paused);
 
   if (anim.animation === "particles") {
     renderParticlesDom(el, anim, offsetX, offsetY);
@@ -635,7 +678,7 @@ function renderEmotionDom(anim, side) {
 }
 
 function pruneFinishedAnimations() {
-  const now = Date.now();
+  const now = emotionEffectiveNow();
   ["player", "enemy"].forEach((side) => {
     const key = side === "player" ? "playerAnim" : "enemyAnim";
     const anim = emotionEngine[key];
@@ -661,17 +704,21 @@ function drawEmotionLayer(_ctx, battleState, elapsedReal) {
     emotionActiveBattle = battleState;
   }
 
-  analyzeBattleState(battleState, elapsedReal);
+  const paused = syncEmotionPauseClock();
+
+  if (!paused) {
+    analyzeBattleState(battleState, elapsedReal);
+  }
   pruneFinishedAnimations();
 
   const active = new Set();
   if (emotionEngine.playerAnim) {
     active.add("emotion-player");
-    renderEmotionDom(emotionEngine.playerAnim, "player");
+    renderEmotionDom(emotionEngine.playerAnim, "player", paused);
   }
   if (emotionEngine.enemyAnim) {
     active.add("emotion-enemy");
-    renderEmotionDom(emotionEngine.enemyAnim, "enemy");
+    renderEmotionDom(emotionEngine.enemyAnim, "enemy", paused);
   }
 
   emotionDomPool.forEach((el, uid) => {

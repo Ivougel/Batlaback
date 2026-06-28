@@ -59,10 +59,16 @@
       "name": "Деревянный меч",
       "icon": "🗡️🪵",
       "color": "#8b949e",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": "rogue",
       "rarity": "common",
       "cost": 3,
@@ -103,10 +109,16 @@
       "name": "Метла",
       "icon": "🧹",
       "color": "#8b949e",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "common",
       "cost": 4,
@@ -151,10 +163,16 @@
       "name": "Сковородка",
       "icon": "🍳",
       "color": "#8b949e",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "common",
       "cost": 4,
@@ -209,10 +227,20 @@
       "name": "Копьё",
       "icon": "🔱",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 3
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          2
+        ]
+      ],
       "classRestriction": null,
       "rarity": "rare",
       "cost": 6,
@@ -251,10 +279,12 @@
       "name": "Кинжал",
       "icon": "🔪",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "rare",
       "cost": 4,
@@ -292,10 +322,16 @@
       "name": "Молот",
       "icon": "🔨",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "rare",
       "cost": 8,
@@ -339,10 +375,16 @@
       "name": "Шипастый кнут",
       "icon": "🪢🌵",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 8,
@@ -391,7 +433,7 @@
       "color": "#ff7b72",
       "shape": {
         "w": 1,
-        "h": 2
+        "h": 3
       },
       "classRestriction": null,
       "rarity": "godly",
@@ -440,10 +482,16 @@
       "name": "Короткий лук",
       "icon": "🏹",
       "color": "#8b949e",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": "rogue",
       "rarity": "common",
       "cost": 4,
@@ -483,10 +531,16 @@
       "name": "Лук со стрелами",
       "icon": "🏹🎯",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": "rogue",
       "rarity": "epic",
       "cost": 7,
@@ -526,10 +580,16 @@
       "name": "Голодный клинок",
       "icon": "🗡️🩸",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 7,
@@ -588,10 +648,16 @@
       "name": "Пила-раздиратор",
       "icon": "🪚🩸",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 7,
@@ -632,7 +698,7 @@
       "color": "#ff7b72",
       "shape": {
         "w": 1,
-        "h": 2
+        "h": 3
       },
       "classRestriction": null,
       "rarity": "godly",
@@ -681,7 +747,7 @@
       "icon": "⚔️📏",
       "color": "#ff7b72",
       "shape": {
-        "w": 1,
+        "w": 2,
         "h": 2
       },
       "classRestriction": null,
@@ -728,10 +794,16 @@
       "name": "Геройский меч",
       "icon": "⚔️🛡️",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 7,
@@ -792,10 +864,20 @@
       "name": "Геройский длинный меч",
       "icon": "🗡️🛡️",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          2
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 19,
@@ -856,10 +938,16 @@
       "name": "Соколиный клинок",
       "icon": "🦅⚔️",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 15,
@@ -930,10 +1018,20 @@
       "name": "Скрещённые клинки",
       "icon": "⚔️⚔️",
       "color": "#ff7b72",
-      "shape": {
-        "w": 2,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 30,
@@ -1016,10 +1114,16 @@
       "name": "Ядовитый кинжал",
       "icon": "🗡️☠️",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 11,
@@ -1067,10 +1171,16 @@
       "name": "Кровавый кинжал",
       "icon": "🔪🩸",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 12,
@@ -1139,10 +1249,12 @@
       "name": "Призрачный кинжал",
       "icon": "👻🔪",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 10,
@@ -1188,10 +1300,16 @@
       "name": "Проклятый кинжал",
       "icon": "🔪🌑",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 10,
@@ -1246,7 +1364,7 @@
       "color": "#f0c14b",
       "shape": {
         "w": 1,
-        "h": 2
+        "h": 3
       },
       "classRestriction": null,
       "rarity": "legendary",
@@ -1297,10 +1415,16 @@
       "name": "Святое копьё",
       "icon": "🔱✨",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 18,
@@ -1346,10 +1470,16 @@
       "name": "Кровавый шип",
       "icon": "🌹🩸",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 15,
@@ -1406,10 +1536,16 @@
       "name": "Жаждущий маны",
       "icon": "🗡️🔮",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 13,
@@ -1466,10 +1602,16 @@
       "name": "Обморожение",
       "icon": "🗡️❄️",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 11,
@@ -1520,10 +1662,16 @@
       "name": "Магический посох",
       "icon": "🪄✨",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 10,
@@ -1580,10 +1728,16 @@
       "name": "Огненный посох",
       "icon": "🪄🔥",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 18,
@@ -1630,10 +1784,16 @@
       "name": "Посох неисцеления",
       "icon": "🪄💀",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 19,
@@ -1675,10 +1835,16 @@
       "name": "Змеиный посох",
       "icon": "🪄🐍",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": "rogue",
       "rarity": "legendary",
       "cost": 17,
@@ -1724,10 +1890,16 @@
       "name": "Посох критического древа",
       "icon": "🪄🌳",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 18,
@@ -1770,10 +1942,16 @@
       "name": "Снежная палка",
       "icon": "🪄❄️",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 8,
@@ -1819,7 +1997,7 @@
       "color": "#ff7b72",
       "shape": {
         "w": 1,
-        "h": 2
+        "h": 3
       },
       "classRestriction": null,
       "rarity": "godly",
@@ -1868,10 +2046,16 @@
       "name": "Пылающий меч",
       "icon": "🗡️🔥",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 13,
@@ -1935,10 +2119,16 @@
       "name": "Пылающий клинок",
       "icon": "🔥⚔️",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 17,
@@ -1987,10 +2177,16 @@
       "name": "Раскалённый кинжал",
       "icon": "🔪🌋",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 6,
@@ -2040,10 +2236,16 @@
       "name": "Раскалённое копьё",
       "icon": "🔱🌋",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 8,
@@ -2092,10 +2294,16 @@
       "name": "Огненный кнут",
       "icon": "🔥🪢",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 10,
@@ -2143,8 +2351,8 @@
       "icon": "⚔️🌋",
       "color": "#ff7b72",
       "shape": {
-        "w": 1,
-        "h": 2
+        "w": 2,
+        "h": 3
       },
       "classRestriction": "mage",
       "rarity": "godly",
@@ -2201,10 +2409,16 @@
       "name": "Клыковый колун",
       "icon": "🦷🏹",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "rare",
       "cost": 8,
@@ -2252,10 +2466,16 @@
       "name": "Клыковый пробойник",
       "icon": "🦷🎯",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 10,
@@ -2317,10 +2537,16 @@
       "name": "Пронзающая стрела",
       "icon": "🏹💥",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": "rogue",
       "rarity": "unique",
       "cost": 10,
@@ -2362,10 +2588,16 @@
       "name": "Тень белладонны",
       "icon": "🏹☠️",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 11,
@@ -2406,10 +2638,16 @@
       "name": "Шёпот белладонны",
       "icon": "🏹🌿",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 13,
@@ -2454,10 +2692,16 @@
       "name": "Надежда Фортуны",
       "icon": "🏹🍀",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 8,
@@ -2499,10 +2743,16 @@
       "name": "Благодать Фортуны",
       "icon": "🏹✨",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 10,
@@ -2549,10 +2799,24 @@
       "name": "Коса смерти",
       "icon": "☠️🌾",
       "color": "#f0c14b",
-      "shape": {
-        "w": 2,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
       "classRestriction": "rogue",
       "rarity": "legendary",
       "cost": 12,
@@ -2596,10 +2860,16 @@
       "name": "Пандемоний",
       "icon": "🐼☠️",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 11,
@@ -2651,10 +2921,20 @@
       "name": "Яйце-экскалибур",
       "icon": "🥚⚔️",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 10,
@@ -2730,10 +3010,16 @@
       "name": "Лопата",
       "icon": "⛏️",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "rare",
       "cost": 8,
@@ -2787,10 +3073,16 @@
       "name": "Огонь по своим",
       "icon": "🔥🤝",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": "mage",
       "rarity": "unique",
       "cost": 10,
@@ -2842,10 +3134,16 @@
       "name": "Топор",
       "icon": "🪓",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": "warrior",
       "rarity": "rare",
       "cost": 6,
@@ -2885,10 +3183,16 @@
       "name": "Меч злодея",
       "icon": "🗡️😈",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 7,
@@ -2942,10 +3246,16 @@
       "name": "Катана",
       "icon": "🗾⚔️",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 14,
@@ -2983,10 +3293,24 @@
       "name": "Призматический меч",
       "icon": "🗡️🌈",
       "color": "#ff7b72",
-      "shape": {
-        "w": 2,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 15,
@@ -3057,10 +3381,28 @@
       "name": "Кожаная броня",
       "icon": "🦺",
       "color": "#58a6ff",
-      "shape": {
-        "w": 2,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          2
+        ]
+      ],
       "classRestriction": null,
       "rarity": "rare",
       "cost": 7,
@@ -3117,7 +3459,7 @@
       "color": "#f0c14b",
       "shape": {
         "w": 2,
-        "h": 2
+        "h": 3
       },
       "classRestriction": null,
       "rarity": "legendary",
@@ -3167,10 +3509,24 @@
       "name": "Вампирская броня",
       "icon": "🦺🩸",
       "color": "#f0c14b",
-      "shape": {
-        "w": 2,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 15,
@@ -3224,10 +3580,24 @@
       "name": "Драконья чешуя",
       "icon": "🐉🦺",
       "color": "#a371f7",
-      "shape": {
-        "w": 2,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
       "classRestriction": "warrior",
       "rarity": "epic",
       "cost": 7,
@@ -3268,7 +3638,7 @@
       "color": "#f0c14b",
       "shape": {
         "w": 2,
-        "h": 2
+        "h": 3
       },
       "classRestriction": null,
       "rarity": "legendary",
@@ -3324,7 +3694,7 @@
       "color": "#ff7b72",
       "shape": {
         "w": 2,
-        "h": 2
+        "h": 3
       },
       "classRestriction": null,
       "rarity": "godly",
@@ -3371,7 +3741,7 @@
       "color": "#ff7b72",
       "shape": {
         "w": 2,
-        "h": 2
+        "h": 3
       },
       "classRestriction": null,
       "rarity": "godly",
@@ -3432,7 +3802,7 @@
       "color": "#ff7b72",
       "shape": {
         "w": 2,
-        "h": 2
+        "h": 3
       },
       "classRestriction": null,
       "rarity": "godly",
@@ -3491,7 +3861,7 @@
       "color": "#a371f7",
       "shape": {
         "w": 2,
-        "h": 2
+        "h": 3
       },
       "classRestriction": null,
       "rarity": "epic",
@@ -3539,10 +3909,24 @@
       "name": "Каменный голем",
       "icon": "🗿🦺",
       "color": "#ff7b72",
-      "shape": {
-        "w": 2,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 16,
@@ -3588,10 +3972,16 @@
       "name": "Деревянный щиток",
       "icon": "🛡️🪵",
       "color": "#8b949e",
-      "shape": {
-        "w": 2,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "common",
       "cost": 4,
@@ -3626,10 +4016,16 @@
       "name": "Шипастый щит",
       "icon": "🛡️🌵",
       "color": "#58a6ff",
-      "shape": {
-        "w": 2,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "rare",
       "cost": 8,
@@ -3682,10 +4078,16 @@
       "name": "Щит доблести",
       "icon": "🛡️⭐",
       "color": "#f0c14b",
-      "shape": {
-        "w": 2,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 11,
@@ -3728,10 +4130,16 @@
       "name": "Лунный щит",
       "icon": "🛡️🌙",
       "color": "#ff7b72",
-      "shape": {
-        "w": 2,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 18,
@@ -3774,10 +4182,16 @@
       "name": "Солнечный щит",
       "icon": "🛡️☀️",
       "color": "#ff7b72",
-      "shape": {
-        "w": 2,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 14,
@@ -3837,10 +4251,16 @@
       "name": "Замёрзший щиток",
       "icon": "🛡️❄️",
       "color": "#a371f7",
-      "shape": {
-        "w": 2,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 8,
@@ -3935,10 +4355,12 @@
       "name": "Перчатки спешки",
       "icon": "🧤⚡",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "rare",
       "cost": 4,
@@ -3997,7 +4419,7 @@
       "icon": "🐾⚔️",
       "color": "#a371f7",
       "shape": {
-        "w": 1,
+        "w": 2,
         "h": 1
       },
       "classRestriction": null,
@@ -4055,10 +4477,12 @@
       "name": "Вампирские перчатки",
       "icon": "🧤🩸",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 12,
@@ -4095,10 +4519,12 @@
       "name": "Перчатки силы",
       "icon": "🧤💪",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 10,
@@ -4167,10 +4593,12 @@
       "name": "Драконьи когти",
       "icon": "🐉🐾",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 4,
@@ -4217,10 +4645,16 @@
       "name": "Шапка стойкости",
       "icon": "🧢💪",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 7,
@@ -4257,10 +4691,16 @@
       "name": "Сияющая корона",
       "icon": "👑✨",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 12,
@@ -4315,10 +4755,16 @@
       "name": "Королевская корона",
       "icon": "👑👑",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 17,
@@ -4374,10 +4820,16 @@
       "name": "Шапка дискомфорта",
       "icon": "🧢😣",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 14,
@@ -4416,7 +4868,7 @@
       "icon": "⛑️🪨",
       "color": "#f0c14b",
       "shape": {
-        "w": 1,
+        "w": 2,
         "h": 2
       },
       "classRestriction": null,
@@ -4461,10 +4913,16 @@
       "name": "Шапка рока",
       "icon": "🎩☠️",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": "rogue",
       "rarity": "godly",
       "cost": 10,
@@ -4504,10 +4962,16 @@
       "name": "Кожаные сапоги",
       "icon": "👢",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 6,
@@ -4548,10 +5012,16 @@
       "name": "Крылатые сапоги",
       "icon": "👢🪽",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 13,
@@ -4607,10 +5077,16 @@
       "name": "Каменные ботинки",
       "icon": "👞🪨",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 12,
@@ -4657,10 +5133,16 @@
       "name": "Сапоги из драконьей кожи",
       "icon": "👢🐉",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 2
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": "warrior",
       "rarity": "epic",
       "cost": 6,
@@ -4716,10 +5198,12 @@
       "name": "Зелье здоровья",
       "icon": "🧪❤️",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "rare",
       "cost": 4,
@@ -4757,10 +5241,12 @@
       "name": "Сильное зелье здоровья",
       "icon": "🧪💗",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 8,
@@ -4802,10 +5288,12 @@
       "name": "Зелье каменной кожи",
       "icon": "🧪🪨",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 6,
@@ -4846,10 +5334,12 @@
       "name": "Сильное зелье каменной кожи",
       "icon": "🧪🛡️",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 9,
@@ -4895,10 +5385,12 @@
       "name": "Геройское зелье",
       "icon": "🧪⚔️",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 6,
@@ -4937,10 +5429,12 @@
       "name": "Сильное геройское зелье",
       "icon": "🧪💪",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 9,
@@ -4979,10 +5473,12 @@
       "name": "Зелье маны",
       "icon": "🧪🔮",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 6,
@@ -5025,10 +5521,12 @@
       "name": "Сильное зелье маны",
       "icon": "🧪✨",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 7,
@@ -5071,10 +5569,12 @@
       "name": "Ядовитое зелье",
       "icon": "🧪☠️",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 7,
@@ -5109,10 +5609,12 @@
       "name": "Сильное ядовитое зелье",
       "icon": "🧪💀",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 10,
@@ -5159,10 +5661,12 @@
       "name": "Вампирское зелье",
       "icon": "🧪🩸",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 8,
@@ -5222,7 +5726,7 @@
           },
           "damage": 15,
           "damageType": "magic",
-          "lifesteal": 1.0
+          "lifesteal": 1
         }
       ],
       "synergies": [],
@@ -5236,10 +5740,12 @@
       "name": "Сильное вампирское зелье",
       "icon": "🧪🦇",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 12,
@@ -5294,7 +5800,7 @@
           },
           "damage": 20,
           "damageType": "magic",
-          "lifesteal": 1.0
+          "lifesteal": 1
         }
       ],
       "synergies": [],
@@ -5308,10 +5814,12 @@
       "name": "Божественное зелье",
       "icon": "🧪✨",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 7,
@@ -5346,10 +5854,12 @@
       "name": "Сильное божественное зелье",
       "icon": "🧪🌟",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 15,
@@ -5388,10 +5898,12 @@
       "name": "Демоническая склянка",
       "icon": "🧪😈",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": "rogue",
       "rarity": "godly",
       "cost": 7,
@@ -5430,10 +5942,12 @@
       "name": "Сильная демоническая склянка",
       "icon": "🧪🔥",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 14,
@@ -5473,10 +5987,12 @@
       "name": "Губерт",
       "icon": "🟢",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "rare",
       "cost": 6,
@@ -5514,10 +6030,12 @@
       "name": "Кровавый губерт",
       "icon": "🔴",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 15,
@@ -5553,10 +6071,12 @@
       "name": "Стальной губерт",
       "icon": "⚙️",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 17,
@@ -5605,10 +6125,12 @@
       "name": "Светлый губерт",
       "icon": "💡",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 18,
@@ -5646,10 +6168,12 @@
       "name": "Ядовитый губерт",
       "icon": "🟢☠️",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 12,
@@ -5681,10 +6205,12 @@
       "name": "Морковный губерт",
       "icon": "🥕",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 12,
@@ -5726,10 +6252,12 @@
       "name": "Острый губерт",
       "icon": "🌶️",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 11,
@@ -5768,10 +6296,12 @@
       "name": "Король губерт",
       "icon": "👑🟢",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 23,
@@ -5809,10 +6339,12 @@
       "name": "Радужный губерт",
       "icon": "🌈",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 50,
@@ -5854,10 +6386,12 @@
       "name": "Рубиновое яйцо",
       "icon": "🥚💎",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 10,
@@ -5891,10 +6425,12 @@
       "name": "Рубиновый дракончик",
       "icon": "🐉💎",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 10,
@@ -5931,10 +6467,12 @@
       "name": "Рубиновый толстяк",
       "icon": "🐲💎",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 15,
@@ -5979,7 +6517,7 @@
       "icon": "🐉🖤",
       "color": "#ff7b72",
       "shape": {
-        "w": 1,
+        "w": 2,
         "h": 1
       },
       "classRestriction": null,
@@ -6024,7 +6562,7 @@
       "icon": "🐉❄️",
       "color": "#ff7b72",
       "shape": {
-        "w": 1,
+        "w": 2,
         "h": 1
       },
       "classRestriction": null,
@@ -6080,10 +6618,12 @@
       "name": "Изумрудный дракончик",
       "icon": "🐉💚",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 14,
@@ -6137,10 +6677,12 @@
       "name": "Сапфировый дракончик",
       "icon": "🐉💙",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 14,
@@ -6200,7 +6742,7 @@
       "icon": "🐉💜",
       "color": "#ff7b72",
       "shape": {
-        "w": 1,
+        "w": 2,
         "h": 1
       },
       "classRestriction": null,
@@ -6252,10 +6794,12 @@
       "name": "Шелли",
       "icon": "🐚",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "rare",
       "cost": 6,
@@ -6298,10 +6842,12 @@
       "name": "Вольпертингер",
       "icon": "🐰",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 12,
@@ -6352,7 +6898,7 @@
       "icon": "🔥🐦",
       "color": "#f0c14b",
       "shape": {
-        "w": 1,
+        "w": 2,
         "h": 1
       },
       "classRestriction": "mage",
@@ -6395,10 +6941,12 @@
       "name": "Крыса",
       "icon": "🐀",
       "color": "#8b949e",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": "rogue",
       "rarity": "common",
       "cost": 4,
@@ -6439,10 +6987,12 @@
       "name": "Белка",
       "icon": "🐿️",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": "rogue",
       "rarity": "rare",
       "cost": 5,
@@ -6480,10 +7030,12 @@
       "name": "Ёжик",
       "icon": "🦔",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": "rogue",
       "rarity": "epic",
       "cost": 6,
@@ -6549,10 +7101,12 @@
       "name": "Крыса-повар",
       "icon": "🐀👨‍🍳",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "rare",
       "cost": 8,
@@ -6605,10 +7159,12 @@
       "name": "Белка-лучник",
       "icon": "🐿️🏹",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 9,
@@ -6646,10 +7202,12 @@
       "name": "Гиперёжик",
       "icon": "🦔⚡",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 12,
@@ -6716,10 +7274,12 @@
       "name": "Жаба",
       "icon": "🐸",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": "rogue",
       "rarity": "epic",
       "cost": 6,
@@ -6766,10 +7326,12 @@
       "name": "Ворон",
       "icon": "🐦‍⬛",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": "rogue",
       "rarity": "godly",
       "cost": 13,
@@ -6813,10 +7375,12 @@
       "name": "Змея",
       "icon": "🐍",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": "rogue",
       "rarity": "unique",
       "cost": 10,
@@ -6864,10 +7428,12 @@
       "name": "Мисс Фортуна",
       "icon": "🐱🍀",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": "rogue",
       "rarity": "epic",
       "cost": 7,
@@ -6905,10 +7471,12 @@
       "name": "Танцующий дракон",
       "icon": "🐉💃",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 12,
@@ -6956,10 +7524,12 @@
       "name": "Райская птичка",
       "icon": "🦜",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 20,
@@ -7011,10 +7581,12 @@
       "name": "Ктулху",
       "icon": "🐙👁️",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 8,
@@ -7057,7 +7629,7 @@
           "trigger": "passive",
           "damage": 10,
           "damageType": "magic",
-          "lifesteal": 1.0,
+          "lifesteal": 1,
           "gainWeakestStack": true
         }
       ],
@@ -7072,10 +7644,12 @@
       "name": "Тим",
       "icon": "🐢",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 10,
@@ -7117,10 +7691,12 @@
       "name": "Точильный камень",
       "icon": "🪨",
       "color": "#8b949e",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "common",
       "cost": 4,
@@ -7171,10 +7747,12 @@
       "name": "Сфера маны (талисман)",
       "icon": "🔮",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 6,
@@ -7232,10 +7810,12 @@
       "name": "Кровавый амулет",
       "icon": "📿",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 8,
@@ -7270,10 +7850,12 @@
       "name": "Искажённый кристалл",
       "icon": "💎",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 7,
@@ -7328,10 +7910,12 @@
       "name": "Клык моржа",
       "icon": "🦷",
       "color": "#8b949e",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "common",
       "cost": 4,
@@ -7372,10 +7956,12 @@
       "name": "Драконья сфера",
       "icon": "🔮🐉",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": "mage",
       "rarity": "epic",
       "cost": 8,
@@ -7421,10 +8007,12 @@
       "name": "Свиток заклинания: Ледяная стрела",
       "icon": "📜❄️",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": "mage",
       "rarity": "rare",
       "cost": 4,
@@ -7476,10 +8064,20 @@
       "name": "Сердечный сосуд",
       "icon": "❤️",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 11,
@@ -7543,10 +8141,20 @@
       "name": "Сердце тьмы",
       "icon": "🖤",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 19,
@@ -7624,10 +8232,12 @@
       "name": "Копилка",
       "icon": "🐷",
       "color": "#8b949e",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "common",
       "cost": 3,
@@ -7674,10 +8284,12 @@
       "name": "Счастливая копилка",
       "icon": "🐷",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 7,
@@ -7731,10 +8343,12 @@
       "name": "Карта покупателя",
       "icon": "💳",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "rare",
       "cost": 4,
@@ -7775,10 +8389,12 @@
       "name": "Платиновая карта покупателя",
       "icon": "💳",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 8,
@@ -7826,7 +8442,7 @@
       "icon": "🪨",
       "color": "#8b949e",
       "shape": {
-        "w": 1,
+        "w": 2,
         "h": 1
       },
       "classRestriction": null,
@@ -7881,10 +8497,12 @@
       "name": "Горящий уголь",
       "icon": "🔥",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "rare",
       "cost": 2,
@@ -7940,10 +8558,12 @@
       "name": "Факел",
       "icon": "🔦",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "rare",
       "cost": 5,
@@ -7977,10 +8597,12 @@
       "name": "Пылающий факел",
       "icon": "🔥",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 5,
@@ -8025,10 +8647,12 @@
       "name": "Магический факел",
       "icon": "✨",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 11,
@@ -8068,10 +8692,12 @@
       "name": "Жёлудевой ошейник",
       "icon": "🌰",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": "rogue",
       "rarity": "epic",
       "cost": 8,
@@ -8107,10 +8733,12 @@
       "name": "Шипастый ошейник",
       "icon": "⭕",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": "warrior",
       "rarity": "legendary",
       "cost": 6,
@@ -8145,10 +8773,12 @@
       "name": "Счастливый клевер",
       "icon": "🍀",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": "rogue",
       "rarity": "rare",
       "cost": 2,
@@ -8208,7 +8838,7 @@
       "icon": "🐱",
       "color": "#f0c14b",
       "shape": {
-        "w": 1,
+        "w": 2,
         "h": 1
       },
       "classRestriction": null,
@@ -8254,10 +8884,12 @@
       "name": "Кузнечный молот",
       "icon": "🔨",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": "warrior",
       "rarity": "unique",
       "cost": 3,
@@ -8301,10 +8933,12 @@
       "name": "Масляная лампа",
       "icon": "🪔",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": "mage",
       "rarity": "epic",
       "cost": 7,
@@ -8344,10 +8978,12 @@
       "name": "Тёмный фонарь",
       "icon": "🏮",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 10,
@@ -8448,10 +9084,12 @@
       "name": "Котёл",
       "icon": "🫕",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": "rogue",
       "rarity": "unique",
       "cost": 10,
@@ -8521,10 +9159,12 @@
       "name": "Карманный песок",
       "icon": "🏖️",
       "color": "#8b949e",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "common",
       "cost": 2,
@@ -8560,10 +9200,12 @@
       "name": "Сэр Песок",
       "icon": "🏖️",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 5,
@@ -8653,10 +9295,12 @@
       "name": "Камень",
       "icon": "🪨",
       "color": "#8b949e",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "common",
       "cost": 1,
@@ -8698,10 +9342,12 @@
       "name": "Мешок камней",
       "icon": "🪨",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "rare",
       "cost": 3,
@@ -8712,11 +9358,6 @@
       "cooldown": 0,
       "craftOnly": false,
       "effects": [
-        {
-          "type": "repeatCast",
-          "magicOnly": false,
-          "trigger": "passive"
-        },
         {
           "type": "stonesMultiThrow",
           "trigger": "passive"
@@ -8733,10 +9374,12 @@
       "name": "Снежок",
       "icon": "⛄",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 4,
@@ -8773,10 +9416,12 @@
       "name": "Кривой снеговик",
       "icon": "⛄",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 8,
@@ -8817,10 +9462,12 @@
       "name": "Повелитель снега",
       "icon": "❄️",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 9,
@@ -8864,10 +9511,12 @@
       "name": "Замёрзшее пламя",
       "icon": "🧊",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 10,
@@ -8933,10 +9582,12 @@
       "name": "Сборщик крови",
       "icon": "🩸🌾",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 11,
@@ -8961,7 +9612,7 @@
         },
         {
           "type": "stackGainMult",
-          "value": 1.0,
+          "value": 1,
           "trigger": "passive"
         }
       ],
@@ -8993,7 +9644,7 @@
       "icon": "🎰",
       "color": "#a371f7",
       "shape": {
-        "w": 1,
+        "w": 2,
         "h": 1
       },
       "classRestriction": null,
@@ -9054,10 +9705,12 @@
       "name": "Стабильный перекомбобулятор",
       "icon": "⚗️",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 6,
@@ -9102,10 +9755,12 @@
       "name": "Призматическая сфера",
       "icon": "🔮",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 14,
@@ -9166,10 +9821,12 @@
       "name": "Тревожное присутствие",
       "icon": "👁️",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 10,
@@ -9208,10 +9865,12 @@
       "name": "Замедлитель времени",
       "icon": "⏳",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 8,
@@ -9355,10 +10014,12 @@
       "name": "Ящик богатства",
       "icon": "📦",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "rare",
       "cost": 5,
@@ -9392,10 +10053,12 @@
       "name": "Горсть монет",
       "icon": "🪙",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "rare",
       "cost": 9,
@@ -9436,10 +10099,12 @@
       "name": "Больше статов",
       "icon": "📊",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 5,
@@ -9489,10 +10154,12 @@
       "name": "Звезда мужества",
       "icon": "⭐",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "rare",
       "cost": 1,
@@ -9538,10 +10205,12 @@
       "name": "Лампа джинна",
       "icon": "🪔",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 11,
@@ -9611,10 +10280,12 @@
       "name": "Черника",
       "icon": "🫐",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "rare",
       "cost": 2,
@@ -9651,10 +10322,12 @@
       "name": "Банан",
       "icon": "🍌",
       "color": "#8b949e",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "common",
       "cost": 3,
@@ -9684,10 +10357,12 @@
       "name": "Чеснок",
       "icon": "🧄",
       "color": "#8b949e",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "common",
       "cost": 2,
@@ -9726,10 +10401,12 @@
       "name": "Целебные травы",
       "icon": "🌿",
       "color": "#8b949e",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "common",
       "cost": 4,
@@ -9764,10 +10441,12 @@
       "name": "Морковь",
       "icon": "🥕",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": "rogue",
       "rarity": "rare",
       "cost": 3,
@@ -9807,10 +10486,12 @@
       "name": "Ананас",
       "icon": "🍍",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 6,
@@ -9851,10 +10532,12 @@
       "name": "Перец чили",
       "icon": "🌶️",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": "mage",
       "rarity": "rare",
       "cost": 5,
@@ -9896,10 +10579,12 @@
       "name": "Мухомор",
       "icon": "🍄",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "rare",
       "cost": 3,
@@ -9935,10 +10620,12 @@
       "name": "Сыр",
       "icon": "🧀",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 8,
@@ -9972,10 +10659,12 @@
       "name": "Снежный пирог",
       "icon": "🍰❄️",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 6,
@@ -10027,10 +10716,12 @@
       "name": "Сколотый рубин",
       "icon": "◇❤️",
       "color": "#8b949e",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "common",
       "cost": 1,
@@ -10064,10 +10755,12 @@
       "name": "Дефектный рубин",
       "icon": "◆❤️",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "rare",
       "cost": 2,
@@ -10101,10 +10794,12 @@
       "name": "Обычный рубин",
       "icon": "💎❤️",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 4,
@@ -10139,10 +10834,12 @@
       "name": "Безупречный рубин",
       "icon": "💠❤️",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 8,
@@ -10176,10 +10873,12 @@
       "name": "Идеальный рубин",
       "icon": "👑❤️",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 16,
@@ -10213,10 +10912,12 @@
       "name": "Сколотый сапфир",
       "icon": "◇💙",
       "color": "#8b949e",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "common",
       "cost": 1,
@@ -10251,10 +10952,12 @@
       "name": "Дефектный сапфир",
       "icon": "◆💙",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "rare",
       "cost": 2,
@@ -10289,10 +10992,12 @@
       "name": "Обычный сапфир",
       "icon": "💎💙",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 4,
@@ -10327,10 +11032,12 @@
       "name": "Безупречный сапфир",
       "icon": "💠💙",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 8,
@@ -10365,10 +11072,12 @@
       "name": "Идеальный сапфир",
       "icon": "👑💙",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 16,
@@ -10403,10 +11112,12 @@
       "name": "Сколотый изумруд",
       "icon": "◇💚",
       "color": "#8b949e",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "common",
       "cost": 1,
@@ -10439,10 +11150,12 @@
       "name": "Дефектный изумруд",
       "icon": "◆💚",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "rare",
       "cost": 2,
@@ -10475,10 +11188,12 @@
       "name": "Обычный изумруд",
       "icon": "💎💚",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 4,
@@ -10511,10 +11226,12 @@
       "name": "Безупречный изумруд",
       "icon": "💠💚",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 8,
@@ -10547,10 +11264,12 @@
       "name": "Идеальный изумруд",
       "icon": "👑💚",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 16,
@@ -10583,10 +11302,12 @@
       "name": "Сколотый топаз",
       "icon": "◇💛",
       "color": "#8b949e",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "common",
       "cost": 1,
@@ -10616,10 +11337,12 @@
       "name": "Дефектный топаз",
       "icon": "◆💛",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "rare",
       "cost": 2,
@@ -10649,10 +11372,12 @@
       "name": "Обычный топаз",
       "icon": "💎💛",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 4,
@@ -10682,10 +11407,12 @@
       "name": "Безупречный топаз",
       "icon": "💠💛",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 8,
@@ -10715,10 +11442,12 @@
       "name": "Идеальный топаз",
       "icon": "👑💛",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 16,
@@ -10748,10 +11477,12 @@
       "name": "Сколотый аметист",
       "icon": "◇💜",
       "color": "#8b949e",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "common",
       "cost": 1,
@@ -10781,10 +11512,12 @@
       "name": "Дефектный аметист",
       "icon": "◆💜",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "rare",
       "cost": 2,
@@ -10814,10 +11547,12 @@
       "name": "Обычный аметист",
       "icon": "💎💜",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 4,
@@ -10847,10 +11582,12 @@
       "name": "Безупречный аметист",
       "icon": "💠💜",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 8,
@@ -10880,10 +11617,12 @@
       "name": "Идеальный аметист",
       "icon": "👑💜",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 16,
@@ -11308,10 +12047,12 @@
       "name": "Колода карт",
       "icon": "🃏",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "rare",
       "cost": 3,
@@ -11359,10 +12100,12 @@
       "name": "Туз пик",
       "icon": "🃏♠️",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "rare",
       "cost": 3,
@@ -11399,10 +12142,12 @@
       "name": "Влюблённые",
       "icon": "🃏💕",
       "color": "#8b949e",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "common",
       "cost": 3,
@@ -11441,7 +12186,7 @@
       "icon": "🃏🤡",
       "color": "#a371f7",
       "shape": {
-        "w": 1,
+        "w": 2,
         "h": 1
       },
       "classRestriction": null,
@@ -11489,10 +12234,12 @@
       "name": "Реверс!",
       "icon": "🃏🔄",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "rare",
       "cost": 3,
@@ -11528,7 +12275,7 @@
       "icon": "🃏🐉",
       "color": "#a371f7",
       "shape": {
-        "w": 1,
+        "w": 2,
         "h": 1
       },
       "classRestriction": null,
@@ -11589,10 +12336,12 @@
       "name": "Голографическая огненная ящерица",
       "icon": "🃏🦎",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 5,
@@ -11652,10 +12401,20 @@
       "name": "Джимбо",
       "icon": "🃏🤠",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 4,
@@ -11703,10 +12462,12 @@
       "name": "Тёмнейший лотос",
       "icon": "🪷🌑",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 5,
@@ -11754,10 +12515,12 @@
       "name": "Радужный значок",
       "icon": "🌈",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 5,
@@ -11797,10 +12560,12 @@
       "name": "Каменный значок",
       "icon": "🪨",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 5,
@@ -11869,10 +12634,12 @@
       "name": "Листовой значок",
       "icon": "🍃",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 5,
@@ -11933,10 +12700,12 @@
       "name": "Черепной значок",
       "icon": "💀",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 5,
@@ -11977,10 +12746,12 @@
       "name": "Волчий значок",
       "icon": "🐺",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 5,
@@ -12044,10 +12815,12 @@
       "name": "Огненный значок",
       "icon": "🔥",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 5,
@@ -12099,10 +12872,12 @@
       "name": "Магический значок",
       "icon": "✨",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 5,
@@ -12155,10 +12930,12 @@
       "name": "Значок головоломки",
       "icon": "🧩",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 5,
@@ -12201,10 +12978,12 @@
       "name": "Верёвочный значок",
       "icon": "🧵",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 5,
@@ -12262,10 +13041,12 @@
       "name": "Артефактный камень: Холод",
       "icon": "🪨❄️",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 10,
@@ -12320,10 +13101,12 @@
       "name": "Артефактный камень: Жар",
       "icon": "🪨🔥",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 9,
@@ -12373,10 +13156,12 @@
       "name": "Артефактный камень: Смерть",
       "icon": "💀",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 8,
@@ -12427,10 +13212,20 @@
       "name": "Подарок",
       "icon": "🎁",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 10,
@@ -12482,10 +13277,12 @@
       "name": "Пряничный Джерри",
       "icon": "🍪",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 8,
@@ -12539,10 +13336,12 @@
       "name": "Тыква",
       "icon": "🎃",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 8,
@@ -12595,10 +13394,12 @@
       "name": "Счастливая бомба",
       "icon": "🎉",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 7,
@@ -12633,10 +13434,12 @@
       "name": "Поп",
       "icon": "💥",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 6,
@@ -12671,10 +13474,12 @@
       "name": "Маленький каштан",
       "icon": "🌰",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 6,
@@ -12715,10 +13520,12 @@
       "name": "Блестящая раковина",
       "icon": "🐚",
       "color": "#8b949e",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "common",
       "cost": 2,
@@ -12755,10 +13562,12 @@
       "name": "Тотем раковины",
       "icon": "🗿",
       "color": "#58a6ff",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "rare",
       "cost": 5,
@@ -12823,10 +13632,12 @@
       "name": "Флейта",
       "icon": "🎵",
       "color": "#a371f7",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "epic",
       "cost": 6,
@@ -12874,10 +13685,12 @@
       "name": "Фанфары",
       "icon": "🎺",
       "color": "#ff7b72",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "godly",
       "cost": 7,
@@ -12909,10 +13722,12 @@
       "name": "Повторитель",
       "icon": "🔁",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 8,
@@ -12948,10 +13763,12 @@
       "name": "Куберт",
       "icon": "🧊",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 8,
@@ -12983,10 +13800,12 @@
       "name": "Мистер Страглз",
       "icon": "😰",
       "color": "#ffa657",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "unique",
       "cost": 10,
@@ -13022,10 +13841,12 @@
       "name": "Миссис Страглз",
       "icon": "😤",
       "color": "#f0c14b",
-      "shape": {
-        "w": 1,
-        "h": 1
-      },
+      "shape": [
+        [
+          0,
+          0
+        ]
+      ],
       "classRestriction": null,
       "rarity": "legendary",
       "cost": 7,
