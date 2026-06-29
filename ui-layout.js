@@ -323,11 +323,86 @@
     syncBattleSceneGridMetrics();
   }
 
+  const FLANK_HERO_DOM_IDS = ["player-avatar-panel", "enemy-avatar-panel", "battle-thought-arena"];
+
+  function clearFlankHeroInlineStyles() {
+    FLANK_HERO_DOM_IDS.forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      ["left", "top", "right", "bottom", "width", "max-width", "transform"].forEach((prop) => {
+        el.style.removeProperty(prop);
+      });
+    });
+  }
+
+  /** L2 hero slots anchored to backpack centers on #game-canvas (Safari-safe, 4-layer). */
+  function syncFlankArenaHeroAnchors() {
+    const fieldCol = document.getElementById("prep-field-column");
+    const objectsLayer = document.getElementById("layer-objects");
+    const canvas = document.getElementById("game-canvas");
+    if (!fieldCol || !canvas || typeof window.getBattleTeamAnchorClient !== "function") return;
+
+    const originRect = objectsLayer?.getBoundingClientRect() ?? fieldCol.getBoundingClientRect();
+    const canvasRect = canvas.getBoundingClientRect();
+    if (originRect.width <= 0 || canvasRect.width <= 0) return;
+
+    const heroColW = readCssPx(
+      "--battle-hero-col-w",
+      readCssPx("--desktop-battle-hero-col-w", 180),
+    );
+    const uiScale = readCssPx("--ui-scale", 1);
+    const rowGap = Math.round(6 * uiScale);
+    const heroRowTop = canvasRect.bottom - originRect.top + rowGap;
+    const edgePad = Math.max(4, Math.round(4 * uiScale));
+
+    const anchors = {};
+
+    [
+      { team: "player", panelId: "player-avatar-panel" },
+      { team: "enemy", panelId: "enemy-avatar-panel" },
+    ].forEach(({ team, panelId }) => {
+      const anchor = window.getBattleTeamAnchorClient(team);
+      const panel = document.getElementById(panelId);
+      if (!anchor || !panel) return;
+
+      const w = Math.round(Math.min(heroColW, Math.max(96, heroColW)));
+      const left = anchor.x - originRect.left - w / 2;
+      const clampedLeft = Math.max(edgePad, Math.min(originRect.width - w - edgePad, left));
+
+      panel.style.position = "absolute";
+      panel.style.left = `${Math.round(clampedLeft)}px`;
+      panel.style.top = `${Math.round(heroRowTop)}px`;
+      panel.style.width = `${w}px`;
+      panel.style.maxWidth = `${w}px`;
+      panel.style.right = "auto";
+      panel.style.bottom = "auto";
+      panel.style.transform = "none";
+
+      anchors[team] = { x: clampedLeft + w / 2, w };
+    });
+
+    const thoughtArena = document.getElementById("battle-thought-arena");
+    if (thoughtArena && anchors.player && anchors.enemy) {
+      const innerPad = Math.round(8 * uiScale);
+      const left = Math.min(anchors.player.x, anchors.enemy.x) + innerPad;
+      const right = Math.max(anchors.player.x, anchors.enemy.x) - innerPad;
+      const arenaW = Math.max(64, right - left);
+      thoughtArena.style.position = "absolute";
+      thoughtArena.style.left = `${Math.round(left)}px`;
+      thoughtArena.style.width = `${Math.round(arenaW)}px`;
+      thoughtArena.style.top = `${Math.round(heroRowTop)}px`;
+      thoughtArena.style.right = "auto";
+      thoughtArena.style.bottom = "auto";
+      thoughtArena.style.minHeight = `${readCssPx("--battle-thought-arena-min-h", 110)}px`;
+    }
+  }
+
   function syncBattleSceneGridMetrics() {
     const root = document.documentElement;
     if (root.dataset.battleArenaLayout !== "true") return;
     if (root.dataset.battleHeroPlacement !== "flank-arena") return;
     if (!isBattleUiPhase()) return;
+    syncFlankArenaHeroAnchors();
     if (typeof syncFxCanvasGeometry === "function") syncFxCanvasGeometry();
     if (typeof syncBattleHudAnchors === "function") syncBattleHudAnchors();
   }
@@ -409,8 +484,14 @@
 
   function setBattleHeroPlacement(mode) {
     const root = document.documentElement;
-    if (mode) root.dataset.battleHeroPlacement = mode;
-    else root.removeAttribute("data-battle-hero-placement");
+    if (mode) {
+      root.dataset.battleHeroPlacement = mode;
+      root.dataset.battleHeroAnchor = mode === "flank-arena" ? "canvas" : "false";
+    } else {
+      root.removeAttribute("data-battle-hero-placement");
+      root.removeAttribute("data-battle-hero-anchor");
+      clearFlankHeroInlineStyles();
+    }
   }
 
   const BATTLE_LAYOUT_VAR_NAMES = [

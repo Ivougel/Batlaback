@@ -2,21 +2,13 @@
  * Единая раскладка фазы боя на всех tier:
  * html[data-battle-hero-placement="flank-arena"]
  *
- * Слоты (нижний ряд): player | arena | enemy
- * JS задаёт --battle-hero-col-w, --battle-hero-img-h, --battle-thought-arena-min-h
+ * Герои (L2) + HUD (L4) якорятся к центрам рюкзаков на canvas через JS
+ * (syncFlankArenaHeroAnchors / getBattleTeamAnchorClient).
  *
- * 4-layer compositor: L1/L2 → display:contents (участники grid),
- * L3/L4 остаются absolute-оверлеями поверх сцены.
+ * 4-layer: L1 canvas, L2 avatars (absolute), L3 fx, L4 hud overlay.
  */
 
-/* ─── Layer compositor ↔ CSS Grid ─── */
-
-html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #layer-world,
-html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #layer-world,
-html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #layer-objects,
-html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #layer-objects {
-  display: contents;
-}
+/* ─── Layer compositor (battle) ─── */
 
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #layer-fx,
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #layer-fx,
@@ -38,10 +30,13 @@ html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #layer-
   z-index: var(--z-layer-hud);
 }
 
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #layer-objects,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #layer-objects {
+  z-index: var(--z-layer-objects);
+}
+
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .scene-bg,
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .scene-bg {
-  grid-column: 1 / -1;
-  grid-row: 1 / -1;
   position: absolute;
   inset: 0;
   z-index: 0;
@@ -80,23 +75,12 @@ html[data-battle-hero-placement="flank-arena"][data-tablet-prep-hero="true"] #ap
   --battle-portrait-zoom: 1.0;
 }
 
-/* ─── Grid: canvas / player | arena | enemy ─── */
+/* ─── Scene column + canvas (L1) ─── */
 
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .prep-field-column,
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .prep-field-column {
-  display: grid;
-  grid-template-columns:
-    minmax(0, var(--battle-hero-col-w, var(--desktop-battle-hero-col-w, var(--battle-hero-col-w-fallback))))
-    minmax(96px, 1fr)
-    minmax(0, var(--battle-hero-col-w, var(--desktop-battle-hero-col-w, var(--battle-hero-col-w-fallback))));
-  grid-template-rows: auto minmax(var(--battle-thought-arena-min-h, var(--desktop-battle-thought-arena-min-h, var(--battle-thought-arena-min-h-fallback))), 1fr);
-  grid-template-areas:
-    "canvas canvas canvas"
-    "player arena enemy";
-  align-items: end;
-  justify-items: stretch;
-  column-gap: calc(8px * var(--ui-scale));
-  row-gap: calc(6px * var(--ui-scale));
+  display: block;
+  position: relative;
   width: 100%;
   height: 100%;
   min-height: 0;
@@ -112,23 +96,21 @@ html[data-battle-hero-placement="flank-arena"][data-tablet-prep-hero="true"] #ap
   padding-bottom: var(--tablet-battle-chrome-bottom, 72px);
 }
 
-html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .prep-field-island,
-html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .prep-field-island {
-  grid-area: canvas;
-  position: relative !important;
-  justify-self: center;
-  align-self: start;
-  left: auto !important;
-  top: auto !important;
-  margin: calc(var(--prep-scene-top, 14px) + var(--field-offset-y, 0px)) auto 0;
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #layer-world .prep-field-island,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #layer-world .prep-field-island {
+  position: absolute;
+  top: calc(var(--prep-scene-top, 14px) + var(--field-offset-y, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
   width: var(--battle-canvas-display-w, var(--battle-canvas-w)) !important;
   height: var(--battle-canvas-display-h, var(--battle-canvas-h)) !important;
-  max-width: 100% !important;
+  max-width: calc(100% - 8px) !important;
 }
 
-html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"] .prep-field-island,
-html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="replay"] .prep-field-island {
-  margin-top: 0;
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"] #layer-world .prep-field-island,
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="replay"] #layer-world .prep-field-island {
+  top: 0;
 }
 
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-canvas-stage,
@@ -142,47 +124,45 @@ html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle
 
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-scene-ui,
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-scene-ui {
-  display: contents !important;
+  display: block !important;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
 }
 
-/* ─── Slot 1: player ─── */
+/* ─── Slot 1: player (L2 — left/top via JS) ─── */
 
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-scene-avatar-player,
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-scene-avatar-player {
-  grid-area: player;
-  position: relative !important;
-  justify-self: stretch;
-  align-self: end;
-  width: 100%;
-  max-width: var(--battle-hero-col-w, var(--desktop-battle-hero-col-w, 100%));
+  position: absolute !important;
   inset: auto !important;
   transform: none !important;
+  width: var(--battle-hero-col-w, var(--desktop-battle-hero-col-w, 100%));
+  max-width: var(--battle-hero-col-w, var(--desktop-battle-hero-col-w, 100%));
   pointer-events: auto;
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  justify-content: flex-end;
+  justify-content: flex-start;
   overflow: visible;
   z-index: 10;
 }
 
-/* ─── Slot 2: enemy ─── */
+/* ─── Slot 2: enemy (L2 — left/top via JS) ─── */
 
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-scene-avatar-enemy,
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-scene-avatar-enemy {
-  grid-area: enemy;
-  position: relative !important;
-  justify-self: stretch;
-  align-self: end;
-  width: 100%;
-  max-width: var(--battle-hero-col-w, var(--desktop-battle-hero-col-w, 100%));
+  position: absolute !important;
   inset: auto !important;
   transform: none !important;
+  width: var(--battle-hero-col-w, var(--desktop-battle-hero-col-w, 100%));
+  max-width: var(--battle-hero-col-w, var(--desktop-battle-hero-col-w, 100%));
   pointer-events: auto;
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  justify-content: flex-end;
+  justify-content: flex-start;
   overflow: visible;
   z-index: 10;
 }
@@ -237,14 +217,13 @@ html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar
 
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-thought-arena,
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-thought-arena {
-  grid-area: arena;
-  align-self: stretch;
-  justify-self: stretch;
-  width: 100%;
-  min-height: var(--battle-thought-arena-min-h, var(--desktop-battle-thought-arena-min-h, var(--battle-thought-arena-min-h-fallback)));
+  position: absolute !important;
+  inset: auto !important;
   margin: 0;
   flex: unset;
   z-index: 8;
+  pointer-events: none;
+  min-height: var(--battle-thought-arena-min-h, var(--desktop-battle-thought-arena-min-h, var(--battle-thought-arena-min-h-fallback)));
 }
 
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .avatar-thought-slot,

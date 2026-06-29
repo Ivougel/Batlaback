@@ -1449,6 +1449,9 @@ function syncBattleArenaLayout() {
   if (typeof window.syncFxCanvasGeometry === "function") {
     requestAnimationFrame(() => window.syncFxCanvasGeometry());
   }
+  if (typeof window.syncBattleSceneGridMetrics === "function") {
+    requestAnimationFrame(() => window.syncBattleSceneGridMetrics());
+  }
 }
 
 function bindRunStatsToggle() {
@@ -2932,6 +2935,30 @@ function boardCellClientCenter(col, row, team = prepViewSide) {
     y: canvasRect.top + (rect.y + rect.h / 2) * scaleY,
   };
 }
+
+/** Canvas logical coords → viewport client coords (battle + prep). */
+function canvasPointToClient(x, y) {
+  if (!canvas || canvas.width <= 0 || canvas.height <= 0) return null;
+  const canvasRect = canvas.getBoundingClientRect();
+  if (canvasRect.width <= 0 || canvasRect.height <= 0) return null;
+  const scaleX = canvasRect.width / canvas.width;
+  const scaleY = canvasRect.height / canvas.height;
+  return {
+    x: canvasRect.left + x * scaleX,
+    y: canvasRect.top + y * scaleY,
+  };
+}
+
+/** Horizontal center of a team's backpack field in viewport coords. */
+function getBattleTeamAnchorClient(team) {
+  if (!isBattleUiPhase()) return null;
+  const x = gridOrigin(team) + GRID_INNER_W / 2;
+  const y = layoutBackpackY() + GRID_INNER_H / 2;
+  return canvasPointToClient(x, y);
+}
+
+window.canvasPointToClient = canvasPointToClient;
+window.getBattleTeamAnchorClient = getBattleTeamAnchorClient;
 
 function setGamepadBoardFocus(col, row) {
   if (phase !== "prep" || !canEditPrepSide()) return;
@@ -5426,6 +5453,9 @@ function renderPlayerProfiles() {
         }
       }
       if (typeof syncBattleHudAnchors === "function") syncBattleHudAnchors();
+    }
+    if (typeof syncBattleSceneGridMetrics === "function") {
+      requestAnimationFrame(() => syncBattleSceneGridMetrics());
     }
   } else {
     const battleHud = document.getElementById("battle-run-hud");
