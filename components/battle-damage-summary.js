@@ -415,7 +415,7 @@ function ensureDamageFlightLayer() {
     layer.id = "battle-damage-fx-layer";
     layer.className = "battle-damage-fx-layer";
     layer.setAttribute("aria-hidden", "true");
-    document.body.appendChild(layer);
+    appendToLayerFx(layer);
   }
   return layer;
 }
@@ -722,7 +722,7 @@ function ensureCountdownOverlay() {
     el.innerHTML = `<span class="battle-countdown-digit"></span>`;
     el.style.display = "none";
     el.hidden = true;
-    document.body.appendChild(el);
+    appendToLayerFx(el);
   }
   return el;
 }

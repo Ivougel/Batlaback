@@ -189,7 +189,7 @@ function ensureItemFlightLayer() {
     layer.id = "item-flight-fx-layer";
     layer.className = "item-flight-fx-layer item-movement-fx-layer displace-fx-layer";
     layer.setAttribute("aria-hidden", "true");
-    document.body.appendChild(layer);
+    appendToLayerFx(layer);
   }
   return layer;
 }

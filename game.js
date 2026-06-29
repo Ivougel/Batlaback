@@ -85,7 +85,7 @@ function applyGridMetricsFromCss() {
 
 window.applyGridMetricsFromCss = applyGridMetricsFromCss;
 
-let canvas, ctx;
+let canvas, ctx, fxCanvas, fxCtx;
 let lastGameLoopDt = 0.016;
 let phase = "prep";
 let layoutCell = GRID_CELL;
@@ -468,11 +468,25 @@ function updatePrepSideUI() {
   updateShopGoldStat();
 }
 
-function updateShopGoldStat() {
-  const el = document.getElementById("shop-gold-stat");
+function syncRunHudPhase() {
+  const phaseEl = document.getElementById("run-hud-phase");
+  if (!phaseEl) return;
+  const labels = { prep: "Подготовка", battle: "Бой", replay: "Повтор" };
+  const label = labels[phase] || "";
+  phaseEl.textContent = label;
+  phaseEl.hidden = !label;
+  if (label) phaseEl.removeAttribute("aria-hidden");
+  else phaseEl.setAttribute("aria-hidden", "true");
+}
+
+function updateShopSideStat() {
+  const el = document.getElementById("shop-side-stat");
   if (!el || phase !== "prep") return;
-  const st = getSideState(prepViewSide);
-  el.textContent = `💰 ${st.gold} · ${getShopSideLabel(prepViewSide)}`;
+  el.textContent = getShopSideLabel(prepViewSide);
+}
+
+function updateShopGoldStat() {
+  updateShopSideStat();
 }
 
 function showGameModeStep() {
@@ -1058,6 +1072,8 @@ function init() {
 
   canvas = document.getElementById("game-canvas");
   ctx = canvas.getContext("2d");
+  fxCanvas = document.getElementById("canvas-fx");
+  fxCtx = fxCanvas?.getContext("2d") || null;
   applyPhaseCanvasLayout();
   syncBattleArenaLayout();
   canvas.addEventListener("mousedown", (e) => {
@@ -1271,10 +1287,17 @@ function applyPhaseCanvasLayout() {
     canvas.width = BATTLE_CANVAS_W;
     canvas.height = BATTLE_CANVAS_H;
   }
+  if (fxCanvas) {
+    fxCanvas.width = canvas.width;
+    fxCanvas.height = canvas.height;
+  }
   layoutCanvasH = canvas.height;
   if (typeof warmupCellEmojiMetrics === "function") warmupCellEmojiMetrics(ctx);
   if (typeof window.fitCanvasDisplaySize === "function") {
     window.fitCanvasDisplaySize();
+  }
+  if (typeof window.syncFxCanvasGeometry === "function") {
+    requestAnimationFrame(() => window.syncFxCanvasGeometry());
   }
 }
 
@@ -1337,6 +1360,23 @@ function renderPhase() {
   if (phase !== "prep") setPrepDollOpen(false);
   if (phase !== "prep" && typeof closeMobilePrepShop === "function") closeMobilePrepShop();
   if (typeof applyUiLayout === "function") scheduleLayoutAfterPhase();
+  syncRunHudPhase();
+  syncBattleHudVisibility();
+}
+
+function syncBattleHudVisibility() {
+  const battleHud = document.getElementById("battle-run-hud");
+  const runHud = document.getElementById("run-hud");
+  const live = isBattleUiPhase();
+  if (battleHud) {
+    battleHud.hidden = !live;
+    if (live) battleHud.removeAttribute("aria-hidden");
+    else battleHud.setAttribute("aria-hidden", "true");
+  }
+  if (runHud) runHud.hidden = live;
+  if (live && typeof syncBattleHudAnchors === "function") {
+    requestAnimationFrame(() => syncBattleHudAnchors());
+  }
 }
 
 function scheduleLayoutAfterPhase() {
@@ -1406,6 +1446,9 @@ function syncBattleArenaLayout() {
   if (typeof window.fitCanvasDisplaySize === "function") {
     window.fitCanvasDisplaySize();
   }
+  if (typeof window.syncFxCanvasGeometry === "function") {
+    requestAnimationFrame(() => window.syncFxCanvasGeometry());
+  }
 }
 
 function bindRunStatsToggle() {
@@ -1427,14 +1470,14 @@ function bindRunStatsToggle() {
 }
 
 function bindPrepHeroTooltip() {
-  const hud = document.getElementById("prep-stats-hud");
+  const trigger = document.getElementById("btn-prep-hero-info");
   const tooltip = document.getElementById("prep-hero-tooltip");
-  if (!hud || !tooltip) return;
+  if (!trigger || !tooltip) return;
 
   const open = () => {
     refreshPrepHeroTooltip();
     tooltip.classList.remove("hidden");
-    hud.setAttribute("aria-expanded", "true");
+    trigger.setAttribute("aria-expanded", "true");
   };
 
   const toggle = (e) => {
@@ -1443,8 +1486,8 @@ function bindPrepHeroTooltip() {
     else closePrepHeroTooltip();
   };
 
-  hud.addEventListener("click", toggle);
-  hud.addEventListener("keydown", (e) => {
+  trigger.addEventListener("click", toggle);
+  trigger.addEventListener("keydown", (e) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       toggle(e);
@@ -1454,7 +1497,7 @@ function bindPrepHeroTooltip() {
 
   document.addEventListener("click", (e) => {
     if (tooltip.classList.contains("hidden")) return;
-    if (e.target.closest("#prep-stats-hud") || e.target.closest("#prep-hero-tooltip")) return;
+    if (e.target.closest("#btn-prep-hero-info") || e.target.closest("#prep-hero-tooltip")) return;
     closePrepHeroTooltip();
   });
 }
@@ -1479,7 +1522,7 @@ function refreshPrepHeroTooltip() {
 
 function closePrepHeroTooltip() {
   document.getElementById("prep-hero-tooltip")?.classList.add("hidden");
-  document.getElementById("prep-stats-hud")?.setAttribute("aria-expanded", "false");
+  document.getElementById("btn-prep-hero-info")?.setAttribute("aria-expanded", "false");
 }
 
 function isRunStatsPopoverOpen() {
@@ -2922,18 +2965,18 @@ function clearGamepadBoardFocus() {
 }
 
 function drawGamepadBoardFocus() {
-  if (!gamepadBoardFocus || phase !== "prep") return;
+  if (!gamepadBoardFocus || phase !== "prep" || !fxCtx) return;
   const team = prepViewSide;
   const { col, row } = gamepadBoardFocus;
   const { x, y, w, h } = cellRect(team, col, row);
-  ctx.save();
-  ctx.strokeStyle = "#f0c14b";
-  ctx.lineWidth = 2.5;
-  ctx.shadowColor = "rgba(240, 193, 75, 0.55)";
-  ctx.shadowBlur = 8;
+  fxCtx.save();
+  fxCtx.strokeStyle = "#f0c14b";
+  fxCtx.lineWidth = 2.5;
+  fxCtx.shadowColor = "rgba(240, 193, 75, 0.55)";
+  fxCtx.shadowBlur = 8;
   roundRect(x + 1.5, y + 1.5, w - 3, h - 3, 5);
-  ctx.stroke();
-  ctx.restore();
+  fxCtx.stroke();
+  fxCtx.restore();
 }
 
 function dropGamepadAtBoardFocus() {
@@ -3258,6 +3301,11 @@ function rotateDragItem() {
 }
 
 function draw() {
+  drawWorldLayer();
+  drawFxLayer();
+}
+
+function drawWorldLayer() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawBackground();
   if (phase === "prep") {
@@ -3280,18 +3328,10 @@ function draw() {
     if (typeof drawAllPrepItemIdleEffects === "function") {
       drawAllPrepItemIdleEffects(ctx, st.items, side, synergyAnimTime);
     }
-    drawDisplaceAnimations(ctx, side);
     drawSynergyVisuals(ctx, synergyAnimTime, synergyPreviewBuilt, "over", side);
     if (typeof drawPrepSynergyEnhancements === "function") {
       drawPrepSynergyEnhancements(ctx, synergyAnimTime, side, st.items);
     }
-    if (canEditPrepSide() && hoverSlot && !dragPayload && !gamepadBoardFocus) drawHoverCell();
-    if (canEditPrepSide() && gamepadBoardFocus && isGamepadInteraction()) drawGamepadBoardFocus();
-    if (canEditPrepSide() && dragPayload && (hoverCell || hoverSlot)) {
-      if (typeof drawPrepDropPreview === "function") drawPrepDropPreview(ctx, side, st);
-      else drawDropPreview();
-    }
-    if (typeof drawPrepCellReactions === "function") drawPrepCellReactions(ctx, side);
     ctx.restore();
   } else if (isBattleUiPhase()) {
     if (battleState) {
@@ -3313,10 +3353,7 @@ function draw() {
   if (isBattleUiPhase() && battleState) {
     drawPlacedItems(battleState.player.items, "player", false, true);
     drawPlacedItems(battleState.enemy.items, "enemy", true, true);
-    drawAttackAnimations(ctx, battleState);
-    renderBattleEffectsOverlay(battleState);
     if (typeof updateBattleAnalyzer === "function") updateBattleAnalyzer(battleState, 0);
-    if (typeof renderBattleCountdown === "function") renderBattleCountdown(battleState);
     if (isBattleUiPhase() && typeof drawEmotionLayer === "function") {
       drawEmotionLayer(ctx, battleState, (Date.now() - battleStartTime) / 1000);
     }
@@ -3328,8 +3365,34 @@ function draw() {
     if (typeof clearDamageFlightLayer === "function") clearDamageFlightLayer();
     if (typeof hideBattleCountdownOverlay === "function") hideBattleCountdownOverlay();
   }
-  if (phase === "battle" && battleState && typeof drawBattleHud === "function") {
-    drawBattleHud(ctx, battleState);
+}
+
+function drawFxLayer() {
+  if (!fxCtx || !fxCanvas) return;
+  fxCtx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
+  if (phase === "prep") {
+    const side = prepViewSide;
+    const st = getSideState(side);
+    const shake = typeof getPrepBackpackShakeOffset === "function"
+      ? getPrepBackpackShakeOffset()
+      : { x: 0, y: 0 };
+    fxCtx.save();
+    fxCtx.translate(shake.x, shake.y);
+    drawDisplaceAnimations(fxCtx, side);
+    if (canEditPrepSide() && hoverSlot && !dragPayload && !gamepadBoardFocus) drawHoverCell();
+    if (canEditPrepSide() && gamepadBoardFocus && isGamepadInteraction()) drawGamepadBoardFocus();
+    if (canEditPrepSide() && dragPayload && (hoverCell || hoverSlot)) {
+      if (typeof drawPrepDropPreview === "function") drawPrepDropPreview(fxCtx, side, st);
+      else drawDropPreview();
+    }
+    if (typeof drawPrepCellReactions === "function") drawPrepCellReactions(fxCtx, side);
+    fxCtx.restore();
+    return;
+  }
+  if (isBattleUiPhase() && battleState) {
+    drawAttackAnimations(fxCtx, battleState);
+    renderBattleEffectsOverlay(battleState);
+    if (typeof renderBattleCountdown === "function") renderBattleCountdown(battleState);
   }
 }
 
@@ -3557,16 +3620,16 @@ function drawItemPreview(x, y, def, itemId, selected, rotation, targetCtx = ctx)
 }
 
 function drawHoverCell() {
-  if (!hoverSlot) return;
+  if (!hoverSlot || !fxCtx) return;
   const team = prepViewSide;
   const { x, y, w, h } = cellRect(team, hoverSlot.col, hoverSlot.row);
-  ctx.fillStyle = team === "enemy" ? "rgba(248,81,73,0.25)" : "rgba(88,166,255,0.25)";
+  fxCtx.fillStyle = team === "enemy" ? "rgba(248,81,73,0.25)" : "rgba(88,166,255,0.25)";
   roundRect(x + 2, y + 2, w - 4, h - 4, 4);
-  ctx.fill();
+  fxCtx.fill();
 }
 
 function drawDropPreview() {
-  if (!dragPayload) return;
+  if (!dragPayload || !fxCtx) return;
   const team = prepViewSide;
   const st = getSideState(team);
   if (isContainerItem(dragPayload.itemId) && hoverCell) {
@@ -3584,9 +3647,9 @@ function drawDropPreview() {
     );
     rotateShape(ITEM_CATALOG[dragPayload.itemId].shape, dragPayload.rotation || 0).forEach(([dx, dy]) => {
       const { x, y, w, h } = cellRect(team, hoverCell.col + dx, hoverCell.row + dy);
-      ctx.fillStyle = valid ? "rgba(63,185,80,0.4)" : "rgba(248,81,73,0.4)";
+      fxCtx.fillStyle = valid ? "rgba(63,185,80,0.4)" : "rgba(248,81,73,0.4)";
       roundRect(x + 2, y + 2, w - 4, h - 4, 4);
-      ctx.fill();
+      fxCtx.fill();
     });
     return;
   }
@@ -3617,16 +3680,16 @@ function drawDropPreview() {
   const valid = placement.valid && benchOk && slotOk;
   rotateShape(ITEM_CATALOG[dragPayload.itemId].shape, placement.rotation).forEach(([dx, dy]) => {
     const { x, y, w, h } = cellRect(team, placement.col + dx, placement.row + dy);
-    ctx.fillStyle = valid ? "rgba(63,185,80,0.45)" : "rgba(248,81,73,0.45)";
+    fxCtx.fillStyle = valid ? "rgba(63,185,80,0.45)" : "rgba(248,81,73,0.45)";
     roundRect(x + 2, y + 2, w - 4, h - 4, 4);
-    ctx.fill();
+    fxCtx.fill();
   });
   displaced.forEach((item) => {
     getItemCells(item).forEach(([c, r]) => {
       const { x, y, w, h } = cellRect(team, c, r);
-      ctx.fillStyle = valid ? "rgba(210,153,34,0.35)" : "rgba(248,81,73,0.25)";
+      fxCtx.fillStyle = valid ? "rgba(210,153,34,0.35)" : "rgba(248,81,73,0.25)";
       roundRect(x + 2, y + 2, w - 4, h - 4, 4);
-      ctx.fill();
+      fxCtx.fill();
     });
   });
 }
@@ -5341,14 +5404,37 @@ function renderPlayerProfiles() {
     if (typeof ensureBattleHeroShells === "function") {
       ensureBattleHeroShells(battleState, playerProfile, enemyProfile);
     } else {
+      const battleHud = document.getElementById("battle-run-hud");
+      if (battleHud) {
+        battleHud.hidden = false;
+        battleHud.removeAttribute("aria-hidden");
+      }
       if (!playerAvatarEl.querySelector(".avatar-hero-shell")) {
         playerAvatarEl.innerHTML = renderAvatarHeroHTML(playerProfile, "player");
       }
       if (!enemyAvatarEl.querySelector(".avatar-hero-shell")) {
         enemyAvatarEl.innerHTML = renderAvatarHeroHTML(enemyProfile, "enemy");
       }
+      if (typeof renderAvatarBarsHTML === "function") {
+        const playerBars = document.getElementById("battle-hud-player");
+        const enemyBars = document.getElementById("battle-hud-enemy");
+        if (playerBars && !playerBars.querySelector(".avatar-hero-bars")) {
+          playerBars.innerHTML = renderAvatarBarsHTML(playerProfile, "player");
+        }
+        if (enemyBars && !enemyBars.querySelector(".avatar-hero-bars")) {
+          enemyBars.innerHTML = renderAvatarBarsHTML(enemyProfile, "enemy");
+        }
+      }
+      if (typeof syncBattleHudAnchors === "function") syncBattleHudAnchors();
     }
   } else {
+    const battleHud = document.getElementById("battle-run-hud");
+    if (battleHud) {
+      battleHud.hidden = true;
+      battleHud.setAttribute("aria-hidden", "true");
+    }
+    document.getElementById("battle-hud-player")?.replaceChildren();
+    document.getElementById("battle-hud-enemy")?.replaceChildren();
     if (!playerAvatarEl.querySelector(".profile-avatar") || playerAvatarEl.querySelector(".avatar-hero-shell")) {
       playerAvatarEl.innerHTML = renderProfileAvatarHTML(playerProfile, "player");
     }

@@ -72,10 +72,12 @@
   --character-slot-h: min(380px, calc(100vh - 480px));
   --character-scale: 1;
   --prep-character-slot-h: var(--character-slot-h);
-  --prep-hero-slot-left: 22%;
-  --prep-hero-slot-width: 17%;
+  --prep-hero-slot-left: 6%;
+  --prep-hero-slot-width: 14%;
   --prep-hero-slot-bottom: var(--gap-sm);
-  --prep-hero-slot-height: min(400px, 46vh);
+  --prep-hero-slot-height: min(200px, 28vh);
+  --prep-desktop-hero-max-h: min(148px, 22vh);
+  --prep-desktop-hero-max-w: min(120px, 11vw);
   --doll-slot-size: 38px;
   --doll-layer-w: calc(var(--prep-canvas-w) * 0.38);
   --doll-layer-h: calc(var(--character-slot-h, 320px) * 0.85);
@@ -87,6 +89,16 @@
   --fx-float-scale: 1;
   --fx-projectile-scale: 1;
   --battle-stats-panel-w: 276px;
+
+  /* Scene layer stack */
+  --z-layer-world: 10;
+  --z-layer-objects: 20;
+  --z-layer-fx: 30;
+  --z-layer-hud: 40;
+  --z-scene-chrome: 45;
+  --z-chrome: 50;
+  --z-system: 100;
+  --z-drag-ghost: 5;
 }
 
 @media (max-width: 1100px) {

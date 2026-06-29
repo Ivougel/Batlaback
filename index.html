@@ -5,16 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="mobile-web-app-capable" content="yes">
   <title>Backpack Battles — Автобатлер</title>
-  <link rel="stylesheet" href="styles/tokens.css">
-  <link rel="stylesheet" href="styles.css?v=16">
+  <link rel="stylesheet" href="styles/tokens.css?v=2">
+  <link rel="stylesheet" href="styles/layers.css?v=5">
+  <link rel="stylesheet" href="styles.css?v=19">
   <link rel="stylesheet" href="styles/combat-feed.css">
   <link rel="stylesheet" href="styles/emotion-thoughts.css?v=4">
   <link rel="stylesheet" href="styles/arena-equipment.css?v=1">
-  <link rel="stylesheet" href="styles/battle-arena-layout.css?v=3">
+  <link rel="stylesheet" href="styles/battle-arena-layout.css?v=4">
   <link rel="stylesheet" href="styles/mobile-prep.css?v=7">
-  <link rel="stylesheet" href="styles/tablet-side.css?v=18">
+  <link rel="stylesheet" href="styles/tablet-side.css?v=20">
   <link rel="stylesheet" href="styles/doll.css?v=20">
-  <script src="ui-layout.js?v=17"></script>
+  <script src="ui-layout.js?v=21"></script>
 </head>
 <body>
   <div id="app" data-phase="prep">
@@ -22,31 +23,100 @@
       <section class="board-section">
         <div class="battle-arena" id="battle-arena">
           <div class="prep-left-column" id="prep-left-column">
-            <div class="prep-field-column" id="prep-field-column">
-              <div class="prep-character-layer" id="prep-character-layer" aria-hidden="true">
-                <div class="prep-character" id="prep-character-player" hidden></div>
-                <div class="prep-character" id="prep-character-enemy" hidden></div>
-                <button type="button"
-                        class="btn-secondary btn-toggle-doll"
-                        id="btn-toggle-doll"
-                        aria-expanded="false"
-                        aria-controls="prep-doll-layer">
-                  🪆 Экипировка
-                </button>
+            <div class="prep-field-column scene-viewport" id="prep-field-column">
+
+              <!-- Layer 1 — Мир / сетка -->
+              <div class="layer layer-world" id="layer-world">
+                <div class="scene-bg" aria-hidden="true"></div>
+                <div class="prep-doll-layer" id="prep-doll-layer" aria-hidden="true">
+                  <div class="doll-slot" data-slot="head">👑</div>
+                  <div class="doll-slot" data-slot="chest">🫁</div>
+                  <div class="doll-slot" data-slot="leftHand">🤜</div>
+                  <div class="doll-slot" data-slot="rightHand">🤛</div>
+                  <div class="doll-slot" data-slot="gloves">🧤</div>
+                  <div class="doll-slot" data-slot="boots">👢</div>
+                  <div class="doll-slot" data-slot="ring1">💍</div>
+                  <div class="doll-slot" data-slot="ring2">💍</div>
+                  <div class="doll-slot" data-slot="amulet">📿</div>
+                </div>
+                <div class="prep-field-island" id="prep-field-island">
+                  <div class="battle-canvas-stage">
+                    <div class="canvas-scale-wrap canvas-stack">
+                      <canvas id="game-canvas"></canvas>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="prep-doll-layer" id="prep-doll-layer" aria-hidden="true">
-                <div class="doll-slot" data-slot="head">👑</div>
-                <div class="doll-slot" data-slot="chest">🫁</div>
-                <div class="doll-slot" data-slot="leftHand">🤜</div>
-                <div class="doll-slot" data-slot="rightHand">🤛</div>
-                <div class="doll-slot" data-slot="gloves">🧤</div>
-                <div class="doll-slot" data-slot="boots">👢</div>
-                <div class="doll-slot" data-slot="ring1">💍</div>
-                <div class="doll-slot" data-slot="ring2">💍</div>
-                <div class="doll-slot" data-slot="amulet">📿</div>
+
+              <!-- Layer 2 — Игровые объекты -->
+              <div class="layer layer-objects" id="layer-objects">
+                <div class="prep-character-layer" id="prep-character-layer" aria-hidden="true">
+                  <div class="prep-character" id="prep-character-player" hidden></div>
+                  <div class="prep-character" id="prep-character-enemy" hidden></div>
+                  <button type="button"
+                          class="btn-secondary btn-toggle-doll"
+                          id="btn-toggle-doll"
+                          aria-expanded="false"
+                          aria-controls="prep-doll-layer">
+                    🪆 Экипировка
+                  </button>
+                </div>
+                <div class="battle-scene-ui" id="battle-scene-ui" aria-hidden="true">
+                  <div class="battle-build-stats-anchor" id="battle-build-stats-anchor">
+                    <button type="button" class="btn-secondary battle-build-stats-btn" id="btn-battle-build-stats" aria-expanded="false" aria-controls="battle-build-stats-popover" title="Сравнение сборок">📊 Сборки</button>
+                    <div class="battle-build-stats-popover center-stats-panel hidden" id="battle-build-stats-popover" role="dialog" aria-labelledby="battle-build-stats-title" aria-modal="true">
+                      <div class="battle-build-stats-popover-head">
+                        <span id="battle-build-stats-title">Сравнение сборок</span>
+                      </div>
+                      <div id="battle-build-stats-content"></div>
+                    </div>
+                  </div>
+                  <div class="field-avatar-wrap battle-scene-avatar battle-scene-avatar-player" id="player-avatar-panel" aria-label="Аватар игрока">
+                    <button type="button" class="btn-secondary btn-player-stats" id="btn-player-stats" aria-expanded="false" aria-controls="player-characteristics-popup" title="H — характеристики">📋 Характеристики</button>
+                    <div class="field-avatar-slot" id="player-avatar-slot"></div>
+                    <div class="avatar-thought-slot" id="player-thought-slot" data-team="player" aria-live="polite" aria-label="Мысли игрока"></div>
+                    <div class="player-characteristics-popup hidden" id="player-characteristics-popup" role="dialog" aria-labelledby="player-char-title" aria-modal="true">
+                      <div id="player-characteristics-content"></div>
+                    </div>
+                  </div>
+                  <div class="center-stats-panel battle-scene-stats" id="battle-stats-panel" aria-label="Сравнение статов"></div>
+                  <div class="field-avatar-wrap battle-scene-avatar battle-scene-avatar-enemy" id="enemy-avatar-panel" aria-label="Аватар противника">
+                    <button type="button" class="btn-secondary btn-player-stats btn-enemy-stats" id="btn-enemy-stats" aria-expanded="false" aria-controls="enemy-characteristics-popup" title="Характеристики противника">📋 Характеристики</button>
+                    <div class="field-avatar-slot" id="enemy-avatar-slot"></div>
+                    <div class="avatar-thought-slot" id="enemy-thought-slot" data-team="enemy" aria-live="polite" aria-label="Мысли противника"></div>
+                    <div class="player-characteristics-popup fighter-char-popup-enemy hidden" id="enemy-characteristics-popup" role="dialog" aria-labelledby="enemy-char-title" aria-modal="true">
+                      <div id="enemy-characteristics-content"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="battle-thought-arena" id="battle-thought-arena" aria-live="polite" aria-label="Боевые эмоджи героев">
+                  <div class="arena-equipment-layer" id="arena-equipment-layer" aria-hidden="true"></div>
+                </div>
               </div>
-              <div class="prep-stats-stack">
-                <div class="prep-stats-hud" id="prep-stats-hud" aria-live="polite" role="button" tabindex="0" aria-haspopup="dialog" aria-expanded="false" aria-controls="prep-hero-tooltip"></div>
+
+              <!-- Layer 3 — FX -->
+              <div class="layer layer-fx" id="layer-fx" aria-hidden="true">
+                <div class="canvas-fx-anchor" id="canvas-fx-anchor">
+                  <canvas id="canvas-fx" class="canvas-fx-overlay" aria-hidden="true"></canvas>
+                </div>
+                <canvas id="ui-drag-ghost" class="ui-drag-ghost hidden" aria-hidden="true"></canvas>
+                <div id="battle-float-layer"></div>
+              </div>
+
+              <!-- Layer 4 — HUD (read-only stats) -->
+              <div class="layer layer-hud" id="layer-hud">
+                <div class="run-hud" id="run-hud">
+                  <div class="run-hud-phase" id="run-hud-phase" aria-hidden="true"></div>
+                  <div class="prep-stats-hud" id="prep-stats-hud" aria-live="polite"></div>
+                </div>
+                <div class="battle-run-hud" id="battle-run-hud" hidden aria-hidden="true">
+                  <div class="battle-hud-side" id="battle-hud-player" data-team="player"></div>
+                  <div class="battle-hud-side" id="battle-hud-enemy" data-team="enemy"></div>
+                </div>
+              </div>
+
+              <!-- Scene chrome: popovers tied to HUD -->
+              <div class="prep-hud-chrome" id="prep-hud-chrome">
                 <div class="prep-hero-tooltip hidden" id="prep-hero-tooltip" role="dialog" aria-labelledby="prep-hero-tooltip-title">
                   <div class="prep-hero-tooltip-title" id="prep-hero-tooltip-title"></div>
                   <div class="prep-hero-tooltip-desc" id="prep-hero-tooltip-desc"></div>
@@ -58,68 +128,35 @@
                   </div>
                 </div>
               </div>
-              <div class="prep-field-island" id="prep-field-island">
-                <div class="battle-canvas-stage">
-                  <div class="canvas-scale-wrap" style="position:relative;display:inline-block;width:100%;">
-                    <canvas id="game-canvas"></canvas>
-                  </div>
-                </div>
-              </div>
-              <div class="battle-scene-ui" id="battle-scene-ui" aria-hidden="true">
-                <div class="battle-build-stats-anchor" id="battle-build-stats-anchor">
-                  <button type="button" class="btn-secondary battle-build-stats-btn" id="btn-battle-build-stats" aria-expanded="false" aria-controls="battle-build-stats-popover" title="Сравнение сборок">📊 Сборки</button>
-                  <div class="battle-build-stats-popover center-stats-panel hidden" id="battle-build-stats-popover" role="dialog" aria-labelledby="battle-build-stats-title" aria-modal="true">
-                    <div class="battle-build-stats-popover-head">
-                      <span id="battle-build-stats-title">Сравнение сборок</span>
-                    </div>
-                    <div id="battle-build-stats-content"></div>
-                  </div>
-                </div>
-                <div class="field-avatar-wrap battle-scene-avatar battle-scene-avatar-player" id="player-avatar-panel" aria-label="Аватар игрока">
-                  <button type="button" class="btn-secondary btn-player-stats" id="btn-player-stats" aria-expanded="false" aria-controls="player-characteristics-popup" title="H — характеристики">📋 Характеристики</button>
-                  <div class="field-avatar-slot" id="player-avatar-slot"></div>
-                  <div class="avatar-thought-slot" id="player-thought-slot" data-team="player" aria-live="polite" aria-label="Мысли игрока"></div>
-                  <div class="player-characteristics-popup hidden" id="player-characteristics-popup" role="dialog" aria-labelledby="player-char-title" aria-modal="true">
-                    <div id="player-characteristics-content"></div>
-                  </div>
-                </div>
-                <div class="center-stats-panel battle-scene-stats" id="battle-stats-panel" aria-label="Сравнение статов"></div>
-                <div class="field-avatar-wrap battle-scene-avatar battle-scene-avatar-enemy" id="enemy-avatar-panel" aria-label="Аватар противника">
-                  <button type="button" class="btn-secondary btn-player-stats btn-enemy-stats" id="btn-enemy-stats" aria-expanded="false" aria-controls="enemy-characteristics-popup" title="Характеристики противника">📋 Характеристики</button>
-                  <div class="field-avatar-slot" id="enemy-avatar-slot"></div>
-                  <div class="avatar-thought-slot" id="enemy-thought-slot" data-team="enemy" aria-live="polite" aria-label="Мысли противника"></div>
-                  <div class="player-characteristics-popup fighter-char-popup-enemy hidden" id="enemy-characteristics-popup" role="dialog" aria-labelledby="enemy-char-title" aria-modal="true">
-                    <div id="enemy-characteristics-content"></div>
-                  </div>
-                </div>
-              </div>
-              <div class="battle-thought-arena" id="battle-thought-arena" aria-live="polite" aria-label="Боевые эмоджи героев">
-                <div class="arena-equipment-layer" id="arena-equipment-layer" aria-hidden="true"></div>
-              </div>
+
             </div>
           </div>
           <div class="shop-panel" id="shop-panel">
-            <div class="shop-panel-header">
-              <div class="shop-panel-heading">
-                <h3 id="shop-panel-title">🛒 Магазин</h3>
-                <span class="shop-gold-stat" id="shop-gold-stat">💰 12 · Игрок 1</span>
+            <div class="shop-chrome">
+              <div class="shop-panel-header">
+                <div class="shop-panel-heading">
+                  <h3 id="shop-panel-title">🛒 Магазин</h3>
+                  <span class="shop-side-stat" id="shop-side-stat">Игрок 1</span>
+                </div>
+                <button type="button" class="btn-secondary btn-refresh-shop" id="btn-refresh">🔄 Обновить (1💰)</button>
+                <button type="button" class="prep-shop-drawer-close" id="btn-prep-shop-close" aria-label="Закрыть магазин">✕</button>
               </div>
-              <button type="button" class="btn-secondary btn-refresh-shop" id="btn-refresh">🔄 Обновить (1💰)</button>
-              <button type="button" class="prep-shop-drawer-close" id="btn-prep-shop-close" aria-label="Закрыть магазин">✕</button>
-            </div>
-            <p class="shop-hint" id="shop-panel-hint">✚ — навигация · A — выбрать · ← — доска · 📍 — заморозить</p>
-            <p class="shop-hint shop-hint-touch">Зажать — подсказка · перетащите на поле · 📍 — закрепить · два пальца — поворот</p>
-            <div class="shop-slots" id="shop-slots"></div>
-            <div class="shop-sell-zone" id="shop-sell-zone">
-              <div class="shop-action-row">
-                <button type="button" class="btn-secondary btn-sell-drop" id="btn-sell">💰 Продать</button>
-                <button type="button" class="btn-secondary btn-recipe-book" id="btn-recipe-book">⚗️ Рецепты</button>
+              <p class="shop-hint" id="shop-panel-hint">✚ — навигация · A — выбрать · ← — доска · 📍 — заморозить</p>
+              <p class="shop-hint shop-hint-touch">Зажать — подсказка · перетащите на поле · 📍 — закрепить · два пальца — поворот</p>
+              <div class="shop-sell-zone" id="shop-sell-zone">
+                <div class="shop-action-row">
+                  <button type="button" class="btn-secondary btn-sell-drop" id="btn-sell">💰 Продать</button>
+                  <button type="button" class="btn-secondary btn-recipe-book" id="btn-recipe-book">⚗️ Рецепты</button>
+                </div>
+                <span class="shop-sell-hint">Перетащите предмет · полная стоимость</span>
               </div>
-              <span class="shop-sell-hint">Перетащите предмет · полная стоимость</span>
             </div>
-            <div class="bench-panel" id="bench-panel">
-              <h3>📦 Скамейка</h3>
-              <div class="bench-slots" id="bench-slots"></div>
+            <div class="shop-objects">
+              <div class="shop-slots" id="shop-slots"></div>
+              <div class="bench-panel" id="bench-panel">
+                <h3>📦 Скамейка</h3>
+                <div class="bench-slots" id="bench-slots"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -127,6 +164,7 @@
           <div class="prep-toolbar-left prep-toolbar-side-switch">
             <button type="button" class="btn-secondary prep-side-btn active" id="btn-prep-player" data-prep-side="player">🧑 Мой стол</button>
             <button type="button" class="btn-secondary prep-side-btn" id="btn-prep-enemy" data-prep-side="enemy">🤖 Противник</button>
+            <button type="button" class="btn-secondary btn-prep-hero-info" id="btn-prep-hero-info" aria-expanded="false" aria-controls="prep-hero-tooltip" title="Инфо о герое">ℹ️</button>
             <button type="button" class="btn-secondary prep-settings-btn" id="btn-settings" aria-label="Настройки" aria-expanded="false" aria-controls="settings-overlay">⚙️</button>
           </div>
           <div class="prep-toolbar-feed-home" id="prep-toolbar-feed-home">
@@ -159,10 +197,12 @@
           <span class="hint-touch">Палец — перетаскивание · два пальца — поворот · продажа — в зону внизу</span>
           <span class="hint-enemy">■ Красное — поле противника</span>
         </div>
+
       </section>
     </main>
   </div>
 
+  <div class="layer-system" id="layer-system">
   <div class="overlay hidden" id="class-overlay">
       <div class="class-overlay-bg" aria-hidden="true">
         <span class="class-overlay-blob class-overlay-blob--purple"></span>
@@ -349,8 +389,9 @@
       </div>
     </div>
   </div>
+  </div>
 
-  <div id="gamepad-hints-bar" class="gamepad-hints-bar" aria-live="polite">
+  <div id="gamepad-hints-bar" class="gamepad-hints-bar scene-chrome" aria-live="polite">
     <div class="battle-controls hidden" id="battle-controls">
       <button type="button" class="bc-btn" id="btn-battle-pause" title="Пауза (Start)">⏸</button>
       <button type="button" class="bc-btn bc-speed" data-speed="1">×1</button>
@@ -371,7 +412,6 @@
     <p class="mobile-rotate-prompt-sub">Игра оптимизирована для портретной ориентации</p>
   </div>
   <div id="gamepad-cursor" class="gamepad-cursor hidden" aria-hidden="true"></div>
-  <canvas id="ui-drag-ghost" class="ui-drag-ghost hidden" aria-hidden="true"></canvas>
   <div id="prep-tooltip-dock" class="prep-tooltip-dock hidden" aria-live="polite" aria-label="Подсказка к предмету">
     <div id="prep-mobile-hint" class="prep-mobile-hint hidden" aria-hidden="true">
       <p class="prep-mobile-hint-body" id="prep-mobile-hint-body">Зажмите предмет — описание · перетащите на поле · 🛒 — магазин</p>
@@ -379,6 +419,7 @@
     <div id="sidebar-tooltip" class="sidebar-tooltip hidden"></div>
   </div>
 
+  <script src="components/layer-host.js"></script>
   <script src="classes.js"></script>
   <script src="items.js"></script>
   <script src="items-bb-catalog.js"></script>
@@ -434,6 +475,5 @@
   <script src="battle-hud.js"></script>
   <script src="systems/doll-engine.js"></script>
   <script src="game.js"></script>
-  <div id="battle-float-layer" aria-hidden="true"></div>
 </body>
 </html>

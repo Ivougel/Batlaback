@@ -8,6 +8,7 @@
 
 /*
  * Canvas: display → ui-layout.js fitCanvasDisplaySize(); bitmap → game.js.
+ * Layers: styles/layers.css — L1 world / L2 objects / L3 fx / L4 hud.
  * Layout contract — секция в конце файла.
  * Tokens: styles/tokens.css (loaded before this file in index.html).
  */
@@ -59,7 +60,7 @@ body.is-ui-dragging * {
   left: 0;
   top: 0;
   pointer-events: none;
-  z-index: 10050;
+  z-index: var(--z-drag-ghost);
   transform: translate(-50%, -50%);
   opacity: 0.94;
   filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.45));
@@ -356,7 +357,7 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar {
     env(safe-area-inset-bottom, 0px)
     calc(12px + env(safe-area-inset-left, 0px));
   margin: 0;
-  z-index: 900;
+  z-index: var(--z-chrome);
 }
 
 html[data-battle-hud-pin="true"] body:has(#app[data-phase="battle"]) .gamepad-hints-bar,
@@ -1625,10 +1626,9 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 .displace-fx-layer,
 .item-movement-fx-layer,
 .item-flight-fx-layer {
-  position: fixed;
+  position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 91;
   overflow: visible;
 }
 
@@ -1654,10 +1654,9 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 }
 
 .battle-damage-fx-layer {
-  position: fixed;
+  position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 92;
   overflow: hidden;
 }
 
@@ -1679,14 +1678,13 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 }
 
 .battle-countdown-overlay {
-  position: fixed;
+  position: absolute;
   inset: 0;
   display: none;
   align-items: flex-start;
   justify-content: center;
   padding-top: min(14vh, 128px);
   pointer-events: none;
-  z-index: 120;
   background: rgba(0, 0, 0, 0.18);
 }
 
@@ -2146,10 +2144,9 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 /* ─── AttackAnimationManager: визуальные атаки (от аватара, не из рюкзака) ─── */
 
 .attack-fx-layer {
-  position: fixed;
+  position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 88;
   overflow: hidden;
 }
 
@@ -2485,10 +2482,10 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
   min-width: 0;
 }
 
-.shop-gold-stat {
-  font-size: calc(0.95rem * var(--ui-scale));
-  font-weight: 700;
-  color: var(--gold);
+.shop-side-stat {
+  font-size: calc(0.82rem * var(--ui-scale));
+  font-weight: 600;
+  color: var(--muted);
   line-height: 1.2;
 }
 
@@ -3038,7 +3035,7 @@ html[data-battle-hud-pin="true"] body {
   }
 
   #app[data-phase="prep"] #shop-panel .shop-panel-heading h3,
-  #app[data-phase="prep"] #shop-panel .shop-gold-stat {
+  #app[data-phase="prep"] #shop-panel .shop-side-stat {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -3780,21 +3777,15 @@ button:disabled {
   padding: 8px 0;
 }
 
-/* ─── Летящие эффекты боя (HTML overlay → fixed layer поверх всего) ─── */
+/* ─── Летящие эффекты боя (внутри #layer-fx) ─── */
 
 #battle-float-layer {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
   pointer-events: none;
   overflow: visible;
 }
 
 .battle-float-layer {
-  position: fixed;
-  inset: 0;
   pointer-events: none;
-  z-index: 9999;
   overflow: visible;
 }
 
@@ -3860,7 +3851,7 @@ button:disabled {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  z-index: 2000;
+  z-index: var(--z-system);
   padding:
     max(6px, env(safe-area-inset-top))
     max(6px, env(safe-area-inset-right))
@@ -5938,7 +5929,7 @@ body.recipe-book-open {
 .gamepad-hints-bar {
   position: relative;
   flex-shrink: 0;
-  z-index: 900;
+  z-index: var(--z-chrome);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -6697,16 +6688,8 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
 
 /* ─── Сцена: фон + персонаж + поле ─── */
 
-.prep-field-column {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  overflow: visible;
-  background:
-    radial-gradient(ellipse 90% 70% at 28% 72%, rgba(62, 48, 36, 0.55) 0%, transparent 62%),
-    radial-gradient(ellipse 55% 45% at 72% 18%, rgba(48, 40, 32, 0.4) 0%, transparent 58%),
-    linear-gradient(165deg, #1c1713 0%, #12100d 42%, #0c0a08 100%);
+.prep-field-column.scene-viewport {
+  background: transparent;
 }
 
 .prep-field-island {
@@ -6750,38 +6733,53 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
   padding: 0;
 }
 
-/* Prep shop: герой в фиксированном слоте (макет), stats HUD остаётся слева внизу */
+.canvas-stack {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+}
+
+/* Prep hero: не перекрывает сетку — слот слева/справа, ограниченный размер */
 #app[data-phase="prep"] .prep-character-layer {
   left: var(--prep-hero-slot-left);
-  width: max(var(--prep-scene-avatar-w), var(--prep-hero-slot-width));
-  min-width: var(--prep-scene-avatar-w);
+  width: var(--prep-desktop-hero-max-w, var(--prep-hero-slot-width));
+  min-width: 0;
+  max-width: var(--prep-desktop-hero-max-w, var(--prep-hero-slot-width));
   top: auto;
   bottom: var(--prep-hero-slot-bottom);
-  height: max(var(--prep-scene-avatar-h), var(--prep-hero-slot-height));
-  min-height: var(--avatar-prep-size);
+  height: auto;
+  max-height: var(--prep-desktop-hero-max-h, var(--prep-hero-slot-height));
+  min-height: 0;
   justify-content: center;
-  overflow: visible;
+  overflow: hidden;
   z-index: 3;
 }
 
 #app[data-phase="prep"][data-prep-side="enemy"] .prep-character-layer {
   left: auto;
   right: var(--prep-hero-slot-left);
-  width: max(var(--prep-scene-avatar-w), var(--prep-hero-slot-width));
-  min-width: var(--prep-scene-avatar-w);
+  width: var(--prep-desktop-hero-max-w, var(--prep-hero-slot-width));
+  min-width: 0;
+  max-width: var(--prep-desktop-hero-max-w, var(--prep-hero-slot-width));
   justify-content: center;
 }
 
 #app[data-phase="prep"] .prep-character,
 #app[data-phase="prep"][data-prep-side="enemy"] .prep-character {
   justify-content: center;
-  overflow: visible;
+  align-items: flex-end;
+  overflow: hidden;
+  width: 100%;
+  height: auto;
+  max-height: inherit;
 }
 
 #app[data-phase="prep"] .prep-character-img {
-  height: var(--avatar-prep-size);
+  display: block;
+  height: auto;
   width: auto;
-  max-width: var(--prep-scene-avatar-w);
+  max-height: var(--prep-desktop-hero-max-h, var(--prep-hero-slot-height));
+  max-width: var(--prep-desktop-hero-max-w, 100%);
   object-fit: contain;
   object-position: center bottom;
 }
@@ -6804,7 +6802,6 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
 }
 
 .prep-character-img {
-  height: calc(100% * var(--character-scale));
   width: auto;
   max-width: 100%;
   object-fit: contain;
@@ -6851,18 +6848,20 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
   flex-shrink: 0;
 }
 
-.prep-stats-stack {
-  position: absolute;
-  left: 10px;
-  bottom: 10px;
-  z-index: 4;
+.prep-stats-hud {
+  position: relative;
+  padding: 7px 10px;
+  background: rgba(10, 8, 6, 0.82);
+  border: 1px solid rgba(90, 72, 54, 0.45);
+  border-radius: 4px;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  pointer-events: none;
+  min-width: 108px;
+  backdrop-filter: blur(3px);
 }
 
 .prep-hero-tooltip {
-  position: absolute;
-  left: 0;
-  bottom: calc(100% + 8px);
-  z-index: 6;
   min-width: min(240px, calc(100vw - 32px));
   max-width: min(300px, calc(100vw - 32px));
   padding: 10px 12px;
@@ -6914,23 +6913,8 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
   right: auto;
 }
 
-.prep-stats-hud {
-  position: relative;
-  padding: 7px 10px;
-  background: rgba(10, 8, 6, 0.82);
-  border: 1px solid rgba(90, 72, 54, 0.45);
-  border-radius: 4px;
-  font-size: 0.72rem;
-  line-height: 1.45;
-  pointer-events: auto;
-  min-width: 108px;
-  backdrop-filter: blur(3px);
-  cursor: pointer;
-}
-
 .prep-stats-hud:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline: none;
 }
 
 .prep-stats-class {
@@ -7741,34 +7725,37 @@ body.is-ui-dragging #app[data-phase="prep"] .prep-field-island .canvas-scale-wra
 
   html:not([data-prep-layout="mobile"]):not([data-prep-viewport-fit="true"]) #app[data-phase="prep"] .prep-character-layer {
     position: absolute;
-    bottom: 0;
-    left: 50%;
+    bottom: var(--prep-hero-slot-bottom, 8px);
+    left: var(--prep-hero-slot-left, 6%);
     right: auto;
-    transform: translateX(-50%);
-    height: calc(100% - var(--prep-canvas-h, 60%) - 8px);
-    min-height: var(--avatar-prep-size);
-    width: 100%;
-    max-width: none;
+    transform: none;
+    height: auto;
+    max-height: var(--prep-desktop-hero-max-h, min(148px, 22vh));
+    width: auto;
+    max-width: var(--prep-desktop-hero-max-w, min(120px, 11vw));
     min-width: 0;
+    min-height: 0;
     top: auto;
     display: flex;
     align-items: flex-end;
     justify-content: center;
+    overflow: hidden;
   }
 
   html:not([data-prep-layout="mobile"]):not([data-prep-viewport-fit="true"]) #app[data-phase="prep"][data-prep-side="enemy"] .prep-character-layer {
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%);
-    width: 100%;
+    left: auto;
+    right: var(--prep-hero-slot-left, 6%);
+    transform: none;
+    width: auto;
+    max-width: var(--prep-desktop-hero-max-w, min(120px, 11vw));
     min-width: 0;
   }
 
   html:not([data-prep-layout="mobile"]):not([data-prep-viewport-fit="true"]) #app[data-phase="prep"] .prep-character-img {
-    height: 100%;
-    max-height: 100%;
+    height: auto;
+    max-height: var(--prep-desktop-hero-max-h, min(148px, 22vh));
+    max-width: var(--prep-desktop-hero-max-w, min(120px, 11vw));
     width: auto;
-    max-width: 100%;
     object-fit: contain;
     object-position: center bottom;
   }

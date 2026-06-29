@@ -14,7 +14,7 @@ function ensureAttackFxLayer() {
     layer.id = "attack-fx-layer";
     layer.className = "attack-fx-layer";
     layer.setAttribute("aria-hidden", "true");
-    document.body.appendChild(layer);
+    appendToLayerFx(layer);
   }
   return layer;
 }

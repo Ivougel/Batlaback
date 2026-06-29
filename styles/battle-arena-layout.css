@@ -4,7 +4,59 @@
  *
  * Слоты (нижний ряд): player | arena | enemy
  * JS задаёт --battle-hero-col-w, --battle-hero-img-h, --battle-thought-arena-min-h
+ *
+ * 4-layer compositor: L1/L2 → display:contents (участники grid),
+ * L3/L4 остаются absolute-оверлеями поверх сцены.
  */
+
+/* ─── Layer compositor ↔ CSS Grid ─── */
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #layer-world,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #layer-world,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #layer-objects,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #layer-objects {
+  display: contents;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #layer-fx,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #layer-fx,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #layer-hud,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #layer-hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #layer-fx,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #layer-fx {
+  z-index: var(--z-layer-fx);
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #layer-hud,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #layer-hud {
+  z-index: var(--z-layer-hud);
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .scene-bg,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .scene-bg {
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #prep-hud-chrome,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #prep-hud-chrome {
+  display: none !important;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .prep-field-island,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .prep-field-island {
+  z-index: 1;
+}
 
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"],
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] {
@@ -155,6 +207,15 @@ html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle
   --battle-avatar-w: 100%;
   width: 100%;
   max-width: var(--battle-hero-col-w, var(--desktop-battle-hero-col-w, 100%));
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-stage,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-stage {
+  width: 100%;
+  min-height: 0;
+  max-height: var(--battle-hero-img-h, var(--desktop-battle-hero-img-h, var(--battle-hero-img-h-fallback)));
+  height: auto;
+  overflow: hidden;
 }
 
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-bars,

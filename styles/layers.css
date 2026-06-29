@@ -1,0 +1,206 @@
+/**
+ * 4-layer scene compositor
+ * L1 world → L2 objects → L3 fx → L4 hud (+ scene chrome)
+ * Tokens: --z-layer-* in tokens.css
+ */
+
+.scene-viewport {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: visible;
+  isolation: isolate;
+}
+
+.scene-viewport > .layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.layer-world {
+  z-index: var(--z-layer-world);
+}
+
+.layer-objects {
+  z-index: var(--z-layer-objects);
+}
+
+.layer-objects > .prep-character-layer,
+.layer-objects > .battle-scene-ui,
+.layer-objects > .battle-thought-arena {
+  pointer-events: auto;
+}
+
+.layer-hud {
+  z-index: var(--z-layer-hud);
+}
+
+.layer-hud .run-hud {
+  pointer-events: none;
+}
+
+.layer-hud .prep-stats-hud {
+  pointer-events: none;
+  cursor: default;
+}
+
+/* Canvas FX — в layer-fx (поверх L2), якорь совпадает с #game-canvas */
+.canvas-fx-anchor {
+  position: absolute;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 1;
+}
+
+.canvas-fx-anchor .canvas-fx-overlay {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Battle HUD — HP/stamina bars anchored over hero portraits */
+.battle-run-hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.battle-hud-side {
+  position: absolute;
+  pointer-events: none;
+  max-width: var(--battle-avatar-card-w, 210px);
+}
+
+.battle-hud-side .avatar-hero-bars {
+  width: 100%;
+}
+
+#app:not([data-phase="prep"]) .btn-prep-hero-info {
+  display: none !important;
+}
+
+.layer-fx {
+  z-index: var(--z-layer-fx);
+}
+
+.layer-fx .ui-drag-ghost {
+  position: fixed;
+  z-index: var(--z-drag-ghost);
+}
+
+.layer-fx #battle-float-layer,
+.layer-fx .battle-float-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: visible;
+}
+
+.layer-fx .attack-fx-layer,
+.layer-fx .displace-fx-layer,
+.layer-fx .item-movement-fx-layer,
+.layer-fx .item-flight-fx-layer,
+.layer-fx .battle-damage-fx-layer,
+.layer-fx .battle-countdown-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
+.layer-fx .battle-countdown-overlay {
+  z-index: 3;
+}
+
+/* L1 — scene background (was on .prep-field-column) */
+.scene-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 90% 70% at 28% 72%, rgba(62, 48, 36, 0.55) 0%, transparent 62%),
+    radial-gradient(ellipse 55% 45% at 72% 18%, rgba(48, 40, 32, 0.4) 0%, transparent 58%),
+    linear-gradient(165deg, #1c1713 0%, #12100d 42%, #0c0a08 100%);
+}
+
+.prep-field-column.scene-viewport {
+  background: transparent;
+}
+
+/* HUD panel */
+.run-hud {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.run-hud-phase {
+  padding: 4px 10px;
+  background: rgba(10, 8, 6, 0.82);
+  border: 1px solid rgba(90, 72, 54, 0.45);
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #8b7d6a;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  backdrop-filter: blur(3px);
+}
+
+.prep-hud-chrome {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  z-index: var(--z-scene-chrome);
+  pointer-events: none;
+}
+
+.prep-hud-chrome > * {
+  pointer-events: auto;
+}
+
+.prep-hud-chrome .prep-hero-tooltip {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 8px);
+}
+
+.prep-hud-chrome .run-stats-anchor--prep {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 0;
+}
+
+/* Shop: chrome (L1) vs object slots (L2) */
+.shop-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.shop-chrome {
+  flex-shrink: 0;
+}
+
+.shop-objects {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: var(--z-layer-objects);
+}
+
+/* System modals */
+.layer-system .overlay {
+  z-index: var(--z-system);
+}

@@ -23,7 +23,7 @@ html[data-prep-layout="mobile"] #shop-panel-title {
 
 html[data-prep-layout="mobile"] #app[data-phase="prep"] #prep-toolbar .stat-round,
 html[data-prep-layout="mobile"] #app[data-phase="prep"] #prep-toolbar .phase-label,
-html[data-prep-layout="mobile"] #app[data-phase="prep"] #shop-panel .shop-gold-stat {
+html[data-prep-layout="mobile"] #app[data-phase="prep"] #shop-panel .shop-side-stat {
   font-size: 0.85rem;
 }
 
@@ -164,8 +164,7 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] #game-canvas {
   touch-action: none;
 }
 
-html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-stats-stack {
-  z-index: 4;
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .run-hud {
   left: max(6px, env(safe-area-inset-left));
   bottom: calc(58px + max(8px, env(safe-area-inset-bottom, 0px)));
 }
@@ -815,15 +814,15 @@ html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[d
   max-width: 100%;
 }
 
-html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-bars,
-html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-bars {
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"] .battle-hud-side .avatar-hero-bars,
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="replay"] .battle-hud-side .avatar-hero-bars {
   position: static;
   flex-shrink: 0;
   width: 100%;
 }
 
-html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-bars-col,
-html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-bars-col {
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"] .battle-hud-side .avatar-hero-bars-col,
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="replay"] .battle-hud-side .avatar-hero-bars-col {
   width: 100%;
 }
 

@@ -98,7 +98,7 @@ html[data-tablet-prep-hero="true"] #app[data-phase="prep"] .prep-character-layer
     92%
   ) !important;
   min-width: min(var(--prep-canvas-display-w, var(--prep-canvas-w)), 100%) !important;
-  min-height: var(--tablet-prep-hero-h, 240px) !important;
+  min-height: var(--tablet-prep-hero-h, 168px) !important;
   max-height: none !important;
   height: auto !important;
   margin-top: 8px;
@@ -117,7 +117,7 @@ html[data-tablet-prep-hero="true"] #app[data-phase="prep"] .prep-character,
 html[data-tablet-prep-hero="true"] #app[data-phase="prep"][data-prep-side="enemy"] .prep-character {
   width: 100%;
   height: 100%;
-  min-height: var(--tablet-prep-hero-h, 240px);
+  min-height: var(--tablet-prep-hero-h, 168px);
   justify-content: center;
   align-items: flex-end;
 }
@@ -127,12 +127,12 @@ html[data-tablet-prep-hero="true"] #app[data-phase="prep"] .prep-character-img {
   width: auto !important;
   max-width: 100% !important;
   max-height: none !important;
-  min-height: calc(var(--tablet-prep-hero-h, 240px) - 8px) !important;
+  min-height: calc(var(--tablet-prep-hero-h, 168px) - 8px) !important;
   object-fit: contain;
   object-position: center bottom;
 }
 
-html[data-tablet-prep-hero="true"] #app[data-phase="prep"] .prep-stats-stack {
+html[data-tablet-prep-hero="true"] #app[data-phase="prep"] .run-hud {
   order: 3;
   z-index: 4;
 }
@@ -160,7 +160,7 @@ html[data-battle-hero-placement="flank-arena"][data-tablet-prep-hero="true"] #ap
   width: 100%;
   height: auto !important;
   min-height: 0 !important;
-  max-height: min(45dvh, calc(320px * var(--ui-scale))) !important;
+  max-height: min(36dvh, calc(240px * var(--ui-scale))) !important;
   overflow: visible;
   justify-content: flex-start !important;
 }

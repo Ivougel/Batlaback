@@ -43,6 +43,39 @@ function maybeTriggerHeroTakingHit(team, shell, hpCurrent) {
   lastSyncedHeroHp[team] = hpCurrent;
 }
 
+function getBattleHudBarsEl(team) {
+  return document.getElementById(team === "player" ? "battle-hud-player" : "battle-hud-enemy");
+}
+
+function renderAvatarBarsHTML(profile, team) {
+  const hpCurrent = profile.hpCurrent ?? profile.hp ?? 0;
+  const hpMax = profile.hpMax ?? profile.hp ?? 100;
+  const hpPct = Math.max(0, Math.min(100, (hpCurrent / Math.max(1, hpMax)) * 100));
+  const staminaCurrent = profile.staminaCurrent ?? profile.stamina ?? 0;
+  const staminaMax = profile.staminaMax ?? 40;
+  const staminaPct = Math.max(0, Math.min(100, (staminaCurrent / Math.max(1, staminaMax)) * 100));
+
+  return `
+    <div class="avatar-hero-bars">
+      <div class="avatar-hero-bars-col">
+        <div class="avatar-hero-hp-bar">
+          <div class="avatar-hero-hp-track">
+            <div class="avatar-hero-hp-fill avatar-hero-hp-fill-${team}" style="width:${hpPct}%"></div>
+            <div class="avatar-hero-hp-heal-preview" hidden style="left:${hpPct}%;width:0%"></div>
+          </div>
+          <span class="avatar-hero-hp-label">${Math.ceil(hpCurrent)}/${hpMax}</span>
+        </div>
+        <div class="avatar-hero-stamina-bar">
+          <div class="avatar-hero-stamina-track">
+            <div class="avatar-hero-stamina-fill avatar-hero-stamina-fill-${team}" style="width:${staminaPct}%"></div>
+          </div>
+          <span class="avatar-hero-stamina-label">${Math.ceil(staminaCurrent)}/${staminaMax}</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function renderAvatarHeroHTML(profile, team) {
   const className = escapeProfileHtml(profile.className || "—");
   const icon = profile.classIconSrc
@@ -51,12 +84,6 @@ function renderAvatarHeroHTML(profile, team) {
   const gold = profile.gold ?? 0;
   const tooltipDesc = escapeProfileHtml(`💰 ${gold} золота`);
   const displayName = escapeProfileHtml(profile.name || (team === "player" ? "Игрок" : "ИИ"));
-  const hpCurrent = profile.hpCurrent ?? profile.hp ?? 0;
-  const hpMax = profile.hpMax ?? profile.hp ?? 100;
-  const hpPct = Math.max(0, Math.min(100, (hpCurrent / Math.max(1, hpMax)) * 100));
-  const staminaCurrent = profile.staminaCurrent ?? profile.stamina ?? 0;
-  const staminaMax = profile.staminaMax ?? 40;
-  const staminaPct = Math.max(0, Math.min(100, (staminaCurrent / Math.max(1, staminaMax)) * 100));
 
   return `
     <div class="avatar-hero-shell avatar-hero-shell-${team}" data-team="${team}">
@@ -68,23 +95,6 @@ function renderAvatarHeroHTML(profile, team) {
                data-status-desc="${tooltipDesc}"
                tabindex="0"
                aria-label="${className}">${icon}</div>
-        </div>
-        <div class="avatar-hero-bars">
-          <div class="avatar-hero-bars-col">
-            <div class="avatar-hero-hp-bar">
-              <div class="avatar-hero-hp-track">
-                <div class="avatar-hero-hp-fill avatar-hero-hp-fill-${team}" style="width:${hpPct}%"></div>
-                <div class="avatar-hero-hp-heal-preview" hidden style="left:${hpPct}%;width:0%"></div>
-              </div>
-              <span class="avatar-hero-hp-label">${Math.ceil(hpCurrent)}/${hpMax}</span>
-            </div>
-            <div class="avatar-hero-stamina-bar">
-              <div class="avatar-hero-stamina-track">
-                <div class="avatar-hero-stamina-fill avatar-hero-stamina-fill-${team}" style="width:${staminaPct}%"></div>
-              </div>
-              <span class="avatar-hero-stamina-label">${Math.ceil(staminaCurrent)}/${staminaMax}</span>
-            </div>
-          </div>
         </div>
       </div>
       <div class="avatar-hero-effects-panel avatar-effects-float" aria-hidden="true">
@@ -176,9 +186,10 @@ function getSideBattleMetrics(state, team) {
   return sideState?.metrics || null;
 }
 
-function syncAvatarHeroHealPreview(shell, hpCurrent, hpMax, projectedHeal2s) {
+function syncAvatarHeroHealPreview(barsRoot, hpCurrent, hpMax, projectedHeal2s) {
+  if (!barsRoot) return;
   const hpPct = Math.max(0, Math.min(100, (hpCurrent / Math.max(1, hpMax)) * 100));
-  const healPreview = shell.querySelector(".avatar-hero-hp-heal-preview");
+  const healPreview = barsRoot.querySelector(".avatar-hero-hp-heal-preview");
   if (!healPreview) return;
 
   const healAmount = Math.max(0, Number(projectedHeal2s) || 0);
@@ -198,7 +209,8 @@ function syncAvatarHeroHealPreview(shell, hpCurrent, hpMax, projectedHeal2s) {
 function syncAvatarHeroResourceBars(team, state) {
   const slot = getAvatarSlotEl(team);
   const shell = slot?.querySelector(".avatar-hero-shell");
-  if (!shell || !state) return;
+  const barsRoot = getBattleHudBarsEl(team);
+  if (!shell || !barsRoot || !state) return;
 
   const side = team === "player" ? state.player : state.enemy;
   const hpCurrent = side?.hp ?? 0;
@@ -211,30 +223,31 @@ function syncAvatarHeroResourceBars(team, state) {
 
   maybeTriggerHeroTakingHit(team, shell, hpCurrent);
 
-  const hpFill = shell.querySelector(".avatar-hero-hp-fill");
-  const hpLabel = shell.querySelector(".avatar-hero-hp-label");
-  const staminaFill = shell.querySelector(".avatar-hero-stamina-fill");
-  const staminaLabel = shell.querySelector(".avatar-hero-stamina-label");
+  const hpFill = barsRoot.querySelector(".avatar-hero-hp-fill");
+  const hpLabel = barsRoot.querySelector(".avatar-hero-hp-label");
+  const staminaFill = barsRoot.querySelector(".avatar-hero-stamina-fill");
+  const staminaLabel = barsRoot.querySelector(".avatar-hero-stamina-label");
 
   if (hpFill) hpFill.style.width = `${hpPct}%`;
   if (hpLabel) hpLabel.textContent = formatHeroHpLabel(hpCurrent, hpMax);
   if (staminaFill) staminaFill.style.width = `${staminaPct}%`;
   if (staminaLabel) staminaLabel.textContent = formatHeroStaminaLabel(staminaCurrent, staminaMax);
-  syncAvatarHeroHealPreview(shell, hpCurrent, hpMax, metrics?.projectedHeal2s ?? 0);
+  syncAvatarHeroHealPreview(barsRoot, hpCurrent, hpMax, metrics?.projectedHeal2s ?? 0);
 }
 
 function syncAvatarHeroHpOnly(team, hpCurrent, hpMax, state = null) {
   const slot = getAvatarSlotEl(team);
   const shell = slot?.querySelector(".avatar-hero-shell");
-  if (!shell) return;
+  const barsRoot = getBattleHudBarsEl(team);
+  if (!shell || !barsRoot) return;
   maybeTriggerHeroTakingHit(team, shell, hpCurrent);
   const hpPct = Math.max(0, Math.min(100, (hpCurrent / Math.max(1, hpMax)) * 100));
-  const hpFill = shell.querySelector(".avatar-hero-hp-fill");
-  const hpLabel = shell.querySelector(".avatar-hero-hp-label");
+  const hpFill = barsRoot.querySelector(".avatar-hero-hp-fill");
+  const hpLabel = barsRoot.querySelector(".avatar-hero-hp-label");
   if (hpFill) hpFill.style.width = `${hpPct}%`;
   if (hpLabel) hpLabel.textContent = formatHeroHpLabel(hpCurrent, hpMax);
   const metrics = state ? getSideBattleMetrics(state, team) : null;
-  syncAvatarHeroHealPreview(shell, hpCurrent, hpMax, metrics?.projectedHeal2s ?? 0);
+  syncAvatarHeroHealPreview(barsRoot, hpCurrent, hpMax, metrics?.projectedHeal2s ?? 0);
 }
 
 function syncAvatarCompanionBeads(team, state) {
@@ -279,7 +292,8 @@ function syncAvatarHeroEffects(team, profile, state) {
   const slot = getAvatarSlotEl(team);
   if (!slot) return;
   const shell = slot.querySelector(".avatar-hero-shell");
-  if (!shell) return;
+  const barsRoot = getBattleHudBarsEl(team);
+  if (!shell || !barsRoot) return;
 
   const hpCurrent = profile.hpCurrent ?? profile.hp ?? 0;
   const hpMax = profile.hpMax ?? profile.hp ?? 100;
@@ -292,15 +306,15 @@ function syncAvatarHeroEffects(team, profile, state) {
 
   maybeTriggerHeroTakingHit(team, shell, hpCurrent);
 
-  const hpFill = shell.querySelector(".avatar-hero-hp-fill");
-  const hpLabel = shell.querySelector(".avatar-hero-hp-label");
-  const staminaFill = shell.querySelector(".avatar-hero-stamina-fill");
-  const staminaLabel = shell.querySelector(".avatar-hero-stamina-label");
+  const hpFill = barsRoot.querySelector(".avatar-hero-hp-fill");
+  const hpLabel = barsRoot.querySelector(".avatar-hero-hp-label");
+  const staminaFill = barsRoot.querySelector(".avatar-hero-stamina-fill");
+  const staminaLabel = barsRoot.querySelector(".avatar-hero-stamina-label");
   if (hpFill) hpFill.style.width = `${hpPct}%`;
   if (hpLabel) hpLabel.textContent = formatHeroHpLabel(hpCurrent, hpMax);
   if (staminaFill) staminaFill.style.width = `${staminaPct}%`;
   if (staminaLabel) staminaLabel.textContent = formatHeroStaminaLabel(staminaCurrent, staminaMax);
-  syncAvatarHeroHealPreview(shell, hpCurrent, hpMax, metrics?.projectedHeal2s ?? 0);
+  syncAvatarHeroHealPreview(barsRoot, hpCurrent, hpMax, metrics?.projectedHeal2s ?? 0);
 
   const posEl = shell.querySelector(".avatar-status-zone-buffs .avatar-beads-positive")
     || shell.querySelector(".avatar-beads-positive");
@@ -335,6 +349,11 @@ function syncAllAvatarHeroEffects(playerProfile, enemyProfile, state) {
 
 function ensureBattleHeroShells(state, playerProfile, enemyProfile) {
   if (!state) return;
+  const battleHud = document.getElementById("battle-run-hud");
+  if (battleHud) {
+    battleHud.hidden = false;
+    battleHud.removeAttribute("aria-hidden");
+  }
   ["player", "enemy"].forEach((team) => {
     const slot = getAvatarSlotEl(team);
     if (!slot) return;
@@ -343,7 +362,12 @@ function ensureBattleHeroShells(state, playerProfile, enemyProfile) {
       slot.innerHTML = renderAvatarHeroHTML(profile, team);
       resetHeroHpTracking(team);
     }
+    const barsEl = getBattleHudBarsEl(team);
+    if (barsEl && !barsEl.querySelector(".avatar-hero-bars")) {
+      barsEl.innerHTML = renderAvatarBarsHTML(profile, team);
+    }
   });
+  if (typeof syncBattleHudAnchors === "function") syncBattleHudAnchors();
 }
 
 function initAvatarCompanions(state) {

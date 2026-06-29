@@ -68,8 +68,8 @@
   }
 
   function computeTabletPrepHeroHeight(columnH, sceneTop = 14) {
-    const usable = Math.max(280, columnH - sceneTop - 12);
-    return Math.round(Math.min(440, Math.max(240, usable * 0.48)));
+    const usable = Math.max(220, columnH - sceneTop - 12);
+    return Math.round(Math.min(300, Math.max(168, usable * 0.32)));
   }
 
   function shouldUseStackedPrep(w, h) {
@@ -110,12 +110,14 @@
   }
 
   function clearCanvasDisplaySize() {
-    const canvas = document.getElementById("game-canvas");
-    if (!canvas) return;
-    canvas.style.removeProperty("width");
-    canvas.style.removeProperty("height");
-    canvas.style.removeProperty("max-width");
-    canvas.style.removeProperty("max-height");
+    ["game-canvas", "canvas-fx"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.style.removeProperty("width");
+      el.style.removeProperty("height");
+      el.style.removeProperty("max-width");
+      el.style.removeProperty("max-height");
+    });
   }
 
   function setCanvasDisplaySize(canvas, w, h) {
@@ -123,6 +125,61 @@
     canvas.style.height = `${h}px`;
     canvas.style.maxWidth = `${w}px`;
     canvas.style.maxHeight = `${h}px`;
+    if (canvas.id === "game-canvas") {
+      const fx = document.getElementById("canvas-fx");
+      if (fx) {
+        fx.style.width = `${w}px`;
+        fx.style.height = `${h}px`;
+        fx.style.maxWidth = `${w}px`;
+        fx.style.maxHeight = `${h}px`;
+        if (canvas.width > 0 && canvas.height > 0) {
+          fx.width = canvas.width;
+          fx.height = canvas.height;
+        }
+      }
+    }
+  }
+
+  function syncFxCanvasGeometry() {
+    const viewport = document.getElementById("prep-field-column");
+    const canvasEl = document.getElementById("game-canvas");
+    const anchor = document.getElementById("canvas-fx-anchor");
+    if (!viewport || !canvasEl || !anchor) return;
+
+    const vpRect = viewport.getBoundingClientRect();
+    const canvasRect = canvasEl.getBoundingClientRect();
+    if (canvasRect.width <= 0 || canvasRect.height <= 0) return;
+
+    anchor.style.left = `${canvasRect.left - vpRect.left}px`;
+    anchor.style.top = `${canvasRect.top - vpRect.top}px`;
+    anchor.style.width = `${canvasRect.width}px`;
+    anchor.style.height = `${canvasRect.height}px`;
+  }
+
+  function syncBattleHudAnchors() {
+    const viewport = document.getElementById("prep-field-column");
+    const app = document.getElementById("app");
+    if (!viewport || !app) return;
+    const phase = app.dataset.phase;
+    if (phase !== "battle" && phase !== "replay") return;
+
+    const vpRect = viewport.getBoundingClientRect();
+    [
+      { slotId: "player-avatar-slot", hudId: "battle-hud-player" },
+      { slotId: "enemy-avatar-slot", hudId: "battle-hud-enemy" },
+    ].forEach(({ slotId, hudId }) => {
+      const slot = document.getElementById(slotId);
+      const hud = document.getElementById(hudId);
+      if (!slot || !hud) return;
+      const shell = slot.querySelector(".avatar-hero-shell");
+      const anchor = shell?.querySelector(".avatar-hero-stage") || shell || slot;
+      const anchorRect = anchor.getBoundingClientRect();
+      const bars = hud.querySelector(".avatar-hero-bars");
+      const barsH = bars?.offsetHeight || 52;
+      hud.style.left = `${anchorRect.left - vpRect.left}px`;
+      hud.style.top = `${Math.max(0, anchorRect.bottom - vpRect.top - barsH)}px`;
+      hud.style.width = `${Math.max(anchorRect.width, 120)}px`;
+    });
   }
 
   function clearMobileDisplayVars() {
@@ -271,6 +328,8 @@
     if (root.dataset.battleArenaLayout !== "true") return;
     if (root.dataset.battleHeroPlacement !== "flank-arena") return;
     if (!isBattleUiPhase()) return;
+    if (typeof syncFxCanvasGeometry === "function") syncFxCanvasGeometry();
+    if (typeof syncBattleHudAnchors === "function") syncBattleHudAnchors();
   }
 
   function syncBattleHudFeedDock() {
@@ -391,10 +450,10 @@
       portraitZoom = 2.5;
       chromePad = 10;
     } else if (tabletSide) {
-      heroZone = Math.min(320, Math.max(200, Math.round((vh - hudReserve) * 0.3)));
-      arenaMin = Math.max(110, Math.round(vh * 0.14));
-      heroColW = Math.round(Math.min(220, Math.max(140, stageW * 0.15)));
-      heroImgH = Math.round(Math.min(220, Math.max(140, heroZone * 0.46)));
+      heroZone = Math.min(260, Math.max(160, Math.round((vh - hudReserve) * 0.26)));
+      arenaMin = Math.max(96, Math.round(vh * 0.12));
+      heroColW = Math.round(Math.min(180, Math.max(120, stageW * 0.18)));
+      heroImgH = Math.round(Math.min(190, Math.max(120, heroZone * 0.42)));
       portraitZoom = 1.0;
       chromePad = 16;
       root.style.setProperty("--tablet-battle-chrome-bottom", `${hudReserve}px`);
@@ -441,7 +500,10 @@
   function fitCanvasDisplaySize() {
     const app = document.getElementById("app");
     const canvas = document.getElementById("game-canvas");
-    if (!canvas || canvas.width <= 0 || canvas.height <= 0) return;
+    if (!canvas || canvas.width <= 0 || canvas.height <= 0) {
+      syncFxCanvasGeometry();
+      return;
+    }
 
     const phase = app?.dataset.phase;
     const root = document.documentElement;
@@ -458,6 +520,7 @@
       const stageW = fieldCol?.clientWidth ?? stage?.clientWidth ?? 0;
       if (stage && stageW > 0) {
         fitFlankArenaBattleLayout(root, canvas, fieldCol, stageW);
+        syncFxCanvasGeometry();
         return;
       }
       setBattleArenaLayout(false);
@@ -475,12 +538,14 @@
         readCssPx("--battle-canvas-h", canvas.height),
       );
       syncMobileShopFabPosition();
+      syncFxCanvasGeometry();
       return;
     }
 
     if (phase !== "prep") {
       clearCanvasDisplaySize();
       syncMobileShopFabPosition();
+      syncFxCanvasGeometry();
       return;
     }
 
@@ -519,6 +584,7 @@
           root.style.setProperty("--prep-canvas-display-h", `${ch}px`);
           setCanvasDisplaySize(canvas, w, ch);
           syncMobileShopFabPosition();
+          syncFxCanvasGeometry();
           return;
         }
       }
@@ -529,6 +595,7 @@
       );
       root.style.removeProperty("--prep-canvas-display-w");
       root.style.removeProperty("--prep-canvas-display-h");
+      syncFxCanvasGeometry();
       return;
     }
 
@@ -564,6 +631,7 @@
         root.style.removeProperty("--prep-canvas-display-h");
       }
       syncMobileShopFabPosition();
+      syncFxCanvasGeometry();
       return;
     }
 
@@ -573,10 +641,12 @@
         readCssPx("--prep-canvas-w", canvas.width),
         readCssPx("--prep-canvas-h", canvas.height),
       );
+      syncFxCanvasGeometry();
       return;
     }
 
     clearCanvasDisplaySize();
+    syncFxCanvasGeometry();
   }
 
   function scheduleCanvasFit() {
@@ -682,7 +752,7 @@
     document.documentElement.dataset.prepLayout = prepLayout;
     const tabletSideFit = shouldUseTabletSideFit(w, h, prepLayout, touchDev, tier);
     const tabletPrepHero = tabletSideFit
-      || (prepLayout === "side" && w > h && (tier === "tablet" || touchDev));
+      || (prepLayout === "side" && w > h && tier === "tablet" && touchDev);
     document.documentElement.dataset.tabletSideFit = tabletSideFit ? "true" : "false";
     document.documentElement.dataset.tabletPrepHero = tabletPrepHero ? "true" : "false";
     if (!tabletSideFit && !tabletPrepHero) {
@@ -727,6 +797,8 @@
     if (typeof window.applyGridMetricsFromCss === "function") {
       window.applyGridMetricsFromCss();
     }
+    syncBattleHudAnchors();
+    syncFxCanvasGeometry();
   }
 
   function scheduleLayout() {
@@ -743,7 +815,11 @@
           const { h } = viewportSize();
           syncTabletSideLayoutVars(h, document.getElementById("app")?.dataset.phase ?? "prep");
           fitCanvasDisplaySize();
-          requestAnimationFrame(syncBattleSceneGridMetrics);
+          requestAnimationFrame(() => {
+            syncBattleSceneGridMetrics();
+            syncBattleHudAnchors();
+            syncFxCanvasGeometry();
+          });
         }
       });
     });
@@ -807,6 +883,8 @@
   window.fitPrepCanvasToStage = fitCanvasDisplaySize;
   window.scheduleCanvasFit = scheduleCanvasFit;
   window.syncMobileShopFabPosition = syncMobileShopFabPosition;
+  window.syncBattleHudAnchors = syncBattleHudAnchors;
+  window.syncFxCanvasGeometry = syncFxCanvasGeometry;
   window.syncBattleHudFeedDock = syncBattleHudFeedDock;
   window.syncTabletBattleAvatarPositions = syncTabletBattleAvatarPositions;
   window.syncBattleSceneGridMetrics = syncBattleSceneGridMetrics;
