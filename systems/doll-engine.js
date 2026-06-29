@@ -118,6 +118,29 @@ function deriveDollFromItems(items) {
   return { doll, uidBySlot };
 }
 
+const DOLL_ARENA_SLOT_ORDER = [
+  "head", "chest", "leftHand", "rightHand",
+  "gloves", "boots", "ring1", "ring2", "amulet",
+];
+
+/** Уникальные предметы манекена для арены (twoHand — один раз). */
+function listDollEquippedItems(items) {
+  const { doll, uidBySlot } = deriveDollFromItems(items);
+  const seenUid = new Set();
+  const out = [];
+  for (const slotId of DOLL_ARENA_SLOT_ORDER) {
+    const itemId = doll[slotId];
+    const uid = uidBySlot[slotId];
+    if (!itemId || !uid || seenUid.has(uid)) continue;
+    if (slotId === "leftHand" && uidBySlot.rightHand === uid) continue;
+    seenUid.add(uid);
+    const def = ITEM_CATALOG[itemId];
+    if (!def) continue;
+    out.push({ slotId, itemId, uid, def });
+  }
+  return out;
+}
+
 function getDollState(items) {
   if (items) return deriveDollFromItems(items).doll;
   if (typeof getSideState === "function") {

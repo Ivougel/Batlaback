@@ -432,8 +432,6 @@ const ThoughtArena = (() => {
       rafId = null;
     }
     lastTs = 0;
-    const arena = getArenaEl();
-    if (arena) arena.innerHTML = "";
   }
 
   function onResize() {

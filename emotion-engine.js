@@ -72,6 +72,9 @@ function clearEmotionLayer() {
   if (typeof EmotionPresenter !== "undefined") {
     EmotionPresenter.clearAllThoughts();
   }
+  if (typeof ArenaEquipment !== "undefined") {
+    ArenaEquipment.clearAll();
+  }
 }
 
 function clearEmotionMount(side) {
@@ -520,6 +523,13 @@ function drawEmotionLayer(_ctx, battleState, elapsedReal) {
     renderEmotionDom(emotionEngine.enemyAnim, "enemy");
   } else {
     clearEmotionMount("enemy");
+  }
+
+  if (
+    typeof ArenaEquipment !== "undefined"
+    && document.documentElement.dataset.battleArenaLayout === "true"
+  ) {
+    ArenaEquipment.syncBattle(battleState, elapsedReal);
   }
 
   emotionEngine.lastRenderAt = Date.now();

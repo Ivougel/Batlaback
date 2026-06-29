@@ -354,6 +354,12 @@
     document.documentElement.dataset.battleArenaLayout = enabled ? "true" : "false";
   }
 
+  function setBattleHeroPlacement(mode) {
+    const root = document.documentElement;
+    if (mode) root.dataset.battleHeroPlacement = mode;
+    else root.removeAttribute("data-battle-hero-placement");
+  }
+
   function fitDesktopBattleLayout(root, canvas, fieldCol, stageW) {
     const vh = window.visualViewport?.height ?? window.innerHeight;
     const hudReserve = measureBattleHudReserve();
@@ -361,6 +367,7 @@
     const cssH = readCssPx("--battle-canvas-h", canvas.height);
     const heroZone = Math.min(360, Math.max(220, Math.round(vh * 0.24)));
     const arenaMin = Math.max(140, Math.round(vh * 0.18));
+    const heroColW = Math.round(Math.min(280, Math.max(200, stageW * 0.17)));
     const maxH = Math.max(120, vh - hudReserve - heroZone - arenaMin - 20);
     const scale = Math.min(stageW / cssW, maxH / cssH, 1);
     const w = Math.max(1, Math.floor(cssW * scale));
@@ -368,8 +375,10 @@
     const heroImgH = Math.round(Math.min(240, Math.max(160, heroZone * 0.5)));
 
     setBattleArenaLayout(true);
+    setBattleHeroPlacement("flank-arena");
     root.style.setProperty("--desktop-battle-hero-zone-h", `${heroZone}px`);
     root.style.setProperty("--desktop-battle-hero-img-h", `${heroImgH}px`);
+    root.style.setProperty("--desktop-battle-hero-col-w", `${heroColW}px`);
     root.style.setProperty("--desktop-battle-thought-arena-min-h", `${arenaMin}px`);
     root.style.setProperty("--battle-canvas-display-w", `${w}px`);
     root.style.setProperty("--battle-canvas-display-h", `${ch}px`);
@@ -392,9 +401,11 @@
 
     if (phase !== "battle" && phase !== "replay") {
       setBattleArenaLayout(false);
+      setBattleHeroPlacement(null);
       [
         "--desktop-battle-hero-zone-h",
         "--desktop-battle-hero-img-h",
+        "--desktop-battle-hero-col-w",
         "--desktop-battle-thought-arena-min-h",
       ].forEach((name) => root.style.removeProperty(name));
     }
@@ -425,6 +436,7 @@
             root.style.setProperty("--mobile-battle-portrait-h", `${portraitH}px`);
             root.style.setProperty("--mobile-battle-hero-img-h", `${heroImgH}px`);
             setBattleArenaLayout(root.dataset.orientation !== "landscape");
+            setBattleHeroPlacement(null);
             setCanvasDisplaySize(canvas, w, h);
             setMobileBattleDisplayVars(w, h, cssW);
             syncMobileShopFabPosition();
@@ -455,6 +467,7 @@
             root.style.setProperty("--battle-canvas-display-w", `${w}px`);
             root.style.setProperty("--battle-canvas-display-h", `${ch}px`);
             setBattleArenaLayout(true);
+            setBattleHeroPlacement("under-backpacks");
             setCanvasDisplaySize(canvas, w, ch);
             setTabletBattleFieldMetrics(root, w);
             requestAnimationFrame(() => {
@@ -475,6 +488,7 @@
           return;
         }
         setBattleArenaLayout(false);
+        setBattleHeroPlacement(null);
         root.dataset.battleMobileFit = "false";
         [
           "--battle-canvas-display-w",

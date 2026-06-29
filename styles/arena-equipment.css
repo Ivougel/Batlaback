@@ -1,0 +1,62 @@
+/**
+ * Экипировка манекена в боевой арене (#battle-thought-arena).
+ */
+
+.arena-equipment-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.arena-equip-body {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: calc(12px * var(--ui-scale, 1));
+  background: rgba(8, 12, 22, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 8px 22px rgba(0, 0, 0, 0.45);
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.5));
+  will-change: transform, opacity;
+  transform-origin: center center;
+  line-height: 1;
+  user-select: none;
+  z-index: 1;
+}
+
+.arena-equip-body--player {
+  z-index: 2;
+}
+
+.arena-equip-body--enemy {
+  z-index: 1;
+}
+
+.arena-equip-body--weapon {
+  z-index: 3;
+  background: rgba(12, 16, 28, 0.52);
+}
+
+.arena-equip-body.is-attacking {
+  z-index: 8;
+  filter: drop-shadow(0 6px 20px rgba(255, 180, 80, 0.35));
+}
+
+.battle-thought-body {
+  z-index: 12;
+}
+
+.battle-thought-body--player {
+  z-index: 14;
+}
+
+.battle-thought-body--enemy {
+  z-index: 13;
+}

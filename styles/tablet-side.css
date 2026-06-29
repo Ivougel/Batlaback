@@ -137,6 +137,81 @@ html[data-tablet-prep-hero="true"] #app[data-phase="prep"] .prep-stats-stack {
   z-index: 4;
 }
 
+/* ─── Battle: герои под своими рюкзаками (tablet / mobile portrait) ─── */
+
+html[data-battle-hero-placement="under-backpacks"][data-tablet-side-fit="true"] #app[data-phase="battle"] .prep-field-column,
+html[data-battle-hero-placement="under-backpacks"][data-tablet-side-fit="true"] #app[data-phase="replay"] .prep-field-column,
+html[data-battle-hero-placement="under-backpacks"][data-tablet-prep-hero="true"] #app[data-phase="battle"] .prep-field-column,
+html[data-battle-hero-placement="under-backpacks"][data-tablet-prep-hero="true"] #app[data-phase="replay"] .prep-field-column {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  height: 100%;
+  min-height: 0;
+  overflow: visible;
+}
+
+html[data-battle-hero-placement="under-backpacks"][data-tablet-side-fit="true"] #app[data-phase="battle"] .battle-scene-ui,
+html[data-battle-hero-placement="under-backpacks"][data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-ui,
+html[data-battle-hero-placement="under-backpacks"][data-tablet-prep-hero="true"] #app[data-phase="battle"] .battle-scene-ui,
+html[data-battle-hero-placement="under-backpacks"][data-tablet-prep-hero="true"] #app[data-phase="replay"] .battle-scene-ui {
+  display: grid !important;
+  grid-template-areas: "player gap enemy";
+  grid-template-columns:
+    var(--tablet-battle-slot-w, var(--battle-field-display-w, minmax(0, 1fr)))
+    var(--battle-grid-gap-display, var(--grid-gap))
+    var(--tablet-battle-slot-w, var(--battle-field-display-w, minmax(0, 1fr)));
+  width: var(
+    --tablet-battle-canvas-display-w,
+    var(--battle-canvas-display-w, var(--battle-canvas-w))
+  );
+  max-width: 100%;
+  align-self: center;
+  flex: 0 0 auto;
+  min-height: 0;
+  margin-top: 4px;
+  margin-bottom: 0;
+  justify-items: center;
+  align-items: end;
+  align-content: end;
+}
+
+html[data-battle-hero-placement="under-backpacks"][data-tablet-side-fit="true"] #app[data-phase="battle"] .battle-scene-avatar-player,
+html[data-battle-hero-placement="under-backpacks"][data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-avatar-player,
+html[data-battle-hero-placement="under-backpacks"][data-tablet-prep-hero="true"] #app[data-phase="battle"] .battle-scene-avatar-player,
+html[data-battle-hero-placement="under-backpacks"][data-tablet-prep-hero="true"] #app[data-phase="replay"] .battle-scene-avatar-player {
+  grid-area: player !important;
+  justify-self: center;
+  width: 100%;
+  max-width: var(--tablet-battle-slot-w, 100%);
+}
+
+html[data-battle-hero-placement="under-backpacks"][data-tablet-side-fit="true"] #app[data-phase="battle"] .battle-scene-avatar-enemy,
+html[data-battle-hero-placement="under-backpacks"][data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-avatar-enemy,
+html[data-battle-hero-placement="under-backpacks"][data-tablet-prep-hero="true"] #app[data-phase="battle"] .battle-scene-avatar-enemy,
+html[data-battle-hero-placement="under-backpacks"][data-tablet-prep-hero="true"] #app[data-phase="replay"] .battle-scene-avatar-enemy {
+  grid-area: enemy !important;
+  justify-self: center;
+  width: 100%;
+  max-width: var(--tablet-battle-slot-w, 100%);
+}
+
+html[data-battle-hero-placement="under-backpacks"][data-tablet-side-fit="true"] #app[data-phase="battle"] .battle-thought-arena,
+html[data-battle-hero-placement="under-backpacks"][data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-thought-arena,
+html[data-battle-hero-placement="under-backpacks"][data-tablet-prep-hero="true"] #app[data-phase="battle"] .battle-thought-arena,
+html[data-battle-hero-placement="under-backpacks"][data-tablet-prep-hero="true"] #app[data-phase="replay"] .battle-thought-arena {
+  flex: 1 1 auto;
+  align-self: stretch;
+  width: 100%;
+  min-height: var(
+    --tablet-battle-thought-arena-min-h,
+    var(--mobile-battle-thought-arena-min-h, min(140px, 18vh))
+  );
+  margin-top: calc(4px * var(--ui-scale));
+  margin-bottom: calc(4px * var(--ui-scale));
+}
+
 /* ─── Battle: герои под своими рюкзаками, zoom портрета, HP/бафы ─── */
 
 html[data-tablet-side-fit="true"] #app[data-phase="battle"],

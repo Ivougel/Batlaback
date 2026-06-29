@@ -1,0 +1,535 @@
+/**
+ * ArenaEquipment — экипировка манекена в боевой арене эмоджи.
+ * Предметы «висят» в своей половине арены; оружие периодически бьёт по противнику.
+ */
+
+const ArenaEquipment = (() => {
+  const SIZE_RATIO = 0.105;
+  const SPRING_K = 9;
+  const AIR_DRAG = 0.992;
+  const MAX_DT = 0.032;
+  const SYNC_INTERVAL_MS = 450;
+  const BURST_SPACING_SEC = 6.5;
+  const MIN_BURSTS = 2;
+  const MAX_BURSTS = 14;
+
+  const PHASE_DUR = {
+    lunge: 0.22,
+    hit: 0.11,
+    return: 0.26,
+  };
+
+  const SLOT_ANCHOR = {
+    head: { y: 0.14, xBias: 0.5 },
+    chest: { y: 0.3, xBias: 0.5 },
+    leftHand: { y: 0.46, xBias: 0.68 },
+    rightHand: { y: 0.46, xBias: 0.82 },
+    gloves: { y: 0.58, xBias: 0.5 },
+    boots: { y: 0.76, xBias: 0.5 },
+    ring1: { y: 0.64, xBias: 0.38 },
+    ring2: { y: 0.64, xBias: 0.62 },
+    amulet: { y: 0.38, xBias: 0.35 },
+  };
+
+  /** @type {Map<string, object[]>} */
+  const bodiesBySide = new Map();
+  let rafId = null;
+  let lastTs = 0;
+  /** @type {object|null} */
+  let activeBattle = null;
+  let lastSyncAt = 0;
+  let battleDurationEst = 60;
+  let paused = false;
+
+  function getLayerEl() {
+    return document.getElementById("arena-equipment-layer");
+  }
+
+  function getArenaEl() {
+    return document.getElementById("battle-thought-arena");
+  }
+
+  function viewportMin() {
+    const vv = window.visualViewport;
+    return Math.min(vv?.width ?? window.innerWidth, vv?.height ?? window.innerHeight);
+  }
+
+  function equipDiameterPx() {
+    return viewportMin() * SIZE_RATIO;
+  }
+
+  function equipRadiusPx() {
+    return equipDiameterPx() * 0.5;
+  }
+
+  function isArenaActive() {
+    return document.documentElement.dataset.battleArenaLayout === "true";
+  }
+
+  function isBattlePaused() {
+    return typeof isEmotionBattlePaused === "function"
+      ? isEmotionBattlePaused()
+      : !!(typeof battlePaused !== "undefined" && battlePaused);
+  }
+
+  function isWeaponDef(def) {
+    if (!def) return false;
+    if (def.tags?.includes("weapon")) return true;
+    const slot = def.slot;
+    return slot === "twoHand" || slot === "rightHand";
+  }
+
+  function easeOutCubic(t) {
+    const u = 1 - t;
+    return 1 - u * u * u;
+  }
+
+  function easeInOutQuad(t) {
+    return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  }
+
+  function estimateBattleDuration(battleState) {
+    const maxDur = typeof MAX_BATTLE_DURATION !== "undefined" ? MAX_BATTLE_DURATION : 120;
+    const elapsed = battleState.elapsed || 0;
+    const playerHp = Math.max(1, battleState.player?.hp || 1);
+    const enemyHp = Math.max(1, battleState.enemy?.hp || 1);
+    const playerDps = battleState.commentary?.playerState?.metrics?.outgoingDps || 0;
+    const enemyDps = battleState.commentary?.enemyState?.metrics?.outgoingDps || 0;
+
+    if (playerDps < 0.4 && enemyDps < 0.4) {
+      const pMax = battleState.player?.maxHp || 100;
+      const eMax = battleState.enemy?.maxHp || 100;
+      return Math.min(maxDur, Math.max(18, (pMax + eMax) / 14));
+    }
+
+    const toKillEnemy = enemyHp / Math.max(0.5, playerDps);
+    const toKillPlayer = playerHp / Math.max(0.5, enemyDps);
+    const remaining = Math.min(toKillEnemy, toKillPlayer);
+    return Math.min(maxDur, Math.max(10, elapsed + remaining));
+  }
+
+  function computeBurstPlan(battleState) {
+    const elapsed = battleState.elapsed || 0;
+    const est = estimateBattleDuration(battleState);
+    battleDurationEst = est;
+    const totalBursts = Math.max(
+      MIN_BURSTS,
+      Math.min(MAX_BURSTS, Math.round(est / BURST_SPACING_SEC)),
+    );
+    const remaining = Math.max(4, est - elapsed);
+    const interval = remaining / totalBursts;
+    return { totalBursts, interval, est };
+  }
+
+  function zoneBounds(side, w, h, r) {
+    const pad = r + 6;
+    const mid = w * 0.5;
+    const gap = w * 0.04;
+    if (side === "player") {
+      return { xMin: pad, xMax: mid - gap, yMin: pad, yMax: h - pad };
+    }
+    return { xMin: mid + gap, xMax: w - pad, yMin: pad, yMax: h - pad };
+  }
+
+  function homeForSlot(side, slotId, w, h, r) {
+    const zone = zoneBounds(side, w, h, r);
+    const anchor = SLOT_ANCHOR[slotId] || { y: 0.5, xBias: 0.5 };
+    const zoneW = zone.xMax - zone.xMin;
+    const zoneH = zone.yMax - zone.yMin;
+    let xBias = anchor.xBias;
+    if (side === "enemy") xBias = 1 - xBias;
+    return {
+      x: zone.xMin + zoneW * xBias,
+      y: zone.yMin + zoneH * anchor.y,
+    };
+  }
+
+  function foeStrikeTarget(side, w, h) {
+    const r = equipRadiusPx();
+    const foe = side === "player" ? "enemy" : "player";
+    const zone = zoneBounds(foe, w, h, r);
+    const cx = (zone.xMin + zone.xMax) * 0.5;
+    const cy = (zone.yMin + zone.yMax) * 0.5;
+    return {
+      x: cx + (Math.random() - 0.5) * (zone.xMax - zone.xMin) * 0.35,
+      y: cy + (Math.random() - 0.5) * (zone.yMax - zone.yMin) * 0.3,
+    };
+  }
+
+  function styleBodyEl(body) {
+    const d = equipDiameterPx();
+    body.el.style.width = `${d}px`;
+    body.el.style.height = `${d}px`;
+    body.el.style.fontSize = `${d * 0.62}px`;
+    body.radius = equipRadiusPx();
+  }
+
+  function applyVisual(body) {
+    const scale = body.displayScale ?? 1;
+    const rot = body.rotation ?? 0;
+    const x = body.renderX ?? body.x;
+    const y = body.renderY ?? body.y;
+    body.el.style.transform = `translate(${x - body.radius}px, ${y - body.radius}px) scale(${scale}) rotate(${rot}deg)`;
+    body.el.style.opacity = String(body.opacity ?? 1);
+  }
+
+  function createBody(side, entry, home, weaponIndex) {
+    const layer = getLayerEl();
+    if (!layer) return null;
+
+    const el = document.createElement("div");
+    el.className = "arena-equip-body";
+    el.classList.add(`arena-equip-body--${side}`);
+    if (isWeaponDef(entry.def)) el.classList.add("arena-equip-body--weapon");
+    el.textContent = entry.def.icon || "?";
+    el.title = entry.def.name || "";
+    layer.appendChild(el);
+
+    const vmin = viewportMin();
+    const body = {
+      el,
+      side,
+      uid: entry.uid,
+      itemId: entry.itemId,
+      slotId: entry.slotId,
+      isWeapon: isWeaponDef(entry.def),
+      glyph: entry.def.icon,
+      x: home.x,
+      y: home.y,
+      homeX: home.x,
+      homeY: home.y,
+      renderX: home.x,
+      renderY: home.y,
+      vx: 0,
+      vy: 0,
+      radius: equipRadiusPx(),
+      rotation: (Math.random() - 0.5) * 12,
+      rotVel: (Math.random() - 0.5) * 8,
+      displayScale: 1,
+      opacity: 1,
+      wobblePhase: Math.random() * Math.PI * 2,
+      wobbleAmp: 0.7 + Math.random() * 0.5,
+      wobbleSpeed: 0.9 + Math.random() * 0.6,
+      attack: null,
+      burstsTotal: 0,
+      burstsDone: 0,
+      burstInterval: 7,
+      nextAttackAt: 0,
+      weaponIndex,
+    };
+    styleBodyEl(body);
+    applyVisual(body);
+    return body;
+  }
+
+  function getAllBodies() {
+    const all = [];
+    bodiesBySide.forEach((list) => all.push(...list));
+    return all;
+  }
+
+  function clampToArena(body, w, h) {
+    const r = body.radius;
+    body.x = Math.max(r, Math.min(w - r, body.x));
+    body.y = Math.max(r, Math.min(h - r, body.y));
+  }
+
+  function resolveCollisions(bodies, w, h) {
+    for (let i = 0; i < bodies.length; i++) {
+      for (let j = i + 1; j < bodies.length; j++) {
+        const a = bodies[i];
+        const b = bodies[j];
+        if (a.attack || b.attack) continue;
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        let dist = Math.hypot(dx, dy);
+        const minDist = a.radius + b.radius;
+        if (dist >= minDist) continue;
+        if (dist < 0.001) dist = 0.001;
+        const nx = dx / dist;
+        const ny = dy / dist;
+        const overlap = (minDist - dist) * 0.5;
+        a.x -= nx * overlap;
+        a.y -= ny * overlap;
+        b.x += nx * overlap;
+        b.y += ny * overlap;
+      }
+    }
+    bodies.forEach((body) => {
+      if (!body.attack) clampToArena(body, w, h);
+    });
+  }
+
+  function startAttack(body, w, h, elapsed) {
+    const target = foeStrikeTarget(body.side, w, h);
+    const hitsTotal = 2 + Math.floor(Math.random() * 3);
+    body.attack = {
+      phase: "lunge",
+      phaseT: 0,
+      hitsTotal,
+      hitsDone: 0,
+      fromX: body.x,
+      fromY: body.y,
+      targetX: target.x,
+      targetY: target.y,
+      strikeX: target.x,
+      strikeY: target.y,
+    };
+    body.el.classList.add("is-attacking");
+    body.burstsDone += 1;
+    body.nextAttackAt = elapsed + body.burstInterval * (0.85 + Math.random() * 0.3);
+  }
+
+  function stepAttack(body, dt) {
+    const atk = body.attack;
+    if (!atk) return;
+
+    atk.phaseT += dt;
+    const vmin = viewportMin();
+
+    if (atk.phase === "lunge") {
+      const t = easeOutCubic(Math.min(1, atk.phaseT / PHASE_DUR.lunge));
+      body.renderX = atk.fromX + (atk.targetX - atk.fromX) * t;
+      body.renderY = atk.fromY + (atk.targetY - atk.fromY) * t;
+      body.displayScale = 1 + t * 0.12;
+      body.rotation += dt * 120 * (body.side === "player" ? 1 : -1);
+      if (atk.phaseT >= PHASE_DUR.lunge) {
+        atk.phase = "hit";
+        atk.phaseT = 0;
+        atk.strikeX = body.renderX;
+        atk.strikeY = body.renderY;
+      }
+    } else if (atk.phase === "hit") {
+      const shake = Math.sin(atk.phaseT * 48) * vmin * 0.004;
+      body.renderX = atk.strikeX + shake;
+      body.renderY = atk.strikeY + Math.cos(atk.phaseT * 40) * vmin * 0.003;
+      body.displayScale = 1.1 + Math.sin(atk.phaseT * 50) * 0.06;
+      if (atk.phaseT >= PHASE_DUR.hit) {
+        atk.hitsDone += 1;
+        atk.phaseT = 0;
+        if (atk.hitsDone >= atk.hitsTotal) {
+          atk.phase = "return";
+          atk.fromX = body.renderX;
+          atk.fromY = body.renderY;
+        }
+      }
+    } else if (atk.phase === "return") {
+      const t = easeInOutQuad(Math.min(1, atk.phaseT / PHASE_DUR.return));
+      body.renderX = atk.fromX + (body.homeX - atk.fromX) * t;
+      body.renderY = atk.fromY + (body.homeY - atk.fromY) * t;
+      body.displayScale = 1.1 - t * 0.1;
+      body.rotation *= 1 - dt * 3;
+      if (atk.phaseT >= PHASE_DUR.return) {
+        body.x = body.homeX;
+        body.y = body.homeY;
+        body.renderX = body.homeX;
+        body.renderY = body.homeY;
+        body.displayScale = 1;
+        body.attack = null;
+        body.el.classList.remove("is-attacking");
+      }
+    }
+  }
+
+  function stepIdle(body, dt) {
+    const vmin = viewportMin();
+    body.wobblePhase += dt * body.wobbleSpeed;
+
+    const wobbleX = Math.sin(body.wobblePhase) * body.wobbleAmp * vmin * 0.0025;
+    const wobbleY = Math.cos(body.wobblePhase * 0.85) * body.wobbleAmp * vmin * 0.002;
+
+    const ax = (body.homeX - body.x) * SPRING_K;
+    const ay = (body.homeY - body.y) * SPRING_K;
+    body.vx = (body.vx + ax * dt) * AIR_DRAG;
+    body.vy = (body.vy + ay * dt) * AIR_DRAG;
+    body.x += body.vx * dt;
+    body.y += body.vy * dt;
+
+    body.renderX = body.x + wobbleX;
+    body.renderY = body.y + wobbleY;
+    body.rotation += body.rotVel * dt;
+    body.rotVel *= Math.pow(0.92, dt * 60);
+
+  }
+
+  function stepPhysics(ts) {
+    if (paused) return;
+    if (!lastTs) lastTs = ts;
+    let dt = (ts - lastTs) / 1000;
+    lastTs = ts;
+    if (dt > MAX_DT) dt = MAX_DT;
+    if (dt <= 0) return;
+
+    const arena = getArenaEl();
+    if (!arena) return;
+    const w = arena.clientWidth;
+    const h = arena.clientHeight;
+    if (w < 8 || h < 8) return;
+
+    const elapsed = activeBattle?.elapsed || 0;
+    const all = getAllBodies();
+
+    all.forEach((body) => {
+      if (body.isWeapon && !body.attack && body.burstsDone < body.burstsTotal && elapsed >= body.nextAttackAt) {
+        startAttack(body, w, h, elapsed);
+      }
+      if (body.attack) {
+        stepAttack(body, dt);
+      } else {
+        stepIdle(body, dt);
+      }
+      applyVisual(body);
+    });
+
+    const idleBodies = all.filter((b) => !b.attack);
+    resolveCollisions(idleBodies, w, h);
+    idleBodies.forEach(applyVisual);
+
+    if (all.length) scheduleFrame();
+  }
+
+  function scheduleFrame() {
+    if (rafId != null) return;
+    rafId = requestAnimationFrame((ts) => {
+      rafId = null;
+      stepPhysics(ts);
+    });
+  }
+
+  function syncSide(side, entries, battleState, elapsed, burstPlan) {
+    const arena = getArenaEl();
+    if (!arena) return;
+    const w = arena.clientWidth;
+    const h = arena.clientHeight;
+    const r = equipRadiusPx();
+
+    const existing = bodiesBySide.get(side) || [];
+    const byUid = new Map(existing.map((b) => [b.uid, b]));
+    const nextBodies = [];
+    let weaponIndex = 0;
+
+    entries.forEach((entry) => {
+      const home = homeForSlot(side, entry.slotId, w, h, r);
+      let body = byUid.get(entry.uid);
+      if (body) {
+        body.homeX = home.x;
+        body.homeY = home.y;
+        body.slotId = entry.slotId;
+        body.itemId = entry.itemId;
+        body.isWeapon = isWeaponDef(entry.def);
+        if (body.glyph !== entry.def.icon) {
+          body.glyph = entry.def.icon;
+          body.el.textContent = entry.def.icon || "?";
+        }
+        body.el.classList.toggle("arena-equip-body--weapon", body.isWeapon);
+        styleBodyEl(body);
+      } else {
+        body = createBody(side, entry, home, weaponIndex);
+      }
+      if (!body) return;
+
+      if (body.isWeapon) {
+        body.burstsTotal = burstPlan.totalBursts;
+        body.burstInterval = burstPlan.interval;
+        if (body.nextAttackAt === 0) {
+          body.nextAttackAt = elapsed + 1.1 + weaponIndex * 0.42 + Math.random() * 0.35;
+        }
+        weaponIndex += 1;
+      }
+
+      nextBodies.push(body);
+      byUid.delete(entry.uid);
+    });
+
+    byUid.forEach((body) => body.el.remove());
+    bodiesBySide.set(side, nextBodies);
+  }
+
+  function syncBattle(battleState, elapsed) {
+    paused = isBattlePaused();
+
+    if (!isArenaActive() || !battleState || battleState.finished) {
+      clearAll();
+      return;
+    }
+
+    if (!getLayerEl()) return;
+
+    if (activeBattle !== battleState) {
+      clearAll();
+      activeBattle = battleState;
+      lastSyncAt = 0;
+    }
+
+    const now = Date.now();
+    if (now - lastSyncAt < SYNC_INTERVAL_MS && bodiesBySide.size > 0) {
+      if (!paused) scheduleFrame();
+      return;
+    }
+    lastSyncAt = now;
+
+    const burstPlan = computeBurstPlan(battleState);
+    const listFn = typeof listDollEquippedItems === "function"
+      ? listDollEquippedItems
+      : () => [];
+
+    ["player", "enemy"].forEach((side) => {
+      const items = battleState[side]?.items || [];
+      syncSide(side, listFn(items), battleState, elapsed, burstPlan);
+    });
+
+    if (getAllBodies().length) scheduleFrame();
+  }
+
+  function clearAll() {
+    bodiesBySide.forEach((list) => {
+      list.forEach((body) => body.el.remove());
+    });
+    bodiesBySide.clear();
+    activeBattle = null;
+    lastSyncAt = 0;
+    lastTs = 0;
+    if (rafId != null) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+  }
+
+  function onResize() {
+    const arena = getArenaEl();
+    if (!arena) return;
+    const w = arena.clientWidth;
+    const h = arena.clientHeight;
+    const r = equipRadiusPx();
+    bodiesBySide.forEach((list, side) => {
+      list.forEach((body) => {
+        const home = homeForSlot(side, body.slotId, w, h, r);
+        body.homeX = home.x;
+        body.homeY = home.y;
+        if (!body.attack) {
+          body.x = home.x;
+          body.y = home.y;
+          body.renderX = home.x;
+          body.renderY = home.y;
+        }
+        styleBodyEl(body);
+        applyVisual(body);
+      });
+    });
+  }
+
+  if (typeof ResizeObserver !== "undefined") {
+    document.addEventListener("DOMContentLoaded", () => {
+      const arena = getArenaEl();
+      if (arena) new ResizeObserver(onResize).observe(arena);
+    });
+  }
+  window.addEventListener("resize", onResize);
+  window.visualViewport?.addEventListener("resize", onResize);
+
+  return {
+    syncBattle,
+    clearAll,
+    estimateBattleDuration,
+  };
+})();
