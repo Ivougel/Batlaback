@@ -176,6 +176,7 @@ function setPrepDollOpen(open) {
     layer.classList.toggle("doll-open", prepDollOpen);
     layer.setAttribute("aria-hidden", prepDollOpen ? "false" : "true");
   }
+  if (!prepDollOpen && sidebarTooltipSource === "doll") hideSidebarTooltip();
 }
 
 function togglePrepDollOpen(e) {
@@ -3096,7 +3097,7 @@ function updatePointerFromClient(clientX, clientY) {
       hideSidebarTooltip();
     } else {
       const touchTooltipOpen = isTouchUi() && touchLongPress?.phase === "tooltipOpen";
-      if ((sidebarTooltipSource === "shop" || sidebarTooltipSource === "bench") && !touchTooltipOpen) {
+      if ((sidebarTooltipSource === "shop" || sidebarTooltipSource === "bench" || sidebarTooltipSource === "doll") && !touchTooltipOpen) {
         hideSidebarTooltip();
       }
       if (!isTouchUi() || touchLongPress?.phase === "tooltipOpen") {
@@ -3190,6 +3191,26 @@ function gamepadPointerDownAt(clientX, clientY) {
       }
       return;
     }
+  }
+
+  const dollSlot = target?.closest?.(".doll-slot[data-slot]");
+  if (dollSlot && typeof isDollOpen === "function" && isDollOpen() && canEditPrepSide(prepViewSide)) {
+    if (isTouchUi()) {
+      armTouchLongPress({
+        clientX,
+        clientY,
+        onHold: () => {
+          if (dragPayload) return;
+          if (typeof refreshDollSlotTooltip === "function") {
+            refreshDollSlotTooltip({ clientX, clientY, currentTarget: dollSlot }, dollSlot);
+          }
+        },
+        onDragFromTooltip: () => {
+          hideSidebarTooltip();
+        },
+      });
+    }
+    return;
   }
 
   const clickable = target?.closest?.("button:not([disabled]), .shop-pin");
@@ -4115,7 +4136,7 @@ function isPointerOverPrepSidebar(clientX, clientY) {
   const hit = document.elementFromPoint(clientX, clientY);
   if (!hit) return false;
   return !!hit.closest(
-    "#shop-panel, .run-stats-anchor, #prep-run-stats-anchor, #run-stats-popover, #sidebar-tooltip, #prep-tooltip-dock, #recipe-book-overlay, #combat-feed-dock, #combat-feed-panel, #combat-feed-scroll",
+    "#shop-panel, .run-stats-anchor, #prep-run-stats-anchor, #run-stats-popover, #sidebar-tooltip, #prep-tooltip-dock, #recipe-book-overlay, #combat-feed-dock, #combat-feed-panel, #combat-feed-scroll, #prep-doll-layer",
   );
 }
 
@@ -4246,6 +4267,13 @@ function getCorridorTooltipPosition(placement, clientX, clientY, tipW, tipH, mar
       verticalBias: 0.4,
     });
   }
+  if (placement === "doll") {
+    return positionTooltipInCorridor(tipW, tipH, margin, gap, {
+      hAnchor: "left",
+      clientY,
+      verticalBias: 0.42,
+    });
+  }
   return null;
 }
 
@@ -4282,7 +4310,7 @@ function positionSidebarTooltip(clientX, clientY, boundsKind = "viewport", place
   let left;
   let top;
 
-  if (placement === "shop" || placement === "bench" || placement === "field") {
+  if (placement === "shop" || placement === "bench" || placement === "field" || placement === "doll") {
     const corridorPos = getCorridorTooltipPosition(placement, clientX, clientY, tipW, tipH, margin, gap);
     if (corridorPos) {
       left = corridorPos.left;
@@ -4505,7 +4533,7 @@ function updateTooltip(mx, my) {
   const sidebarEl = document.getElementById("sidebar-tooltip");
   const sidebarHoverActive = sidebarEl
     && !sidebarEl.classList.contains("hidden")
-    && (sidebarTooltipSource === "shop" || sidebarTooltipSource === "bench" || sidebarTooltipSource === "combat-feed");
+    && (sidebarTooltipSource === "shop" || sidebarTooltipSource === "bench" || sidebarTooltipSource === "combat-feed" || sidebarTooltipSource === "doll");
   if (sidebarHoverActive) {
     return;
   }
@@ -4605,7 +4633,7 @@ function showSidebarTooltipAt(clientX, clientY, itemId, contentItem, context = "
   el.style.borderColor = RARITY_COLORS[def.rarity] || "#30363d";
   el.classList.remove("hidden");
   syncPrepTooltipDockVisibility();
-  const boundsKind = context === "shop" ? "shop" : context === "bench" ? "bench" : context === "field" ? "field" : "viewport";
+  const boundsKind = context === "shop" ? "shop" : context === "bench" ? "bench" : context === "field" || context === "doll" ? "field" : "viewport";
   positionSidebarTooltip(clientX, clientY, boundsKind, context);
   if (isMobilePrepPortrait() && (context === "shop" || context === "bench")) {
     requestAnimationFrame(() => {

@@ -195,11 +195,11 @@ function syncDollUI(side) {
       const def = ITEM_CATALOG[itemId];
       slotEl.classList.add("doll-slot--filled");
       slotEl.textContent = def?.icon || "?";
-      slotEl.title = def?.name || itemId;
+      slotEl.removeAttribute("title");
     } else {
       slotEl.classList.remove("doll-slot--filled");
       slotEl.textContent = DOLL_SLOT_PLACEHOLDERS[slotId] || "○";
-      slotEl.title = DOLL_SLOTS[slotId]?.label || slotId;
+      slotEl.removeAttribute("title");
     }
   });
 }
@@ -328,6 +328,113 @@ function updateDollDropHighlight(clientX, clientY) {
   });
 }
 
+const DOLL_SLOT_ACCEPT_TEXT = {
+  head: "шлем",
+  chest: "броня",
+  leftHand: "щит, двуручное оружие",
+  rightHand: "одноручное или двуручное оружие",
+  gloves: "перчатки",
+  boots: "обувь",
+  ring1: "кольцо",
+  ring2: "кольцо",
+  amulet: "амулет",
+};
+
+function getEquippedItemForSlot(slotId, side) {
+  if (typeof getSideState !== "function") return null;
+  const st = getSideState(side);
+  const { uidBySlot } = deriveDollFromItems(st.items);
+  const uid = uidBySlot[slotId];
+  if (!uid) return null;
+  return st.items.find((item) => item.uid === uid) || null;
+}
+
+function buildDollEmptySlotTooltipLines(slotId) {
+  const slot = DOLL_SLOTS[slotId];
+  const accept = DOLL_SLOT_ACCEPT_TEXT[slotId] || "—";
+  return [
+    {
+      text: `${DOLL_SLOT_PLACEHOLDERS[slotId] || "○"} ${slot?.label || slotId}`,
+      style: "title",
+      color: "#58a6ff",
+    },
+    { text: "Слот экипировки", style: "sub", color: "#8b949e" },
+    { text: `Принимает: ${accept}`, style: "normal", color: "#c9d1d9" },
+    {
+      text: "💡 Перетащите подходящий предмет из сумки или со скамейки",
+      style: "sub",
+      color: "#79c0ff",
+    },
+  ];
+}
+
+function showDollEmptySlotTooltipAt(clientX, clientY, slotId) {
+  const el = document.getElementById("sidebar-tooltip");
+  if (!el || typeof renderTooltipLinesHtml !== "function") return;
+  if (typeof cancelScheduledTooltipHide === "function") cancelScheduledTooltipHide();
+  if (typeof sidebarTooltipSource !== "undefined") sidebarTooltipSource = "doll";
+  if (typeof tooltipItem !== "undefined") tooltipItem = null;
+  if (typeof fieldTooltipVisible !== "undefined") fieldTooltipVisible = false;
+  el.classList.remove("synergy-tooltip");
+  el.innerHTML = renderTooltipLinesHtml(buildDollEmptySlotTooltipLines(slotId));
+  el.style.borderColor = "#58a6ff";
+  el.classList.remove("hidden");
+  if (typeof syncPrepTooltipDockVisibility === "function") syncPrepTooltipDockVisibility();
+  if (typeof positionSidebarTooltip === "function") {
+    positionSidebarTooltip(clientX, clientY, "viewport", "doll");
+  }
+}
+
+function showDollFilledSlotTooltipAt(clientX, clientY, item, slotEl) {
+  if (typeof showSidebarTooltipAt !== "function") return;
+  const def = ITEM_CATALOG[item.itemId];
+  if (!def) return;
+  showSidebarTooltipAt(clientX, clientY, item.itemId, item, "doll", slotEl);
+  const el = document.getElementById("sidebar-tooltip");
+  if (el && typeof renderTooltipLinesHtml === "function" && typeof buildItemTooltipLines === "function") {
+    const lines = buildItemTooltipLines(def, item, item.rotation || 0, "field");
+    lines.push({ text: "Клик — снять на скамейку", style: "sub", color: "#8b949e" });
+    el.innerHTML = renderTooltipLinesHtml(lines);
+    el.style.borderColor = (typeof RARITY_COLORS !== "undefined" && RARITY_COLORS[def.rarity]) || "#30363d";
+  }
+}
+
+function refreshDollSlotTooltip(e, slotEl) {
+  if (typeof prepTooltipsEnabled !== "undefined" && !prepTooltipsEnabled) return;
+  if (typeof phase !== "undefined" && phase !== "prep") return;
+  if (typeof dragPayload !== "undefined" && dragPayload) return;
+  if (!isDollOpen()) return;
+  const side = typeof prepViewSide !== "undefined" ? prepViewSide : "player";
+  const slotId = slotEl.dataset.slot;
+  const item = getEquippedItemForSlot(slotId, side);
+  if (item) {
+    showDollFilledSlotTooltipAt(e.clientX, e.clientY, item, slotEl);
+  } else {
+    showDollEmptySlotTooltipAt(e.clientX, e.clientY, slotId);
+  }
+}
+
+function bindDollSlotTooltips() {
+  document.querySelectorAll(".doll-slot[data-slot]").forEach((slotEl) => {
+    if (slotEl.dataset.dollTooltipBound === "1") return;
+    slotEl.dataset.dollTooltipBound = "1";
+    slotEl.style.cursor = "help";
+
+    slotEl.addEventListener("mouseenter", (e) => {
+      if (typeof cancelScheduledTooltipHide === "function") cancelScheduledTooltipHide();
+      refreshDollSlotTooltip(e, slotEl);
+    });
+    slotEl.addEventListener("mousemove", (e) => {
+      if (typeof cancelScheduledTooltipHide === "function") cancelScheduledTooltipHide();
+      refreshDollSlotTooltip(e, slotEl);
+      if (typeof moveSidebarTooltip === "function") moveSidebarTooltip(e, "viewport", "doll");
+    });
+    slotEl.addEventListener("mouseleave", () => {
+      if (typeof requestHideSidebarTooltip === "function") requestHideSidebarTooltip();
+    });
+  });
+}
+
 function chainDollDragHooks() {
   const prevMove = typeof onPrepDragMove === "function" ? onPrepDragMove : null;
   const prevEnd = typeof onPrepDragEnd === "function" ? onPrepDragEnd : null;
@@ -362,6 +469,7 @@ function initDollSlotClicks() {
   });
   syncDollUI();
   chainDollDragHooks();
+  bindDollSlotTooltips();
 }
 
 document.addEventListener("DOMContentLoaded", initDollSlotClicks);
