@@ -7,19 +7,19 @@
 
 const EmotionPresenter = (() => {
   const LAYOUT = {
-    PARKED: "parked",
+    ARENA: "arena",
     FLOAT: "float",
   };
 
   /** @type {Record<string, { present(side: string, event: object): void, clear(side: string): void, matches?(): boolean }>} */
   const layouts = {
-    [LAYOUT.PARKED]: {
+    [LAYOUT.ARENA]: {
       matches() {
         const root = document.documentElement;
         return root.dataset.prepLayout === "mobile" && root.dataset.orientation !== "landscape";
       },
-      present: presentParkedThought,
-      clear: clearParkedThought,
+      present: presentArenaThought,
+      clear: clearArenaThought,
     },
     [LAYOUT.FLOAT]: {
       matches() {
@@ -31,7 +31,6 @@ const EmotionPresenter = (() => {
   };
 
   const lastKey = { player: null, enemy: null };
-  const parkedBubble = { player: null, enemy: null };
 
   function resolveLayoutName() {
     for (const [name, strategy] of Object.entries(layouts)) {
@@ -45,53 +44,17 @@ const EmotionPresenter = (() => {
     return layouts[name] || layouts[LAYOUT.FLOAT];
   }
 
-  function thoughtEventKey(event) {
-    if (!event) return "";
-    return `${event.side}|${event.startedAt}|${event.emoji}|${event.animation || ""}`;
-  }
-
-  function getThoughtSlotEl(side) {
-    const id = side === "player" ? "player-thought-slot" : "enemy-thought-slot";
-    return document.getElementById(id);
-  }
-
-  function applyThoughtAnimation(el, animation) {
-    const anim = animation || "shake";
-    el.dataset.animation = anim;
-    el.className = `battle-thought-bubble battle-thought--${anim}`;
-    el.classList.remove("battle-thought--active");
-    void el.offsetWidth;
-    el.classList.add("battle-thought--active");
-  }
-
-  function presentParkedThought(side, event) {
-    const slot = getThoughtSlotEl(side);
-    if (!slot) return;
-    const emoji = String(event.emoji || "");
-    const key = thoughtEventKey(event);
-    if (lastKey[side] === key && parkedBubble[side]?.isConnected) return;
-
-    let bubble = parkedBubble[side];
-    if (!bubble || bubble.parentElement !== slot) {
-      slot.innerHTML = "";
-      bubble = document.createElement("div");
-      bubble.className = "battle-thought-bubble";
-      bubble.setAttribute("role", "img");
-      slot.appendChild(bubble);
-      parkedBubble[side] = bubble;
+  function presentArenaThought(side, event) {
+    if (typeof ThoughtArena !== "undefined") {
+      ThoughtArena.upsert(side, event);
+      lastKey[side] = `${event.startedAt}|${event.emoji}`;
     }
-
-    bubble.textContent = emoji;
-    if (event.replyTo) bubble.dataset.replyTo = event.replyTo;
-    else bubble.removeAttribute("data-reply-to");
-    applyThoughtAnimation(bubble, event.animation);
-    lastKey[side] = key;
   }
 
-  function clearParkedThought(side) {
-    const slot = getThoughtSlotEl(side);
-    if (slot) slot.innerHTML = "";
-    parkedBubble[side] = null;
+  function clearArenaThought(side) {
+    if (typeof ThoughtArena !== "undefined") {
+      ThoughtArena.remove(side);
+    }
     lastKey[side] = null;
   }
 
@@ -124,8 +87,11 @@ const EmotionPresenter = (() => {
   }
 
   function clearAllThoughts() {
-    clearParkedThought("player");
-    clearParkedThought("enemy");
+    if (typeof ThoughtArena !== "undefined") {
+      ThoughtArena.clearAll();
+    }
+    lastKey.player = null;
+    lastKey.enemy = null;
     clearFloatThought("player");
     clearFloatThought("enemy");
     document.getElementById("battle-emotion-layer")?.remove();
@@ -144,6 +110,6 @@ const EmotionPresenter = (() => {
     clearThought,
     clearAllThoughts,
     registerLayout,
-    getThoughtSlotEl,
+    getThoughtSlotEl: () => document.getElementById("battle-thought-arena"),
   };
 })();

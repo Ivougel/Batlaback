@@ -32,6 +32,7 @@ function createEmotionEngineState() {
     seenFloatIds: new Set(),
     recentDamage: [],
     durationFlags: { t30: false, t60: false, t120: false },
+    firstBlood: false,
     pauseTotalMs: 0,
     pauseStartedAt: null,
   };
@@ -154,10 +155,21 @@ function tryQueueEvent(side, event) {
   return true;
 }
 
+function pickMemeEmoji(options) {
+  const list = Array.isArray(options) ? options : [options];
+  return list[Math.floor(Math.random() * list.length)];
+}
+
 function takeSnapshot(state) {
+  const playerHp = Math.max(0, state.player?.hp ?? 0);
+  const enemyHp = Math.max(0, state.enemy?.hp ?? 0);
+  const playerMax = Math.max(1, state.player?.maxHp ?? 100);
+  const enemyMax = Math.max(1, state.enemy?.maxHp ?? 100);
   return {
-    playerHp: Math.max(0, state.player?.hp ?? 0),
-    enemyHp: Math.max(0, state.enemy?.hp ?? 0),
+    playerHp,
+    enemyHp,
+    playerHpPct: playerHp / playerMax,
+    enemyHpPct: enemyHp / enemyMax,
     playerPoison: state.player?.poisonStacks ?? 0,
     enemyPoison: state.enemy?.poisonStacks ?? 0,
     elapsed: state.elapsed ?? 0,
@@ -183,7 +195,7 @@ function checkSimultaneousDamage() {
 
   tryQueueEvent("player", createDialogEvent({
     side: "player",
-    emoji: "😬",
+    emoji: "🫨",
     replyTo: "enemy",
     animation: "fly",
     duration: 1100,
@@ -193,7 +205,7 @@ function checkSimultaneousDamage() {
   }));
   tryQueueEvent("enemy", createDialogEvent({
     side: "enemy",
-    emoji: "😬",
+    emoji: "🫨",
     replyTo: "player",
     animation: "fly",
     duration: 1100,
@@ -205,14 +217,36 @@ function checkSimultaneousDamage() {
   return true;
 }
 
-function queueDamageDialog(victim, attacker, amount) {
+function queueDamageDialog(victim, attacker, amount, victimHpPct = 1) {
   recordDamageHit(victim, amount);
   if (checkSimultaneousDamage()) return;
 
-  if (amount > 15) {
+  if (!emotionEngine.firstBlood) {
+    emotionEngine.firstBlood = true;
     tryQueueEvent(victim, createDialogEvent({
       side: victim,
-      emoji: "💀",
+      emoji: "🩸",
+      replyTo: attacker,
+      animation: "shake",
+      duration: 1100,
+    }));
+    tryQueueEvent(attacker, createDialogEvent({
+      side: attacker,
+      emoji: "👀",
+      replyTo: victim,
+      animation: "bounce",
+      duration: 1000,
+    }));
+    return;
+  }
+
+  if (amount > 15) {
+    const victimEmoji = victimHpPct < 0.25
+      ? pickMemeEmoji(["💀😱", "💀🫠", "☠️"])
+      : pickMemeEmoji(["💀🔥", "💀", "🪦"]);
+    tryQueueEvent(victim, createDialogEvent({
+      side: victim,
+      emoji: victimEmoji,
       replyTo: attacker,
       animation: "grow",
       duration: 1400,
@@ -220,7 +254,7 @@ function queueDamageDialog(victim, attacker, amount) {
     }));
     tryQueueEvent(attacker, createDialogEvent({
       side: attacker,
-      emoji: "😈",
+      emoji: pickMemeEmoji(["🗿", "😈", "🤣"]),
       replyTo: victim,
       animation: "fly",
       duration: 1300,
@@ -234,14 +268,14 @@ function queueDamageDialog(victim, attacker, amount) {
   if (amount > 8) {
     tryQueueEvent(victim, createDialogEvent({
       side: victim,
-      emoji: "😤",
+      emoji: victimHpPct < 0.3 ? "😭" : "😤",
       replyTo: attacker,
       animation: "shake",
       duration: 1200,
     }));
     tryQueueEvent(attacker, createDialogEvent({
       side: attacker,
-      emoji: "😏",
+      emoji: pickMemeEmoji(["🤣", "😏", "😎"]),
       replyTo: victim,
       animation: "bounce",
       duration: 1100,
@@ -252,10 +286,17 @@ function queueDamageDialog(victim, attacker, amount) {
   if (amount > 2) {
     tryQueueEvent(victim, createDialogEvent({
       side: victim,
-      emoji: "😮",
+      emoji: pickMemeEmoji(["🫠", "😮", "😵‍💫"]),
       replyTo: attacker,
       animation: "shake",
       duration: 1000,
+    }));
+    tryQueueEvent(attacker, createDialogEvent({
+      side: attacker,
+      emoji: pickMemeEmoji(["🥱", "🗿", "🙂"]),
+      replyTo: victim,
+      animation: "nod",
+      duration: 900,
     }));
   }
 }
@@ -271,7 +312,7 @@ function queueBlockDialog(victim, attacker) {
   }));
   tryQueueEvent(attacker, createDialogEvent({
     side: attacker,
-    emoji: "😒",
+    emoji: pickMemeEmoji(["🤡", "😒", "🙄"]),
     replyTo: victim,
     animation: "shake",
     duration: 1100,
@@ -281,7 +322,7 @@ function queueBlockDialog(victim, attacker) {
 function queuePoisonDialog(victim, attacker) {
   tryQueueEvent(victim, createDialogEvent({
     side: victim,
-    emoji: "🤢",
+    emoji: pickMemeEmoji(["🤮", "🤢", "☣️"]),
     replyTo: attacker,
     animation: "particles",
     duration: 1400,
@@ -289,7 +330,7 @@ function queuePoisonDialog(victim, attacker) {
   }));
   tryQueueEvent(attacker, createDialogEvent({
     side: attacker,
-    emoji: "😈",
+    emoji: pickMemeEmoji(["🧪😈", "😈", "🤢"]),
     replyTo: victim,
     animation: "nod",
     duration: 1000,
@@ -301,14 +342,14 @@ function queueHealDialog(healer) {
   const foe = foeOf(healer);
   tryQueueEvent(healer, createDialogEvent({
     side: healer,
-    emoji: "💚",
+    emoji: pickMemeEmoji(["💚✨", "💚", "🩹"]),
     replyTo: foe,
     animation: "bounce",
     duration: 1200,
   }));
   tryQueueEvent(foe, createDialogEvent({
     side: foe,
-    emoji: "😒",
+    emoji: pickMemeEmoji(["🙄", "😑", "🤨"]),
     replyTo: healer,
     animation: "shake",
     duration: 1000,
@@ -318,11 +359,19 @@ function queueHealDialog(healer) {
 function queueCritDialog(victim, attacker) {
   tryQueueEvent(victim, createDialogEvent({
     side: victim,
-    emoji: "💥",
+    emoji: pickMemeEmoji(["💥😵", "💥", "🤯"]),
     replyTo: attacker,
     animation: "grow",
     duration: 1100,
     priorityHint: "crit",
+  }));
+  tryQueueEvent(attacker, createDialogEvent({
+    side: attacker,
+    emoji: "👀",
+    replyTo: victim,
+    animation: "bounce",
+    duration: 900,
+    priority: EMOTION_PRIORITY.crit - 1,
   }));
 }
 
@@ -377,8 +426,8 @@ function detectSnapshotEvents(prev, cur, elapsedReal) {
   const playerGain = Math.max(0, cur.playerHp - prev.playerHp);
   const enemyGain = Math.max(0, cur.enemyHp - prev.enemyHp);
 
-  if (playerLoss > 0.5) queueDamageDialog("player", "enemy", playerLoss);
-  if (enemyLoss > 0.5) queueDamageDialog("enemy", "player", enemyLoss);
+  if (playerLoss > 0.5) queueDamageDialog("player", "enemy", playerLoss, cur.playerHpPct);
+  if (enemyLoss > 0.5) queueDamageDialog("enemy", "player", enemyLoss, cur.enemyHpPct);
 
   if (playerGain > 0.5) queueHealDialog("player");
   if (enemyGain > 0.5) queueHealDialog("enemy");
@@ -388,6 +437,11 @@ function detectSnapshotEvents(prev, cur, elapsedReal) {
   }
   if (cur.enemyPoison > prev.enemyPoison) {
     queuePoisonDialog("enemy", "player");
+  }
+
+  if (cur.playerHpPct < 0.12 && cur.enemyHpPct < 0.12 && !emotionEngine.durationFlags.dogfight) {
+    emotionEngine.durationFlags.dogfight = true;
+    queueDurationDialog("😰", "shake", 1400);
   }
 
   const realSec = Math.max(0, elapsedReal || 0);
@@ -401,7 +455,7 @@ function detectSnapshotEvents(prev, cur, elapsedReal) {
   }
   if (realSec > 120 && !emotionEngine.durationFlags.t120) {
     emotionEngine.durationFlags.t120 = true;
-    queueDurationDialog("💀", "shake", 2200);
+    queueDurationDialog("⏳💀", "shake", 2200);
   }
 }
 
