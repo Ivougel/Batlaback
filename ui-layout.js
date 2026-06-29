@@ -359,15 +359,15 @@
           const stageW = fieldCol?.clientWidth ?? stage.clientWidth;
           if (stageW > 0) {
             const vh = window.visualViewport?.height ?? window.innerHeight;
-            const hudH = isHudVisible() ? (document.getElementById("gamepad-hints-bar")?.offsetHeight ?? 0) : 0;
+            const hudReserve = measureBattleHudReserve();
             const cssW = readCssPx("--battle-canvas-w", canvas.width);
             const cssH = readCssPx("--battle-canvas-h", canvas.height);
-            const avatarZone = Math.min(300, Math.max(190, Math.round(vh * 0.34)));
-            const maxH = Math.max(120, vh - hudH - avatarZone - 16);
+            const avatarZone = Math.min(280, Math.max(175, Math.round(vh * 0.29)));
+            const maxH = Math.max(140, vh - hudReserve - avatarZone - 12);
             const scale = Math.min(stageW / cssW, maxH / cssH, 1);
             const w = Math.max(1, Math.floor(cssW * scale));
             const h = Math.max(1, Math.floor(cssH * scale));
-            const heroImgH = Math.round(Math.min(184, Math.max(120, avatarZone * 0.48)));
+            const heroImgH = Math.round(Math.min(168, Math.max(108, avatarZone * 0.5)));
             root.style.setProperty("--mobile-battle-hero-zone-h", `${avatarZone}px`);
             root.style.setProperty("--mobile-battle-hero-img-h", `${heroImgH}px`);
             setCanvasDisplaySize(canvas, w, h);
