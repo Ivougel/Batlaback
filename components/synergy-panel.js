@@ -11,11 +11,16 @@ function buildSynergyTooltipHtml(synergy) {
   const sources = (synergy.icons || []).map((icon, i) =>
     `<div class="synergy-tt-source">${icon} ${synergy.names[i]}</div>`,
   ).join("");
+  const fmt = typeof formatTooltipMechanicText === "function"
+    ? formatTooltipMechanicText
+    : (text) => String(text ?? "—");
+  const condition = synergy.condition || "—";
+  const effect = synergy.effect || synergy.bonus || "—";
 
   return `
     <div class="synergy-tt-title">${title}</div>
-    <div class="synergy-tt-row"><span class="synergy-tt-label">Условие:</span> ${synergy.condition || "—"}</div>
-    <div class="synergy-tt-row"><span class="synergy-tt-label">Эффект:</span> ${synergy.effect || synergy.bonus || "—"}</div>
+    <div class="synergy-tt-row"><span class="synergy-tt-label">Условие:</span> ${fmt(condition)}</div>
+    <div class="synergy-tt-row"><span class="synergy-tt-label">Эффект:</span> ${fmt(effect)}</div>
     <div class="synergy-tt-sources">
       <div class="synergy-tt-label">Источник:</div>
       ${sources}

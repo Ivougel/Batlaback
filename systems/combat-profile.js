@@ -457,6 +457,7 @@ function scoreItemBackpackPower(item, side) {
   const dup = rt.duplicateEfficiency ?? 1;
   const poisonEff = rt.poisonSourceEfficiency ?? 1;
   const blockEff = rt.blockSourceEfficiency ?? 1;
+  const healEff = rt.healSourceEfficiency ?? 1;
   const cd = Math.max(0.8, getEffectiveCooldown(item) || def.cooldown || 2.5);
   const pace = 2.2 / cd;
 
@@ -484,7 +485,7 @@ function scoreItemBackpackPower(item, side) {
         break;
       }
       case "heal": {
-        const val = ((effect.value || 0) + (rt.healBonus || 0)) * dup;
+        const val = ((effect.value || 0) + (rt.healBonus || 0)) * dup * healEff;
         score += val * pace * 1.8;
         break;
       }
@@ -1005,7 +1006,12 @@ function showProfileStatusTooltip(e, chip) {
   el.classList.remove("synergy-tooltip");
   el.innerHTML = [
     `<div class="tt-line tt-title">${title}</div>`,
-    ...desc.split("\n").filter(Boolean).map((line) => `<div class="tt-line tt-sub">${line}</div>`),
+    ...desc.split("\n").filter(Boolean).map((line) => {
+      const html = typeof formatTooltipMechanicText === "function"
+        ? formatTooltipMechanicText(line)
+        : line;
+      return `<div class="tt-line tt-sub">${html}</div>`;
+    }),
   ].join("");
   el.classList.remove("hidden");
   moveSidebarTooltip(e);

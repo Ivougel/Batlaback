@@ -592,6 +592,16 @@ function getItemStaminaCost(def) {
     return computeItemStaminaCostFromOpts(def);
   }
   if (def.tags?.includes("gem")) return GEM_ACTIVATION_STAMINA_COST;
+  if (def.tags?.includes("food")) {
+    const hasHeal = (def.effects || []).some(
+      (e) => e.type === "heal" || (e.type === "periodic" && Number(e.heal) > 0),
+    );
+    if (hasHeal) {
+      const healFx = (def.effects || []).find((e) => e.type === "heal");
+      const healVal = healFx?.value || 2;
+      return Math.max(2, Math.min(5, Math.ceil(healVal * 0.75)));
+    }
+  }
   if (typeof def.staminaCost === "number" && def.staminaCost > 0) return def.staminaCost;
   return 0;
 }
@@ -771,7 +781,7 @@ const ITEM_CATALOG = {
     synergies: [{
       id: "shield_weapon_buff", adjacency: "strong", neighborTags: ["weapon"], target: "self",
       apply: { type: "grantBlockBuff", value: 3, buffTargetTags: ["weapon"], cap: 12 },
-      desc: "При блоке: +3 к атаке соседнего оружия",
+      desc: "[при блоке]: +3 к атаке соседнего оружия",
     }],
   }),
   poison_dagger: defItem({
@@ -990,7 +1000,7 @@ const ITEM_CATALOG = {
     synergies: [{
       id: "royal_block_buff", adjacency: "strong", neighborTags: ["weapon"], target: "self",
       apply: { type: "grantBlockBuff", value: 4, buffTargetTags: ["weapon"], cap: 20 },
-      desc: "При блоке: +4 к атаке соседнего оружия (макс. +20 за бой)",
+      desc: "[при блоке]: +4 к атаке соседнего оружия (макс. +20 за бой)",
     }],
   }),
   smoke_bomb: defItem({
@@ -1089,7 +1099,7 @@ const ITEM_CATALOG = {
     metaEffects: [
       { phase: "shop_enter", type: "dig_item", value: 1 },
     ],
-    description: "При входе в магазин: Выкопать случайный предмет. При попадании: 40% шанс наложить 1 стак(ов)",
+    description: "[при входе в магазин]: Выкопать случайный предмет. [при попадании]: 40% шанс наложить 1 стак(ов)",
   }),
   eggscalibur: defItem({
     id: "eggscalibur", name: "Яйце-экскалибур", icon: "🥚", color: "#f0c14b",

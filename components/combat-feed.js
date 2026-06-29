@@ -100,7 +100,12 @@ const CombatLog = (() => {
     el.innerHTML = String(hint)
       .split("\n")
       .filter(Boolean)
-      .map((line) => `<div class="tt-line tt-sub">${escapeHtml(line)}</div>`)
+      .map((line) => {
+        const html = typeof formatTooltipMechanicText === "function"
+          ? formatTooltipMechanicText(line)
+          : escapeHtml(line);
+        return `<div class="tt-line tt-sub">${html}</div>`;
+      })
       .join("");
     el.style.borderColor = "#484f58";
     el.classList.remove("hidden");

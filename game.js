@@ -3691,7 +3691,7 @@ function describeEffect(e) {
       return `📊 ${parts.join(", ")}`;
     }
     case "periodic": return `⏱ Каждые ${e.interval || 3}с: особый эффект`;
-    case "tagScaledStack": return `📌 +${e.perTag || e.value || 1} ${e.stack || "блок"} за предмет «${formatTagLabel(e.tag || "armor")}»`;
+    case "tagScaledStack": return `📌 +${e.perTag || e.value || 1} ${e.stack || "блок"} за каждый предмет с ${typeof formatItemTagMechanic === "function" ? formatItemTagMechanic(e.tag || "armor") : `[${formatTagLabel(e.tag || "armor")}]`}`;
     case "convertHp": return `❤️ −${e.hpCost || e.from} HP → +${e.stackGain || e.toStacks} ${e.stack || "regen"}`;
     case "timedDamageReduction": return `🛡 −${Math.round((e.value || 0.25) * 100)}% урона на ${e.duration || 3}с`;
     case "cooldownStartMult": return `⚡ Предметы на ${Math.round((e.value || 0) * 100)}% быстрее`;
@@ -3705,7 +3705,7 @@ function describeEffect(e) {
     case "cleanseDebuffs": return `✨ Снять ${e.value || 1} дебафф(ов)`;
     case "stealWeaponDamage": return `🗡 Украсть ${e.value || 1} урона с оружия противника`;
     case "damagePerFoeDebuff": return `☠ +${e.value || 0.5} урона за дебафф противника`;
-    case "damagePerTag": return `🏷 +${e.value || 1} урона за предмет «${formatTagLabel(e.tag || "food")}»`;
+    case "damagePerTag": return `🏷 +${e.value || 1} урона за предмет с ${typeof formatItemTagMechanic === "function" ? formatItemTagMechanic(e.tag || "food") : `[${formatTagLabel(e.tag || "food")}]`}`;
     case "hpThreshold": {
       const pct = Math.round((e.threshold || 0.7) * 100);
       const dir = e.direction === "above" ? "выше" : "ниже";
@@ -3738,10 +3738,10 @@ function describeEffect(e) {
     case "onRevive": return `🔄 При перерождении: урон/яд по тегам`;
     case "onFoeHeal": return `☠ При лечении противника: яд`;
     case "critPerFoeDebuff": return `🎯 +${Math.round((e.value || 0.01) * 100)}% крит за дебафф противника`;
-    case "lifestealPerTag": return `🩸 +${Math.round((e.value || 0.15) * 100)}% вампиризм за «${formatTagLabel(e.tag || "cold")}»`;
+    case "lifestealPerTag": return `🩸 +${Math.round((e.value || 0.15) * 100)}% вампиризм за ${typeof formatItemTagMechanic === "function" ? formatItemTagMechanic(e.tag || "cold") : `[${formatTagLabel(e.tag || "cold")}]`}`;
     case "healPerTag": {
       const scope = e.adjacent ? "соседний " : "";
-      return `❤ +${e.value || 1} лечения за ${scope}предмет «${formatTagLabel(e.tag || "vampiric")}»`;
+      return `❤ +${e.value || 1} лечения за ${scope}предмет с ${typeof formatItemTagMechanic === "function" ? formatItemTagMechanic(e.tag || "vampiric") : `[${formatTagLabel(e.tag || "vampiric")}]`}`;
     }
     case "gainWeakestStack": return `📊 +${e.value || 1} к самому слабому стаку`;
     case "onHitCapBonus": return `⚔ При попадании: +${e.value || 1} урона (до ${e.cap || 7})`;
@@ -3916,6 +3916,10 @@ function describeTooltipEffectLine(e, def, adj) {
 }
 
 function renderTooltipLinesHtml(lines) {
+  const fmt = typeof formatTooltipMechanicText === "function"
+    ? formatTooltipMechanicText
+    : (text) => (typeof escapeTooltipHtml === "function" ? escapeTooltipHtml(text) : String(text ?? ""));
+
   return lines
     .filter((l) => !l.sep)
     .map((l) => {
@@ -3923,9 +3927,9 @@ function renderTooltipLinesHtml(lines) {
       if (l.statDelta) {
         const buffClass = l.statDelta.buffColor === "purple" ? " tt-stat-buff--purple" : "";
         const suffix = l.statDelta.suffix ? escapeTooltipHtml(l.statDelta.suffix) : "";
-        return `<div class="tt-line tt-line-stat tt-${l.style || "normal"}"${color}>${l.text} <span class="tt-stat-base">${escapeTooltipHtml(l.statDelta.from)}</span><span class="tt-stat-arrow">→</span><span class="tt-stat-buff${buffClass}">${escapeTooltipHtml(l.statDelta.to)}</span>${suffix}</div>`;
+        return `<div class="tt-line tt-line-stat tt-${l.style || "normal"}"${color}>${fmt(l.text)} <span class="tt-stat-base">${escapeTooltipHtml(l.statDelta.from)}</span><span class="tt-stat-arrow">→</span><span class="tt-stat-buff${buffClass}">${escapeTooltipHtml(l.statDelta.to)}</span>${suffix}</div>`;
       }
-      return `<div class="tt-line tt-${l.style || "normal"}"${color}>${l.text}</div>`;
+      return `<div class="tt-line tt-${l.style || "normal"}"${color}>${fmt(l.text)}</div>`;
     })
     .join("");
 }

@@ -16,7 +16,7 @@ const STAMINA_POOL_PEAK_MULT = 0.55;
 const STAMINA_POOL_PEAK_ADD = 5;
 const STAMINA_POOL_BASE_ADD = 8;
 /** Сглаживание разгона урона и DoT (1 = без изменений). */
-const DAMAGE_PACING_SCALE = 0.88;
+const DAMAGE_PACING_SCALE = 0.92;
 const POISON_STACK_PACING = 0.55;
 const GROUND_FIRE_PACING = 0.85;
 /** Усталость арены: порог по номеру раунда забега (1…16). */
@@ -29,7 +29,7 @@ const FATIGUE_DAMAGE_ESCALATE_STEP = 0.05;
 const FATIGUE_DAMAGE_BONUS_CAP = 0.4;
 /** Через столько секунд после старта усталости — доп. drain HP. */
 const FATIGUE_HP_DRAIN_DELAY_AFTER_START = 10;
-const FATIGUE_HP_DRAIN_PER_SEC = 2;
+const FATIGUE_HP_DRAIN_PER_SEC = 4;
 
 function getFatigueStartSec(battleRound = 1, maxItemsOnSide = 0) {
   const round = Math.max(1, Math.min(FATIGUE_RUN_ROUNDS, battleRound || 1));
@@ -105,9 +105,16 @@ const BLOCK_SOURCE_EFFICIENCY = [1, 0.85, 0.72, 0.6];
 const DUPLICATE_ITEM_EFFICIENCY = BLOCK_SOURCE_EFFICIENCY;
 /** 2-й и дальше poison-слот заметно слабее (отдельно от блока). */
 const POISON_SOURCE_EFFICIENCY = [1, 0.65, 0.5, 0.4];
-/** Лечение слабее под ядом: −5% за стак, макс. −50%. */
-const HEAL_POISON_PENALTY_PER_STACK = 0.05;
-const HEAL_POISON_PENALTY_CAP = 0.5;
+/** 2-й и дальше heal-слот слабее (как блок/яд). */
+const HEAL_SOURCE_EFFICIENCY = [1, 0.72, 0.55, 0.42];
+/** Periodic-heal слабее активируемого (банан, чеснок). */
+const PERIODIC_HEAL_SCALE = 0.62;
+/** Лечение на высоком HP: от 75% max HP эффективность падает до 40%. */
+const HEAL_SATURATION_HP_RATIO = 0.75;
+const HEAL_SATURATION_FLOOR = 0.4;
+/** Лечение слабее под ядом: −7% за стак, макс. −65%. */
+const HEAL_POISON_PENALTY_PER_STACK = 0.07;
+const HEAL_POISON_PENALTY_CAP = 0.65;
 
 function getStackEfficiency(index, table = BLOCK_SOURCE_EFFICIENCY) {
   if (index < table.length) return table[index];
@@ -172,6 +179,10 @@ function getPoisonSourceEfficiency(sourceIndex) {
   return getStackEfficiency(sourceIndex, POISON_SOURCE_EFFICIENCY);
 }
 
+function getHealSourceEfficiency(sourceIndex) {
+  return getStackEfficiency(sourceIndex, HEAL_SOURCE_EFFICIENCY);
+}
+
 function getPoisonDotDamage(poisonStacks) {
   if (poisonStacks <= 0) return 0;
   return Math.max(1, Math.floor(poisonStacks * POISON_DOT_PER_STACK));
@@ -184,6 +195,45 @@ function getHealAmountUnderPoison(baseAmount, poisonStacks) {
     poisonStacks * HEAL_POISON_PENALTY_PER_STACK,
   );
   return Math.max(0, Math.floor(baseAmount * (1 - penalty)));
+}
+
+function itemHasHealEffect(def) {
+  if (!def?.effects) return false;
+  return def.effects.some((e) => e.type === "heal" || (e.type === "periodic" && Number(e.heal) > 0));
+}
+
+function getItemHealPower(def, item) {
+  if (!def) return 0;
+  let power = 0;
+  (def.effects || []).forEach((effect) => {
+    if (effect.type === "heal") {
+      power = Math.max(power, (Number(effect.value) || 0) + (item?.runtime?.healBonus || 0));
+    }
+    if (effect.type === "periodic" && Number(effect.heal) > 0) {
+      const interval = Math.max(0.5, Number(effect.interval) || 3);
+      power = Math.max(power, (Number(effect.heal) * PERIODIC_HEAL_SCALE * 2.2) / interval);
+    }
+  });
+  return power;
+}
+
+/** Дубликаты, источник, яд, насыщение на высоком HP. */
+function applyHealAmountModifiers(rawAmount, self, rt) {
+  let amount = Math.max(0, Number(rawAmount) || 0);
+  const dupEff = rt?.duplicateEfficiency ?? 1;
+  const sourceEff = rt?.healSourceEfficiency ?? 1;
+  amount = Math.floor(amount * dupEff * sourceEff);
+  amount = getHealAmountUnderPoison(amount, self?.poisonStacks || 0);
+  if ((self?.maxHp || 0) > 0 && amount > 0) {
+    const hpRatio = (self.hp || 0) / self.maxHp;
+    if (hpRatio >= HEAL_SATURATION_HP_RATIO) {
+      const span = Math.max(0.001, 1 - HEAL_SATURATION_HP_RATIO);
+      const t = Math.min(1, (hpRatio - HEAL_SATURATION_HP_RATIO) / span);
+      const mult = 1 - t * (1 - HEAL_SATURATION_FLOOR);
+      amount = Math.max(0, Math.floor(amount * mult));
+    }
+  }
+  return amount;
 }
 
 function itemHasPoisonEffect(def) {
@@ -221,6 +271,20 @@ function assignPoisonSourceEfficiency(side) {
   poisonItems.forEach((item, index) => {
     item.runtime = item.runtime || createRuntimeState(item);
     item.runtime.poisonSourceEfficiency = getPoisonSourceEfficiency(index);
+  });
+}
+
+/** Несколько heal-предметов — слабее повторяющиеся источники. */
+function assignHealSourceEfficiency(side) {
+  const healItems = side.items.filter((item) => itemHasHealEffect(ITEM_CATALOG[item.itemId]));
+  healItems.sort((a, b) => {
+    const valA = getItemHealPower(ITEM_CATALOG[a.itemId], a);
+    const valB = getItemHealPower(ITEM_CATALOG[b.itemId], b);
+    return valB - valA;
+  });
+  healItems.forEach((item, index) => {
+    item.runtime = item.runtime || createRuntimeState(item);
+    item.runtime.healSourceEfficiency = getHealSourceEfficiency(index);
   });
 }
 
@@ -398,6 +462,7 @@ function createBattleSide(items, classId, prepMeta = {}) {
   assignDuplicateItemEfficiency(side);
   assignBlockSourceEfficiency(side);
   assignPoisonSourceEfficiency(side);
+  assignHealSourceEfficiency(side);
   assignGrantBlockBuffEfficiency(side);
   applyPassiveItemEffects(side);
   side.pendingShopBuffs = Number(prepMeta.pendingShopBuffs) || 0;
@@ -1064,7 +1129,10 @@ function tickPeriodicItemEffects(state, dt) {
         item.periodicTimers[timerKey] -= interval;
         if (effect.randomPick?.length) {
           const pick = effect.randomPick[Math.floor(Math.random() * effect.randomPick.length)];
-          if (pick.heal) executeEffect(state, { type: "heal", value: pick.heal }, item, self, foe, rt, team);
+          if (pick.heal) {
+            const healVal = Math.max(1, Math.floor(Number(pick.heal) * PERIODIC_HEAL_SCALE));
+            executeEffect(state, { type: "heal", value: healVal }, item, self, foe, rt, team);
+          }
           if (pick.block) executeEffect(state, { type: "block", value: pick.block }, item, self, foe, rt, team);
           if (pick.gainStack) applyGainStackEffect(state, pick.gainStack, item, self, team);
           if (pick.foePoison && foe) executeEffect(state, { type: "poison", value: pick.foePoison }, item, self, foe, rt, team);
@@ -1188,7 +1256,8 @@ function tickPeriodicItemEffects(state, dt) {
           }
         }
         if (!hasHpBranch && effect.heal) {
-          executeEffect(state, { type: "heal", value: effect.heal }, item, self, foe, rt, team);
+          const healVal = Math.max(1, Math.floor(Number(effect.heal) * PERIODIC_HEAL_SCALE));
+          executeEffect(state, { type: "heal", value: healVal }, item, self, foe, rt, team);
         }
         if (effect.spendRandomStack && typeof spendRandomSelfStack === "function") {
           spendRandomSelfStack(state, item, self, team, Number(effect.spendRandomStack) || 1);
@@ -1269,7 +1338,11 @@ function tickPeriodicItemEffects(state, dt) {
               { noRetaliation: true },
             );
             if (effect.lifesteal && hpDmg > 0) {
-              const heal = Math.floor(hpDmg * Number(effect.lifesteal));
+              const rawHeal = Math.floor(hpDmg * Number(effect.lifesteal));
+              const heal = applyHealAmountModifiers(rawHeal, self, {
+                duplicateEfficiency: 1,
+                healSourceEfficiency: 1,
+              });
               if (heal > 0) self.hp = Math.min(self.maxHp, self.hp + heal);
             }
           }
@@ -2799,7 +2872,10 @@ function executeEffect(state, effect, item, self, foe, rt, team, execOptions = {
 
       if (self.lifesteal > 0 && actualDmg > 0) {
         const rawHeal = Math.floor(actualDmg * self.lifesteal);
-        const heal = getHealAmountUnderPoison(rawHeal, self.poisonStacks);
+        const heal = applyHealAmountModifiers(rawHeal, self, {
+          duplicateEfficiency: 1,
+          healSourceEfficiency: 1,
+        });
         if (heal > 0) {
           self.hp = Math.min(self.maxHp, self.hp + heal);
           const poisonNote = heal < rawHeal && self.poisonStacks > 0
@@ -2831,13 +2907,13 @@ function executeEffect(state, effect, item, self, foe, rt, team, execOptions = {
           );
         }
       }
-      const beforePoison = amount;
-      amount = getHealAmountUnderPoison(amount, self.poisonStacks);
+      const beforeModifiers = amount;
+      amount = applyHealAmountModifiers(amount, self, rt);
       const before = self.hp;
       self.hp = Math.min(self.maxHp, self.hp + amount);
       const healed = self.hp - before;
-      const poisonNote = amount < beforePoison
-        ? ` (яд ×${self.poisonStacks}: −${Math.round((1 - amount / beforePoison) * 100)}%)`
+      const poisonNote = self.poisonStacks > 0 && amount < beforeModifiers
+        ? ` (яд ×${self.poisonStacks}: ослабление)`
         : "";
       pushBattleLog(state, {
         actor: team,

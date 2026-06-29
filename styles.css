@@ -4742,6 +4742,19 @@ html[data-game-phase="prep"] #prep-tooltip-dock .sidebar-tooltip.hidden {
   margin-bottom: var(--gap-xs);
 }
 
+.mechanic-tag {
+  display: inline;
+  color: #58a6ff;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.recipe-book-item-synergy .mechanic-tag,
+.synergy-tooltip .mechanic-tag,
+.prep-hero-tooltip-desc .mechanic-tag {
+  color: #58a6ff;
+}
+
 html[data-touch="true"] .sidebar-tooltip {
   max-width: min(calc(480px * var(--ui-scale)), calc(100vw - 24px));
   padding: calc(16px * var(--ui-scale)) calc(18px * var(--ui-scale));
