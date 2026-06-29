@@ -362,13 +362,15 @@
             const hudReserve = measureBattleHudReserve();
             const cssW = readCssPx("--battle-canvas-w", canvas.width);
             const cssH = readCssPx("--battle-canvas-h", canvas.height);
-            const avatarZone = Math.min(280, Math.max(175, Math.round(vh * 0.29)));
-            const maxH = Math.max(140, vh - hudReserve - avatarZone - 12);
+            const avatarZone = Math.min(380, Math.max(240, Math.round(vh * 0.38)));
+            const maxH = Math.max(120, vh - hudReserve - avatarZone - 10);
             const scale = Math.min(stageW / cssW, maxH / cssH, 1);
             const w = Math.max(1, Math.floor(cssW * scale));
             const h = Math.max(1, Math.floor(cssH * scale));
-            const heroImgH = Math.round(Math.min(168, Math.max(108, avatarZone * 0.5)));
+            const portraitH = Math.round(Math.min(232, Math.max(184, avatarZone * 0.68)));
+            const heroImgH = portraitH;
             root.style.setProperty("--mobile-battle-hero-zone-h", `${avatarZone}px`);
+            root.style.setProperty("--mobile-battle-portrait-h", `${portraitH}px`);
             root.style.setProperty("--mobile-battle-hero-img-h", `${heroImgH}px`);
             setCanvasDisplaySize(canvas, w, h);
             setMobileBattleDisplayVars(w, h, cssW);

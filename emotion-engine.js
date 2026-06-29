@@ -1,6 +1,6 @@
 /**
  * EmotionEngine — «живой диалог» между персонажами во время боя (только визуал).
- * BattleAnalyzer → DialogEvent → parked emoji slots beside hero cards.
+ * BattleAnalyzer → DialogEvent → EmotionPresenter (боевые эмоджи / мысли героя).
  */
 
 const EMOTION_ANALYZE_INTERVAL_MS = 500;
@@ -67,6 +67,24 @@ function resetEmotionEngine() {
   clearEmotionLayer();
 }
 
+function clearEmotionLayer() {
+  if (typeof EmotionPresenter !== "undefined") {
+    EmotionPresenter.clearAllThoughts();
+  }
+}
+
+function clearEmotionMount(side) {
+  if (typeof EmotionPresenter !== "undefined") {
+    EmotionPresenter.clearThought(side);
+  }
+}
+
+function renderEmotionDom(anim, side) {
+  if (typeof EmotionPresenter !== "undefined") {
+    EmotionPresenter.presentThought(side, anim);
+  }
+}
+
 function foeOf(side) {
   return side === "player" ? "enemy" : "player";
 }
@@ -86,28 +104,6 @@ function getEmojiPriority(emoji, hint = "normal") {
   if (hint === "block") return EMOTION_PRIORITY.block;
   if (hint === "skull") return EMOTION_PRIORITY.skull;
   return EMOTION_PRIORITY.normal;
-}
-
-const emotionFloatLast = { player: "", enemy: "" };
-
-function queryEmotionMount(side) {
-  const slotId = side === "player" ? "player-avatar-slot" : "enemy-avatar-slot";
-  return document.querySelector(`#${slotId} .avatar-hero-shell > .avatar-emotion-mount`);
-}
-
-function clearEmotionLayer() {
-  emotionFloatLast.player = "";
-  emotionFloatLast.enemy = "";
-  document.getElementById("battle-emotion-layer")?.remove();
-}
-
-function clearEmotionMount(side) {
-  emotionFloatLast[side] = "";
-}
-
-function ensureEmotionMount(side) {
-  const slotId = side === "player" ? "player-avatar-slot" : "enemy-avatar-slot";
-  return document.querySelector(`#${slotId} .profile-avatar`);
 }
 
 function createDialogEvent({
@@ -425,21 +421,6 @@ function analyzeBattleState(battleState, elapsedReal) {
 
   detectSnapshotEvents(emotionEngine.snapshot, snap, elapsedReal);
   emotionEngine.snapshot = snap;
-}
-
-function upsertEmotionEl(uid, side, anim) {
-  const next = anim.emoji || "";
-  if (emotionFloatLast[side] === next) return null;
-  emotionFloatLast[side] = next;
-  const anchor = ensureEmotionMount(side);
-  if (typeof floatLayer !== "undefined" && floatLayer.spawnEmotion) {
-    floatLayer.spawnEmotion(next, anchor);
-  }
-  return anchor;
-}
-
-function renderEmotionDom(anim, side) {
-  upsertEmotionEl(`emotion-${side}`, side, anim);
 }
 
 function pruneFinishedAnimations() {

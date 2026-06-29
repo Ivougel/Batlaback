@@ -7142,6 +7142,16 @@ html:not([data-tablet-side-fit="true"]):not([data-tablet-prep-hero="true"]):not(
   z-index: auto;
 }
 
+html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-effects-panel,
+html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-effects-panel,
+html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-effects-float,
+html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-effects-float {
+  position: relative;
+  top: auto;
+  left: auto;
+  right: auto;
+}
+
 #app[data-phase="battle"] .avatar-hero-effects-panel .avatar-hero-status-zones,
 #app[data-phase="replay"] .avatar-hero-effects-panel .avatar-hero-status-zones,
 #app[data-phase="battle"] .avatar-effects-float .avatar-hero-status-zones,
