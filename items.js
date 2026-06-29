@@ -340,6 +340,9 @@ const TAG_LABELS = {
   spikes: "шипы",
   stun: "оглушение",
   accessory: "аксессуар",
+  ring: "кольцо",
+  amulet: "амулет",
+  necklace: "ожерелье",
   gloves: "перчатки",
   shoes: "обувь",
   helmet: "шлем",
@@ -600,16 +603,23 @@ function shapeCellCount(shape) {
 function resolveItemSlot(def) {
   const tags = def.tags || [];
   const id = def.id || "";
+
   if (tags.includes("helmet") || id.includes("helmet")) return "head";
   if (tags.includes("shield")) return "leftHand";
+  if (tags.includes("ring")) return "ring";
+  if (tags.includes("amulet") || tags.includes("necklace")) return "amulet";
+  if (tags.includes("gloves") || tags.includes("gauntlets")) return "gloves";
+  if (tags.includes("shoes") || tags.includes("boots")) return "boots";
   if (tags.includes("armor")) return "chest";
   if (tags.includes("weapon")) {
     return shapeCellCount(def.shape) >= 3 ? "twoHand" : "rightHand";
   }
-  if (tags.includes("gloves") || tags.includes("gauntlets")) return "gloves";
-  if (tags.includes("shoes") || tags.includes("boots")) return "boots";
-  if (tags.includes("ring")) return "ring";
-  if (tags.includes("amulet") || tags.includes("necklace")) return "amulet";
+
+  if (tags.includes("gem") || tags.includes("utility") || tags.includes("food")
+    || tags.includes("poison") || tags.includes("consumable") || tags.includes("potion")
+    || tags.includes("accessory") || tags.includes("pet") || tags.includes("bag")) {
+    return null;
+  }
   return null;
 }
 
@@ -751,7 +761,7 @@ const ITEM_CATALOG = {
   // ── COMMON (6 + 4 стартовых в общем пуле) ──
   rusty_sword: defItem({
     id: "rusty_sword", name: "Ржавый меч", icon: "🗡️", color: "#8b949e",
-    shape: shapeRect(1, 2), rarity: "common", cost: 2, tags: ["weapon"], damage: 2, cooldown: 2.5,
+    shape: shapeRect(1, 2), rarity: "common", cost: 2, tags: ["weapon", "melee"], damage: 2, cooldown: 2.5,
     effects: [{ type: "damage", value: 2, valueMin: 1, valueMax: 3 }],
   }),
   iron_shield: defItem({
@@ -766,7 +776,7 @@ const ITEM_CATALOG = {
   }),
   poison_dagger: defItem({
     id: "poison_dagger", name: "Ядовитый кинжал", icon: "🗡️", color: "#3fb950",
-    shape: shapeRect(1, 2), rarity: "common", cost: 3, tags: ["weapon", "poison"], damage: 2, cooldown: 2.6,
+    shape: shapeRect(1, 2), rarity: "common", cost: 3, tags: ["weapon", "poison", "melee"], damage: 2, cooldown: 2.6,
     effects: [
       { type: "damage", value: 2, valueMin: 1, valueMax: 2 },
       { type: "poison", value: 2, trigger: "on_hit" },
@@ -775,7 +785,7 @@ const ITEM_CATALOG = {
   }),
   healing_herb: defItem({
     id: "healing_herb", name: "Целебная трава", icon: "🌿", color: "#56d364",
-    shape: shapeRect(2, 1), rarity: "common", cost: 2, tags: ["food", "nature"], cooldown: 4,
+    shape: shapeRect(2, 1), rarity: "common", cost: 2, tags: ["food", "nature", "heal"], cooldown: 4,
     effects: [{ type: "heal", value: 5 }],
     synergies: [{
       id: "nature_food_boost", adjacency: "strong", neighborTags: ["nature"], target: "self",
@@ -784,12 +794,12 @@ const ITEM_CATALOG = {
   }),
   apple: defItem({
     id: "apple", name: "Яблоко", icon: "🍎", color: "#f85149",
-    shape: [[0, 0]], rarity: "common", cost: 1, tags: ["food"], cooldown: 2.5,
+    shape: [[0, 0]], rarity: "common", cost: 1, tags: ["food", "heal"], cooldown: 2.5,
     effects: [{ type: "heal", value: 3 }],
   }),
   iron_helmet: defItem({
     id: "iron_helmet", name: "Железный шлем", icon: "⛑️", color: "#6e7681",
-    shape: shapeRect(1, 2), rarity: "common", cost: 2, tags: ["armor"], defense: 3, cooldown: 4,
+    shape: shapeRect(1, 2), rarity: "common", cost: 2, tags: ["armor", "helmet"], defense: 3, cooldown: 4,
     effects: [
       { type: "passiveDefense", value: 3, trigger: "passive" },
       { type: "block", value: 4 },
@@ -797,7 +807,7 @@ const ITEM_CATALOG = {
   }),
   dagger: defItem({
     id: "dagger", name: "Кинжал", icon: "🔪", color: "#c9d1d9",
-    shape: [[0, 0]], rarity: "common", cost: 2, tags: ["weapon"], damage: 2, cooldown: 1.5,
+    shape: [[0, 0]], rarity: "common", cost: 2, tags: ["weapon", "melee"], damage: 2, cooldown: 1.5,
     effects: [
       { type: "damage", value: 2, valueMin: 1, valueMax: 3 },
       { type: "extraAttackOnStun", trigger: "passive" },
@@ -805,34 +815,34 @@ const ITEM_CATALOG = {
   }),
   poison_vial: defItem({
     id: "poison_vial", name: "Яд", icon: "☠️", color: "#3fb950",
-    shape: [[0, 0]], rarity: "common", cost: 2, tags: ["poison"], cooldown: 4.5,
+    shape: [[0, 0]], rarity: "common", cost: 2, tags: ["poison", "consumable"], cooldown: 4.5,
     effects: [{ type: "poison", value: 1 }],
   }),
 
   // ── UTILITY — универсальные, слабые, под любой билд и бюджет ──
   bandage: defItem({
     id: "bandage", name: "Бинт", icon: "🩹", color: "#56d364",
-    shape: [[0, 0]], rarity: "common", cost: 1, tags: ["utility", "food"], cooldown: 3,
+    shape: [[0, 0]], rarity: "common", cost: 1, tags: ["utility", "food", "heal"], cooldown: 3,
     effects: [{ type: "heal", value: 3 }],
   }),
   lucky_charm: defItem({
     id: "lucky_charm", name: "Талисман", icon: "🍀", color: "#3fb950",
-    shape: shapeRect(2, 2), rarity: "common", cost: 2, tags: ["utility", "gem"], cooldown: 0,
+    shape: shapeRect(2, 2), rarity: "common", cost: 2, tags: ["utility", "gem", "luck", "accessory"], cooldown: 0,
     effects: [{ type: "passiveLuck", value: 35, trigger: "passive" }],
   }),
   cork_charm: defItem({
     id: "cork_charm", name: "Пробка-оберег", icon: "🧿", color: "#6e7681",
-    shape: [[0, 0]], rarity: "common", cost: 2, tags: ["utility"], cooldown: 5,
+    shape: [[0, 0]], rarity: "common", cost: 2, tags: ["utility", "accessory"], cooldown: 5,
     effects: [{ type: "block", value: 2 }],
   }),
   iron_patch: defItem({
     id: "iron_patch", name: "Железная заплатка", icon: "🔩", color: "#6e7681",
-    shape: shapeRect(1, 2), rarity: "common", cost: 3, tags: ["utility", "armor"], cooldown: 0,
+    shape: shapeRect(1, 2), rarity: "common", cost: 3, tags: ["utility"], cooldown: 0,
     effects: [{ type: "passiveDefense", value: 2, trigger: "passive" }],
   }),
   antitoxin: defItem({
     id: "antitoxin", name: "Антидот", icon: "🧴", color: "#79c0ff",
-    shape: [[0, 0]], rarity: "uncommon", cost: 3, tags: ["utility", "nature"], cooldown: 3.5,
+    shape: [[0, 0]], rarity: "uncommon", cost: 3, tags: ["utility", "nature", "heal"], cooldown: 3.5,
     effects: [{ type: "heal", value: 4 }],
   }),
   spark_stone: defItem({
@@ -843,7 +853,7 @@ const ITEM_CATALOG = {
 
   apprentice_staff: defItem({
     id: "apprentice_staff", name: "Посох ученика", icon: "🪄", color: "#a371f7",
-    shape: shapeRect(1, 2), rarity: "common", cost: 3, tags: ["weapon", "magic"], damage: 2, cooldown: 2.5,
+    shape: shapeRect(1, 2), rarity: "common", cost: 3, tags: ["weapon", "magic", "melee"], damage: 2, cooldown: 2.5,
     effects: [{ type: "damage", value: 2, valueMin: 1, valueMax: 3, damageType: "magic" }],
   }),
 
@@ -855,12 +865,12 @@ const ITEM_CATALOG = {
   }),
   ring_of_power: defItem({
     id: "ring_of_power", name: "Кольцо силы", icon: "💍", color: "#f0883e",
-    shape: shapeRect(1, 2), rarity: "uncommon", cost: 5, tags: ["gem"], cooldown: 0,
+    shape: shapeRect(1, 2), rarity: "uncommon", cost: 5, tags: ["accessory", "ring"], cooldown: 0,
     effects: [{ type: "statMult", stat: "damage", value: 0.15, trigger: "passive" }],
   }),
   health_stone: defItem({
     id: "health_stone", name: "Камень здоровья", icon: "❤️", color: "#f85149",
-    shape: [[0, 0]], rarity: "uncommon", cost: 5, tags: ["gem"], maxHp: 12, cooldown: 5,
+    shape: [[0, 0]], rarity: "uncommon", cost: 5, tags: ["gem", "heal"], maxHp: 12, cooldown: 5,
     effects: [
       { type: "passiveMaxHp", value: 12, trigger: "passive" },
       { type: "heal", value: 4 },
@@ -873,7 +883,7 @@ const ITEM_CATALOG = {
   }),
   speed_amulet: defItem({
     id: "speed_amulet", name: "Амулет скорости", icon: "⚡", color: "#58a6ff",
-    shape: [[0, 0]], rarity: "uncommon", cost: 5, tags: ["gem"], cooldown: 0,
+    shape: [[0, 0]], rarity: "uncommon", cost: 5, tags: ["accessory", "amulet", "gem"], cooldown: 0,
     effects: [{ type: "statMult", stat: "cooldown", value: -0.12, trigger: "passive" }],
   }),
   fire_crystal: defItem({
@@ -883,7 +893,7 @@ const ITEM_CATALOG = {
   }),
   frost_crystal: defItem({
     id: "frost_crystal", name: "Морозный кристалл", icon: "❄️", color: "#79c0ff",
-    shape: shapeRect(1, 2), rarity: "uncommon", cost: 6, tags: ["magic", "gem"], damage: 4, cooldown: 3,
+    shape: shapeRect(1, 2), rarity: "uncommon", cost: 6, tags: ["magic", "gem", "cold"], damage: 4, cooldown: 3,
     effects: [
       { type: "damage", value: 4, damageType: "magic" },
       { type: "slow", value: 0.15, duration: 3 },
@@ -891,12 +901,12 @@ const ITEM_CATALOG = {
   }),
   spider_web: defItem({
     id: "spider_web", name: "Паутина", icon: "🕸️", color: "#8b949e",
-    shape: shapeRect(2, 1), rarity: "uncommon", cost: 5, tags: ["nature"], cooldown: 4,
+    shape: shapeRect(2, 1), rarity: "uncommon", cost: 5, tags: ["nature", "debuff", "utility"], cooldown: 4,
     effects: [{ type: "slow", value: 0.1, duration: 4 }],
   }),
   beast_fang: defItem({
     id: "beast_fang", name: "Клык зверя", icon: "🦷", color: "#d29922",
-    shape: [[0, 0]], rarity: "uncommon", cost: 6, tags: ["weapon"], cooldown: 0,
+    shape: [[0, 0]], rarity: "uncommon", cost: 6, tags: ["accessory", "nature"], cooldown: 0,
     effects: [
       { type: "statMult", stat: "cooldown", value: -0.15, trigger: "passive" },
       { type: "statMult", stat: "damage", value: 0.1, trigger: "passive" },
@@ -904,7 +914,7 @@ const ITEM_CATALOG = {
   }),
   rage_potion: defItem({
     id: "rage_potion", name: "Зелье ярости", icon: "🧪", color: "#f85149",
-    shape: [[0, 0]], rarity: "uncommon", cost: 8, tags: ["food"], cooldown: 6,
+    shape: [[0, 0]], rarity: "uncommon", cost: 8, tags: ["food", "potion"], cooldown: 6,
     effects: [{ type: "buffTimed", stat: "damage", value: 0.3, duration: 5 }],
   }),
 
@@ -921,7 +931,7 @@ const ITEM_CATALOG = {
   }),
   knight_sword: defItem({
     id: "knight_sword", name: "Меч рыцаря", icon: "⚔️", color: "#79c0ff",
-    shape: shapeRect(1, 3), rarity: "rare", cost: 9, tags: ["weapon"], damage: 16, cooldown: 3.2,
+    shape: shapeRect(1, 3), rarity: "rare", cost: 9, tags: ["weapon", "melee"], damage: 16, cooldown: 3.2,
     effects: [{ type: "damage", value: 16 }],
   }),
   titan_armor: defItem({
@@ -934,7 +944,7 @@ const ITEM_CATALOG = {
   }),
   blood_stone: defItem({
     id: "blood_stone", name: "Кровавый камень", icon: "🩸", color: "#f85149",
-    shape: shapeRect(1, 2), rarity: "rare", cost: 10, tags: ["gem"], damage: 5, cooldown: 3.5,
+    shape: shapeRect(1, 2), rarity: "rare", cost: 10, tags: ["gem", "vampiric"], damage: 5, cooldown: 3.5,
     effects: [
       { type: "lifesteal", value: 0.22, trigger: "passive" },
       { type: "passiveMaxHp", value: 10, trigger: "passive" },
@@ -943,7 +953,7 @@ const ITEM_CATALOG = {
   }),
   rune_of_protection: defItem({
     id: "rune_of_protection", name: "Руна защиты", icon: "🔷", color: "#58a6ff",
-    shape: shapeRect(1, 2), rarity: "rare", cost: 7, tags: ["magic"], cooldown: 3.5,
+    shape: shapeRect(1, 2), rarity: "rare", cost: 7, tags: ["magic", "utility"], cooldown: 3.5,
     effects: [
       { type: "shieldBlockMult", value: 0.38, trigger: "passive" },
       { type: "block", value: 6 },
@@ -962,7 +972,7 @@ const ITEM_CATALOG = {
   war_hammer: defItem({
     id: "war_hammer", name: "Боевой молот", icon: "🔨", color: "#ffa657",
     shape: [[0, 0], [1, 0], [0, 1]], classRestriction: "warrior",
-    rarity: "legendary", cost: 12, tags: ["weapon"], damage: 25, cooldown: 4.5,
+    rarity: "legendary", cost: 12, tags: ["weapon", "melee"], damage: 25, cooldown: 4.5,
     effects: [
       { type: "damage", value: 25 },
       { type: "shieldBreakBonus", value: 0.5, trigger: "passive" },
@@ -971,7 +981,7 @@ const ITEM_CATALOG = {
   royal_helmet: defItem({
     id: "royal_helmet", name: "Королевский шлем", icon: "👑", color: "#f0c14b",
     shape: shapeRect(1, 2), classRestriction: "warrior",
-    rarity: "legendary", cost: 10, tags: ["armor"], defense: 10, maxHp: 15, cooldown: 2.5,
+    rarity: "legendary", cost: 10, tags: ["armor", "helmet"], defense: 10, maxHp: 15, cooldown: 2.5,
     effects: [
       { type: "passiveDefense", value: 10, trigger: "passive" },
       { type: "passiveMaxHp", value: 15, trigger: "passive" },
@@ -986,7 +996,7 @@ const ITEM_CATALOG = {
   smoke_bomb: defItem({
     id: "smoke_bomb", name: "Дымовая бомба", icon: "💨", color: "#8b949e",
     shape: shapeRect(1, 2), classRestriction: "rogue",
-    rarity: "legendary", cost: 10, tags: ["poison"], cooldown: 4.5,
+    rarity: "legendary", cost: 10, tags: ["poison", "utility", "debuff"], cooldown: 4.5,
     effects: [
       { type: "dodgePeriodic", interval: 3, trigger: "passive" },
       { type: "poison", value: 2 },
@@ -995,7 +1005,7 @@ const ITEM_CATALOG = {
   shadow_blade: defItem({
     id: "shadow_blade", name: "Клинок тени", icon: "🌑", color: "#484f58",
     shape: shapeRect(1, 2), classRestriction: "rogue",
-    rarity: "legendary", cost: 15, tags: ["weapon", "poison"], damage: 13, cooldown: 2,
+    rarity: "legendary", cost: 15, tags: ["weapon", "poison", "melee"], damage: 13, cooldown: 2,
     effects: [
       { type: "damage", value: 13 },
       { type: "crit", chance: 0.25, doublePoison: true, trigger: "passive" },
@@ -1004,7 +1014,7 @@ const ITEM_CATALOG = {
   fire_staff: defItem({
     id: "fire_staff", name: "Огненный посох", icon: "🔥", color: "#f0883e",
     shape: [[0, 0], [0, 1], [1, 1]], classRestriction: "mage",
-    rarity: "legendary", cost: 12, tags: ["weapon", "magic", "fire"], damage: 11, cooldown: 3,
+    rarity: "legendary", cost: 12, tags: ["weapon", "magic", "fire", "melee"], damage: 11, cooldown: 3,
     effects: [
       { type: "damage", value: 11, damageType: "fire" },
       { type: "groundFire", value: 3, trigger: "passive" },
@@ -1028,27 +1038,27 @@ const ITEM_CATALOG = {
   // ── КРАФТ — только через рецепты ──
   hero_sword: defItem({
     id: "hero_sword", name: "Геройский меч", icon: "⚔️", color: "#79c0ff",
-    shape: shapeRect(1, 2), rarity: "uncommon", cost: 0, craftOnly: true, tags: ["weapon"], damage: 6, cooldown: 2.4,
+    shape: shapeRect(1, 2), rarity: "uncommon", cost: 0, craftOnly: true, tags: ["weapon", "melee"], damage: 6, cooldown: 2.4,
     effects: [{ type: "damage", value: 6, valueMin: 4, valueMax: 8 }],
   }),
   hero_long_sword: defItem({
     id: "hero_long_sword", name: "Геройский длинный меч", icon: "🗡️", color: "#58a6ff",
-    shape: shapeRect(1, 3), rarity: "rare", cost: 0, craftOnly: true, tags: ["weapon"], damage: 11, cooldown: 2.8,
+    shape: shapeRect(1, 3), rarity: "rare", cost: 0, craftOnly: true, tags: ["weapon", "melee"], damage: 11, cooldown: 2.8,
     effects: [{ type: "damage", value: 11, valueMin: 8, valueMax: 14 }],
   }),
   falcon_blade: defItem({
     id: "falcon_blade", name: "Соколиный клинок", icon: "🦅", color: "#79c0ff",
-    shape: shapeRect(1, 2), rarity: "rare", cost: 0, craftOnly: true, tags: ["weapon"], damage: 8, cooldown: 1.4,
+    shape: shapeRect(1, 2), rarity: "rare", cost: 0, craftOnly: true, tags: ["weapon", "melee"], damage: 8, cooldown: 1.4,
     effects: [{ type: "damage", value: 8, valueMin: 6, valueMax: 10 }],
   }),
   crossblades: defItem({
     id: "crossblades", name: "Скрещённые клинки", icon: "⚔️", color: "#a371f7",
-    shape: [[0, 0], [1, 0], [0, 1]], rarity: "epic", cost: 0, craftOnly: true, tags: ["weapon"], damage: 15, cooldown: 2.6,
+    shape: [[0, 0], [1, 0], [0, 1]], rarity: "epic", cost: 0, craftOnly: true, tags: ["weapon", "melee"], damage: 15, cooldown: 2.6,
     effects: [{ type: "damage", value: 15, valueMin: 12, valueMax: 18 }],
   }),
   spectral_dagger: defItem({
     id: "spectral_dagger", name: "Призрачный кинжал", icon: "👻", color: "#a371f7",
-    shape: [[0, 0]], rarity: "uncommon", cost: 0, craftOnly: true, tags: ["weapon", "magic"], damage: 5, cooldown: 1.6,
+    shape: [[0, 0]], rarity: "uncommon", cost: 0, craftOnly: true, tags: ["weapon", "magic", "melee"], damage: 5, cooldown: 1.6,
     effects: [
       { type: "damage", value: 5, damageType: "magic" },
       { type: "spendStack", stack: "mana", value: 1, trigger: "on_hit", attackBuff: 6 },
@@ -1057,7 +1067,7 @@ const ITEM_CATALOG = {
   }),
   manathirst: defItem({
     id: "manathirst", name: "Жаждущий маны", icon: "🩸", color: "#a371f7",
-    shape: shapeRect(1, 2), rarity: "rare", cost: 0, craftOnly: true, tags: ["weapon", "magic"], damage: 6, cooldown: 2.2,
+    shape: shapeRect(1, 2), rarity: "rare", cost: 0, craftOnly: true, tags: ["weapon", "magic", "melee"], damage: 6, cooldown: 2.2,
     effects: [
       { type: "damage", value: 6, damageType: "magic" },
       { type: "lifesteal", value: 0.15, trigger: "passive" },
@@ -1065,7 +1075,7 @@ const ITEM_CATALOG = {
   }),
   enchanted_staff: defItem({
     id: "enchanted_staff", name: "Магический посох", icon: "🪄", color: "#bc8cff",
-    shape: shapeRect(1, 2), rarity: "uncommon", cost: 0, craftOnly: true, tags: ["weapon", "magic"], damage: 5, cooldown: 2.2,
+    shape: shapeRect(1, 2), rarity: "uncommon", cost: 0, craftOnly: true, tags: ["weapon", "magic", "melee"], damage: 5, cooldown: 2.2,
     effects: [{ type: "damage", value: 5, damageType: "magic" }],
   }),
   shovel: defItem({
@@ -1083,13 +1093,13 @@ const ITEM_CATALOG = {
   }),
   eggscalibur: defItem({
     id: "eggscalibur", name: "Яйце-экскалибур", icon: "🥚", color: "#f0c14b",
-    shape: [[0, 0], [1, 0], [0, 1]], rarity: "legendary", cost: 0, craftOnly: true, tags: ["weapon"], damage: 18, cooldown: 3,
+    shape: [[0, 0], [1, 0], [0, 1]], rarity: "legendary", cost: 0, craftOnly: true, tags: ["weapon", "melee"], damage: 18, cooldown: 3,
     effects: [{ type: "damage", value: 18, valueMin: 14, valueMax: 22 }],
   }),
 };
 
 Object.values(ITEM_CATALOG).forEach((item) => {
-  if (!("slot" in item)) item.slot = resolveItemSlot(item);
+  item.slot = resolveItemSlot(item);
 });
 
 function isShopEligibleItem(item, playerClass = null, round = 1) {
