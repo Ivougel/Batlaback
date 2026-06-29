@@ -269,14 +269,8 @@
   function syncBattleSceneGridMetrics() {
     const root = document.documentElement;
     if (root.dataset.battleArenaLayout !== "true") return;
+    if (root.dataset.battleHeroPlacement !== "flank-arena") return;
     if (!isBattleUiPhase()) return;
-    const canvas = document.getElementById("game-canvas");
-    let displayCanvasW = readCssPx("--battle-canvas-display-w", 0);
-    if (displayCanvasW <= 0 && canvas) {
-      displayCanvasW = canvas.getBoundingClientRect().width;
-    }
-    if (displayCanvasW <= 0) return;
-    setTabletBattleFieldMetrics(root, displayCanvasW);
   }
 
   function syncBattleHudFeedDock() {
@@ -360,34 +354,87 @@
     else root.removeAttribute("data-battle-hero-placement");
   }
 
-  function fitDesktopBattleLayout(root, canvas, fieldCol, stageW) {
+  const BATTLE_LAYOUT_VAR_NAMES = [
+    "--battle-hero-col-w",
+    "--battle-hero-img-h",
+    "--battle-thought-arena-min-h",
+    "--battle-hero-zone-h",
+    "--desktop-battle-hero-zone-h",
+    "--desktop-battle-hero-img-h",
+    "--desktop-battle-hero-col-w",
+    "--desktop-battle-thought-arena-min-h",
+    "--tablet-battle-chrome-bottom",
+  ];
+
+  /** Единая раскладка боя: player | arena | enemy на всех tier. */
+  function fitFlankArenaBattleLayout(root, canvas, fieldCol, stageW) {
     const vh = window.visualViewport?.height ?? window.innerHeight;
     const hudReserve = measureBattleHudReserve();
     const cssW = readCssPx("--battle-canvas-w", canvas.width);
     const cssH = readCssPx("--battle-canvas-h", canvas.height);
-    const heroZone = Math.min(360, Math.max(220, Math.round(vh * 0.24)));
-    const arenaMin = Math.max(140, Math.round(vh * 0.18));
-    const heroColW = Math.round(Math.min(280, Math.max(200, stageW * 0.17)));
-    const maxH = Math.max(120, vh - hudReserve - heroZone - arenaMin - 20);
+    const mobileLayout = root.dataset.prepLayout === "mobile";
+    const tabletSide = root.dataset.tabletSideFit === "true"
+      || root.dataset.tabletPrepHero === "true";
+
+    let heroZone;
+    let arenaMin;
+    let heroColW;
+    let heroImgH;
+    let portraitZoom;
+    let chromePad;
+
+    if (mobileLayout) {
+      heroZone = Math.min(280, Math.max(200, Math.round(vh * 0.26)));
+      arenaMin = Math.max(130, Math.round(vh * 0.18));
+      heroColW = Math.round(Math.min(180, Math.max(108, stageW * 0.24)));
+      heroImgH = Math.round(Math.min(200, Math.max(132, heroZone * 0.55)));
+      portraitZoom = 2.5;
+      chromePad = 10;
+    } else if (tabletSide) {
+      heroZone = Math.min(320, Math.max(200, Math.round((vh - hudReserve) * 0.3)));
+      arenaMin = Math.max(110, Math.round(vh * 0.14));
+      heroColW = Math.round(Math.min(220, Math.max(140, stageW * 0.15)));
+      heroImgH = Math.round(Math.min(220, Math.max(140, heroZone * 0.46)));
+      portraitZoom = 1.0;
+      chromePad = 16;
+      root.style.setProperty("--tablet-battle-chrome-bottom", `${hudReserve}px`);
+    } else {
+      heroZone = Math.min(360, Math.max(220, Math.round(vh * 0.24)));
+      arenaMin = Math.max(140, Math.round(vh * 0.18));
+      heroColW = Math.round(Math.min(280, Math.max(200, stageW * 0.17)));
+      heroImgH = Math.round(Math.min(240, Math.max(160, heroZone * 0.5)));
+      portraitZoom = 1.15;
+      chromePad = 20;
+    }
+
+    const maxH = Math.max(100, vh - hudReserve - heroZone - arenaMin - chromePad);
     const scale = Math.min(stageW / cssW, maxH / cssH, 1);
     const w = Math.max(1, Math.floor(cssW * scale));
     const ch = Math.max(1, Math.floor(cssH * scale));
-    const heroImgH = Math.round(Math.min(240, Math.max(160, heroZone * 0.5)));
 
     setBattleArenaLayout(true);
     setBattleHeroPlacement("flank-arena");
+
+    root.style.setProperty("--battle-hero-col-w", `${heroColW}px`);
+    root.style.setProperty("--battle-hero-img-h", `${heroImgH}px`);
+    root.style.setProperty("--battle-thought-arena-min-h", `${arenaMin}px`);
+    root.style.setProperty("--battle-hero-zone-h", `${heroZone}px`);
+    root.style.setProperty("--battle-portrait-zoom", String(portraitZoom));
     root.style.setProperty("--desktop-battle-hero-zone-h", `${heroZone}px`);
     root.style.setProperty("--desktop-battle-hero-img-h", `${heroImgH}px`);
     root.style.setProperty("--desktop-battle-hero-col-w", `${heroColW}px`);
     root.style.setProperty("--desktop-battle-thought-arena-min-h", `${arenaMin}px`);
     root.style.setProperty("--battle-canvas-display-w", `${w}px`);
     root.style.setProperty("--battle-canvas-display-h", `${ch}px`);
+
+    if (mobileLayout) {
+      root.style.setProperty("--mobile-battle-portrait-h", `${heroImgH}px`);
+      setMobileBattleDisplayVars(w, ch, cssW);
+    }
+
     setCanvasDisplaySize(canvas, w, ch);
-    setTabletBattleFieldMetrics(root, w);
-    requestAnimationFrame(() => {
-      setTabletBattleFieldMetrics(root, w);
-      requestAnimationFrame(syncBattleSceneGridMetrics);
-    });
+    syncMobileShopFabPosition();
+    requestAnimationFrame(() => requestAnimationFrame(syncBattleSceneGridMetrics));
   }
 
   /** Единственный источник display-size #game-canvas (bitmap — game.js applyPhaseCanvasLayout). */
@@ -402,101 +449,26 @@
     if (phase !== "battle" && phase !== "replay") {
       setBattleArenaLayout(false);
       setBattleHeroPlacement(null);
-      [
-        "--desktop-battle-hero-zone-h",
-        "--desktop-battle-hero-img-h",
-        "--desktop-battle-hero-col-w",
-        "--desktop-battle-thought-arena-min-h",
-      ].forEach((name) => root.style.removeProperty(name));
+      BATTLE_LAYOUT_VAR_NAMES.forEach((name) => root.style.removeProperty(name));
     }
 
     if (phase === "battle" || phase === "replay") {
-      const mobileLayout = root.dataset.prepLayout === "mobile";
-      const tabletSide = root.dataset.tabletSideFit === "true";
-      if (mobileLayout) {
-        const stage = canvas.closest(".battle-canvas-stage");
-        const fieldCol = canvas.closest(".prep-field-column");
-        if (stage) {
-          const stageW = fieldCol?.clientWidth ?? stage.clientWidth;
-          if (stageW > 0) {
-            const vh = window.visualViewport?.height ?? window.innerHeight;
-            const hudReserve = measureBattleHudReserve();
-            const cssW = readCssPx("--battle-canvas-w", canvas.width);
-            const cssH = readCssPx("--battle-canvas-h", canvas.height);
-            const heroZone = Math.min(280, Math.max(200, Math.round(vh * 0.26)));
-            const arenaMin = Math.max(130, Math.round(vh * 0.2));
-            const maxH = Math.max(100, vh - hudReserve - heroZone - arenaMin - 10);
-            const scale = Math.min(stageW / cssW, maxH / cssH, 1);
-            const w = Math.max(1, Math.floor(cssW * scale));
-            const h = Math.max(1, Math.floor(cssH * scale));
-            const portraitH = Math.round(Math.min(232, Math.max(184, heroZone * 0.68)));
-            const heroImgH = portraitH;
-            root.style.setProperty("--mobile-battle-hero-zone-h", `${heroZone}px`);
-            root.style.setProperty("--mobile-battle-thought-arena-min-h", `${arenaMin}px`);
-            root.style.setProperty("--mobile-battle-portrait-h", `${portraitH}px`);
-            root.style.setProperty("--mobile-battle-hero-img-h", `${heroImgH}px`);
-            setBattleArenaLayout(root.dataset.orientation !== "landscape");
-            setBattleHeroPlacement(null);
-            setCanvasDisplaySize(canvas, w, h);
-            setMobileBattleDisplayVars(w, h, cssW);
-            syncMobileShopFabPosition();
-            return;
-          }
-        }
-      } else if (tabletSide || root.dataset.tabletPrepHero === "true") {
-        const stage = canvas.closest(".battle-canvas-stage");
-        const fieldCol = canvas.closest(".prep-field-column");
-        if (stage) {
-          const stageW = fieldCol?.clientWidth ?? stage.clientWidth;
-          if (stageW > 0) {
-            const vh = window.visualViewport?.height ?? window.innerHeight;
-            const hudH = isHudVisible() ? (document.getElementById("gamepad-hints-bar")?.offsetHeight ?? 0) : 0;
-            const cssW = readCssPx("--battle-canvas-w", canvas.width);
-            const cssH = readCssPx("--battle-canvas-h", canvas.height);
-            const heroZone = Math.min(320, Math.max(200, Math.round((vh - measureBattleHudReserve()) * 0.3)));
-            const arenaMin = Math.max(110, Math.round(vh * 0.14));
-            const maxH = Math.max(100, vh - measureBattleHudReserve() - heroZone - arenaMin - 16);
-            const scale = Math.min(stageW / cssW, maxH / cssH, 1);
-            const w = Math.max(1, Math.floor(cssW * scale));
-            const ch = Math.max(1, Math.floor(cssH * scale));
-            const heroImgH = Math.round(Math.min(220, Math.max(140, heroZone * 0.46)));
-            root.style.setProperty("--tablet-battle-hero-zone-h", `${heroZone}px`);
-            root.style.setProperty("--tablet-battle-hero-img-h", `${heroImgH}px`);
-            root.style.setProperty("--tablet-battle-thought-arena-min-h", `${arenaMin}px`);
-            root.style.setProperty("--tablet-battle-chrome-bottom", `${measureBattleHudReserve()}px`);
-            root.style.setProperty("--battle-canvas-display-w", `${w}px`);
-            root.style.setProperty("--battle-canvas-display-h", `${ch}px`);
-            setBattleArenaLayout(true);
-            setBattleHeroPlacement("under-backpacks");
-            setCanvasDisplaySize(canvas, w, ch);
-            setTabletBattleFieldMetrics(root, w);
-            requestAnimationFrame(() => {
-              setTabletBattleFieldMetrics(root, w);
-              requestAnimationFrame(syncBattleSceneGridMetrics);
-            });
-            syncMobileShopFabPosition();
-            return;
-          }
-        }
-      } else {
-        const stage = canvas.closest(".battle-canvas-stage");
-        const fieldCol = canvas.closest(".prep-field-column");
-        const stageW = fieldCol?.clientWidth ?? stage?.clientWidth ?? 0;
-        if (stage && stageW > 0) {
-          fitDesktopBattleLayout(root, canvas, fieldCol, stageW);
-          syncMobileShopFabPosition();
-          return;
-        }
-        setBattleArenaLayout(false);
-        setBattleHeroPlacement(null);
-        root.dataset.battleMobileFit = "false";
-        [
-          "--battle-canvas-display-w",
-          "--battle-canvas-display-h",
-          "--battle-field-display-w",
-          "--battle-grid-gap-display",
-        ].forEach((name) => root.style.removeProperty(name));
+      const stage = canvas.closest(".battle-canvas-stage");
+      const fieldCol = canvas.closest(".prep-field-column");
+      const stageW = fieldCol?.clientWidth ?? stage?.clientWidth ?? 0;
+      if (stage && stageW > 0) {
+        fitFlankArenaBattleLayout(root, canvas, fieldCol, stageW);
+        return;
       }
+      setBattleArenaLayout(false);
+      setBattleHeroPlacement(null);
+      root.dataset.battleMobileFit = "false";
+      [
+        "--battle-canvas-display-w",
+        "--battle-canvas-display-h",
+        "--battle-field-display-w",
+        "--battle-grid-gap-display",
+      ].forEach((name) => root.style.removeProperty(name));
       setCanvasDisplaySize(
         canvas,
         readCssPx("--battle-canvas-w", canvas.width),

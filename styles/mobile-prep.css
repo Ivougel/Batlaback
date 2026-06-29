@@ -797,6 +797,8 @@ html[data-prep-layout="mobile"] #app[data-phase="replay"] #prep-toolbar {
   display: none !important;
 }
 
+/* ─── Бой в портрете: shell (grid — battle-arena-layout.css) ─── */
+
 html[data-prep-layout="mobile"] #app[data-phase="battle"] .prep-left-column,
 html[data-prep-layout="mobile"] #app[data-phase="replay"] .prep-left-column {
   display: flex;
@@ -806,173 +808,34 @@ html[data-prep-layout="mobile"] #app[data-phase="replay"] .prep-left-column {
   min-height: 0;
 }
 
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .prep-field-column,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .prep-field-column {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: flex-start;
-  height: 100%;
-  min-height: 0;
-}
-
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .prep-field-island,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .prep-field-island {
-  position: relative !important;
-  flex: 0 0 auto;
-  align-self: center;
-  left: auto !important;
-  top: auto !important;
-  margin: 0 auto;
-  width: var(--battle-canvas-display-w, var(--battle-canvas-w)) !important;
-  height: var(--battle-canvas-display-h, var(--battle-canvas-h)) !important;
-  max-width: 100% !important;
-}
-
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-canvas-stage,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-canvas-stage {
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-}
-
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-ui,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-ui {
-  position: relative !important;
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  justify-content: space-around;
-  gap: calc(6px * var(--ui-scale));
-  flex: 0 0 auto;
-  width: 100%;
-  min-height: 0;
-  height: auto;
-  max-height: none;
-  padding: calc(6px * var(--ui-scale)) calc(8px * var(--ui-scale)) 0;
-  margin-top: calc(4px * var(--ui-scale));
-  inset: auto !important;
-  pointer-events: none;
-  z-index: 8;
-  overflow: visible;
-}
-
-html[data-prep-layout="mobile"] #app[data-phase="battle"],
-html[data-prep-layout="mobile"] #app[data-phase="replay"] {
-  --mobile-battle-hero-zone-h: auto;
-  --mobile-battle-portrait-h: min(216px, 30dvh);
-  --mobile-battle-hero-img-h: var(--mobile-battle-portrait-h);
-  --avatar-effects-panel-h: min(calc(44px * var(--ui-scale)), 6vh);
-  --battle-scene-avatar-h: auto;
-  --battle-hero-img-h: var(--mobile-battle-portrait-h);
-  --battle-avatar-w: min(156px, 44vw);
-  --battle-emotion-strip-w: min(32px, 8vw);
-  --battle-portrait-zoom: 2.5;
-  --mobile-battle-thought-arena-min-h: min(180px, 24dvh);
-}
-
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-ui .battle-scene-avatar,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-ui .battle-scene-avatar {
-  position: relative;
-  top: auto;
-  bottom: auto;
-  left: auto;
-  right: auto;
-  transform: none;
-  flex: 1 1 0;
-  flex-direction: column;
-  width: auto;
-  min-width: 0;
-  max-width: calc(50% - 4px);
-  height: auto;
-  max-height: none;
-  padding-top: 0;
-  display: flex;
-  align-items: stretch;
-  justify-content: flex-start;
-  overflow: visible;
-  pointer-events: auto;
-}
-
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-avatar-player,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-avatar-player,
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-avatar-enemy,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-avatar-enemy {
-  left: auto;
-  right: auto;
-  justify-content: center;
-}
-
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-avatar-player .field-avatar-slot,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-avatar-player .field-avatar-slot,
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-avatar-enemy .field-avatar-slot,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-avatar-enemy .field-avatar-slot {
-  flex: 0 0 auto;
-  align-items: flex-start;
-  justify-content: flex-start;
-  width: 100%;
-  height: auto;
-  max-height: none;
-  position: relative;
-  overflow: visible;
-}
-
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-thought-slot,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-thought-slot {
-  display: none !important;
-}
-
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-thought-arena,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-thought-arena {
-  flex: 1 1 auto;
-  min-height: var(--mobile-battle-thought-arena-min-h, min(180px, 24dvh));
-  margin-bottom: calc(4px * var(--ui-scale));
-}
-
-html[data-prep-layout="mobile"] #app[data-phase="battle"] #player-avatar-slot > .avatar-hero-shell,
-html[data-prep-layout="mobile"] #app[data-phase="battle"] #enemy-avatar-slot > .avatar-hero-shell,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] #player-avatar-slot > .avatar-hero-shell,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] #enemy-avatar-slot > .avatar-hero-shell {
-  position: relative !important;
-  inset: auto !important;
-  width: 100%;
-  height: auto !important;
-  min-height: 0 !important;
-  max-height: none !important;
-  overflow: visible;
-  justify-content: flex-start !important;
-  align-items: stretch;
-}
-
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-ui .avatar-hero-shell,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-ui .avatar-hero-shell {
+/* Косметика портретов (статусы, бафы) — не трогает grid-слоты */
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-ui .avatar-hero-shell,
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-ui .avatar-hero-shell {
   width: 100%;
   max-width: 100%;
 }
 
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-bars,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-bars {
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-bars,
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-bars {
   position: static;
   flex-shrink: 0;
   width: 100%;
 }
 
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-bars-col,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-bars-col {
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-bars-col,
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-bars-col {
   width: 100%;
 }
 
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-name,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-name {
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-name,
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-name {
   width: 100%;
   text-align: center;
   font-size: calc(0.72rem * var(--ui-scale));
 }
 
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-upper,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-upper {
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-upper,
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-upper {
   flex-shrink: 0;
   justify-content: flex-start;
   align-items: center;
@@ -980,10 +843,10 @@ html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .av
   gap: calc(3px * var(--ui-scale));
 }
 
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-effects-panel,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-effects-panel,
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-effects-float,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-effects-float {
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-effects-panel,
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-effects-panel,
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-effects-float,
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-effects-float {
   position: relative !important;
   top: auto !important;
   left: auto !important;
@@ -996,23 +859,23 @@ html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .av
   overflow: visible;
 }
 
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-damage-stack,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-damage-stack,
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-benefit-stack,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-benefit-stack,
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-dot-stack,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-dot-stack {
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-damage-stack,
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-damage-stack,
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-benefit-stack,
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-benefit-stack,
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-dot-stack,
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-dot-stack {
   pointer-events: auto;
 }
 
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-status-zone-buffs .avatar-benefit-stacks,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-status-zone-buffs .avatar-benefit-stacks,
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-status-zone-debuffs .avatar-dot-stacks,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-status-zone-debuffs .avatar-dot-stacks,
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-status-zone-buffs .avatar-beads,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-status-zone-buffs .avatar-beads,
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-status-zone-debuffs .avatar-hero-debuff-row,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-status-zone-debuffs .avatar-hero-debuff-row {
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-status-zone-buffs .avatar-benefit-stacks,
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-status-zone-buffs .avatar-benefit-stacks,
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-status-zone-debuffs .avatar-dot-stacks,
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-status-zone-debuffs .avatar-dot-stacks,
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-status-zone-buffs .avatar-beads,
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-status-zone-buffs .avatar-beads,
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-status-zone-debuffs .avatar-hero-debuff-row,
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-status-zone-debuffs .avatar-hero-debuff-row {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
@@ -1020,38 +883,17 @@ html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .av
   position: static;
 }
 
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-status-zone-buffs .avatar-bead-positive,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-status-zone-buffs .avatar-bead-positive,
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-status-zone-debuffs .avatar-bead-debuff,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-status-zone-debuffs .avatar-bead-debuff {
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-status-zone-buffs .avatar-bead-positive,
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-status-zone-buffs .avatar-bead-positive,
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-status-zone-debuffs .avatar-bead-debuff,
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-status-zone-debuffs .avatar-bead-debuff {
   position: static;
   transform: none;
   animation: none;
 }
 
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-stage,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-stage {
-  position: relative;
-  z-index: 2;
-  flex: 0 0 auto;
-  width: 100%;
-  height: var(--mobile-battle-portrait-h, min(216px, 30dvh));
-  min-height: var(--mobile-battle-portrait-h, min(216px, 30dvh));
-  max-height: var(--mobile-battle-portrait-h, min(216px, 30dvh));
-  overflow: hidden;
-  align-items: flex-start;
-  justify-content: center;
-  animation: none;
-}
-
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-ui .avatar-hero-stage,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-ui .avatar-hero-stage {
-  width: 100%;
-  animation: none;
-}
-
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-ui .profile-avatar,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-ui .profile-avatar {
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-ui .profile-avatar,
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-ui .profile-avatar {
   width: 100%;
   height: 100%;
   max-height: none;
@@ -1061,47 +903,8 @@ html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-ui .prof
   justify-content: center;
 }
 
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .portrait-zoom-clip,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .portrait-zoom-clip {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  transform: scale(var(--battle-portrait-zoom, 2.5));
-  transform-origin: center top;
-}
-
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .portrait-zoom-clip img,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .portrait-zoom-clip img {
-  width: 100%;
-  height: auto;
-  max-height: none;
-  object-fit: cover;
-  object-position: center top;
-  transform: none;
-  transform-origin: center top;
-}
-
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-ui .avatar-hero-stage .profile-avatar,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-ui .avatar-hero-stage .profile-avatar {
-  animation: none;
-  height: 100%;
-}
-
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-build-stats-anchor,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-build-stats-anchor {
-  position: fixed;
-  top: auto;
-  bottom: calc(56px + env(safe-area-inset-bottom, 0px));
-  right: calc(12px + env(safe-area-inset-right, 0px));
-  left: auto;
-  width: auto;
-  transform: none;
-  z-index: 901;
-  pointer-events: none;
-}
-
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-build-stats-popover,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-build-stats-popover {
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"] .battle-build-stats-popover,
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="replay"] .battle-build-stats-popover {
   top: auto;
   bottom: calc(100% + 6px);
   left: auto;
@@ -1110,13 +913,8 @@ html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-build-stats-po
   max-height: min(42dvh, 280px);
 }
 
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-ui .btn-player-stats,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-ui .btn-player-stats {
-  display: none;
-}
-
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-stats,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-stats {
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"] .battle-scene-stats,
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="replay"] .battle-scene-stats {
   display: none !important;
 }
 
