@@ -134,7 +134,9 @@
       "--battle-field-display-w",
       "--battle-grid-gap-display",
       "--mobile-battle-hero-zone-h",
+      "--mobile-battle-portrait-h",
       "--mobile-battle-hero-img-h",
+      "--mobile-battle-thought-arena-min-h",
       "--prep-canvas-display-w",
       "--prep-canvas-display-h",
       "--prep-shop-fab-top",
@@ -184,6 +186,7 @@
     "--tablet-prep-hero-h",
     "--tablet-battle-hero-zone-h",
     "--tablet-battle-hero-img-h",
+    "--tablet-battle-thought-arena-min-h",
     "--tablet-battle-chrome-bottom",
     "--tablet-battle-scene-offset-x",
     "--tablet-battle-enemy-slot-left",
@@ -247,7 +250,8 @@
       el.style.setProperty("--battle-grid-gap-display", gapPx);
     }
     if (sceneUi) {
-      sceneUi.style.width = canvasPx;
+      const sceneUiW = Math.round(slotW * 2 + gap);
+      sceneUi.style.width = `${sceneUiW}px`;
       sceneUi.style.maxWidth = "100%";
       sceneUi.style.marginLeft = "auto";
       sceneUi.style.marginRight = "auto";
@@ -259,8 +263,12 @@
   }
 
   function syncTabletBattleAvatarPositions() {
+    syncBattleSceneGridMetrics();
+  }
+
+  function syncBattleSceneGridMetrics() {
     const root = document.documentElement;
-    if (root.dataset.tabletSideFit !== "true" && root.dataset.tabletPrepHero !== "true") return;
+    if (root.dataset.battleArenaLayout !== "true") return;
     if (!isBattleUiPhase()) return;
     const canvas = document.getElementById("game-canvas");
     let displayCanvasW = readCssPx("--battle-canvas-display-w", 0);
@@ -333,11 +341,44 @@
     }
 
     if (phase === "battle" || phase === "replay") {
-      const heroZone = Math.min(360, Math.max(240, Math.round((h - measureBattleHudReserve()) * 0.42)));
+      const heroZone = Math.min(320, Math.max(200, Math.round((h - measureBattleHudReserve()) * 0.3)));
+      const arenaMin = Math.max(110, Math.round(h * 0.14));
       const heroImgH = Math.round(Math.min(220, Math.max(140, heroZone * 0.46)));
       root.style.setProperty("--tablet-battle-hero-zone-h", `${heroZone}px`);
       root.style.setProperty("--tablet-battle-hero-img-h", `${heroImgH}px`);
+      root.style.setProperty("--tablet-battle-thought-arena-min-h", `${arenaMin}px`);
     }
+  }
+
+  function setBattleArenaLayout(enabled) {
+    document.documentElement.dataset.battleArenaLayout = enabled ? "true" : "false";
+  }
+
+  function fitDesktopBattleLayout(root, canvas, fieldCol, stageW) {
+    const vh = window.visualViewport?.height ?? window.innerHeight;
+    const hudReserve = measureBattleHudReserve();
+    const cssW = readCssPx("--battle-canvas-w", canvas.width);
+    const cssH = readCssPx("--battle-canvas-h", canvas.height);
+    const heroZone = Math.min(360, Math.max(220, Math.round(vh * 0.24)));
+    const arenaMin = Math.max(140, Math.round(vh * 0.18));
+    const maxH = Math.max(120, vh - hudReserve - heroZone - arenaMin - 20);
+    const scale = Math.min(stageW / cssW, maxH / cssH, 1);
+    const w = Math.max(1, Math.floor(cssW * scale));
+    const ch = Math.max(1, Math.floor(cssH * scale));
+    const heroImgH = Math.round(Math.min(240, Math.max(160, heroZone * 0.5)));
+
+    setBattleArenaLayout(true);
+    root.style.setProperty("--desktop-battle-hero-zone-h", `${heroZone}px`);
+    root.style.setProperty("--desktop-battle-hero-img-h", `${heroImgH}px`);
+    root.style.setProperty("--desktop-battle-thought-arena-min-h", `${arenaMin}px`);
+    root.style.setProperty("--battle-canvas-display-w", `${w}px`);
+    root.style.setProperty("--battle-canvas-display-h", `${ch}px`);
+    setCanvasDisplaySize(canvas, w, ch);
+    setTabletBattleFieldMetrics(root, w);
+    requestAnimationFrame(() => {
+      setTabletBattleFieldMetrics(root, w);
+      requestAnimationFrame(syncBattleSceneGridMetrics);
+    });
   }
 
   /** Единственный источник display-size #game-canvas (bitmap — game.js applyPhaseCanvasLayout). */
@@ -348,6 +389,15 @@
 
     const phase = app?.dataset.phase;
     const root = document.documentElement;
+
+    if (phase !== "battle" && phase !== "replay") {
+      setBattleArenaLayout(false);
+      [
+        "--desktop-battle-hero-zone-h",
+        "--desktop-battle-hero-img-h",
+        "--desktop-battle-thought-arena-min-h",
+      ].forEach((name) => root.style.removeProperty(name));
+    }
 
     if (phase === "battle" || phase === "replay") {
       const mobileLayout = root.dataset.prepLayout === "mobile";
@@ -374,6 +424,7 @@
             root.style.setProperty("--mobile-battle-thought-arena-min-h", `${arenaMin}px`);
             root.style.setProperty("--mobile-battle-portrait-h", `${portraitH}px`);
             root.style.setProperty("--mobile-battle-hero-img-h", `${heroImgH}px`);
+            setBattleArenaLayout(root.dataset.orientation !== "landscape");
             setCanvasDisplaySize(canvas, w, h);
             setMobileBattleDisplayVars(w, h, cssW);
             syncMobileShopFabPosition();
@@ -390,28 +441,40 @@
             const hudH = isHudVisible() ? (document.getElementById("gamepad-hints-bar")?.offsetHeight ?? 0) : 0;
             const cssW = readCssPx("--battle-canvas-w", canvas.width);
             const cssH = readCssPx("--battle-canvas-h", canvas.height);
-            const heroZone = Math.min(360, Math.max(240, Math.round((vh - measureBattleHudReserve()) * 0.42)));
-            const maxH = Math.max(120, vh - measureBattleHudReserve() - heroZone - 16);
+            const heroZone = Math.min(320, Math.max(200, Math.round((vh - measureBattleHudReserve()) * 0.3)));
+            const arenaMin = Math.max(110, Math.round(vh * 0.14));
+            const maxH = Math.max(100, vh - measureBattleHudReserve() - heroZone - arenaMin - 16);
             const scale = Math.min(stageW / cssW, maxH / cssH, 1);
             const w = Math.max(1, Math.floor(cssW * scale));
             const ch = Math.max(1, Math.floor(cssH * scale));
             const heroImgH = Math.round(Math.min(220, Math.max(140, heroZone * 0.46)));
             root.style.setProperty("--tablet-battle-hero-zone-h", `${heroZone}px`);
             root.style.setProperty("--tablet-battle-hero-img-h", `${heroImgH}px`);
+            root.style.setProperty("--tablet-battle-thought-arena-min-h", `${arenaMin}px`);
             root.style.setProperty("--tablet-battle-chrome-bottom", `${measureBattleHudReserve()}px`);
             root.style.setProperty("--battle-canvas-display-w", `${w}px`);
             root.style.setProperty("--battle-canvas-display-h", `${ch}px`);
+            setBattleArenaLayout(true);
             setCanvasDisplaySize(canvas, w, ch);
             setTabletBattleFieldMetrics(root, w);
             requestAnimationFrame(() => {
               setTabletBattleFieldMetrics(root, w);
-              requestAnimationFrame(() => syncTabletBattleAvatarPositions());
+              requestAnimationFrame(syncBattleSceneGridMetrics);
             });
             syncMobileShopFabPosition();
             return;
           }
         }
       } else {
+        const stage = canvas.closest(".battle-canvas-stage");
+        const fieldCol = canvas.closest(".prep-field-column");
+        const stageW = fieldCol?.clientWidth ?? stage?.clientWidth ?? 0;
+        if (stage && stageW > 0) {
+          fitDesktopBattleLayout(root, canvas, fieldCol, stageW);
+          syncMobileShopFabPosition();
+          return;
+        }
+        setBattleArenaLayout(false);
         root.dataset.battleMobileFit = "false";
         [
           "--battle-canvas-display-w",
@@ -688,14 +751,13 @@
           applyBattleHudPin(true, true);
         }
         if (
-          (document.documentElement.dataset.tabletSideFit === "true"
-            || document.documentElement.dataset.tabletPrepHero === "true")
+          document.documentElement.dataset.battleArenaLayout === "true"
           && isBattleUiPhase()
         ) {
           const { h } = viewportSize();
           syncTabletSideLayoutVars(h, document.getElementById("app")?.dataset.phase ?? "prep");
           fitCanvasDisplaySize();
-          requestAnimationFrame(syncTabletBattleAvatarPositions);
+          requestAnimationFrame(syncBattleSceneGridMetrics);
         }
       });
     });
@@ -719,19 +781,15 @@
     const battleSceneUi = document.getElementById("battle-scene-ui");
     const gameCanvas = document.getElementById("game-canvas");
     const prepFieldIsland = document.getElementById("prep-field-island");
-    const syncTabletAvatarsOnResize = () => {
-      if (
-        (document.documentElement.dataset.tabletSideFit === "true"
-          || document.documentElement.dataset.tabletPrepHero === "true")
-        && isBattleUiPhase()
-      ) {
-        syncTabletBattleAvatarPositions();
+    const syncBattleGridOnResize = () => {
+      if (document.documentElement.dataset.battleArenaLayout === "true" && isBattleUiPhase()) {
+        syncBattleSceneGridMetrics();
       }
     };
     if (typeof ResizeObserver !== "undefined") {
-      if (battleSceneUi) new ResizeObserver(syncTabletAvatarsOnResize).observe(battleSceneUi);
-      if (gameCanvas) new ResizeObserver(syncTabletAvatarsOnResize).observe(gameCanvas);
-      if (prepFieldIsland) new ResizeObserver(syncTabletAvatarsOnResize).observe(prepFieldIsland);
+      if (battleSceneUi) new ResizeObserver(syncBattleGridOnResize).observe(battleSceneUi);
+      if (gameCanvas) new ResizeObserver(syncBattleGridOnResize).observe(gameCanvas);
+      if (prepFieldIsland) new ResizeObserver(syncBattleGridOnResize).observe(prepFieldIsland);
     }
     const hud = document.getElementById("gamepad-hints-bar");
     if (hud) {
@@ -765,4 +823,5 @@
   window.syncMobileShopFabPosition = syncMobileShopFabPosition;
   window.syncBattleHudFeedDock = syncBattleHudFeedDock;
   window.syncTabletBattleAvatarPositions = syncTabletBattleAvatarPositions;
+  window.syncBattleSceneGridMetrics = syncBattleSceneGridMetrics;
 })();

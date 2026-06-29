@@ -11,13 +11,14 @@ const EmotionPresenter = (() => {
     FLOAT: "float",
   };
 
+  function usesBattleThoughtArena() {
+    return document.documentElement.dataset.battleArenaLayout === "true";
+  }
+
   /** @type {Record<string, { present(side: string, event: object): void, clear(side: string): void, matches?(): boolean }>} */
   const layouts = {
     [LAYOUT.ARENA]: {
-      matches() {
-        const root = document.documentElement;
-        return root.dataset.prepLayout === "mobile" && root.dataset.orientation !== "landscape";
-      },
+      matches: usesBattleThoughtArena,
       present: presentArenaThought,
       clear: clearArenaThought,
     },

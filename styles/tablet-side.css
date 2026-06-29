@@ -201,9 +201,9 @@ html[data-tablet-prep-hero="true"] #app[data-phase="replay"] .battle-scene-ui {
   display: grid !important;
   grid-template-areas: "player gap enemy";
   grid-template-columns:
-    minmax(0, 1fr)
+    var(--tablet-battle-slot-w, var(--battle-field-display-w, minmax(0, 1fr)))
     var(--battle-grid-gap-display, var(--grid-gap))
-    minmax(0, 1fr);
+    var(--tablet-battle-slot-w, var(--battle-field-display-w, minmax(0, 1fr)));
   width: var(
     --tablet-battle-canvas-display-w,
     var(--battle-canvas-display-w, var(--battle-canvas-w))
@@ -213,7 +213,7 @@ html[data-tablet-prep-hero="true"] #app[data-phase="replay"] .battle-scene-ui {
   margin-left: auto;
   margin-right: auto;
   flex: 0 0 auto;
-  min-height: var(--tablet-battle-hero-zone-h, min(260px, 34vh));
+  min-height: 0;
   max-height: none;
   margin-top: 4px;
   margin-bottom: 0;
@@ -222,7 +222,8 @@ html[data-tablet-prep-hero="true"] #app[data-phase="replay"] .battle-scene-ui {
   pointer-events: none;
   align-content: end;
   align-items: end;
-  justify-content: stretch;
+  justify-content: center;
+  justify-items: center;
   column-gap: 0;
 }
 
@@ -252,6 +253,9 @@ html[data-tablet-prep-hero="true"] #app[data-phase="battle"] .battle-scene-avata
 html[data-tablet-prep-hero="true"] #app[data-phase="replay"] .battle-scene-avatar-player {
   grid-area: player !important;
   justify-content: center !important;
+  justify-self: center;
+  width: 100%;
+  max-width: var(--tablet-battle-slot-w, 100%);
 }
 
 html[data-tablet-side-fit="true"] #app[data-phase="battle"] .battle-scene-avatar-enemy,
@@ -260,6 +264,9 @@ html[data-tablet-prep-hero="true"] #app[data-phase="battle"] .battle-scene-avata
 html[data-tablet-prep-hero="true"] #app[data-phase="replay"] .battle-scene-avatar-enemy {
   grid-area: enemy !important;
   justify-content: center !important;
+  justify-self: center;
+  width: 100%;
+  max-width: var(--tablet-battle-slot-w, 100%);
 }
 
 html[data-tablet-side-fit="true"] #app[data-phase="battle"] .battle-scene-ui .battle-scene-stats,
@@ -385,6 +392,25 @@ html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-scene-ui .pr
   overflow: visible;
   align-items: flex-start;
   justify-content: center;
+}
+
+html[data-tablet-side-fit="true"] #app[data-phase="battle"] .battle-thought-arena,
+html[data-tablet-side-fit="true"] #app[data-phase="replay"] .battle-thought-arena,
+html[data-tablet-prep-hero="true"] #app[data-phase="battle"] .battle-thought-arena,
+html[data-tablet-prep-hero="true"] #app[data-phase="replay"] .battle-thought-arena {
+  flex: 1 1 auto;
+  align-self: stretch;
+  width: 100%;
+  min-height: var(--tablet-battle-thought-arena-min-h, min(140px, 18vh));
+  margin-top: calc(4px * var(--ui-scale));
+  margin-bottom: calc(4px * var(--ui-scale));
+}
+
+html[data-tablet-side-fit="true"] #app[data-phase="battle"] .avatar-thought-slot,
+html[data-tablet-side-fit="true"] #app[data-phase="replay"] .avatar-thought-slot,
+html[data-tablet-prep-hero="true"] #app[data-phase="battle"] .avatar-thought-slot,
+html[data-tablet-prep-hero="true"] #app[data-phase="replay"] .avatar-thought-slot {
+  display: none !important;
 }
 
 html[data-tablet-side-fit="true"] #app[data-phase="battle"] .portrait-zoom-clip,

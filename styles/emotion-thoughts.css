@@ -19,8 +19,8 @@
   --thought-size: 15vmin;
 }
 
-html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-thought-arena,
-html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-thought-arena {
+html[data-battle-arena-layout="true"] #app[data-phase="battle"] .battle-thought-arena,
+html[data-battle-arena-layout="true"] #app[data-phase="replay"] .battle-thought-arena {
   display: block;
 }
 
