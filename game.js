@@ -157,6 +157,36 @@ let suppressShopClickUntil = 0;
 let opponentMode = "ai";
 let gameMode = "solo";
 let prepViewSide = "player";
+let prepDollOpen = false;
+
+function setPrepDollOpen(open) {
+  prepDollOpen = !!open;
+  const app = document.getElementById("app");
+  const btn = document.getElementById("btn-toggle-doll");
+  const layer = document.getElementById("prep-doll-layer");
+  if (app) {
+    if (prepDollOpen) app.setAttribute("data-doll-open", "true");
+    else app.removeAttribute("data-doll-open");
+  }
+  if (btn) {
+    btn.classList.toggle("active", prepDollOpen);
+    btn.setAttribute("aria-expanded", prepDollOpen ? "true" : "false");
+  }
+  if (layer) {
+    layer.classList.toggle("doll-open", prepDollOpen);
+    layer.setAttribute("aria-hidden", prepDollOpen ? "false" : "true");
+  }
+}
+
+function togglePrepDollOpen(e) {
+  e?.preventDefault();
+  e?.stopPropagation();
+  const app = document.getElementById("app");
+  const layer = document.getElementById("prep-doll-layer");
+  const isOpen = app?.getAttribute("data-doll-open") === "true"
+    || layer?.classList.contains("doll-open");
+  setPrepDollOpen(!isOpen);
+}
 let selectedGameMode = "solo";
 let selectedOpponentMode = "ai";
 let selectedEnemyClass = null;
@@ -1089,6 +1119,7 @@ function init() {
   window.addEventListener("orientationchange", syncClassMobileDock, { passive: true });
   document.getElementById("btn-prep-player")?.addEventListener("click", () => setPrepViewSide("player"));
   document.getElementById("btn-prep-enemy")?.addEventListener("click", () => setPrepViewSide("enemy"));
+  document.getElementById("btn-toggle-doll")?.addEventListener("click", togglePrepDollOpen);
   document.getElementById("btn-battle-continue")?.addEventListener("click", () => {
     transitionToPhase("prep", () => {
       hideBattleResultPopup();
@@ -1302,6 +1333,7 @@ function renderPhase() {
   }
   renderFightButton();
   if (phase !== "prep") closeAllFighterCharacteristicsPopups();
+  if (phase !== "prep") setPrepDollOpen(false);
   if (phase !== "prep" && typeof closeMobilePrepShop === "function") closeMobilePrepShop();
   if (typeof applyUiLayout === "function") scheduleLayoutAfterPhase();
 }
@@ -2661,6 +2693,7 @@ function gameLoop(ts) {
       } catch (err) {
         console.error("battleTick failed:", err);
       }
+      flushBattleEvents();
       recordBattleFrame(battleState);
     }
     if (Math.floor(ts / 500) !== Math.floor((ts - dt * 1000) / 500)) {
@@ -2709,6 +2742,71 @@ function layoutBackpackY() {
 
 function gridOrigin(team) {
   return layoutGridOrigin(team);
+}
+
+window._battleLayout = {
+  get CELL() { return CELL; },
+  get BACKPACK_Y() { return BACKPACK_Y; },
+  gridOrigin,
+};
+
+function handleBattleEvent(ev) {
+  if (!canvas || !battleState || typeof floatLayer === "undefined") return;
+
+  switch (ev.type) {
+    case "damage": {
+      const side = ev.targetTeam === "player" ? battleState.player : battleState.enemy;
+      const item = ev.targetUid
+        ? side?.items?.find((i) => i.uid === ev.targetUid)
+        : null;
+      const col = item?.col ?? 3;
+      const row = item?.row ?? 2;
+      floatLayer.spawnDamage(canvas, ev.targetTeam, col, row, ev.amount);
+      if (ev.amount >= 8 && ev.sourceTeam) {
+        floatLayer.spawnEmotionFly(
+          canvas,
+          "😤",
+          ev.sourceTeam,
+          ev.sourceCol ?? 3,
+          ev.sourceRow ?? 2,
+          ev.targetTeam,
+          col,
+          row,
+        );
+      }
+      break;
+    }
+    case "heal": {
+      const side = ev.targetTeam === "player" ? battleState.player : battleState.enemy;
+      const item = ev.targetUid
+        ? side?.items?.find((i) => i.uid === ev.targetUid)
+        : null;
+      floatLayer.spawnHeal(canvas, ev.targetTeam, item?.col ?? 3, item?.row ?? 2, ev.amount);
+      break;
+    }
+    case "poison_tick": {
+      const cx = gridOrigin(ev.targetTeam) + GRID_INNER_W / 2;
+      const cy = BACKPACK_Y + GRID_INNER_H / 2;
+      const { vx, vy } = floatLayer.canvasToViewport(canvas, cx, cy);
+      floatLayer.spawn(`☠️ −${ev.amount}`, "poison", vx, vy);
+      break;
+    }
+    case "block": {
+      const cx = gridOrigin(ev.targetTeam) + GRID_INNER_W / 2;
+      const cy = BACKPACK_Y + 20;
+      const { vx, vy } = floatLayer.canvasToViewport(canvas, cx, cy);
+      floatLayer.spawn(`🛡 ${ev.amount}`, "block", vx, vy);
+      break;
+    }
+    default:
+      break;
+  }
+}
+
+function flushBattleEvents() {
+  if (!battleState?.events?.length) return;
+  battleState.events.forEach((ev) => handleBattleEvent(ev));
+  battleState.events = [];
 }
 function gridStrideFor(team) {
   return team === "enemy" ? GRID_STRIDE : GRID_STRIDE;
@@ -3491,8 +3589,11 @@ function drawDropPreview() {
       excludeUid,
     )
     : [];
+  const displacedUids = displaced.map((item) => item.uid);
+  const slotOk = typeof canAddSlotItemToLoadout !== "function"
+    || canAddSlotItemToLoadout(st.items, dragPayload.itemId, excludeUid, displacedUids);
   const benchOk = st.bench.length + displaced.length <= MAX_BENCH;
-  const valid = placement.valid && benchOk;
+  const valid = placement.valid && benchOk && slotOk;
   rotateShape(ITEM_CATALOG[dragPayload.itemId].shape, placement.rotation).forEach(([dx, dy]) => {
     const { x, y, w, h } = cellRect(team, placement.col + dx, placement.row + dy);
     ctx.fillStyle = valid ? "rgba(63,185,80,0.45)" : "rgba(248,81,73,0.45)";
@@ -4717,6 +4818,15 @@ function finishDragDrop(e) {
   const onBackpackSlot = onBoard && isSlotCell(st.containers, boardCol, boardRow);
   const dropOnBench = !onBackpackSlot && isDropOnBench(dropE);
 
+  if (typeof tryFinishDragOnDoll === "function" && tryFinishDragOnDoll(dropE)) {
+    clearDragUiState();
+    if (canEditPrepSide(side)) applyCraftingForSide(side);
+    renderBench();
+    recalcSynergies();
+    updateUI();
+    return;
+  }
+
   if (dropOnSell && sellDraggedItem(side)) {
     clearDragUiState();
     renderBench();
@@ -4861,8 +4971,22 @@ function finishDragDrop(e) {
           placement.rotation,
           excludeUid,
         );
+        const displacedUids = displaced.map((item) => item.uid);
+        const slotOk = typeof canAddSlotItemToLoadout !== "function"
+          || canAddSlotItemToLoadout(st.items, dragPayload.itemId, excludeUid, displacedUids);
         if (st.bench.length + displaced.length > MAX_BENCH) {
           log("Скамейка полна!");
+          if (dragFrom.type === "item") {
+            st.items = [...st.items, dragFrom.item];
+            if (typeof notifyPrepPlacementRejected === "function") notifyPrepPlacementRejected(dragFrom.item);
+          }
+          clearDragUiState();
+          renderBench();
+          recalcSynergies();
+          updateUI();
+          return;
+        }
+        if (!slotOk) {
           if (dragFrom.type === "item") {
             st.items = [...st.items, dragFrom.item];
             if (typeof notifyPrepPlacementRejected === "function") notifyPrepPlacementRejected(dragFrom.item);
@@ -5076,6 +5200,7 @@ function updateUI() {
     renderShop();
     renderBench();
     renderFightButton();
+    if (typeof syncDollUI === "function") syncDollUI(prepViewSide);
     refreshPlayerCharacteristicsPopup(getPlayerCharacteristicsState());
     refreshFighterCharacteristicsPopup(getEnemyCharacteristicsState());
   }

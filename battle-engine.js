@@ -2034,6 +2034,11 @@ function getItemCooldownMult(item) {
   return clampCooldownMult(item.runtime?.cooldownMult ?? 1);
 }
 
+function pushEvent(state, event) {
+  if (!state.events) state.events = [];
+  state.events.push(event);
+}
+
 function createBattleState(playerItems, enemyItems, playerClassId = null, enemyClassId = null, battleRound = 1, prepMeta = {}) {
   const player = createBattleSide(playerItems, playerClassId, prepMeta.player || {});
   const enemy = createBattleSide(enemyItems, enemyClassId || pickRandomClassId(), prepMeta.enemy || {});
@@ -2043,6 +2048,7 @@ function createBattleState(playerItems, enemyItems, playerClassId = null, enemyC
     battleRound: Math.max(1, battleRound || 1),
     fatigueAnnounced: false,
     log: [],
+    events: [],
     finished: false,
     winner: null,
     elapsed: 0,
@@ -2432,6 +2438,11 @@ function tickPoison(state, dt) {
         type: "poison",
         target: team,
         message: `${battleTeamLabel(team)}: яд −${dmg} HP (стаков: ${side.poisonStacks}, ${getPoisonDotDamage(side.poisonStacks)}/с)`,
+      });
+      pushEvent(state, {
+        type: "poison_tick",
+        amount: dmg,
+        targetTeam: team,
       });
       triggerProfileAvatarHitShake(team);
     }
@@ -2836,7 +2847,12 @@ function executeEffect(state, effect, item, self, foe, rt, team, execOptions = {
       });
       stat.healingDone += healed;
       self.totalHealingDone += healed;
-      queueHitAnimation(state, item, team, `+${healed}❤`, "#3fb950");
+      pushEvent(state, {
+        type: "heal",
+        amount: healed,
+        targetTeam: team,
+        targetUid: item.uid,
+      });
       if (typeof emitEffectAttackVisual === "function") {
         emitEffectAttackVisual(state, item, team, effect, { damage: 0, targetTeam: team });
       }
@@ -2878,7 +2894,11 @@ function executeEffect(state, effect, item, self, foe, rt, team, execOptions = {
       self.totalBlockAbsorbed += amount;
       if (!self.blockLedger) self.blockLedger = [];
       self.blockLedger.push({ itemUid: item.uid, amount });
-      queueHitAnimation(state, item, team, `+${amount}🛡`, "#8b949e");
+      pushEvent(state, {
+        type: "block",
+        amount,
+        targetTeam: team,
+      });
       if (typeof emitEffectAttackVisual === "function") {
         emitEffectAttackVisual(state, item, team, effect, { damage: 0, targetTeam: team });
       }
@@ -3065,10 +3085,15 @@ function applyDamage(target, amount, state, sourceLabel, attackerTeam, attackerS
     const attackerSide = attackerTeam === "player" ? state.player : state.enemy;
     trySpikeRetaliation(state, target, targetTeam, attackerSide, attackerTeam, sourceItem, effect?.damageType, options);
     const dmgType = effect?.damageType;
-    const floatText = dmgType === "fire" ? `🔥 −${Math.round(hpDmg)}`
-      : dmgType === "magic" ? `✨ −${Math.round(hpDmg)}`
-        : `−${Math.round(hpDmg)}`;
-    queueHitAnimation(state, sourceItem, attackerTeam, floatText, "#f85149");
+    pushEvent(state, {
+      type: "damage",
+      amount: Math.round(hpDmg),
+      sourceTeam: attackerTeam,
+      sourceCol: sourceItem?.col ?? 3,
+      sourceRow: sourceItem?.row ?? 2,
+      targetTeam,
+      targetUid: null,
+    });
     triggerProfileAvatarHitShake(targetTeam);
   } else if (blockAbs + armorAbs > 0) {
     const absorbed = Math.round(blockAbs + armorAbs);

@@ -593,6 +593,26 @@ function getItemStaminaCost(def) {
   return 0;
 }
 
+function shapeCellCount(shape) {
+  return Array.isArray(shape) ? shape.length : 0;
+}
+
+function resolveItemSlot(def) {
+  const tags = def.tags || [];
+  const id = def.id || "";
+  if (tags.includes("helmet") || id.includes("helmet")) return "head";
+  if (tags.includes("shield")) return "leftHand";
+  if (tags.includes("armor")) return "chest";
+  if (tags.includes("weapon")) {
+    return shapeCellCount(def.shape) >= 3 ? "twoHand" : "rightHand";
+  }
+  if (tags.includes("gloves") || tags.includes("gauntlets")) return "gloves";
+  if (tags.includes("shoes") || tags.includes("boots")) return "boots";
+  if (tags.includes("ring")) return "ring";
+  if (tags.includes("amulet") || tags.includes("necklace")) return "amulet";
+  return null;
+}
+
 function defItem(opts) {
   const tags = opts.tags || [];
   const staminaCost = opts.staminaCost ?? computeItemStaminaCostFromOpts(opts);
@@ -602,6 +622,7 @@ function defItem(opts) {
     icon: opts.icon,
     color: opts.color || "#8b949e",
     shape: opts.shape,
+    slot: resolveItemSlot(opts),
     classRestriction: opts.classRestriction ?? null,
     rarity: opts.rarity,
     cost: opts.cost,
@@ -1066,6 +1087,10 @@ const ITEM_CATALOG = {
     effects: [{ type: "damage", value: 18, valueMin: 14, valueMax: 22 }],
   }),
 };
+
+Object.values(ITEM_CATALOG).forEach((item) => {
+  if (!("slot" in item)) item.slot = resolveItemSlot(item);
+});
 
 function isShopEligibleItem(item, playerClass = null, round = 1) {
   if (!item || item.craftOnly) return false;

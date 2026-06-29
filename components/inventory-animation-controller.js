@@ -277,8 +277,11 @@ const InventoryAnimationController = (() => {
         excludeUid,
       )
       : [];
+    const displacedUids = displaced.map((item) => item.uid);
+    const slotOk = typeof canAddSlotItemToLoadout !== "function"
+      || canAddSlotItemToLoadout(st.items, dragPayload.itemId, excludeUid, displacedUids);
     const benchOk = st.bench.length + displaced.length <= (typeof MAX_BENCH !== "undefined" ? MAX_BENCH : 6);
-    const valid = placement.valid && benchOk;
+    const valid = placement.valid && benchOk && slotOk;
 
     rotateShape(ITEM_CATALOG[dragPayload.itemId].shape, placement.rotation).forEach(([dx, dy]) => {
       const { x, y, w, h } = cellRect(team, placement.col + dx, placement.row + dy);

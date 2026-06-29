@@ -6,10 +6,11 @@
   <meta name="mobile-web-app-capable" content="yes">
   <title>Backpack Battles — Автобатлер</title>
   <link rel="stylesheet" href="styles/tokens.css">
-  <link rel="stylesheet" href="styles.css?v=15">
+  <link rel="stylesheet" href="styles.css?v=16">
   <link rel="stylesheet" href="styles/combat-feed.css">
   <link rel="stylesheet" href="styles/mobile-prep.css">
   <link rel="stylesheet" href="styles/tablet-side.css?v=15">
+  <link rel="stylesheet" href="styles/doll.css?v=20">
   <script src="ui-layout.js?v=10"></script>
 </head>
 <body>
@@ -22,6 +23,24 @@
               <div class="prep-character-layer" id="prep-character-layer" aria-hidden="true">
                 <div class="prep-character" id="prep-character-player" hidden></div>
                 <div class="prep-character" id="prep-character-enemy" hidden></div>
+                <button type="button"
+                        class="btn-secondary btn-toggle-doll"
+                        id="btn-toggle-doll"
+                        aria-expanded="false"
+                        aria-controls="prep-doll-layer">
+                  🪆 Экипировка
+                </button>
+              </div>
+              <div class="prep-doll-layer" id="prep-doll-layer" aria-hidden="true">
+                <div class="doll-slot" data-slot="head">👑</div>
+                <div class="doll-slot" data-slot="chest">🫁</div>
+                <div class="doll-slot" data-slot="leftHand">🤜</div>
+                <div class="doll-slot" data-slot="rightHand">🤛</div>
+                <div class="doll-slot" data-slot="gloves">🧤</div>
+                <div class="doll-slot" data-slot="boots">👢</div>
+                <div class="doll-slot" data-slot="ring1">💍</div>
+                <div class="doll-slot" data-slot="ring2">💍</div>
+                <div class="doll-slot" data-slot="amulet">📿</div>
               </div>
               <div class="prep-stats-stack">
                 <div class="prep-stats-hud" id="prep-stats-hud" aria-live="polite" role="button" tabindex="0" aria-haspopup="dialog" aria-expanded="false" aria-controls="prep-hero-tooltip"></div>
@@ -366,7 +385,6 @@
   <script src="systems/combat-profile.js"></script>
   <script src="components/run-stats.js"></script>
   <script src="components/player-characteristics.js"></script>
-  <script src="components/battle-float-layer.js"></script>
   <script src="components/avatar-hero-effects.js"></script>
   <script src="systems/attack-events.js"></script>
   <script src="systems/battle-analyzer.js"></script>
@@ -399,8 +417,11 @@
   <script src="ai-engine.js"></script>
   <script src="hard-bot-engine.js"></script>
   <script src="battle-engine.js"></script>
-  <script src="emotion-engine.js?v=15"></script>
+  <script src="battle-float-layer.js?v=16"></script>
+  <script src="emotion-engine.js?v=16"></script>
   <script src="battle-hud.js"></script>
+  <script src="systems/doll-engine.js"></script>
   <script src="game.js"></script>
+  <div id="battle-float-layer" aria-hidden="true"></div>
 </body>
 </html>

@@ -1,0 +1,224 @@
+/* Paper doll — prep phase visual only (toggle via #btn-toggle-doll) */
+
+.prep-doll-layer {
+  display: none;
+  position: absolute;
+  right: var(--prep-hero-slot-left, 22%);
+  bottom: var(--prep-hero-slot-bottom, 6px);
+  width: var(--doll-layer-w);
+  height: var(--doll-layer-h);
+  pointer-events: none;
+  z-index: 5;
+}
+
+#app[data-phase="prep"][data-doll-open="true"] .prep-doll-layer {
+  display: flex;
+}
+
+/* Кнопка поверх куклы, чтобы повторный клик закрывал слой */
+#app[data-phase="prep"][data-doll-open="true"] .prep-character-layer {
+  z-index: 6;
+}
+
+#app[data-phase="prep"][data-doll-open="true"] .btn-toggle-doll {
+  z-index: 7;
+}
+
+#app[data-phase="prep"][data-prep-side="enemy"][data-doll-open="true"] .prep-doll-layer {
+  right: auto;
+  left: var(--prep-hero-slot-left, 22%);
+}
+
+.doll-slot {
+  position: absolute;
+  width: var(--doll-slot-size);
+  height: var(--doll-slot-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  border: 1.5px dashed var(--border);
+  border-radius: 8px;
+  background: rgba(13, 17, 23, 0.55);
+  backdrop-filter: blur(4px);
+  pointer-events: all;
+  cursor: default;
+  transition: border-color 0.15s, background 0.15s;
+  user-select: none;
+}
+
+.doll-slot:hover {
+  border-color: var(--accent);
+  background: rgba(88, 166, 255, 0.12);
+}
+
+.doll-slot--filled {
+  border-style: solid;
+  border-color: var(--gold);
+}
+
+.doll-slot--drop-valid {
+  border-color: rgba(63, 185, 80, 0.65);
+  background: rgba(63, 185, 80, 0.1);
+}
+
+.doll-slot--drop-invalid {
+  border-color: rgba(248, 81, 73, 0.55);
+  background: rgba(248, 81, 73, 0.08);
+  opacity: 0.85;
+}
+
+.doll-slot--drop-hover.doll-slot--drop-valid {
+  border-color: #3fb950;
+  background: rgba(63, 185, 80, 0.22);
+  box-shadow: 0 0 0 2px rgba(63, 185, 80, 0.35);
+}
+
+.doll-slot--drop-hover.doll-slot--drop-invalid {
+  border-color: #f85149;
+  background: rgba(248, 81, 73, 0.16);
+  box-shadow: 0 0 0 2px rgba(248, 81, 73, 0.3);
+}
+
+.doll-slot[data-slot="head"]      { top: 2%;  left: 50%; transform: translateX(-50%); }
+.doll-slot[data-slot="amulet"]    { top: 2%;  right: 4%; }
+.doll-slot[data-slot="chest"]     { top: 24%; left: 50%; transform: translateX(-50%); }
+.doll-slot[data-slot="leftHand"]  { top: 24%; left: 4%; }
+.doll-slot[data-slot="rightHand"] { top: 24%; right: 4%; }
+.doll-slot[data-slot="gloves"]    { top: 48%; left: 4%; }
+.doll-slot[data-slot="ring1"]     { top: 48%; right: 4%; }
+.doll-slot[data-slot="ring2"]     { top: 64%; left: 4%; }
+.doll-slot[data-slot="boots"]     { top: 68%; left: 50%; transform: translateX(-50%); }
+
+.btn-toggle-doll {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  min-height: 28px;
+  white-space: nowrap;
+  z-index: 5;
+  border-radius: 8px;
+  background: rgba(13, 17, 23, 0.75);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  pointer-events: auto;
+}
+
+.btn-toggle-doll:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.btn-toggle-doll.active {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+html[data-prep-layout="mobile"] .btn-toggle-doll {
+  position: fixed;
+  bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  right: max(12px, env(safe-area-inset-right, 0px));
+  left: auto;
+  top: auto;
+  transform: none;
+  width: 48px;
+  height: 48px;
+  min-height: 48px;
+  border-radius: 50%;
+  padding: 0;
+  font-size: 20px;
+  background: rgba(22, 27, 34, 0.92);
+  border: 1.5px solid var(--border);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  z-index: 902;
+  color: var(--muted);
+  transition: border-color 0.15s, color 0.15s;
+}
+
+html[data-prep-layout="mobile"] .btn-toggle-doll.active {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+html[data-prep-layout="mobile"] .btn-toggle-doll:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+/* Скрыть текст — показать только эмодзи через псевдоэлемент */
+html[data-prep-layout="mobile"] .btn-toggle-doll {
+  font-size: 0;
+}
+
+html[data-prep-layout="mobile"] .btn-toggle-doll::before {
+  content: "🪆";
+  font-size: 22px;
+}
+
+/* Мобайл: кукла справа от героя, на его уровне */
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-doll-layer {
+  display: none;
+  position: fixed;
+  top: auto;
+  bottom: calc(var(--prep-mobile-hero-bottom, 72px) + 20px);
+  right: max(12px, env(safe-area-inset-right, 0px));
+  left: auto;
+  width: min(44vw, 200px);
+  height: min(55vh, 420px);
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+html[data-prep-layout="mobile"] .prep-doll-layer .doll-slot {
+  width: 32px;
+  height: 32px;
+  font-size: 14px;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-doll-layer.doll-open {
+  display: flex;
+  opacity: 1;
+  pointer-events: none;
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-doll-layer.doll-open .doll-slot {
+  pointer-events: auto;
+}
+
+#app[data-phase="battle"] .prep-doll-layer,
+#app[data-phase="replay"] .prep-doll-layer,
+#app[data-phase="battle"] #btn-toggle-doll,
+#app[data-phase="replay"] #btn-toggle-doll {
+  display: none !important;
+}
+
+/* Tablet prep hero: манекен справа от героя в зоне под полем */
+html[data-tablet-prep-hero="true"] #app[data-phase="prep"][data-doll-open="true"] .prep-field-column {
+  overflow: visible;
+}
+
+html[data-tablet-prep-hero="true"] #app[data-phase="prep"][data-doll-open="true"] .prep-doll-layer {
+  right: 8%;
+  left: auto;
+  bottom: 14%;
+  width: min(var(--doll-layer-w), 36vw);
+  height: min(var(--doll-layer-h), 40vh);
+}
+
+html[data-tablet-prep-hero="true"] #app[data-phase="prep"][data-prep-side="enemy"][data-doll-open="true"] .prep-doll-layer {
+  right: auto;
+  left: 8%;
+}
+
+html[data-tablet-side-fit="true"] #app[data-phase="prep"][data-doll-open="true"] .prep-doll-layer {
+  --doll-slot-size: 30px;
+  font-size: 13px;
+}

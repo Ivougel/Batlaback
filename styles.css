@@ -1447,37 +1447,7 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 }
 
 .avatar-emotion-mount {
-  position: absolute;
-  top: calc(8px * var(--ui-scale));
-  font-size: calc(2.4rem * var(--ui-scale));
-  line-height: 1;
-  pointer-events: none;
-  z-index: 14;
-  transition: opacity 0.2s;
-  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.55));
-}
-
-/* Inward toward the fight gap — avoids clipping at screen/column edges */
-.avatar-emotion-mount-player {
-  left: 100%;
-  right: auto;
-  margin-left: calc(4px * var(--ui-scale));
-}
-
-.avatar-emotion-mount-enemy {
-  right: 100%;
-  left: auto;
-  margin-right: calc(4px * var(--ui-scale));
-}
-
-@keyframes emotion-pulse {
-  0% { transform: scale(1); }
-  40% { transform: scale(1.35); }
-  100% { transform: scale(1); }
-}
-
-.avatar-emotion-mount.emotion-pulse {
-  animation: emotion-pulse 0.4s ease-out both;
+  display: none !important;
 }
 
 @keyframes avatar-hero-idle-sway {
@@ -3810,29 +3780,64 @@ button:disabled {
   padding: 8px 0;
 }
 
-/* ─── Летящие эффекты боя (HTML overlay → аватары профиля) ─── */
+/* ─── Летящие эффекты боя (HTML overlay → fixed layer поверх всего) ─── */
+
+#battle-float-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  overflow: visible;
+}
 
 .battle-float-layer {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 90;
-  overflow: hidden;
+  z-index: 9999;
+  overflow: visible;
 }
 
 .battle-float {
-  position: fixed;
+  position: absolute;
   left: 0;
   top: 0;
-  transform: translate3d(-9999px, -9999px, 0);
-  font-weight: 700;
-  font-size: calc(17px * var(--ui-scale) * var(--fx-float-scale, 1));
-  line-height: 1;
+  pointer-events: none;
+  user-select: none;
   white-space: nowrap;
+  transform: translateX(-50%);
+  font-weight: 700;
+  font-size: calc(1.5rem * var(--ui-scale));
+  line-height: 1;
   color: var(--bf-color, #f85149);
-  text-shadow: 0 0 10px rgba(248, 81, 73, 0.45), 0 1px 2px rgba(0, 0, 0, 0.85);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
   will-change: transform, opacity;
   backface-visibility: hidden;
+}
+
+.battle-float.damage {
+  color: #f85149;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+}
+
+.battle-float.heal {
+  color: #3fb950;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+}
+
+.battle-float.block {
+  color: #8b949e;
+  font-size: calc(1.1rem * var(--ui-scale));
+}
+
+.battle-float.poison {
+  color: #3fb950;
+  font-size: calc(1.2rem * var(--ui-scale));
+}
+
+.battle-float.emotion {
+  font-size: calc(2rem * var(--ui-scale));
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.55));
 }
 
 .battle-float-positive {

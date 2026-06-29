@@ -1,25 +1,119 @@
 /**
- * HTML-overlay для летящих чисел и снарядов — цель: аватар в профиле сбоку.
+ * Battle Float Layer — летящие числа урона, лечения, emoji-реакции.
+ * Все элементы рендерятся в #battle-float-layer (position: fixed, z-index 9999).
  */
 
 const battleFloatDomPool = new Map();
 
-function ensureBattleFloatLayer() {
-  let layer = document.getElementById("battle-float-layer");
-  if (!layer) {
-    layer = document.createElement("div");
-    layer.id = "battle-float-layer";
-    layer.className = "battle-float-layer";
-    layer.setAttribute("aria-hidden", "true");
-    document.body.appendChild(layer);
+const floatLayer = (() => {
+  function getLayer() {
+    return document.getElementById("battle-float-layer");
   }
-  return layer;
+
+  function spawn(text, cssClass, vx, vy, opts = {}) {
+    const layer = getLayer();
+    if (!layer) return null;
+
+    const el = document.createElement("div");
+    el.className = `battle-float ${cssClass}`;
+    el.textContent = text;
+    el.style.left = `${vx}px`;
+    el.style.top = `${vy}px`;
+    layer.appendChild(el);
+
+    const hasFlyTarget = opts.toVx != null && opts.toVy != null;
+    const keyframes = hasFlyTarget
+      ? [
+        { transform: "translateX(-50%) scale(1)", opacity: 1, left: `${vx}px`, top: `${vy}px` },
+        { transform: "translateX(-50%) scale(0.7)", opacity: 0.2, left: `${opts.toVx}px`, top: `${opts.toVy}px` },
+      ]
+      : [
+        { transform: "translateX(-50%) translateY(0) scale(1.2)", opacity: 1 },
+        { transform: "translateX(-50%) translateY(-56px) scale(0.9)", opacity: 0 },
+      ];
+
+    const duration = hasFlyTarget ? 550 : 900;
+    el.animate(keyframes, {
+      duration,
+      easing: "ease-out",
+      fill: "forwards",
+    }).finished.then(() => el.remove()).catch(() => el.remove());
+    return el;
+  }
+
+  function canvasToViewport(canvas, cx, cy) {
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return { vx: rect.left, vy: rect.top };
+    const scaleX = rect.width / canvas.width;
+    const scaleY = rect.height / canvas.height;
+    return {
+      vx: rect.left + cx * scaleX,
+      vy: rect.top + cy * scaleY,
+    };
+  }
+
+  function cellCenterViewport(canvas, team, col, row) {
+    if (typeof cellRect === "function") {
+      const rect = cellRect(team, col, row);
+      return canvasToViewport(canvas, rect.x + rect.w / 2, rect.y + rect.h / 2);
+    }
+    const layout = window._battleLayout;
+    if (!layout) return { vx: 0, vy: 0 };
+    const { CELL, BACKPACK_Y, gridOrigin } = layout;
+    const stride = typeof GRID_STRIDE !== "undefined" ? GRID_STRIDE : CELL;
+    const cx = gridOrigin(team) + col * stride + CELL / 2;
+    const cy = BACKPACK_Y + row * stride + CELL / 2;
+    return canvasToViewport(canvas, cx, cy);
+  }
+
+  function spawnDamage(canvas, team, col, row, amount) {
+    const { vx, vy } = cellCenterViewport(canvas, team, col, row);
+    spawn(`−${amount}`, "damage", vx, vy);
+  }
+
+  function spawnHeal(canvas, team, col, row, amount) {
+    const { vx, vy } = cellCenterViewport(canvas, team, col, row);
+    spawn(`+${amount}`, "heal", vx, vy);
+  }
+
+  function spawnEmotion(emoji, anchorEl, opts = {}) {
+    let vx;
+    let vy;
+    if (anchorEl) {
+      const rect = anchorEl.getBoundingClientRect();
+      vx = rect.left + rect.width / 2;
+      vy = rect.top - 8;
+    } else {
+      vx = opts.vx ?? 0;
+      vy = opts.vy ?? 0;
+    }
+    spawn(emoji, "emotion", vx, vy, opts);
+  }
+
+  function spawnEmotionFly(canvas, emoji, fromTeam, fromCol, fromRow, toTeam, toCol, toRow) {
+    const from = cellCenterViewport(canvas, fromTeam, fromCol, fromRow);
+    const to = cellCenterViewport(canvas, toTeam, toCol, toRow);
+    spawn(emoji, "emotion", from.vx, from.vy, { toVx: to.vx, toVy: to.vy });
+  }
+
+  return {
+    spawn,
+    spawnDamage,
+    spawnHeal,
+    spawnEmotion,
+    spawnEmotionFly,
+    canvasToViewport,
+  };
+})();
+
+function ensureBattleFloatLayer() {
+  return document.getElementById("battle-float-layer");
 }
 
 function clearBattleFloatLayer() {
   battleFloatDomPool.forEach((el) => el.remove());
   battleFloatDomPool.clear();
-  const layer = document.getElementById("battle-float-layer");
+  const layer = ensureBattleFloatLayer();
   if (layer) layer.innerHTML = "";
 }
 
@@ -61,7 +155,6 @@ function getArcControlPoint(from, to, targetTeam) {
   };
 }
 
-/** Прямой урон от предмета → аватар противника (красная стрелка). */
 function getWeaponControlPoint(from, to, targetTeam) {
   const midX = (from.x + to.x) / 2;
   const midY = (from.y + to.y) / 2;
@@ -76,7 +169,6 @@ function getWeaponControlPoint(from, to, targetTeam) {
   };
 }
 
-/** Усталость арены: сверху экрана → аватар (синяя стрелка). */
 function getFatigueOriginViewport(targetTeam) {
   const canvas = getBattleCanvasEl();
   const avatar = getProfileAvatarViewportCenter(targetTeam);
@@ -97,7 +189,6 @@ function getFatigueControlPoint(from, to) {
   return { x: midX, y: midY };
 }
 
-/** DoT яда/огня: чип ДЕБА в центре → аватар владельца дебаффа. */
 function getDebuffDotControlPoint(from, to, targetTeam) {
   const midX = (from.x + to.x) / 2;
   const midY = (from.y + to.y) / 2;
@@ -112,7 +203,6 @@ function getDebuffDotControlPoint(from, to, targetTeam) {
   };
 }
 
-/** Лечение: петля от предмета к своему аватару (зелёная стрелка). */
 function getHealLoopControls(from, to, targetTeam) {
   const outward = targetTeam === "player" ? -1 : 1;
   const dx = to.x - from.x;
@@ -176,8 +266,8 @@ function getBattleStatsStaminaBarCenter(team) {
   }
   const row = document.querySelector(`#battle-stats-panel .stat-stamina-cell-${team}`);
   if (row) {
-    const bar = row.querySelector(".stat-stamina-bar");
-    const rect = (bar || row).getBoundingClientRect();
+    const staminaBar = row.querySelector(".stat-stamina-bar");
+    const rect = (staminaBar || row).getBoundingClientRect();
     return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
   }
   return getBattleStatsPanelCenter();
@@ -303,13 +393,13 @@ function upsertBattleFloatEl(layer, uid, className, content, asHtml = false) {
 
 function renderBattleEffectsOverlay(state) {
   const layer = ensureBattleFloatLayer();
+  if (!layer) return;
   if (!state) {
     clearBattleFloatLayer();
     return;
   }
 
   const activeIds = new Set();
-
 
   (state.floatingNumbers || []).forEach((fn) => {
     const uid = fn.uid || fn.text;
@@ -336,16 +426,4 @@ function renderBattleEffectsOverlay(state) {
     el.remove();
     battleFloatDomPool.delete(uid);
   });
-}
-
-function easeInOutSine(t) {
-  return -(Math.cos(Math.PI * t) - 1) / 2;
-}
-
-function easeInOutQuint(t) {
-  return t < 0.5 ? 16 * t ** 5 : 1 - (-2 * t + 2) ** 5 / 2;
-}
-
-function easeInOutCubic(t) {
-  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }

@@ -167,6 +167,10 @@ function canPlaceContainer(itemId, col, row, rotation, gridW, gridH, containers,
 function canPlaceInLoadout(itemId, col, row, rotation, containers, items, excludeUid = null) {
   const def = ITEM_CATALOG[itemId];
   if (!def || def.isContainer) return false;
+  if (typeof canAddSlotItemToLoadout === "function"
+    && !canAddSlotItemToLoadout(items, itemId, excludeUid)) {
+    return false;
+  }
   const slots = buildSlotSet(containers);
   const occupied = buildItemOccupancyMap(items, excludeUid);
   const shape = rotateShape(def.shape, rotation || 0);

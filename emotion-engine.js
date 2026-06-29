@@ -88,45 +88,26 @@ function getEmojiPriority(emoji, hint = "normal") {
   return EMOTION_PRIORITY.normal;
 }
 
+const emotionFloatLast = { player: "", enemy: "" };
+
 function queryEmotionMount(side) {
   const slotId = side === "player" ? "player-avatar-slot" : "enemy-avatar-slot";
   return document.querySelector(`#${slotId} .avatar-hero-shell > .avatar-emotion-mount`);
 }
 
 function clearEmotionLayer() {
-  document.querySelectorAll(".avatar-emotion-mount").forEach((mount) => {
-    mount.textContent = "";
-    mount.classList.remove("emotion-pulse");
-  });
+  emotionFloatLast.player = "";
+  emotionFloatLast.enemy = "";
   document.getElementById("battle-emotion-layer")?.remove();
 }
 
 function clearEmotionMount(side) {
-  const mount = queryEmotionMount(side);
-  if (!mount) return;
-  mount.textContent = "";
-  mount.classList.remove("emotion-pulse");
+  emotionFloatLast[side] = "";
 }
 
 function ensureEmotionMount(side) {
   const slotId = side === "player" ? "player-avatar-slot" : "enemy-avatar-slot";
-  const shell = document.querySelector(`#${slotId} .avatar-hero-shell`);
-  if (!shell) return null;
-  let mount = shell.querySelector(":scope > .avatar-emotion-mount");
-  if (!mount) {
-    const legacy = shell.querySelector(".avatar-hero-stage > .avatar-emotion-mount");
-    if (legacy) {
-      mount = legacy;
-      shell.appendChild(mount);
-    } else {
-      mount = document.createElement("div");
-      mount.className = `avatar-emotion-mount avatar-emotion-mount-${side}`;
-      mount.dataset.team = side;
-      mount.setAttribute("aria-hidden", "true");
-      shell.appendChild(mount);
-    }
-  }
-  return mount;
+  return document.querySelector(`#${slotId} .profile-avatar`);
 }
 
 function createDialogEvent({
@@ -447,16 +428,14 @@ function analyzeBattleState(battleState, elapsedReal) {
 }
 
 function upsertEmotionEl(uid, side, anim) {
-  const mount = ensureEmotionMount(side);
-  if (!mount) return null;
   const next = anim.emoji || "";
-  if (mount.textContent !== next) {
-    mount.textContent = next;
-    mount.classList.remove("emotion-pulse");
-    void mount.offsetWidth;
-    mount.classList.add("emotion-pulse");
+  if (emotionFloatLast[side] === next) return null;
+  emotionFloatLast[side] = next;
+  const anchor = ensureEmotionMount(side);
+  if (typeof floatLayer !== "undefined" && floatLayer.spawnEmotion) {
+    floatLayer.spawnEmotion(next, anchor);
   }
-  return mount;
+  return anchor;
 }
 
 function renderEmotionDom(anim, side) {

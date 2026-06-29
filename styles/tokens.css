@@ -76,6 +76,9 @@
   --prep-hero-slot-width: 17%;
   --prep-hero-slot-bottom: var(--gap-sm);
   --prep-hero-slot-height: min(400px, 46vh);
+  --doll-slot-size: 38px;
+  --doll-layer-w: calc(var(--prep-canvas-w) * 0.38);
+  --doll-layer-h: calc(var(--character-slot-h, 320px) * 0.85);
   --shop-panel-w: 320px;
   --shop-card-row-h: calc(132px * var(--ui-scale, 1));
   --shop-item-icon-size: calc(72px * var(--ui-scale, 1));
