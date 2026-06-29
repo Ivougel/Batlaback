@@ -2561,13 +2561,19 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 }
 
 #app[data-phase="prep"] #shop-panel .bench-panel {
-  margin-top: auto;
+  margin-top: 0;
   flex-shrink: 0;
   margin-bottom: 0;
   padding: calc(10px * var(--ui-scale)) 0 0;
   background: transparent;
   border: none;
   border-radius: 0;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-objects {
+  display: flex;
+  flex-direction: column;
+  gap: calc(4px * var(--ui-scale));
 }
 
 #app[data-phase="prep"] #shop-panel .shop-sell-zone {

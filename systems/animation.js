@@ -423,7 +423,6 @@ function easeInOutCubic(t) {
 function tickBattleAnimations(state, dt) {
   if (!state?.animations) {
     tickFloatingNumbers(state, dt);
-    if (typeof tickAvatarCompanions === "function") tickAvatarCompanions(state, dt);
     if (typeof tickAttackVisuals === "function") tickAttackVisuals(state, dt);
     return;
   }
@@ -442,7 +441,6 @@ function tickBattleAnimations(state, dt) {
     .filter((p) => p.age < p.maxAge);
 
   tickFloatingNumbers(state, dt);
-  if (typeof tickAvatarCompanions === "function") tickAvatarCompanions(state, dt);
   if (typeof tickAttackVisuals === "function") tickAttackVisuals(state, dt);
 }
 

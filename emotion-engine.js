@@ -7,6 +7,12 @@ const EMOTION_ANALYZE_INTERVAL_MS = 500;
 const EMOTION_MIN_GAP_MS = 600;
 const EMOTION_SIMULTANEOUS_DAMAGE_MS = 300;
 
+/** Стартовая «основная» эмоция — всегда на экране, не гаснет по таймеру */
+const DEFAULT_MAIN_EMOJI = {
+  player: "😤",
+  enemy: "😏",
+};
+
 const EMOTION_PRIORITY = {
   skull: 5,
   poison: 4,
@@ -25,8 +31,8 @@ function createEmotionEngineState() {
     lastAnalyzeAt: 0,
     lastRenderAt: 0,
     snapshot: null,
-    playerAnim: null,
-    enemyAnim: null,
+    playerMain: null,
+    enemyMain: null,
     lastEmitAt: { player: 0, enemy: 0 },
     seenAttackIds: new Set(),
     seenFloatIds: new Set(),
@@ -110,6 +116,35 @@ function getEmojiPriority(emoji, hint = "normal") {
   return EMOTION_PRIORITY.normal;
 }
 
+function createMainEmotionEvent(side, emoji, animation = "nod") {
+  return createDialogEvent({
+    side,
+    emoji,
+    animation,
+    duration: Number.POSITIVE_INFINITY,
+    priority: 0,
+    persistent: true,
+  });
+}
+
+function ensureMainEmotions() {
+  if (!emotionEngine.playerMain) {
+    emotionEngine.playerMain = createMainEmotionEvent("player", DEFAULT_MAIN_EMOJI.player);
+  }
+  if (!emotionEngine.enemyMain) {
+    emotionEngine.enemyMain = createMainEmotionEvent("enemy", DEFAULT_MAIN_EMOJI.enemy);
+  }
+}
+
+function getMainEmotion(side) {
+  return side === "player" ? emotionEngine.playerMain : emotionEngine.enemyMain;
+}
+
+function setMainEmotion(side, event) {
+  if (side === "player") emotionEngine.playerMain = event;
+  else emotionEngine.enemyMain = event;
+}
+
 function createDialogEvent({
   side,
   emoji,
@@ -120,6 +155,7 @@ function createDialogEvent({
   flyFrom = null,
   flyTo = null,
   priorityHint = "normal",
+  persistent = false,
 }) {
   return {
     side,
@@ -131,6 +167,7 @@ function createDialogEvent({
     priority: priority ?? getEmojiPriority(emoji, priorityHint),
     flyFrom: flyFrom || side,
     flyTo: flyTo || (replyTo || null),
+    persistent,
   };
 }
 
@@ -139,21 +176,16 @@ function tryQueueEvent(side, event) {
   const pri = event.priority ?? getEmojiPriority(event.emoji);
   event.priority = pri;
 
-  const current = side === "player" ? emotionEngine.playerAnim : emotionEngine.enemyAnim;
+  ensureMainEmotions();
+  const current = getMainEmotion(side);
   const lastEmit = emotionEngine.lastEmitAt[side] || 0;
 
-  if (current) {
-    const progress = (now - current.startedAt) / current.duration;
-    if (progress < 1 && pri <= current.priority) return false;
-  }
-
-  if (now - lastEmit < EMOTION_MIN_GAP_MS) {
-    if (!current || pri <= current.priority) return false;
-  }
+  if (current && pri <= current.priority) return false;
 
   event.startedAt = now;
-  if (side === "player") emotionEngine.playerAnim = event;
-  else emotionEngine.enemyAnim = event;
+  event.duration = Number.POSITIVE_INFINITY;
+  event.persistent = true;
+  setMainEmotion(side, event);
   emotionEngine.lastEmitAt[side] = now;
   return true;
 }
@@ -480,16 +512,6 @@ function analyzeBattleState(battleState, elapsedReal) {
   emotionEngine.snapshot = snap;
 }
 
-function pruneFinishedAnimations() {
-  const now = emotionEffectiveNow();
-  ["player", "enemy"].forEach((side) => {
-    const key = side === "player" ? "playerAnim" : "enemyAnim";
-    const anim = emotionEngine[key];
-    if (!anim) return;
-    if (now - anim.startedAt >= anim.duration) emotionEngine[key] = null;
-  });
-}
-
 function drawEmotionLayer(_ctx, battleState, elapsedReal) {
   if (!battleState || battleState.finished) {
     clearEmotionLayer();
@@ -512,18 +534,10 @@ function drawEmotionLayer(_ctx, battleState, elapsedReal) {
   if (!paused) {
     analyzeBattleState(battleState, elapsedReal);
   }
-  pruneFinishedAnimations();
 
-  if (emotionEngine.playerAnim) {
-    renderEmotionDom(emotionEngine.playerAnim, "player");
-  } else {
-    clearEmotionMount("player");
-  }
-  if (emotionEngine.enemyAnim) {
-    renderEmotionDom(emotionEngine.enemyAnim, "enemy");
-  } else {
-    clearEmotionMount("enemy");
-  }
+  ensureMainEmotions();
+  renderEmotionDom(emotionEngine.playerMain, "player");
+  renderEmotionDom(emotionEngine.enemyMain, "enemy");
 
   if (
     typeof ArenaEquipment !== "undefined"

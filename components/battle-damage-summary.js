@@ -516,7 +516,20 @@ function ensureDamageStacksEl(shell) {
   return stacks;
 }
 
-function ensureBenefitStacksEl(shell) {
+function isFlankArenaStatusHud() {
+  return document.documentElement.dataset.battleHeroPlacement === "flank-arena";
+}
+
+function getFlankHudStatusEl(team, selector) {
+  if (!isFlankArenaStatusHud()) return null;
+  const hud = document.getElementById(team === "player" ? "battle-hud-player" : "battle-hud-enemy");
+  return hud?.querySelector(selector) || null;
+}
+
+function ensureBenefitStacksEl(shell, team = null) {
+  const hudStacks = team ? getFlankHudStatusEl(team, ".battle-hud-benefit-stacks") : null;
+  if (hudStacks) return hudStacks;
+
   const buffZone = shell.querySelector(".avatar-status-zone-buffs")
     || shell.querySelector(".avatar-hero-effects-panel")
     || shell.querySelector(".avatar-hero-footer");
@@ -531,7 +544,10 @@ function ensureBenefitStacksEl(shell) {
   return stacks;
 }
 
-function ensureDotStacksEl(shell) {
+function ensureDotStacksEl(shell, team = null) {
+  const hudStacks = team ? getFlankHudStatusEl(team, ".battle-hud-dot-stacks") : null;
+  if (hudStacks) return hudStacks;
+
   const debuffZone = shell.querySelector(".avatar-status-zone-debuffs")
     || shell.querySelector(".avatar-hero-effects-panel")
     || shell.querySelector(".avatar-hero-footer");
@@ -553,7 +569,7 @@ function syncDotStackDisplay(team, state) {
   const shell = slot?.querySelector(".avatar-hero-shell");
   if (!shell) return;
 
-  const stacksEl = ensureDotStacksEl(shell);
+  const stacksEl = ensureDotStacksEl(shell, team);
   if (!stacksEl) return;
 
   const store = state?.dotStacks?.[team];
@@ -604,7 +620,7 @@ function syncBenefitStackDisplay(team, state) {
   const shell = slot?.querySelector(".avatar-hero-shell");
   if (!shell) return;
 
-  const stacksEl = ensureBenefitStacksEl(shell);
+  const stacksEl = ensureBenefitStacksEl(shell, team);
   if (!stacksEl) return;
 
   const store = state?.benefitStacks?.[team];

@@ -1362,6 +1362,9 @@ function renderPhase() {
   if (typeof applyUiLayout === "function") scheduleLayoutAfterPhase();
   syncRunHudPhase();
   syncBattleHudVisibility();
+  if (isBattleUiPhase() && typeof window.scheduleBattleHeroRowSync === "function") {
+    window.scheduleBattleHeroRowSync();
+  }
 }
 
 function syncBattleHudVisibility() {
@@ -2959,6 +2962,7 @@ function getBattleTeamAnchorClient(team) {
 
 window.canvasPointToClient = canvasPointToClient;
 window.getBattleTeamAnchorClient = getBattleTeamAnchorClient;
+window.getBattleFieldLayoutMetrics = getFieldLayoutMetrics;
 
 function setGamepadBoardFocus(col, row) {
   if (phase !== "prep" || !canEditPrepSide()) return;
@@ -5445,10 +5449,10 @@ function renderPlayerProfiles() {
       if (typeof renderAvatarBarsHTML === "function") {
         const playerBars = document.getElementById("battle-hud-player");
         const enemyBars = document.getElementById("battle-hud-enemy");
-        if (playerBars && !playerBars.querySelector(".avatar-hero-bars")) {
+        if (playerBars && !playerBars.querySelector(".battle-hud-status-stack")) {
           playerBars.innerHTML = renderAvatarBarsHTML(playerProfile, "player");
         }
-        if (enemyBars && !enemyBars.querySelector(".avatar-hero-bars")) {
+        if (enemyBars && !enemyBars.querySelector(".battle-hud-status-stack")) {
           enemyBars.innerHTML = renderAvatarBarsHTML(enemyProfile, "enemy");
         }
       }

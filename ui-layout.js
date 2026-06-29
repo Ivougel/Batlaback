@@ -164,22 +164,109 @@
     if (phase !== "battle" && phase !== "replay") return;
 
     const vpRect = viewport.getBoundingClientRect();
+    const root = document.documentElement;
+    const useFlankZones = root.dataset.battleHeroPlacement === "flank-arena";
+
     [
-      { slotId: "player-avatar-slot", hudId: "battle-hud-player" },
-      { slotId: "enemy-avatar-slot", hudId: "battle-hud-enemy" },
-    ].forEach(({ slotId, hudId }) => {
+      {
+        team: "player",
+        slotId: "player-avatar-slot",
+        panelId: "player-avatar-panel",
+        hudId: "battle-hud-player",
+        zoneLeftVar: "--battle-player-zone-left",
+        zoneWidthVar: "--battle-player-zone-width",
+      },
+      {
+        team: "enemy",
+        slotId: "enemy-avatar-slot",
+        panelId: "enemy-avatar-panel",
+        hudId: "battle-hud-enemy",
+        zoneLeftVar: "--battle-enemy-zone-left",
+        zoneWidthVar: "--battle-enemy-zone-width",
+      },
+    ].forEach(({ slotId, panelId, hudId, zoneLeftVar, zoneWidthVar }) => {
       const slot = document.getElementById(slotId);
+      const panel = document.getElementById(panelId);
       const hud = document.getElementById(hudId);
       if (!slot || !hud) return;
+
       const shell = slot.querySelector(".avatar-hero-shell");
       const anchor = shell?.querySelector(".avatar-hero-stage") || shell || slot;
       const anchorRect = anchor.getBoundingClientRect();
       const bars = hud.querySelector(".avatar-hero-bars");
       const barsH = bars?.offsetHeight || 52;
-      hud.style.left = `${anchorRect.left - vpRect.left}px`;
-      hud.style.top = `${Math.max(0, anchorRect.bottom - vpRect.top - barsH)}px`;
-      hud.style.width = `${Math.max(anchorRect.width, 120)}px`;
+
+      let hudLeft = anchorRect.left - vpRect.left;
+      let hudWidth = Math.max(anchorRect.width, 120);
+
+      if (useFlankZones) {
+        const zoneLeft = readCssPx(zoneLeftVar, hudLeft);
+        const zoneW = readCssPx(zoneWidthVar, hudWidth);
+        const panelRect = panel?.getBoundingClientRect();
+        if (panelRect && panelRect.width > 8) {
+          hudLeft = panelRect.left - vpRect.left;
+          hudWidth = Math.max(120, Math.min(zoneW, panelRect.width));
+        } else {
+          hudLeft = zoneLeft;
+          hudWidth = Math.max(120, zoneW - Math.round(8 * readCssPx("--ui-scale", 1)));
+        }
+      }
+
+      const barsGap = Math.round(4 * readCssPx("--ui-scale", 1));
+      hud.style.left = `${Math.round(hudLeft)}px`;
+      hud.style.top = `${Math.max(0, Math.round(anchorRect.bottom - vpRect.top + barsGap))}px`;
+      hud.style.width = `${Math.round(hudWidth)}px`;
+      hud.style.maxWidth = `${Math.round(hudWidth)}px`;
     });
+
+    if (useFlankZones) syncHeroEmotionSlotAnchors();
+    syncHeroAttackSlotAnchors();
+  }
+
+  /** Зона атакующей экипировки — под HP/статами (L2, синие области макета). */
+  function syncHeroAttackSlotAnchors() {
+    const root = document.documentElement;
+    if (root.dataset.battleHeroPlacement !== "flank-arena") return;
+
+    const viewport = document.getElementById("prep-field-column");
+    const sceneUi = document.getElementById("battle-scene-ui");
+    if (!viewport || !sceneUi) return;
+
+    const vpRect = viewport.getBoundingClientRect();
+    const sceneRect = sceneUi.getBoundingClientRect();
+    const uiScale = readCssPx("--ui-scale", 1);
+    const gap = Math.round(6 * uiScale);
+    const minH = Math.round(76 * uiScale);
+
+    [
+      { slotId: "player-attack-arena", hudId: "battle-hud-player" },
+      { slotId: "enemy-attack-arena", hudId: "battle-hud-enemy" },
+    ].forEach(({ slotId, hudId }) => {
+      const slot = document.getElementById(slotId);
+      const hud = document.getElementById(hudId);
+      if (!slot || !hud) return;
+
+      const hudRect = hud.getBoundingClientRect();
+      if (hudRect.width <= 0) return;
+
+      const left = hudRect.left - sceneRect.left;
+      const top = hudRect.bottom - sceneRect.top + gap;
+      const width = hudRect.width;
+      const panelBottom = sceneRect.bottom - gap;
+      const height = Math.max(minH, panelBottom - top);
+
+      slot.style.position = "absolute";
+      slot.style.left = `${Math.round(left)}px`;
+      slot.style.top = `${Math.round(top)}px`;
+      slot.style.width = `${Math.round(width)}px`;
+      slot.style.height = `${Math.round(Math.max(minH, height))}px`;
+      slot.style.right = "auto";
+      slot.style.bottom = "auto";
+    });
+
+    if (typeof ArenaEquipment !== "undefined" && ArenaEquipment.onResize) {
+      ArenaEquipment.onResize();
+    }
   }
 
   function clearMobileDisplayVars() {
@@ -329,82 +416,282 @@
     FLANK_HERO_DOM_IDS.forEach((id) => {
       const el = document.getElementById(id);
       if (!el) return;
-      ["left", "top", "right", "bottom", "width", "max-width", "transform"].forEach((prop) => {
+      ["left", "top", "right", "bottom", "width", "max-width", "height", "max-height", "transform"].forEach((prop) => {
         el.style.removeProperty(prop);
       });
     });
   }
 
-  /** L2 hero slots anchored to backpack centers on #game-canvas (Safari-safe, 4-layer). */
+  function measureBattleFieldChromeBottom(fieldCol) {
+    const root = document.documentElement;
+    const fromVar = readCssPx("--tablet-battle-chrome-bottom", 0);
+    if (fromVar > 0) return fromVar;
+    const hudReserve = measureBattleHudReserve();
+    if (hudReserve > 0) return hudReserve;
+
+    const toolbar = document.getElementById("prep-toolbar");
+    if (!fieldCol || !toolbar || getComputedStyle(toolbar).display === "none") return 8;
+
+    const colRect = fieldCol.getBoundingClientRect();
+    const toolRect = toolbar.getBoundingClientRect();
+    if (toolRect.top >= colRect.bottom - 2) return 8;
+    return Math.max(8, Math.round(colRect.bottom - toolRect.top + 4));
+  }
+
+  function ensureFlankBattleSceneUiMetrics(sceneUi) {
+    if (!sceneUi) return;
+    sceneUi.style.width = "100%";
+    sceneUi.style.maxWidth = "100%";
+    sceneUi.style.marginLeft = "0";
+    sceneUi.style.marginRight = "0";
+  }
+
+  /**
+   * Три зоны hero-row по UI-макету (не по gap между рюкзаками на canvas):
+   * ~28% player | ~44% emoji arena | ~28% enemy
+   */
+  function computeBattleHeroRowZones(layoutWidth, _layoutRect, _canvasRect, heroColW, edgePad) {
+    const innerW = Math.max(320, layoutWidth - edgePad * 2);
+    const playerShare = 0.28;
+    const arenaShare = 0.44;
+    const enemyShare = 0.28;
+
+    let playerZoneW = Math.round(innerW * playerShare);
+    let arenaW = Math.round(innerW * arenaShare);
+    let enemyZoneW = Math.round(innerW * enemyShare);
+
+    const minSide = Math.max(heroColW, Math.round(innerW * 0.22));
+    const minArena = Math.max(160, Math.round(innerW * 0.34));
+    playerZoneW = Math.max(minSide, playerZoneW);
+    enemyZoneW = Math.max(minSide, enemyZoneW);
+    arenaW = Math.max(minArena, arenaW);
+
+    let overflow = playerZoneW + arenaW + enemyZoneW - innerW;
+    if (overflow > 0) {
+      const fromArena = Math.min(overflow, Math.max(0, arenaW - minArena));
+      arenaW -= fromArena;
+      overflow -= fromArena;
+    }
+    if (overflow > 0) {
+      const fromPlayer = Math.min(overflow, Math.max(0, playerZoneW - minSide));
+      playerZoneW -= fromPlayer;
+      overflow -= fromPlayer;
+    }
+    if (overflow > 0) {
+      enemyZoneW = Math.max(minSide, enemyZoneW - overflow);
+    }
+
+    const playerZoneLeft = edgePad;
+    const arenaLeft = playerZoneLeft + playerZoneW;
+    const enemyZoneLeft = arenaLeft + arenaW;
+    const innerPad = Math.max(edgePad, Math.round(edgePad * 1.5));
+
+    const playerColW = Math.min(
+      Math.max(heroColW, Math.floor(playerZoneW - innerPad * 2)),
+      Math.floor(playerZoneW - innerPad),
+    );
+    const enemyColW = Math.min(
+      Math.max(heroColW, Math.floor(enemyZoneW - innerPad * 2)),
+      Math.floor(enemyZoneW - innerPad),
+    );
+
+    return {
+      colW: Math.min(playerColW, enemyColW),
+      playerColW,
+      enemyColW,
+      playerZoneLeft,
+      playerZoneW,
+      playerPanelLeft: playerZoneLeft + innerPad,
+      enemyZoneLeft,
+      enemyZoneW,
+      enemyPanelLeft: enemyZoneLeft + Math.max(innerPad, enemyZoneW - enemyColW - innerPad),
+      arenaLeft,
+      arenaW,
+    };
+  }
+
+  function applyBattleHeroRowZoneVars(root, fieldCol, zones, heroRowTop, heroZoneH) {
+    const entries = [
+      ["--battle-hero-row-top", heroRowTop],
+      ["--battle-hero-zone-h-active", heroZoneH],
+      ["--battle-hero-col-w-active", zones.colW],
+      ["--battle-player-zone-left", zones.playerZoneLeft],
+      ["--battle-player-zone-width", zones.playerZoneW],
+      ["--battle-enemy-zone-left", zones.enemyZoneLeft],
+      ["--battle-enemy-zone-width", zones.enemyZoneW],
+      ["--battle-arena-zone-left", zones.arenaLeft],
+      ["--battle-arena-zone-width", zones.arenaW],
+    ];
+    entries.forEach(([name, value]) => {
+      root.style.setProperty(name, `${Math.round(value)}px`);
+      fieldCol?.style.setProperty(name, `${Math.round(value)}px`);
+    });
+  }
+
+  function placeBattleHeroPanel(panel, left, top, width, height) {
+    if (!panel) return;
+    panel.style.setProperty("--flank-panel-x", `${Math.round(left)}px`);
+    panel.style.setProperty("--flank-panel-y", `${Math.round(top)}px`);
+    panel.style.position = "absolute";
+    panel.style.left = `${Math.round(left)}px`;
+    panel.style.top = `${Math.round(top)}px`;
+    panel.style.width = `${Math.round(width)}px`;
+    panel.style.maxWidth = `${Math.round(width)}px`;
+    panel.style.height = "auto";
+    panel.style.minHeight = `${Math.round(Math.min(height, 120))}px`;
+    panel.style.maxHeight = `${Math.round(height)}px`;
+    panel.style.right = "auto";
+    panel.style.bottom = "auto";
+    panel.style.transform = "none";
+  }
+
+  /** Якорь боевой эмодзи: верхний inner-угол портрета (к центру экрана). */
+  function syncHeroEmotionSlotAnchors() {
+    const root = document.documentElement;
+    if (root.dataset.battleHeroPlacement !== "flank-arena") return;
+
+    [
+      { panelId: "player-avatar-panel", slotId: "player-thought-slot", innerX: 0.88 },
+      { panelId: "enemy-avatar-panel", slotId: "enemy-thought-slot", innerX: 0.12 },
+    ].forEach(({ panelId, slotId, innerX }) => {
+      const panel = document.getElementById(panelId);
+      const slot = document.getElementById(slotId);
+      const stage = panel?.querySelector(".avatar-hero-stage");
+      if (!panel || !slot || !stage) return;
+
+      const panelRect = panel.getBoundingClientRect();
+      const stageRect = stage.getBoundingClientRect();
+      if (stageRect.width <= 0 || stageRect.height <= 0) return;
+
+      const size = Math.round(Math.min(stageRect.width, stageRect.height) * 0.36);
+      const top = stageRect.top - panelRect.top + stageRect.height * 0.14;
+      const left = stageRect.left - panelRect.left + stageRect.width * innerX - size * 0.5;
+
+      slot.style.position = "absolute";
+      slot.style.left = `${Math.round(left)}px`;
+      slot.style.top = `${Math.round(top)}px`;
+      slot.style.width = `${size}px`;
+      slot.style.height = `${size}px`;
+      slot.style.right = "auto";
+      slot.style.bottom = "auto";
+    });
+
+    if (typeof ThoughtArena !== "undefined" && ThoughtArena.onResize) {
+      ThoughtArena.onResize();
+    }
+  }
+
+  /** L2/L3 hero row: 3 зоны (player | emoji arena | enemy), Safari-safe 4-layer. */
   function syncFlankArenaHeroAnchors() {
     const fieldCol = document.getElementById("prep-field-column");
+    const sceneUi = document.getElementById("battle-scene-ui");
     const objectsLayer = document.getElementById("layer-objects");
     const canvas = document.getElementById("game-canvas");
-    if (!fieldCol || !canvas || typeof window.getBattleTeamAnchorClient !== "function") return;
+    const root = document.documentElement;
+    if (!fieldCol || !canvas || !sceneUi || !objectsLayer) return;
 
-    const originRect = objectsLayer?.getBoundingClientRect() ?? fieldCol.getBoundingClientRect();
+    ensureFlankBattleSceneUiMetrics(sceneUi);
+
+    const layoutRect = objectsLayer.getBoundingClientRect();
+    const sceneRect = sceneUi.getBoundingClientRect();
+    if (layoutRect.width <= 0) return;
+
     const canvasRect = canvas.getBoundingClientRect();
-    if (originRect.width <= 0 || canvasRect.width <= 0) return;
-
+    const heroZoneH = readCssPx(
+      "--battle-hero-zone-h",
+      readCssPx("--desktop-battle-hero-zone-h", 220),
+    );
     const heroColW = readCssPx(
       "--battle-hero-col-w",
       readCssPx("--desktop-battle-hero-col-w", 180),
     );
     const uiScale = readCssPx("--ui-scale", 1);
-    const rowGap = Math.round(6 * uiScale);
-    const heroRowTop = canvasRect.bottom - originRect.top + rowGap;
     const edgePad = Math.max(4, Math.round(4 * uiScale));
+    const scenePad = Math.max(4, Math.round(4 * uiScale));
+    const fieldPadBottom = parseFloat(getComputedStyle(fieldCol).paddingBottom) || 0;
+    const toolbarReserve = fieldPadBottom > 0
+      ? fieldPadBottom
+      : measureBattleFieldChromeBottom(fieldCol);
+    const layoutHeight = Math.max(layoutRect.height, sceneRect.height, fieldCol.clientHeight);
+    const canvasBottom = Math.max(0, Math.round(canvasRect.bottom - layoutRect.top));
+    const rowGap = Math.round(8 * uiScale);
+    const heroRowTopFromCanvas = canvasBottom + rowGap;
+    const heroRowTopMax = Math.max(rowGap, layoutHeight - heroZoneH - Math.round(6 * uiScale));
+    const heroRowTop = Math.max(
+      rowGap,
+      Math.min(heroRowTopFromCanvas, heroRowTopMax),
+    );
+    const sceneOffsetX = sceneRect.left - layoutRect.left;
 
-    const anchors = {};
+    const zones = computeBattleHeroRowZones(
+      layoutRect.width,
+      layoutRect,
+      canvasRect,
+      heroColW,
+      edgePad,
+    );
+    applyBattleHeroRowZoneVars(root, fieldCol, zones, heroRowTop, heroZoneH);
 
-    [
-      { team: "player", panelId: "player-avatar-panel" },
-      { team: "enemy", panelId: "enemy-avatar-panel" },
-    ].forEach(({ team, panelId }) => {
-      const anchor = window.getBattleTeamAnchorClient(team);
-      const panel = document.getElementById(panelId);
-      if (!anchor || !panel) return;
-
-      const w = Math.round(Math.min(heroColW, Math.max(96, heroColW)));
-      const left = anchor.x - originRect.left - w / 2;
-      const clampedLeft = Math.max(edgePad, Math.min(originRect.width - w - edgePad, left));
-
-      panel.style.position = "absolute";
-      panel.style.left = `${Math.round(clampedLeft)}px`;
-      panel.style.top = `${Math.round(heroRowTop)}px`;
-      panel.style.width = `${w}px`;
-      panel.style.maxWidth = `${w}px`;
-      panel.style.right = "auto";
-      panel.style.bottom = "auto";
-      panel.style.transform = "none";
-
-      anchors[team] = { x: clampedLeft + w / 2, w };
-    });
+    placeBattleHeroPanel(
+      document.getElementById("player-avatar-panel"),
+      zones.playerPanelLeft + sceneOffsetX,
+      heroRowTop,
+      zones.playerColW,
+      heroZoneH,
+    );
+    placeBattleHeroPanel(
+      document.getElementById("enemy-avatar-panel"),
+      zones.enemyPanelLeft + sceneOffsetX,
+      heroRowTop,
+      zones.enemyColW,
+      heroZoneH,
+    );
 
     const thoughtArena = document.getElementById("battle-thought-arena");
-    if (thoughtArena && anchors.player && anchors.enemy) {
-      const innerPad = Math.round(8 * uiScale);
-      const left = Math.min(anchors.player.x, anchors.enemy.x) + innerPad;
-      const right = Math.max(anchors.player.x, anchors.enemy.x) - innerPad;
-      const arenaW = Math.max(64, right - left);
+    if (thoughtArena) {
       thoughtArena.style.position = "absolute";
-      thoughtArena.style.left = `${Math.round(left)}px`;
-      thoughtArena.style.width = `${Math.round(arenaW)}px`;
-      thoughtArena.style.top = `${Math.round(heroRowTop)}px`;
+      thoughtArena.style.left = `${zones.arenaLeft}px`;
+      thoughtArena.style.width = `${zones.arenaW}px`;
+      thoughtArena.style.top = `${heroRowTop}px`;
+      thoughtArena.style.height = `${Math.round(heroZoneH)}px`;
+      thoughtArena.style.maxHeight = `${Math.round(heroZoneH)}px`;
       thoughtArena.style.right = "auto";
       thoughtArena.style.bottom = "auto";
       thoughtArena.style.minHeight = `${readCssPx("--battle-thought-arena-min-h", 110)}px`;
     }
+
+    syncHeroEmotionSlotAnchors();
+    syncHeroAttackSlotAnchors();
   }
 
   function syncBattleSceneGridMetrics() {
     const root = document.documentElement;
-    if (root.dataset.battleArenaLayout !== "true") return;
-    if (root.dataset.battleHeroPlacement !== "flank-arena") return;
     if (!isBattleUiPhase()) return;
+
+    if (root.dataset.battleHeroPlacement !== "flank-arena" || root.dataset.battleArenaLayout !== "true") {
+      const canvas = document.getElementById("game-canvas");
+      const fieldCol = document.getElementById("prep-field-column");
+      const stageW = fieldCol?.clientWidth ?? 0;
+      if (canvas && canvas.width > 0 && stageW > 0) {
+        fitFlankArenaBattleLayout(root, canvas, fieldCol, stageW);
+      }
+    }
+
+    if (root.dataset.battleHeroPlacement !== "flank-arena") return;
     syncFlankArenaHeroAnchors();
     if (typeof syncFxCanvasGeometry === "function") syncFxCanvasGeometry();
     if (typeof syncBattleHudAnchors === "function") syncBattleHudAnchors();
+  }
+
+  function scheduleBattleHeroRowSync(attempts = 6) {
+    let left = attempts;
+    const tick = () => {
+      if (!isBattleUiPhase() || left <= 0) return;
+      left -= 1;
+      syncBattleSceneGridMetrics();
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
   }
 
   function syncBattleHudFeedDock() {
@@ -487,6 +774,9 @@
     if (mode) {
       root.dataset.battleHeroPlacement = mode;
       root.dataset.battleHeroAnchor = mode === "flank-arena" ? "canvas" : "false";
+      if (mode === "flank-arena") {
+        ensureFlankBattleSceneUiMetrics(document.getElementById("battle-scene-ui"));
+      }
     } else {
       root.removeAttribute("data-battle-hero-placement");
       root.removeAttribute("data-battle-hero-anchor");
@@ -499,6 +789,15 @@
     "--battle-hero-img-h",
     "--battle-thought-arena-min-h",
     "--battle-hero-zone-h",
+    "--battle-hero-row-top",
+    "--battle-hero-zone-h-active",
+    "--battle-hero-col-w-active",
+    "--battle-player-zone-left",
+    "--battle-player-zone-width",
+    "--battle-enemy-zone-left",
+    "--battle-enemy-zone-width",
+    "--battle-arena-zone-left",
+    "--battle-arena-zone-width",
     "--desktop-battle-hero-zone-h",
     "--desktop-battle-hero-img-h",
     "--desktop-battle-hero-col-w",
@@ -515,6 +814,11 @@
     const mobileLayout = root.dataset.prepLayout === "mobile";
     const tabletSide = root.dataset.tabletSideFit === "true"
       || root.dataset.tabletPrepHero === "true";
+    const portrait = stageW < vh;
+    const tabletPortrait = portrait
+      && !mobileLayout
+      && !tabletSide
+      && (root.dataset.uiTier === "tablet" || root.dataset.touch === "true");
 
     let heroZone;
     let arenaMin;
@@ -531,13 +835,21 @@
       portraitZoom = 2.5;
       chromePad = 10;
     } else if (tabletSide) {
-      heroZone = Math.min(260, Math.max(160, Math.round((vh - hudReserve) * 0.26)));
+      heroZone = Math.min(320, Math.max(200, Math.round((vh - hudReserve) * 0.30)));
       arenaMin = Math.max(96, Math.round(vh * 0.12));
-      heroColW = Math.round(Math.min(180, Math.max(120, stageW * 0.18)));
-      heroImgH = Math.round(Math.min(190, Math.max(120, heroZone * 0.42)));
-      portraitZoom = 1.0;
+      heroColW = Math.round(Math.min(200, Math.max(120, stageW * 0.20)));
+      heroImgH = Math.round(Math.min(210, Math.max(150, heroZone * 0.50)));
+      portraitZoom = 0.95;
       chromePad = 16;
-      root.style.setProperty("--tablet-battle-chrome-bottom", `${hudReserve}px`);
+      root.style.setProperty("--tablet-battle-chrome-bottom", `${Math.max(hudReserve, chromePad)}px`);
+    } else if (tabletPortrait) {
+      heroZone = Math.min(300, Math.max(180, Math.round((vh - hudReserve) * 0.30)));
+      arenaMin = Math.max(88, Math.round(vh * 0.10));
+      heroColW = Math.round(Math.min(150, Math.max(96, stageW * 0.22)));
+      heroImgH = Math.round(Math.min(180, Math.max(108, heroZone * 0.44)));
+      portraitZoom = 1.05;
+      chromePad = 12;
+      root.style.setProperty("--tablet-battle-chrome-bottom", `${Math.max(hudReserve, chromePad)}px`);
     } else {
       heroZone = Math.min(360, Math.max(220, Math.round(vh * 0.24)));
       arenaMin = Math.max(140, Math.round(vh * 0.18));
@@ -545,6 +857,7 @@
       heroImgH = Math.round(Math.min(240, Math.max(160, heroZone * 0.5)));
       portraitZoom = 1.15;
       chromePad = 20;
+      root.style.setProperty("--tablet-battle-chrome-bottom", `${Math.max(hudReserve, 8)}px`);
     }
 
     const maxH = Math.max(100, vh - hudReserve - heroZone - arenaMin - chromePad);
@@ -604,22 +917,25 @@
         syncFxCanvasGeometry();
         return;
       }
-      setBattleArenaLayout(false);
-      setBattleHeroPlacement(null);
-      root.dataset.battleMobileFit = "false";
-      [
-        "--battle-canvas-display-w",
-        "--battle-canvas-display-h",
-        "--battle-field-display-w",
-        "--battle-grid-gap-display",
-      ].forEach((name) => root.style.removeProperty(name));
-      setCanvasDisplaySize(
-        canvas,
-        readCssPx("--battle-canvas-w", canvas.width),
-        readCssPx("--battle-canvas-h", canvas.height),
-      );
+      if (root.dataset.battleHeroPlacement !== "flank-arena") {
+        setBattleArenaLayout(false);
+        setBattleHeroPlacement(null);
+        root.dataset.battleMobileFit = "false";
+        [
+          "--battle-canvas-display-w",
+          "--battle-canvas-display-h",
+          "--battle-field-display-w",
+          "--battle-grid-gap-display",
+        ].forEach((name) => root.style.removeProperty(name));
+        setCanvasDisplaySize(
+          canvas,
+          readCssPx("--battle-canvas-w", canvas.width),
+          readCssPx("--battle-canvas-h", canvas.height),
+        );
+      }
       syncMobileShopFabPosition();
       syncFxCanvasGeometry();
+      requestAnimationFrame(() => syncBattleSceneGridMetrics());
       return;
     }
 
@@ -969,4 +1285,5 @@
   window.syncBattleHudFeedDock = syncBattleHudFeedDock;
   window.syncTabletBattleAvatarPositions = syncTabletBattleAvatarPositions;
   window.syncBattleSceneGridMetrics = syncBattleSceneGridMetrics;
+  window.scheduleBattleHeroRowSync = scheduleBattleHeroRowSync;
 })();

@@ -2,10 +2,13 @@
  * Единая раскладка фазы боя на всех tier:
  * html[data-battle-hero-placement="flank-arena"]
  *
- * Герои (L2) + HUD (L4) якорятся к центрам рюкзаков на canvas через JS
- * (syncFlankArenaHeroAnchors / getBattleTeamAnchorClient).
+ * Hero-row — 3 зоны (как на макете):
+ *   Zone 1 (L2+L4) — player: портрет, HP/stamina, баффы
+ *   Zone 3 (L2/L3) — центр: боевые эмодзи (#battle-thought-arena)
+ *   Zone 2 (L2+L4) — enemy: портрет, HP/stamina, баффы
  *
- * 4-layer: L1 canvas, L2 avatars (absolute), L3 fx, L4 hud overlay.
+ * Границы зон проецируются с canvas (getBattleFieldLayoutMetrics).
+ * 4-layer: L1 canvas, L2 avatars, L3 fx, L4 hud overlay.
  */
 
 /* ─── Layer compositor (battle) ─── */
@@ -92,7 +95,9 @@ html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .prep-f
 html[data-battle-hero-placement="flank-arena"][data-tablet-side-fit="true"] #app[data-phase="battle"] .prep-field-column,
 html[data-battle-hero-placement="flank-arena"][data-tablet-side-fit="true"] #app[data-phase="replay"] .prep-field-column,
 html[data-battle-hero-placement="flank-arena"][data-tablet-prep-hero="true"] #app[data-phase="battle"] .prep-field-column,
-html[data-battle-hero-placement="flank-arena"][data-tablet-prep-hero="true"] #app[data-phase="replay"] .prep-field-column {
+html[data-battle-hero-placement="flank-arena"][data-tablet-prep-hero="true"] #app[data-phase="replay"] .prep-field-column,
+html[data-battle-hero-placement="flank-arena"][data-ui-tier="tablet"][data-orientation="portrait"] #app[data-phase="battle"] .prep-field-column,
+html[data-battle-hero-placement="flank-arena"][data-ui-tier="tablet"][data-orientation="portrait"] #app[data-phase="replay"] .prep-field-column {
   padding-bottom: var(--tablet-battle-chrome-bottom, 72px);
 }
 
@@ -127,41 +132,66 @@ html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle
   display: block !important;
   position: absolute;
   inset: 0;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
   pointer-events: none;
   overflow: visible;
 }
 
-/* ─── Slot 1: player (L2 — left/top via JS) ─── */
+/* ─── Slot 1: player zone (L2 — left column) ─── */
 
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-scene-avatar-player,
-html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-scene-avatar-player {
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-scene-avatar-player,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #player-avatar-panel,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #player-avatar-panel {
   position: absolute !important;
-  inset: auto !important;
+  left: var(--flank-panel-x, 0) !important;
+  top: var(--flank-panel-y, auto) !important;
+  right: auto !important;
+  bottom: auto !important;
   transform: none !important;
-  width: var(--battle-hero-col-w, var(--desktop-battle-hero-col-w, 100%));
-  max-width: var(--battle-hero-col-w, var(--desktop-battle-hero-col-w, 100%));
+  width: auto;
+  max-width: 100%;
+  max-height: var(--battle-hero-zone-h-active, var(--battle-hero-zone-h, var(--desktop-battle-hero-zone-h, 240px)));
   pointer-events: auto;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
+  align-items: flex-start;
   justify-content: flex-start;
   overflow: visible;
   z-index: 10;
 }
 
-/* ─── Slot 2: enemy (L2 — left/top via JS) ─── */
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #player-avatar-panel,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #player-avatar-panel {
+  align-items: flex-start;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #enemy-avatar-panel,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #enemy-avatar-panel {
+  align-items: flex-end;
+}
+
+/* ─── Slot 2: enemy zone (L2 — right column) ─── */
 
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-scene-avatar-enemy,
-html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-scene-avatar-enemy {
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-scene-avatar-enemy,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #enemy-avatar-panel,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #enemy-avatar-panel {
   position: absolute !important;
-  inset: auto !important;
+  left: var(--flank-panel-x, 0) !important;
+  top: var(--flank-panel-y, auto) !important;
+  right: auto !important;
+  bottom: auto !important;
   transform: none !important;
-  width: var(--battle-hero-col-w, var(--desktop-battle-hero-col-w, 100%));
-  max-width: var(--battle-hero-col-w, var(--desktop-battle-hero-col-w, 100%));
+  width: auto;
+  max-width: 100%;
+  max-height: var(--battle-hero-zone-h-active, var(--battle-hero-zone-h, var(--desktop-battle-hero-zone-h, 240px)));
   pointer-events: auto;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
+  align-items: flex-end;
   justify-content: flex-start;
   overflow: visible;
   z-index: 10;
@@ -177,16 +207,24 @@ html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-scene-avatar .field-avatar-slot,
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-scene-avatar .field-avatar-slot {
   width: 100%;
-  align-items: center;
-  justify-content: flex-end;
+  align-items: stretch;
+  justify-content: flex-start;
+  overflow: visible;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-scene-avatar-enemy .field-avatar-slot,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-scene-avatar-enemy .field-avatar-slot {
+  align-items: flex-end;
 }
 
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-scene-avatar .avatar-hero-shell,
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-scene-avatar .avatar-hero-shell {
   --battle-hero-img-h: var(--battle-hero-img-h, var(--desktop-battle-hero-img-h, var(--battle-hero-img-h-fallback)));
   --battle-avatar-w: 100%;
+  --battle-portrait-object-y: 20%;
   width: 100%;
-  max-width: var(--battle-hero-col-w, var(--desktop-battle-hero-col-w, 100%));
+  max-width: var(--battle-hero-col-w-active, var(--battle-hero-col-w, var(--desktop-battle-hero-col-w, 100%)));
+  overflow: visible;
 }
 
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-stage,
@@ -194,8 +232,25 @@ html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar
   width: 100%;
   min-height: 0;
   max-height: var(--battle-hero-img-h, var(--desktop-battle-hero-img-h, var(--battle-hero-img-h-fallback)));
-  height: auto;
+  height: var(--battle-hero-img-h, var(--desktop-battle-hero-img-h, var(--battle-hero-img-h-fallback)));
   overflow: hidden;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+/* Портрет: «камера» на голову/торс (не ноги) */
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-scene-avatar .portrait-zoom-clip,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-scene-avatar .portrait-zoom-clip {
+  transform-origin: center var(--battle-portrait-object-y, 20%) !important;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-scene-avatar .portrait-zoom-clip img,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-scene-avatar .portrait-zoom-clip img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center var(--battle-portrait-object-y, 20%);
+  transform-origin: center var(--battle-portrait-object-y, 20%);
 }
 
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-bars,
@@ -213,21 +268,153 @@ html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar
   width: 100%;
 }
 
-/* ─── Slot 3: thought arena (косметика внутри — ThoughtArena, equipment layer) ─── */
+/* ─── Slot 3: thought arena — центральная зона эмодзи (L2, физика ThoughtArena) ─── */
 
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-thought-arena,
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-thought-arena {
   position: absolute !important;
-  inset: auto !important;
+  left: var(--battle-arena-zone-left, 0) !important;
+  top: var(--battle-hero-row-top, auto) !important;
+  width: var(--battle-arena-zone-width, auto) !important;
+  right: auto !important;
+  bottom: auto !important;
   margin: 0;
   flex: unset;
   z-index: 8;
   pointer-events: none;
+  max-height: var(--battle-hero-zone-h-active, var(--battle-hero-zone-h, var(--desktop-battle-hero-zone-h, 240px)));
   min-height: var(--battle-thought-arena-min-h, var(--desktop-battle-thought-arena-min-h, var(--battle-thought-arena-min-h-fallback)));
+  overflow: hidden;
+}
+
+/* ─── L4 HUD: HP/stamina + debuff chips под строкой стамины ─── */
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-hud-side,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-hud-side {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: calc(4px * var(--ui-scale));
+  overflow: visible;
+  pointer-events: none;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #battle-hud-player,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #battle-hud-player {
+  max-width: var(--battle-player-zone-width, var(--battle-hero-col-w-active, 210px));
+  align-items: flex-start;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #battle-hud-enemy,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #battle-hud-enemy {
+  max-width: var(--battle-enemy-zone-width, var(--battle-hero-col-w-active, 210px));
+  align-items: flex-end;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-hud-side .avatar-hero-bars,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-hud-side .avatar-hero-bars {
+  width: 100%;
+  flex-shrink: 0;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-hud-side .battle-hud-debuff-row,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-hud-side .battle-hud-debuff-row {
+  display: flex !important;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: center;
+  gap: calc(4px * var(--ui-scale));
+  width: 100%;
+  min-height: calc(22px * var(--ui-scale));
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  pointer-events: auto;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #battle-hud-enemy .battle-hud-debuff-row,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #battle-hud-enemy .battle-hud-debuff-row {
+  justify-content: flex-end;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-effects-panel,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-effects-panel {
+  display: none !important;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-hud-status-stack,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-hud-status-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: calc(3px * var(--ui-scale));
+  width: 100%;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #battle-hud-enemy .battle-hud-status-stack,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #battle-hud-enemy .battle-hud-status-stack {
+  align-items: flex-end;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-hud-benefit-stacks,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-hud-benefit-stacks,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-hud-dot-stacks,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-hud-dot-stacks {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: calc(4px * var(--ui-scale));
+  width: 100%;
+  pointer-events: auto;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #battle-hud-enemy .battle-hud-benefit-stacks,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #battle-hud-enemy .battle-hud-benefit-stacks,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #battle-hud-enemy .battle-hud-dot-stacks,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #battle-hud-enemy .battle-hud-dot-stacks {
+  justify-content: flex-end;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-hud-benefit-stacks .avatar-benefit-stack,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-hud-benefit-stacks .avatar-benefit-stack,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-hud-dot-stacks .avatar-dot-stack,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-hud-dot-stacks .avatar-dot-stack {
+  position: relative;
+  left: auto;
+  top: auto;
+  transform: none;
+  animation: none;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-scene-avatar .avatar-hero-effects-panel .avatar-status-zone-debuffs,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-scene-avatar .avatar-hero-effects-panel .avatar-status-zone-debuffs {
+  display: none !important;
 }
 
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .avatar-thought-slot,
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar-thought-slot {
+  display: block !important;
+  position: absolute;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 24;
+}
+
+/* Зона атакующей экипировки — под HP/статами (L2, как боевые эмодзи) */
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .avatar-attack-arena,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar-attack-arena {
+  display: block;
+  position: absolute;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 22;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #arena-equipment-layer,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #arena-equipment-layer {
   display: none !important;
 }
 

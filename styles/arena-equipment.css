@@ -10,6 +10,27 @@
   overflow: hidden;
 }
 
+.avatar-attack-arena .arena-equipment-layer {
+  overflow: visible;
+}
+
+.arena-equip-fx-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  overflow: visible;
+}
+
+.arena-equip-body--fx-flight {
+  z-index: 45;
+  pointer-events: none;
+}
+
+.avatar-attack-arena {
+  display: none;
+}
+
 .arena-equip-body {
   position: absolute;
   left: 0;
@@ -59,4 +80,20 @@
 
 .battle-thought-body--enemy {
   z-index: 13;
+}
+
+/* Flank: экипировка в боковых зонах — без плитки, как боевые эмодзи */
+html[data-battle-hero-placement="flank-arena"] .avatar-attack-arena .arena-equip-body {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.55));
+}
+
+html[data-battle-hero-placement="flank-arena"] .avatar-attack-arena .arena-equip-body--weapon {
+  background: transparent;
+}
+
+html[data-battle-hero-placement="flank-arena"] .avatar-attack-arena .arena-equip-body.is-attacking {
+  filter: drop-shadow(0 8px 22px rgba(255, 180, 80, 0.45));
 }

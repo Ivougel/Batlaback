@@ -7,15 +7,15 @@
   <title>Backpack Battles — Автобатлер</title>
   <link rel="stylesheet" href="styles/tokens.css?v=2">
   <link rel="stylesheet" href="styles/layers.css?v=5">
-  <link rel="stylesheet" href="styles.css?v=19">
+  <link rel="stylesheet" href="styles.css?v=20">
   <link rel="stylesheet" href="styles/combat-feed.css">
   <link rel="stylesheet" href="styles/emotion-thoughts.css?v=4">
-  <link rel="stylesheet" href="styles/arena-equipment.css?v=1">
-  <link rel="stylesheet" href="styles/battle-arena-layout.css?v=5">
+  <link rel="stylesheet" href="styles/arena-equipment.css?v=5">
+  <link rel="stylesheet" href="styles/battle-arena-layout.css?v=16">
   <link rel="stylesheet" href="styles/mobile-prep.css?v=7">
   <link rel="stylesheet" href="styles/tablet-side.css?v=20">
   <link rel="stylesheet" href="styles/doll.css?v=20">
-  <script src="ui-layout.js?v=22"></script>
+  <script src="ui-layout.js?v=31"></script>
 </head>
 <body>
   <div id="app" data-phase="prep">
@@ -88,6 +88,12 @@
                       <div id="enemy-characteristics-content"></div>
                     </div>
                   </div>
+                  <div class="avatar-attack-arena" id="player-attack-arena" data-team="player" aria-hidden="true">
+                    <div class="arena-equipment-layer" id="player-arena-equip-layer"></div>
+                  </div>
+                  <div class="avatar-attack-arena" id="enemy-attack-arena" data-team="enemy" aria-hidden="true">
+                    <div class="arena-equipment-layer" id="enemy-arena-equip-layer"></div>
+                  </div>
                 </div>
                 <div class="battle-thought-arena" id="battle-thought-arena" aria-live="polite" aria-label="Боевые эмоджи героев">
                   <div class="arena-equipment-layer" id="arena-equipment-layer" aria-hidden="true"></div>
@@ -143,6 +149,9 @@
               </div>
               <p class="shop-hint" id="shop-panel-hint">✚ — навигация · A — выбрать · ← — доска · 📍 — заморозить</p>
               <p class="shop-hint shop-hint-touch">Зажать — подсказка · перетащите на поле · 📍 — закрепить · два пальца — поворот</p>
+            </div>
+            <div class="shop-objects">
+              <div class="shop-slots" id="shop-slots"></div>
               <div class="shop-sell-zone" id="shop-sell-zone">
                 <div class="shop-action-row">
                   <button type="button" class="btn-secondary btn-sell-drop" id="btn-sell">💰 Продать</button>
@@ -150,9 +159,6 @@
                 </div>
                 <span class="shop-sell-hint">Перетащите предмет · полная стоимость</span>
               </div>
-            </div>
-            <div class="shop-objects">
-              <div class="shop-slots" id="shop-slots"></div>
               <div class="bench-panel" id="bench-panel">
                 <h3>📦 Скамейка</h3>
                 <div class="bench-slots" id="bench-slots"></div>
@@ -435,10 +441,10 @@
   <script src="systems/combat-profile.js"></script>
   <script src="components/run-stats.js"></script>
   <script src="components/player-characteristics.js"></script>
-  <script src="components/avatar-hero-effects.js"></script>
+  <script src="components/avatar-hero-effects.js?v=4"></script>
   <script src="systems/attack-events.js"></script>
   <script src="systems/battle-analyzer.js"></script>
-  <script src="components/battle-damage-summary.js"></script>
+  <script src="components/battle-damage-summary.js?v=2"></script>
   <script src="components/attack-animation-manager.js"></script>
   <script src="systems/animation.js"></script>
   <script src="components/accordion.js"></script>
@@ -468,12 +474,12 @@
   <script src="hard-bot-engine.js"></script>
   <script src="battle-engine.js"></script>
   <script src="battle-float-layer.js?v=16"></script>
-  <script src="components/thought-arena.js?v=3"></script>
-  <script src="components/arena-equipment.js?v=1"></script>
-  <script src="components/emotion-presenter.js?v=4"></script>
-  <script src="emotion-engine.js?v=19"></script>
+  <script src="components/thought-arena.js?v=6"></script>
+  <script src="components/arena-equipment.js?v=4"></script>
+  <script src="components/emotion-presenter.js?v=5"></script>
+  <script src="emotion-engine.js?v=20"></script>
   <script src="battle-hud.js"></script>
   <script src="systems/doll-engine.js"></script>
-  <script src="game.js"></script>
+  <script src="game.js?v=3"></script>
 </body>
 </html>

@@ -46,10 +46,11 @@ const EmotionPresenter = (() => {
   }
 
   function presentArenaThought(side, event) {
-    if (typeof ThoughtArena !== "undefined") {
-      ThoughtArena.upsert(side, event);
-      lastKey[side] = `${event.startedAt}|${event.emoji}`;
-    }
+    if (typeof ThoughtArena === "undefined") return;
+    const key = `${event.emoji}|${event.animation || ""}`;
+    if (lastKey[side] === key) return;
+    lastKey[side] = key;
+    ThoughtArena.upsert(side, event);
   }
 
   function clearArenaThought(side) {

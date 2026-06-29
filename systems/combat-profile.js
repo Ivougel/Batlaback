@@ -765,7 +765,6 @@ const PROFILE_TOOLTIP_TARGET_SELECTOR = [
   ".status-chip",
   ".profile-avatar",
   ".avatar-bead-debuff",
-  ".avatar-bead-positive",
   ".avatar-damage-stack",
   ".avatar-benefit-stack",
   ".avatar-dot-stack",

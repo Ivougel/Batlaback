@@ -106,6 +106,7 @@
 .layer-fx .item-movement-fx-layer,
 .layer-fx .item-flight-fx-layer,
 .layer-fx .battle-damage-fx-layer,
+.layer-fx .arena-equip-fx-layer,
 .layer-fx .battle-countdown-overlay {
   position: absolute;
   inset: 0;

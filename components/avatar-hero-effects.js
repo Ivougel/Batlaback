@@ -1,16 +1,6 @@
 /**
- * Область героя: бусины баффов/дебаффов, HP под аватаром, transient-комpanions.
+ * Область героя: HP/stamina, дебаффы, benefit/dot stacks.
  */
-
-const DEBUFF_BEAD_LABELS = {
-  poison: "яд",
-  slow: "замедл.",
-  "ground-fire": "огонь",
-  stun: "оглуш.",
-  invuln: "неуяз.",
-  revive: "рев.",
-  "arena-fatigue": "устал.",
-};
 
 function getAvatarSlotEl(team) {
   return document.getElementById(team === "player" ? "player-avatar-slot" : "enemy-avatar-slot");
@@ -73,6 +63,11 @@ function renderAvatarBarsHTML(profile, team) {
         </div>
       </div>
     </div>
+    <div class="battle-hud-status-stack">
+      <div class="avatar-benefit-stacks battle-hud-benefit-stacks" aria-hidden="true" hidden></div>
+      <div class="avatar-hero-debuff-row battle-hud-debuff-row" hidden></div>
+      <div class="avatar-dot-stacks battle-hud-dot-stacks" aria-hidden="true" hidden></div>
+    </div>
   `;
 }
 
@@ -101,7 +96,6 @@ function renderAvatarHeroHTML(profile, team) {
         <div class="avatar-hero-status-zones" aria-hidden="true">
           <div class="avatar-status-zone avatar-status-zone-buffs">
             <div class="avatar-damage-stacks" aria-hidden="true" hidden></div>
-            <div class="avatar-beads avatar-beads-positive avatar-status-stack" aria-hidden="true"></div>
             <div class="avatar-benefit-stacks" aria-hidden="true" hidden></div>
           </div>
           <div class="avatar-status-zone avatar-status-zone-debuffs">
@@ -114,25 +108,7 @@ function renderAvatarHeroHTML(profile, team) {
   `;
 }
 
-function getBeadDebuffLabel(chip) {
-  if (DEBUFF_BEAD_LABELS[chip.id]) return DEBUFF_BEAD_LABELS[chip.id];
-  return (chip.title || chip.id || "эффект").slice(0, 8).toLowerCase();
-}
-
-function renderPositiveBeadHTML(bead, index, total) {
-  const countHtml = bead.count > 1 ? `<span class="avatar-bead-count">${bead.count}</span>` : "";
-  const title = escapeProfileHtml(bead.title || bead.icon || "");
-  const transient = bead.transient ? " avatar-bead-transient" : "";
-  const opacity = bead.transient && bead.maxAge
-    ? Math.max(0.12, 1 - (bead.age / bead.maxAge) * 0.88)
-    : 1;
-  return `<span class="avatar-bead avatar-bead-positive avatar-bead-${bead.kind || "buff"}${transient}"
-    style="--bead-i:${index};--bead-n:${Math.max(1, total)};opacity:${opacity.toFixed(2)}"
-    data-bead-key="${escapeProfileHtml(bead.key || bead.id || "")}"
-    title="${title}"><span class="avatar-bead-icon">${bead.icon}</span>${countHtml}</span>`;
-}
-
-function renderDebuffBeadHTML(chip) {
+function renderDebuffChipHTML(chip) {
   const title = escapeProfileHtml((chip.lines || []).join("\n") || chip.title || "");
   const value = Math.ceil(Number(chip.value) || 0);
   const valueHtml = value > 1
@@ -146,29 +122,13 @@ function renderDebuffBeadHTML(chip) {
     title="${title}"><span class="avatar-bead-debuff-icon">${chip.icon}</span>${valueHtml}</span>`;
 }
 
-function collectPositiveBeads(profile, team, state) {
-  const beads = [];
+function collectPositiveBeads(profile) {
   const seen = new Set();
-
-  (profile.buffs || []).forEach((chip) => {
-    if (seen.has(chip.id)) return;
+  return (profile.buffs || []).filter((chip) => {
+    if (seen.has(chip.id)) return false;
     seen.add(chip.id);
-    beads.push({
-      key: chip.id,
-      id: chip.id,
-      icon: chip.icon,
-      count: (chip.id.startsWith("timed-") || chip.id.startsWith("stack-")) && chip.value > 1
-        ? chip.value
-        : 0,
-      kind: chip.id === "block" ? "block" : "buff",
-      title: chip.title,
-      transient: false,
-      age: 0,
-      maxAge: 0,
-    });
-  });
-
-  return beads.slice(0, 8);
+    return true;
+  }).slice(0, 8);
 }
 
 function formatHeroHpLabel(hpCurrent, hpMax) {
@@ -250,42 +210,8 @@ function syncAvatarHeroHpOnly(team, hpCurrent, hpMax, state = null) {
   syncAvatarHeroHealPreview(barsRoot, hpCurrent, hpMax, metrics?.projectedHeal2s ?? 0);
 }
 
-function syncAvatarCompanionBeads(team, state) {
-  const slot = getAvatarSlotEl(team);
-  const posEl = slot?.querySelector(".avatar-status-zone-buffs .avatar-beads-positive")
-    || slot?.querySelector(".avatar-beads-positive");
-  if (!posEl || !state?.avatarCompanions?.[team]) return;
-
-  const companions = state.avatarCompanions[team].filter((c) => c.age < c.maxAge);
-  const keys = new Set(companions.map((c) => c.key));
-
-  posEl.querySelectorAll(".avatar-bead-transient").forEach((el) => {
-    if (!keys.has(el.dataset.beadKey)) el.remove();
-  });
-
-  companions.forEach((c, i) => {
-    let el = posEl.querySelector(`.avatar-bead-transient[data-bead-key="${CSS.escape(c.key)}"]`);
-    const opacity = Math.max(0.12, 1 - (c.age / c.maxAge) * 0.88);
-    const countHtml = c.count > 1 ? `<span class="avatar-bead-count">${c.count}</span>` : "";
-    if (!el) {
-      posEl.insertAdjacentHTML("beforeend", `<span class="avatar-bead avatar-bead-positive avatar-bead-${c.kind || "buff"} avatar-bead-transient"
-        style="--bead-i:${i};--bead-n:${Math.max(1, companions.length)};opacity:${opacity.toFixed(2)}"
-        data-bead-key="${escapeProfileHtml(c.key)}"
-        title="${escapeProfileHtml(c.title || "")}"><span class="avatar-bead-icon">${c.icon}</span>${countHtml}</span>`);
-      return;
-    }
-    el.style.opacity = String(opacity);
-    el.style.setProperty("--bead-i", String(i));
-    el.style.setProperty("--bead-n", String(Math.max(1, companions.length)));
-    const countEl = el.querySelector(".avatar-bead-count");
-    if (c.count > 1) {
-      if (countEl) countEl.textContent = String(c.count);
-      else el.insertAdjacentHTML("beforeend", `<span class="avatar-bead-count">${c.count}</span>`);
-    } else if (countEl) {
-      countEl.remove();
-    }
-  });
-  posEl.hidden = false;
+function isFlankArenaBattleHud() {
+  return document.documentElement.dataset.battleHeroPlacement === "flank-arena";
 }
 
 function syncAvatarHeroEffects(team, profile, state) {
@@ -316,30 +242,32 @@ function syncAvatarHeroEffects(team, profile, state) {
   if (staminaLabel) staminaLabel.textContent = formatHeroStaminaLabel(staminaCurrent, staminaMax);
   syncAvatarHeroHealPreview(barsRoot, hpCurrent, hpMax, metrics?.projectedHeal2s ?? 0);
 
-  const posEl = shell.querySelector(".avatar-status-zone-buffs .avatar-beads-positive")
-    || shell.querySelector(".avatar-beads-positive");
-  const debuffRow = shell.querySelector(".avatar-status-zone-debuffs .avatar-hero-debuff-row")
+  const debuffRow = (isFlankArenaBattleHud()
+    ? barsRoot.querySelector(".avatar-hero-debuff-row")
+    : null)
+    || shell.querySelector(".avatar-status-zone-debuffs .avatar-hero-debuff-row")
+    || shell.querySelector(".avatar-hero-debuff-row");
+  const shellDebuffRow = shell.querySelector(".avatar-status-zone-debuffs .avatar-hero-debuff-row")
     || shell.querySelector(".avatar-hero-debuff-row");
 
-  const posBeads = collectPositiveBeads(profile, team, state);
-  if (posEl) {
-    const persistent = posBeads.filter((b) => !b.transient);
-    posEl.querySelectorAll(".avatar-bead-positive:not(.avatar-bead-transient)").forEach((el) => el.remove());
-    persistent.forEach((b, i) => {
-      posEl.insertAdjacentHTML("beforeend", renderPositiveBeadHTML(b, i, persistent.length));
-    });
-    posEl.hidden = persistent.length === 0
-      && !posEl.querySelector(".avatar-bead-transient");
-  }
+  const activeBuffs = collectPositiveBeads(profile);
   const debuffs = profile.debuffs || [];
   if (debuffRow) {
     debuffRow.hidden = debuffs.length === 0;
-    debuffRow.innerHTML = debuffs.map(renderDebuffBeadHTML).join("");
+    debuffRow.innerHTML = debuffs.map(renderDebuffChipHTML).join("");
+  }
+  if (isFlankArenaBattleHud() && shellDebuffRow && shellDebuffRow !== debuffRow) {
+    shellDebuffRow.hidden = true;
+    shellDebuffRow.innerHTML = "";
   }
 
-  shell.classList.toggle("avatar-hero-has-buffs", posBeads.length > 0);
+  shell.classList.toggle("avatar-hero-has-buffs", activeBuffs.length > 0);
   shell.classList.toggle("avatar-hero-has-debuffs", debuffs.length > 0);
-  if (typeof syncAvatarCompanionBeads === "function") syncAvatarCompanionBeads(team, state);
+  barsRoot.classList.toggle("avatar-hero-has-buffs", activeBuffs.length > 0);
+  barsRoot.classList.toggle("avatar-hero-has-debuffs", debuffs.length > 0);
+  if (isFlankArenaBattleHud() && typeof syncBattleHudAnchors === "function") {
+    syncBattleHudAnchors();
+  }
 }
 
 function syncAllAvatarHeroEffects(playerProfile, enemyProfile, state) {
@@ -363,53 +291,11 @@ function ensureBattleHeroShells(state, playerProfile, enemyProfile) {
       resetHeroHpTracking(team);
     }
     const barsEl = getBattleHudBarsEl(team);
-    if (barsEl && !barsEl.querySelector(".avatar-hero-bars")) {
+    if (barsEl && !barsEl.querySelector(".battle-hud-status-stack")) {
       barsEl.innerHTML = renderAvatarBarsHTML(profile, team);
     }
   });
   if (typeof syncBattleHudAnchors === "function") syncBattleHudAnchors();
-}
-
-function initAvatarCompanions(state) {
-  if (!state.avatarCompanions) {
-    state.avatarCompanions = { player: [], enemy: [] };
-  }
-  if (state._beadUid == null) state._beadUid = 0;
-}
-
-function queueAvatarCompanionBead(state, team, item, kind, iconOverride) {
-  if (!state || !team) return;
-  initAvatarCompanions(state);
-  const def = item?.itemId ? ITEM_CATALOG[item.itemId] : null;
-  const icon = iconOverride || def?.icon || (kind === "heal" ? "❤" : "🛡");
-  const key = item?.uid ? `item-${item.uid}` : `${kind}-${icon}`;
-  const list = state.avatarCompanions[team];
-  const existing = list.find((b) => b.key === key && b.age < b.maxAge);
-  if (existing) {
-    existing.count += 1;
-    existing.age = 0;
-    return;
-  }
-  state._beadUid += 1;
-  list.push({
-    uid: `cbead-${state._beadUid}`,
-    key,
-    icon,
-    kind: kind || "buff",
-    count: 1,
-    age: 0,
-    maxAge: 2.6,
-    title: def?.name || "",
-  });
-}
-
-function tickAvatarCompanions(state, dt) {
-  if (!state?.avatarCompanions) return;
-  ["player", "enemy"].forEach((team) => {
-    state.avatarCompanions[team] = state.avatarCompanions[team]
-      .map((b) => ({ ...b, age: b.age + dt }))
-      .filter((b) => b.age < b.maxAge);
-  });
 }
 
 function getAvatarHeroStageRect(team) {
