@@ -448,6 +448,46 @@ function applyProfileIdentity(profile, classId, gold) {
   return profile;
 }
 
+const CLASS_WEAPON_FALLBACK = {
+  warrior: { icon: "⚔️", kind: "melee", label: "Меч" },
+  rogue: { icon: "🗡️", kind: "melee", label: "Кинжал" },
+  mage: { icon: "🪄", kind: "magic", label: "Посох" },
+  priest: { icon: "✨", kind: "holy", label: "Свет" },
+};
+
+function resolveWeaponKindFromDef(def) {
+  const tags = def?.tags || [];
+  if (tags.includes("magic") || tags.includes("fire") || tags.includes("cold")) return "magic";
+  if (tags.includes("holy")) return "holy";
+  return "melee";
+}
+
+function resolveProfileWeaponBadge(items, classId) {
+  const fallback = CLASS_WEAPON_FALLBACK[classId] || { icon: "⚔️", kind: "melee", label: "Оружие" };
+  const doll = typeof getDollState === "function" ? getDollState(items) : null;
+  const weaponId = doll?.rightHand || doll?.leftHand;
+  if (!weaponId) return { ...fallback };
+  const def = ITEM_CATALOG[weaponId];
+  if (!def) return { ...fallback };
+  let icon = def.icon;
+  if (typeof firstItemIconGrapheme === "function") {
+    icon = firstItemIconGrapheme(def.icon) || icon;
+  }
+  return {
+    icon: icon || fallback.icon,
+    kind: resolveWeaponKindFromDef(def),
+    label: def.name || fallback.label,
+  };
+}
+
+function enrichProfileWeaponBadge(profile, items, classId) {
+  const badge = resolveProfileWeaponBadge(items, classId);
+  profile.weaponIcon = badge.icon;
+  profile.weaponKind = badge.kind;
+  profile.weaponLabel = badge.label;
+  return profile;
+}
+
 function getBackpackPowerTier(score) {
   if (score < 45) return { label: "Слабый", className: "bp-tier-weak" };
   if (score < 90) return { label: "Средний", className: "bp-tier-mid" };

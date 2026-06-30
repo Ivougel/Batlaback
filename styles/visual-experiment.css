@@ -405,6 +405,13 @@ html[data-visual-experiment="true"] #battle-thought-arena::before {
   animation: vexp-arena-pulse 3.2s ease-in-out infinite alternate;
 }
 
+html[data-visual-experiment="true"][data-orientation="portrait"] #app[data-phase="battle"] #battle-thought-arena::before,
+html[data-visual-experiment="true"][data-orientation="portrait"] #app[data-phase="replay"] #battle-thought-arena::before,
+html[data-visual-experiment="true"][data-battle-mobile-stack="true"] #app[data-phase="battle"] #battle-thought-arena::before,
+html[data-visual-experiment="true"][data-battle-mobile-stack="true"] #app[data-phase="replay"] #battle-thought-arena::before {
+  display: none;
+}
+
 @keyframes vexp-arena-pulse {
   from { opacity: 0.45; transform: scale(0.96); }
   to { opacity: 0.85; transform: scale(1.04); }

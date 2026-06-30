@@ -68,14 +68,14 @@ html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] {
 html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"],
 html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="replay"] {
   --avatar-effects-panel-h: min(calc(44px * var(--ui-scale)), 6vh);
-  --battle-portrait-zoom: 2.5;
+  --battle-portrait-zoom: 1.55;
 }
 
 html[data-battle-hero-placement="flank-arena"][data-tablet-side-fit="true"] #app[data-phase="battle"],
 html[data-battle-hero-placement="flank-arena"][data-tablet-side-fit="true"] #app[data-phase="replay"],
 html[data-battle-hero-placement="flank-arena"][data-tablet-prep-hero="true"] #app[data-phase="battle"],
 html[data-battle-hero-placement="flank-arena"][data-tablet-prep-hero="true"] #app[data-phase="replay"] {
-  --battle-portrait-zoom: 1.0;
+  --battle-portrait-zoom: 0.82;
 }
 
 /* ─── Scene column + canvas (L1) ─── */
@@ -242,19 +242,35 @@ html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar
   justify-content: center;
 }
 
-/* Портрет: «камера» на голову/торс (не ноги) */
-html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-scene-avatar .portrait-zoom-clip,
-html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-scene-avatar .portrait-zoom-clip {
-  transform-origin: center var(--battle-portrait-object-y, 20%) !important;
+/* Flank-arena: бюст-кроп, не полный рост (перебивает styles.css battle portraits) */
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .portrait-zoom-clip,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .portrait-zoom-clip {
+  transform: none !important;
+  transform-origin: center var(--battle-portrait-object-y, 18%) !important;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-scene-ui .profile-avatar,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-scene-ui .profile-avatar {
+  width: 100%;
+  height: 100%;
+  max-height: var(--battle-hero-img-h, var(--desktop-battle-hero-img-h, 168px));
+  overflow: hidden;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-scene-ui .profile-avatar-img,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-scene-ui .profile-avatar-img,
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-scene-avatar .portrait-zoom-clip img,
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-scene-avatar .portrait-zoom-clip img {
   width: 100%;
   height: 100%;
+  max-height: none;
   object-fit: cover;
-  object-position: center var(--battle-portrait-object-y, 20%);
-  transform-origin: center var(--battle-portrait-object-y, 20%);
+  object-position: center var(--battle-portrait-object-y, 18%);
+  transform: scale(var(--battle-portrait-zoom, 0.82));
+  transform-origin: center var(--battle-portrait-object-y, 18%);
 }
 
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-bars,
@@ -272,11 +288,21 @@ html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar
   width: 100%;
 }
 
-html[data-battle-hero-placement="flank-arena"][data-tablet-thought-corners="true"] #app[data-phase="battle"] .avatar-thought-slot,
-html[data-battle-hero-placement="flank-arena"][data-tablet-thought-corners="true"] #app[data-phase="replay"] .avatar-thought-slot {
+html[data-battle-combat-floor="true"] #app[data-phase="battle"] .avatar-thought-slot .battle-thought-body,
+html[data-battle-combat-floor="true"] #app[data-phase="replay"] .avatar-thought-slot .battle-thought-body {
+  filter: drop-shadow(0 8px 22px rgba(0, 0, 0, 0.6));
+}
+
+html[data-thought-slot-below-hero="true"] #app[data-phase="battle"] .avatar-thought-slot,
+html[data-thought-slot-below-hero="true"] #app[data-phase="replay"] .avatar-thought-slot {
   overflow: visible;
   pointer-events: none;
   z-index: 24;
+}
+
+html[data-thought-slot-below-hero="true"] #app[data-phase="battle"] .avatar-thought-slot .battle-thought-body,
+html[data-thought-slot-below-hero="true"] #app[data-phase="replay"] .avatar-thought-slot .battle-thought-body {
+  z-index: 6;
 }
 
 /* ─── Slot 3: thought arena — центральная зона эмодзи (L2, физика ThoughtArena) ─── */
@@ -296,6 +322,15 @@ html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle
   max-height: var(--battle-hero-zone-h-active, var(--battle-hero-zone-h, var(--desktop-battle-hero-zone-h, 240px)));
   min-height: var(--battle-thought-arena-min-h, var(--desktop-battle-thought-arena-min-h, var(--battle-thought-arena-min-h-fallback)));
   overflow: hidden;
+}
+
+html[data-battle-combat-floor="true"] #app[data-phase="battle"] .battle-thought-arena,
+html[data-battle-combat-floor="true"] #app[data-phase="replay"] .battle-thought-arena {
+  top: var(--battle-combat-floor-top, var(--battle-hero-row-top, auto)) !important;
+  max-height: var(--battle-combat-floor-h, none) !important;
+  height: var(--battle-combat-floor-h, auto);
+  min-height: var(--battle-thought-arena-min-h, var(--desktop-battle-thought-arena-min-h, var(--battle-thought-arena-min-h-fallback)));
+  overflow: visible;
 }
 
 /* ─── L4 HUD: HP/stamina + debuff chips под строкой стамины ─── */
@@ -429,6 +464,7 @@ html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar
   overflow: visible;
   pointer-events: none;
   z-index: 22;
+  background: transparent;
 }
 
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #arena-equipment-layer,
@@ -478,19 +514,19 @@ html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[d
   width: 100%;
   height: 100%;
   overflow: hidden;
-  transform: scale(var(--battle-portrait-zoom, 2.5));
+  transform: none;
   transform-origin: center top;
 }
 
 html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"] .portrait-zoom-clip img,
 html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="replay"] .portrait-zoom-clip img {
   width: 100%;
-  height: auto;
+  height: 100%;
   max-height: none;
   object-fit: cover;
-  object-position: center top;
-  transform: none;
-  transform-origin: center top;
+  object-position: center var(--battle-portrait-object-y, 8%);
+  transform: scale(var(--battle-portrait-zoom, 1.55));
+  transform-origin: center var(--battle-portrait-object-y, 8%);
 }
 
 /* ─── Mobile: fixed build-stats FAB (косметика, не влияет на grid) ─── */
@@ -524,4 +560,98 @@ html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .field-
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .field-avatar-wrap .profile-avatar {
   box-shadow: none;
   filter: none;
+}
+
+/* ─── Карточка героя: без рамок (только контент) ─── */
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-scene-avatar .avatar-hero-shell,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-scene-avatar .avatar-hero-shell {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .avatar-hero-shell-player,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar-hero-shell-player,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .avatar-hero-shell-enemy,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar-hero-shell-enemy {
+  border: none;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .avatar-hero-weapon-badge,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar-hero-weapon-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  flex-shrink: 0;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  margin: calc(2px * var(--ui-scale)) 0 calc(4px * var(--ui-scale));
+  border-radius: 0;
+  font-size: calc(1.5rem * var(--ui-scale));
+  line-height: 1;
+  pointer-events: none;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  filter: none;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .avatar-hero-shell-player .avatar-hero-weapon-badge,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar-hero-shell-player .avatar-hero-weapon-badge,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .avatar-hero-shell-enemy .avatar-hero-weapon-badge,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar-hero-shell-enemy .avatar-hero-weapon-badge {
+  border: none;
+  filter: none;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .avatar-hero-weapon-badge--magic,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar-hero-weapon-badge--magic,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .avatar-hero-weapon-badge--melee,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar-hero-weapon-badge--melee {
+  background: transparent;
+}
+
+/* ─── Mobile/portrait stack: арена эмодзи — невидимый слой (без «синего поля») ─── */
+
+html[data-battle-mobile-stack="true"] #app[data-phase="battle"] .battle-thought-arena,
+html[data-battle-mobile-stack="true"] #app[data-phase="replay"] .battle-thought-arena,
+html[data-battle-hero-placement="flank-arena"][data-orientation="portrait"] #app[data-phase="battle"] .battle-thought-arena,
+html[data-battle-hero-placement="flank-arena"][data-orientation="portrait"] #app[data-phase="replay"] .battle-thought-arena {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+html[data-battle-mobile-stack="true"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-effects-panel,
+html[data-battle-mobile-stack="true"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-effects-panel {
+  display: none !important;
+}
+
+html[data-battle-mobile-stack="true"] #app[data-phase="battle"] .battle-scene-avatar .avatar-hero-shell,
+html[data-battle-mobile-stack="true"] #app[data-phase="replay"] .battle-scene-avatar .avatar-hero-shell {
+  max-height: var(--battle-hero-card-h, 180px);
+}
+
+/* Без декоративных рамок на панелях боя */
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-scene-avatar,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-scene-avatar,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #player-avatar-panel,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #player-avatar-panel,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #enemy-avatar-panel,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #enemy-avatar-panel,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .avatar-hero-stage,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar-hero-stage,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .portrait-zoom-clip,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .portrait-zoom-clip {
+  border: none;
+  outline: none;
+  box-shadow: none;
 }

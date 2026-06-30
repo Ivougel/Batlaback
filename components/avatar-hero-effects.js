@@ -71,6 +71,26 @@ function renderAvatarBarsHTML(profile, team) {
   `;
 }
 
+function renderAvatarWeaponBadgeHTML(profile) {
+  const icon = profile.weaponIcon || "⚔️";
+  const kind = profile.weaponKind || "melee";
+  const label = escapeProfileHtml(profile.weaponLabel || "Оружие");
+  return `<div class="avatar-hero-weapon-badge avatar-hero-weapon-badge--${escapeProfileHtml(kind)}" title="${label}" aria-label="${label}">${icon}</div>`;
+}
+
+function syncAvatarWeaponBadge(shell, profile) {
+  if (!shell || !profile) return;
+  const badge = shell.querySelector(".avatar-hero-weapon-badge");
+  if (!badge) return;
+  const icon = profile.weaponIcon || "⚔️";
+  const kind = profile.weaponKind || "melee";
+  const label = profile.weaponLabel || "Оружие";
+  badge.textContent = icon;
+  badge.title = label;
+  badge.setAttribute("aria-label", label);
+  badge.className = `avatar-hero-weapon-badge avatar-hero-weapon-badge--${kind}`;
+}
+
 function renderAvatarHeroHTML(profile, team) {
   const className = escapeProfileHtml(profile.className || "—");
   const icon = profile.classIconSrc
@@ -91,6 +111,7 @@ function renderAvatarHeroHTML(profile, team) {
                tabindex="0"
                aria-label="${className}">${icon}</div>
         </div>
+        ${renderAvatarWeaponBadgeHTML(profile)}
       </div>
       <div class="avatar-hero-effects-panel avatar-effects-float" aria-hidden="true">
         <div class="avatar-hero-status-zones" aria-hidden="true">
@@ -262,6 +283,7 @@ function syncAvatarHeroEffects(team, profile, state) {
   }
 
   shell.classList.toggle("avatar-hero-has-buffs", activeBuffs.length > 0);
+  syncAvatarWeaponBadge(shell, profile);
   shell.classList.toggle("avatar-hero-has-debuffs", debuffs.length > 0);
   barsRoot.classList.toggle("avatar-hero-has-buffs", activeBuffs.length > 0);
   barsRoot.classList.toggle("avatar-hero-has-debuffs", debuffs.length > 0);

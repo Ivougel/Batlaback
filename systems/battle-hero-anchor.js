@@ -3,6 +3,12 @@
  */
 
 const BattleHeroAnchor = (() => {
+  /** Нормированные позиции слотов внутри combat floor (#battle-thought-arena). */
+  const COMBAT_FLOOR_ANCHOR = {
+    player: { x: 0.20, y: 0.40 },
+    enemy: { x: 0.80, y: 0.40 },
+  };
+
   function viewportMin() {
     const vv = window.visualViewport;
     return Math.min(vv?.width ?? window.innerWidth, vv?.height ?? window.innerHeight);
@@ -16,8 +22,47 @@ const BattleHeroAnchor = (() => {
       && (phase === "battle" || phase === "replay");
   }
 
+  /** Боевой пол (дуэль) — нижняя полоса под портретами, на всех tier. */
+  function usesCombatFloorAnchors() {
+    return isFlankArenaBattle();
+  }
+
+  /** @deprecated alias */
+  function shouldAnchorThoughtBelowHero() {
+    return usesCombatFloorAnchors();
+  }
+
+  function getBattleHudEl(side) {
+    return document.getElementById(side === "enemy" ? "battle-hud-enemy" : "battle-hud-player");
+  }
+
+  function getCombatFloorEl() {
+    return document.getElementById("battle-thought-arena");
+  }
+
+  function getCombatFloorRect() {
+    const r = getCombatFloorEl()?.getBoundingClientRect();
+    if (r && r.width > 8 && r.height > 8) return r;
+    return null;
+  }
+
+  function thoughtSlotGapPx() {
+    const raw = getComputedStyle(document.documentElement).getPropertyValue("--ui-scale").trim();
+    const scale = Number.parseFloat(raw) || 1;
+    return Math.round(6 * scale);
+  }
+
+  function readCssPx(name, fallback = 0) {
+    const raw = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    const n = Number.parseFloat(raw);
+    return Number.isFinite(n) ? n : fallback;
+  }
+
   function thoughtSlotSize(vmin = viewportMin()) {
-    return Math.round(Math.min(112, Math.max(68, vmin * 0.12)));
+    const floor = getCombatFloorRect();
+    const fromFloor = floor ? Math.round(floor.height * 0.70) : 0;
+    const fromVmin = Math.round(vmin * 0.19);
+    return Math.round(Math.min(172, Math.max(100, Math.max(fromFloor, fromVmin))));
   }
 
   function getThoughtSlotEl(side) {
@@ -39,6 +84,61 @@ const BattleHeroAnchor = (() => {
     return ar;
   }
 
+  function getHeroColumnCenterX(side) {
+    const ar = getAvatarAnchorRect(side);
+    if (ar) return ar.left + ar.width / 2;
+
+    const panelId = side === "enemy" ? "enemy-avatar-panel" : "player-avatar-panel";
+    const panelRect = document.getElementById(panelId)?.getBoundingClientRect();
+    if (panelRect && panelRect.width > 8) {
+      return panelRect.left + panelRect.width / 2;
+    }
+
+    const zoneLeftVar = side === "enemy" ? "--battle-enemy-zone-left" : "--battle-player-zone-left";
+    const zoneWidthVar = side === "enemy" ? "--battle-enemy-zone-width" : "--battle-player-zone-width";
+    const objectsLayer = document.getElementById("layer-objects");
+    const layoutRect = objectsLayer?.getBoundingClientRect();
+    if (layoutRect && layoutRect.width > 0) {
+      const zoneLeft = readCssPx(zoneLeftVar, 0);
+      const zoneW = readCssPx(zoneWidthVar, 120);
+      return layoutRect.left + zoneLeft + zoneW / 2;
+    }
+
+    return null;
+  }
+
+  /** Позиция thought-slot в viewport (px) — под колонкой героя, в combat floor. */
+  function getThoughtSlotAnchor(side) {
+    const floor = getCombatFloorRect();
+    const size = thoughtSlotSize();
+    const cx = getHeroColumnCenterX(side);
+
+    if (floor && cx != null) {
+      const gap = thoughtSlotGapPx();
+      const cy = floor.top + gap + size / 2;
+      return {
+        cx,
+        cy,
+        top: cy - size / 2,
+        left: cx - size / 2,
+        size,
+      };
+    }
+
+    const ar = getAvatarAnchorRect(side);
+    if (!ar) return null;
+
+    const gap = thoughtSlotGapPx();
+    const fallbackCx = ar.left + ar.width / 2;
+    return {
+      cx: fallbackCx,
+      cy: ar.bottom + gap + size / 2,
+      top: ar.bottom + gap,
+      left: fallbackCx - size / 2,
+      size,
+    };
+  }
+
   /** Центр слота эмодзи-аватара в viewport (px). */
   function getThoughtSlotCenter(side) {
     const slot = getThoughtSlotEl(side);
@@ -51,17 +151,16 @@ const BattleHeroAnchor = (() => {
       };
     }
 
-    const ar = getAvatarAnchorRect(side);
-    if (!ar) return null;
+    const anchor = getThoughtSlotAnchor(side);
+    if (anchor) {
+      return {
+        x: anchor.cx,
+        y: anchor.cy,
+        size: anchor.size,
+      };
+    }
 
-    const size = thoughtSlotSize();
-    const cx = ar.left + ar.width / 2;
-    const top = ar.top - size * 0.42;
-    return {
-      x: cx,
-      y: Math.max(4 + size / 2, top + size / 2),
-      size,
-    };
+    return null;
   }
 
   function getFoeThoughtCenter(side) {
@@ -71,11 +170,19 @@ const BattleHeroAnchor = (() => {
   }
 
   return {
+    COMBAT_FLOOR_ANCHOR,
     viewportMin,
     isFlankArenaBattle,
+    usesCombatFloorAnchors,
+    shouldAnchorThoughtBelowHero,
+    getBattleHudEl,
+    getCombatFloorEl,
+    getCombatFloorRect,
+    thoughtSlotGapPx,
     thoughtSlotSize,
     getThoughtSlotEl,
     getAvatarAnchorRect,
+    getThoughtSlotAnchor,
     getThoughtSlotCenter,
     getFoeThoughtCenter,
   };

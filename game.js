@@ -6009,6 +6009,13 @@ function renderPlayerProfiles() {
 
   applyProfileIdentity(playerProfile, playerClass, gold);
   applyProfileIdentity(enemyProfile, enemyClass, enemyGold);
+  if (battleState) {
+    enrichProfileWeaponBadge(playerProfile, battleState.player?.items || playerItems, playerClass);
+    enrichProfileWeaponBadge(enemyProfile, battleState.enemy?.items || enemyItems, enemyClass);
+  } else {
+    enrichProfileWeaponBadge(playerProfile, playerItems, playerClass);
+    enrichProfileWeaponBadge(enemyProfile, enemyItems, enemyClass);
+  }
   playerProfile.backpackPower = computeBackpackPower(playerContainers, playerItems, playerClass);
   enemyProfile.backpackPower = computeBackpackPower(enemyContainers, enemyItems, enemyClass);
 

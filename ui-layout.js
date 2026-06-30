@@ -252,37 +252,55 @@
     syncHeroAttackSlotAnchors();
   }
 
-  /** Зона атакующей экипировки — под HP/статами (L2, синие области макета). */
+  /** Зона атакующей экипировки — в combat floor по колонкам героев. */
   function syncHeroAttackSlotAnchors() {
     const root = document.documentElement;
     if (root.dataset.battleHeroPlacement !== "flank-arena") return;
 
     const viewport = document.getElementById("prep-field-column");
     const sceneUi = document.getElementById("battle-scene-ui");
+    const objectsLayer = document.getElementById("layer-objects");
     if (!viewport || !sceneUi) return;
 
-    const vpRect = viewport.getBoundingClientRect();
     const sceneRect = sceneUi.getBoundingClientRect();
     const uiScale = readCssPx("--ui-scale", 1);
     const gap = Math.round(6 * uiScale);
     const minH = Math.round(76 * uiScale);
+    const useCombatFloor = typeof BattleHeroAnchor !== "undefined"
+      && BattleHeroAnchor.usesCombatFloorAnchors();
+    const floorRect = useCombatFloor ? BattleHeroAnchor.getCombatFloorRect() : null;
+    const layoutRect = objectsLayer?.getBoundingClientRect();
 
     [
-      { slotId: "player-attack-arena", hudId: "battle-hud-player" },
-      { slotId: "enemy-attack-arena", hudId: "battle-hud-enemy" },
-    ].forEach(({ slotId, hudId }) => {
+      { slotId: "player-attack-arena", hudId: "battle-hud-player", side: "player", zoneLeftVar: "--battle-player-zone-left", zoneWidthVar: "--battle-player-zone-width" },
+      { slotId: "enemy-attack-arena", hudId: "battle-hud-enemy", side: "enemy", zoneLeftVar: "--battle-enemy-zone-left", zoneWidthVar: "--battle-enemy-zone-width" },
+    ].forEach(({ slotId, hudId, side, zoneLeftVar, zoneWidthVar }) => {
       const slot = document.getElementById(slotId);
       const hud = document.getElementById(hudId);
       if (!slot || !hud) return;
 
-      const hudRect = hud.getBoundingClientRect();
-      if (hudRect.width <= 0) return;
+      let left;
+      let top;
+      let width;
+      let height;
 
-      const left = hudRect.left - sceneRect.left;
-      const top = hudRect.bottom - sceneRect.top + gap;
-      const width = hudRect.width;
-      const panelBottom = sceneRect.bottom - gap;
-      const height = Math.max(minH, panelBottom - top);
+      if (floorRect && layoutRect && layoutRect.width > 0) {
+        const zoneLeft = readCssPx(zoneLeftVar, 0);
+        const zoneW = readCssPx(zoneWidthVar, 120);
+        left = layoutRect.left + zoneLeft - sceneRect.left;
+        top = floorRect.top - sceneRect.top;
+        width = zoneW;
+        height = Math.max(minH, floorRect.height);
+      } else {
+        const hudRect = hud.getBoundingClientRect();
+        if (hudRect.width <= 0) return;
+
+        left = hudRect.left - sceneRect.left;
+        top = hudRect.bottom - sceneRect.top + gap;
+        width = hudRect.width;
+        const panelBottom = sceneRect.bottom - gap;
+        height = Math.max(minH, panelBottom - top);
+      }
 
       slot.style.position = "absolute";
       slot.style.left = `${Math.round(left)}px`;
@@ -310,6 +328,7 @@
       "--mobile-battle-portrait-h",
       "--mobile-battle-hero-img-h",
       "--mobile-battle-thought-arena-min-h",
+      "--battle-hero-card-h",
       "--prep-canvas-display-w",
       "--prep-canvas-display-h",
       "--prep-shop-fab-top",
@@ -477,13 +496,42 @@
 
   /**
    * Три зоны hero-row по UI-макету (не по gap между рюкзаками на canvas):
-   * ~28% player | ~44% emoji arena | ~28% enemy
+   * desktop ~28% player | ~44% emoji arena | ~28% enemy
+   * mobile stack: 50% | 50% карточки сверху, арена — отдельной полосой ниже
    */
-  function computeBattleHeroRowZones(layoutWidth, _layoutRect, _canvasRect, heroColW, edgePad) {
+  function computeBattleHeroRowZones(layoutWidth, _layoutRect, _canvasRect, heroColW, edgePad, opts = {}) {
     const innerW = Math.max(320, layoutWidth - edgePad * 2);
-    const playerShare = 0.28;
-    const arenaShare = 0.44;
-    const enemyShare = 0.28;
+    const uiScale = opts.uiScale ?? 1;
+
+    if (opts.mobileStack === true) {
+      const cardGap = Math.max(6, Math.round(6 * uiScale));
+      const cardW = Math.floor((innerW - cardGap) / 2);
+      const innerPad = Math.max(4, edgePad);
+      const playerColW = Math.max(
+        heroColW,
+        Math.min(cardW - innerPad, cardW - innerPad * 2),
+      );
+      const enemyColW = playerColW;
+      return {
+        mobileStack: true,
+        colW: Math.min(playerColW, enemyColW),
+        playerColW,
+        enemyColW,
+        playerZoneLeft: edgePad,
+        playerZoneW: cardW,
+        playerPanelLeft: edgePad + Math.max(0, Math.floor((cardW - playerColW) / 2)),
+        enemyZoneLeft: edgePad + cardW + cardGap,
+        enemyZoneW: cardW,
+        enemyPanelLeft: edgePad + cardW + cardGap + Math.max(0, Math.floor((cardW - enemyColW) / 2)),
+        arenaLeft: edgePad,
+        arenaW: innerW,
+      };
+    }
+
+    const shares = opts.zoneShares || { player: 0.28, arena: 0.44, enemy: 0.28 };
+    const playerShare = shares.player;
+    const arenaShare = shares.arena;
+    const enemyShare = shares.enemy;
 
     let playerZoneW = Math.round(innerW * playerShare);
     let arenaW = Math.round(innerW * arenaShare);
@@ -539,7 +587,7 @@
     };
   }
 
-  function applyBattleHeroRowZoneVars(root, fieldCol, zones, heroRowTop, heroZoneH) {
+  function applyBattleHeroRowZoneVars(root, fieldCol, zones, heroRowTop, heroZoneH, combatFloor = null) {
     const entries = [
       ["--battle-hero-row-top", heroRowTop],
       ["--battle-hero-zone-h-active", heroZoneH],
@@ -551,6 +599,12 @@
       ["--battle-arena-zone-left", zones.arenaLeft],
       ["--battle-arena-zone-width", zones.arenaW],
     ];
+    if (combatFloor) {
+      entries.push(
+        ["--battle-combat-floor-top", combatFloor.top],
+        ["--battle-combat-floor-h", combatFloor.height],
+      );
+    }
     entries.forEach(([name, value]) => {
       root.style.setProperty(name, `${Math.round(value)}px`);
       fieldCol?.style.setProperty(name, `${Math.round(value)}px`);
@@ -575,18 +629,25 @@
   }
 
   function usesTabletBattleThoughtCorners() {
-    return false;
+    return typeof BattleHeroAnchor !== "undefined"
+      && BattleHeroAnchor.usesCombatFloorAnchors();
   }
 
-  /** Эмодзи-аватар: фиксированно над портретом героя (mobile + tablet). */
+  /** Эмодзи-аватар: в combat floor (нижняя полоса дуэли) на всех tier. */
   function syncHeroEmotionSlotAnchors(opts = {}) {
     const root = document.documentElement;
     if (root.dataset.battleHeroPlacement !== "flank-arena") {
       root.removeAttribute("data-tablet-thought-corners");
+      root.removeAttribute("data-thought-slot-below-hero");
+      root.removeAttribute("data-battle-combat-floor");
       return;
     }
 
-    root.dataset.tabletThoughtCorners = "false";
+    const combatFloor = typeof BattleHeroAnchor !== "undefined"
+      && BattleHeroAnchor.usesCombatFloorAnchors();
+    root.dataset.battleCombatFloor = combatFloor ? "true" : "false";
+    root.dataset.tabletThoughtCorners = combatFloor ? "true" : "false";
+    root.dataset.thoughtSlotBelowHero = combatFloor ? "true" : "false";
 
     const vmin = Math.min(
       window.visualViewport?.width ?? window.innerWidth,
@@ -597,32 +658,39 @@
       : Math.round(Math.min(112, Math.max(68, vmin * 0.12)));
 
     [
-      { slotId: "player-thought-slot", avatarSlotId: "player-avatar-slot", biasX: 0.5 },
-      { slotId: "enemy-thought-slot", avatarSlotId: "enemy-avatar-slot", biasX: 0.5 },
-    ].forEach(({ slotId, avatarSlotId, biasX }) => {
+      { slotId: "player-thought-slot", side: "player" },
+      { slotId: "enemy-thought-slot", side: "enemy" },
+    ].forEach(({ slotId, side }) => {
       const thoughtSlot = document.getElementById(slotId);
       if (!thoughtSlot) return;
 
-      const ar = typeof BattleHeroAnchor !== "undefined"
-        ? BattleHeroAnchor.getAvatarAnchorRect(
-          slotId === "enemy-thought-slot" ? "enemy" : "player",
-        )
-        : null;
-      const avatarSlot = document.getElementById(avatarSlotId);
-      const fallbackAr = !ar && avatarSlot
-        ? (avatarSlot.querySelector(".avatar-hero-shell") || avatarSlot).getBoundingClientRect()
-        : null;
-      const anchorRect = ar || fallbackAr;
-      if (!anchorRect || anchorRect.width <= 4) return;
+      let cx;
+      let top;
+      let slotSize = size;
 
-      const cx = anchorRect.left + anchorRect.width * biasX;
-      const top = anchorRect.top - size * 0.42;
+      if (combatFloor && typeof BattleHeroAnchor !== "undefined") {
+        const anchor = BattleHeroAnchor.getThoughtSlotAnchor(side);
+        if (anchor) {
+          cx = anchor.cx;
+          top = anchor.top;
+          slotSize = anchor.size;
+        }
+      }
+
+      if (cx == null || top == null) {
+        const ar = typeof BattleHeroAnchor !== "undefined"
+          ? BattleHeroAnchor.getAvatarAnchorRect(side)
+          : null;
+        if (!ar || ar.width <= 4) return;
+        cx = ar.left + ar.width / 2;
+        top = ar.top - slotSize * 0.42;
+      }
 
       thoughtSlot.style.position = "fixed";
-      thoughtSlot.style.left = `${Math.round(cx - size / 2)}px`;
+      thoughtSlot.style.left = `${Math.round(cx - slotSize / 2)}px`;
       thoughtSlot.style.top = `${Math.round(Math.max(4, top))}px`;
-      thoughtSlot.style.width = `${size}px`;
-      thoughtSlot.style.height = `${size}px`;
+      thoughtSlot.style.width = `${slotSize}px`;
+      thoughtSlot.style.height = `${slotSize}px`;
       thoughtSlot.style.right = "auto";
       thoughtSlot.style.bottom = "auto";
       thoughtSlot.style.zIndex = "26";
@@ -648,6 +716,7 @@
     const root = document.documentElement;
     if (!fieldCol || !canvas || !sceneUi || !objectsLayer) return;
 
+    root.dataset.battleCombatFloor = "true";
     ensureFlankBattleSceneUiMetrics(sceneUi);
 
     const layoutRect = objectsLayer.getBoundingClientRect();
@@ -673,10 +742,38 @@
     const rowGap = typeof getVisualExperimentHeroRowGap === "function"
       ? getVisualExperimentHeroRowGap(uiScale)
       : Math.round(8 * uiScale);
-    const sceneTop = root.dataset.prepLayout === "mobile"
+    const mobileStack = root.dataset.prepLayout === "mobile";
+    const tabletSide = root.dataset.tabletSideFit === "true"
+      || root.dataset.tabletPrepHero === "true";
+    if (mobileStack) {
+      root.dataset.battleMobileStack = "true";
+    } else {
+      root.removeAttribute("data-battle-mobile-stack");
+    }
+
+    const sceneTop = mobileStack
       ? 0
       : readCssPx("--prep-scene-top", 14);
-    const heroRowTopMax = Math.max(rowGap, layoutHeight - heroZoneH - Math.round(6 * uiScale));
+    const heroCardH = mobileStack
+      ? readCssPx("--battle-hero-card-h", Math.round(heroZoneH * 0.92))
+      : heroZoneH;
+    const arenaGap = Math.round(8 * uiScale);
+    const vmin = Math.min(
+      window.visualViewport?.width ?? window.innerWidth,
+      window.visualViewport?.height ?? window.innerHeight,
+    );
+    const thoughtSizeEst = typeof BattleHeroAnchor !== "undefined"
+      ? BattleHeroAnchor.thoughtSlotSize(vmin)
+      : Math.round(Math.min(172, Math.max(100, vmin * 0.19)));
+    const combatFloorMin = Math.max(
+      readCssPx("--battle-thought-arena-min-h", 110),
+      Math.round(layoutHeight * 0.24),
+      thoughtSizeEst + Math.round(28 * uiScale),
+    );
+    const heroRowTopMax = Math.max(
+      rowGap,
+      layoutHeight - heroCardH - arenaGap - combatFloorMin - toolbarReserve - rowGap,
+    );
     const heroRowTop = Math.max(
       rowGap,
       Math.min(sceneTop + rowGap, heroRowTopMax),
@@ -689,22 +786,37 @@
       null,
       heroColW,
       edgePad,
+      {
+        mobileStack,
+        uiScale,
+        zoneShares: tabletSide && !mobileStack
+          ? { player: 0.24, arena: 0.52, enemy: 0.24 }
+          : null,
+      },
     );
-    applyBattleHeroRowZoneVars(root, fieldCol, zones, heroRowTop, heroZoneH);
+    const combatFloorTop = heroRowTop + heroCardH + arenaGap;
+    const combatFloorH = Math.max(
+      combatFloorMin,
+      layoutHeight - combatFloorTop - toolbarReserve - arenaGap,
+    );
+    applyBattleHeroRowZoneVars(root, fieldCol, zones, heroRowTop, heroCardH, {
+      top: combatFloorTop,
+      height: combatFloorH,
+    });
 
     placeBattleHeroPanel(
       document.getElementById("player-avatar-panel"),
       zones.playerPanelLeft + sceneOffsetX,
       heroRowTop,
       zones.playerColW,
-      heroZoneH,
+      heroCardH,
     );
     placeBattleHeroPanel(
       document.getElementById("enemy-avatar-panel"),
       zones.enemyPanelLeft + sceneOffsetX,
       heroRowTop,
       zones.enemyColW,
-      heroZoneH,
+      heroCardH,
     );
 
     const thoughtArena = document.getElementById("battle-thought-arena");
@@ -712,16 +824,20 @@
       thoughtArena.style.position = "absolute";
       thoughtArena.style.left = `${zones.arenaLeft}px`;
       thoughtArena.style.width = `${zones.arenaW}px`;
-      thoughtArena.style.top = `${heroRowTop}px`;
-      thoughtArena.style.height = `${Math.round(heroZoneH)}px`;
-      thoughtArena.style.maxHeight = `${Math.round(heroZoneH)}px`;
+      thoughtArena.style.top = `${Math.round(combatFloorTop)}px`;
+      thoughtArena.style.height = `${Math.round(combatFloorH)}px`;
+      thoughtArena.style.maxHeight = `${Math.round(combatFloorH)}px`;
       thoughtArena.style.right = "auto";
       thoughtArena.style.bottom = "auto";
       thoughtArena.style.minHeight = `${readCssPx("--battle-thought-arena-min-h", 110)}px`;
     }
 
-    syncHeroEmotionSlotAnchors();
-    syncHeroAttackSlotAnchors();
+    if (typeof syncBattleHudAnchors === "function") {
+      syncBattleHudAnchors();
+    } else {
+      syncHeroEmotionSlotAnchors();
+      syncHeroAttackSlotAnchors();
+    }
   }
 
   function syncBattleSceneGridMetrics() {
@@ -809,8 +925,28 @@
     } else {
       root.removeAttribute("data-battle-hero-placement");
       root.removeAttribute("data-battle-hero-anchor");
+      root.removeAttribute("data-battle-combat-floor");
       clearFlankHeroInlineStyles();
     }
+  }
+
+  /** CSS vars на html и #app — иначе #app[data-phase=battle] перебивает наследование. */
+  function setBattleLayoutVar(name, value) {
+    const root = document.documentElement;
+    const app = document.getElementById("app");
+    root.style.setProperty(name, value);
+    if (app && (app.dataset.phase === "battle" || app.dataset.phase === "replay")) {
+      app.style.setProperty(name, value);
+    }
+  }
+
+  function clearBattleLayoutVars(names) {
+    const root = document.documentElement;
+    const app = document.getElementById("app");
+    names.forEach((name) => {
+      root.style.removeProperty(name);
+      app?.style.removeProperty(name);
+    });
   }
 
   const BATTLE_LAYOUT_VAR_NAMES = [
@@ -827,6 +963,8 @@
     "--battle-enemy-zone-width",
     "--battle-arena-zone-left",
     "--battle-arena-zone-width",
+    "--battle-combat-floor-top",
+    "--battle-combat-floor-h",
     "--desktop-battle-hero-zone-h",
     "--desktop-battle-hero-img-h",
     "--desktop-battle-hero-col-w",
@@ -857,20 +995,25 @@
     let chromePad;
 
     if (mobileLayout) {
-      heroZone = Math.min(300, Math.max(200, Math.round(vh * 0.32)));
-      arenaMin = Math.max(130, Math.round(vh * 0.18));
-      heroColW = Math.round(Math.min(180, Math.max(108, stageW * 0.24)));
-      heroImgH = Math.round(Math.min(200, Math.max(132, heroZone * 0.55)));
-      portraitZoom = 2.5;
+      const heroCardH = Math.min(200, Math.max(130, Math.round(vh * 0.22)));
+      heroZone = heroCardH;
+      arenaMin = Math.max(160, Math.round(vh * 0.30));
+      heroColW = Math.round(Math.min(200, Math.max(140, stageW * 0.46)));
+      heroImgH = Math.round(Math.min(118, Math.max(84, heroCardH * 0.50)));
+      portraitZoom = 1.55;
       chromePad = 10;
+      setBattleLayoutVar("--battle-hero-card-h", `${heroCardH}px`);
+      setBattleLayoutVar("--battle-portrait-object-y", "8%");
     } else if (tabletSide) {
-      heroZone = Math.min(360, Math.max(220, Math.round((vh - hudReserve) * 0.38)));
-      arenaMin = Math.max(96, Math.round(vh * 0.12));
-      heroColW = Math.round(Math.min(200, Math.max(120, stageW * 0.20)));
-      heroImgH = Math.round(Math.min(210, Math.max(150, heroZone * 0.50)));
-      portraitZoom = 0.95;
+      heroZone = Math.min(320, Math.max(190, Math.round((vh - hudReserve) * 0.30)));
+      arenaMin = Math.max(120, Math.round(vh * 0.20));
+      heroColW = Math.round(Math.min(190, Math.max(118, stageW * 0.19)));
+      heroImgH = Math.round(Math.min(168, Math.max(118, heroZone * 0.42)));
+      portraitZoom = 0.82;
       chromePad = 16;
-      root.style.setProperty("--tablet-battle-chrome-bottom", `${Math.max(hudReserve, chromePad)}px`);
+      setBattleLayoutVar("--battle-portrait-object-y", "14%");
+      setBattleLayoutVar("--tablet-battle-hero-img-h", `${heroImgH}px`);
+      setBattleLayoutVar("--tablet-battle-chrome-bottom", `${Math.max(hudReserve, chromePad)}px`);
     } else if (tabletPortrait) {
       heroZone = Math.min(320, Math.max(180, Math.round((vh - hudReserve) * 0.36)));
       arenaMin = Math.max(88, Math.round(vh * 0.10));
@@ -880,13 +1023,14 @@
       chromePad = 12;
       root.style.setProperty("--tablet-battle-chrome-bottom", `${Math.max(hudReserve, chromePad)}px`);
     } else {
-      heroZone = Math.min(380, Math.max(220, Math.round((vh - hudReserve) * 0.34)));
-      arenaMin = Math.max(140, Math.round(vh * 0.18));
-      heroColW = Math.round(Math.min(280, Math.max(200, stageW * 0.17)));
-      heroImgH = Math.round(Math.min(240, Math.max(160, heroZone * 0.5)));
-      portraitZoom = 1.15;
+      heroZone = Math.min(340, Math.max(200, Math.round((vh - hudReserve) * 0.28)));
+      arenaMin = Math.max(130, Math.round(vh * 0.22));
+      heroColW = Math.round(Math.min(260, Math.max(180, stageW * 0.17)));
+      heroImgH = Math.round(Math.min(200, Math.max(140, heroZone * 0.44)));
+      portraitZoom = 0.95;
       chromePad = 20;
-      root.style.setProperty("--tablet-battle-chrome-bottom", `${Math.max(hudReserve, 8)}px`);
+      setBattleLayoutVar("--battle-portrait-object-y", "16%");
+      setBattleLayoutVar("--tablet-battle-chrome-bottom", `${Math.max(hudReserve, 8)}px`);
     }
 
     let scale = 0;
@@ -926,20 +1070,20 @@
     setBattleArenaLayout(true);
     setBattleHeroPlacement("flank-arena");
 
-    root.style.setProperty("--battle-hero-col-w", `${heroColW}px`);
-    root.style.setProperty("--battle-hero-img-h", `${heroImgH}px`);
-    root.style.setProperty("--battle-thought-arena-min-h", `${arenaMin}px`);
-    root.style.setProperty("--battle-hero-zone-h", `${heroZone}px`);
-    root.style.setProperty("--battle-portrait-zoom", String(portraitZoom));
-    root.style.setProperty("--desktop-battle-hero-zone-h", `${heroZone}px`);
-    root.style.setProperty("--desktop-battle-hero-img-h", `${heroImgH}px`);
-    root.style.setProperty("--desktop-battle-hero-col-w", `${heroColW}px`);
-    root.style.setProperty("--desktop-battle-thought-arena-min-h", `${arenaMin}px`);
-    root.style.setProperty("--battle-canvas-display-w", `${w}px`);
-    root.style.setProperty("--battle-canvas-display-h", `${ch}px`);
+    setBattleLayoutVar("--battle-hero-col-w", `${heroColW}px`);
+    setBattleLayoutVar("--battle-hero-img-h", `${heroImgH}px`);
+    setBattleLayoutVar("--battle-thought-arena-min-h", `${arenaMin}px`);
+    setBattleLayoutVar("--battle-hero-zone-h", `${heroZone}px`);
+    setBattleLayoutVar("--battle-portrait-zoom", String(portraitZoom));
+    setBattleLayoutVar("--desktop-battle-hero-zone-h", `${heroZone}px`);
+    setBattleLayoutVar("--desktop-battle-hero-img-h", `${heroImgH}px`);
+    setBattleLayoutVar("--desktop-battle-hero-col-w", `${heroColW}px`);
+    setBattleLayoutVar("--desktop-battle-thought-arena-min-h", `${arenaMin}px`);
+    setBattleLayoutVar("--battle-canvas-display-w", `${w}px`);
+    setBattleLayoutVar("--battle-canvas-display-h", `${ch}px`);
 
     if (mobileLayout) {
-      root.style.setProperty("--mobile-battle-portrait-h", `${heroImgH}px`);
+      setBattleLayoutVar("--mobile-battle-portrait-h", `${heroImgH}px`);
       setMobileBattleDisplayVars(w, ch, cssW);
     }
 
@@ -963,7 +1107,7 @@
     if (phase !== "battle" && phase !== "replay") {
       setBattleArenaLayout(false);
       setBattleHeroPlacement(null);
-      BATTLE_LAYOUT_VAR_NAMES.forEach((name) => root.style.removeProperty(name));
+      clearBattleLayoutVars(BATTLE_LAYOUT_VAR_NAMES);
     }
 
     if (phase === "battle" || phase === "replay") {

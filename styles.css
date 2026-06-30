@@ -7050,18 +7050,18 @@ html[data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-effects-float 
   max-height: calc(220px * var(--ui-scale));
 }
 
-/* Battle portraits: iPad landscape — cap stage height, reduce zoom */
+/* Battle portraits: iPad landscape — cap stage height, reduce zoom (не flank-arena) */
 @media (min-width: 900px) and (max-width: 1200px) {
-  .avatar-hero-stage {
+  html:not([data-battle-hero-placement="flank-arena"]) .avatar-hero-stage {
     max-height: calc(180px * var(--ui-scale));
   }
 
-  :root {
+  html:not([data-battle-hero-placement="flank-arena"]) {
     --battle-portrait-zoom: 1.3;
   }
 
-  #app[data-phase="battle"],
-  #app[data-phase="replay"] {
+  html:not([data-battle-hero-placement="flank-arena"]) #app[data-phase="battle"],
+  html:not([data-battle-hero-placement="flank-arena"]) #app[data-phase="replay"] {
     --battle-portrait-zoom: 1.3;
   }
 }
@@ -7070,16 +7070,16 @@ html[data-tablet-side-fit="true"] #app[data-phase="battle"] .avatar-hero-shell,
 html[data-tablet-side-fit="true"] #app[data-phase="replay"] .avatar-hero-shell,
 html[data-tablet-prep-hero="true"] #app[data-phase="battle"] .avatar-hero-shell,
 html[data-tablet-prep-hero="true"] #app[data-phase="replay"] .avatar-hero-shell {
-  overflow: visible;
+  overflow: hidden;
 }
 
-html[data-tablet-side-fit="true"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-stage,
-html[data-tablet-side-fit="true"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-stage,
-html[data-tablet-prep-hero="true"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-stage,
-html[data-tablet-prep-hero="true"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-stage {
-  flex: 0 0 auto;
-  min-height: calc(140px * var(--ui-scale));
-  overflow: hidden;
+html[data-battle-hero-placement="flank-arena"][data-tablet-side-fit="true"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-stage,
+html[data-battle-hero-placement="flank-arena"][data-tablet-side-fit="true"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-stage,
+html[data-battle-hero-placement="flank-arena"][data-tablet-prep-hero="true"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-stage,
+html[data-battle-hero-placement="flank-arena"][data-tablet-prep-hero="true"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-stage {
+  min-height: 0;
+  max-height: var(--battle-hero-img-h, var(--tablet-battle-hero-img-h, 168px));
+  height: var(--battle-hero-img-h, var(--tablet-battle-hero-img-h, 168px));
 }
 
 #app[data-phase="battle"] .avatar-damage-stacks,
