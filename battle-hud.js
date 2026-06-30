@@ -531,20 +531,29 @@ function closeHudPopup() {
   }
 }
 
+function hudTypePx(remSize) {
+  if (typeof LayoutScales !== "undefined") return LayoutScales.typePx(remSize);
+  const root = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+  return Math.round(root * remSize);
+}
+
 function openHudPopup(bbox) {
   const popup = ensureHudPopup();
   if (!popup || !bbox) return;
+  const rowFont = hudTypePx(0.8125);
+  const iconFont = hudTypePx(1);
+  const headerFont = hudTypePx(0.75);
   const rows = (bbox.all || []).map((entry) => {
     const color = HUD_CHIP_COLORS[entry.type] || "#8b949e";
     const val = entry.type === "block"
       ? `+${Math.abs(Math.round(entry.value))}`
       : chipLabel(entry);
-    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:13px">`
-      + `<span style="font-size:16px;width:20px;text-align:center">${entry.icon || "❔"}</span>`
+    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:${rowFont}px">`
+      + `<span style="font-size:${iconFont}px;width:20px;text-align:center">${entry.icon || "❔"}</span>`
       + `<span style="flex:1;color:#c9d1d9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${entry.name || "Предмет"}</span>`
       + `<span style="font-weight:700;color:${color}">${val}</span></div>`;
   }).join("");
-  popup.innerHTML = `<div style="font-size:11px;color:#8b949e;margin-bottom:8px">Все эффекты раунда</div>${rows}`;
+  popup.innerHTML = `<div style="font-size:${headerFont}px;color:#8b949e;margin-bottom:8px">Все эффекты раунда</div>${rows}`;
   popup.hidden = false;
   popup.style.display = "block";
 

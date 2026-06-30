@@ -12,19 +12,15 @@
 
 /* ─── Global mobile typography (393×851 and similar) ─── */
 
-html[data-prep-layout="mobile"] {
-  font-size: 15px;
-}
-
 html[data-prep-layout="mobile"] h3,
 html[data-prep-layout="mobile"] #shop-panel-title {
-  font-size: 0.88rem;
+  font-size: var(--font-md);
 }
 
 html[data-prep-layout="mobile"] #app[data-phase="prep"] #prep-toolbar .stat-round,
 html[data-prep-layout="mobile"] #app[data-phase="prep"] #prep-toolbar .phase-label,
 html[data-prep-layout="mobile"] #app[data-phase="prep"] #shop-panel .shop-side-stat {
-  font-size: 0.85rem;
+  font-size: var(--font-sm);
 }
 
 /* ─── Screens 1–3: mode & class selection ─── */
@@ -44,7 +40,7 @@ html[data-prep-layout="mobile"] .class-modal .class-name {
 
 html[data-prep-layout="mobile"] .class-modal .class-desc,
 html[data-prep-layout="mobile"] .class-modal .class-bonus {
-  font-size: 0.85rem;
+  font-size: var(--font-sm);
 }
 
 html[data-prep-layout="mobile"] .class-modal .game-mode-card .glass-card-icon {
@@ -67,11 +63,11 @@ html[data-prep-layout="mobile"] #class-overlay .class-modal .opponent-class-card
 
 html[data-prep-layout="mobile"] .class-mobile-dock .btn-glass-start,
 html[data-prep-layout="mobile"] .class-mobile-dock .btn-glass-back {
-  font-size: 1rem;
+  font-size: var(--font-lg);
   padding: 14px;
   width: 100%;
   max-width: none;
-  min-height: 48px;
+  min-height: var(--touch-target-min);
 }
 
 html[data-prep-layout="mobile"] .class-mobile-dock:not(.hidden) {
@@ -81,7 +77,7 @@ html[data-prep-layout="mobile"] .class-mobile-dock:not(.hidden) {
 
 html[data-prep-layout="mobile"] .class-modal .class-step-actions .btn-secondary,
 html[data-prep-layout="mobile"] .class-modal .class-step-actions .btn-primary {
-  font-size: 1rem;
+  font-size: var(--font-lg);
   padding: 14px;
   width: 100%;
 }

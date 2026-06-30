@@ -31,7 +31,10 @@ let itemFlightIdCounter = 0;
 const itemFlightDomActive = new Map();
 
 function itemFlightUiScale() {
-  return parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--ui-scale")) || 1;
+  if (typeof LayoutScales !== "undefined") return LayoutScales.gameScale();
+  return parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--game-scale"))
+    || parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--ui-scale"))
+    || 1;
 }
 
 function itemFlightUiPx(n) {

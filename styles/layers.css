@@ -148,7 +148,7 @@
   background: rgba(10, 8, 6, 0.82);
   border: 1px solid rgba(90, 72, 54, 0.45);
   border-radius: 4px;
-  font-size: 0.68rem;
+  font-size: var(--font-xs);
   font-weight: 700;
   color: #8b7d6a;
   letter-spacing: 0.04em;

@@ -418,8 +418,7 @@ function setPrepViewSide(side) {
 
 function shouldHideShopHints() {
   const root = document.documentElement;
-  return root.dataset.tabletSideFit === "true"
-    || root.dataset.tabletPrepHero === "true"
+  return root.dataset.uiSurface === "tablet-side"
     || (root.dataset.prepLayout === "side" && root.dataset.touch === "true");
 }
 

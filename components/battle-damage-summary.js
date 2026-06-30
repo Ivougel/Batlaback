@@ -481,8 +481,12 @@ function renderDamageFlights(state) {
       damageFlightActive.set(fx.id, el);
     }
 
-    const uiScale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--ui-scale")) || 1;
-    const size = 22 * flightScale * uiScale;
+    const gs = typeof LayoutScales !== "undefined"
+      ? LayoutScales.gameScale()
+      : (parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--game-scale"))
+        || parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--ui-scale"))
+        || 1);
+    const size = Math.round(22 * flightScale * gs);
     el.style.fontSize = `${size}px`;
     el.style.opacity = String(alpha);
     el.style.transform = `translate3d(${pt.x}px, ${pt.y}px, 0) translate(-50%, -50%) rotate(${spin}deg) scale(${flightScale})`;

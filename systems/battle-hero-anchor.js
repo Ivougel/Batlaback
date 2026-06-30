@@ -46,10 +46,30 @@ const BattleHeroAnchor = (() => {
     return null;
   }
 
+  function gameScale() {
+    return readCssPx("--game-scale", readCssPx("--ui-scale", 1));
+  }
+
+  const EMOJI_SIZE_BY_PROFILE = {
+    "phone-portrait": { floorRatio: 0.46, vminRatio: 0.12, minPx: 60, maxPx: 96, haloRatio: 0.32 },
+    "phone-landscape": { floorRatio: 0.50, vminRatio: 0.13, minPx: 56, maxPx: 88, haloRatio: 0.34 },
+    "tablet-landscape-side": { floorRatio: 0.62, vminRatio: 0.17, minPx: 92, maxPx: 156, haloRatio: 0.38 },
+    "tablet-portrait": { floorRatio: 0.58, vminRatio: 0.16, minPx: 88, maxPx: 148, haloRatio: 0.38 },
+    "desktop-portrait": { floorRatio: 0.68, vminRatio: 0.19, minPx: 100, maxPx: 172, haloRatio: 0.40 },
+    "desktop-landscape": { floorRatio: 0.68, vminRatio: 0.19, minPx: 100, maxPx: 172, haloRatio: 0.40 },
+  };
+
+  function currentBattleProfile() {
+    return document.documentElement.dataset.battleProfile || "desktop-landscape";
+  }
+
+  function emojiProfile() {
+    return EMOJI_SIZE_BY_PROFILE[currentBattleProfile()]
+      || EMOJI_SIZE_BY_PROFILE["desktop-landscape"];
+  }
+
   function thoughtSlotGapPx() {
-    const raw = getComputedStyle(document.documentElement).getPropertyValue("--ui-scale").trim();
-    const scale = Number.parseFloat(raw) || 1;
-    return Math.round(6 * scale);
+    return Math.round(6 * gameScale());
   }
 
   function readCssPx(name, fallback = 0) {
@@ -58,15 +78,45 @@ const BattleHeroAnchor = (() => {
     return Number.isFinite(n) ? n : fallback;
   }
 
+  function battleEmojiScale() {
+    const raw = getComputedStyle(document.documentElement).getPropertyValue("--battle-emoji-scale").trim();
+    const n = Number.parseFloat(raw);
+    return Number.isFinite(n) && n > 0 ? n : 1;
+  }
+
+  function isMobilePortrait() {
+    const root = document.documentElement;
+    return root.dataset.prepLayout === "mobile" && root.dataset.orientation === "portrait";
+  }
+
+  function isPhoneLandscape() {
+    const root = document.documentElement;
+    return root.dataset.battleProfile === "phone-landscape"
+      || root.dataset.uiSurface === "phone-landscape";
+  }
+
+  function visibleCombatFloorBottom(floorRect) {
+    if (!floorRect) return null;
+    const chrome = readCssPx("--tablet-battle-chrome-bottom", 0)
+      || readCssPx("--bottom-chrome-h-measured", 56);
+    const vv = window.visualViewport;
+    const safeBottom = (vv?.offsetTop ?? 0) + (vv?.height ?? window.innerHeight) - chrome - thoughtSlotGapPx();
+    return Math.min(floorRect.bottom, safeBottom);
+  }
+
   function thoughtSlotEmojiSize(vmin = viewportMin()) {
+    const prof = emojiProfile();
     const floor = getCombatFloorRect();
-    const fromFloor = floor ? Math.round(floor.height * 0.68) : 0;
-    const fromVmin = Math.round(vmin * 0.19);
-    return Math.round(Math.min(172, Math.max(100, Math.max(fromFloor, fromVmin))));
+    const emojiMod = battleEmojiScale();
+    const gs = gameScale();
+
+    const fromFloor = floor ? Math.round(floor.height * prof.floorRatio) : 0;
+    const fromVmin = Math.round(vmin * prof.vminRatio * gs);
+    return Math.round(Math.min(prof.maxPx, Math.max(prof.minPx, Math.max(fromFloor, fromVmin) * emojiMod)));
   }
 
   function thoughtSlotHaloPx(emojiSize = thoughtSlotEmojiSize()) {
-    return Math.round(emojiSize * 0.40);
+    return Math.round(emojiSize * emojiProfile().haloRatio);
   }
 
   /** Размер контейнера слота (эмодзи + орбита спутников). */
@@ -127,7 +177,8 @@ const BattleHeroAnchor = (() => {
 
     if (floor && cx != null) {
       const gap = thoughtSlotGapPx();
-      const cy = floor.bottom - gap - emojiSize / 2;
+      const floorBottom = visibleCombatFloorBottom(floor) ?? floor.bottom;
+      const cy = floorBottom - gap - emojiSize / 2;
       return {
         cx,
         cy,
@@ -197,7 +248,9 @@ const BattleHeroAnchor = (() => {
     getBattleHudEl,
     getCombatFloorEl,
     getCombatFloorRect,
-    thoughtSlotGapPx,
+    isMobilePortrait,
+    isPhoneLandscape,
+    battleEmojiScale,
     thoughtSlotEmojiSize,
     thoughtSlotHaloPx,
     thoughtSlotSize,

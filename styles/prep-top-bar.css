@@ -51,7 +51,7 @@
   backdrop-filter: none;
   pointer-events: none;
   min-height: 0;
-  font-size: calc(0.76rem * var(--ui-scale));
+  font-size: var(--font-sm);
 }
 
 .prep-top-bar .prep-stats-class {
@@ -59,7 +59,7 @@
   margin: 0;
   padding-right: calc(12px * var(--ui-scale));
   border-right: 1px solid rgba(90, 72, 54, 0.45);
-  font-size: calc(0.82rem * var(--ui-scale));
+  font-size: var(--font-md);
   white-space: nowrap;
 }
 

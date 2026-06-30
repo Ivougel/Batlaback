@@ -37,7 +37,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: var(--font-md);
   border: 1.5px dashed var(--border);
   border-radius: 8px;
   background: rgba(13, 17, 23, 0.55);
@@ -96,7 +96,7 @@
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 0.75rem;
+  font-size: var(--font-sm);
   padding: 4px 10px;
   min-height: 28px;
   white-space: nowrap;
@@ -130,7 +130,7 @@ html[data-prep-layout="mobile"] .btn-toggle-doll {
   min-height: 48px;
   border-radius: 50%;
   padding: 0;
-  font-size: 20px;
+  font-size: var(--font-lg);
   background: rgba(22, 27, 34, 0.92);
   border: 1.5px solid var(--border);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
@@ -159,7 +159,7 @@ html[data-prep-layout="mobile"] .btn-toggle-doll {
 
 html[data-prep-layout="mobile"] .btn-toggle-doll::before {
   content: "🪆";
-  font-size: 22px;
+  font-size: var(--font-xl);
 }
 
 /* Мобайл: кукла справа от героя, на его уровне */
@@ -181,7 +181,7 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-doll-layer {
 html[data-prep-layout="mobile"] .prep-doll-layer .doll-slot {
   width: 32px;
   height: 32px;
-  font-size: 14px;
+  font-size: var(--font-sm);
 }
 
 html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-doll-layer.doll-open {
@@ -202,22 +202,22 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-doll-layer.doll-op
 }
 
 /* Tablet prep hero: манекен справа от героя в зоне под полем */
-html[data-tablet-prep-hero="true"] #app[data-phase="prep"][data-doll-open="true"] .prep-field-column {
+html[data-ui-surface="tablet-side"] #app[data-phase="prep"][data-doll-open="true"] .prep-field-column {
   overflow: visible;
 }
 
-html[data-tablet-prep-hero="true"] #app[data-phase="prep"][data-doll-open="true"] .prep-doll-layer {
+html[data-ui-surface="tablet-side"] #app[data-phase="prep"][data-doll-open="true"] .prep-doll-layer {
   bottom: var(--prep-hero-slot-bottom);
   width: var(--doll-layer-w);
   height: var(--doll-layer-h);
 }
 
-html[data-tablet-prep-hero="true"] #app[data-phase="prep"][data-prep-side="enemy"][data-doll-open="true"] .prep-doll-layer {
+html[data-ui-surface="tablet-side"] #app[data-phase="prep"][data-prep-side="enemy"][data-doll-open="true"] .prep-doll-layer {
   left: auto;
   right: calc(var(--prep-hero-slot-left) + var(--prep-hero-slot-width) + var(--prep-hero-slot-gap));
 }
 
-html[data-tablet-side-fit="true"] #app[data-phase="prep"][data-doll-open="true"] .prep-doll-layer {
+html[data-ui-surface="tablet-side"] #app[data-phase="prep"][data-doll-open="true"] .prep-doll-layer {
   --doll-slot-size: 30px;
-  font-size: 13px;
+  font-size: var(--font-sm);
 }

@@ -1,0 +1,50 @@
+/**
+ * Container queries — адаптация карточек по размеру контейнера, не только viewport.
+ */
+
+#class-overlay .class-modal {
+  container-type: size;
+  container-name: class-overlay-modal;
+}
+
+@container class-overlay-modal (max-height: 720px) {
+  #class-overlay .class-modal .class-card.glass-card[data-class],
+  #class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class] {
+    --class-pick-card-min-h: clamp(240px, 44cqh, 380px);
+    --class-pick-hero-min-h: clamp(140px, 28cqh, 240px);
+  }
+
+  #class-overlay .class-modal .game-mode-card.glass-card {
+    padding: 12px 16px;
+  }
+}
+
+@container class-overlay-modal (max-height: 560px) {
+  #class-overlay .class-modal .class-card.glass-card[data-class],
+  #class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class] {
+    --class-pick-card-min-h: clamp(200px, 40cqh, 300px);
+  }
+}
+
+#shop-panel {
+  container-type: inline-size;
+  container-name: shop-panel;
+}
+
+@container shop-panel (max-width: 340px) {
+  #shop-panel .shop-card,
+  #shop-panel .shop-card.empty {
+    min-height: 54px;
+  }
+
+  #shop-panel .shop-item-visual {
+    width: calc(52px * var(--game-scale));
+    height: calc(52px * var(--game-scale));
+  }
+}
+
+@container shop-panel (max-width: 280px) {
+  #shop-panel .shop-card .name {
+    font-size: var(--font-xs);
+  }
+}

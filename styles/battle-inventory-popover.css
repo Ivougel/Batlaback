@@ -48,7 +48,7 @@
 
 .battle-inventory-popover__title {
   margin: 0;
-  font-size: calc(0.78rem * var(--ui-scale, 1));
+  font-size: var(--font-sm);
   font-weight: 700;
   line-height: 1.25;
   color: var(--text);
@@ -107,7 +107,7 @@
 .battle-inventory-popover .board-preview-section-title {
   margin-top: 2px;
   margin-bottom: 4px;
-  font-size: calc(0.68rem * var(--ui-scale, 1));
+  font-size: var(--font-xs);
 }
 
 .battle-inventory-popover .bp-synergy-chips {

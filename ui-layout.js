@@ -59,10 +59,11 @@
       && !window.matchMedia("(pointer: fine)").matches;
   }
 
-  /** Stacked — планшет landscape / узкий desktop. Портрет телефона — mobile (drawer). */
-  function shouldUseMobilePrepLayout(w, h) {
+  /** Портрет телефона — mobile (drawer). Планшет в портрете — stacked, не drawer. */
+  function shouldUseMobilePrepLayout(w, h, tier) {
     if (w > h) return false;
     if (!isTouchDevice() && !isCoarsePointerOnly()) return false;
+    if (tier === "tablet") return false;
     return w <= 768;
   }
 
@@ -76,7 +77,11 @@
   }
 
   function usesTabletPrepHeroLayout(root = document.documentElement) {
-    return root.dataset.tabletPrepHero === "true";
+    return root.dataset.uiSurface === "tablet-side";
+  }
+
+  function isTabletSideLayout(root = document.documentElement) {
+    return root.dataset.uiSurface === "tablet-side";
   }
 
   function computeTabletPrepHeroHeight(columnH, sceneTop = 14) {
@@ -84,8 +89,10 @@
     return Math.round(Math.min(300, Math.max(168, usable * 0.32)));
   }
 
-  function shouldUseStackedPrep(w, h) {
-    if (shouldUseMobilePrepLayout(w, h)) return false;
+  function shouldUseStackedPrep(w, h, tier) {
+    if (shouldUseMobilePrepLayout(w, h, tier)) return false;
+
+    if (h >= w && tier === "tablet") return true;
 
     if (w >= 600 && w <= 1200) return false;
 
@@ -99,10 +106,325 @@
     return false;
   }
 
+  function roundScale(n) {
+    return Math.round(n * 1000) / 1000;
+  }
+
+  /**
+   * Матрица tier × orientation + battle-подпрофиль.
+   * id: phone-portrait | phone-landscape | tablet-portrait | tablet-landscape | desktop-portrait | desktop-landscape
+   */
+  function resolveLayoutProfile(w, h, ctx) {
+    const portrait = h >= w;
+    const orientation = portrait ? "portrait" : "landscape";
+    const { tier, prepLayout, tabletSideFit, tabletPrepHero, touchDev } = ctx;
+
+    let battleProfile;
+    if (prepLayout === "mobile") {
+      battleProfile = "phone-portrait";
+    } else if (tier === "phone" && !portrait) {
+      battleProfile = "phone-landscape";
+    } else if ((tabletSideFit || tabletPrepHero) && !portrait) {
+      battleProfile = "tablet-landscape-side";
+    } else if (portrait && tier !== "desktop") {
+      battleProfile = "tablet-portrait";
+    } else {
+      battleProfile = portrait ? "desktop-portrait" : "desktop-landscape";
+    }
+
+    return {
+      id: `${tier}-${orientation}`,
+      battleProfile,
+      tier,
+      orientation,
+      portrait,
+      prepLayout,
+      touchDev,
+      phoneLandscape: battleProfile === "phone-landscape",
+      mobilePrep: prepLayout === "mobile",
+    };
+  }
+
+  function resolveUiSurface(ctx) {
+    const { prepLayout, tabletSideFit, tabletPrepHero, layoutProfile } = ctx;
+    if (prepLayout === "mobile") return "phone-drawer";
+    if (tabletSideFit || tabletPrepHero) return "tablet-side";
+    if (prepLayout === "stacked" || layoutProfile.id === "tablet-portrait") return "tablet-stacked";
+    if (layoutProfile.id === "phone-landscape") return "phone-landscape";
+    if (layoutProfile.tier === "desktop") return "desktop";
+    return "default";
+  }
+
+  const TYPE_SCALE_BY_TIER = {
+    phone: { floor: 0.88, boost: 1.14 },
+    tablet: { floor: 0.92, boost: 1.06 },
+    desktop: { floor: 0.85, boost: 1 },
+  };
+
+  function computeTypeScale(uiScale, profile) {
+    const cfg = TYPE_SCALE_BY_TIER[profile.tier] || TYPE_SCALE_BY_TIER.desktop;
+    let typeScale = uiScale * cfg.boost;
+    if (profile.touchDev) typeScale = Math.max(typeScale, cfg.floor);
+    return roundScale(Math.max(cfg.floor, Math.min(1.05, typeScale)));
+  }
+
+  function computeGameScale(uiScale, profile) {
+    const shrink = { phone: 0.94, tablet: 0.97, desktop: 1 };
+    const mod = shrink[profile?.tier] ?? 1;
+    return roundScale(Math.max(SCALE_MIN, Math.min(1, uiScale * mod)));
+  }
+
+  /** Prep-раскладка по layoutProfile (tier × orientation). */
+  const PREP_PROFILES = {
+    "phone-portrait": {
+      fitAvailH: 340, fitMinScale: 0.58, fitWidthRatio: 0.36,
+      canvasAvailShare: 0.38, canvasMaxCap: 240,
+      shopRowBase: 70, shopRowMin: 54, shopRowMax: 74,
+      heroSlotHeight: "min(260px, 32vh)", heroSlotMax: 280,
+      sceneAvatarH: 120, sceneAvatarW: 100, dollSlot: 34, characterGap: 6,
+      shopPanelW: 300,
+    },
+    "phone-landscape": {
+      fitAvailH: PREP_SIDE_CONTENT_H, fitMinScale: SCALE_MIN, fitWidthRatio: 1,
+      canvasAvailShare: 0.42, canvasMaxCap: 220,
+      shopRowBase: 66, shopRowMin: 52, shopRowMax: 70,
+      heroSlotHeight: "min(220px, 38vh)", heroSlotMax: 240,
+      sceneAvatarH: 108, sceneAvatarW: 90, dollSlot: 32, characterGap: 6,
+      shopPanelW: 280,
+    },
+    "tablet-portrait": {
+      fitAvailH: PREP_STACKED_CONTENT_H, fitMinScale: SCALE_MIN, fitWidthRatio: 1,
+      canvasAvailShare: 0.34, canvasMaxCap: 240,
+      shopRowBase: 70, shopRowMin: 54, shopRowMax: 74,
+      heroSlotHeight: "min(340px, 40vh)", heroSlotMax: 360,
+      sceneAvatarH: 136, sceneAvatarW: 108, dollSlot: 36, characterGap: 8,
+      shopPanelW: 300,
+    },
+    "tablet-landscape": {
+      fitAvailH: PREP_SIDE_CONTENT_H, fitMinScale: SCALE_MIN, fitWidthRatio: 1,
+      canvasAvailShare: 0.36, canvasMaxCap: 260,
+      shopRowBase: 72, shopRowMin: 56, shopRowMax: 76,
+      heroSlotHeight: "min(320px, 36vh)", heroSlotMax: 380,
+      sceneAvatarH: 148, sceneAvatarW: 118, dollSlot: 38, characterGap: 8,
+      shopPanelW: 310,
+    },
+    "desktop-portrait": {
+      fitAvailH: PREP_STACKED_CONTENT_H, fitMinScale: SCALE_MIN, fitWidthRatio: 1,
+      canvasAvailShare: 0.32, canvasMaxCap: 260,
+      shopRowBase: 72, shopRowMin: 56, shopRowMax: 76,
+      heroSlotHeight: "min(320px, 36vh)", heroSlotMax: 380,
+      sceneAvatarH: 152, sceneAvatarW: 120, dollSlot: 38, characterGap: 8,
+      shopPanelW: 320,
+    },
+    "desktop-landscape": {
+      fitAvailH: PREP_SIDE_CONTENT_H, fitMinScale: SCALE_MIN, fitWidthRatio: 1,
+      canvasAvailShare: 0.30, canvasMaxCap: 280,
+      shopRowBase: 74, shopRowMin: 58, shopRowMax: 78,
+      heroSlotHeight: "min(320px, 36vh)", heroSlotMax: 380,
+      sceneAvatarH: 152, sceneAvatarW: 120, dollSlot: 38, characterGap: 8,
+      shopPanelW: 320,
+    },
+  };
+
+  function applyPrepProfileVars(layoutProfile, fitScale = 1) {
+    const cfg = PREP_PROFILES[layoutProfile.id] || PREP_PROFILES["desktop-landscape"];
+    const root = document.documentElement;
+    root.style.setProperty("--prep-hero-slot-height", cfg.heroSlotHeight);
+    root.style.setProperty("--prep-hero-slot-height-max", `${cfg.heroSlotMax}px`);
+    root.style.setProperty("--prep-scene-avatar-h", `calc(${cfg.sceneAvatarH}px * var(--game-scale))`);
+    root.style.setProperty("--prep-scene-avatar-w", `calc(${cfg.sceneAvatarW}px * var(--game-scale))`);
+    root.style.setProperty("--doll-slot-size", `calc(${cfg.dollSlot}px * var(--game-scale))`);
+    root.style.setProperty("--prep-character-gap", `${cfg.characterGap}px`);
+    root.style.setProperty("--shop-panel-w", `${cfg.shopPanelW}px`);
+    const shopRowH = Math.round(Math.max(
+      cfg.shopRowMin,
+      Math.min(cfg.shopRowMax, cfg.shopRowBase * fitScale),
+    ));
+    root.style.setProperty("--prep-shop-row-h", `${shopRowH}px`);
+    return cfg;
+  }
+
+  function applyFluidGridMetrics(uiScale) {
+    const root = document.documentElement;
+    const cell = Math.round(Math.max(36, Math.min(46, 36 + 10 * uiScale)));
+    const gap = Math.round(Math.max(20, Math.min(36, 20 + 16 * uiScale)));
+    const statsW = Math.round(Math.max(248, Math.min(276, 248 + 28 * uiScale)));
+    root.style.setProperty("--cell-size", `${cell}px`);
+    root.style.setProperty("--grid-gap", `${gap}px`);
+    root.style.setProperty("--battle-stats-panel-w", `${statsW}px`);
+  }
+
+  /** Коэффициенты боевой раскладки по battleProfile (доли vh/vw, min/max). */
+  const BATTLE_PROFILES = {
+    "phone-portrait": {
+      heroFromVh: true, heroVh: 0.19, heroMin: 116, heroMax: 176,
+      arenaVh: 0.22, arenaMin: 108,
+      colMin: 132, colMax: 200, colShare: 0.46,
+      imgRatio: 0.46, imgMin: 76, imgMax: 104,
+      portraitZoom: 1.55, chromePad: 10, portraitObjectY: "8%",
+      emojiScale: 0.72, floorShare: 0.26, heroShare: 0.28,
+    },
+    "phone-landscape": {
+      heroFromVh: false, heroZoneShare: 0.30, heroMin: 104, heroMax: 148,
+      arenaVh: 0.24, arenaMin: 92,
+      colMin: 92, colMax: 132, colShare: 0.21,
+      imgRatio: 0.46, imgMin: 68, imgMax: 96,
+      portraitZoom: 0.92, chromePad: 8, portraitObjectY: "12%",
+      emojiScale: 0.84, floorShare: 0.30, heroShare: 0.32,
+    },
+    "tablet-landscape-side": {
+      heroFromVh: false, heroZoneShare: 0.30, heroMin: 190, heroMax: 320,
+      arenaVh: 0.20, arenaMin: 120,
+      colMin: 118, colMax: 190, colShare: 0.19,
+      imgRatio: 0.42, imgMin: 118, imgMax: 168,
+      portraitZoom: 0.82, chromePad: 16, portraitObjectY: "14%",
+      emojiScale: 1, floorShare: 0.24, heroShare: 0.30,
+      tabletSide: true,
+    },
+    "tablet-portrait": {
+      heroFromVh: false, heroZoneShare: 0.36, heroMin: 180, heroMax: 320,
+      arenaVh: 0.10, arenaMin: 88,
+      colMin: 96, colMax: 150, colShare: 0.22,
+      imgRatio: 0.44, imgMin: 108, imgMax: 180,
+      portraitZoom: 1.05, chromePad: 12, portraitObjectY: "14%",
+      emojiScale: 1, floorShare: 0.22, heroShare: 0.34,
+    },
+    "desktop-portrait": {
+      heroFromVh: false, heroZoneShare: 0.28, heroMin: 200, heroMax: 340,
+      arenaVh: 0.22, arenaMin: 130,
+      colMin: 180, colMax: 260, colShare: 0.17,
+      imgRatio: 0.44, imgMin: 140, imgMax: 200,
+      portraitZoom: 0.95, chromePad: 20, portraitObjectY: "16%",
+      emojiScale: 1, floorShare: 0.24, heroShare: 0.28,
+    },
+    "desktop-landscape": {
+      heroFromVh: false, heroZoneShare: 0.28, heroMin: 200, heroMax: 340,
+      arenaVh: 0.22, arenaMin: 130,
+      colMin: 180, colMax: 260, colShare: 0.17,
+      imgRatio: 0.44, imgMin: 140, imgMax: 200,
+      portraitZoom: 0.95, chromePad: 20, portraitObjectY: "16%",
+      emojiScale: 1, floorShare: 0.24, heroShare: 0.28,
+    },
+  };
+
+  function computeBattleLayoutFromProfile(profileKey, { vh, hudReserve, stageW, measuredFieldH = 0, measuredArenaH = 0 }) {
+    const cfg = BATTLE_PROFILES[profileKey] || BATTLE_PROFILES["desktop-landscape"];
+    const usable = measuredFieldH > 120 ? measuredFieldH : (vh - hudReserve);
+    const heroZone = cfg.heroFromVh
+      ? Math.min(cfg.heroMax, Math.max(cfg.heroMin, Math.round(vh * cfg.heroVh)))
+      : Math.min(cfg.heroMax, Math.max(cfg.heroMin, Math.round(usable * cfg.heroZoneShare)));
+    let arenaMin = Math.max(cfg.arenaMin, Math.round(vh * cfg.arenaVh));
+    if (measuredFieldH > 120 && cfg.floorShare) {
+      const floorBudget = Math.round(measuredFieldH * cfg.floorShare);
+      arenaMin = Math.max(cfg.arenaMin, Math.min(floorBudget, Math.round(measuredFieldH * 0.42)));
+    }
+    if (measuredArenaH > cfg.arenaMin * 0.45) {
+      arenaMin = Math.max(arenaMin, Math.round(measuredArenaH));
+    }
+    const heroColW = Math.round(Math.min(cfg.colMax, Math.max(cfg.colMin, stageW * cfg.colShare)));
+    const heroImgH = Math.round(Math.min(cfg.imgMax, Math.max(cfg.imgMin, heroZone * cfg.imgRatio)));
+    return {
+      cfg,
+      heroZone,
+      arenaMin,
+      heroColW,
+      heroImgH,
+      portraitZoom: cfg.portraitZoom,
+      chromePad: cfg.chromePad,
+    };
+  }
+
+  function applyBattleProfileDataset(root, profileKey) {
+    const cfg = BATTLE_PROFILES[profileKey] || BATTLE_PROFILES["desktop-landscape"];
+    root.dataset.battleProfile = profileKey;
+    if (profileKey === "phone-landscape") {
+      root.dataset.battlePhoneLandscape = "true";
+    } else {
+      root.removeAttribute("data-battle-phone-landscape");
+    }
+    if (profileKey === "phone-portrait") {
+      root.dataset.battleMobileStack = "true";
+    } else {
+      root.removeAttribute("data-battle-mobile-stack");
+    }
+  }
+
   function measurePrepChromeHeight() {
     const app = document.getElementById("app");
     if (!app || app.dataset.phase !== "prep") return 0;
     return measureBottomChromeHeight() + 4;
+  }
+
+  /** Измерение ключевых зон prep после первого layout-прохода. */
+  function measureLayoutZones() {
+    const root = document.documentElement;
+    const app = document.getElementById("app");
+    if (!app) return null;
+
+    const zones = {
+      viewportH: viewportSize().h,
+      appH: app.offsetHeight,
+      topBar: 0,
+      toolbar: 0,
+      canvas: 0,
+      hero: 0,
+      chrome: measureBottomChromeHeight(),
+      used: 0,
+    };
+
+    const topBar = document.getElementById("prep-top-bar");
+    const toolbar = document.getElementById("prep-toolbar");
+    const island = document.getElementById("prep-field-island");
+    const hero = document.querySelector("#app[data-phase=\"prep\"] .prep-character-layer");
+
+    if (topBar && getComputedStyle(topBar).display !== "none") zones.topBar = topBar.offsetHeight;
+    if (toolbar && getComputedStyle(toolbar).display !== "none") zones.toolbar = toolbar.offsetHeight;
+    if (island && getComputedStyle(island).display !== "none") zones.canvas = island.offsetHeight;
+    if (hero && getComputedStyle(hero).display !== "none") zones.hero = hero.offsetHeight;
+
+    zones.used = zones.topBar + zones.toolbar + zones.canvas + zones.hero + zones.chrome;
+    root.style.setProperty("--zone-topbar-h", `${zones.topBar}px`);
+    root.style.setProperty("--zone-toolbar-h", `${zones.toolbar}px`);
+    root.style.setProperty("--zone-canvas-h", `${zones.canvas}px`);
+    root.style.setProperty("--zone-hero-h", `${zones.hero}px`);
+    root.style.setProperty("--zone-chrome-h", `${zones.chrome}px`);
+    root.style.setProperty("--zone-used-h", `${zones.used}px`);
+    return zones;
+  }
+
+  /** Второй проход: поджать canvas, если зоны не влезают в --app-h. */
+  function applyMeasuredZoneFit(zones) {
+    const root = document.documentElement;
+    if (!zones) return;
+
+    const prepLayout = root.dataset.prepLayout;
+    if (prepLayout !== "mobile" && prepLayout !== "stacked") {
+      root.style.removeProperty("--zone-fit-shrink");
+      return;
+    }
+
+    const appH = readCssPx("--app-h", zones.viewportH) || zones.appH;
+    const overflow = zones.used - appH + 8;
+    if (overflow <= 4) {
+      root.style.removeProperty("--zone-fit-shrink");
+      return;
+    }
+
+    const shrink = Math.max(0.86, appH / zones.used);
+    root.style.setProperty("--zone-fit-shrink", String(roundScale(shrink)));
+
+    const canvasMax = readCssPx("--prep-canvas-max-h", null);
+    if (canvasMax != null) {
+      root.style.setProperty("--prep-canvas-max-h", `${Math.round(canvasMax * shrink)}px`);
+      return;
+    }
+
+    if (prepLayout === "mobile") {
+      const cap = readCssPx("--prep-mobile-canvas-cap", null);
+      if (cap != null) {
+        root.style.setProperty("--prep-mobile-canvas-cap", `${Math.round(cap * shrink)}px`);
+      }
+    }
   }
 
   function readCssPx(name, fallback = null) {
@@ -743,8 +1065,8 @@
       ? getVisualExperimentHeroRowGap(uiScale)
       : Math.round(8 * uiScale);
     const mobileStack = root.dataset.prepLayout === "mobile";
-    const tabletSide = root.dataset.tabletSideFit === "true"
-      || root.dataset.tabletPrepHero === "true";
+    const phoneLandscape = root.dataset.battlePhoneLandscape === "true";
+    const tabletSide = isTabletSideLayout(root);
     if (mobileStack) {
       root.dataset.battleMobileStack = "true";
     } else {
@@ -754,7 +1076,7 @@
     const sceneTop = mobileStack
       ? 0
       : readCssPx("--prep-scene-top", 14);
-    const heroCardH = mobileStack
+    let heroCardH = mobileStack
       ? readCssPx("--battle-hero-card-h", Math.round(heroZoneH * 0.92))
       : heroZoneH;
     const arenaGap = Math.round(8 * uiScale);
@@ -765,11 +1087,29 @@
     const thoughtSizeEst = typeof BattleHeroAnchor !== "undefined"
       ? BattleHeroAnchor.thoughtSlotSize(vmin)
       : Math.round(Math.min(172, Math.max(100, vmin * 0.19)));
-    const combatFloorMin = Math.max(
+    let combatFloorMin = Math.max(
       readCssPx("--battle-thought-arena-min-h", 110),
       Math.round(layoutHeight * 0.24),
       thoughtSizeEst + Math.round(28 * uiScale),
     );
+    const usableH = Math.max(148, layoutHeight - toolbarReserve - rowGap);
+
+    if (mobileStack || phoneLandscape) {
+      const prof = BATTLE_PROFILES[root.dataset.battleProfile] || {};
+      const floorShare = prof.floorShare ?? (mobileStack ? 0.26 : 0.30);
+      const heroShare = prof.heroShare ?? (mobileStack ? 0.28 : 0.32);
+      combatFloorMin = Math.max(phoneLandscape ? 84 : 100, Math.round(usableH * floorShare));
+      heroCardH = Math.min(
+        heroCardH,
+        Math.max(phoneLandscape ? 92 : 104, Math.round(usableH * heroShare)),
+      );
+    }
+
+    if (heroCardH + arenaGap + combatFloorMin > usableH) {
+      combatFloorMin = Math.max(phoneLandscape ? 80 : 92, Math.round(usableH * 0.27));
+      heroCardH = Math.max(phoneLandscape ? 88 : 100, usableH - arenaGap - combatFloorMin);
+    }
+
     const heroRowTopMax = Math.max(
       rowGap,
       layoutHeight - heroCardH - arenaGap - combatFloorMin - toolbarReserve - rowGap,
@@ -795,10 +1135,11 @@
       },
     );
     const combatFloorTop = heroRowTop + heroCardH + arenaGap;
-    const combatFloorH = Math.max(
-      combatFloorMin,
+    const combatFloorAvailable = Math.max(
+      72,
       layoutHeight - combatFloorTop - toolbarReserve - arenaGap,
     );
+    const combatFloorH = Math.min(combatFloorMin, combatFloorAvailable);
     applyBattleHeroRowZoneVars(root, fieldCol, zones, heroRowTop, heroCardH, {
       top: combatFloorTop,
       height: combatFloorH,
@@ -882,8 +1223,7 @@
 
   function syncTabletSideLayoutVars(h, phase) {
     const root = document.documentElement;
-    const tabletPrep = root.dataset.tabletPrepHero === "true";
-    if (root.dataset.tabletSideFit !== "true" && !tabletPrep) {
+    if (!isTabletSideLayout(root)) {
       clearTabletSideVars();
       return;
     }
@@ -965,6 +1305,7 @@
     "--battle-arena-zone-width",
     "--battle-combat-floor-top",
     "--battle-combat-floor-h",
+    "--battle-emoji-scale",
     "--desktop-battle-hero-zone-h",
     "--desktop-battle-hero-img-h",
     "--desktop-battle-hero-col-w",
@@ -979,57 +1320,44 @@
     const cssW = readCssPx("--battle-canvas-w", canvas.width);
     const cssH = readCssPx("--battle-canvas-h", canvas.height);
     const mobileLayout = root.dataset.prepLayout === "mobile";
-    const tabletSide = root.dataset.tabletSideFit === "true"
-      || root.dataset.tabletPrepHero === "true";
-    const portrait = stageW < vh;
-    const tabletPortrait = portrait
-      && !mobileLayout
-      && !tabletSide
-      && (root.dataset.uiTier === "tablet" || root.dataset.touch === "true");
+    const tabletSide = isTabletSideLayout(root);
 
-    let heroZone;
-    let arenaMin;
-    let heroColW;
-    let heroImgH;
-    let portraitZoom;
-    let chromePad;
+    const profileKey = root.dataset.battleProfile
+      || resolveLayoutProfile(stageW, vh, {
+        tier: root.dataset.uiTier || "desktop",
+        prepLayout: root.dataset.prepLayout || "side",
+        tabletSideFit: tabletSide,
+        tabletPrepHero: tabletSide,
+        touchDev: root.dataset.touch === "true",
+      }).battleProfile;
 
-    if (mobileLayout) {
-      const heroCardH = Math.min(200, Math.max(130, Math.round(vh * 0.22)));
-      heroZone = heroCardH;
-      arenaMin = Math.max(160, Math.round(vh * 0.30));
-      heroColW = Math.round(Math.min(200, Math.max(140, stageW * 0.46)));
-      heroImgH = Math.round(Math.min(118, Math.max(84, heroCardH * 0.50)));
-      portraitZoom = 1.55;
-      chromePad = 10;
+    const measuredFieldH = fieldCol?.clientHeight ?? 0;
+    const measuredArenaH = document.getElementById("battle-thought-arena")?.offsetHeight ?? 0;
+
+    let {
+      cfg,
+      heroZone,
+      arenaMin,
+      heroColW,
+      heroImgH,
+      portraitZoom,
+      chromePad,
+    } = computeBattleLayoutFromProfile(profileKey, { vh, hudReserve, stageW, measuredFieldH, measuredArenaH });
+
+    applyBattleProfileDataset(root, profileKey);
+
+    if (profileKey === "phone-portrait") {
+      const heroCardH = heroZone;
       setBattleLayoutVar("--battle-hero-card-h", `${heroCardH}px`);
-      setBattleLayoutVar("--battle-portrait-object-y", "8%");
-    } else if (tabletSide) {
-      heroZone = Math.min(320, Math.max(190, Math.round((vh - hudReserve) * 0.30)));
-      arenaMin = Math.max(120, Math.round(vh * 0.20));
-      heroColW = Math.round(Math.min(190, Math.max(118, stageW * 0.19)));
-      heroImgH = Math.round(Math.min(168, Math.max(118, heroZone * 0.42)));
-      portraitZoom = 0.82;
-      chromePad = 16;
-      setBattleLayoutVar("--battle-portrait-object-y", "14%");
+    }
+    setBattleLayoutVar("--battle-portrait-object-y", cfg.portraitObjectY);
+    setBattleLayoutVar("--battle-emoji-scale", String(cfg.emojiScale));
+    if (cfg.tabletSide) {
       setBattleLayoutVar("--tablet-battle-hero-img-h", `${heroImgH}px`);
       setBattleLayoutVar("--tablet-battle-chrome-bottom", `${Math.max(hudReserve, chromePad)}px`);
-    } else if (tabletPortrait) {
-      heroZone = Math.min(320, Math.max(180, Math.round((vh - hudReserve) * 0.36)));
-      arenaMin = Math.max(88, Math.round(vh * 0.10));
-      heroColW = Math.round(Math.min(150, Math.max(96, stageW * 0.22)));
-      heroImgH = Math.round(Math.min(180, Math.max(108, heroZone * 0.44)));
-      portraitZoom = 1.05;
-      chromePad = 12;
+    } else if (profileKey === "tablet-portrait") {
       root.style.setProperty("--tablet-battle-chrome-bottom", `${Math.max(hudReserve, chromePad)}px`);
-    } else {
-      heroZone = Math.min(340, Math.max(200, Math.round((vh - hudReserve) * 0.28)));
-      arenaMin = Math.max(130, Math.round(vh * 0.22));
-      heroColW = Math.round(Math.min(260, Math.max(180, stageW * 0.17)));
-      heroImgH = Math.round(Math.min(200, Math.max(140, heroZone * 0.44)));
-      portraitZoom = 0.95;
-      chromePad = 20;
-      setBattleLayoutVar("--battle-portrait-object-y", "16%");
+    } else if (profileKey.startsWith("desktop-")) {
       setBattleLayoutVar("--tablet-battle-chrome-bottom", `${Math.max(hudReserve, 8)}px`);
     }
 
@@ -1046,7 +1374,7 @@
         scale,
         mobileLayout,
         tabletSide,
-        tabletPortrait,
+        tabletPortrait: profileKey === "tablet-portrait",
         stageW,
         vh,
         hudReserve,
@@ -1253,48 +1581,48 @@
       requestAnimationFrame(() => {
         fitCanvasDisplaySize();
         syncPrepHeroSlotHeight();
+        const zones = measureLayoutZones();
+        applyMeasuredZoneFit(zones);
       });
     });
   }
 
-  function applyPrepLayoutFit(w, h, prepLayout, baseScale, touchDev) {
+  function applyPrepLayoutFit(w, h, prepLayout, baseScale, touchDev, layoutProfile) {
     document.documentElement.dataset.prepViewportFit = "false";
     document.documentElement.dataset.prepSideFit = "false";
     document.documentElement.dataset.prepMobileFit = "false";
     document.documentElement.style.removeProperty("--prep-canvas-max-h");
-    document.documentElement.style.removeProperty("--prep-shop-row-h");
 
+    const cfg = PREP_PROFILES[layoutProfile?.id] || PREP_PROFILES["desktop-landscape"];
     const hudH = isModalOpen() ? 0 : measureBottomChromeHeight();
     const chromeH = measurePrepChromeHeight() + hudH;
     const available = Math.max(400, h - chromeH);
 
     if (prepLayout === "mobile") {
       document.documentElement.dataset.prepMobileFit = "true";
-      let fitScale = Math.min(baseScale, available / 340, w / (DESIGN_W * 0.36));
-      fitScale = Math.max(0.58, Math.min(SCALE_MAX, fitScale));
+      let fitScale = Math.min(baseScale, available / cfg.fitAvailH, w / (DESIGN_W * cfg.fitWidthRatio));
+      fitScale = Math.max(cfg.fitMinScale, Math.min(SCALE_MAX, fitScale));
       return Math.round(fitScale * 1000) / 1000;
     }
 
     if (prepLayout === "stacked") {
       document.documentElement.dataset.prepViewportFit = "true";
-      let fitScale = Math.min(baseScale, available / PREP_STACKED_CONTENT_H, w / DESIGN_W);
+      let fitScale = Math.min(baseScale, available / cfg.fitAvailH, w / DESIGN_W);
       fitScale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, fitScale));
-      const canvasMax = Math.round(Math.min(available * 0.34, 240 * fitScale));
-      const shopRowH = Math.round(Math.max(54, Math.min(74, 70 * fitScale)));
+      const canvasMax = Math.round(Math.min(available * cfg.canvasAvailShare, cfg.canvasMaxCap * fitScale));
       document.documentElement.style.setProperty("--prep-canvas-max-h", `${canvasMax}px`);
-      document.documentElement.style.setProperty("--prep-shop-row-h", `${shopRowH}px`);
       return Math.round(fitScale * 1000) / 1000;
     }
 
     if (prepLayout === "side" && w >= 600) {
-      let fitScale = Math.min(baseScale, available / PREP_SIDE_CONTENT_H, w / DESIGN_W);
+      let fitScale = Math.min(baseScale, available / cfg.fitAvailH, w / DESIGN_W);
       fitScale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, fitScale));
       return Math.round(fitScale * 1000) / 1000;
     }
 
     if (touchDev && w < 600) {
       document.documentElement.dataset.prepSideFit = "true";
-      let fitScale = Math.min(baseScale, available / PREP_SIDE_CONTENT_H, w / DESIGN_W);
+      let fitScale = Math.min(baseScale, available / cfg.fitAvailH, w / DESIGN_W);
       fitScale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, fitScale));
       return Math.round(fitScale * 1000) / 1000;
     }
@@ -1335,22 +1663,48 @@
     const compact = tier !== "desktop" || h <= 820;
     document.documentElement.dataset.uiCompact = compact ? "true" : "false";
 
-    const prepLayout = shouldUseMobilePrepLayout(w, h)
+    const prepLayout = shouldUseMobilePrepLayout(w, h, tier)
       ? "mobile"
-      : (shouldUseStackedPrep(w, h) ? "stacked" : "side");
+      : (shouldUseStackedPrep(w, h, tier) ? "stacked" : "side");
     document.documentElement.dataset.prepLayout = prepLayout;
     const tabletSideFit = shouldUseTabletSideFit(w, h, prepLayout, touchDev, tier);
     const tabletPrepHero = tabletSideFit
       || (prepLayout === "side" && w > h && tier === "tablet" && touchDev);
-    document.documentElement.dataset.tabletSideFit = tabletSideFit ? "true" : "false";
-    document.documentElement.dataset.tabletPrepHero = tabletPrepHero ? "true" : "false";
-    if (!tabletSideFit && !tabletPrepHero) {
+
+    const layoutProfile = resolveLayoutProfile(w, h, {
+      tier,
+      prepLayout,
+      tabletSideFit,
+      tabletPrepHero,
+      touchDev,
+    });
+    document.documentElement.dataset.layoutProfile = layoutProfile.id;
+    document.documentElement.dataset.battleProfile = layoutProfile.battleProfile;
+    document.documentElement.dataset.uiSurface = resolveUiSurface({
+      prepLayout,
+      tabletSideFit,
+      tabletPrepHero,
+      layoutProfile,
+    });
+    if (layoutProfile.phoneLandscape) {
+      document.documentElement.dataset.battlePhoneLandscape = "true";
+    } else {
+      document.documentElement.removeAttribute("data-battle-phone-landscape");
+    }
+
+    if (!isTabletSideLayout()) {
       clearTabletSideVars();
     }
     if (prepLayout !== "mobile") {
       clearMobileDisplayVars();
     }
-    clamped = applyPrepLayoutFit(w, h, prepLayout, clamped, touchDev);
+    const typeScale = computeTypeScale(clamped, layoutProfile);
+    const gameScale = computeGameScale(clamped, layoutProfile);
+    document.documentElement.style.setProperty("--type-scale", String(typeScale));
+    document.documentElement.style.setProperty("--game-scale", String(gameScale));
+    applyFluidGridMetrics(clamped);
+    clamped = applyPrepLayoutFit(w, h, prepLayout, clamped, touchDev, layoutProfile);
+    applyPrepProfileVars(layoutProfile, clamped);
     if (typeof applyVisualExperimentPrepUiScale === "function") {
       clamped = applyVisualExperimentPrepUiScale(clamped, { prepLayout, tier, w, h });
     }
@@ -1484,5 +1838,6 @@
   window.syncBattleSceneGridMetrics = syncBattleSceneGridMetrics;
   window.scheduleBattleHeroRowSync = scheduleBattleHeroRowSync;
   window.syncPrepHeroSlotHeight = syncPrepHeroSlotHeight;
+  window.measureLayoutZones = measureLayoutZones;
   window.syncHeroEmotionSlotAnchors = syncHeroEmotionSlotAnchors;
 })();

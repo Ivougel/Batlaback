@@ -336,7 +336,11 @@ function getAvatarHeroStageRect(team) {
   if (typeof getProfileAvatarViewportCenter === "function") {
     const center = getProfileAvatarViewportCenter(team);
     if (center?.x != null && center?.y != null) {
-      const scale = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--ui-scale")) || 1;
+      const scale = typeof LayoutScales !== "undefined"
+        ? LayoutScales.gameScale()
+        : (Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--game-scale"))
+          || Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--ui-scale"))
+          || 1);
       const size = 228 * scale;
       return {
         left: center.x - size / 2,

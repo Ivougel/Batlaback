@@ -1,0 +1,62 @@
+/**
+ * Поверхности UI (data-ui-surface из ui-layout.js).
+ * Дополняет mobile-prep / tablet-side — типографика и touch на stacked/desktop.
+ */
+
+/* ─── Tablet portrait / stacked prep ─── */
+
+html[data-ui-surface="tablet-stacked"] #app[data-phase="prep"] .shop-panel h3,
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .shop-panel h3 {
+  font-size: var(--font-md);
+}
+
+html[data-ui-surface="tablet-stacked"] #app[data-phase="prep"] #shop-panel .shop-hint,
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #shop-panel .shop-hint {
+  font-size: var(--font-sm);
+}
+
+html[data-ui-surface="tablet-stacked"] #app[data-phase="prep"] .btn-refresh-shop,
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .btn-refresh-shop {
+  min-height: var(--touch-target-min);
+  font-size: var(--font-sm);
+}
+
+/* ─── Phone landscape (prep side / battle) ─── */
+
+html[data-ui-surface="phone-landscape"] #app[data-phase="prep"] .shop-panel h3 {
+  font-size: var(--font-sm);
+}
+
+html[data-ui-surface="phone-landscape"] body:has(#app[data-phase="battle"]) .bottom-chrome .bc-btn,
+html[data-ui-surface="phone-landscape"] body:has(#app[data-phase="replay"]) .bottom-chrome .bc-btn {
+  min-height: var(--touch-target-min);
+  font-size: var(--font-sm);
+}
+
+/* ─── Desktop: class overlay readability ─── */
+
+html[data-ui-surface="desktop"] .class-modal-eyebrow {
+  font-size: var(--font-xs);
+}
+
+html[data-ui-surface="desktop"] .class-modal-footer {
+  font-size: var(--font-sm);
+}
+
+html[data-ui-surface="desktop"] .class-modal .glass-card .class-desc {
+  font-size: var(--font-md);
+}
+
+/* ─── Class overlay: scroll на узких/низких экранах ─── */
+
+html[data-ui-surface="tablet-stacked"] #class-overlay .class-modal,
+html[data-prep-layout="mobile"] #class-overlay .class-modal {
+  max-height: var(--overlay-max-h);
+}
+
+html[data-ui-surface="tablet-stacked"] #class-overlay .class-modal .class-step:not(.hidden),
+html[data-prep-layout="mobile"] #class-overlay .class-modal .class-step:not(.hidden) {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}

@@ -596,9 +596,12 @@ const ArenaEquipment = (() => {
 
   function styleBodyEl(body) {
     const d = equipDiameterForBody(body);
+    const gs = typeof LayoutScales !== "undefined"
+      ? LayoutScales.gameScale()
+      : 1;
     body.el.style.width = `${d}px`;
     body.el.style.height = `${d}px`;
-    body.el.style.fontSize = `${d * 0.62}px`;
+    body.el.style.fontSize = `${Math.round(d * 0.62 * gs)}px`;
     body.radius = d * 0.5;
     if (body.orbitSlotMounted || usesEmojiAvatarEquipHome()) {
       const slotZ = SLOT_Z[body.slotId] || 0;

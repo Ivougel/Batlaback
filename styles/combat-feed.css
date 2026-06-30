@@ -19,13 +19,14 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 36px;
+  min-height: var(--touch-target-min);
   padding: 6px 14px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(22, 27, 34, 0.92);
   color: #c9d1d9;
-  font-size: 0.84rem;
+  font-size: var(--font-sm);
+  min-height: var(--touch-target-min);
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
@@ -50,7 +51,7 @@
 }
 
 .btn-combat-feed-chevron {
-  font-size: 0.78rem;
+  font-size: var(--font-sm);
   opacity: 0.85;
 }
 
@@ -118,7 +119,7 @@
 }
 
 .combat-feed-title {
-  font-size: 14px;
+  font-size: var(--font-sm);
   font-weight: 600;
   color: #e6edf3;
   letter-spacing: 0.01em;
@@ -133,7 +134,7 @@
   height: 28px;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--font-sm);
   line-height: 1;
   transition: background 0.15s ease, color 0.15s ease;
 }
@@ -182,7 +183,7 @@
   border-radius: 14px;
   background: rgba(0, 0, 0, 0.38);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
-  font-size: 14px;
+  font-size: var(--font-sm);
   line-height: 1.35;
 }
 
@@ -203,7 +204,7 @@
 
 .combat-feed-msg-icon {
   flex: 0 0 auto;
-  font-size: 15px;
+  font-size: var(--font-md);
   line-height: 1.35;
 }
 
@@ -277,6 +278,6 @@ html[data-game-phase="prep"] #prep-tooltip-dock .sidebar-tooltip.combat-feed-hin
 
   .btn-combat-feed {
     padding: 6px 12px;
-    font-size: 0.8rem;
+    font-size: var(--font-sm);
   }
 }

@@ -71,10 +71,8 @@ html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[d
   --battle-portrait-zoom: 1.55;
 }
 
-html[data-battle-hero-placement="flank-arena"][data-tablet-side-fit="true"] #app[data-phase="battle"],
-html[data-battle-hero-placement="flank-arena"][data-tablet-side-fit="true"] #app[data-phase="replay"],
-html[data-battle-hero-placement="flank-arena"][data-tablet-prep-hero="true"] #app[data-phase="battle"],
-html[data-battle-hero-placement="flank-arena"][data-tablet-prep-hero="true"] #app[data-phase="replay"] {
+html[data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="battle"],
+html[data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="replay"] {
   --battle-portrait-zoom: 0.82;
 }
 
@@ -92,10 +90,8 @@ html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .prep-f
   box-sizing: border-box;
 }
 
-html[data-battle-hero-placement="flank-arena"][data-tablet-side-fit="true"] #app[data-phase="battle"] .prep-field-column,
-html[data-battle-hero-placement="flank-arena"][data-tablet-side-fit="true"] #app[data-phase="replay"] .prep-field-column,
-html[data-battle-hero-placement="flank-arena"][data-tablet-prep-hero="true"] #app[data-phase="battle"] .prep-field-column,
-html[data-battle-hero-placement="flank-arena"][data-tablet-prep-hero="true"] #app[data-phase="replay"] .prep-field-column,
+html[data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="battle"] .prep-field-column,
+html[data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="replay"] .prep-field-column,
 html[data-battle-hero-placement="flank-arena"][data-ui-tier="tablet"][data-orientation="portrait"] #app[data-phase="battle"] .prep-field-column,
 html[data-battle-hero-placement="flank-arena"][data-ui-tier="tablet"][data-orientation="portrait"] #app[data-phase="replay"] .prep-field-column {
   padding-bottom: var(--tablet-battle-chrome-bottom, 72px);

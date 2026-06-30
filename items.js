@@ -7,7 +7,10 @@
 const UI_SCALE = 1;
 
 function uiPx(value) {
-  return Math.round(value * UI_SCALE);
+  const scale = (typeof LayoutScales !== "undefined" && LayoutScales.gameScale)
+    ? LayoutScales.gameScale()
+    : (parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--game-scale")) || 1);
+  return Math.round(value * scale);
 }
 
 /** Отступ цветной плитки предмета внутри клетки (совпадает с roundRect в drawLoadoutItems). */
