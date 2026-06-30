@@ -2257,10 +2257,48 @@ function notifyPrepDragRejectedFromDragFrom() {
   }
 }
 
+function isPrepBackpackArcDrag() {
+  return dragFrom?.type === "item" || dragFrom?.type === "container";
+}
+
+function isPrepArcDragSource() {
+  if (!dragFrom) return false;
+  return dragFrom.type === "shop"
+    || dragFrom.type === "bench"
+    || dragFrom.type === "item"
+    || dragFrom.type === "container";
+}
+
+function getPrepArcSidebarAnchorClient(clientX, clientY) {
+  const pointer = createSyntheticPointerEvent(clientX, clientY);
+  if (isDropOnBench(pointer)) {
+    const benchEl = document.getElementById("bench-slots") || document.getElementById("bench-panel");
+    const benchCenter = getElementClientCenter(benchEl);
+    if (benchCenter) return benchCenter;
+  }
+  if (isDropOnSell(pointer)) {
+    const sellCenter = getElementClientCenter(document.getElementById("shop-sell-zone"));
+    if (sellCenter) return sellCenter;
+  }
+  return null;
+}
+
 function getPrepArcDropState() {
   if (phase !== "prep" || !dragPayload) return "neutral";
   const side = dragFrom?.side || prepViewSide;
   const st = getSideState(side);
+
+  if (isPrepBackpackArcDrag()) {
+    const pointer = createSyntheticPointerEvent(lastPointerClient.x, lastPointerClient.y);
+    if (isDropOnBench(pointer)) {
+      return st.bench.length < MAX_BENCH ? "valid" : "invalid";
+    }
+    if (isDropOnSell(pointer)) {
+      return "valid";
+    }
+    return "neutral";
+  }
+
   if (!isOnBoard(mousePos.x, mousePos.y, side)) return "neutral";
 
   if (isContainerItem(dragPayload.itemId) && hoverCell) {
@@ -2320,7 +2358,7 @@ function getPrepArcDropState() {
 
 function maybeCelebratePrepArcDrop(success) {
   if (!success || typeof PrepDragArc === "undefined") return false;
-  if (dragFrom?.type !== "shop" && dragFrom?.type !== "bench") return false;
+  if (!isPrepArcDragSource()) return false;
   if (!PrepDragArc.isActive()) return false;
   PrepDragArc.celebrate(lastPointerClient.x, lastPointerClient.y);
   return true;
@@ -3178,6 +3216,12 @@ function getDragGhostAnchorClient(clientX, clientY) {
   const side = dragFrom?.side || prepViewSide;
   if (!canEditPrepSide(side)) return { x: clientX, y: clientY };
 
+  if (isPrepBackpackArcDrag()) {
+    const sidebarAnchor = getPrepArcSidebarAnchorClient(clientX, clientY);
+    if (sidebarAnchor) return sidebarAnchor;
+    return { x: clientX, y: clientY };
+  }
+
   const team = prepViewSide;
 
   if (isContainerItem(dragPayload.itemId) && hoverCell) {
@@ -3216,7 +3260,7 @@ function syncDragGhostOverlay(clientX, clientY) {
   let arcRotation = null;
 
   if (phase === "prep"
-    && (dragFrom?.type === "shop" || dragFrom?.type === "bench")
+    && isPrepArcDragSource()
     && typeof PrepDragArc !== "undefined"
     && PrepDragArc.isActive()) {
     PrepDragArc.mountGhostToBody();
@@ -4933,6 +4977,7 @@ function onMouseDown(e) {
     dragPayload = { itemId: hit.item.itemId, rotation: hit.item.rotation || 0 };
     dragFrom = { type: "item", item: hit.item, side };
     st.items = st.items.filter((i) => i.uid !== hit.item.uid);
+    beginPrepDragArcFromBackpack(hit.item.col, hit.item.row, side);
     startSynergyPreview();
     recalcSynergies();
     syncUiDragState();
@@ -4946,6 +4991,7 @@ function onMouseDown(e) {
     dragFrom = { type: "container", container: hit.container, carriedItems, side };
     st.containers = st.containers.filter((c) => c.uid !== hit.container.uid);
     st.items = st.items.filter((i) => !carriedItems.some((c) => c.uid === i.uid));
+    beginPrepDragArcFromBackpack(hit.container.col, hit.container.row, side);
     startSynergyPreview();
     recalcSynergies();
     syncUiDragState();
@@ -5066,6 +5112,7 @@ function finishDragDrop(e) {
   }
 
   if (dropOnSell && sellDraggedItem(side)) {
+    if (isPrepBackpackArcDrag()) prepArcCelebrate = true;
     clearDragUiState();
     renderBench();
     recalcSynergies();
@@ -5097,6 +5144,7 @@ function finishDragDrop(e) {
       }
     } else if (dragFrom.type === "item") {
       st.bench.push({ itemId: dragFrom.item.itemId, uid: dragFrom.item.uid, rotation: dragPayload.rotation || 0 });
+      prepArcCelebrate = true;
     } else if (dragFrom.type === "container") {
       st.bench.push({
         itemId: dragFrom.container.itemId,
@@ -5106,6 +5154,7 @@ function finishDragDrop(e) {
         originCol: dragFrom.container.col,
         originRow: dragFrom.container.row,
       });
+      prepArcCelebrate = true;
     }
   } else if (isContainerItem(dragPayload.itemId) && isOnBoard(mx, my, side)) {
     const col = xToCol(mx, side);
@@ -5395,6 +5444,13 @@ function beginPrepDragArcFromCard(cardEl, itemIdOverride = null) {
   if (!c) return;
   const itemId = itemIdOverride || cardEl.dataset.itemId || dragPayload?.itemId;
   PrepDragArc.begin({ fromX: c.x, fromY: c.y, itemId });
+}
+
+function beginPrepDragArcFromBackpack(col, row, side = prepViewSide) {
+  if (phase !== "prep" || typeof PrepDragArc === "undefined") return;
+  const c = boardCellClientCenter(col, row, side);
+  if (!c) return;
+  PrepDragArc.begin({ fromX: c.x, fromY: c.y, itemId: dragPayload?.itemId });
 }
 
 function startShopDrag(index, e, side = prepViewSide) {

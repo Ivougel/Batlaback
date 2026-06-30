@@ -337,6 +337,18 @@ html[data-visual-experiment="true"] #enemy-avatar-panel {
   isolation: isolate;
 }
 
+html[data-visual-experiment="true"] #app[data-phase="battle"] #player-avatar-panel::before,
+html[data-visual-experiment="true"] #app[data-phase="replay"] #player-avatar-panel::before,
+html[data-visual-experiment="true"] #app[data-phase="battle"] #enemy-avatar-panel::before,
+html[data-visual-experiment="true"] #app[data-phase="replay"] #enemy-avatar-panel::before {
+  display: none;
+}
+
+html[data-visual-experiment="true"] #app[data-phase="battle"] .vexp-hero-pedestal,
+html[data-visual-experiment="true"] #app[data-phase="replay"] .vexp-hero-pedestal {
+  display: none;
+}
+
 html[data-visual-experiment="true"] #player-avatar-panel::before,
 html[data-visual-experiment="true"] #enemy-avatar-panel::before {
   content: "";

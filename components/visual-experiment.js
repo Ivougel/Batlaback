@@ -77,6 +77,12 @@ const VisualExperiment = (() => {
       document.querySelectorAll(".vexp-hero-pedestal").forEach((el) => el.remove());
       return;
     }
+    const app = document.getElementById("app");
+    const phase = app?.dataset.phase;
+    if (phase === "battle" || phase === "replay") {
+      document.querySelectorAll(".vexp-hero-pedestal").forEach((el) => el.remove());
+      return;
+    }
     ["player-avatar-panel", "enemy-avatar-panel"].forEach((id) => {
       const panel = document.getElementById(id);
       if (!panel || panel.querySelector(".vexp-hero-pedestal")) return;

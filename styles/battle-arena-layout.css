@@ -511,3 +511,13 @@ html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[d
   min-width: 44px;
   pointer-events: auto;
 }
+
+/* ─── Battle: без овальных теней под героями ─── */
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-scene-ui .profile-avatar,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-scene-ui .profile-avatar,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .field-avatar-wrap .profile-avatar,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .field-avatar-wrap .profile-avatar {
+  box-shadow: none;
+  filter: none;
+}

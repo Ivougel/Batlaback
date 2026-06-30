@@ -744,7 +744,7 @@ body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
 }
 
 .battle-arena.is-battle .field-avatar-wrap .profile-avatar {
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+  box-shadow: none;
 }
 
 .stats-round-badge {

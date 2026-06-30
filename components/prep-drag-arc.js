@@ -1,5 +1,6 @@
 /**
- * PrepDragArc — живая магическая дуга переноса из магазина/скамьи (только prep).
+ * PrepDragArc — живая магическая дуга переноса в prep:
+ * магазин/скамья → поле, рюкзак → продажа/скамья.
  */
 
 const PrepDragArc = (() => {
@@ -445,10 +446,13 @@ const PrepDragArc = (() => {
     });
   }
 
-  function isPrepShopBenchDrag() {
+  function isPrepArcDrag() {
     if (typeof phase === "undefined" || phase !== "prep") return false;
     if (typeof dragFrom === "undefined" || !dragFrom) return false;
-    return dragFrom.type === "shop" || dragFrom.type === "bench";
+    return dragFrom.type === "shop"
+      || dragFrom.type === "bench"
+      || dragFrom.type === "item"
+      || dragFrom.type === "container";
   }
 
   function sampleArc(geom, t) {
@@ -576,7 +580,7 @@ const PrepDragArc = (() => {
   }
 
   function isActive() {
-    return active && isPrepShopBenchDrag();
+    return active && isPrepArcDrag();
   }
 
   function isCelebrating() {
