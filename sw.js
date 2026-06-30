@@ -4,7 +4,7 @@
 importScripts("pwa-precache.js");
 
 const CACHE = self.PWA_CACHE_VERSION || "bb-pwa-v1";
-const PRECACHE = self.PWA_PRECACHE_URLS || ["/", "/index.html", "/manifest.webmanifest"];
+const PRECACHE = self.PWA_PRECACHE_URLS || ["index.html", "manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

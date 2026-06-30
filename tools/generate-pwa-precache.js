@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * Собирает список URL для precache PWA из index.html + статика.
+ * Относительные пути — работают на GitHub Pages (/RepoName/) и локально.
  * node tools/generate-pwa-precache.js
  */
 
@@ -10,8 +11,13 @@ const path = require("path");
 const ROOT = path.join(__dirname, "..");
 const INDEX = path.join(ROOT, "index.html");
 const OUT = path.join(ROOT, "pwa-precache.js");
+const CACHE_VERSION = "bb-pwa-v2";
 
 const STATIC_EXT = new Set([".js", ".css", ".png", ".jpg", ".jpeg", ".webp", ".svg", ".mp3", ".woff", ".woff2"]);
+
+function toRelUrl(filePath) {
+  return filePath.split(path.sep).join("/");
+}
 
 function walk(dir, out = []) {
   if (!fs.existsSync(dir)) return out;
@@ -21,14 +27,14 @@ function walk(dir, out = []) {
     const st = fs.statSync(full);
     if (st.isDirectory()) walk(full, out);
     else if (STATIC_EXT.has(path.extname(name).toLowerCase())) {
-      out.push("/" + path.relative(ROOT, full).split(path.sep).join("/"));
+      out.push(toRelUrl(path.relative(ROOT, full)));
     }
   }
   return out;
 }
 
 function urlsFromIndex(html) {
-  const urls = new Set(["/", "/index.html", "/manifest.webmanifest", "/sw.js"]);
+  const urls = new Set(["index.html", "manifest.webmanifest", "sw.js", "pwa-precache.js"]);
   const re = /(?:src|href)=["']([^"']+)["']/g;
   let m;
   while ((m = re.exec(html))) {
@@ -36,8 +42,8 @@ function urlsFromIndex(html) {
     if (!raw || raw.startsWith("http") || raw.startsWith("//") || raw.startsWith("#") || raw.startsWith("data:")) {
       continue;
     }
-    const clean = raw.split("#")[0];
-    urls.add(clean.startsWith("/") ? clean : `/${clean}`);
+    const clean = raw.split("#")[0].replace(/^\//, "");
+    if (clean) urls.add(clean);
   }
   return urls;
 }
@@ -48,12 +54,12 @@ function main() {
   const sorted = [...urls].sort();
 
   const body = `// Auto-generated — node tools/generate-pwa-precache.js
-self.PWA_CACHE_VERSION = "bb-pwa-v1";
+self.PWA_CACHE_VERSION = "${CACHE_VERSION}";
 self.PWA_PRECACHE_URLS = ${JSON.stringify(sorted, null, 2)};
 `;
 
   fs.writeFileSync(OUT, body, "utf8");
-  console.log(`Precache: ${sorted.length} URLs → ${OUT}`);
+  console.log(`Precache: ${sorted.length} URLs → ${OUT} (${CACHE_VERSION})`);
 }
 
 main();
