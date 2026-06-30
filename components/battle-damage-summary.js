@@ -23,9 +23,14 @@ function initBattleCountdown(state) {
 
 function tickBattleCountdown(state, dt) {
   if (!state?.countdown?.active) return;
+  const prevLabel = state.countdown.label;
   state.countdown.remaining -= dt;
   const left = Math.ceil(Math.max(0, state.countdown.remaining));
   state.countdown.label = left > 0 ? String(left) : null;
+  if (state.countdown.label !== prevLabel && typeof playGameSfx === "function") {
+    if (state.countdown.label) playGameSfx("battle_countdown_tick");
+    else playGameSfx("battle_countdown_go");
+  }
   if (state.countdown.remaining <= 0) {
     state.countdown.active = false;
     state.countdown.remaining = 0;

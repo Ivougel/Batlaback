@@ -21,7 +21,7 @@
   <link rel="stylesheet" href="styles/arena-equipment.css?v=14">
   <link rel="stylesheet" href="styles/prep-drag-arc.css?v=4">
   <link rel="stylesheet" href="styles/battle-arena-layout.css?v=19">
-  <link rel="stylesheet" href="styles/mobile-prep.css?v=8">
+  <link rel="stylesheet" href="styles/mobile-prep.css?v=9">
   <link rel="stylesheet" href="styles/tablet-side.css?v=21">
   <link rel="stylesheet" href="styles/doll.css?v=22">
   <link rel="stylesheet" href="styles/battle-inventory-popover.css?v=2">
@@ -366,6 +366,11 @@
           <span class="settings-value" id="settings-music-volume-value">60%</span>
         </div>
         <input type="range" id="settings-music-volume" class="settings-slider" min="0" max="100" step="1" value="60" aria-label="Громкость музыки">
+        <div class="settings-row">
+          <label class="settings-label" for="settings-sfx-volume">🔊 Громкость звуков</label>
+          <span class="settings-value" id="settings-sfx-volume-value">75%</span>
+        </div>
+        <input type="range" id="settings-sfx-volume" class="settings-slider" min="0" max="100" step="1" value="75" aria-label="Громкость звуков">
         <div class="settings-row settings-row-checkbox">
           <label class="settings-label settings-checkbox-label" for="settings-negrov-enabled">Негры</label>
           <input type="checkbox" id="settings-negrov-enabled" class="settings-checkbox" aria-label="Негры">
@@ -455,14 +460,14 @@
   <script src="systems/crafting.js"></script>
   <script src="systems/synergy.js"></script>
   <script src="systems/combat.js"></script>
-  <script src="systems/combat-profile.js"></script>
+  <script src="systems/combat-profile.js?v=2"></script>
   <script src="components/run-stats.js"></script>
   <script src="components/player-characteristics.js"></script>
   <script src="components/avatar-hero-effects.js?v=4"></script>
   <script src="systems/attack-events.js"></script>
   <script src="systems/arena-attack-styles.js?v=3"></script>
   <script src="systems/battle-analyzer.js"></script>
-  <script src="components/battle-damage-summary.js?v=2"></script>
+  <script src="components/battle-damage-summary.js?v=3"></script>
   <script src="components/attack-animation-manager.js?v=2"></script>
   <script src="systems/animation.js"></script>
   <script src="components/accordion.js"></script>
@@ -480,13 +485,14 @@
   <script src="systems/battle-speed.js"></script>
   <script src="systems/battle-stacks.js"></script>
   <script src="systems/battle-debuffs.js"></script>
+  <script src="systems/sfx.js?v=1"></script>
   <script src="systems/music.js"></script>
   <script src="systems/input-mode.js"></script>
   <script src="systems/gamepad.js"></script>
   <script src="components/item-flight-controller.js"></script>
   <script src="components/displace-animation.js"></script>
-  <script src="components/inventory-animation-controller.js?v=4"></script>
-  <script src="components/prep-drag-arc.js?v=7"></script>
+  <script src="components/inventory-animation-controller.js?v=5"></script>
+  <script src="components/prep-drag-arc.js?v=8"></script>
   <script src="components/item-effects-controller.js"></script>
   <script src="components/synergy-visual-controller.js"></script>
   <script src="components/battle-controls.js"></script>
@@ -500,7 +506,7 @@
   <script src="emotion-engine.js?v=20"></script>
   <script src="battle-hud.js"></script>
   <script src="systems/doll-engine.js"></script>
-  <script src="game.js?v=14"></script>
+  <script src="game.js?v=18"></script>
   <script src="pwa-register.js"></script>
 </body>
 </html>

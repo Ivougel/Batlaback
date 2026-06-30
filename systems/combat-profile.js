@@ -809,6 +809,7 @@ function bindProfileStatusTooltips() {
       if (typeof isTouchUi !== "function" || !isTouchUi()) return;
       const target = findProfileTooltipTarget(e.target);
       if (!target) {
+        if (typeof sidebarTooltipPinned !== "undefined" && sidebarTooltipPinned) return;
         hideSidebarTooltip();
         return;
       }
@@ -848,10 +849,14 @@ function bindProfileStatusTooltips() {
 
   if (!document.documentElement.dataset.battleStackTouchDismissBound) {
     document.documentElement.dataset.battleStackTouchDismissBound = "1";
+    const prepTooltipTapTargets = "#sidebar-tooltip, #prep-tooltip-dock, .shop-card, .bench-card, "
+      + ".doll-slot, #shop-panel, #game-canvas, .combat-feed-msg-text--hinted";
     document.addEventListener("click", (e) => {
       if (typeof isTouchUi !== "function" || !isTouchUi()) return;
-      if (e.target.closest("#sidebar-tooltip")) return;
+      if (typeof isSyntheticMouseFromTouch === "function" && isSyntheticMouseFromTouch()) return;
+      if (e.target.closest(prepTooltipTapTargets)) return;
       if (findProfileTooltipTarget(e.target)) return;
+      if (typeof sidebarTooltipPinned !== "undefined" && sidebarTooltipPinned) return;
       hideSidebarTooltip();
     });
   }

@@ -408,11 +408,11 @@ function showDollEmptySlotTooltipAt(clientX, clientY, slotId) {
   }
 }
 
-function showDollFilledSlotTooltipAt(clientX, clientY, item, slotEl) {
+function showDollFilledSlotTooltipAt(clientX, clientY, item, slotEl, options = {}) {
   if (typeof showSidebarTooltipAt !== "function") return;
   const def = ITEM_CATALOG[item.itemId];
   if (!def) return;
-  showSidebarTooltipAt(clientX, clientY, item.itemId, item, "doll", slotEl);
+  showSidebarTooltipAt(clientX, clientY, item.itemId, item, "doll", slotEl, { pinned: !!options.pinned });
   const el = document.getElementById("sidebar-tooltip");
   if (el && typeof renderTooltipLinesHtml === "function" && typeof buildItemTooltipLines === "function") {
     const lines = buildItemTooltipLines(def, item, item.rotation || 0, "field");
@@ -422,7 +422,7 @@ function showDollFilledSlotTooltipAt(clientX, clientY, item, slotEl) {
   }
 }
 
-function refreshDollSlotTooltip(e, slotEl) {
+function refreshDollSlotTooltip(e, slotEl, options = {}) {
   if (typeof prepTooltipsEnabled !== "undefined" && !prepTooltipsEnabled) return;
   if (typeof phase !== "undefined" && phase !== "prep") return;
   if (typeof dragPayload !== "undefined" && dragPayload) return;
@@ -431,7 +431,7 @@ function refreshDollSlotTooltip(e, slotEl) {
   const slotId = slotEl.dataset.slot;
   const item = getEquippedItemForSlot(slotId, side);
   if (item) {
-    showDollFilledSlotTooltipAt(e.clientX, e.clientY, item, slotEl);
+    showDollFilledSlotTooltipAt(e.clientX, e.clientY, item, slotEl, options);
   } else {
     showDollEmptySlotTooltipAt(e.clientX, e.clientY, slotId);
   }
@@ -444,10 +444,12 @@ function bindDollSlotTooltips() {
     slotEl.style.cursor = "help";
 
     slotEl.addEventListener("mouseenter", (e) => {
+      if (typeof isSyntheticMouseFromTouch === "function" && isSyntheticMouseFromTouch()) return;
       if (typeof cancelScheduledTooltipHide === "function") cancelScheduledTooltipHide();
       refreshDollSlotTooltip(e, slotEl);
     });
     slotEl.addEventListener("mousemove", (e) => {
+      if (typeof isSyntheticMouseFromTouch === "function" && isSyntheticMouseFromTouch()) return;
       if (typeof cancelScheduledTooltipHide === "function") cancelScheduledTooltipHide();
       refreshDollSlotTooltip(e, slotEl);
       if (typeof moveSidebarTooltip === "function") moveSidebarTooltip(e, "viewport", "doll");
@@ -458,7 +460,7 @@ function bindDollSlotTooltips() {
 
     if (typeof bindPointerTapTooltip === "function") {
       bindPointerTapTooltip(slotEl, (clientX, clientY) => {
-        refreshDollSlotTooltip({ clientX, clientY }, slotEl);
+        refreshDollSlotTooltip({ clientX, clientY }, slotEl, { pinned: true });
       });
     }
   });

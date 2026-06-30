@@ -124,6 +124,7 @@ self.PWA_PRECACHE_URLS = [
   "systems/item-locale.js",
   "systems/mechanic-tags.js",
   "systems/meta-effects.js",
+  "systems/sfx.js",
   "systems/music.js",
   "systems/synergy.js",
   "ui-layout.js",

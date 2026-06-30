@@ -131,6 +131,7 @@ let fieldTooltipVisible = false;
 let prepTooltipsEnabled = true;
 let lastGamepadPrepFocus = null;
 let sidebarTooltipSource = null;
+let sidebarTooltipPinned = false;
 let lastRoundStats = null;
 let pendingGameOver = false;
 let lastBattleReplay = null;
@@ -158,6 +159,10 @@ let opponentMode = "ai";
 let gameMode = "solo";
 let prepViewSide = "player";
 let prepDollOpen = false;
+
+function playPrepSfx(id, opts) {
+  if (typeof playGameSfx === "function") playGameSfx(id, opts);
+}
 
 function setPrepDollOpen(open) {
   prepDollOpen = !!open;
@@ -616,7 +621,7 @@ function clonePrepBattleItem(item) {
 }
 
 function isSyntheticMouseFromTouch() {
-  return Date.now() - lastTouchEventAt < 700;
+  return Date.now() - lastTouchEventAt < 1000;
 }
 
 function isTouchUi() {
@@ -648,6 +653,10 @@ function createDropPointerEvent(e) {
   return createSyntheticPointerEvent(x, y);
 }
 
+function isTouchLikePointerType(pointerType) {
+  return pointerType === "touch" || pointerType === "pen";
+}
+
 function clearTouchTapGesture() {
   touchTapGesture = null;
 }
@@ -665,6 +674,16 @@ function beginTouchTapGesture({ clientX, clientY, onTap, onCancel, allowMouse = 
   };
 }
 
+/** На touch/pen — сразу при касании; на mouse — только подготовка жеста до pointerup. */
+function armPointerTapTooltip(clientX, clientY, onTap, { pointerType, allowMouse = true } = {}) {
+  beginTouchTapGesture({ clientX, clientY, allowMouse, onTap });
+  if (isTouchLikePointerType(pointerType) || (!pointerType && isTouchUi())) {
+    finishTouchTapGesture(clientX, clientY);
+    return true;
+  }
+  return false;
+}
+
 function updateTouchTapGestureMove(clientX, clientY) {
   if (!touchTapGesture || touchTapGesture.cancelled) return;
   const dist = Math.hypot(clientX - touchTapGesture.startX, clientY - touchTapGesture.startY);
@@ -672,6 +691,9 @@ function updateTouchTapGestureMove(clientX, clientY) {
     touchTapGesture.cancelled = true;
     touchTapGesture.onCancel?.();
     clearTouchTapGesture();
+    if (isTouchUi() && sidebarTooltipPinned && !dragPayload) {
+      hideSidebarTooltip();
+    }
   }
 }
 
@@ -696,6 +718,7 @@ function cancelScheduledTooltipHide() {
 
 function hideSidebarTooltip() {
   cancelScheduledTooltipHide();
+  sidebarTooltipPinned = false;
   const el = document.getElementById("sidebar-tooltip");
   const wasCombatFeed = sidebarTooltipSource === "combat-feed";
   if (el) {
@@ -862,6 +885,8 @@ function scheduleHideSidebarTooltip() {
 }
 
 function requestHideSidebarTooltip() {
+  if (isSyntheticMouseFromTouch()) return;
+  if (sidebarTooltipPinned) return;
   if (isTouchUi()) scheduleHideSidebarTooltip();
   else hideSidebarTooltip();
 }
@@ -869,12 +894,15 @@ function requestHideSidebarTooltip() {
 function bindTouchTooltipDismiss() {
   if (document.documentElement.dataset.touchTooltipDismissBound) return;
   document.documentElement.dataset.touchTooltipDismissBound = "1";
+  const dismissTooltipTargets = "#sidebar-tooltip, .shop-card, .bench-card, .doll-slot, #game-canvas, "
+    + ".combat-feed-msg-text--hinted, .profile-status-chip, .profile-stack-chip";
   document.addEventListener("pointerdown", (e) => {
-    if (!isTouchUi() || e.pointerType === "mouse") return;
-    if (e.target.closest(
-      "#sidebar-tooltip, .shop-card, .bench-card, .doll-slot, #game-canvas, "
-      + ".combat-feed-msg-text--hinted, .profile-status-chip, .profile-stack-chip",
-    )) return;
+    if (isSyntheticMouseFromTouch()) return;
+    if (e.target.closest(dismissTooltipTargets)) return;
+    const tooltip = document.getElementById("sidebar-tooltip");
+    if (!tooltip || tooltip.classList.contains("hidden")) return;
+    if (!isTouchUi() && !sidebarTooltipPinned) return;
+    if (isTouchUi() && e.pointerType === "mouse" && !sidebarTooltipPinned) return;
     hideSidebarTooltip();
     tooltipItem = null;
     syncFieldTooltip();
@@ -1055,7 +1083,7 @@ function init() {
   document.addEventListener("mousedown", markMouseFromEvent, true);
   document.addEventListener("pointerdown", (e) => {
     if (e.pointerType === "touch" || e.pointerType === "pen") return;
-    if (e.pointerType === "mouse") markMouseInteraction();
+    if (e.pointerType === "mouse" && !isSyntheticMouseFromTouch()) markMouseInteraction();
   }, true);
 
   canvas = document.getElementById("game-canvas");
@@ -1794,6 +1822,7 @@ function refreshShop(pay = false, side = prepViewSide) {
     if (side === "player") goldSpentTotal += 1;
   }
   refreshShopSlotsForSide(side, { isReroll: pay });
+  if (pay) playPrepSfx("prep_refresh");
   if (phase === "prep") {
     renderShop();
     updateUI();
@@ -1806,6 +1835,7 @@ function toggleShopFreeze(index, side = prepViewSide) {
   st.shopFrozen[index] = !st.shopFrozen[index];
   const name = ITEM_CATALOG[st.shop[index]].name;
   log(st.shopFrozen[index] ? `📌 Закреплено: ${name}` : `📌 Снято закрепление: ${name}`);
+  playPrepSfx("prep_freeze");
   renderShop();
 }
 
@@ -2146,6 +2176,7 @@ function buyFromShop(index, side = prepViewSide) {
   const itemId = commitShopPurchase(index, side);
   if (!itemId) return;
   st.bench.push({ itemId, uid: `bench-${Date.now()}-${Math.random().toString(36).slice(2, 5)}` });
+  playPrepSfx("prep_buy");
   if (side === prepViewSide && typeof CombatLog !== "undefined") {
     CombatLog.notifyPurchase(ITEM_CATALOG[itemId]);
   }
@@ -2175,6 +2206,7 @@ function creditItemSale(itemId, side = prepViewSide) {
   if (!itemId) return;
   const refund = getSellRefund(itemId, side);
   getSideState(side).gold += refund;
+  playPrepSfx("prep_sell");
   if (side === prepViewSide && typeof CombatLog !== "undefined") {
     CombatLog.notifySell(ITEM_CATALOG[itemId], refund);
   }
@@ -2247,6 +2279,7 @@ function applyCraftingForSide(side = prepViewSide) {
   const result = tryResolveCrafting(st.containers, st.items);
   if (!result.crafted.length) return false;
   st.items = result.items;
+  playPrepSfx("prep_craft");
   result.crafted.forEach((recipe) => {
     const out = ITEM_CATALOG[recipe.output];
     if (out) {
@@ -2742,6 +2775,7 @@ function tickReplay(rawDt) {
 
 function startBattle() {
   if (!canStartBattle()) {
+    playPrepSfx("ui_error");
     if (phase === "prep" && playerItems.length === 0) {
       log("Положите хотя бы один предмет в сумку! (не только на скамейку)");
     } else if (phase === "prep" && isVersusMode() && enemyItems.length === 0) {
@@ -2801,6 +2835,7 @@ function startBattle() {
       updateBattleControlsUI();
       setPhaseLabel("Бой!", true);
       log(`Раунд ${round}: бой!`);
+      playPrepSfx("battle_start");
       renderBattleStats();
       renderPlayerProfiles();
       renderFightButton();
@@ -2863,22 +2898,26 @@ function endBattle() {
     if (battleWinner === "player") {
       recentBattleResults.push("win");
       log(`Победа в бою! +${goldReward}💰`);
+      playPrepSfx("battle_victory");
       if (typeof CombatLog !== "undefined") {
         CombatLog.addEvent({ type: "win", text: `Победа! +${goldReward}💰`, mergeKey: "battle:win" });
       }
     } else if (battleWinner === "enemy") {
       recentBattleResults.push("loss");
       log(`Поражение в бою. +${goldReward}💰`);
+      playPrepSfx("battle_defeat");
       if (typeof CombatLog !== "undefined") {
         CombatLog.addEvent({ type: "loss", text: `Поражение. +${goldReward}💰`, mergeKey: "battle:loss" });
       }
     } else {
       recentBattleResults.push("draw");
       log(`Ничья. +${goldReward}💰`);
+      playPrepSfx("battle_draw");
       if (typeof CombatLog !== "undefined") {
         CombatLog.addEvent({ type: "neutral", text: `Ничья. +${goldReward}💰`, mergeKey: "battle:draw" });
       }
     }
+    if (goldReward > 0) playPrepSfx("gold");
 
     battleSummary = buildBattleSummary(finishedState, {
       roundNum: round,
@@ -3142,6 +3181,7 @@ function handleBattleEvent(ev) {
         : null;
       const col = item?.col ?? 3;
       const row = item?.row ?? 2;
+      if (ev.amount > 0) playPrepSfx("battle_hit", { amount: ev.amount });
       floatLayer.spawnDamage(canvas, ev.targetTeam, col, row, ev.amount);
       if (ev.sourceTeam && ev.amount > 0
         && document.documentElement.dataset.battleArenaLayout === "true"
@@ -3176,10 +3216,12 @@ function handleBattleEvent(ev) {
       const item = ev.targetUid
         ? side?.items?.find((i) => i.uid === ev.targetUid)
         : null;
+      if (ev.amount > 0) playPrepSfx("battle_heal", { amount: ev.amount });
       floatLayer.spawnHeal(canvas, ev.targetTeam, item?.col ?? 3, item?.row ?? 2, ev.amount);
       break;
     }
     case "poison_tick": {
+      playPrepSfx("battle_poison");
       if (document.documentElement.dataset.battleHeroPlacement === "flank-arena"
         && typeof getProfileAvatarFloatAnchor === "function") {
         const pt = getProfileAvatarFloatAnchor(ev.targetTeam, 0);
@@ -3193,6 +3235,7 @@ function handleBattleEvent(ev) {
       break;
     }
     case "block": {
+      playPrepSfx("battle_block");
       if (document.documentElement.dataset.battleHeroPlacement === "flank-arena"
         && typeof getProfileAvatarFloatAnchor === "function") {
         const pt = getProfileAvatarFloatAnchor(ev.targetTeam, 0);
@@ -3203,6 +3246,10 @@ function handleBattleEvent(ev) {
         const { vx, vy } = floatLayer.canvasToViewport(canvas, cx, cy);
         floatLayer.spawn(`🛡 ${ev.amount}`, "block", vx, vy);
       }
+      break;
+    }
+    case "miss": {
+      playPrepSfx("battle_miss");
       break;
     }
     default:
@@ -3575,7 +3622,8 @@ function updatePointerFromClient(clientX, clientY) {
       tooltipItem = null;
       hideSidebarTooltip();
     } else if (!isTouchUi()) {
-      if (sidebarTooltipSource === "shop" || sidebarTooltipSource === "bench" || sidebarTooltipSource === "doll") {
+      if (!sidebarTooltipPinned
+        && (sidebarTooltipSource === "shop" || sidebarTooltipSource === "bench" || sidebarTooltipSource === "doll")) {
         hideSidebarTooltip();
       }
       updateTooltip(mousePos.x, mousePos.y);
@@ -3611,24 +3659,21 @@ function gamepadPointerDownAt(clientX, clientY) {
   if (shopCard && canEditPrepSide(prepViewSide)) {
     const index = +shopCard.dataset.index;
     if (!Number.isNaN(index)) {
-      if (isTouchUi()) {
-        beginTouchTapGesture({
-          clientX,
-          clientY,
-          onTap: () => {
-            if (dragPayload || shopDidDrag) return;
-            showSidebarTooltipAt(
-              clientX,
-              clientY,
-              shopCard.dataset.itemId,
-              null,
-              "shop",
-              shopCard,
-            );
-          },
-        });
-      }
       beginPendingShopDrag(index, synthetic, prepViewSide);
+      if (isTouchUi()) {
+        armPointerTapTooltip(clientX, clientY, () => {
+          if (dragPayload || shopDidDrag) return;
+          showSidebarTooltipAt(
+            clientX,
+            clientY,
+            shopCard.dataset.itemId,
+            null,
+            "shop",
+            shopCard,
+            { pinned: true },
+          );
+        }, { pointerType: "touch" });
+      }
       return;
     }
   }
@@ -3638,22 +3683,22 @@ function gamepadPointerDownAt(clientX, clientY) {
     const index = +benchCard.dataset.bench;
     if (!Number.isNaN(index)) {
       if (isTouchUi()) {
-        beginTouchTapGesture({
-          clientX,
-          clientY,
-          onTap: () => {
-            if (dragPayload) return;
-            showSidebarTooltipAt(
-              clientX,
-              clientY,
-              benchCard.dataset.itemId,
-              null,
-              "bench",
-              benchCard,
-            );
-          },
-        });
+        const st = getSideState(prepViewSide);
+        const entry = st.bench[index];
         beginPendingBenchDrag(index, synthetic, prepViewSide);
+        armPointerTapTooltip(clientX, clientY, () => {
+          if (dragPayload) return;
+          if (!entry) return;
+          showSidebarTooltipAt(
+            clientX,
+            clientY,
+            entry.itemId,
+            entry,
+            "bench",
+            benchCard,
+            { pinned: true },
+          );
+        }, { pointerType: "touch" });
       } else {
         startBenchDrag(index, synthetic, prepViewSide);
       }
@@ -3664,16 +3709,12 @@ function gamepadPointerDownAt(clientX, clientY) {
   const dollSlot = target?.closest?.(".doll-slot[data-slot]");
   if (dollSlot && typeof isDollOpen === "function" && isDollOpen() && canEditPrepSide(prepViewSide)) {
     if (isTouchUi()) {
-      beginTouchTapGesture({
-        clientX,
-        clientY,
-        onTap: () => {
-          if (dragPayload) return;
-          if (typeof refreshDollSlotTooltip === "function") {
-            refreshDollSlotTooltip({ clientX, clientY, currentTarget: dollSlot }, dollSlot);
-          }
-        },
-      });
+      armPointerTapTooltip(clientX, clientY, () => {
+        if (dragPayload) return;
+        if (typeof refreshDollSlotTooltip === "function") {
+          refreshDollSlotTooltip({ clientX, clientY }, dollSlot, { pinned: true });
+        }
+      }, { pointerType: "touch" });
     }
     return;
   }
@@ -3685,15 +3726,11 @@ function gamepadPointerDownAt(clientX, clientY) {
   }
 
   if (isTouchUi() && target?.closest?.("#game-canvas")) {
-    beginTouchTapGesture({
-      clientX,
-      clientY,
-      onTap: () => {
-        pendingCanvasPick = null;
-        updatePointerFromClient(clientX, clientY);
-        updateTooltip(mousePos.x, mousePos.y);
-      },
-    });
+    armPointerTapTooltip(clientX, clientY, () => {
+      pendingCanvasPick = null;
+      updatePointerFromClient(clientX, clientY);
+      updateTooltip(mousePos.x, mousePos.y);
+    }, { pointerType: "touch" });
     pendingCanvasPick = { clientX, clientY };
     return;
   }
@@ -3703,8 +3740,8 @@ function gamepadPointerDownAt(clientX, clientY) {
 
 function gamepadPointerUpAt(clientX, clientY) {
   updatePointerFromClient(clientX, clientY);
-  if (tryBuyFromPendingShopDrag(clientX, clientY)) return;
   if (tryShowPrepPointerTapTooltip(clientX, clientY)) return;
+  if (tryBuyFromPendingShopDrag(clientX, clientY)) return;
   pendingBenchDrag = null;
   pendingCanvasPick = null;
   finishDragDrop(createSyntheticPointerEvent(clientX, clientY));
@@ -3716,6 +3753,7 @@ function canvasCoordsFromEvent(e) {
 function rotateDragItem() {
   if (!dragPayload) return;
   dragPayload.rotation = ((dragPayload.rotation || 0) + 1) % 4;
+  playPrepSfx("prep_rotate");
   syncDragGhostOverlay(lastPointerClient.x, lastPointerClient.y);
 }
 
@@ -4862,6 +4900,7 @@ function syncFieldTooltip() {
     }
 
     sidebarTooltipSource = "field";
+    sidebarTooltipPinned = false;
     const { itemId, x, y, contentItem, rotation } = tooltipItem;
     const el = document.getElementById("sidebar-tooltip");
     const def = ITEM_CATALOG[itemId];
@@ -5108,11 +5147,12 @@ function updateTooltip(mx, my) {
   syncFieldTooltip();
 }
 
-function showSidebarTooltipAt(clientX, clientY, itemId, contentItem, context = "shop", sourceEl = null) {
+function showSidebarTooltipAt(clientX, clientY, itemId, contentItem, context = "shop", sourceEl = null, options = {}) {
   const el = document.getElementById("sidebar-tooltip");
   const def = ITEM_CATALOG[itemId];
   if (!el || !def) return;
   cancelScheduledTooltipHide();
+  sidebarTooltipPinned = !!options.pinned;
   sidebarTooltipSource = context;
   tooltipItem = null;
   fieldTooltipVisible = false;
@@ -5154,31 +5194,37 @@ function bindPointerTapTooltip(el, onTapAt) {
   if (!el || el.dataset.pointerTapTooltipBound === "1") return;
   el.dataset.pointerTapTooltipBound = "1";
   let activePointer = null;
+  const captureOpts = { capture: true };
 
   el.addEventListener("pointerdown", (e) => {
     if (e.pointerType === "mouse" && e.button !== 0) return;
     activePointer = e.pointerId;
-    beginTouchTapGesture({
-      clientX: e.clientX,
-      clientY: e.clientY,
-      allowMouse: true,
-      onTap: () => onTapAt(e.clientX, e.clientY),
-    });
-  });
+    const shownNow = armPointerTapTooltip(
+      e.clientX,
+      e.clientY,
+      () => onTapAt(e.clientX, e.clientY),
+      { pointerType: e.pointerType, allowMouse: true },
+    );
+    if (shownNow) activePointer = null;
+  }, captureOpts);
   el.addEventListener("pointerup", (e) => {
     if (activePointer == null || e.pointerId !== activePointer) return;
     activePointer = null;
+    if (isTouchLikePointerType(e.pointerType)) return;
     finishTouchTapGesture(e.clientX, e.clientY);
-  });
+  }, captureOpts);
   el.addEventListener("pointercancel", () => {
     activePointer = null;
     clearTouchTapGesture();
-  });
+  }, captureOpts);
 }
 
 function tryShowPrepPointerTapTooltip(clientX, clientY) {
   if (!isTouchUi() || phase !== "prep" || gameOver || !prepTooltipsEnabled) return false;
   if (dragPayload || shopDidDrag) return false;
+
+  const tip = document.getElementById("sidebar-tooltip");
+  const tipAlreadyVisible = tip && !tip.classList.contains("hidden") && sidebarTooltipPinned;
 
   if (pendingShopDrag) {
     const dx = clientX - pendingShopDrag.startX;
@@ -5191,7 +5237,8 @@ function tryShowPrepPointerTapTooltip(clientX, clientY) {
       if (entry && card && !card.classList.contains("empty")) {
         pendingShopDrag = null;
         syncUiDragState();
-        showSidebarTooltipAt(clientX, clientY, entry.itemId, null, "shop", card);
+        if (tipAlreadyVisible && sidebarTooltipSource === "shop") return true;
+        showSidebarTooltipAt(clientX, clientY, entry.itemId, null, "shop", card, { pinned: true });
         return true;
       }
     }
@@ -5208,7 +5255,8 @@ function tryShowPrepPointerTapTooltip(clientX, clientY) {
       if (entry && card && !card.classList.contains("empty")) {
         pendingBenchDrag = null;
         syncUiDragState();
-        showSidebarTooltipAt(clientX, clientY, entry.itemId, entry, "bench", card);
+        if (tipAlreadyVisible && sidebarTooltipSource === "bench") return true;
+        showSidebarTooltipAt(clientX, clientY, entry.itemId, entry, "bench", card, { pinned: true });
         return true;
       }
     }
@@ -5239,10 +5287,12 @@ function bindItemTooltipEvents(el, itemId, contentItem, context = "shop") {
   };
 
   el.addEventListener("mouseenter", (e) => {
+    if (isSyntheticMouseFromTouch()) return;
     cancelScheduledTooltipHide();
     refresh(e);
   });
   el.addEventListener("mousemove", (e) => {
+    if (isSyntheticMouseFromTouch()) return;
     cancelScheduledTooltipHide();
     refresh(e);
     moveSidebarTooltip(e, boundsKind, context);
@@ -5253,7 +5303,7 @@ function bindItemTooltipEvents(el, itemId, contentItem, context = "shop") {
     if (!prepTooltipsEnabled) return;
     const liveItemId = el.dataset.itemId || itemId;
     if (!liveItemId) return;
-    showSidebarTooltipAt(clientX, clientY, liveItemId, contentItem, context, el);
+    showSidebarTooltipAt(clientX, clientY, liveItemId, contentItem, context, el, { pinned: true });
   });
 
   if (context === "shop" || context === "bench" || context === "field") {
@@ -5325,6 +5375,7 @@ function tryGemSocketDrop(st, dragFrom, dragPayload, col, row, side) {
   const gemName = ITEM_CATALOG[gemId]?.name || gemId;
   const hostName = ITEM_CATALOG[host.itemId]?.name || host.itemId;
   log(`💎 ${gemName} вставлен в ${hostName}`);
+  playPrepSfx("prep_gem");
   if (side === prepViewSide && typeof CombatLog !== "undefined") {
     CombatLog.notifyGemSocketed(gemId, host.itemId);
   }
@@ -5707,8 +5758,9 @@ function tryBuyFromPendingShopDrag(clientX, clientY) {
   if (!isTouchUi()) {
     buyFromShop(index, side);
     suppressShopClickUntil = Date.now() + 500;
+    return true;
   }
-  return true;
+  return false;
 }
 
 function beginPendingShopDrag(index, e, side = prepViewSide) {

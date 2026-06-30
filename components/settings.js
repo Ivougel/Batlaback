@@ -5,8 +5,12 @@
 function showSettingsPopup() {
   const overlay = document.getElementById("settings-overlay");
   if (!overlay) return;
+  if (typeof playGameSfx === "function") playGameSfx("ui_open");
   if (typeof syncMusicVolumeUi === "function") {
     syncMusicVolumeUi(typeof getMusicVolume === "function" ? getMusicVolume() : 0.6);
+  }
+  if (typeof syncSfxVolumeUi === "function") {
+    syncSfxVolumeUi(typeof getSfxVolume === "function" ? getSfxVolume() : 0.75);
   }
   if (typeof syncNegrovEnabledUi === "function") {
     syncNegrovEnabledUi(typeof isNegrovEnabled === "function" ? isNegrovEnabled() : false);
@@ -20,6 +24,7 @@ function showSettingsPopup() {
 }
 
 function hideSettingsPopup() {
+  if (typeof playGameSfx === "function") playGameSfx("ui_close");
   document.getElementById("settings-overlay")?.classList.add("hidden");
   document.getElementById("settings-overlay")?.setAttribute("aria-hidden", "true");
   document.getElementById("btn-settings")?.setAttribute("aria-expanded", "false");
@@ -50,6 +55,13 @@ function initSettingsControls() {
     const pct = +e.target.value;
     if (typeof setMusicVolume === "function") setMusicVolume(pct / 100);
     if (typeof tryStartMusic === "function") tryStartMusic();
+  });
+
+  const sfxSlider = document.getElementById("settings-sfx-volume");
+  sfxSlider?.addEventListener("input", (e) => {
+    const pct = +e.target.value;
+    if (typeof setSfxVolume === "function") setSfxVolume(pct / 100);
+    if (typeof playGameSfx === "function") playGameSfx("ui_click");
   });
 
   const negrovCheckbox = document.getElementById("settings-negrov-enabled");

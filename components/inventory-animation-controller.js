@@ -109,11 +109,13 @@ const InventoryAnimationController = (() => {
     const cells = typeof getItemCells === "function" ? getItemCells(item) : [];
     queuePlacement(item.uid, cells, true);
     triggerBackpackShake(def || ITEM_CATALOG?.[item.itemId]);
+    if (typeof playGameSfx === "function") playGameSfx("prep_place");
   }
 
   function notifyPlacementRejected(item) {
     if (!item?.uid) return;
     queueReject(item.uid);
+    if (typeof playGameSfx === "function") playGameSfx("prep_reject");
   }
 
   function getItemDrawTransform(uid) {
@@ -351,6 +353,7 @@ const InventoryAnimationController = (() => {
 
   function notifyHeavyDrop(def) {
     triggerBackpackShake(def);
+    if (typeof playGameSfx === "function") playGameSfx("prep_place", { heavy: true });
   }
 
   return {
@@ -377,6 +380,7 @@ function tickInventoryAnimationController(dt) {
 
 function onPrepDragStart() {
   InventoryAnimationController.onDragStart();
+  playPrepSfx("prep_pickup");
 }
 
 function onPrepDragMove(clientX, clientY) {

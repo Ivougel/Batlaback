@@ -129,8 +129,8 @@ const PrepDragArc = (() => {
   }
 
   function playBeginSound() {
-    playTone(440, 0.1, 0.028);
-    window.setTimeout(() => playTone(620, 0.08, 0.02), 40);
+    if (typeof playGameSfx === "function") playGameSfx("arc_hover");
+    else playTone(440, 0.1, 0.028);
   }
 
   function hoverCellKey(col, row, kind = "c") {
@@ -151,9 +151,12 @@ const PrepDragArc = (() => {
   }
 
   function playCelebrateSound() {
-    playTone(740, 0.1, 0.032);
-    window.setTimeout(() => playTone(980, 0.12, 0.028), 55);
-    window.setTimeout(() => playTone(1180, 0.08, 0.018), 110);
+    if (typeof playGameSfx === "function") playGameSfx("arc_celebrate");
+    else {
+      playTone(740, 0.1, 0.032);
+      window.setTimeout(() => playTone(980, 0.12, 0.028), 55);
+      window.setTimeout(() => playTone(1180, 0.08, 0.018), 110);
+    }
   }
 
   function rarityKey(id) {
