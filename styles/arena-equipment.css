@@ -15,11 +15,32 @@
 }
 
 .arena-equip-fx-layer {
-  position: absolute;
+  position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 4;
+  z-index: 28;
   overflow: visible;
+}
+
+/* Спутники экипировки — внутри того же слота, что и главный эмодзи-аватар */
+.avatar-thought-slot .arena-equip-body--thought-orbit {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.avatar-thought-slot .arena-equip-body--thought-orbit.arena-equip-body--weapon {
+  z-index: 4;
+}
+
+.avatar-thought-slot .arena-equip-body--thought-orbit.arena-equip-body--gear {
+  z-index: 5;
+}
+
+html[data-battle-hero-placement="flank-arena"] .avatar-thought-slot .battle-thought-body {
+  z-index: 6;
 }
 
 .arena-equip-body--fx-flight {
@@ -99,11 +120,26 @@ html[data-battle-hero-placement="flank-arena"] .arena-equip-body--hero-card.aren
   filter: drop-shadow(0 8px 22px rgba(255, 180, 80, 0.45));
 }
 
-/* Планшет: оружие с манекена стартует из верхних «дорожек» над героем */
-.arena-equip-body--tablet-lane {
+/* Экипировка летает рядом с эмодзи-аватаром (thought-slot) */
+.arena-equip-body--emoji-avatar-orbit {
   position: fixed;
-  z-index: 24;
   pointer-events: none;
+}
+
+.arena-equip-body--emoji-avatar-orbit.arena-equip-body--gear {
+  background: rgba(10, 14, 26, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 6px 18px rgba(0, 0, 0, 0.45);
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
+}
+
+html[data-battle-hero-placement="flank-arena"] .arena-equip-body--hero-card.arena-equip-body--gear {
+  background: rgba(10, 14, 26, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
 }
 
 /* Стили атаки экипировки (ArenaAttackStyles) */

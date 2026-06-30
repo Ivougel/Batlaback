@@ -404,10 +404,17 @@ html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .avatar-thought-slot,
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar-thought-slot {
   display: block !important;
-  position: absolute;
+  position: fixed;
   overflow: visible;
   pointer-events: none;
-  z-index: 24;
+  z-index: 26;
+}
+
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-thought-slot,
+html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-thought-slot {
+  display: block !important;
+  overflow: visible;
+  z-index: 26;
 }
 
 /* Зона атакующей экипировки — под HP/статами (L2, как боевые эмодзи) */

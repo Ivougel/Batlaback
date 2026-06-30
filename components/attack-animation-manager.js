@@ -118,6 +118,9 @@ function initAttackVisuals(state) {
 }
 
 function enqueueAttackVisual(state, event) {
+  if (typeof BattleHeroAnchor !== "undefined" && BattleHeroAnchor.isFlankArenaBattle()) {
+    return;
+  }
   initAttackVisuals(state);
   if (state.attackVisuals.length >= ATTACK_FX_MAX) {
     state.attackVisuals.shift();

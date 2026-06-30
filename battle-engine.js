@@ -3184,6 +3184,7 @@ function applyDamage(target, amount, state, sourceLabel, attackerTeam, attackerS
       type: "damage",
       amount: Math.round(hpDmg),
       sourceTeam: attackerTeam,
+      sourceUid: sourceItem?.uid ?? null,
       sourceCol: sourceItem?.col ?? 3,
       sourceRow: sourceItem?.row ?? 2,
       targetTeam,

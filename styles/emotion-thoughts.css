@@ -42,6 +42,11 @@ html[data-battle-arena-layout="true"] #app[data-phase="replay"] .battle-thought-
   will-change: transform, opacity;
   transform-origin: center center;
   transition: filter 0.25s ease;
+  z-index: 1;
+}
+
+html[data-battle-hero-placement="flank-arena"] .battle-thought-body {
+  z-index: 6;
 }
 
 .battle-thought-body--player {

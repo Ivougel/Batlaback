@@ -5,11 +5,12 @@
 
 const ArenaEquipment = (() => {
   const SIZE_RATIO = 0.105;
+  const GEAR_SIZE_RATIO = 0.095;
   const SPRING_K = 9;
   const AIR_DRAG = 0.992;
   const MAX_DT = 0.032;
   const SYNC_INTERVAL_MS = 450;
-  const BURST_SPACING_SEC = 6.5;
+  const BURST_SPACING_SEC = 9.5;
   const MIN_BURSTS = 2;
   const MAX_BURSTS = 14;
 
@@ -64,18 +65,37 @@ const ArenaEquipment = (() => {
     amulet: { y: 0.38, xBias: 0.35 },
   };
 
-  /** Три «синие» точки на планшете: верх / середина / над героем (доля battle-scene-ui). */
-  const TABLET_WEAPON_LANES = {
-    player: [
-      { x: 0.20, y: 0.11 },
-      { x: 0.27, y: 0.22 },
-      { x: 0.34, y: 0.34 },
-    ],
-    enemy: [
-      { x: 0.80, y: 0.11 },
-      { x: 0.73, y: 0.22 },
-      { x: 0.66, y: 0.34 },
-    ],
+  /** Орбита вокруг эмодзи-аватара игрока (смещение от центра слота, в долях vmin). */
+  const PLAYER_EMOJI_ORBIT = {
+    head:      { dx: 0.0,  dy: -1.05 },
+    amulet:    { dx: -0.82, dy: -0.42 },
+    chest:     { dx: 0.38,  dy: 0.12 },
+    leftHand:  { dx: -1.0,  dy: 0.28 },
+    rightHand: { dx: 0.72,  dy: 0.06 },
+    ring1:     { dx: 0.58,  dy: -0.58 },
+    ring2:     { dx: 0.72,  dy: 0.55 },
+    gloves:    { dx: -0.62, dy: 0.78 },
+    boots:     { dx: 0.15,  dy: 0.98 },
+  };
+
+  /** Зеркальная орбита врага — предметы остаются у своего аватара на правой половине экрана. */
+  const ENEMY_EMOJI_ORBIT = {
+    head:      { dx: 0.0,  dy: -1.05 },
+    amulet:    { dx: 0.82,  dy: -0.42 },
+    chest:     { dx: -0.38, dy: 0.12 },
+    leftHand:  { dx: 1.0,   dy: 0.28 },
+    rightHand: { dx: -0.72, dy: 0.06 },
+    ring1:     { dx: -0.58, dy: -0.58 },
+    ring2:     { dx: -0.72, dy: 0.55 },
+    gloves:    { dx: 0.62,  dy: 0.78 },
+    boots:     { dx: -0.15, dy: 0.98 },
+  };
+
+  const EMOJI_ORBIT_Z_BASE = 30;
+
+  const SLOT_Z = {
+    head: 0, amulet: 1, chest: 2, leftHand: 3, rightHand: 4,
+    ring1: 5, ring2: 6, gloves: 7, boots: 8,
   };
 
   /** @type {Map<string, object[]>} */
@@ -213,42 +233,133 @@ const ArenaEquipment = (() => {
     return isFlankAttackLayout();
   }
 
-  function usesTabletWeaponLanes() {
-    const root = document.documentElement;
-    if (!usesSideAttackZones()) return false;
-    if (root.dataset.prepLayout === "mobile") return false;
-    if (root.dataset.tabletSideFit === "true") return true;
-    if (root.dataset.tabletPrepHero === "true") return true;
-    if (root.dataset.uiTier === "tablet") return true;
-    return false;
+  function usesEmojiAvatarEquipHome() {
+    return usesSideAttackZones();
   }
 
-  function getSceneUiRect() {
-    const el = document.getElementById("battle-scene-ui")
-      || document.getElementById("prep-field-column");
-    const rect = el?.getBoundingClientRect();
-    if (!rect || rect.width <= 0 || rect.height <= 0) return null;
-    return rect;
+  function getEmojiAvatarSlotEl(side) {
+    return document.getElementById(side === "enemy" ? "enemy-thought-slot" : "player-thought-slot");
   }
 
-  function getTabletWeaponHomeViewport(side, weaponIndex) {
-    const rect = getSceneUiRect();
-    if (!rect) return null;
-    const lanes = TABLET_WEAPON_LANES[side];
-    if (!lanes?.length) return null;
-    const lane = lanes[weaponIndex % lanes.length];
+  function equipDisplayGlyph(def) {
+    if (typeof firstItemIconGrapheme === "function") {
+      return firstItemIconGrapheme(def?.icon);
+    }
+    if (typeof getItemIcons === "function") {
+      const icons = getItemIcons(def);
+      if (icons?.length) return icons[0];
+    }
+    return def?.icon || "?";
+  }
+
+  function equipDiameterForBody(body) {
+    const ratio = body.isWeapon ? SIZE_RATIO : GEAR_SIZE_RATIO;
+    return viewportMin() * ratio;
+  }
+
+  /** Радиус орбиты вокруг эмодзи-аватара (~размер thought-slot), не весь viewport. */
+  function orbitSpanPx() {
+    const slot = typeof BattleHeroAnchor !== "undefined"
+      ? BattleHeroAnchor.thoughtSlotSize()
+      : Math.round(Math.min(112, Math.max(68, viewportMin() * 0.12)));
+    return slot * 0.88;
+  }
+
+  function orbitOffsetPx(side, slotId) {
+    const off = emojiOrbitOffset(side, slotId);
+    const span = orbitSpanPx();
+    return { ox: off.dx * span, oy: off.dy * span };
+  }
+
+  function getEquipViewportHome(side, slotId) {
+    const off = orbitOffsetPx(side, slotId);
+    const center = typeof BattleHeroAnchor !== "undefined"
+      ? BattleHeroAnchor.getThoughtSlotCenter(side)
+      : null;
+    if (!center) return { ...off, x: null, y: null };
     return {
-      x: rect.left + rect.width * lane.x,
-      y: rect.top + rect.height * lane.y,
+      ox: off.ox,
+      oy: off.oy,
+      x: center.x + off.ox,
+      y: center.y + off.oy,
     };
   }
 
-  function mountTabletWeapon(body) {
+  function mountOrbitThoughtSlot(body) {
+    if (body.attack) return;
+    const slot = getEmojiAvatarSlotEl(body.side);
+    if (!slot) {
+      mountViewportEquip(body);
+      return;
+    }
+    if (body.el.parentElement !== slot) slot.appendChild(body.el);
+    body.orbitSlotMounted = true;
+    body.homeViewport = false;
+    body.fxMounted = false;
+    body.el.classList.add("arena-equip-body--thought-orbit");
+    body.el.classList.remove("arena-equip-body--emoji-avatar-orbit", "arena-equip-body--fx-flight");
+    body.el.style.position = "";
+    body.el.style.left = "";
+    body.el.style.top = "";
+  }
+
+  function mountToFxForAttack(body) {
+    const fxLayer = ensureEquipFxLayer();
+    if (body.el.parentElement !== fxLayer) fxLayer.appendChild(body.el);
+    body.fxMounted = true;
+    body.orbitSlotMounted = false;
+    body.el.classList.add("arena-equip-body--fx-flight");
+    body.el.classList.remove("arena-equip-body--thought-orbit");
+  }
+
+  function remountOrbitAfterAttack(body) {
+    body.el.classList.remove("arena-equip-body--fx-flight");
+    body.fxMounted = false;
+    body.el.style.position = "";
+    body.el.style.left = "";
+    body.el.style.top = "";
+    body.el.style.zIndex = "";
+    if (usesEmojiAvatarEquipHome()) {
+      const off = orbitOffsetPx(body.side, body.slotId);
+      body.homeOx = off.ox;
+      body.homeOy = off.oy;
+      body.renderOx = off.ox;
+      body.renderOy = off.oy;
+      mountOrbitThoughtSlot(body);
+    }
+  }
+  function emojiOrbitOffset(side, slotId) {
+    const table = side === "enemy" ? ENEMY_EMOJI_ORBIT : PLAYER_EMOJI_ORBIT;
+    return table[slotId] || { dx: 0, dy: 0.55 };
+  }
+
+  function resolveEquipOrigin(body) {
+    const vp = getEquipViewportHome(body.side, body.slotId);
+    body.homeOx = vp.ox;
+    body.homeOy = vp.oy;
+    if (vp.x != null) {
+      body.homeX = vp.x;
+      body.homeY = vp.y;
+    }
+    if (!body.attack) {
+      body.renderOx = vp.ox;
+      body.renderOy = vp.oy;
+      if (vp.x != null) {
+        body.x = vp.x;
+        body.y = vp.y;
+        body.renderX = vp.x;
+        body.renderY = vp.y;
+      }
+    }
+    return vp.x != null ? vp : null;
+  }
+
+  function mountViewportEquip(body) {
     const fxLayer = ensureEquipFxLayer();
     if (body.el.parentElement !== fxLayer) fxLayer.appendChild(body.el);
     body.fxMounted = true;
     body.homeViewport = true;
-    body.el.classList.add("arena-equip-body--tablet-lane");
+    body.el.classList.add("arena-equip-body--emoji-avatar-orbit");
   }
 
   function slotAnchorTable() {
@@ -274,15 +385,27 @@ const ArenaEquipment = (() => {
   }
 
   function homeCoords(side, slotId, isWeapon, weaponIndex, w, h, r) {
-    if (isWeapon && usesTabletWeaponLanes()) {
-      const vp = getTabletWeaponHomeViewport(side, weaponIndex);
-      if (vp) return { x: vp.x, y: vp.y, viewport: true };
+    if (usesEmojiAvatarEquipHome()) {
+      const off = orbitOffsetPx(side, slotId);
+      return { ox: off.ox, oy: off.oy, orbit: true };
     }
     const local = homeForSlot(side, slotId, w, h, r);
     return { x: local.x, y: local.y, viewport: false };
   }
 
   function applyHomeToBody(body, home) {
+    if (home.orbit) {
+      body.homeOx = home.ox;
+      body.homeOy = home.oy;
+      if (!body.attack) {
+        body.renderOx = home.ox;
+        body.renderOy = home.oy;
+        mountOrbitThoughtSlot(body);
+        styleBodyEl(body);
+      }
+      return;
+    }
+
     const wasViewport = !!body.homeViewport;
     body.homeViewport = !!home.viewport;
     body.homeX = home.x;
@@ -294,13 +417,13 @@ const ArenaEquipment = (() => {
       body.renderY = home.y;
     }
     if (body.homeViewport) {
-      mountTabletWeapon(body);
+      mountViewportEquip(body);
     } else if (wasViewport && body.fxMounted) {
       const layer = getLayerEl(body.side);
       if (layer) layer.appendChild(body.el);
       body.fxMounted = false;
       body.el.classList.remove(
-        "arena-equip-body--tablet-lane",
+        "arena-equip-body--emoji-avatar-orbit",
         "arena-equip-body--fx-flight",
       );
       body.el.style.position = "";
@@ -317,15 +440,14 @@ const ArenaEquipment = (() => {
   }
 
   function foeStrikeTargetViewport(side) {
+    if (typeof BattleHeroAnchor !== "undefined") {
+      return BattleHeroAnchor.getFoeThoughtCenter(side);
+    }
     const foe = side === "player" ? "enemy" : "player";
     const foeSlot = document.getElementById(foe === "player" ? "player-thought-slot" : "enemy-thought-slot");
     const sr = foeSlot?.getBoundingClientRect();
     if (!sr || sr.width <= 0) return null;
-    const vmin = viewportMin();
-    return {
-      x: sr.left + sr.width / 2 + (Math.random() - 0.5) * vmin * 0.05,
-      y: sr.top + sr.height / 2 + (Math.random() - 0.5) * vmin * 0.04,
-    };
+    return { x: sr.left + sr.width / 2, y: sr.top + sr.height / 2 };
   }
 
   function foeStrikeTarget(body, w, h) {
@@ -394,44 +516,56 @@ const ArenaEquipment = (() => {
   }
 
   function unmountAttackFx(body) {
-    if (!body.fxMounted) return;
-    if (body.homeViewport) {
-      body.el.classList.remove("arena-equip-body--fx-flight");
-      body.el.style.zIndex = "";
+    if (!body.fxMounted && !body.el.classList.contains("arena-equip-body--fx-flight")) {
       return;
     }
-    const layer = getLayerEl(body.side);
-    if (layer) layer.appendChild(body.el);
-    body.fxMounted = false;
-    body.el.classList.remove("arena-equip-body--fx-flight");
-    body.el.style.position = "";
-    body.el.style.left = "";
-    body.el.style.top = "";
-    body.el.style.zIndex = "";
+    remountOrbitAfterAttack(body);
   }
 
   function styleBodyEl(body) {
-    const d = equipDiameterPx();
+    const d = equipDiameterForBody(body);
     body.el.style.width = `${d}px`;
     body.el.style.height = `${d}px`;
     body.el.style.fontSize = `${d * 0.62}px`;
-    body.radius = equipRadiusPx();
+    body.radius = d * 0.5;
+    const z = (SLOT_Z[body.slotId] || 0) + (body.isWeapon ? 5 : 1);
+    body.el.style.zIndex = String(z);
+  }
+
+  function ensureAttackFxMount(body) {
+    if (!body.attack || !usesEmojiAvatarEquipHome()) return;
+    if (!body.fxMounted) mountToFxForAttack(body);
   }
 
   function applyVisual(body) {
     const scale = body.displayScale ?? 1;
     const rot = body.rotation ?? 0;
-    const x = body.renderX ?? body.x;
-    const y = body.renderY ?? body.y;
 
-    if (body.fxMounted) {
+    if (body.attack || body.fxMounted) {
+      const x = body.renderX ?? body.x;
+      const y = body.renderY ?? body.y;
       body.el.style.position = "fixed";
       body.el.style.left = `${x}px`;
       body.el.style.top = `${y}px`;
       body.el.style.transform = `translate(-50%, -50%) scale(${scale}) rotate(${rot}deg)`;
       body.el.style.opacity = String(body.opacity ?? 1);
+      body.el.style.zIndex = "45";
       return;
     }
+
+    if (body.orbitSlotMounted) {
+      const ox = body.renderOx ?? body.homeOx ?? 0;
+      const oy = body.renderOy ?? body.homeOy ?? 0;
+      body.el.style.position = "absolute";
+      body.el.style.left = "50%";
+      body.el.style.top = "50%";
+      body.el.style.transform = `translate(calc(-50% + ${ox}px), calc(-50% + ${oy}px)) scale(${scale}) rotate(${rot}deg)`;
+      body.el.style.opacity = String(body.opacity ?? 1);
+      return;
+    }
+
+    const x = body.renderX ?? body.x;
+    const y = body.renderY ?? body.y;
 
     body.el.style.position = "";
     body.el.style.left = "";
@@ -441,20 +575,26 @@ const ArenaEquipment = (() => {
   }
 
   function createBody(side, entry, home, weaponIndex) {
-    const layer = getLayerEl(side);
+    const slot = usesEmojiAvatarEquipHome() ? getEmojiAvatarSlotEl(side) : null;
+    const layer = slot || getLayerEl(side);
     if (!layer) return null;
 
     const el = document.createElement("div");
     el.className = "arena-equip-body";
     el.classList.add(`arena-equip-body--${side}`);
     if (usesSideAttackZones()) el.classList.add("arena-equip-body--hero-card");
-    if (isWeaponDef(entry.def)) el.classList.add("arena-equip-body--weapon");
+    if (isWeaponDef(entry.def)) {
+      el.classList.add("arena-equip-body--weapon");
+    } else {
+      el.classList.add("arena-equip-body--gear");
+    }
     el.dataset.attackStyle = resolveBodyAttackStyle(entry.def);
-    el.textContent = entry.def.icon || "?";
+    el.dataset.equipSlot = entry.slotId;
+    el.dataset.team = side;
+    el.textContent = equipDisplayGlyph(entry.def);
     el.title = entry.def.name || "";
     layer.appendChild(el);
 
-    const vmin = viewportMin();
     const body = {
       el,
       side,
@@ -463,14 +603,19 @@ const ArenaEquipment = (() => {
       slotId: entry.slotId,
       isWeapon: isWeaponDef(entry.def),
       attackStyle: resolveBodyAttackStyle(entry.def),
-      glyph: entry.def.icon,
-      x: home.x,
-      y: home.y,
-      homeX: home.x,
-      homeY: home.y,
-      renderX: home.x,
-      renderY: home.y,
+      glyph: equipDisplayGlyph(entry.def),
+      x: 0,
+      y: 0,
+      homeX: 0,
+      homeY: 0,
+      homeOx: home.ox ?? 0,
+      homeOy: home.oy ?? 0,
+      renderOx: home.ox ?? 0,
+      renderOy: home.oy ?? 0,
+      renderX: 0,
+      renderY: 0,
       homeViewport: false,
+      orbitSlotMounted: false,
       fxMounted: false,
       vx: 0,
       vy: 0,
@@ -542,28 +687,34 @@ const ArenaEquipment = (() => {
     let homeVpX = fromX;
     let homeVpY = fromY;
 
-    if (usesSideAttackZones() && layer) {
+    if (usesEmojiAvatarEquipHome()) {
+      const vpHome = getEquipViewportHome(body.side, body.slotId);
+      const vpTarget = foeStrikeTargetViewport(body.side);
+      if (!vpHome?.x || !vpTarget) return;
+      mountToFxForAttack(body);
+      fromX = vpHome.x;
+      fromY = vpHome.y;
+      homeVpX = vpHome.x;
+      homeVpY = vpHome.y;
+      body.renderX = fromX;
+      body.renderY = fromY;
+      target = vpTarget;
+      useViewport = true;
+    } else if (usesSideAttackZones() && layer) {
       const vpTarget = foeStrikeTargetViewport(body.side);
       if (vpTarget && mountAttackFx(body)) {
-        if (body.homeViewport) {
-          fromX = body.renderX ?? body.homeX;
-          fromY = body.renderY ?? body.homeY;
-          homeVpX = body.homeX;
-          homeVpY = body.homeY;
-        } else {
-          const vpFrom = localToViewport(layer, fromX, fromY);
-          const vpHome = localToViewport(layer, body.homeX, body.homeY);
-          fromX = vpFrom.x;
-          fromY = vpFrom.y;
-          homeVpX = vpHome.x;
-          homeVpY = vpHome.y;
-        }
+        const vpFrom = localToViewport(layer, fromX, fromY);
+        const vpHome = localToViewport(layer, body.homeX, body.homeY);
+        fromX = vpFrom.x;
+        fromY = vpFrom.y;
+        homeVpX = vpHome.x;
+        homeVpY = vpHome.y;
         target = vpTarget;
         useViewport = true;
       }
     }
 
-    const hitsTotal = 2 + Math.floor(Math.random() * 3);
+    const hitsTotal = 1;
     const styleId = body.attackStyle || resolveBodyAttackStyle({ id: body.itemId });
     const atkBase = {
       fromX,
@@ -576,6 +727,8 @@ const ArenaEquipment = (() => {
       homeVpX,
       homeVpY,
       styleId,
+      useEmojiAvatarArc: !!useViewport,
+      hitsTotal: 1,
     };
 
     if (typeof ArenaAttackStyles !== "undefined" && ArenaAttackStyles.createAttack) {
@@ -584,7 +737,7 @@ const ArenaEquipment = (() => {
       body.attack = {
         phase: "lunge",
         phaseT: 0,
-        hitsTotal,
+        hitsTotal: 1,
         hitsDone: 0,
         fromX,
         fromY,
@@ -600,7 +753,6 @@ const ArenaEquipment = (() => {
     body.el.classList.add("is-attacking");
     body.el.dataset.attackStyle = styleId;
     body.el.classList.add(`arena-equip-attack--${styleId}`);
-    body.burstsDone += 1;
     body.nextAttackAt = elapsed + body.burstInterval * (0.85 + Math.random() * 0.3);
   }
 
@@ -608,14 +760,30 @@ const ArenaEquipment = (() => {
     const atk = body.attack;
     if (!atk) return;
 
+    ensureAttackFxMount(body);
+
     if (typeof ArenaAttackStyles !== "undefined" && ArenaAttackStyles.stepAttack && atk.styleId) {
+      if (atk.useEmojiAvatarArc) {
+        const vpHome = getEquipViewportHome(body.side, body.slotId);
+        if (vpHome?.x) {
+          atk.homeVpX = vpHome.x;
+          atk.homeVpY = vpHome.y;
+          body.homeX = vpHome.x;
+          body.homeY = vpHome.y;
+          if (atk.phase === "windup" || atk.phase === "recover") {
+            body.renderX = vpHome.x;
+            body.renderY = vpHome.y;
+          }
+        }
+      }
       const vmin = viewportMin();
       const done = ArenaAttackStyles.stepAttack(body, atk, dt, vmin);
       if (done) {
+        remountOrbitAfterAttack(body);
         body.attack = null;
         body.el.classList.remove("is-attacking");
         body.el.classList.remove(`arena-equip-attack--${atk.styleId}`);
-        unmountAttackFx(body);
+        applyVisual(body);
       }
       return;
     }
@@ -665,7 +833,8 @@ const ArenaEquipment = (() => {
         body.displayScale = 1;
         body.attack = null;
         body.el.classList.remove("is-attacking");
-        unmountAttackFx(body);
+        remountOrbitAfterAttack(body);
+        applyVisual(body);
       }
     }
   }
@@ -676,6 +845,32 @@ const ArenaEquipment = (() => {
 
     const wobbleX = Math.sin(body.wobblePhase) * body.wobbleAmp * vmin * 0.0025;
     const wobbleY = Math.cos(body.wobblePhase * 0.85) * body.wobbleAmp * vmin * 0.002;
+
+    if (body.orbitSlotMounted && !body.attack) {
+      const off = orbitOffsetPx(body.side, body.slotId);
+      body.homeOx = off.ox;
+      body.homeOy = off.oy;
+      body.renderOx = body.homeOx + wobbleX;
+      body.renderOy = body.homeOy + wobbleY;
+      body.rotation += body.rotVel * dt;
+      body.rotVel *= Math.pow(0.92, dt * 60);
+      return;
+    }
+
+    if (body.homeViewport) {
+      const vp = getEquipViewportHome(body.side, body.slotId);
+      if (vp?.x) {
+        body.homeX = vp.x;
+        body.homeY = vp.y;
+        body.x = vp.x;
+        body.y = vp.y;
+      }
+      body.renderX = body.x + wobbleX;
+      body.renderY = body.y + wobbleY;
+      body.rotation += body.rotVel * dt;
+      body.rotVel *= Math.pow(0.92, dt * 60);
+      return;
+    }
 
     const ax = (body.homeX - body.x) * SPRING_K;
     const ay = (body.homeY - body.y) * SPRING_K;
@@ -688,7 +883,6 @@ const ArenaEquipment = (() => {
     body.renderY = body.y + wobbleY;
     body.rotation += body.rotVel * dt;
     body.rotVel *= Math.pow(0.92, dt * 60);
-
   }
 
   function stepPhysics(ts) {
@@ -712,16 +906,13 @@ const ArenaEquipment = (() => {
 
     all.forEach((body) => {
       const { w, h } = sizeBySide[body.side] || { w: 0, h: 0 };
-      if (body.homeViewport) {
-        if (!getSceneUiRect()) return;
+      if (body.orbitSlotMounted || usesEmojiAvatarEquipHome()) {
+        if (!getEmojiAvatarSlotEl(body.side)) return;
       } else if (w < 8 || h < 8) {
         return;
       }
       anyActive = true;
 
-      if (body.isWeapon && !body.attack && body.burstsDone < body.burstsTotal && elapsed >= body.nextAttackAt) {
-        startAttack(body, w, h, elapsed);
-      }
       if (body.attack) {
         stepAttack(body, dt);
       } else {
@@ -733,7 +924,9 @@ const ArenaEquipment = (() => {
     ["player", "enemy"].forEach((side) => {
       const { w, h } = sizeBySide[side];
       if (w < 8 || h < 8) return;
-      const idleBodies = (bodiesBySide.get(side) || []).filter((b) => !b.attack && !b.homeViewport);
+      const idleBodies = (bodiesBySide.get(side) || []).filter(
+        (b) => !b.attack && !b.homeViewport && !b.orbitSlotMounted,
+      );
       resolveCollisions(idleBodies, w, h);
       idleBodies.forEach(applyVisual);
     });
@@ -751,10 +944,8 @@ const ArenaEquipment = (() => {
 
   function syncSide(side, entries, battleState, elapsed, burstPlan) {
     const { w, h } = getSideArenaSize(side);
-    const tabletWeapons = usesTabletWeaponLanes();
-    const hasWeapon = entries.some((e) => isWeaponDef(e.def));
     if (w < 8 || h < 8) {
-      if (!tabletWeapons || !hasWeapon || !getSceneUiRect()) return;
+      if (!usesEmojiAvatarEquipHome() || !getEmojiAvatarSlotEl(side)) return;
     }
     const r = equipRadiusPx();
 
@@ -768,38 +959,75 @@ const ArenaEquipment = (() => {
       const home = homeForEntry(side, entry, weaponIndex, w, h, r);
       let body = byUid.get(entry.uid);
       if (body) {
+        body.side = side;
         body.slotId = entry.slotId;
         body.itemId = entry.itemId;
         body.isWeapon = isWeapon;
+        body.el.classList.remove("arena-equip-body--player", "arena-equip-body--enemy");
+        body.el.classList.add(`arena-equip-body--${side}`);
+        body.el.dataset.team = side;
         body.attackStyle = resolveBodyAttackStyle(entry.def);
-        if (body.glyph !== entry.def.icon) {
-          body.glyph = entry.def.icon;
-          body.el.textContent = entry.def.icon || "?";
+        if (body.glyph !== equipDisplayGlyph(entry.def)) {
+          body.glyph = equipDisplayGlyph(entry.def);
+          body.el.textContent = body.glyph;
         }
         body.el.classList.toggle("arena-equip-body--weapon", body.isWeapon);
+        body.el.classList.toggle("arena-equip-body--gear", !body.isWeapon);
+        body.el.dataset.equipSlot = entry.slotId;
         body.el.dataset.attackStyle = body.attackStyle;
         styleBodyEl(body);
-        applyHomeToBody(body, home);
+        if (!body.attack) {
+          applyHomeToBody(body, home);
+        } else {
+          body.homeOx = home.ox;
+          body.homeOy = home.oy;
+        }
       } else {
         body = createBody(side, entry, home, weaponIndex);
       }
       if (!body) return;
 
-      if (body.isWeapon) {
-        body.burstsTotal = burstPlan.totalBursts;
-        body.burstInterval = burstPlan.interval;
-        if (body.nextAttackAt === 0) {
-          body.nextAttackAt = elapsed + 1.1 + weaponIndex * 0.42 + Math.random() * 0.35;
-        }
-        weaponIndex += 1;
-      }
-
       nextBodies.push(body);
       byUid.delete(entry.uid);
+      if (isWeapon) weaponIndex += 1;
     });
 
     byUid.forEach((body) => body.el.remove());
     bodiesBySide.set(side, nextBodies);
+  }
+
+  function resolveStrikeWeaponBody(sourceTeam, itemUid) {
+    const list = bodiesBySide.get(sourceTeam) || [];
+    const byUid = list.find((b) => b.uid === itemUid && b.isWeapon);
+    if (byUid) return byUid;
+
+    const items = activeBattle?.[sourceTeam]?.items || [];
+    const srcItem = items.find((i) => i.uid === itemUid);
+    if (!srcItem) return null;
+
+    const byItemId = list.find((b) => b.isWeapon && b.itemId === srcItem.itemId);
+    if (byItemId) return byItemId;
+
+    const def = typeof ITEM_CATALOG !== "undefined" ? ITEM_CATALOG[srcItem.itemId] : null;
+    if (def?.slot) {
+      const slotId = def.slot === "twoHand" ? "rightHand" : def.slot;
+      const bySlot = list.find((b) => b.isWeapon && b.slotId === slotId);
+      if (bySlot) return bySlot;
+    }
+
+    return list.find((b) => b.isWeapon) || null;
+  }
+
+  function triggerDamageStrike(sourceTeam, itemUid, amount = 0) {
+    if (!isArenaActive() || !sourceTeam || !itemUid) return;
+    const body = resolveStrikeWeaponBody(sourceTeam, itemUid);
+    if (!body || body.attack) return;
+
+    body.pendingHitAmount = Math.max(0, Number(amount) || 0);
+    const { w, h } = getSideArenaSize(sourceTeam);
+    const elapsed = activeBattle?.elapsed || 0;
+    startAttack(body, w, h, elapsed);
+    scheduleFrame();
   }
 
   function syncBattle(battleState, elapsed) {
@@ -818,6 +1046,11 @@ const ArenaEquipment = (() => {
       lastSyncAt = 0;
     }
 
+    if (usesEmojiAvatarEquipHome()
+      && typeof window.syncHeroEmotionSlotAnchors === "function") {
+      window.syncHeroEmotionSlotAnchors({ skipEquipRelayout: true });
+    }
+
     const now = Date.now();
     if (now - lastSyncAt < SYNC_INTERVAL_MS && bodiesBySide.size > 0) {
       if (!paused) scheduleFrame();
@@ -834,6 +1067,8 @@ const ArenaEquipment = (() => {
       const items = battleState[side]?.items || [];
       syncSide(side, listFn(items), battleState, elapsed, burstPlan);
     });
+
+    if (usesEmojiAvatarEquipHome()) onResize();
 
     if (getAllBodies().length) scheduleFrame();
   }
@@ -861,10 +1096,24 @@ const ArenaEquipment = (() => {
     const r = equipRadiusPx();
     bodiesBySide.forEach((list, side) => {
       const { w, h } = getSideArenaSize(side);
-      if (w < 8 || h < 8) return;
+      if (w < 8 || h < 8) {
+        if (!usesEmojiAvatarEquipHome() || !getEmojiAvatarSlotEl(side)) return;
+      }
       let weaponIndex = 0;
       list.forEach((body) => {
-        const home = homeCoords(side, body.slotId, body.isWeapon, weaponIndex, w, h, r);
+        if (body.attack) {
+          const vpHome = getEquipViewportHome(body.side, body.slotId);
+          if (vpHome?.x && body.attack) {
+            body.attack.homeVpX = vpHome.x;
+            body.attack.homeVpY = vpHome.y;
+            body.homeX = vpHome.x;
+            body.homeY = vpHome.y;
+          }
+          styleBodyEl(body);
+          return;
+        }
+        const bodySide = body.side || side;
+        const home = homeCoords(bodySide, body.slotId, body.isWeapon, weaponIndex, w, h, r);
         applyHomeToBody(body, home);
         if (body.isWeapon) weaponIndex += 1;
         styleBodyEl(body);
@@ -878,7 +1127,8 @@ const ArenaEquipment = (() => {
     const observer = new ResizeObserver(onResize);
     const centerArena = document.getElementById("battle-thought-arena");
     if (centerArena) observer.observe(centerArena);
-    ["player-attack-arena", "enemy-attack-arena", "battle-scene-ui"].forEach((id) => {
+    ["player-attack-arena", "enemy-attack-arena", "player-thought-slot", "enemy-thought-slot",
+      "player-avatar-slot", "enemy-avatar-slot"].forEach((id) => {
       const el = document.getElementById(id);
       if (el) observer.observe(el);
     });
@@ -892,5 +1142,6 @@ const ArenaEquipment = (() => {
     clearAll,
     estimateBattleDuration,
     onResize,
+    triggerDamageStrike,
   };
 })();

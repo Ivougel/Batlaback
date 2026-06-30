@@ -572,100 +572,68 @@
     panel.style.transform = "none";
   }
 
-  function usesTabletBattleThoughtCorners(root = document.documentElement) {
-    if (root.dataset.prepLayout === "mobile") return false;
-    if (root.dataset.tabletSideFit === "true") return true;
-    if (root.dataset.tabletPrepHero === "true") return true;
-    if (root.dataset.uiTier === "tablet") return true;
+  function usesTabletBattleThoughtCorners() {
     return false;
   }
 
-  /** iPad / tablet: боевые эмодзи в верхних углах сцены (синие точки на макете). */
-  function syncTabletCornerEmotionSlots() {
-    const sceneUi = document.getElementById("battle-scene-ui");
-    const fieldCol = document.getElementById("prep-field-column");
-    const anchorRoot = sceneUi || fieldCol;
-    if (!anchorRoot) return;
-
-    const sceneRect = anchorRoot.getBoundingClientRect();
-    if (sceneRect.width <= 0 || sceneRect.height <= 0) return;
-
-    const vmin = Math.min(
-      window.visualViewport?.width ?? window.innerWidth,
-      window.visualViewport?.height ?? window.innerHeight,
-    );
-    const size = Math.round(Math.min(168, Math.max(104, vmin * 0.15)));
-    const padX = Math.max(10, readCssPx("--gap-md", 10));
-    const padTop = Math.max(8, readCssPx("--prep-scene-top", 14));
-    const top = sceneRect.top + padTop;
-    const leftX = sceneRect.left + padX;
-    const rightX = sceneRect.right - padX - size;
-
-    [
-      { slotId: "player-thought-slot", x: leftX },
-      { slotId: "enemy-thought-slot", x: rightX },
-    ].forEach(({ slotId, x }) => {
-      const slot = document.getElementById(slotId);
-      if (!slot) return;
-      slot.style.position = "fixed";
-      slot.style.left = `${Math.round(x)}px`;
-      slot.style.top = `${Math.round(top)}px`;
-      slot.style.width = `${size}px`;
-      slot.style.height = `${size}px`;
-      slot.style.right = "auto";
-      slot.style.bottom = "auto";
-      slot.style.zIndex = "24";
-    });
-  }
-
-  /** Якорь боевой эмодзи: верхний inner-угол портрета (к центру экрана). */
-  function syncHeroEmotionSlotAnchors() {
+  /** Эмодзи-аватар: фиксированно над портретом героя (mobile + tablet). */
+  function syncHeroEmotionSlotAnchors(opts = {}) {
     const root = document.documentElement;
     if (root.dataset.battleHeroPlacement !== "flank-arena") {
       root.removeAttribute("data-tablet-thought-corners");
       return;
     }
 
-    const tabletCorners = usesTabletBattleThoughtCorners(root) && isBattleUiPhase();
-    root.dataset.tabletThoughtCorners = tabletCorners ? "true" : "false";
+    root.dataset.tabletThoughtCorners = "false";
 
-    if (tabletCorners) {
-      syncTabletCornerEmotionSlots();
-      if (typeof ThoughtArena !== "undefined" && ThoughtArena.onResize) {
-        ThoughtArena.onResize();
-      }
-      return;
-    }
+    const vmin = Math.min(
+      window.visualViewport?.width ?? window.innerWidth,
+      window.visualViewport?.height ?? window.innerHeight,
+    );
+    const size = typeof BattleHeroAnchor !== "undefined"
+      ? BattleHeroAnchor.thoughtSlotSize(vmin)
+      : Math.round(Math.min(112, Math.max(68, vmin * 0.12)));
 
     [
-      { panelId: "player-avatar-panel", slotId: "player-thought-slot", innerX: 0.88 },
-      { panelId: "enemy-avatar-panel", slotId: "enemy-thought-slot", innerX: 0.12 },
-    ].forEach(({ panelId, slotId, innerX }) => {
-      const panel = document.getElementById(panelId);
-      const slot = document.getElementById(slotId);
-      const stage = panel?.querySelector(".avatar-hero-stage");
-      if (!panel || !slot || !stage) return;
+      { slotId: "player-thought-slot", avatarSlotId: "player-avatar-slot", biasX: 0.5 },
+      { slotId: "enemy-thought-slot", avatarSlotId: "enemy-avatar-slot", biasX: 0.5 },
+    ].forEach(({ slotId, avatarSlotId, biasX }) => {
+      const thoughtSlot = document.getElementById(slotId);
+      if (!thoughtSlot) return;
 
-      const panelRect = panel.getBoundingClientRect();
-      const stageRect = stage.getBoundingClientRect();
-      if (stageRect.width <= 0 || stageRect.height <= 0) return;
+      const ar = typeof BattleHeroAnchor !== "undefined"
+        ? BattleHeroAnchor.getAvatarAnchorRect(
+          slotId === "enemy-thought-slot" ? "enemy" : "player",
+        )
+        : null;
+      const avatarSlot = document.getElementById(avatarSlotId);
+      const fallbackAr = !ar && avatarSlot
+        ? (avatarSlot.querySelector(".avatar-hero-shell") || avatarSlot).getBoundingClientRect()
+        : null;
+      const anchorRect = ar || fallbackAr;
+      if (!anchorRect || anchorRect.width <= 4) return;
 
-      const size = Math.round(Math.min(stageRect.width, stageRect.height) * 0.36);
-      const top = stageRect.top - panelRect.top + stageRect.height * 0.14;
-      const left = stageRect.left - panelRect.left + stageRect.width * innerX - size * 0.5;
+      const cx = anchorRect.left + anchorRect.width * biasX;
+      const top = anchorRect.top - size * 0.42;
 
-      slot.style.position = "absolute";
-      slot.style.left = `${Math.round(left)}px`;
-      slot.style.top = `${Math.round(top)}px`;
-      slot.style.width = `${size}px`;
-      slot.style.height = `${size}px`;
-      slot.style.right = "auto";
-      slot.style.bottom = "auto";
-      slot.style.zIndex = "";
+      thoughtSlot.style.position = "fixed";
+      thoughtSlot.style.left = `${Math.round(cx - size / 2)}px`;
+      thoughtSlot.style.top = `${Math.round(Math.max(4, top))}px`;
+      thoughtSlot.style.width = `${size}px`;
+      thoughtSlot.style.height = `${size}px`;
+      thoughtSlot.style.right = "auto";
+      thoughtSlot.style.bottom = "auto";
+      thoughtSlot.style.zIndex = "26";
+      thoughtSlot.style.overflow = "visible";
+      thoughtSlot.style.pointerEvents = "none";
     });
 
     if (typeof ThoughtArena !== "undefined" && ThoughtArena.onResize) {
       ThoughtArena.onResize();
+    }
+    if (!opts.skipEquipRelayout
+      && typeof ArenaEquipment !== "undefined" && ArenaEquipment.onResize) {
+      ArenaEquipment.onResize();
     }
   }
 
@@ -1415,4 +1383,5 @@
   window.syncBattleSceneGridMetrics = syncBattleSceneGridMetrics;
   window.scheduleBattleHeroRowSync = scheduleBattleHeroRowSync;
   window.syncPrepHeroSlotHeight = syncPrepHeroSlotHeight;
+  window.syncHeroEmotionSlotAnchors = syncHeroEmotionSlotAnchors;
 })();

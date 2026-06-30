@@ -4,6 +4,8 @@
  */
 
 const ArenaAttackStyles = (() => {
+  const ATTACK_TIME_SCALE = 2.75;
+
   function easeOutCubic(t) {
     const u = 1 - t;
     return 1 - u * u * u;
@@ -69,6 +71,47 @@ const ArenaAttackStyles = (() => {
     const pt = quadBezier(from, to, ctrl, u);
     const angle = Math.atan2(to.y - ctrl.y, to.x - ctrl.x) * (180 / Math.PI);
     return { x: pt.x, y: pt.y, scale: 0.9 + u * 0.22, rotation: angle * 0.35 };
+  }
+
+  function emojiAvatarArcCtrl(from, to, vmin) {
+    const span = Math.abs(to.x - from.x);
+    const lift = Math.max(vmin * 0.17, span * 0.32);
+    return {
+      x: (from.x + to.x) * 0.5,
+      y: Math.min(from.y, to.y) - lift,
+    };
+  }
+
+  function emojiAvatarStrikeArc(atk, t, vmin, params) {
+    const from = { x: atk.fromX, y: atk.fromY };
+    const to = { x: atk.targetX, y: atk.targetY };
+    const ctrl = emojiAvatarArcCtrl(from, to, vmin);
+    const u = easeOutCubic(Math.min(1, Math.max(0, t)));
+    const pt = quadBezier(from, ctrl, to, u);
+    const ptNext = quadBezier(from, ctrl, to, Math.min(1, u + 0.025));
+    const angle = Math.atan2(ptNext.y - pt.y, ptNext.x - pt.x) * (180 / Math.PI);
+    return {
+      x: pt.x,
+      y: pt.y,
+      scale: 0.9 + Math.sin(u * Math.PI) * 0.16,
+      rotation: angle + params.spin * 12,
+    };
+  }
+
+  function emojiAvatarRecoverArc(atk, t, vmin, params) {
+    const homeX = atk.useViewport ? atk.homeVpX : atk.homeX;
+    const homeY = atk.useViewport ? atk.homeVpY : atk.homeY;
+    const from = { x: atk.fromX, y: atk.fromY };
+    const to = { x: homeX, y: homeY };
+    const ctrl = emojiAvatarArcCtrl(from, to, vmin);
+    const u = easeInOutQuad(Math.min(1, Math.max(0, t)));
+    const pt = quadBezier(from, ctrl, to, u);
+    return {
+      x: pt.x,
+      y: pt.y,
+      scale: 1.06 - u * 0.06,
+      rotation: (1 - u) * 24 * params.spin,
+    };
   }
 
   /** @type {Record<string, object>} */
@@ -809,9 +852,9 @@ const ArenaAttackStyles = (() => {
     const params = itemParams(itemId);
     const range = style.hits();
     const min = range[0];
-    const max = range[1];
-    const bonus = params.hitsBonus && Math.random() > 0.5 ? 1 : 0;
-    return min + Math.floor(Math.random() * (max - min + 1)) + bonus;
+    const max = Math.min(range[1], 2);
+    const bonus = params.hitsBonus && Math.random() > 0.65 ? 1 : 0;
+    return Math.min(2, min + Math.floor(Math.random() * (max - min + 1)) + bonus);
   }
 
   function createAttack(body, atkBase) {
@@ -823,11 +866,12 @@ const ArenaAttackStyles = (() => {
       styleParams: params,
       phase: "windup",
       phaseT: 0,
-      hitsTotal: rollHits(style, body.itemId),
+      hitsTotal: atkBase.hitsTotal ?? rollHits(style, body.itemId),
       hitsDone: 0,
       hitReacted: false,
       homeX: body.homeX,
       homeY: body.homeY,
+      useEmojiAvatarArc: !!atkBase.useEmojiAvatarArc,
     };
   }
 
@@ -847,22 +891,36 @@ const ArenaAttackStyles = (() => {
     const style = STYLES[atk.styleId] || STYLES.slash;
     const params = atk.styleParams || itemParams(body.itemId);
     const phases = style.phases;
-    const dur = phases[atk.phase] || 0.2;
+    const dur = (phases[atk.phase] || 0.2) * ATTACK_TIME_SCALE;
 
     atk.phaseT += dt;
     const t = atk.phaseT / dur;
 
     let visual;
     if (atk.phase === "windup") {
-      visual = style.windup(atk, t, vmin, params);
+      if (atk.useEmojiAvatarArc) {
+        const pulse = 1 + Math.sin(t * Math.PI) * 0.07;
+        visual = {
+          x: atk.homeVpX,
+          y: atk.homeVpY,
+          scale: pulse,
+          rotation: body.rotation || 0,
+        };
+      } else {
+        visual = style.windup(atk, t, vmin, params);
+      }
     } else if (atk.phase === "strike") {
-      visual = style.strike(atk, t, vmin, params);
-      if (t >= 0.55 && !atk.hitReacted) {
+      visual = atk.useEmojiAvatarArc
+        ? emojiAvatarStrikeArc(atk, t, vmin, params)
+        : style.strike(atk, t, vmin, params);
+      if (t >= 0.82 && !atk.hitReacted) {
         atk.hitReacted = true;
         fireThoughtReaction(body, style);
       }
     } else if (atk.phase === "recover") {
-      visual = style.recover(atk, t, vmin, params);
+      visual = atk.useEmojiAvatarArc
+        ? emojiAvatarRecoverArc(atk, t, vmin, params)
+        : style.recover(atk, t, vmin, params);
     } else {
       visual = { x: body.renderX, y: body.renderY, scale: 1, rotation: body.rotation || 0 };
     }
@@ -882,8 +940,13 @@ const ArenaAttackStyles = (() => {
 
     if (atk.phase === "windup") {
       atk.phase = "strike";
-      atk.fromX = body.renderX;
-      atk.fromY = body.renderY;
+      if (atk.useEmojiAvatarArc) {
+        atk.fromX = atk.homeVpX;
+        atk.fromY = atk.homeVpY;
+      } else {
+        atk.fromX = body.renderX;
+        atk.fromY = body.renderY;
+      }
       return false;
     }
 
@@ -895,10 +958,19 @@ const ArenaAttackStyles = (() => {
         atk.phase = "recover";
         atk.fromX = atk.strikeX;
         atk.fromY = atk.strikeY;
+        if (atk.useEmojiAvatarArc) {
+          atk.homeVpX = body.homeX;
+          atk.homeVpY = body.homeY;
+        }
       } else {
         atk.phase = "windup";
-        atk.fromX = atk.strikeX;
-        atk.fromY = atk.strikeY;
+        if (atk.useEmojiAvatarArc) {
+          atk.fromX = atk.homeVpX;
+          atk.fromY = atk.homeVpY;
+        } else {
+          atk.fromX = atk.strikeX;
+          atk.fromY = atk.strikeY;
+        }
       }
       return false;
     }

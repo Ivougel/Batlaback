@@ -2836,6 +2836,20 @@ function handleBattleEvent(ev) {
       const col = item?.col ?? 3;
       const row = item?.row ?? 2;
       floatLayer.spawnDamage(canvas, ev.targetTeam, col, row, ev.amount);
+      if (ev.sourceTeam && ev.amount > 0
+        && document.documentElement.dataset.battleArenaLayout === "true"
+        && typeof ArenaEquipment !== "undefined"
+        && ArenaEquipment.triggerDamageStrike) {
+        const atkSide = battleState[ev.sourceTeam];
+        const srcItem = ev.sourceUid
+          ? atkSide?.items?.find((i) => i.uid === ev.sourceUid)
+          : atkSide?.items?.find(
+            (i) => i.col === (ev.sourceCol ?? 3) && i.row === (ev.sourceRow ?? 2),
+          );
+        if (srcItem?.uid) {
+          ArenaEquipment.triggerDamageStrike(ev.sourceTeam, srcItem.uid, ev.amount);
+        }
+      }
       if (ev.amount >= 8 && ev.sourceTeam) {
         floatLayer.spawnEmotionFly(
           canvas,
