@@ -373,7 +373,6 @@ function onPrepDragMove(clientX, clientY) {
 function onPrepDragEnd() {
   InventoryAnimationController.onDragEnd();
   InventoryAnimationController.resetDragGhostStyles(getDragGhostCanvas?.());
-  if (typeof PrepDragArc !== "undefined") PrepDragArc.end();
 }
 
 function applyPrepDragGhostStyles(el, arcRotation = null) {

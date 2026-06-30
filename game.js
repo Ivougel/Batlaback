@@ -2257,6 +2257,75 @@ function notifyPrepDragRejectedFromDragFrom() {
   }
 }
 
+function getPrepArcDropState() {
+  if (phase !== "prep" || !dragPayload) return "neutral";
+  const side = dragFrom?.side || prepViewSide;
+  const st = getSideState(side);
+  if (!isOnBoard(mousePos.x, mousePos.y, side)) return "neutral";
+
+  if (isContainerItem(dragPayload.itemId) && hoverCell) {
+    const excludeUid = dragFrom?.type === "container" ? dragFrom.container?.uid : null;
+    const valid = dragFrom?.type === "container"
+      ? canMoveContainerWithItems(
+        dragFrom.container,
+        hoverCell.col,
+        hoverCell.row,
+        st.containers,
+        st.items,
+        excludeUid,
+        GRID_COLS,
+        GRID_ROWS,
+      )
+      : canPlaceContainer(
+        dragPayload.itemId,
+        hoverCell.col,
+        hoverCell.row,
+        dragPayload.rotation || 0,
+        GRID_COLS,
+        GRID_ROWS,
+        st.containers,
+        excludeUid,
+        st.items,
+      );
+    return valid ? "valid" : "invalid";
+  }
+
+  if (!isContainerItem(dragPayload.itemId) && hoverSlot) {
+    const excludeUid = dragFrom?.type === "item" ? dragFrom.item?.uid : null;
+    const placement = resolveLoadoutPlacementDisplacing(
+      st.containers,
+      dragPayload.itemId,
+      hoverSlot.col,
+      hoverSlot.row,
+      dragPayload.rotation || 0,
+    );
+    if (!placement.valid) return "invalid";
+    const displaced = getOverlappingLoadoutItems(
+      st.items,
+      dragPayload.itemId,
+      placement.col,
+      placement.row,
+      placement.rotation,
+      excludeUid,
+    );
+    const displacedUids = displaced.map((item) => item.uid);
+    const slotOk = typeof canAddSlotItemToLoadout !== "function"
+      || canAddSlotItemToLoadout(st.items, dragPayload.itemId, excludeUid, displacedUids);
+    const benchOk = st.bench.length + displaced.length <= MAX_BENCH;
+    return placement.valid && benchOk && slotOk ? "valid" : "invalid";
+  }
+
+  return "neutral";
+}
+
+function maybeCelebratePrepArcDrop(success) {
+  if (!success || typeof PrepDragArc === "undefined") return false;
+  if (dragFrom?.type !== "shop" && dragFrom?.type !== "bench") return false;
+  if (!PrepDragArc.isActive()) return false;
+  PrepDragArc.celebrate(lastPointerClient.x, lastPointerClient.y);
+  return true;
+}
+
 function clearDragUiState() {
   document.querySelectorAll(".shop-card.shop-dragging").forEach((el) => el.classList.remove("shop-dragging"));
   pendingShopDrag = null;
@@ -2272,6 +2341,9 @@ function clearDragUiState() {
   dragFrom = null;
   clearGamepadBoardFocus();
   if (typeof onPrepDragEnd === "function") onPrepDragEnd();
+  if (typeof PrepDragArc !== "undefined" && !PrepDragArc.isCelebrating?.()) {
+    PrepDragArc.end();
+  }
   hideDragGhostOverlay();
   syncUiDragState();
 }
@@ -3147,11 +3219,15 @@ function syncDragGhostOverlay(clientX, clientY) {
     && (dragFrom?.type === "shop" || dragFrom?.type === "bench")
     && typeof PrepDragArc !== "undefined"
     && PrepDragArc.isActive()) {
+    PrepDragArc.mountGhostToBody();
     const arcPos = PrepDragArc.resolveGhostPosition(clientX, clientY, anchor.x, anchor.y);
     ghostX = arcPos.x;
     ghostY = arcPos.y;
     arcRotation = arcPos.rotation;
-    PrepDragArc.sync(clientX, clientY, anchor.x, anchor.y);
+    PrepDragArc.sync(clientX, clientY, anchor.x, anchor.y, {
+      dropState: getPrepArcDropState(),
+      itemId: dragPayload.itemId,
+    });
     el.classList.add("ui-drag-ghost--arc-flight");
   } else {
     el.classList.remove("ui-drag-ghost--arc-flight");
@@ -4959,6 +5035,7 @@ function finishDragDrop(e) {
     return;
   }
 
+  let prepArcCelebrate = false;
   const dropE = createDropPointerEvent(e);
   const { x: dropClientX, y: dropClientY } = getDropPointerClient(e);
 
@@ -5069,11 +5146,13 @@ function finishDragDrop(e) {
           const dRow = row - (benchEntry.originRow ?? row);
           st.items = [...st.items, { ...item, col: item.col + dCol, row: item.row + dRow }];
         });
+        prepArcCelebrate = true;
       } else if (dragFrom.type === "shop") {
         const itemId = commitShopPurchase(dragFrom.index, side);
         if (itemId) {
           const placed = createContainer(itemId, col, row, dragPayload.rotation || 0);
           st.containers = [...st.containers, placed];
+          prepArcCelebrate = true;
         }
       } else {
         const placed = createContainer(dragPayload.itemId, col, row, dragPayload.rotation || 0);
@@ -5200,6 +5279,9 @@ function finishDragDrop(e) {
         if (typeof notifyPrepItemPlaced === "function") {
           notifyPrepItemPlaced(placed, ITEM_CATALOG[placed.itemId]);
         }
+        if (dragFrom.type === "shop" || dragFrom.type === "bench") {
+          prepArcCelebrate = true;
+        }
       } else if (dragFrom.type === "item") {
         st.items = [...st.items, dragFrom.item];
         if (typeof notifyPrepPlacementRejected === "function") notifyPrepPlacementRejected(dragFrom.item);
@@ -5219,6 +5301,7 @@ function finishDragDrop(e) {
     });
   }
 
+  maybeCelebratePrepArcDrop(prepArcCelebrate);
   clearDragUiState();
   if (canEditPrepSide(side)) applyCraftingForSide(side);
   if (typeof hasActiveDisplaceAnimations === "function" && hasActiveDisplaceAnimations(side)) {
@@ -5306,11 +5389,12 @@ function updatePendingShopDrag(e) {
   startShopDrag(index, e, side);
 }
 
-function beginPrepDragArcFromCard(cardEl) {
+function beginPrepDragArcFromCard(cardEl, itemIdOverride = null) {
   if (phase !== "prep" || !cardEl || typeof PrepDragArc === "undefined") return;
   const c = getElementClientCenter(cardEl);
   if (!c) return;
-  PrepDragArc.begin({ fromX: c.x, fromY: c.y });
+  const itemId = itemIdOverride || cardEl.dataset.itemId || dragPayload?.itemId;
+  PrepDragArc.begin({ fromX: c.x, fromY: c.y, itemId });
 }
 
 function startShopDrag(index, e, side = prepViewSide) {

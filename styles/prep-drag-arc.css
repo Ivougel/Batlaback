@@ -1,6 +1,5 @@
 /**
  * Магическая дуга переноса предмета из магазина/скамьи (prep).
- * Верхний слой — поверх магазина, HUD и сцены.
  */
 
 .prep-drag-arc-layer {
@@ -19,25 +18,84 @@
 
 .prep-drag-arc-halo {
   stroke-linecap: round;
-  filter: blur(3px);
+  mix-blend-mode: screen;
+}
+
+.prep-drag-arc-flow {
+  stroke-linecap: round;
   mix-blend-mode: screen;
 }
 
 .prep-drag-arc-core {
   stroke-linecap: round;
-  filter: drop-shadow(0 0 3px rgba(148, 188, 230, 0.28));
+  filter: drop-shadow(0 0 2px rgba(148, 188, 230, 0.22));
+}
+
+.prep-drag-arc-spark {
+  fill: rgba(210, 235, 255, 0.85);
+  filter: drop-shadow(0 0 4px rgba(160, 210, 255, 0.55));
+}
+
+.prep-drag-arc-anchor {
+  stroke: rgba(170, 210, 255, 0.42);
+  fill: rgba(140, 190, 255, 0.08);
+}
+
+.prep-drag-arc-anchor--target {
+  stroke: rgba(180, 220, 255, 0.5);
+}
+
+.prep-drag-arc-burst {
+  stroke: rgba(190, 230, 255, 0.55);
+  fill: rgba(160, 210, 255, 0.12);
+}
+
+.prep-drag-arc-layer--valid .prep-drag-arc-anchor--target {
+  stroke: rgba(120, 220, 150, 0.55);
+}
+
+.prep-drag-arc-layer--invalid .prep-drag-arc-anchor--target {
+  stroke: rgba(255, 130, 120, 0.5);
 }
 
 .prep-drag-arc-layer--fade .prep-drag-arc-halo,
-.prep-drag-arc-layer--fade .prep-drag-arc-core {
+.prep-drag-arc-layer--fade .prep-drag-arc-flow,
+.prep-drag-arc-layer--fade .prep-drag-arc-core,
+.prep-drag-arc-layer--fade .prep-drag-arc-spark,
+.prep-drag-arc-layer--fade .prep-drag-arc-anchor,
+.prep-drag-arc-layer--fade .prep-drag-arc-burst,
+.prep-drag-arc-layer--fade .prep-drag-arc-trail,
+.prep-drag-arc-layer--fade .prep-drag-arc-particles {
   opacity: 0;
-  transition: opacity 0.16s ease-out;
+  transition: opacity 0.18s ease-out;
 }
 
 .ui-drag-ghost--arc-flight {
   z-index: 9251 !important;
   filter:
-    drop-shadow(0 0 calc(4px + var(--prep-arc-pulse, 0.5) * 5px) rgba(168, 120, 255, 0.32))
-    drop-shadow(0 0 calc(8px + var(--prep-arc-pulse, 0.5) * 7px) rgba(126, 232, 250, 0.22))
+    drop-shadow(0 0 calc(4px + var(--prep-arc-pulse, 0.5) * 5px) rgba(168, 120, 255, 0.28))
+    drop-shadow(0 0 calc(8px + var(--prep-arc-pulse, 0.5) * 7px) rgba(126, 232, 250, 0.18))
     drop-shadow(0 6px 14px rgba(0, 0, 0, 0.4)) !important;
+}
+
+.prep-drag-ghost-trail {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9250;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  overflow: visible;
+}
+
+.prep-drag-ghost-trail__dot {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(180, 220, 255, 0.22) 0%, transparent 70%);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
 }
