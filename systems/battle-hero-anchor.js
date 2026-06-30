@@ -51,12 +51,12 @@ const BattleHeroAnchor = (() => {
   }
 
   const EMOJI_SIZE_BY_PROFILE = {
-    "phone-portrait": { floorRatio: 0.62, vminRatio: 0.165, minPx: 76, maxPx: 140, haloRatio: 0.30 },
-    "phone-landscape": { floorRatio: 0.56, vminRatio: 0.155, minPx: 68, maxPx: 112, haloRatio: 0.32 },
-    "tablet-landscape-side": { floorRatio: 0.60, vminRatio: 0.16, minPx: 90, maxPx: 152, haloRatio: 0.37 },
-    "tablet-portrait": { floorRatio: 0.54, vminRatio: 0.14, minPx: 84, maxPx: 140, haloRatio: 0.36 },
-    "desktop-portrait": { floorRatio: 0.62, vminRatio: 0.17, minPx: 96, maxPx: 164, haloRatio: 0.38 },
-    "desktop-landscape": { floorRatio: 0.64, vminRatio: 0.175, minPx: 100, maxPx: 172, haloRatio: 0.38 },
+    "phone-portrait": { floorRatio: 0.70, vminRatio: 0.18, minPx: 88, maxPx: 156, haloRatio: 0.26, avatarRatio: 0.44 },
+    "phone-landscape": { floorRatio: 0.66, vminRatio: 0.17, minPx: 80, maxPx: 128, haloRatio: 0.28, avatarRatio: 0.40 },
+    "tablet-landscape-side": { floorRatio: 0.64, vminRatio: 0.165, minPx: 94, maxPx: 158, haloRatio: 0.34, avatarRatio: 0.38 },
+    "tablet-portrait": { floorRatio: 0.58, vminRatio: 0.15, minPx: 88, maxPx: 144, haloRatio: 0.34, avatarRatio: 0.36 },
+    "desktop-portrait": { floorRatio: 0.66, vminRatio: 0.175, minPx: 100, maxPx: 168, haloRatio: 0.36, avatarRatio: 0.36 },
+    "desktop-landscape": { floorRatio: 0.68, vminRatio: 0.18, minPx: 104, maxPx: 176, haloRatio: 0.36, avatarRatio: 0.34 },
   };
 
   function currentBattleProfile() {
@@ -113,7 +113,17 @@ const BattleHeroAnchor = (() => {
     const fromFloorH = floor ? Math.round(floor.height * prof.floorRatio) : 0;
     const fromFloorW = floor ? Math.round(floor.width * 0.11) : 0;
     const fromVmin = Math.round(vmin * prof.vminRatio * Math.max(0.92, uiScale));
-    const raw = Math.max(fromFloorH, fromFloorW, fromVmin) * emojiMod;
+    let fromAvatar = 0;
+    const avatarRatio = prof.avatarRatio ?? 0;
+    if (avatarRatio > 0) {
+      for (const side of ["player", "enemy"]) {
+        const ar = getAvatarAnchorRect(side);
+        if (ar && ar.height > 40) {
+          fromAvatar = Math.max(fromAvatar, Math.round(ar.height * avatarRatio));
+        }
+      }
+    }
+    const raw = Math.max(fromFloorH, fromFloorW, fromVmin, fromAvatar) * emojiMod;
     return Math.round(Math.min(prof.maxPx, Math.max(prof.minPx, raw)));
   }
 

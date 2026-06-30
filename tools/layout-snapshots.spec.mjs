@@ -1,5 +1,5 @@
 /**
- * Pixel-snapshots class overlay (стабильный boot, ?vexp=0).
+ * Pixel-snapshots class overlay (стабильный boot).
  * Обновить эталоны: npm run test:snapshots:update
  */
 import { test, expect, devices } from "@playwright/test";
@@ -7,7 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-const baseUrl = `file://${root}/index.html?vexp=0`;
+const baseUrl = `file://${root}/index.html`;
 
 const SNAPSHOT_PROFILES = [
   { name: "iphone-portrait", device: devices["iPhone 14 Pro Max"] },

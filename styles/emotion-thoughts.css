@@ -16,7 +16,7 @@
   pointer-events: none;
   z-index: 22;
   margin-top: calc(2px * var(--ui-scale));
-  --thought-size: 15vmin;
+  --thought-size: var(--battle-thought-emoji-size, 15vmin);
 }
 
 html[data-battle-arena-layout="true"] #app[data-phase="battle"] .battle-thought-arena,
@@ -33,7 +33,7 @@ html[data-battle-arena-layout="true"] #app[data-phase="replay"] .battle-thought-
   justify-content: center;
   width: var(--thought-size);
   height: var(--thought-size);
-  font-size: calc(var(--thought-size) * 0.72);
+  font-size: calc(var(--thought-size) * 0.90);
   line-height: 1;
   user-select: none;
   white-space: nowrap;

@@ -1175,9 +1175,7 @@
       ? fieldPadBottom
       : measureBattleFieldChromeBottom(fieldCol);
     const layoutHeight = Math.max(layoutRect.height, sceneRect.height, fieldCol.clientHeight);
-    const rowGap = typeof getVisualExperimentHeroRowGap === "function"
-      ? getVisualExperimentHeroRowGap(uiScale)
-      : Math.round(8 * uiScale);
+    const rowGap = Math.round(8 * uiScale);
     const mobileStack = root.dataset.prepLayout === "mobile";
     const phoneLandscape = root.dataset.battlePhoneLandscape === "true";
     const phoneCompact = mobileStack || phoneLandscape;
@@ -1505,35 +1503,6 @@
     }
 
     let scale = 0;
-
-    if (typeof applyVisualExperimentBattleLayout === "function") {
-      const tweaked = applyVisualExperimentBattleLayout({
-        heroZone,
-        arenaMin,
-        heroColW,
-        heroImgH,
-        portraitZoom,
-        chromePad,
-        scale,
-        mobileLayout,
-        tabletSide,
-        tabletPortrait: profileKey === "tablet-portrait",
-        stageW,
-        vh,
-        hudReserve,
-      });
-      if (tweaked) {
-        heroZone = tweaked.heroZone;
-        arenaMin = tweaked.arenaMin;
-        heroColW = tweaked.heroColW;
-        heroImgH = tweaked.heroImgH;
-        portraitZoom = tweaked.portraitZoom;
-        chromePad = tweaked.chromePad ?? chromePad;
-        if (tweaked.scale != null) {
-          scale = tweaked.scale;
-        }
-      }
-    }
 
     const w = 0;
     const ch = 0;
@@ -1863,9 +1832,6 @@
     applyFluidGridMetrics(clamped);
     clamped = applyPrepLayoutFit(w, h, prepLayout, clamped, touchDev, layoutProfile);
     applyPrepProfileVars(layoutProfile, clamped);
-    if (typeof applyVisualExperimentPrepUiScale === "function") {
-      clamped = applyVisualExperimentPrepUiScale(clamped, { prepLayout, tier, w, h });
-    }
 
     document.documentElement.style.setProperty("--ui-scale", String(clamped));
     document.documentElement.style.setProperty("--viewport-h", `${Math.round(h)}px`);

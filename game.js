@@ -1060,7 +1060,6 @@ function setPhaseLabel(text, isBattle = false) {
 }
 
 function init() {
-  if (typeof initVisualExperiment === "function") initVisualExperiment();
   applyGridMetricsFromCss();
   initInteractionMode();
   onInteractionModeChange((mode) => {

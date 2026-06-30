@@ -11,6 +11,8 @@ const ThoughtArena = (() => {
   const MAX_DT = 0.032;
   const CLUSTER_SPACING_RATIO = 0.58;
   const CLUSTER_MAX_SPREAD_RATIO = 1.35;
+  /** Доля диаметра тела, занимаемая глифом (без legacy-усадки 0.72). */
+  const THOUGHT_GLYPH_FONT_RATIO = 0.90;
 
   /** Legacy: центр арены (до переноса на карточку героя) */
   const COMPANION_ANCHOR_NORM = {
@@ -101,7 +103,7 @@ const ThoughtArena = (() => {
     const onHeroCard = isAnchoredFlankArena();
     if (onHeroCard && typeof BattleHeroAnchor !== "undefined") {
       const emojiSize = BattleHeroAnchor.thoughtSlotEmojiSize();
-      const scale = glyphCount > 1 ? 0.86 : 0.94;
+      const scale = glyphCount > 1 ? 0.92 : 1;
       return Math.round(emojiSize * scale);
     }
     const ratio = glyphCount > 1
@@ -616,7 +618,7 @@ const ThoughtArena = (() => {
     body.el.textContent = glyph;
     body.el.style.width = `${size}px`;
     body.el.style.height = `${size}px`;
-    body.el.style.fontSize = `${size * 0.72}px`;
+    body.el.style.fontSize = `${Math.round(size * THOUGHT_GLYPH_FONT_RATIO)}px`;
     if (isAnchoredFlankArena()) {
       body.el.style.zIndex = "1";
     }

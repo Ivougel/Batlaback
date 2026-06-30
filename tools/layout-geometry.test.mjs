@@ -7,7 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-const baseUrl = `file://${root}/index.html?vexp=0`;
+const baseUrl = `file://${root}/index.html`;
 
 function assert(cond, msg) {
   if (!cond) throw new Error(msg);
@@ -44,78 +44,6 @@ function box(page, selector) {
 }
 
 const CASES = [
-  {
-    id: "iphone-portrait-prep-vexp",
-    device: devices["iPhone 14 Pro Max"],
-    async run(page) {
-      await page.goto(baseUrl.replace("vexp=0", "vexp=1"), { waitUntil: "domcontentloaded", timeout: 20000 });
-      await page.waitForFunction(() => typeof startRunFromOverlay === "function");
-      await page.evaluate(() => {
-        localStorage.setItem("bb_visual_experiment", "1");
-        document.documentElement.dataset.visualExperiment = "true";
-        selectGameMode("solo");
-        selectPlayerClass("warrior");
-        selectOpponentClass("mage");
-        startRunFromOverlay();
-      });
-      await page.waitForFunction(() => document.getElementById("app")?.dataset.phase === "prep");
-      await page.waitForTimeout(800);
-      await page.evaluate(() => { window.applyUiLayout?.(); window.scheduleCanvasFit?.(); });
-      await page.waitForTimeout(400);
-
-      const m = await page.evaluate(() => {
-        const canvas = document.getElementById("game-canvas")?.getBoundingClientRect();
-        const hero = document.querySelector(".prep-character-layer")?.getBoundingClientRect();
-        const pos = getComputedStyle(document.querySelector(".prep-character-layer")).position;
-        return {
-          canvasH: canvas?.height ?? 0,
-          voidBelow: hero && canvas ? hero.top - canvas.bottom : 999,
-          heroPos: pos,
-        };
-      });
-      assert(m.canvasH >= 260, `canvas too small: ${m.canvasH}px`);
-      assert(m.voidBelow <= 48, `vexp hero gap below canvas: ${m.voidBelow}px`);
-      assert(m.heroPos === "absolute", `vexp hero should be absolute, got ${m.heroPos}`);
-    },
-  },
-  {
-    id: "iphone-portrait-battle-vexp-gap",
-    device: devices["iPhone 14 Pro Max"],
-    async run(page) {
-      await page.goto(baseUrl.replace("vexp=0", "vexp=1"), { waitUntil: "domcontentloaded", timeout: 20000 });
-      await page.waitForFunction(() => typeof startRunFromOverlay === "function");
-      await page.evaluate(() => {
-        localStorage.setItem("bb_visual_experiment", "1");
-        document.documentElement.dataset.visualExperiment = "true";
-        selectGameMode("solo");
-        selectPlayerClass("warrior");
-        selectOpponentClass("mage");
-        startRunFromOverlay();
-      });
-      await page.waitForFunction(() => document.getElementById("app")?.dataset.phase === "prep");
-      await page.evaluate(() => startBattle());
-      await page.waitForFunction(() => document.getElementById("app")?.dataset.phase === "battle");
-      await page.waitForFunction(
-        () => !document.getElementById("battle-countdown-overlay")
-          ?.classList.contains("battle-countdown-overlay-visible"),
-        { timeout: 12000 },
-      );
-      await page.waitForTimeout(800);
-      await page.evaluate(() => { window.applyUiLayout?.(); window.scheduleCanvasFit?.(); });
-      await page.waitForTimeout(400);
-
-      const m = await page.evaluate(() => {
-        const thought = document.getElementById("battle-thought-arena")?.getBoundingClientRect();
-        const chrome = document.querySelector(".bottom-chrome")?.getBoundingClientRect();
-        return {
-          gap: thought && chrome ? chrome.top - thought.bottom : 999,
-          floorH: thought?.height ?? 0,
-        };
-      });
-      assert(m.gap <= 72, `dead zone below combat floor: ${m.gap}px`);
-      assert(m.floorH >= 120, `combat floor too small: ${m.floorH}px`);
-    },
-  },
   {
     id: "iphone-portrait-battle-chrome",
     device: devices["iPhone 14 Pro Max"],
@@ -190,20 +118,26 @@ const CASES = [
         const emojiPx = window.BattleHeroAnchor?.thoughtSlotEmojiSize?.() ?? 0;
         const playerHud = document.getElementById("battle-hud-player")?.getBoundingClientRect();
         const stage = document.querySelector("#player-avatar-slot .avatar-hero-stage")?.getBoundingClientRect();
+        const avatarH = stage?.height ?? 0;
         return {
           floorH: floor?.height ?? 0,
           emojiPx,
+          avatarH,
+          avatarRatio: avatarH && emojiPx ? emojiPx / avatarH : 0,
           floorRatio: floor && emojiPx ? emojiPx / floor.height : 0,
           hudTop: playerHud?.top ?? 0,
           stageBottom: stage?.bottom ?? 0,
         };
       });
       assert(m.floorH > 48, "combat floor too small");
-      assert(m.emojiPx >= 68, `emoji too small: ${m.emojiPx}px`);
+      assert(m.emojiPx >= 80, `emoji too small: ${m.emojiPx}px`);
+      if (m.avatarH > 80) {
+        assert(m.avatarRatio >= 0.38, `emoji/avatar ratio low: ${m.avatarRatio.toFixed(2)}`);
+      }
       if (m.floorH > 280) {
-        assert(m.emojiPx >= 100, `emoji should use headroom on tall floor: ${m.emojiPx}px`);
+        assert(m.emojiPx >= 110, `emoji should use headroom on tall floor: ${m.emojiPx}px`);
       } else {
-        assert(m.floorRatio >= 0.38, `emoji/floor ratio low: ${m.floorRatio.toFixed(2)}`);
+        assert(m.floorRatio >= 0.42, `emoji/floor ratio low: ${m.floorRatio.toFixed(2)}`);
       }
       assert(m.hudTop >= m.stageBottom - 4, `HUD overlaps portrait: hud=${m.hudTop} stage=${m.stageBottom}`);
     },
@@ -272,53 +206,6 @@ const CASES = [
       if (m.heroImgH > 0 && m.heroLayerH > 0) {
         assert(m.heroImgH <= m.heroLayerH * 1.08, `hero image cropped: img=${m.heroImgH} layer=${m.heroLayerH}`);
       }
-    },
-  },
-  {
-    id: "iphone-landscape-prep-vexp",
-    device: {
-      ...devices["iPhone 14 Pro Max"],
-      viewport: { width: 932, height: 430 },
-      isMobile: true,
-      hasTouch: true,
-    },
-    async run(page) {
-      await page.goto(baseUrl.replace("vexp=0", "vexp=1"), { waitUntil: "domcontentloaded", timeout: 20000 });
-      await page.waitForFunction(() => typeof startRunFromOverlay === "function");
-      await page.evaluate(() => {
-        localStorage.setItem("bb_visual_experiment", "1");
-        document.documentElement.dataset.visualExperiment = "true";
-        selectGameMode("solo");
-        selectPlayerClass("warrior");
-        selectOpponentClass("mage");
-        startRunFromOverlay();
-      });
-      await page.waitForFunction(() => document.getElementById("app")?.dataset.phase === "prep");
-      await page.waitForTimeout(800);
-      await page.evaluate(() => { window.applyUiLayout?.(); window.scheduleCanvasFit?.(); });
-      await page.waitForTimeout(400);
-
-      const m = await page.evaluate(() => {
-        const hero = document.querySelector(".prep-character-layer")?.getBoundingClientRect();
-        const island = document.getElementById("prep-field-island")?.getBoundingClientRect();
-        const shop = document.getElementById("shop-panel")?.getBoundingClientRect();
-        const fieldCol = document.querySelector(".prep-field-column")?.getBoundingClientRect();
-        const top = parseFloat(getComputedStyle(document.querySelector(".prep-character-layer")).top) || 0;
-        return {
-          surface: document.documentElement.dataset.uiSurface,
-          prepLayout: document.documentElement.dataset.prepLayout,
-          heroTop: hero?.top ?? 0,
-          islandBottom: island?.bottom ?? 0,
-          shopLeft: shop?.left ?? 0,
-          fieldRight: fieldCol?.right ?? 0,
-          cssTop: top,
-        };
-      });
-      assert(m.surface === "tablet-side", `vexp landscape surface: ${m.surface}`);
-      assert(m.prepLayout === "side", `vexp prep layout: ${m.prepLayout}`);
-      assert(m.shopLeft >= m.fieldRight - 12, `vexp shop not on right: ${m.shopLeft} vs ${m.fieldRight}`);
-      assert(m.heroTop >= m.islandBottom - 12, `vexp hero not below canvas: ${m.heroTop} vs ${m.islandBottom}`);
-      assert(m.cssTop < 200, `vexp hero css top too large: ${m.cssTop}px`);
     },
   },
   {

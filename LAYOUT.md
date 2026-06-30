@@ -70,7 +70,7 @@ Touch-цели: `min-height: var(--touch-target-min)` (≥ 44px).
 **Готово (battle):** `BATTLE_PROFILES` + `BattleHeroAnchor` (эмодзи от combat floor), `syncBattleHudAnchors` (HP под портретом), `syncFlankArenaHeroAnchors`.
 
 **Осталось (backlog):**
-- **VISUAL EXP** (`?vexp=1`) — косметика; при багах: `?vexp=0` или `VisualExperiment.disable()`
+- Полировка базовой вёрстки без экспериментальных флагов
 
 ### Этап M (replay timeline, modal tokens)
 
@@ -93,15 +93,13 @@ Touch-цели: `min-height: var(--touch-target-min)` (≥ 44px).
 - Убран штраф `--battle-emoji-scale` 0.72 на phone
 - `EMOJI_SIZE_BY_PROFILE` — крупнее на phone/tablet, центр в высоком combat floor
 - `syncBattleHudAnchors` — якорь под `.avatar-hero-upper` / badge, не на тело портрета
-- `visual-experiment.css` — flank-arena сохраняет бюст-кроп (HP не на героя)
 - `battle-scale.css` — типографика HP/эмодзи по `data-battle-profile`
 
-### Этап K (modals, tablet battle, mobile scale, vexp snapshots)
+### Этап K (modals, tablet battle, mobile scale)
 
 - **`modal-scale.css`** — container queries для recipe/settings/battle-result/run-complete
 - **Phone prep** — `fitMinScale: 0.65`, `--ui-scale` floor 0.58 на tier phone, type boost 1.18
 - **Tablet landscape battle** — `BATTLE_PROFILES` floorShare 0.30, `tablet-side.css` combat floor
-- **`layout-battle-vexp-snapshots.spec.mjs`** — эталоны боя с `?vexp=1` (отдельно от базы)
 
 ## Опасный паттерн селекторов
 
