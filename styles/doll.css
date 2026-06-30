@@ -3,8 +3,9 @@
 .prep-doll-layer {
   display: none;
   position: absolute;
-  right: var(--prep-hero-slot-left, 22%);
-  bottom: var(--prep-hero-slot-bottom, 6px);
+  left: var(--prep-doll-slot-left);
+  right: auto;
+  bottom: var(--prep-hero-slot-bottom);
   width: var(--doll-layer-w);
   height: var(--doll-layer-h);
   pointer-events: none;
@@ -25,8 +26,8 @@
 }
 
 #app[data-phase="prep"][data-prep-side="enemy"][data-doll-open="true"] .prep-doll-layer {
-  right: auto;
-  left: var(--prep-hero-slot-left, 22%);
+  left: auto;
+  right: calc(var(--prep-hero-slot-left) + var(--prep-hero-slot-width) + var(--prep-hero-slot-gap));
 }
 
 .doll-slot {
@@ -206,16 +207,14 @@ html[data-tablet-prep-hero="true"] #app[data-phase="prep"][data-doll-open="true"
 }
 
 html[data-tablet-prep-hero="true"] #app[data-phase="prep"][data-doll-open="true"] .prep-doll-layer {
-  right: 8%;
-  left: auto;
-  bottom: 14%;
-  width: min(var(--doll-layer-w), 36vw);
-  height: min(var(--doll-layer-h), 40vh);
+  bottom: var(--prep-hero-slot-bottom);
+  width: var(--doll-layer-w);
+  height: var(--doll-layer-h);
 }
 
 html[data-tablet-prep-hero="true"] #app[data-phase="prep"][data-prep-side="enemy"][data-doll-open="true"] .prep-doll-layer {
-  right: auto;
-  left: 8%;
+  left: auto;
+  right: calc(var(--prep-hero-slot-left) + var(--prep-hero-slot-width) + var(--prep-hero-slot-gap));
 }
 
 html[data-tablet-side-fit="true"] #app[data-phase="prep"][data-doll-open="true"] .prep-doll-layer {

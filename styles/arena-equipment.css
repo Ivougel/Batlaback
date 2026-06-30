@@ -82,18 +82,19 @@
   z-index: 13;
 }
 
-/* Flank: экипировка в боковых зонах — без плитки, как боевые эмодзи */
-html[data-battle-hero-placement="flank-arena"] .avatar-attack-arena .arena-equip-body {
+/* Flank: экипировка без плитки — как боевые эмодзи (в т.ч. на FX-слое при полёте) */
+html[data-battle-hero-placement="flank-arena"] .arena-equip-body--hero-card {
   background: transparent;
   border: none;
   box-shadow: none;
   filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.55));
 }
 
-html[data-battle-hero-placement="flank-arena"] .avatar-attack-arena .arena-equip-body--weapon {
+html[data-battle-hero-placement="flank-arena"] .arena-equip-body--hero-card.arena-equip-body--weapon {
   background: transparent;
 }
 
-html[data-battle-hero-placement="flank-arena"] .avatar-attack-arena .arena-equip-body.is-attacking {
+html[data-battle-hero-placement="flank-arena"] .arena-equip-body--hero-card.is-attacking,
+html[data-battle-hero-placement="flank-arena"] .arena-equip-body--hero-card.arena-equip-body--fx-flight {
   filter: drop-shadow(0 8px 22px rgba(255, 180, 80, 0.45));
 }

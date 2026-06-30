@@ -41,6 +41,9 @@ function createEmotionEngineState() {
     firstBlood: false,
     pauseTotalMs: 0,
     pauseStartedAt: null,
+    comboCount: { player: 0, enemy: 0 },
+    lastHitBy: { player: null, enemy: null },
+    endDialogShown: false,
   };
 }
 
@@ -253,6 +256,34 @@ function checkSimultaneousDamage() {
 }
 
 function queueDamageDialog(victim, attacker, amount, victimHpPct = 1) {
+  const combo = emotionEngine.comboCount || (emotionEngine.comboCount = { player: 0, enemy: 0 });
+  const lastHitBy = emotionEngine.lastHitBy || (emotionEngine.lastHitBy = { player: null, enemy: null });
+
+  if (lastHitBy[victim] === attacker) {
+    combo[attacker] = (combo[attacker] || 0) + 1;
+  } else {
+    combo[attacker] = 1;
+  }
+  lastHitBy[victim] = attacker;
+
+  if (combo[attacker] === 3) {
+    tryQueueEvent(attacker, createDialogEvent({
+      side: attacker,
+      emoji: pickMemeEmoji(["🔥😤", "🔥", "⚡😈", "💪🔥"]),
+      animation: "grow",
+      duration: 1400,
+      priority: EMOTION_PRIORITY.crit,
+    }));
+    tryQueueEvent(victim, createDialogEvent({
+      side: victim,
+      emoji: pickMemeEmoji(["😵‍💫", "🤯", "😱", "💫"]),
+      animation: "shake",
+      duration: 1300,
+      priority: EMOTION_PRIORITY.crit - 1,
+    }));
+    combo[attacker] = 0;
+  }
+
   recordDamageHit(victim, amount);
   if (checkSimultaneousDamage()) return;
 
@@ -299,6 +330,8 @@ function queueDamageDialog(victim, attacker, amount, victimHpPct = 1) {
     }));
     return;
   }
+
+  maybeTaunt(attacker, victimHpPct);
 
   if (amount > 8) {
     tryQueueEvent(victim, createDialogEvent({
@@ -352,6 +385,16 @@ function queueBlockDialog(victim, attacker) {
     animation: "shake",
     duration: 1100,
   }));
+
+  setTimeout(() => {
+    tryQueueEvent(victim, createDialogEvent({
+      side: victim,
+      emoji: pickMemeEmoji(["😏🛡️", "🤙", "💅"]),
+      animation: "bounce",
+      duration: 1000,
+      priority: EMOTION_PRIORITY.normal + 1,
+    }));
+  }, 500);
 }
 
 function queuePoisonDialog(victim, attacker) {
@@ -492,6 +535,36 @@ function detectSnapshotEvents(prev, cur, elapsedReal) {
     emotionEngine.durationFlags.t120 = true;
     queueDurationDialog("⏳💀", "shake", 2200);
   }
+
+  const elapsedSec = Math.floor(realSec);
+  if (elapsedSec > 5 && elapsedSec % 8 === 0 && !emotionEngine[`taunt_${elapsedSec}`]) {
+    emotionEngine[`taunt_${elapsedSec}`] = true;
+
+    const aggressor = Math.random() > 0.5 ? "player" : "enemy";
+    const target = foeOf(aggressor);
+
+    tryQueueEvent(aggressor, createDialogEvent({
+      side: aggressor,
+      emoji: pickMemeEmoji(["😤", "👊", "💢", "😈", "🫵"]),
+      animation: "bounce",
+      duration: 1100,
+      priority: EMOTION_PRIORITY.normal + 1,
+    }));
+
+    setTimeout(() => {
+      const snap = emotionEngine.snapshot;
+      const targetHpPct = target === "player" ? snap?.playerHpPct : snap?.enemyHpPct;
+      tryQueueEvent(target, createDialogEvent({
+        side: target,
+        emoji: targetHpPct < 0.3
+          ? pickMemeEmoji(["😰", "😨", "🥵"])
+          : pickMemeEmoji(["😏", "🗿", "💪", "😤"]),
+        animation: targetHpPct < 0.3 ? "shake" : "nod",
+        duration: 1000,
+        priority: EMOTION_PRIORITY.normal,
+      }));
+    }, 800);
+  }
 }
 
 function analyzeBattleState(battleState, elapsedReal) {
@@ -513,8 +586,20 @@ function analyzeBattleState(battleState, elapsedReal) {
 }
 
 function drawEmotionLayer(_ctx, battleState, elapsedReal) {
-  if (!battleState || battleState.finished) {
+  if (!battleState) {
     clearEmotionLayer();
+    return;
+  }
+
+  if (battleState.finished) {
+    if (!emotionEngine.endDialogShown) {
+      emotionEngine.endDialogShown = true;
+      queueBattleEndDialog(battleState.winner);
+    }
+    ensureMainEmotions();
+    renderEmotionDom(emotionEngine.playerMain, "player");
+    renderEmotionDom(emotionEngine.enemyMain, "enemy");
+    emotionEngine.lastRenderAt = Date.now();
     return;
   }
 
@@ -547,4 +632,79 @@ function drawEmotionLayer(_ctx, battleState, elapsedReal) {
   }
 
   emotionEngine.lastRenderAt = Date.now();
+}
+
+function queueBattleEndDialog(winner) {
+  const loser = foeOf(winner);
+
+  tryQueueEvent(winner, createDialogEvent({
+    side: winner,
+    emoji: pickMemeEmoji(["🏆😎", "🎉", "💪😤", "🥇"]),
+    animation: "bounce",
+    duration: Number.POSITIVE_INFINITY,
+    priority: EMOTION_PRIORITY.skull + 1,
+    persistent: true,
+  }));
+
+  tryQueueEvent(loser, createDialogEvent({
+    side: loser,
+    emoji: pickMemeEmoji(["💀", "😵", "🪦😭", "😭"]),
+    animation: "shake",
+    duration: Number.POSITIVE_INFINITY,
+    priority: EMOTION_PRIORITY.skull + 1,
+    persistent: true,
+  }));
+}
+
+// ─── Провокации и ответные реакции ───
+
+const TAUNT_COOLDOWNS = { player: 0, enemy: 0 };
+const TAUNT_MIN_INTERVAL = 4000;
+
+function maybeTaunt(attacker, victimHpPct) {
+  const now = Date.now();
+  if (now - TAUNT_COOLDOWNS[attacker] < TAUNT_MIN_INTERVAL) return;
+  TAUNT_COOLDOWNS[attacker] = now;
+
+  const victim = foeOf(attacker);
+
+  if (victimHpPct < 0.25) {
+    tryQueueEvent(attacker, createDialogEvent({
+      side: attacker,
+      emoji: pickMemeEmoji(["🕺", "💪", "😤👊", "🎉"]),
+      animation: "bounce",
+      duration: 1500,
+      priority: EMOTION_PRIORITY.normal + 1,
+    }));
+    setTimeout(() => {
+      tryQueueEvent(victim, createDialogEvent({
+        side: victim,
+        emoji: victimHpPct < 0.12
+          ? pickMemeEmoji(["😡💢", "🤬", "😤💢"])
+          : pickMemeEmoji(["😒", "🙄", "😐"]),
+        animation: "shake",
+        duration: 1200,
+        priority: EMOTION_PRIORITY.normal,
+      }));
+    }, 600);
+    return;
+  }
+
+  if (Math.random() > 0.4) return;
+  tryQueueEvent(attacker, createDialogEvent({
+    side: attacker,
+    emoji: pickMemeEmoji(["😏", "😎", "🗿", "🤙"]),
+    animation: "nod",
+    duration: 1000,
+    priority: EMOTION_PRIORITY.normal,
+  }));
+  setTimeout(() => {
+    tryQueueEvent(victim, createDialogEvent({
+      side: victim,
+      emoji: pickMemeEmoji(["😠", "🤨", "😤", "💢"]),
+      animation: "shake",
+      duration: 1000,
+      priority: EMOTION_PRIORITY.normal,
+    }));
+  }, 700);
 }

@@ -72,15 +72,19 @@
   --character-slot-h: min(380px, calc(100vh - 480px));
   --character-scale: 1;
   --prep-character-slot-h: var(--character-slot-h);
-  --prep-hero-slot-left: 6%;
-  --prep-hero-slot-width: 14%;
+  --prep-hero-slot-left: 2%;
+  --prep-hero-slot-width: 21%;
+  --prep-hero-slot-gap: 1%;
   --prep-hero-slot-bottom: var(--gap-sm);
-  --prep-hero-slot-height: min(200px, 28vh);
-  --prep-desktop-hero-max-h: min(148px, 22vh);
-  --prep-desktop-hero-max-w: min(120px, 11vw);
+  --prep-hero-slot-height: min(320px, 36vh);
+  --prep-hero-slot-height-max: 380px;
+  --prep-doll-slot-width: var(--prep-hero-slot-width);
+  --prep-doll-slot-left: calc(var(--prep-hero-slot-left) + var(--prep-hero-slot-width) + var(--prep-hero-slot-gap));
+  --prep-desktop-hero-max-h: var(--prep-hero-slot-height);
+  --prep-desktop-hero-max-w: 100%;
   --doll-slot-size: 38px;
-  --doll-layer-w: calc(var(--prep-canvas-w) * 0.38);
-  --doll-layer-h: calc(var(--character-slot-h, 320px) * 0.85);
+  --doll-layer-w: var(--prep-doll-slot-width);
+  --doll-layer-h: var(--prep-hero-slot-height);
   --shop-panel-w: 320px;
   --shop-card-row-h: calc(132px * var(--ui-scale, 1));
   --shop-item-icon-size: calc(72px * var(--ui-scale, 1));
@@ -112,8 +116,6 @@
     --shop-item-icon-duo-width: calc(var(--shop-item-icon-size) * 2.05);
     --prep-scene-top: var(--gap-md);
     --battle-stats-panel-w: 252px;
-    --prep-hero-slot-left: 20%;
-    --prep-hero-slot-width: 19%;
     --prep-hero-slot-height: min(360px, 44vh);
   }
 }

@@ -156,6 +156,33 @@
     anchor.style.height = `${canvasRect.height}px`;
   }
 
+  function syncPrepHeroSlotHeight() {
+    const app = document.getElementById("app");
+    const root = document.documentElement;
+    if (app?.dataset.phase !== "prep" || root.dataset.prepLayout === "mobile") {
+      root.style.removeProperty("--prep-hero-slot-height");
+      return;
+    }
+
+    const fieldCol = document.getElementById("prep-field-column");
+    const island = document.getElementById("prep-field-island");
+    if (!fieldCol || !island) return;
+
+    const colRect = fieldCol.getBoundingClientRect();
+    const islandRect = island.getBoundingClientRect();
+    if (colRect.width <= 0) return;
+
+    const toolbar = document.getElementById("prep-toolbar");
+    const toolbarTop = toolbar?.getBoundingClientRect().top ?? colRect.bottom;
+    const gap = readCssPx("--prep-character-gap", 8);
+    const bottomPad = readCssPx("--prep-hero-slot-bottom", 6);
+    const rowTop = islandRect.bottom + gap - colRect.top;
+    const rowBottom = toolbarTop - colRect.top - 8;
+    const maxH = readCssPx("--prep-hero-slot-height-max", 380);
+    const rowH = Math.max(108, Math.min(maxH, rowBottom - rowTop - bottomPad));
+    root.style.setProperty("--prep-hero-slot-height", `${Math.round(rowH)}px`);
+  }
+
   function syncBattleHudAnchors() {
     const viewport = document.getElementById("prep-field-column");
     const app = document.getElementById("app");
@@ -1048,7 +1075,10 @@
 
   function scheduleCanvasFit() {
     requestAnimationFrame(() => {
-      requestAnimationFrame(fitCanvasDisplaySize);
+      requestAnimationFrame(() => {
+        fitCanvasDisplaySize();
+        syncPrepHeroSlotHeight();
+      });
     });
   }
 
@@ -1190,6 +1220,7 @@
 
     scheduleCanvasFit();
     syncMobileShopFabPosition();
+    syncPrepHeroSlotHeight();
 
     if (typeof window.applyGridMetricsFromCss === "function") {
       window.applyGridMetricsFromCss();
@@ -1286,4 +1317,5 @@
   window.syncTabletBattleAvatarPositions = syncTabletBattleAvatarPositions;
   window.syncBattleSceneGridMetrics = syncBattleSceneGridMetrics;
   window.scheduleBattleHeroRowSync = scheduleBattleHeroRowSync;
+  window.syncPrepHeroSlotHeight = syncPrepHeroSlotHeight;
 })();

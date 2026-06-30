@@ -6745,16 +6745,16 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
   line-height: 0;
 }
 
-/* Prep hero: не перекрывает сетку — слот слева/справа, ограниченный размер */
+/* Prep hero: слот слева/справа под полем — tokens: --prep-hero-slot-*, --prep-doll-slot-* */
 #app[data-phase="prep"] .prep-character-layer {
   left: var(--prep-hero-slot-left);
-  width: var(--prep-desktop-hero-max-w, var(--prep-hero-slot-width));
+  width: var(--prep-hero-slot-width);
   min-width: 0;
-  max-width: var(--prep-desktop-hero-max-w, var(--prep-hero-slot-width));
+  max-width: var(--prep-hero-slot-width);
   top: auto;
   bottom: var(--prep-hero-slot-bottom);
-  height: auto;
-  max-height: var(--prep-desktop-hero-max-h, var(--prep-hero-slot-height));
+  height: var(--prep-hero-slot-height);
+  max-height: var(--prep-hero-slot-height);
   min-height: 0;
   justify-content: center;
   overflow: hidden;
@@ -6764,9 +6764,9 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
 #app[data-phase="prep"][data-prep-side="enemy"] .prep-character-layer {
   left: auto;
   right: var(--prep-hero-slot-left);
-  width: var(--prep-desktop-hero-max-w, var(--prep-hero-slot-width));
+  width: var(--prep-hero-slot-width);
   min-width: 0;
-  max-width: var(--prep-desktop-hero-max-w, var(--prep-hero-slot-width));
+  max-width: var(--prep-hero-slot-width);
   justify-content: center;
 }
 
@@ -6776,16 +6776,17 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
   align-items: flex-end;
   overflow: hidden;
   width: 100%;
-  height: auto;
-  max-height: inherit;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
 }
 
 #app[data-phase="prep"] .prep-character-img {
   display: block;
   height: auto;
   width: auto;
-  max-height: var(--prep-desktop-hero-max-h, var(--prep-hero-slot-height));
-  max-width: var(--prep-desktop-hero-max-w, 100%);
+  max-height: 100%;
+  max-width: 100%;
   object-fit: contain;
   object-position: center bottom;
 }
@@ -7732,13 +7733,13 @@ body.is-ui-dragging #app[data-phase="prep"] .prep-field-island .canvas-scale-wra
   html:not([data-prep-layout="mobile"]):not([data-prep-viewport-fit="true"]) #app[data-phase="prep"] .prep-character-layer {
     position: absolute;
     bottom: var(--prep-hero-slot-bottom, 8px);
-    left: var(--prep-hero-slot-left, 6%);
+    left: var(--prep-hero-slot-left, 2%);
     right: auto;
     transform: none;
-    height: auto;
-    max-height: var(--prep-desktop-hero-max-h, min(148px, 22vh));
-    width: auto;
-    max-width: var(--prep-desktop-hero-max-w, min(120px, 11vw));
+    width: var(--prep-hero-slot-width, 21%);
+    max-width: var(--prep-hero-slot-width, 21%);
+    height: var(--prep-hero-slot-height);
+    max-height: var(--prep-hero-slot-height);
     min-width: 0;
     min-height: 0;
     top: auto;
@@ -7750,17 +7751,16 @@ body.is-ui-dragging #app[data-phase="prep"] .prep-field-island .canvas-scale-wra
 
   html:not([data-prep-layout="mobile"]):not([data-prep-viewport-fit="true"]) #app[data-phase="prep"][data-prep-side="enemy"] .prep-character-layer {
     left: auto;
-    right: var(--prep-hero-slot-left, 6%);
-    transform: none;
-    width: auto;
-    max-width: var(--prep-desktop-hero-max-w, min(120px, 11vw));
+    right: var(--prep-hero-slot-left, 2%);
+    width: var(--prep-hero-slot-width, 21%);
+    max-width: var(--prep-hero-slot-width, 21%);
     min-width: 0;
   }
 
   html:not([data-prep-layout="mobile"]):not([data-prep-viewport-fit="true"]) #app[data-phase="prep"] .prep-character-img {
     height: auto;
-    max-height: var(--prep-desktop-hero-max-h, min(148px, 22vh));
-    max-width: var(--prep-desktop-hero-max-w, min(120px, 11vw));
+    max-height: 100%;
+    max-width: 100%;
     width: auto;
     object-fit: contain;
     object-position: center bottom;
