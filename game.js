@@ -739,36 +739,18 @@ function isMobilePrepPortrait() {
   return document.documentElement.dataset.prepLayout === "mobile" && phase === "prep";
 }
 
-function syncPrepMobileHintDefault() {
-  const body = document.getElementById("prep-mobile-hint-body");
-  if (!body) return;
-  const touchBoard = document.querySelector("#board-hint .hint-touch");
-  const touchShop = document.querySelector("#shop-panel .shop-hint-touch");
-  const parts = [touchBoard?.textContent?.trim(), touchShop?.textContent?.trim()].filter(Boolean);
-  const defaultText = parts.length
-    ? parts.join(" · ")
-    : "Коснитесь предмета — описание · перетащите на поле · 🛒 — магазин";
-  body.dataset.defaultHint = defaultText;
-  if (!body.dataset.craftActive) body.textContent = defaultText;
-}
-
 function syncPrepTooltipDockVisibility() {
   const el = document.getElementById("sidebar-tooltip");
   const dock = document.getElementById("prep-tooltip-dock");
-  const mobileHint = document.getElementById("prep-mobile-hint");
   if (!dock) return;
 
   if (phase !== "prep") {
     dock.classList.remove("hidden");
-    mobileHint?.classList.add("hidden");
-    mobileHint?.setAttribute("aria-hidden", "true");
     return;
   }
 
   if (isMobilePrepPortrait()) {
     const hasItemTip = el && !el.classList.contains("hidden");
-    mobileHint?.classList.add("hidden");
-    mobileHint?.setAttribute("aria-hidden", "true");
     dock.classList.toggle("hidden", !hasItemTip);
     dock.classList.toggle("prep-tooltip-dock--item", hasItemTip);
     if (hasItemTip) positionPrepTooltipDock();
@@ -779,8 +761,6 @@ function syncPrepTooltipDockVisibility() {
 
   if (!el) return;
   dock.classList.toggle("hidden", el.classList.contains("hidden"));
-  mobileHint?.classList.add("hidden");
-  mobileHint?.setAttribute("aria-hidden", "true");
 }
 
 function shouldUsePrepTooltipDock() {
@@ -1375,7 +1355,6 @@ function renderPhase() {
     updatePrepSideUI();
     renderShop();
     renderBench();
-    if (isMobilePrepPortrait()) syncPrepMobileHintDefault();
     syncPrepTooltipDockVisibility();
   }
   renderFightButton();

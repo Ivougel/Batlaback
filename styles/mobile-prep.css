@@ -580,20 +580,6 @@ html[data-prep-layout="mobile"][data-game-phase="prep"] #prep-tooltip-dock .side
   justify-content: center;
 }
 
-html[data-prep-layout="mobile"] .prep-mobile-hint {
-  display: none !important;
-}
-
-html[data-prep-layout="mobile"] .prep-mobile-hint-body {
-  margin: 0;
-  font-size: 0.82rem;
-  line-height: 1.38;
-  color: #8b949e;
-  text-align: center;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
 html[data-prep-layout="mobile"] #app[data-phase="prep"] #board-hint {
   display: none !important;
 }
