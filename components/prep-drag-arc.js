@@ -8,6 +8,8 @@ const PrepDragArc = (() => {
   const SPRING_K = 11;
   const TRAIL_MAX = 6;
   const PARTICLE_MAX = 14;
+  const DASH_PHASE_SPEED = 0.00155;
+  const DASH_OFFSET_SCALE = 13;
 
   const RARITY_PALETTE = {
     common:    { a: "#9eb4d4", b: "#8ecde8", c: "#a8b8d0" },
@@ -53,6 +55,7 @@ const PrepDragArc = (() => {
   let lastFrameTs = 0;
   let burstT = 0;
   let audioCtx = null;
+  let lastHoverCellKey = null;
 
   let smoothTo = null;
   let smoothC1 = null;
@@ -128,6 +131,24 @@ const PrepDragArc = (() => {
   function playBeginSound() {
     playTone(440, 0.1, 0.028);
     window.setTimeout(() => playTone(620, 0.08, 0.02), 40);
+  }
+
+  function hoverCellKey(col, row, kind = "c") {
+    if (col == null || row == null) return null;
+    return `${kind}:${col},${row}`;
+  }
+
+  function syncHoverCell(col, row, kind = "c") {
+    if (!active) return;
+    const key = hoverCellKey(col, row, kind);
+    if (!key) {
+      lastHoverCellKey = null;
+      return;
+    }
+    if (key === lastHoverCellKey) return;
+    const prev = lastHoverCellKey;
+    lastHoverCellKey = key;
+    if (prev !== null) playBeginSound();
   }
 
   function playCelebrateSound() {
@@ -383,8 +404,8 @@ const PrepDragArc = (() => {
     const pulseB = pulseWave(1.55, 0.9);
     const dashPeriod = 4 + pulseB;
     const dashGap = 6.5 + pulseA * 1.2;
-    const dashOffset = -pulsePhase * 28;
-    const flowOffset = -pulsePhase * 28 + 9;
+    const dashOffset = -pulsePhase * DASH_OFFSET_SCALE;
+    const flowOffset = -pulsePhase * DASH_OFFSET_SCALE + 9;
     const dashPattern = `${dashPeriod.toFixed(1)} ${dashGap.toFixed(1)}`;
 
     const haloWidth = 4.5 + pulseA * 2;
@@ -438,7 +459,7 @@ const PrepDragArc = (() => {
       if (!active && !celebrating) return;
       const dt = lastFrameTs ? Math.min(0.05, (ts - lastFrameTs) / 1000) : 0.016;
       lastFrameTs = ts;
-      pulsePhase = ts * 0.0036;
+      pulsePhase = ts * DASH_PHASE_SPEED;
       const from = { x: fromX, y: fromY };
       const geom = getSmoothedGeometry(lastTargetX, lastTargetY, dt);
       renderArc(geom, lastProgress, dt);
@@ -459,7 +480,7 @@ const PrepDragArc = (() => {
     return cubicBezier(geom.from, geom.controls.c1, geom.controls.c2, geom.to, t);
   }
 
-  function begin({ fromX: fx, fromY: fy, itemId: id }) {
+  function begin({ fromX: fx, fromY: fy, itemId: id, originCol, originRow, originKind }) {
     if (typeof phase !== "undefined" && phase !== "prep") return;
     active = true;
     celebrating = false;
@@ -479,6 +500,7 @@ const PrepDragArc = (() => {
     burstT = 0;
     lastFrameTs = 0;
     pulsePhase = 0;
+    lastHoverCellKey = hoverCellKey(originCol, originRow, originKind);
     ensureLayer();
     playBeginSound();
     schedulePulse();
@@ -547,6 +569,7 @@ const PrepDragArc = (() => {
     lastProgress = 0;
     trail.length = 0;
     particles.length = 0;
+    lastHoverCellKey = null;
     if (rafId != null) {
       cancelAnimationFrame(rafId);
       rafId = null;
@@ -597,6 +620,7 @@ const PrepDragArc = (() => {
     resolveGhostPosition,
     pushTrailPoint,
     mountGhostToBody,
+    syncHoverCell,
     getGhostRotation: () => lastRotation,
   };
 })();

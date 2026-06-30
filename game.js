@@ -3113,12 +3113,21 @@ function setGamepadBoardFocus(col, row) {
     if (isContainerItem(dragPayload.itemId)) {
       hoverCell = { col: c, row: r };
       hoverSlot = null;
+      if (typeof PrepDragArc !== "undefined" && PrepDragArc.isActive()) {
+        PrepDragArc.syncHoverCell(c, r, "c");
+      }
     } else if (isSlotCell(st.containers, c, r)) {
       hoverSlot = { col: c, row: r };
       hoverCell = null;
+      if (typeof PrepDragArc !== "undefined" && PrepDragArc.isActive()) {
+        PrepDragArc.syncHoverCell(c, r, "s");
+      }
     } else {
       hoverCell = { col: c, row: r };
       hoverSlot = null;
+      if (typeof PrepDragArc !== "undefined" && PrepDragArc.isActive()) {
+        PrepDragArc.syncHoverCell(c, r, "c");
+      }
     }
   } else {
     hoverSlot = isSlotCell(st.containers, c, r) ? { col: c, row: r } : null;
@@ -3329,6 +3338,17 @@ function updatePointerFromClient(clientX, clientY) {
       } else {
         hoverCell = { col, row };
       }
+      if (typeof PrepDragArc !== "undefined" && PrepDragArc.isActive()) {
+        if (hoverSlot) {
+          PrepDragArc.syncHoverCell(hoverSlot.col, hoverSlot.row, "s");
+        } else if (hoverCell) {
+          PrepDragArc.syncHoverCell(hoverCell.col, hoverCell.row, "c");
+        } else {
+          PrepDragArc.syncHoverCell(null, null);
+        }
+      }
+    } else if (dragPayload && typeof PrepDragArc !== "undefined" && PrepDragArc.isActive()) {
+      PrepDragArc.syncHoverCell(null, null);
     }
 
     const overSidebar = isPointerOverPrepSidebar(clientX, clientY);
@@ -5450,7 +5470,18 @@ function beginPrepDragArcFromBackpack(col, row, side = prepViewSide) {
   if (phase !== "prep" || typeof PrepDragArc === "undefined") return;
   const c = boardCellClientCenter(col, row, side);
   if (!c) return;
-  PrepDragArc.begin({ fromX: c.x, fromY: c.y, itemId: dragPayload?.itemId });
+  const st = getSideState(side);
+  const kind = isContainerItem(dragPayload?.itemId)
+    ? "c"
+    : (isSlotCell(st.containers, col, row) ? "s" : "c");
+  PrepDragArc.begin({
+    fromX: c.x,
+    fromY: c.y,
+    itemId: dragPayload?.itemId,
+    originCol: col,
+    originRow: row,
+    originKind: kind,
+  });
 }
 
 function startShopDrag(index, e, side = prepViewSide) {
