@@ -46,7 +46,7 @@ html[data-battle-arena-layout="true"] #app[data-phase="replay"] .battle-thought-
 }
 
 html[data-battle-hero-placement="flank-arena"] .battle-thought-body {
-  z-index: 6;
+  z-index: 1;
 }
 
 .battle-thought-body--player {

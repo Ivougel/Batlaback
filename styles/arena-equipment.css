@@ -22,25 +22,25 @@
   overflow: visible;
 }
 
-/* Спутники экипировки — внутри того же слота, что и главный эмодзи-аватар */
+/* Спутники экипировки — кольцо вокруг эмодзи-аватара (поверх диска аватара) */
 .avatar-thought-slot .arena-equip-body--thought-orbit {
   position: absolute;
   left: 50%;
   top: 50%;
   pointer-events: none;
-  z-index: 2;
+  z-index: 12;
 }
 
 .avatar-thought-slot .arena-equip-body--thought-orbit.arena-equip-body--weapon {
-  z-index: 4;
+  z-index: 20;
 }
 
 .avatar-thought-slot .arena-equip-body--thought-orbit.arena-equip-body--gear {
-  z-index: 5;
+  z-index: 14;
 }
 
 html[data-battle-hero-placement="flank-arena"] .avatar-thought-slot .battle-thought-body {
-  z-index: 6;
+  z-index: 1;
 }
 
 .arena-equip-body--fx-flight {

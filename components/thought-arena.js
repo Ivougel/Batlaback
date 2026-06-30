@@ -617,6 +617,9 @@ const ThoughtArena = (() => {
     body.el.style.width = `${size}px`;
     body.el.style.height = `${size}px`;
     body.el.style.fontSize = `${size * 0.72}px`;
+    if (isAnchoredFlankArena()) {
+      body.el.style.zIndex = "1";
+    }
   }
 
   function createCluster(side, glyphs, eventKey, event) {

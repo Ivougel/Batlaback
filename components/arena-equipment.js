@@ -90,7 +90,7 @@ const ArenaEquipment = (() => {
     };
   }
 
-  const EMOJI_ORBIT_Z_BASE = 30;
+  const EMOJI_ORBIT_Z_BASE = 12;
 
   const SLOT_Z = {
     head: 0, amulet: 1, chest: 2, leftHand: 3, rightHand: 4,
@@ -276,7 +276,14 @@ const ArenaEquipment = (() => {
     return Math.round(emoji * 0.12);
   }
 
-  /** Радиус орбиты спутников — halo вокруг эмодзи. */
+  function emojiVisualRadiusPx() {
+    const emoji = typeof BattleHeroAnchor !== "undefined"
+      ? BattleHeroAnchor.thoughtSlotEmojiSize()
+      : Math.round(viewportMin() * 0.12);
+    return Math.round(emoji * 0.48);
+  }
+
+  /** Радиус орбиты: кольцо спутников снаружи диска эмодзи-аватара. */
   function orbitSpanPx() {
     const emoji = typeof BattleHeroAnchor !== "undefined"
       ? BattleHeroAnchor.thoughtSlotEmojiSize()
@@ -284,7 +291,33 @@ const ArenaEquipment = (() => {
     const halo = typeof BattleHeroAnchor !== "undefined"
       ? BattleHeroAnchor.thoughtSlotHaloPx(emoji)
       : Math.round(emoji * 0.40);
-    return Math.max(34, halo);
+    return Math.max(emojiVisualRadiusPx() + 20, emojiVisualRadiusPx() + halo * 0.65);
+  }
+
+  function orbitMaxRadiusPx(slotId) {
+    const emoji = typeof BattleHeroAnchor !== "undefined"
+      ? BattleHeroAnchor.thoughtSlotEmojiSize()
+      : Math.round(viewportMin() * 0.12);
+    const halo = typeof BattleHeroAnchor !== "undefined"
+      ? BattleHeroAnchor.thoughtSlotHaloPx(emoji)
+      : Math.round(emoji * 0.40);
+    const itemR = orbitItemRadiusPx(slotId);
+    return Math.max(emojiVisualRadiusPx() + 12, emojiVisualRadiusPx() + halo - itemR - 4);
+  }
+
+  function enforceOrbitOutsideEmoji(ox, oy, slotId) {
+    const itemR = orbitItemRadiusPx(slotId);
+    const minDist = emojiVisualRadiusPx() + itemR + 8;
+    const dist = Math.hypot(ox, oy);
+    if (dist >= minDist) return { ox, oy };
+
+    const polar = PLAYER_EMOJI_ORBIT_POLAR[slotId] || { angle: 90, r: 1 };
+    const unit = polarOrbitOffset(polar.angle, 1);
+    if (dist < 0.001) {
+      return { ox: unit.dx * minDist, oy: unit.dy * minDist };
+    }
+    const scale = minDist / dist;
+    return { ox: ox * scale, oy: oy * scale };
   }
 
   function clampOrbitOffset(ox, oy, maxRadius) {
@@ -297,9 +330,10 @@ const ArenaEquipment = (() => {
   function orbitOffsetPx(side, slotId) {
     const off = emojiOrbitOffset(side, slotId);
     const span = orbitSpanPx();
-    const itemR = orbitItemRadiusPx(slotId);
-    const maxR = Math.max(span - itemR - 2, span * 0.55);
-    return clampOrbitOffset(off.dx * span, off.dy * span, maxR);
+    let ox = off.dx * span;
+    let oy = off.dy * span;
+    ({ ox, oy } = enforceOrbitOutsideEmoji(ox, oy, slotId));
+    return clampOrbitOffset(ox, oy, orbitMaxRadiusPx(slotId));
   }
 
   function getEquipViewportHome(side, slotId) {
@@ -323,7 +357,12 @@ const ArenaEquipment = (() => {
       mountViewportEquip(body);
       return;
     }
-    if (body.el.parentElement !== slot) slot.appendChild(body.el);
+    const thoughtBodies = slot.querySelectorAll(".battle-thought-body");
+    const insertBefore = thoughtBodies.length > 0 ? thoughtBodies[0] : null;
+    if (body.el.parentElement !== slot) {
+      if (insertBefore) slot.insertBefore(body.el, insertBefore);
+      else slot.appendChild(body.el);
+    }
     body.orbitSlotMounted = true;
     body.homeViewport = false;
     body.fxMounted = false;
@@ -561,8 +600,14 @@ const ArenaEquipment = (() => {
     body.el.style.height = `${d}px`;
     body.el.style.fontSize = `${d * 0.62}px`;
     body.radius = d * 0.5;
-    const z = (SLOT_Z[body.slotId] || 0) + (body.isWeapon ? 5 : 1);
-    body.el.style.zIndex = String(z);
+    if (body.orbitSlotMounted || usesEmojiAvatarEquipHome()) {
+      const slotZ = SLOT_Z[body.slotId] || 0;
+      const z = EMOJI_ORBIT_Z_BASE + slotZ + (body.isWeapon ? 6 : 0);
+      body.el.style.zIndex = String(z);
+    } else {
+      const z = (SLOT_Z[body.slotId] || 0) + (body.isWeapon ? 5 : 1);
+      body.el.style.zIndex = String(z);
+    }
   }
 
   function ensureAttackFxMount(body) {
@@ -594,6 +639,8 @@ const ArenaEquipment = (() => {
       body.el.style.top = "50%";
       body.el.style.transform = `translate(calc(-50% + ${ox}px), calc(-50% + ${oy}px)) scale(${scale}) rotate(${rot}deg)`;
       body.el.style.opacity = String(body.opacity ?? 1);
+      const slotZ = SLOT_Z[body.slotId] || 0;
+      body.el.style.zIndex = String(EMOJI_ORBIT_Z_BASE + slotZ + (body.isWeapon ? 6 : 0));
       return;
     }
 

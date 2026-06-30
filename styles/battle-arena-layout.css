@@ -297,16 +297,17 @@ html[data-battle-combat-floor="true"] #app[data-phase="replay"] .avatar-thought-
 
 html[data-battle-combat-floor="true"] #app[data-phase="battle"] .avatar-thought-slot .arena-equip-body--thought-orbit.arena-equip-body--weapon,
 html[data-battle-combat-floor="true"] #app[data-phase="replay"] .avatar-thought-slot .arena-equip-body--thought-orbit.arena-equip-body--weapon {
-  z-index: 4;
+  z-index: 20;
 }
 
 html[data-battle-combat-floor="true"] #app[data-phase="battle"] .avatar-thought-slot .arena-equip-body--thought-orbit.arena-equip-body--gear,
 html[data-battle-combat-floor="true"] #app[data-phase="replay"] .avatar-thought-slot .arena-equip-body--thought-orbit.arena-equip-body--gear {
-  z-index: 3;
+  z-index: 14;
 }
 
 html[data-battle-combat-floor="true"] #app[data-phase="battle"] .avatar-thought-slot .battle-thought-body,
 html[data-battle-combat-floor="true"] #app[data-phase="replay"] .avatar-thought-slot .battle-thought-body {
+  z-index: 1;
   filter: drop-shadow(0 8px 22px rgba(0, 0, 0, 0.6));
 }
 
@@ -319,7 +320,7 @@ html[data-thought-slot-below-hero="true"] #app[data-phase="replay"] .avatar-thou
 
 html[data-thought-slot-below-hero="true"] #app[data-phase="battle"] .avatar-thought-slot .battle-thought-body,
 html[data-thought-slot-below-hero="true"] #app[data-phase="replay"] .avatar-thought-slot .battle-thought-body {
-  z-index: 6;
+  z-index: 1;
 }
 
 /* ─── Slot 3: thought arena — центральная зона эмодзи (L2, физика ThoughtArena) ─── */
