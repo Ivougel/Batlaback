@@ -4462,6 +4462,84 @@ function renderTooltipLinesHtml(lines) {
     .join("");
 }
 
+function isDescribeEffectFallback(e) {
+  const described = describeEffect(e);
+  const typeLabel = typeof localizeBbDescription === "function" ? localizeBbDescription(e.type) : e.type;
+  const fallback = `${typeLabel}${e.value != null ? `: ${e.value}` : ""}`;
+  return described === fallback;
+}
+
+function getStrongCanonicalEffectTexts(def) {
+  return (def.effects || [])
+    .filter((e) => !isDescribeEffectFallback(e))
+    .map((e) => describeEffect(e));
+}
+
+function normalizeTooltipCompareText(text) {
+  return String(text ?? "")
+    .toLowerCase()
+    .replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, "")
+    .replace(/\[([^\]]+)\]/g, "$1")
+    .replace(/[«»"""'']/g, "")
+    .replace(/(?:^|[\s,.;])(?:в\s+)?(?:при\s+[\p{L}]+|в\s+начале\s+боя)\s*:?\s*/giu, " ")
+    .replace(/каждый|тегом|у противника|противнику|с тегом/g, "")
+    .replace(/(\p{L}+)ов(?=[\s,.!?:;→]|$)/gu, "$1")
+    .replace(/следующей/g, "след")
+    .replace(/[^\p{L}\p{N}%+\-→.:]+/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function tooltipCompareTokens(text) {
+  const normalized = normalizeTooltipCompareText(text);
+  if (!normalized) return [];
+  return normalized.split(" ").filter((token) => token.length > 1 || /[\d%]/.test(token));
+}
+
+function isTooltipTextCoveredBy(candidate, canonicalTexts) {
+  const normalizedCandidate = normalizeTooltipCompareText(candidate);
+  if (!normalizedCandidate) return true;
+
+  return canonicalTexts.some((canonical) => {
+    const normalizedCanonical = normalizeTooltipCompareText(canonical);
+    if (!normalizedCanonical) return false;
+    if (normalizedCandidate.includes(normalizedCanonical) || normalizedCanonical.includes(normalizedCandidate)) {
+      return true;
+    }
+
+    const candidateTokens = tooltipCompareTokens(candidate);
+    const canonicalTokens = tooltipCompareTokens(canonical);
+    if (!candidateTokens.length || !canonicalTokens.length) return false;
+
+    const shorter = candidateTokens.length <= canonicalTokens.length ? candidateTokens : canonicalTokens;
+    const longer = candidateTokens.length > canonicalTokens.length ? candidateTokens : canonicalTokens;
+    const longerSet = new Set(longer);
+    const matched = shorter.filter((token) => longerSet.has(token)).length;
+    return matched / shorter.length >= 0.75;
+  });
+}
+
+function splitTooltipDescriptionSegments(text) {
+  return String(text ?? "")
+    .split(/\.\s+/)
+    .map((segment) => segment.replace(/\.\s*$/, "").trim())
+    .filter(Boolean);
+}
+
+function filterRedundantTooltipText(text, canonicalTexts) {
+  if (!text || !canonicalTexts.length) return text;
+
+  const segments = splitTooltipDescriptionSegments(text);
+  if (!segments.length) return text;
+
+  const kept = segments.filter((segment) => !isTooltipTextCoveredBy(segment, canonicalTexts));
+  if (!kept.length) return null;
+  if (kept.length === segments.length) return text;
+
+  const joined = kept.join(". ");
+  return /[.!?]$/.test(text.trim()) ? `${joined}.` : joined;
+}
+
 /** context: shop — магазин; bench — скамейка; field — предмет на поле / canvas */
 function buildItemTooltipLines(def, contentItem, rotation, context = "field") {
   const lines = [];
@@ -4483,8 +4561,12 @@ function buildItemTooltipLines(def, contentItem, rotation, context = "field") {
     const containerDesc = typeof getItemTooltipDescription === "function"
       ? getItemTooltipDescription(def)
       : def.description;
-    if (containerDesc) {
-      lines.push({ text: containerDesc, style: "normal", color: "#c9d1d9" });
+    const containerCanonicalTexts = getStrongCanonicalEffectTexts(def);
+    const filteredContainerDesc = containerDesc
+      ? filterRedundantTooltipText(containerDesc, containerCanonicalTexts)
+      : null;
+    if (filteredContainerDesc) {
+      lines.push({ text: filteredContainerDesc, style: "normal", color: "#c9d1d9" });
     }
     if (context === "shop") {
       lines.push({ text: `${def.cost}💰 · купите и поставьте рядом с инвентарём`, style: "normal", color: "#f0c14b" });
@@ -4506,11 +4588,16 @@ function buildItemTooltipLines(def, contentItem, rotation, context = "field") {
     lines.push({ text: `${shape.length} кл.`, style: "sub", color: "#8b949e" });
   }
 
+  const canonicalEffectTexts = getStrongCanonicalEffectTexts(def);
+
   const tooltipDescription = typeof getItemTooltipDescription === "function"
     ? getItemTooltipDescription(def)
     : def.description;
-  if (tooltipDescription) {
-    lines.push({ text: tooltipDescription, style: "normal", color: "#c9d1d9" });
+  const filteredTooltipDescription = tooltipDescription
+    ? filterRedundantTooltipText(tooltipDescription, canonicalEffectTexts)
+    : null;
+  if (filteredTooltipDescription) {
+    lines.push({ text: filteredTooltipDescription, style: "normal", color: "#c9d1d9" });
   }
 
   const buildHints = typeof getItemBuildHints === "function" ? getItemBuildHints(def) : def.buildHints;
@@ -4587,6 +4674,7 @@ function buildItemTooltipLines(def, contentItem, rotation, context = "field") {
 
   getUniqueItemSynergies(def).forEach((s) => {
     const desc = typeof localizeSynergyDesc === "function" ? localizeSynergyDesc(s.desc) : s.desc;
+    if (isTooltipTextCoveredBy(desc, canonicalEffectTexts)) return;
     lines.push({ text: desc, style: "normal", color: "#79c0ff" });
   });
 
