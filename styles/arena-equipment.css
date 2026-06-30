@@ -98,3 +98,46 @@ html[data-battle-hero-placement="flank-arena"] .arena-equip-body--hero-card.is-a
 html[data-battle-hero-placement="flank-arena"] .arena-equip-body--hero-card.arena-equip-body--fx-flight {
   filter: drop-shadow(0 8px 22px rgba(255, 180, 80, 0.45));
 }
+
+/* Планшет: оружие с манекена стартует из верхних «дорожек» над героем */
+.arena-equip-body--tablet-lane {
+  position: fixed;
+  z-index: 24;
+  pointer-events: none;
+}
+
+/* Стили атаки экипировки (ArenaAttackStyles) */
+.arena-equip-body.is-attacking.arena-equip-attack--fireball,
+.arena-equip-body.is-attacking.arena-equip-attack--flameSlash {
+  filter: drop-shadow(0 6px 18px rgba(255, 120, 40, 0.45));
+}
+
+.arena-equip-body.is-attacking.arena-equip-attack--ice,
+.arena-equip-body.is-attacking.arena-equip-attack--freeze {
+  filter: drop-shadow(0 6px 18px rgba(120, 200, 255, 0.4));
+}
+
+.arena-equip-body.is-attacking.arena-equip-attack--arcane,
+.arena-equip-body.is-attacking.arena-equip-attack--energy {
+  filter: drop-shadow(0 6px 20px rgba(140, 180, 255, 0.45));
+}
+
+.arena-equip-body.is-attacking.arena-equip-attack--poison,
+.arena-equip-body.is-attacking.arena-equip-attack--poisonCloud {
+  filter: drop-shadow(0 6px 18px rgba(80, 220, 90, 0.4));
+}
+
+.arena-equip-body.is-attacking.arena-equip-attack--holy,
+.arena-equip-body.is-attacking.arena-equip-attack--dazzle {
+  filter: drop-shadow(0 8px 22px rgba(255, 255, 200, 0.5));
+}
+
+.arena-equip-body.is-attacking.arena-equip-attack--drain,
+.arena-equip-body.is-attacking.arena-equip-attack--shadow {
+  filter: drop-shadow(0 6px 18px rgba(140, 60, 200, 0.42));
+}
+
+.arena-equip-body.is-attacking.arena-equip-attack--reap,
+.arena-equip-body.is-attacking.arena-equip-attack--bash {
+  filter: drop-shadow(0 8px 22px rgba(255, 180, 80, 0.5));
+}

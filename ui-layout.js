@@ -572,10 +572,70 @@
     panel.style.transform = "none";
   }
 
+  function usesTabletBattleThoughtCorners(root = document.documentElement) {
+    if (root.dataset.prepLayout === "mobile") return false;
+    if (root.dataset.tabletSideFit === "true") return true;
+    if (root.dataset.tabletPrepHero === "true") return true;
+    if (root.dataset.uiTier === "tablet") return true;
+    return false;
+  }
+
+  /** iPad / tablet: боевые эмодзи в верхних углах сцены (синие точки на макете). */
+  function syncTabletCornerEmotionSlots() {
+    const sceneUi = document.getElementById("battle-scene-ui");
+    const fieldCol = document.getElementById("prep-field-column");
+    const anchorRoot = sceneUi || fieldCol;
+    if (!anchorRoot) return;
+
+    const sceneRect = anchorRoot.getBoundingClientRect();
+    if (sceneRect.width <= 0 || sceneRect.height <= 0) return;
+
+    const vmin = Math.min(
+      window.visualViewport?.width ?? window.innerWidth,
+      window.visualViewport?.height ?? window.innerHeight,
+    );
+    const size = Math.round(Math.min(168, Math.max(104, vmin * 0.15)));
+    const padX = Math.max(10, readCssPx("--gap-md", 10));
+    const padTop = Math.max(8, readCssPx("--prep-scene-top", 14));
+    const top = sceneRect.top + padTop;
+    const leftX = sceneRect.left + padX;
+    const rightX = sceneRect.right - padX - size;
+
+    [
+      { slotId: "player-thought-slot", x: leftX },
+      { slotId: "enemy-thought-slot", x: rightX },
+    ].forEach(({ slotId, x }) => {
+      const slot = document.getElementById(slotId);
+      if (!slot) return;
+      slot.style.position = "fixed";
+      slot.style.left = `${Math.round(x)}px`;
+      slot.style.top = `${Math.round(top)}px`;
+      slot.style.width = `${size}px`;
+      slot.style.height = `${size}px`;
+      slot.style.right = "auto";
+      slot.style.bottom = "auto";
+      slot.style.zIndex = "24";
+    });
+  }
+
   /** Якорь боевой эмодзи: верхний inner-угол портрета (к центру экрана). */
   function syncHeroEmotionSlotAnchors() {
     const root = document.documentElement;
-    if (root.dataset.battleHeroPlacement !== "flank-arena") return;
+    if (root.dataset.battleHeroPlacement !== "flank-arena") {
+      root.removeAttribute("data-tablet-thought-corners");
+      return;
+    }
+
+    const tabletCorners = usesTabletBattleThoughtCorners(root) && isBattleUiPhase();
+    root.dataset.tabletThoughtCorners = tabletCorners ? "true" : "false";
+
+    if (tabletCorners) {
+      syncTabletCornerEmotionSlots();
+      if (typeof ThoughtArena !== "undefined" && ThoughtArena.onResize) {
+        ThoughtArena.onResize();
+      }
+      return;
+    }
 
     [
       { panelId: "player-avatar-panel", slotId: "player-thought-slot", innerX: 0.88 },
@@ -601,6 +661,7 @@
       slot.style.height = `${size}px`;
       slot.style.right = "auto";
       slot.style.bottom = "auto";
+      slot.style.zIndex = "";
     });
 
     if (typeof ThoughtArena !== "undefined" && ThoughtArena.onResize) {

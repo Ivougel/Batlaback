@@ -24,6 +24,8 @@ const ThoughtArena = (() => {
 
   /** @type {Map<string, { eventKey: string, members: object[] }>} */
   const clusters = new Map();
+  /** @type {Record<string, object[]>} */
+  const equipReactions = { player: [], enemy: [] };
   let rafId = null;
   let lastTs = 0;
 
@@ -249,16 +251,212 @@ const ThoughtArena = (() => {
 
   function applyVisual(body) {
     const wobble = 1 + Math.sin(body.wobblePhase) * 0.04 * body.wobbleAmp;
-    const scale = body.displayScale * wobble;
-    const x = body.renderX ?? body.x;
-    const y = body.renderY ?? body.y;
+    const scale = body.displayScale * wobble * (body.reactScale ?? 1);
+    const x = (body.renderX ?? body.x) + (body.reactOx ?? 0);
+    const y = (body.renderY ?? body.y) + (body.reactOy ?? 0);
+    const rot = (body.rotation ?? 0) + (body.reactRot ?? 0);
     body.el.style.transform = [
       `translate3d(${x}px, ${y}px, 0)`,
       "translate(-50%, -50%)",
-      `rotate(${body.rotation}deg)`,
+      `rotate(${rot}deg)`,
       `scale(${scale})`,
     ].join(" ");
     body.el.style.opacity = String(body.opacity);
+    if (body.reactFilter) {
+      body.el.style.filter = body.reactFilter;
+    } else {
+      body.el.style.filter = "";
+    }
+  }
+
+  function triggerEquipHitReaction(side, spec) {
+    if (!clusters.has(side) || !spec) return;
+    equipReactions[side].push({
+      kind: spec.kind || "shake",
+      intensity: spec.intensity ?? 1,
+      duration: spec.duration ?? 0.35,
+      fromSide: spec.fromSide,
+      styleId: spec.styleId,
+      t: 0,
+    });
+    scheduleFrame();
+  }
+
+  function sampleEquipReaction(spec, p, vmin) {
+    const k = spec.kind;
+    const i = spec.intensity;
+    const wave = Math.sin(p * Math.PI * 6);
+    const dir = spec.fromSide === "player" ? 1 : -1;
+
+    switch (k) {
+      case "flinch":
+        return {
+          ox: dir * vmin * 0.018 * i * (1 - p),
+          oy: vmin * 0.006 * i * p,
+          scale: 1 - p * 0.14 * i,
+          rot: -dir * 8 * i * (1 - p),
+        };
+      case "duck":
+        return {
+          ox: 0,
+          oy: vmin * 0.022 * i * Math.sin(p * Math.PI),
+          scale: 1 - 0.12 * i * Math.sin(p * Math.PI),
+          rot: dir * 6 * i * (1 - p),
+        };
+      case "squash":
+        return {
+          ox: dir * vmin * 0.01 * wave * (1 - p),
+          oy: vmin * 0.008 * i * (1 - p),
+          scale: 1 - 0.18 * i * Math.sin(p * Math.PI),
+          rot: wave * 4 * i,
+        };
+      case "stagger":
+        return {
+          ox: dir * vmin * 0.025 * i * Math.sin(p * Math.PI * 3),
+          oy: vmin * 0.012 * i * Math.cos(p * Math.PI * 2),
+          scale: 1 - 0.08 * i * Math.sin(p * Math.PI),
+          rot: wave * 10 * i,
+        };
+      case "spin":
+        return {
+          ox: 0,
+          oy: 0,
+          scale: 1 + 0.1 * i * Math.sin(p * Math.PI),
+          rot: p * 220 * i * dir,
+        };
+      case "burn":
+        return {
+          ox: wave * vmin * 0.004,
+          oy: -vmin * 0.006 * i * Math.sin(p * Math.PI),
+          scale: 1 + 0.12 * i * Math.sin(p * Math.PI),
+          rot: wave * 5,
+          filter: `drop-shadow(0 0 ${8 + p * 14}px rgba(255,120,40,${0.35 + (1 - p) * 0.4}))`,
+        };
+      case "freeze":
+        return {
+          ox: wave * vmin * 0.002,
+          oy: 0,
+          scale: 1 - 0.1 * i * Math.min(1, p * 1.4),
+          rot: wave * 2,
+          filter: `drop-shadow(0 0 ${10}px rgba(120,200,255,${0.25 + (1 - p) * 0.35}))`,
+        };
+      case "poison":
+        return {
+          ox: Math.sin(p * Math.PI * 5) * vmin * 0.005 * i,
+          oy: vmin * 0.008 * i * Math.sin(p * Math.PI * 2),
+          scale: 1 + 0.06 * i * wave,
+          rot: wave * 6,
+          filter: `drop-shadow(0 0 ${8}px rgba(80,220,90,${0.2 + (1 - p) * 0.3}))`,
+        };
+      case "dazzle":
+        return {
+          ox: 0,
+          oy: -vmin * 0.01 * i * Math.sin(p * Math.PI),
+          scale: 1 + 0.2 * i * Math.sin(p * Math.PI),
+          rot: 0,
+          filter: `drop-shadow(0 0 ${16 + p * 20}px rgba(255,255,220,${0.45 * (1 - p)})) brightness(${1 + 0.35 * (1 - p)})`,
+        };
+      case "drain":
+        return {
+          ox: -dir * vmin * 0.02 * i * Math.sin(p * Math.PI),
+          oy: vmin * 0.004 * i * (1 - p),
+          scale: 1 - 0.15 * i * Math.sin(p * Math.PI),
+          rot: -dir * p * 30 * i,
+          filter: `drop-shadow(0 0 ${10}px rgba(180,60,220,${0.25 + (1 - p) * 0.25}))`,
+        };
+      case "impale":
+        return {
+          ox: -dir * vmin * 0.03 * i * Math.min(1, p * 2),
+          oy: 0,
+          scale: 1 - 0.1 * i * Math.min(1, p * 1.5),
+          rot: dir * 12 * i * (1 - p),
+        };
+      case "ripple":
+        return {
+          ox: wave * vmin * 0.008 * i,
+          oy: Math.cos(p * Math.PI * 4) * vmin * 0.006 * i,
+          scale: 1 + 0.14 * i * Math.sin(p * Math.PI),
+          rot: wave * 8,
+        };
+      case "spark":
+        return {
+          ox: wave * vmin * 0.01 * i,
+          oy: -wave * vmin * 0.008 * i,
+          scale: 1 + 0.08 * i * Math.sin(p * Math.PI * 2),
+          rot: p * 160 * dir * i,
+          filter: `drop-shadow(0 0 ${12}px rgba(120,180,255,${0.35 * (1 - p)}))`,
+        };
+      case "stun":
+        return {
+          ox: wave * vmin * 0.012 * i,
+          oy: Math.sin(p * Math.PI * 8) * vmin * 0.008 * i,
+          scale: 1 + 0.1 * i * Math.sin(p * Math.PI * 3),
+          rot: p * 300 * dir * i,
+          filter: `drop-shadow(0 0 ${10}px rgba(255,220,80,${0.3 * (1 - p)}))`,
+        };
+      case "flicker":
+        return {
+          ox: (Math.random() - 0.5) * vmin * 0.012 * i * (1 - p),
+          oy: (Math.random() - 0.5) * vmin * 0.01 * i * (1 - p),
+          scale: 1 - 0.06 * i * Math.random(),
+          rot: (Math.random() - 0.5) * 20 * i,
+          filter: `drop-shadow(0 0 ${8}px rgba(60,40,90,${0.35 * (1 - p)}))`,
+        };
+      case "shake":
+      default:
+        return {
+          ox: wave * vmin * 0.01 * i,
+          oy: Math.cos(p * Math.PI * 5) * vmin * 0.006 * i,
+          scale: 1 + 0.05 * i * Math.sin(p * Math.PI),
+          rot: wave * 7 * i,
+        };
+    }
+  }
+
+  function stepEquipReactions(list, dt) {
+    const vmin = viewportMin();
+    ["player", "enemy"].forEach((side) => {
+      equipReactions[side] = equipReactions[side].filter((spec) => {
+        spec.t += dt;
+        return spec.t < spec.duration;
+      });
+    });
+
+    if (!equipReactions.player.length && !equipReactions.enemy.length) {
+      list.forEach((body) => {
+        body.reactOx = 0;
+        body.reactOy = 0;
+        body.reactScale = 1;
+        body.reactRot = 0;
+        body.reactFilter = "";
+      });
+      return;
+    }
+
+    list.forEach((body) => {
+      const reactions = equipReactions[body.side] || [];
+      let ox = 0;
+      let oy = 0;
+      let scale = 1;
+      let rot = 0;
+      let filter = "";
+
+      reactions.forEach((spec) => {
+        const p = Math.min(1, spec.t / spec.duration);
+        const sample = sampleEquipReaction(spec, p, vmin);
+        ox += sample.ox || 0;
+        oy += sample.oy || 0;
+        scale *= sample.scale ?? 1;
+        rot += sample.rot || 0;
+        if (sample.filter) filter = sample.filter;
+      });
+
+      body.reactOx = ox;
+      body.reactOy = oy;
+      body.reactScale = scale;
+      body.reactRot = rot;
+      body.reactFilter = filter;
+    });
   }
 
   function pruneFadedBodies() {
@@ -387,6 +585,7 @@ const ThoughtArena = (() => {
     }
 
     pruneFadedBodies();
+    stepEquipReactions(list, dt);
     getAllBodies().forEach(applyVisual);
 
     if (clusters.size > 0) scheduleFrame();
@@ -556,6 +755,8 @@ const ThoughtArena = (() => {
       cluster.members.forEach((body) => body.el.remove());
     });
     clusters.clear();
+    equipReactions.player = [];
+    equipReactions.enemy = [];
     if (rafId != null) {
       cancelAnimationFrame(rafId);
       rafId = null;
@@ -611,6 +812,7 @@ const ThoughtArena = (() => {
     getCompanionAnchorPx,
     getCompanionAnchorNorm,
     isAnchoredFlankArena,
+    triggerEquipHitReaction,
     onResize,
   };
 })();
