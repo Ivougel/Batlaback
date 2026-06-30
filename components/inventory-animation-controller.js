@@ -44,11 +44,13 @@ const InventoryAnimationController = (() => {
     dragVelY = 0;
   }
 
-  function applyDragGhostStyles(el) {
+  function applyDragGhostStyles(el, arcRotation = null) {
     if (!el) return;
     const speed = Math.hypot(dragVelX, dragVelY);
     const scale = 1.05 + Math.min(0.05, speed * 0.0018);
-    const tilt = Math.max(-10, Math.min(10, dragVelX * 0.12));
+    const tilt = arcRotation != null
+      ? arcRotation * 0.35
+      : Math.max(-10, Math.min(10, dragVelX * 0.12));
     el.style.transform = `translate(-50%, -50%) scale(${scale}) rotate(${tilt}deg)`;
     el.style.filter =
       "drop-shadow(0 10px 22px rgba(0,0,0,0.55)) drop-shadow(0 3px 8px rgba(0,0,0,0.35))";
@@ -57,6 +59,7 @@ const InventoryAnimationController = (() => {
 
   function resetDragGhostStyles(el) {
     if (!el) return;
+    el.classList.remove("ui-drag-ghost--arc-flight");
     el.style.transform = "translate(-50%, -50%)";
     el.style.filter = "drop-shadow(0 4px 14px rgba(0, 0, 0, 0.45))";
     el.style.opacity = "0.94";
@@ -370,10 +373,11 @@ function onPrepDragMove(clientX, clientY) {
 function onPrepDragEnd() {
   InventoryAnimationController.onDragEnd();
   InventoryAnimationController.resetDragGhostStyles(getDragGhostCanvas?.());
+  if (typeof PrepDragArc !== "undefined") PrepDragArc.end();
 }
 
-function applyPrepDragGhostStyles(el) {
-  InventoryAnimationController.applyDragGhostStyles(el);
+function applyPrepDragGhostStyles(el, arcRotation = null) {
+  InventoryAnimationController.applyDragGhostStyles(el, arcRotation);
 }
 
 function notifyPrepItemPlaced(item, def) {

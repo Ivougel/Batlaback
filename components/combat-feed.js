@@ -182,35 +182,6 @@ const CombatLog = (() => {
       }
     });
 
-    scrollEl.addEventListener("touchstart", (e) => {
-      const textEl = findHintTextEl(e.target);
-      if (!textEl || e.touches.length !== 1) return;
-      const t = e.touches[0];
-      if (typeof armTouchLongPress !== "function") return;
-      armTouchLongPress({
-        clientX: t.clientX,
-        clientY: t.clientY,
-        onHold: () => {
-          textEl.dataset.hintActive = "1";
-          showFeedHintAt(t.clientX, t.clientY, textEl.dataset.hint);
-        },
-        onCancel: () => {
-          textEl.removeAttribute("data-hint-active");
-          hideFeedHint();
-        },
-      });
-    }, { passive: true });
-
-    scrollEl.addEventListener("touchmove", (e) => {
-      const t = e.touches[0];
-      if (!t || typeof updateTouchLongPressMove !== "function") return;
-      updateTouchLongPressMove(t.clientX, t.clientY);
-    }, { passive: true });
-
-    scrollEl.addEventListener("touchend", () => {
-      if (typeof finishTouchLongPress === "function") finishTouchLongPress();
-    }, { passive: true });
-
     document.addEventListener("click", (e) => {
       if (!feedTooltipActive) return;
       if (findHintTextEl(e.target)) return;

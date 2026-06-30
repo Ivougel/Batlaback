@@ -144,14 +144,13 @@ let pendingCanvasPick = null;
 let shopDidDrag = false;
 let lastTouchEventAt = 0;
 const TOOLTIP_CONFIG = {
-  longPressDelay: 450,
   moveTolerance: 20,
   hideDelay: 250,
   touchPadding: 16,
 };
 const MOUSE_DRAG_THRESHOLD_PX = 5;
 const TOUCH_DRAG_THRESHOLD_PX = 4;
-let touchLongPress = null;
+let touchTapGesture = null;
 let tooltipHideTimer = null;
 let suppressShopClickUntil = 0;
 let opponentMode = "ai";
@@ -641,21 +640,42 @@ function createDropPointerEvent(e) {
   return createSyntheticPointerEvent(x, y);
 }
 
-function clearTouchLongPress() {
-  if (touchLongPress?.timer) clearTimeout(touchLongPress.timer);
-  touchLongPress = null;
+function clearTouchTapGesture() {
+  touchTapGesture = null;
 }
 
-function getTouchLongPressDistance(clientX, clientY) {
-  if (!touchLongPress) return 0;
-  return Math.hypot(clientX - touchLongPress.startX, clientY - touchLongPress.startY);
+function beginTouchTapGesture({ clientX, clientY, onTap, onCancel }) {
+  if (!isTouchUi()) return;
+  clearTouchTapGesture();
+  cancelScheduledTooltipHide();
+  touchTapGesture = {
+    startX: clientX,
+    startY: clientY,
+    onTap,
+    onCancel,
+    cancelled: false,
+  };
 }
 
-function shouldDeferTouchDrag(clientX = lastPointerClient.x, clientY = lastPointerClient.y) {
-  if (!isTouchUi() || !touchLongPress) return false;
-  const dist = getTouchLongPressDistance(clientX, clientY);
-  if (touchLongPress.phase === "waiting" && dist < TOOLTIP_CONFIG.moveTolerance) return true;
-  if (touchLongPress.phase === "tooltipOpen" && dist < TOOLTIP_CONFIG.moveTolerance) return true;
+function updateTouchTapGestureMove(clientX, clientY) {
+  if (!touchTapGesture || touchTapGesture.cancelled) return;
+  const dist = Math.hypot(clientX - touchTapGesture.startX, clientY - touchTapGesture.startY);
+  if (dist >= TOOLTIP_CONFIG.moveTolerance) {
+    touchTapGesture.cancelled = true;
+    touchTapGesture.onCancel?.();
+    clearTouchTapGesture();
+  }
+}
+
+/** @returns {boolean} true, если сработал tap и показана подсказка */
+function finishTouchTapGesture(clientX, clientY) {
+  if (!touchTapGesture) return false;
+  const gesture = touchTapGesture;
+  clearTouchTapGesture();
+  if (!gesture.cancelled) {
+    gesture.onTap?.(clientX, clientY);
+    return true;
+  }
   return false;
 }
 
@@ -696,7 +716,7 @@ function syncPrepMobileHintDefault() {
   const parts = [touchBoard?.textContent?.trim(), touchShop?.textContent?.trim()].filter(Boolean);
   const defaultText = parts.length
     ? parts.join(" · ")
-    : "Зажмите предмет — описание · перетащите на поле · 🛒 — магазин";
+    : "Коснитесь предмета — описание · перетащите на поле · 🛒 — магазин";
   body.dataset.defaultHint = defaultText;
   if (!body.dataset.craftActive) body.textContent = defaultText;
 }
@@ -838,62 +858,19 @@ function requestHideSidebarTooltip() {
   else hideSidebarTooltip();
 }
 
-function armTouchLongPress({ clientX, clientY, onHold, onCancel, onDragFromTooltip }) {
-  if (!isTouchUi()) return;
-  clearTouchLongPress();
-  cancelScheduledTooltipHide();
-  const state = {
-    clientX,
-    clientY,
-    startX: clientX,
-    startY: clientY,
-    onHold,
-    onCancel,
-    onDragFromTooltip,
-    held: false,
-    phase: "waiting",
-    timer: null,
-  };
-  state.timer = setTimeout(() => {
-    state.held = true;
-    state.phase = "tooltipOpen";
-    state.timer = null;
-    onHold?.(state);
-  }, TOOLTIP_CONFIG.longPressDelay);
-  touchLongPress = state;
-}
-
-function updateTouchLongPressMove(clientX, clientY) {
-  if (!touchLongPress) return;
-  const dist = getTouchLongPressDistance(clientX, clientY);
-  const tolerance = TOOLTIP_CONFIG.moveTolerance;
-
-  if (touchLongPress.phase === "tooltipOpen") {
-    if (dist < tolerance) {
-      if (sidebarTooltipSource === "combat-feed" && typeof moveSidebarTooltip === "function") {
-        moveSidebarTooltip({ clientX, clientY }, "viewport", "auto");
-      }
-      cancelScheduledTooltipHide();
-      return;
-    }
+function bindTouchTooltipDismiss() {
+  if (document.documentElement.dataset.touchTooltipDismissBound) return;
+  document.documentElement.dataset.touchTooltipDismissBound = "1";
+  document.addEventListener("pointerdown", (e) => {
+    if (!isTouchUi() || e.pointerType === "mouse") return;
+    if (e.target.closest(
+      "#sidebar-tooltip, .shop-card, .bench-card, .doll-slot, #game-canvas, "
+      + ".combat-feed-msg-text--hinted, .profile-status-chip, .profile-stack-chip",
+    )) return;
     hideSidebarTooltip();
-    touchLongPress.onDragFromTooltip?.(clientX, clientY);
-    clearTouchLongPress();
-    return;
-  }
-
-  if (touchLongPress.phase === "waiting") {
-    if (dist < tolerance) return;
-    touchLongPress.onCancel?.();
-    clearTouchLongPress();
-  }
-}
-
-function finishTouchLongPress() {
-  const wasHeld = touchLongPress?.phase === "tooltipOpen";
-  clearTouchLongPress();
-  if (wasHeld && sidebarTooltipSource !== "combat-feed") hideSidebarTooltip();
-  return wasHeld;
+    tooltipItem = null;
+    syncFieldTooltip();
+  }, true);
 }
 
 function bindTouchInput() {
@@ -918,10 +895,10 @@ function bindTouchInput() {
       activeGesture = gestureKey(kind, id);
       lastTouchEventAt = Date.now();
       if (e.cancelable) e.preventDefault();
-      armTouchLongPress({
+      beginTouchTapGesture({
         clientX: x,
         clientY: y,
-        onHold: () => {
+        onTap: () => {
           updatePointerFromClient(x, y);
           updateTooltip(mousePos.x, mousePos.y);
         },
@@ -943,7 +920,7 @@ function bindTouchInput() {
 
   const onMove = (kind, id, x, y, e) => {
     if (activeGesture !== gestureKey(kind, id)) return;
-    updateTouchLongPressMove(x, y);
+    updateTouchTapGestureMove(x, y);
     if (e.cancelable) e.preventDefault();
     updatePointerFromClient(x, y);
   };
@@ -951,8 +928,8 @@ function bindTouchInput() {
   const onUp = (kind, id, x, y) => {
     if (activeGesture !== gestureKey(kind, id)) return;
     lastTouchEventAt = Date.now();
-    const longPressHeld = finishTouchLongPress();
-    if (longPressHeld && !dragPayload) {
+    const tapHandled = finishTouchTapGesture(x, y);
+    if (tapHandled && !dragPayload) {
       pendingShopDrag = null;
       pendingBenchDrag = null;
       pendingCanvasPick = null;
@@ -1042,6 +1019,8 @@ function bindTouchInput() {
       rotateDragItem();
     }
   }, bubbleOpts);
+
+  bindTouchTooltipDismiss();
 }
 
 function setPhaseLabel(text, isBattle = false) {
@@ -1056,7 +1035,7 @@ function init() {
   applyGridMetricsFromCss();
   initInteractionMode();
   onInteractionModeChange((mode) => {
-    if (mode !== "touch") clearTouchLongPress();
+    if (mode !== "touch") clearTouchTapGesture();
     if (typeof refreshGamepadHints === "function") refreshGamepadHints();
   });
 
@@ -3160,9 +3139,27 @@ function syncDragGhostOverlay(clientX, clientY) {
   if (!el || !dragGhostCtx) return;
 
   const anchor = getDragGhostAnchorClient(clientX, clientY);
+  let ghostX = anchor.x;
+  let ghostY = anchor.y;
+  let arcRotation = null;
+
+  if (phase === "prep"
+    && (dragFrom?.type === "shop" || dragFrom?.type === "bench")
+    && typeof PrepDragArc !== "undefined"
+    && PrepDragArc.isActive()) {
+    const arcPos = PrepDragArc.resolveGhostPosition(clientX, clientY, anchor.x, anchor.y);
+    ghostX = arcPos.x;
+    ghostY = arcPos.y;
+    arcRotation = arcPos.rotation;
+    PrepDragArc.sync(clientX, clientY, anchor.x, anchor.y);
+    el.classList.add("ui-drag-ghost--arc-flight");
+  } else {
+    el.classList.remove("ui-drag-ghost--arc-flight");
+  }
+
   el.classList.remove("hidden");
-  el.style.left = `${anchor.x}px`;
-  el.style.top = `${anchor.y}px`;
+  el.style.left = `${ghostX}px`;
+  el.style.top = `${ghostY}px`;
 
   const size = DRAG_GHOST_CANVAS_SIZE;
   const dpr = window.devicePixelRatio || 1;
@@ -3180,7 +3177,9 @@ function syncDragGhostOverlay(clientX, clientY) {
   if (!def) return;
   const offset = uiPx(10);
   drawItemPreview(offset, offset, def, dragPayload.itemId, true, dragPayload.rotation || 0, dragGhostCtx);
-  if (typeof applyPrepDragGhostStyles === "function") applyPrepDragGhostStyles(el);
+  if (typeof applyPrepDragGhostStyles === "function") {
+    applyPrepDragGhostStyles(el, arcRotation);
+  }
 }
 
 function updatePointerFromClient(clientX, clientY) {
@@ -3219,14 +3218,11 @@ function updatePointerFromClient(clientX, clientY) {
     } else if (dragPayload || pendingShopDrag || pendingBenchDrag) {
       tooltipItem = null;
       hideSidebarTooltip();
-    } else {
-      const touchTooltipOpen = isTouchUi() && touchLongPress?.phase === "tooltipOpen";
-      if ((sidebarTooltipSource === "shop" || sidebarTooltipSource === "bench" || sidebarTooltipSource === "doll") && !touchTooltipOpen) {
+    } else if (!isTouchUi()) {
+      if (sidebarTooltipSource === "shop" || sidebarTooltipSource === "bench" || sidebarTooltipSource === "doll") {
         hideSidebarTooltip();
       }
-      if (!isTouchUi() || touchLongPress?.phase === "tooltipOpen") {
-        updateTooltip(mousePos.x, mousePos.y);
-      }
+      updateTooltip(mousePos.x, mousePos.y);
     }
 
     const benchPanel = document.getElementById("bench-panel");
@@ -3241,7 +3237,7 @@ function updatePointerFromClient(clientX, clientY) {
       );
     }
     syncPrepShopDragBackdrop(clientX, clientY);
-  } else if ((phase === "battle" || phase === "replay") && battleState) {
+  } else if ((phase === "battle" || phase === "replay") && battleState && !isTouchUi()) {
     updateTooltip(mousePos.x, mousePos.y);
   }
 
@@ -3260,10 +3256,10 @@ function gamepadPointerDownAt(clientX, clientY) {
     const index = +shopCard.dataset.index;
     if (!Number.isNaN(index)) {
       if (isTouchUi()) {
-        armTouchLongPress({
+        beginTouchTapGesture({
           clientX,
           clientY,
-          onHold: () => {
+          onTap: () => {
             if (dragPayload || shopDidDrag) return;
             showSidebarTooltipAt(
               clientX,
@@ -3273,10 +3269,6 @@ function gamepadPointerDownAt(clientX, clientY) {
               "shop",
               shopCard,
             );
-          },
-          onDragFromTooltip: (x, y) => {
-            pendingShopDrag = null;
-            startShopDrag(index, createSyntheticPointerEvent(x, y), prepViewSide);
           },
         });
       }
@@ -3290,10 +3282,10 @@ function gamepadPointerDownAt(clientX, clientY) {
     const index = +benchCard.dataset.bench;
     if (!Number.isNaN(index)) {
       if (isTouchUi()) {
-        armTouchLongPress({
+        beginTouchTapGesture({
           clientX,
           clientY,
-          onHold: () => {
+          onTap: () => {
             if (dragPayload) return;
             showSidebarTooltipAt(
               clientX,
@@ -3303,10 +3295,6 @@ function gamepadPointerDownAt(clientX, clientY) {
               "bench",
               benchCard,
             );
-          },
-          onDragFromTooltip: (x, y) => {
-            pendingBenchDrag = null;
-            startBenchDrag(index, createSyntheticPointerEvent(x, y), prepViewSide);
           },
         });
         beginPendingBenchDrag(index, synthetic, prepViewSide);
@@ -3320,17 +3308,14 @@ function gamepadPointerDownAt(clientX, clientY) {
   const dollSlot = target?.closest?.(".doll-slot[data-slot]");
   if (dollSlot && typeof isDollOpen === "function" && isDollOpen() && canEditPrepSide(prepViewSide)) {
     if (isTouchUi()) {
-      armTouchLongPress({
+      beginTouchTapGesture({
         clientX,
         clientY,
-        onHold: () => {
+        onTap: () => {
           if (dragPayload) return;
           if (typeof refreshDollSlotTooltip === "function") {
             refreshDollSlotTooltip({ clientX, clientY, currentTarget: dollSlot }, dollSlot);
           }
-        },
-        onDragFromTooltip: () => {
-          hideSidebarTooltip();
         },
       });
     }
@@ -3344,17 +3329,13 @@ function gamepadPointerDownAt(clientX, clientY) {
   }
 
   if (isTouchUi() && target?.closest?.("#game-canvas")) {
-    armTouchLongPress({
+    beginTouchTapGesture({
       clientX,
       clientY,
-      onHold: () => {
+      onTap: () => {
         pendingCanvasPick = null;
         updatePointerFromClient(clientX, clientY);
         updateTooltip(mousePos.x, mousePos.y);
-      },
-      onDragFromTooltip: (x, y) => {
-        pendingCanvasPick = null;
-        onMouseDown(createSyntheticPointerEvent(x, y));
       },
     });
     pendingCanvasPick = { clientX, clientY };
@@ -4829,33 +4810,33 @@ function bindItemTooltipEvents(el, itemId, contentItem, context = "shop") {
   });
   el.addEventListener("mouseleave", requestHideSidebarTooltip);
 
-  if (isTouchUi() && context !== "shop" && context !== "bench") {
-    const touchOpts = { passive: false };
+  if (isTouchUi()) {
     el.addEventListener("touchstart", (e) => {
       if (e.touches.length !== 1) return;
       const t = e.touches[0];
-      armTouchLongPress({
+      beginTouchTapGesture({
         clientX: t.clientX,
         clientY: t.clientY,
-        onHold: () => {
-          showSidebarTooltipAt(t.clientX, t.clientY, el.dataset.itemId || itemId, contentItem, context, el);
-        },
-        onDragFromTooltip: () => {
-          hideSidebarTooltip();
+        onTap: () => {
+          showSidebarTooltipAt(
+            t.clientX,
+            t.clientY,
+            el.dataset.itemId || itemId,
+            contentItem,
+            context,
+            el,
+          );
         },
       });
-    }, touchOpts);
-    el.addEventListener("touchmove", (e) => {
-      const t = e.touches[0];
+    }, { passive: true });
+    el.addEventListener("touchend", (e) => {
+      const t = e.changedTouches[0];
       if (!t) return;
-      updateTouchLongPressMove(t.clientX, t.clientY);
-    }, touchOpts);
-    el.addEventListener("touchend", () => {
-      finishTouchLongPress();
-    }, touchOpts);
+      finishTouchTapGesture(t.clientX, t.clientY);
+    }, { passive: true });
     el.addEventListener("touchcancel", () => {
-      finishTouchLongPress();
-    }, touchOpts);
+      clearTouchTapGesture();
+    }, { passive: true });
   }
 
   if (context === "shop" || context === "bench" || context === "field") {
@@ -5267,20 +5248,18 @@ function beginPendingBenchDrag(index, e, side = prepViewSide) {
 
 function updatePendingBenchDrag(e) {
   if (!pendingBenchDrag || dragPayload) return;
-  if (shouldDeferTouchDrag(e.clientX, e.clientY)) return;
   const dx = e.clientX - pendingBenchDrag.startX;
   const dy = e.clientY - pendingBenchDrag.startY;
   if (Math.hypot(dx, dy) < getDragThresholdPx()) return;
   const { index, side } = pendingBenchDrag;
   pendingBenchDrag = null;
-  clearTouchLongPress();
+  clearTouchTapGesture();
   hideSidebarTooltip();
   startBenchDrag(index, e, side);
 }
 
 function updatePendingCanvasPick(clientX, clientY) {
   if (!pendingCanvasPick || dragPayload) return;
-  if (shouldDeferTouchDrag(clientX, clientY)) return;
   const dx = clientX - pendingCanvasPick.clientX;
   const dy = clientY - pendingCanvasPick.clientY;
   if (Math.hypot(dx, dy) < getDragThresholdPx()) return;
@@ -5317,15 +5296,21 @@ function beginPendingShopDrag(index, e, side = prepViewSide) {
 
 function updatePendingShopDrag(e) {
   if (!pendingShopDrag || dragPayload) return;
-  if (shouldDeferTouchDrag(e.clientX, e.clientY)) return;
   const dx = e.clientX - pendingShopDrag.startX;
   const dy = e.clientY - pendingShopDrag.startY;
   if (Math.hypot(dx, dy) < getDragThresholdPx()) return;
   const { index, side } = pendingShopDrag;
   pendingShopDrag = null;
-  clearTouchLongPress();
+  clearTouchTapGesture();
   shopDidDrag = true;
   startShopDrag(index, e, side);
+}
+
+function beginPrepDragArcFromCard(cardEl) {
+  if (phase !== "prep" || !cardEl || typeof PrepDragArc === "undefined") return;
+  const c = getElementClientCenter(cardEl);
+  if (!c) return;
+  PrepDragArc.begin({ fromX: c.x, fromY: c.y });
 }
 
 function startShopDrag(index, e, side = prepViewSide) {
@@ -5335,10 +5320,11 @@ function startShopDrag(index, e, side = prepViewSide) {
   const def = ITEM_CATALOG[st.shop[index]];
   if (!def || st.gold < def.cost) return;
   if (e?.preventDefault) e.preventDefault();
-  clearTouchLongPress();
+  clearTouchTapGesture();
   hideSidebarTooltip();
   dragPayload = { itemId: st.shop[index], rotation: 0 };
   dragFrom = { type: "shop", index, side };
+  beginPrepDragArcFromCard(document.querySelector(`.shop-card[data-index="${index}"]`));
   startSynergyPreview();
   document.querySelector(`.shop-card[data-index="${index}"]`)?.classList.add("shop-dragging");
   syncUiDragState();
@@ -5354,12 +5340,13 @@ function startBenchDrag(index, e, side = prepViewSide) {
   const st = getSideState(side);
   if (phase !== "prep" || gameOver || !canEditPrepSide(side) || !st.bench[index]) return;
   e.preventDefault();
-  clearTouchLongPress();
+  clearTouchTapGesture();
   hideSidebarTooltip();
   selectedBench = index;
   renderBench();
   dragPayload = { itemId: st.bench[index].itemId, rotation: st.bench[index].rotation || 0 };
   dragFrom = { type: "bench", index, side };
+  beginPrepDragArcFromCard(document.querySelector(`.bench-card[data-bench="${index}"]`));
   startSynergyPreview();
   syncUiDragState();
   if (typeof onPrepDragStart === "function") onPrepDragStart();
