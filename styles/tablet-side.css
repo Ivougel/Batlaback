@@ -84,11 +84,6 @@ html[data-tablet-prep-hero="true"] #app[data-phase="prep"] .battle-canvas-stage 
   height: 100%;
 }
 
-html[data-tablet-prep-hero="true"] #app[data-phase="prep"] .run-hud {
-  order: 3;
-  z-index: 4;
-}
-
 /* ─── Battle layout: единый grid в battle-arena-layout.css (flank-arena) ─── */
 
 html[data-battle-hero-placement="flank-arena"][data-tablet-side-fit="true"] #app[data-phase="battle"] .prep-left-column,

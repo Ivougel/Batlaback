@@ -159,7 +159,7 @@
 .prep-hud-chrome {
   position: absolute;
   left: 10px;
-  bottom: 10px;
+  top: 0;
   z-index: var(--z-scene-chrome);
   pointer-events: none;
 }
@@ -171,15 +171,22 @@
 .prep-hud-chrome .prep-hero-tooltip {
   position: absolute;
   left: 0;
-  bottom: calc(100% + 8px);
+  top: calc(100% + 8px);
 }
 
 .prep-hud-chrome .run-stats-anchor--prep {
   position: absolute;
   left: 0;
-  bottom: 0;
+  top: 0;
   width: 0;
   height: 0;
+}
+
+.prep-hud-chrome .run-stats-popover {
+  pointer-events: auto;
+  top: calc(100% + 8px);
+  bottom: auto;
+  left: 0;
 }
 
 /* Shop: chrome (L1) vs object slots (L2) */

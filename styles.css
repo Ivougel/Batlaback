@@ -6906,7 +6906,7 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
 .run-stats-anchor--prep {
   position: absolute;
   left: 0;
-  bottom: 0;
+  top: 0;
   width: 0;
   height: 0;
   pointer-events: none;
@@ -6914,8 +6914,8 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
 
 .run-stats-anchor--prep .run-stats-popover {
   pointer-events: auto;
-  top: auto;
-  bottom: calc(100% + 8px);
+  top: calc(100% + 8px);
+  bottom: auto;
   left: 0;
   right: auto;
 }
@@ -6953,8 +6953,10 @@ html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
 }
 
 #app[data-phase="battle"] .prep-character-layer,
+#app[data-phase="battle"] .prep-top-bar,
 #app[data-phase="battle"] .prep-stats-hud,
 #app[data-phase="replay"] .prep-character-layer,
+#app[data-phase="replay"] .prep-top-bar,
 #app[data-phase="replay"] .prep-stats-hud {
   display: none !important;
 }

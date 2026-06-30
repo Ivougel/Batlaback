@@ -1,0 +1,120 @@
+/**
+ * Верхняя полоска prep: фаза, класс, золото, HP, раунд.
+ */
+
+#app[data-phase="prep"] .prep-left-column {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+#app[data-phase="prep"] .prep-field-column {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.prep-top-bar {
+  position: relative;
+  z-index: var(--z-chrome);
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: calc(10px * var(--ui-scale));
+  min-height: var(--prep-top-bar-h);
+  padding:
+    calc(6px * var(--ui-scale))
+    calc(10px * var(--ui-scale))
+    calc(6px * var(--ui-scale))
+    calc(12px * var(--ui-scale));
+  background: rgba(14, 12, 10, 0.97);
+  border-bottom: 1px solid rgba(80, 65, 50, 0.42);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.22);
+}
+
+.prep-top-bar .run-hud-phase {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+.prep-top-bar .prep-stats-hud {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(6px * var(--ui-scale)) calc(14px * var(--ui-scale));
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  backdrop-filter: none;
+  pointer-events: none;
+  min-height: 0;
+  font-size: calc(0.76rem * var(--ui-scale));
+}
+
+.prep-top-bar .prep-stats-class {
+  flex: 0 0 auto;
+  margin: 0;
+  padding-right: calc(12px * var(--ui-scale));
+  border-right: 1px solid rgba(90, 72, 54, 0.45);
+  font-size: calc(0.82rem * var(--ui-scale));
+  white-space: nowrap;
+}
+
+.prep-top-bar .prep-stats-metrics {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(6px * var(--ui-scale)) calc(14px * var(--ui-scale));
+  min-width: 0;
+}
+
+.prep-top-bar .prep-stats-row {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(4px * var(--ui-scale));
+  white-space: nowrap;
+}
+
+.prep-top-bar .prep-hud-chrome {
+  position: absolute;
+  left: calc(12px * var(--ui-scale));
+  top: 100%;
+  bottom: auto;
+  z-index: var(--z-scene-chrome);
+  pointer-events: none;
+}
+
+.prep-top-bar .prep-hud-chrome > * {
+  pointer-events: auto;
+}
+
+.prep-top-bar .prep-hud-chrome .prep-hero-tooltip {
+  position: absolute;
+  left: 0;
+  top: calc(8px * var(--ui-scale));
+  bottom: auto;
+}
+
+.prep-top-bar .prep-hud-chrome .run-stats-anchor--prep {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: auto;
+  width: 0;
+  height: 0;
+}
+
+.prep-top-bar .prep-hud-chrome .run-stats-popover {
+  top: calc(100% + 8px);
+  bottom: auto;
+  left: 0;
+}
+
+#app[data-phase="battle"] .prep-top-bar,
+#app[data-phase="replay"] .prep-top-bar {
+  display: none !important;
+}

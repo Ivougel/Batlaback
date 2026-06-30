@@ -1376,7 +1376,10 @@ function syncBattleHudVisibility() {
     if (live) battleHud.removeAttribute("aria-hidden");
     else battleHud.setAttribute("aria-hidden", "true");
   }
-  if (runHud) runHud.hidden = live;
+  if (runHud) {
+    runHud.hidden = true;
+    runHud.setAttribute("aria-hidden", "true");
+  }
   if (live && typeof syncBattleHudAnchors === "function") {
     requestAnimationFrame(() => syncBattleHudAnchors());
   }
@@ -5367,9 +5370,11 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
   if (statsHud) {
     statsHud.innerHTML = `
       <div class="prep-stats-class">${profile.className || "—"}</div>
-      <div class="prep-stats-row"><span>💰</span><b>${st.gold}</b></div>
-      <div class="prep-stats-row"><span>❤️</span><b>${profile.hpDisplay}</b></div>
-      <div class="prep-stats-row"><span>Раунд</span><b>${Math.min(round, RUN_BATTLES)}/${RUN_BATTLES}</b></div>
+      <div class="prep-stats-metrics">
+        <div class="prep-stats-row"><span>💰</span><b>${st.gold}</b></div>
+        <div class="prep-stats-row"><span>❤️</span><b>${profile.hpDisplay}</b></div>
+        <div class="prep-stats-row"><span>Раунд</span><b>${Math.min(round, RUN_BATTLES)}/${RUN_BATTLES}</b></div>
+      </div>
     `;
     if (!document.getElementById("prep-hero-tooltip")?.classList.contains("hidden")) {
       refreshPrepHeroTooltip();

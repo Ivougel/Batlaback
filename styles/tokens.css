@@ -67,6 +67,7 @@
   --field-offset-x: 0px;
   --field-offset-y: 0px;
   --prep-scene-top: 14px;
+  --prep-top-bar-h: calc(44px * var(--ui-scale));
   --prep-character-gap: 8px;
   --prep-character-top: calc(var(--prep-scene-top) + var(--prep-canvas-h) + var(--prep-character-gap));
   --character-slot-h: min(380px, calc(100vh - 480px));
