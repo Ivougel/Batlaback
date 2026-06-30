@@ -22,13 +22,25 @@
     return phase === "battle" || phase === "replay";
   }
 
+  function getBottomChrome() {
+    return document.getElementById("bottom-chrome");
+  }
+
+  function measureBottomChromeHeight() {
+    if (isModalOpen()) return 0;
+    const bar = getBottomChrome();
+    if (!bar || bar.classList.contains("hidden")) return readCssPx("--bottom-chrome-h", 44);
+    if (getComputedStyle(bar).display === "none") return readCssPx("--bottom-chrome-h", 44);
+    return bar.offsetHeight || readCssPx("--bottom-chrome-h", 44);
+  }
+
   function isHudVisible() {
-    const hud = document.getElementById("gamepad-hints-bar");
-    if (!hud || hud.classList.contains("hidden")) return false;
+    const bar = getBottomChrome();
+    if (!bar || bar.classList.contains("hidden")) return false;
     if (isModalOpen()) return false;
     if (isBattleUiPhase()) return true;
     if (document.documentElement.dataset.gamepadHud === "hidden") return false;
-    return getComputedStyle(hud).display !== "none";
+    return getComputedStyle(bar).display !== "none";
   }
 
   function isModalOpen() {
@@ -89,18 +101,8 @@
 
   function measurePrepChromeHeight() {
     const app = document.getElementById("app");
-    if (!app) return 72;
-    let chrome = 0;
-    const bottomBar = app.querySelector("#prep-toolbar");
-    if (bottomBar && getComputedStyle(bottomBar).display !== "none") {
-      const bottomStyle = getComputedStyle(bottomBar);
-      chrome += bottomBar.offsetHeight
-        + (parseFloat(bottomStyle.marginTop) || 0)
-        + (parseFloat(bottomStyle.marginBottom) || 0);
-    }
-    const appStyle = getComputedStyle(app);
-    chrome += (parseFloat(appStyle.paddingTop) || 0) + (parseFloat(appStyle.paddingBottom) || 0);
-    return chrome + 8;
+    if (!app || app.dataset.phase !== "prep") return 0;
+    return measureBottomChromeHeight() + 4;
   }
 
   function readCssPx(name, fallback = null) {
@@ -172,7 +174,7 @@
     const islandRect = island.getBoundingClientRect();
     if (colRect.width <= 0) return;
 
-    const toolbar = document.getElementById("prep-toolbar");
+    const toolbar = getBottomChrome();
     const toolbarTop = toolbar?.getBoundingClientRect().top ?? colRect.bottom;
     const gap = readCssPx("--prep-character-gap", 8);
     const bottomPad = readCssPx("--prep-hero-slot-bottom", 6);
@@ -337,7 +339,7 @@
     const phase = document.getElementById("app")?.dataset.phase;
     if (phase !== "prep") return;
     const island = document.getElementById("prep-field-island");
-    const toolbar = document.getElementById("prep-toolbar");
+    const toolbar = getBottomChrome();
     if (!island || !toolbar) return;
     const rect = island.getBoundingClientRect();
     const toolbarTop = toolbar.getBoundingClientRect().top;
@@ -456,7 +458,7 @@
     const hudReserve = measureBattleHudReserve();
     if (hudReserve > 0) return hudReserve;
 
-    const toolbar = document.getElementById("prep-toolbar");
+    const toolbar = getBottomChrome();
     if (!fieldCol || !toolbar || getComputedStyle(toolbar).display === "none") return 8;
 
     const colRect = fieldCol.getBoundingClientRect();
@@ -652,7 +654,6 @@
     const sceneRect = sceneUi.getBoundingClientRect();
     if (layoutRect.width <= 0) return;
 
-    const canvasRect = canvas.getBoundingClientRect();
     const heroZoneH = readCssPx(
       "--battle-hero-zone-h",
       readCssPx("--desktop-battle-hero-zone-h", 220),
@@ -669,22 +670,23 @@
       ? fieldPadBottom
       : measureBattleFieldChromeBottom(fieldCol);
     const layoutHeight = Math.max(layoutRect.height, sceneRect.height, fieldCol.clientHeight);
-    const canvasBottom = Math.max(0, Math.round(canvasRect.bottom - layoutRect.top));
     const rowGap = typeof getVisualExperimentHeroRowGap === "function"
       ? getVisualExperimentHeroRowGap(uiScale)
       : Math.round(8 * uiScale);
-    const heroRowTopFromCanvas = canvasBottom + rowGap;
+    const sceneTop = root.dataset.prepLayout === "mobile"
+      ? 0
+      : readCssPx("--prep-scene-top", 14);
     const heroRowTopMax = Math.max(rowGap, layoutHeight - heroZoneH - Math.round(6 * uiScale));
     const heroRowTop = Math.max(
       rowGap,
-      Math.min(heroRowTopFromCanvas, heroRowTopMax),
+      Math.min(sceneTop + rowGap, heroRowTopMax),
     );
     const sceneOffsetX = sceneRect.left - layoutRect.left;
 
     const zones = computeBattleHeroRowZones(
       layoutRect.width,
       layoutRect,
-      canvasRect,
+      null,
       heroColW,
       edgePad,
     );
@@ -753,44 +755,13 @@
   }
 
   function syncBattleHudFeedDock() {
-    const dock = document.getElementById("combat-feed-dock");
-    const prepHome = document.getElementById("prep-toolbar-feed-home");
-    const hudSlot = document.getElementById("battle-hud-feed-slot");
-    if (!dock || !prepHome) return;
-
-    const useHudBar = document.documentElement.dataset.tabletSideFit === "true" && isBattleUiPhase();
-    document.documentElement.dataset.battleFeedHud = useHudBar ? "true" : "false";
-
-    if (useHudBar && hudSlot) {
-      hudSlot.hidden = false;
-      if (dock.parentElement !== hudSlot) hudSlot.appendChild(dock);
-    } else {
-      if (hudSlot) hudSlot.hidden = true;
-      if (dock.parentElement !== prepHome) prepHome.appendChild(dock);
-    }
+    document.documentElement.dataset.battleFeedHud = "false";
   }
 
   function measureBattleHudReserve() {
     if (!isBattleUiPhase()) return 0;
-    const vv = window.visualViewport;
-    const vBottom = (vv?.offsetTop ?? 0) + (vv?.height ?? window.innerHeight);
-    let chromeTop = vBottom;
-
-    const bar = document.getElementById("gamepad-hints-bar");
-    if (bar && isHudVisible() && getComputedStyle(bar).display !== "none") {
-      const rect = bar.getBoundingClientRect();
-      if (rect.height > 0) chromeTop = Math.min(chromeTop, rect.top);
-    }
-
-    const toolbar = document.getElementById("prep-toolbar");
-    if (toolbar && getComputedStyle(toolbar).display !== "none") {
-      const rect = toolbar.getBoundingClientRect();
-      if (rect.height > 0 && rect.bottom >= vBottom - 4) {
-        chromeTop = Math.min(chromeTop, rect.top);
-      }
-    }
-
-    return Math.ceil(Math.max(0, vBottom - chromeTop) + 10);
+    const h = measureBottomChromeHeight();
+    return h > 0 ? h + 4 : 0;
   }
 
   function syncTabletSideLayoutVars(h, phase) {
@@ -802,7 +773,7 @@
     }
 
     const hudReserve = isBattleUiPhase() ? measureBattleHudReserve() : 0;
-    const hudH = isHudVisible() ? (document.getElementById("gamepad-hints-bar")?.offsetHeight ?? 0) : 0;
+    const hudH = measureBottomChromeHeight();
     root.style.setProperty("--tablet-battle-chrome-bottom", `${Math.max(hudReserve, hudH + 12)}px`);
 
     if (phase === "prep") {
@@ -886,14 +857,14 @@
     let chromePad;
 
     if (mobileLayout) {
-      heroZone = Math.min(280, Math.max(200, Math.round(vh * 0.26)));
+      heroZone = Math.min(300, Math.max(200, Math.round(vh * 0.32)));
       arenaMin = Math.max(130, Math.round(vh * 0.18));
       heroColW = Math.round(Math.min(180, Math.max(108, stageW * 0.24)));
       heroImgH = Math.round(Math.min(200, Math.max(132, heroZone * 0.55)));
       portraitZoom = 2.5;
       chromePad = 10;
     } else if (tabletSide) {
-      heroZone = Math.min(320, Math.max(200, Math.round((vh - hudReserve) * 0.30)));
+      heroZone = Math.min(360, Math.max(220, Math.round((vh - hudReserve) * 0.38)));
       arenaMin = Math.max(96, Math.round(vh * 0.12));
       heroColW = Math.round(Math.min(200, Math.max(120, stageW * 0.20)));
       heroImgH = Math.round(Math.min(210, Math.max(150, heroZone * 0.50)));
@@ -901,7 +872,7 @@
       chromePad = 16;
       root.style.setProperty("--tablet-battle-chrome-bottom", `${Math.max(hudReserve, chromePad)}px`);
     } else if (tabletPortrait) {
-      heroZone = Math.min(300, Math.max(180, Math.round((vh - hudReserve) * 0.30)));
+      heroZone = Math.min(320, Math.max(180, Math.round((vh - hudReserve) * 0.36)));
       arenaMin = Math.max(88, Math.round(vh * 0.10));
       heroColW = Math.round(Math.min(150, Math.max(96, stageW * 0.22)));
       heroImgH = Math.round(Math.min(180, Math.max(108, heroZone * 0.44)));
@@ -909,7 +880,7 @@
       chromePad = 12;
       root.style.setProperty("--tablet-battle-chrome-bottom", `${Math.max(hudReserve, chromePad)}px`);
     } else {
-      heroZone = Math.min(360, Math.max(220, Math.round(vh * 0.24)));
+      heroZone = Math.min(380, Math.max(220, Math.round((vh - hudReserve) * 0.34)));
       arenaMin = Math.max(140, Math.round(vh * 0.18));
       heroColW = Math.round(Math.min(280, Math.max(200, stageW * 0.17)));
       heroImgH = Math.round(Math.min(240, Math.max(160, heroZone * 0.5)));
@@ -918,8 +889,7 @@
       root.style.setProperty("--tablet-battle-chrome-bottom", `${Math.max(hudReserve, 8)}px`);
     }
 
-    let maxH = Math.max(100, vh - hudReserve - heroZone - arenaMin - chromePad);
-    let scale = Math.min(stageW / cssW, maxH / cssH, 1);
+    let scale = 0;
 
     if (typeof applyVisualExperimentBattleLayout === "function") {
       const tweaked = applyVisualExperimentBattleLayout({
@@ -946,13 +916,12 @@
         chromePad = tweaked.chromePad ?? chromePad;
         if (tweaked.scale != null) {
           scale = tweaked.scale;
-          maxH = Math.max(100, vh - hudReserve - heroZone - arenaMin - chromePad);
         }
       }
     }
 
-    const w = Math.max(1, Math.floor(cssW * scale));
-    const ch = Math.max(1, Math.floor(cssH * scale));
+    const w = 0;
+    const ch = 0;
 
     setBattleArenaLayout(true);
     setBattleHeroPlacement("flank-arena");
@@ -1151,7 +1120,7 @@
     document.documentElement.style.removeProperty("--prep-canvas-max-h");
     document.documentElement.style.removeProperty("--prep-shop-row-h");
 
-    const hudH = isModalOpen() || !isHudVisible() ? 0 : (document.getElementById("gamepad-hints-bar")?.offsetHeight ?? 0);
+    const hudH = isModalOpen() ? 0 : measureBottomChromeHeight();
     const chromeH = measurePrepChromeHeight() + hudH;
     const available = Math.max(400, h - chromeH);
 
@@ -1190,27 +1159,14 @@
   }
 
   function applyBattleHudPin(hudVisible, refreshAppH = false) {
-    const bar = document.getElementById("gamepad-hints-bar");
-    if (!bar || !hudVisible || !isBattleUiPhase() || isModalOpen()) {
-      document.documentElement.dataset.battleHudPin = "false";
-      document.documentElement.style.removeProperty("--hud-fixed-top");
-      return;
-    }
-
-    const vv = window.visualViewport;
-    const vTop = vv?.offsetTop ?? 0;
-    const vHeight = vv?.height ?? window.innerHeight;
-    const barH = bar.offsetHeight || 0;
-    const top = Math.max(0, Math.round(vTop + vHeight - barH));
-
-    document.documentElement.dataset.battleHudPin = "true";
-    document.documentElement.style.setProperty("--hud-fixed-top", `${top}px`);
-
-    if (refreshAppH && barH > 0) {
-      document.documentElement.style.setProperty("--hud-offset", `${barH}px`);
+    document.documentElement.dataset.battleHudPin = "false";
+    document.documentElement.style.removeProperty("--hud-fixed-top");
+    if (!hudVisible || refreshAppH) {
+      const chromeH = measureBottomChromeHeight();
+      document.documentElement.style.setProperty("--hud-offset", `${chromeH}px`);
       document.documentElement.style.setProperty(
         "--app-h",
-        `calc(var(--viewport-h, 100dvh) - ${barH}px - env(safe-area-inset-top))`,
+        `calc(var(--viewport-h, 100dvh) - ${chromeH}px - env(safe-area-inset-top))`,
       );
     }
   }
@@ -1259,8 +1215,9 @@
     document.documentElement.style.setProperty("--viewport-h", `${Math.round(h)}px`);
     document.documentElement.style.setProperty("--viewport-w", `${Math.round(w)}px`);
 
-    const hudVisible = !isModalOpen() && isHudVisible();
-    const hudH = hudVisible ? (document.getElementById("gamepad-hints-bar")?.offsetHeight ?? 0) : 0;
+    const hudVisible = !isModalOpen();
+    const hudH = measureBottomChromeHeight();
+    document.documentElement.style.setProperty("--bottom-chrome-h-measured", `${hudH}px`);
     document.documentElement.style.setProperty("--hud-offset", `${hudH}px`);
     document.documentElement.style.setProperty(
       "--app-h",
@@ -1346,7 +1303,7 @@
       if (gameCanvas) new ResizeObserver(syncBattleGridOnResize).observe(gameCanvas);
       if (prepFieldIsland) new ResizeObserver(syncBattleGridOnResize).observe(prepFieldIsland);
     }
-    const hud = document.getElementById("gamepad-hints-bar");
+    const hud = getBottomChrome();
     if (hud) {
       new MutationObserver(scheduleLayout).observe(hud, {
         attributes: true,

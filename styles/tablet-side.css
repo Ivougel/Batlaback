@@ -176,47 +176,20 @@ html[data-battle-hero-placement="flank-arena"][data-tablet-prep-hero="true"] #ap
   transform-origin: center bottom;
 }
 
-/* ─── Battle HUD: «События» на нижней панели, без подсказок геймпада ─── */
+/* ─── Battle HUD: компактная нижняя панель ─── */
 
-html[data-tablet-side-fit="true"] body:has(#app[data-phase="battle"]) .gamepad-hints-bar,
-html[data-tablet-side-fit="true"] body:has(#app[data-phase="replay"]) .gamepad-hints-bar {
-  align-items: center;
-  justify-content: flex-start;
-  gap: 10px;
+html[data-tablet-side-fit="true"] body:has(#app[data-phase="battle"]) .bottom-chrome,
+html[data-tablet-side-fit="true"] body:has(#app[data-phase="replay"]) .bottom-chrome {
+  gap: 8px;
 }
 
-html[data-tablet-side-fit="true"] body:has(#app[data-phase="battle"]) .gamepad-hints-bar .gamepad-hints-status,
-html[data-tablet-side-fit="true"] body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-status,
-html[data-tablet-side-fit="true"] body:has(#app[data-phase="battle"]) .gamepad-hints-bar .gamepad-hints-list,
-html[data-tablet-side-fit="true"] body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list,
-html[data-tablet-side-fit="true"] body:has(#app[data-phase="battle"]) .battle-controls-hint,
-html[data-tablet-side-fit="true"] body:has(#app[data-phase="replay"]) .battle-controls-hint {
-  display: none !important;
+html[data-tablet-side-fit="true"] body:has(#app[data-phase="battle"]) .bottom-chrome-center,
+html[data-tablet-side-fit="true"] body:has(#app[data-phase="replay"]) .bottom-chrome-center {
+  justify-self: end;
 }
 
-html[data-tablet-side-fit="true"] #battle-hud-feed-slot:not([hidden]) {
-  display: flex;
-  flex: 1 1 auto;
-  justify-content: flex-end;
-  align-items: center;
-  align-self: stretch;
-  min-width: 0;
-  pointer-events: none;
-  padding-top: 6px;
-  padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
-  margin-bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
-}
-
-html[data-tablet-side-fit="true"] #battle-hud-feed-slot[hidden] {
-  display: none !important;
-}
-
-html[data-tablet-side-fit="true"] #battle-hud-feed-slot .combat-feed-dock {
-  position: relative;
-  pointer-events: auto;
-}
-
-html[data-tablet-side-fit="true"] #battle-hud-feed-slot .combat-feed {
+html[data-tablet-side-fit="true"] body:has(#app[data-phase="battle"]) .bottom-chrome .combat-feed,
+html[data-tablet-side-fit="true"] body:has(#app[data-phase="replay"]) .bottom-chrome .combat-feed {
   left: auto;
   right: 0;
   transform: none;

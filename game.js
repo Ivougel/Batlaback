@@ -629,6 +629,13 @@ function getDragThresholdPx() {
   return isTouchUi() ? TOUCH_DRAG_THRESHOLD_PX : MOUSE_DRAG_THRESHOLD_PX;
 }
 
+/** На touch drag стартует только после «свободы» для tap-to-tooltip. */
+function getPrepDragCommitThresholdPx() {
+  return isTouchUi()
+    ? Math.max(TOUCH_DRAG_THRESHOLD_PX, TOOLTIP_CONFIG.moveTolerance)
+    : MOUSE_DRAG_THRESHOLD_PX;
+}
+
 function getDropPointerClient(e) {
   if (isTouchUi() && (dragPayload || pendingShopDrag || pendingBenchDrag)) {
     return { x: lastPointerClient.x, y: lastPointerClient.y };
@@ -645,8 +652,8 @@ function clearTouchTapGesture() {
   touchTapGesture = null;
 }
 
-function beginTouchTapGesture({ clientX, clientY, onTap, onCancel }) {
-  if (!isTouchUi()) return;
+function beginTouchTapGesture({ clientX, clientY, onTap, onCancel, allowMouse = false }) {
+  if (!allowMouse && !isTouchUi()) return;
   clearTouchTapGesture();
   cancelScheduledTooltipHide();
   touchTapGesture = {
@@ -760,7 +767,7 @@ function shouldUsePrepTooltipDock() {
 function positionMobilePrepTooltipDock(dock) {
   const margin = 8;
   const island = document.getElementById("prep-field-island");
-  const toolbar = document.getElementById("prep-toolbar");
+  const toolbar = document.getElementById("bottom-chrome");
   const shopPanel = document.getElementById("shop-panel");
   const shopOpen = document.documentElement.hasAttribute("data-prep-shop-open");
   const vv = window.visualViewport;
@@ -817,7 +824,7 @@ function positionPrepTooltipDock() {
     left = viewLeft + (viewWidth - width) / 2;
   }
 
-  const toolbar = document.getElementById("prep-toolbar");
+  const toolbar = document.getElementById("bottom-chrome");
   const combatFeedBtn = document.getElementById("btn-combat-feed");
   const feedPanel = document.getElementById("combat-feed-panel");
   const toolbarRect = toolbar?.getBoundingClientRect();
@@ -3561,7 +3568,10 @@ function updatePointerFromClient(clientX, clientY) {
     if (overSidebar) {
       tooltipItem = null;
       syncFieldTooltip();
-    } else if (dragPayload || pendingShopDrag || pendingBenchDrag) {
+    } else if (dragPayload) {
+      tooltipItem = null;
+      hideSidebarTooltip();
+    } else if ((pendingShopDrag || pendingBenchDrag) && !isTouchUi()) {
       tooltipItem = null;
       hideSidebarTooltip();
     } else if (!isTouchUi()) {
@@ -3694,6 +3704,7 @@ function gamepadPointerDownAt(clientX, clientY) {
 function gamepadPointerUpAt(clientX, clientY) {
   updatePointerFromClient(clientX, clientY);
   if (tryBuyFromPendingShopDrag(clientX, clientY)) return;
+  if (tryShowPrepPointerTapTooltip(clientX, clientY)) return;
   pendingBenchDrag = null;
   pendingCanvasPick = null;
   finishDragDrop(createSyntheticPointerEvent(clientX, clientY));
@@ -3819,6 +3830,10 @@ function drawBackground() {
     glow.addColorStop(1, "rgba(0, 0, 0, 0)");
     ctx.fillStyle = glow;
     ctx.fillRect(0, 0, w, h);
+    return;
+  }
+  if (!shouldDrawCanvasLoadoutInBattle()) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     return;
   }
   ctx.fillStyle = "#12100d";
@@ -5135,6 +5150,84 @@ function moveSidebarTooltip(e, boundsKind = "viewport", placement = "auto") {
   positionSidebarTooltip(e.clientX, e.clientY, boundsKind, placement);
 }
 
+function bindPointerTapTooltip(el, onTapAt) {
+  if (!el || el.dataset.pointerTapTooltipBound === "1") return;
+  el.dataset.pointerTapTooltipBound = "1";
+  let activePointer = null;
+
+  el.addEventListener("pointerdown", (e) => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    activePointer = e.pointerId;
+    beginTouchTapGesture({
+      clientX: e.clientX,
+      clientY: e.clientY,
+      allowMouse: true,
+      onTap: () => onTapAt(e.clientX, e.clientY),
+    });
+  });
+  el.addEventListener("pointerup", (e) => {
+    if (activePointer == null || e.pointerId !== activePointer) return;
+    activePointer = null;
+    finishTouchTapGesture(e.clientX, e.clientY);
+  });
+  el.addEventListener("pointercancel", () => {
+    activePointer = null;
+    clearTouchTapGesture();
+  });
+}
+
+function tryShowPrepPointerTapTooltip(clientX, clientY) {
+  if (!isTouchUi() || phase !== "prep" || gameOver || !prepTooltipsEnabled) return false;
+  if (dragPayload || shopDidDrag) return false;
+
+  if (pendingShopDrag) {
+    const dx = clientX - pendingShopDrag.startX;
+    const dy = clientY - pendingShopDrag.startY;
+    if (Math.hypot(dx, dy) < getPrepDragCommitThresholdPx()) {
+      const { index, side } = pendingShopDrag;
+      const st = getSideState(side);
+      const entry = st.shop[index];
+      const card = document.querySelectorAll("#shop-slots .shop-card")[index];
+      if (entry && card && !card.classList.contains("empty")) {
+        pendingShopDrag = null;
+        syncUiDragState();
+        showSidebarTooltipAt(clientX, clientY, entry.itemId, null, "shop", card);
+        return true;
+      }
+    }
+  }
+
+  if (pendingBenchDrag) {
+    const dx = clientX - pendingBenchDrag.startX;
+    const dy = clientY - pendingBenchDrag.startY;
+    if (Math.hypot(dx, dy) < getPrepDragCommitThresholdPx()) {
+      const { index, side } = pendingBenchDrag;
+      const st = getSideState(side);
+      const entry = st.bench[index];
+      const card = document.querySelectorAll("#bench-slots .bench-card")[index];
+      if (entry && card && !card.classList.contains("empty")) {
+        pendingBenchDrag = null;
+        syncUiDragState();
+        showSidebarTooltipAt(clientX, clientY, entry.itemId, entry, "bench", card);
+        return true;
+      }
+    }
+  }
+
+  if (pendingCanvasPick) {
+    const dx = clientX - pendingCanvasPick.clientX;
+    const dy = clientY - pendingCanvasPick.clientY;
+    if (Math.hypot(dx, dy) < getPrepDragCommitThresholdPx()) {
+      pendingCanvasPick = null;
+      updatePointerFromClient(clientX, clientY);
+      updateTooltip(mousePos.x, mousePos.y);
+      return true;
+    }
+  }
+
+  return false;
+}
+
 function bindItemTooltipEvents(el, itemId, contentItem, context = "shop") {
   if (!itemId || !el) return;
   const boundsKind = context === "shop" ? "shop" : context === "bench" ? "bench" : context === "field" ? "field" : "viewport";
@@ -5156,34 +5249,12 @@ function bindItemTooltipEvents(el, itemId, contentItem, context = "shop") {
   });
   el.addEventListener("mouseleave", requestHideSidebarTooltip);
 
-  if (isTouchUi()) {
-    el.addEventListener("touchstart", (e) => {
-      if (e.touches.length !== 1) return;
-      const t = e.touches[0];
-      beginTouchTapGesture({
-        clientX: t.clientX,
-        clientY: t.clientY,
-        onTap: () => {
-          showSidebarTooltipAt(
-            t.clientX,
-            t.clientY,
-            el.dataset.itemId || itemId,
-            contentItem,
-            context,
-            el,
-          );
-        },
-      });
-    }, { passive: true });
-    el.addEventListener("touchend", (e) => {
-      const t = e.changedTouches[0];
-      if (!t) return;
-      finishTouchTapGesture(t.clientX, t.clientY);
-    }, { passive: true });
-    el.addEventListener("touchcancel", () => {
-      clearTouchTapGesture();
-    }, { passive: true });
-  }
+  bindPointerTapTooltip(el, (clientX, clientY) => {
+    if (!prepTooltipsEnabled) return;
+    const liveItemId = el.dataset.itemId || itemId;
+    if (!liveItemId) return;
+    showSidebarTooltipAt(clientX, clientY, liveItemId, contentItem, context, el);
+  });
 
   if (context === "shop" || context === "bench" || context === "field") {
     el.style.cursor = "help";
@@ -5608,7 +5679,7 @@ function updatePendingBenchDrag(e) {
   if (!pendingBenchDrag || dragPayload) return;
   const dx = e.clientX - pendingBenchDrag.startX;
   const dy = e.clientY - pendingBenchDrag.startY;
-  if (Math.hypot(dx, dy) < getDragThresholdPx()) return;
+  if (Math.hypot(dx, dy) < getPrepDragCommitThresholdPx()) return;
   const { index, side } = pendingBenchDrag;
   pendingBenchDrag = null;
   clearTouchTapGesture();
@@ -5620,7 +5691,7 @@ function updatePendingCanvasPick(clientX, clientY) {
   if (!pendingCanvasPick || dragPayload) return;
   const dx = clientX - pendingCanvasPick.clientX;
   const dy = clientY - pendingCanvasPick.clientY;
-  if (Math.hypot(dx, dy) < getDragThresholdPx()) return;
+  if (Math.hypot(dx, dy) < getPrepDragCommitThresholdPx()) return;
   pendingCanvasPick = null;
   onMouseDown(createSyntheticPointerEvent(clientX, clientY));
 }
@@ -5629,7 +5700,7 @@ function tryBuyFromPendingShopDrag(clientX, clientY) {
   if (!pendingShopDrag || dragPayload) return false;
   const dx = clientX - pendingShopDrag.startX;
   const dy = clientY - pendingShopDrag.startY;
-  if (Math.hypot(dx, dy) >= getDragThresholdPx()) return false;
+  if (Math.hypot(dx, dy) >= getPrepDragCommitThresholdPx()) return false;
   const { index, side } = pendingShopDrag;
   pendingShopDrag = null;
   syncUiDragState();
@@ -5656,7 +5727,7 @@ function updatePendingShopDrag(e) {
   if (!pendingShopDrag || dragPayload) return;
   const dx = e.clientX - pendingShopDrag.startX;
   const dy = e.clientY - pendingShopDrag.startY;
-  if (Math.hypot(dx, dy) < getDragThresholdPx()) return;
+  if (Math.hypot(dx, dy) < getPrepDragCommitThresholdPx()) return;
   const { index, side } = pendingShopDrag;
   pendingShopDrag = null;
   clearTouchTapGesture();
@@ -6084,5 +6155,6 @@ function renderBattleStats() {
 window.positionPrepTooltipDock = positionPrepTooltipDock;
 window.syncPrepTooltipDockVisibility = syncPrepTooltipDockVisibility;
 window.syncShopHintsVisibility = syncShopHintsVisibility;
+window.bindPointerTapTooltip = bindPointerTapTooltip;
 
 init();

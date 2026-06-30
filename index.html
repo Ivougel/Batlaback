@@ -11,24 +11,25 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles/tokens.css?v=2">
+  <link rel="stylesheet" href="styles/tokens.css?v=3">
   <link rel="stylesheet" href="styles/layers.css?v=5">
-  <link rel="stylesheet" href="styles.css?v=22">
+  <link rel="stylesheet" href="styles/bottom-chrome.css?v=3">
+  <link rel="stylesheet" href="styles.css?v=24">
   <link rel="stylesheet" href="styles/prep-top-bar.css?v=1">
   <link rel="stylesheet" href="styles/combat-feed.css">
   <link rel="stylesheet" href="styles/emotion-thoughts.css?v=7">
   <link rel="stylesheet" href="styles/arena-equipment.css?v=14">
   <link rel="stylesheet" href="styles/prep-drag-arc.css?v=4">
-  <link rel="stylesheet" href="styles/battle-arena-layout.css?v=18">
+  <link rel="stylesheet" href="styles/battle-arena-layout.css?v=19">
   <link rel="stylesheet" href="styles/mobile-prep.css?v=8">
-  <link rel="stylesheet" href="styles/tablet-side.css?v=20">
+  <link rel="stylesheet" href="styles/tablet-side.css?v=21">
   <link rel="stylesheet" href="styles/doll.css?v=22">
   <link rel="stylesheet" href="styles/battle-inventory-popover.css?v=2">
   <!-- Experimental visual overhaul (opt-in ?vexp=1) — safe to remove block below -->
   <link rel="stylesheet" href="styles/visual-experiment.css?v=11">
   <script src="components/visual-experiment.js?v=4"></script>
   <script src="systems/battle-hero-anchor.js?v=1"></script>
-  <script src="ui-layout.js?v=38"></script>
+  <script src="ui-layout.js?v=40"></script>
 </head>
 <body>
   <div id="app" data-phase="prep">
@@ -176,37 +177,6 @@
                 <div class="bench-slots" id="bench-slots"></div>
               </div>
             </div>
-          </div>
-        </div>
-        <div class="prep-toolbar" id="prep-toolbar">
-          <div class="prep-toolbar-left prep-toolbar-side-switch">
-            <button type="button" class="btn-secondary prep-side-btn active" id="btn-prep-player" data-prep-side="player">🧑 Мой стол</button>
-            <button type="button" class="btn-secondary prep-side-btn" id="btn-prep-enemy" data-prep-side="enemy">🤖 Противник</button>
-            <button type="button" class="btn-secondary btn-prep-hero-info" id="btn-prep-hero-info" aria-expanded="false" aria-controls="prep-hero-tooltip" title="Инфо о герое">ℹ️</button>
-            <button type="button" class="btn-secondary prep-settings-btn" id="btn-settings" aria-label="Настройки" aria-expanded="false" aria-controls="settings-overlay">⚙️</button>
-          </div>
-          <div class="prep-toolbar-feed-home" id="prep-toolbar-feed-home">
-            <div class="combat-feed-dock" id="combat-feed-dock">
-              <div id="combat-feed" class="combat-feed" aria-live="polite" aria-label="Журнал событий">
-                <div class="combat-feed-panel combat-feed-panel--collapsed" id="combat-feed-panel">
-                  <header class="combat-feed-header" id="combat-feed-header">
-                    <span class="combat-feed-title">📜 События</span>
-                    <button type="button" class="combat-feed-toggle" id="combat-feed-toggle" aria-expanded="false" aria-label="Развернуть журнал">▾</button>
-                  </header>
-                  <div class="combat-feed-body" id="combat-feed-body">
-                    <div class="combat-feed-scroll" id="combat-feed-scroll"></div>
-                  </div>
-                </div>
-              </div>
-              <button type="button" class="btn-secondary btn-combat-feed" id="btn-combat-feed" aria-expanded="false" aria-controls="combat-feed-panel">
-                <span class="btn-combat-feed-label">📜 События</span>
-                <span class="btn-combat-feed-chevron" aria-hidden="true">▾</span>
-              </button>
-            </div>
-          </div>
-          <div class="prep-toolbar-hints" id="prep-toolbar-hints" aria-label="Управление"></div>
-          <div class="prep-toolbar-right prep-toolbar-actions">
-            <button class="btn-primary btn-fight-header" id="btn-fight" type="button" aria-label="В бой">⚔️ В бой!</button>
           </div>
         </div>
         <div class="board-hint" id="board-hint">
@@ -409,19 +379,54 @@
   </div>
   </div>
 
-  <div id="gamepad-hints-bar" class="gamepad-hints-bar scene-chrome" aria-live="polite">
-    <div class="battle-controls hidden" id="battle-controls">
-      <button type="button" class="bc-btn" id="btn-battle-pause" title="Пауза (Start)">⏸</button>
-      <button type="button" class="bc-btn bc-speed" data-speed="1">×1</button>
-      <button type="button" class="bc-btn bc-speed" data-speed="2">×2</button>
-      <button type="button" class="bc-btn bc-speed" data-speed="3">×3</button>
-      <button type="button" class="bc-btn bc-skip" id="btn-battle-skip">⏩ Пропустить</button>
-      <span class="battle-controls-hint">Start — пауза · A — пропуск · LB/RB — скорость</span>
+  <div id="bottom-chrome" class="bottom-chrome scene-chrome" aria-live="polite">
+    <div class="bottom-chrome-start">
+      <div class="bottom-chrome-prep-left prep-toolbar-side-switch" id="bottom-chrome-prep-left">
+        <button type="button" class="btn-secondary prep-side-btn active" id="btn-prep-player" data-prep-side="player">🧑 Мой стол</button>
+        <button type="button" class="btn-secondary prep-side-btn" id="btn-prep-enemy" data-prep-side="enemy">🤖 Противник</button>
+        <button type="button" class="btn-secondary btn-prep-hero-info" id="btn-prep-hero-info" aria-expanded="false" aria-controls="prep-hero-tooltip" title="Инфо о герое">ℹ️</button>
+        <button type="button" class="btn-secondary prep-settings-btn" id="btn-settings" aria-label="Настройки" aria-expanded="false" aria-controls="settings-overlay">⚙️</button>
+      </div>
+      <div class="battle-controls hidden" id="battle-controls">
+        <button type="button" class="bc-btn" id="btn-battle-pause" title="Пауза (Start)">⏸</button>
+        <button type="button" class="bc-btn bc-speed" data-speed="1">×1</button>
+        <button type="button" class="bc-btn bc-speed" data-speed="2">×2</button>
+        <button type="button" class="bc-btn bc-speed" data-speed="3">×3</button>
+        <button type="button" class="bc-btn bc-skip" id="btn-battle-skip">⏩ Пропустить</button>
+        <span class="battle-controls-hint">Start — пауза · A — пропуск · LB/RB — скорость</span>
+      </div>
     </div>
-    <div class="battle-hud-feed-slot" id="battle-hud-feed-slot" hidden></div>
-    <span class="gamepad-hints-status" id="gamepad-status">🎮 Кликните по игре и нажмите кнопку на геймпаде</span>
-    <div class="gamepad-hints-list" id="gamepad-hints-list"></div>
+    <div class="bottom-chrome-center prep-toolbar-feed-home" id="prep-toolbar-feed-home">
+      <div class="combat-feed-dock" id="combat-feed-dock">
+        <div id="combat-feed" class="combat-feed" aria-live="polite" aria-label="Журнал событий">
+          <div class="combat-feed-panel combat-feed-panel--collapsed" id="combat-feed-panel">
+            <header class="combat-feed-header" id="combat-feed-header">
+              <span class="combat-feed-title">📜 События</span>
+              <button type="button" class="combat-feed-toggle" id="combat-feed-toggle" aria-expanded="false" aria-label="Развернуть журнал">▾</button>
+            </header>
+            <div class="combat-feed-body" id="combat-feed-body">
+              <div class="combat-feed-scroll" id="combat-feed-scroll"></div>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="btn-secondary btn-combat-feed" id="btn-combat-feed" aria-expanded="false" aria-controls="combat-feed-panel">
+          <span class="btn-combat-feed-label">📜 События</span>
+          <span class="btn-combat-feed-chevron" aria-hidden="true">▾</span>
+        </button>
+      </div>
+    </div>
+    <div class="bottom-chrome-end">
+      <div class="prep-toolbar-hints bottom-chrome-hints" id="prep-toolbar-hints" aria-label="Управление"></div>
+      <div class="bottom-chrome-gamepad">
+        <span class="gamepad-hints-status" id="gamepad-status">🎮 Кликните по игре и нажмите кнопку на геймпаде</span>
+        <div class="gamepad-hints-list" id="gamepad-hints-list"></div>
+      </div>
+      <div class="bottom-chrome-prep-right prep-toolbar-actions" id="bottom-chrome-prep-right">
+        <button class="btn-primary btn-fight-header" id="btn-fight" type="button" aria-label="В бой">⚔️ В бой!</button>
+      </div>
+    </div>
   </div>
+
   <div id="prep-shop-backdrop" class="prep-shop-backdrop hidden" aria-hidden="true"></div>
   <button type="button" class="btn-secondary prep-mobile-shop-btn" id="btn-mobile-shop" aria-expanded="false" aria-controls="shop-panel" aria-label="Магазин и скамейка">🛒</button>
   <div id="mobile-rotate-prompt" class="mobile-rotate-prompt hidden" aria-live="polite" aria-hidden="true">
@@ -495,7 +500,7 @@
   <script src="emotion-engine.js?v=20"></script>
   <script src="battle-hud.js"></script>
   <script src="systems/doll-engine.js"></script>
-  <script src="game.js?v=13"></script>
+  <script src="game.js?v=14"></script>
   <script src="pwa-register.js"></script>
 </body>
 </html>

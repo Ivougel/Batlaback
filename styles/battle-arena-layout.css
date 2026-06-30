@@ -101,21 +101,25 @@ html[data-battle-hero-placement="flank-arena"][data-ui-tier="tablet"][data-orien
   padding-bottom: var(--tablet-battle-chrome-bottom, 72px);
 }
 
+/* Бой flank-arena: canvas только для prep — в бою рюкзак в поповере, остров схлопнут */
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #layer-world .prep-field-island,
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #layer-world .prep-field-island {
   position: absolute;
-  top: calc(var(--prep-scene-top, 14px) + var(--field-offset-y, 0px));
-  left: 50%;
-  transform: translateX(-50%);
+  top: 0;
+  left: 0;
+  transform: none;
   margin: 0;
-  width: var(--battle-canvas-display-w, var(--battle-canvas-w)) !important;
-  height: var(--battle-canvas-display-h, var(--battle-canvas-h)) !important;
-  max-width: calc(100% - 8px) !important;
+  width: 0 !important;
+  height: 0 !important;
+  max-width: 0 !important;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
 }
 
-html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"] #layer-world .prep-field-island,
-html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="replay"] #layer-world .prep-field-island {
-  top: 0;
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #canvas-fx-anchor,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #canvas-fx-anchor {
+  display: none;
 }
 
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-canvas-stage,

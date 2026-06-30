@@ -455,6 +455,12 @@ function bindDollSlotTooltips() {
     slotEl.addEventListener("mouseleave", () => {
       if (typeof requestHideSidebarTooltip === "function") requestHideSidebarTooltip();
     });
+
+    if (typeof bindPointerTapTooltip === "function") {
+      bindPointerTapTooltip(slotEl, (clientX, clientY) => {
+        refreshDollSlotTooltip({ clientX, clientY }, slotEl);
+      });
+    }
   });
 }
 

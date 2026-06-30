@@ -595,7 +595,7 @@ function getMenuContext() {
 }
 
 function refreshGamepadHints() {
-  const bar = document.getElementById("gamepad-hints-bar");
+  const bar = document.getElementById("bottom-chrome");
   const list = document.getElementById("gamepad-hints-list");
   const status = document.getElementById("gamepad-status");
   if (!bar || !list) return;
@@ -623,12 +623,14 @@ function refreshGamepadHints() {
     }
   }
 
+  // #bottom-chrome — единая панель prep/battle; скрываем только подсказки геймпада, не всю панель.
+  bar.classList.remove("hidden");
+
   if (!hints || !isGamepadInteraction()) {
-    bar.classList.add("hidden");
+    list.innerHTML = "";
     return;
   }
 
-  bar.classList.remove("hidden");
   list.innerHTML = hints.map((h) =>
     `<span class="gamepad-hint-chip"><kbd class="gamepad-hint-key">${h.keys}</kbd><span>${h.label}</span></span>`,
   ).join("");

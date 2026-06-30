@@ -43,9 +43,10 @@
   --game-item-icon-font: 2.025rem;
   --game-item-icon-duo-width: calc(var(--game-item-icon-size) * 1.85);
 
-  /* Toolbar */
-  --prep-toolbar-h: 50px;
-  --toolbar-h: var(--prep-toolbar-h);
+  /* Toolbar / bottom chrome */
+  --bottom-chrome-h: 44px;
+  --prep-toolbar-h: var(--bottom-chrome-h);
+  --toolbar-h: var(--bottom-chrome-h);
   --toolbar-btn-h: var(--gap-md);
   --toolbar-font: var(--font-sm);
 

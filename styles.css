@@ -73,13 +73,13 @@ body.is-ui-dragging * {
 }
 
 #app {
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
   max-width: none;
   width: 100%;
   margin: 0;
   padding: 0;
-  height: 100%;
+  max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   overflow-x: hidden;
   overflow-y: hidden;
   display: flex;
@@ -340,48 +340,6 @@ body:has(#app[data-phase="prep"]) #battle-controls {
 body:has(#app[data-phase="battle"]) #battle-controls:not(.hidden),
 body:has(#app[data-phase="replay"]) #battle-controls:not(.hidden) {
   display: flex !important;
-}
-
-body:has(#app[data-phase="battle"]) .gamepad-hints-bar,
-body:has(#app[data-phase="replay"]) .gamepad-hints-bar {
-  display: flex !important;
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  top: var(--hud-fixed-top, auto);
-  align-items: stretch;
-  padding:
-    0
-    calc(12px + env(safe-area-inset-right, 0px))
-    env(safe-area-inset-bottom, 0px)
-    calc(12px + env(safe-area-inset-left, 0px));
-  margin: 0;
-  z-index: var(--z-chrome);
-}
-
-html[data-battle-hud-pin="true"] body:has(#app[data-phase="battle"]) .gamepad-hints-bar,
-html[data-battle-hud-pin="true"] body:has(#app[data-phase="replay"]) .gamepad-hints-bar {
-  bottom: auto;
-}
-
-body:has(#app[data-phase="battle"]) .gamepad-hints-bar .battle-controls:not(.hidden),
-body:has(#app[data-phase="replay"]) .gamepad-hints-bar .battle-controls:not(.hidden) {
-  align-self: stretch;
-  align-items: center;
-  padding-top: 6px;
-  padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
-  margin-right: 4px;
-  margin-bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
-}
-
-body:has(#app[data-phase="battle"]) .gamepad-hints-bar .gamepad-hints-status,
-body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-status,
-body:has(#app[data-phase="battle"]) .gamepad-hints-bar .gamepad-hints-list,
-body:has(#app[data-phase="replay"]) .gamepad-hints-bar .gamepad-hints-list {
-  align-self: center;
-  padding-top: 6px;
-  padding-bottom: 6px;
 }
 
 #app[data-phase="battle"] .battle-canvas-stage {
@@ -6174,10 +6132,6 @@ html[data-ui-compact="true"] .prep-toolbar .btn-secondary {
 }
 
 @media (hover: none) and (pointer: coarse) {
-  body:has(#app[data-phase="prep"]) .gamepad-hints-bar {
-    display: none;
-  }
-
   .class-controls-hint,
   body:has(#app[data-phase="prep"]) .battle-controls-hint {
     display: none;
@@ -6382,13 +6336,8 @@ html[data-prep-side-fit="true"] body {
   overflow: hidden;
 }
 
-html[data-gamepad-hud="hidden"] .gamepad-hints-bar {
+html[data-gamepad-hud="hidden"] .bottom-chrome-gamepad {
   display: none !important;
-}
-
-html[data-gamepad-hud="hidden"] body:has(#app[data-phase="battle"]) .gamepad-hints-bar,
-html[data-gamepad-hud="hidden"] body:has(#app[data-phase="replay"]) .gamepad-hints-bar {
-  display: flex !important;
 }
 
 html[data-prep-side-fit="true"] #app[data-phase="prep"] {
@@ -6453,12 +6402,6 @@ html[data-prep-side-fit="true"] #app[data-phase="prep"] #shop-panel {
   padding: calc(8px * var(--ui-scale));
 }
 
-html[data-prep-side-fit="true"] #app[data-phase="prep"] #prep-toolbar {
-  flex-shrink: 0;
-  margin-top: var(--gap-xs);
-  padding: 4px 8px;
-}
-
 html[data-prep-side-fit="true"] #app[data-phase="prep"] #board-hint {
   display: none;
 }
@@ -6521,7 +6464,7 @@ html[data-prep-side-fit="true"] #app[data-phase="prep"] #shop-panel .bench-panel
 #app[data-phase="prep"] .game-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--shop-panel-w);
-  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr);
   align-items: stretch;
   gap: 0;
   height: 100%;
@@ -6564,68 +6507,6 @@ html[data-prep-side-fit="true"] #app[data-phase="prep"] #shop-panel .bench-panel
   overflow: hidden;
 }
 
-#app[data-phase="prep"] #prep-toolbar {
-  grid-column: 1 / -1;
-  grid-row: 2;
-  flex-shrink: 0;
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, auto) minmax(0, 1fr) minmax(0, auto);
-  align-items: center;
-  height: auto;
-  min-height: var(--toolbar-h);
-  max-height: none;
-  margin: 0;
-  padding: var(--gap-sm) var(--gap-md) 8px;
-  gap: var(--gap-sm) var(--gap-md);
-  overflow: visible;
-  border: none;
-  border-top: 1px solid rgba(80, 65, 50, 0.35);
-  border-radius: 0;
-  background: #14110e;
-}
-
-#app[data-phase="prep"] #prep-toolbar .prep-toolbar-left {
-  grid-column: 1;
-  justify-self: start;
-}
-
-#app[data-phase="prep"] #prep-toolbar .prep-toolbar-feed-home {
-  position: absolute;
-  left: 50%;
-  bottom: 8px;
-  transform: translateX(-50%);
-  z-index: 3;
-}
-
-#app[data-phase="prep"] #prep-toolbar .prep-toolbar-feed-home .combat-feed-dock {
-  position: relative;
-  left: auto;
-  bottom: auto;
-  transform: none;
-}
-
-#app[data-phase="prep"] #prep-toolbar .prep-toolbar-hints {
-  grid-column: 2;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: var(--gap-sm) var(--gap-md);
-  min-width: 0;
-  padding: 0 clamp(120px, 14vw, 160px);
-}
-
-#app[data-phase="prep"] #prep-toolbar .prep-toolbar-right {
-  grid-column: 3;
-  justify-self: end;
-  margin-left: 0;
-}
-
-#app[data-phase="prep"] #prep-toolbar .prep-toolbar-hints.hidden {
-  display: none;
-}
-
 .prep-hint-chip {
   display: inline-flex;
   align-items: center;
@@ -6650,46 +6531,15 @@ html[data-prep-side-fit="true"] #app[data-phase="prep"] #shop-panel .bench-panel
   line-height: 1.2;
 }
 
-html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-chip {
+html[data-touch="true"] .bottom-chrome-hints .prep-hint-chip {
   font-size: var(--font-sm);
   color: #aeb6c0;
 }
 
-html[data-touch="true"] #app[data-phase="prep"] #prep-toolbar .prep-hint-key {
+html[data-touch="true"] .bottom-chrome-hints .prep-hint-key {
   font-size: 0.76rem;
   min-width: 1.6em;
   padding: 2px 7px;
-}
-
-#app[data-phase="prep"] #prep-toolbar .prep-side-hint {
-  display: none;
-}
-
-#app[data-phase="prep"] #prep-toolbar .phase-label {
-  display: inline-flex !important;
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
-#app[data-phase="prep"] #prep-toolbar .prep-toolbar-left,
-#app[data-phase="prep"] #prep-toolbar .prep-toolbar-right,
-#app[data-phase="prep"] #prep-toolbar .prep-toolbar-side-switch,
-#app[data-phase="prep"] #prep-toolbar .prep-toolbar-actions {
-  flex-wrap: nowrap;
-  flex-shrink: 0;
-}
-
-#app[data-phase="prep"] #prep-toolbar .btn-secondary,
-#app[data-phase="prep"] #prep-toolbar .btn-primary,
-#app[data-phase="prep"] #prep-toolbar .btn-top-stats {
-  padding: var(--gap-sm) var(--gap-md);
-  font-size: var(--font-sm);
-  white-space: nowrap;
-}
-
-#app[data-phase="prep"] #prep-toolbar .stat-round {
-  font-size: 0.82rem;
-  white-space: nowrap;
 }
 
 /* ─── Сцена: фон + персонаж + поле ─── */
@@ -7787,43 +7637,7 @@ body.is-ui-dragging #app[data-phase="prep"] .prep-field-island .canvas-scale-wra
 
 /* --- Toolbar --- */
 
-html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #prep-toolbar {
-  display: flex !important;
-  flex-wrap: wrap;
-  gap: var(--portrait-toolbar-gap);
-  flex-shrink: 0;
-}
-
-html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #prep-toolbar .prep-toolbar-side-switch {
-  flex: 1 1 auto;
-  order: 1;
-}
-
-html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #prep-toolbar .prep-toolbar-feed-home {
-  order: 2;
-  position: static;
-  transform: none;
-  left: auto;
-  bottom: auto;
-}
-
-html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #prep-toolbar .prep-toolbar-hints {
-  display: none;
-}
-
-html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #prep-toolbar .prep-toolbar-actions {
-  flex: 0 0 100%;
-  order: 3;
-  margin-left: 0;
-}
-
-html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #prep-toolbar .btn-fight-header {
-  width: 100%;
-  padding: var(--portrait-fight-btn-h);
-  font-size: var(--font-lg);
-}
-
-
+/* prep-viewport-fit toolbar rules → styles/bottom-chrome.css */
 
 /* --- Board section --- */
 

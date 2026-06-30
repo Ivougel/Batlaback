@@ -1,0 +1,422 @@
+/**
+ * Единая нижняя панель (prep + battle).
+ * DOM: #bottom-chrome — sibling #app в body.
+ */
+
+.bottom-chrome {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  flex-shrink: 0;
+  z-index: var(--z-chrome);
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr) minmax(0, auto);
+  align-items: center;
+  gap: 8px;
+  min-height: var(--bottom-chrome-h, 44px);
+  padding:
+    4px
+    max(10px, env(safe-area-inset-right))
+    calc(4px + env(safe-area-inset-bottom, 0px))
+    max(10px, env(safe-area-inset-left));
+  background: rgba(13, 17, 23, 0.94);
+  border-top: 1px solid #30363d;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.bottom-chrome.hidden {
+  display: none;
+}
+
+body:has(#class-overlay:not(.hidden)) .bottom-chrome,
+body:has(#battle-result-overlay:not(.hidden)) .bottom-chrome,
+body:has(#battle-detail-overlay:not(.hidden)) .bottom-chrome,
+body:has(#overlay:not(.hidden)) .bottom-chrome {
+  display: none !important;
+}
+
+.bottom-chrome-start,
+.bottom-chrome-end {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.bottom-chrome-start {
+  grid-column: 1;
+  justify-self: start;
+}
+
+.bottom-chrome-end {
+  grid-column: 3;
+  justify-self: end;
+  margin-left: 0;
+}
+
+.bottom-chrome-center {
+  grid-column: 2;
+  justify-self: center;
+  position: static;
+  transform: none;
+  z-index: 2;
+  pointer-events: none;
+  min-width: 0;
+}
+
+.bottom-chrome-center > * {
+  pointer-events: auto;
+}
+
+.bottom-chrome-center .combat-feed-dock {
+  position: relative;
+  left: auto;
+  bottom: auto;
+  transform: none;
+}
+
+.bottom-chrome-prep-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+
+.bottom-chrome-prep-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bottom-chrome-hints {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px 8px;
+  min-width: 0;
+}
+
+.bottom-chrome-gamepad {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+body:has(#app[data-phase="prep"]) .bottom-chrome {
+  background: #14110e;
+  border-top-color: rgba(80, 65, 50, 0.35);
+}
+
+.bottom-chrome .btn-secondary,
+.bottom-chrome .btn-primary {
+  padding: 6px 10px;
+  font-size: 0.82rem;
+  min-height: 36px;
+  line-height: 1.1;
+}
+
+.bottom-chrome .prep-side-btn.active {
+  border-color: #58a6ff;
+  color: #79c0ff;
+  background: rgba(88, 166, 255, 0.12);
+}
+
+.bottom-chrome .btn-fight-header {
+  padding: 6px 12px;
+  font-size: 0.86rem;
+  white-space: nowrap;
+}
+
+.bottom-chrome .prep-settings-btn {
+  min-width: 36px;
+  padding: 6px 8px;
+}
+
+/* ─── Prep phase ─── */
+
+body:has(#app[data-phase="prep"]) .bottom-chrome .battle-controls {
+  display: none !important;
+}
+
+body:has(#app[data-phase="prep"]) .bottom-chrome-prep-left,
+body:has(#app[data-phase="prep"]) .bottom-chrome-prep-right {
+  display: flex;
+}
+
+body:has(#app[data-phase="prep"]) .bottom-chrome-hints {
+  display: flex;
+}
+
+body:has(#app[data-phase="prep"]) .bottom-chrome-gamepad {
+  display: none;
+}
+
+/* ─── Battle / replay ─── */
+
+body:has(#app[data-phase="battle"]) .bottom-chrome-prep-left,
+body:has(#app[data-phase="replay"]) .bottom-chrome-prep-left,
+body:has(#app[data-phase="battle"]) .bottom-chrome-prep-right,
+body:has(#app[data-phase="replay"]) .bottom-chrome-prep-right,
+body:has(#app[data-phase="battle"]) .bottom-chrome-hints,
+body:has(#app[data-phase="replay"]) .bottom-chrome-hints {
+  display: none !important;
+}
+
+body:has(#app[data-phase="battle"]) .bottom-chrome .battle-controls:not(.hidden),
+body:has(#app[data-phase="replay"]) .bottom-chrome .battle-controls:not(.hidden) {
+  display: flex !important;
+}
+
+body:has(#app[data-phase="battle"]) .bottom-chrome-gamepad,
+body:has(#app[data-phase="replay"]) .bottom-chrome-gamepad {
+  display: flex;
+}
+
+/* Battle controls */
+.bottom-chrome .battle-controls {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 0;
+  margin: 0;
+  border: none;
+  pointer-events: auto;
+}
+
+.bottom-chrome .bc-btn {
+  min-width: 34px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid #30363d;
+  border-radius: 7px;
+  background: #21262d;
+  color: #e6edf3;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bottom-chrome .bc-btn.active {
+  background: rgba(240, 193, 75, 0.18);
+  border-color: #f0c14b;
+  color: #ffe066;
+}
+
+.bottom-chrome .bc-skip {
+  padding: 0 10px;
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+
+.bottom-chrome .battle-controls-hint {
+  font-size: 0.68rem;
+  color: var(--muted);
+  white-space: nowrap;
+  margin-left: 4px;
+}
+
+.bottom-chrome .gamepad-hints-status {
+  font-size: 0.72rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.bottom-chrome .gamepad-hints-status.is-connected {
+  color: #3fb950;
+}
+
+.bottom-chrome .gamepad-hints-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+}
+
+/* Touch prep: hide keyboard/gamepad hints, keep action buttons */
+@media (hover: none) and (pointer: coarse) {
+  body:has(#app[data-phase="prep"]) .bottom-chrome-hints {
+    display: none !important;
+  }
+
+  body:has(#app[data-phase="prep"]) .bottom-chrome .battle-controls-hint {
+    display: none;
+  }
+}
+
+html[data-gamepad-hud="hidden"] .bottom-chrome-gamepad {
+  display: none !important;
+}
+
+/* ─── Side / tablet landscape prep (touch) ─── */
+
+html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .bottom-chrome,
+html[data-tablet-side-fit="true"] body:has(#app[data-phase="prep"]) .bottom-chrome {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 6px;
+  min-height: 48px;
+  padding:
+    4px
+    max(8px, env(safe-area-inset-right))
+    calc(4px + env(safe-area-inset-bottom, 0px))
+    max(8px, env(safe-area-inset-left));
+}
+
+html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .bottom-chrome-prep-left,
+html[data-tablet-side-fit="true"] body:has(#app[data-phase="prep"]) .bottom-chrome-prep-left {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .bottom-chrome .prep-side-btn,
+html[data-tablet-side-fit="true"] body:has(#app[data-phase="prep"]) .bottom-chrome .prep-side-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 120px;
+  min-height: 40px;
+  padding: 6px 8px;
+  font-size: 0.8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .bottom-chrome .prep-settings-btn,
+html[data-tablet-side-fit="true"] body:has(#app[data-phase="prep"]) .bottom-chrome .prep-settings-btn {
+  flex: 0 0 auto;
+  min-width: 40px;
+  min-height: 40px;
+}
+
+html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .btn-fight-header,
+html[data-tablet-side-fit="true"] body:has(#app[data-phase="prep"]) .btn-fight-header {
+  min-height: 40px;
+}
+
+/* ─── Mobile prep ─── */
+
+html[data-prep-layout="mobile"] body:has(#app[data-phase="prep"]) .bottom-chrome {
+  gap: 6px;
+  min-height: 48px;
+  padding:
+    4px
+    max(8px, env(safe-area-inset-right))
+    calc(4px + env(safe-area-inset-bottom, 0px))
+    max(8px, env(safe-area-inset-left));
+}
+
+html[data-prep-layout="mobile"] body:has(#app[data-phase="prep"]) .bottom-chrome-prep-left {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+html[data-prep-layout="mobile"] body:has(#app[data-phase="prep"]) .bottom-chrome-center {
+  position: static;
+  transform: none;
+  flex-shrink: 0;
+}
+
+html[data-prep-layout="mobile"] body:has(#app[data-phase="prep"]) .bottom-chrome {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+}
+
+html[data-prep-layout="mobile"] body:has(#app[data-phase="prep"]) .bottom-chrome-start {
+  grid-column: 1;
+}
+
+html[data-prep-layout="mobile"] body:has(#app[data-phase="prep"]) .bottom-chrome-center {
+  grid-column: 2;
+  justify-self: center;
+}
+
+html[data-prep-layout="mobile"] body:has(#app[data-phase="prep"]) .bottom-chrome-end {
+  grid-column: 3;
+  margin-left: 0;
+  justify-self: end;
+}
+
+html[data-prep-layout="mobile"] body:has(#app[data-phase="prep"]) .bottom-chrome .prep-side-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 84px;
+  min-height: 40px;
+  padding: 6px 4px;
+  font-size: 0.8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html[data-prep-layout="mobile"] body:has(#app[data-phase="prep"]) .bottom-chrome .prep-settings-btn {
+  flex: 0 0 auto;
+  min-width: 40px;
+  min-height: 40px;
+}
+
+html[data-prep-layout="mobile"] body:has(#app[data-phase="prep"]) #btn-combat-feed {
+  min-height: 40px;
+  min-width: 40px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  font-size: 1rem;
+}
+
+html[data-prep-layout="mobile"] body:has(#app[data-phase="prep"]) .btn-combat-feed-label {
+  display: none;
+}
+
+html[data-prep-layout="mobile"] body:has(#app[data-phase="prep"]) .btn-combat-feed-chevron {
+  display: none;
+}
+
+/* ─── Tablet side: compact gamepad row in battle ─── */
+
+html[data-tablet-side-fit="true"] body:has(#app[data-phase="battle"]) .bottom-chrome .gamepad-hints-status,
+html[data-tablet-side-fit="true"] body:has(#app[data-phase="replay"]) .bottom-chrome .gamepad-hints-status,
+html[data-tablet-side-fit="true"] body:has(#app[data-phase="battle"]) .bottom-chrome .gamepad-hints-list,
+html[data-tablet-side-fit="true"] body:has(#app[data-phase="replay"]) .bottom-chrome .gamepad-hints-list,
+html[data-tablet-side-fit="true"] body:has(#app[data-phase="battle"]) .bottom-chrome .battle-controls-hint,
+html[data-tablet-side-fit="true"] body:has(#app[data-phase="replay"]) .bottom-chrome .battle-controls-hint {
+  display: none;
+}
+
+/* ─── Stacked / viewport-fit prep toolbar ─── */
+
+html[data-prep-viewport-fit="true"] body:has(#app[data-phase="prep"]) .bottom-chrome {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--portrait-toolbar-gap);
+}
+
+html[data-prep-viewport-fit="true"] body:has(#app[data-phase="prep"]) .bottom-chrome-prep-left {
+  flex: 1 1 auto;
+  order: 1;
+}
+
+html[data-prep-viewport-fit="true"] body:has(#app[data-phase="prep"]) .bottom-chrome-center {
+  order: 2;
+  position: static;
+  transform: none;
+}
+
+html[data-prep-viewport-fit="true"] body:has(#app[data-phase="prep"]) .bottom-chrome-hints {
+  display: none;
+}
+
+html[data-prep-viewport-fit="true"] body:has(#app[data-phase="prep"]) .bottom-chrome-prep-right {
+  flex: 0 0 100%;
+  order: 3;
+}
+
+html[data-prep-viewport-fit="true"] body:has(#app[data-phase="prep"]) .bottom-chrome .btn-fight-header {
+  width: 100%;
+  padding: var(--portrait-fight-btn-h);
+  font-size: var(--font-lg);
+}
