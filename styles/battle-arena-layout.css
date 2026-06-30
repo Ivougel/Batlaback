@@ -295,6 +295,16 @@ html[data-battle-combat-floor="true"] #app[data-phase="replay"] .avatar-thought-
   contain: none;
 }
 
+html[data-battle-combat-floor="true"] #app[data-phase="battle"] .avatar-thought-slot .arena-equip-body--thought-orbit.arena-equip-body--weapon,
+html[data-battle-combat-floor="true"] #app[data-phase="replay"] .avatar-thought-slot .arena-equip-body--thought-orbit.arena-equip-body--weapon {
+  z-index: 4;
+}
+
+html[data-battle-combat-floor="true"] #app[data-phase="battle"] .avatar-thought-slot .arena-equip-body--thought-orbit.arena-equip-body--gear,
+html[data-battle-combat-floor="true"] #app[data-phase="replay"] .avatar-thought-slot .arena-equip-body--thought-orbit.arena-equip-body--gear {
+  z-index: 3;
+}
+
 html[data-battle-combat-floor="true"] #app[data-phase="battle"] .avatar-thought-slot .battle-thought-body,
 html[data-battle-combat-floor="true"] #app[data-phase="replay"] .avatar-thought-slot .battle-thought-body {
   filter: drop-shadow(0 8px 22px rgba(0, 0, 0, 0.6));

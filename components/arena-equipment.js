@@ -65,31 +65,30 @@ const ArenaEquipment = (() => {
     amulet: { y: 0.38, xBias: 0.35 },
   };
 
-  /** Компактная орбита-спутники вокруг главного эмодзи (доли радиуса орбиты). */
-  const PLAYER_EMOJI_ORBIT = {
-    head:      { dx: 0.0,   dy: -0.95 },
-    amulet:    { dx: -0.82, dy: -0.42 },
-    chest:     { dx: 0.38,  dy: -0.12 },
-    leftHand:  { dx: -0.95, dy: 0.18 },
-    rightHand: { dx: 0.78,  dy: 0.02 },
-    ring1:     { dx: 0.62,  dy: -0.55 },
-    ring2:     { dx: 0.68,  dy: 0.48 },
-    gloves:    { dx: -0.58, dy: 0.62 },
-    boots:     { dx: 0.12,  dy: 0.92 },
+  /**
+   * Схема спутников вокруг эмодзи-аватара (игрок слева).
+   * angle: градусы от верха по часовой; r: доля радиуса орбиты.
+   * rightHand — к центру экрана (синий круг на макете); остальные — кольцо (красные).
+   */
+  const PLAYER_EMOJI_ORBIT_POLAR = {
+    rightHand: { angle: 88, r: 0.96 },
+    leftHand:  { angle: 272, r: 0.92 },
+    head:      { angle: 0, r: 0.90 },
+    amulet:    { angle: 324, r: 0.76 },
+    chest:     { angle: 38, r: 0.72 },
+    ring1:     { angle: 218, r: 0.68 },
+    ring2:     { angle: 142, r: 0.68 },
+    gloves:    { angle: 242, r: 0.80 },
+    boots:     { angle: 118, r: 0.86 },
   };
 
-  /** Зеркальная орбита врага. */
-  const ENEMY_EMOJI_ORBIT = {
-    head:      { dx: 0.0,   dy: -0.95 },
-    amulet:    { dx: 0.82,  dy: -0.42 },
-    chest:     { dx: -0.38, dy: -0.12 },
-    leftHand:  { dx: 0.95,  dy: 0.18 },
-    rightHand: { dx: -0.78, dy: 0.02 },
-    ring1:     { dx: -0.62, dy: -0.55 },
-    ring2:     { dx: -0.68, dy: 0.48 },
-    gloves:    { dx: 0.58,  dy: 0.62 },
-    boots:     { dx: -0.12, dy: 0.92 },
-  };
+  function polarOrbitOffset(angleDeg, radius) {
+    const rad = (angleDeg * Math.PI) / 180;
+    return {
+      dx: Math.sin(rad) * radius,
+      dy: -Math.cos(rad) * radius,
+    };
+  }
 
   const EMOJI_ORBIT_Z_BASE = 30;
 
@@ -257,22 +256,35 @@ const ArenaEquipment = (() => {
       const emoji = typeof BattleHeroAnchor !== "undefined"
         ? BattleHeroAnchor.thoughtSlotEmojiSize()
         : Math.round(viewportMin() * 0.12);
-      const ratio = body.isWeapon ? 0.24 : 0.20;
-      return Math.round(Math.min(emoji * 0.34, viewportMin() * ratio));
+      if (body.isWeapon) {
+        const primary = body.slotId === "rightHand";
+        const scale = primary ? 0.40 : 0.30;
+        return Math.round(Math.min(emoji * scale, viewportMin() * 0.28));
+      }
+      return Math.round(Math.min(emoji * 0.24, viewportMin() * 0.18));
     }
     const ratio = body.isWeapon ? SIZE_RATIO : GEAR_SIZE_RATIO;
     return viewportMin() * ratio;
   }
 
-  /** Радиус орбиты спутников — в пределах halo вокруг эмодзи. */
+  function orbitItemRadiusPx(slotId) {
+    const emoji = typeof BattleHeroAnchor !== "undefined"
+      ? BattleHeroAnchor.thoughtSlotEmojiSize()
+      : Math.round(viewportMin() * 0.12);
+    if (slotId === "rightHand") return Math.round(emoji * 0.20);
+    if (slotId === "leftHand") return Math.round(emoji * 0.15);
+    return Math.round(emoji * 0.12);
+  }
+
+  /** Радиус орбиты спутников — halo вокруг эмодзи. */
   function orbitSpanPx() {
     const emoji = typeof BattleHeroAnchor !== "undefined"
       ? BattleHeroAnchor.thoughtSlotEmojiSize()
       : Math.round(Math.min(112, Math.max(68, viewportMin() * 0.12)));
     const halo = typeof BattleHeroAnchor !== "undefined"
       ? BattleHeroAnchor.thoughtSlotHaloPx(emoji)
-      : Math.round(emoji * 0.36);
-    return Math.max(28, Math.min(halo * 0.92, emoji * 0.42));
+      : Math.round(emoji * 0.40);
+    return Math.max(34, halo);
   }
 
   function clampOrbitOffset(ox, oy, maxRadius) {
@@ -285,11 +297,8 @@ const ArenaEquipment = (() => {
   function orbitOffsetPx(side, slotId) {
     const off = emojiOrbitOffset(side, slotId);
     const span = orbitSpanPx();
-    const emoji = typeof BattleHeroAnchor !== "undefined"
-      ? BattleHeroAnchor.thoughtSlotEmojiSize()
-      : Math.round(viewportMin() * 0.12);
-    const itemR = Math.round(emoji * 0.11);
-    const maxR = Math.max(span * 0.96 - itemR, span * 0.5);
+    const itemR = orbitItemRadiusPx(slotId);
+    const maxR = Math.max(span - itemR - 2, span * 0.55);
     return clampOrbitOffset(off.dx * span, off.dy * span, maxR);
   }
 
@@ -351,8 +360,10 @@ const ArenaEquipment = (() => {
     }
   }
   function emojiOrbitOffset(side, slotId) {
-    const table = side === "enemy" ? ENEMY_EMOJI_ORBIT : PLAYER_EMOJI_ORBIT;
-    return table[slotId] || { dx: 0, dy: 0.55 };
+    const polar = PLAYER_EMOJI_ORBIT_POLAR[slotId] || { angle: 180, r: 0.65 };
+    const { dx, dy } = polarOrbitOffset(polar.angle, polar.r);
+    if (side === "enemy") return { dx: -dx, dy };
+    return { dx, dy };
   }
 
   function resolveEquipOrigin(body) {

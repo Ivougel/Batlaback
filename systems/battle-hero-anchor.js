@@ -66,7 +66,7 @@ const BattleHeroAnchor = (() => {
   }
 
   function thoughtSlotHaloPx(emojiSize = thoughtSlotEmojiSize()) {
-    return Math.round(emojiSize * 0.36);
+    return Math.round(emojiSize * 0.40);
   }
 
   /** Размер контейнера слота (эмодзи + орбита спутников). */
