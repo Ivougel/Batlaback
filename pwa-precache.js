@@ -217,7 +217,7 @@ self.PWA_PRECACHE_URLS = [
   "systems/battle-analyzer.js",
   "systems/battle-debuffs.js",
   "systems/battle-hero-anchor.js",
-  "systems/battle-hero-anchor.js?v=13",
+  "systems/battle-hero-anchor.js?v=14",
   "systems/battle-speed.js",
   "systems/battle-stacks.js",
   "systems/combat-profile.js",
@@ -238,5 +238,5 @@ self.PWA_PRECACHE_URLS = [
   "systems/sfx.js?v=1",
   "systems/synergy.js",
   "ui-layout.js",
-  "ui-layout.js?v=80"
+  "ui-layout.js?v=81"
 ];

@@ -51,7 +51,7 @@ const BattleHeroAnchor = (() => {
   }
 
   const EMOJI_SIZE_BY_PROFILE = {
-    "phone-portrait": { floorRatio: 0.70, vminRatio: 0.18, minPx: 88, maxPx: 156, haloRatio: 0.26, avatarRatio: 0.44 },
+    "phone-portrait": { floorRatio: 0.58, vminRatio: 0.16, minPx: 80, maxPx: 132, haloRatio: 0.24, avatarRatio: 0.40, slotCenterRatio: 0.46 },
     "phone-landscape": { floorRatio: 0.66, vminRatio: 0.17, minPx: 80, maxPx: 128, haloRatio: 0.28, avatarRatio: 0.40 },
     "tablet-landscape-side": { floorRatio: 0.64, vminRatio: 0.165, minPx: 94, maxPx: 158, haloRatio: 0.34, avatarRatio: 0.38 },
     "tablet-portrait": { floorRatio: 0.58, vminRatio: 0.15, minPx: 88, maxPx: 144, haloRatio: 0.34, avatarRatio: 0.36 },
@@ -192,9 +192,11 @@ const BattleHeroAnchor = (() => {
       const floorBottom = visibleCombatFloorBottom(floor) ?? floor.bottom;
       const floorTop = floor.top;
       const usableH = Math.max(0, floorBottom - floorTop);
+      const prof = emojiProfile();
+      const centerRatio = prof.slotCenterRatio ?? 0.52;
       let cy;
       if (usableH > emojiSize * 2.4) {
-        cy = floorTop + usableH * 0.52;
+        cy = floorTop + usableH * centerRatio;
       } else {
         cy = floorBottom - gap - emojiSize / 2;
       }

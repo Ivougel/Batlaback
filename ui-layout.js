@@ -262,7 +262,8 @@
       colMin: 140, colMax: 220, colShare: 0.48,
       imgRatio: 0.48, imgMin: 88, imgMax: 116,
       portraitZoom: 1.55, chromePad: 10, portraitObjectY: "8%",
-      emojiScale: 1, floorShare: 0.34, heroShare: 0.26,
+      emojiScale: 1, floorShare: 0.30, heroShare: 0.26,
+      floorVhCap: 0.34,
       fxFloatScale: 0.9, fxProjectileScale: 0.9,
     },
     "phone-landscape": {
@@ -1415,14 +1416,15 @@
           : null,
       },
     );
-    const combatFloorTop = heroRowTop + heroCardH + arenaGap;
+    const combatFloorTopInitial = heroRowTop + heroCardH + arenaGap;
     const combatFloorAvailable = phoneCompact
-      ? Math.max(72, layoutH - combatFloorTop - arenaGap)
+      ? Math.max(72, layoutH - combatFloorTopInitial - arenaGap)
       : Math.max(
         72,
-        layoutHeight - combatFloorTop - toolbarReserve - arenaGap,
+        layoutHeight - combatFloorTopInitial - toolbarReserve - arenaGap,
       );
-    const combatFloorH = phoneCompact
+    let combatFloorTop = combatFloorTopInitial;
+    let combatFloorH = phoneCompact
       ? (() => {
         let h = Math.max(combatFloorMin, combatFloorAvailable);
         if (phoneLandscape) {
@@ -1436,10 +1438,6 @@
         return h;
       })()
       : Math.min(combatFloorMin, combatFloorAvailable);
-    applyBattleHeroRowZoneVars(root, fieldCol, zones, heroRowTop, heroCardH, {
-      top: combatFloorTop,
-      height: combatFloorH,
-    });
 
     placeBattleHeroPanel(
       document.getElementById("player-avatar-panel"),
@@ -1455,6 +1453,37 @@
       zones.enemyColW,
       heroCardH,
     );
+
+    if (mobileStack && root.dataset.battleProfile === "phone-portrait") {
+      if (typeof syncBattleHudAnchors === "function") syncBattleHudAnchors();
+      const hudBottomLayout = Math.max(
+        document.getElementById("battle-hud-player")?.getBoundingClientRect().bottom ?? 0,
+        document.getElementById("battle-hud-enemy")?.getBoundingClientRect().bottom ?? 0,
+      ) - layoutRect.top;
+      const vhNow = window.visualViewport?.height ?? window.innerHeight;
+      const chromeBar = getBottomChrome();
+      const chromeTopLayout = chromeBar && getComputedStyle(chromeBar).display !== "none"
+        ? chromeBar.getBoundingClientRect().top - layoutRect.top
+        : layoutH;
+      const prof = BATTLE_PROFILES["phone-portrait"];
+      const floorTopMin = Math.max(combatFloorTopInitial, hudBottomLayout + arenaGap);
+      const floorBottomMax = Math.min(layoutH - arenaGap, chromeTopLayout - arenaGap);
+      const maxFloorH = Math.max(96, floorBottomMax - floorTopMin);
+      const vhCap = Math.round(vhNow * (prof.floorVhCap ?? 0.34));
+      const targetFloorH = Math.min(
+        maxFloorH,
+        vhCap,
+        Math.round(usableH * (prof.floorShare ?? 0.30)),
+        Math.max(combatFloorMin, 112),
+      );
+      combatFloorTop = floorTopMin;
+      combatFloorH = targetFloorH;
+    }
+
+    applyBattleHeroRowZoneVars(root, fieldCol, zones, heroRowTop, heroCardH, {
+      top: combatFloorTop,
+      height: combatFloorH,
+    });
 
     const thoughtArena = document.getElementById("battle-thought-arena");
     if (thoughtArena) {

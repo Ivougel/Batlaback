@@ -194,28 +194,31 @@ const CASES = [
         const floor = document.getElementById("battle-thought-arena")?.getBoundingClientRect();
         const emojiPx = window.BattleHeroAnchor?.thoughtSlotEmojiSize?.() ?? 0;
         const playerHud = document.getElementById("battle-hud-player")?.getBoundingClientRect();
+        const enemyHud = document.getElementById("battle-hud-enemy")?.getBoundingClientRect();
         const stage = document.querySelector("#player-avatar-slot .avatar-hero-stage")?.getBoundingClientRect();
+        const playerSlot = document.getElementById("player-thought-slot")?.getBoundingClientRect();
+        const hudBottom = Math.max(playerHud?.bottom ?? 0, enemyHud?.bottom ?? 0);
         const avatarH = stage?.height ?? 0;
+        const vh = window.innerHeight;
         return {
           floorH: floor?.height ?? 0,
+          floorTop: floor?.top ?? 0,
           emojiPx,
           avatarH,
           avatarRatio: avatarH && emojiPx ? emojiPx / avatarH : 0,
           floorRatio: floor && emojiPx ? emojiPx / floor.height : 0,
           hudTop: playerHud?.top ?? 0,
           stageBottom: stage?.bottom ?? 0,
+          hudToSlotGap: (playerSlot?.top ?? 0) - hudBottom,
+          floorVhRatio: floor && vh ? floor.height / vh : 0,
         };
       });
       assert(m.floorH > 48, "combat floor too small");
+      assert(m.floorVhRatio <= 0.42, `combat floor too tall on portrait: ${m.floorVhRatio.toFixed(2)}`);
       assert(m.emojiPx >= 80, `emoji too small: ${m.emojiPx}px`);
-      if (m.avatarH > 80) {
-        assert(m.avatarRatio >= 0.38, `emoji/avatar ratio low: ${m.avatarRatio.toFixed(2)}`);
-      }
-      if (m.floorH > 280) {
-        assert(m.emojiPx >= 110, `emoji should use headroom on tall floor: ${m.emojiPx}px`);
-      } else {
-        assert(m.floorRatio >= 0.42, `emoji/floor ratio low: ${m.floorRatio.toFixed(2)}`);
-      }
+      assert(m.emojiPx <= 140, `emoji too large on portrait: ${m.emojiPx}px`);
+      assert(m.hudToSlotGap <= 120, `emoji zone too far below HUD: ${m.hudToSlotGap}px`);
+      assert(m.hudToSlotGap >= -8, `emoji overlaps HUD: ${m.hudToSlotGap}px`);
       assert(m.hudTop >= m.stageBottom - 4, `HUD overlaps portrait: hud=${m.hudTop} stage=${m.stageBottom}`);
     },
   },
