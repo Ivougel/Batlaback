@@ -70,10 +70,12 @@ function buildBoardPreviewCellMap(containers, items) {
       }
       let itemDef = null;
       let isAnchor = false;
+      let itemUid = null;
       for (const item of items) {
         if (!getItemCells(item).some(([c, r]) => c === col && r === row)) continue;
         itemDef = ITEM_CATALOG[item.itemId];
         isAnchor = item.col === col && item.row === row;
+        if (isAnchor) itemUid = item.uid;
         break;
       }
       cells.push({
@@ -83,6 +85,7 @@ function buildBoardPreviewCellMap(containers, items) {
         containerDef,
         itemDef,
         isAnchor,
+        itemUid,
         synergy: synergyKeys.has(key),
       });
     }
@@ -90,9 +93,10 @@ function buildBoardPreviewCellMap(containers, items) {
   return cells;
 }
 
-function renderBoardPreviewGrid(containers, items, team) {
+function renderBoardPreviewGrid(containers, items, team, options = {}) {
   const cells = buildBoardPreviewCellMap(containers, items);
   const teamClass = team === "player" ? "bp-team-player" : "bp-team-enemy";
+  const activeUids = options.activeUids instanceof Set ? options.activeUids : null;
   return `<div class="bp-grid-wrap ${teamClass}">
     <div class="bp-grid" style="--bp-cols:${GRID_COLS}; --bp-rows:${GRID_ROWS};">
       ${cells.map((cell) => {
@@ -101,16 +105,18 @@ function renderBoardPreviewGrid(containers, items, team) {
           cell.isSlot ? "bp-slot" : "bp-void",
           cell.synergy ? "bp-synergy" : "",
           cell.itemDef ? "bp-has-item" : "",
+          activeUids && cell.itemUid && activeUids.has(cell.itemUid) ? "bp-cell-active" : "",
         ].filter(Boolean).join(" ");
         const style = cell.itemDef
           ? `--bp-fill:${cell.itemDef.color}`
           : cell.containerDef
             ? `--bp-fill:${cell.containerDef.color}`
             : "";
+        const uidAttr = cell.itemUid ? ` data-item-uid="${escapeBoardPreviewHtml(cell.itemUid)}"` : "";
         const icon = cell.isAnchor && cell.itemDef
           ? `<span class="bp-icon" title="${escapeBoardPreviewHtml(cell.itemDef.name)}">${cell.itemDef.icon}</span>`
           : "";
-        return `<div class="${classes}" style="${style}">${icon}</div>`;
+        return `<div class="${classes}" style="${style}"${uidAttr}>${icon}</div>`;
       }).join("")}
     </div>
   </div>`;

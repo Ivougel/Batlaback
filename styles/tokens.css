@@ -101,6 +101,7 @@
   --z-layer-fx: 30;
   --z-layer-hud: 40;
   --z-scene-chrome: 45;
+  --z-live-popover: 45;
   --z-chrome: 50;
   --z-system: 100;
   --z-drag-ghost: 5;

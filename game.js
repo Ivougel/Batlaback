@@ -1165,6 +1165,7 @@ function init() {
   bindPrepHeroTooltip();
   bindPlayerCharacteristicsControls(getPlayerCharacteristicsState, getEnemyCharacteristicsState);
   initBoardPreviewControls();
+  if (typeof initBattleInventoryPopover === "function") initBattleInventoryPopover();
   initRecipeBookControls();
   initSettingsControls();
   if (typeof initCombatFeedControls === "function") initCombatFeedControls();
@@ -1357,6 +1358,7 @@ function renderPhase() {
   }
   renderFightButton();
   if (phase !== "prep") closeAllFighterCharacteristicsPopups();
+  if (!isBattleUiPhase() && typeof closeBattleInventoryPopover === "function") closeBattleInventoryPopover();
   if (phase !== "prep") setPrepDollOpen(false);
   if (phase !== "prep" && typeof closeMobilePrepShop === "function") closeMobilePrepShop();
   if (typeof applyUiLayout === "function") scheduleLayoutAfterPhase();
@@ -1862,6 +1864,11 @@ function closeAllPopups() {
 
   if (typeof isSettingsOpen === "function" && isSettingsOpen()) {
     hideSettingsPopup();
+    closed = true;
+  }
+
+  if (typeof isBattleInventoryPopoverOpen === "function" && isBattleInventoryPopoverOpen()) {
+    closeBattleInventoryPopover();
     closed = true;
   }
 
@@ -2510,6 +2517,7 @@ function endBattle() {
   battleState = null;
   clearBattleFloatLayer();
   if (typeof closeBattleHudPopups === "function") closeBattleHudPopups();
+  if (typeof closeBattleInventoryPopover === "function") closeBattleInventoryPopover();
   if (typeof clearBattleDamageSummary === "function") clearBattleDamageSummary(finishedState);
   if (typeof hideBattleCountdownOverlay === "function") hideBattleCountdownOverlay();
 
@@ -2754,14 +2762,18 @@ function gameLoop(ts) {
     if (Math.floor(ts / 500) !== Math.floor((ts - dt * 1000) / 500)) {
       renderBattleStats();
       renderPlayerProfiles();
+      if (typeof refreshBattleInventoryPopover === "function") refreshBattleInventoryPopover();
     }
+    if (typeof syncBattleInventoryPopoverFlash === "function") syncBattleInventoryPopoverFlash();
   } else if (phase === "battle" && battleState?.finished) {
     endBattle();
   } else if (phase === "replay") {
     tickReplay(dt);
     if (Math.floor(ts / 500) !== Math.floor((ts - dt * 1000) / 500)) {
       renderPlayerProfiles();
+      if (typeof refreshBattleInventoryPopover === "function") refreshBattleInventoryPopover();
     }
+    if (typeof syncBattleInventoryPopoverFlash === "function") syncBattleInventoryPopoverFlash();
   }
   if (phase === "prep") {
     tickDisplaceAnimations(dt);
