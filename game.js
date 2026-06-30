@@ -1272,6 +1272,12 @@ function isBattleUiPhase() {
   return phase === "battle" || phase === "replay";
 }
 
+/** В flank-arena рюкзак показывается по тапу на портрет, не на canvas. */
+function shouldDrawCanvasLoadoutInBattle() {
+  if (!isBattleUiPhase()) return false;
+  return document.documentElement.dataset.battleHeroPlacement !== "flank-arena";
+}
+
 function getAppDataPhase() {
   if (phase === "battle" || phase === "replay") return phase;
   return "prep";
@@ -3382,25 +3388,29 @@ function drawWorldLayer() {
     }
     ctx.restore();
   } else if (isBattleUiPhase()) {
-    if (battleState) {
-      drawBackpackFrame("player", {
-        containers: playerContainers,
-        items: battleState.player.items,
-      });
-      drawBackpackFrame("enemy", {
-        containers: enemyContainers,
-        items: battleState.enemy.items,
-      });
-      drawContainers(playerContainers, "player", false);
-      drawContainers(enemyContainers, "enemy", false);
-    } else {
-      drawBackpackFrame("player", { containers: playerContainers, items: playerItems });
-      drawBackpackFrame("enemy", { containers: enemyContainers, items: enemyItems });
+    if (shouldDrawCanvasLoadoutInBattle()) {
+      if (battleState) {
+        drawBackpackFrame("player", {
+          containers: playerContainers,
+          items: battleState.player.items,
+        });
+        drawBackpackFrame("enemy", {
+          containers: enemyContainers,
+          items: battleState.enemy.items,
+        });
+        drawContainers(playerContainers, "player", false);
+        drawContainers(enemyContainers, "enemy", false);
+      } else {
+        drawBackpackFrame("player", { containers: playerContainers, items: playerItems });
+        drawBackpackFrame("enemy", { containers: enemyContainers, items: enemyItems });
+      }
     }
   }
   if (isBattleUiPhase() && battleState) {
-    drawPlacedItems(battleState.player.items, "player", false, true);
-    drawPlacedItems(battleState.enemy.items, "enemy", true, true);
+    if (shouldDrawCanvasLoadoutInBattle()) {
+      drawPlacedItems(battleState.player.items, "player", false, true);
+      drawPlacedItems(battleState.enemy.items, "enemy", true, true);
+    }
     if (typeof updateBattleAnalyzer === "function") updateBattleAnalyzer(battleState, 0);
     if (isBattleUiPhase() && typeof drawEmotionLayer === "function") {
       drawEmotionLayer(ctx, battleState, (Date.now() - battleStartTime) / 1000);

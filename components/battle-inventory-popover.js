@@ -114,18 +114,44 @@ const BattleInventoryPopover = (() => {
     lastRenderSig = buildRenderSignature(data);
   }
 
+  function getPortraitPanelEl(team) {
+    return document.getElementById(team === "player" ? "player-avatar-panel" : "enemy-avatar-panel");
+  }
+
+  function getPortraitAnchorRect(team) {
+    const panel = getPortraitPanelEl(team);
+    const panelRect = panel?.getBoundingClientRect();
+    const stageRect = typeof getAvatarHeroStageRect === "function"
+      ? getAvatarHeroStageRect(team)
+      : null;
+    if (!stageRect?.width || !panelRect?.width) return stageRect;
+    return {
+      left: panelRect.left,
+      right: panelRect.right,
+      top: stageRect.top,
+      bottom: stageRect.bottom,
+      width: panelRect.width,
+      height: Math.max(0, stageRect.bottom - stageRect.top),
+    };
+  }
+
   function positionPopover(team) {
     const el = ensurePopoverEl();
     if (el.classList.contains("hidden")) return;
 
-    const rect = typeof getAvatarHeroStageRect === "function"
-      ? getAvatarHeroStageRect(team)
-      : null;
+    const rect = getPortraitAnchorRect(team);
     if (!rect || !rect.width) return;
 
     const margin = 10;
-    const gap = 12;
+    const gap = 8;
     const bounds = getTooltipBounds();
+
+    el.dataset.team = team;
+    const panelW = Math.min(
+      Math.max(rect.width, 156),
+      bounds.right - bounds.left - margin * 2,
+    );
+    el.style.width = `${Math.round(panelW)}px`;
 
     el.style.visibility = "hidden";
     el.style.left = "-9999px";
@@ -133,25 +159,15 @@ const BattleInventoryPopover = (() => {
     const tipW = el.offsetWidth;
     const tipH = el.offsetHeight;
 
-    const anchorY = rect.top + rect.height * 0.32;
-    let left;
-    let top;
+    let left = team === "enemy" ? rect.right - tipW : rect.left;
+    let top = rect.top - tipH - gap;
 
-    if (team === "player") {
-      left = rect.right + gap;
-      if (left + tipW > bounds.right - margin) {
-        left = rect.left - tipW - gap;
-      }
-    } else {
-      left = rect.left - tipW - gap;
-      if (left < bounds.left + margin) {
-        left = rect.right + gap;
-      }
+    if (top < bounds.top + margin) {
+      top = bounds.top + margin;
     }
 
-    top = anchorY - tipH * 0.2;
-    top = Math.max(bounds.top + margin, Math.min(top, bounds.bottom - tipH - margin));
     left = Math.max(bounds.left + margin, Math.min(left, bounds.right - tipW - margin));
+    top = Math.max(bounds.top + margin, Math.min(top, bounds.bottom - tipH - margin));
 
     el.style.left = `${Math.round(left)}px`;
     el.style.top = `${Math.round(top)}px`;
@@ -168,6 +184,8 @@ const BattleInventoryPopover = (() => {
     lastRenderSig = "";
     const el = ensurePopoverEl();
     el.classList.add("hidden");
+    el.removeAttribute("data-team");
+    el.style.removeProperty("width");
     el.setAttribute("aria-hidden", "true");
     if (typeof refreshGamepadHints === "function") refreshGamepadHints();
   }

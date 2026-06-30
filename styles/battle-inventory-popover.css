@@ -10,12 +10,12 @@
 .battle-inventory-popover {
   position: fixed;
   z-index: var(--z-live-popover);
-  width: min(calc(280px * var(--ui-scale, 1)), calc(100vw - 16px));
-  max-height: min(72vh, calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 24px));
+  width: min(calc(240px * var(--ui-scale, 1)), calc(100vw - 16px));
+  max-height: min(46vh, calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 24px));
   display: flex;
   flex-direction: column;
-  padding: calc(10px * var(--ui-scale, 1));
-  gap: calc(8px * var(--ui-scale, 1));
+  padding: calc(8px * var(--ui-scale, 1));
+  gap: calc(6px * var(--ui-scale, 1));
   background: rgba(13, 17, 23, 0.96);
   border: 1px solid var(--border);
   border-radius: calc(10px * var(--ui-scale, 1));
@@ -24,6 +24,10 @@
   overflow: hidden;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+}
+
+.battle-inventory-popover[data-team="enemy"] {
+  text-align: right;
 }
 
 .battle-inventory-popover.hidden {
@@ -38,9 +42,13 @@
   flex-shrink: 0;
 }
 
+.battle-inventory-popover[data-team="enemy"] .battle-inventory-popover__head {
+  flex-direction: row-reverse;
+}
+
 .battle-inventory-popover__title {
   margin: 0;
-  font-size: calc(0.82rem * var(--ui-scale, 1));
+  font-size: calc(0.78rem * var(--ui-scale, 1));
   font-weight: 700;
   line-height: 1.25;
   color: var(--text);
@@ -48,8 +56,8 @@
 
 .battle-inventory-popover__close {
   flex-shrink: 0;
-  width: calc(28px * var(--ui-scale, 1));
-  height: calc(28px * var(--ui-scale, 1));
+  width: calc(26px * var(--ui-scale, 1));
+  height: calc(26px * var(--ui-scale, 1));
   border: 1px solid var(--border);
   border-radius: 6px;
   background: rgba(22, 27, 34, 0.9);
@@ -71,11 +79,17 @@
 }
 
 .battle-inventory-popover .bp-grid-wrap {
-  padding: calc(6px * var(--ui-scale, 1));
+  padding: calc(4px * var(--ui-scale, 1));
 }
 
 .battle-inventory-popover .bp-grid {
-  width: min(100%, calc(var(--bp-cols) * 26px));
+  width: min(100%, calc(var(--bp-cols) * 22px));
+  margin-inline: auto;
+}
+
+.battle-inventory-popover[data-team="enemy"] .bp-grid-wrap {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .battle-inventory-popover .bp-cell.bp-cell-active {
@@ -92,10 +106,16 @@
 
 .battle-inventory-popover .board-preview-section-title {
   margin-top: 2px;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
+  font-size: calc(0.68rem * var(--ui-scale, 1));
 }
 
 .battle-inventory-popover .bp-synergy-chips {
-  max-height: 88px;
+  max-height: 64px;
   overflow: auto;
+  justify-content: flex-start;
+}
+
+.battle-inventory-popover[data-team="enemy"] .bp-synergy-chips {
+  justify-content: flex-end;
 }

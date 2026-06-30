@@ -85,7 +85,7 @@ self.PWA_PRECACHE_URLS = [
   "styles/battle-arena-layout.css",
   "styles/battle-arena-layout.css?v=16",
   "styles/battle-inventory-popover.css",
-  "styles/battle-inventory-popover.css?v=1",
+  "styles/battle-inventory-popover.css?v=2",
   "styles/combat-feed.css",
   "styles/doll.css",
   "styles/doll.css?v=22",
