@@ -550,8 +550,8 @@ html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[d
   display: block !important;
   position: fixed;
   top: auto;
-  bottom: calc(56px + env(safe-area-inset-bottom, 0px));
-  right: calc(12px + env(safe-area-inset-right, 0px));
+  bottom: calc(var(--prep-mobile-fab-bottom, 56px) + env(safe-area-inset-bottom, 0px));
+  right: max(var(--prep-mobile-fab-right, var(--prep-mobile-edge-inset)), env(safe-area-inset-right, 0px));
   left: auto;
   width: auto;
   transform: none;

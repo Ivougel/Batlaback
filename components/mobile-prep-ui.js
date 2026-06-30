@@ -28,6 +28,9 @@
     if (typeof window.syncMobileShopFabPosition === "function") {
       requestAnimationFrame(() => window.syncMobileShopFabPosition());
     }
+    if (typeof window.syncMobileOverlayAnchors === "function") {
+      requestAnimationFrame(() => window.syncMobileOverlayAnchors({ phase: "prep" }));
+    }
     if (typeof scheduleCanvasFit === "function") scheduleCanvasFit();
   }
 

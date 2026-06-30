@@ -3844,25 +3844,6 @@ body:has(#overlay:not(.hidden)) {
   display: none;
 }
 
-.modal {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: calc(36px * var(--ui-scale));
-  text-align: center;
-  max-width: calc(440px * var(--ui-scale));
-}
-
-.modal h2 {
-  margin-bottom: 12px;
-  font-size: calc(1.5rem * var(--ui-scale));
-}
-
-.modal p {
-  color: var(--muted);
-  margin-bottom: 20px;
-}
-
 .run-complete-modal {
   max-width: 620px;
   width: 95%;
@@ -6080,11 +6061,6 @@ html[data-ui-compact="true"] .class-modal .class-step-actions-top .btn-secondary
 html[data-ui-compact="true"] .battle-result-modal,
 html[data-ui-compact="true"] .run-complete-modal {
   padding: calc(14px * var(--ui-scale)) calc(16px * var(--ui-scale));
-}
-
-html[data-ui-compact="true"] .modal h2 {
-  font-size: calc(1.15rem * var(--ui-scale));
-  margin-bottom: 6px;
 }
 
 html[data-ui-compact="true"] .battle-result-subtitle {

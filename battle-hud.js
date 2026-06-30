@@ -604,9 +604,62 @@ function closeBattleHudPopups() {
 }
 
 function isMobilePortraitBattleHud() {
-  // TODO: implement HTML chip fallback for mobile portrait
-  return false;
+  const root = document.documentElement;
+  const phase = document.getElementById("app")?.dataset.phase;
+  return root.dataset.battleHeroPlacement === "flank-arena"
+    && root.dataset.prepLayout === "mobile"
+    && root.dataset.layoutProfile === "phone-portrait"
+    && (phase === "battle" || phase === "replay");
 }
+
+function isCompactBattleHud() {
+  const root = document.documentElement;
+  if (root.dataset.battleHudCompact === "true") return true;
+  if (isMobilePortraitBattleHud()) return true;
+  const phase = document.getElementById("app")?.dataset.phase;
+  return root.dataset.battleHeroPlacement === "flank-arena"
+    && root.dataset.battleProfile === "tablet-portrait"
+    && (phase === "battle" || phase === "replay");
+}
+
+function renderRuntimeChipHTML(chip) {
+  const theme = chip.theme || STATUS_CHIP_THEMES.damage;
+  return `<span class="battle-hud-runtime-chip" style="--chip-fg:${theme.fg};--chip-bg:${theme.bg};--chip-border:${theme.border}">`
+    + `<span class="battle-hud-runtime-chip-icon" aria-hidden="true">${chip.icon}</span>`
+    + `<span class="battle-hud-runtime-chip-val">${chip.label}</span></span>`;
+}
+
+function syncBattleHudRuntimeChips(team, sideState) {
+  if (document.documentElement.dataset.battleHeroPlacement !== "flank-arena" || !sideState) return;
+  const hud = document.getElementById(team === "player" ? "battle-hud-player" : "battle-hud-enemy");
+  if (!hud) return;
+
+  let row = hud.querySelector(".battle-hud-runtime-chips");
+  if (!row) {
+    const stack = hud.querySelector(".battle-hud-status-stack");
+    if (!stack) return;
+    row = document.createElement("div");
+    row.className = "battle-hud-runtime-chips";
+    row.setAttribute("aria-hidden", "true");
+    stack.insertBefore(row, stack.firstChild);
+  }
+
+  const chips = buildStatusChipEntries(sideState);
+  row.hidden = chips.length === 0;
+  row.innerHTML = chips.map(renderRuntimeChipHTML).join("");
+}
+
+function syncBattleHudSurfaceFlags() {
+  const root = document.documentElement;
+  const compact = isCompactBattleHud();
+  root.dataset.battleHudCompact = compact ? "true" : "false";
+  root.dataset.battleHudHtml = root.dataset.battleHeroPlacement === "flank-arena" ? "true" : "false";
+}
+
+window.isMobilePortraitBattleHud = isMobilePortraitBattleHud;
+window.isCompactBattleHud = isCompactBattleHud;
+window.syncBattleHudRuntimeChips = syncBattleHudRuntimeChips;
+window.syncBattleHudSurfaceFlags = syncBattleHudSurfaceFlags;
 
 function drawBattleHud(ctx, battleState) {
   if (!ctx || !battleState) return;

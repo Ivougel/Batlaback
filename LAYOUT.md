@@ -69,8 +69,46 @@ Touch-цели: `min-height: var(--touch-target-min)` (≥ 44px).
 
 **Готово (battle):** `BATTLE_PROFILES` + `BattleHeroAnchor` (эмодзи от combat floor), `syncBattleHudAnchors` (HP под портретом), `syncFlankArenaHeroAnchors`.
 
-**Осталось (backlog):**
-- Полировка базовой вёрстки без экспериментальных флагов
+**Осталось (backlog):** нет — базовая автоматическая раскладка закрыта (N→R). Дальше только точечные фичи.
+
+### Этап R (shop sheet zones, class dock test, PWA precache)
+
+- **`syncMobileOverlayAnchors()`** — `--prep-shop-sheet-max-h` и `--prep-shop-sheet-bottom` (sheet над toolbar, не под ним)
+- **`syncClassOverlayAnchors()`** — `--class-modal-scroll-max-h` от header + dock на opponent step
+- **`test:geometry`** — `iphone-portrait-shop-sheet-zone`, `iphone-portrait-class-dock`
+- **PWA precache** — `bb-pwa-v3`, все новые CSS/JS из `index.html`
+
+### Этап Q (type-scale, overlay tokens, tooltip test)
+
+- **`TYPE_SCALE_BY_TIER`** — phone floor 0.96 / boost 1.2, tablet floor 0.94
+- **`syncClassOverlayAnchors()`** — `--class-mobile-dock-h` от измеренного dock
+- **Токены:** `--class-mobile-dock-*`, `--overlay-rotate-prompt-*`
+- **class-mobile-dock / rotate prompt** — padding и типографика через `--ui-scale` / `--font-*`
+- **`test:geometry`** — `iphone-portrait-battle-inventory-tooltip`, type-scale в prep-chrome
+
+### Этап P (HTML battle HUD, compact chips, tablet anchor fix)
+
+- **`isMobilePortraitBattleHud()` / `isCompactBattleHud()`** — phone portrait + tablet portrait compact HUD
+- **`syncBattleHudRuntimeChips()`** — block/poison/bonus chips в DOM (`.battle-hud-runtime-chips`)
+- **`syncBattleHudAnchors()`** — HUD строго под `.avatar-hero-stage`, `--battle-hud-max-h` в hero row
+- **`styles/battle-hud-compact.css`** — компактные полоски + runtime chips
+- **`test:geometry`** — `ipad-portrait-battle-hud`
+
+### Этап O (mobile overlay FAB anchors)
+
+- **`syncMobileOverlayAnchors()`** — единый якорь для prep + battle/replay на mobile: toolbar, bottom/right FAB
+- **Токены:** `--prep-mobile-fab-bottom`, `--prep-mobile-fab-right`, `--prep-doll-layer-bottom`, `--prep-mobile-edge-inset`
+- **`battle-build-stats` FAB** — вместо `56px`/`12px` → zone tokens от `#bottom-chrome`
+- **Doll toggle + doll layer** — `--prep-mobile-fab-bottom` / `--prep-doll-layer-bottom`
+- **`test:geometry`** — `iphone-portrait-mobile-fab-anchors`
+
+### Этап N (modal dedup, prep zone anchors)
+
+- **`modal-scale.css`** — единый источник для `.modal` / `.overlay > .modal` (типографика, padding, compact)
+- **`styles.css`** — убраны дубли `.modal`; структурные правила модалок (run-complete, class-overlay) остаются
+- **Mobile prep anchors** — `measureLayoutZones()` пишет `--prep-canvas-zone-bottom`, `--prep-hero-zone-*`, `--prep-toolbar-zone-top`
+- **FAB / shop sheet** — `--prep-shop-fab-size`, `--prep-shop-sheet-max-h` от `--app-h` / `--touch-target-min`
+- **`syncMobileShopFabPosition`** — после `measureLayoutZones`, без magic `56px` / `12px`
 
 ### Этап M (replay timeline, modal tokens)
 

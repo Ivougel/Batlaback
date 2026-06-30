@@ -307,12 +307,12 @@ html[data-prep-layout="mobile"][data-game-phase="prep"] .prep-mobile-shop-btn {
   z-index: 9050;
   top: var(--prep-shop-fab-top, 50%);
   bottom: auto;
-  right: var(--prep-shop-fab-right, 12px);
+  right: var(--prep-mobile-fab-right, var(--prep-shop-fab-right, calc(var(--gap-md) * var(--ui-scale))));
   left: auto;
-  width: 56px;
-  height: 56px;
-  min-width: 56px;
-  min-height: 56px;
+  width: var(--prep-shop-fab-size, var(--touch-target-min));
+  height: var(--prep-shop-fab-size, var(--touch-target-min));
+  min-width: var(--prep-shop-fab-size, var(--touch-target-min));
+  min-height: var(--prep-shop-fab-size, var(--touch-target-min));
   padding: 0;
   border-radius: 50%;
   font-size: 1.45rem;
@@ -370,7 +370,7 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] #shop-panel {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: 0;
+  bottom: var(--prep-shop-sheet-bottom, 0);
   top: auto;
   z-index: 9200;
   grid-column: auto;
@@ -378,7 +378,7 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] #shop-panel {
   width: 100%;
   min-width: 0;
   max-width: none;
-  max-height: 62vh;
+  max-height: var(--prep-shop-sheet-max-h, min(62dvh, calc(var(--app-h, 100dvh) * 0.62)));
   margin: 0;
   padding: calc(8px * var(--ui-scale)) calc(10px * var(--ui-scale))
     calc(10px * var(--ui-scale) + env(safe-area-inset-bottom, 0px));
@@ -558,8 +558,8 @@ html[data-prep-layout="mobile"] .mobile-rotate-prompt {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 24px;
+  gap: var(--overlay-rotate-prompt-gap, calc(12px * var(--ui-scale)));
+  padding: var(--overlay-rotate-prompt-pad, calc(24px * var(--ui-scale)));
   text-align: center;
   background: #0d1117;
   color: #e6edf3;
@@ -579,19 +579,19 @@ html[data-prep-layout="mobile"][data-orientation="landscape"] #app {
 }
 
 .mobile-rotate-prompt-icon {
-  font-size: 3rem;
+  font-size: var(--font-2xl, calc(3rem * var(--type-scale, 1)));
   line-height: 1;
 }
 
 .mobile-rotate-prompt-title {
-  font-size: 1.15rem;
+  font-size: var(--font-lg);
   font-weight: 600;
 }
 
 .mobile-rotate-prompt-sub {
-  font-size: 0.88rem;
+  font-size: var(--font-sm);
   color: #8b949e;
-  max-width: 280px;
+  max-width: min(280px, calc(100vw - 48px));
 }
 
 /* ─── Выбор класса: dock «Начать забег» ─── */
@@ -601,10 +601,10 @@ html[data-prep-layout="mobile"][data-orientation="landscape"] #app {
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: calc(12px * var(--ui-scale));
   max-width: 560px;
   width: 100%;
-  margin: 16px auto 0;
+  margin: calc(16px * var(--ui-scale)) auto 0;
 }
 
 .class-mobile-dock:not(.hidden) {
@@ -613,15 +613,15 @@ html[data-prep-layout="mobile"][data-orientation="landscape"] #app {
 
 .class-mobile-dock .btn-glass-back {
   flex: 0 0 auto;
-  min-height: 48px;
-  padding: 10px 16px;
+  min-height: var(--touch-target-min);
+  padding: calc(10px * var(--ui-scale)) calc(16px * var(--ui-scale));
 }
 
 .class-mobile-dock .btn-glass-start {
   flex: 1 1 auto;
-  min-height: 48px;
-  max-width: 280px;
-  font-size: 0.95rem;
+  min-height: var(--touch-target-min);
+  max-width: calc(280px * var(--ui-scale));
+  font-size: var(--font-md);
   font-weight: 700;
 }
 
@@ -635,9 +635,10 @@ html[data-prep-layout="mobile"] #class-overlay:not(.hidden) .class-mobile-dock:n
   max-width: none;
   width: 100%;
   padding:
-    12px max(16px, env(safe-area-inset-right))
-    calc(12px + env(safe-area-inset-bottom, 0px))
-    max(16px, env(safe-area-inset-left));
+    var(--class-mobile-dock-pad-y, calc(12px * var(--ui-scale)))
+    max(var(--class-mobile-dock-pad-x, calc(16px * var(--ui-scale))), env(safe-area-inset-right))
+    calc(var(--class-mobile-dock-pad-y, calc(12px * var(--ui-scale))) + env(safe-area-inset-bottom, 0px))
+    max(var(--class-mobile-dock-pad-x, calc(16px * var(--ui-scale))), env(safe-area-inset-left));
   background: rgba(13, 17, 23, 0.96);
   border-top: 1px solid rgba(88, 166, 255, 0.24);
   box-shadow: 0 -14px 44px rgba(0, 0, 0, 0.48);
@@ -647,10 +648,11 @@ html[data-prep-layout="mobile"] #class-overlay:not(.hidden) .class-mobile-dock:n
 html[data-prep-layout="mobile"] #class-overlay:not(.hidden) .class-modal {
   height: 100dvh;
   max-height: 100dvh;
-  padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(var(--class-mobile-dock-h, 88px) + env(safe-area-inset-bottom, 0px));
 }
 
 html[data-prep-layout="mobile"] #class-overlay .class-modal .class-step:not(.hidden) {
+  max-height: var(--class-modal-scroll-max-h, calc(100dvh - var(--class-mobile-dock-h, 88px) - 108px));
   padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
 }
 
@@ -874,6 +876,6 @@ html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[d
 
 html[data-prep-layout="mobile"] #app[data-phase="battle"] .battle-build-stats-btn,
 html[data-prep-layout="mobile"] #app[data-phase="replay"] .battle-build-stats-btn {
-  min-height: 44px;
-  min-width: 44px;
+  min-height: var(--prep-shop-fab-size, var(--touch-target-min));
+  min-width: var(--prep-shop-fab-size, var(--touch-target-min));
 }

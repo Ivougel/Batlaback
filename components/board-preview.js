@@ -71,11 +71,15 @@ function buildBoardPreviewCellMap(containers, items) {
       let itemDef = null;
       let isAnchor = false;
       let itemUid = null;
+      let itemId = null;
       for (const item of items) {
         if (!getItemCells(item).some(([c, r]) => c === col && r === row)) continue;
         itemDef = ITEM_CATALOG[item.itemId];
         isAnchor = item.col === col && item.row === row;
-        if (isAnchor) itemUid = item.uid;
+        if (isAnchor) {
+          itemUid = item.uid;
+          itemId = item.itemId;
+        }
         break;
       }
       cells.push({
@@ -86,6 +90,7 @@ function buildBoardPreviewCellMap(containers, items) {
         itemDef,
         isAnchor,
         itemUid,
+        itemId,
         synergy: synergyKeys.has(key),
       });
     }
@@ -113,10 +118,11 @@ function renderBoardPreviewGrid(containers, items, team, options = {}) {
             ? `--bp-fill:${cell.containerDef.color}`
             : "";
         const uidAttr = cell.itemUid ? ` data-item-uid="${escapeBoardPreviewHtml(cell.itemUid)}"` : "";
+        const itemIdAttr = cell.itemId ? ` data-item-id="${escapeBoardPreviewHtml(cell.itemId)}"` : "";
         const icon = cell.isAnchor && cell.itemDef
           ? `<span class="bp-icon" title="${escapeBoardPreviewHtml(cell.itemDef.name)}">${cell.itemDef.icon}</span>`
           : "";
-        return `<div class="${classes}" style="${style}"${uidAttr}>${icon}</div>`;
+        return `<div class="${classes}" style="${style}"${uidAttr}${itemIdAttr}>${icon}</div>`;
       }).join("")}
     </div>
   </div>`;
@@ -150,6 +156,17 @@ function bindBoardPreviewSynergyTooltips(items) {
   });
 }
 
+function bindBoardPreviewItemTooltips(items, rootEl) {
+  if (!rootEl || !items?.length || typeof bindItemTooltipEvents !== "function") return;
+  rootEl.querySelectorAll(".bp-cell.bp-has-item[data-item-id]").forEach((cell) => {
+    const itemId = cell.dataset.itemId;
+    if (!itemId) return;
+    const item = items.find((i) => i.uid === cell.dataset.itemUid)
+      || items.find((i) => i.itemId === itemId);
+    bindItemTooltipEvents(cell, itemId, item || null, "inventory");
+  });
+}
+
 function showBoardPreviewPopup(team, snapshot) {
   const overlay = document.getElementById("board-preview-overlay");
   const titleEl = document.getElementById("board-preview-title");
@@ -162,6 +179,7 @@ function showBoardPreviewPopup(team, snapshot) {
   gridEl.innerHTML = renderBoardPreviewGrid(side.containers, side.items, team);
   synergiesEl.innerHTML = renderBoardPreviewSynergies(side.items);
   bindBoardPreviewSynergyTooltips(side.items);
+  bindBoardPreviewItemTooltips(side.items, gridEl);
   overlay.classList.remove("hidden");
   if (typeof refreshGamepadHints === "function") refreshGamepadHints();
 }

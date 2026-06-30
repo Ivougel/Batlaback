@@ -120,14 +120,14 @@
 
 html[data-prep-layout="mobile"] .btn-toggle-doll {
   position: fixed;
-  bottom: calc(80px + env(safe-area-inset-bottom, 0px));
-  right: max(12px, env(safe-area-inset-right, 0px));
+  bottom: calc(var(--prep-mobile-fab-bottom, 80px) + env(safe-area-inset-bottom, 0px));
+  right: max(var(--prep-mobile-fab-right, var(--prep-mobile-edge-inset)), env(safe-area-inset-right, 0px));
   left: auto;
   top: auto;
   transform: none;
-  width: 48px;
-  height: 48px;
-  min-height: 48px;
+  width: var(--prep-shop-fab-size, var(--touch-target-min));
+  height: var(--prep-shop-fab-size, var(--touch-target-min));
+  min-height: var(--prep-shop-fab-size, var(--touch-target-min));
   border-radius: 50%;
   padding: 0;
   font-size: var(--font-lg);
@@ -167,8 +167,8 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-doll-layer {
   display: none;
   position: fixed;
   top: auto;
-  bottom: calc(var(--prep-mobile-hero-bottom, 72px) + 20px);
-  right: max(12px, env(safe-area-inset-right, 0px));
+  bottom: calc(var(--prep-doll-layer-bottom, 92px) + env(safe-area-inset-bottom, 0px));
+  right: max(var(--prep-mobile-fab-right, var(--prep-mobile-edge-inset)), env(safe-area-inset-right, 0px));
   left: auto;
   width: min(44vw, 200px);
   height: min(55vh, 420px);

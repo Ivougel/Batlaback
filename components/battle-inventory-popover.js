@@ -126,6 +126,20 @@ const BattleInventoryPopover = (() => {
       <div class="battle-inventory-popover__synergies">${renderBoardPreviewSynergies(data.items)}</div>
     `;
     lastRenderSig.set(team, buildRenderSignature(data));
+    bindPopoverCellTooltips(team, data);
+  }
+
+  function bindPopoverCellTooltips(team, data) {
+    const el = popoverEls.get(team);
+    if (!el || !data || typeof bindItemTooltipEvents !== "function") return;
+
+    el.querySelectorAll(".bp-cell.bp-has-item[data-item-id]").forEach((cell) => {
+      const itemId = cell.dataset.itemId;
+      if (!itemId) return;
+      const item = data.items.find((i) => i.uid === cell.dataset.itemUid)
+        || data.items.find((i) => i.itemId === itemId);
+      bindItemTooltipEvents(cell, itemId, item || null, "inventory");
+    });
   }
 
   function getPortraitPanelEl(team) {
@@ -362,6 +376,17 @@ function isBattleInventoryPopoverOpen() {
 function refreshBattleInventoryPopover() {
   BattleInventoryPopover.refreshBattleInventoryPopover();
 }
+
+function openBattleInventoryPopover(team) {
+  BattleInventoryPopover.openBattleInventoryPopover(team);
+}
+
+function toggleBattleInventoryPopover(team) {
+  BattleInventoryPopover.toggleBattleInventoryPopover(team);
+}
+
+window.openBattleInventoryPopover = openBattleInventoryPopover;
+window.toggleBattleInventoryPopover = toggleBattleInventoryPopover;
 
 function syncBattleInventoryPopoverFlash() {
   BattleInventoryPopover.syncBattleInventoryPopoverFlash();

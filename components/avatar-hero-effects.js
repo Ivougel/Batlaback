@@ -64,6 +64,7 @@ function renderAvatarBarsHTML(profile, team) {
       </div>
     </div>
     <div class="battle-hud-status-stack">
+      <div class="battle-hud-runtime-chips" aria-hidden="true" hidden></div>
       <div class="avatar-benefit-stacks battle-hud-benefit-stacks" aria-hidden="true" hidden></div>
       <div class="avatar-hero-debuff-row battle-hud-debuff-row" hidden></div>
       <div class="avatar-dot-stacks battle-hud-dot-stacks" aria-hidden="true" hidden></div>
@@ -287,6 +288,12 @@ function syncAvatarHeroEffects(team, profile, state) {
   shell.classList.toggle("avatar-hero-has-debuffs", debuffs.length > 0);
   barsRoot.classList.toggle("avatar-hero-has-buffs", activeBuffs.length > 0);
   barsRoot.classList.toggle("avatar-hero-has-debuffs", debuffs.length > 0);
+  if (isFlankArenaBattleHud() && state) {
+    const sideState = team === "player" ? state.player : state.enemy;
+    if (typeof syncBattleHudRuntimeChips === "function") {
+      syncBattleHudRuntimeChips(team, sideState);
+    }
+  }
   if (isFlankArenaBattleHud() && typeof syncBattleHudAnchors === "function") {
     syncBattleHudAnchors();
   }

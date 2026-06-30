@@ -28,6 +28,7 @@ async function quickStart(page) {
     window.applyUiLayout?.();
     window.scheduleCanvasFit?.();
     window.syncMobileShopFabPosition?.();
+    window.syncMobileOverlayAnchors?.();
   });
   await page.waitForTimeout(500);
 }
@@ -83,15 +84,91 @@ const CASES = [
         const bar = document.querySelector(".bottom-chrome")?.getBoundingClientRect();
         const label = document.querySelector("#btn-prep-player .prep-side-label");
         const labelHidden = label ? getComputedStyle(label).display === "none" : false;
+        const typeScale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--type-scale")) || 0;
         return {
           fightW: fight?.width ?? 0,
           barW: bar?.width ?? 0,
           labelHidden,
           fightOnOwnRow: fight && bar ? fight.width >= bar.width * 0.92 : false,
+          typeScale,
         };
       });
       assert(m.labelHidden, "prep side labels should be icon-only on mobile");
       assert(m.fightOnOwnRow, `fight btn not full width: ${m.fightW}/${m.barW}`);
+      assert(m.typeScale >= 0.94, `type-scale too small on phone portrait: ${m.typeScale}`);
+    },
+  },
+  {
+    id: "iphone-portrait-shop-sheet-zone",
+    device: devices["iPhone 14 Pro Max"],
+    async run(page) {
+      await quickStart(page);
+      await page.evaluate(() => window.toggleMobilePrepShop?.());
+      await page.waitForTimeout(500);
+      const m = await page.evaluate(() => {
+        const shop = document.getElementById("shop-panel")?.getBoundingClientRect();
+        const chrome = document.getElementById("bottom-chrome")?.getBoundingClientRect();
+        const island = document.getElementById("prep-field-island")?.getBoundingClientRect();
+        const maxH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--prep-shop-sheet-max-h")) || 0;
+        return {
+          shopTop: shop?.top ?? 0,
+          shopBottom: shop?.bottom ?? 0,
+          shopH: shop?.height ?? 0,
+          chromeTop: chrome?.top ?? 0,
+          islandBottom: island?.bottom ?? 0,
+          maxH,
+          open: document.documentElement.hasAttribute("data-prep-shop-open"),
+        };
+      });
+      assert(m.open, "shop drawer not open");
+      assert(m.maxH >= 160, `shop sheet max-h token: ${m.maxH}`);
+      assert(m.shopH <= m.maxH + 4, `shop taller than token: ${m.shopH} > ${m.maxH}`);
+      assert(m.shopBottom <= m.chromeTop + 8, `shop overlaps toolbar: ${m.shopBottom} > ${m.chromeTop}`);
+      assert(m.shopTop >= m.islandBottom - 24, `shop covers field: top=${m.shopTop} island=${m.islandBottom}`);
+    },
+  },
+  {
+    id: "iphone-portrait-class-dock",
+    device: devices["iPhone 14 Pro Max"],
+    async run(page) {
+      await page.goto(baseUrl, { waitUntil: "domcontentloaded", timeout: 20000 });
+      await page.waitForFunction(() => typeof selectPlayerClass === "function");
+      await page.evaluate(() => {
+        selectGameMode("solo");
+        selectPlayerClass("warrior");
+        showSecondClassStep();
+        selectOpponentClass("mage");
+        window.applyUiLayout?.();
+        window.syncClassOverlayAnchors?.();
+      });
+      await page.waitForTimeout(400);
+      const m = await page.evaluate(() => {
+        const dock = document.getElementById("class-mobile-dock");
+        const step = document.querySelector("#class-step-opponent:not(.hidden)");
+        const dockRect = dock?.getBoundingClientRect();
+        const stepRect = step?.getBoundingClientRect();
+        const token = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--class-mobile-dock-h")) || 0;
+        const scrollMax = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--class-modal-scroll-max-h")) || 0;
+        return {
+          dockVisible: !!(dock && !dock.classList.contains("hidden")),
+          dockTop: dockRect?.top ?? 0,
+          dockBottom: dockRect?.bottom ?? 0,
+          stepBottom: stepRect?.bottom ?? 0,
+          stepScrollH: step?.scrollHeight ?? 0,
+          stepClientH: step?.clientHeight ?? 0,
+          vh: window.innerHeight,
+          token,
+          scrollMax,
+          prepLayout: document.documentElement.dataset.prepLayout,
+        };
+      });
+      assert(m.prepLayout === "mobile", `expected mobile prep layout, got ${m.prepLayout}`);
+      assert(m.dockVisible, "class mobile dock hidden on opponent step");
+      assert(m.token >= 72, `class dock token: ${m.token}`);
+      assert(m.scrollMax >= 120, `class scroll max-h token: ${m.scrollMax}`);
+      assert(m.dockBottom <= m.vh + 2, "dock below viewport");
+      assert(m.stepBottom <= m.dockTop + 8, `class step overlaps dock: step=${m.stepBottom} dock=${m.dockTop}`);
+      assert(m.stepScrollH > m.stepClientH + 4, "opponent grid should scroll above dock");
     },
   },
   {
@@ -160,6 +237,96 @@ const CASES = [
         assert(fab.top >= island.bottom - 4, "FAB not above canvas");
         assert(fab.bottom <= chrome.top + 4, "FAB overlaps toolbar");
       }
+    },
+  },
+  {
+    id: "iphone-portrait-mobile-fab-anchors",
+    device: devices["iPhone 14 Pro Max"],
+    async run(page) {
+      await quickStart(page);
+      const prep = await page.evaluate(() => {
+        const chrome = document.getElementById("bottom-chrome")?.getBoundingClientRect();
+        const doll = document.getElementById("btn-toggle-doll")?.getBoundingClientRect();
+        const fabBottom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--prep-mobile-fab-bottom"));
+        return { chromeTop: chrome?.top ?? 0, dollBottom: doll?.bottom ?? 0, fabBottom };
+      });
+      assert(prep.fabBottom > 0, "prep mobile fab bottom token missing");
+      assert(prep.dollBottom <= prep.chromeTop + 4, `doll FAB overlaps toolbar: ${prep.dollBottom} > ${prep.chromeTop}`);
+
+      await page.evaluate(() => startBattle());
+      await page.waitForFunction(() => document.getElementById("app")?.dataset.phase === "battle");
+      await page.waitForTimeout(800);
+      await page.evaluate(() => {
+        window.applyUiLayout?.();
+        window.syncMobileOverlayAnchors?.();
+      });
+      await page.waitForTimeout(300);
+
+      const battle = await page.evaluate(() => {
+        const chrome = document.getElementById("bottom-chrome")?.getBoundingClientRect();
+        const stats = document.getElementById("btn-battle-build-stats")?.getBoundingClientRect();
+        const fabBottom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--prep-mobile-fab-bottom"));
+        const anchorDisplay = getComputedStyle(document.getElementById("battle-build-stats-anchor")).display;
+        return {
+          chromeTop: chrome?.top ?? 0,
+          statsBottom: stats?.bottom ?? 0,
+          fabBottom,
+          anchorDisplay,
+        };
+      });
+      assert(battle.fabBottom > 0, "battle mobile fab bottom token missing");
+      assert(battle.anchorDisplay !== "none", "build-stats anchor hidden in mobile battle");
+      assert(battle.statsBottom <= battle.chromeTop + 4, `build-stats overlaps toolbar: ${battle.statsBottom} > ${battle.chromeTop}`);
+    },
+  },
+  {
+    id: "iphone-portrait-battle-inventory-tooltip",
+    device: devices["iPhone 14 Pro Max"],
+    async run(page) {
+      await quickStart(page);
+      await page.evaluate(() => startBattle());
+      await page.waitForFunction(() => document.getElementById("app")?.dataset.phase === "battle");
+      await page.waitForFunction(
+        () => !document.getElementById("battle-countdown-overlay")
+          ?.classList.contains("battle-countdown-overlay-visible"),
+        { timeout: 12000 },
+      );
+      await page.waitForTimeout(1000);
+      await page.evaluate(() => {
+        window.applyUiLayout?.();
+        window.openBattleInventoryPopover?.("player");
+      });
+      await page.waitForTimeout(400);
+
+      const opened = await page.evaluate(() => {
+        const pop = document.getElementById("battle-inventory-popover-player");
+        return !!(pop && !pop.classList.contains("hidden"));
+      });
+      assert(opened, "battle inventory popover did not open");
+
+      const tipOk = await page.evaluate(() => {
+        const cell = document.querySelector(
+          "#battle-inventory-popover-player .bp-cell.bp-has-item[data-item-id]",
+        );
+        if (!cell || typeof showSidebarTooltipAt !== "function") return { ok: false, reason: "no-cell" };
+        const rect = cell.getBoundingClientRect();
+        showSidebarTooltipAt(
+          rect.left + rect.width / 2,
+          rect.top + rect.height / 2,
+          cell.dataset.itemId,
+          null,
+          "inventory",
+          cell,
+          { pinned: true },
+        );
+        const tip = document.getElementById("sidebar-tooltip");
+        return {
+          ok: !!(tip && !tip.classList.contains("hidden")),
+          source: typeof sidebarTooltipSource !== "undefined" ? sidebarTooltipSource : null,
+        };
+      });
+      assert(tipOk.ok, `inventory tooltip not visible (${tipOk.reason || tipOk.source})`);
+      assert(tipOk.source === "inventory", `tooltip source: ${tipOk.source}`);
     },
   },
   {
@@ -285,6 +452,47 @@ const CASES = [
       assert(m.fillPct === "50%", `progress wrong: ${m.fillPct}`);
       assert(m.time === "3/5", `time label: ${m.time}`);
       assert(m.feedHidden, "combat feed should hide during replay");
+    },
+  },
+  {
+    id: "ipad-portrait-battle-hud",
+    device: devices["iPad Mini"],
+    async run(page) {
+      await quickStart(page);
+      await page.evaluate(() => startBattle());
+      await page.waitForFunction(() => document.getElementById("app")?.dataset.phase === "battle");
+      await page.waitForFunction(
+        () => !document.getElementById("battle-countdown-overlay")
+          ?.classList.contains("battle-countdown-overlay-visible"),
+        { timeout: 12000 },
+      );
+      await page.waitForTimeout(1000);
+      await page.evaluate(() => {
+        window.applyUiLayout?.();
+        window.syncBattleHudAnchors?.();
+        window.syncBattleHudSurfaceFlags?.();
+      });
+      await page.waitForTimeout(400);
+
+      const m = await page.evaluate(() => {
+        const stage = document.querySelector("#player-avatar-slot .avatar-hero-stage")?.getBoundingClientRect();
+        const hud = document.getElementById("battle-hud-player")?.getBoundingClientRect();
+        const hp = document.querySelector("#battle-hud-player .avatar-hero-hp-bar")?.getBoundingClientRect();
+        return {
+          profile: document.documentElement.dataset.battleProfile,
+          compact: document.documentElement.dataset.battleHudCompact,
+          htmlHud: document.documentElement.dataset.battleHudHtml,
+          stageBottom: stage?.bottom ?? 0,
+          hudTop: hud?.top ?? 0,
+          hpTop: hp?.top ?? 0,
+          hpH: hp?.height ?? 0,
+        };
+      });
+      assert(m.profile === "tablet-portrait", `profile: ${m.profile}`);
+      assert(m.htmlHud === "true", "flank HTML HUD flag missing");
+      assert(m.hudTop >= m.stageBottom - 4, `HUD overlaps portrait: hud=${m.hudTop} stage=${m.stageBottom}`);
+      assert(m.hpH >= 6, `HP bar too small: ${m.hpH}px`);
+      assert(m.hpTop >= m.stageBottom - 4, `HP bar on portrait: hp=${m.hpTop} stage=${m.stageBottom}`);
     },
   },
   {

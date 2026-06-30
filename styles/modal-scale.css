@@ -3,20 +3,36 @@
  * recipe, settings, run complete, battle result, class overlay, battle detail, board preview.
  */
 
+.overlay > .modal,
+.modal {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  text-align: center;
+}
+
 .overlay > .modal {
   padding: calc(20px * var(--ui-scale));
   border-radius: calc(16px * var(--ui-scale));
   max-width: min(96vw, calc(440px * var(--ui-scale)));
 }
 
-.overlay > .modal h2 {
+.overlay > .modal h2,
+.modal h2 {
   font-size: var(--font-xl);
   margin-bottom: calc(10px * var(--ui-scale));
 }
 
-.overlay > .modal p {
+.overlay > .modal p,
+.modal p {
   font-size: var(--font-md);
+  color: var(--muted);
   margin-bottom: calc(16px * var(--ui-scale));
+}
+
+html[data-ui-compact="true"] .overlay > .modal h2,
+html[data-ui-compact="true"] .modal h2 {
+  font-size: var(--font-lg);
+  margin-bottom: calc(6px * var(--ui-scale));
 }
 
 #recipe-book-overlay:not(.hidden),

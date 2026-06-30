@@ -582,6 +582,9 @@ function syncClassMobileDock() {
     && !opponentStep.classList.contains("hidden");
   dock.classList.toggle("hidden", !show);
   dock.setAttribute("aria-hidden", show ? "false" : "true");
+  if (typeof window.syncClassOverlayAnchors === "function") {
+    requestAnimationFrame(() => window.syncClassOverlayAnchors());
+  }
 }
 
 function updateStartRunButton() {
@@ -781,30 +784,70 @@ function shouldUsePrepTooltipDock() {
 }
 
 function positionMobilePrepTooltipDock(dock) {
-  const margin = 8;
-  const island = document.getElementById("prep-field-island");
-  const toolbar = document.getElementById("bottom-chrome");
-  const shopPanel = document.getElementById("shop-panel");
-  const shopOpen = document.documentElement.hasAttribute("data-prep-shop-open");
+  const root = document.documentElement;
+  const uiScale = parseFloat(getComputedStyle(root).getPropertyValue("--ui-scale")) || 1;
+  const margin = Math.round(8 * uiScale);
   const vv = window.visualViewport;
   const viewLeft = vv?.offsetLeft ?? 0;
   const viewWidth = vv?.width ?? window.innerWidth;
 
-  const islandRect = island?.getBoundingClientRect();
-  const toolbarRect = toolbar?.getBoundingClientRect();
-  const top = (islandRect?.bottom ?? margin) + margin;
-  let bottomLimit = (toolbarRect?.top ?? window.innerHeight) - margin;
+  const readZonePx = (name, fallback = 0) => {
+    const inline = parseFloat(root.style.getPropertyValue(name));
+    if (Number.isFinite(inline) && inline > 0) return inline;
+    const computed = parseFloat(getComputedStyle(root).getPropertyValue(name));
+    if (Number.isFinite(computed) && computed > 0) return computed;
+    return fallback;
+  };
 
-  if (shopOpen && shopPanel) {
-    const shopRect = shopPanel.getBoundingClientRect();
-    if (shopRect.top < bottomLimit) bottomLimit = shopRect.top - margin;
+  if (typeof window.syncPrepMobileZoneAnchors === "function") {
+    window.syncPrepMobileZoneAnchors({ phase: "prep" });
   }
 
-  const maxHeight = Math.max(100, Math.min(220, bottomLimit - top));
+  const toolbarTop = readZonePx(
+    "--prep-toolbar-zone-top",
+    document.getElementById("bottom-chrome")?.getBoundingClientRect().top ?? window.innerHeight,
+  );
+  let zoneBottom = toolbarTop - margin;
+
+  const shopPanel = document.getElementById("shop-panel");
+  const shopOpen = root.hasAttribute("data-prep-shop-open");
+  if (shopOpen && shopPanel) {
+    const shopRect = shopPanel.getBoundingClientRect();
+    if (shopRect.top < zoneBottom) zoneBottom = shopRect.top - margin;
+  }
+
+  const heroTop = readZonePx("--prep-hero-zone-top", 0);
+  const heroBottom = readZonePx("--prep-hero-zone-bottom", 0);
+  const canvasBottom = readZonePx(
+    "--prep-canvas-zone-bottom",
+    document.getElementById("prep-field-island")?.getBoundingClientRect().bottom ?? margin,
+  );
+
+  let zoneTop;
+  if (heroBottom > heroTop + 48) {
+    zoneTop = heroTop + margin;
+    zoneBottom = Math.min(zoneBottom, heroBottom - margin);
+  } else {
+    zoneTop = canvasBottom + margin;
+  }
+
+  if (zoneBottom <= zoneTop + 40) {
+    zoneTop = canvasBottom + margin;
+    zoneBottom = toolbarTop - margin;
+    if (shopOpen && shopPanel) {
+      const shopRect = shopPanel.getBoundingClientRect();
+      if (shopRect.top < zoneBottom) zoneBottom = shopRect.top - margin;
+    }
+  }
+
+  const availableH = Math.max(48, zoneBottom - zoneTop);
+  const zoneHeroH = parseFloat(getComputedStyle(root).getPropertyValue("--zone-hero-h")) || availableH;
+  const maxHeight = Math.min(220, Math.round(Math.min(zoneHeroH * 0.9, availableH)));
+  const top = Math.max(margin, zoneTop);
 
   dock.style.left = `${viewLeft + margin}px`;
   dock.style.width = `${Math.max(120, viewWidth - margin * 2)}px`;
-  dock.style.top = `${Math.max(margin, top)}px`;
+  dock.style.top = `${top}px`;
   dock.style.maxHeight = `${maxHeight}px`;
   dock.style.height = "auto";
 }
@@ -887,7 +930,8 @@ function requestHideSidebarTooltip() {
 function bindTouchTooltipDismiss() {
   if (document.documentElement.dataset.touchTooltipDismissBound) return;
   document.documentElement.dataset.touchTooltipDismissBound = "1";
-  const dismissTooltipTargets = "#sidebar-tooltip, .shop-card, .bench-card, .doll-slot, #game-canvas, "
+  const dismissTooltipTargets = "#sidebar-tooltip, #prep-tooltip-dock, .shop-card, .bench-card, .doll-slot, #game-canvas, "
+    + ".battle-inventory-popover, .battle-inventory-popover .bp-cell, #board-preview-overlay .bp-cell, "
     + ".combat-feed-msg-text--hinted, .profile-status-chip, .profile-stack-chip";
   document.addEventListener("pointerdown", (e) => {
     if (isSyntheticMouseFromTouch()) return;
@@ -3315,9 +3359,14 @@ function isDropOnBench(e) {
 
 function canvasCoordsFromClient(clientX, clientY) {
   const rect = canvas.getBoundingClientRect();
+  const rw = rect.width > 0 ? rect.width : canvas.width;
+  const rh = rect.height > 0 ? rect.height : canvas.height;
+  if (rw <= 0 || rh <= 0 || canvas.width <= 0 || canvas.height <= 0) {
+    return { x: 0, y: 0 };
+  }
   return {
-    x: (clientX - rect.left) * (canvas.width / rect.width),
-    y: (clientY - rect.top) * (canvas.height / rect.height),
+    x: (clientX - rect.left) * (canvas.width / rw),
+    y: (clientY - rect.top) * (canvas.height / rh),
   };
 }
 
@@ -4707,16 +4756,6 @@ function buildItemTooltipLines(def, contentItem, rotation, context = "field") {
   return lines;
 }
 
-function canvasPointToClient(cx, cy) {
-  if (!canvas) return { x: 0, y: 0 };
-  const rect = canvas.getBoundingClientRect();
-  if (rect.width <= 0 || rect.height <= 0) return { x: rect.left, y: rect.top };
-  return {
-    x: rect.left + (cx / canvas.width) * rect.width,
-    y: rect.top + (cy / canvas.height) * rect.height,
-  };
-}
-
 function getTooltipBounds(boundsKind = "viewport") {
   if (boundsKind === "field") {
     const canvasEl = document.getElementById("game-canvas");
@@ -4889,6 +4928,9 @@ function getCorridorTooltipPosition(placement, clientX, clientY, tipW, tipH, mar
       verticalBias: 0.42,
     });
   }
+  if (placement === "inventory") {
+    return null;
+  }
   return null;
 }
 
@@ -4925,7 +4967,7 @@ function positionSidebarTooltip(clientX, clientY, boundsKind = "viewport", place
   let left;
   let top;
 
-  if (placement === "shop" || placement === "bench" || placement === "field" || placement === "doll") {
+  if (placement === "shop" || placement === "bench" || placement === "field" || placement === "doll" || placement === "inventory") {
     const corridorPos = getCorridorTooltipPosition(placement, clientX, clientY, tipW, tipH, margin, gap);
     if (corridorPos) {
       left = corridorPos.left;
@@ -4937,6 +4979,11 @@ function positionSidebarTooltip(clientX, clientY, boundsKind = "viewport", place
       const viewBottom = (vv?.offsetTop ?? 0) + (vv?.height ?? window.innerHeight) - margin;
       left = viewRight - tipW;
       top = Math.max(viewTop, Math.min(clientY - tipH * 0.42, viewBottom - tipH));
+    } else if (placement === "inventory") {
+      left = clientX - tipW / 2;
+      top = clientY - tipH - gap;
+      top = Math.max(bounds.top + margin, Math.min(top, bounds.bottom - tipH - margin));
+      left = Math.max(bounds.left + margin, Math.min(left, bounds.right - tipW - margin));
     } else {
       const bias = placement === "bench" ? 0.58 : 0.42;
       left = clientX - tipW - gap;
@@ -4997,6 +5044,7 @@ function syncFieldTooltip() {
     fieldTooltipVisible = true;
 
     const client = canvasPointToClient(x, y);
+    if (!client) return;
     positionSidebarTooltip(client.x, client.y, "field", "field");
   } catch (err) {
     console.error("syncFieldTooltip failed:", err);
@@ -5131,8 +5179,17 @@ function getTooltipBoardSources() {
   return null;
 }
 
+function isPointerOverBattleInventoryPopover(clientX, clientY) {
+  if (clientX == null || clientY == null) return false;
+  const hit = document.elementFromPoint(clientX, clientY);
+  return !!hit?.closest?.(".battle-inventory-popover");
+}
+
 function updateTooltip(mx, my) {
   if (isPointerOverCombatFeed(lastPointerClient.x, lastPointerClient.y)) {
+    return;
+  }
+  if (isPointerOverBattleInventoryPopover(lastPointerClient.x, lastPointerClient.y)) {
     return;
   }
 
@@ -5149,7 +5206,9 @@ function updateTooltip(mx, my) {
   const sidebarEl = document.getElementById("sidebar-tooltip");
   const sidebarHoverActive = sidebarEl
     && !sidebarEl.classList.contains("hidden")
-    && (sidebarTooltipSource === "shop" || sidebarTooltipSource === "bench" || sidebarTooltipSource === "combat-feed" || sidebarTooltipSource === "doll");
+    && (sidebarTooltipSource === "shop" || sidebarTooltipSource === "bench"
+      || sidebarTooltipSource === "combat-feed" || sidebarTooltipSource === "doll"
+      || sidebarTooltipSource === "inventory");
   if (sidebarHoverActive) {
     return;
   }
@@ -5250,9 +5309,12 @@ function showSidebarTooltipAt(clientX, clientY, itemId, contentItem, context = "
   el.style.borderColor = RARITY_COLORS[def.rarity] || "#30363d";
   el.classList.remove("hidden");
   syncPrepTooltipDockVisibility();
-  const boundsKind = context === "shop" ? "shop" : context === "bench" ? "bench" : context === "field" || context === "doll" ? "field" : "viewport";
+  const boundsKind = context === "shop" ? "shop"
+    : context === "bench" ? "bench"
+      : context === "field" || context === "inventory" ? "field"
+        : "viewport";
   positionSidebarTooltip(clientX, clientY, boundsKind, context);
-  if (isMobilePrepPortrait() && (context === "shop" || context === "bench")) {
+  if (isMobilePrepPortrait() && (context === "shop" || context === "bench" || context === "field" || context === "inventory" || context === "doll")) {
     requestAnimationFrame(() => {
       positionPrepTooltipDock();
       syncPrepTooltipDockVisibility();
@@ -5361,7 +5423,11 @@ function tryShowPrepPointerTapTooltip(clientX, clientY) {
 
 function bindItemTooltipEvents(el, itemId, contentItem, context = "shop") {
   if (!itemId || !el) return;
-  const boundsKind = context === "shop" ? "shop" : context === "bench" ? "bench" : context === "field" ? "field" : "viewport";
+  const boundsKind = context === "shop" ? "shop"
+    : context === "bench" ? "bench"
+      : context === "field" ? "field"
+        : context === "inventory" ? "viewport"
+          : "viewport";
   const refresh = (e) => {
     if (!prepTooltipsEnabled) return;
     const liveItemId = el.dataset.itemId || itemId;
@@ -5389,7 +5455,7 @@ function bindItemTooltipEvents(el, itemId, contentItem, context = "shop") {
     showSidebarTooltipAt(clientX, clientY, liveItemId, contentItem, context, el, { pinned: true });
   });
 
-  if (context === "shop" || context === "bench" || context === "field") {
+  if (context === "shop" || context === "bench" || context === "field" || context === "inventory") {
     el.style.cursor = "help";
   }
 }

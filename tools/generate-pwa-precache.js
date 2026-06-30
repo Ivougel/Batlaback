@@ -11,7 +11,7 @@ const path = require("path");
 const ROOT = path.join(__dirname, "..");
 const INDEX = path.join(ROOT, "index.html");
 const OUT = path.join(ROOT, "pwa-precache.js");
-const CACHE_VERSION = "bb-pwa-v2";
+const CACHE_VERSION = "bb-pwa-v3";
 
 const STATIC_EXT = new Set([".js", ".css", ".png", ".jpg", ".jpeg", ".webp", ".svg", ".mp3", ".woff", ".woff2"]);
 

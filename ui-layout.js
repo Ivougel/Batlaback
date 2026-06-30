@@ -156,8 +156,8 @@
   }
 
   const TYPE_SCALE_BY_TIER = {
-    phone: { floor: 0.92, boost: 1.18 },
-    tablet: { floor: 0.92, boost: 1.06 },
+    phone: { floor: 0.96, boost: 1.2 },
+    tablet: { floor: 0.94, boost: 1.08 },
     desktop: { floor: 0.85, boost: 1 },
   };
 
@@ -450,6 +450,7 @@
     root.style.setProperty("--zone-hero-h", `${zones.hero}px`);
     root.style.setProperty("--zone-chrome-h", `${zones.chrome}px`);
     root.style.setProperty("--zone-used-h", `${zones.used}px`);
+    syncMobileOverlayAnchors(zones);
     return zones;
   }
 
@@ -601,6 +602,55 @@
     root.style.setProperty("--prep-hero-slot-height", `${Math.round(rowH)}px`);
   }
 
+  function syncClassOverlayAnchors() {
+    const root = document.documentElement;
+    const uiScale = readCssPx("--ui-scale", 1);
+    const touchMin = readCssPx("--touch-target-min", 44);
+    const fallback = Math.round(Math.max(72, touchMin + 24 * uiScale));
+    const gap = Math.round(8 * uiScale);
+    const vh = window.visualViewport?.height ?? window.innerHeight;
+
+    if (root.dataset.prepLayout !== "mobile") {
+      root.style.removeProperty("--class-mobile-dock-h");
+      root.style.removeProperty("--class-modal-scroll-max-h");
+      return;
+    }
+
+    const overlay = document.getElementById("class-overlay");
+    const dock = document.getElementById("class-mobile-dock");
+    const modal = overlay?.querySelector(".class-modal");
+    const dockVisible = overlay
+      && !overlay.classList.contains("hidden")
+      && dock
+      && !dock.classList.contains("hidden");
+
+    let dockH = fallback;
+    if (dockVisible) {
+      const h = dock.getBoundingClientRect().height;
+      dockH = Math.max(fallback, Math.round(h));
+      root.style.setProperty("--class-mobile-dock-h", `${dockH}px`);
+    } else {
+      root.style.setProperty("--class-mobile-dock-h", `${fallback}px`);
+    }
+
+    if (overlay && !overlay.classList.contains("hidden") && modal) {
+      const modalStyle = getComputedStyle(modal);
+      const modalPadTop = parseFloat(modalStyle.paddingTop) || 0;
+      const modalPadBottom = parseFloat(modalStyle.paddingBottom) || 0;
+      let chromeH = modalPadTop + modalPadBottom;
+      modal.querySelectorAll(
+        ".class-modal-header, .class-controls-hint, .class-step-actions-top:not(.hidden)",
+      ).forEach((el) => {
+        if (getComputedStyle(el).display === "none") return;
+        chromeH += el.getBoundingClientRect().height + gap;
+      });
+      const scrollMax = Math.max(120, Math.round(vh - dockH - chromeH - gap));
+      root.style.setProperty("--class-modal-scroll-max-h", `${scrollMax}px`);
+    } else {
+      root.style.removeProperty("--class-modal-scroll-max-h");
+    }
+  }
+
   function syncBattleHudAnchors() {
     const viewport = document.getElementById("prep-field-column");
     const app = document.getElementById("app");
@@ -641,14 +691,18 @@
       const stage = shell?.querySelector(".avatar-hero-stage");
       const anchor = stage || upper || shell || slot;
       const anchorRect = anchor.getBoundingClientRect();
-      const bars = hud.querySelector(".avatar-hero-bars");
+      const stageRect = stage?.getBoundingClientRect();
+      const upperRect = upper?.getBoundingClientRect();
 
       let anchorBottom = anchorRect.bottom;
       if (badge) {
         const badgeRect = badge.getBoundingClientRect();
-        if (badgeRect.height > 2) anchorBottom = badgeRect.bottom;
-      } else if (upper) {
-        anchorBottom = upper.getBoundingClientRect().bottom;
+        if (badgeRect.height > 2) anchorBottom = Math.max(anchorBottom, badgeRect.bottom);
+      } else if (upperRect && upperRect.height > 8) {
+        anchorBottom = Math.max(anchorBottom, upperRect.bottom);
+      }
+      if (stageRect && stageRect.height > 8) {
+        anchorBottom = Math.max(anchorBottom, stageRect.bottom);
       }
 
       let hudLeft = anchorRect.left - vpRect.left;
@@ -668,12 +722,27 @@
       }
 
       const barsGap = Math.round(6 * readCssPx("--ui-scale", 1));
+      let hudTopPx = Math.max(0, Math.round(anchorBottom - vpRect.top + barsGap));
+      if (stageRect && stageRect.height > 8) {
+        const minTop = Math.round(stageRect.bottom - vpRect.top + barsGap);
+        if (hudTopPx < minTop) hudTopPx = minTop;
+      }
+
+      const heroRowTop = readCssPx("--battle-hero-row-top", 0);
+      const heroZoneH = readCssPx("--battle-hero-zone-h-active", readCssPx("--battle-hero-zone-h", 0));
+      if (heroZoneH > 40) {
+        const heroRowBottomVp = heroRowTop + heroZoneH - vpRect.top;
+        const maxHudH = Math.max(40, Math.round(heroRowBottomVp - hudTopPx - barsGap));
+        hud.style.setProperty("--battle-hud-max-h", `${maxHudH}px`);
+      }
+
       hud.style.left = `${Math.round(hudLeft)}px`;
-      hud.style.top = `${Math.max(0, Math.round(anchorBottom - vpRect.top + barsGap))}px`;
+      hud.style.top = `${hudTopPx}px`;
       hud.style.width = `${Math.round(hudWidth)}px`;
       hud.style.maxWidth = `${Math.round(hudWidth)}px`;
     });
 
+    if (typeof syncBattleHudSurfaceFlags === "function") syncBattleHudSurfaceFlags();
     if (useFlankZones) syncHeroEmotionSlotAnchors();
     syncHeroAttackSlotAnchors();
   }
@@ -759,7 +828,125 @@
       "--prep-canvas-display-h",
       "--prep-shop-fab-top",
       "--prep-shop-fab-right",
+      "--prep-canvas-zone-bottom",
+      "--prep-hero-zone-top",
+      "--prep-hero-zone-bottom",
+      "--prep-toolbar-zone-top",
+      "--prep-mobile-fab-bottom",
+      "--prep-mobile-fab-right",
+      "--prep-doll-layer-bottom",
     ].forEach((name) => root.style.removeProperty(name));
+  }
+
+  function syncMobileOverlayAnchors(zones) {
+    const root = document.documentElement;
+    const app = document.getElementById("app");
+    const phase = zones?.phase || app?.dataset.phase || "prep";
+
+    if (root.dataset.prepLayout !== "mobile") {
+      [
+        "--prep-shop-fab-top",
+        "--prep-canvas-zone-bottom",
+        "--prep-hero-zone-top",
+        "--prep-hero-zone-bottom",
+        "--prep-toolbar-zone-top",
+        "--prep-mobile-fab-bottom",
+        "--prep-mobile-fab-right",
+        "--prep-doll-layer-bottom",
+        "--prep-shop-sheet-max-h",
+        "--prep-shop-sheet-bottom",
+      ].forEach((name) => root.style.removeProperty(name));
+      return;
+    }
+
+    const chrome = getBottomChrome();
+    const uiScale = readCssPx("--ui-scale", 1);
+    const gap = Math.round(8 * uiScale);
+    const edgeInset = Math.round(readCssPx("--prep-mobile-edge-inset", readCssPx("--gap-md", 12) * uiScale));
+    const fabSize = Math.round(readCssPx("--prep-shop-fab-size", 56));
+    const vh = window.visualViewport?.height ?? window.innerHeight;
+
+    if (chrome && getComputedStyle(chrome).display !== "none") {
+      const toolbarTop = Math.round(chrome.getBoundingClientRect().top);
+      root.style.setProperty("--prep-toolbar-zone-top", `${toolbarTop}px`);
+      root.style.setProperty("--prep-mobile-fab-bottom", `${Math.max(gap, vh - toolbarTop + gap)}px`);
+    } else if (zones?.toolbar > 0) {
+      const toolbarTop = Math.round(vh - zones.toolbar);
+      root.style.setProperty("--prep-toolbar-zone-top", `${toolbarTop}px`);
+      root.style.setProperty("--prep-mobile-fab-bottom", `${Math.max(gap, zones.toolbar + gap)}px`);
+    }
+
+    root.style.setProperty("--prep-mobile-fab-right", `${edgeInset}px`);
+
+    const fabBottom = readCssPx("--prep-mobile-fab-bottom", fabSize + gap);
+    root.style.setProperty("--prep-doll-layer-bottom", `${Math.round(fabBottom + fabSize + gap)}px`);
+
+    if (phase !== "prep") return;
+
+    const island = document.getElementById("prep-field-island");
+    const hero = document.querySelector("#app[data-phase=\"prep\"] .prep-character-layer");
+
+    if (island && getComputedStyle(island).display !== "none") {
+      root.style.setProperty("--prep-canvas-zone-bottom", `${Math.round(island.getBoundingClientRect().bottom)}px`);
+    }
+    if (hero && getComputedStyle(hero).display !== "none") {
+      const hr = hero.getBoundingClientRect();
+      if (hr.height > 40) {
+        root.style.setProperty("--prep-hero-zone-top", `${Math.round(hr.top)}px`);
+        root.style.setProperty("--prep-hero-zone-bottom", `${Math.round(hr.bottom)}px`);
+      }
+    }
+
+    const heroTop = readCssPx("--prep-hero-zone-top", 0);
+    const heroBottom = readCssPx("--prep-hero-zone-bottom", 0);
+    const canvasBottom = readCssPx("--prep-canvas-zone-bottom", 0);
+    const toolbarTop = readCssPx("--prep-toolbar-zone-top", 0);
+
+    let zoneTop = canvasBottom + gap;
+    let zoneBottom = toolbarTop - gap;
+    if (heroBottom > heroTop + 48) {
+      zoneTop = heroTop + gap;
+      zoneBottom = heroBottom - gap;
+    }
+    if (zoneBottom > zoneTop + fabSize) {
+      const centeredTop = Math.round((zoneTop + zoneBottom) / 2 - fabSize / 2);
+      const top = Math.max(zoneTop, Math.min(centeredTop, zoneBottom - fabSize));
+      root.style.setProperty("--prep-shop-fab-top", `${top}px`);
+    }
+
+    if (toolbarTop > 0) {
+      const appH = readCssPx("--app-h", vh);
+      const tokenCap = Math.min(Math.round(appH * 0.62), Math.round(vh * 0.62));
+      const peekTop = Math.max(canvasBottom, heroTop, Math.round(vh * 0.18));
+      const corridorCap = Math.max(160, Math.round(toolbarTop - gap - peekTop));
+      root.style.setProperty(
+        "--prep-shop-sheet-max-h",
+        `${Math.max(160, Math.min(tokenCap, corridorCap))}px`,
+      );
+      root.style.setProperty("--prep-shop-sheet-bottom", `${Math.max(0, Math.round(vh - toolbarTop))}px`);
+    }
+  }
+
+  /** @deprecated alias — используйте syncMobileOverlayAnchors */
+  function syncPrepMobileZoneAnchors(zones) {
+    syncMobileOverlayAnchors(zones);
+  }
+
+  function syncMobileShopFabPosition() {
+    const root = document.documentElement;
+    syncMobileOverlayAnchors({ phase: document.getElementById("app")?.dataset.phase || "prep" });
+
+    if (root.dataset.prepLayout !== "mobile") {
+      return;
+    }
+    const phase = document.getElementById("app")?.dataset.phase;
+    if (phase !== "prep") return;
+
+    const tip = document.getElementById("sidebar-tooltip");
+    if (tip && !tip.classList.contains("hidden")
+      && typeof window.positionPrepTooltipDock === "function") {
+      window.positionPrepTooltipDock();
+    }
   }
 
   function setMobileBattleDisplayVars(displayW, displayH, logicalBattleW) {
@@ -772,38 +959,6 @@
     root.style.setProperty("--battle-field-display-w", `${Math.round(fieldW)}px`);
     root.style.setProperty("--battle-grid-gap-display", `${Math.round(gridGap)}px`);
     root.dataset.battleMobileFit = "true";
-  }
-
-  function syncMobileShopFabPosition() {
-    const root = document.documentElement;
-    if (root.dataset.prepLayout !== "mobile") {
-      root.style.removeProperty("--prep-shop-fab-top");
-      root.style.removeProperty("--prep-shop-fab-right");
-      return;
-    }
-    const phase = document.getElementById("app")?.dataset.phase;
-    if (phase !== "prep") return;
-    const island = document.getElementById("prep-field-island");
-    const toolbar = getBottomChrome();
-    if (!island || !toolbar) return;
-    const rect = island.getBoundingClientRect();
-    const heroLayer = document.querySelector("#app[data-phase=\"prep\"] .prep-character-layer");
-    const heroRect = heroLayer?.getBoundingClientRect();
-    const toolbarTop = toolbar.getBoundingClientRect().top;
-    const fabSize = 56;
-    let zoneTop = rect.bottom + 8;
-    let zoneBottom = toolbarTop - 8;
-    if (heroRect && heroRect.height > 48) {
-      zoneTop = heroRect.top + 8;
-      zoneBottom = heroRect.bottom - 8;
-    }
-    const centeredTop = Math.round((zoneTop + zoneBottom) / 2 - fabSize / 2);
-    const top = Math.max(zoneTop, Math.min(centeredTop, zoneBottom - fabSize));
-    root.style.setProperty("--prep-shop-fab-top", `${top}px`);
-    root.style.setProperty("--prep-shop-fab-right", "12px");
-    if (typeof window.positionPrepTooltipDock === "function") {
-      window.positionPrepTooltipDock();
-    }
   }
 
   const TABLET_BATTLE_AVATAR_VAR_NAMES = [
@@ -1502,11 +1657,6 @@
       setBattleLayoutVar("--tablet-battle-chrome-bottom", `${Math.max(hudReserve, 8)}px`);
     }
 
-    let scale = 0;
-
-    const w = 0;
-    const ch = 0;
-
     setBattleArenaLayout(true);
     setBattleHeroPlacement("flank-arena");
 
@@ -1519,15 +1669,19 @@
     setBattleLayoutVar("--desktop-battle-hero-img-h", `${heroImgH}px`);
     setBattleLayoutVar("--desktop-battle-hero-col-w", `${heroColW}px`);
     setBattleLayoutVar("--desktop-battle-thought-arena-min-h", `${arenaMin}px`);
-    setBattleLayoutVar("--battle-canvas-display-w", `${w}px`);
-    setBattleLayoutVar("--battle-canvas-display-h", `${ch}px`);
+    root.style.removeProperty("--battle-canvas-display-w");
+    root.style.removeProperty("--battle-canvas-display-h");
 
     if (mobileLayout) {
       setBattleLayoutVar("--mobile-battle-portrait-h", `${heroImgH}px`);
-      setMobileBattleDisplayVars(w, ch, cssW);
+      root.style.removeProperty("--battle-canvas-display-w");
+      root.style.removeProperty("--battle-canvas-display-h");
+      root.style.removeProperty("--battle-field-display-w");
+      root.style.removeProperty("--battle-grid-gap-display");
     }
 
-    setCanvasDisplaySize(canvas, w, ch);
+    // Рюкзак в бою — в popover; canvas схлопнут CSS, не ставим 0×0 (ломает координаты).
+    clearCanvasDisplaySize();
     syncMobileShopFabPosition();
     requestAnimationFrame(() => requestAnimationFrame(syncBattleSceneGridMetrics));
   }
@@ -1699,10 +1853,13 @@
         syncPrepHeroSlotHeight();
         const zones = measureLayoutZones();
         applyMeasuredZoneFit(zones);
+        syncMobileShopFabPosition();
         if (document.documentElement.style.getPropertyValue("--zone-fit-shrink")) {
           requestAnimationFrame(() => {
             fitCanvasDisplaySize();
-            applyMeasuredZoneFit(measureLayoutZones());
+            const refitZones = measureLayoutZones();
+            applyMeasuredZoneFit(refitZones);
+            syncMobileShopFabPosition();
           });
         }
       });
@@ -1862,6 +2019,10 @@
 
     syncBattleHudFeedDock();
 
+    if (typeof syncBattleHudSurfaceFlags === "function") syncBattleHudSurfaceFlags();
+
+    syncClassOverlayAnchors();
+
     scheduleCanvasFit();
     syncMobileShopFabPosition();
     syncPrepHeroSlotHeight();
@@ -1955,6 +2116,9 @@
   window.fitPrepCanvasToStage = fitCanvasDisplaySize;
   window.scheduleCanvasFit = scheduleCanvasFit;
   window.syncMobileShopFabPosition = syncMobileShopFabPosition;
+  window.syncMobileOverlayAnchors = syncMobileOverlayAnchors;
+  window.syncPrepMobileZoneAnchors = syncPrepMobileZoneAnchors;
+  window.syncClassOverlayAnchors = syncClassOverlayAnchors;
   window.syncBattleHudAnchors = syncBattleHudAnchors;
   window.syncFxCanvasGeometry = syncFxCanvasGeometry;
   window.syncBattleHudFeedDock = syncBattleHudFeedDock;
