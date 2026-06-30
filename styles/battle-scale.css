@@ -1,0 +1,32 @@
+/**
+ * Боевые масштабы по data-battle-profile — эмодзи, HP/stamina, портреты.
+ */
+
+html[data-battle-profile="phone-portrait"] #app[data-phase="battle"] .avatar-hero-hp-label,
+html[data-battle-profile="phone-portrait"] #app[data-phase="replay"] .avatar-hero-hp-label,
+html[data-battle-profile="phone-portrait"] #app[data-phase="battle"] .avatar-hero-stamina-label,
+html[data-battle-profile="phone-portrait"] #app[data-phase="replay"] .avatar-hero-stamina-label {
+  font-size: var(--font-xs);
+}
+
+html[data-battle-profile="phone-portrait"] #app[data-phase="battle"] .avatar-hero-hp-bar,
+html[data-battle-profile="phone-portrait"] #app[data-phase="replay"] .avatar-hero-hp-bar,
+html[data-battle-profile="phone-portrait"] #app[data-phase="battle"] .avatar-hero-stamina-bar,
+html[data-battle-profile="phone-portrait"] #app[data-phase="replay"] .avatar-hero-stamina-bar {
+  min-height: calc(14px * var(--ui-scale));
+}
+
+html[data-battle-profile="phone-landscape"] #app[data-phase="battle"] .battle-thought-body,
+html[data-battle-profile="phone-landscape"] #app[data-phase="replay"] .battle-thought-body {
+  font-size: max(1em, calc(var(--battle-thought-emoji-size, 72px) * 0.92));
+}
+
+html[data-battle-profile="phone-portrait"] #app[data-phase="battle"] .battle-thought-body,
+html[data-battle-profile="phone-portrait"] #app[data-phase="replay"] .battle-thought-body {
+  font-size: max(1em, calc(var(--battle-thought-emoji-size, 80px) * 0.92));
+}
+
+html[data-battle-profile="tablet-portrait"] #app[data-phase="battle"] .battle-hud-side,
+html[data-battle-profile="tablet-portrait"] #app[data-phase="replay"] .battle-hud-side {
+  z-index: calc(var(--z-layer-hud) + 2);
+}

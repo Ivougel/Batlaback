@@ -242,6 +242,23 @@ html[data-visual-experiment="true"] #app[data-phase="replay"] .avatar-hero-stage
   max-height: none !important;
 }
 
+/* Flank-arena: бюст-кроп и фикс. высота — иначе HP/стамина наезжают на портрет */
+html[data-visual-experiment="true"][data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .avatar-hero-stage,
+html[data-visual-experiment="true"][data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar-hero-stage {
+  max-height: var(--battle-hero-img-h, var(--desktop-battle-hero-img-h, 168px)) !important;
+  height: var(--battle-hero-img-h, var(--desktop-battle-hero-img-h, 168px)) !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+html[data-visual-experiment="true"][data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .portrait-zoom-clip img,
+html[data-visual-experiment="true"][data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .portrait-zoom-clip img,
+html[data-visual-experiment="true"][data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .profile-avatar-img,
+html[data-visual-experiment="true"][data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .profile-avatar-img {
+  object-fit: cover !important;
+  max-height: none !important;
+}
+
 html[data-visual-experiment="true"] #app[data-phase="battle"] .portrait-zoom-clip,
 html[data-visual-experiment="true"] #app[data-phase="replay"] .portrait-zoom-clip {
   transform: none !important;
@@ -374,8 +391,13 @@ html[data-visual-experiment="true"] .scene-bg {
 /* ─── Статусы ближе к герою ─── */
 
 html[data-visual-experiment="true"] .battle-hud-side .battle-hud-status-stack {
-  margin-top: -4px;
-  transform: translateY(-2px);
+  margin-top: 0;
+  transform: none;
+}
+
+html[data-visual-experiment="true"][data-battle-hero-placement="flank-arena"] .battle-hud-side .battle-hud-status-stack {
+  margin-top: calc(2px * var(--ui-scale));
+  transform: none;
 }
 
 html[data-visual-experiment="true"] .battle-hud-side .avatar-hero-bars {

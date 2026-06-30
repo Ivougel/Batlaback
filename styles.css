@@ -6313,8 +6313,11 @@ html[data-prep-layout="stacked"] #app[data-phase="prep"] .battle-canvas-stage {
 }
 
 html[data-prep-layout="stacked"] #app[data-phase="prep"][data-prep-side="player"] #shop-panel,
-html[data-prep-layout="stacked"] #app[data-phase="prep"][data-prep-side="enemy"] #shop-panel {
+html[data-prep-layout="stacked"] #app[data-phase="prep"][data-prep-side="enemy"] #shop-panel,
+html[data-prep-layout="stacked"] #app[data-phase="prep"] #shop-panel {
   width: 100%;
+  min-width: 0;
+  max-width: none;
   flex-shrink: 0;
 }
 
@@ -7653,6 +7656,9 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] {
 }
 
 html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .game-layout {
+  display: flex;
+  flex-direction: column;
+  grid-template-columns: none;
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
@@ -7705,6 +7711,10 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] {
 html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #shop-panel {
   flex: 1 1 auto;
   min-height: 0;
+  min-width: 0;
+  width: 100%;
+  max-width: none;
+  grid-column: auto;
   margin-top: var(--gap-xs);
   overflow: hidden;
   display: flex;

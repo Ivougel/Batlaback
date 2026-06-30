@@ -258,20 +258,20 @@
   /** Коэффициенты боевой раскладки по battleProfile (доли vh/vw, min/max). */
   const BATTLE_PROFILES = {
     "phone-portrait": {
-      heroFromVh: true, heroVh: 0.19, heroMin: 116, heroMax: 176,
-      arenaVh: 0.22, arenaMin: 108,
-      colMin: 132, colMax: 200, colShare: 0.46,
-      imgRatio: 0.46, imgMin: 76, imgMax: 104,
+      heroFromVh: true, heroVh: 0.24, heroMin: 128, heroMax: 192,
+      arenaVh: 0.26, arenaMin: 118,
+      colMin: 140, colMax: 220, colShare: 0.48,
+      imgRatio: 0.48, imgMin: 88, imgMax: 116,
       portraitZoom: 1.55, chromePad: 10, portraitObjectY: "8%",
-      emojiScale: 0.72, floorShare: 0.26, heroShare: 0.28,
+      emojiScale: 1, floorShare: 0.34, heroShare: 0.26,
     },
     "phone-landscape": {
-      heroFromVh: false, heroZoneShare: 0.28, heroMin: 96, heroMax: 140,
-      arenaVh: 0.22, arenaMin: 88,
-      colMin: 88, colMax: 128, colShare: 0.20,
-      imgRatio: 0.44, imgMin: 64, imgMax: 92,
-      portraitZoom: 0.88, chromePad: 8, portraitObjectY: "12%",
-      emojiScale: 0.86, floorShare: 0.34, heroShare: 0.30,
+      heroFromVh: false, heroZoneShare: 0.26, heroMin: 100, heroMax: 136,
+      arenaVh: 0.24, arenaMin: 96,
+      colMin: 92, colMax: 132, colShare: 0.21,
+      imgRatio: 0.46, imgMin: 72, imgMax: 100,
+      portraitZoom: 0.90, chromePad: 8, portraitObjectY: "12%",
+      emojiScale: 1, floorShare: 0.42, heroShare: 0.26,
     },
     "tablet-landscape-side": {
       heroFromVh: false, heroZoneShare: 0.30, heroMin: 190, heroMax: 320,
@@ -283,12 +283,12 @@
       tabletSide: true,
     },
     "tablet-portrait": {
-      heroFromVh: false, heroZoneShare: 0.36, heroMin: 180, heroMax: 320,
-      arenaVh: 0.10, arenaMin: 88,
-      colMin: 96, colMax: 150, colShare: 0.22,
-      imgRatio: 0.44, imgMin: 108, imgMax: 180,
-      portraitZoom: 1.05, chromePad: 12, portraitObjectY: "14%",
-      emojiScale: 1, floorShare: 0.22, heroShare: 0.34,
+      heroFromVh: false, heroZoneShare: 0.32, heroMin: 168, heroMax: 300,
+      arenaVh: 0.12, arenaMin: 96,
+      colMin: 100, colMax: 158, colShare: 0.22,
+      imgRatio: 0.44, imgMin: 112, imgMax: 172,
+      portraitZoom: 1.02, chromePad: 12, portraitObjectY: "14%",
+      emojiScale: 1, floorShare: 0.28, heroShare: 0.30,
     },
     "desktop-portrait": {
       heroFromVh: false, heroZoneShare: 0.28, heroMin: 200, heroMax: 340,
@@ -609,10 +609,20 @@
       if (!slot || !hud) return;
 
       const shell = slot.querySelector(".avatar-hero-shell");
-      const anchor = shell?.querySelector(".avatar-hero-stage") || shell || slot;
+      const upper = shell?.querySelector(".avatar-hero-upper");
+      const badge = shell?.querySelector(".avatar-hero-weapon-badge");
+      const stage = shell?.querySelector(".avatar-hero-stage");
+      const anchor = stage || upper || shell || slot;
       const anchorRect = anchor.getBoundingClientRect();
       const bars = hud.querySelector(".avatar-hero-bars");
-      const barsH = bars?.offsetHeight || 52;
+
+      let anchorBottom = anchorRect.bottom;
+      if (badge) {
+        const badgeRect = badge.getBoundingClientRect();
+        if (badgeRect.height > 2) anchorBottom = badgeRect.bottom;
+      } else if (upper) {
+        anchorBottom = upper.getBoundingClientRect().bottom;
+      }
 
       let hudLeft = anchorRect.left - vpRect.left;
       let hudWidth = Math.max(anchorRect.width, 120);
@@ -630,9 +640,9 @@
         }
       }
 
-      const barsGap = Math.round(4 * readCssPx("--ui-scale", 1));
+      const barsGap = Math.round(6 * readCssPx("--ui-scale", 1));
       hud.style.left = `${Math.round(hudLeft)}px`;
-      hud.style.top = `${Math.max(0, Math.round(anchorRect.bottom - vpRect.top + barsGap))}px`;
+      hud.style.top = `${Math.max(0, Math.round(anchorBottom - vpRect.top + barsGap))}px`;
       hud.style.width = `${Math.round(hudWidth)}px`;
       hud.style.maxWidth = `${Math.round(hudWidth)}px`;
     });
@@ -1095,6 +1105,10 @@
 
     if (typeof ThoughtArena !== "undefined" && ThoughtArena.onResize) {
       ThoughtArena.onResize();
+    }
+    if (typeof BattleHeroAnchor !== "undefined") {
+      const emojiPx = BattleHeroAnchor.thoughtSlotEmojiSize(vmin);
+      root.style.setProperty("--battle-thought-emoji-size", `${emojiPx}px`);
     }
     if (!opts.skipEquipRelayout
       && typeof ArenaEquipment !== "undefined" && ArenaEquipment.onResize) {

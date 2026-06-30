@@ -45,6 +45,44 @@ function box(page, selector) {
 
 const CASES = [
   {
+    id: "iphone-portrait-battle-emoji",
+    device: devices["iPhone 14 Pro Max"],
+    async run(page) {
+      await quickStart(page);
+      await page.evaluate(() => startBattle());
+      await page.waitForFunction(() => document.getElementById("app")?.dataset.phase === "battle");
+      await page.waitForFunction(
+        () => !document.getElementById("battle-countdown-overlay")
+          ?.classList.contains("battle-countdown-overlay-visible"),
+        { timeout: 12000 },
+      );
+      await page.waitForTimeout(1000);
+      await page.evaluate(() => {
+        window.applyUiLayout?.();
+        window.scheduleCanvasFit?.();
+      });
+      await page.waitForTimeout(600);
+
+      const m = await page.evaluate(() => {
+        const floor = document.getElementById("battle-thought-arena")?.getBoundingClientRect();
+        const emojiPx = window.BattleHeroAnchor?.thoughtSlotEmojiSize?.() ?? 0;
+        const playerHud = document.getElementById("battle-hud-player")?.getBoundingClientRect();
+        const stage = document.querySelector("#player-avatar-slot .avatar-hero-stage")?.getBoundingClientRect();
+        return {
+          floorH: floor?.height ?? 0,
+          emojiPx,
+          floorRatio: floor && emojiPx ? emojiPx / floor.height : 0,
+          hudTop: playerHud?.top ?? 0,
+          stageBottom: stage?.bottom ?? 0,
+        };
+      });
+      assert(m.floorH > 48, "combat floor too small");
+      assert(m.emojiPx >= 68, `emoji too small: ${m.emojiPx}px`);
+      assert(m.floorRatio >= 0.38, `emoji/floor ratio low: ${m.floorRatio.toFixed(2)}`);
+      assert(m.hudTop >= m.stageBottom - 4, `HUD overlaps portrait: hud=${m.hudTop} stage=${m.stageBottom}`);
+    },
+  },
+  {
     id: "iphone-portrait-prep-hero",
     device: devices["iPhone 14 Pro Max"],
     async run(page) {
@@ -97,6 +135,42 @@ const CASES = [
       assert(floor.bottom <= vh + 4, `floor overflows: ${floor.bottom} > ${vh}`);
       assert(scene.top >= -4, `scene clipped: top=${scene.top}`);
       assert(floor.top >= scene.bottom - 12, `floor should sit below portraits: floor.top=${floor.top} scene.bottom=${scene.bottom}`);
+    },
+  },
+  {
+    id: "ipad-portrait-shop-scroll",
+    device: devices["iPad Mini"],
+    async run(page) {
+      await quickStart(page);
+      const surface = await page.evaluate(() => document.documentElement.dataset.uiSurface);
+      assert(surface === "tablet-stacked", `expected tablet-stacked, got ${surface}`);
+
+      const shop = await page.evaluate(() => {
+        const panel = document.getElementById("shop-panel");
+        const slots = panel?.querySelector(".shop-slots");
+        if (!panel || !slots) return null;
+        const panelCs = getComputedStyle(panel);
+        const slotsCs = getComputedStyle(slots);
+        const pr = panel.getBoundingClientRect();
+        return {
+          panelOverflow: panelCs.overflowY,
+          slotsOverflow: slotsCs.overflowY,
+          scrollable: slots.scrollHeight > slots.clientHeight + 2,
+          panelBottom: pr.bottom,
+          vh: window.innerHeight,
+        };
+      });
+
+      assert(shop, "shop panel missing");
+      assert(shop.slotsOverflow === "auto" || shop.slotsOverflow === "scroll", `shop-slots overflow: ${shop.slotsOverflow}`);
+      assert(shop.panelBottom <= shop.vh + 6, `shop overflows viewport: bottom=${shop.panelBottom} vh=${shop.vh}`);
+
+      const layout = await page.evaluate(() => {
+        const shopEl = document.getElementById("shop-panel");
+        const sr = shopEl?.getBoundingClientRect();
+        return { shopW: sr?.width ?? 0, vw: window.innerWidth };
+      });
+      assert(layout.shopW >= layout.vw * 0.88, `shop too narrow: ${layout.shopW}px vs vw ${layout.vw}`);
     },
   },
   {

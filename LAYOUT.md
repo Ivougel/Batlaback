@@ -59,6 +59,28 @@ Touch-цели: `min-height: var(--touch-target-min)` (≥ 44px).
 | `surface-profiles.css` | типографика / touch по поверхностям |
 | `container-queries.css` | карточки class/shop по размеру контейнера |
 | `battle-arena-layout.css` | `data-battle-hero-placement="flank-arena"` |
+| `battle-scale.css` | `data-battle-profile` — эмодзи, HP/stamina |
+
+## Автомасштаб — что уже есть / что осталось
+
+**Готово (prep):** `--ui-scale`, `--type-scale`, `--game-scale`, зоны, fit по профилю, CSS по `data-ui-surface`.
+
+**Готово (battle):** `BATTLE_PROFILES` + `BattleHeroAnchor` (эмодзи от combat floor), `syncBattleHudAnchors` (HP под портретом), `syncFlankArenaHeroAnchors`.
+
+**Осталось (backlog):**
+- Предметы на поле боя / FX — частично через `--game-scale`, без единого профиля
+- Модалки (рецепты, события) — фикс. px, не читают `--ui-scale`
+- Class overlay — container queries, но не полный fluid type
+- Replay / damage float — canvas coords, не viewport %
+- **VISUAL EXP** (`?vexp=1`) — косметика; при багах отключить: `?vexp=0` или `VisualExperiment.disable()`
+
+### Этап J (battle auto-scale)
+
+- Убран штраф `--battle-emoji-scale` 0.72 на phone
+- `EMOJI_SIZE_BY_PROFILE` — крупнее на phone/tablet, центр в высоком combat floor
+- `syncBattleHudAnchors` — якорь под `.avatar-hero-upper` / badge, не на тело портрета
+- `visual-experiment.css` — flank-arena сохраняет бюст-кроп (HP не на героя)
+- `battle-scale.css` — типографика HP/эмодзи по `data-battle-profile`
 
 ## Опасный паттерн селекторов
 
@@ -77,7 +99,7 @@ html[data-ui-surface="phone-drawer"][data-prep-layout="mobile"] .foo { }
 npm run test:layout   # boot + class overlay, 5 профилей
 npm run test:phases   # prep + battle после quick start, 3 профиля
 npm run test:geometry # геометрия зон hero/canvas/shop
-npm run test:snapshots # pixel-snapshots class overlay (Playwright)
+npm run test:snapshots # pixel-snapshots class overlay + battle arena (Playwright)
 npm run test:ui       # все четыре набора
 ```
 
@@ -111,6 +133,13 @@ npm run test:ui       # все четыре набора
 - **`BATTLE_PROFILES["phone-landscape"]`** — меньше hero row, больше floor
 - **`test:snapshots`** — Playwright `toHaveScreenshot` для class overlay (4 профиля)
 - **`test:phases`** — добавлен iPhone landscape (prep + battle in viewport)
+
+### Этап I (battle snapshots, iPad shop scroll)
+
+- **`layout-battle-snapshots.spec.mjs`** — снапшоты `#app[data-phase="battle"] .prep-field-column` (iPhone portrait, iPad landscape, desktop); пауза боя + mask FX/countdown
+- **`tablet-stacked.css`** — shop/bench: flex-колонка, `overflow-y: auto`, `overscroll-behavior: contain`
+- **`test:geometry`** — `ipad-portrait-shop-scroll` (панель в viewport, слоты скроллятся)
+- **`.gitignore`** — `test-results/`
 
 Проверяет 5 профилей: iPhone portrait/landscape, iPad portrait/landscape, desktop.
 
