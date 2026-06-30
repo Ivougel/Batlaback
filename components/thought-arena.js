@@ -100,9 +100,9 @@ const ThoughtArena = (() => {
   function thoughtDiameterPx(glyphCount = 1) {
     const onHeroCard = isAnchoredFlankArena();
     if (onHeroCard && typeof BattleHeroAnchor !== "undefined") {
-      const slotSize = BattleHeroAnchor.thoughtSlotSize();
+      const emojiSize = BattleHeroAnchor.thoughtSlotEmojiSize();
       const scale = glyphCount > 1 ? 0.86 : 0.94;
-      return Math.round(slotSize * scale);
+      return Math.round(emojiSize * scale);
     }
     const ratio = glyphCount > 1
       ? (onHeroCard ? HERO_CARD_CLUSTER_SIZE_RATIO : CLUSTER_SIZE_RATIO)

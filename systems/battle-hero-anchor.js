@@ -58,11 +58,21 @@ const BattleHeroAnchor = (() => {
     return Number.isFinite(n) ? n : fallback;
   }
 
-  function thoughtSlotSize(vmin = viewportMin()) {
+  function thoughtSlotEmojiSize(vmin = viewportMin()) {
     const floor = getCombatFloorRect();
-    const fromFloor = floor ? Math.round(floor.height * 0.70) : 0;
+    const fromFloor = floor ? Math.round(floor.height * 0.68) : 0;
     const fromVmin = Math.round(vmin * 0.19);
     return Math.round(Math.min(172, Math.max(100, Math.max(fromFloor, fromVmin))));
+  }
+
+  function thoughtSlotHaloPx(emojiSize = thoughtSlotEmojiSize()) {
+    return Math.round(emojiSize * 0.36);
+  }
+
+  /** Размер контейнера слота (эмодзи + орбита спутников). */
+  function thoughtSlotSize(vmin = viewportMin()) {
+    const emoji = thoughtSlotEmojiSize(vmin);
+    return emoji + thoughtSlotHaloPx(emoji) * 2;
   }
 
   function getThoughtSlotEl(side) {
@@ -107,21 +117,26 @@ const BattleHeroAnchor = (() => {
     return null;
   }
 
-  /** Позиция thought-slot в viewport (px) — под колонкой героя, в combat floor. */
+  /** Позиция thought-slot в viewport (px) — под колонкой героя, у нижнего края combat floor. */
   function getThoughtSlotAnchor(side) {
     const floor = getCombatFloorRect();
-    const size = thoughtSlotSize();
+    const emojiSize = thoughtSlotEmojiSize();
+    const halo = thoughtSlotHaloPx(emojiSize);
+    const containerSize = emojiSize + halo * 2;
     const cx = getHeroColumnCenterX(side);
 
     if (floor && cx != null) {
       const gap = thoughtSlotGapPx();
-      const cy = floor.top + gap + size / 2;
+      const cy = floor.bottom - gap - emojiSize / 2;
       return {
         cx,
         cy,
-        top: cy - size / 2,
-        left: cx - size / 2,
-        size,
+        emojiSize,
+        halo,
+        containerSize,
+        top: cy - containerSize / 2,
+        left: cx - containerSize / 2,
+        size: containerSize,
       };
     }
 
@@ -130,12 +145,16 @@ const BattleHeroAnchor = (() => {
 
     const gap = thoughtSlotGapPx();
     const fallbackCx = ar.left + ar.width / 2;
+    const cy = ar.bottom + gap + emojiSize / 2;
     return {
       cx: fallbackCx,
-      cy: ar.bottom + gap + size / 2,
-      top: ar.bottom + gap,
-      left: fallbackCx - size / 2,
-      size,
+      cy,
+      emojiSize,
+      halo,
+      containerSize,
+      top: cy - containerSize / 2,
+      left: fallbackCx - containerSize / 2,
+      size: containerSize,
     };
   }
 
@@ -156,7 +175,7 @@ const BattleHeroAnchor = (() => {
       return {
         x: anchor.cx,
         y: anchor.cy,
-        size: anchor.size,
+        size: anchor.emojiSize ?? anchor.size,
       };
     }
 
@@ -179,6 +198,8 @@ const BattleHeroAnchor = (() => {
     getCombatFloorEl,
     getCombatFloorRect,
     thoughtSlotGapPx,
+    thoughtSlotEmojiSize,
+    thoughtSlotHaloPx,
     thoughtSlotSize,
     getThoughtSlotEl,
     getAvatarAnchorRect,

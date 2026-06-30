@@ -288,6 +288,13 @@ html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar
   width: 100%;
 }
 
+html[data-battle-combat-floor="true"] #app[data-phase="battle"] .avatar-thought-slot,
+html[data-battle-combat-floor="true"] #app[data-phase="replay"] .avatar-thought-slot {
+  overflow: visible !important;
+  clip-path: none;
+  contain: none;
+}
+
 html[data-battle-combat-floor="true"] #app[data-phase="battle"] .avatar-thought-slot .battle-thought-body,
 html[data-battle-combat-floor="true"] #app[data-phase="replay"] .avatar-thought-slot .battle-thought-body {
   filter: drop-shadow(0 8px 22px rgba(0, 0, 0, 0.6));

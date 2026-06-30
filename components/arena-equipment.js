@@ -65,30 +65,30 @@ const ArenaEquipment = (() => {
     amulet: { y: 0.38, xBias: 0.35 },
   };
 
-  /** Орбита вокруг эмодзи-аватара игрока (смещение от центра слота, в долях vmin). */
+  /** Компактная орбита-спутники вокруг главного эмодзи (доли радиуса орбиты). */
   const PLAYER_EMOJI_ORBIT = {
-    head:      { dx: 0.0,  dy: -1.05 },
+    head:      { dx: 0.0,   dy: -0.95 },
     amulet:    { dx: -0.82, dy: -0.42 },
-    chest:     { dx: 0.38,  dy: 0.12 },
-    leftHand:  { dx: -1.0,  dy: 0.28 },
-    rightHand: { dx: 0.72,  dy: 0.06 },
-    ring1:     { dx: 0.58,  dy: -0.58 },
-    ring2:     { dx: 0.72,  dy: 0.55 },
-    gloves:    { dx: -0.62, dy: 0.78 },
-    boots:     { dx: 0.15,  dy: 0.98 },
+    chest:     { dx: 0.38,  dy: -0.12 },
+    leftHand:  { dx: -0.95, dy: 0.18 },
+    rightHand: { dx: 0.78,  dy: 0.02 },
+    ring1:     { dx: 0.62,  dy: -0.55 },
+    ring2:     { dx: 0.68,  dy: 0.48 },
+    gloves:    { dx: -0.58, dy: 0.62 },
+    boots:     { dx: 0.12,  dy: 0.92 },
   };
 
-  /** Зеркальная орбита врага — предметы остаются у своего аватара на правой половине экрана. */
+  /** Зеркальная орбита врага. */
   const ENEMY_EMOJI_ORBIT = {
-    head:      { dx: 0.0,  dy: -1.05 },
+    head:      { dx: 0.0,   dy: -0.95 },
     amulet:    { dx: 0.82,  dy: -0.42 },
-    chest:     { dx: -0.38, dy: 0.12 },
-    leftHand:  { dx: 1.0,   dy: 0.28 },
-    rightHand: { dx: -0.72, dy: 0.06 },
-    ring1:     { dx: -0.58, dy: -0.58 },
-    ring2:     { dx: -0.72, dy: 0.55 },
-    gloves:    { dx: 0.62,  dy: 0.78 },
-    boots:     { dx: -0.15, dy: 0.98 },
+    chest:     { dx: -0.38, dy: -0.12 },
+    leftHand:  { dx: 0.95,  dy: 0.18 },
+    rightHand: { dx: -0.78, dy: 0.02 },
+    ring1:     { dx: -0.62, dy: -0.55 },
+    ring2:     { dx: -0.68, dy: 0.48 },
+    gloves:    { dx: 0.58,  dy: 0.62 },
+    boots:     { dx: -0.12, dy: 0.92 },
   };
 
   const EMOJI_ORBIT_Z_BASE = 30;
@@ -253,22 +253,44 @@ const ArenaEquipment = (() => {
   }
 
   function equipDiameterForBody(body) {
+    if (usesEmojiAvatarEquipHome()) {
+      const emoji = typeof BattleHeroAnchor !== "undefined"
+        ? BattleHeroAnchor.thoughtSlotEmojiSize()
+        : Math.round(viewportMin() * 0.12);
+      const ratio = body.isWeapon ? 0.24 : 0.20;
+      return Math.round(Math.min(emoji * 0.34, viewportMin() * ratio));
+    }
     const ratio = body.isWeapon ? SIZE_RATIO : GEAR_SIZE_RATIO;
     return viewportMin() * ratio;
   }
 
-  /** Радиус орбиты вокруг эмодзи-аватара (~размер thought-slot), не весь viewport. */
+  /** Радиус орбиты спутников — в пределах halo вокруг эмодзи. */
   function orbitSpanPx() {
-    const slot = typeof BattleHeroAnchor !== "undefined"
-      ? BattleHeroAnchor.thoughtSlotSize()
+    const emoji = typeof BattleHeroAnchor !== "undefined"
+      ? BattleHeroAnchor.thoughtSlotEmojiSize()
       : Math.round(Math.min(112, Math.max(68, viewportMin() * 0.12)));
-    return slot * 0.88;
+    const halo = typeof BattleHeroAnchor !== "undefined"
+      ? BattleHeroAnchor.thoughtSlotHaloPx(emoji)
+      : Math.round(emoji * 0.36);
+    return Math.max(28, Math.min(halo * 0.92, emoji * 0.42));
+  }
+
+  function clampOrbitOffset(ox, oy, maxRadius) {
+    const r = Math.hypot(ox, oy);
+    if (r <= maxRadius || r < 0.001) return { ox, oy };
+    const scale = maxRadius / r;
+    return { ox: ox * scale, oy: oy * scale };
   }
 
   function orbitOffsetPx(side, slotId) {
     const off = emojiOrbitOffset(side, slotId);
     const span = orbitSpanPx();
-    return { ox: off.dx * span, oy: off.dy * span };
+    const emoji = typeof BattleHeroAnchor !== "undefined"
+      ? BattleHeroAnchor.thoughtSlotEmojiSize()
+      : Math.round(viewportMin() * 0.12);
+    const itemR = Math.round(emoji * 0.11);
+    const maxR = Math.max(span * 0.96 - itemR, span * 0.5);
+    return clampOrbitOffset(off.dx * span, off.dy * span, maxR);
   }
 
   function getEquipViewportHome(side, slotId) {
@@ -843,8 +865,8 @@ const ArenaEquipment = (() => {
     const vmin = viewportMin();
     body.wobblePhase += dt * body.wobbleSpeed;
 
-    const wobbleX = Math.sin(body.wobblePhase) * body.wobbleAmp * vmin * 0.0025;
-    const wobbleY = Math.cos(body.wobblePhase * 0.85) * body.wobbleAmp * vmin * 0.002;
+    const wobbleX = Math.sin(body.wobblePhase) * body.wobbleAmp * vmin * 0.0012;
+    const wobbleY = Math.cos(body.wobblePhase * 0.85) * body.wobbleAmp * vmin * 0.001;
 
     if (body.orbitSlotMounted && !body.attack) {
       const off = orbitOffsetPx(body.side, body.slotId);
