@@ -3,6 +3,7 @@
     "test:layout": "node tools/layout-profiles.test.mjs",
     "test:phases": "node tools/layout-phases.test.mjs",
     "test:geometry": "node tools/layout-geometry.test.mjs",
+    "test:qa": "node tools/layout-qa-audit.mjs",
     "test:snapshots": "playwright test",
     "test:snapshots:update": "playwright test --update-snapshots",
     "test:ui": "npm run test:layout && npm run test:phases && npm run test:geometry && npm run test:snapshots"

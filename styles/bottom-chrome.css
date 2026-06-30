@@ -279,7 +279,7 @@ html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .bottom-ch
   flex: 1 1 0;
   min-width: 0;
   max-width: 120px;
-  min-height: 40px;
+  min-height: var(--touch-target-min);
   padding: 6px 8px;
   font-size: var(--font-sm);
   overflow: hidden;
@@ -290,13 +290,13 @@ html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .bottom-ch
 html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .bottom-chrome .prep-settings-btn,
 html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .bottom-chrome .prep-settings-btn {
   flex: 0 0 auto;
-  min-width: 40px;
-  min-height: 40px;
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
 }
 
 html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .btn-fight-header,
 html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .btn-fight-header {
-  min-height: 40px;
+  min-height: var(--touch-target-min);
 }
 
 /* ─── Mobile prep ─── */
@@ -373,20 +373,20 @@ html[data-prep-layout="mobile"] body:has(#app[data-phase="prep"]) .bottom-chrome
 }
 
 html[data-prep-layout="mobile"] body:has(#app[data-phase="prep"]) .bottom-chrome .prep-side-btn {
-  min-height: 40px;
+  min-height: var(--touch-target-min);
 }
 
 html[data-prep-layout="mobile"] body:has(#app[data-phase="prep"]) .bottom-chrome .prep-settings-btn {
   flex: 0 0 auto;
-  min-width: 40px;
-  min-height: 40px;
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
 }
 
 html[data-prep-layout="mobile"] body:has(#app[data-phase="prep"]) #btn-combat-feed {
-  min-height: 40px;
-  min-width: 40px;
-  width: 40px;
-  height: 40px;
+  min-height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+  width: var(--touch-target-min);
+  height: var(--touch-target-min);
   padding: 0;
   font-size: 1rem;
 }

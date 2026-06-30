@@ -176,7 +176,7 @@ self.PWA_PRECACHE_URLS = [
   "styles/battle-scale.css",
   "styles/battle-scale.css?v=3",
   "styles/bottom-chrome.css",
-  "styles/bottom-chrome.css?v=8",
+  "styles/bottom-chrome.css?v=9",
   "styles/combat-feed.css",
   "styles/combat-feed.css?v=2",
   "styles/container-queries.css",

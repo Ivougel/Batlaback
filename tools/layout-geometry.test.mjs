@@ -359,6 +359,7 @@ const CASES = [
           shopLeft: shop?.left ?? 0,
           fieldRight: fieldCol?.right ?? 0,
           fightW: fight?.width ?? 0,
+          fightH: fight?.height ?? 0,
           barW: bar?.width ?? 0,
           heroImgH: heroImg?.height ?? 0,
           heroLayerH: hero?.height ?? 0,
@@ -369,6 +370,7 @@ const CASES = [
       assert(m.canvasH >= 120, `canvas too small: ${m.canvasH}px`);
       assert(m.shopLeft >= m.fieldRight - 12, `shop not on right: shop.left=${m.shopLeft} field.right=${m.fieldRight}`);
       assert(m.heroTop >= m.islandBottom - 12, `hero should sit below canvas: hero.top=${m.heroTop} island.bottom=${m.islandBottom}`);
+      assert(m.fightH >= 42, `fight btn too short on landscape side prep: ${m.fightH}px`);
       assert(m.fightW <= m.barW * 0.42, `toolbar too wide/spread: fight=${m.fightW} bar=${m.barW}`);
       if (m.heroImgH > 0 && m.heroLayerH > 0) {
         assert(m.heroImgH <= m.heroLayerH * 1.08, `hero image cropped: img=${m.heroImgH} layer=${m.heroLayerH}`);
