@@ -1,27 +1,67 @@
 /**
- * Модалки — container queries + токены (recipe, settings, run complete, battle result).
+ * Модалки — container queries + токены.
+ * recipe, settings, run complete, battle result, class overlay, battle detail, board preview.
  */
+
+.overlay > .modal {
+  padding: calc(20px * var(--ui-scale));
+  border-radius: calc(16px * var(--ui-scale));
+  max-width: min(96vw, calc(440px * var(--ui-scale)));
+}
+
+.overlay > .modal h2 {
+  font-size: var(--font-xl);
+  margin-bottom: calc(10px * var(--ui-scale));
+}
+
+.overlay > .modal p {
+  font-size: var(--font-md);
+  margin-bottom: calc(16px * var(--ui-scale));
+}
 
 #recipe-book-overlay:not(.hidden),
 #settings-overlay:not(.hidden),
 #battle-result-overlay:not(.hidden),
-#overlay:not(.hidden) {
+#overlay:not(.hidden),
+#battle-detail-overlay:not(.hidden),
+#board-preview-overlay:not(.hidden) {
   container-type: size;
   container-name: game-modal;
+}
+
+#class-overlay:not(.hidden) {
+  container-type: size;
+  container-name: class-overlay-modal;
 }
 
 .recipe-book-modal,
 .settings-modal,
 .battle-result-modal,
-.run-complete-modal {
+.run-complete-modal,
+.battle-detail-modal,
+.board-preview-modal {
   max-height: min(92dvh, var(--overlay-max-h, calc(100dvh - 12px)));
+}
+
+#class-overlay .class-modal {
+  max-height: min(94dvh, var(--overlay-max-h, calc(100dvh - 12px)));
 }
 
 .recipe-book-heading h2,
 .settings-header h2,
 .battle-result-modal h2,
-.run-complete-modal h2 {
+.run-complete-modal h2,
+.battle-detail-modal h2,
+.board-preview-modal h2 {
   font-size: var(--font-xl);
+}
+
+.class-modal-title {
+  font-size: var(--font-2xl);
+}
+
+.class-modal-header .class-subtitle {
+  font-size: var(--font-md);
 }
 
 .recipe-book-close,
@@ -34,14 +74,18 @@
   .recipe-book-modal,
   .settings-modal,
   .battle-result-modal,
-  .run-complete-modal {
+  .run-complete-modal,
+  .battle-detail-modal,
+  .board-preview-modal {
     max-height: min(94cqh, var(--overlay-max-h, 96dvh));
     padding: calc(12px * var(--ui-scale));
   }
 
   .recipe-book-body,
   #battle-result-accordions,
-  #run-complete-accordions {
+  #run-complete-accordions,
+  .battle-detail-modal .battle-detail-body,
+  .board-preview-modal .board-preview-body {
     flex: 1 1 auto;
     min-height: 0;
     max-height: min(58cqh, 52dvh);
@@ -53,12 +97,16 @@
 
 @container game-modal (max-width: 520px) {
   .recipe-book-modal,
-  .settings-modal {
+  .settings-modal,
+  .battle-detail-modal,
+  .board-preview-modal {
     width: min(96cqw, 96vw);
   }
 
   .recipe-book-heading h2,
-  .settings-header h2 {
+  .settings-header h2,
+  .battle-detail-modal h2,
+  .board-preview-modal h2 {
     font-size: var(--font-lg);
   }
 
@@ -72,8 +120,43 @@
   }
 }
 
+@container class-overlay-modal (max-height: 720px) {
+  #class-overlay .class-modal-title {
+    font-size: var(--font-xl);
+  }
+
+  #class-overlay .class-modal-header .class-subtitle {
+    font-size: var(--font-sm);
+  }
+
+  #class-overlay .class-modal .glass-card {
+    padding: calc(10px * var(--ui-scale));
+  }
+}
+
+@container class-overlay-modal (max-width: 520px) {
+  #class-overlay .class-modal-title {
+    font-size: var(--font-lg);
+  }
+
+  #class-overlay .class-modal-eyebrow {
+    font-size: var(--font-xs);
+  }
+
+  #class-overlay .class-modal .game-mode-card.glass-card {
+    padding: calc(10px * var(--ui-scale)) calc(12px * var(--ui-scale));
+  }
+}
+
 html[data-ui-tier="phone"] .recipe-book-modal,
-html[data-ui-tier="phone"] .settings-modal {
+html[data-ui-tier="phone"] .settings-modal,
+html[data-ui-tier="phone"] .battle-detail-modal,
+html[data-ui-tier="phone"] .board-preview-modal {
   width: min(96vw, 100%);
   padding: calc(14px * var(--ui-scale));
+}
+
+html[data-ui-tier="phone"] #class-overlay .class-modal {
+  width: min(96vw, 100%);
+  padding: calc(12px * var(--ui-scale));
 }

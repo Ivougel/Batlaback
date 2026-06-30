@@ -1,0 +1,100 @@
+/**
+ * Replay timeline — bottom chrome, масштаб через --ui-scale / % ширины.
+ */
+
+body:has(#app[data-phase="replay"]) .replay-timeline:not(.hidden) {
+  display: flex;
+}
+
+body:has(#app[data-phase="replay"]) .replay-timeline:not(.hidden) ~ .combat-feed-dock,
+body:has(#app[data-phase="replay"]) .replay-timeline:not(.hidden) ~ .combat-feed-dock .btn-combat-feed {
+  display: none !important;
+}
+
+.replay-timeline {
+  display: none;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: clamp(6px, 1.6vw, 10px);
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0 clamp(4px, 1vw, 8px);
+  box-sizing: border-box;
+}
+
+.replay-timeline-label {
+  flex: 0 0 auto;
+  font-size: var(--font-md);
+  line-height: 1;
+  opacity: 0.85;
+}
+
+.replay-timeline-track {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: min(42vw, 320px);
+  width: 100%;
+  height: max(10px, calc(12px * var(--ui-scale)));
+  border-radius: 999px;
+  background: rgba(48, 54, 61, 0.9);
+  border: 1px solid rgba(139, 148, 158, 0.35);
+  cursor: pointer;
+  touch-action: none;
+  overflow: visible;
+}
+
+.replay-timeline-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(88, 166, 255, 0.55), rgba(240, 193, 75, 0.75));
+  pointer-events: none;
+}
+
+.replay-timeline-thumb {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: max(14px, calc(16px * var(--ui-scale)));
+  height: max(14px, calc(16px * var(--ui-scale)));
+  margin-left: max(-7px, calc(-8px * var(--ui-scale)));
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: #f0c14b;
+  border: 2px solid #1c2128;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+
+.replay-timeline-time {
+  flex: 0 0 auto;
+  min-width: 3.2em;
+  font-size: var(--font-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  text-align: right;
+  white-space: nowrap;
+}
+
+html[data-ui-tier="phone"] body:has(#app[data-phase="replay"]) .bottom-chrome-center {
+  flex: 1 1 100%;
+  order: 2;
+  width: 100%;
+  min-width: 0;
+}
+
+html[data-ui-tier="phone"] body:has(#app[data-phase="replay"]) .replay-timeline {
+  width: 100%;
+}
+
+html[data-ui-tier="phone"] body:has(#app[data-phase="replay"]) .replay-timeline-track {
+  min-width: 0;
+}
+
+html[data-ui-tier="phone"] body:has(#app[data-phase="replay"]) .replay-timeline-label {
+  display: none;
+}

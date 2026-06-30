@@ -263,6 +263,7 @@
       imgRatio: 0.48, imgMin: 88, imgMax: 116,
       portraitZoom: 1.55, chromePad: 10, portraitObjectY: "8%",
       emojiScale: 1, floorShare: 0.34, heroShare: 0.26,
+      fxFloatScale: 0.9, fxProjectileScale: 0.9,
     },
     "phone-landscape": {
       heroFromVh: false, heroZoneShare: 0.30, heroMin: 108, heroMax: 148,
@@ -271,6 +272,7 @@
       imgRatio: 0.46, imgMin: 72, imgMax: 100,
       portraitZoom: 0.90, chromePad: 8, portraitObjectY: "12%",
       emojiScale: 1, floorShare: 0.42, heroShare: 0.26,
+      fxFloatScale: 0.86, fxProjectileScale: 0.88,
     },
     "tablet-landscape-side": {
       heroFromVh: false, heroZoneShare: 0.28, heroMin: 180, heroMax: 300,
@@ -280,6 +282,7 @@
       portraitZoom: 0.84, chromePad: 14, portraitObjectY: "14%",
       emojiScale: 1, floorShare: 0.30, heroShare: 0.28,
       tabletSide: true,
+      fxFloatScale: 1, fxProjectileScale: 1,
     },
     "tablet-portrait": {
       heroFromVh: false, heroZoneShare: 0.32, heroMin: 168, heroMax: 300,
@@ -288,6 +291,7 @@
       imgRatio: 0.44, imgMin: 112, imgMax: 172,
       portraitZoom: 1.02, chromePad: 12, portraitObjectY: "14%",
       emojiScale: 1, floorShare: 0.28, heroShare: 0.30,
+      fxFloatScale: 0.94, fxProjectileScale: 0.94,
     },
     "desktop-portrait": {
       heroFromVh: false, heroZoneShare: 0.28, heroMin: 200, heroMax: 340,
@@ -296,6 +300,7 @@
       imgRatio: 0.44, imgMin: 140, imgMax: 200,
       portraitZoom: 0.95, chromePad: 20, portraitObjectY: "16%",
       emojiScale: 1, floorShare: 0.24, heroShare: 0.28,
+      fxFloatScale: 1, fxProjectileScale: 1,
     },
     "desktop-landscape": {
       heroFromVh: false, heroZoneShare: 0.28, heroMin: 200, heroMax: 340,
@@ -304,6 +309,7 @@
       imgRatio: 0.44, imgMin: 140, imgMax: 200,
       portraitZoom: 0.95, chromePad: 20, portraitObjectY: "16%",
       emojiScale: 1, floorShare: 0.24, heroShare: 0.28,
+      fxFloatScale: 1, fxProjectileScale: 1,
     },
   };
 
@@ -334,9 +340,18 @@
     };
   }
 
-  function applyBattleProfileDataset(root, profileKey) {
+  function applyBattleFxScaleVars(profileKey) {
     const cfg = BATTLE_PROFILES[profileKey] || BATTLE_PROFILES["desktop-landscape"];
+    const root = document.documentElement;
+    const fx = cfg.fxFloatScale ?? 1;
+    const proj = cfg.fxProjectileScale ?? fx;
+    root.style.setProperty("--fx-float-scale", String(fx));
+    root.style.setProperty("--fx-projectile-scale", String(proj));
+  }
+
+  function applyBattleProfileDataset(root, profileKey) {
     root.dataset.battleProfile = profileKey;
+    applyBattleFxScaleVars(profileKey);
     if (profileKey === "phone-landscape") {
       root.dataset.battlePhoneLandscape = "true";
     } else {
@@ -1822,6 +1837,7 @@
     });
     document.documentElement.dataset.layoutProfile = layoutProfile.id;
     document.documentElement.dataset.battleProfile = layoutProfile.battleProfile;
+    applyBattleFxScaleVars(layoutProfile.battleProfile);
     document.documentElement.dataset.uiSurface = resolveUiSurface({
       prepLayout,
       tabletSideFit,

@@ -1167,6 +1167,7 @@ function init() {
     startBattleReplay();
   });
   initBattleControls({ onSkip: skipBattle });
+  if (typeof initReplayTimeline === "function") initReplayTimeline();
   loadBattleSettings();
   bindProfileStatusTooltips();
   bindRunStatsToggle();
@@ -1381,6 +1382,7 @@ function renderPhase() {
   if (isBattleUiPhase() && typeof window.scheduleBattleHeroRowSync === "function") {
     window.scheduleBattleHeroRowSync();
   }
+  if (typeof syncReplayTimeline === "function") syncReplayTimeline();
 }
 
 function syncBattleHudVisibility() {
@@ -2756,6 +2758,8 @@ function tickReplay(rawDt) {
   }
 
   renderBattleStats();
+
+  if (typeof syncReplayTimeline === "function") syncReplayTimeline();
 
   if (
     replayPlayback.index >= replayPlayback.frames.length - 1

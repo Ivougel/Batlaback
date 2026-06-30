@@ -5,6 +5,21 @@
 
 const battleFloatDomPool = new Map();
 
+function battleFxScale() {
+  if (typeof LayoutScales !== "undefined") {
+    return LayoutScales.gameScale() * LayoutScales.readCssPx("--fx-float-scale", 1);
+  }
+  const root = document.documentElement;
+  const cs = getComputedStyle(root);
+  const gs = parseFloat(cs.getPropertyValue("--game-scale")) || 1;
+  const fs = parseFloat(cs.getPropertyValue("--fx-float-scale")) || 1;
+  return gs * fs;
+}
+
+function battleFxPx(n) {
+  return n * battleFxScale();
+}
+
 function isFlankArenaBattleUi() {
   const app = document.getElementById("app");
   const phase = app?.dataset.phase;
@@ -18,7 +33,7 @@ function getBattleHeroFloatViewport(team, lane = 0) {
     return { x: pt.x, y: pt.y };
   }
   const center = getProfileAvatarViewportCenter(team);
-  return { x: center.x, y: center.y - 48 - lane * 22 };
+  return { x: center.x, y: center.y - battleFxPx(48) - lane * battleFxPx(22) };
 }
 
 const floatLayer = (() => {
@@ -38,6 +53,7 @@ const floatLayer = (() => {
     layer.appendChild(el);
 
     const hasFlyTarget = opts.toVx != null && opts.toVy != null;
+    const flyUp = battleFxPx(56);
     const keyframes = hasFlyTarget
       ? [
         { transform: "translateX(-50%) scale(1)", opacity: 1, left: `${vx}px`, top: `${vy}px` },
@@ -45,7 +61,7 @@ const floatLayer = (() => {
       ]
       : [
         { transform: "translateX(-50%) translateY(0) scale(1.2)", opacity: 1 },
-        { transform: "translateX(-50%) translateY(-56px) scale(0.9)", opacity: 0 },
+        { transform: `translateX(-50%) translateY(-${flyUp}px) scale(0.9)`, opacity: 0 },
       ];
 
     const duration = hasFlyTarget ? 550 : 900;
@@ -102,7 +118,7 @@ const floatLayer = (() => {
     if (anchorEl) {
       const rect = anchorEl.getBoundingClientRect();
       vx = rect.left + rect.width / 2;
-      vy = rect.top - 8;
+      vy = rect.top - battleFxPx(8);
     } else {
       vx = opts.vx ?? 0;
       vy = opts.vy ?? 0;
@@ -167,7 +183,7 @@ function getArcControlPoint(from, to, targetTeam) {
   const dx = to.x - from.x;
   const dy = to.y - from.y;
   const dist = Math.hypot(dx, dy) || 1;
-  const lift = Math.max(56, dist * 0.48);
+  const lift = Math.max(battleFxPx(56), dist * 0.48);
   const side = targetTeam === "player" ? -1 : targetTeam === "enemy" ? 1 : (to.x < from.x ? -1 : 1);
   return {
     x: midX + side * dist * 0.14,
@@ -181,7 +197,7 @@ function getWeaponControlPoint(from, to, targetTeam) {
   const dx = to.x - from.x;
   const dy = to.y - from.y;
   const dist = Math.hypot(dx, dy) || 1;
-  const lift = Math.max(28, dist * 0.12);
+  const lift = Math.max(battleFxPx(28), dist * 0.12);
   const side = targetTeam === "player" ? -1 : targetTeam === "enemy" ? 1 : (to.x < from.x ? -1 : 1);
   return {
     x: midX + side * dist * 0.06,
@@ -192,12 +208,12 @@ function getWeaponControlPoint(from, to, targetTeam) {
 function getFatigueOriginViewport(targetTeam) {
   if (isFlankArenaBattleUi()) {
     const pt = getBattleHeroFloatViewport(targetTeam, 0);
-    return { x: pt.x, y: pt.y - 36 };
+    return { x: pt.x, y: pt.y - battleFxPx(36) };
   }
   const canvas = getBattleCanvasEl();
   const avatar = getProfileAvatarViewportCenter(targetTeam);
   if (!canvas) {
-    return { x: avatar.x, y: Math.max(48, avatar.y - window.innerHeight * 0.42) };
+    return { x: avatar.x, y: Math.max(battleFxPx(48), avatar.y - window.innerHeight * 0.42) };
   }
   const rect = canvas.getBoundingClientRect();
   const bias = targetTeam === "player" ? -0.12 : targetTeam === "enemy" ? 0.12 : 0;
@@ -220,10 +236,10 @@ function getDebuffDotControlPoint(from, to, targetTeam) {
   const dy = to.y - from.y;
   const dist = Math.hypot(dx, dy) || 1;
   const outward = targetTeam === "player" ? -1 : 1;
-  const bulge = Math.min(52, dist * 0.24);
+  const bulge = Math.min(battleFxPx(52), dist * 0.24);
   return {
     x: midX + outward * bulge * 0.35,
-    y: midY + Math.min(32, dist * 0.14),
+    y: midY + Math.min(battleFxPx(32), dist * 0.14),
   };
 }
 
@@ -232,8 +248,8 @@ function getHealLoopControls(from, to, targetTeam) {
   const dx = to.x - from.x;
   const dy = to.y - from.y;
   const dist = Math.hypot(dx, dy) || 1;
-  const loop = Math.max(72, dist * 0.38);
-  const lift = Math.max(36, dist * 0.16);
+  const loop = Math.max(battleFxPx(72), dist * 0.38);
+  const lift = Math.max(battleFxPx(36), dist * 0.16);
   return {
     c1: {
       x: from.x + outward * loop,
@@ -274,7 +290,7 @@ function getBattlefieldCenterViewport() {
     }
     const player = getProfileAvatarViewportCenter("player");
     const enemy = getProfileAvatarViewportCenter("enemy");
-    return { x: (player.x + enemy.x) / 2, y: Math.min(player.y, enemy.y) - 48 };
+    return { x: (player.x + enemy.x) / 2, y: Math.min(player.y, enemy.y) - battleFxPx(48) };
   }
   if (typeof getTeamGridCenter === "function") {
     const player = getTeamGridCenter("player");

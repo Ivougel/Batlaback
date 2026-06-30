@@ -143,8 +143,12 @@ for (const profile of PHASE_PROFILES) {
     });
     await page.waitForTimeout(800);
 
-    const battle = await readBattleState(page);
-    assert(battle.phase === "battle", `expected battle, got ${battle.phase}`);
+      const battle = await readBattleState(page);
+      assert(battle.phase === "battle", `expected battle, got ${battle.phase}`);
+      const fxScale = await page.evaluate(() => parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue("--fx-float-scale"),
+      ) || 0);
+      assert(fxScale > 0 && fxScale <= 1.05, `fx-float-scale missing: ${fxScale}`);
     assert(battle.heroPlacement === "flank-arena", `hero placement: ${battle.heroPlacement}`);
     assert(battle.arenaLayout === "true", `arena layout not active: ${battle.arenaLayout}`);
     assert(battle.floorH > 36, `combat floor too small: ${battle.floorH}px`);

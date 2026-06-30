@@ -16,7 +16,7 @@
 | Viewport | tier | prepLayout | ui-surface | battle-profile |
 |----------|------|------------|------------|----------------|
 | iPhone portrait | phone | `mobile` | `phone-drawer` | `phone-portrait` |
-| iPhone landscape | phone | `stacked` | `phone-landscape` | `phone-landscape` |
+| iPhone landscape | phone | `side` | `tablet-side` | `phone-landscape` |
 | iPad portrait | tablet | `stacked` | `tablet-stacked` | `tablet-portrait` |
 | iPad landscape | tablet | `side` | `tablet-side` | `tablet-landscape-side` |
 | Desktop | desktop | `side` | `desktop` | `desktop-landscape` |
@@ -52,7 +52,7 @@ Touch-цели: `min-height: var(--touch-target-min)` (≥ 44px).
 | Файл | Поверхность |
 |------|-------------|
 | `mobile-prep.css` | `data-prep-layout="mobile"` |
-| `phone-landscape.css` | `data-ui-surface="phone-landscape"` |
+| `phone-landscape.css` | `data-layout-profile="phone-landscape"` (бой; prep на `tablet-side`) |
 | `tablet-stacked.css` | `data-ui-surface="tablet-stacked"` |
 | `tablet-side.css` | `data-ui-surface="tablet-side"` |
 | `desktop-prep.css` | `data-ui-surface="desktop"` |
@@ -60,6 +60,8 @@ Touch-цели: `min-height: var(--touch-target-min)` (≥ 44px).
 | `container-queries.css` | карточки class/shop по размеру контейнера |
 | `battle-arena-layout.css` | `data-battle-hero-placement="flank-arena"` |
 | `battle-scale.css` | `data-battle-profile` — эмодзи, HP/stamina |
+| `replay-chrome.css` | `data-phase="replay"` — timeline в toolbar |
+| `modal-scale.css` | overlay-модалки, container queries |
 
 ## Автомасштаб — что уже есть / что осталось
 
@@ -68,11 +70,23 @@ Touch-цели: `min-height: var(--touch-target-min)` (≥ 44px).
 **Готово (battle):** `BATTLE_PROFILES` + `BattleHeroAnchor` (эмодзи от combat floor), `syncBattleHudAnchors` (HP под портретом), `syncFlankArenaHeroAnchors`.
 
 **Осталось (backlog):**
-- Предметы на поле боя / FX — частично через `--game-scale`, без единого профиля
-- Модалки (рецепты, события) — фикс. px, не читают `--ui-scale`
-- Class overlay — container queries, но не полный fluid type
-- Replay / damage float — canvas coords, не viewport %
-- **VISUAL EXP** (`?vexp=1`) — косметика; при багах отключить: `?vexp=0` или `VisualExperiment.disable()`
+- **VISUAL EXP** (`?vexp=1`) — косметика; при багах: `?vexp=0` или `VisualExperiment.disable()`
+
+### Этап M (replay timeline, modal tokens)
+
+- **`replay-chrome.css`** + **`replay-timeline.js`** — полоса прогресса в bottom-chrome при `data-phase="replay"`
+- Скраб по тапу/перетаскиванию, стрелки на фокусе; ширина в `%` / `vw`, не фикс. px
+- На phone timeline на всю ширину центра, журнал событий скрыт
+- **`modal-scale.css`** — базовый `.overlay > .modal` на `--ui-scale` / `--font-*`
+
+### Этап L (battle FX profile, float scale, modals)
+
+- **`BATTLE_PROFILES`** — `fxFloatScale` / `fxProjectileScale` → `--fx-float-scale`, `--fx-projectile-scale`
+- **`battle-float-layer.js`** — траектории через `battleFxPx()` (viewport, не canvas px)
+- **`LayoutScales`** — `fxFloatScale()`, `battleFxPx()` для FX
+- **`battle-scale.css`** — компактные летящие числа на phone-профилях
+- **`modal-scale.css`** — class overlay fluid type, battle-detail, board-preview
+- **Phone landscape prep** — `side` + `tablet-side` (как iPad Mini)
 
 ### Этап J (battle auto-scale)
 
@@ -135,8 +149,8 @@ npm run test:ui       # все четыре набора
 
 ### Этап H (phone-landscape, snapshots)
 
-- **`resolveUiSurface`** — iPhone landscape → `phone-landscape` (не `tablet-stacked`)
-- **`styles/phone-landscape.css`** — компактный stacked prep + combat floor в viewport
+- **Phone landscape prep** — `side` + `tablet-side` (магазин справа, как iPad Mini)
+- **`styles/phone-landscape.css`** — бой по `data-layout-profile="phone-landscape"`
 - **`BATTLE_PROFILES["phone-landscape"]`** — меньше hero row, больше floor
 - **`test:snapshots`** — Playwright `toHaveScreenshot` для class overlay (4 профиля)
 - **`test:phases`** — добавлен iPhone landscape (prep + battle in viewport)

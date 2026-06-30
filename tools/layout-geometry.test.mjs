@@ -357,6 +357,50 @@ const CASES = [
     },
   },
   {
+    id: "iphone-portrait-replay-timeline",
+    device: devices["iPhone 14 Pro Max"],
+    async run(page) {
+      await quickStart(page);
+      await page.evaluate(() => {
+        const frames = Array.from({ length: 5 }, () => ({}));
+        phase = "replay";
+        replayPlayback = {
+          frames,
+          index: 2,
+          accum: 0,
+          frameDuration: 0.1,
+          speed: 2,
+          playing: true,
+        };
+        battleState = { player: { hp: 100 }, enemy: { hp: 100 }, finished: false };
+        document.getElementById("app").dataset.phase = "replay";
+        window.syncReplayTimeline?.();
+      });
+
+      const m = await page.evaluate(() => {
+        const tl = document.getElementById("replay-timeline");
+        const track = document.getElementById("replay-timeline-track");
+        const feed = document.querySelector(".btn-combat-feed");
+        const bar = document.querySelector(".bottom-chrome");
+        const fill = document.getElementById("replay-timeline-fill");
+        const feedCs = feed ? getComputedStyle(feed) : null;
+        return {
+          visible: tl && !tl.classList.contains("hidden"),
+          trackW: track?.getBoundingClientRect().width ?? 0,
+          barW: bar?.getBoundingClientRect().width ?? 0,
+          fillPct: fill?.style.width ?? "",
+          feedHidden: feedCs?.display === "none",
+          time: document.getElementById("replay-timeline-time")?.textContent ?? "",
+        };
+      });
+      assert(m.visible, "replay timeline hidden");
+      assert(m.trackW >= m.barW * 0.35, `timeline too narrow: ${m.trackW}/${m.barW}`);
+      assert(m.fillPct === "50%", `progress wrong: ${m.fillPct}`);
+      assert(m.time === "3/5", `time label: ${m.time}`);
+      assert(m.feedHidden, "combat feed should hide during replay");
+    },
+  },
+  {
     id: "ipad-portrait-shop-scroll",
     device: devices["iPad Mini"],
     async run(page) {

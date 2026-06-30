@@ -43,6 +43,24 @@ const LayoutScales = (() => {
     return isUiSurface("tablet-side");
   }
 
+  /** Профильный множитель летящих чисел / FX (ui-layout BATTLE_PROFILES). */
+  function fxFloatScale() {
+    return readCssPx("--fx-float-scale", 1);
+  }
+
+  function fxProjectileScale() {
+    return readCssPx("--fx-projectile-scale", fxFloatScale());
+  }
+
+  /** game-scale × fx-float-scale для траекторий боя. */
+  function battleFxScale() {
+    return gameScale() * fxFloatScale();
+  }
+
+  function battleFxPx(basePx) {
+    return Math.round(basePx * battleFxScale());
+  }
+
   return {
     readCssPx,
     uiScale,
@@ -50,6 +68,10 @@ const LayoutScales = (() => {
     typeScale,
     typePx,
     gamePx,
+    fxFloatScale,
+    fxProjectileScale,
+    battleFxScale,
+    battleFxPx,
     uiSurface,
     isUiSurface,
     isTabletSide,

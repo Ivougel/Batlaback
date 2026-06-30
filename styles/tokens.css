@@ -116,6 +116,7 @@
   --shop-item-icon-duo-width: calc(var(--shop-item-icon-size) * 2.05);
   --fx-float-scale: 1;
   --fx-projectile-scale: 1;
+  --fx-projectile-scale: 1;
   --battle-stats-panel-w: 276px;
 
   /* Scene layer stack */

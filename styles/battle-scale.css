@@ -1,5 +1,5 @@
 /**
- * Боевые масштабы по data-battle-profile — эмодзи, HP/stamina, портреты.
+ * Боевые масштабы по data-battle-profile — эмодзи, HP/stamina, портреты, FX.
  */
 
 html[data-battle-profile="phone-portrait"] #app[data-phase="battle"] .avatar-hero-hp-label,
@@ -29,4 +29,14 @@ html[data-battle-profile="phone-portrait"] #app[data-phase="replay"] .battle-tho
 html[data-battle-profile="tablet-portrait"] #app[data-phase="battle"] .battle-hud-side,
 html[data-battle-profile="tablet-portrait"] #app[data-phase="replay"] .battle-hud-side {
   z-index: calc(var(--z-layer-hud) + 2);
+}
+
+html[data-battle-profile="phone-portrait"] .battle-float,
+html[data-battle-profile="phone-landscape"] .battle-float {
+  font-size: calc(1.35rem * var(--ui-scale) * var(--fx-float-scale, 1));
+}
+
+html[data-battle-profile="phone-portrait"] .battle-float.emotion,
+html[data-battle-profile="phone-landscape"] .battle-float.emotion {
+  font-size: calc(1.75rem * var(--ui-scale) * var(--fx-float-scale, 1));
 }

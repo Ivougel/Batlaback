@@ -3764,7 +3764,7 @@ button:disabled {
   white-space: nowrap;
   transform: translateX(-50%);
   font-weight: 700;
-  font-size: calc(1.5rem * var(--ui-scale));
+  font-size: calc(1.5rem * var(--ui-scale) * var(--fx-float-scale, 1));
   line-height: 1;
   color: var(--bf-color, #f85149);
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
@@ -3784,16 +3784,16 @@ button:disabled {
 
 .battle-float.block {
   color: #8b949e;
-  font-size: calc(1.1rem * var(--ui-scale));
+  font-size: calc(1.1rem * var(--ui-scale) * var(--fx-float-scale, 1));
 }
 
 .battle-float.poison {
   color: #3fb950;
-  font-size: calc(1.2rem * var(--ui-scale));
+  font-size: calc(1.2rem * var(--ui-scale) * var(--fx-float-scale, 1));
 }
 
 .battle-float.emotion {
-  font-size: calc(2rem * var(--ui-scale));
+  font-size: calc(2rem * var(--ui-scale) * var(--fx-float-scale, 1));
   filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.55));
 }
 
