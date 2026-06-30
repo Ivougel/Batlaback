@@ -91,6 +91,7 @@ async function readState(page) {
       overlayHidden: overlay?.classList.contains("hidden"),
       overlayDisplay: overlayCs?.display ?? null,
       overlayHeight: overlay?.offsetHeight ?? 0,
+      modalHeight: document.querySelector("#class-overlay .class-modal")?.offsetHeight ?? 0,
       appH: htmlCs.getPropertyValue("--app-h").trim(),
       zoneUsedH: htmlCs.getPropertyValue("--zone-used-h").trim(),
       modalTitle: document.querySelector(".class-modal h2, .class-modal-eyebrow")?.textContent?.trim() ?? "",
@@ -128,6 +129,7 @@ for (const profile of PROFILES) {
       assert(!state.overlayHidden, "class-overlay should be visible on boot");
       assert(state.overlayDisplay !== "none", "overlay display:none");
       assert(state.overlayHeight > 100, `overlay height: ${state.overlayHeight}`);
+      assert(state.modalHeight > 120, `class-modal collapsed: ${state.modalHeight}px`);
     }
     if (errors.length) throw new Error(`JS errors: ${errors.join("; ")}`);
 

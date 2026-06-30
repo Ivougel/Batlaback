@@ -1,8 +1,10 @@
 /**
  * Container queries — адаптация карточек по размеру контейнера, не только viewport.
+ * Контейнер — #class-overlay (fixed inset:0), НЕ .class-modal:
+ * container-type:size на flex-modal ломает высоту (size containment).
  */
 
-#class-overlay .class-modal {
+#class-overlay:not(.hidden) {
   container-type: size;
   container-name: class-overlay-modal;
 }
