@@ -15,6 +15,7 @@
   let currentTrackIndex = 0;
   let musicStarted = false;
   let unlockBound = false;
+  let pausedByBackground = false;
 
   function isNegrovEnabled() {
     return localStorage.getItem(NEGROV_ENABLED_KEY) === "1";
@@ -145,6 +146,34 @@
     document.addEventListener("touchstart", unlock, { passive: true });
   }
 
+  function pauseMusicForBackground() {
+    if (!musicAudio || musicAudio.paused) return;
+    pausedByBackground = true;
+    musicAudio.pause();
+  }
+
+  function resumeMusicFromBackground() {
+    if (!musicAudio || !pausedByBackground) return;
+    pausedByBackground = false;
+    if (getMusicVolume() <= 0) return;
+    const playPromise = musicAudio.play();
+    if (playPromise) playPromise.catch(() => {});
+  }
+
+  function bindMusicVisibility() {
+    const onHide = () => pauseMusicForBackground();
+    const onShow = () => resumeMusicFromBackground();
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") onHide();
+      else onShow();
+    });
+    window.addEventListener("pagehide", onHide);
+    window.addEventListener("pageshow", onShow);
+    window.addEventListener("blur", onHide);
+    window.addEventListener("focus", onShow);
+  }
+
   function initMusic() {
     if (musicAudio) return;
     const playlist = getMusicPlaylist();
@@ -158,6 +187,7 @@
     applyMusicVolume(getMusicVolume());
     syncNegrovEnabledUi(isNegrovEnabled());
     bindMusicUnlock();
+    bindMusicVisibility();
     tryStartMusic();
   }
 
