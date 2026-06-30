@@ -239,7 +239,7 @@ body.is-ui-dragging * {
   border: 1px solid #3d444d;
   border-radius: 8px;
   font-family: inherit;
-  font-size: 1.725rem;
+  font-size: var(--font-chip);
   line-height: 1;
   cursor: help;
   overflow: hidden;
@@ -266,7 +266,7 @@ body.is-ui-dragging * {
 .synergy-chip-icon {
   display: inline-block;
   line-height: 1;
-  font-size: 1.725rem;
+  font-size: var(--font-chip);
 }
 
 .synergy-chip:hover {
@@ -788,7 +788,7 @@ body:has(#app[data-phase="replay"]) #battle-controls:not(.hidden) {
 .stats-name-enemy { color: #f85149; }
 
 .stats-vs-icon {
-  font-size: 1.1rem;
+  font-size: var(--font-lg);
   opacity: 0.55;
   line-height: 1;
   user-select: none;
@@ -2257,7 +2257,7 @@ body:has(#app[data-phase="replay"]) #battle-controls:not(.hidden) {
 
 .profile-name {
   margin-bottom: calc(8px * var(--ui-scale));
-  font-size: 1.1rem;
+  font-size: var(--font-lg);
   font-weight: 700;
   line-height: 1.2;
   text-align: center;
@@ -2848,7 +2848,7 @@ html[data-touch="true"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-
   right: 2px;
   width: 18px;
   height: 18px;
-  font-size: 10px;
+  font-size: var(--font-xs);
   border-radius: 4px;
   opacity: 0.45;
   z-index: 3;
@@ -2984,7 +2984,7 @@ html[data-battle-hud-pin="true"] body {
   .logo {
     flex-shrink: 1;
     min-width: 0;
-    font-size: 1.15rem;
+    font-size: var(--font-lg);
   }
 
   /* Grid/shop width: --shop-panel-w (layout contract) */
@@ -4739,13 +4739,13 @@ html[data-touch="true"] .sidebar-tooltip.synergy-tooltip {
 }
 
 html[data-touch="true"] .sidebar-tooltip.synergy-tooltip .synergy-tt-title {
-  font-size: 1.2rem;
+  font-size: var(--font-xl);
   margin-bottom: 8px;
 }
 
 html[data-touch="true"] .sidebar-tooltip.synergy-tooltip .synergy-tt-row,
 html[data-touch="true"] .sidebar-tooltip.synergy-tooltip .synergy-tt-source {
-  font-size: 1.04rem;
+  font-size: var(--font-md);
   margin-bottom: var(--gap-xs);
 }
 
@@ -4772,7 +4772,7 @@ html[data-touch="true"] .sidebar-tooltip.synergy-tooltip .synergy-tt-source {
   border-radius: 6px;
   background: rgba(0, 0, 0, 0.35);
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--font-xs);
   line-height: 1;
   opacity: 0.55;
   transition: opacity 0.15s, background 0.15s;
@@ -4896,7 +4896,7 @@ html[data-touch="true"] .sidebar-tooltip.synergy-tooltip .synergy-tt-source {
 }
 
 .popup-trigger-chevron {
-  font-size: 1.2rem;
+  font-size: var(--font-xl);
   line-height: 1;
   color: var(--muted);
 }
@@ -5588,7 +5588,7 @@ html[data-touch="true"] .sidebar-tooltip.synergy-tooltip .synergy-tt-source {
 }
 
 .recipe-book-item-icon {
-  font-size: 1.6rem;
+  font-size: var(--font-2xl);
   line-height: 1;
 }
 
@@ -5702,7 +5702,7 @@ body.recipe-book-open {
 }
 
 .is-item-cell .is-icon {
-  font-size: 1.1rem;
+  font-size: var(--font-lg);
   flex-shrink: 0;
 }
 
@@ -6122,7 +6122,7 @@ html[data-ui-compact="true"] .top-bar {
 }
 
 html[data-ui-compact="true"] .logo {
-  font-size: 1.15rem;
+  font-size: var(--font-lg);
 }
 
 html[data-ui-compact="true"] .board-section {

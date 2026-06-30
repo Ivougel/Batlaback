@@ -30,6 +30,8 @@
   --font-md: 0.9375rem;
   --font-lg: 1.0625rem;
   --font-xl: 1.2rem;
+  --font-2xl: 1.6rem;
+  --font-chip: 1.725rem;
   --touch-target-min: max(44px, 2.75rem);
 
   /* Spacing */
@@ -98,6 +100,8 @@
   --zone-hero-h: 0px;
   --zone-chrome-h: 0px;
   --zone-used-h: 0px;
+  --zone-battle-hero-h: 0px;
+  --zone-battle-floor-h: 0px;
   --prep-doll-slot-width: var(--prep-hero-slot-width);
   --prep-doll-slot-left: calc(var(--prep-hero-slot-left) + var(--prep-hero-slot-width) + var(--prep-hero-slot-gap));
   --prep-desktop-hero-max-h: var(--prep-hero-slot-height);

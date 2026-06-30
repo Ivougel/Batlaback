@@ -1,0 +1,36 @@
+/**
+ * iPad portrait / tablet-stacked prep — полировка поверх data-prep-viewport-fit.
+ */
+
+html[data-ui-surface="tablet-stacked"] #app[data-phase="prep"] .battle-arena {
+  gap: var(--gap-sm);
+}
+
+html[data-ui-surface="tablet-stacked"] #app[data-phase="prep"] .battle-canvas-stage {
+  max-height: min(var(--prep-canvas-max-h, 34dvh), 42vh);
+}
+
+html[data-ui-surface="tablet-stacked"] #app[data-phase="prep"] #shop-panel {
+  max-height: min(44vh, 420px);
+  flex: 0 1 auto;
+}
+
+html[data-ui-surface="tablet-stacked"] #app[data-phase="prep"] .shop-panel .shop-card,
+html[data-ui-surface="tablet-stacked"] #app[data-phase="prep"] .shop-panel .shop-card.empty {
+  min-height: var(--prep-shop-row-h, 58px);
+}
+
+html[data-ui-surface="tablet-stacked"] #app[data-phase="prep"] .prep-character-layer {
+  max-height: min(36vh, var(--prep-hero-slot-height-max, 360px));
+}
+
+/* Бой tablet-portrait: combat floor не съедается героями */
+html[data-ui-surface="tablet-stacked"] #app[data-phase="battle"] .battle-thought-arena,
+html[data-ui-surface="tablet-stacked"] #app[data-phase="replay"] .battle-thought-arena {
+  min-height: max(80px, var(--zone-battle-floor-h, 0px), 18vh);
+}
+
+html[data-ui-surface="tablet-stacked"] #app[data-phase="battle"] #battle-scene-ui,
+html[data-ui-surface="tablet-stacked"] #app[data-phase="replay"] #battle-scene-ui {
+  max-height: min(38vh, var(--battle-hero-zone-h, 280px));
+}

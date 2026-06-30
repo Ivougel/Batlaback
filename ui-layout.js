@@ -93,6 +93,7 @@
     if (shouldUseMobilePrepLayout(w, h, tier)) return false;
 
     if (h >= w && tier === "tablet") return true;
+    if (tier === "phone" && w > h) return true;
 
     if (w >= 600 && w <= 1200) return false;
 
@@ -149,8 +150,8 @@
     const { prepLayout, tabletSideFit, tabletPrepHero, layoutProfile } = ctx;
     if (prepLayout === "mobile") return "phone-drawer";
     if (tabletSideFit || tabletPrepHero) return "tablet-side";
-    if (prepLayout === "stacked" || layoutProfile.id === "tablet-portrait") return "tablet-stacked";
     if (layoutProfile.id === "phone-landscape") return "phone-landscape";
+    if (prepLayout === "stacked" || layoutProfile.id === "tablet-portrait") return "tablet-stacked";
     if (layoutProfile.tier === "desktop") return "desktop";
     return "default";
   }
@@ -185,11 +186,11 @@
       shopPanelW: 300,
     },
     "phone-landscape": {
-      fitAvailH: PREP_SIDE_CONTENT_H, fitMinScale: SCALE_MIN, fitWidthRatio: 1,
-      canvasAvailShare: 0.42, canvasMaxCap: 220,
-      shopRowBase: 66, shopRowMin: 52, shopRowMax: 70,
-      heroSlotHeight: "min(220px, 38vh)", heroSlotMax: 240,
-      sceneAvatarH: 108, sceneAvatarW: 90, dollSlot: 32, characterGap: 6,
+      fitAvailH: 360, fitMinScale: SCALE_MIN, fitWidthRatio: 1,
+      canvasAvailShare: 0.34, canvasMaxCap: 180,
+      shopRowBase: 58, shopRowMin: 48, shopRowMax: 64,
+      heroSlotHeight: "min(160px, 28vh)", heroSlotMax: 180,
+      sceneAvatarH: 96, sceneAvatarW: 84, dollSlot: 30, characterGap: 6,
       shopPanelW: 280,
     },
     "tablet-portrait": {
@@ -265,12 +266,12 @@
       emojiScale: 0.72, floorShare: 0.26, heroShare: 0.28,
     },
     "phone-landscape": {
-      heroFromVh: false, heroZoneShare: 0.30, heroMin: 104, heroMax: 148,
-      arenaVh: 0.24, arenaMin: 92,
-      colMin: 92, colMax: 132, colShare: 0.21,
-      imgRatio: 0.46, imgMin: 68, imgMax: 96,
-      portraitZoom: 0.92, chromePad: 8, portraitObjectY: "12%",
-      emojiScale: 0.84, floorShare: 0.30, heroShare: 0.32,
+      heroFromVh: false, heroZoneShare: 0.28, heroMin: 96, heroMax: 140,
+      arenaVh: 0.22, arenaMin: 88,
+      colMin: 88, colMax: 128, colShare: 0.20,
+      imgRatio: 0.44, imgMin: 64, imgMax: 92,
+      portraitZoom: 0.88, chromePad: 8, portraitObjectY: "12%",
+      emojiScale: 0.86, floorShare: 0.34, heroShare: 0.30,
     },
     "tablet-landscape-side": {
       heroFromVh: false, heroZoneShare: 0.30, heroMin: 190, heroMax: 320,
@@ -355,13 +356,15 @@
     return measureBottomChromeHeight() + 4;
   }
 
-  /** Измерение ключевых зон prep после первого layout-прохода. */
+  /** Измерение ключевых зон prep/battle после первого layout-прохода. */
   function measureLayoutZones() {
     const root = document.documentElement;
     const app = document.getElementById("app");
     if (!app) return null;
 
+    const phase = app.dataset.phase;
     const zones = {
+      phase,
       viewportH: viewportSize().h,
       appH: app.offsetHeight,
       topBar: 0,
@@ -369,20 +372,51 @@
       canvas: 0,
       hero: 0,
       chrome: measureBottomChromeHeight(),
+      battleHero: 0,
+      battleFloor: 0,
       used: 0,
     };
 
-    const topBar = document.getElementById("prep-top-bar");
-    const toolbar = document.getElementById("prep-toolbar");
-    const island = document.getElementById("prep-field-island");
-    const hero = document.querySelector("#app[data-phase=\"prep\"] .prep-character-layer");
+    if (phase === "prep") {
+      const topBar = document.getElementById("prep-top-bar");
+      const chromeBar = getBottomChrome();
+      const island = document.getElementById("prep-field-island");
+      const hero = document.querySelector("#app[data-phase=\"prep\"] .prep-character-layer");
 
-    if (topBar && getComputedStyle(topBar).display !== "none") zones.topBar = topBar.offsetHeight;
-    if (toolbar && getComputedStyle(toolbar).display !== "none") zones.toolbar = toolbar.offsetHeight;
-    if (island && getComputedStyle(island).display !== "none") zones.canvas = island.offsetHeight;
-    if (hero && getComputedStyle(hero).display !== "none") zones.hero = hero.offsetHeight;
+      if (topBar && getComputedStyle(topBar).display !== "none") zones.topBar = topBar.offsetHeight;
+      if (chromeBar && getComputedStyle(chromeBar).display !== "none") zones.toolbar = chromeBar.offsetHeight;
+      if (island && getComputedStyle(island).display !== "none") {
+        const canvasEl = document.getElementById("game-canvas");
+        const stage = island.querySelector(".battle-canvas-stage");
+        const fitMode = root.dataset.prepViewportFit === "true" || root.dataset.prepMobileFit === "true";
+        let canvasZone = island.offsetHeight;
+        if (fitMode) {
+          const displayH = Math.max(canvasEl?.offsetHeight ?? 0, stage?.offsetHeight ?? 0);
+          if (displayH > 20) {
+            const pad = Math.round(10 * (readCssPx("--ui-scale", 1) || 1));
+            canvasZone = Math.min(canvasZone, displayH + pad);
+          }
+        }
+        zones.canvas = canvasZone;
+      }
+      if (hero && getComputedStyle(hero).display !== "none") zones.hero = hero.offsetHeight;
 
-    zones.used = zones.topBar + zones.toolbar + zones.canvas + zones.hero + zones.chrome;
+      zones.chrome = 0;
+      zones.used = zones.topBar + zones.toolbar + zones.canvas + zones.hero;
+    } else if (phase === "battle" || phase === "replay") {
+      const sceneUi = document.getElementById("battle-scene-ui");
+      const combatFloor = document.getElementById("battle-thought-arena");
+      if (sceneUi && getComputedStyle(sceneUi).display !== "none") {
+        zones.battleHero = sceneUi.offsetHeight;
+      }
+      if (combatFloor && getComputedStyle(combatFloor).display !== "none") {
+        zones.battleFloor = combatFloor.offsetHeight;
+      }
+      zones.used = zones.battleHero + zones.battleFloor + zones.chrome;
+      root.style.setProperty("--zone-battle-hero-h", `${zones.battleHero}px`);
+      root.style.setProperty("--zone-battle-floor-h", `${zones.battleFloor}px`);
+    }
+
     root.style.setProperty("--zone-topbar-h", `${zones.topBar}px`);
     root.style.setProperty("--zone-toolbar-h", `${zones.toolbar}px`);
     root.style.setProperty("--zone-canvas-h", `${zones.canvas}px`);
@@ -392,38 +426,71 @@
     return zones;
   }
 
-  /** Второй проход: поджать canvas, если зоны не влезают в --app-h. */
+  /** Второй проход: поджать зоны, если не влезают в --app-h. */
   function applyMeasuredZoneFit(zones) {
     const root = document.documentElement;
     if (!zones) return;
 
+    const appH = readCssPx("--app-h", zones.viewportH) || zones.appH;
+    const phase = zones.phase;
+
+    if (phase === "battle" || phase === "replay") {
+      const floorMin = root.dataset.battlePhoneLandscape === "true" ? 64 : 72;
+      if (zones.battleFloor > 0 && zones.battleFloor < floorMin && zones.battleHero > floorMin + 40) {
+        const heroCap = Math.max(96, Math.round((appH - zones.chrome - floorMin) * 0.42));
+        const curHero = readCssPx("--battle-hero-zone-h", zones.battleHero);
+        if (curHero > heroCap) {
+          root.style.setProperty("--battle-hero-zone-h", `${heroCap}px`);
+          root.style.setProperty("--desktop-battle-hero-zone-h", `${heroCap}px`);
+        }
+      }
+      return;
+    }
+
     const prepLayout = root.dataset.prepLayout;
-    if (prepLayout !== "mobile" && prepLayout !== "stacked") {
+    const phoneLandscape = root.dataset.uiSurface === "phone-landscape";
+    if (prepLayout !== "mobile" && prepLayout !== "stacked" && !phoneLandscape) {
       root.style.removeProperty("--zone-fit-shrink");
       return;
     }
 
-    const appH = readCssPx("--app-h", zones.viewportH) || zones.appH;
     const overflow = zones.used - appH + 8;
     if (overflow <= 4) {
       root.style.removeProperty("--zone-fit-shrink");
+      root.style.removeProperty("--prep-canvas-max-h-base");
       return;
     }
 
     const shrink = Math.max(0.86, appH / zones.used);
     root.style.setProperty("--zone-fit-shrink", String(roundScale(shrink)));
 
-    const canvasMax = readCssPx("--prep-canvas-max-h", null);
+    let canvasBase = readCssPx("--prep-canvas-max-h-base", null);
+    const canvasCur = readCssPx("--prep-canvas-max-h", null);
+    if (canvasBase == null && canvasCur != null) {
+      canvasBase = canvasCur;
+      root.style.setProperty("--prep-canvas-max-h-base", `${Math.round(canvasBase)}px`);
+    }
+    if (canvasBase != null) {
+      root.style.setProperty("--prep-canvas-max-h", `${Math.round(canvasBase * shrink)}px`);
+      return;
+    }
+
+    const canvasMax = canvasCur;
     if (canvasMax != null) {
       root.style.setProperty("--prep-canvas-max-h", `${Math.round(canvasMax * shrink)}px`);
       return;
     }
 
     if (prepLayout === "mobile") {
-      const cap = readCssPx("--prep-mobile-canvas-cap", null);
-      if (cap != null) {
-        root.style.setProperty("--prep-mobile-canvas-cap", `${Math.round(cap * shrink)}px`);
+      const app = document.getElementById("app");
+      const canvasH = zones.canvas || document.getElementById("prep-field-island")?.offsetHeight || 0;
+      if (canvasH > 100) {
+        const newCap = Math.max(132, Math.round(canvasH * shrink));
+        const capVar = `${newCap}px`;
+        document.documentElement.style.setProperty("--prep-mobile-canvas-cap", capVar);
+        app?.style.setProperty("--prep-mobile-canvas-cap", capVar);
       }
+      return;
     }
   }
 
@@ -683,10 +750,16 @@
     const toolbar = getBottomChrome();
     if (!island || !toolbar) return;
     const rect = island.getBoundingClientRect();
+    const heroLayer = document.querySelector("#app[data-phase=\"prep\"] .prep-character-layer");
+    const heroRect = heroLayer?.getBoundingClientRect();
     const toolbarTop = toolbar.getBoundingClientRect().top;
     const fabSize = 56;
-    const zoneTop = rect.bottom + 8;
-    const zoneBottom = toolbarTop - 8;
+    let zoneTop = rect.bottom + 8;
+    let zoneBottom = toolbarTop - 8;
+    if (heroRect && heroRect.height > 48) {
+      zoneTop = heroRect.top + 8;
+      zoneBottom = heroRect.bottom - 8;
+    }
     const centeredTop = Math.round((zoneTop + zoneBottom) / 2 - fabSize / 2);
     const top = Math.max(zoneTop, Math.min(centeredTop, zoneBottom - fabSize));
     root.style.setProperty("--prep-shop-fab-top", `${top}px`);
@@ -1583,6 +1656,12 @@
         syncPrepHeroSlotHeight();
         const zones = measureLayoutZones();
         applyMeasuredZoneFit(zones);
+        if (document.documentElement.style.getPropertyValue("--zone-fit-shrink")) {
+          requestAnimationFrame(() => {
+            fitCanvasDisplaySize();
+            applyMeasuredZoneFit(measureLayoutZones());
+          });
+        }
       });
     });
   }
@@ -1592,6 +1671,8 @@
     document.documentElement.dataset.prepSideFit = "false";
     document.documentElement.dataset.prepMobileFit = "false";
     document.documentElement.style.removeProperty("--prep-canvas-max-h");
+    document.documentElement.style.removeProperty("--prep-canvas-max-h-base");
+    document.documentElement.style.removeProperty("--zone-fit-shrink");
 
     const cfg = PREP_PROFILES[layoutProfile?.id] || PREP_PROFILES["desktop-landscape"];
     const hudH = isModalOpen() ? 0 : measureBottomChromeHeight();

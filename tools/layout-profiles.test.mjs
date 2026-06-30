@@ -31,7 +31,10 @@ const PROFILES = [
     },
     expect: {
       orientation: "landscape",
+      prepLayout: "stacked",
+      uiSurface: "phone-landscape",
       htmlNotNone: true,
+      overlayVisible: true,
     },
   },
   {

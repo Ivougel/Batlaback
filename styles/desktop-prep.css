@@ -1,0 +1,54 @@
+/**
+ * Desktop prep — side-by-side field + shop на широких экранах.
+ */
+
+html[data-ui-surface="desktop"] #app[data-phase="prep"],
+html[data-ui-surface="desktop"] #app[data-phase="battle"],
+html[data-ui-surface="desktop"] #app[data-phase="replay"] {
+  height: var(--app-h);
+  max-height: var(--app-h);
+  overflow: hidden;
+}
+
+html[data-ui-surface="desktop"] #app[data-phase="prep"] .game-layout,
+html[data-ui-surface="desktop"] #app[data-phase="battle"] .game-layout,
+html[data-ui-surface="desktop"] #app[data-phase="replay"] .game-layout {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+html[data-ui-surface="desktop"] #app[data-phase="prep"] .battle-arena {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: var(--gap-md);
+  min-height: 0;
+  height: 100%;
+}
+
+html[data-ui-surface="desktop"] #app[data-phase="prep"] .prep-left-column {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+html[data-ui-surface="desktop"] #app[data-phase="prep"] #shop-panel {
+  flex: 0 0 min(var(--shop-panel-w, 320px), 28vw);
+  width: min(var(--shop-panel-w, 320px), 28vw);
+  max-width: 360px;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+html[data-ui-surface="desktop"] #app[data-phase="prep"] .shop-panel .shop-card,
+html[data-ui-surface="desktop"] #app[data-phase="prep"] .shop-panel .shop-card.empty {
+  min-height: var(--prep-shop-row-h, 66px);
+}
+
+html[data-ui-surface="desktop"] #app[data-phase="prep"] .btn-refresh-shop,
+html[data-ui-surface="desktop"] #app[data-phase="prep"] .shop-action-row .btn-secondary {
+  min-height: var(--touch-target-min);
+}

@@ -1,0 +1,74 @@
+/**
+ * iPhone landscape — компактный stacked prep + flank-arena battle.
+ * data-ui-surface="phone-landscape" (tier phone, orientation landscape).
+ */
+
+html[data-ui-surface="phone-landscape"] #app[data-phase="prep"] .battle-arena {
+  gap: var(--gap-xs);
+}
+
+html[data-ui-surface="phone-landscape"][data-prep-viewport-fit="true"] #app[data-phase="prep"] #prep-field-island {
+  position: relative;
+  left: auto;
+  top: auto;
+  width: 100%;
+  height: auto;
+  max-height: var(--prep-canvas-max-h, 44vh);
+}
+
+html[data-ui-surface="phone-landscape"][data-prep-viewport-fit="true"] #app[data-phase="prep"] .prep-character-layer {
+  position: relative;
+  top: auto;
+  left: auto;
+  width: 100%;
+  height: auto;
+}
+
+html[data-ui-surface="phone-landscape"] #app[data-phase="prep"] .battle-canvas-stage {
+  max-height: min(var(--prep-canvas-max-h, 38dvh), 44vh);
+}
+
+html[data-ui-surface="phone-landscape"] #app[data-phase="prep"] #shop-panel {
+  max-height: min(30vh, 220px);
+  flex: 0 1 auto;
+}
+
+html[data-ui-surface="phone-landscape"] #app[data-phase="prep"] .shop-panel .shop-card,
+html[data-ui-surface="phone-landscape"] #app[data-phase="prep"] .shop-panel .shop-card.empty {
+  min-height: var(--prep-shop-row-h, 52px);
+}
+
+html[data-ui-surface="phone-landscape"] #app[data-phase="prep"] .prep-character-layer {
+  max-height: min(30vh, 200px);
+}
+
+/* Бой: портреты сверху, combat floor снизу — всё в viewport */
+html[data-ui-surface="phone-landscape"] #app[data-phase="battle"] .prep-field-island,
+html[data-ui-surface="phone-landscape"] #app[data-phase="replay"] .prep-field-island {
+  padding-bottom: var(--phone-landscape-chrome-bottom, 52px);
+}
+
+html[data-ui-surface="phone-landscape"] #app[data-phase="battle"] #battle-scene-ui,
+html[data-ui-surface="phone-landscape"] #app[data-phase="replay"] #battle-scene-ui {
+  max-height: min(34vh, var(--battle-hero-zone-h, 140px));
+}
+
+html[data-ui-surface="phone-landscape"] #app[data-phase="battle"] .battle-scene-avatar .avatar-hero-shell,
+html[data-ui-surface="phone-landscape"] #app[data-phase="replay"] .battle-scene-avatar .avatar-hero-shell {
+  max-height: var(--battle-hero-card-h, min(128px, 28vh));
+}
+
+html[data-ui-surface="phone-landscape"] #app[data-phase="battle"] .battle-thought-arena,
+html[data-ui-surface="phone-landscape"] #app[data-phase="replay"] .battle-thought-arena {
+  min-height: max(64px, var(--zone-battle-floor-h, 0px), 16vh);
+}
+
+html[data-ui-surface="phone-landscape"] #class-overlay .class-modal {
+  max-height: var(--overlay-max-h);
+}
+
+html[data-ui-surface="phone-landscape"] #class-overlay .class-modal .class-step:not(.hidden) {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}

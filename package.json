@@ -1,8 +1,14 @@
 {
   "scripts": {
-    "test:layout": "node tools/layout-profiles.test.mjs"
+    "test:layout": "node tools/layout-profiles.test.mjs",
+    "test:phases": "node tools/layout-phases.test.mjs",
+    "test:geometry": "node tools/layout-geometry.test.mjs",
+    "test:snapshots": "playwright test",
+    "test:snapshots:update": "playwright test --update-snapshots",
+    "test:ui": "npm run test:layout && npm run test:phases && npm run test:geometry && npm run test:snapshots"
   },
   "dependencies": {
+    "@playwright/test": "^1.49.0",
     "playwright": "^1.49.0"
   }
 }
