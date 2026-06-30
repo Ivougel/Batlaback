@@ -117,6 +117,7 @@ let selectedBench = -1;
 let gameOver = false;
 let hoverCell = null;
 let hoverSlot = null;
+let prepDropPreviewHover = null;
 let mousePos = { x: 0, y: 0 };
 let dragGhostCanvas = null;
 let dragGhostCtx = null;
@@ -2358,6 +2359,126 @@ function maybePrepArcHoverSound(col, row) {
   PrepDragArc.syncHoverCell(col, row, kind);
 }
 
+function syncPrepDropPreviewHover(clientX, clientY, ghostClientX, ghostClientY) {
+  prepDropPreviewHover = null;
+  if (phase !== "prep" || !dragPayload) return;
+  const side = dragFrom?.side || prepViewSide;
+  if (!canEditPrepSide(side)) return;
+  const st = getSideState(side);
+
+  const applyBoardCoords = (coords) => {
+    if (!isOnBoard(coords.x, coords.y, side)) return false;
+    const col = xToCol(coords.x, side);
+    const row = yToRow(coords.y, side);
+    prepDropPreviewHover = { col, row };
+    if (isContainerItem(dragPayload.itemId)) {
+      hoverCell = { col, row };
+      hoverSlot = null;
+      return true;
+    }
+    if (isSlotCell(st.containers, col, row)) {
+      hoverSlot = { col, row };
+      hoverCell = null;
+      return true;
+    }
+    const placement = resolveLoadoutPlacementDisplacing(
+      st.containers,
+      dragPayload.itemId,
+      col,
+      row,
+      dragPayload.rotation || 0,
+    );
+    if (placement.valid) {
+      hoverSlot = { col, row };
+      hoverCell = null;
+      return true;
+    }
+    hoverCell = { col, row };
+    hoverSlot = null;
+    return true;
+  };
+
+  if (applyBoardCoords(canvasCoordsFromClient(clientX, clientY))) return;
+  if (typeof PrepDragArc !== "undefined" && PrepDragArc.isActive() && isPrepArcDragSource()) {
+    applyBoardCoords(canvasCoordsFromClient(ghostClientX, ghostClientY));
+  }
+}
+
+function getPrepDropPlacement(st, side = prepViewSide) {
+  if (!dragPayload || phase !== "prep") return null;
+  const col = hoverSlot?.col ?? hoverCell?.col ?? prepDropPreviewHover?.col;
+  const row = hoverSlot?.row ?? hoverCell?.row ?? prepDropPreviewHover?.row;
+  if (col == null || row == null) return null;
+
+  const excludeUid = dragFrom?.type === "container"
+    ? dragFrom.container?.uid
+    : (dragFrom?.type === "item" ? dragFrom.item?.uid : null);
+
+  if (isContainerItem(dragPayload.itemId)) {
+    const resolved = resolveContainerPlacementAtCursor(st, col, row);
+    if (!resolved) return null;
+    const valid = dragFrom?.type === "container"
+      ? canMoveContainerWithItems(
+        dragFrom.container,
+        resolved.col,
+        resolved.row,
+        st.containers,
+        st.items,
+        excludeUid,
+        GRID_COLS,
+        GRID_ROWS,
+      )
+      : canPlaceContainer(
+        dragPayload.itemId,
+        resolved.col,
+        resolved.row,
+        resolved.rotation,
+        GRID_COLS,
+        GRID_ROWS,
+        st.containers,
+        excludeUid,
+        st.items,
+      );
+    return {
+      kind: "container",
+      col: resolved.col,
+      row: resolved.row,
+      rotation: resolved.rotation,
+      valid,
+      displaced: [],
+    };
+  }
+
+  const placement = resolveLoadoutPlacementDisplacing(
+    st.containers,
+    dragPayload.itemId,
+    col,
+    row,
+    dragPayload.rotation || 0,
+  );
+  if (!placement.valid) return null;
+  const displaced = getOverlappingLoadoutItems(
+    st.items,
+    dragPayload.itemId,
+    placement.col,
+    placement.row,
+    placement.rotation,
+    excludeUid,
+  );
+  const displacedUids = displaced.map((item) => item.uid);
+  const slotOk = typeof canAddSlotItemToLoadout !== "function"
+    || canAddSlotItemToLoadout(st.items, dragPayload.itemId, excludeUid, displacedUids);
+  const benchOk = st.bench.length + displaced.length <= MAX_BENCH;
+  return {
+    kind: "item",
+    col: placement.col,
+    row: placement.row,
+    rotation: placement.rotation,
+    valid: slotOk && benchOk,
+    displaced,
+  };
+}
+
 function getPrepArcSidebarAnchorClient(clientX, clientY) {
   const pointer = createSyntheticPointerEvent(clientX, clientY);
   if (isDropOnBench(pointer)) {
@@ -2466,6 +2587,7 @@ function clearDragUiState() {
   document.getElementById("shop-sell-zone")?.classList.remove("sell-drop-target");
   dragPayload = null;
   dragFrom = null;
+  prepDropPreviewHover = null;
   clearGamepadBoardFocus();
   if (typeof onPrepDragEnd === "function") onPrepDragEnd();
   if (typeof PrepDragArc !== "undefined" && !PrepDragArc.isCelebrating?.()) {
@@ -3398,6 +3520,7 @@ function syncDragGhostOverlay(clientX, clientY) {
   if (typeof applyPrepDragGhostStyles === "function") {
     applyPrepDragGhostStyles(el, arcRotation);
   }
+  syncPrepDropPreviewHover(clientX, clientY, ghostX, ghostY);
 }
 
 function updatePointerFromClient(clientX, clientY) {
@@ -3670,7 +3793,7 @@ function drawFxLayer() {
     drawDisplaceAnimations(fxCtx, side);
     if (canEditPrepSide() && hoverSlot && !dragPayload && !gamepadBoardFocus) drawHoverCell();
     if (canEditPrepSide() && gamepadBoardFocus && isGamepadInteraction()) drawGamepadBoardFocus();
-    if (canEditPrepSide() && dragPayload && (hoverCell || hoverSlot)) {
+    if (canEditPrepSide() && dragPayload && getPrepDropPlacement(st, side)) {
       if (typeof drawPrepDropPreview === "function") drawPrepDropPreview(fxCtx, side, st);
       else drawDropPreview();
     }

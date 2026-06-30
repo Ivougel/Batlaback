@@ -224,70 +224,81 @@ const InventoryAnimationController = (() => {
     });
   }
 
+  function drawPlacementFigureShadow(ctx, team, placementInfo) {
+    const { col, row, rotation, valid, displaced, kind } = placementInfo;
+    const itemId = dragPayload.itemId;
+    const def = ITEM_CATALOG[itemId];
+    if (!def) return;
+    const ghostItem = { itemId, col, row, rotation: rotation || 0, uid: "__prep-drop-preview__" };
+    const alpha = valid ? 0.46 : 0.3;
+    const shape = rotateShape(def.shape, rotation || 0);
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    shape.forEach(([dx, dy]) => {
+      const { x, y, w, h } = cellRect(team, col + dx, row + dy);
+      ctx.fillStyle = `${def.color}${valid ? "bb" : "77"}`;
+      roundRect(x + CELL_TILE_PAD, y + CELL_TILE_PAD, w - CELL_TILE_PAD * 2, h - CELL_TILE_PAD * 2, 5);
+      ctx.fill();
+      ctx.strokeStyle = valid ? "rgba(120,220,140,0.35)" : "rgba(255,120,110,0.28)";
+      ctx.lineWidth = 1.25;
+      roundRect(x + CELL_TILE_PAD, y + CELL_TILE_PAD, w - CELL_TILE_PAD * 2, h - CELL_TILE_PAD * 2, 5);
+      ctx.stroke();
+    });
+
+    if (kind === "item" && typeof drawPlacedItemIcons === "function") {
+      drawPlacedItemIcons(ctx, def, ghostItem, (c, r) => cellRect(team, c, r));
+    } else if (kind === "container") {
+      const icons = getItemIcons(def);
+      const [adx, ady] = getShapeAnchorOffset(shape);
+      const anchorRect = cellRect(team, col + adx, row + ady);
+      drawItemIcons(
+        ctx,
+        icons,
+        anchorRect.x + anchorRect.w * 0.5,
+        anchorRect.y + anchorRect.h * 0.5,
+        anchorRect.w * 0.72,
+        anchorRect.h * 0.72,
+        CELL_TILE_PAD,
+      );
+    }
+    ctx.restore();
+
+    displaced.forEach((item) => {
+      const itemDef = ITEM_CATALOG[item.itemId];
+      if (!itemDef) return;
+      ctx.save();
+      ctx.globalAlpha = valid ? 0.24 : 0.16;
+      getItemCells(item).forEach(([c, r]) => {
+        const { x, y, w, h } = cellRect(team, c, r);
+        ctx.fillStyle = "rgba(210,153,34,0.55)";
+        roundRect(x + CELL_TILE_PAD, y + CELL_TILE_PAD, w - CELL_TILE_PAD * 2, h - CELL_TILE_PAD * 2, 5);
+        ctx.fill();
+      });
+      if (typeof drawPlacedItemIcons === "function") {
+        drawPlacedItemIcons(ctx, itemDef, item, (c, r) => cellRect(team, c, r));
+      }
+      ctx.restore();
+    });
+  }
+
   function drawEnhancedDropPreview(ctx, team, st) {
     if (typeof dragPayload === "undefined" || !dragPayload) return;
-    const pulse = 0.5 + Math.sin(spreadPhase * 5) * 0.12;
+    const placementInfo = typeof getPrepDropPlacement === "function"
+      ? getPrepDropPlacement(st, team)
+      : null;
+    if (!placementInfo) return;
 
-    if (typeof isContainerItem === "function" && isContainerItem(dragPayload.itemId) && hoverCell) {
-      const excludeUid = dragFrom?.type === "container" ? dragFrom.container.uid : null;
-      const valid = canPlaceContainer(
-        dragPayload.itemId,
-        hoverCell.col,
-        hoverCell.row,
-        dragPayload.rotation || 0,
-        GRID_COLS,
-        GRID_ROWS,
-        st.containers,
-        excludeUid,
-        st.items,
-      );
-      rotateShape(ITEM_CATALOG[dragPayload.itemId].shape, dragPayload.rotation || 0).forEach(([dx, dy]) => {
-        const { x, y, w, h } = cellRect(team, hoverCell.col + dx, hoverCell.row + dy);
-        ctx.save();
-        ctx.fillStyle = valid
-          ? `rgba(63,185,80,${0.22 + pulse * 0.12})`
-          : `rgba(248,81,73,${0.18 + pulse * 0.08})`;
-        roundRect(x + 3, y + 3, w - 6, h - 6, 5);
-        ctx.fill();
-        ctx.strokeStyle = valid
-          ? `rgba(120,220,140,${0.35 + pulse * 0.15})`
-          : `rgba(255,120,110,${0.28 + pulse * 0.1})`;
-        ctx.lineWidth = 1.5;
-        roundRect(x + 3, y + 3, w - 6, h - 6, 5);
-        ctx.stroke();
-        ctx.restore();
-      });
-      return;
+    if (placementInfo.kind === "item" && placementInfo.valid) {
+      dragPayload.rotation = placementInfo.rotation;
     }
 
-    if (!hoverSlot) return;
-    const excludeUid = dragFrom?.type === "item" ? dragFrom.item.uid : null;
-    const placement = resolveLoadoutPlacementDisplacing(
-      st.containers,
-      dragPayload.itemId,
-      hoverSlot.col,
-      hoverSlot.row,
-      dragPayload.rotation || 0,
-    );
-    if (placement.valid) dragPayload.rotation = placement.rotation;
-    const displaced = placement.valid
-      ? getOverlappingLoadoutItems(
-        st.items,
-        dragPayload.itemId,
-        placement.col,
-        placement.row,
-        placement.rotation,
-        excludeUid,
-      )
-      : [];
-    const displacedUids = displaced.map((item) => item.uid);
-    const slotOk = typeof canAddSlotItemToLoadout !== "function"
-      || canAddSlotItemToLoadout(st.items, dragPayload.itemId, excludeUid, displacedUids);
-    const benchOk = st.bench.length + displaced.length <= (typeof MAX_BENCH !== "undefined" ? MAX_BENCH : 6);
-    const valid = placement.valid && benchOk && slotOk;
+    const pulse = 0.5 + Math.sin(spreadPhase * 5) * 0.12;
+    const { col, row, rotation, valid, displaced } = placementInfo;
+    const shape = rotateShape(ITEM_CATALOG[dragPayload.itemId].shape, rotation || 0);
 
-    rotateShape(ITEM_CATALOG[dragPayload.itemId].shape, placement.rotation).forEach(([dx, dy]) => {
-      const { x, y, w, h } = cellRect(team, placement.col + dx, placement.row + dy);
+    shape.forEach(([dx, dy]) => {
+      const { x, y, w, h } = cellRect(team, col + dx, row + dy);
       ctx.save();
       ctx.fillStyle = valid
         ? `rgba(63,185,80,${0.24 + pulse * 0.14})`
@@ -313,6 +324,8 @@ const InventoryAnimationController = (() => {
         ctx.restore();
       });
     });
+
+    drawPlacementFigureShadow(ctx, team, placementInfo);
   }
 
   function tick(dt) {
