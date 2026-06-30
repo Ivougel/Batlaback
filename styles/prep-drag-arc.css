@@ -1,5 +1,6 @@
 /**
  * Магическая дуга переноса предмета из магазина/скамьи (prep).
+ * Верхний слой — поверх магазина, HUD и сцены.
  */
 
 .prep-drag-arc-layer {
@@ -7,7 +8,7 @@
   left: 0;
   top: 0;
   pointer-events: none;
-  z-index: calc(var(--z-drag-ghost, 5) - 1);
+  z-index: 9250;
   overflow: visible;
   --prep-arc-pulse: 0.5;
 }
@@ -18,38 +19,25 @@
 
 .prep-drag-arc-halo {
   stroke-linecap: round;
-  filter: blur(6px);
-  mix-blend-mode: screen;
-}
-
-.prep-drag-arc-glow {
-  stroke-linecap: round;
+  filter: blur(3px);
   mix-blend-mode: screen;
 }
 
 .prep-drag-arc-core {
   stroke-linecap: round;
-  filter:
-    drop-shadow(0 0 calc(4px + var(--prep-arc-pulse) * 8px) rgba(168, 120, 255, 0.85))
-    drop-shadow(0 0 calc(8px + var(--prep-arc-pulse) * 12px) rgba(126, 232, 250, 0.45));
-}
-
-.prep-drag-arc-spark {
-  stroke-linecap: round;
-  mix-blend-mode: screen;
+  filter: drop-shadow(0 0 3px rgba(148, 188, 230, 0.28));
 }
 
 .prep-drag-arc-layer--fade .prep-drag-arc-halo,
-.prep-drag-arc-layer--fade .prep-drag-arc-glow,
-.prep-drag-arc-layer--fade .prep-drag-arc-core,
-.prep-drag-arc-layer--fade .prep-drag-arc-spark {
+.prep-drag-arc-layer--fade .prep-drag-arc-core {
   opacity: 0;
   transition: opacity 0.16s ease-out;
 }
 
 .ui-drag-ghost--arc-flight {
+  z-index: 9251 !important;
   filter:
-    drop-shadow(0 0 calc(8px + var(--prep-arc-pulse, 0.5) * 10px) rgba(168, 120, 255, 0.6))
-    drop-shadow(0 0 calc(16px + var(--prep-arc-pulse, 0.5) * 14px) rgba(126, 232, 250, 0.4))
-    drop-shadow(0 8px 20px rgba(0, 0, 0, 0.45)) !important;
+    drop-shadow(0 0 calc(4px + var(--prep-arc-pulse, 0.5) * 5px) rgba(168, 120, 255, 0.32))
+    drop-shadow(0 0 calc(8px + var(--prep-arc-pulse, 0.5) * 7px) rgba(126, 232, 250, 0.22))
+    drop-shadow(0 6px 14px rgba(0, 0, 0, 0.4)) !important;
 }

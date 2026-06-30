@@ -14,9 +14,7 @@ const PrepDragArc = (() => {
   let lastRotation = 0;
   let layerEl = null;
   let haloPathEl = null;
-  let glowPathEl = null;
   let corePathEl = null;
-  let sparkPathEl = null;
   let rafId = null;
   let pulsePhase = 0;
 
@@ -39,22 +37,25 @@ const PrepDragArc = (() => {
     };
   }
 
-  /** Плавная широкая дуга: два контрольных пункта с высоким подъёмом. */
+  /**
+   * Низкая плавная дуга вдоль хорды (магазин → поле), без высокого пика к верху экрана.
+   */
   function arcControls(from, to, vmin) {
     const dx = to.x - from.x;
     const dy = to.y - from.y;
-    const span = Math.hypot(dx, dy);
-    const lift = Math.max(vmin * 0.26, span * 0.48);
-    const sideBias = dx * 0.08;
+    const span = Math.hypot(dx, dy) || 1;
+    const lift = Math.min(span * 0.1, vmin * 0.055);
+    const midX = (from.x + to.x) * 0.5;
+    const midY = (from.y + to.y) * 0.5;
 
     return {
       c1: {
-        x: from.x + dx * 0.18 + sideBias,
-        y: from.y + dy * 0.06 - lift * 0.72,
+        x: from.x + dx * 0.28,
+        y: midY - lift * 0.35,
       },
       c2: {
-        x: from.x + dx * 0.82 - sideBias * 0.5,
-        y: from.y + dy * 0.38 - lift,
+        x: midX + dx * 0.12,
+        y: midY - lift,
       },
     };
   }
@@ -78,33 +79,19 @@ const PrepDragArc = (() => {
       layerEl.setAttribute("aria-hidden", "true");
       layerEl.innerHTML = `
         <defs>
-          <linearGradient id="prep-drag-arc-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stop-color="#c77dff" stop-opacity="0.95"/>
-            <stop offset="45%" stop-color="#7ee8fa" stop-opacity="1"/>
-            <stop offset="100%" stop-color="#a78bfa" stop-opacity="0.9"/>
+          <linearGradient id="prep-drag-arc-grad" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#b8a0e8" stop-opacity="0.42"/>
+            <stop offset="50%" stop-color="#8ecde8" stop-opacity="0.5"/>
+            <stop offset="100%" stop-color="#a99ad4" stop-opacity="0.38"/>
           </linearGradient>
-          <filter id="prep-drag-arc-glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="7" result="blur"/>
-            <feColorMatrix in="blur" type="matrix"
-              values="0 0 0 0 0.72  0 0 0 0 0.35  0 0 0 0 1  0 0 0 0.85 0"/>
-            <feMerge>
-              <feMergeNode/>
-              <feMergeNode in="SourceGraphic"/>
-            </feMerge>
-          </filter>
         </defs>
         <path class="prep-drag-arc-halo" fill="none"/>
-        <path class="prep-drag-arc-glow" fill="none" filter="url(#prep-drag-arc-glow)"/>
         <path class="prep-drag-arc-core" fill="none" stroke="url(#prep-drag-arc-grad)"/>
-        <path class="prep-drag-arc-spark" fill="none" stroke="url(#prep-drag-arc-grad)"/>
       `;
-      const host = document.getElementById("layer-fx") || document.body;
-      host.appendChild(layerEl);
+      document.body.appendChild(layerEl);
     }
     haloPathEl = layerEl.querySelector(".prep-drag-arc-halo");
-    glowPathEl = layerEl.querySelector(".prep-drag-arc-glow");
     corePathEl = layerEl.querySelector(".prep-drag-arc-core");
-    sparkPathEl = layerEl.querySelector(".prep-drag-arc-spark");
     return layerEl;
   }
 
@@ -113,10 +100,14 @@ const PrepDragArc = (() => {
     const vv = window.visualViewport;
     const w = vv?.width ?? window.innerWidth;
     const h = vv?.height ?? window.innerHeight;
+    const left = vv?.offsetLeft ?? 0;
+    const top = vv?.offsetTop ?? 0;
     layerEl.setAttribute("width", String(w));
     layerEl.setAttribute("height", String(h));
     layerEl.style.width = `${w}px`;
     layerEl.style.height = `${h}px`;
+    layerEl.style.left = `${left}px`;
+    layerEl.style.top = `${top}px`;
   }
 
   function pathD(from, c1, c2, to) {
@@ -127,47 +118,50 @@ const PrepDragArc = (() => {
     return 0.5 + 0.5 * Math.sin(pulsePhase * speed + offset);
   }
 
+  function updateGradientEndpoints(from, to) {
+    const grad = layerEl?.querySelector("#prep-drag-arc-grad");
+    if (!grad) return;
+    grad.setAttribute("x1", String(from.x));
+    grad.setAttribute("y1", String(from.y));
+    grad.setAttribute("x2", String(to.x));
+    grad.setAttribute("y2", String(to.y));
+  }
+
   function renderArc(from, controls, to, progress) {
     ensureLayer();
     syncLayerSize();
+    updateGradientEndpoints(from, to);
     const { c1, c2 } = controls;
     const d = pathD(from, c1, c2, to);
 
-    const pulseA = pulseWave(1.1, 0);
-    const pulseB = pulseWave(1.7, 1.2);
-    const glowWidth = 18 + pulseA * 10;
-    const haloWidth = 28 + pulseB * 14;
-    const coreWidth = 2.8 + pulseA * 1.2;
-    const glowOpacity = 0.42 + pulseA * 0.28;
-    const coreOpacity = 0.78 + pulseB * 0.2;
-    const haloOpacity = 0.18 + pulseA * 0.14;
+    const pulseA = pulseWave(1.05, 0);
+    const pulseB = pulseWave(1.55, 0.9);
+    const dashPeriod = 5 + pulseB * 1.2;
+    const dashGap = 7 + pulseA * 1.5;
+    const dashOffset = -pulsePhase * 18;
+    const dashPattern = `${dashPeriod.toFixed(1)} ${dashGap.toFixed(1)}`;
 
-    [haloPathEl, glowPathEl, corePathEl, sparkPathEl].forEach((el) => {
+    const haloWidth = 5 + pulseA * 2.5;
+    const coreWidth = 1.35 + pulseA * 0.45;
+    const haloOpacity = 0.1 + pulseA * 0.08;
+    const coreOpacity = 0.34 + pulseB * 0.14;
+
+    [haloPathEl, corePathEl].forEach((el) => {
       if (!el) return;
       el.setAttribute("d", d);
+      el.setAttribute("stroke-dasharray", dashPattern);
+      el.setAttribute("stroke-dashoffset", String(dashOffset));
     });
 
     if (haloPathEl) {
-      haloPathEl.setAttribute("stroke", `rgba(140, 200, 255, ${haloOpacity.toFixed(3)})`);
+      haloPathEl.setAttribute("stroke", `rgba(148, 188, 230, ${haloOpacity.toFixed(3)})`);
       haloPathEl.setAttribute("stroke-width", String(haloWidth));
       haloPathEl.setAttribute("stroke-linecap", "round");
-    }
-    if (glowPathEl) {
-      glowPathEl.setAttribute("stroke", `rgba(168, 120, 255, ${glowOpacity.toFixed(3)})`);
-      glowPathEl.setAttribute("stroke-width", String(glowWidth));
-      glowPathEl.setAttribute("stroke-linecap", "round");
     }
     if (corePathEl) {
       corePathEl.setAttribute("stroke-width", String(coreWidth));
       corePathEl.setAttribute("stroke-linecap", "round");
       corePathEl.style.opacity = String(coreOpacity);
-    }
-    if (sparkPathEl) {
-      const len = Math.max(140, Math.hypot(to.x - from.x, to.y - from.y) * 1.5);
-      sparkPathEl.setAttribute("stroke-width", String(1.6 + pulseB * 0.8));
-      sparkPathEl.setAttribute("stroke-dasharray", `6 14 3 ${len}`);
-      sparkPathEl.setAttribute("stroke-dashoffset", String(-pulsePhase * 52));
-      sparkPathEl.style.opacity = String(0.28 + progress * 0.35 + pulseA * 0.18);
     }
 
     layerEl.style.setProperty("--prep-arc-pulse", String(pulseA));
