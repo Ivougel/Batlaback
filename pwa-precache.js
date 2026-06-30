@@ -5,7 +5,7 @@ self.PWA_PRECACHE_URLS = [
   "backpack-engine.js",
   "battle-engine.js",
   "battle-float-layer.js",
-  "battle-float-layer.js?v=16",
+  "battle-float-layer.js?v=17",
   "battle-hud.js",
   "classes.js",
   "components/accordion.js",

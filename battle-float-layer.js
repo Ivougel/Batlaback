@@ -5,6 +5,22 @@
 
 const battleFloatDomPool = new Map();
 
+function isFlankArenaBattleUi() {
+  const app = document.getElementById("app");
+  const phase = app?.dataset.phase;
+  return document.documentElement.dataset.battleHeroPlacement === "flank-arena"
+    && (phase === "battle" || phase === "replay");
+}
+
+function getBattleHeroFloatViewport(team, lane = 0) {
+  if (typeof getProfileAvatarFloatAnchor === "function") {
+    const pt = getProfileAvatarFloatAnchor(team, lane);
+    return { x: pt.x, y: pt.y };
+  }
+  const center = getProfileAvatarViewportCenter(team);
+  return { x: center.x, y: center.y - 48 - lane * 22 };
+}
+
 const floatLayer = (() => {
   function getLayer() {
     return document.getElementById("battle-float-layer");
@@ -53,6 +69,10 @@ const floatLayer = (() => {
   }
 
   function cellCenterViewport(canvas, team, col, row) {
+    if (isFlankArenaBattleUi()) {
+      const pt = getBattleHeroFloatViewport(team, 0);
+      return { vx: pt.x, vy: pt.y };
+    }
     if (typeof cellRect === "function") {
       const rect = cellRect(team, col, row);
       return canvasToViewport(canvas, rect.x + rect.w / 2, rect.y + rect.h / 2);
@@ -170,6 +190,10 @@ function getWeaponControlPoint(from, to, targetTeam) {
 }
 
 function getFatigueOriginViewport(targetTeam) {
+  if (isFlankArenaBattleUi()) {
+    const pt = getBattleHeroFloatViewport(targetTeam, 0);
+    return { x: pt.x, y: pt.y - 36 };
+  }
   const canvas = getBattleCanvasEl();
   const avatar = getProfileAvatarViewportCenter(targetTeam);
   if (!canvas) {
@@ -240,6 +264,18 @@ function sampleFloatTrajectory(trajectory, from, to, targetTeam, t) {
 }
 
 function getBattlefieldCenterViewport() {
+  if (isFlankArenaBattleUi()) {
+    const arena = document.getElementById("battle-thought-arena");
+    if (arena) {
+      const rect = arena.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        return { x: rect.left + rect.width / 2, y: rect.top + rect.height * 0.38 };
+      }
+    }
+    const player = getProfileAvatarViewportCenter("player");
+    const enemy = getProfileAvatarViewportCenter("enemy");
+    return { x: (player.x + enemy.x) / 2, y: Math.min(player.y, enemy.y) - 48 };
+  }
   if (typeof getTeamGridCenter === "function") {
     const player = getTeamGridCenter("player");
     const enemy = getTeamGridCenter("enemy");
@@ -284,6 +320,9 @@ function getBattleStatsPanelCenter() {
 }
 
 function getItemViewportCenter(item, team) {
+  if (isFlankArenaBattleUi()) {
+    return getBattleHeroFloatViewport(team, 0);
+  }
   if (!item || typeof getItemCells !== "function" || typeof cellRect !== "function") {
     return getBattlefieldCenterViewport();
   }
@@ -351,6 +390,22 @@ function getProfileAvatarViewportCenter(team) {
   if (avatar) {
     const rect = avatar.getBoundingClientRect();
     return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+  }
+  if (typeof getAvatarHeroStageRect === "function") {
+    const rect = getAvatarHeroStageRect(team);
+    if (rect.width > 0) {
+      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    }
+  }
+  if (isFlankArenaBattleUi()) {
+    const arena = document.getElementById("battle-thought-arena");
+    if (arena) {
+      const rect = arena.getBoundingClientRect();
+      if (rect.width > 0) {
+        return { x: rect.left + rect.width / 2, y: rect.top + rect.height * 0.38 };
+      }
+    }
+    return { x: window.innerWidth / 2, y: window.innerHeight * 0.3 };
   }
   const fallback = getTeamGridCenter(team);
   return canvasPointToViewport(fallback.x, fallback.y);

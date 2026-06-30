@@ -2858,17 +2858,29 @@ function handleBattleEvent(ev) {
       break;
     }
     case "poison_tick": {
-      const cx = gridOrigin(ev.targetTeam) + GRID_INNER_W / 2;
-      const cy = BACKPACK_Y + GRID_INNER_H / 2;
-      const { vx, vy } = floatLayer.canvasToViewport(canvas, cx, cy);
-      floatLayer.spawn(`☠️ −${ev.amount}`, "poison", vx, vy);
+      if (document.documentElement.dataset.battleHeroPlacement === "flank-arena"
+        && typeof getProfileAvatarFloatAnchor === "function") {
+        const pt = getProfileAvatarFloatAnchor(ev.targetTeam, 0);
+        floatLayer.spawn(`☠️ −${ev.amount}`, "poison", pt.x, pt.y);
+      } else {
+        const cx = gridOrigin(ev.targetTeam) + GRID_INNER_W / 2;
+        const cy = BACKPACK_Y + GRID_INNER_H / 2;
+        const { vx, vy } = floatLayer.canvasToViewport(canvas, cx, cy);
+        floatLayer.spawn(`☠️ −${ev.amount}`, "poison", vx, vy);
+      }
       break;
     }
     case "block": {
-      const cx = gridOrigin(ev.targetTeam) + GRID_INNER_W / 2;
-      const cy = BACKPACK_Y + 20;
-      const { vx, vy } = floatLayer.canvasToViewport(canvas, cx, cy);
-      floatLayer.spawn(`🛡 ${ev.amount}`, "block", vx, vy);
+      if (document.documentElement.dataset.battleHeroPlacement === "flank-arena"
+        && typeof getProfileAvatarFloatAnchor === "function") {
+        const pt = getProfileAvatarFloatAnchor(ev.targetTeam, 0);
+        floatLayer.spawn(`🛡 ${ev.amount}`, "block", pt.x, pt.y);
+      } else {
+        const cx = gridOrigin(ev.targetTeam) + GRID_INNER_W / 2;
+        const cy = BACKPACK_Y + 20;
+        const { vx, vy } = floatLayer.canvasToViewport(canvas, cx, cy);
+        floatLayer.spawn(`🛡 ${ev.amount}`, "block", vx, vy);
+      }
       break;
     }
     default:
