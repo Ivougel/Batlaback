@@ -37,9 +37,9 @@ const CLASS_CATALOG = {
     name: "Жрец",
     icon: "✨",
     iconSrc: "img/sticker_priest.png",
-    desc: "+5 макс. HP за каждую еду в рюкзаке",
+    desc: "+3% макс. HP за еду · еда лечит на 25% сильнее",
     starterItems: ["apple", "banana"],
-    combatBonus: { type: "foodInventory", maxHpPerFood: 5 },
+    combatBonus: { type: "foodInventory", maxHpPctPerFood: 0.03, foodHealMult: 0.25 },
     priorityTags: ["food", "potion", "nature"],
   },
 };

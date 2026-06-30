@@ -1522,8 +1522,10 @@ function refreshPrepHeroTooltip() {
     if (classId === "priest" && typeof countFoodItemsInLoadout === "function") {
       const items = prepViewSide === "player" ? playerItems : enemyItems;
       const foodCount = countFoodItemsInLoadout(items);
-      const perFood = cls?.combatBonus?.maxHpPerFood || 5;
-      desc += ` · Сейчас: ${foodCount} еды → +${foodCount * perFood} HP`;
+      const bonus = cls?.combatBonus || {};
+      const pct = Math.round((bonus.maxHpPctPerFood || 0.03) * 100);
+      const healPct = Math.round((bonus.foodHealMult || 0.25) * 100);
+      desc += ` · Сейчас: ${foodCount} еды → +${foodCount * pct}% HP, еда +${healPct}% хил`;
     }
     descEl.textContent = desc;
   }

@@ -4,7 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0d1117">
   <title>Backpack Battles — Автобатлер</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="stylesheet" href="styles/tokens.css?v=2">
   <link rel="stylesheet" href="styles/layers.css?v=5">
   <link rel="stylesheet" href="styles.css?v=21">
@@ -270,7 +276,7 @@
             <span class="glass-card-icon glass-card-icon--class class-icon"><img src="img/sticker_priest.png" alt="" class="class-sticker" draggable="false"></span>
             <span class="class-name">Жрец</span>
             <span class="class-desc">Яблоко + банан</span>
-            <span class="class-bonus">+5 HP за каждую еду</span>
+            <span class="class-bonus">+3% HP за еду · +25% хил еды</span>
           </button>
         </div>
         </div>
@@ -481,5 +487,6 @@
   <script src="battle-hud.js"></script>
   <script src="systems/doll-engine.js"></script>
   <script src="game.js?v=4"></script>
+  <script src="pwa-register.js"></script>
 </body>
 </html>

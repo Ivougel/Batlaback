@@ -104,17 +104,23 @@ function collectPrepStatusEffects(side, items) {
     }, seen);
   }
 
-  if (side.classId === "priest" && side.classFoodBonusHp > 0) {
-    const perFood = getClassById(side.classId)?.combatBonus?.maxHpPerFood || 5;
+  if (side.classId === "priest" && (side.classFoodBonusHp > 0 || side.classFoodHealMult > 1)) {
+    const bonus = getClassById(side.classId)?.combatBonus || {};
+    const pct = Math.round((bonus.maxHpPctPerFood || 0.03) * 100);
+    const healPct = Math.round((bonus.foodHealMult || 0.25) * 100);
+    const lines = [
+      `+${pct}% макс. HP за каждую еду в рюкзаке`,
+      side.classFoodBonusHp > 0
+        ? `${side.classFoodCount || 0} еды → +${side.classFoodBonusHp} HP`
+        : null,
+      `Еда лечит на +${healPct}% сильнее`,
+    ].filter(Boolean);
     pushUniqueStatusChip(buffs, {
       id: "priest-food-bonus",
       icon: "🍎",
-      value: side.classFoodBonusHp,
+      value: side.classFoodBonusHp || side.classFoodCount || 0,
       title: "Благословение жреца",
-      lines: [
-        `+${perFood} макс. HP за каждую еду в рюкзаке`,
-        `${side.classFoodCount || 0} еды → +${side.classFoodBonusHp} HP`,
-      ],
+      lines,
     }, seen);
   }
 

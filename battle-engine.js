@@ -771,14 +771,32 @@ function applyClassCombatBonus(side, classId) {
   if (b.type === "magicDamageMult") side.magicDamageMult *= 1 + b.value;
   if (b.type === "foodInventory") {
     const foodCount = countFoodItemsInLoadout(side.items);
-    const perFood = Number(b.maxHpPerFood) || 0;
-    const bonusHp = foodCount * perFood;
-    if (bonusHp > 0) {
-      side.maxHp += bonusHp;
-      side.classFoodBonusHp = bonusHp;
-      side.classFoodCount = foodCount;
+    side.classFoodCount = foodCount;
+    const pctPerFood = Number(b.maxHpPctPerFood) || 0;
+    const flatPerFood = Number(b.maxHpPerFood) || 0;
+    if (foodCount > 0) {
+      const before = side.maxHp;
+      if (pctPerFood > 0) {
+        side.maxHp = Math.floor(side.maxHp * (1 + foodCount * pctPerFood));
+      } else if (flatPerFood > 0) {
+        side.maxHp += foodCount * flatPerFood;
+      }
+      side.classFoodBonusHp = side.maxHp - before;
     }
+    const foodHealMult = Number(b.foodHealMult) || 0;
+    if (foodHealMult > 0) side.classFoodHealMult = 1 + foodHealMult;
   }
+}
+
+function isFoodTaggedItemDef(def) {
+  return !!def && !def.isContainer && def.tags?.includes("food");
+}
+
+function applyClassFoodHealBonus(amount, self, def) {
+  if (!amount || !isFoodTaggedItemDef(def)) return amount;
+  const mult = self?.classFoodHealMult || 1;
+  if (mult <= 1) return amount;
+  return Math.floor(amount * mult);
 }
 
 function countFoodItemsInLoadout(items = []) {
@@ -2907,6 +2925,7 @@ function executeEffect(state, effect, item, self, foe, rt, team, execOptions = {
           );
         }
       }
+      amount = applyClassFoodHealBonus(amount, self, def);
       const beforeModifiers = amount;
       amount = applyHealAmountModifiers(amount, self, rt);
       const before = self.hp;

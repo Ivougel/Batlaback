@@ -1,0 +1,833 @@
+{
+  "generatedAt": "2026-06-30T00:47:21.191Z",
+  "presets": {
+    "warrior_r1_opt": {
+      "key": "warrior_r1_opt",
+      "label": "Воин bot-optimal R1",
+      "classId": "warrior",
+      "round": 1,
+      "variant": "opt",
+      "power": 294,
+      "itemCount": 5,
+      "weaponCount": 1,
+      "foodCount": 0,
+      "items": [
+        {
+          "itemId": "heart_container",
+          "col": 4,
+          "row": 3,
+          "rotation": 2
+        },
+        {
+          "itemId": "gloves_of_haste",
+          "col": 3,
+          "row": 4,
+          "rotation": 0
+        },
+        {
+          "itemId": "hammer",
+          "col": 4,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "royal_helmet",
+          "col": 3,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "gloves_of_haste",
+          "col": 5,
+          "row": 2,
+          "rotation": 0
+        }
+      ],
+      "itemIds": [
+        "heart_container",
+        "gloves_of_haste",
+        "hammer",
+        "royal_helmet"
+      ]
+    },
+    "warrior_r8_opt": {
+      "key": "warrior_r8_opt",
+      "label": "Воин bot-optimal R8",
+      "classId": "warrior",
+      "round": 8,
+      "variant": "opt",
+      "power": 294,
+      "itemCount": 5,
+      "weaponCount": 1,
+      "foodCount": 0,
+      "items": [
+        {
+          "itemId": "heart_container",
+          "col": 4,
+          "row": 3,
+          "rotation": 2
+        },
+        {
+          "itemId": "gloves_of_haste",
+          "col": 3,
+          "row": 4,
+          "rotation": 0
+        },
+        {
+          "itemId": "hammer",
+          "col": 4,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "royal_helmet",
+          "col": 3,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "gloves_of_haste",
+          "col": 5,
+          "row": 2,
+          "rotation": 0
+        }
+      ],
+      "itemIds": [
+        "heart_container",
+        "gloves_of_haste",
+        "hammer",
+        "royal_helmet"
+      ]
+    },
+    "warrior_r16_opt": {
+      "key": "warrior_r16_opt",
+      "label": "Воин bot-optimal R16",
+      "classId": "warrior",
+      "round": 16,
+      "variant": "opt",
+      "power": 294,
+      "itemCount": 5,
+      "weaponCount": 1,
+      "foodCount": 0,
+      "items": [
+        {
+          "itemId": "heart_container",
+          "col": 4,
+          "row": 3,
+          "rotation": 2
+        },
+        {
+          "itemId": "gloves_of_haste",
+          "col": 3,
+          "row": 4,
+          "rotation": 0
+        },
+        {
+          "itemId": "hammer",
+          "col": 4,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "royal_helmet",
+          "col": 3,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "gloves_of_haste",
+          "col": 5,
+          "row": 2,
+          "rotation": 0
+        }
+      ],
+      "itemIds": [
+        "heart_container",
+        "gloves_of_haste",
+        "hammer",
+        "royal_helmet"
+      ]
+    },
+    "rogue_r1_opt": {
+      "key": "rogue_r1_opt",
+      "label": "Разбойник bot-optimal R1",
+      "classId": "rogue",
+      "round": 1,
+      "variant": "opt",
+      "power": 302,
+      "itemCount": 6,
+      "weaponCount": 1,
+      "foodCount": 0,
+      "items": [
+        {
+          "itemId": "heart_container",
+          "col": 4,
+          "row": 3,
+          "rotation": 0
+        },
+        {
+          "itemId": "shadow_blade",
+          "col": 3,
+          "row": 3,
+          "rotation": 0
+        },
+        {
+          "itemId": "more_stats",
+          "col": 5,
+          "row": 4,
+          "rotation": 0
+        },
+        {
+          "itemId": "gloves_of_haste",
+          "col": 4,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "artifact_stone_death",
+          "col": 3,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "gloves_of_haste",
+          "col": 5,
+          "row": 2,
+          "rotation": 0
+        }
+      ],
+      "itemIds": [
+        "heart_container",
+        "shadow_blade",
+        "more_stats",
+        "gloves_of_haste",
+        "artifact_stone_death"
+      ]
+    },
+    "rogue_r8_opt": {
+      "key": "rogue_r8_opt",
+      "label": "Разбойник bot-optimal R8",
+      "classId": "rogue",
+      "round": 8,
+      "variant": "opt",
+      "power": 302,
+      "itemCount": 6,
+      "weaponCount": 1,
+      "foodCount": 0,
+      "items": [
+        {
+          "itemId": "heart_container",
+          "col": 4,
+          "row": 3,
+          "rotation": 0
+        },
+        {
+          "itemId": "shadow_blade",
+          "col": 3,
+          "row": 3,
+          "rotation": 0
+        },
+        {
+          "itemId": "more_stats",
+          "col": 5,
+          "row": 4,
+          "rotation": 0
+        },
+        {
+          "itemId": "gloves_of_haste",
+          "col": 4,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "artifact_stone_death",
+          "col": 3,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "gloves_of_haste",
+          "col": 5,
+          "row": 2,
+          "rotation": 0
+        }
+      ],
+      "itemIds": [
+        "heart_container",
+        "shadow_blade",
+        "more_stats",
+        "gloves_of_haste",
+        "artifact_stone_death"
+      ]
+    },
+    "rogue_r16_opt": {
+      "key": "rogue_r16_opt",
+      "label": "Разбойник bot-optimal R16",
+      "classId": "rogue",
+      "round": 16,
+      "variant": "opt",
+      "power": 302,
+      "itemCount": 6,
+      "weaponCount": 1,
+      "foodCount": 0,
+      "items": [
+        {
+          "itemId": "heart_container",
+          "col": 4,
+          "row": 3,
+          "rotation": 0
+        },
+        {
+          "itemId": "shadow_blade",
+          "col": 3,
+          "row": 3,
+          "rotation": 0
+        },
+        {
+          "itemId": "more_stats",
+          "col": 5,
+          "row": 4,
+          "rotation": 0
+        },
+        {
+          "itemId": "gloves_of_haste",
+          "col": 4,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "artifact_stone_death",
+          "col": 3,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "gloves_of_haste",
+          "col": 5,
+          "row": 2,
+          "rotation": 0
+        }
+      ],
+      "itemIds": [
+        "heart_container",
+        "shadow_blade",
+        "more_stats",
+        "gloves_of_haste",
+        "artifact_stone_death"
+      ]
+    },
+    "mage_r1_opt": {
+      "key": "mage_r1_opt",
+      "label": "Маг bot-optimal R1",
+      "classId": "mage",
+      "round": 1,
+      "variant": "opt",
+      "power": 300,
+      "itemCount": 5,
+      "weaponCount": 1,
+      "foodCount": 0,
+      "items": [
+        {
+          "itemId": "heart_container",
+          "col": 4,
+          "row": 3,
+          "rotation": 2
+        },
+        {
+          "itemId": "artifact_stone_death",
+          "col": 3,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "gloves_of_haste",
+          "col": 4,
+          "row": 3,
+          "rotation": 0
+        },
+        {
+          "itemId": "hammer",
+          "col": 4,
+          "row": 2,
+          "rotation": 1
+        },
+        {
+          "itemId": "gloves_of_haste",
+          "col": 3,
+          "row": 3,
+          "rotation": 0
+        }
+      ],
+      "itemIds": [
+        "heart_container",
+        "artifact_stone_death",
+        "gloves_of_haste",
+        "hammer"
+      ]
+    },
+    "mage_r8_opt": {
+      "key": "mage_r8_opt",
+      "label": "Маг bot-optimal R8",
+      "classId": "mage",
+      "round": 8,
+      "variant": "opt",
+      "power": 300,
+      "itemCount": 5,
+      "weaponCount": 1,
+      "foodCount": 0,
+      "items": [
+        {
+          "itemId": "heart_container",
+          "col": 4,
+          "row": 3,
+          "rotation": 2
+        },
+        {
+          "itemId": "artifact_stone_death",
+          "col": 3,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "gloves_of_haste",
+          "col": 4,
+          "row": 3,
+          "rotation": 0
+        },
+        {
+          "itemId": "hammer",
+          "col": 4,
+          "row": 2,
+          "rotation": 1
+        },
+        {
+          "itemId": "gloves_of_haste",
+          "col": 3,
+          "row": 3,
+          "rotation": 0
+        }
+      ],
+      "itemIds": [
+        "heart_container",
+        "artifact_stone_death",
+        "gloves_of_haste",
+        "hammer"
+      ]
+    },
+    "mage_r16_opt": {
+      "key": "mage_r16_opt",
+      "label": "Маг bot-optimal R16",
+      "classId": "mage",
+      "round": 16,
+      "variant": "opt",
+      "power": 300,
+      "itemCount": 5,
+      "weaponCount": 1,
+      "foodCount": 0,
+      "items": [
+        {
+          "itemId": "heart_container",
+          "col": 4,
+          "row": 3,
+          "rotation": 2
+        },
+        {
+          "itemId": "artifact_stone_death",
+          "col": 3,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "gloves_of_haste",
+          "col": 4,
+          "row": 3,
+          "rotation": 0
+        },
+        {
+          "itemId": "hammer",
+          "col": 4,
+          "row": 2,
+          "rotation": 1
+        },
+        {
+          "itemId": "gloves_of_haste",
+          "col": 3,
+          "row": 3,
+          "rotation": 0
+        }
+      ],
+      "itemIds": [
+        "heart_container",
+        "artifact_stone_death",
+        "gloves_of_haste",
+        "hammer"
+      ]
+    },
+    "priest_r1_opt": {
+      "key": "priest_r1_opt",
+      "label": "Жрец bot-optimal R1",
+      "classId": "priest",
+      "round": 1,
+      "variant": "opt",
+      "power": 328,
+      "itemCount": 7,
+      "weaponCount": 0,
+      "foodCount": 0,
+      "items": [
+        {
+          "itemId": "heart_container",
+          "col": 4,
+          "row": 3,
+          "rotation": 0
+        },
+        {
+          "itemId": "artifact_stone_death",
+          "col": 3,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "artifact_stone_death",
+          "col": 5,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "gloves_of_haste",
+          "col": 3,
+          "row": 3,
+          "rotation": 0
+        },
+        {
+          "itemId": "more_stats",
+          "col": 5,
+          "row": 4,
+          "rotation": 0
+        },
+        {
+          "itemId": "gloves_of_haste",
+          "col": 4,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "artifact_stone_death",
+          "col": 3,
+          "row": 4,
+          "rotation": 0
+        }
+      ],
+      "itemIds": [
+        "heart_container",
+        "artifact_stone_death",
+        "gloves_of_haste",
+        "more_stats"
+      ]
+    },
+    "priest_r1_hybrid_opt": {
+      "key": "priest_r1_hybrid_opt",
+      "label": "Жрец hybrid optimal R1",
+      "classId": "priest",
+      "round": 1,
+      "variant": "hybrid",
+      "power": 328,
+      "itemCount": 7,
+      "weaponCount": 0,
+      "foodCount": 0,
+      "items": [
+        {
+          "itemId": "heart_container",
+          "col": 4,
+          "row": 3,
+          "rotation": 0
+        },
+        {
+          "itemId": "artifact_stone_death",
+          "col": 3,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "artifact_stone_death",
+          "col": 5,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "gloves_of_haste",
+          "col": 3,
+          "row": 3,
+          "rotation": 0
+        },
+        {
+          "itemId": "more_stats",
+          "col": 5,
+          "row": 4,
+          "rotation": 0
+        },
+        {
+          "itemId": "gloves_of_haste",
+          "col": 4,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "artifact_stone_death",
+          "col": 3,
+          "row": 4,
+          "rotation": 0
+        }
+      ],
+      "itemIds": [
+        "heart_container",
+        "artifact_stone_death",
+        "gloves_of_haste",
+        "more_stats"
+      ]
+    },
+    "priest_r8_opt": {
+      "key": "priest_r8_opt",
+      "label": "Жрец bot-optimal R8",
+      "classId": "priest",
+      "round": 8,
+      "variant": "opt",
+      "power": 328,
+      "itemCount": 7,
+      "weaponCount": 0,
+      "foodCount": 0,
+      "items": [
+        {
+          "itemId": "heart_container",
+          "col": 4,
+          "row": 3,
+          "rotation": 0
+        },
+        {
+          "itemId": "artifact_stone_death",
+          "col": 3,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "artifact_stone_death",
+          "col": 5,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "gloves_of_haste",
+          "col": 3,
+          "row": 3,
+          "rotation": 0
+        },
+        {
+          "itemId": "more_stats",
+          "col": 5,
+          "row": 4,
+          "rotation": 0
+        },
+        {
+          "itemId": "gloves_of_haste",
+          "col": 4,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "artifact_stone_death",
+          "col": 3,
+          "row": 4,
+          "rotation": 0
+        }
+      ],
+      "itemIds": [
+        "heart_container",
+        "artifact_stone_death",
+        "gloves_of_haste",
+        "more_stats"
+      ]
+    },
+    "priest_r8_hybrid_opt": {
+      "key": "priest_r8_hybrid_opt",
+      "label": "Жрец hybrid optimal R8",
+      "classId": "priest",
+      "round": 8,
+      "variant": "hybrid",
+      "power": 328,
+      "itemCount": 7,
+      "weaponCount": 0,
+      "foodCount": 0,
+      "items": [
+        {
+          "itemId": "heart_container",
+          "col": 4,
+          "row": 3,
+          "rotation": 0
+        },
+        {
+          "itemId": "artifact_stone_death",
+          "col": 3,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "artifact_stone_death",
+          "col": 5,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "gloves_of_haste",
+          "col": 3,
+          "row": 3,
+          "rotation": 0
+        },
+        {
+          "itemId": "more_stats",
+          "col": 5,
+          "row": 4,
+          "rotation": 0
+        },
+        {
+          "itemId": "gloves_of_haste",
+          "col": 4,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "artifact_stone_death",
+          "col": 3,
+          "row": 4,
+          "rotation": 0
+        }
+      ],
+      "itemIds": [
+        "heart_container",
+        "artifact_stone_death",
+        "gloves_of_haste",
+        "more_stats"
+      ]
+    },
+    "priest_r16_opt": {
+      "key": "priest_r16_opt",
+      "label": "Жрец bot-optimal R16",
+      "classId": "priest",
+      "round": 16,
+      "variant": "opt",
+      "power": 328,
+      "itemCount": 7,
+      "weaponCount": 0,
+      "foodCount": 0,
+      "items": [
+        {
+          "itemId": "heart_container",
+          "col": 4,
+          "row": 3,
+          "rotation": 0
+        },
+        {
+          "itemId": "artifact_stone_death",
+          "col": 3,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "artifact_stone_death",
+          "col": 5,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "gloves_of_haste",
+          "col": 3,
+          "row": 3,
+          "rotation": 0
+        },
+        {
+          "itemId": "more_stats",
+          "col": 5,
+          "row": 4,
+          "rotation": 0
+        },
+        {
+          "itemId": "gloves_of_haste",
+          "col": 4,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "artifact_stone_death",
+          "col": 3,
+          "row": 4,
+          "rotation": 0
+        }
+      ],
+      "itemIds": [
+        "heart_container",
+        "artifact_stone_death",
+        "gloves_of_haste",
+        "more_stats"
+      ]
+    },
+    "priest_r16_hybrid_opt": {
+      "key": "priest_r16_hybrid_opt",
+      "label": "Жрец hybrid optimal R16",
+      "classId": "priest",
+      "round": 16,
+      "variant": "hybrid",
+      "power": 328,
+      "itemCount": 7,
+      "weaponCount": 0,
+      "foodCount": 0,
+      "items": [
+        {
+          "itemId": "heart_container",
+          "col": 4,
+          "row": 3,
+          "rotation": 0
+        },
+        {
+          "itemId": "artifact_stone_death",
+          "col": 3,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "artifact_stone_death",
+          "col": 5,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "gloves_of_haste",
+          "col": 3,
+          "row": 3,
+          "rotation": 0
+        },
+        {
+          "itemId": "more_stats",
+          "col": 5,
+          "row": 4,
+          "rotation": 0
+        },
+        {
+          "itemId": "gloves_of_haste",
+          "col": 4,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "artifact_stone_death",
+          "col": 3,
+          "row": 4,
+          "rotation": 0
+        }
+      ],
+      "itemIds": [
+        "heart_container",
+        "artifact_stone_death",
+        "gloves_of_haste",
+        "more_stats"
+      ]
+    }
+  }
+}

@@ -1,0 +1,362 @@
+{
+  "legacy_flat5": {
+    "label": "Legacy: +5 HP за еду",
+    "hpSamples": {
+      "priest_start": {
+        "maxHp": 128,
+        "food": 2
+      },
+      "priest_food": {
+        "maxHp": 168,
+        "food": 6
+      },
+      "no_food": {
+        "maxHp": 108,
+        "food": 0
+      }
+    },
+    "stats": {
+      "all": {
+        "n": 36,
+        "wins": 8,
+        "timeouts": 2,
+        "avgHeal": 76.37388888888889,
+        "avgDmg": 4.169722222222222
+      },
+      "byPreset": {
+        "priest_food": {
+          "n": 18,
+          "wins": 4,
+          "timeouts": 0,
+          "avgHeal": 77.35888888888888,
+          "avgDmg": 8.339444444444444,
+          "avgMaxHp": 138
+        },
+        "priest_minimal": {
+          "n": 4,
+          "wins": 2,
+          "timeouts": 0,
+          "avgHeal": 26.5,
+          "avgDmg": 0,
+          "avgMaxHp": 118
+        },
+        "heal_stack": {
+          "n": 8,
+          "wins": 0,
+          "timeouts": 2,
+          "avgHeal": 106.625,
+          "avgDmg": 0,
+          "avgMaxHp": 150
+        },
+        "sustain_mix": {
+          "n": 6,
+          "wins": 2,
+          "timeouts": 0,
+          "avgHeal": 66.33333333333333,
+          "avgDmg": 0,
+          "avgMaxHp": 140
+        }
+      }
+    }
+  },
+  "vB_current": {
+    "label": "vB (текущий): 3% HP + 25% хил еды",
+    "hpSamples": {
+      "priest_start": {
+        "maxHp": 120,
+        "food": 2
+      },
+      "priest_food": {
+        "maxHp": 149,
+        "food": 6
+      },
+      "no_food": {
+        "maxHp": 108,
+        "food": 0
+      }
+    },
+    "stats": {
+      "all": {
+        "n": 36,
+        "wins": 8,
+        "timeouts": 2,
+        "avgHeal": 80.47333333333333,
+        "avgDmg": 3.9705555555555554
+      },
+      "byPreset": {
+        "priest_food": {
+          "n": 18,
+          "wins": 4,
+          "timeouts": 0,
+          "avgHeal": 81.94666666666666,
+          "avgDmg": 7.941111111111111,
+          "avgMaxHp": 127
+        },
+        "priest_minimal": {
+          "n": 4,
+          "wins": 2,
+          "timeouts": 0,
+          "avgHeal": 28,
+          "avgDmg": 0,
+          "avgMaxHp": 114
+        },
+        "heal_stack": {
+          "n": 8,
+          "wins": 0,
+          "timeouts": 2,
+          "avgHeal": 116.25,
+          "avgDmg": 0,
+          "avgMaxHp": 139
+        },
+        "sustain_mix": {
+          "n": 6,
+          "wins": 2,
+          "timeouts": 0,
+          "avgHeal": 63.333333333333336,
+          "avgDmg": 0,
+          "avgMaxHp": 132
+        }
+      }
+    }
+  },
+  "variant_A": {
+    "label": "A: +10 base HP + 4 HP/еда",
+    "hpSamples": {
+      "priest_start": {
+        "maxHp": 144,
+        "food": 2
+      },
+      "priest_food": {
+        "maxHp": 176,
+        "food": 6
+      },
+      "no_food": {
+        "maxHp": 128,
+        "food": 0
+      }
+    },
+    "stats": {
+      "all": {
+        "n": 36,
+        "wins": 8,
+        "timeouts": 2,
+        "avgHeal": 76.21666666666667,
+        "avgDmg": 4.253611111111111
+      },
+      "byPreset": {
+        "priest_food": {
+          "n": 18,
+          "wins": 4,
+          "timeouts": 0,
+          "avgHeal": 80.32222222222222,
+          "avgDmg": 8.507222222222222,
+          "avgMaxHp": 142
+        },
+        "priest_minimal": {
+          "n": 4,
+          "wins": 2,
+          "timeouts": 0,
+          "avgHeal": 25,
+          "avgDmg": 0,
+          "avgMaxHp": 126
+        },
+        "heal_stack": {
+          "n": 8,
+          "wins": 0,
+          "timeouts": 2,
+          "avgHeal": 109.5,
+          "avgDmg": 0,
+          "avgMaxHp": 154
+        },
+        "sustain_mix": {
+          "n": 6,
+          "wins": 2,
+          "timeouts": 0,
+          "avgHeal": 53.666666666666664,
+          "avgDmg": 0,
+          "avgMaxHp": 146
+        }
+      }
+    }
+  },
+  "variant_B_plus": {
+    "label": "B+: 4% HP/еда + 30% хил + 8 base",
+    "hpSamples": {
+      "priest_start": {
+        "maxHp": 143,
+        "food": 2
+      },
+      "priest_food": {
+        "maxHp": 187,
+        "food": 6
+      },
+      "no_food": {
+        "maxHp": 124,
+        "food": 0
+      }
+    },
+    "stats": {
+      "all": {
+        "n": 36,
+        "wins": 8,
+        "timeouts": 4,
+        "avgHeal": 93.67916666666666,
+        "avgDmg": 4.505833333333334
+      },
+      "byPreset": {
+        "priest_food": {
+          "n": 18,
+          "wins": 4,
+          "timeouts": 2,
+          "avgHeal": 107.30277777777776,
+          "avgDmg": 9.011666666666668,
+          "avgMaxHp": 143
+        },
+        "priest_minimal": {
+          "n": 4,
+          "wins": 2,
+          "timeouts": 0,
+          "avgHeal": 26.5,
+          "avgDmg": 0,
+          "avgMaxHp": 125
+        },
+        "heal_stack": {
+          "n": 8,
+          "wins": 0,
+          "timeouts": 2,
+          "avgHeal": 117.125,
+          "avgDmg": 0,
+          "avgMaxHp": 155
+        },
+        "sustain_mix": {
+          "n": 6,
+          "wins": 2,
+          "timeouts": 0,
+          "avgHeal": 66.33333333333333,
+          "avgDmg": 0,
+          "avgMaxHp": 146
+        }
+      }
+    }
+  },
+  "variant_B_pp": {
+    "label": "B++: 5% HP/еда + 35% хил + 8 base",
+    "hpSamples": {
+      "priest_start": {
+        "maxHp": 148,
+        "food": 2
+      },
+      "priest_food": {
+        "maxHp": 205,
+        "food": 6
+      },
+      "no_food": {
+        "maxHp": 124,
+        "food": 0
+      }
+    },
+    "stats": {
+      "all": {
+        "n": 36,
+        "wins": 10,
+        "timeouts": 3,
+        "avgHeal": 101.69277777777776,
+        "avgDmg": 4.724722222222223
+      },
+      "byPreset": {
+        "priest_food": {
+          "n": 18,
+          "wins": 6,
+          "timeouts": 1,
+          "avgHeal": 114.28833333333331,
+          "avgDmg": 9.449444444444445,
+          "avgMaxHp": 150
+        },
+        "priest_minimal": {
+          "n": 4,
+          "wins": 2,
+          "timeouts": 0,
+          "avgHeal": 33.75,
+          "avgDmg": 0,
+          "avgMaxHp": 127
+        },
+        "heal_stack": {
+          "n": 8,
+          "wins": 0,
+          "timeouts": 2,
+          "avgHeal": 124.84375,
+          "avgDmg": 0,
+          "avgMaxHp": 162
+        },
+        "sustain_mix": {
+          "n": 6,
+          "wins": 2,
+          "timeouts": 0,
+          "avgHeal": 78.33333333333333,
+          "avgDmg": 0,
+          "avgMaxHp": 151
+        }
+      }
+    }
+  },
+  "variant_C": {
+    "label": "C: 3% HP/еда + 35% хил + 10 base",
+    "hpSamples": {
+      "priest_start": {
+        "maxHp": 143,
+        "food": 2
+      },
+      "priest_food": {
+        "maxHp": 175,
+        "food": 6
+      },
+      "no_food": {
+        "maxHp": 128,
+        "food": 0
+      }
+    },
+    "stats": {
+      "all": {
+        "n": 36,
+        "wins": 10,
+        "timeouts": 3,
+        "avgHeal": 96.84416666666667,
+        "avgDmg": 4.406111111111112
+      },
+      "byPreset": {
+        "priest_food": {
+          "n": 18,
+          "wins": 6,
+          "timeouts": 1,
+          "avgHeal": 104.18833333333333,
+          "avgDmg": 8.812222222222225,
+          "avgMaxHp": 139
+        },
+        "priest_minimal": {
+          "n": 4,
+          "wins": 2,
+          "timeouts": 0,
+          "avgHeal": 31.75,
+          "avgDmg": 0,
+          "avgMaxHp": 125
+        },
+        "heal_stack": {
+          "n": 8,
+          "wins": 0,
+          "timeouts": 2,
+          "avgHeal": 121.375,
+          "avgDmg": 0,
+          "avgMaxHp": 151
+        },
+        "sustain_mix": {
+          "n": 6,
+          "wins": 2,
+          "timeouts": 0,
+          "avgHeal": 85.5,
+          "avgDmg": 0,
+          "avgMaxHp": 144
+        }
+      }
+    }
+  }
+}
