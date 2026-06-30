@@ -641,7 +641,9 @@
       : measureBattleFieldChromeBottom(fieldCol);
     const layoutHeight = Math.max(layoutRect.height, sceneRect.height, fieldCol.clientHeight);
     const canvasBottom = Math.max(0, Math.round(canvasRect.bottom - layoutRect.top));
-    const rowGap = Math.round(8 * uiScale);
+    const rowGap = typeof getVisualExperimentHeroRowGap === "function"
+      ? getVisualExperimentHeroRowGap(uiScale)
+      : Math.round(8 * uiScale);
     const heroRowTopFromCanvas = canvasBottom + rowGap;
     const heroRowTopMax = Math.max(rowGap, layoutHeight - heroZoneH - Math.round(6 * uiScale));
     const heroRowTop = Math.max(
@@ -887,8 +889,39 @@
       root.style.setProperty("--tablet-battle-chrome-bottom", `${Math.max(hudReserve, 8)}px`);
     }
 
-    const maxH = Math.max(100, vh - hudReserve - heroZone - arenaMin - chromePad);
-    const scale = Math.min(stageW / cssW, maxH / cssH, 1);
+    let maxH = Math.max(100, vh - hudReserve - heroZone - arenaMin - chromePad);
+    let scale = Math.min(stageW / cssW, maxH / cssH, 1);
+
+    if (typeof applyVisualExperimentBattleLayout === "function") {
+      const tweaked = applyVisualExperimentBattleLayout({
+        heroZone,
+        arenaMin,
+        heroColW,
+        heroImgH,
+        portraitZoom,
+        chromePad,
+        scale,
+        mobileLayout,
+        tabletSide,
+        tabletPortrait,
+        stageW,
+        vh,
+        hudReserve,
+      });
+      if (tweaked) {
+        heroZone = tweaked.heroZone;
+        arenaMin = tweaked.arenaMin;
+        heroColW = tweaked.heroColW;
+        heroImgH = tweaked.heroImgH;
+        portraitZoom = tweaked.portraitZoom;
+        chromePad = tweaked.chromePad ?? chromePad;
+        if (tweaked.scale != null) {
+          scale = tweaked.scale;
+          maxH = Math.max(100, vh - hudReserve - heroZone - arenaMin - chromePad);
+        }
+      }
+    }
+
     const w = Math.max(1, Math.floor(cssW * scale));
     const ch = Math.max(1, Math.floor(cssH * scale));
 
@@ -1189,6 +1222,9 @@
       clearMobileDisplayVars();
     }
     clamped = applyPrepLayoutFit(w, h, prepLayout, clamped, touchDev);
+    if (typeof applyVisualExperimentPrepUiScale === "function") {
+      clamped = applyVisualExperimentPrepUiScale(clamped, { prepLayout, tier, w, h });
+    }
 
     document.documentElement.style.setProperty("--ui-scale", String(clamped));
     document.documentElement.style.setProperty("--viewport-h", `${Math.round(h)}px`);
