@@ -1,41 +1,55 @@
 /**
  * Live-попап инвентаря по тапу на портрет в battle/replay.
  * position: fixed на document.body — вне ResizeObserver ui-layout.
+ * Оба героя могут быть открыты одновременно.
  */
 
 const BattleInventoryPopover = (() => {
-  let popoverEl = null;
-  let openTeam = null;
+  const TEAMS = ["player", "enemy"];
+  /** @type {Map<string, HTMLElement>} */
+  const popoverEls = new Map();
+  /** @type {Map<string, string>} */
+  const lastRenderSig = new Map();
   let listenersBound = false;
   let lastTouchAt = 0;
-  let lastRenderSig = "";
 
   function isLiveBattlePhase() {
     return phase === "battle" || phase === "replay";
   }
 
-  function ensurePopoverEl() {
-    if (popoverEl) return popoverEl;
-    popoverEl = document.createElement("div");
-    popoverEl.id = "battle-inventory-popover";
-    popoverEl.className = "battle-inventory-popover hidden";
-    popoverEl.setAttribute("role", "dialog");
-    popoverEl.setAttribute("aria-modal", "false");
-    popoverEl.innerHTML = `
+  function ensurePopoverEl(team) {
+    if (popoverEls.has(team)) return popoverEls.get(team);
+    const el = document.createElement("div");
+    el.id = `battle-inventory-popover-${team}`;
+    el.className = "battle-inventory-popover hidden";
+    el.dataset.team = team;
+    el.setAttribute("role", "dialog");
+    el.setAttribute("aria-modal", "false");
+    el.innerHTML = `
       <div class="battle-inventory-popover__head">
-        <h4 class="battle-inventory-popover__title" id="battle-inventory-popover-title"></h4>
-        <button type="button" class="battle-inventory-popover__close" id="battle-inventory-popover-close" aria-label="Закрыть">×</button>
+        <h4 class="battle-inventory-popover__title"></h4>
+        <button type="button" class="battle-inventory-popover__close" aria-label="Закрыть">×</button>
       </div>
-      <div class="battle-inventory-popover__body" id="battle-inventory-popover-body"></div>
+      <div class="battle-inventory-popover__body"></div>
     `;
-    document.body.appendChild(popoverEl);
-    popoverEl.querySelector("#battle-inventory-popover-close")
+    document.body.appendChild(el);
+    el.querySelector(".battle-inventory-popover__close")
       ?.addEventListener("click", (e) => {
         e.stopPropagation();
-        closeBattleInventoryPopover();
+        closeBattleInventoryPopover(team);
       });
-    popoverEl.addEventListener("click", (e) => e.stopPropagation());
-    return popoverEl;
+    el.addEventListener("click", (e) => e.stopPropagation());
+    popoverEls.set(team, el);
+    return el;
+  }
+
+  function isTeamPopoverOpen(team) {
+    const el = popoverEls.get(team);
+    return !!(el && !el.classList.contains("hidden"));
+  }
+
+  function getOpenTeams() {
+    return TEAMS.filter((team) => isTeamPopoverOpen(team));
   }
 
   function getTooltipBounds() {
@@ -99,9 +113,9 @@ const BattleInventoryPopover = (() => {
 
   function renderPopoverContent(team) {
     const data = getLiveSideData(team);
-    const el = ensurePopoverEl();
-    const titleEl = el.querySelector("#battle-inventory-popover-title");
-    const bodyEl = el.querySelector("#battle-inventory-popover-body");
+    const el = ensurePopoverEl(team);
+    const titleEl = el.querySelector(".battle-inventory-popover__title");
+    const bodyEl = el.querySelector(".battle-inventory-popover__body");
     if (!data || !titleEl || !bodyEl) return;
 
     titleEl.textContent = `Рюкзак · ${getTeamTitle(team, data.classId)}`;
@@ -109,9 +123,9 @@ const BattleInventoryPopover = (() => {
     bodyEl.innerHTML = `
       ${renderBoardPreviewGrid(data.containers, data.items, team, { activeUids })}
       <div class="board-preview-section-title">Активные синергии</div>
-      <div id="battle-inventory-popover-synergies">${renderBoardPreviewSynergies(data.items)}</div>
+      <div class="battle-inventory-popover__synergies">${renderBoardPreviewSynergies(data.items)}</div>
     `;
-    lastRenderSig = buildRenderSignature(data);
+    lastRenderSig.set(team, buildRenderSignature(data));
   }
 
   function getPortraitPanelEl(team) {
@@ -136,7 +150,7 @@ const BattleInventoryPopover = (() => {
   }
 
   function positionPopover(team) {
-    const el = ensurePopoverEl();
+    const el = ensurePopoverEl(team);
     if (el.classList.contains("hidden")) return;
 
     const rect = getPortraitAnchorRect(team);
@@ -146,7 +160,6 @@ const BattleInventoryPopover = (() => {
     const gap = 8;
     const bounds = getTooltipBounds();
 
-    el.dataset.team = team;
     const panelW = Math.min(
       Math.max(rect.width, 156),
       bounds.right - bounds.left - margin * 2,
@@ -175,25 +188,30 @@ const BattleInventoryPopover = (() => {
   }
 
   function isBattleInventoryPopoverOpen() {
-    return !!openTeam && popoverEl && !popoverEl.classList.contains("hidden");
+    return getOpenTeams().length > 0;
   }
 
-  function closeBattleInventoryPopover() {
-    if (!openTeam) return;
-    openTeam = null;
-    lastRenderSig = "";
-    const el = ensurePopoverEl();
-    el.classList.add("hidden");
-    el.removeAttribute("data-team");
-    el.style.removeProperty("width");
-    el.setAttribute("aria-hidden", "true");
+  function closeBattleInventoryPopover(team = null) {
+    const teams = team ? [team] : getOpenTeams();
+    if (!teams.length) return;
+
+    teams.forEach((side) => {
+      const el = popoverEls.get(side);
+      if (!el || el.classList.contains("hidden")) return;
+      el.classList.add("hidden");
+      el.style.removeProperty("width");
+      el.setAttribute("aria-hidden", "true");
+      lastRenderSig.delete(side);
+    });
+
     if (typeof refreshGamepadHints === "function") refreshGamepadHints();
   }
 
   function syncActiveCellHighlights(team) {
-    if (!openTeam || openTeam !== team || !popoverEl || popoverEl.classList.contains("hidden")) return;
+    const el = popoverEls.get(team);
+    if (!el || el.classList.contains("hidden")) return;
     const activeUids = collectActiveItemUids(team);
-    popoverEl.querySelectorAll(".bp-cell[data-item-uid]").forEach((cell) => {
+    el.querySelectorAll(".bp-cell[data-item-uid]").forEach((cell) => {
       const uid = cell.dataset.itemUid;
       cell.classList.toggle("bp-cell-active", activeUids.has(uid));
     });
@@ -202,21 +220,19 @@ const BattleInventoryPopover = (() => {
   function openBattleInventoryPopover(team) {
     if (!isLiveBattlePhase() || !getLiveSideData(team)) return;
     if (typeof hideSidebarTooltip === "function") hideSidebarTooltip();
-    ensurePopoverEl();
-    openTeam = team;
+    const el = ensurePopoverEl(team);
     renderPopoverContent(team);
-    popoverEl.classList.remove("hidden");
-    popoverEl.setAttribute("aria-hidden", "false");
+    el.classList.remove("hidden");
+    el.setAttribute("aria-hidden", "false");
     positionPopover(team);
     if (typeof refreshGamepadHints === "function") refreshGamepadHints();
   }
 
   function toggleBattleInventoryPopover(team) {
-    if (openTeam === team) {
-      closeBattleInventoryPopover();
+    if (isTeamPopoverOpen(team)) {
+      closeBattleInventoryPopover(team);
       return;
     }
-    closeBattleInventoryPopover();
     openBattleInventoryPopover(team);
   }
 
@@ -258,39 +274,54 @@ const BattleInventoryPopover = (() => {
   }
 
   function onDocumentPointerDown(e) {
-    if (!openTeam || !popoverEl) return;
-    if (popoverEl.contains(e.target)) return;
-    if (resolveTeamFromPortraitTarget(e.target) === openTeam) return;
+    const openTeams = getOpenTeams();
+    if (!openTeams.length) return;
+
+    // Любой тап по портрету обрабатывается отдельно (toggle), не закрываем остальные.
+    if (resolveTeamFromPortraitTarget(e.target)) return;
+
+    for (const team of openTeams) {
+      const el = popoverEls.get(team);
+      if (el?.contains(e.target)) return;
+    }
+
     closeBattleInventoryPopover();
   }
 
   function onReposition() {
-    if (!openTeam) return;
-    positionPopover(openTeam);
+    getOpenTeams().forEach((team) => positionPopover(team));
   }
 
-  function refreshBattleInventoryPopover() {
-    if (!openTeam || !isLiveBattlePhase()) {
-      if (openTeam) closeBattleInventoryPopover();
+  function refreshTeamPopover(team) {
+    if (!isTeamPopoverOpen(team)) return;
+    if (!isLiveBattlePhase()) {
+      closeBattleInventoryPopover(team);
       return;
     }
-    const data = getLiveSideData(openTeam);
+    const data = getLiveSideData(team);
     if (!data) {
-      closeBattleInventoryPopover();
+      closeBattleInventoryPopover(team);
       return;
     }
     const sig = buildRenderSignature(data);
-    if (sig !== lastRenderSig) {
-      renderPopoverContent(openTeam);
+    if (sig !== lastRenderSig.get(team)) {
+      renderPopoverContent(team);
     } else {
-      syncActiveCellHighlights(openTeam);
+      syncActiveCellHighlights(team);
     }
-    positionPopover(openTeam);
+    positionPopover(team);
+  }
+
+  function refreshBattleInventoryPopover() {
+    getOpenTeams().forEach((team) => refreshTeamPopover(team));
+    if (!isLiveBattlePhase() && isBattleInventoryPopoverOpen()) {
+      closeBattleInventoryPopover();
+    }
   }
 
   function syncBattleInventoryPopoverFlash() {
-    if (!openTeam || !isLiveBattlePhase()) return;
-    syncActiveCellHighlights(openTeam);
+    if (!isLiveBattlePhase()) return;
+    getOpenTeams().forEach((team) => syncActiveCellHighlights(team));
   }
 
   function initBattleInventoryPopover() {
@@ -320,8 +351,8 @@ function initBattleInventoryPopover() {
   BattleInventoryPopover.initBattleInventoryPopover();
 }
 
-function closeBattleInventoryPopover() {
-  BattleInventoryPopover.closeBattleInventoryPopover();
+function closeBattleInventoryPopover(team) {
+  BattleInventoryPopover.closeBattleInventoryPopover(team);
 }
 
 function isBattleInventoryPopoverOpen() {

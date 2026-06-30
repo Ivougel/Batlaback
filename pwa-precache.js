@@ -19,6 +19,7 @@ self.PWA_PRECACHE_URLS = [
   "components/battle-damage-summary.js",
   "components/battle-damage-summary.js?v=2",
   "components/battle-inventory-popover.js",
+  "components/battle-inventory-popover.js?v=2",
   "components/battle-result.js",
   "components/board-preview.js",
   "components/combat-feed.js",
