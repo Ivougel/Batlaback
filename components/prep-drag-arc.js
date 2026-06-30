@@ -146,9 +146,8 @@ const PrepDragArc = (() => {
       return;
     }
     if (key === lastHoverCellKey) return;
-    const prev = lastHoverCellKey;
     lastHoverCellKey = key;
-    if (prev !== null) playBeginSound();
+    playBeginSound();
   }
 
   function playCelebrateSound() {

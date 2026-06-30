@@ -2269,6 +2269,95 @@ function isPrepArcDragSource() {
     || dragFrom.type === "container";
 }
 
+function resolveContainerPlacementAtCursor(st, cursorCol, cursorRow) {
+  if (!dragPayload || !isContainerItem(dragPayload.itemId)) return null;
+  const excludeUid = dragFrom?.type === "container" ? dragFrom.container?.uid : null;
+  const other = findContainerAtCell(st.containers, cursorCol, cursorRow);
+  if (other && other.uid !== excludeUid) return null;
+
+  const itemId = dragPayload.itemId;
+  const startRot = ((dragPayload.rotation || 0) % 4 + 4) % 4;
+  const rotations = [startRot];
+  for (let r = 0; r < 4; r++) if (r !== startRot) rotations.push(r);
+
+  for (const rot of rotations) {
+    const shape = rotateShape(ITEM_CATALOG[itemId].shape, rot);
+    for (const [dx, dy] of shape) {
+      const anchorCol = cursorCol - dx;
+      const anchorRow = cursorRow - dy;
+      const ok = dragFrom?.type === "container"
+        ? canMoveContainerWithItems(
+          dragFrom.container,
+          anchorCol,
+          anchorRow,
+          st.containers,
+          st.items,
+          excludeUid,
+          GRID_COLS,
+          GRID_ROWS,
+        )
+        : canPlaceContainer(
+          itemId,
+          anchorCol,
+          anchorRow,
+          rot,
+          GRID_COLS,
+          GRID_ROWS,
+          st.containers,
+          excludeUid,
+          st.items,
+        );
+      if (ok) return { col: anchorCol, row: anchorRow, rotation: rot };
+    }
+  }
+  return null;
+}
+
+function isPrepArcPlaceableCell(col, row) {
+  if (phase !== "prep" || !dragPayload) return false;
+  const side = dragFrom?.side || prepViewSide;
+  if (!canEditPrepSide(side)) return false;
+  const st = getSideState(side);
+
+  if (isContainerItem(dragPayload.itemId)) {
+    return !!resolveContainerPlacementAtCursor(st, col, row);
+  }
+
+  if (!isSlotCell(st.containers, col, row)) return false;
+  const excludeUid = dragFrom?.type === "item" ? dragFrom.item?.uid : null;
+  const placement = resolveLoadoutPlacementDisplacing(
+    st.containers,
+    dragPayload.itemId,
+    col,
+    row,
+    dragPayload.rotation || 0,
+  );
+  if (!placement.valid) return false;
+  const displaced = getOverlappingLoadoutItems(
+    st.items,
+    dragPayload.itemId,
+    placement.col,
+    placement.row,
+    placement.rotation,
+    excludeUid,
+  );
+  const displacedUids = displaced.map((item) => item.uid);
+  const slotOk = typeof canAddSlotItemToLoadout !== "function"
+    || canAddSlotItemToLoadout(st.items, dragPayload.itemId, excludeUid, displacedUids);
+  const benchOk = st.bench.length + displaced.length <= MAX_BENCH;
+  return slotOk && benchOk;
+}
+
+function maybePrepArcHoverSound(col, row) {
+  if (typeof PrepDragArc === "undefined" || !PrepDragArc.isActive()) return;
+  if (col == null || row == null || !isPrepArcPlaceableCell(col, row)) {
+    PrepDragArc.syncHoverCell(null, null);
+    return;
+  }
+  const kind = isContainerItem(dragPayload?.itemId) ? "c" : "s";
+  PrepDragArc.syncHoverCell(col, row, kind);
+}
+
 function getPrepArcSidebarAnchorClient(clientX, clientY) {
   const pointer = createSyntheticPointerEvent(clientX, clientY);
   if (isDropOnBench(pointer)) {
@@ -3114,19 +3203,19 @@ function setGamepadBoardFocus(col, row) {
       hoverCell = { col: c, row: r };
       hoverSlot = null;
       if (typeof PrepDragArc !== "undefined" && PrepDragArc.isActive()) {
-        PrepDragArc.syncHoverCell(c, r, "c");
+        maybePrepArcHoverSound(c, r);
       }
     } else if (isSlotCell(st.containers, c, r)) {
       hoverSlot = { col: c, row: r };
       hoverCell = null;
       if (typeof PrepDragArc !== "undefined" && PrepDragArc.isActive()) {
-        PrepDragArc.syncHoverCell(c, r, "s");
+        maybePrepArcHoverSound(c, r);
       }
     } else {
       hoverCell = { col: c, row: r };
       hoverSlot = null;
       if (typeof PrepDragArc !== "undefined" && PrepDragArc.isActive()) {
-        PrepDragArc.syncHoverCell(c, r, "c");
+        PrepDragArc.syncHoverCell(null, null);
       }
     }
   } else {
@@ -3339,13 +3428,7 @@ function updatePointerFromClient(clientX, clientY) {
         hoverCell = { col, row };
       }
       if (typeof PrepDragArc !== "undefined" && PrepDragArc.isActive()) {
-        if (hoverSlot) {
-          PrepDragArc.syncHoverCell(hoverSlot.col, hoverSlot.row, "s");
-        } else if (hoverCell) {
-          PrepDragArc.syncHoverCell(hoverCell.col, hoverCell.row, "c");
-        } else {
-          PrepDragArc.syncHoverCell(null, null);
-        }
+        maybePrepArcHoverSound(col, row);
       }
     } else if (dragPayload && typeof PrepDragArc !== "undefined" && PrepDragArc.isActive()) {
       PrepDragArc.syncHoverCell(null, null);
@@ -5474,12 +5557,13 @@ function beginPrepDragArcFromBackpack(col, row, side = prepViewSide) {
   const kind = isContainerItem(dragPayload?.itemId)
     ? "c"
     : (isSlotCell(st.containers, col, row) ? "s" : "c");
+  const originPlaceable = isPrepArcPlaceableCell(col, row);
   PrepDragArc.begin({
     fromX: c.x,
     fromY: c.y,
     itemId: dragPayload?.itemId,
-    originCol: col,
-    originRow: row,
+    originCol: originPlaceable ? col : null,
+    originRow: originPlaceable ? row : null,
     originKind: kind,
   });
 }
