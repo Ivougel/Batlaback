@@ -31,8 +31,9 @@ const PROFILES = [
     },
     expect: {
       orientation: "landscape",
-      prepLayout: "stacked",
-      uiSurface: "phone-landscape",
+      prepLayout: "side",
+      uiSurface: "tablet-side",
+      layoutProfile: "phone-landscape",
       htmlNotNone: true,
       overlayVisible: true,
     },
@@ -121,6 +122,7 @@ for (const profile of PROFILES) {
     if (exp.prepLayoutNot) assert(state.prepLayout !== exp.prepLayoutNot, `prepLayout should not be ${exp.prepLayoutNot}`);
     if (exp.uiSurface) assert(state.uiSurface === exp.uiSurface, `uiSurface: ${state.uiSurface} !== ${exp.uiSurface}`);
     if (exp.uiSurfaceNot) assert(state.uiSurface !== exp.uiSurfaceNot, `uiSurface should not be ${exp.uiSurfaceNot}`);
+    if (exp.layoutProfile) assert(state.layoutProfile === exp.layoutProfile, `layoutProfile: ${state.layoutProfile} !== ${exp.layoutProfile}`);
     if (exp.tier) assert(state.tier === exp.tier, `tier: ${state.tier} !== ${exp.tier}`);
     if (exp.orientation) assert(state.orientation === exp.orientation, `orientation: ${state.orientation}`);
     if (exp.htmlDisplay) assert(state.htmlDisplay === exp.htmlDisplay, `html display: ${state.htmlDisplay}`);

@@ -1,0 +1,79 @@
+/**
+ * Модалки — container queries + токены (recipe, settings, run complete, battle result).
+ */
+
+#recipe-book-overlay:not(.hidden),
+#settings-overlay:not(.hidden),
+#battle-result-overlay:not(.hidden),
+#overlay:not(.hidden) {
+  container-type: size;
+  container-name: game-modal;
+}
+
+.recipe-book-modal,
+.settings-modal,
+.battle-result-modal,
+.run-complete-modal {
+  max-height: min(92dvh, var(--overlay-max-h, calc(100dvh - 12px)));
+}
+
+.recipe-book-heading h2,
+.settings-header h2,
+.battle-result-modal h2,
+.run-complete-modal h2 {
+  font-size: var(--font-xl);
+}
+
+.recipe-book-close,
+.settings-close {
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+}
+
+@container game-modal (max-height: 680px) {
+  .recipe-book-modal,
+  .settings-modal,
+  .battle-result-modal,
+  .run-complete-modal {
+    max-height: min(94cqh, var(--overlay-max-h, 96dvh));
+    padding: calc(12px * var(--ui-scale));
+  }
+
+  .recipe-book-body,
+  #battle-result-accordions,
+  #run-complete-accordions {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: min(58cqh, 52dvh);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+}
+
+@container game-modal (max-width: 520px) {
+  .recipe-book-modal,
+  .settings-modal {
+    width: min(96cqw, 96vw);
+  }
+
+  .recipe-book-heading h2,
+  .settings-header h2 {
+    font-size: var(--font-lg);
+  }
+
+  .recipe-book-item-icon {
+    font-size: var(--font-xl);
+  }
+
+  .recipe-book-formula {
+    flex-wrap: wrap;
+    gap: var(--gap-xs);
+  }
+}
+
+html[data-ui-tier="phone"] .recipe-book-modal,
+html[data-ui-tier="phone"] .settings-modal {
+  width: min(96vw, 100%);
+  padding: calc(14px * var(--ui-scale));
+}

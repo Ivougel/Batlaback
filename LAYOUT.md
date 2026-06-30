@@ -82,6 +82,13 @@ Touch-цели: `min-height: var(--touch-target-min)` (≥ 44px).
 - `visual-experiment.css` — flank-arena сохраняет бюст-кроп (HP не на героя)
 - `battle-scale.css` — типографика HP/эмодзи по `data-battle-profile`
 
+### Этап K (modals, tablet battle, mobile scale, vexp snapshots)
+
+- **`modal-scale.css`** — container queries для recipe/settings/battle-result/run-complete
+- **Phone prep** — `fitMinScale: 0.65`, `--ui-scale` floor 0.58 на tier phone, type boost 1.18
+- **Tablet landscape battle** — `BATTLE_PROFILES` floorShare 0.30, `tablet-side.css` combat floor
+- **`layout-battle-vexp-snapshots.spec.mjs`** — эталоны боя с `?vexp=1` (отдельно от базы)
+
 ## Опасный паттерн селекторов
 
 ```css

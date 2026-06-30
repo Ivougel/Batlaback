@@ -67,12 +67,12 @@
     return w <= 768;
   }
 
-  /** iPad landscape side-by-side: не только tier tablet (Pro/desktop site может быть шире 1366). */
+  /** iPad / phone landscape side-by-side: touch, ширина ≥700, высота ≥360. */
   function shouldUseTabletSideFit(w, h, prepLayout, touchDev, tier) {
     if (prepLayout !== "side") return false;
     if (h >= w) return false;
     if (tier === "tablet") return true;
-    if (touchDev && w >= 700 && w <= 1800 && h >= 560 && h <= 1200) return true;
+    if (touchDev && w >= 700 && w <= 1800 && h >= 360 && h <= 1200) return true;
     return false;
   }
 
@@ -93,7 +93,6 @@
     if (shouldUseMobilePrepLayout(w, h, tier)) return false;
 
     if (h >= w && tier === "tablet") return true;
-    if (tier === "phone" && w > h) return true;
 
     if (w >= 600 && w <= 1200) return false;
 
@@ -157,7 +156,7 @@
   }
 
   const TYPE_SCALE_BY_TIER = {
-    phone: { floor: 0.88, boost: 1.14 },
+    phone: { floor: 0.92, boost: 1.18 },
     tablet: { floor: 0.92, boost: 1.06 },
     desktop: { floor: 0.85, boost: 1 },
   };
@@ -178,20 +177,20 @@
   /** Prep-раскладка по layoutProfile (tier × orientation). */
   const PREP_PROFILES = {
     "phone-portrait": {
-      fitAvailH: 340, fitMinScale: 0.58, fitWidthRatio: 0.36,
-      canvasAvailShare: 0.38, canvasMaxCap: 240,
+      fitAvailH: 300, fitMinScale: 0.65, fitWidthRatio: 0.48,
+      canvasAvailShare: 0.44, canvasMaxCap: 280,
       shopRowBase: 70, shopRowMin: 54, shopRowMax: 74,
       heroSlotHeight: "min(260px, 32vh)", heroSlotMax: 280,
       sceneAvatarH: 120, sceneAvatarW: 100, dollSlot: 34, characterGap: 6,
       shopPanelW: 300,
     },
     "phone-landscape": {
-      fitAvailH: 360, fitMinScale: SCALE_MIN, fitWidthRatio: 1,
-      canvasAvailShare: 0.34, canvasMaxCap: 180,
-      shopRowBase: 58, shopRowMin: 48, shopRowMax: 64,
-      heroSlotHeight: "min(160px, 28vh)", heroSlotMax: 180,
-      sceneAvatarH: 96, sceneAvatarW: 84, dollSlot: 30, characterGap: 6,
-      shopPanelW: 280,
+      fitAvailH: 200, fitMinScale: SCALE_MIN, fitWidthRatio: 1,
+      canvasAvailShare: 0.68, canvasMaxCap: 320,
+      shopRowBase: 52, shopRowMin: 44, shopRowMax: 58,
+      heroSlotHeight: "100%", heroSlotMax: 220,
+      sceneAvatarH: 110, sceneAvatarW: 96, dollSlot: 28, characterGap: 4,
+      shopPanelW: 260,
     },
     "tablet-portrait": {
       fitAvailH: PREP_STACKED_CONTENT_H, fitMinScale: SCALE_MIN, fitWidthRatio: 1,
@@ -258,28 +257,28 @@
   /** Коэффициенты боевой раскладки по battleProfile (доли vh/vw, min/max). */
   const BATTLE_PROFILES = {
     "phone-portrait": {
-      heroFromVh: true, heroVh: 0.24, heroMin: 128, heroMax: 192,
-      arenaVh: 0.26, arenaMin: 118,
+      heroFromVh: true, heroVh: 0.28, heroMin: 136, heroMax: 200,
+      arenaVh: 0.30, arenaMin: 128,
       colMin: 140, colMax: 220, colShare: 0.48,
       imgRatio: 0.48, imgMin: 88, imgMax: 116,
       portraitZoom: 1.55, chromePad: 10, portraitObjectY: "8%",
       emojiScale: 1, floorShare: 0.34, heroShare: 0.26,
     },
     "phone-landscape": {
-      heroFromVh: false, heroZoneShare: 0.26, heroMin: 100, heroMax: 136,
-      arenaVh: 0.24, arenaMin: 96,
+      heroFromVh: false, heroZoneShare: 0.30, heroMin: 108, heroMax: 148,
+      arenaVh: 0.28, arenaMin: 104,
       colMin: 92, colMax: 132, colShare: 0.21,
       imgRatio: 0.46, imgMin: 72, imgMax: 100,
       portraitZoom: 0.90, chromePad: 8, portraitObjectY: "12%",
       emojiScale: 1, floorShare: 0.42, heroShare: 0.26,
     },
     "tablet-landscape-side": {
-      heroFromVh: false, heroZoneShare: 0.30, heroMin: 190, heroMax: 320,
-      arenaVh: 0.20, arenaMin: 120,
-      colMin: 118, colMax: 190, colShare: 0.19,
-      imgRatio: 0.42, imgMin: 118, imgMax: 168,
-      portraitZoom: 0.82, chromePad: 16, portraitObjectY: "14%",
-      emojiScale: 1, floorShare: 0.24, heroShare: 0.30,
+      heroFromVh: false, heroZoneShare: 0.28, heroMin: 180, heroMax: 300,
+      arenaVh: 0.18, arenaMin: 112,
+      colMin: 120, colMax: 200, colShare: 0.20,
+      imgRatio: 0.44, imgMin: 120, imgMax: 164,
+      portraitZoom: 0.84, chromePad: 14, portraitObjectY: "14%",
+      emojiScale: 1, floorShare: 0.30, heroShare: 0.28,
       tabletSide: true,
     },
     "tablet-portrait": {
@@ -384,7 +383,10 @@
       const hero = document.querySelector("#app[data-phase=\"prep\"] .prep-character-layer");
 
       if (topBar && getComputedStyle(topBar).display !== "none") zones.topBar = topBar.offsetHeight;
-      if (chromeBar && getComputedStyle(chromeBar).display !== "none") zones.toolbar = chromeBar.offsetHeight;
+      if (chromeBar && getComputedStyle(chromeBar).display !== "none") {
+        const measured = readCssPx("--bottom-chrome-h-measured", 0);
+        zones.toolbar = measured > 0 ? measured : chromeBar.offsetHeight;
+      }
       if (island && getComputedStyle(island).display !== "none") {
         const canvasEl = document.getElementById("game-canvas");
         const stage = island.querySelector(".battle-canvas-stage");
@@ -402,7 +404,14 @@
       if (hero && getComputedStyle(hero).display !== "none") zones.hero = hero.offsetHeight;
 
       zones.chrome = 0;
-      zones.used = zones.topBar + zones.toolbar + zones.canvas + zones.hero;
+      const fieldCol = document.querySelector("#app[data-phase=\"prep\"] .prep-field-column");
+      const fieldColZone = (root.dataset.prepViewportFit === "true"
+        || root.dataset.prepMobileFit === "true"
+        || root.dataset.uiSurface === "phone-landscape"
+        || root.dataset.uiSurface === "tablet-side")
+        && fieldCol
+        && getComputedStyle(fieldCol).display !== "none";
+      zones.used = zones.topBar + (fieldColZone ? fieldCol.offsetHeight : zones.canvas + zones.hero);
     } else if (phase === "battle" || phase === "replay") {
       const sceneUi = document.getElementById("battle-scene-ui");
       const combatFloor = document.getElementById("battle-thought-arena");
@@ -410,7 +419,10 @@
         zones.battleHero = sceneUi.offsetHeight;
       }
       if (combatFloor && getComputedStyle(combatFloor).display !== "none") {
-        zones.battleFloor = combatFloor.offsetHeight;
+        const assignedFloor = readCssPx("--battle-combat-floor-h", 0);
+        zones.battleFloor = assignedFloor > 0
+          ? assignedFloor
+          : combatFloor.offsetHeight;
       }
       zones.used = zones.battleHero + zones.battleFloor + zones.chrome;
       root.style.setProperty("--zone-battle-hero-h", `${zones.battleHero}px`);
@@ -1153,6 +1165,7 @@
       : Math.round(8 * uiScale);
     const mobileStack = root.dataset.prepLayout === "mobile";
     const phoneLandscape = root.dataset.battlePhoneLandscape === "true";
+    const phoneCompact = mobileStack || phoneLandscape;
     const tabletSide = isTabletSideLayout(root);
     if (mobileStack) {
       root.dataset.battleMobileStack = "true";
@@ -1181,6 +1194,19 @@
     );
     const usableH = Math.max(148, layoutHeight - toolbarReserve - rowGap);
 
+    let layoutH = layoutHeight;
+    if (phoneCompact) {
+      const vhNow = window.visualViewport?.height ?? window.innerHeight;
+      const chromeBar = getBottomChrome();
+      const chromeTop = chromeBar && getComputedStyle(chromeBar).display !== "none"
+        ? chromeBar.getBoundingClientRect().top
+        : vhNow;
+      layoutH = Math.min(
+        layoutHeight,
+        Math.max(120, Math.round(chromeTop - layoutRect.top)),
+      );
+    }
+
     if (mobileStack || phoneLandscape) {
       const prof = BATTLE_PROFILES[root.dataset.battleProfile] || {};
       const floorShare = prof.floorShare ?? (mobileStack ? 0.26 : 0.30);
@@ -1199,7 +1225,7 @@
 
     const heroRowTopMax = Math.max(
       rowGap,
-      layoutHeight - heroCardH - arenaGap - combatFloorMin - toolbarReserve - rowGap,
+      layoutH - heroCardH - arenaGap - combatFloorMin - toolbarReserve - rowGap,
     );
     const heroRowTop = Math.max(
       rowGap,
@@ -1222,11 +1248,26 @@
       },
     );
     const combatFloorTop = heroRowTop + heroCardH + arenaGap;
-    const combatFloorAvailable = Math.max(
-      72,
-      layoutHeight - combatFloorTop - toolbarReserve - arenaGap,
-    );
-    const combatFloorH = Math.min(combatFloorMin, combatFloorAvailable);
+    const combatFloorAvailable = phoneCompact
+      ? Math.max(72, layoutH - combatFloorTop - arenaGap)
+      : Math.max(
+        72,
+        layoutHeight - combatFloorTop - toolbarReserve - arenaGap,
+      );
+    const combatFloorH = phoneCompact
+      ? (() => {
+        let h = Math.max(combatFloorMin, combatFloorAvailable);
+        if (phoneLandscape) {
+          const chromeBar = getBottomChrome();
+          const chromeTop = chromeBar && getComputedStyle(chromeBar).display !== "none"
+            ? chromeBar.getBoundingClientRect().top
+            : (window.visualViewport?.height ?? window.innerHeight);
+          const maxH = Math.max(72, Math.round(chromeTop - combatFloorTop - arenaGap));
+          h = Math.min(h, maxH);
+        }
+        return h;
+      })()
+      : Math.min(combatFloorMin, combatFloorAvailable);
     applyBattleHeroRowZoneVars(root, fieldCol, zones, heroRowTop, heroCardH, {
       top: combatFloorTop,
       height: combatFloorH,
@@ -1618,7 +1659,7 @@
       const fieldCol = canvas.closest(".prep-field-column");
       if (!stage) return;
 
-      const stageW = (mobileFit && fieldCol?.clientWidth) ? fieldCol.clientWidth : stage.clientWidth;
+      let stageW = (mobileFit && fieldCol?.clientWidth) ? fieldCol.clientWidth : stage.clientWidth;
       if (stageW <= 0) return;
 
       let maxH = canvas.height;
@@ -1629,6 +1670,10 @@
       } else if (viewportFit) {
         const cssMax = getComputedStyle(root).getPropertyValue("--prep-canvas-max-h").trim();
         if (cssMax) maxH = parseFloat(cssMax) || maxH;
+        if (root.dataset.uiSurface === "phone-landscape" && fieldCol?.clientHeight > 80) {
+          stageW = Math.max(stageW, Math.floor(fieldCol.clientWidth * 0.5));
+          maxH = Math.max(maxH, Math.round(fieldCol.clientHeight * 0.94));
+        }
       }
 
       const scale = Math.min(stageW / canvas.width, maxW / canvas.width, maxH / canvas.height);
@@ -1741,12 +1786,11 @@
   function applyUiLayout() {
     const { w, h } = viewportSize();
     const rawScale = Math.min(w / DESIGN_W, h / DESIGN_H);
-    let clamped = Math.max(SCALE_MIN, Math.min(SCALE_MAX, rawScale));
 
     const touchDev = isTouchDevice();
     document.documentElement.dataset.touch = touchDev ? "true" : "false";
     const gamepadMode = typeof isGamepadInteraction === "function" && isGamepadInteraction();
-    document.documentElement.dataset.gamepadHud = (touchDev && !isBattleUiPhase() && !gamepadMode) ? "hidden" : "auto";
+    document.documentElement.dataset.gamepadHud = (touchDev && !gamepadMode) ? "hidden" : "auto";
 
     let tier = "desktop";
     if (w <= 720 || h <= 520) tier = "phone";
@@ -1757,6 +1801,9 @@
 
     const compact = tier !== "desktop" || h <= 820;
     document.documentElement.dataset.uiCompact = compact ? "true" : "false";
+
+    const scaleFloor = tier === "phone" ? 0.58 : SCALE_MIN;
+    let clamped = Math.max(scaleFloor, Math.min(SCALE_MAX, rawScale));
 
     const prepLayout = shouldUseMobilePrepLayout(w, h, tier)
       ? "mobile"

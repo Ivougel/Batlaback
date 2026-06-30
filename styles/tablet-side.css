@@ -186,3 +186,14 @@ html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel .shop-pa
 html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel .shop-sell-hint {
   font-size: var(--font-sm);
 }
+
+/* Бой tablet-side: combat floor + эмодзи */
+html[data-ui-surface="tablet-side"] #app[data-phase="battle"] .battle-thought-arena,
+html[data-ui-surface="tablet-side"] #app[data-phase="replay"] .battle-thought-arena {
+  min-height: max(88px, var(--zone-battle-floor-h, 0px), 16vh);
+}
+
+html[data-ui-surface="tablet-side"] #app[data-phase="battle"] #battle-scene-ui,
+html[data-ui-surface="tablet-side"] #app[data-phase="replay"] #battle-scene-ui {
+  max-height: min(36vh, var(--battle-hero-zone-h, 280px));
+}

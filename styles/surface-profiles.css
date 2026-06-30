@@ -21,14 +21,10 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .btn-refresh-shop {
   font-size: var(--font-sm);
 }
 
-/* ─── Phone landscape (prep side / battle) ─── */
+/* ─── Phone landscape battle (layout-profile, prep на tablet-side) ─── */
 
-html[data-ui-surface="phone-landscape"] #app[data-phase="prep"] .shop-panel h3 {
-  font-size: var(--font-sm);
-}
-
-html[data-ui-surface="phone-landscape"] body:has(#app[data-phase="battle"]) .bottom-chrome .bc-btn,
-html[data-ui-surface="phone-landscape"] body:has(#app[data-phase="replay"]) .bottom-chrome .bc-btn {
+html[data-layout-profile="phone-landscape"] body:has(#app[data-phase="battle"]) .bottom-chrome .bc-btn,
+html[data-layout-profile="phone-landscape"] body:has(#app[data-phase="replay"]) .bottom-chrome .bc-btn {
   min-height: var(--touch-target-min);
   font-size: var(--font-sm);
 }

@@ -51,9 +51,9 @@ const BattleHeroAnchor = (() => {
   }
 
   const EMOJI_SIZE_BY_PROFILE = {
-    "phone-portrait": { floorRatio: 0.62, vminRatio: 0.165, minPx: 76, maxPx: 128, haloRatio: 0.30 },
+    "phone-portrait": { floorRatio: 0.62, vminRatio: 0.165, minPx: 76, maxPx: 140, haloRatio: 0.30 },
     "phone-landscape": { floorRatio: 0.56, vminRatio: 0.155, minPx: 68, maxPx: 112, haloRatio: 0.32 },
-    "tablet-landscape-side": { floorRatio: 0.58, vminRatio: 0.15, minPx: 88, maxPx: 148, haloRatio: 0.36 },
+    "tablet-landscape-side": { floorRatio: 0.60, vminRatio: 0.16, minPx: 90, maxPx: 152, haloRatio: 0.37 },
     "tablet-portrait": { floorRatio: 0.54, vminRatio: 0.14, minPx: 84, maxPx: 140, haloRatio: 0.36 },
     "desktop-portrait": { floorRatio: 0.62, vminRatio: 0.17, minPx: 96, maxPx: 164, haloRatio: 0.38 },
     "desktop-landscape": { floorRatio: 0.64, vminRatio: 0.175, minPx: 100, maxPx: 172, haloRatio: 0.38 },

@@ -45,6 +45,128 @@ function box(page, selector) {
 
 const CASES = [
   {
+    id: "iphone-portrait-prep-vexp",
+    device: devices["iPhone 14 Pro Max"],
+    async run(page) {
+      await page.goto(baseUrl.replace("vexp=0", "vexp=1"), { waitUntil: "domcontentloaded", timeout: 20000 });
+      await page.waitForFunction(() => typeof startRunFromOverlay === "function");
+      await page.evaluate(() => {
+        localStorage.setItem("bb_visual_experiment", "1");
+        document.documentElement.dataset.visualExperiment = "true";
+        selectGameMode("solo");
+        selectPlayerClass("warrior");
+        selectOpponentClass("mage");
+        startRunFromOverlay();
+      });
+      await page.waitForFunction(() => document.getElementById("app")?.dataset.phase === "prep");
+      await page.waitForTimeout(800);
+      await page.evaluate(() => { window.applyUiLayout?.(); window.scheduleCanvasFit?.(); });
+      await page.waitForTimeout(400);
+
+      const m = await page.evaluate(() => {
+        const canvas = document.getElementById("game-canvas")?.getBoundingClientRect();
+        const hero = document.querySelector(".prep-character-layer")?.getBoundingClientRect();
+        const pos = getComputedStyle(document.querySelector(".prep-character-layer")).position;
+        return {
+          canvasH: canvas?.height ?? 0,
+          voidBelow: hero && canvas ? hero.top - canvas.bottom : 999,
+          heroPos: pos,
+        };
+      });
+      assert(m.canvasH >= 260, `canvas too small: ${m.canvasH}px`);
+      assert(m.voidBelow <= 48, `vexp hero gap below canvas: ${m.voidBelow}px`);
+      assert(m.heroPos === "absolute", `vexp hero should be absolute, got ${m.heroPos}`);
+    },
+  },
+  {
+    id: "iphone-portrait-battle-vexp-gap",
+    device: devices["iPhone 14 Pro Max"],
+    async run(page) {
+      await page.goto(baseUrl.replace("vexp=0", "vexp=1"), { waitUntil: "domcontentloaded", timeout: 20000 });
+      await page.waitForFunction(() => typeof startRunFromOverlay === "function");
+      await page.evaluate(() => {
+        localStorage.setItem("bb_visual_experiment", "1");
+        document.documentElement.dataset.visualExperiment = "true";
+        selectGameMode("solo");
+        selectPlayerClass("warrior");
+        selectOpponentClass("mage");
+        startRunFromOverlay();
+      });
+      await page.waitForFunction(() => document.getElementById("app")?.dataset.phase === "prep");
+      await page.evaluate(() => startBattle());
+      await page.waitForFunction(() => document.getElementById("app")?.dataset.phase === "battle");
+      await page.waitForFunction(
+        () => !document.getElementById("battle-countdown-overlay")
+          ?.classList.contains("battle-countdown-overlay-visible"),
+        { timeout: 12000 },
+      );
+      await page.waitForTimeout(800);
+      await page.evaluate(() => { window.applyUiLayout?.(); window.scheduleCanvasFit?.(); });
+      await page.waitForTimeout(400);
+
+      const m = await page.evaluate(() => {
+        const thought = document.getElementById("battle-thought-arena")?.getBoundingClientRect();
+        const chrome = document.querySelector(".bottom-chrome")?.getBoundingClientRect();
+        return {
+          gap: thought && chrome ? chrome.top - thought.bottom : 999,
+          floorH: thought?.height ?? 0,
+        };
+      });
+      assert(m.gap <= 72, `dead zone below combat floor: ${m.gap}px`);
+      assert(m.floorH >= 120, `combat floor too small: ${m.floorH}px`);
+    },
+  },
+  {
+    id: "iphone-portrait-battle-chrome",
+    device: devices["iPhone 14 Pro Max"],
+    async run(page) {
+      await quickStart(page);
+      await page.evaluate(() => startBattle());
+      await page.waitForFunction(() => document.getElementById("app")?.dataset.phase === "battle");
+      await page.waitForTimeout(800);
+      await page.evaluate(() => { window.applyUiLayout?.(); });
+      const m = await page.evaluate(() => {
+        const bar = document.querySelector(".bottom-chrome")?.getBoundingClientRect();
+        const gamepad = document.querySelector(".bottom-chrome-gamepad");
+        const cs = gamepad ? getComputedStyle(gamepad) : null;
+        const controls = document.querySelector(".battle-controls")?.getBoundingClientRect();
+        return {
+          gamepadHud: document.documentElement.dataset.gamepadHud,
+          gamepadDisplay: cs?.display ?? "none",
+          barH: bar?.height ?? 0,
+          barBottom: bar?.bottom ?? 0,
+          vw: window.innerWidth,
+          controlsW: controls?.width ?? 0,
+        };
+      });
+      assert(m.gamepadHud === "hidden", `gamepad hud should be hidden on touch: ${m.gamepadHud}`);
+      assert(m.gamepadDisplay === "none", `gamepad row visible: ${m.gamepadDisplay}`);
+      assert(m.barBottom <= (await page.evaluate(() => window.innerHeight)) + 2, "chrome below viewport");
+      assert(m.controlsW <= m.vw + 2, "battle controls overflow");
+    },
+  },
+  {
+    id: "iphone-portrait-prep-chrome",
+    device: devices["iPhone 14 Pro Max"],
+    async run(page) {
+      await quickStart(page);
+      const m = await page.evaluate(() => {
+        const fight = document.getElementById("btn-fight")?.getBoundingClientRect();
+        const bar = document.querySelector(".bottom-chrome")?.getBoundingClientRect();
+        const label = document.querySelector("#btn-prep-player .prep-side-label");
+        const labelHidden = label ? getComputedStyle(label).display === "none" : false;
+        return {
+          fightW: fight?.width ?? 0,
+          barW: bar?.width ?? 0,
+          labelHidden,
+          fightOnOwnRow: fight && bar ? fight.width >= bar.width * 0.92 : false,
+        };
+      });
+      assert(m.labelHidden, "prep side labels should be icon-only on mobile");
+      assert(m.fightOnOwnRow, `fight btn not full width: ${m.fightW}/${m.barW}`);
+    },
+  },
+  {
     id: "iphone-portrait-battle-emoji",
     device: devices["iPhone 14 Pro Max"],
     async run(page) {
@@ -78,7 +200,11 @@ const CASES = [
       });
       assert(m.floorH > 48, "combat floor too small");
       assert(m.emojiPx >= 68, `emoji too small: ${m.emojiPx}px`);
-      assert(m.floorRatio >= 0.38, `emoji/floor ratio low: ${m.floorRatio.toFixed(2)}`);
+      if (m.floorH > 280) {
+        assert(m.emojiPx >= 100, `emoji should use headroom on tall floor: ${m.emojiPx}px`);
+      } else {
+        assert(m.floorRatio >= 0.38, `emoji/floor ratio low: ${m.floorRatio.toFixed(2)}`);
+      }
       assert(m.hudTop >= m.stageBottom - 4, `HUD overlaps portrait: hud=${m.hudTop} stage=${m.stageBottom}`);
     },
   },
@@ -103,6 +229,99 @@ const CASES = [
     },
   },
   {
+    id: "iphone-landscape-prep",
+    device: {
+      ...devices["iPhone 14 Pro Max"],
+      viewport: { width: 932, height: 430 },
+      isMobile: true,
+      hasTouch: true,
+    },
+    async run(page) {
+      await quickStart(page);
+      const m = await page.evaluate(() => {
+        const surface = document.documentElement.dataset.uiSurface;
+        const prepLayout = document.documentElement.dataset.prepLayout;
+        const canvas = document.getElementById("game-canvas")?.getBoundingClientRect();
+        const island = document.getElementById("prep-field-island")?.getBoundingClientRect();
+        const hero = document.querySelector(".prep-character-layer")?.getBoundingClientRect();
+        const shop = document.getElementById("shop-panel")?.getBoundingClientRect();
+        const fieldCol = document.querySelector(".prep-field-column")?.getBoundingClientRect();
+        const fight = document.getElementById("btn-fight")?.getBoundingClientRect();
+        const bar = document.querySelector(".bottom-chrome")?.getBoundingClientRect();
+        const heroImg = document.querySelector(".prep-character-img")?.getBoundingClientRect();
+        return {
+          surface,
+          prepLayout,
+          canvasH: canvas?.height ?? 0,
+          heroTop: hero?.top ?? 0,
+          islandBottom: island?.bottom ?? 0,
+          shopLeft: shop?.left ?? 0,
+          fieldRight: fieldCol?.right ?? 0,
+          fightW: fight?.width ?? 0,
+          barW: bar?.width ?? 0,
+          heroImgH: heroImg?.height ?? 0,
+          heroLayerH: hero?.height ?? 0,
+        };
+      });
+      assert(m.surface === "tablet-side", `expected tablet-side, got ${m.surface}`);
+      assert(m.prepLayout === "side", `expected side prep, got ${m.prepLayout}`);
+      assert(m.canvasH >= 120, `canvas too small: ${m.canvasH}px`);
+      assert(m.shopLeft >= m.fieldRight - 12, `shop not on right: shop.left=${m.shopLeft} field.right=${m.fieldRight}`);
+      assert(m.heroTop >= m.islandBottom - 12, `hero should sit below canvas: hero.top=${m.heroTop} island.bottom=${m.islandBottom}`);
+      assert(m.fightW <= m.barW * 0.42, `toolbar too wide/spread: fight=${m.fightW} bar=${m.barW}`);
+      if (m.heroImgH > 0 && m.heroLayerH > 0) {
+        assert(m.heroImgH <= m.heroLayerH * 1.08, `hero image cropped: img=${m.heroImgH} layer=${m.heroLayerH}`);
+      }
+    },
+  },
+  {
+    id: "iphone-landscape-prep-vexp",
+    device: {
+      ...devices["iPhone 14 Pro Max"],
+      viewport: { width: 932, height: 430 },
+      isMobile: true,
+      hasTouch: true,
+    },
+    async run(page) {
+      await page.goto(baseUrl.replace("vexp=0", "vexp=1"), { waitUntil: "domcontentloaded", timeout: 20000 });
+      await page.waitForFunction(() => typeof startRunFromOverlay === "function");
+      await page.evaluate(() => {
+        localStorage.setItem("bb_visual_experiment", "1");
+        document.documentElement.dataset.visualExperiment = "true";
+        selectGameMode("solo");
+        selectPlayerClass("warrior");
+        selectOpponentClass("mage");
+        startRunFromOverlay();
+      });
+      await page.waitForFunction(() => document.getElementById("app")?.dataset.phase === "prep");
+      await page.waitForTimeout(800);
+      await page.evaluate(() => { window.applyUiLayout?.(); window.scheduleCanvasFit?.(); });
+      await page.waitForTimeout(400);
+
+      const m = await page.evaluate(() => {
+        const hero = document.querySelector(".prep-character-layer")?.getBoundingClientRect();
+        const island = document.getElementById("prep-field-island")?.getBoundingClientRect();
+        const shop = document.getElementById("shop-panel")?.getBoundingClientRect();
+        const fieldCol = document.querySelector(".prep-field-column")?.getBoundingClientRect();
+        const top = parseFloat(getComputedStyle(document.querySelector(".prep-character-layer")).top) || 0;
+        return {
+          surface: document.documentElement.dataset.uiSurface,
+          prepLayout: document.documentElement.dataset.prepLayout,
+          heroTop: hero?.top ?? 0,
+          islandBottom: island?.bottom ?? 0,
+          shopLeft: shop?.left ?? 0,
+          fieldRight: fieldCol?.right ?? 0,
+          cssTop: top,
+        };
+      });
+      assert(m.surface === "tablet-side", `vexp landscape surface: ${m.surface}`);
+      assert(m.prepLayout === "side", `vexp prep layout: ${m.prepLayout}`);
+      assert(m.shopLeft >= m.fieldRight - 12, `vexp shop not on right: ${m.shopLeft} vs ${m.fieldRight}`);
+      assert(m.heroTop >= m.islandBottom - 12, `vexp hero not below canvas: ${m.heroTop} vs ${m.islandBottom}`);
+      assert(m.cssTop < 200, `vexp hero css top too large: ${m.cssTop}px`);
+    },
+  },
+  {
     id: "iphone-landscape-battle",
     device: {
       ...devices["iPhone 14 Pro Max"],
@@ -113,7 +332,7 @@ const CASES = [
     async run(page) {
       await quickStart(page);
       const prepSurface = await page.evaluate(() => document.documentElement.dataset.uiSurface);
-      assert(prepSurface === "phone-landscape", `expected phone-landscape prep, got ${prepSurface}`);
+      assert(prepSurface === "tablet-side", `expected tablet-side prep, got ${prepSurface}`);
 
       await page.evaluate(() => startBattle());
       await page.waitForFunction(() => document.getElementById("app")?.dataset.phase === "battle");
@@ -171,6 +390,38 @@ const CASES = [
         return { shopW: sr?.width ?? 0, vw: window.innerWidth };
       });
       assert(layout.shopW >= layout.vw * 0.88, `shop too narrow: ${layout.shopW}px vs vw ${layout.vw}`);
+    },
+  },
+  {
+    id: "ipad-landscape-battle-emoji",
+    device: { ...devices["iPad Mini"], viewport: { width: 1024, height: 768 } },
+    async run(page) {
+      await quickStart(page);
+      await page.evaluate(() => startBattle());
+      await page.waitForFunction(() => document.getElementById("app")?.dataset.phase === "battle");
+      await page.waitForFunction(
+        () => !document.getElementById("battle-countdown-overlay")
+          ?.classList.contains("battle-countdown-overlay-visible"),
+        { timeout: 12000 },
+      );
+      await page.waitForTimeout(1000);
+      await page.evaluate(() => {
+        window.applyUiLayout?.();
+        window.scheduleCanvasFit?.();
+      });
+      await page.waitForTimeout(600);
+
+      const m = await page.evaluate(() => ({
+        profile: document.documentElement.dataset.battleProfile,
+        emojiPx: window.BattleHeroAnchor?.thoughtSlotEmojiSize?.() ?? 0,
+        floorH: document.getElementById("battle-thought-arena")?.offsetHeight ?? 0,
+        hudTop: document.getElementById("battle-hud-player")?.getBoundingClientRect().top ?? 0,
+        stageBottom: document.querySelector("#player-avatar-slot .avatar-hero-stage")?.getBoundingClientRect().bottom ?? 0,
+      }));
+      assert(m.profile === "tablet-landscape-side", `profile: ${m.profile}`);
+      assert(m.emojiPx >= 80, `emoji too small: ${m.emojiPx}px`);
+      assert(m.floorH >= 80, `combat floor too small: ${m.floorH}px`);
+      assert(m.hudTop >= m.stageBottom - 4, `HUD on portrait: hud=${m.hudTop} stage=${m.stageBottom}`);
     },
   },
   {

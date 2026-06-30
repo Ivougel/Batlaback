@@ -96,7 +96,7 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  --prep-mobile-canvas-cap: min(var(--prep-canvas-display-h, var(--prep-canvas-h)), 38vh);
+  --prep-mobile-canvas-cap: min(var(--prep-canvas-display-h, var(--prep-canvas-h)), 44vh);
   padding:
     max(6px, env(safe-area-inset-top))
     max(6px, env(safe-area-inset-right))

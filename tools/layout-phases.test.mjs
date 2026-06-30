@@ -19,7 +19,7 @@ const PHASE_PROFILES = [
       isMobile: true,
       hasTouch: true,
     },
-    expectUiSurface: "phone-landscape",
+    expectUiSurface: "tablet-side",
     expectBattleProfile: "phone-landscape",
   },
   {

@@ -642,6 +642,8 @@ html[data-battle-hero-placement="flank-arena"][data-orientation="portrait"] #app
   border: none;
   border-radius: 0;
   box-shadow: none;
+  min-height: max(88px, var(--battle-combat-floor-h, var(--zone-battle-floor-h, 88px)));
+  max-height: var(--battle-combat-floor-h, 48vh);
 }
 
 html[data-battle-mobile-stack="true"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-effects-panel,

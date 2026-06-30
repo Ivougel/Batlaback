@@ -429,6 +429,20 @@ function syncShopHintsVisibility() {
   document.querySelector("#shop-panel .shop-sell-hint")?.toggleAttribute("hidden", hide);
 }
 
+function setPrepSideBtnContent(btn, emoji, label) {
+  if (!btn) return;
+  const ico = btn.querySelector(".prep-side-ico");
+  const lbl = btn.querySelector(".prep-side-label");
+  if (ico && lbl) {
+    ico.textContent = emoji;
+    lbl.textContent = label;
+    btn.setAttribute("aria-label", label);
+    btn.title = label;
+    return;
+  }
+  btn.textContent = `${emoji} ${label}`;
+}
+
 function updatePrepSideUI() {
   document.querySelectorAll(".prep-side-btn").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.prepSide === prepViewSide);
@@ -443,8 +457,8 @@ function updatePrepSideUI() {
   const enemyBtn = document.getElementById("btn-prep-enemy");
 
   if (isVersusMode()) {
-    if (playerBtn) playerBtn.textContent = "🧑 Игрок 1";
-    if (enemyBtn) enemyBtn.textContent = "🧑 Игрок 2";
+    setPrepSideBtnContent(playerBtn, "🧑", "Игрок 1");
+    setPrepSideBtnContent(enemyBtn, "🧑", "Игрок 2");
     if (prepViewSide === "enemy") {
       if (title) title.textContent = "🛒 Магазин · Игрок 2";
       if (hint) hint.textContent = "Покупки и расстановка второго игрока · Tab — вернуться к игроку 1";
@@ -453,8 +467,8 @@ function updatePrepSideUI() {
       if (hint) hint.textContent = "Покупки и расстановка первого игрока · Tab — перейти к игроку 2";
     }
   } else if (prepViewSide === "enemy") {
-    if (playerBtn) playerBtn.textContent = "🧑 Мой стол";
-    if (enemyBtn) enemyBtn.textContent = isHardBotMode() ? "💀 Сложный бот" : "🤖 Противник";
+    setPrepSideBtnContent(playerBtn, "🧑", "Мой стол");
+    setPrepSideBtnContent(enemyBtn, isHardBotMode() ? "💀" : "🤖", isHardBotMode() ? "Сложный бот" : "Противник");
     if (title) title.textContent = isHardBotMode() ? "🛒 Сложный бот (просмотр)" : "🛒 Магазин ИИ (просмотр)";
     if (hint) {
       hint.textContent = isHardBotMode()
@@ -462,8 +476,8 @@ function updatePrepSideUI() {
         : "ИИ управляет этим билдом сам — только просмотр";
     }
   } else {
-    if (playerBtn) playerBtn.textContent = "🧑 Мой стол";
-    if (enemyBtn) enemyBtn.textContent = "🤖 Противник";
+    setPrepSideBtnContent(playerBtn, "🧑", "Мой стол");
+    setPrepSideBtnContent(enemyBtn, "🤖", "Противник");
     if (title) title.textContent = "🛒 Магазин";
     if (hint) hint.textContent = "Перетащите предмет в инвентарь или на скамейку · 📍 — заморозить";
   }
