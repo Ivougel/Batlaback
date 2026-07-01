@@ -2696,6 +2696,50 @@ function getPrepPlacementAnchorClient() {
   return canvasPointToClient(sx / shape.length, sy / shape.length);
 }
 
+/** ~одна клетка сетки в экранных px (для отступа фигуры от ✊). */
+function getPrepGrabMinOffsetClientPx() {
+  const stride = typeof GRID_STRIDE !== "undefined" ? GRID_STRIDE : 47;
+  if (!canvas || canvas.width <= 0) return stride;
+  const canvasRect = canvas.getBoundingClientRect();
+  if (canvasRect.width <= 0) return stride;
+  const scale = canvasRect.width / canvas.width;
+  return stride * scale;
+}
+
+/** Целевая точка фигуры: не ближе одной клетки от пальца, по направлению к ideal. */
+function getPrepRemoteHoldFigureClient(grabX, grabY, idealX, idealY) {
+  const minDist = getPrepGrabMinOffsetClientPx();
+  const dx = idealX - grabX;
+  const dy = idealY - grabY;
+  const dist = Math.hypot(dx, dy);
+  if (dist >= minDist) {
+    return { x: idealX, y: idealY };
+  }
+  if (dist < 0.5) {
+    const boardCenter = canvasPointToClient(
+      gridOrigin(prepViewSide) + GRID_INNER_W / 2,
+      layoutBackpackY() + GRID_INNER_H / 2,
+    );
+    if (boardCenter) {
+      const bx = boardCenter.x - grabX;
+      const by = boardCenter.y - grabY;
+      const blen = Math.hypot(bx, by) || 1;
+      return { x: grabX + (bx / blen) * minDist, y: grabY + (by / blen) * minDist };
+    }
+    return { x: grabX - minDist, y: grabY };
+  }
+  const scale = minDist / dist;
+  return { x: grabX + dx * scale, y: grabY + dy * scale };
+}
+
+function getPrepSidebarHoldIdealClient(grabX, grabY) {
+  const boardCenter = canvasPointToClient(
+    gridOrigin(prepViewSide) + GRID_INNER_W / 2,
+    layoutBackpackY() + GRID_INNER_H / 2,
+  );
+  return boardCenter || { x: grabX - getPrepGrabMinOffsetClientPx(), y: grabY };
+}
+
 function getPrepArcGhostRotation() {
   const rot = ((dragPayload?.rotation || 0) % 4 + 4) % 4;
   return rot * 90;
@@ -2703,8 +2747,12 @@ function getPrepArcGhostRotation() {
 
 function getPrepDragGhostClientPos(clientX, clientY) {
   const placementAnchor = getPrepPlacementAnchorClient();
-  if (isPrepSidebarArcDrag() && placementAnchor) {
-    return { x: placementAnchor.x, y: placementAnchor.y, rotation: getPrepArcGhostRotation() };
+  if (isPrepSidebarArcDrag()) {
+    const ideal = placementAnchor
+      ? placementAnchor
+      : getPrepSidebarHoldIdealClient(clientX, clientY);
+    const figure = getPrepRemoteHoldFigureClient(clientX, clientY, ideal.x, ideal.y);
+    return { x: figure.x, y: figure.y, rotation: getPrepArcGhostRotation() };
   }
   const anchor = getDragGhostAnchorClient(clientX, clientY);
   if (phase === "prep"
@@ -4235,11 +4283,14 @@ function syncDragGhostOverlay(clientX, clientY) {
     && PrepDragArc.isActive()) {
     PrepDragArc.mountGhostToBody();
     if (sidebarDrag && placementAnchor) {
-      ghostX = placementAnchor.x;
-      ghostY = placementAnchor.y;
+      const figure = getPrepRemoteHoldFigureClient(
+        clientX, clientY, placementAnchor.x, placementAnchor.y,
+      );
+      ghostX = figure.x;
+      ghostY = figure.y;
       arcRotation = getPrepArcGhostRotation();
       PrepDragArc.sync(clientX, clientY, clientX, clientY, {
-        linkPoint: placementAnchor,
+        linkPoint: figure,
         grabAtPointer: true,
         remoteHold: true,
         dropState: getPrepArcDropState(),
@@ -4248,17 +4299,20 @@ function syncDragGhostOverlay(clientX, clientY) {
       el.classList.add("ui-drag-ghost--arc-flight", "ui-drag-ghost--remote-hold");
       el.classList.remove("hidden");
     } else if (sidebarDrag) {
+      const ideal = getPrepSidebarHoldIdealClient(clientX, clientY);
+      const figure = getPrepRemoteHoldFigureClient(clientX, clientY, ideal.x, ideal.y);
+      ghostX = figure.x;
+      ghostY = figure.y;
+      arcRotation = getPrepArcGhostRotation();
       PrepDragArc.sync(clientX, clientY, clientX, clientY, {
         grabAtPointer: true,
-        remoteHold: false,
-        linkPoint: null,
+        remoteHold: true,
+        linkPoint: figure,
         dropState: getPrepArcDropState(),
         itemId: dragPayload.itemId,
       });
-      el.classList.add("ui-drag-ghost--arc-flight");
-      el.classList.remove("ui-drag-ghost--remote-hold");
-      el.classList.add("hidden");
-      return;
+      el.classList.add("ui-drag-ghost--arc-flight", "ui-drag-ghost--remote-hold");
+      el.classList.remove("hidden");
     } else {
       const arcPos = PrepDragArc.resolveGhostPosition(clientX, clientY, anchor.x, anchor.y);
       ghostX = arcPos.x;
