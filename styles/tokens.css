@@ -40,14 +40,19 @@
   --gap-md: 10px;
   --gap-lg: 16px;
 
-  /* Avatar */
+  /* Avatar & hero card (see UI_UX.md) */
   --profile-avatar-size: calc(148px * var(--ui-scale));
   --battle-portrait-zoom: 1.0;
   --profile-avatar-height: calc(192px * var(--ui-scale));
-  --prep-scene-avatar-h: calc(152px * var(--ui-scale));
-  --prep-scene-avatar-w: calc(120px * var(--ui-scale));
+  --prep-scene-avatar-h: calc(168px * var(--ui-scale));
+  --prep-scene-avatar-w: calc(132px * var(--ui-scale));
   --avatar-prep-size: var(--prep-scene-avatar-h);
   --avatar-battle-size: calc(282px * var(--ui-scale));
+  --hero-portrait-bleed: 1.12;
+  --hero-hud-overlap: calc(16px * var(--ui-scale));
+  --hero-name-scrim: linear-gradient(180deg, rgba(13, 17, 23, 0.78) 0%, rgba(13, 17, 23, 0.2) 55%, transparent 100%);
+  --hero-chrome-scrim: linear-gradient(180deg, transparent 0%, rgba(13, 17, 23, 0.45) 28%, rgba(13, 17, 23, 0.92) 100%);
+  --hero-card-min-portrait-h: calc(140px * var(--ui-scale));
   --avatar-effects-panel-h: calc(68px * var(--ui-scale));
   --battle-avatar-card-w: calc(210px * var(--ui-scale));
 
@@ -89,10 +94,10 @@
   --character-scale: 1;
   --prep-character-slot-h: var(--character-slot-h);
   --prep-hero-slot-left: 2%;
-  --prep-hero-slot-width: 21%;
+  --prep-hero-slot-width: 24%;
   --prep-hero-slot-gap: 1%;
   --prep-hero-slot-bottom: var(--gap-sm);
-  --prep-hero-slot-height: min(320px, 36vh);
+  --prep-hero-slot-height: min(360px, 40vh);
   --prep-hero-slot-height-max: 380px;
   --zone-topbar-h: 0px;
   --zone-toolbar-h: 0px;

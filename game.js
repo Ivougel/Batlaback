@@ -137,6 +137,13 @@ let pendingGameOver = false;
 let lastBattleReplay = null;
 let lastBattlePrepSnapshot = null;
 let replayPlayback = null;
+
+/** Освобождает тяжёлые replay-кадры (PWA / iPad OOM). Лог и summary остаются. */
+function releasePreviousBattleReplayFrames() {
+  if (!lastBattleReplay) return;
+  lastBattleReplay.frames = [];
+  lastBattleReplay.prepSnapshot = null;
+}
 let runResults = [];
 let runItemStats = createEmptyRunItemStats();
 let battleEndHandled = false;
@@ -507,12 +514,37 @@ function updateShopGoldStat() {
   updateShopSideStat();
 }
 
+function syncClassOverlayUi() {
+  const badge = document.getElementById("class-step-badge");
+  const hint = document.getElementById("class-action-hint");
+  const modeStep = document.getElementById("class-step-mode");
+  const playerStep = document.getElementById("class-step-player");
+  const opponentStep = document.getElementById("class-step-opponent");
+  if (!badge || !hint) return;
+
+  if (modeStep && !modeStep.classList.contains("hidden")) {
+    badge.textContent = "Шаг 1 из 3 · Режим";
+    hint.textContent = "Нажмите на режим — одиночная, PvP или сложный бот";
+  } else if (playerStep && !playerStep.classList.contains("hidden")) {
+    badge.textContent = "Шаг 2 из 3 · Ваш класс";
+    hint.textContent = "Нажмите на карточку класса — откроется выбор соперника";
+  } else if (opponentStep && !opponentStep.classList.contains("hidden")) {
+    badge.textContent = "Шаг 3 из 3 · Соперник";
+    const startLabel = selectedGameMode === "versus" ? "Начать игру" : "Начать забег";
+    hint.textContent = `Выберите класс соперника, затем «${startLabel}» внизу экрана`;
+  } else {
+    badge.textContent = "";
+    hint.textContent = "";
+  }
+}
+
 function showGameModeStep() {
   document.getElementById("class-step-mode")?.classList.remove("hidden");
   document.getElementById("class-step-player")?.classList.add("hidden");
   document.getElementById("class-step-opponent")?.classList.add("hidden");
   document.getElementById("class-modal-title").textContent = "Режим игры";
   document.getElementById("class-modal-subtitle").textContent = "Выберите формат — против бота, сложного бота или с другом";
+  syncClassOverlayUi();
   syncClassMobileDock();
 }
 
@@ -526,6 +558,7 @@ function showPlayerClassStep() {
   document.getElementById("class-modal-subtitle").textContent = selectedGameMode === "versus"
     ? "Первый игрок выбирает класс и стартовый набор."
     : "Каждый класс получает стартовый набор и уникальный бонус на весь забег.";
+  syncClassOverlayUi();
   syncClassMobileDock();
 }
 
@@ -541,6 +574,7 @@ function resetClassSelectOverlay() {
   document.querySelectorAll(".opponent-class-card").forEach((card) => card.classList.remove("selected"));
   showGameModeStep();
   updateStartRunButton();
+  syncClassOverlayUi();
   syncClassMobileDock();
 }
 
@@ -567,6 +601,7 @@ function showSecondClassStep() {
     card.classList.toggle("selected", card.dataset.opponentClass === selectedEnemyClass);
   });
   updateStartRunButton();
+  syncClassOverlayUi();
   syncClassMobileDock();
   scrollClassPickerCardIntoView(document.querySelector(`.opponent-class-card[data-opponent-class="${selectedEnemyClass}"]`));
 }
@@ -583,7 +618,10 @@ function syncClassMobileDock() {
   dock.classList.toggle("hidden", !show);
   dock.setAttribute("aria-hidden", show ? "false" : "true");
   if (typeof window.syncClassOverlayAnchors === "function") {
-    requestAnimationFrame(() => window.syncClassOverlayAnchors());
+    requestAnimationFrame(() => {
+      window.syncClassOverlayAnchors();
+      syncClassOverlayUi();
+    });
   }
 }
 
@@ -591,6 +629,7 @@ function updateStartRunButton() {
   const btn = document.getElementById("btn-start-run");
   if (!btn) return;
   btn.disabled = !(pendingPlayerClass && selectedEnemyClass);
+  btn.textContent = selectedGameMode === "versus" ? "Начать игру" : "Начать забег";
 }
 
 function scrollClassPickerCardIntoView(card) {
@@ -1192,6 +1231,7 @@ function init() {
   document.getElementById("btn-battle-continue")?.addEventListener("click", () => {
     transitionToPhase("prep", () => {
       hideBattleResultPopup();
+      releasePreviousBattleReplayFrames();
       if (typeof hideBattleCountdownOverlay === "function") hideBattleCountdownOverlay();
       if (pendingGameOver) {
         showRunComplete();
@@ -2762,6 +2802,7 @@ function startBattleReplay() {
     setBattleEnemyTeamLabel(getEnemyDisplayName());
   }
   battleState.recording = false;
+  battleState.replayFullLog = lastBattleReplay.log || [];
   applyBattleFrame(battleState, lastBattleReplay.frames[0]);
   updateBattleControlsUI();
   renderFightButton();
@@ -2833,6 +2874,7 @@ function startBattle() {
 
   transitionToPhase("battle", () => {
     try {
+      releasePreviousBattleReplayFrames();
       battleEndHandled = false;
       tooltipItem = null;
       lastRoundStats = null;
@@ -2972,6 +3014,8 @@ function endBattle() {
       });
     }
 
+    if (typeof finalizeBattleReplay === "function") finalizeBattleReplay(finishedState);
+
     lastBattleReplay = {
       frames: finishedState.replayFrames || [],
       log: [...finishedState.log],
@@ -2991,6 +3035,7 @@ function endBattle() {
   } catch (err) {
     console.error("endBattle summary failed:", err);
     battleSummary = buildBattleSummary(finishedState, { roundNum: round, goldReward: 0 });
+    if (typeof finalizeBattleReplay === "function") finalizeBattleReplay(finishedState);
     lastBattleReplay = {
       frames: finishedState.replayFrames || [],
       log: [...(finishedState.log || [])],

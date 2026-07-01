@@ -180,8 +180,8 @@
       fitAvailH: 300, fitMinScale: 0.65, fitWidthRatio: 0.48,
       canvasAvailShare: 0.44, canvasMaxCap: 280,
       shopRowBase: 70, shopRowMin: 54, shopRowMax: 74,
-      heroSlotHeight: "min(260px, 32vh)", heroSlotMax: 280,
-      sceneAvatarH: 120, sceneAvatarW: 100, dollSlot: 34, characterGap: 6,
+      heroSlotHeight: "min(280px, 34vh)", heroSlotMax: 300,
+      sceneAvatarH: 140, sceneAvatarW: 112, dollSlot: 34, characterGap: 6,
       shopPanelW: 300,
     },
     "phone-landscape": {
@@ -196,8 +196,8 @@
       fitAvailH: PREP_STACKED_CONTENT_H, fitMinScale: SCALE_MIN, fitWidthRatio: 1,
       canvasAvailShare: 0.34, canvasMaxCap: 240,
       shopRowBase: 70, shopRowMin: 54, shopRowMax: 74,
-      heroSlotHeight: "min(340px, 40vh)", heroSlotMax: 360,
-      sceneAvatarH: 136, sceneAvatarW: 108, dollSlot: 36, characterGap: 8,
+      heroSlotHeight: "min(360px, 42vh)", heroSlotMax: 380,
+      sceneAvatarH: 168, sceneAvatarW: 128, dollSlot: 36, characterGap: 8,
       shopPanelW: 300,
     },
     "tablet-landscape": {
@@ -257,40 +257,41 @@
   /** Коэффициенты боевой раскладки по battleProfile (доли vh/vw, min/max). */
   const BATTLE_PROFILES = {
     "phone-portrait": {
-      heroFromVh: true, heroVh: 0.28, heroMin: 136, heroMax: 200,
+      heroFromVh: true, heroVh: 0.32, heroMin: 148, heroMax: 220,
       arenaVh: 0.30, arenaMin: 128,
       colMin: 140, colMax: 220, colShare: 0.48,
-      imgRatio: 0.48, imgMin: 88, imgMax: 116,
-      portraitZoom: 1.36, chromePad: 10, portraitObjectY: "14%",
-      emojiScale: 1, floorShare: 0.30, heroShare: 0.26, portraitDuelShare: 0.30,
+      imgRatio: 0.72, imgMin: 120, imgMax: 168,
+      portraitZoom: 1.0, chromePad: 10, portraitObjectY: "100%",
+      emojiScale: 1, floorShare: 0.30, heroShare: 0.28, portraitDuelShare: 0.30,
       fxFloatScale: 0.9, fxProjectileScale: 0.9,
     },
     "phone-landscape": {
       heroFromVh: false, heroZoneShare: 0.30, heroMin: 108, heroMax: 148,
       arenaVh: 0.28, arenaMin: 104,
       colMin: 92, colMax: 132, colShare: 0.21,
-      imgRatio: 0.46, imgMin: 72, imgMax: 100,
-      portraitZoom: 0.90, chromePad: 8, portraitObjectY: "12%",
+      imgRatio: 0.52, imgMin: 80, imgMax: 118,
+      portraitZoom: 0.92, chromePad: 8, portraitObjectY: "100%",
       emojiScale: 1, floorShare: 0.42, heroShare: 0.26,
       fxFloatScale: 0.86, fxProjectileScale: 0.88,
     },
     "tablet-landscape-side": {
-      heroFromVh: false, heroZoneShare: 0.28, heroMin: 180, heroMax: 300,
-      arenaVh: 0.18, arenaMin: 112,
-      colMin: 120, colMax: 200, colShare: 0.20,
-      imgRatio: 0.44, imgMin: 120, imgMax: 164,
-      portraitZoom: 0.84, chromePad: 14, portraitObjectY: "14%",
-      emojiScale: 1, floorShare: 0.30, heroShare: 0.28,
+      heroFromVh: false, heroZoneShare: 0.52, heroMin: 220, heroMax: 400,
+      arenaVh: 0.15, arenaMin: 88,
+      colMin: 168, colMax: 320, colShare: 0.30,
+      imgRatio: 0.84, imgMin: 200, imgMax: 340,
+      portraitZoom: 1.0, chromePad: 14, portraitObjectY: "100%",
+      emojiScale: 1, floorShare: 0.22, heroShare: 0.52,
+      zoneShares: { player: 0.30, arena: 0.38, enemy: 0.30 },
       tabletSide: true,
       fxFloatScale: 1, fxProjectileScale: 1,
     },
     "tablet-portrait": {
-      heroFromVh: false, heroZoneShare: 0.32, heroMin: 168, heroMax: 300,
+      heroFromVh: false, heroZoneShare: 0.36, heroMin: 180, heroMax: 320,
       arenaVh: 0.12, arenaMin: 96,
       colMin: 100, colMax: 158, colShare: 0.22,
-      imgRatio: 0.44, imgMin: 112, imgMax: 172,
-      portraitZoom: 1.02, chromePad: 12, portraitObjectY: "14%",
-      emojiScale: 1, floorShare: 0.28, heroShare: 0.30, portraitDuelShare: 0.28,
+      imgRatio: 0.68, imgMin: 128, imgMax: 240,
+      portraitZoom: 0.98, chromePad: 12, portraitObjectY: "100%",
+      emojiScale: 1, floorShare: 0.28, heroShare: 0.28, portraitDuelShare: 0.28,
       fxFloatScale: 0.94, fxProjectileScale: 0.94,
     },
     "desktop-portrait": {
@@ -351,6 +352,7 @@
 
   function applyBattleProfileDataset(root, profileKey) {
     root.dataset.battleProfile = profileKey;
+    root.dataset.heroCardMode = "full-bleed";
     applyBattleFxScaleVars(profileKey);
     if (profileKey === "phone-landscape") {
       root.dataset.battlePhoneLandscape = "true";
@@ -607,18 +609,9 @@
     const uiScale = readCssPx("--ui-scale", 1);
     const touchMin = readCssPx("--touch-target-min", 44);
     const fallback = Math.round(Math.max(72, touchMin + 24 * uiScale));
-    const gap = Math.round(8 * uiScale);
-    const vh = window.visualViewport?.height ?? window.innerHeight;
-
-    if (root.dataset.prepLayout !== "mobile") {
-      root.style.removeProperty("--class-mobile-dock-h");
-      root.style.removeProperty("--class-modal-scroll-max-h");
-      return;
-    }
 
     const overlay = document.getElementById("class-overlay");
     const dock = document.getElementById("class-mobile-dock");
-    const modal = overlay?.querySelector(".class-modal");
     const dockVisible = overlay
       && !overlay.classList.contains("hidden")
       && dock
@@ -628,27 +621,9 @@
     if (dockVisible) {
       const h = dock.getBoundingClientRect().height;
       dockH = Math.max(fallback, Math.round(h));
-      root.style.setProperty("--class-mobile-dock-h", `${dockH}px`);
-    } else {
-      root.style.setProperty("--class-mobile-dock-h", `${fallback}px`);
     }
-
-    if (overlay && !overlay.classList.contains("hidden") && modal) {
-      const modalStyle = getComputedStyle(modal);
-      const modalPadTop = parseFloat(modalStyle.paddingTop) || 0;
-      const modalPadBottom = parseFloat(modalStyle.paddingBottom) || 0;
-      let chromeH = modalPadTop + modalPadBottom;
-      modal.querySelectorAll(
-        ".class-modal-header, .class-controls-hint, .class-step-actions-top:not(.hidden)",
-      ).forEach((el) => {
-        if (getComputedStyle(el).display === "none") return;
-        chromeH += el.getBoundingClientRect().height + gap;
-      });
-      const scrollMax = Math.max(120, Math.round(vh - dockH - chromeH - gap));
-      root.style.setProperty("--class-modal-scroll-max-h", `${scrollMax}px`);
-    } else {
-      root.style.removeProperty("--class-modal-scroll-max-h");
-    }
+    root.style.setProperty("--class-mobile-dock-h", `${dockH}px`);
+    root.style.removeProperty("--class-modal-scroll-max-h");
   }
 
   function syncBattleHudAnchors() {
@@ -722,7 +697,10 @@
       }
 
       const barsGap = Math.round(6 * readCssPx("--ui-scale", 1));
-      let hudTopPx = Math.max(0, Math.round(anchorBottom - vpRect.top + barsGap));
+      const hudOverlap = useFlankZones
+        ? readCssPx("--hero-hud-overlap", Math.round(16 * readCssPx("--ui-scale", 1)))
+        : 0;
+      let hudTopPx = Math.max(0, Math.round(anchorBottom - vpRect.top + barsGap - hudOverlap));
       if (stageRect && stageRect.height > 8) {
         const minTop = Math.round(stageRect.bottom - vpRect.top + barsGap);
         if (hudTopPx < minTop) hudTopPx = minTop;
@@ -1444,6 +1422,7 @@
     );
     const sceneOffsetX = sceneRect.left - layoutRect.left;
 
+    const battleProf = BATTLE_PROFILES[root.dataset.battleProfile || ""] || {};
     const zones = computeBattleHeroRowZones(
       layoutRect.width,
       layoutRect,
@@ -1454,7 +1433,7 @@
         mobileStack,
         uiScale,
         zoneShares: tabletSide && !mobileStack
-          ? { player: 0.24, arena: 0.52, enemy: 0.24 }
+          ? (battleProf.zoneShares || { player: 0.30, arena: 0.38, enemy: 0.30 })
           : null,
       },
     );
@@ -1588,9 +1567,17 @@
     }
 
     if (phase === "battle" || phase === "replay") {
-      const heroZone = Math.min(320, Math.max(200, Math.round((h - measureBattleHudReserve()) * 0.3)));
-      const arenaMin = Math.max(110, Math.round(h * 0.14));
-      const heroImgH = Math.round(Math.min(220, Math.max(140, heroZone * 0.46)));
+      const profileKey = root.dataset.battleProfile || "tablet-landscape-side";
+      const prof = BATTLE_PROFILES[profileKey] || BATTLE_PROFILES["tablet-landscape-side"];
+      const avail = Math.max(200, h - hudReserve);
+      const heroZone = Math.min(
+        prof.heroMax,
+        Math.max(prof.heroMin, Math.round(avail * (prof.heroZoneShare ?? 0.52))),
+      );
+      const heroImgH = Math.round(
+        Math.min(prof.imgMax, Math.max(prof.imgMin, heroZone * (prof.imgRatio ?? 0.84))),
+      );
+      const arenaMin = Math.max(prof.arenaMin ?? 88, Math.round(h * (prof.arenaVh ?? 0.15)));
       root.style.setProperty("--tablet-battle-hero-zone-h", `${heroZone}px`);
       root.style.setProperty("--tablet-battle-hero-img-h", `${heroImgH}px`);
       root.style.setProperty("--tablet-battle-thought-arena-min-h", `${arenaMin}px`);
@@ -2014,6 +2001,7 @@
     });
     document.documentElement.dataset.layoutProfile = layoutProfile.id;
     document.documentElement.dataset.battleProfile = layoutProfile.battleProfile;
+    document.documentElement.dataset.heroCardMode = "full-bleed";
     applyBattleFxScaleVars(layoutProfile.battleProfile);
     document.documentElement.dataset.uiSurface = resolveUiSurface({
       prepLayout,

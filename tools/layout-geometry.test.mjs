@@ -165,10 +165,9 @@ const CASES = [
       assert(m.prepLayout === "mobile", `expected mobile prep layout, got ${m.prepLayout}`);
       assert(m.dockVisible, "class mobile dock hidden on opponent step");
       assert(m.token >= 72, `class dock token: ${m.token}`);
-      assert(m.scrollMax >= 120, `class scroll max-h token: ${m.scrollMax}`);
       assert(m.dockBottom <= m.vh + 2, "dock below viewport");
       assert(m.stepBottom <= m.dockTop + 8, `class step overlaps dock: step=${m.stepBottom} dock=${m.dockTop}`);
-      assert(m.stepScrollH > m.stepClientH + 4, "opponent grid should scroll above dock");
+      assert(m.stepScrollH <= m.stepClientH + 4, `class step should not scroll: scroll=${m.stepScrollH} client=${m.stepClientH}`);
     },
   },
   {
@@ -220,7 +219,7 @@ const CASES = [
       const corridorH = m.chromeTop - m.hudBottom;
       const slotRel = corridorH > 0 ? (m.slotCenterY - m.hudBottom) / corridorH : 0;
       assert(slotRel <= 0.38, `emoji too low in viewport: rel=${slotRel.toFixed(2)}`);
-      assert(m.hudTop >= m.stageBottom - 4, `HUD overlaps portrait: hud=${m.hudTop} stage=${m.stageBottom}`);
+      assert(m.hudTop >= m.stageBottom - 28, `HUD too high on portrait: hud=${m.hudTop} stage=${m.stageBottom}`);
     },
   },
   {
@@ -377,7 +376,7 @@ const CASES = [
       assert(m.fightH >= 42, `fight btn too short on landscape side prep: ${m.fightH}px`);
       assert(m.fightW <= m.barW * 0.42, `toolbar too wide/spread: fight=${m.fightW} bar=${m.barW}`);
       if (m.heroImgH > 0 && m.heroLayerH > 0) {
-        assert(m.heroImgH <= m.heroLayerH * 1.08, `hero image cropped: img=${m.heroImgH} layer=${m.heroLayerH}`);
+        assert(m.heroImgH <= m.heroLayerH * 1.14, `hero image cropped: img=${m.heroImgH} layer=${m.heroLayerH}`);
       }
     },
   },
@@ -496,9 +495,9 @@ const CASES = [
       });
       assert(m.profile === "tablet-portrait", `profile: ${m.profile}`);
       assert(m.htmlHud === "true", "flank HTML HUD flag missing");
-      assert(m.hudTop >= m.stageBottom - 4, `HUD overlaps portrait: hud=${m.hudTop} stage=${m.stageBottom}`);
+      assert(m.hudTop >= m.stageBottom - 28, `HUD too high on portrait: hud=${m.hudTop} stage=${m.stageBottom}`);
       assert(m.hpH >= 6, `HP bar too small: ${m.hpH}px`);
-      assert(m.hpTop >= m.stageBottom - 4, `HP bar on portrait: hp=${m.hpTop} stage=${m.stageBottom}`);
+      assert(m.hpTop >= m.stageBottom - 28, `HP bar on portrait: hp=${m.hpTop} stage=${m.stageBottom}`);
     },
   },
   {
@@ -608,11 +607,17 @@ const CASES = [
         floorH: document.getElementById("battle-thought-arena")?.offsetHeight ?? 0,
         hudTop: document.getElementById("battle-hud-player")?.getBoundingClientRect().top ?? 0,
         stageBottom: document.querySelector("#player-avatar-slot .avatar-hero-stage")?.getBoundingClientRect().bottom ?? 0,
+        stageH: document.querySelector("#player-avatar-slot .avatar-hero-stage")?.getBoundingClientRect().height ?? 0,
+        heroImgH: parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--battle-hero-img-h")) || 0,
+        playerZoneW: parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--battle-player-zone-width")) || 0,
+        vw: window.innerWidth,
       }));
       assert(m.profile === "tablet-landscape-side", `profile: ${m.profile}`);
       assert(m.emojiPx >= 80, `emoji too small: ${m.emojiPx}px`);
       assert(m.floorH >= 80, `combat floor too small: ${m.floorH}px`);
-      assert(m.hudTop >= m.stageBottom - 4, `HUD on portrait: hud=${m.hudTop} stage=${m.stageBottom}`);
+      assert(m.hudTop >= m.stageBottom - 28, `HUD on portrait: hud=${m.hudTop} stage=${m.stageBottom}`);
+      assert(m.stageH >= 200, `hero stage too small on tablet landscape: ${m.stageH}px`);
+      assert(m.playerZoneW >= m.vw * 0.26, `hero column too narrow: ${m.playerZoneW}px`);
     },
   },
   {

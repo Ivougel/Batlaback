@@ -1,0 +1,149 @@
+/**
+ * Hero card — full-bleed portraits, UI overlap on model.
+ * See UI_UX.md. Enabled via html[data-hero-card-mode="full-bleed"].
+ */
+
+/* ─── Prep: side / stacked hero slot ─── */
+
+html[data-hero-card-mode="full-bleed"] #app[data-phase="prep"] .prep-character-layer {
+  overflow: visible;
+  z-index: 4;
+}
+
+html[data-hero-card-mode="full-bleed"] #app[data-phase="prep"] .prep-character,
+html[data-hero-card-mode="full-bleed"] #app[data-phase="prep"][data-prep-side="enemy"] .prep-character {
+  overflow: visible;
+  align-items: flex-end;
+}
+
+html[data-hero-card-mode="full-bleed"] #app[data-phase="prep"] .prep-character-img {
+  width: auto;
+  height: calc(100% * var(--hero-portrait-bleed, 1.12));
+  max-height: calc(100% * var(--hero-portrait-bleed, 1.12));
+  max-width: 108%;
+  object-fit: contain;
+  object-position: center bottom;
+  filter: drop-shadow(0 10px 28px rgba(0, 0, 0, 0.45));
+}
+
+html[data-hero-card-mode="full-bleed"][data-prep-layout="mobile"] #app[data-phase="prep"] .prep-character-img {
+  min-height: min(32vh, 240px);
+  object-position: center bottom;
+}
+
+/* ─── Battle: flank-arena hero shell ─── */
+
+html[data-hero-card-mode="full-bleed"][data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .avatar-hero-shell,
+html[data-hero-card-mode="full-bleed"][data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar-hero-shell {
+  position: relative;
+  overflow: visible;
+}
+
+html[data-hero-card-mode="full-bleed"][data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .avatar-hero-upper,
+html[data-hero-card-mode="full-bleed"][data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar-hero-upper {
+  position: relative;
+  overflow: visible;
+}
+
+html[data-hero-card-mode="full-bleed"][data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .avatar-hero-name,
+html[data-hero-card-mode="full-bleed"][data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar-hero-name {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 6;
+  margin: 0;
+  padding:
+    calc(6px * var(--ui-scale))
+    calc(8px * var(--ui-scale))
+    calc(18px * var(--ui-scale));
+  text-align: center;
+  background: var(--hero-name-scrim);
+  pointer-events: none;
+}
+
+html[data-hero-card-mode="full-bleed"][data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-stage,
+html[data-hero-card-mode="full-bleed"][data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-stage {
+  overflow: visible;
+  align-items: flex-end;
+  justify-content: center;
+  min-height: var(--battle-hero-img-h, var(--desktop-battle-hero-img-h, 140px));
+  max-height: none;
+  height: var(--battle-hero-img-h, var(--desktop-battle-hero-img-h, 140px));
+}
+
+html[data-hero-card-mode="full-bleed"][data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .portrait-zoom-clip,
+html[data-hero-card-mode="full-bleed"][data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .portrait-zoom-clip {
+  overflow: visible !important;
+  transform: none !important;
+  transform-origin: center bottom !important;
+  width: 100%;
+  height: calc(100% * var(--hero-portrait-bleed, 1.12));
+  max-height: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+html[data-hero-card-mode="full-bleed"][data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-scene-ui .profile-avatar,
+html[data-hero-card-mode="full-bleed"][data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-scene-ui .profile-avatar,
+html[data-hero-card-mode="full-bleed"][data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-scene-avatar .profile-avatar,
+html[data-hero-card-mode="full-bleed"][data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-scene-avatar .profile-avatar {
+  overflow: visible;
+  max-height: none;
+  height: 100%;
+  align-items: flex-end;
+}
+
+html[data-hero-card-mode="full-bleed"][data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-scene-ui .profile-avatar-img,
+html[data-hero-card-mode="full-bleed"][data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-scene-ui .profile-avatar-img,
+html[data-hero-card-mode="full-bleed"][data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-scene-avatar .portrait-zoom-clip img,
+html[data-hero-card-mode="full-bleed"][data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-scene-avatar .portrait-zoom-clip img {
+  width: auto;
+  height: 100%;
+  max-width: 108%;
+  max-height: none;
+  object-fit: contain;
+  object-position: center bottom;
+  transform: scale(var(--battle-portrait-zoom, 1));
+  transform-origin: center bottom;
+  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.5));
+}
+
+html[data-hero-card-mode="full-bleed"][data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-stage,
+html[data-hero-card-mode="full-bleed"][data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-stage {
+  min-height: var(--battle-hero-img-h, var(--mobile-battle-portrait-h, min(240px, 34dvh)));
+  height: var(--battle-hero-img-h, var(--mobile-battle-portrait-h, min(240px, 34dvh)));
+  max-height: none;
+}
+
+html[data-hero-card-mode="full-bleed"][data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"] .portrait-zoom-clip img,
+html[data-hero-card-mode="full-bleed"][data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="replay"] .portrait-zoom-clip img {
+  transform: scale(var(--battle-portrait-zoom, 1));
+  transform-origin: center bottom;
+  object-position: center bottom;
+}
+
+/* Weapon badge floats on portrait edge */
+html[data-hero-card-mode="full-bleed"][data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .avatar-hero-weapon-badge,
+html[data-hero-card-mode="full-bleed"][data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar-hero-weapon-badge {
+  z-index: 7;
+}
+
+/* ─── Class pick: larger hero stickers ─── */
+
+html[data-hero-card-mode="full-bleed"] #class-overlay .class-modal .class-card.glass-card[data-class],
+html[data-hero-card-mode="full-bleed"] #class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class] {
+  --class-pick-hero-min-h: clamp(200px, 36vh, 320px);
+  --class-pick-card-min-h: clamp(300px, 52vh, 440px);
+}
+
+html[data-hero-card-mode="full-bleed"] #class-overlay .class-modal .class-card.glass-card[data-class] .glass-card-icon--class .class-sticker,
+html[data-hero-card-mode="full-bleed"] #class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class] .glass-card-icon--class .class-sticker {
+  max-height: min(42vh, 360px);
+  width: auto;
+  height: min(100%, min(42vh, 360px));
+  object-fit: contain;
+  object-position: center bottom;
+  filter: drop-shadow(0 12px 32px rgba(0, 0, 0, 0.35));
+}

@@ -3309,6 +3309,52 @@ function buildDamageLogMessage(attackerTeam, sourceLabel, targetTeam, raw, block
   return msg;
 }
 
+const REPLAY_RECORD_INTERVAL_DESKTOP = 0.12;
+const REPLAY_RECORD_INTERVAL_TOUCH = 0.24;
+const REPLAY_MAX_FRAMES_DESKTOP = 500;
+const REPLAY_MAX_FRAMES_TOUCH = 280;
+
+function isTouchReplayProfile() {
+  const tier = document.documentElement?.dataset?.uiTier;
+  if (tier === "phone" || tier === "tablet") return true;
+  if (tier === "desktop") return false;
+  return "ontouchstart" in window || navigator.maxTouchPoints > 0;
+}
+
+function getReplayRecordInterval() {
+  return isTouchReplayProfile() ? REPLAY_RECORD_INTERVAL_TOUCH : REPLAY_RECORD_INTERVAL_DESKTOP;
+}
+
+function getReplayMaxFrames() {
+  return isTouchReplayProfile() ? REPLAY_MAX_FRAMES_TOUCH : REPLAY_MAX_FRAMES_DESKTOP;
+}
+
+function compactReplayFrames(frames) {
+  const max = getReplayMaxFrames();
+  if (!frames?.length || frames.length <= max) return frames || [];
+  if (frames.length <= 2) return frames.slice();
+
+  const first = frames[0];
+  const last = frames[frames.length - 1];
+  const middle = frames.slice(1, -1);
+  const budget = Math.max(1, max - 2);
+  const step = middle.length / budget;
+  const out = [first];
+  for (let i = 0; i < budget; i++) {
+    const idx = Math.min(middle.length - 1, Math.floor(i * step));
+    const frame = middle[idx];
+    if (out[out.length - 1] !== frame) out.push(frame);
+  }
+  if (out[out.length - 1] !== last) out.push(last);
+  return out;
+}
+
+function finalizeBattleReplay(state) {
+  if (!state?.replayFrames?.length) return state?.replayFrames || [];
+  state.replayFrames = compactReplayFrames(state.replayFrames);
+  return state.replayFrames;
+}
+
 function snapshotBattleSide(side) {
   return {
     hp: side.hp,
@@ -3344,17 +3390,19 @@ function snapshotBattleSide(side) {
 }
 
 function captureBattleFrame(state) {
-  return {
+  const frame = {
     elapsed: state.elapsed,
     battleRound: state.battleRound,
     fatigueAnnounced: !!state.fatigueAnnounced,
     player: snapshotBattleSide(state.player),
     enemy: snapshotBattleSide(state.enemy),
-    log: state.log.slice(-80),
-    floatingNumbers: state.floatingNumbers.map((fn) => ({ ...fn })),
     winner: state.winner,
     finished: state.finished,
   };
+  if (state.floatingNumbers?.length) {
+    frame.floatingNumbers = state.floatingNumbers.map((fn) => ({ ...fn }));
+  }
+  return frame;
 }
 
 function applySideSnapshot(side, snap) {
@@ -3392,19 +3440,31 @@ function applyBattleFrame(state, frame) {
   state.fatigueAnnounced = !!frame.fatigueAnnounced;
   applySideSnapshot(state.player, frame.player);
   applySideSnapshot(state.enemy, frame.enemy);
-  state.log = [...frame.log];
-  state.floatingNumbers = frame.floatingNumbers.map((fn) => ({ ...fn }));
+  const fullLog = state.replayFullLog;
+  if (Array.isArray(fullLog)) {
+    const t = frame.elapsed ?? 0;
+    state.log = fullLog.filter((row) => row.t == null || row.t <= t + 0.05);
+  } else if (frame.log) {
+    state.log = [...frame.log];
+  }
+  state.floatingNumbers = frame.floatingNumbers
+    ? frame.floatingNumbers.map((fn) => ({ ...fn }))
+    : [];
   state.finished = !!frame.finished;
   state.winner = frame.winner || null;
 }
 
 function recordBattleFrame(state) {
   if (!state?.recording) return;
-  const interval = 0.12;
-  if (state.elapsed - (state.lastRecordAt || 0) >= interval || state.finished) {
-    state.lastRecordAt = state.elapsed;
-    state.replayFrames.push(captureBattleFrame(state));
-  }
+  const interval = getReplayRecordInterval();
+  const due = state.elapsed - (state.lastRecordAt || 0) >= interval;
+  if (!due && !state.finished) return;
+
+  const max = getReplayMaxFrames();
+  if (state.replayFrames.length >= max && !state.finished) return;
+
+  state.lastRecordAt = state.elapsed;
+  state.replayFrames.push(captureBattleFrame(state));
 }
 
 function fastForwardBattle(state) {
@@ -3429,4 +3489,5 @@ function fastForwardBattle(state) {
   if (!state.replayFrames.length || state.replayFrames[state.replayFrames.length - 1].elapsed !== state.elapsed) {
     state.replayFrames.push(captureBattleFrame(state));
   }
+  finalizeBattleReplay(state);
 }

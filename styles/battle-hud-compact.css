@@ -100,7 +100,20 @@ html[data-battle-hud-html="true"] .battle-hud-runtime-chip {
   line-height: 1.1;
 }
 
-html[data-battle-hud-html="true"] .battle-hud-runtime-chip-icon {
-  font-size: var(--font-sm);
-  line-height: 1;
+html[data-hero-card-mode="full-bleed"][data-battle-hud-html="true"] #app[data-phase="battle"] .battle-hud-side,
+html[data-hero-card-mode="full-bleed"][data-battle-hud-html="true"] #app[data-phase="replay"] .battle-hud-side {
+  position: relative;
+  z-index: 12;
+  padding-top: calc(4px * var(--ui-scale));
+  background: var(--hero-chrome-scrim);
+  border-radius: calc(8px * var(--ui-scale));
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25);
+}
+
+html[data-hero-card-mode="full-bleed"][data-battle-hud-compact="true"] #app[data-phase="battle"] .battle-hud-side .avatar-hero-hp-bar,
+html[data-hero-card-mode="full-bleed"][data-battle-hud-compact="true"] #app[data-phase="replay"] .battle-hud-side .avatar-hero-hp-bar,
+html[data-hero-card-mode="full-bleed"][data-battle-hud-compact="true"] #app[data-phase="battle"] .battle-hud-side .avatar-hero-stamina-bar,
+html[data-hero-card-mode="full-bleed"][data-battle-hud-compact="true"] #app[data-phase="replay"] .battle-hud-side .avatar-hero-stamina-bar {
+  height: calc(13px * var(--ui-scale));
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
 }
