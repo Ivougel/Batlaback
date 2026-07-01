@@ -393,7 +393,7 @@ function scheduleHeroPortraitLayoutSync() {
       window.syncBattleSceneGridMetrics();
     }
     if (typeof window.scheduleBattleHeroRowSync === "function") {
-      window.scheduleBattleHeroRowSync(8);
+      window.scheduleBattleHeroRowSync(2);
     }
     if (typeof syncBattleHudAnchors === "function") syncBattleHudAnchors();
   };
@@ -426,7 +426,10 @@ function ensureBattleHeroShells(state, playerProfile, enemyProfile, opts = {}) {
   ["player", "enemy"].forEach((team) => {
     const profile = team === "player" ? playerProfile : enemyProfile;
     if (!profile) return;
-    const rebuilt = syncAvatarHeroPortraitContent(team, profile, { forceRebuild: !!opts.force });
+    const slot = getAvatarSlotEl(team);
+    const sig = profileHeroShellSignature(profile);
+    const forceRebuild = !!opts.forceRebuild && slot?.dataset.heroShellSig !== sig;
+    const rebuilt = syncAvatarHeroPortraitContent(team, profile, { forceRebuild });
     if (rebuilt) shellChanged = true;
     const barsEl = getBattleHudBarsEl(team);
     const barsSig = profileBarsSignature(profile);
@@ -435,7 +438,7 @@ function ensureBattleHeroShells(state, playerProfile, enemyProfile, opts = {}) {
       barsEl.dataset.barsSig = barsSig;
     }
   });
-  if (shellChanged || opts.force) {
+  if (shellChanged || opts.forceRebuild) {
     scheduleHeroPortraitLayoutSync();
   }
   if (typeof syncBattleHudAnchors === "function") syncBattleHudAnchors();

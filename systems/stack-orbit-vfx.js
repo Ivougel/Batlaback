@@ -171,14 +171,14 @@ function clearStackOrbitRings() {
   });
 }
 
-function syncStackOrbitFromBattle(battleState) {
+function syncStackOrbitFromBattle(battleState, opts = {}) {
   if (!battleState || battleState.finished) return;
   if (!sideHasOrbitStacks(battleState.player) && !sideHasOrbitStacks(battleState.enemy)) {
     clearStackOrbitRings();
     return;
   }
   const now = performance.now();
-  if (now - stackOrbitLastSyncAt < stackOrbitSyncGapMs()) return;
+  if (!opts.force && now - stackOrbitLastSyncAt < stackOrbitSyncGapMs()) return;
   stackOrbitLastSyncAt = now;
 
   ["player", "enemy"].forEach((team) => {

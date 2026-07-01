@@ -85,9 +85,14 @@ function createLobbyMatchState(match, lobby, battleRound) {
     battleRound,
     {},
   );
-  state.recording = true;
-  state.replayFrames = [captureBattleFrame(state)];
-  state.lastRecordAt = 0;
+  state.recording = !!match.isPlayerMatch;
+  if (state.recording) {
+    state.replayFrames = [captureBattleFrame(state)];
+    state.lastRecordAt = 0;
+  } else {
+    state.replayFrames = [];
+    state.lastRecordAt = 0;
+  }
   match.state = state;
   return state;
 }

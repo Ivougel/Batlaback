@@ -6,15 +6,42 @@
 
 const BattleInventoryPopover = (() => {
   const TEAMS = ["player", "enemy"];
+  const BODY_CACHE_MAX = 20;
+  const LOADING_BODY_HTML = `
+    <div class="battle-inventory-popover__loading" aria-hidden="true">
+      <div class="battle-inventory-popover__loading-grid"></div>
+      <div class="battle-inventory-popover__loading-line"></div>
+      <div class="battle-inventory-popover__loading-line battle-inventory-popover__loading-line--short"></div>
+    </div>`;
   /** @type {Map<string, HTMLElement>} */
   const popoverEls = new Map();
   /** @type {Map<string, string>} */
   const lastRenderSig = new Map();
+  /** @type {Map<string, string>} */
+  const lastFlashSig = new Map();
+  /** @type {Map<string, { title: string, html: string }>} */
+  const bodyHtmlCache = new Map();
   let listenersBound = false;
   let lastTouchAt = 0;
+  let lastFlashSyncAt = 0;
+  let prewarmQueued = false;
 
   function isLiveBattlePhase() {
     return phase === "battle" || phase === "replay";
+  }
+
+  function isLobbySpectateLive() {
+    return typeof isLobbyMode === "function" && isLobbyMode()
+      && typeof lobbyMatches !== "undefined" && lobbyMatches?.length > 0
+      && typeof lobbyState !== "undefined" && !!lobbyState;
+  }
+
+  function resolveLobbySpectateFighter(team) {
+    if (!isLobbySpectateLive()) return null;
+    const match = lobbyMatches[lobbySpectateMatchId];
+    if (!match || match.byeFighterId) return null;
+    const fighterId = team === "player" ? match.fighterAId : match.fighterBId;
+    return lobbyState.fighters[fighterId] || null;
   }
 
   function ensurePopoverEl(team) {
@@ -78,18 +105,34 @@ const BattleInventoryPopover = (() => {
   function getLiveSideData(team) {
     const state = getActiveBattleState();
     if (!state || !state[team]) return null;
-    const containers = team === "player" ? playerContainers : enemyContainers;
-    const classId = team === "player" ? playerClass : enemyClass;
+
+    const lobbyFighter = resolveLobbySpectateFighter(team);
+    if (lobbyFighter) {
+      return {
+        team,
+        scopeKey: `lobby:${lobbySpectateMatchId}`,
+        containers: lobbyFighter.containers,
+        items: state[team].items || [],
+        classId: lobbyFighter.classId,
+        displayName: lobbyFighter.name,
+      };
+    }
+
     return {
       team,
-      containers,
+      scopeKey: "solo",
+      containers: team === "player" ? playerContainers : enemyContainers,
       items: state[team].items || [],
-      classId,
+      classId: team === "player" ? playerClass : enemyClass,
+      displayName: null,
     };
   }
 
-  function getTeamTitle(team, classId) {
+  function getTeamTitle(team, classId, data = null) {
     const className = CLASS_CATALOG[classId]?.name;
+    if (data?.displayName) {
+      return className ? `${data.displayName} · ${className}` : data.displayName;
+    }
     if (team === "player") {
       const name = typeof getPlayerProfileName === "function" ? getPlayerProfileName() : "Вы";
       return className ? `${name} · ${className}` : name;
@@ -111,35 +154,28 @@ const BattleInventoryPopover = (() => {
 
   function buildRenderSignature(data) {
     if (!data) return "";
-    const bpScore = data.backpackPower?.score ?? 0;
     const parts = data.items.map((item) => {
       const rt = item.runtime || {};
       const syn = (rt.activeSynergies || []).length;
-      const cd = item.currentCooldown != null ? item.currentCooldown.toFixed(2) : "-";
-      return `${item.uid}:${item.itemId}:${item.col},${item.row},${item.rotation || 0}:${cd}:${syn}`;
+      return `${item.uid}:${item.itemId}:${item.col},${item.row},${item.rotation || 0}:${syn}`;
     });
-    return `${data.team}|${bpScore}|${parts.join(";")}`;
+    return `${data.scopeKey || "solo"}|${data.team}|${parts.join(";")}`;
   }
 
-  function renderPopoverContent(team) {
-    const data = getLiveSideData(team);
-    const el = ensurePopoverEl(team);
-    const titleEl = el.querySelector(".battle-inventory-popover__title");
-    const bodyEl = el.querySelector(".battle-inventory-popover__body");
-    if (!data || !titleEl || !bodyEl) return;
+  function computeSideBackpackPower(data) {
+    if (!data || typeof computeBackpackPower !== "function") {
+      return { score: 0, itemCount: 0, tier: { label: "—", className: "" } };
+    }
+    return computeBackpackPower(data.containers, data.items, data.classId);
+  }
 
-    const backpackPower = typeof computeBackpackPower === "function"
-      ? computeBackpackPower(data.containers, data.items, data.classId)
-      : { score: 0, itemCount: 0, tier: { label: "—", className: "" } };
-    data.backpackPower = backpackPower;
-
-    titleEl.textContent = `Рюкзак · ${getTeamTitle(team, data.classId)}`;
-    const activeUids = collectActiveItemUids(team);
+  function buildPopoverBodyHTML(data, team) {
+    const backpackPower = computeSideBackpackPower(data);
     const powerHtml = typeof renderBackpackPowerStatHTML === "function"
       ? renderBackpackPowerStatHTML(backpackPower, "battle-inventory-popover__bp")
       : `<span class="battle-inventory-popover__power-value">${backpackPower.score ?? 0}</span>`;
-    bodyEl.innerHTML = `
-      ${renderBoardPreviewGrid(data.containers, data.items, team, { activeUids })}
+    return `
+      ${renderBoardPreviewGrid(data.containers, data.items, team, { activeUids: null })}
       <div class="battle-inventory-popover__power">
         <span class="battle-inventory-popover__power-label">Сила рюкзака</span>
         ${powerHtml}
@@ -147,20 +183,120 @@ const BattleInventoryPopover = (() => {
       <div class="board-preview-section-title">Активные синергии</div>
       <div class="battle-inventory-popover__synergies">${renderBoardPreviewSynergies(data.items)}</div>
     `;
-    lastRenderSig.set(team, buildRenderSignature(data));
-    bindPopoverCellTooltips(team, data);
+  }
+
+  function trimBodyCache() {
+    while (bodyHtmlCache.size > BODY_CACHE_MAX) {
+      const first = bodyHtmlCache.keys().next().value;
+      bodyHtmlCache.delete(first);
+    }
+  }
+
+  function rememberBodyCache(data, team, payload) {
+    bodyHtmlCache.set(buildRenderSignature(data), payload);
+    trimBodyCache();
+  }
+
+  function getFlashSyncGapMs() {
+    if (typeof window.BattleFxTier?.isLightBattleFx === "function" && window.BattleFxTier.isLightBattleFx()) {
+      return 100;
+    }
+    return 50;
+  }
+
+  function collectActiveFlashSignature(team) {
+    const active = collectActiveItemUids(team);
+    if (!active.size) return "";
+    return [...active].sort().join(",");
   }
 
   function bindPopoverCellTooltips(team, data) {
     const el = popoverEls.get(team);
-    if (!el || !data || typeof bindItemTooltipEvents !== "function") return;
+    const bodyEl = el?.querySelector(".battle-inventory-popover__body");
+    if (!bodyEl || !data || typeof bindItemTooltipEvents !== "function") return;
+    if (bodyEl.dataset.tooltipsBound === "1") return;
+    bodyEl.dataset.tooltipsBound = "1";
 
-    el.querySelectorAll(".bp-cell.bp-has-item[data-item-id]").forEach((cell) => {
+    bodyEl.querySelectorAll(".bp-cell.bp-has-item[data-item-id]").forEach((cell) => {
       const itemId = cell.dataset.itemId;
       if (!itemId) return;
       const item = data.items.find((i) => i.uid === cell.dataset.itemUid)
         || data.items.find((i) => i.itemId === itemId);
       bindItemTooltipEvents(cell, itemId, item || null, "inventory");
+    });
+  }
+
+  function clearPopoverBody(team) {
+    const el = popoverEls.get(team);
+    const bodyEl = el?.querySelector(".battle-inventory-popover__body");
+    if (!bodyEl) return;
+    bodyEl.innerHTML = "";
+    delete bodyEl.dataset.tooltipsBound;
+  }
+
+  function applyPopoverContent(team, data, bodyHtml, titleText) {
+    const el = ensurePopoverEl(team);
+    const titleEl = el.querySelector(".battle-inventory-popover__title");
+    const bodyEl = el.querySelector(".battle-inventory-popover__body");
+    if (!titleEl || !bodyEl) return;
+
+    titleEl.textContent = titleText;
+    delete bodyEl.dataset.tooltipsBound;
+    bodyEl.innerHTML = bodyHtml;
+    lastRenderSig.set(team, buildRenderSignature(data));
+    lastFlashSig.delete(team);
+    bindPopoverCellTooltips(team, data);
+    syncActiveCellHighlights(team, true);
+    el.classList.remove("battle-inventory-popover--loading");
+  }
+
+  function renderPopoverContent(team) {
+    const data = getLiveSideData(team);
+    if (!data) return;
+    const titleText = `Рюкзак · ${getTeamTitle(team, data.classId, data)}`;
+    const bodyHtml = buildPopoverBodyHTML(data, team);
+    rememberBodyCache(data, team, { title: titleText, html: bodyHtml });
+    applyPopoverContent(team, data, bodyHtml, titleText);
+  }
+
+  function showPopoverLoading(team) {
+    const el = ensurePopoverEl(team);
+    const titleEl = el.querySelector(".battle-inventory-popover__title");
+    const bodyEl = el.querySelector(".battle-inventory-popover__body");
+    if (!titleEl || !bodyEl) return;
+    el.classList.add("battle-inventory-popover--loading");
+    titleEl.textContent = "Рюкзак · …";
+    bodyEl.innerHTML = LOADING_BODY_HTML;
+    delete bodyEl.dataset.tooltipsBound;
+  }
+
+  function schedulePopoverRender(team) {
+    const run = () => {
+      const el = popoverEls.get(team);
+      if (!el || el.classList.contains("hidden")) return;
+
+      const data = getLiveSideData(team);
+      if (!data) {
+        closeBattleInventoryPopover(team);
+        return;
+      }
+
+      const cacheKey = buildRenderSignature(data);
+      const cached = bodyHtmlCache.get(cacheKey);
+      if (cached) {
+        applyPopoverContent(team, data, cached.html, cached.title);
+      } else {
+        renderPopoverContent(team);
+      }
+      positionPopover(team);
+    };
+
+    requestAnimationFrame(() => {
+      if (typeof requestIdleCallback === "function") {
+        requestIdleCallback(run, { timeout: 60 });
+      } else {
+        run();
+      }
     });
   }
 
@@ -235,17 +371,23 @@ const BattleInventoryPopover = (() => {
       const el = popoverEls.get(side);
       if (!el || el.classList.contains("hidden")) return;
       el.classList.add("hidden");
+      el.classList.remove("battle-inventory-popover--loading");
       el.style.removeProperty("width");
       el.setAttribute("aria-hidden", "true");
       lastRenderSig.delete(side);
+      lastFlashSig.delete(side);
+      clearPopoverBody(side);
     });
 
     if (typeof refreshGamepadHints === "function") refreshGamepadHints();
   }
 
-  function syncActiveCellHighlights(team) {
+  function syncActiveCellHighlights(team, force = false) {
     const el = popoverEls.get(team);
     if (!el || el.classList.contains("hidden")) return;
+    const flashSig = collectActiveFlashSignature(team);
+    if (!force && flashSig === lastFlashSig.get(team)) return;
+    lastFlashSig.set(team, flashSig);
     const activeUids = collectActiveItemUids(team);
     el.querySelectorAll(".bp-cell[data-item-uid]").forEach((cell) => {
       const uid = cell.dataset.itemUid;
@@ -257,10 +399,11 @@ const BattleInventoryPopover = (() => {
     if (!isLiveBattlePhase() || !getLiveSideData(team)) return;
     if (typeof hideSidebarTooltip === "function") hideSidebarTooltip();
     const el = ensurePopoverEl(team);
-    renderPopoverContent(team);
     el.classList.remove("hidden");
     el.setAttribute("aria-hidden", "false");
+    showPopoverLoading(team);
     positionPopover(team);
+    schedulePopoverRender(team);
     if (typeof refreshGamepadHints === "function") refreshGamepadHints();
   }
 
@@ -313,7 +456,6 @@ const BattleInventoryPopover = (() => {
     const openTeams = getOpenTeams();
     if (!openTeams.length) return;
 
-    // Любой тап по портрету обрабатывается отдельно (toggle), не закрываем остальные.
     if (resolveTeamFromPortraitTarget(e.target)) return;
 
     for (const team of openTeams) {
@@ -341,7 +483,12 @@ const BattleInventoryPopover = (() => {
     }
     const sig = buildRenderSignature(data);
     if (sig !== lastRenderSig.get(team)) {
-      renderPopoverContent(team);
+      const cached = bodyHtmlCache.get(sig);
+      if (cached) {
+        applyPopoverContent(team, data, cached.html, cached.title);
+      } else {
+        renderPopoverContent(team);
+      }
     } else {
       syncActiveCellHighlights(team);
     }
@@ -356,8 +503,40 @@ const BattleInventoryPopover = (() => {
   }
 
   function syncBattleInventoryPopoverFlash() {
-    if (!isLiveBattlePhase()) return;
+    if (!isLiveBattlePhase() || !isBattleInventoryPopoverOpen()) return;
+    const now = performance.now();
+    if (now - lastFlashSyncAt < getFlashSyncGapMs()) return;
+    lastFlashSyncAt = now;
     getOpenTeams().forEach((team) => syncActiveCellHighlights(team));
+  }
+
+  function prewarmBattleInventoryPopover() {
+    if (!isLiveBattlePhase()) return;
+    TEAMS.forEach((team) => {
+      const data = getLiveSideData(team);
+      if (!data) return;
+      const cacheKey = buildRenderSignature(data);
+      if (bodyHtmlCache.has(cacheKey)) return;
+      const titleText = `Рюкзак · ${getTeamTitle(team, data.classId, data)}`;
+      rememberBodyCache(data, team, {
+        title: titleText,
+        html: buildPopoverBodyHTML(data, team),
+      });
+    });
+  }
+
+  function queuePrewarmBattleInventoryPopover() {
+    if (!isLiveBattlePhase() || prewarmQueued) return;
+    prewarmQueued = true;
+    const run = () => {
+      prewarmQueued = false;
+      prewarmBattleInventoryPopover();
+    };
+    if (typeof requestIdleCallback === "function") {
+      requestIdleCallback(run, { timeout: 120 });
+    } else {
+      requestAnimationFrame(run);
+    }
   }
 
   function initBattleInventoryPopover() {
@@ -380,6 +559,8 @@ const BattleInventoryPopover = (() => {
     isBattleInventoryPopoverOpen,
     refreshBattleInventoryPopover,
     syncBattleInventoryPopoverFlash,
+    prewarmBattleInventoryPopover,
+    queuePrewarmBattleInventoryPopover,
   };
 })();
 
@@ -407,8 +588,17 @@ function toggleBattleInventoryPopover(team) {
   BattleInventoryPopover.toggleBattleInventoryPopover(team);
 }
 
+function prewarmBattleInventoryPopover() {
+  BattleInventoryPopover.prewarmBattleInventoryPopover();
+}
+
+function queuePrewarmBattleInventoryPopover() {
+  BattleInventoryPopover.queuePrewarmBattleInventoryPopover();
+}
+
 window.openBattleInventoryPopover = openBattleInventoryPopover;
 window.toggleBattleInventoryPopover = toggleBattleInventoryPopover;
+window.prewarmBattleInventoryPopover = prewarmBattleInventoryPopover;
 
 function syncBattleInventoryPopoverFlash() {
   BattleInventoryPopover.syncBattleInventoryPopoverFlash();
