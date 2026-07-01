@@ -2776,30 +2776,61 @@ function getPrepGrabMinOffsetClientPx() {
   return stride * scale;
 }
 
-/** Целевая точка фигуры: не ближе одной клетки от пальца, по направлению к ideal. */
-function getPrepRemoteHoldFigureClient(grabX, grabY, idealX, idealY) {
+/** Целевая точка фигуры от ✊. snapToIdeal: true — на точке посадки, если палец далеко. */
+function getPrepRemoteHoldFigureClient(grabX, grabY, idealX, idealY, { snapToIdeal = false } = {}) {
   const minDist = getPrepGrabMinOffsetClientPx();
   const dx = idealX - grabX;
   const dy = idealY - grabY;
   const dist = Math.hypot(dx, dy);
+
+  const offsetAlongIdeal = () => {
+    if (dist < 0.5) {
+      const boardCenter = canvasPointToClient(
+        gridOrigin(prepViewSide) + GRID_INNER_W / 2,
+        layoutBackpackY() + GRID_INNER_H / 2,
+      );
+      if (boardCenter) {
+        const bx = boardCenter.x - grabX;
+        const by = boardCenter.y - grabY;
+        const blen = Math.hypot(bx, by) || 1;
+        return { x: grabX + (bx / blen) * minDist, y: grabY + (by / blen) * minDist };
+      }
+      return { x: grabX - minDist, y: grabY };
+    }
+    const scale = minDist / dist;
+    return { x: grabX + dx * scale, y: grabY + dy * scale };
+  };
+
+  if (!snapToIdeal) {
+    return offsetAlongIdeal();
+  }
   if (dist >= minDist) {
     return { x: idealX, y: idealY };
   }
-  if (dist < 0.5) {
-    const boardCenter = canvasPointToClient(
-      gridOrigin(prepViewSide) + GRID_INNER_W / 2,
-      layoutBackpackY() + GRID_INNER_H / 2,
+  return offsetAlongIdeal();
+}
+
+function isPointerOverPrepBackpack(clientX, clientY) {
+  if (!canvas || phase !== "prep" || clientX == null || clientY == null) return false;
+  if (isPointerOverPrepSidebar(clientX, clientY)) return false;
+  const coords = canvasCoordsFromClient(clientX, clientY);
+  const team = prepViewSide;
+  const ox = gridOrigin(team);
+  const oy = layoutBackpackY();
+  return coords.x >= ox && coords.x <= ox + GRID_INNER_W
+    && coords.y >= oy && coords.y <= oy + GRID_INNER_H;
+}
+
+function getPrepSidebarRemoteHoldFigureClient(clientX, clientY) {
+  const holdDir = getPrepSidebarHoldIdealClient(clientX, clientY);
+  const overBoard = isPointerOverPrepBackpack(clientX, clientY);
+  const placementAnchor = overBoard ? getPrepPlacementAnchorClient() : null;
+  if (placementAnchor) {
+    return getPrepRemoteHoldFigureClient(
+      clientX, clientY, placementAnchor.x, placementAnchor.y, { snapToIdeal: true },
     );
-    if (boardCenter) {
-      const bx = boardCenter.x - grabX;
-      const by = boardCenter.y - grabY;
-      const blen = Math.hypot(bx, by) || 1;
-      return { x: grabX + (bx / blen) * minDist, y: grabY + (by / blen) * minDist };
-    }
-    return { x: grabX - minDist, y: grabY };
   }
-  const scale = minDist / dist;
-  return { x: grabX + dx * scale, y: grabY + dy * scale };
+  return getPrepRemoteHoldFigureClient(clientX, clientY, holdDir.x, holdDir.y);
 }
 
 function getPrepSidebarHoldIdealClient(grabX, grabY) {
@@ -2816,12 +2847,8 @@ function getPrepArcGhostRotation() {
 }
 
 function getPrepDragGhostClientPos(clientX, clientY) {
-  const placementAnchor = getPrepPlacementAnchorClient();
   if (isPrepSidebarArcDrag()) {
-    const ideal = placementAnchor
-      ? placementAnchor
-      : getPrepSidebarHoldIdealClient(clientX, clientY);
-    const figure = getPrepRemoteHoldFigureClient(clientX, clientY, ideal.x, ideal.y);
+    const figure = getPrepSidebarRemoteHoldFigureClient(clientX, clientY);
     return { x: figure.x, y: figure.y, rotation: getPrepArcGhostRotation() };
   }
   const anchor = getDragGhostAnchorClient(clientX, clientY);
@@ -2844,6 +2871,15 @@ function syncPrepDragBoardHover(clientX, clientY, ghostClientX, ghostClientY) {
     return;
   }
   const st = getSideState(side);
+
+  if (isPrepSidebarArcDrag() && isPointerOverPrepSidebar(clientX, clientY)) {
+    hoverCell = null;
+    hoverSlot = null;
+    if (typeof PrepDragArc !== "undefined" && PrepDragArc.isActive()) {
+      PrepDragArc.syncHoverCell(null, null);
+    }
+    return;
+  }
 
   const tryClient = (cx, cy) => {
     const coords = canvasCoordsFromClient(cx, cy);
@@ -4340,7 +4376,6 @@ function syncDragGhostOverlay(clientX, clientY) {
   const el = getDragGhostCanvas();
   if (!el || !dragGhostCtx) return;
 
-  const placementAnchor = getPrepPlacementAnchorClient();
   const sidebarDrag = isPrepSidebarArcDrag();
   const anchor = getDragGhostAnchorClient(clientX, clientY);
   let ghostX = anchor.x;
@@ -4352,32 +4387,15 @@ function syncDragGhostOverlay(clientX, clientY) {
     && typeof PrepDragArc !== "undefined"
     && PrepDragArc.isActive()) {
     PrepDragArc.mountGhostToBody();
-    if (sidebarDrag && placementAnchor) {
-      const figure = getPrepRemoteHoldFigureClient(
-        clientX, clientY, placementAnchor.x, placementAnchor.y,
-      );
+    if (sidebarDrag) {
+      const figure = getPrepSidebarRemoteHoldFigureClient(clientX, clientY);
       ghostX = figure.x;
       ghostY = figure.y;
-      arcRotation = getPrepArcGhostRotation();
+      arcRotation = null;
       PrepDragArc.sync(clientX, clientY, clientX, clientY, {
         linkPoint: figure,
         grabAtPointer: true,
         remoteHold: true,
-        dropState: getPrepArcDropState(),
-        itemId: dragPayload.itemId,
-      });
-      el.classList.add("ui-drag-ghost--arc-flight", "ui-drag-ghost--remote-hold");
-      el.classList.remove("hidden");
-    } else if (sidebarDrag) {
-      const ideal = getPrepSidebarHoldIdealClient(clientX, clientY);
-      const figure = getPrepRemoteHoldFigureClient(clientX, clientY, ideal.x, ideal.y);
-      ghostX = figure.x;
-      ghostY = figure.y;
-      arcRotation = getPrepArcGhostRotation();
-      PrepDragArc.sync(clientX, clientY, clientX, clientY, {
-        grabAtPointer: true,
-        remoteHold: true,
-        linkPoint: figure,
         dropState: getPrepArcDropState(),
         itemId: dragPayload.itemId,
       });

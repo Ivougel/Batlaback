@@ -51,9 +51,11 @@ const InventoryAnimationController = (() => {
     const scale = fullSize
       ? 1
       : 1.05 + Math.min(0.05, speed * 0.0018);
-    const tilt = arcRotation != null
-      ? (fullSize ? arcRotation : arcRotation * 0.35)
-      : Math.max(-10, Math.min(10, dragVelX * 0.12));
+    const tilt = fullSize
+      ? Math.max(-10, Math.min(10, dragVelX * 0.12))
+      : arcRotation != null
+        ? arcRotation * 0.35
+        : Math.max(-10, Math.min(10, dragVelX * 0.12));
     el.style.transform = `translate(-50%, -50%) scale(${scale}) rotate(${tilt}deg)`;
     el.style.filter = fullSize
       ? "drop-shadow(0 8px 20px rgba(0,0,0,0.5)) drop-shadow(0 2px 6px rgba(0,0,0,0.35))"
