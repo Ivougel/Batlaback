@@ -3,6 +3,30 @@
  */
 
 const BattleHeroAnchor = (() => {
+  const MEASURE_CACHE_MS = 32;
+  const measureCache = {
+    until: 0,
+    thoughtCenter: {},
+    avatarRect: {},
+    combatFloor: undefined,
+  };
+
+  function invalidateMeasureCache() {
+    measureCache.until = 0;
+    measureCache.thoughtCenter = {};
+    measureCache.avatarRect = {};
+    measureCache.combatFloor = undefined;
+  }
+
+  function refreshMeasureCache() {
+    const now = performance.now();
+    if (now <= measureCache.until) return;
+    measureCache.until = now + MEASURE_CACHE_MS;
+    measureCache.thoughtCenter = {};
+    measureCache.avatarRect = {};
+    measureCache.combatFloor = undefined;
+  }
+
   /** Нормированные позиции слотов внутри combat floor (#battle-thought-arena). */
   const COMBAT_FLOOR_ANCHOR = {
     player: { x: 0.20, y: 0.40 },
@@ -41,9 +65,13 @@ const BattleHeroAnchor = (() => {
   }
 
   function getCombatFloorRect() {
+    refreshMeasureCache();
+    if (measureCache.combatFloor !== undefined) {
+      return measureCache.combatFloor;
+    }
     const r = getCombatFloorEl()?.getBoundingClientRect();
-    if (r && r.width > 8 && r.height > 8) return r;
-    return null;
+    measureCache.combatFloor = (r && r.width > 8 && r.height > 8) ? r : null;
+    return measureCache.combatFloor;
   }
 
   function gameScale() {
@@ -146,9 +174,17 @@ const BattleHeroAnchor = (() => {
   }
 
   function getAvatarAnchorRect(side) {
+    refreshMeasureCache();
+    if (measureCache.avatarRect[side] !== undefined) {
+      return measureCache.avatarRect[side];
+    }
+
     const avatarSlotId = side === "enemy" ? "enemy-avatar-slot" : "player-avatar-slot";
     const avatarSlot = document.getElementById(avatarSlotId);
-    if (!avatarSlot) return null;
+    if (!avatarSlot) {
+      measureCache.avatarRect[side] = null;
+      return null;
+    }
 
     const shell = avatarSlot.querySelector(".avatar-hero-shell");
     const anchor = shell?.querySelector(".avatar-hero-stage")
@@ -156,8 +192,8 @@ const BattleHeroAnchor = (() => {
       || shell
       || avatarSlot;
     const ar = anchor.getBoundingClientRect();
-    if (ar.width <= 4 || ar.height <= 4) return null;
-    return ar;
+    measureCache.avatarRect[side] = (ar.width <= 4 || ar.height <= 4) ? null : ar;
+    return measureCache.avatarRect[side];
   }
 
   function getHeroColumnCenterX(side) {
@@ -316,25 +352,33 @@ const BattleHeroAnchor = (() => {
 
   /** Центр слота эмодзи-аватара в viewport (px). */
   function getThoughtSlotCenter(side) {
+    refreshMeasureCache();
+    if (measureCache.thoughtCenter[side] !== undefined) {
+      return measureCache.thoughtCenter[side];
+    }
+
     const slot = getThoughtSlotEl(side);
     const sr = slot?.getBoundingClientRect();
     if (sr && sr.width > 4 && sr.height > 4) {
-      return {
+      measureCache.thoughtCenter[side] = {
         x: sr.left + sr.width / 2,
         y: sr.top + sr.height / 2,
         size: sr.width,
       };
+      return measureCache.thoughtCenter[side];
     }
 
     const anchor = getThoughtSlotAnchor(side);
     if (anchor) {
-      return {
+      measureCache.thoughtCenter[side] = {
         x: anchor.cx,
         y: anchor.cy,
         size: anchor.emojiSize ?? anchor.size,
       };
+      return measureCache.thoughtCenter[side];
     }
 
+    measureCache.thoughtCenter[side] = null;
     return null;
   }
 
@@ -368,6 +412,7 @@ const BattleHeroAnchor = (() => {
     emojiProfile,
     satelliteScaleFactor,
     usesHeroBelowThoughtAnchors,
+    invalidateMeasureCache,
   };
 })();
 

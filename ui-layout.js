@@ -648,6 +648,14 @@
   }
 
   function syncBattleHudAnchors() {
+    if (syncBattleHudAnchors._raf) return;
+    syncBattleHudAnchors._raf = requestAnimationFrame(() => {
+      syncBattleHudAnchors._raf = 0;
+      syncBattleHudAnchorsNow();
+    });
+  }
+
+  function syncBattleHudAnchorsNow() {
     const viewport = document.getElementById("prep-field-column");
     const app = document.getElementById("app");
     if (!viewport || !app) return;
@@ -1281,6 +1289,7 @@
       root.removeAttribute("data-tablet-thought-corners");
       root.removeAttribute("data-thought-slot-below-hero");
       root.removeAttribute("data-battle-combat-floor");
+      syncHeroEmotionSlotAnchors._layout = null;
       return;
     }
 
@@ -1298,6 +1307,11 @@
       ? BattleHeroAnchor.thoughtSlotSize(vmin)
       : Math.round(Math.min(112, Math.max(68, vmin * 0.12)));
 
+    if (!syncHeroEmotionSlotAnchors._layout) {
+      syncHeroEmotionSlotAnchors._layout = { player: "", enemy: "" };
+    }
+    let layoutChanged = false;
+
     [
       { slotId: "player-thought-slot", side: "player" },
       { slotId: "enemy-thought-slot", side: "enemy" },
@@ -1308,6 +1322,7 @@
       let cx;
       let top;
       let slotSize = size;
+      let emojiSize = null;
 
       if (combatFloor && typeof BattleHeroAnchor !== "undefined") {
         const anchor = BattleHeroAnchor.getThoughtSlotAnchor(side);
@@ -1315,9 +1330,7 @@
           cx = anchor.cx;
           top = anchor.top;
           slotSize = anchor.size;
-          if (anchor.emojiSize) {
-            thoughtSlot.style.setProperty("--battle-thought-emoji-size", `${anchor.emojiSize}px`);
-          }
+          emojiSize = anchor.emojiSize || null;
         }
       }
 
@@ -1328,6 +1341,15 @@
         if (!ar || ar.width <= 4) return;
         cx = ar.left + ar.width / 2;
         top = ar.top - slotSize * 0.42;
+      }
+
+      const layoutKey = `${Math.round(cx)}|${Math.round(top)}|${slotSize}|${emojiSize || ""}`;
+      if (syncHeroEmotionSlotAnchors._layout[side] === layoutKey) return;
+      syncHeroEmotionSlotAnchors._layout[side] = layoutKey;
+      layoutChanged = true;
+
+      if (emojiSize) {
+        thoughtSlot.style.setProperty("--battle-thought-emoji-size", `${emojiSize}px`);
       }
 
       thoughtSlot.style.position = "fixed";
@@ -1342,11 +1364,28 @@
       thoughtSlot.style.pointerEvents = "none";
     });
 
+    if (!layoutChanged) {
+      if (typeof BattleHeroAnchor !== "undefined") {
+        const emojiPx = BattleHeroAnchor.thoughtSlotEmojiSize(vmin);
+        const rootKey = String(emojiPx);
+        if (syncHeroEmotionSlotAnchors._rootEmoji !== rootKey) {
+          syncHeroEmotionSlotAnchors._rootEmoji = rootKey;
+          root.style.setProperty("--battle-thought-emoji-size", `${emojiPx}px`);
+        }
+      }
+      return;
+    }
+
+    if (typeof BattleHeroAnchor !== "undefined" && BattleHeroAnchor.invalidateMeasureCache) {
+      BattleHeroAnchor.invalidateMeasureCache();
+    }
+
     if (typeof ThoughtArena !== "undefined" && ThoughtArena.onResize) {
       ThoughtArena.onResize();
     }
     if (typeof BattleHeroAnchor !== "undefined") {
       const emojiPx = BattleHeroAnchor.thoughtSlotEmojiSize(vmin);
+      syncHeroEmotionSlotAnchors._rootEmoji = String(emojiPx);
       root.style.setProperty("--battle-thought-emoji-size", `${emojiPx}px`);
     }
     if (!opts.skipEquipRelayout
@@ -2035,25 +2074,31 @@
     root.style.setProperty("--prep-bench-row-h", `${benchH}px`);
   }
 
-  function scheduleCanvasFit() {
-    requestAnimationFrame(() => {
+  let canvasFitRafId = 0;
+
+  function runCanvasFitPass() {
+    fitCanvasDisplaySize();
+    syncPrepHeroSlotHeight();
+    syncTabletPortraitShopRows();
+    const zones = measureLayoutZones();
+    applyMeasuredZoneFit(zones);
+    syncMobileShopFabPosition();
+    if (document.documentElement.style.getPropertyValue("--zone-fit-shrink")) {
       requestAnimationFrame(() => {
         fitCanvasDisplaySize();
-        syncPrepHeroSlotHeight();
         syncTabletPortraitShopRows();
-        const zones = measureLayoutZones();
-        applyMeasuredZoneFit(zones);
+        const refitZones = measureLayoutZones();
+        applyMeasuredZoneFit(refitZones);
         syncMobileShopFabPosition();
-        if (document.documentElement.style.getPropertyValue("--zone-fit-shrink")) {
-          requestAnimationFrame(() => {
-            fitCanvasDisplaySize();
-            syncTabletPortraitShopRows();
-            const refitZones = measureLayoutZones();
-            applyMeasuredZoneFit(refitZones);
-            syncMobileShopFabPosition();
-          });
-        }
       });
+    }
+  }
+
+  function scheduleCanvasFit() {
+    if (canvasFitRafId) return;
+    canvasFitRafId = requestAnimationFrame(() => {
+      canvasFitRafId = 0;
+      requestAnimationFrame(runCanvasFitPass);
     });
   }
 
@@ -2195,6 +2240,10 @@
     document.documentElement.style.setProperty("--viewport-h", `${Math.round(h)}px`);
     document.documentElement.style.setProperty("--viewport-w", `${Math.round(w)}px`);
 
+    if (typeof BattleFxTier !== "undefined" && BattleFxTier.applyBattleFxTierFlags) {
+      BattleFxTier.applyBattleFxTierFlags();
+    }
+
     const hudVisible = !isModalOpen();
     const hudH = measureBottomChromeHeight();
     document.documentElement.style.setProperty("--bottom-chrome-h-measured", `${hudH}px`);
@@ -2224,6 +2273,15 @@
 
     syncClassOverlayAnchors();
 
+    if (isBattleUiPhase() && syncHeroEmotionSlotAnchors._layout) {
+      syncHeroEmotionSlotAnchors._layout.player = "";
+      syncHeroEmotionSlotAnchors._layout.enemy = "";
+      syncHeroEmotionSlotAnchors._rootEmoji = null;
+      if (typeof BattleHeroAnchor !== "undefined" && BattleHeroAnchor.invalidateMeasureCache) {
+        BattleHeroAnchor.invalidateMeasureCache();
+      }
+    }
+
     scheduleCanvasFit();
     syncMobileShopFabPosition();
     syncPrepHeroSlotHeight();
@@ -2235,35 +2293,52 @@
     syncFxCanvasGeometry();
   }
 
-  function scheduleLayout() {
-    requestAnimationFrame(() => {
-      applyUiLayout();
+  let layoutRafId = 0;
+  let lastViewportW = 0;
+  let lastViewportH = 0;
+
+  function runLayoutFollowUp() {
+    if (document.documentElement.dataset.battleHudPin === "true") {
+      applyBattleHudPin(true, true);
+    }
+    if (
+      document.documentElement.dataset.battleArenaLayout === "true"
+      && isBattleUiPhase()
+    ) {
+      const { h } = viewportSize();
+      syncTabletSideLayoutVars(h, document.getElementById("app")?.dataset.phase ?? "prep");
+      fitCanvasDisplaySize();
       requestAnimationFrame(() => {
-        if (document.documentElement.dataset.battleHudPin === "true") {
-          applyBattleHudPin(true, true);
-        }
-        if (
-          document.documentElement.dataset.battleArenaLayout === "true"
-          && isBattleUiPhase()
-        ) {
-          const { h } = viewportSize();
-          syncTabletSideLayoutVars(h, document.getElementById("app")?.dataset.phase ?? "prep");
-          fitCanvasDisplaySize();
-          requestAnimationFrame(() => {
-            syncBattleSceneGridMetrics();
-            syncBattleHudAnchors();
-            syncFxCanvasGeometry();
-          });
-        }
+        syncBattleSceneGridMetrics();
+        syncBattleHudAnchors();
+        syncFxCanvasGeometry();
       });
+    }
+  }
+
+  function scheduleLayout() {
+    if (layoutRafId) return;
+    layoutRafId = requestAnimationFrame(() => {
+      layoutRafId = 0;
+      const { w, h } = viewportSize();
+      lastViewportW = w;
+      lastViewportH = h;
+      applyUiLayout();
+      requestAnimationFrame(runLayoutFollowUp);
     });
+  }
+
+  function scheduleLayoutOnViewportChange() {
+    const { w, h } = viewportSize();
+    if (w === lastViewportW && h === lastViewportH) return;
+    scheduleLayout();
   }
 
   scheduleLayout();
   window.addEventListener("resize", scheduleLayout, { passive: true });
   window.addEventListener("orientationchange", scheduleLayout, { passive: true });
-  window.visualViewport?.addEventListener("resize", scheduleLayout, { passive: true });
-  window.visualViewport?.addEventListener("scroll", scheduleLayout, { passive: true });
+  window.visualViewport?.addEventListener("resize", scheduleLayoutOnViewportChange, { passive: true });
+  window.visualViewport?.addEventListener("scroll", scheduleLayoutOnViewportChange, { passive: true });
   document.addEventListener("DOMContentLoaded", () => {
     scheduleLayout();
     const stage = document.querySelector(".battle-canvas-stage");

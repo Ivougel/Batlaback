@@ -1261,6 +1261,7 @@ function init() {
   if (typeof initBattleInventoryPopover === "function") initBattleInventoryPopover();
   initRecipeBookControls();
   initSettingsControls();
+  if (typeof initLightBattleFxControls === "function") initLightBattleFxControls();
   if (typeof initCombatFeedControls === "function") initCombatFeedControls();
   initMusic();
   initGamepadControls({
@@ -1339,20 +1340,13 @@ function init() {
       updateBattleControlsUI();
     },
   });
-  window.addEventListener("resize", syncBattleArenaLayout);
-  window.addEventListener("resize", () => {
-    requestAnimationFrame(applyGridMetricsFromCss);
-    if (shouldUsePrepTooltipDock()) {
-      const tip = document.getElementById("sidebar-tooltip");
-      if (tip && !tip.classList.contains("hidden")) positionPrepTooltipDock();
-    }
-  });
-  window.visualViewport?.addEventListener("resize", () => {
-    if (shouldUsePrepTooltipDock()) {
-      const tip = document.getElementById("sidebar-tooltip");
-      if (tip && !tip.classList.contains("hidden")) positionPrepTooltipDock();
-    }
-  });
+  const repositionOpenPrepTooltip = () => {
+    if (!shouldUsePrepTooltipDock()) return;
+    const tip = document.getElementById("sidebar-tooltip");
+    if (tip && !tip.classList.contains("hidden")) positionPrepTooltipDock();
+  };
+  window.addEventListener("resize", repositionOpenPrepTooltip);
+  window.visualViewport?.addEventListener("resize", repositionOpenPrepTooltip);
   showClassSelect();
   requestAnimationFrame(gameLoop);
 }
@@ -2905,6 +2899,7 @@ function startBattle() {
       );
       if (typeof resetStackOrbitVfx === "function") resetStackOrbitVfx();
       battleStartTime = Date.now();
+      tickBattlePresentation._at = { emotion: 0, arena: 0 };
       if (typeof resetEmotionEngine === "function") resetEmotionEngine();
       if (typeof initBattleHud === "function") initBattleHud();
       if (typeof hideBattleCountdownOverlay === "function") hideBattleCountdownOverlay();
@@ -3155,6 +3150,34 @@ function showRunComplete() {
   });
 }
 
+function tickBattlePresentation() {
+  if (!isBattleUiPhase() || !battleState) return;
+  const elapsed = battleStartTime ? (Date.now() - battleStartTime) / 1000 : 0;
+  const now = performance.now();
+  if (!tickBattlePresentation._at) {
+    tickBattlePresentation._at = { emotion: 0, arena: 0 };
+  }
+  const emotionGap = typeof BattleFxTier !== "undefined"
+    ? BattleFxTier.emotionPresentGapMs()
+    : 100;
+  const arenaGap = typeof BattleFxTier !== "undefined"
+    ? BattleFxTier.arenaPresentGapMs()
+    : 450;
+
+  if (now - tickBattlePresentation._at.emotion >= emotionGap) {
+    tickBattlePresentation._at.emotion = now;
+    if (typeof drawEmotionLayer === "function") {
+      drawEmotionLayer(null, battleState, elapsed);
+    }
+  }
+  if (now - tickBattlePresentation._at.arena >= arenaGap) {
+    tickBattlePresentation._at.arena = now;
+    if (typeof tickBattleArenaPresentation === "function") {
+      tickBattleArenaPresentation(battleState, elapsed);
+    }
+  }
+}
+
 function gameLoop(ts) {
   if (!gameLoop.last) gameLoop.last = ts;
   const dt = Math.min(0.05, (ts - gameLoop.last) / 1000);
@@ -3204,12 +3227,16 @@ function gameLoop(ts) {
       flushBattleEvents();
       recordBattleFrame(battleState);
     }
+    if (!battleState.finished && typeof syncStackOrbitFromBattle === "function") {
+      syncStackOrbitFromBattle(battleState);
+    }
     if (Math.floor(ts / 500) !== Math.floor((ts - dt * 1000) / 500)) {
       renderBattleStats();
       renderPlayerProfiles();
       if (typeof refreshBattleInventoryPopover === "function") refreshBattleInventoryPopover();
     }
     if (typeof syncBattleInventoryPopoverFlash === "function") syncBattleInventoryPopoverFlash();
+    tickBattlePresentation();
   } else if (phase === "battle" && battleState?.finished) {
     if (typeof resetStackOrbitVfx === "function") resetStackOrbitVfx();
     clearBattleFloatLayer();
@@ -3221,6 +3248,7 @@ function gameLoop(ts) {
       if (typeof refreshBattleInventoryPopover === "function") refreshBattleInventoryPopover();
     }
     if (typeof syncBattleInventoryPopoverFlash === "function") syncBattleInventoryPopoverFlash();
+    tickBattlePresentation();
   }
   if (phase === "prep") {
     tickDisplaceAnimations(dt);
@@ -3916,13 +3944,6 @@ function drawWorldLayer() {
     if (shouldDrawCanvasLoadoutInBattle()) {
       drawPlacedItems(battleState.player.items, "player", false, true);
       drawPlacedItems(battleState.enemy.items, "enemy", true, true);
-    }
-    if (typeof updateBattleAnalyzer === "function") updateBattleAnalyzer(battleState, 0);
-    if (isBattleUiPhase() && typeof drawEmotionLayer === "function") {
-      drawEmotionLayer(ctx, battleState, (Date.now() - battleStartTime) / 1000);
-    }
-    if (!battleState.finished && typeof syncStackOrbitFromBattle === "function") {
-      syncStackOrbitFromBattle(battleState);
     }
   } else {
     if (typeof resetStackOrbitVfx === "function") resetStackOrbitVfx();
@@ -6219,7 +6240,6 @@ function renderPlayerProfiles() {
           enemyBars.innerHTML = renderAvatarBarsHTML(enemyProfile, "enemy");
         }
       }
-      if (typeof syncBattleHudAnchors === "function") syncBattleHudAnchors();
     }
     if (typeof syncBattleSceneGridMetrics === "function") {
       requestAnimationFrame(() => syncBattleSceneGridMetrics());

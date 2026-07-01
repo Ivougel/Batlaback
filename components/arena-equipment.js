@@ -100,6 +100,15 @@ const ArenaEquipment = (() => {
   /** @type {Map<string, object[]>} */
   const bodiesBySide = new Map();
   let rafId = null;
+  let lastPhysicsStepAt = 0;
+
+  function arenaPhysicsGapMs() {
+    if (typeof BattleFxTier !== "undefined") return BattleFxTier.arenaPhysicsGapMs();
+    const tier = document.documentElement?.dataset?.uiTier;
+    if (tier === "phone") return 50;
+    if (tier === "tablet") return 33;
+    return 0;
+  }
   let lastTs = 0;
   /** @type {object|null} */
   let activeBattle = null;
@@ -623,11 +632,20 @@ const ArenaEquipment = (() => {
     if (body.attack || body.fxMounted) {
       const x = body.renderX ?? body.x;
       const y = body.renderY ?? body.y;
-      body.el.style.position = "fixed";
-      body.el.style.left = `${x}px`;
-      body.el.style.top = `${y}px`;
-      body.el.style.transform = `translate(-50%, -50%) scale(${scale}) rotate(${rot}deg)`;
-      body.el.style.opacity = String(body.opacity ?? 1);
+      const transform = `translate(-50%, -50%) scale(${scale}) rotate(${rot}deg)`;
+      const posKey = `${Math.round(x)}|${Math.round(y)}|${transform}`;
+      if (body._arenaVisKey !== posKey) {
+        body._arenaVisKey = posKey;
+        body.el.style.position = "fixed";
+        body.el.style.left = `${x}px`;
+        body.el.style.top = `${y}px`;
+        body.el.style.transform = transform;
+      }
+      const opacity = String(body.opacity ?? 1);
+      if (body._arenaOpacity !== opacity) {
+        body._arenaOpacity = opacity;
+        body.el.style.opacity = opacity;
+      }
       body.el.style.zIndex = "45";
       return;
     }
@@ -635,11 +653,19 @@ const ArenaEquipment = (() => {
     if (body.orbitSlotMounted) {
       const ox = body.renderOx ?? body.homeOx ?? 0;
       const oy = body.renderOy ?? body.homeOy ?? 0;
-      body.el.style.position = "absolute";
-      body.el.style.left = "50%";
-      body.el.style.top = "50%";
-      body.el.style.transform = `translate(calc(-50% + ${ox}px), calc(-50% + ${oy}px)) scale(${scale}) rotate(${rot}deg)`;
-      body.el.style.opacity = String(body.opacity ?? 1);
+      const transform = `translate(calc(-50% + ${ox}px), calc(-50% + ${oy}px)) scale(${scale}) rotate(${rot}deg)`;
+      if (body._arenaVisKey !== transform) {
+        body._arenaVisKey = transform;
+        body.el.style.position = "absolute";
+        body.el.style.left = "50%";
+        body.el.style.top = "50%";
+        body.el.style.transform = transform;
+      }
+      const opacity = String(body.opacity ?? 1);
+      if (body._arenaOpacity !== opacity) {
+        body._arenaOpacity = opacity;
+        body.el.style.opacity = opacity;
+      }
       const slotZ = SLOT_Z[body.slotId] || 0;
       body.el.style.zIndex = String(EMOJI_ORBIT_Z_BASE + slotZ + (body.isWeapon ? 6 : 0));
       return;
@@ -647,12 +673,19 @@ const ArenaEquipment = (() => {
 
     const x = body.renderX ?? body.x;
     const y = body.renderY ?? body.y;
-
-    body.el.style.position = "";
-    body.el.style.left = "";
-    body.el.style.top = "";
-    body.el.style.transform = `translate(${x - body.radius}px, ${y - body.radius}px) scale(${scale}) rotate(${rot}deg)`;
-    body.el.style.opacity = String(body.opacity ?? 1);
+    const transform = `translate(${x - body.radius}px, ${y - body.radius}px) scale(${scale}) rotate(${rot}deg)`;
+    if (body._arenaVisKey !== transform) {
+      body._arenaVisKey = transform;
+      body.el.style.position = "";
+      body.el.style.left = "";
+      body.el.style.top = "";
+      body.el.style.transform = transform;
+    }
+    const opacity = String(body.opacity ?? 1);
+    if (body._arenaOpacity !== opacity) {
+      body._arenaOpacity = opacity;
+      body.el.style.opacity = opacity;
+    }
   }
 
   function createBody(side, entry, home, weaponIndex) {
@@ -968,6 +1001,17 @@ const ArenaEquipment = (() => {
 
   function stepPhysics(ts) {
     if (paused) return;
+
+    const physicsGap = arenaPhysicsGapMs();
+    if (physicsGap > 0) {
+      const now = performance.now();
+      if (now - lastPhysicsStepAt < physicsGap) {
+        scheduleFrame();
+        return;
+      }
+      lastPhysicsStepAt = now;
+    }
+
     if (!lastTs) lastTs = ts;
     let dt = (ts - lastTs) / 1000;
     lastTs = ts;
@@ -1127,17 +1171,18 @@ const ArenaEquipment = (() => {
       lastSyncAt = 0;
     }
 
-    if (usesEmojiAvatarEquipHome()
-      && typeof window.syncHeroEmotionSlotAnchors === "function") {
-      window.syncHeroEmotionSlotAnchors({ skipEquipRelayout: true });
-    }
-
     const now = Date.now();
-    if (now - lastSyncAt < SYNC_INTERVAL_MS && bodiesBySide.size > 0) {
+    const needsFullSync = bodiesBySide.size === 0 || now - lastSyncAt >= SYNC_INTERVAL_MS;
+    if (!needsFullSync) {
       if (!paused) scheduleFrame();
       return;
     }
     lastSyncAt = now;
+
+    if (usesEmojiAvatarEquipHome()
+      && typeof window.syncHeroEmotionSlotAnchors === "function") {
+      window.syncHeroEmotionSlotAnchors({ skipEquipRelayout: true });
+    }
 
     const burstPlan = computeBurstPlan(battleState);
     const listFn = typeof listDollEquippedItems === "function"

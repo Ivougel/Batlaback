@@ -654,6 +654,12 @@ function syncBattleHudRuntimeChips(team, sideState, battleState = null) {
   }
 
   const chips = buildStatusChipEntries(sideState, chipOpts);
+  const sig = chips.map((chip) => `${chip.icon}:${chip.label}`).join("|");
+  if (row.dataset.chipSig === sig) {
+    row.hidden = chips.length === 0;
+    return;
+  }
+  row.dataset.chipSig = sig;
   row.hidden = chips.length === 0;
   row.innerHTML = chips.map(renderRuntimeChipHTML).join("");
 }

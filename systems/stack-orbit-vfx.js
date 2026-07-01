@@ -3,19 +3,21 @@
  */
 
 const STACK_ORBIT_BUFF_TYPES = ["spikes", "block", "empower", "regen", "luck", "heat", "mana"];
-let stackOrbitFrame = 0;
 const stackProjectileTimers = [];
 const stackFireThrottleAt = { player: 0, enemy: 0 };
+let stackOrbitLastSyncAt = 0;
 
 function isStackOrbitLightProfile() {
+  if (typeof BattleFxTier !== "undefined") return BattleFxTier.isLightBattleFx();
   const tier = document.documentElement?.dataset?.uiTier;
   if (tier === "phone" || tier === "tablet") return true;
   if (tier === "desktop") return false;
   return "ontouchstart" in window || navigator.maxTouchPoints > 0;
 }
 
-function stackOrbitSyncInterval() {
-  return isStackOrbitLightProfile() ? 10 : 4;
+function stackOrbitSyncGapMs() {
+  if (typeof BattleFxTier !== "undefined") return BattleFxTier.stackOrbitGapMs();
+  return isStackOrbitLightProfile() ? 170 : 70;
 }
 
 function stackOrbitParticleCap() {
@@ -99,7 +101,7 @@ function positionOrbitRing(ring, team) {
 }
 
 function resetStackOrbitVfx() {
-  stackOrbitFrame = 0;
+  stackOrbitLastSyncAt = 0;
   stackFireThrottleAt.player = 0;
   stackFireThrottleAt.enemy = 0;
   while (stackProjectileTimers.length) {
@@ -150,10 +152,34 @@ function collectSideOrbitStacks(side) {
   return emojis.slice(0, stackOrbitParticleCap());
 }
 
+function sideHasOrbitStacks(side) {
+  if (!side) return false;
+  if ((side.coldStacks || 0) > 0) return true;
+  return STACK_ORBIT_BUFF_TYPES.some((type) => {
+    const count = typeof getSideStack === "function" ? getSideStack(side, type) : 0;
+    return count > 0;
+  });
+}
+
+function clearStackOrbitRings() {
+  document.querySelectorAll(".avatar-stack-orbit-ring").forEach((ring) => {
+    if (ring.hidden && !ring.innerHTML) return;
+    ring.innerHTML = "";
+    ring.hidden = true;
+    delete ring.dataset.orbitSig;
+    delete ring.dataset.orbitSizeKey;
+  });
+}
+
 function syncStackOrbitFromBattle(battleState) {
   if (!battleState || battleState.finished) return;
-  stackOrbitFrame += 1;
-  if (stackOrbitFrame % stackOrbitSyncInterval() !== 0) return;
+  if (!sideHasOrbitStacks(battleState.player) && !sideHasOrbitStacks(battleState.enemy)) {
+    clearStackOrbitRings();
+    return;
+  }
+  const now = performance.now();
+  if (now - stackOrbitLastSyncAt < stackOrbitSyncGapMs()) return;
+  stackOrbitLastSyncAt = now;
 
   ["player", "enemy"].forEach((team) => {
     const ring = getAvatarStackOrbitRing(team);
@@ -175,6 +201,9 @@ function syncStackOrbitFromBattle(battleState) {
     const particlePx = Math.max(11, Math.round(emojiPx * 0.13));
 
     if (ring.dataset.orbitSig === sig) {
+      const sizeKey = `${orbitR}|${particlePx}`;
+      if (ring.dataset.orbitSizeKey === sizeKey) return;
+      ring.dataset.orbitSizeKey = sizeKey;
       ring.querySelectorAll(".avatar-stack-orbit-particle").forEach((span) => {
         span.style.setProperty("--orbit-r", `${orbitR}px`);
         span.style.fontSize = `${particlePx}px`;
@@ -183,6 +212,7 @@ function syncStackOrbitFromBattle(battleState) {
     }
 
     ring.dataset.orbitSig = sig;
+    ring.dataset.orbitSizeKey = `${orbitR}|${particlePx}`;
     ring.hidden = false;
     ring.innerHTML = "";
     all.forEach((entry, i) => {

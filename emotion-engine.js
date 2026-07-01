@@ -78,6 +78,10 @@ function resetEmotionEngine() {
 }
 
 function clearEmotionLayer() {
+  if (renderEmotionDom._lastKey) {
+    renderEmotionDom._lastKey.player = null;
+    renderEmotionDom._lastKey.enemy = null;
+  }
   if (typeof EmotionPresenter !== "undefined") {
     EmotionPresenter.clearAllThoughts();
   }
@@ -93,6 +97,10 @@ function clearEmotionMount(side) {
 }
 
 function renderEmotionDom(anim, side) {
+  const key = anim?.emoji ? `${anim.emoji}|${anim.animation || ""}` : "";
+  if (renderEmotionDom._lastKey?.[side] === key) return;
+  if (!renderEmotionDom._lastKey) renderEmotionDom._lastKey = { player: null, enemy: null };
+  renderEmotionDom._lastKey[side] = key;
   if (typeof EmotionPresenter !== "undefined") {
     EmotionPresenter.presentThought(side, anim);
   }
@@ -624,14 +632,17 @@ function drawEmotionLayer(_ctx, battleState, elapsedReal) {
   renderEmotionDom(emotionEngine.playerMain, "player");
   renderEmotionDom(emotionEngine.enemyMain, "enemy");
 
+  emotionEngine.lastRenderAt = Date.now();
+}
+
+function tickBattleArenaPresentation(battleState, elapsedReal) {
   if (
     typeof ArenaEquipment !== "undefined"
     && document.documentElement.dataset.battleArenaLayout === "true"
+    && battleState
   ) {
     ArenaEquipment.syncBattle(battleState, elapsedReal);
   }
-
-  emotionEngine.lastRenderAt = Date.now();
 }
 
 function queueBattleEndDialog(winner) {

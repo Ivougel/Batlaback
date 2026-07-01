@@ -37,8 +37,9 @@
   <link rel="stylesheet" href="styles/tablet-side.css?v=30">
   <link rel="stylesheet" href="styles/battle-inventory-popover.css?v=3">
   <script src="systems/layout-scales.js?v=2"></script>
-  <script src="systems/battle-hero-anchor.js?v=21"></script>
-  <script src="ui-layout.js?v=92"></script>
+  <script src="systems/battle-fx-tier.js?v=1"></script>
+  <script src="systems/battle-hero-anchor.js?v=22"></script>
+  <script src="ui-layout.js?v=97"></script>
 </head>
 <body>
   <div id="app" data-phase="prep">
@@ -390,6 +391,10 @@
           <label class="settings-label settings-checkbox-label" for="settings-combat-feed-enabled">Показывать журнал событий</label>
           <input type="checkbox" id="settings-combat-feed-enabled" class="settings-checkbox" checked aria-label="Показывать журнал событий">
         </div>
+        <div class="settings-row settings-row-checkbox">
+          <label class="settings-label settings-checkbox-label" for="settings-light-battle-fx">Облегчённые боевые эффекты</label>
+          <input type="checkbox" id="settings-light-battle-fx" class="settings-checkbox" checked aria-label="Облегчённые боевые эффекты">
+        </div>
       </div>
     </div>
   </div>
@@ -479,7 +484,7 @@
   <script src="systems/combat-profile.js?v=3"></script>
   <script src="components/run-stats.js"></script>
   <script src="components/player-characteristics.js"></script>
-  <script src="components/avatar-hero-effects.js?v=8"></script>
+  <script src="components/avatar-hero-effects.js?v=9"></script>
   <script src="systems/attack-events.js"></script>
   <script src="systems/arena-attack-styles.js?v=3"></script>
   <script src="systems/battle-analyzer.js"></script>
@@ -500,7 +505,7 @@
   <script src="components/attack-animation.js"></script>
   <script src="systems/battle-speed.js"></script>
   <script src="systems/battle-stacks.js"></script>
-  <script src="systems/stack-orbit-vfx.js?v=3"></script>
+  <script src="systems/stack-orbit-vfx.js?v=6"></script>
   <script src="systems/battle-debuffs.js"></script>
   <script src="systems/sfx.js?v=1"></script>
   <script src="systems/music.js"></script>
@@ -518,13 +523,13 @@
   <script src="hard-bot-engine.js"></script>
   <script src="battle-engine.js?v=2"></script>
   <script src="battle-float-layer.js?v=18"></script>
-  <script src="components/thought-arena.js?v=11"></script>
-  <script src="components/arena-equipment.js?v=20"></script>
+  <script src="components/thought-arena.js?v=14"></script>
+  <script src="components/arena-equipment.js?v=23"></script>
   <script src="components/emotion-presenter.js?v=5"></script>
-  <script src="emotion-engine.js?v=20"></script>
-  <script src="battle-hud.js?v=5"></script>
+  <script src="emotion-engine.js?v=21"></script>
+  <script src="battle-hud.js?v=6"></script>
   <script src="systems/doll-engine.js"></script>
-  <script src="game.js?v=25"></script>
+  <script src="game.js?v=30"></script>
   <script src="pwa-register.js"></script>
 </body>
 </html>

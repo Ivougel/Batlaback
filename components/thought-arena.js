@@ -30,6 +30,15 @@ const ThoughtArena = (() => {
   const equipReactions = { player: [], enemy: [] };
   let rafId = null;
   let lastTs = 0;
+  let lastThoughtStepAt = 0;
+
+  function thoughtStepGapMs() {
+    if (typeof BattleFxTier !== "undefined") return BattleFxTier.thoughtStepGapMs();
+    const tier = document.documentElement?.dataset?.uiTier;
+    if (tier === "phone") return 50;
+    if (tier === "tablet") return 33;
+    return 0;
+  }
 
   function getArenaEl() {
     return document.getElementById("battle-thought-arena");
@@ -262,17 +271,25 @@ const ThoughtArena = (() => {
     const x = (body.renderX ?? body.x) + (body.reactOx ?? 0);
     const y = (body.renderY ?? body.y) + (body.reactOy ?? 0);
     const rot = (body.rotation ?? 0) + (body.reactRot ?? 0);
-    body.el.style.transform = [
+    const transform = [
       `translate3d(${x}px, ${y}px, 0)`,
       "translate(-50%, -50%)",
       `rotate(${rot}deg)`,
       `scale(${scale})`,
     ].join(" ");
-    body.el.style.opacity = String(body.opacity);
-    if (body.reactFilter) {
-      body.el.style.filter = body.reactFilter;
-    } else {
-      body.el.style.filter = "";
+    if (body._lastTransform !== transform) {
+      body._lastTransform = transform;
+      body.el.style.transform = transform;
+    }
+    const opacity = String(body.opacity);
+    if (body._lastOpacity !== opacity) {
+      body._lastOpacity = opacity;
+      body.el.style.opacity = opacity;
+    }
+    const filter = body.reactFilter || "";
+    if (body._lastFilter !== filter) {
+      body._lastFilter = filter;
+      body.el.style.filter = filter;
     }
   }
 
@@ -479,12 +496,23 @@ const ThoughtArena = (() => {
 
   function stepAnchoredHover(list, dt) {
     const vmin = viewportMin();
+    const mountSizeCache = new Map();
+    const readMountSize = (mount) => {
+      if (!mount) return null;
+      let cached = mountSizeCache.get(mount);
+      if (!cached) {
+        cached = { w: mount.clientWidth, h: mount.clientHeight };
+        mountSizeCache.set(mount, cached);
+      }
+      return cached;
+    };
+
     list.forEach((body) => {
       const mount = getHeroMountEl(body.side);
       if (!mount) return;
-      const w = mount.clientWidth;
-      const h = mount.clientHeight;
-      if (w <= 0 || h <= 0) return;
+      const size = readMountSize(mount);
+      if (!size || size.w <= 0 || size.h <= 0) return;
+      const { w, h } = size;
 
       const targetR = thoughtRadiusPx(body.glyphCount);
       body.radius += (targetR - body.radius) * Math.min(1, dt * 6);
@@ -521,6 +549,18 @@ const ThoughtArena = (() => {
       lastTs = 0;
       scheduleFrame();
       return;
+    }
+
+    if (isAnchoredFlankArena()) {
+      const gap = thoughtStepGapMs();
+      if (gap > 0) {
+        const now = performance.now();
+        if (now - lastThoughtStepAt < gap) {
+          scheduleFrame();
+          return;
+        }
+        lastThoughtStepAt = now;
+      }
     }
 
     if (!lastTs) lastTs = ts;

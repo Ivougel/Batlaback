@@ -16,6 +16,7 @@ function showSettingsPopup() {
     syncNegrovEnabledUi(typeof isNegrovEnabled === "function" ? isNegrovEnabled() : false);
   }
   if (typeof syncCombatFeedSettingsUi === "function") syncCombatFeedSettingsUi();
+  if (typeof syncLightBattleFxSettingsUi === "function") syncLightBattleFxSettingsUi();
   overlay.classList.remove("hidden");
   overlay.setAttribute("aria-hidden", "false");
   document.getElementById("btn-settings")?.setAttribute("aria-expanded", "true");
