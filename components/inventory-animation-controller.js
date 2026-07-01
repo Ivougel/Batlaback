@@ -226,28 +226,69 @@ const InventoryAnimationController = (() => {
     });
   }
 
+  function itemPreviewFill(color, valid) {
+    const alpha = valid ? 0.78 : 0.52;
+    const hex = String(color || "#58a6ff");
+    if (hex.startsWith("#") && hex.length >= 7) {
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      if (Number.isFinite(r) && Number.isFinite(g) && Number.isFinite(b)) {
+        return `rgba(${r},${g},${b},${alpha})`;
+      }
+    }
+    return valid ? `rgba(88,166,255,${alpha})` : `rgba(248,81,73,${alpha * 0.85})`;
+  }
+
+  function drawPlacementFacingMarker(ctx, team, col, row, rotation) {
+    const { x, y, w, h } = cellRect(team, col, row);
+    const cx = x + w / 2;
+    const cy = y + h / 2;
+    const rot = ((rotation || 0) % 4 + 4) % 4;
+    const size = Math.min(w, h) * 0.2;
+    const inset = Math.max(3, CELL_TILE_PAD + 1);
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(rot * Math.PI / 2);
+    ctx.fillStyle = "rgba(255,255,255,0.92)";
+    ctx.strokeStyle = "rgba(0,0,0,0.55)";
+    ctx.lineWidth = 1.25;
+    ctx.beginPath();
+    ctx.moveTo(0, -h / 2 + inset);
+    ctx.lineTo(-size, -h / 2 + inset + size * 1.35);
+    ctx.lineTo(size, -h / 2 + inset + size * 1.35);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  }
+
   function drawPlacementFigureShadow(ctx, team, placementInfo) {
     const { col, row, rotation, valid, displaced, kind } = placementInfo;
     const itemId = dragPayload.itemId;
     const def = ITEM_CATALOG[itemId];
     if (!def) return;
     const ghostItem = { itemId, col, row, rotation: rotation || 0, uid: "__prep-drop-preview__" };
-    const alpha = valid ? 0.46 : 0.3;
     const shape = rotateShape(def.shape, rotation || 0);
+    const fill = itemPreviewFill(def.color, valid);
+    const stroke = valid ? "rgba(120,220,140,0.75)" : "rgba(255,120,110,0.6)";
 
-    ctx.save();
-    ctx.globalAlpha = alpha;
     shape.forEach(([dx, dy]) => {
       const { x, y, w, h } = cellRect(team, col + dx, row + dy);
-      ctx.fillStyle = `${def.color}${valid ? "bb" : "77"}`;
+      ctx.save();
+      ctx.fillStyle = fill;
       roundRect(x + CELL_TILE_PAD, y + CELL_TILE_PAD, w - CELL_TILE_PAD * 2, h - CELL_TILE_PAD * 2, 5);
       ctx.fill();
-      ctx.strokeStyle = valid ? "rgba(120,220,140,0.35)" : "rgba(255,120,110,0.28)";
-      ctx.lineWidth = 1.25;
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = valid ? 2 : 1.5;
       roundRect(x + CELL_TILE_PAD, y + CELL_TILE_PAD, w - CELL_TILE_PAD * 2, h - CELL_TILE_PAD * 2, 5);
       ctx.stroke();
+      ctx.restore();
     });
 
+    ctx.save();
+    ctx.globalAlpha = valid ? 0.92 : 0.72;
     if (kind === "item" && typeof drawPlacedItemIcons === "function") {
       drawPlacedItemIcons(ctx, def, ghostItem, (c, r) => cellRect(team, c, r));
     } else if (kind === "container") {
@@ -265,6 +306,8 @@ const InventoryAnimationController = (() => {
       );
     }
     ctx.restore();
+
+    drawPlacementFacingMarker(ctx, team, col, row, rotation);
 
     displaced.forEach((item) => {
       const itemDef = ITEM_CATALOG[item.itemId];
@@ -292,7 +335,10 @@ const InventoryAnimationController = (() => {
     if (!placementInfo) return;
 
     if (placementInfo.kind === "item" && placementInfo.valid) {
-      dragPayload.rotation = placementInfo.rotation;
+      const nextRot = placementInfo.rotation || 0;
+      if ((dragPayload.rotation || 0) !== nextRot) {
+        dragPayload.rotation = nextRot;
+      }
     }
 
     const pulse = 0.5 + Math.sin(spreadPhase * 5) * 0.12;
@@ -303,8 +349,8 @@ const InventoryAnimationController = (() => {
       const { x, y, w, h } = cellRect(team, col + dx, row + dy);
       ctx.save();
       ctx.fillStyle = valid
-        ? `rgba(63,185,80,${0.24 + pulse * 0.14})`
-        : `rgba(248,81,73,${0.2 + pulse * 0.1})`;
+        ? `rgba(63,185,80,${0.32 + pulse * 0.18})`
+        : `rgba(248,81,73,${0.28 + pulse * 0.12})`;
       roundRect(x + 3, y + 3, w - 6, h - 6, 5);
       ctx.fill();
       ctx.strokeStyle = valid

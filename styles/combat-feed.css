@@ -1,5 +1,13 @@
 /* Combat Feed — журнал в центре нижней панели */
 
+#app[data-phase="battle"] #combat-feed-dock,
+#app[data-phase="replay"] #combat-feed-dock {
+  display: none !important;
+  visibility: hidden;
+  pointer-events: none;
+  content-visibility: hidden;
+}
+
 .combat-feed-dock {
   position: relative;
   display: flex;

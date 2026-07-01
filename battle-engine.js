@@ -3317,7 +3317,8 @@ function pushBattleLog(state, entry) {
   };
   state.log.push(row);
   if (state.log.length > BATTLE_LOG_MAX) state.log.shift();
-  if (typeof CombatLog !== "undefined" && typeof CombatLog.ingestBattleLog === "function") {
+  const feedPhase = document.getElementById("app")?.dataset.phase;
+  if (feedPhase === "prep" && typeof CombatLog !== "undefined" && typeof CombatLog.ingestBattleLog === "function") {
     CombatLog.ingestBattleLog(row);
   }
 }

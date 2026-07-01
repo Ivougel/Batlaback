@@ -495,26 +495,44 @@ function getLobbySpectateProfileNames() {
   };
 }
 
+function returnToLobbyPlayerMatch() {
+  if (!isLobbyMode() || !lobbyMatches.length) return;
+  const idx = typeof findLobbyPlayerMatchIndex === "function"
+    ? findLobbyPlayerMatchIndex(lobbyMatches)
+    : lobbyMatches.findIndex((m) => m.isPlayerMatch);
+  if (idx >= 0) setLobbySpectateMatch(idx);
+}
+
+function syncLobbyReturnTableButton() {
+  const btn = document.getElementById("btn-lobby-return-table");
+  if (!btn) return;
+  const match = lobbyMatches[lobbySpectateMatchId];
+  const watching = isLobbyMode()
+    && isBattleUiPhase()
+    && !!lobbyState
+    && match
+    && !match.byeFighterId
+    && !match.isPlayerMatch;
+  btn.classList.toggle("hidden", !watching);
+}
+
 function renderLobbyChrome(force = false) {
-  const prepChrome = document.getElementById("lobby-prep-chrome");
-  const battleDock = document.getElementById("lobby-battle-dock");
+  const prepRosterPanel = document.getElementById("lobby-prep-roster-panel");
+  const battleRosterBar = document.getElementById("lobby-battle-roster-bar");
   const timerSlot = document.getElementById("lobby-prep-timer-slot");
   const stripPrep = document.getElementById("lobby-roster-strip-prep");
   const stripBattle = document.getElementById("lobby-roster-strip-battle");
   const show = isLobbyMode() && !!lobbyState;
-  prepChrome?.classList.toggle("hidden", !show || phase !== "prep");
-  battleDock?.classList.toggle("hidden", !show || !isBattleUiPhase());
+  prepRosterPanel?.classList.toggle("hidden", !show || phase !== "prep");
+  battleRosterBar?.classList.toggle("hidden", !show || !isBattleUiPhase());
   if (!show) {
-    if (typeof setLobbyBattleDockOpen === "function") setLobbyBattleDockOpen(false);
+    syncLobbyReturnTableButton();
     return;
-  }
-  if (!isBattleUiPhase() && typeof setLobbyBattleDockOpen === "function") {
-    setLobbyBattleDockOpen(false);
   }
 
   const rosterOpts = phase === "prep"
     ? { phase: "prep", viewFighterId: lobbyViewFighterId }
-    : { phase: "battle", spectateMatchId: lobbySpectateMatchId, matches: lobbyMatches };
+    : { phase: "battle", spectateMatchId: lobbySpectateMatchId, matches: lobbyMatches, layout: "bottom" };
   const stripSig = typeof buildLobbyRosterStripSignature === "function"
     ? buildLobbyRosterStripSignature(lobbyState, rosterOpts)
     : "";
@@ -522,16 +540,11 @@ function renderLobbyChrome(force = false) {
     lastLobbyRosterStripSig = stripSig;
     const stripHtml = renderLobbyRosterStrip(lobbyState, rosterOpts);
     if (stripPrep && phase === "prep") stripPrep.innerHTML = stripHtml;
-    if (stripBattle && isBattleUiPhase()) {
-      if (typeof setLobbyBattleDockStripHtml === "function") {
-        setLobbyBattleDockStripHtml(stripHtml);
-      } else {
-        stripBattle.innerHTML = stripHtml;
-      }
-    }
+    if (stripBattle && isBattleUiPhase()) stripBattle.innerHTML = stripHtml;
   }
-  if (isBattleUiPhase() && typeof syncLobbyBattleDockChrome === "function") {
-    syncLobbyBattleDockChrome(lobbyState, rosterOpts);
+  syncLobbyReturnTableButton();
+  if (show && typeof syncLobbyFighterAvatars === "function") {
+    syncLobbyFighterAvatars(lobbyState, rosterOpts);
   }
   if (timerSlot) {
     timerSlot.innerHTML = phase === "prep" && lobbyPrepTimerActive
@@ -539,9 +552,8 @@ function renderLobbyChrome(force = false) {
       : "";
   }
   if (isBattleUiPhase() && typeof queuePrewarmBattleInventoryPopover === "function") {
-    const dockOpen = typeof isLobbyBattleDockOpen === "function" && isLobbyBattleDockOpen();
     const popoverOpen = typeof isBattleInventoryPopoverOpen === "function" && isBattleInventoryPopoverOpen();
-    if (!isLobbyMode() || dockOpen || popoverOpen) {
+    if (!isLobbyMode() || popoverOpen) {
       queuePrewarmBattleInventoryPopover();
     }
   }
@@ -561,11 +573,21 @@ function bindLobbyRosterClicks() {
       e.preventDefault();
       const idx = Number(spectateBtn.dataset.lobbySpectate);
       if (Number.isFinite(idx)) setLobbySpectateMatch(idx);
+      return;
+    }
+    const fighterCard = e.target.closest("[data-lobby-fighter-card]");
+    if (fighterCard && isLobbyMode() && isBattleUiPhase() && !fighterCard.disabled) {
+      e.preventDefault();
+      const idx = Number(fighterCard.dataset.lobbySpectate);
+      if (Number.isFinite(idx)) setLobbySpectateMatch(idx);
     }
   };
-  document.getElementById("lobby-prep-chrome")?.addEventListener("pointerdown", onRosterPointerDown);
-  document.getElementById("lobby-battle-dock")?.addEventListener("pointerdown", onRosterPointerDown);
-  if (typeof bindLobbyBattleDock === "function") bindLobbyBattleDock();
+  document.getElementById("lobby-prep-roster-panel")?.addEventListener("pointerdown", onRosterPointerDown);
+  document.getElementById("lobby-battle-roster-bar")?.addEventListener("pointerdown", onRosterPointerDown);
+  document.getElementById("btn-lobby-return-table")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    returnToLobbyPlayerMatch();
+  });
 }
 
 function initLobbyRun() {
@@ -1674,6 +1696,7 @@ function renderPhase() {
   syncRunHudPhase();
   syncBattleHudVisibility();
   renderLobbyChrome();
+  if (typeof CombatLog?.syncCombatFeedPhase === "function") CombatLog.syncCombatFeedPhase();
   if (isLobbyMode() && isBattleUiPhase()) {
     if (typeof CombatLog?.hideTooltip === "function") CombatLog.hideTooltip();
   }
@@ -2615,49 +2638,126 @@ function maybePrepArcHoverSound(col, row) {
   PrepDragArc.syncHoverCell(col, row, kind);
 }
 
-function syncPrepDropPreviewHover(clientX, clientY, ghostClientX, ghostClientY) {
-  prepDropPreviewHover = null;
-  if (phase !== "prep" || !dragPayload) return;
-  const side = dragFrom?.side || prepViewSide;
-  if (!canEditPrepSide(side)) return;
-  const st = getSideState(side);
-
-  const applyBoardCoords = (coords) => {
-    if (!isOnBoard(coords.x, coords.y, side)) return false;
-    const col = xToCol(coords.x, side);
-    const row = yToRow(coords.y, side);
-    prepDropPreviewHover = { col, row };
-    if (isContainerItem(dragPayload.itemId)) {
-      hoverCell = { col, row };
-      hoverSlot = null;
-      return true;
-    }
-    if (isSlotCell(st.containers, col, row)) {
-      hoverSlot = { col, row };
-      hoverCell = null;
-      return true;
-    }
-    const placement = resolveLoadoutPlacementDisplacing(
-      st.containers,
-      dragPayload.itemId,
-      col,
-      row,
-      dragPayload.rotation || 0,
-    );
-    if (placement.valid) {
-      hoverSlot = { col, row };
-      hoverCell = null;
-      return true;
-    }
+function applyPrepBoardHoverFromCanvasXY(mx, my, side, st) {
+  if (!isOnBoard(mx, my, side)) return false;
+  const col = xToCol(mx, side);
+  const row = yToRow(my, side);
+  prepDropPreviewHover = { col, row };
+  if (isContainerItem(dragPayload.itemId)) {
     hoverCell = { col, row };
     hoverSlot = null;
     return true;
+  }
+  if (isSlotCell(st.containers, col, row)) {
+    hoverSlot = { col, row };
+    hoverCell = null;
+    return true;
+  }
+  const placement = resolveLoadoutPlacementDisplacing(
+    st.containers,
+    dragPayload.itemId,
+    col,
+    row,
+    dragPayload.rotation || 0,
+  );
+  if (placement.valid) {
+    hoverSlot = { col, row };
+    hoverCell = null;
+    return true;
+  }
+  hoverCell = { col, row };
+  hoverSlot = null;
+  return true;
+}
+
+function isPrepSidebarArcDrag() {
+  return dragFrom?.type === "shop" || dragFrom?.type === "bench";
+}
+
+function getPrepPlacementAnchorClient() {
+  if (phase !== "prep" || !dragPayload || !canvas) return null;
+  const side = dragFrom?.side || prepViewSide;
+  if (!canEditPrepSide(side)) return null;
+  const st = getSideState(side);
+  const placement = getPrepDropPlacement(st, side);
+  if (!placement) return null;
+  const team = prepViewSide;
+  const def = ITEM_CATALOG[dragPayload.itemId];
+  if (!def) return null;
+  const shape = rotateShape(def.shape, placement.rotation || 0);
+  if (!shape.length) return null;
+  let sx = 0;
+  let sy = 0;
+  shape.forEach(([dx, dy]) => {
+    const rect = cellRect(team, placement.col + dx, placement.row + dy);
+    sx += rect.x + rect.w / 2;
+    sy += rect.y + rect.h / 2;
+  });
+  return canvasPointToClient(sx / shape.length, sy / shape.length);
+}
+
+function getPrepArcGhostRotation() {
+  const rot = ((dragPayload?.rotation || 0) % 4 + 4) % 4;
+  return rot * 90;
+}
+
+function getPrepDragGhostClientPos(clientX, clientY) {
+  const placementAnchor = getPrepPlacementAnchorClient();
+  if (isPrepSidebarArcDrag() && placementAnchor) {
+    return { x: placementAnchor.x, y: placementAnchor.y, rotation: getPrepArcGhostRotation() };
+  }
+  const anchor = getDragGhostAnchorClient(clientX, clientY);
+  if (phase === "prep"
+    && isPrepArcDragSource()
+    && typeof PrepDragArc !== "undefined"
+    && PrepDragArc.isActive()) {
+    return PrepDragArc.resolveGhostPosition(clientX, clientY, anchor.x, anchor.y);
+  }
+  return { x: anchor.x, y: anchor.y, rotation: 0 };
+}
+
+function syncPrepDragBoardHover(clientX, clientY, ghostClientX, ghostClientY) {
+  prepDropPreviewHover = null;
+  if (phase !== "prep" || !dragPayload) return;
+  const side = dragFrom?.side || prepViewSide;
+  if (!canEditPrepSide(side)) {
+    hoverCell = null;
+    hoverSlot = null;
+    return;
+  }
+  const st = getSideState(side);
+
+  const tryClient = (cx, cy) => {
+    const coords = canvasCoordsFromClient(cx, cy);
+    return applyPrepBoardHoverFromCanvasXY(coords.x, coords.y, side, st);
   };
 
-  if (applyBoardCoords(canvasCoordsFromClient(clientX, clientY))) return;
-  if (typeof PrepDragArc !== "undefined" && PrepDragArc.isActive() && isPrepArcDragSource()) {
-    applyBoardCoords(canvasCoordsFromClient(ghostClientX, ghostClientY));
+  if (tryClient(clientX, clientY)) {
+    maybePrepArcHoverSound(hoverSlot?.col ?? hoverCell?.col, hoverSlot?.row ?? hoverCell?.row);
+    return;
   }
+  if (!isPrepSidebarArcDrag() && ghostClientX != null && ghostClientY != null && tryClient(ghostClientX, ghostClientY)) {
+    maybePrepArcHoverSound(hoverSlot?.col ?? hoverCell?.col, hoverSlot?.row ?? hoverCell?.row);
+    return;
+  }
+  if (typeof PrepDragArc !== "undefined" && PrepDragArc.isActive() && isPrepArcDragSource()) {
+    const anchor = getDragGhostAnchorClient(clientX, clientY);
+    if (tryClient(anchor.x, anchor.y)) {
+      maybePrepArcHoverSound(hoverSlot?.col ?? hoverCell?.col, hoverSlot?.row ?? hoverCell?.row);
+      return;
+    }
+  }
+
+  hoverCell = null;
+  hoverSlot = null;
+  if (typeof PrepDragArc !== "undefined" && PrepDragArc.isActive()) {
+    PrepDragArc.syncHoverCell(null, null);
+  }
+}
+
+/** @deprecated use syncPrepDragBoardHover */
+function syncPrepDropPreviewHover(clientX, clientY, ghostClientX, ghostClientY) {
+  syncPrepDragBoardHover(clientX, clientY, ghostClientX, ghostClientY);
 }
 
 function getPrepDropPlacement(st, side = prepViewSide) {
@@ -2712,7 +2812,9 @@ function getPrepDropPlacement(st, side = prepViewSide) {
     row,
     dragPayload.rotation || 0,
   );
-  if (!placement.valid) return null;
+  if (!placement.valid) {
+    return buildInvalidItemDropPreview(dragPayload.itemId, col, row, dragPayload.rotation || 0);
+  }
   const displaced = getOverlappingLoadoutItems(
     st.items,
     dragPayload.itemId,
@@ -2733,6 +2835,37 @@ function getPrepDropPlacement(st, side = prepViewSide) {
     valid: slotOk && benchOk,
     displaced,
   };
+}
+
+function buildInvalidItemDropPreview(itemId, hoverCol, hoverRow, rotation) {
+  const def = ITEM_CATALOG[itemId];
+  if (!def || def.isContainer) return null;
+  const rot = ((rotation || 0) % 4 + 4) % 4;
+  const shape = rotateShape(def.shape, rot);
+  let best = null;
+  let bestScore = -1;
+  for (const [dx, dy] of shape) {
+    const col = hoverCol - dx;
+    const row = hoverRow - dy;
+    let score = 0;
+    for (const [sx, sy] of shape) {
+      const c = col + sx;
+      const r = row + sy;
+      if (c >= 0 && c < GRID_COLS && r >= 0 && r < GRID_ROWS) score += 1;
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      best = {
+        kind: "item",
+        col,
+        row,
+        rotation: rot,
+        valid: false,
+        displaced: [],
+      };
+    }
+  }
+  return best;
 }
 
 function getPrepArcSidebarAnchorClient(clientX, clientY) {
@@ -3100,8 +3233,7 @@ function startBattle() {
       renderFightButton();
       renderLobbyChrome();
       if (typeof queuePrewarmBattleInventoryPopover === "function") {
-        const dockOpen = typeof isLobbyBattleDockOpen === "function" && isLobbyBattleDockOpen();
-        if (!isLobbyMode() || dockOpen) {
+        if (!isLobbyMode()) {
           queuePrewarmBattleInventoryPopover();
         }
       }
@@ -3547,6 +3679,13 @@ function tickLobbyRoundBattles(dt, ts) {
     renderBattleStats();
     renderPlayerProfiles();
     if (typeof refreshBattleInventoryPopover === "function") refreshBattleInventoryPopover();
+    if (typeof syncLobbyFighterAvatars === "function" && lobbyState) {
+      syncLobbyFighterAvatars(lobbyState, {
+        phase: "battle",
+        spectateMatchId: lobbySpectateMatchId,
+        matches: lobbyMatches,
+      });
+    }
   }
   if (Math.floor(ts / 400) !== Math.floor((ts - dt * 1000) / 400)) {
     if (!tickLobbyRoundBattles._lastChromeAt || ts - tickLobbyRoundBattles._lastChromeAt >= 400) {
@@ -3566,7 +3705,6 @@ function tickLobbyRoundBattles(dt, ts) {
 function cleanupLobbyRoundTransition() {
   if (typeof clearBattleInventoryPopoverCache === "function") clearBattleInventoryPopoverCache();
   if (typeof closeBattleInventoryPopover === "function") closeBattleInventoryPopover();
-  if (typeof setLobbyBattleDockOpen === "function") setLobbyBattleDockOpen(false);
 }
 
 function finishLobbyRoundFromContinue() {
@@ -4084,6 +4222,8 @@ function syncDragGhostOverlay(clientX, clientY) {
   const el = getDragGhostCanvas();
   if (!el || !dragGhostCtx) return;
 
+  const placementAnchor = getPrepPlacementAnchorClient();
+  const sidebarDrag = isPrepSidebarArcDrag();
   const anchor = getDragGhostAnchorClient(clientX, clientY);
   let ghostX = anchor.x;
   let ghostY = anchor.y;
@@ -4094,14 +4234,26 @@ function syncDragGhostOverlay(clientX, clientY) {
     && typeof PrepDragArc !== "undefined"
     && PrepDragArc.isActive()) {
     PrepDragArc.mountGhostToBody();
-    const arcPos = PrepDragArc.resolveGhostPosition(clientX, clientY, anchor.x, anchor.y);
-    ghostX = arcPos.x;
-    ghostY = arcPos.y;
-    arcRotation = arcPos.rotation;
-    PrepDragArc.sync(clientX, clientY, anchor.x, anchor.y, {
-      dropState: getPrepArcDropState(),
-      itemId: dragPayload.itemId,
-    });
+    if (sidebarDrag && placementAnchor) {
+      ghostX = placementAnchor.x;
+      ghostY = placementAnchor.y;
+      arcRotation = getPrepArcGhostRotation();
+      PrepDragArc.sync(clientX, clientY, clientX, clientY, {
+        linkPoint: placementAnchor,
+        dropState: getPrepArcDropState(),
+        itemId: dragPayload.itemId,
+      });
+    } else {
+      const arcPos = PrepDragArc.resolveGhostPosition(clientX, clientY, anchor.x, anchor.y);
+      ghostX = arcPos.x;
+      ghostY = arcPos.y;
+      arcRotation = arcPos.rotation;
+      PrepDragArc.sync(clientX, clientY, anchor.x, anchor.y, {
+        dropState: getPrepArcDropState(),
+        itemId: dragPayload.itemId,
+        linkPoint: null,
+      });
+    }
     el.classList.add("ui-drag-ghost--arc-flight");
   } else {
     el.classList.remove("ui-drag-ghost--arc-flight");
@@ -4130,7 +4282,6 @@ function syncDragGhostOverlay(clientX, clientY) {
   if (typeof applyPrepDragGhostStyles === "function") {
     applyPrepDragGhostStyles(el, arcRotation);
   }
-  syncPrepDropPreviewHover(clientX, clientY, ghostX, ghostY);
 }
 
 function updatePointerFromClient(clientX, clientY) {
@@ -4149,22 +4300,9 @@ function updatePointerFromClient(clientX, clientY) {
     updatePendingBenchDrag(synthetic);
     updatePendingCanvasPick(clientX, clientY);
     const side = dragPayload && dragFrom?.side ? dragFrom.side : prepViewSide;
-    const st = getSideState(side);
-    if (dragPayload && canEditPrepSide(side) && isOnBoard(mousePos.x, mousePos.y, side)) {
-      const col = xToCol(mousePos.x, side);
-      const row = yToRow(mousePos.y, side);
-      if (isContainerItem(dragPayload.itemId)) {
-        hoverCell = { col, row };
-      } else if (isSlotCell(st.containers, col, row)) {
-        hoverSlot = { col, row };
-      } else {
-        hoverCell = { col, row };
-      }
-      if (typeof PrepDragArc !== "undefined" && PrepDragArc.isActive()) {
-        maybePrepArcHoverSound(col, row);
-      }
-    } else if (dragPayload && typeof PrepDragArc !== "undefined" && PrepDragArc.isActive()) {
-      PrepDragArc.syncHoverCell(null, null);
+    if (dragPayload && canEditPrepSide(side)) {
+      syncPrepDragBoardHover(clientX, clientY, clientX, clientY);
+      if (typeof window.syncFxCanvasGeometry === "function") window.syncFxCanvasGeometry();
     }
 
     const overSidebar = isPointerOverPrepSidebar(clientX, clientY);
@@ -4345,6 +4483,10 @@ function drawWorldLayer() {
     if (typeof drawPrepSynergyEnhancements === "function") {
       drawPrepSynergyEnhancements(ctx, synergyAnimTime, side, st.items);
     }
+    if (canEditPrepSide(side) && dragPayload && getPrepDropPlacement(st, side)) {
+      if (typeof drawPrepDropPreview === "function") drawPrepDropPreview(ctx, side, st);
+      else drawDropPreview(ctx);
+    }
     ctx.restore();
   } else if (isBattleUiPhase()) {
     const viewState = getDisplayBattleState();
@@ -4397,10 +4539,6 @@ function drawFxLayer() {
     drawDisplaceAnimations(fxCtx, side);
     if (canEditPrepSide() && hoverSlot && !dragPayload && !gamepadBoardFocus) drawHoverCell();
     if (canEditPrepSide() && gamepadBoardFocus && isGamepadInteraction()) drawGamepadBoardFocus();
-    if (canEditPrepSide() && dragPayload && getPrepDropPlacement(st, side)) {
-      if (typeof drawPrepDropPreview === "function") drawPrepDropPreview(fxCtx, side, st);
-      else drawDropPreview();
-    }
     if (typeof drawPrepCellReactions === "function") drawPrepCellReactions(fxCtx, side);
     fxCtx.restore();
     return;
@@ -4648,8 +4786,8 @@ function drawHoverCell() {
   fxCtx.fill();
 }
 
-function drawDropPreview() {
-  if (!dragPayload || !fxCtx) return;
+function drawDropPreview(targetCtx = fxCtx) {
+  if (!dragPayload || !targetCtx) return;
   const team = prepViewSide;
   const st = getSideState(team);
   if (isContainerItem(dragPayload.itemId) && hoverCell) {
@@ -4667,9 +4805,9 @@ function drawDropPreview() {
     );
     rotateShape(ITEM_CATALOG[dragPayload.itemId].shape, dragPayload.rotation || 0).forEach(([dx, dy]) => {
       const { x, y, w, h } = cellRect(team, hoverCell.col + dx, hoverCell.row + dy);
-      fxCtx.fillStyle = valid ? "rgba(63,185,80,0.4)" : "rgba(248,81,73,0.4)";
+      targetCtx.fillStyle = valid ? "rgba(63,185,80,0.4)" : "rgba(248,81,73,0.4)";
       roundRect(x + 2, y + 2, w - 4, h - 4, 4);
-      fxCtx.fill();
+      targetCtx.fill();
     });
     return;
   }
@@ -4700,16 +4838,16 @@ function drawDropPreview() {
   const valid = placement.valid && benchOk && slotOk;
   rotateShape(ITEM_CATALOG[dragPayload.itemId].shape, placement.rotation).forEach(([dx, dy]) => {
     const { x, y, w, h } = cellRect(team, placement.col + dx, placement.row + dy);
-    fxCtx.fillStyle = valid ? "rgba(63,185,80,0.45)" : "rgba(248,81,73,0.45)";
+    targetCtx.fillStyle = valid ? "rgba(63,185,80,0.45)" : "rgba(248,81,73,0.45)";
     roundRect(x + 2, y + 2, w - 4, h - 4, 4);
-    fxCtx.fill();
+    targetCtx.fill();
   });
   displaced.forEach((item) => {
     getItemCells(item).forEach(([c, r]) => {
       const { x, y, w, h } = cellRect(team, c, r);
-      fxCtx.fillStyle = valid ? "rgba(210,153,34,0.35)" : "rgba(248,81,73,0.25)";
+      targetCtx.fillStyle = valid ? "rgba(210,153,34,0.35)" : "rgba(248,81,73,0.25)";
       roundRect(x + 2, y + 2, w - 4, h - 4, 4);
-      fxCtx.fill();
+      targetCtx.fill();
     });
   });
 }

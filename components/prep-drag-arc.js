@@ -55,7 +55,12 @@ const PrepDragArc = (() => {
   let lastFrameTs = 0;
   let burstT = 0;
   let audioCtx = null;
-  let lastHoverCellKey = null;
+  let lastPointerX = 0;
+  let lastPointerY = 0;
+  let lastLinkPoint = null;
+  let linkHaloPathEl = null;
+  let linkCorePathEl = null;
+  let linkAnchorEl = null;
 
   let smoothTo = null;
   let smoothC1 = null;
@@ -210,6 +215,9 @@ const PrepDragArc = (() => {
         <circle class="prep-drag-arc-spark" r="3"/>
         <circle class="prep-drag-arc-anchor prep-drag-arc-anchor--source" fill="none"/>
         <circle class="prep-drag-arc-anchor prep-drag-arc-anchor--target" fill="none"/>
+        <path class="prep-drag-arc-link-halo" fill="none"/>
+        <path class="prep-drag-arc-link-core" fill="none"/>
+        <circle class="prep-drag-arc-anchor prep-drag-arc-anchor--link" fill="none"/>
         <circle class="prep-drag-arc-burst" fill="none" opacity="0"/>
       `;
       document.body.appendChild(layerEl);
@@ -221,6 +229,9 @@ const PrepDragArc = (() => {
     sparkEl = layerEl.querySelector(".prep-drag-arc-spark");
     sourceAnchorEl = layerEl.querySelector(".prep-drag-arc-anchor--source");
     targetAnchorEl = layerEl.querySelector(".prep-drag-arc-anchor--target");
+    linkHaloPathEl = layerEl.querySelector(".prep-drag-arc-link-halo");
+    linkCorePathEl = layerEl.querySelector(".prep-drag-arc-link-core");
+    linkAnchorEl = layerEl.querySelector(".prep-drag-arc-anchor--link");
     burstEl = layerEl.querySelector(".prep-drag-arc-burst");
     trailGroupEl = layerEl.querySelector(".prep-drag-arc-trail");
     particleGroupEl = layerEl.querySelector(".prep-drag-arc-particles");
@@ -394,6 +405,56 @@ const PrepDragArc = (() => {
     return { from, to: smoothTo, controls: { c1: smoothC1, c2: smoothC2 } };
   }
 
+  function renderLinkArc(pointer, placement, pulseA, pulseB) {
+    if (!linkHaloPathEl || !linkCorePathEl) return;
+    if (!placement || !pointer) {
+      linkHaloPathEl.removeAttribute("d");
+      linkCorePathEl.removeAttribute("d");
+      linkAnchorEl?.setAttribute("r", "0");
+      return;
+    }
+
+    const from = { x: pointer.x, y: pointer.y };
+    const to = { x: placement.x, y: placement.y };
+    const span = Math.hypot(to.x - from.x, to.y - from.y);
+    if (span < 10) {
+      linkHaloPathEl.removeAttribute("d");
+      linkCorePathEl.removeAttribute("d");
+      linkAnchorEl?.setAttribute("r", "0");
+      return;
+    }
+
+    const { c1, c2 } = arcControls(from, to, viewportMin() * 0.72);
+    const d = pathD(from, c1, c2, to);
+    const dashPeriod = 3.5 + pulseB;
+    const dashGap = 5.5 + pulseA;
+    const dashPattern = `${dashPeriod.toFixed(1)} ${dashGap.toFixed(1)}`;
+    const dashOffset = -pulsePhase * (DASH_OFFSET_SCALE * 1.15);
+
+    linkHaloPathEl.setAttribute("d", d);
+    linkCorePathEl.setAttribute("d", d);
+    linkHaloPathEl.setAttribute("stroke", `rgba(168, 205, 255, ${(0.14 + pulseA * 0.1).toFixed(3)})`);
+    linkHaloPathEl.setAttribute("stroke-width", String(5 + pulseA * 2.2));
+    linkHaloPathEl.setAttribute("stroke-dasharray", dashPattern);
+    linkHaloPathEl.setAttribute("stroke-dashoffset", String(dashOffset));
+    const linkStroke = dropState === "valid"
+      ? "rgba(130, 230, 160, 0.72)"
+      : dropState === "invalid"
+        ? "rgba(255, 140, 130, 0.62)"
+        : "rgba(190, 225, 255, 0.68)";
+    linkCorePathEl.setAttribute("stroke", linkStroke);
+    linkCorePathEl.setAttribute("stroke-dasharray", dashPattern);
+    linkCorePathEl.setAttribute("stroke-dashoffset", String(dashOffset));
+    linkCorePathEl.style.opacity = String(0.42 + pulseB * 0.16);
+
+    if (linkAnchorEl) {
+      linkAnchorEl.setAttribute("cx", to.x.toFixed(1));
+      linkAnchorEl.setAttribute("cy", to.y.toFixed(1));
+      linkAnchorEl.setAttribute("r", String(6 + pulseB * 2.5));
+      linkAnchorEl.setAttribute("stroke-width", "1.6");
+    }
+  }
+
   function renderArc(geom, progress, dt) {
     ensureLayer();
     syncLayerSize();
@@ -448,6 +509,17 @@ const PrepDragArc = (() => {
     renderTrail(dt);
     tickParticles(dt, d);
     renderBurst(dt);
+
+    if (lastLinkPoint) {
+      renderLinkArc(
+        { x: lastPointerX, y: lastPointerY },
+        lastLinkPoint,
+        pulseA,
+        pulseB,
+      );
+    } else {
+      renderLinkArc(null, null, pulseA, pulseB);
+    }
 
     layerEl.style.setProperty("--prep-arc-pulse", String(pulseA));
     layerEl.classList.remove("hidden");
@@ -536,6 +608,13 @@ const PrepDragArc = (() => {
 
   function sync(clientX, clientY, targetX, targetY, opts = {}) {
     if (!active) return;
+    lastPointerX = clientX;
+    lastPointerY = clientY;
+    if (opts.linkPoint) {
+      lastLinkPoint = { x: opts.linkPoint.x, y: opts.linkPoint.y };
+    } else {
+      lastLinkPoint = null;
+    }
     if (opts.dropState) dropState = opts.dropState;
     if (opts.itemId) itemId = opts.itemId;
     const pos = resolveGhostPosition(clientX, clientY, targetX, targetY);
@@ -572,6 +651,7 @@ const PrepDragArc = (() => {
     trail.length = 0;
     particles.length = 0;
     lastHoverCellKey = null;
+    lastLinkPoint = null;
     if (rafId != null) {
       cancelAnimationFrame(rafId);
       rafId = null;

@@ -57,6 +57,17 @@ const CombatLog = (() => {
   let toolbarBtn;
   let dockEl;
   let feedTooltipActive = false;
+  /** @type {Array<object>} */
+  const deferredEvents = [];
+
+  function isCombatFeedPhaseActive() {
+    const ph = document.getElementById("app")?.dataset.phase;
+    return ph === "prep";
+  }
+
+  function isCombatFeedVisible() {
+    return enabled && isCombatFeedPhaseActive();
+  }
 
   function bracketItemName(name) {
     const label = String(name || "").trim();
@@ -259,11 +270,23 @@ const CombatLog = (() => {
 
   function syncVisibility() {
     if (!rootEl) return;
-    const hidden = !enabled;
+    const hidden = !isCombatFeedVisible();
     rootEl.classList.toggle("combat-feed--hidden", hidden);
     rootEl.setAttribute("aria-hidden", hidden ? "true" : "false");
     if (dockEl) dockEl.classList.toggle("combat-feed-dock--hidden", hidden);
     if (toolbarBtn) toolbarBtn.disabled = hidden;
+  }
+
+  function flushDeferredEvents() {
+    if (!isCombatFeedPhaseActive() || !enabled || !deferredEvents.length) return;
+    const batch = deferredEvents.splice(0);
+    batch.forEach((payload) => addEventCore(payload));
+  }
+
+  function syncCombatFeedPhase() {
+    if (!isCombatFeedPhaseActive()) hideFeedHint();
+    syncVisibility();
+    flushDeferredEvents();
   }
 
   function syncCollapsedUi() {
@@ -359,7 +382,7 @@ const CombatLog = (() => {
     autoScroll = dist <= COMBAT_FEED_CONFIG.scrollBottomThreshold;
   }
 
-  function addEvent(payload = {}) {
+  function addEventCore(payload = {}) {
     const type = payload.type || "neutral";
     const text = String(payload.text || "").trim();
     if (!text) return;
@@ -404,6 +427,17 @@ const CombatLog = (() => {
     }
   }
 
+  function addEvent(payload = {}) {
+    if (!isCombatFeedPhaseActive()) {
+      const text = String(payload.text || "").trim();
+      if (!text) return;
+      deferredEvents.push(payload);
+      while (deferredEvents.length > 24) deferredEvents.shift();
+      return;
+    }
+    addEventCore(payload);
+  }
+
   function mapBattleEntry(entry) {
     const msg = entry.message || "";
     if (!msg) return null;
@@ -440,8 +474,9 @@ const CombatLog = (() => {
   }
 
   function ingestBattleLog(entry) {
+    if (!isCombatFeedPhaseActive()) return;
     const mapped = mapBattleEntry(entry);
-    if (mapped) addEvent(mapped);
+    if (mapped) addEventCore(mapped);
   }
 
   function trackSynergies(items) {
@@ -607,6 +642,7 @@ const CombatLog = (() => {
     onExternalTooltipHide,
     isEnabled,
     setEnabled,
+    syncCombatFeedPhase,
     init: initCombatFeed,
   };
 })();

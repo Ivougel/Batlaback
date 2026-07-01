@@ -58,6 +58,34 @@
   stroke: rgba(255, 130, 120, 0.5);
 }
 
+.prep-drag-arc-anchor--link {
+  stroke: rgba(190, 225, 255, 0.58);
+  fill: rgba(150, 200, 255, 0.1);
+}
+
+.prep-drag-arc-link-halo {
+  stroke-linecap: round;
+  mix-blend-mode: screen;
+}
+
+.prep-drag-arc-link-core {
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 3px rgba(148, 188, 230, 0.28));
+}
+
+.prep-drag-arc-layer--valid .prep-drag-arc-anchor--link {
+  stroke: rgba(120, 220, 150, 0.62);
+  fill: rgba(100, 210, 140, 0.12);
+}
+
+.prep-drag-arc-layer--invalid .prep-drag-arc-anchor--link {
+  stroke: rgba(255, 130, 120, 0.55);
+  fill: rgba(255, 100, 90, 0.08);
+}
+
+.prep-drag-arc-layer--fade .prep-drag-arc-link-halo,
+.prep-drag-arc-layer--fade .prep-drag-arc-link-core,
+.prep-drag-arc-layer--fade .prep-drag-arc-anchor--link,
 .prep-drag-arc-layer--fade .prep-drag-arc-halo,
 .prep-drag-arc-layer--fade .prep-drag-arc-flow,
 .prep-drag-arc-layer--fade .prep-drag-arc-core,
