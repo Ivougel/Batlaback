@@ -44,17 +44,21 @@ const InventoryAnimationController = (() => {
     dragVelY = 0;
   }
 
-  function applyDragGhostStyles(el, arcRotation = null) {
+  function applyDragGhostStyles(el, arcRotation = null, opts = {}) {
     if (!el) return;
+    const fullSize = !!opts.fullSize;
     const speed = Math.hypot(dragVelX, dragVelY);
-    const scale = 1.05 + Math.min(0.05, speed * 0.0018);
+    const scale = fullSize
+      ? 1
+      : 1.05 + Math.min(0.05, speed * 0.0018);
     const tilt = arcRotation != null
-      ? arcRotation * 0.35
+      ? (fullSize ? arcRotation : arcRotation * 0.35)
       : Math.max(-10, Math.min(10, dragVelX * 0.12));
     el.style.transform = `translate(-50%, -50%) scale(${scale}) rotate(${tilt}deg)`;
-    el.style.filter =
-      "drop-shadow(0 10px 22px rgba(0,0,0,0.55)) drop-shadow(0 3px 8px rgba(0,0,0,0.35))";
-    el.style.opacity = "0.96";
+    el.style.filter = fullSize
+      ? "drop-shadow(0 8px 20px rgba(0,0,0,0.5)) drop-shadow(0 2px 6px rgba(0,0,0,0.35))"
+      : "drop-shadow(0 10px 22px rgba(0,0,0,0.55)) drop-shadow(0 3px 8px rgba(0,0,0,0.35))";
+    el.style.opacity = fullSize ? "1" : "0.96";
   }
 
   function resetDragGhostStyles(el) {
@@ -373,7 +377,11 @@ const InventoryAnimationController = (() => {
       });
     });
 
-    drawPlacementFigureShadow(ctx, team, placementInfo);
+    const showFigure = typeof shouldDrawPrepGridFigurePreview !== "function"
+      || shouldDrawPrepGridFigurePreview();
+    if (showFigure) {
+      drawPlacementFigureShadow(ctx, team, placementInfo);
+    }
   }
 
   function tick(dt) {
@@ -438,8 +446,8 @@ function onPrepDragEnd() {
   InventoryAnimationController.resetDragGhostStyles(getDragGhostCanvas?.());
 }
 
-function applyPrepDragGhostStyles(el, arcRotation = null) {
-  InventoryAnimationController.applyDragGhostStyles(el, arcRotation);
+function applyPrepDragGhostStyles(el, arcRotation = null, opts = {}) {
+  InventoryAnimationController.applyDragGhostStyles(el, arcRotation, opts);
 }
 
 function notifyPrepItemPlaced(item, def) {

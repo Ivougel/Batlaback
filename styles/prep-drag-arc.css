@@ -130,7 +130,7 @@
 }
 
 .ui-drag-ghost--remote-hold {
-  opacity: 0.94;
+  opacity: 1 !important;
 }
 
 .prep-drag-ghost-trail {

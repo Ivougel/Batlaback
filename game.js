@@ -2674,6 +2674,76 @@ function isPrepSidebarArcDrag() {
   return dragFrom?.type === "shop" || dragFrom?.type === "bench";
 }
 
+function shouldDrawPrepGridFigurePreview() {
+  return !isPrepSidebarArcDrag();
+}
+
+function getPrepGhostCanvasScale() {
+  if (!canvas || canvas.width <= 0) return 1;
+  const rect = canvas.getBoundingClientRect();
+  if (rect.width <= 0) return 1;
+  return rect.width / canvas.width;
+}
+
+function getPrepRemoteHoldGhostLayout(def, rotation) {
+  const shape = rotateShape(def.shape, rotation || 0);
+  if (!shape.length) return null;
+  let maxDx = 0;
+  let maxDy = 0;
+  shape.forEach(([dx, dy]) => {
+    maxDx = Math.max(maxDx, dx);
+    maxDy = Math.max(maxDy, dy);
+  });
+  const stride = GRID_STRIDE;
+  const cell = layoutCell;
+  const margin = CELL_TILE_PAD * 2;
+  const logicalW = (maxDx + 1) * stride + margin;
+  const logicalH = (maxDy + 1) * stride + margin;
+  const scale = getPrepGhostCanvasScale();
+  return {
+    shape,
+    stride,
+    cell,
+    logicalW,
+    logicalH,
+    clientW: logicalW * scale,
+    clientH: logicalH * scale,
+    scale,
+  };
+}
+
+function drawPrepRemoteHoldGhost(targetCtx, def, itemId, rotation, layout) {
+  const ghostItem = {
+    itemId,
+    col: 0,
+    row: 0,
+    rotation: rotation || 0,
+    uid: "__prep-remote-ghost__",
+  };
+  const { stride, cell } = layout;
+  const cellRectFn = (c, r) => ({
+    x: CELL_TILE_PAD + c * stride,
+    y: CELL_TILE_PAD + r * stride,
+    w: cell,
+    h: cell,
+  });
+
+  getItemCells(ghostItem).forEach(([c, r]) => {
+    const { x, y, w, h } = cellRectFn(c, r);
+    targetCtx.fillStyle = `${def.color}dd`;
+    roundRect(x + CELL_TILE_PAD, y + CELL_TILE_PAD, w - CELL_TILE_PAD * 2, h - CELL_TILE_PAD * 2, 5, targetCtx);
+    targetCtx.fill();
+    targetCtx.strokeStyle = RARITY_COLORS[def.rarity] || "#8b949e";
+    targetCtx.lineWidth = 1.5;
+    roundRect(x + CELL_TILE_PAD, y + CELL_TILE_PAD, w - CELL_TILE_PAD * 2, h - CELL_TILE_PAD * 2, 5, targetCtx);
+    targetCtx.stroke();
+  });
+  drawPlacedItemIcons(targetCtx, def, ghostItem, cellRectFn);
+  if (typeof drawItemSocketVisuals === "function") {
+    drawItemSocketVisuals(targetCtx, ghostItem, def, cellRectFn);
+  }
+}
+
 function getPrepPlacementAnchorClient() {
   if (phase !== "prep" || !dragPayload || !canvas) return null;
   const side = dragFrom?.side || prepViewSide;
@@ -4334,24 +4404,51 @@ function syncDragGhostOverlay(clientX, clientY) {
   el.style.left = `${ghostX}px`;
   el.style.top = `${ghostY}px`;
 
-  const size = DRAG_GHOST_CANVAS_SIZE;
+  const def = ITEM_CATALOG[dragPayload.itemId];
+  if (!def) return;
+
+  const remoteHoldGhost = sidebarDrag
+    && phase === "prep"
+    && typeof PrepDragArc !== "undefined"
+    && PrepDragArc.isActive();
+  const ghostLayout = remoteHoldGhost
+    ? getPrepRemoteHoldGhostLayout(def, dragPayload.rotation || 0)
+    : null;
   const dpr = window.devicePixelRatio || 1;
-  if (el.width !== Math.ceil(size * dpr) || el.height !== Math.ceil(size * dpr)) {
-    el.width = Math.ceil(size * dpr);
-    el.height = Math.ceil(size * dpr);
-    el.style.width = `${size}px`;
-    el.style.height = `${size}px`;
+  let sizeW;
+  let sizeH;
+  if (ghostLayout) {
+    sizeW = Math.ceil(ghostLayout.clientW);
+    sizeH = Math.ceil(ghostLayout.clientH);
+  } else {
+    sizeW = DRAG_GHOST_CANVAS_SIZE;
+    sizeH = DRAG_GHOST_CANVAS_SIZE;
+  }
+  if (el.width !== Math.ceil(sizeW * dpr) || el.height !== Math.ceil(sizeH * dpr)) {
+    el.width = Math.ceil(sizeW * dpr);
+    el.height = Math.ceil(sizeH * dpr);
+    el.style.width = `${sizeW}px`;
+    el.style.height = `${sizeH}px`;
   }
 
   dragGhostCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  dragGhostCtx.clearRect(0, 0, size, size);
+  dragGhostCtx.clearRect(0, 0, sizeW, sizeH);
 
-  const def = ITEM_CATALOG[dragPayload.itemId];
-  if (!def) return;
-  const offset = uiPx(10);
-  drawItemPreview(offset, offset, def, dragPayload.itemId, true, dragPayload.rotation || 0, dragGhostCtx);
+  if (ghostLayout) {
+    dragGhostCtx.scale(ghostLayout.scale, ghostLayout.scale);
+    drawPrepRemoteHoldGhost(
+      dragGhostCtx,
+      def,
+      dragPayload.itemId,
+      dragPayload.rotation || 0,
+      ghostLayout,
+    );
+  } else {
+    const offset = uiPx(10);
+    drawItemPreview(offset, offset, def, dragPayload.itemId, true, dragPayload.rotation || 0, dragGhostCtx);
+  }
   if (typeof applyPrepDragGhostStyles === "function") {
-    applyPrepDragGhostStyles(el, arcRotation);
+    applyPrepDragGhostStyles(el, arcRotation, { fullSize: !!ghostLayout });
   }
 }
 
