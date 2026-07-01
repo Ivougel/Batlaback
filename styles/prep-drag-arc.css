@@ -83,7 +83,30 @@
   fill: rgba(255, 100, 90, 0.08);
 }
 
-.prep-drag-arc-layer--fade .prep-drag-arc-link-halo,
+.prep-drag-arc-grab-ring {
+  stroke: rgba(190, 225, 255, 0.55);
+  fill: rgba(140, 190, 255, 0.1);
+  filter: drop-shadow(0 0 4px rgba(160, 210, 255, 0.35));
+}
+
+.prep-drag-arc-grab-emoji {
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  user-select: none;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.45));
+}
+
+.prep-drag-arc-layer--valid .prep-drag-arc-grab-ring {
+  stroke: rgba(120, 220, 150, 0.62);
+  fill: rgba(100, 210, 140, 0.12);
+}
+
+.prep-drag-arc-layer--invalid .prep-drag-arc-grab-ring {
+  stroke: rgba(255, 130, 120, 0.55);
+  fill: rgba(255, 100, 90, 0.08);
+}
+
+.prep-drag-arc-layer--fade .prep-drag-arc-grab,
 .prep-drag-arc-layer--fade .prep-drag-arc-link-core,
 .prep-drag-arc-layer--fade .prep-drag-arc-anchor--link,
 .prep-drag-arc-layer--fade .prep-drag-arc-halo,
@@ -104,6 +127,10 @@
     drop-shadow(0 0 calc(4px + var(--prep-arc-pulse, 0.5) * 5px) rgba(168, 120, 255, 0.28))
     drop-shadow(0 0 calc(8px + var(--prep-arc-pulse, 0.5) * 7px) rgba(126, 232, 250, 0.18))
     drop-shadow(0 6px 14px rgba(0, 0, 0, 0.4)) !important;
+}
+
+.ui-drag-ghost--remote-hold {
+  opacity: 0.94;
 }
 
 .prep-drag-ghost-trail {

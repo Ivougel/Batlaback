@@ -4240,9 +4240,25 @@ function syncDragGhostOverlay(clientX, clientY) {
       arcRotation = getPrepArcGhostRotation();
       PrepDragArc.sync(clientX, clientY, clientX, clientY, {
         linkPoint: placementAnchor,
+        grabAtPointer: true,
+        remoteHold: true,
         dropState: getPrepArcDropState(),
         itemId: dragPayload.itemId,
       });
+      el.classList.add("ui-drag-ghost--arc-flight", "ui-drag-ghost--remote-hold");
+      el.classList.remove("hidden");
+    } else if (sidebarDrag) {
+      PrepDragArc.sync(clientX, clientY, clientX, clientY, {
+        grabAtPointer: true,
+        remoteHold: false,
+        linkPoint: null,
+        dropState: getPrepArcDropState(),
+        itemId: dragPayload.itemId,
+      });
+      el.classList.add("ui-drag-ghost--arc-flight");
+      el.classList.remove("ui-drag-ghost--remote-hold");
+      el.classList.add("hidden");
+      return;
     } else {
       const arcPos = PrepDragArc.resolveGhostPosition(clientX, clientY, anchor.x, anchor.y);
       ghostX = arcPos.x;
@@ -4253,10 +4269,11 @@ function syncDragGhostOverlay(clientX, clientY) {
         itemId: dragPayload.itemId,
         linkPoint: null,
       });
+      el.classList.add("ui-drag-ghost--arc-flight");
+      el.classList.remove("ui-drag-ghost--remote-hold");
     }
-    el.classList.add("ui-drag-ghost--arc-flight");
   } else {
-    el.classList.remove("ui-drag-ghost--arc-flight");
+    el.classList.remove("ui-drag-ghost--arc-flight", "ui-drag-ghost--remote-hold");
   }
 
   el.classList.remove("hidden");
