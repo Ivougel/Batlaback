@@ -584,7 +584,9 @@ function getMenuContext() {
   if (gpHandlers?.isPopupOpen?.("overlay")) return "runComplete";
   if (gpHandlers?.isPopupOpen?.("class-overlay")) {
     if (!document.getElementById("class-step-mode")?.classList.contains("hidden")) return "classMode";
-    if (!document.getElementById("class-step-player")?.classList.contains("hidden")) return "classPlayer";
+    if (!document.getElementById("class-step-player")?.classList.contains("hidden")) {
+      return gpHandlers?.getSelectedGameMode?.() === "lobby" ? "classPlayerLobby" : "classPlayer";
+    }
     return "classOpponent";
   }
   if (gpHandlers?.getPhase?.() === "battle" || gpHandlers?.getPhase?.() === "replay") return "battle";
@@ -693,6 +695,13 @@ function queryMenuFocusables(context) {
   if (context === "classMode") return [...document.querySelectorAll("#class-step-mode .game-mode-card")];
   if (context === "classPlayer") {
     return [...document.querySelectorAll("#class-step-player .class-card[data-class]:not([disabled])")];
+  }
+  if (context === "classPlayerLobby") {
+    return [
+      ...document.querySelectorAll("#class-step-player .class-card[data-class]:not([disabled])"),
+      document.getElementById("btn-class-back-mode"),
+      document.getElementById("btn-start-run"),
+    ].filter(Boolean);
   }
   if (context === "classOpponent") {
     return [
@@ -986,7 +995,9 @@ function handleOverlayNavigation(pad, prevButtons, dt) {
       markGamepadInput();
       return true;
     }
-    if (context === "classOpponent") document.getElementById("btn-start-run")?.click();
+    if (context === "classOpponent" || context === "classPlayerLobby") {
+      document.getElementById("btn-start-run")?.click();
+    }
     else if (context === "battleResult") document.getElementById("btn-battle-continue")?.click();
     else if (context === "runComplete") document.getElementById("btn-restart")?.click();
     else activateMenuFocus();

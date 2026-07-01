@@ -68,14 +68,22 @@ const BattleInventoryPopover = (() => {
     };
   }
 
+  function getActiveBattleState() {
+    if (typeof getDisplayBattleState === "function") {
+      return getDisplayBattleState() || battleState;
+    }
+    return battleState;
+  }
+
   function getLiveSideData(team) {
-    if (!battleState || !battleState[team]) return null;
+    const state = getActiveBattleState();
+    if (!state || !state[team]) return null;
     const containers = team === "player" ? playerContainers : enemyContainers;
     const classId = team === "player" ? playerClass : enemyClass;
     return {
       team,
       containers,
-      items: battleState[team].items || [],
+      items: state[team].items || [],
       classId,
     };
   }
@@ -92,10 +100,11 @@ const BattleInventoryPopover = (() => {
 
   function collectActiveItemUids(team) {
     const active = new Set();
-    if (!battleState || typeof isItemFlashing !== "function") return active;
-    const items = battleState[team]?.items || [];
+    const state = getActiveBattleState();
+    if (!state || typeof isItemFlashing !== "function") return active;
+    const items = state[team]?.items || [];
     items.forEach((item) => {
-      if (isItemFlashing(battleState, item.uid)) active.add(item.uid);
+      if (isItemFlashing(state, item.uid)) active.add(item.uid);
     });
     return active;
   }

@@ -1,0 +1,373 @@
+/**
+ * Лобби: таймер подготовки, ростер участников, параллельные бои и наблюдение.
+ */
+
+const LOBBY_PREP_SECONDS = 50;
+const LOBBY_PREP_OVERTIME_SEC = 12;
+
+function cloneLobbyBattleItem(item) {
+  return {
+    uid: item.uid,
+    itemId: item.itemId,
+    col: item.col,
+    row: item.row,
+    rotation: item.rotation || 0,
+    runtime: item.runtime ? { ...item.runtime } : null,
+  };
+}
+
+function fighterBattleItems(fighter) {
+  return flattenContainersForBattle(fighter.containers, fighter.items).map(cloneLobbyBattleItem);
+}
+
+function shuffleLobbyArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function buildLobbyRoundMatches(lobby) {
+  const player = getLobbyPlayer(lobby);
+  const opponent = getLobbyOpponent(lobby);
+  const matches = [];
+  const used = new Set();
+
+  if (player?.alive && opponent?.alive) {
+    matches.push({
+      id: matches.length,
+      fighterAId: player.id,
+      fighterBId: opponent.id,
+      isPlayerMatch: true,
+      state: null,
+      finished: false,
+    });
+    used.add(player.id);
+    used.add(opponent.id);
+  }
+
+  const pool = getAliveLobbyFighters(lobby).filter((f) => !used.has(f.id));
+  shuffleLobbyArray(pool);
+  if (pool.length % 2 === 1) {
+    const byeFighter = pool.pop();
+    matches.push({
+      id: matches.length,
+      byeFighterId: byeFighter.id,
+      isPlayerMatch: false,
+      state: null,
+      finished: true,
+      winnerSide: "bye",
+    });
+  }
+  for (let i = 0; i < pool.length; i += 2) {
+    matches.push({
+      id: matches.length,
+      fighterAId: pool[i].id,
+      fighterBId: pool[i + 1].id,
+      isPlayerMatch: false,
+      state: null,
+      finished: false,
+    });
+  }
+  return matches;
+}
+
+function createLobbyMatchState(match, lobby, battleRound) {
+  const fighterA = lobby.fighters[match.fighterAId];
+  const fighterB = lobby.fighters[match.fighterBId];
+  if (!fighterA || !fighterB) return null;
+  const state = createBattleState(
+    fighterBattleItems(fighterA),
+    fighterBattleItems(fighterB),
+    fighterA.classId,
+    fighterB.classId,
+    battleRound,
+    {},
+  );
+  state.recording = true;
+  state.replayFrames = [captureBattleFrame(state)];
+  state.lastRecordAt = 0;
+  match.state = state;
+  return state;
+}
+
+function initLobbyRoundBattles(lobby, battleRound) {
+  const matches = buildLobbyRoundMatches(lobby);
+  matches.forEach((match) => {
+    if (!match.byeFighterId) createLobbyMatchState(match, lobby, battleRound);
+  });
+  return matches;
+}
+
+function getLobbyMatchFighter(lobby, fighterId, side) {
+  const match = lobby;
+  const fighter = match.fighters[fighterId];
+  if (!fighter) return null;
+  return fighter;
+}
+
+function getLobbyMatchLabels(lobby, match) {
+  if (match.byeFighterId) {
+    const f = lobby.fighters[match.byeFighterId];
+    return { a: f?.name || "—", b: "bye", short: `${f?.name || "—"} (bye)` };
+  }
+  const a = lobby.fighters[match.fighterAId];
+  const b = lobby.fighters[match.fighterBId];
+  return {
+    a: a?.name || "—",
+    b: b?.name || "—",
+    short: `${a?.name || "—"} vs ${b?.name || "—"}`,
+  };
+}
+
+function areAllLobbyMatchesFinished(matches) {
+  if (!matches?.length) return true;
+  return matches.every((match) => {
+    if (match.byeFighterId) return true;
+    return match.finished || match.state?.finished;
+  });
+}
+
+function countActiveLobbyMatches(matches) {
+  if (!matches?.length) return 0;
+  return matches.filter((match) => {
+    if (match.byeFighterId) return false;
+    return match.state && !match.state.finished;
+  }).length;
+}
+
+function tickLobbyMatchState(match, dt, simDtFn, lobby = null) {
+  if (!match?.state || match.state.finished || match.byeFighterId) {
+    if (match?.state?.finished) match.finished = true;
+    return;
+  }
+  const state = match.state;
+  const countdownDt = typeof getBattleCountdownDt === "function" ? getBattleCountdownDt(dt) : dt;
+  if (countdownDt > 0 && typeof tickBattleCountdown === "function") {
+    tickBattleCountdown(state, countdownDt);
+  }
+  const simDt = typeof simDtFn === "function" ? simDtFn(dt) : dt;
+  const countdownActive = typeof isBattleCountdownActive === "function" && isBattleCountdownActive(state);
+  if (simDt > 0 && !countdownActive) {
+    battleTick(state, simDt);
+    recordBattleFrame(state);
+  }
+  if (state.finished) {
+    match.finished = true;
+    if (typeof finalizeBattleReplay === "function") finalizeBattleReplay(state);
+    if (typeof CombatLog !== "undefined" && lobby) {
+      const labels = getLobbyMatchLabels(lobby, match);
+      const winner = state.winner === "player" ? labels.a : state.winner === "enemy" ? labels.b : null;
+      const text = winner
+        ? `⚔ ${labels.short}: победа ${winner}`
+        : `⚔ ${labels.short}: ничья`;
+      CombatLog.addEvent({
+        type: "neutral",
+        text,
+        mergeKey: `lobby:live:${match.id}:${state.elapsed}`,
+      });
+    }
+  }
+}
+
+function fastForwardLobbyMatch(match) {
+  if (!match?.state || match.state.finished || match.byeFighterId) return;
+  try {
+    fastForwardBattle(match.state);
+  } catch (err) {
+    console.error("fastForwardLobbyMatch failed:", err);
+    match.state.finished = true;
+    match.state.winner = match.state.winner || "draw";
+  }
+  match.finished = true;
+}
+
+function fastForwardRemainingLobbyMatches(matches) {
+  matches.forEach((match) => {
+    if (!match.finished && match.state && !match.state.finished) fastForwardLobbyMatch(match);
+  });
+}
+
+function applyLobbyMatchHpResult(lobby, match) {
+  if (match.byeFighterId) return null;
+  const fighterA = lobby.fighters[match.fighterAId];
+  const fighterB = lobby.fighters[match.fighterBId];
+  const state = match.state;
+  if (!fighterA || !fighterB || !state?.finished) return null;
+
+  const aHp = state.player?.hp ?? 0;
+  const aMax = state.player?.maxHp ?? 1;
+  const bHp = state.enemy?.hp ?? 0;
+  const bMax = state.enemy?.maxHp ?? 1;
+  let summary = { matchId: match.id, isPlayerMatch: !!match.isPlayerMatch };
+
+  if (state.winner === "player") {
+    const dmg = calcLobbyBattleDamage(aHp, aMax);
+    fighterB.hp = Math.max(0, fighterB.hp - dmg);
+    if (fighterB.hp <= 0) fighterB.alive = false;
+    summary = { ...summary, winnerId: fighterA.id, loserId: fighterB.id, damage: dmg, eliminated: !fighterB.alive };
+  } else if (state.winner === "enemy") {
+    const dmg = calcLobbyBattleDamage(bHp, bMax);
+    fighterA.hp = Math.max(0, fighterA.hp - dmg);
+    if (fighterA.hp <= 0) fighterA.alive = false;
+    summary = { ...summary, winnerId: fighterB.id, loserId: fighterA.id, damage: dmg, eliminated: !fighterA.alive };
+  } else {
+    const dmg = 6;
+    fighterA.hp = Math.max(0, fighterA.hp - dmg);
+    fighterB.hp = Math.max(0, fighterB.hp - dmg);
+    if (fighterA.hp <= 0) fighterA.alive = false;
+    if (fighterB.hp <= 0) fighterB.alive = false;
+    summary = { ...summary, draw: true, damage: dmg };
+  }
+  return summary;
+}
+
+function applyAllLobbyMatchResults(lobby, matches) {
+  const summaries = [];
+  matches.forEach((match) => {
+    const s = applyLobbyMatchHpResult(lobby, match);
+    if (s) summaries.push(s);
+  });
+  const player = getLobbyPlayer(lobby);
+  const alive = getAliveLobbyFighters(lobby);
+  return {
+    summaries,
+    playerEliminated: !player?.alive,
+    lobbyWon: player?.alive && alive.length === 1 && alive[0].id === lobby.playerId,
+  };
+}
+
+function getLobbyFighterById(lobby, fighterId) {
+  return lobby?.fighters?.[fighterId] ?? null;
+}
+
+function getAliveLobbyFighterIds(lobby) {
+  return getAliveLobbyFighters(lobby).map((f) => f.id);
+}
+
+function cycleLobbyViewFighterId(lobby, currentId, delta) {
+  const ids = getAliveLobbyFighterIds(lobby);
+  if (!ids.length) return 0;
+  let idx = ids.indexOf(currentId);
+  if (idx < 0) idx = 0;
+  idx = (idx + delta + ids.length) % ids.length;
+  return ids[idx];
+}
+
+function syncEnemyBoardFromLobbyFighter(fighter) {
+  if (!fighter) return;
+  const ghost = exportGhostFighterState(fighter);
+  enemyContainers = ghost.containers;
+  enemyItems = ghost.items;
+  enemyClass = ghost.classId;
+  enemyArchetype = fighter.archetype;
+  enemyGold = ghost.gold;
+}
+
+function buildLobbyRosterStripSignature(lobby, opts = {}) {
+  if (!lobby) return "";
+  const {
+    viewFighterId = 0,
+    phase = "prep",
+    spectateMatchId = 0,
+    matches = [],
+  } = opts;
+
+  if (phase === "battle" && matches.length) {
+    const parts = matches.map((match) => {
+      if (match.byeFighterId) return `bye:${match.byeFighterId}`;
+      const live = match.state && !match.state.finished;
+      return `${match.fighterAId}-${match.fighterBId}:${live ? "live" : "done"}:${match.finished ? "1" : "0"}`;
+    });
+    return `battle:${spectateMatchId}:${parts.join("|")}`;
+  }
+
+  return `prep:${viewFighterId}:${lobby.fighters.map((f) => (
+    `${f.id}:${f.alive ? 1 : 0}:${f.hp}:${f.gold}:${f.id === lobby.currentOpponentId ? 1 : 0}`
+  )).join("|")}`;
+}
+
+function renderLobbyRosterStrip(lobby, opts = {}) {
+  if (!lobby) return "";
+  const {
+    viewFighterId = 0,
+    phase = "prep",
+    spectateMatchId = 0,
+    matches = [],
+  } = opts;
+
+  if (phase === "battle" && matches.length) {
+    const liveCount = countActiveLobbyMatches(matches);
+    const header = liveCount > 0
+      ? `<div class="lobby-battle-strip-label">Параллельные бои · live: ${liveCount}</div>`
+      : `<div class="lobby-battle-strip-label">Все бои завершены</div>`;
+    const spectateMatch = matches[spectateMatchId];
+    let banner = "";
+    if (spectateMatch && !spectateMatch.byeFighterId) {
+      const spectateLabels = getLobbyMatchLabels(lobby, spectateMatch);
+      if (spectateMatch.isPlayerMatch) {
+        banner = `<div class="lobby-spectate-banner lobby-spectate-banner--yours" role="status">⚔ Ваш бой · ${spectateLabels.a} vs ${spectateLabels.b}</div>`;
+      } else {
+        banner = `<div class="lobby-spectate-banner lobby-spectate-banner--watch" role="status">👁 Смотрите: ${spectateLabels.a} ⚔ ${spectateLabels.b}</div>`;
+      }
+    }
+    return `${banner}${header}${matches.map((match, index) => {
+      if (match.byeFighterId) {
+        const f = lobby.fighters[match.byeFighterId];
+        return `<button type="button" class="lobby-roster-chip lobby-roster-chip--bye" disabled title="Пропуск раунда">
+          <span class="lobby-roster-name">${f?.name || "—"}</span>
+          <span class="lobby-roster-meta">bye</span>
+        </button>`;
+      }
+      const labels = getLobbyMatchLabels(lobby, match);
+      const active = index === spectateMatchId;
+      const live = match.state && !match.state.finished;
+      const done = match.finished || match.state?.finished;
+      const cls = [
+        "lobby-roster-chip",
+        active ? "lobby-roster-chip--active" : "",
+        match.isPlayerMatch ? "lobby-roster-chip--yours" : "",
+        live ? "lobby-roster-chip--live" : "",
+        done ? "lobby-roster-chip--done" : "",
+      ].filter(Boolean).join(" ");
+      return `<button type="button" class="${cls}" data-lobby-spectate="${index}" title="${labels.short}">
+        <span class="lobby-roster-name">${labels.a} ⚔ ${labels.b}</span>
+        <span class="lobby-roster-meta">${match.isPlayerMatch ? "ваш бой" : live ? "live" : done ? "✓" : "…"}</span>
+      </button>`;
+    }).join("")}`;
+  }
+
+  return lobby.fighters.map((fighter) => {
+    const active = fighter.id === viewFighterId;
+    const cls = [
+      "lobby-roster-chip",
+      active ? "lobby-roster-chip--active" : "",
+      fighter.isHuman ? "lobby-roster-chip--yours" : "",
+      !fighter.alive ? "lobby-roster-chip--out" : "",
+      fighter.id === lobby.currentOpponentId ? "lobby-roster-chip--next" : "",
+    ].filter(Boolean).join(" ");
+    const disabled = !fighter.alive ? "disabled" : "";
+    return `<button type="button" class="${cls}" data-lobby-fighter="${fighter.id}" ${disabled}
+      title="${fighter.name} · ${fighter.alive ? `${fighter.hp} HP` : "выбыл"}">
+      <span class="lobby-roster-name">${fighter.isHuman ? "🧑 " : "👤 "}${fighter.name}</span>
+        <span class="lobby-roster-meta">${fighter.alive ? `${fighter.hp}♥ ${fighter.gold}💰` : "out"}${fighter.id === lobby.currentOpponentId ? " ⚔" : ""}</span>
+    </button>`;
+  }).join("");
+}
+
+function formatLobbyPrepTimer(seconds) {
+  const s = Math.max(0, Math.ceil(seconds));
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return m > 0 ? `${m}:${String(r).padStart(2, "0")}` : String(r);
+}
+
+function renderLobbyPrepTimerHTML(remaining, active) {
+  if (!active) return "";
+  const urgent = remaining <= 10;
+  return `<div class="lobby-prep-timer${urgent ? " lobby-prep-timer--urgent" : ""}" aria-live="polite">
+    <span class="lobby-prep-timer-label">⏱</span>
+    <b>${formatLobbyPrepTimer(remaining)}</b>
+  </div>`;
+}

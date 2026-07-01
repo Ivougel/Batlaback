@@ -14,7 +14,8 @@
   <link rel="stylesheet" href="styles/tokens.css?v=12">
   <link rel="stylesheet" href="styles/layers.css?v=6">
   <link rel="stylesheet" href="styles/bottom-chrome.css?v=9">
-  <link rel="stylesheet" href="styles.css?v=34">
+  <link rel="stylesheet" href="styles.css?v=36">
+  <link rel="stylesheet" href="styles/shop.css?v=1">
   <link rel="stylesheet" href="styles/prep-top-bar.css?v=2">
   <link rel="stylesheet" href="styles/doll.css?v=25">
   <link rel="stylesheet" href="styles/combat-feed.css?v=2">
@@ -36,6 +37,7 @@
   <link rel="stylesheet" href="styles/tablet-stacked.css?v=7">
   <link rel="stylesheet" href="styles/tablet-side.css?v=30">
   <link rel="stylesheet" href="styles/battle-inventory-popover.css?v=3">
+  <link rel="stylesheet" href="styles/lobby.css?v=2">
   <script src="systems/layout-scales.js?v=2"></script>
   <script src="systems/battle-fx-tier.js?v=1"></script>
   <script src="systems/battle-hero-anchor.js?v=22"></script>
@@ -50,6 +52,10 @@
             <header class="prep-top-bar" id="prep-top-bar" aria-label="Статус забега">
               <div class="run-hud-phase" id="run-hud-phase" aria-hidden="true"></div>
               <div class="prep-stats-hud" id="prep-stats-hud" aria-live="polite"></div>
+              <div class="lobby-chrome hidden" id="lobby-prep-chrome" aria-label="Лобби">
+                <div class="lobby-prep-timer-slot" id="lobby-prep-timer-slot"></div>
+                <div class="lobby-roster-strip" id="lobby-roster-strip-prep" role="tablist" aria-label="Участники лобби"></div>
+              </div>
               <div class="prep-hud-chrome" id="prep-hud-chrome">
                 <div class="prep-hero-tooltip hidden" id="prep-hero-tooltip" role="dialog" aria-labelledby="prep-hero-tooltip-title">
                   <div class="prep-hero-tooltip-title" id="prep-hero-tooltip-title"></div>
@@ -235,6 +241,12 @@
               <span class="class-desc">Идеальная экипировка каждый раунд — сильнее вашего рюкзака</span>
               <span class="class-badge class-badge--hardbot">Хард бот</span>
             </button>
+            <button type="button" class="class-card game-mode-card glass-card" data-game-mode="lobby">
+              <span class="glass-card-icon glass-card-icon--lobby class-icon" aria-hidden="true">🏟</span>
+              <span class="class-name">Лобби</span>
+              <span class="class-desc">8 бойцов, ghost-снимки и HP — как в auto-battler</span>
+              <span class="class-badge class-badge--lobby">Рейтинг</span>
+            </button>
           </div>
         </div>
         <div class="class-step hidden" id="class-step-player">
@@ -418,6 +430,9 @@
       </div>
     </div>
     <div class="bottom-chrome-center prep-toolbar-feed-home" id="prep-toolbar-feed-home">
+      <div class="lobby-chrome hidden" id="lobby-battle-chrome" aria-label="Бои лобби">
+        <div class="lobby-roster-strip lobby-roster-strip--battle" id="lobby-roster-strip-battle" role="tablist"></div>
+      </div>
       <div class="replay-timeline hidden" id="replay-timeline" aria-hidden="true">
         <span class="replay-timeline-label" aria-hidden="true">↻</span>
         <div class="replay-timeline-track" id="replay-timeline-track" role="slider" tabindex="0" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Прогресс повтора">
@@ -521,6 +536,8 @@
   <script src="components/replay-timeline.js?v=1"></script>
   <script src="ai-engine.js"></script>
   <script src="hard-bot-engine.js"></script>
+  <script src="systems/lobby-opponents.js?v=3"></script>
+  <script src="systems/lobby-spectator.js?v=1"></script>
   <script src="battle-engine.js?v=2"></script>
   <script src="battle-float-layer.js?v=18"></script>
   <script src="components/thought-arena.js?v=14"></script>
@@ -528,8 +545,9 @@
   <script src="components/emotion-presenter.js?v=5"></script>
   <script src="emotion-engine.js?v=21"></script>
   <script src="battle-hud.js?v=6"></script>
+  <script src="systems/prep-shop.js?v=1"></script>
   <script src="systems/doll-engine.js"></script>
-  <script src="game.js?v=30"></script>
+  <script src="game.js?v=33"></script>
   <script src="pwa-register.js"></script>
 </body>
 </html>

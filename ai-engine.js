@@ -1182,15 +1182,27 @@ function aiBuyFromShop(state, archetype, shop, gridW = 9, gridH = 7, scout = nul
 
 /**
  * Фаза подготовки ИИ после раунда: контр-пик, покупки, продажи, размещение, перекомпоновка.
- * @param {Array} playerItems — предметы игрока на поле (для контр-пика).
- * @param {string|null} playerClass — класс игрока (mage/warrior/rogue).
+ * @param {Array} playerItems — предметы для скаута (контр-пик).
+ * @param {string|null} playerClass — класс цели скаута.
+ * @param {{ recentResults?: string[] }} prepOpts — доп. контекст подготовки.
  * @returns {{ gold, containers, items, bench, archetype, classId }}
  */
-function aiEnemyPrepPhase(state, round, gridW, gridH, battleWon = null, playerItems = [], playerClass = null) {
-  const scout = buildPlayerScout(playerItems);
+function aiEnemyPrepPhase(
+  state,
+  round,
+  gridW,
+  gridH,
+  battleWon = null,
+  playerItems = [],
+  playerClass = null,
+  prepOpts = {},
+) {
+  const scoutItems = prepOpts.scoutItems ?? playerItems;
+  const scoutClass = prepOpts.scoutClass ?? playerClass;
+  const scout = buildPlayerScout(scoutItems);
   const killArchetype = pickKillArchetype(
     scout,
-    playerClass,
+    scoutClass,
     round,
     state.archetype,
     state.items || [],
@@ -1224,7 +1236,9 @@ function aiEnemyPrepPhase(state, round, gridW, gridH, battleWon = null, playerIt
     loadoutTags: collectLoadoutTags(next.items),
     loadoutItems: next.items,
     opponentLoadoutTags: scout.tags,
-    recentResults: battleWon === false ? ["loss", "loss"] : [],
+    recentResults: Array.isArray(prepOpts.recentResults)
+      ? prepOpts.recentResults
+      : (battleWon === false ? ["loss", "loss"] : []),
     goldSpentTotal: 0,
     isReroll: false,
     hasUniqueInLoadout: typeof loadoutHasUniqueItem === "function"

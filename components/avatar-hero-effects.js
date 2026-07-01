@@ -307,6 +307,16 @@ function syncAllAvatarHeroEffects(playerProfile, enemyProfile, state) {
   }
 }
 
+function profileHeroShellSignature(profile) {
+  if (!profile) return "";
+  return [
+    profile.name,
+    profile.classId,
+    profile.className,
+    profile.classIconSrc || profile.classIcon,
+  ].join("|");
+}
+
 function ensureBattleHeroShells(state, playerProfile, enemyProfile) {
   if (!state) return;
   const battleHud = document.getElementById("battle-run-hud");
@@ -318,8 +328,11 @@ function ensureBattleHeroShells(state, playerProfile, enemyProfile) {
     const slot = getAvatarSlotEl(team);
     if (!slot) return;
     const profile = team === "player" ? playerProfile : enemyProfile;
-    if (!slot.querySelector(".avatar-hero-shell")) {
+    const sig = profileHeroShellSignature(profile);
+    const shell = slot.querySelector(".avatar-hero-shell");
+    if (!shell || slot.dataset.heroShellSig !== sig) {
       slot.innerHTML = renderAvatarHeroHTML(profile, team);
+      slot.dataset.heroShellSig = sig;
       resetHeroHpTracking(team);
     }
     const barsEl = getBattleHudBarsEl(team);

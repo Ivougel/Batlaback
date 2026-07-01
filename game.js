@@ -8,9 +8,6 @@ const FRAME_EDGE = 2;
 const SHOP_FIELD_GAP = 12;
 const BACKPACK_COLS = GRID_COLS;
 const BACKPACK_ROWS = GRID_ROWS;
-const MAX_BENCH = 6;
-const MAX_SHOP = 5;
-const SHOP_RARITY_RANK = { common: 0, uncommon: 1, rare: 2, epic: 3, legendary: 4, godly: 5, unique: 6 };
 const START_GOLD = 12;
 const ROUND_GOLD = 10;
 const WIN_GOLD = 3;
@@ -164,6 +161,17 @@ let tooltipHideTimer = null;
 let suppressShopClickUntil = 0;
 let opponentMode = "ai";
 let gameMode = "solo";
+let lobbyState = null;
+let lobbyViewFighterId = 0;
+let lobbyMatches = [];
+let lobbySpectateMatchId = 0;
+let lobbyPrepTimerRemaining = 0;
+let lobbyPrepTimerActive = false;
+let lobbyPrepOvertimeUsed = false;
+let lobbyRoundSettling = false;
+let lastLobbyPlayerBattleWinner = null;
+let lastLobbyRosterStripSig = "";
+let lastEndedBattleState = null;
 let prepViewSide = "player";
 let prepDollOpen = false;
 
@@ -263,125 +271,55 @@ function isHardBotMode() {
   return gameMode === "hardbot";
 }
 
+function isLobbyMode() {
+  return gameMode === "lobby";
+}
+
 function getEnemyDisplayName() {
+  if (isLobbyMode() && isBattleUiPhase() && lobbyMatches.length) {
+    const names = getLobbySpectateProfileNames();
+    if (names) return names.enemyName;
+  }
+  if (isLobbyMode() && phase === "prep" && lobbyState) {
+    const fighter = getLobbyFighterById(lobbyState, lobbyViewFighterId);
+    if (fighter && !fighter.isHuman) return fighter.name;
+    return getLobbyOpponent(lobbyState)?.name || "Соперник";
+  }
+  if (isLobbyMode()) return getLobbyOpponent(lobbyState)?.name || "Соперник";
   if (isVersusMode()) return "Игрок 2";
   if (isHardBotMode()) return "Сложный бот";
   return "ИИ";
 }
 
 function getPlayerProfileName() {
-  return isVersusMode() ? "Игрок 1" : "Игрок";
-}
-
-function getShopSideLabel(side) {
-  if (side === "enemy") {
-    return isVersusMode() ? "Игрок 2" : (isEnemyPrepEditable() ? "Противник" : "ИИ");
+  if (isLobbyMode() && isBattleUiPhase() && lobbyMatches.length) {
+    const names = getLobbySpectateProfileNames();
+    if (names) return names.playerName;
   }
-  return isVersusMode() ? "Игрок 1" : "Вы";
+  if (isLobbyMode() && phase === "prep" && lobbyState) {
+    const fighter = getLobbyFighterById(lobbyState, lobbyViewFighterId);
+    if (fighter?.isHuman) return "Вы";
+    if (fighter) return fighter.name;
+  }
+  return isVersusMode() ? "Игрок 1" : "Игрок";
 }
 
 function isEnemyPrepEditable() {
   return opponentMode === "manual";
 }
 
+function isLobbyViewingPlayer() {
+  return isLobbyMode() && lobbyState && lobbyViewFighterId === lobbyState.playerId;
+}
+
 function canEditPrepSide(side = prepViewSide) {
+  if (isLobbyMode()) return isLobbyViewingPlayer() && side === "player";
   if (side === "player") return true;
   return isEnemyPrepEditable();
 }
 
 function getPrepFieldTeam() {
   return prepViewSide;
-}
-
-function getShopContextForSide(side = prepViewSide, opts = {}) {
-  const st = getSideState(side);
-  const otherItems = side === "player" ? enemyItems : playerItems;
-  const loadoutItems = st.items;
-  return {
-    round,
-    gold: st.gold,
-    goldSpentTotal: side === "player" ? goldSpentTotal : 0,
-    goldEarnedTotal: side === "player" ? goldEarnedTotal : 0,
-    recentResults: recentBattleResults.slice(-3),
-    playerClass: st.classId,
-    loadoutTags: collectLoadoutTags(loadoutItems),
-    loadoutItems,
-    opponentLoadoutTags: collectLoadoutTags(otherItems),
-    isReroll: !!opts.isReroll,
-    hasUniqueInLoadout: typeof loadoutHasUniqueItem === "function"
-      ? loadoutHasUniqueItem(loadoutItems)
-      : false,
-    shopModifiers: typeof collectShopPoolModifiers === "function"
-      ? collectShopPoolModifiers(loadoutItems)
-      : null,
-    bonusUniqueGranted: getSideState(side).bonusUniqueGranted,
-  };
-}
-
-function ensureSideShopArrays(st) {
-  if (st.shop.length !== MAX_SHOP) st.shop.length = MAX_SHOP;
-  if (st.shopFrozen.length !== MAX_SHOP) st.shopFrozen.length = MAX_SHOP;
-  for (let i = 0; i < MAX_SHOP; i++) {
-    if (st.shop[i] === undefined) st.shop[i] = null;
-    if (st.shopFrozen[i] === undefined) st.shopFrozen[i] = false;
-  }
-}
-
-function refreshShopSlotsForSide(side = prepViewSide, opts = {}) {
-  const st = getSideState(side);
-  ensureSideShopArrays(st);
-  const ctx = getShopContextForSide(side, opts);
-  const unfrozen = [];
-  for (let i = 0; i < MAX_SHOP; i++) {
-    if (st.shopFrozen[i] && st.shop[i]) continue;
-    unfrozen.push(i);
-  }
-  if (!unfrozen.length) return [];
-  const rolled = rollShopBatch(unfrozen.length, ctx);
-  if (ctx.shopModifiers?.bonusUnique > 0 && ctx.bonusUniqueGranted) {
-    st.bonusUniqueGranted = true;
-  }
-  unfrozen.forEach((shopIndex, j) => {
-    st.shop[shopIndex] = rolled[j] || rollShopItemGuaranteed(ctx);
-  });
-  if (opts.isReroll && typeof applyShopRefreshMeta === "function") {
-    applyShopRefreshMeta(side, st.items, unfrozen, st, ctx, (msg) => log(msg));
-  }
-  return unfrozen;
-}
-
-function resetShopForNewRoundForSide(side = prepViewSide) {
-  if (gameOver) return;
-  const st = getSideState(side);
-  const wasNewRound = st.shopReadyForRound !== round;
-  refreshShopSlotsForSide(side);
-  if (wasNewRound && typeof applyShopEnterMeta === "function") {
-    const loadoutChanged = applyShopEnterMeta(side, st.items, (msg) => log(msg));
-    if (loadoutChanged && side === prepViewSide) {
-      recalcSynergies();
-      draw();
-      renderBench();
-      renderShop();
-    }
-  }
-  getSideState(side).shopReadyForRound = round;
-}
-
-function ensureShopReadyForSide(side = prepViewSide) {
-  if (gameOver) return;
-  const st = getSideState(side);
-  ensureSideShopArrays(st);
-  if (st.shopReadyForRound !== round) resetShopForNewRoundForSide(side);
-  else ensureShopHasStock(side);
-}
-
-function ensureShopHasStock(side = prepViewSide) {
-  if (phase !== "prep" || gameOver) return;
-  const st = getSideState(side);
-  ensureSideShopArrays(st);
-  if (st.shop.some(Boolean)) return;
-  refreshShopSlotsForSide(side);
-  st.shopReadyForRound = round;
 }
 
 function initManualEnemyState() {
@@ -404,7 +342,194 @@ function applyManualEnemyRoundGold(battleWinner) {
   resetShopForNewRoundForSide("enemy");
 }
 
+function applyLobbyGhostToEnemy() {
+  const ghost = exportGhostFighterState(getLobbyOpponent(lobbyState));
+  if (!ghost) return;
+  enemyContainers = ghost.containers;
+  enemyItems = ghost.items;
+  enemyClass = ghost.classId;
+  enemyArchetype = ghost.archetype;
+  enemyGold = ghost.gold;
+}
+
+function resetLobbyPrepTimer() {
+  lobbyPrepTimerRemaining = LOBBY_PREP_SECONDS;
+  lobbyPrepTimerActive = true;
+  lobbyPrepOvertimeUsed = false;
+}
+
+function stopLobbyPrepTimer() {
+  lobbyPrepTimerActive = false;
+}
+
+function setLobbyViewFighter(fighterId) {
+  if (!lobbyState) return;
+  const fighter = getLobbyFighterById(lobbyState, fighterId);
+  if (!fighter || (!fighter.alive && fighter.id !== lobbyState.playerId)) return;
+  lobbyViewFighterId = fighter.id;
+  clearDragUiState();
+  closePrepHeroTooltip();
+  if (fighter.isHuman) {
+    prepViewSide = "player";
+  } else {
+    syncEnemyBoardFromLobbyFighter(fighter);
+    prepViewSide = "enemy";
+  }
+  const app = document.getElementById("app");
+  if (app) app.dataset.prepSide = prepViewSide;
+  updatePrepSideUI();
+  if (fighter.isHuman) ensureShopReadyForSide("player");
+  renderShop();
+  renderBench();
+  recalcSynergies();
+  draw();
+  renderLobbyChrome();
+}
+
+function syncLobbyPlayerFromGlobals() {
+  if (!lobbyState) return;
+  importLobbyPlayerGlobals(lobbyState, {
+    classId: playerClass,
+    gold,
+    containers: playerContainers,
+    items: playerItems,
+    bench,
+    pendingShopBuffs: playerPendingShopBuffs,
+  });
+}
+
+function setLobbySpectateMatch(matchIndex) {
+  if (!lobbyMatches.length) return;
+  const idx = Math.max(0, Math.min(lobbyMatches.length - 1, matchIndex));
+  const match = lobbyMatches[idx];
+  if (!match || match.byeFighterId || !match.state) return;
+  lobbySpectateMatchId = idx;
+  syncLobbySpectateBoards(match);
+  const app = document.getElementById("app");
+  if (app) app.dataset.lobbySpectate = match.isPlayerMatch ? "yours" : "watch";
+  if (typeof syncStackOrbitFromBattle === "function" && match.state && !match.state.finished) {
+    syncStackOrbitFromBattle(match.state);
+  }
+  if (typeof window.syncHeroEmotionSlotAnchors === "function") {
+    requestAnimationFrame(() => window.syncHeroEmotionSlotAnchors());
+  }
+  lastLobbyRosterStripSig = "";
+  renderLobbyChrome(true);
+  renderBattleStats();
+  renderPlayerProfiles();
+  draw();
+  if (typeof refreshBattleInventoryPopover === "function") refreshBattleInventoryPopover();
+}
+
+function syncLobbySpectateBoards(match) {
+  if (!match || !lobbyState) return;
+  const fighterA = lobbyState.fighters[match.fighterAId];
+  const fighterB = lobbyState.fighters[match.fighterBId];
+  if (fighterA) {
+    playerContainers = fighterA.containers;
+    playerClass = fighterA.classId;
+  }
+  if (fighterB) {
+    enemyContainers = fighterB.containers;
+    enemyClass = fighterB.classId;
+    enemyArchetype = fighterB.archetype;
+    enemyGold = fighterB.gold;
+  }
+  if (typeof setBattleEnemyTeamLabel === "function") {
+    setBattleEnemyTeamLabel(fighterB?.name || "Соперник");
+  }
+}
+
+function getDisplayBattleState() {
+  if (!isLobbyMode() || !isBattleUiPhase() || !lobbyMatches.length) return battleState;
+  const match = lobbyMatches[lobbySpectateMatchId];
+  return match?.state || battleState;
+}
+
+function getLobbySpectateProfileNames() {
+  const match = lobbyMatches[lobbySpectateMatchId];
+  if (!match || !lobbyState || match.byeFighterId) return null;
+  const fighterA = lobbyState.fighters[match.fighterAId];
+  const fighterB = lobbyState.fighters[match.fighterBId];
+  return {
+    playerName: fighterA?.name || "Игрок",
+    enemyName: fighterB?.name || "Соперник",
+    playerClassId: fighterA?.classId,
+    enemyClassId: fighterB?.classId,
+  };
+}
+
+function renderLobbyChrome(force = false) {
+  const prepChrome = document.getElementById("lobby-prep-chrome");
+  const battleChrome = document.getElementById("lobby-battle-chrome");
+  const timerSlot = document.getElementById("lobby-prep-timer-slot");
+  const stripPrep = document.getElementById("lobby-roster-strip-prep");
+  const stripBattle = document.getElementById("lobby-roster-strip-battle");
+  const show = isLobbyMode() && !!lobbyState;
+  prepChrome?.classList.toggle("hidden", !show || phase !== "prep");
+  battleChrome?.classList.toggle("hidden", !show || !isBattleUiPhase());
+  if (!show) return;
+
+  const rosterOpts = phase === "prep"
+    ? { phase: "prep", viewFighterId: lobbyViewFighterId }
+    : { phase: "battle", spectateMatchId: lobbySpectateMatchId, matches: lobbyMatches };
+  const stripSig = typeof buildLobbyRosterStripSignature === "function"
+    ? buildLobbyRosterStripSignature(lobbyState, rosterOpts)
+    : "";
+  if (force || stripSig !== lastLobbyRosterStripSig) {
+    lastLobbyRosterStripSig = stripSig;
+    const stripHtml = renderLobbyRosterStrip(lobbyState, rosterOpts);
+    if (stripPrep && phase === "prep") stripPrep.innerHTML = stripHtml;
+    if (stripBattle && isBattleUiPhase()) stripBattle.innerHTML = stripHtml;
+  }
+  if (timerSlot) {
+    timerSlot.innerHTML = phase === "prep" && lobbyPrepTimerActive
+      ? renderLobbyPrepTimerHTML(lobbyPrepTimerRemaining, true)
+      : "";
+  }
+}
+
+function bindLobbyRosterClicks() {
+  const onRosterPointerDown = (e) => {
+    if (e.button !== 0) return;
+    const fighterBtn = e.target.closest("[data-lobby-fighter]");
+    if (fighterBtn && isLobbyMode() && phase === "prep" && !fighterBtn.disabled) {
+      e.preventDefault();
+      setLobbyViewFighter(Number(fighterBtn.dataset.lobbyFighter));
+      return;
+    }
+    const spectateBtn = e.target.closest("[data-lobby-spectate]");
+    if (spectateBtn && isLobbyMode() && isBattleUiPhase()) {
+      e.preventDefault();
+      const idx = Number(spectateBtn.dataset.lobbySpectate);
+      if (Number.isFinite(idx)) setLobbySpectateMatch(idx);
+    }
+  };
+  document.getElementById("lobby-prep-chrome")?.addEventListener("pointerdown", onRosterPointerDown);
+  document.getElementById("lobby-battle-chrome")?.addEventListener("pointerdown", onRosterPointerDown);
+}
+
+function initLobbyRun() {
+  lobbyState = initLobby(playerClass, GRID_COLS, GRID_ROWS);
+  lobbyViewFighterId = lobbyState.playerId;
+  lobbyMatches = [];
+  lobbySpectateMatchId = 0;
+  pickLobbyOpponent(lobbyState);
+  resetLobbyPrepTimer();
+  setLobbyViewFighter(lobbyState.playerId);
+}
+
 function setPrepViewSide(side) {
+  if (isLobbyMode() && lobbyState) {
+    if (side === "player") setLobbyViewFighter(lobbyState.playerId);
+    else {
+      const fighter = getLobbyFighterById(lobbyState, lobbyViewFighterId);
+      const opp = getLobbyOpponent(lobbyState);
+      if (fighter && !fighter.isHuman) return;
+      if (opp) setLobbyViewFighter(opp.id);
+    }
+    return;
+  }
   if (side !== "player" && side !== "enemy") return;
   if (side === prepViewSide) return;
   clearDragUiState();
@@ -421,19 +546,6 @@ function setPrepViewSide(side) {
   renderBench();
   recalcSynergies();
   updateUI();
-}
-
-function shouldHideShopHints() {
-  const root = document.documentElement;
-  return root.dataset.uiSurface === "tablet-side"
-    || (root.dataset.prepLayout === "side" && root.dataset.touch === "true");
-}
-
-function syncShopHintsVisibility() {
-  const hide = shouldHideShopHints();
-  document.getElementById("shop-panel-hint")?.toggleAttribute("hidden", hide);
-  document.querySelector("#shop-panel .shop-hint-touch")?.toggleAttribute("hidden", hide);
-  document.querySelector("#shop-panel .shop-sell-hint")?.toggleAttribute("hidden", hide);
 }
 
 function setPrepSideBtnContent(btn, emoji, label) {
@@ -475,16 +587,28 @@ function updatePrepSideUI() {
     }
   } else if (prepViewSide === "enemy") {
     setPrepSideBtnContent(playerBtn, "🧑", "Мой стол");
-    setPrepSideBtnContent(enemyBtn, isHardBotMode() ? "💀" : "🤖", isHardBotMode() ? "Сложный бот" : "Противник");
-    if (title) title.textContent = isHardBotMode() ? "🛒 Сложный бот (просмотр)" : "🛒 Магазин ИИ (просмотр)";
-    if (hint) {
-      hint.textContent = isHardBotMode()
-        ? "Билд бота обновляется каждый раунд — только просмотр"
-        : "ИИ управляет этим билдом сам — только просмотр";
+    if (isLobbyMode()) {
+      const oppName = getLobbyOpponent(lobbyState)?.name || "Соперник";
+      setPrepSideBtnContent(enemyBtn, "👤", oppName);
+      if (title) title.textContent = `🛒 ${oppName} (ghost)`;
+      if (hint) hint.textContent = "Снимок билда соперника — только просмотр · Tab — вернуться";
+    } else {
+      setPrepSideBtnContent(enemyBtn, isHardBotMode() ? "💀" : "🤖", isHardBotMode() ? "Сложный бот" : "Противник");
+      if (title) title.textContent = isHardBotMode() ? "🛒 Сложный бот (просмотр)" : "🛒 Магазин ИИ (просмотр)";
+      if (hint) {
+        hint.textContent = isHardBotMode()
+          ? "Билд бота обновляется каждый раунд — только просмотр"
+          : "ИИ управляет этим билдом сам — только просмотр";
+      }
     }
   } else {
     setPrepSideBtnContent(playerBtn, "🧑", "Мой стол");
-    setPrepSideBtnContent(enemyBtn, "🤖", "Противник");
+    if (isLobbyMode()) {
+      const oppName = getLobbyOpponent(lobbyState)?.name || "Соперник";
+      setPrepSideBtnContent(enemyBtn, "👤", oppName);
+    } else {
+      setPrepSideBtnContent(enemyBtn, "🤖", "Противник");
+    }
     if (title) title.textContent = "🛒 Магазин";
     if (hint) hint.textContent = "Перетащите предмет в инвентарь или на скамейку · 📍 — заморозить";
   }
@@ -504,16 +628,6 @@ function syncRunHudPhase() {
   else phaseEl.setAttribute("aria-hidden", "true");
 }
 
-function updateShopSideStat() {
-  const el = document.getElementById("shop-side-stat");
-  if (!el || phase !== "prep") return;
-  el.textContent = getShopSideLabel(prepViewSide);
-}
-
-function updateShopGoldStat() {
-  updateShopSideStat();
-}
-
 function syncClassOverlayUi() {
   const badge = document.getElementById("class-step-badge");
   const hint = document.getElementById("class-action-hint");
@@ -524,10 +638,15 @@ function syncClassOverlayUi() {
 
   if (modeStep && !modeStep.classList.contains("hidden")) {
     badge.textContent = "Шаг 1 из 3 · Режим";
-    hint.textContent = "Нажмите на режим — одиночная, PvP или сложный бот";
+    hint.textContent = "Нажмите на режим — одиночная, лобби, PvP или сложный бот";
   } else if (playerStep && !playerStep.classList.contains("hidden")) {
-    badge.textContent = "Шаг 2 из 3 · Ваш класс";
-    hint.textContent = "Нажмите на карточку класса — откроется выбор соперника";
+    if (selectedGameMode === "lobby") {
+      badge.textContent = "Шаг 2 из 2 · Ваш класс";
+      hint.textContent = "Выберите класс и нажмите «Начать лобби» внизу";
+    } else {
+      badge.textContent = "Шаг 2 из 3 · Ваш класс";
+      hint.textContent = "Нажмите на карточку класса — откроется выбор соперника";
+    }
   } else if (opponentStep && !opponentStep.classList.contains("hidden")) {
     badge.textContent = "Шаг 3 из 3 · Соперник";
     const startLabel = selectedGameMode === "versus" ? "Начать игру" : "Начать забег";
@@ -543,7 +662,7 @@ function showGameModeStep() {
   document.getElementById("class-step-player")?.classList.add("hidden");
   document.getElementById("class-step-opponent")?.classList.add("hidden");
   document.getElementById("class-modal-title").textContent = "Режим игры";
-  document.getElementById("class-modal-subtitle").textContent = "Выберите формат — против бота, сложного бота или с другом";
+  document.getElementById("class-modal-subtitle").textContent = "Выберите формат — бот, лобби, сложный бот или PvP с другом";
   syncClassOverlayUi();
   syncClassMobileDock();
 }
@@ -557,7 +676,9 @@ function showPlayerClassStep() {
     : "Выберите класс";
   document.getElementById("class-modal-subtitle").textContent = selectedGameMode === "versus"
     ? "Первый игрок выбирает класс и стартовый набор."
-    : "Каждый класс получает стартовый набор и уникальный бонус на весь забег.";
+    : selectedGameMode === "lobby"
+      ? "8 бойцов в лобби: каждый раунд — бой с ghost-снимком другого участника."
+      : "Каждый класс получает стартовый набор и уникальный бонус на весь забег.";
   syncClassOverlayUi();
   syncClassMobileDock();
 }
@@ -610,11 +731,16 @@ function syncClassMobileDock() {
   const dock = document.getElementById("class-mobile-dock");
   const overlay = document.getElementById("class-overlay");
   const opponentStep = document.getElementById("class-step-opponent");
+  const playerStep = document.getElementById("class-step-player");
   if (!dock) return;
-  const show = !!overlay
-    && !overlay.classList.contains("hidden")
-    && !!opponentStep
-    && !opponentStep.classList.contains("hidden");
+  const overlayOpen = !!overlay && !overlay.classList.contains("hidden");
+  const opponentVisible = !!opponentStep && !opponentStep.classList.contains("hidden");
+  const lobbyPlayerVisible = selectedGameMode === "lobby"
+    && !!playerStep
+    && !playerStep.classList.contains("hidden");
+  const show = overlayOpen && (opponentVisible || lobbyPlayerVisible);
+  const dockBack = document.getElementById("btn-class-back");
+  if (dockBack) dockBack.classList.toggle("hidden", lobbyPlayerVisible);
   dock.classList.toggle("hidden", !show);
   dock.setAttribute("aria-hidden", show ? "false" : "true");
   if (typeof window.syncClassOverlayAnchors === "function") {
@@ -628,8 +754,13 @@ function syncClassMobileDock() {
 function updateStartRunButton() {
   const btn = document.getElementById("btn-start-run");
   if (!btn) return;
-  btn.disabled = !(pendingPlayerClass && selectedEnemyClass);
-  btn.textContent = selectedGameMode === "versus" ? "Начать игру" : "Начать забег";
+  const ready = selectedGameMode === "lobby"
+    ? !!pendingPlayerClass
+    : !!(pendingPlayerClass && selectedEnemyClass);
+  btn.disabled = !ready;
+  if (selectedGameMode === "versus") btn.textContent = "Начать игру";
+  else if (selectedGameMode === "lobby") btn.textContent = "Начать лобби";
+  else btn.textContent = "Начать забег";
 }
 
 function scrollClassPickerCardIntoView(card) {
@@ -642,13 +773,25 @@ function selectPlayerClass(classId) {
     card.classList.toggle("selected", card.dataset.class === classId);
   });
   scrollClassPickerCardIntoView(document.querySelector(`.class-card[data-class="${classId}"]`));
+  if (selectedGameMode === "lobby") {
+    updateStartRunButton();
+    syncClassOverlayUi();
+    syncClassMobileDock();
+    return;
+  }
   showSecondClassStep();
 }
 
 function selectGameMode(mode) {
-  if (mode !== "solo" && mode !== "versus" && mode !== "hardbot") return;
+  if (mode !== "solo" && mode !== "versus" && mode !== "hardbot" && mode !== "lobby") return;
   selectedGameMode = mode;
-  selectedOpponentMode = mode === "versus" ? "manual" : mode === "hardbot" ? "hardbot" : "ai";
+  selectedOpponentMode = mode === "versus"
+    ? "manual"
+    : mode === "hardbot"
+      ? "hardbot"
+      : mode === "lobby"
+        ? "ghost"
+        : "ai";
   document.querySelectorAll(".game-mode-card").forEach((card) => {
     card.classList.toggle("selected", card.dataset.gameMode === mode);
   });
@@ -1223,12 +1366,16 @@ function init() {
     showPlayerClassStep();
   });
   document.getElementById("btn-start-run")?.addEventListener("click", startRunFromOverlay);
+  bindLobbyRosterClicks();
   window.addEventListener("resize", syncClassMobileDock, { passive: true });
   window.addEventListener("orientationchange", syncClassMobileDock, { passive: true });
   document.getElementById("btn-prep-player")?.addEventListener("click", () => setPrepViewSide("player"));
   document.getElementById("btn-prep-enemy")?.addEventListener("click", () => setPrepViewSide("enemy"));
   document.getElementById("btn-toggle-doll")?.addEventListener("click", togglePrepDollOpen);
   document.getElementById("btn-battle-continue")?.addEventListener("click", () => {
+    if (isLobbyMode() && lobbyRoundSettling) {
+      finishLobbyRoundFromContinue();
+    }
     transitionToPhase("prep", () => {
       hideBattleResultPopup();
       releasePreviousBattleReplayFrames();
@@ -1237,6 +1384,11 @@ function init() {
         showRunComplete();
         pendingGameOver = false;
         return;
+      }
+      if (isLobbyMode() && lobbyState) {
+        resetLobbyPrepTimer();
+        setLobbyViewFighter(lobbyState.playerId);
+        renderLobbyChrome();
       }
       setPhaseLabel("Подготовка", false);
       updatePrepSideUI();
@@ -1265,6 +1417,7 @@ function init() {
   if (typeof initCombatFeedControls === "function") initCombatFeedControls();
   initMusic();
   initGamepadControls({
+    getSelectedGameMode: () => selectedGameMode,
     getPhase: () => phase,
     getGameOver: () => gameOver,
     getDt: () => lastGameLoopDt,
@@ -1298,6 +1451,10 @@ function init() {
     },
     togglePrepSide: () => {
       if (phase !== "prep" || gameOver || isPhaseTransitioning()) return;
+      if (isLobbyMode() && lobbyState) {
+        setLobbyViewFighter(cycleLobbyViewFighterId(lobbyState, lobbyViewFighterId, 1));
+        return;
+      }
       setPrepViewSide(prepViewSide === "player" ? "enemy" : "player");
     },
     onPrepFocusChanged: onGamepadPrepFocusChanged,
@@ -1456,6 +1613,10 @@ function renderPhase() {
   if (typeof applyUiLayout === "function") scheduleLayoutAfterPhase();
   syncRunHudPhase();
   syncBattleHudVisibility();
+  renderLobbyChrome();
+  if (isLobbyMode() && isBattleUiPhase()) {
+    if (typeof CombatLog?.hideTooltip === "function") CombatLog.hideTooltip();
+  }
   if (isBattleUiPhase() && typeof window.scheduleBattleHeroRowSync === "function") {
     window.scheduleBattleHeroRowSync();
   }
@@ -1711,6 +1872,14 @@ function returnToMainMenu() {
   playerClass = null;
   gameMode = "solo";
   opponentMode = "ai";
+  lobbyState = null;
+  lobbyViewFighterId = 0;
+  lobbyMatches = [];
+  lobbySpectateMatchId = 0;
+  lobbyRoundSettling = false;
+  lastLobbyPlayerBattleWinner = null;
+  stopLobbyPrepTimer();
+  lastEndedBattleState = null;
   prepViewSide = "player";
   phase = "classSelect";
   dragPayload = null;
@@ -1735,17 +1904,20 @@ function showClassSelect() {
   returnToMainMenu();
 }
 
-function getShopContext() {
-  return getShopContextForSide("player");
-}
-
 function startRunFromOverlay() {
-  if (!pendingPlayerClass || !selectedEnemyClass) return;
+  if (!pendingPlayerClass) return;
+  if (selectedGameMode !== "lobby" && !selectedEnemyClass) return;
   gameMode = selectedGameMode;
   playerClass = pendingPlayerClass;
-  opponentMode = gameMode === "versus" ? "manual" : gameMode === "hardbot" ? "hardbot" : "ai";
-  enemyClass = selectedEnemyClass;
-  enemyArchetype = AI_ARCHETYPES[selectedEnemyClass] || AI_ARCHETYPES.warrior;
+  opponentMode = selectedGameMode === "versus"
+    ? "manual"
+    : selectedGameMode === "hardbot"
+      ? "hardbot"
+      : selectedGameMode === "lobby"
+        ? "ghost"
+        : "ai";
+  enemyClass = selectedEnemyClass || pendingPlayerClass;
+  enemyArchetype = AI_ARCHETYPES[enemyClass] || AI_ARCHETYPES.warrior;
   prepViewSide = "player";
   document.getElementById("class-overlay")?.classList.add("hidden");
   const app = document.getElementById("app");
@@ -1815,6 +1987,9 @@ function restartGame() {
     enemyShop = Array(MAX_SHOP).fill(null);
     enemyShopFrozen = Array(MAX_SHOP).fill(false);
     enemyShopReadyForRound = 0;
+  } else if (opponentMode === "ghost") {
+    lobbyState = null;
+    initLobbyRun();
   } else {
     initManualEnemyState();
   }
@@ -1856,58 +2031,11 @@ function restartGame() {
   });
   log(isVersusMode()
     ? "Режим противостояния: Tab или кнопки — переключить магазин между игроками."
-    : isHardBotMode()
-      ? "Сложный бот: каждый раунд подбирает лучшую экипировку. Расставьте предметы и в бой!"
-      : "Расставьте предметы и в бой! Tab — посмотреть билд бота.");
-}
-
-function refillShopSlots() {
-  if (shop.length !== MAX_SHOP) shop = Array(MAX_SHOP).fill(null);
-  if (shopFrozen.length !== MAX_SHOP) shopFrozen = Array(MAX_SHOP).fill(false);
-  refreshShopSlotsForSide("player");
-}
-
-/** Кнопка «Обновить»: переролл всех незамороженных ячеек. */
-function refreshShopSlots() {
-  if (shop.length !== MAX_SHOP) shop = Array(MAX_SHOP).fill(null);
-  if (shopFrozen.length !== MAX_SHOP) shopFrozen = Array(MAX_SHOP).fill(false);
-  refreshShopSlotsForSide("player");
-}
-
-/** Начало раунда: обновить незамороженные ячейки (как бесплатное «Обновить»). */
-function resetShopForNewRound() {
-  resetShopForNewRoundForSide("player");
-}
-
-function ensureShopReady() {
-  ensureShopReadyForSide("player");
-}
-
-function refreshShop(pay = false, side = prepViewSide) {
-  if (gameOver || !canEditPrepSide(side)) return;
-  const st = getSideState(side);
-  if (pay) {
-    if (phase !== "prep") return;
-    if (st.gold < 1) return;
-    st.gold -= 1;
-    if (side === "player") goldSpentTotal += 1;
-  }
-  refreshShopSlotsForSide(side, { isReroll: pay });
-  if (pay) playPrepSfx("prep_refresh");
-  if (phase === "prep") {
-    renderShop();
-    updateUI();
-  }
-}
-
-function toggleShopFreeze(index, side = prepViewSide) {
-  if (phase !== "prep" || gameOver || !canEditPrepSide(side) || !getSideState(side).shop[index]) return;
-  const st = getSideState(side);
-  st.shopFrozen[index] = !st.shopFrozen[index];
-  const name = ITEM_CATALOG[st.shop[index]].name;
-  log(st.shopFrozen[index] ? `📌 Закреплено: ${name}` : `📌 Снято закрепление: ${name}`);
-  playPrepSfx("prep_freeze");
-  renderShop();
+    : isLobbyMode()
+      ? `Лобби: ${LOBBY_FIGHTER_COUNT} бойцов, ${LOBBY_START_HP} HP. Ростер сверху — смотреть билды. Таймер ${LOBBY_PREP_SECONDS}с.`
+      : isHardBotMode()
+        ? "Сложный бот: каждый раунд подбирает лучшую экипировку. Расставьте предметы и в бой!"
+        : "Расставьте предметы и в бой! Tab — посмотреть билд бота.");
 }
 
 function isPopupOpen(id) {
@@ -1982,7 +2110,19 @@ function isPhaseTransitioning() {
 
 function handleEnterHotkey(e) {
   if (e.key !== "Enter" || isPhaseTransitioning()) return false;
-  if (isBoardPreviewOpen() || isPopupOpen("class-overlay")) {
+  if (isPopupOpen("class-overlay")) {
+    const playerStepOpen = !document.getElementById("class-step-player")?.classList.contains("hidden");
+    if (selectedGameMode === "lobby" && playerStepOpen && pendingPlayerClass) {
+      const startBtn = document.getElementById("btn-start-run");
+      if (startBtn && !startBtn.disabled) {
+        startRunFromOverlay();
+        e.preventDefault();
+        return true;
+      }
+    }
+    return false;
+  }
+  if (isBoardPreviewOpen()) {
     return false;
   }
 
@@ -2110,6 +2250,15 @@ function applyGamepadPrepFocusTooltip(focus) {
   }
 }
 
+function getLoadoutGoldPerRoundBonus(items) {
+  let bonus = 0;
+  (items || []).forEach((item) => {
+    const def = ITEM_CATALOG[item.itemId];
+    if (def?.goldPerRound > 0) bonus += def.goldPerRound;
+  });
+  return bonus;
+}
+
 function sellBoardFocusItem() {
   if (phase !== "prep" || !canEditPrepSide() || !gamepadBoardFocus) return false;
   const st = getSideState(prepViewSide);
@@ -2145,6 +2294,25 @@ function sellBenchFocusItem(index) {
   recalcSynergies();
   updateUI();
   return true;
+}
+
+function sellDraggedItem(side = prepViewSide) {
+  if (!dragFrom || !dragPayload) return false;
+  if (dragFrom.type === "shop") return false;
+
+  if (dragFrom.type === "bench") {
+    return sellBenchEntry(dragFrom.index, side);
+  }
+  if (dragFrom.type === "item") {
+    creditItemSale(dragFrom.item.itemId, side);
+    return true;
+  }
+  if (dragFrom.type === "container") {
+    creditItemSale(dragFrom.container.itemId, side);
+    (dragFrom.carriedItems || []).forEach((ci) => creditItemSale(ci.itemId, side));
+    return true;
+  }
+  return false;
 }
 
 function sellDraggedItemQuick(side = prepViewSide) {
@@ -2218,110 +2386,27 @@ function handleGlobalKeydown(e) {
       return;
     }
     e.preventDefault();
+    if (isLobbyMode() && lobbyState) {
+      setLobbyViewFighter(cycleLobbyViewFighterId(
+        lobbyState,
+        lobbyViewFighterId,
+        e.shiftKey ? -1 : 1,
+      ));
+      return;
+    }
     setPrepViewSide(prepViewSide === "player" ? "enemy" : "player");
   }
-}
 
-function commitShopPurchase(index, side = prepViewSide) {
-  const st = getSideState(side);
-  const itemId = st.shop[index];
-  if (!itemId) return null;
-  const def = ITEM_CATALOG[itemId];
-  if (!def || st.gold < def.cost) return null;
-  st.gold -= def.cost;
-  if (side === "player") goldSpentTotal += def.cost;
-  st.shop[index] = null;
-  st.shopFrozen[index] = false;
-  if (typeof applyShopBuyMeta === "function") {
-    const ctx = getShopContextForSide(side);
-    applyShopBuyMeta(side, st.items, itemId, st, ctx, (msg) => log(msg));
+  if (e.key === "Tab" && isBattleUiPhase() && isLobbyMode() && lobbyMatches.length && !isPhaseTransitioning()) {
+    e.preventDefault();
+    const playable = lobbyMatches
+      .map((m, i) => ({ m, i }))
+      .filter(({ m }) => m.state && !m.byeFighterId);
+    if (playable.length < 2) return;
+    const pos = playable.findIndex(({ i }) => i === lobbySpectateMatchId);
+    const next = playable[(pos + (e.shiftKey ? -1 : 1) + playable.length) % playable.length];
+    setLobbySpectateMatch(next.i);
   }
-  return itemId;
-}
-
-function buyFromShop(index, side = prepViewSide) {
-  if (phase !== "prep" || gameOver || !canEditPrepSide(side)) return;
-  const st = getSideState(side);
-  if (!st.shop[index]) return;
-  if (st.bench.length >= MAX_BENCH) { log("Скамейка полна!"); return; }
-  const itemId = commitShopPurchase(index, side);
-  if (!itemId) return;
-  st.bench.push({ itemId, uid: `bench-${Date.now()}-${Math.random().toString(36).slice(2, 5)}` });
-  playPrepSfx("prep_buy");
-  if (side === prepViewSide && typeof CombatLog !== "undefined") {
-    CombatLog.notifyPurchase(ITEM_CATALOG[itemId]);
-  }
-  renderShop();
-  renderBench();
-  updateUI();
-}
-
-function getSellRefund(itemId, side = prepViewSide) {
-  const base = ITEM_CATALOG[itemId]?.cost || 0;
-  const mult = typeof getSellBonusMultiplier === "function"
-    ? getSellBonusMultiplier(getSideState(side).items)
-    : 1;
-  return Math.max(0, Math.round(base * mult));
-}
-
-function getLoadoutGoldPerRoundBonus(items) {
-  let bonus = 0;
-  (items || []).forEach((item) => {
-    const def = ITEM_CATALOG[item.itemId];
-    if (def?.goldPerRound > 0) bonus += def.goldPerRound;
-  });
-  return bonus;
-}
-
-function creditItemSale(itemId, side = prepViewSide) {
-  if (!itemId) return;
-  const refund = getSellRefund(itemId, side);
-  getSideState(side).gold += refund;
-  playPrepSfx("prep_sell");
-  if (side === prepViewSide && typeof CombatLog !== "undefined") {
-    CombatLog.notifySell(ITEM_CATALOG[itemId], refund);
-  }
-}
-
-function sellBenchEntry(index, side = prepViewSide) {
-  const st = getSideState(side);
-  const entry = st.bench[index];
-  if (!entry) return false;
-  creditItemSale(entry.itemId, side);
-  (entry.carriedItems || []).forEach((ci) => creditItemSale(ci.itemId, side));
-  st.bench.splice(index, 1);
-  if (side === prepViewSide) {
-    if (selectedBench === index) selectedBench = -1;
-    else if (selectedBench > index) selectedBench -= 1;
-  }
-  return true;
-}
-
-function sellDraggedItem(side = prepViewSide) {
-  if (!dragFrom || !dragPayload) return false;
-  if (dragFrom.type === "shop") return false;
-
-  if (dragFrom.type === "bench") {
-    return sellBenchEntry(dragFrom.index, side);
-  }
-  if (dragFrom.type === "item") {
-    creditItemSale(dragFrom.item.itemId, side);
-    return true;
-  }
-  if (dragFrom.type === "container") {
-    creditItemSale(dragFrom.container.itemId, side);
-    (dragFrom.carriedItems || []).forEach((ci) => creditItemSale(ci.itemId, side));
-    return true;
-  }
-  return false;
-}
-
-function sellSelected(side = prepViewSide) {
-  const st = getSideState(side);
-  if (selectedBench < 0 || !st.bench[selectedBench]) return;
-  sellBenchEntry(selectedBench, side);
-  renderBench();
-  updateUI();
 }
 
 function restoreDraggedItem(side = prepViewSide) {
@@ -2709,7 +2794,14 @@ function clearDragUiState() {
 }
 
 function canStartBattle() {
-  if (phase !== "prep" || gameOver || round > RUN_BATTLES) return false;
+  if (phase !== "prep" || gameOver) return false;
+  if (isLobbyMode()) {
+    if (!lobbyState || !getLobbyPlayer(lobbyState)?.alive) return false;
+    if (isLobbyRunOver(lobbyState)) return false;
+    if (!getLobbyOpponent(lobbyState)) return false;
+  } else if (round > RUN_BATTLES) {
+    return false;
+  }
   if (playerItems.length === 0) return false;
   if (opponentMode === "manual" && enemyItems.length === 0) return false;
   return true;
@@ -2859,6 +2951,13 @@ function startBattle() {
     }
     return;
   }
+  if (isLobbyMode()) {
+    stopLobbyPrepTimer();
+    applyCraftingForSide("player");
+    runLobbyBotsShopPhase(lobbyState, round);
+    applyLobbyGhostToEnemy();
+    syncLobbyPlayerFromGlobals();
+  }
   if (dragPayload) {
     dragPayload = null;
     dragFrom = null;
@@ -2886,30 +2985,49 @@ function startBattle() {
       if (typeof setBattleEnemyTeamLabel === "function") {
         setBattleEnemyTeamLabel(getEnemyDisplayName());
       }
-      battleState = createBattleState(
-        lastBattlePrepSnapshot.playerItems,
-        lastBattlePrepSnapshot.enemyItems,
-        playerClass,
-        enemyClass,
-        round,
-        {
-          player: { pendingShopBuffs: playerPendingShopBuffs },
-          enemy: { pendingShopBuffs: enemyPendingShopBuffs },
-        },
-      );
+      if (isLobbyMode() && lobbyState) {
+        lobbyMatches = initLobbyRoundBattles(lobbyState, round);
+        const playerIdx = lobbyMatches.findIndex((m) => m.isPlayerMatch);
+        lobbySpectateMatchId = playerIdx >= 0 ? playerIdx : 0;
+        const playerMatch = lobbyMatches[lobbySpectateMatchId];
+        if (!playerMatch?.state) throw new Error("lobby player match missing");
+        battleState = playerMatch.state;
+        syncLobbySpectateBoards(playerMatch);
+        const app = document.getElementById("app");
+        if (app) app.dataset.lobbySpectate = "yours";
+        lobbyMatches.forEach((match) => {
+          if (match.state && typeof initBattleCountdown === "function") {
+            initBattleCountdown(match.state);
+          }
+        });
+      } else {
+        battleState = createBattleState(
+          lastBattlePrepSnapshot.playerItems,
+          lastBattlePrepSnapshot.enemyItems,
+          playerClass,
+          enemyClass,
+          round,
+          {
+            player: { pendingShopBuffs: playerPendingShopBuffs },
+            enemy: { pendingShopBuffs: enemyPendingShopBuffs },
+          },
+        );
+      }
       if (typeof resetStackOrbitVfx === "function") resetStackOrbitVfx();
       battleStartTime = Date.now();
       tickBattlePresentation._at = { emotion: 0, arena: 0 };
       if (typeof resetEmotionEngine === "function") resetEmotionEngine();
       if (typeof initBattleHud === "function") initBattleHud();
       if (typeof hideBattleCountdownOverlay === "function") hideBattleCountdownOverlay();
-      if (typeof initBattleCountdown === "function") initBattleCountdown(battleState);
+      if (!isLobbyMode() && typeof initBattleCountdown === "function") initBattleCountdown(battleState);
       if (typeof initBattleDamageTracker === "function") initBattleDamageTracker(battleState);
       playerPendingShopBuffs = 0;
       enemyPendingShopBuffs = 0;
-      battleState.recording = true;
-      battleState.replayFrames = [captureBattleFrame(battleState)];
-      battleState.lastRecordAt = 0;
+      if (!isLobbyMode()) {
+        battleState.recording = true;
+        battleState.replayFrames = [captureBattleFrame(battleState)];
+        battleState.lastRecordAt = 0;
+      }
       setBattleSpeed(savedBattleSpeed);
       updateBattleControlsUI();
       setPhaseLabel("Бой!", true);
@@ -2918,6 +3036,7 @@ function startBattle() {
       renderBattleStats();
       renderPlayerProfiles();
       renderFightButton();
+      renderLobbyChrome();
       if (typeof updateBattleAnalyzer === "function" && battleState) {
         updateBattleAnalyzer(battleState, 0);
       }
@@ -2937,11 +3056,14 @@ function startBattle() {
 }
 
 function endBattle() {
-  if (!battleState || battleEndHandled) return;
+  const playerMatch = isLobbyMode() ? lobbyMatches.find((m) => m.isPlayerMatch) : null;
+  const activeState = battleState || playerMatch?.state;
+  if (!activeState || battleEndHandled) return;
   battleEndHandled = true;
 
-  const battleWinner = battleState.winner;
-  const finishedState = battleState;
+  const battleWinner = activeState.winner;
+  const finishedState = activeState;
+  lastEndedBattleState = finishedState;
   battleState = null;
   clearBattleFloatLayer();
   if (typeof resetStackOrbitVfx === "function") resetStackOrbitVfx();
@@ -3049,16 +3171,102 @@ function endBattle() {
     showBattleResultPopup(resultSummary, resultLog);
   });
 
+  if (isLobbyMode() && lobbyState) {
+    lastLobbyPlayerBattleWinner = battleWinner;
+    lobbyRoundSettling = true;
+    battleState = null;
+    const live = countActiveLobbyMatches(lobbyMatches);
+    if (live > 0 && typeof CombatLog !== "undefined") {
+      CombatLog.addEvent({
+        type: "neutral",
+        text: `⏳ Ещё ${live} боёв в лобби — Tab или полоска внизу, чтобы смотреть`,
+        mergeKey: `lobby:live-wait:${round}`,
+      });
+    }
+    lastEndedBattleState = null;
+    return;
+  }
+
   try {
     applyPostBattlePrep(battleWinner);
   } catch (err) {
     console.error("applyPostBattlePrep failed:", err);
     updateUI();
   }
+  lastEndedBattleState = null;
 }
 
 function applyPostBattlePrep(battleWinner) {
   if (gameOver) return;
+
+  if (isLobbyMode() && lobbyState) {
+    fastForwardRemainingLobbyMatches(lobbyMatches);
+    const lobbyResult = applyAllLobbyMatchResults(lobbyState, lobbyMatches);
+    const playerSummary = lobbyResult.summaries.find((s) => s.isPlayerMatch);
+    const opponent = getLobbyOpponent(lobbyState);
+
+    if (playerSummary?.loserId === lobbyState.playerId) {
+      const msg = playerSummary.eliminated
+        ? `💔 Вы выбыли из лобби! Урон: −${playerSummary.damage} HP`
+        : `💔 Урон по вам: −${playerSummary.damage} HP (осталось ${getLobbyPlayer(lobbyState)?.hp ?? 0})`;
+      if (typeof CombatLog !== "undefined") {
+        CombatLog.addEvent({ type: "loss", text: msg, mergeKey: `lobby:dmg:player:${round}` });
+      }
+    } else if (playerSummary?.winnerId === lobbyState.playerId && opponent) {
+      const msg = playerSummary.eliminated
+        ? `🏆 ${opponent.name} выбыл! Урон: −${playerSummary.damage} HP`
+        : `🏆 Урон ${opponent.name}: −${playerSummary.damage} HP (осталось ${opponent.hp})`;
+      if (typeof CombatLog !== "undefined") {
+        CombatLog.addEvent({ type: "win", text: msg, mergeKey: `lobby:dmg:enemy:${round}` });
+      }
+    }
+
+    lobbyResult.summaries.filter((s) => !s.isPlayerMatch).forEach((s) => {
+      if (typeof CombatLog === "undefined") return;
+      const a = lobbyState.fighters[s.winnerId];
+      const b = lobbyState.fighters[s.loserId];
+      if (!a || !b) return;
+      const text = s.eliminated
+        ? `${a.name} победил ${b.name} (−${s.damage} HP, выбыл)`
+        : `${a.name} vs ${b.name}: −${s.damage} HP`;
+      CombatLog.addEvent({ type: "neutral", text, mergeKey: `lobby:side:${round}:${s.matchId}` });
+    });
+
+    const playerBag = grantBagReward(playerContainers, round, GRID_COLS, GRID_ROWS, playerItems);
+    if (playerBag.granted) {
+      playerContainers = playerBag.containers;
+      const bagName = ITEM_CATALOG[playerBag.bagId]?.name || "Сумка";
+      log(`🎒 Новая сумка: ${bagName}! Инвентарь расширен.`);
+      if (typeof CombatLog !== "undefined") {
+        CombatLog.notifyBackpack(ITEM_CATALOG[playerBag.bagId]);
+      }
+    }
+
+    lobbyMatches = [];
+
+    if (lobbyResult.playerEliminated || lobbyResult.lobbyWon || isLobbyRunOver(lobbyState)) {
+      pendingGameOver = true;
+      updateUI();
+      renderRunStats();
+      renderLobbyChrome();
+      return;
+    }
+
+    startLobbyPrepRound(lobbyState, round);
+    lobbyViewFighterId = lobbyState.playerId;
+    setLobbyViewFighter(lobbyState.playerId);
+    resetLobbyPrepTimer();
+    resetShopForNewRoundForSide("player");
+    prepViewSide = "player";
+    recalcSynergies();
+    renderBattleStats();
+    renderPlayerProfiles();
+    pendingGameOver = false;
+    updateUI();
+    renderRunStats();
+    renderLobbyChrome();
+    return;
+  }
 
   if (round > RUN_BATTLES) {
     pendingGameOver = true;
@@ -3144,6 +3352,18 @@ function applyPostBattlePrep(battleWinner) {
 
 function showRunComplete() {
   gameOver = true;
+  if (isLobbyMode() && lobbyState) {
+    showLobbyRunCompleteOverlay(
+      lobbyState,
+      runResults,
+      runItemStats,
+      round,
+      phase,
+      captureRunEndBoardSnapshot(),
+      { spent: goldSpentTotal, earned: goldEarnedTotal },
+    );
+    return;
+  }
   showRunCompleteOverlay(runResults, runItemStats, round, phase, captureRunEndBoardSnapshot(), {
     spent: goldSpentTotal,
     earned: goldEarnedTotal,
@@ -3151,7 +3371,8 @@ function showRunComplete() {
 }
 
 function tickBattlePresentation() {
-  if (!isBattleUiPhase() || !battleState) return;
+  const presentState = getDisplayBattleState();
+  if (!isBattleUiPhase() || !presentState) return;
   const elapsed = battleStartTime ? (Date.now() - battleStartTime) / 1000 : 0;
   const now = performance.now();
   if (!tickBattlePresentation._at) {
@@ -3167,15 +3388,92 @@ function tickBattlePresentation() {
   if (now - tickBattlePresentation._at.emotion >= emotionGap) {
     tickBattlePresentation._at.emotion = now;
     if (typeof drawEmotionLayer === "function") {
-      drawEmotionLayer(null, battleState, elapsed);
+      drawEmotionLayer(null, presentState, elapsed);
     }
   }
   if (now - tickBattlePresentation._at.arena >= arenaGap) {
     tickBattlePresentation._at.arena = now;
     if (typeof tickBattleArenaPresentation === "function") {
-      tickBattleArenaPresentation(battleState, elapsed);
+      tickBattleArenaPresentation(presentState, elapsed);
     }
   }
+}
+
+function tickSingleBattleState(state, dt) {
+  const countdownDt = typeof getBattleCountdownDt === "function" ? getBattleCountdownDt(dt) : dt;
+  if (countdownDt > 0 && typeof tickBattleCountdown === "function") {
+    tickBattleCountdown(state, countdownDt);
+  }
+  const simDt = getBattleSimDt(dt);
+  const countdownActive = typeof isBattleCountdownActive === "function" && isBattleCountdownActive(state);
+  if (simDt > 0 && !countdownActive) {
+    battleTick(state, simDt);
+    recordBattleFrame(state);
+  }
+}
+
+function tickLobbyRoundBattles(dt, ts) {
+  if (!isLobbyMode() || phase !== "battle" || !lobbyMatches.length) return false;
+
+  let playerJustFinished = false;
+  lobbyMatches.forEach((match) => {
+    if (match.byeFighterId || !match.state || match.state.finished) return;
+
+    if (match.isPlayerMatch) {
+      if (battleEndHandled) return;
+      battleState = match.state;
+      try {
+        tickSingleBattleState(match.state, dt);
+        if (!match.state.finished && typeof syncStackOrbitFromBattle === "function") {
+          syncStackOrbitFromBattle(match.state);
+        }
+      } catch (err) {
+        console.error("lobby player battleTick failed:", err);
+      }
+      if (match.state.finished) playerJustFinished = true;
+      return;
+    }
+
+    tickLobbyMatchState(match, dt, getBattleSimDt, lobbyState);
+  });
+
+  const displayState = getDisplayBattleState();
+  if (displayState && !displayState.finished && typeof syncStackOrbitFromBattle === "function") {
+    syncStackOrbitFromBattle(displayState);
+  }
+
+  if (battleState && !battleEndHandled) {
+    flushBattleEvents();
+  }
+
+  if (Math.floor(ts / 500) !== Math.floor((ts - dt * 1000) / 500)) {
+    renderBattleStats();
+    renderPlayerProfiles();
+    if (typeof refreshBattleInventoryPopover === "function") refreshBattleInventoryPopover();
+  }
+  if (Math.floor(ts / 400) !== Math.floor((ts - dt * 1000) / 400)) {
+    renderLobbyChrome();
+  }
+  if (typeof syncBattleInventoryPopoverFlash === "function") syncBattleInventoryPopoverFlash();
+  tickBattlePresentation();
+
+  if (playerJustFinished && !battleEndHandled) {
+    endBattle();
+  }
+  return true;
+}
+
+function finishLobbyRoundFromContinue() {
+  if (!isLobbyMode() || !lobbyState) return;
+  fastForwardRemainingLobbyMatches(lobbyMatches);
+  try {
+    applyPostBattlePrep(lastLobbyPlayerBattleWinner);
+  } catch (err) {
+    console.error("finishLobbyRoundFromContinue failed:", err);
+    updateUI();
+  }
+  lobbyRoundSettling = false;
+  lastLobbyPlayerBattleWinner = null;
 }
 
 function gameLoop(ts) {
@@ -3188,6 +3486,24 @@ function gameLoop(ts) {
   if (phase === "prep") {
     if (typeof tickInventoryAnimationController === "function") tickInventoryAnimationController(dt);
     if (typeof tickSynergyVisualController === "function") tickSynergyVisualController(dt);
+    if (isLobbyMode() && lobbyPrepTimerActive) {
+      lobbyPrepTimerRemaining = Math.max(0, lobbyPrepTimerRemaining - dt);
+      if (Math.floor(ts / 250) !== Math.floor((ts - dt * 1000) / 250)) {
+        renderLobbyChrome();
+      }
+      if (lobbyPrepTimerRemaining <= 0) {
+        lobbyPrepTimerActive = false;
+        if (canStartBattle()) {
+          startBattle();
+        } else if (!lobbyPrepOvertimeUsed) {
+          lobbyPrepOvertimeUsed = true;
+          lobbyPrepTimerRemaining = LOBBY_PREP_OVERTIME_SEC;
+          lobbyPrepTimerActive = true;
+          playPrepSfx("ui_error");
+        }
+        renderLobbyChrome();
+      }
+    }
   }
 
   if (phase === "prep" && synergyState.isDragging && dragPayload) {
@@ -3210,7 +3526,9 @@ function gameLoop(ts) {
     canvas?.classList.remove("synergy-preview-mode");
   }
 
-  if (phase === "battle" && battleState && !battleState.finished) {
+  if (phase === "battle" && tickLobbyRoundBattles(dt, ts)) {
+    // все пары лобби тикают параллельно
+  } else if (phase === "battle" && battleState && !battleState.finished) {
     const countdownDt = typeof getBattleCountdownDt === "function" ? getBattleCountdownDt(dt) : dt;
     if (countdownDt > 0 && typeof tickBattleCountdown === "function") {
       tickBattleCountdown(battleState, countdownDt);
@@ -3237,7 +3555,7 @@ function gameLoop(ts) {
     }
     if (typeof syncBattleInventoryPopoverFlash === "function") syncBattleInventoryPopoverFlash();
     tickBattlePresentation();
-  } else if (phase === "battle" && battleState?.finished) {
+  } else if (phase === "battle" && battleState?.finished && !isLobbyMode()) {
     if (typeof resetStackOrbitVfx === "function") resetStackOrbitVfx();
     clearBattleFloatLayer();
     endBattle();
@@ -3922,30 +4240,32 @@ function drawWorldLayer() {
     }
     ctx.restore();
   } else if (isBattleUiPhase()) {
+    const viewState = getDisplayBattleState();
     if (shouldDrawCanvasLoadoutInBattle()) {
-      if (battleState) {
+      if (viewState) {
         drawBackpackFrame("player", {
           containers: playerContainers,
-          items: battleState.player.items,
+          items: viewState.player.items,
         });
         drawBackpackFrame("enemy", {
           containers: enemyContainers,
-          items: battleState.enemy.items,
+          items: viewState.enemy.items,
         });
         drawContainers(playerContainers, "player", false);
         drawContainers(enemyContainers, "enemy", false);
-      } else {
+      } else if (battleState) {
         drawBackpackFrame("player", { containers: playerContainers, items: playerItems });
         drawBackpackFrame("enemy", { containers: enemyContainers, items: enemyItems });
       }
     }
   }
-  if (isBattleUiPhase() && battleState) {
+  if (isBattleUiPhase() && getDisplayBattleState()) {
+    const viewState = getDisplayBattleState();
     if (shouldDrawCanvasLoadoutInBattle()) {
-      drawPlacedItems(battleState.player.items, "player", false, true);
-      drawPlacedItems(battleState.enemy.items, "enemy", true, true);
+      drawPlacedItems(viewState.player.items, "player", false, true);
+      drawPlacedItems(viewState.enemy.items, "enemy", true, true);
     }
-  } else {
+  } else if (!isBattleUiPhase()) {
     if (typeof resetStackOrbitVfx === "function") resetStackOrbitVfx();
     clearBattleFloatLayer();
     if (typeof clearEmotionLayer === "function") clearEmotionLayer();
@@ -6094,6 +6414,7 @@ function startBenchDrag(index, e, side = prepViewSide) {
 function updateUI() {
   renderPlayerProfiles();
   renderRunStats();
+  renderLobbyChrome();
   if (typeof refreshGamepadHints === "function") refreshGamepadHints();
   if (phase === "prep" && !gameOver) {
     ensureShopReadyForSide(prepViewSide);
@@ -6140,12 +6461,23 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
   const st = getSideState(side);
 
   if (statsHud) {
+    const lobbyPlayer = isLobbyMode() ? getLobbyPlayer(lobbyState) : null;
+    const viewedFighter = isLobbyMode() ? getLobbyFighterById(lobbyState, lobbyViewFighterId) : null;
+    const roundLabel = isLobbyMode()
+      ? `${round}`
+      : `${Math.min(round, RUN_BATTLES)}/${RUN_BATTLES}`;
+    const hpLabel = viewedFighter
+      ? `${viewedFighter.hp}/${LOBBY_START_HP}`
+      : lobbyPlayer
+        ? `${lobbyPlayer.hp}/${LOBBY_START_HP}`
+        : profile.hpDisplay;
+    const hpRowClass = lobbyPlayer ? " prep-stats-row--lobby-hp" : "";
     statsHud.innerHTML = `
       <div class="prep-stats-class">${profile.className || "—"}</div>
       <div class="prep-stats-metrics">
         <div class="prep-stats-row"><span>💰</span><b>${st.gold}</b></div>
-        <div class="prep-stats-row"><span>❤️</span><b>${profile.hpDisplay}</b></div>
-        <div class="prep-stats-row"><span>Раунд</span><b>${Math.min(round, RUN_BATTLES)}/${RUN_BATTLES}</b></div>
+        <div class="prep-stats-row${hpRowClass}"><span>❤️</span><b>${hpLabel}</b></div>
+        <div class="prep-stats-row"><span>Раунд</span><b>${roundLabel}</b></div>
       </div>
     `;
     if (!document.getElementById("prep-hero-tooltip")?.classList.contains("hidden")) {
@@ -6161,23 +6493,35 @@ function renderPlayerProfiles() {
 
   let playerProfile;
   let enemyProfile;
+  const viewState = getDisplayBattleState();
+  const spectateNames = getLobbySpectateProfileNames();
+  const profilePlayerClass = spectateNames?.playerClassId || playerClass;
+  const profileEnemyClass = spectateNames?.enemyClassId || enemyClass;
 
-  if (phase === "battle" && battleState) {
-    playerProfile = computeCombatProfileFromBattleSide(battleState.player, playerClass, getPlayerProfileName(), battleState);
-    enemyProfile = computeCombatProfileFromBattleSide(battleState.enemy, enemyClass, getEnemyDisplayName(), battleState);
-  } else if (phase === "replay" && battleState) {
-    playerProfile = computeCombatProfileFromBattleSide(battleState.player, playerClass, getPlayerProfileName(), battleState);
-    enemyProfile = computeCombatProfileFromBattleSide(battleState.enemy, enemyClass, getEnemyDisplayName(), battleState);
+  if (phase === "battle" && viewState) {
+    playerProfile = computeCombatProfileFromBattleSide(
+      viewState.player, profilePlayerClass, getPlayerProfileName(), viewState,
+    );
+    enemyProfile = computeCombatProfileFromBattleSide(
+      viewState.enemy, profileEnemyClass, getEnemyDisplayName(), viewState,
+    );
+  } else if (phase === "replay" && viewState) {
+    playerProfile = computeCombatProfileFromBattleSide(
+      viewState.player, profilePlayerClass, getPlayerProfileName(), viewState,
+    );
+    enemyProfile = computeCombatProfileFromBattleSide(
+      viewState.enemy, profileEnemyClass, getEnemyDisplayName(), viewState,
+    );
   } else {
     playerProfile = computeCombatProfile(playerItems, playerClass, getPlayerProfileName());
     enemyProfile = computeCombatProfile(enemyItems, enemyClass, getEnemyDisplayName());
   }
 
-  applyProfileIdentity(playerProfile, playerClass, gold);
-  applyProfileIdentity(enemyProfile, enemyClass, enemyGold);
-  if (battleState) {
-    enrichProfileWeaponBadge(playerProfile, battleState.player?.items || playerItems, playerClass);
-    enrichProfileWeaponBadge(enemyProfile, battleState.enemy?.items || enemyItems, enemyClass);
+  applyProfileIdentity(playerProfile, profilePlayerClass, gold);
+  applyProfileIdentity(enemyProfile, profileEnemyClass, enemyGold);
+  if (viewState) {
+    enrichProfileWeaponBadge(playerProfile, viewState.player?.items || playerItems, profilePlayerClass);
+    enrichProfileWeaponBadge(enemyProfile, viewState.enemy?.items || enemyItems, profileEnemyClass);
   } else {
     enrichProfileWeaponBadge(playerProfile, playerItems, playerClass);
     enrichProfileWeaponBadge(enemyProfile, enemyItems, enemyClass);
@@ -6193,7 +6537,7 @@ function renderPlayerProfiles() {
   const buildStatsEl = document.getElementById("battle-build-stats-content");
   const statsOptions = {
     round,
-    maxRound: RUN_BATTLES,
+    maxRound: isLobbyMode() ? round : RUN_BATTLES,
     itemCount: Math.max(playerItems.length, enemyItems.length, 1),
   };
 
@@ -6217,7 +6561,7 @@ function renderPlayerProfiles() {
 
   if (liveBattle) {
     if (typeof ensureBattleHeroShells === "function") {
-      ensureBattleHeroShells(battleState, playerProfile, enemyProfile);
+      ensureBattleHeroShells(viewState, playerProfile, enemyProfile);
     } else {
       const battleHud = document.getElementById("battle-run-hud");
       if (battleHud) {
@@ -6259,10 +6603,10 @@ function renderPlayerProfiles() {
       enemyAvatarEl.innerHTML = renderProfileAvatarHTML(enemyProfile, "enemy");
     }
   }
-  if (liveBattle && battleState) {
-    battleState._heroProfiles = { player: playerProfile, enemy: enemyProfile };
-    syncAllAvatarHeroEffects(playerProfile, enemyProfile, battleState);
-    if (typeof updateBattleAnalyzer === "function") updateBattleAnalyzer(battleState, 0);
+  if (liveBattle && viewState) {
+    viewState._heroProfiles = { player: playerProfile, enemy: enemyProfile };
+    syncAllAvatarHeroEffects(playerProfile, enemyProfile, viewState);
+    if (typeof updateBattleAnalyzer === "function") updateBattleAnalyzer(viewState, 0);
   }
   syncBattleArenaLayout();
 }
@@ -6270,6 +6614,13 @@ function renderPlayerProfiles() {
 function renderRunStats() {
   const el = document.getElementById("run-stats-panel");
   if (!el) return;
+  if (isLobbyMode() && lobbyState) {
+    el.innerHTML = renderLobbyStandingsPanel(lobbyState, round, runResults, {
+      spent: goldSpentTotal,
+      earned: goldEarnedTotal,
+    });
+    return;
+  }
   el.innerHTML = renderRunStatsPanel(round, phase, runResults, {
     spent: goldSpentTotal,
     earned: goldEarnedTotal,
@@ -6304,148 +6655,43 @@ function buildItemCardHTML(def, { cardType = "item-card", extraClasses = "", tag
   </div>`;
 }
 
-function renderShopCardHTML(def, { extraClasses = "", innerBefore = "", dataAttrs = "", shapeSize = "md" } = {}) {
-  const classes = getRarityCardClasses(def.rarity, ["shop-card", extraClasses].filter(Boolean).join(" "));
-  const shapeHtml = renderItemShapeMiniHTML(def, { size: shapeSize });
-  const rarityColor = getRarityNameColor(def.rarity);
-  return `<div class="${classes}"${dataAttrs ? ` ${dataAttrs}` : ""} style="--shop-rarity-color:${rarityColor}">
-    ${innerBefore}
-    <div class="shop-item-main">
-      <div class="shop-item-stack">
-        <div class="shop-item-visual">
-          <div class="${getItemIconShellClass(def)}" style="background:${def.color}33">${renderItemIconsHTML(def)}</div>
-          <div class="cost" aria-label="Цена ${def.cost}"><span class="cost-value">${def.cost}</span><span class="cost-coin" aria-hidden="true">💰</span></div>
-        </div>
-        ${shapeHtml}
-      </div>
-    </div>
-  </div>`;
-}
-
-function getShopDisplayEntries(side = prepViewSide) {
-  const st = getSideState(side);
-  return st.shop
-    .map((itemId, index) => ({
-      index,
-      itemId,
-      cost: itemId ? (ITEM_CATALOG[itemId]?.cost ?? 0) : -1,
-    }))
-    .sort((a, b) => {
-      if (a.cost !== b.cost) return b.cost - a.cost;
-      return a.index - b.index;
-    });
-}
-
-function renderShop(side = prepViewSide) {
-  const el = document.getElementById("shop-slots");
-  if (!el) return;
-  const st = getSideState(side);
-  ensureSideShopArrays(st);
-  if (phase === "prep" && !gameOver) {
-    if (st.shopReadyForRound !== round) resetShopForNewRoundForSide(side);
-    else ensureShopHasStock(side);
-  }
-  const editable = canEditPrepSide(side);
-  const emptySlotsHtml = Array.from({ length: MAX_SHOP }, () => `<div class="shop-card empty">—</div>`).join("");
-  let html = emptySlotsHtml;
-  try {
-    const entries = getShopDisplayEntries(side);
-    if (entries.length) {
-      html = entries.map(({ itemId, index }) => {
-        try {
-          if (!itemId) return `<div class="shop-card empty">—</div>`;
-          const def = ITEM_CATALOG[itemId];
-          if (!def) return `<div class="shop-card empty" title="Предмет не найден: ${itemId}">—</div>`;
-          const frozen = st.shopFrozen[index];
-          const affordable = st.gold >= (def.cost ?? 0);
-          const pinBtn = editable
-            ? `<button type="button" class="shop-pin${frozen ? " active" : ""}" data-pin="${index}" title="${frozen ? "Открепить" : "❄️ Заморозить предмет"}">${frozen ? "📌" : "📍"}</button>`
-            : "";
-          return renderShopCardHTML(def, {
-            extraClasses: [frozen ? "frozen" : "", affordable || !editable ? "" : "unaffordable"].filter(Boolean).join(" "),
-            innerBefore: pinBtn,
-            shapeSize: "md",
-            dataAttrs: `data-index="${index}" data-item-id="${itemId}"${affordable || !editable ? "" : ' data-unaffordable="1" title="Недостаточно золота"'}`, 
-          });
-        } catch (itemErr) {
-          console.error("renderShop item failed:", itemId, itemErr);
-          return `<div class="shop-card empty" title="Ошибка карточки">—</div>`;
-        }
-      }).join("");
-    }
-  } catch (err) {
-    console.error("renderShop failed:", err);
-    html = emptySlotsHtml;
-  }
-  el.innerHTML = html;
-  el.querySelectorAll(".shop-card:not(.empty)").forEach((card) => {
-    bindItemTooltipEvents(card, card.dataset.itemId, null, "shop");
-  });
-  if (!editable) return;
-  el.querySelectorAll(".shop-pin").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      toggleShopFreeze(+btn.dataset.pin, side);
-    });
-  });
-  el.querySelectorAll(".shop-card:not(.empty)").forEach((card) => {
-    if (!card.dataset.unaffordable) {
-      card.addEventListener("mousedown", (e) => {
-        if (isSyntheticMouseFromTouch()) return;
-        if (e.button !== 0 || e.target.closest(".shop-pin")) return;
-        beginPendingShopDrag(+card.dataset.index, e, side);
-      });
-      card.addEventListener("click", (e) => {
-        if (isTouchUi()) return;
-        if (Date.now() < suppressShopClickUntil) return;
-        if (e.target.closest(".shop-pin") || shopDidDrag) {
-          shopDidDrag = false;
-          return;
-        }
-        buyFromShop(+card.dataset.index, side);
-      });
-    }
-  });
-  if (typeof refreshGamepadPrepFocus === "function") refreshGamepadPrepFocus();
-}
-
-function renderBench(side = prepViewSide) {
-  const el = document.getElementById("bench-slots");
-  const st = getSideState(side);
-  el.innerHTML = Array.from({ length: MAX_BENCH }, (_, i) => {
-    const b = st.bench[i];
-    if (!b) return `<div class="bench-card empty">пусто</div>`;
-    const def = ITEM_CATALOG[b.itemId];
-    return buildItemCardHTML(def, {
-      cardType: "bench-card",
-      extraClasses: i === selectedBench ? "selected" : "",
-      shapeSize: "sm",
-      showShape: false,
-      dataAttrs: `data-bench="${i}" data-item-id="${b.itemId}"`,
-    });
-  }).join("");
-  el.querySelectorAll(".bench-card:not(.empty)").forEach((card) => {
-    const idx = +card.dataset.bench;
-    bindItemTooltipEvents(card, st.bench[idx]?.itemId, null, "bench");
-  });
-  if (!canEditPrepSide(side)) return;
-  el.querySelectorAll(".bench-card:not(.empty)").forEach((card) => {
-    const idx = +card.dataset.bench;
-    card.addEventListener("mousedown", (e) => {
-      if (isSyntheticMouseFromTouch()) return;
-      startBenchDrag(idx, e, side);
-    });
-  });
-  if (typeof refreshGamepadPrepFocus === "function") refreshGamepadPrepFocus();
-}
-
 function renderBattleStats() {
   renderRunStats();
 }
 
 window.positionPrepTooltipDock = positionPrepTooltipDock;
 window.syncPrepTooltipDockVisibility = syncPrepTooltipDockVisibility;
-window.syncShopHintsVisibility = syncShopHintsVisibility;
 window.bindPointerTapTooltip = bindPointerTapTooltip;
+
+registerPrepShopRuntime({
+  getPrepViewSide: () => prepViewSide,
+  getPhase: () => phase,
+  getRound: () => round,
+  getGameOver: () => gameOver,
+  getSelectedBench: () => selectedBench,
+  setSelectedBench: (v) => { selectedBench = v; },
+  getGoldSpentTotal: () => goldSpentTotal,
+  addGoldSpent: (n) => { goldSpentTotal += n; },
+  getGoldEarnedTotal: () => goldEarnedTotal,
+  getRecentBattleResults: () => recentBattleResults,
+  getPlayerItems: () => playerItems,
+  getEnemyItems: () => enemyItems,
+  getShopDidDrag: () => shopDidDrag,
+  setShopDidDrag: (v) => { shopDidDrag = v; },
+  getSuppressShopClickUntil: () => suppressShopClickUntil,
+  getSideState,
+  canEditPrepSide,
+  isVersusMode,
+  isEnemyPrepEditable,
+  log,
+  draw,
+  recalcSynergies,
+  updateUI,
+  playPrepSfx,
+  isSyntheticMouseFromTouch,
+  isTouchUi,
+  beginPendingShopDrag,
+  startBenchDrag,
+});
 
 init();
