@@ -261,9 +261,8 @@
       arenaVh: 0.30, arenaMin: 128,
       colMin: 140, colMax: 220, colShare: 0.48,
       imgRatio: 0.48, imgMin: 88, imgMax: 116,
-      portraitZoom: 1.55, chromePad: 10, portraitObjectY: "8%",
-      emojiScale: 1, floorShare: 0.30, heroShare: 0.26,
-      floorVhCap: 0.34,
+      portraitZoom: 1.36, chromePad: 10, portraitObjectY: "14%",
+      emojiScale: 1, floorShare: 0.30, heroShare: 0.26, portraitDuelShare: 0.30,
       fxFloatScale: 0.9, fxProjectileScale: 0.9,
     },
     "phone-landscape": {
@@ -291,7 +290,7 @@
       colMin: 100, colMax: 158, colShare: 0.22,
       imgRatio: 0.44, imgMin: 112, imgMax: 172,
       portraitZoom: 1.02, chromePad: 12, portraitObjectY: "14%",
-      emojiScale: 1, floorShare: 0.28, heroShare: 0.30,
+      emojiScale: 1, floorShare: 0.28, heroShare: 0.30, portraitDuelShare: 0.28,
       fxFloatScale: 0.94, fxProjectileScale: 0.94,
     },
     "desktop-portrait": {
@@ -1299,6 +1298,49 @@
     }
   }
 
+  function isPortraitBattleProfile(root) {
+    const profile = root.dataset.battleProfile;
+    return profile === "phone-portrait" || profile === "tablet-portrait";
+  }
+
+  /** Портрет: компактная дуэльная полоса под HUD (не весь коридор до toolbar). */
+  function refinePortraitCombatCorridor(root, layoutRect, layoutH, { arenaGap }) {
+    if (!isPortraitBattleProfile(root)) return null;
+    if (typeof syncBattleHudAnchors === "function") syncBattleHudAnchors();
+
+    const hudBottomLayout = Math.max(
+      document.getElementById("battle-hud-player")?.getBoundingClientRect().bottom ?? 0,
+      document.getElementById("battle-hud-enemy")?.getBoundingClientRect().bottom ?? 0,
+    ) - layoutRect.top;
+    const chromeBar = getBottomChrome();
+    const chromeTopLayout = chromeBar && getComputedStyle(chromeBar).display !== "none"
+      ? chromeBar.getBoundingClientRect().top - layoutRect.top
+      : layoutH;
+
+    const floorTopMin = Math.max(0, hudBottomLayout + arenaGap);
+    const floorBottomMax = Math.min(layoutH - arenaGap, chromeTopLayout - arenaGap);
+    const corridorH = Math.max(96, floorBottomMax - floorTopMin);
+
+    const uiScale = readCssPx("--ui-scale", 1);
+    const vmin = Math.min(
+      window.visualViewport?.width ?? window.innerWidth,
+      window.visualViewport?.height ?? window.innerHeight,
+    );
+    const slotSize = typeof BattleHeroAnchor !== "undefined"
+      ? BattleHeroAnchor.thoughtSlotSize(vmin)
+      : Math.round(Math.min(172, Math.max(100, vmin * 0.19)));
+    const orbitPad = Math.round(48 * uiScale);
+    const compactH = Math.max(96, slotSize + orbitPad);
+
+    const profile = root.dataset.battleProfile || "phone-portrait";
+    const prof = BATTLE_PROFILES[profile] || {};
+    const duelShare = prof.portraitDuelShare ?? 0.32;
+    const shareCap = Math.round(corridorH * duelShare);
+    const floorH = Math.min(corridorH, Math.max(compactH, shareCap));
+
+    return { top: floorTopMin, height: floorH };
+  }
+
   /** L2/L3 hero row: 3 зоны (player | emoji arena | enemy), Safari-safe 4-layer. */
   function syncFlankArenaHeroAnchors() {
     const fieldCol = document.getElementById("prep-field-column");
@@ -1454,30 +1496,10 @@
       heroCardH,
     );
 
-    if (mobileStack && root.dataset.battleProfile === "phone-portrait") {
-      if (typeof syncBattleHudAnchors === "function") syncBattleHudAnchors();
-      const hudBottomLayout = Math.max(
-        document.getElementById("battle-hud-player")?.getBoundingClientRect().bottom ?? 0,
-        document.getElementById("battle-hud-enemy")?.getBoundingClientRect().bottom ?? 0,
-      ) - layoutRect.top;
-      const vhNow = window.visualViewport?.height ?? window.innerHeight;
-      const chromeBar = getBottomChrome();
-      const chromeTopLayout = chromeBar && getComputedStyle(chromeBar).display !== "none"
-        ? chromeBar.getBoundingClientRect().top - layoutRect.top
-        : layoutH;
-      const prof = BATTLE_PROFILES["phone-portrait"];
-      const floorTopMin = Math.max(combatFloorTopInitial, hudBottomLayout + arenaGap);
-      const floorBottomMax = Math.min(layoutH - arenaGap, chromeTopLayout - arenaGap);
-      const maxFloorH = Math.max(96, floorBottomMax - floorTopMin);
-      const vhCap = Math.round(vhNow * (prof.floorVhCap ?? 0.34));
-      const targetFloorH = Math.min(
-        maxFloorH,
-        vhCap,
-        Math.round(usableH * (prof.floorShare ?? 0.30)),
-        Math.max(combatFloorMin, 112),
-      );
-      combatFloorTop = floorTopMin;
-      combatFloorH = targetFloorH;
+    const portraitCorridor = refinePortraitCombatCorridor(root, layoutRect, layoutH, { arenaGap });
+    if (portraitCorridor) {
+      combatFloorTop = portraitCorridor.top;
+      combatFloorH = portraitCorridor.height;
     }
 
     applyBattleHeroRowZoneVars(root, fieldCol, zones, heroRowTop, heroCardH, {

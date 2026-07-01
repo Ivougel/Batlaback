@@ -197,28 +197,29 @@ const CASES = [
         const enemyHud = document.getElementById("battle-hud-enemy")?.getBoundingClientRect();
         const stage = document.querySelector("#player-avatar-slot .avatar-hero-stage")?.getBoundingClientRect();
         const playerSlot = document.getElementById("player-thought-slot")?.getBoundingClientRect();
+        const chromeTop = document.getElementById("bottom-chrome")?.getBoundingClientRect().top ?? 0;
         const hudBottom = Math.max(playerHud?.bottom ?? 0, enemyHud?.bottom ?? 0);
-        const avatarH = stage?.height ?? 0;
-        const vh = window.innerHeight;
         return {
           floorH: floor?.height ?? 0,
           floorTop: floor?.top ?? 0,
           emojiPx,
-          avatarH,
-          avatarRatio: avatarH && emojiPx ? emojiPx / avatarH : 0,
-          floorRatio: floor && emojiPx ? emojiPx / floor.height : 0,
+          hudBottom,
           hudTop: playerHud?.top ?? 0,
           stageBottom: stage?.bottom ?? 0,
           hudToSlotGap: (playerSlot?.top ?? 0) - hudBottom,
-          floorVhRatio: floor && vh ? floor.height / vh : 0,
+          slotCenterY: ((playerSlot?.top ?? 0) + (playerSlot?.bottom ?? 0)) / 2,
+          chromeTop,
         };
       });
       assert(m.floorH > 48, "combat floor too small");
-      assert(m.floorVhRatio <= 0.42, `combat floor too tall on portrait: ${m.floorVhRatio.toFixed(2)}`);
-      assert(m.emojiPx >= 80, `emoji too small: ${m.emojiPx}px`);
-      assert(m.emojiPx <= 140, `emoji too large on portrait: ${m.emojiPx}px`);
-      assert(m.hudToSlotGap <= 120, `emoji zone too far below HUD: ${m.hudToSlotGap}px`);
+      assert(m.hudToSlotGap <= 80, `emoji too far below HUD: ${m.hudToSlotGap}px`);
       assert(m.hudToSlotGap >= -8, `emoji overlaps HUD: ${m.hudToSlotGap}px`);
+      assert(m.emojiPx >= 76, `emoji too small: ${m.emojiPx}px`);
+      assert(m.emojiPx <= 120, `emoji too large on portrait: ${m.emojiPx}px`);
+      assert(m.floorTop >= m.hudBottom - 8, `combat floor above HUD: top=${m.floorTop} hud=${m.hudBottom}`);
+      const corridorH = m.chromeTop - m.hudBottom;
+      const slotRel = corridorH > 0 ? (m.slotCenterY - m.hudBottom) / corridorH : 0;
+      assert(slotRel <= 0.38, `emoji too low in viewport: rel=${slotRel.toFixed(2)}`);
       assert(m.hudTop >= m.stageBottom - 4, `HUD overlaps portrait: hud=${m.hudTop} stage=${m.stageBottom}`);
     },
   },
@@ -498,6 +499,52 @@ const CASES = [
       assert(m.hudTop >= m.stageBottom - 4, `HUD overlaps portrait: hud=${m.hudTop} stage=${m.stageBottom}`);
       assert(m.hpH >= 6, `HP bar too small: ${m.hpH}px`);
       assert(m.hpTop >= m.stageBottom - 4, `HP bar on portrait: hp=${m.hpTop} stage=${m.stageBottom}`);
+    },
+  },
+  {
+    id: "ipad-portrait-battle-corridor",
+    device: devices["iPad Mini"],
+    async run(page) {
+      await quickStart(page);
+      await page.evaluate(() => startBattle());
+      await page.waitForFunction(() => document.getElementById("app")?.dataset.phase === "battle");
+      await page.waitForFunction(
+        () => !document.getElementById("battle-countdown-overlay")
+          ?.classList.contains("battle-countdown-overlay-visible"),
+        { timeout: 12000 },
+      );
+      await page.waitForTimeout(1000);
+      await page.evaluate(() => {
+        window.applyUiLayout?.();
+        window.syncBattleHudAnchors?.();
+      });
+      await page.waitForTimeout(400);
+
+      const m = await page.evaluate(() => {
+        const floor = document.getElementById("battle-thought-arena")?.getBoundingClientRect();
+        const slot = document.getElementById("player-thought-slot")?.getBoundingClientRect();
+        const hudBottom = Math.max(
+          document.getElementById("battle-hud-player")?.getBoundingClientRect().bottom ?? 0,
+          document.getElementById("battle-hud-enemy")?.getBoundingClientRect().bottom ?? 0,
+        );
+        const chromeTop = document.getElementById("bottom-chrome")?.getBoundingClientRect().top ?? 0;
+        return {
+          profile: document.documentElement.dataset.battleProfile,
+          floorTop: floor?.top ?? 0,
+          hudBottom,
+          chromeTop,
+          gapHudFloor: (floor?.top ?? 0) - hudBottom,
+          hudToSlotGap: (slot?.top ?? 0) - hudBottom,
+          slotCenterY: ((slot?.top ?? 0) + (slot?.bottom ?? 0)) / 2,
+        };
+      });
+      assert(m.profile === "tablet-portrait", `profile: ${m.profile}`);
+      assert(m.gapHudFloor <= 16, `combat floor far below HUD: ${m.gapHudFloor}px`);
+      assert(m.hudToSlotGap <= 88, `emoji too far below HUD: ${m.hudToSlotGap}px`);
+      assert(m.hudToSlotGap >= -8, `emoji overlaps HUD: ${m.hudToSlotGap}px`);
+      const corridorH = m.chromeTop - m.hudBottom;
+      const slotRel = corridorH > 0 ? (m.slotCenterY - m.hudBottom) / corridorH : 0;
+      assert(slotRel <= 0.40, `emoji too low on tablet portrait: rel=${slotRel.toFixed(2)}`);
     },
   },
   {

@@ -72,13 +72,14 @@ html[data-ui-surface="tablet-stacked"] #app[data-phase="prep"] .prep-character-l
   max-height: min(36vh, var(--prep-hero-slot-height-max, 360px));
 }
 
-/* Бой tablet-portrait: combat floor не съедается героями */
+/* Бой tablet-portrait: combat floor заполняет corridor HUD → toolbar (flank-arena) */
+html[data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-stacked"] #app[data-phase="battle"] #battle-scene-ui,
+html[data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-stacked"] #app[data-phase="replay"] #battle-scene-ui {
+  max-height: none;
+  inset: 0;
+}
+
 html[data-ui-surface="tablet-stacked"] #app[data-phase="battle"] .battle-thought-arena,
 html[data-ui-surface="tablet-stacked"] #app[data-phase="replay"] .battle-thought-arena {
   min-height: max(80px, var(--zone-battle-floor-h, 0px), 18vh);
-}
-
-html[data-ui-surface="tablet-stacked"] #app[data-phase="battle"] #battle-scene-ui,
-html[data-ui-surface="tablet-stacked"] #app[data-phase="replay"] #battle-scene-ui {
-  max-height: min(38vh, var(--battle-hero-zone-h, 280px));
 }

@@ -168,7 +168,7 @@ self.PWA_PRECACHE_URLS = [
   "styles/arena-equipment.css",
   "styles/arena-equipment.css?v=18",
   "styles/battle-arena-layout.css",
-  "styles/battle-arena-layout.css?v=32",
+  "styles/battle-arena-layout.css?v=33",
   "styles/battle-hud-compact.css",
   "styles/battle-hud-compact.css?v=1",
   "styles/battle-inventory-popover.css",
@@ -206,7 +206,7 @@ self.PWA_PRECACHE_URLS = [
   "styles/tablet-side.css",
   "styles/tablet-side.css?v=25",
   "styles/tablet-stacked.css",
-  "styles/tablet-stacked.css?v=3",
+  "styles/tablet-stacked.css?v=4",
   "styles/tokens.css",
   "styles/tokens.css?v=11",
   "sw.js",
@@ -217,7 +217,7 @@ self.PWA_PRECACHE_URLS = [
   "systems/battle-analyzer.js",
   "systems/battle-debuffs.js",
   "systems/battle-hero-anchor.js",
-  "systems/battle-hero-anchor.js?v=14",
+  "systems/battle-hero-anchor.js?v=16",
   "systems/battle-speed.js",
   "systems/battle-stacks.js",
   "systems/combat-profile.js",
@@ -238,5 +238,5 @@ self.PWA_PRECACHE_URLS = [
   "systems/sfx.js?v=1",
   "systems/synergy.js",
   "ui-layout.js",
-  "ui-layout.js?v=81"
+  "ui-layout.js?v=83"
 ];

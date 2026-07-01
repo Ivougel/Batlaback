@@ -68,7 +68,7 @@ html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] {
 html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"],
 html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="replay"] {
   --avatar-effects-panel-h: min(calc(44px * var(--ui-scale)), 6vh);
-  --battle-portrait-zoom: 1.55;
+  --battle-portrait-zoom: 1.36;
 }
 
 html[data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="battle"],
@@ -538,9 +538,9 @@ html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[d
   height: 100%;
   max-height: none;
   object-fit: cover;
-  object-position: center var(--battle-portrait-object-y, 8%);
-  transform: scale(var(--battle-portrait-zoom, 1.55));
-  transform-origin: center var(--battle-portrait-object-y, 8%);
+  object-position: center var(--battle-portrait-object-y, 14%);
+  transform: scale(var(--battle-portrait-zoom, 1.36));
+  transform-origin: center var(--battle-portrait-object-y, 14%);
 }
 
 /* ─── Mobile: fixed build-stats FAB (косметика, не влияет на grid) ─── */
