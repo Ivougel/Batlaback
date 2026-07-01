@@ -90,7 +90,20 @@ html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="fl
   overflow: visible;
 }
 
-/* Tablet battle (landscape iPad only): full-bleed портреты — не phone-landscape */
+/* Tablet battle (landscape iPad): full-body внутри слота, без bleed в потолок */
+html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] {
+  --hero-portrait-bleed: 1;
+  --hero-hud-overlap: calc(10px * var(--ui-scale));
+}
+
+html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="battle"] #player-avatar-panel,
+html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="replay"] #player-avatar-panel,
+html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="battle"] #enemy-avatar-panel,
+html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="replay"] #enemy-avatar-panel {
+  align-items: stretch !important;
+  overflow: hidden;
+}
+
 html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="battle"] #player-avatar-slot > .avatar-hero-shell,
 html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="battle"] #enemy-avatar-slot > .avatar-hero-shell,
 html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="replay"] #player-avatar-slot > .avatar-hero-shell,
@@ -101,8 +114,9 @@ html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="fl
   height: auto !important;
   min-height: 0 !important;
   max-height: none !important;
-  overflow: visible;
+  overflow: hidden;
   justify-content: flex-start !important;
+  align-items: stretch;
 }
 
 html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-stage,
@@ -111,7 +125,9 @@ html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="fl
   min-height: var(--battle-hero-img-h, var(--tablet-battle-hero-img-h, 200px));
   height: var(--battle-hero-img-h, var(--tablet-battle-hero-img-h, 200px));
   max-height: none;
-  overflow: visible;
+  overflow: hidden;
+  align-items: flex-end;
+  justify-content: center;
 }
 
 html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="battle"] .battle-scene-ui .profile-avatar,
@@ -119,16 +135,25 @@ html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="fl
   width: 100%;
   height: 100%;
   max-height: none;
-  overflow: visible;
+  overflow: hidden;
   align-items: flex-end;
   justify-content: center;
+}
+
+html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-name,
+html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-name {
+  position: relative;
+  flex-shrink: 0;
+  margin: 0 0 calc(4px * var(--ui-scale));
+  padding: calc(4px * var(--ui-scale)) calc(6px * var(--ui-scale));
+  background: var(--hero-name-scrim);
 }
 
 html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="battle"] .portrait-zoom-clip,
 html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="replay"] .portrait-zoom-clip {
   width: 100%;
-  height: calc(100% * var(--hero-portrait-bleed, 1.12));
-  overflow: visible;
+  height: 100%;
+  overflow: hidden;
   transform: none;
   transform-origin: center bottom;
 }
@@ -137,7 +162,7 @@ html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="fl
 html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="replay"] .portrait-zoom-clip img {
   width: auto;
   height: 100%;
-  max-width: 112%;
+  max-width: 100%;
   object-fit: contain;
   object-position: center bottom;
   transform: scale(var(--battle-portrait-zoom, 1));
@@ -148,32 +173,6 @@ html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="fl
 html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-upper {
   flex-shrink: 0;
   overflow: visible;
-}
-
-html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-effects-panel,
-html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-effects-panel,
-html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="battle"] .avatar-hero-shell .avatar-effects-float,
-html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="replay"] .avatar-hero-shell .avatar-effects-float {
-  position: relative !important;
-  top: auto !important;
-  left: auto !important;
-  right: auto !important;
-  flex: 0 0 auto;
-  min-height: var(--avatar-effects-panel-h);
-  margin-top: 0;
-  z-index: 12;
-  overflow: visible;
-}
-
-html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="battle"] .avatar-hero-shell .avatar-status-zone-buffs .avatar-benefit-stacks,
-html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="replay"] .avatar-hero-shell .avatar-status-zone-buffs .avatar-benefit-stacks,
-html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="battle"] .avatar-hero-shell .avatar-status-zone-debuffs .avatar-dot-stacks,
-html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="replay"] .avatar-hero-shell .avatar-status-zone-debuffs .avatar-dot-stacks {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 4px;
-  position: static;
 }
 
 /* ─── Battle HUD: компактная нижняя панель ─── */
@@ -207,14 +206,37 @@ html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel .shop-se
   font-size: var(--font-sm);
 }
 
+/* Бой tablet-side landscape iPad: эмодзи-аватар под героем + орбита спутников */
+html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="battle"] .avatar-thought-slot,
+html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="replay"] .avatar-thought-slot {
+  overflow: visible !important;
+  contain: none;
+  z-index: 26;
+}
+
+html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="battle"] .avatar-thought-slot .battle-thought-body,
+html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="replay"] .avatar-thought-slot .battle-thought-body {
+  width: var(--battle-thought-emoji-size, 120px);
+  height: var(--battle-thought-emoji-size, 120px);
+  font-size: max(1em, calc(var(--battle-thought-emoji-size, 120px) * 0.92));
+  filter: drop-shadow(0 10px 26px rgba(0, 0, 0, 0.62));
+}
+
+html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="battle"] .avatar-thought-slot .arena-equip-body--thought-orbit,
+html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="replay"] .avatar-thought-slot .arena-equip-body--thought-orbit {
+  z-index: 18;
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.5));
+}
+
 /* Бой tablet-side landscape iPad: combat floor + эмодзи */
 html[data-battle-profile="tablet-landscape-side"][data-ui-surface="tablet-side"] #app[data-phase="battle"] .battle-thought-arena,
 html[data-battle-profile="tablet-landscape-side"][data-ui-surface="tablet-side"] #app[data-phase="replay"] .battle-thought-arena {
   min-height: max(88px, var(--zone-battle-floor-h, 0px), 16vh);
 }
 
-html[data-battle-profile="tablet-landscape-side"][data-ui-surface="tablet-side"] #app[data-phase="battle"] #battle-scene-ui,
-html[data-battle-profile="tablet-landscape-side"][data-ui-surface="tablet-side"] #app[data-phase="replay"] #battle-scene-ui {
+html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="battle"] #battle-scene-ui,
+html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="replay"] #battle-scene-ui {
   max-height: none;
   inset: 0;
+  overflow: hidden;
 }

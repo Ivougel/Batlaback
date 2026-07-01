@@ -100,9 +100,11 @@ html[data-battle-hud-html="true"] .battle-hud-runtime-chip {
   line-height: 1.1;
 }
 
-html[data-hero-card-mode="full-bleed"][data-battle-hud-html="true"] #app[data-phase="battle"] .battle-hud-side,
-html[data-hero-card-mode="full-bleed"][data-battle-hud-html="true"] #app[data-phase="replay"] .battle-hud-side {
-  position: relative;
+html[data-hero-card-mode="full-bleed"][data-battle-hud-html="true"][data-battle-profile="phone-portrait"] #app[data-phase="battle"] .battle-hud-side,
+html[data-hero-card-mode="full-bleed"][data-battle-hud-html="true"][data-battle-profile="phone-portrait"] #app[data-phase="replay"] .battle-hud-side,
+html[data-hero-card-mode="full-bleed"][data-battle-hud-html="true"][data-battle-profile="tablet-portrait"] #app[data-phase="battle"] .battle-hud-side,
+html[data-hero-card-mode="full-bleed"][data-battle-hud-html="true"][data-battle-profile="tablet-portrait"] #app[data-phase="replay"] .battle-hud-side {
+  position: absolute;
   z-index: 12;
   padding-top: calc(4px * var(--ui-scale));
   background: var(--hero-chrome-scrim);

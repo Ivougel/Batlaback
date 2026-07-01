@@ -2798,6 +2798,7 @@ function startBattleReplay() {
     lastBattlePrepSnapshot.enemyClass,
     lastBattleReplay.summary?.roundNum || round,
   );
+  if (typeof resetStackOrbitVfx === "function") resetStackOrbitVfx();
   if (typeof setBattleEnemyTeamLabel === "function") {
     setBattleEnemyTeamLabel(getEnemyDisplayName());
   }
@@ -2812,6 +2813,7 @@ function startBattleReplay() {
 function finishBattleReplay() {
   battleState = null;
   clearBattleFloatLayer();
+  if (typeof resetStackOrbitVfx === "function") resetStackOrbitVfx();
   replayPlayback = null;
   resetBattlePause();
   setBattleControlsVisible(false);
@@ -2901,6 +2903,7 @@ function startBattle() {
           enemy: { pendingShopBuffs: enemyPendingShopBuffs },
         },
       );
+      if (typeof resetStackOrbitVfx === "function") resetStackOrbitVfx();
       battleStartTime = Date.now();
       if (typeof resetEmotionEngine === "function") resetEmotionEngine();
       if (typeof initBattleHud === "function") initBattleHud();
@@ -2946,6 +2949,7 @@ function endBattle() {
   const finishedState = battleState;
   battleState = null;
   clearBattleFloatLayer();
+  if (typeof resetStackOrbitVfx === "function") resetStackOrbitVfx();
   if (typeof closeBattleHudPopups === "function") closeBattleHudPopups();
   if (typeof closeBattleInventoryPopover === "function") closeBattleInventoryPopover();
   if (typeof clearBattleDamageSummary === "function") clearBattleDamageSummary(finishedState);
@@ -3334,6 +3338,11 @@ function handleBattleEvent(ev) {
     }
     case "miss": {
       playPrepSfx("battle_miss");
+      break;
+    }
+    case "gainStack":
+    case "fireStack": {
+      if (typeof handleStackOrbitEvent === "function") handleStackOrbitEvent(ev);
       break;
     }
     default:
@@ -3907,7 +3916,9 @@ function drawWorldLayer() {
     if (isBattleUiPhase() && typeof drawEmotionLayer === "function") {
       drawEmotionLayer(ctx, battleState, (Date.now() - battleStartTime) / 1000);
     }
+    if (typeof syncStackOrbitFromBattle === "function") syncStackOrbitFromBattle(battleState);
   } else {
+    if (typeof resetStackOrbitVfx === "function") resetStackOrbitVfx();
     clearBattleFloatLayer();
     if (typeof clearEmotionLayer === "function") clearEmotionLayer();
     if (typeof clearAttackFxLayer === "function") clearAttackFxLayer();

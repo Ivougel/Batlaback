@@ -402,6 +402,15 @@ html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar
   display: none !important;
 }
 
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .avatar-hero-shell .avatar-status-zone-buffs .avatar-benefit-stacks:not(.battle-hud-benefit-stacks),
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar-hero-shell .avatar-status-zone-buffs .avatar-benefit-stacks:not(.battle-hud-benefit-stacks),
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .avatar-hero-shell .avatar-status-zone-debuffs .avatar-dot-stacks:not(.battle-hud-dot-stacks),
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar-hero-shell .avatar-status-zone-debuffs .avatar-dot-stacks:not(.battle-hud-dot-stacks),
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .avatar-hero-shell .avatar-status-zone-debuffs .avatar-hero-debuff-row:not(.battle-hud-debuff-row),
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar-hero-shell .avatar-status-zone-debuffs .avatar-hero-debuff-row:not(.battle-hud-debuff-row) {
+  display: none !important;
+}
+
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-hud-status-stack,
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-hud-status-stack {
   display: flex;

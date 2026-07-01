@@ -385,12 +385,12 @@ function sumSideRuntime(side, pick) {
   return total;
 }
 
-function buildStatusChipEntries(side) {
+function buildStatusChipEntries(side, opts = {}) {
   if (!side) return [];
   const chips = [];
 
   const block = side.block || 0;
-  if (block > 0) {
+  if (block > 0 && !opts.skipBlock) {
     chips.push({
       icon: "🛡",
       label: String(Math.round(block)),
@@ -399,7 +399,7 @@ function buildStatusChipEntries(side) {
   }
 
   const poison = side.poisonStacks || 0;
-  if (poison > 0) {
+  if (poison > 0 && !opts.skipPoison) {
     chips.push({
       icon: "☠",
       label: String(Math.round(poison)),
@@ -408,7 +408,7 @@ function buildStatusChipEntries(side) {
   }
 
   const damageBonus = sumSideRuntime(side, (rt) => (rt.damageBonus || 0) + (rt.pendingAttackBuff || 0));
-  if (damageBonus > 0) {
+  if (damageBonus > 0 && !opts.skipDamageBonus) {
     chips.push({
       icon: "⚔",
       label: String(Math.round(damageBonus)),
@@ -417,7 +417,7 @@ function buildStatusChipEntries(side) {
   }
 
   const healBonus = sumSideRuntime(side, (rt) => rt.healBonus || 0);
-  if (healBonus > 0) {
+  if (healBonus > 0 && !opts.skipHealBonus) {
     chips.push({
       icon: "🌿",
       label: String(Math.round(healBonus)),
@@ -629,7 +629,7 @@ function renderRuntimeChipHTML(chip) {
     + `<span class="battle-hud-runtime-chip-val">${chip.label}</span></span>`;
 }
 
-function syncBattleHudRuntimeChips(team, sideState) {
+function syncBattleHudRuntimeChips(team, sideState, battleState = null) {
   if (document.documentElement.dataset.battleHeroPlacement !== "flank-arena" || !sideState) return;
   const hud = document.getElementById(team === "player" ? "battle-hud-player" : "battle-hud-enemy");
   if (!hud) return;
@@ -644,7 +644,16 @@ function syncBattleHudRuntimeChips(team, sideState) {
     stack.insertBefore(row, stack.firstChild);
   }
 
-  const chips = buildStatusChipEntries(sideState);
+  const chipOpts = {};
+  if (battleState && typeof hasActiveDotStacks === "function" && hasActiveDotStacks(team, battleState)) {
+    chipOpts.skipPoison = true;
+  }
+  if (battleState && typeof hasActiveBenefitStacks === "function" && hasActiveBenefitStacks(team, battleState)) {
+    chipOpts.skipDamageBonus = true;
+    chipOpts.skipHealBonus = true;
+  }
+
+  const chips = buildStatusChipEntries(sideState, chipOpts);
   row.hidden = chips.length === 0;
   row.innerHTML = chips.map(renderRuntimeChipHTML).join("");
 }

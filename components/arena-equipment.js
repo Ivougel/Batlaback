@@ -251,47 +251,44 @@ const ArenaEquipment = (() => {
     return def?.icon || "?";
   }
 
+  function satelliteScaleFactor() {
+    if (typeof BattleHeroAnchor !== "undefined" && BattleHeroAnchor.satelliteScaleFactor) {
+      return BattleHeroAnchor.satelliteScaleFactor();
+    }
+    return 0.85;
+  }
+
   function equipDiameterForBody(body) {
     if (usesEmojiAvatarEquipHome()) {
       const emoji = typeof BattleHeroAnchor !== "undefined"
         ? BattleHeroAnchor.thoughtSlotEmojiSize()
         : Math.round(viewportMin() * 0.12);
-      if (body.isWeapon) {
-        const primary = body.slotId === "rightHand";
-        const scale = primary ? 0.40 : 0.30;
-        return Math.round(Math.min(emoji * scale, viewportMin() * 0.28));
-      }
-      return Math.round(Math.min(emoji * 0.24, viewportMin() * 0.18));
+      const sat = satelliteScaleFactor();
+      return Math.round(emoji * sat);
     }
     const ratio = body.isWeapon ? SIZE_RATIO : GEAR_SIZE_RATIO;
     return viewportMin() * ratio;
   }
 
   function orbitItemRadiusPx(slotId) {
-    const emoji = typeof BattleHeroAnchor !== "undefined"
-      ? BattleHeroAnchor.thoughtSlotEmojiSize()
-      : Math.round(viewportMin() * 0.12);
-    if (slotId === "rightHand") return Math.round(emoji * 0.20);
-    if (slotId === "leftHand") return Math.round(emoji * 0.15);
-    return Math.round(emoji * 0.12);
+    return Math.round(equipDiameterForBody({ slotId, isWeapon: true }) * 0.5);
   }
 
   function emojiVisualRadiusPx() {
     const emoji = typeof BattleHeroAnchor !== "undefined"
       ? BattleHeroAnchor.thoughtSlotEmojiSize()
       : Math.round(viewportMin() * 0.12);
-    return Math.round(emoji * 0.48);
+    return Math.round(emoji * 0.5);
   }
 
-  /** Радиус орбиты: кольцо спутников снаружи диска эмодзи-аватара. */
+  /** Радиус орбиты: кольцо спутников снаружи диска эмодзи-аватара (~15% меньше центра). */
   function orbitSpanPx() {
     const emoji = typeof BattleHeroAnchor !== "undefined"
       ? BattleHeroAnchor.thoughtSlotEmojiSize()
       : Math.round(Math.min(112, Math.max(68, viewportMin() * 0.12)));
-    const halo = typeof BattleHeroAnchor !== "undefined"
-      ? BattleHeroAnchor.thoughtSlotHaloPx(emoji)
-      : Math.round(emoji * 0.40);
-    return Math.max(emojiVisualRadiusPx() + 20, emojiVisualRadiusPx() + halo * 0.65);
+    const satD = Math.round(emoji * satelliteScaleFactor());
+    const gap = Math.max(6, Math.round(8 * (typeof LayoutScales !== "undefined" ? LayoutScales.gameScale() : 1)));
+    return Math.round(emoji * 0.5 + satD * 0.5 + gap);
   }
 
   function orbitMaxRadiusPx(slotId) {
@@ -601,7 +598,8 @@ const ArenaEquipment = (() => {
       : 1;
     body.el.style.width = `${d}px`;
     body.el.style.height = `${d}px`;
-    body.el.style.fontSize = `${Math.round(d * 0.62 * gs)}px`;
+    const fontRatio = usesEmojiAvatarEquipHome() ? 0.78 : 0.62;
+    body.el.style.fontSize = `${Math.round(d * fontRatio * gs)}px`;
     body.radius = d * 0.5;
     if (body.orbitSlotMounted || usesEmojiAvatarEquipHome()) {
       const slotZ = SLOT_Z[body.slotId] || 0;

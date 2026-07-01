@@ -53,7 +53,11 @@ const BattleHeroAnchor = (() => {
   const EMOJI_SIZE_BY_PROFILE = {
     "phone-portrait": { floorRatio: 0.32, vminRatio: 0.14, minPx: 76, maxPx: 112, haloRatio: 0.22, avatarRatio: 0.34, slotCenterRatio: 0.38 },
     "phone-landscape": { floorRatio: 0.66, vminRatio: 0.17, minPx: 80, maxPx: 128, haloRatio: 0.28, avatarRatio: 0.40 },
-    "tablet-landscape-side": { floorRatio: 0.58, vminRatio: 0.14, minPx: 88, maxPx: 168, haloRatio: 0.30, avatarRatio: 0.36, slotCenterRatio: 0.44 },
+    "tablet-landscape-side": {
+      floorRatio: 0.48, vminRatio: 0.145, minPx: 96, maxPx: 168,
+      haloRatio: 0.44, avatarRatio: 0.18, slotCenterRatio: 0.50,
+      satelliteScale: 0.85, heroBelow: true, heroBelowZoneBias: 0.68,
+    },
     "tablet-portrait": { floorRatio: 0.30, vminRatio: 0.13, minPx: 84, maxPx: 136, haloRatio: 0.26, avatarRatio: 0.32, slotCenterRatio: 0.38 },
     "desktop-portrait": { floorRatio: 0.66, vminRatio: 0.175, minPx: 100, maxPx: 168, haloRatio: 0.36, avatarRatio: 0.36 },
     "desktop-landscape": { floorRatio: 0.68, vminRatio: 0.18, minPx: 104, maxPx: 176, haloRatio: 0.36, avatarRatio: 0.34 },
@@ -179,13 +183,93 @@ const BattleHeroAnchor = (() => {
     return null;
   }
 
-  /** Позиция thought-slot в viewport (px) — под колонкой героя, у нижнего края combat floor. */
-  function getThoughtSlotAnchor(side) {
-    const floor = getCombatFloorRect();
+  function satelliteScaleFactor() {
+    return emojiProfile().satelliteScale ?? 0.85;
+  }
+
+  function usesHeroBelowThoughtAnchors() {
+    const prof = emojiProfile();
+    return prof.heroBelow === true || currentBattleProfile() === "tablet-landscape-side";
+  }
+
+  function visibleViewportBottomPx() {
+    const chrome = readCssPx("--tablet-battle-chrome-bottom", 0)
+      || readCssPx("--bottom-chrome-h-measured", 56);
+    const vv = window.visualViewport;
+    return (vv?.offsetTop ?? 0) + (vv?.height ?? window.innerHeight) - chrome;
+  }
+
+  /** Верхний край нижнего battle-chrome (начало коридора под HUD). */
+  function visibleBattleCorridorTopPx() {
+    const fromVar = readCssPx("--zone-toolbar-top", 0)
+      || readCssPx("--prep-toolbar-zone-top", 0);
+    if (fromVar > 80) return fromVar;
+    const chrome = document.getElementById("bottom-chrome")
+      || document.querySelector(".bottom-chrome");
+    const rect = chrome?.getBoundingClientRect();
+    if (rect && rect.height > 12) return rect.top;
+    return visibleViewportBottomPx();
+  }
+
+  /** Планшет landscape: эмодзи-аватар под героем (под HUD), спутники — орбита вокруг. */
+  function getHeroBelowThoughtAnchor(side) {
     const emojiSize = thoughtSlotEmojiSize();
     const halo = thoughtSlotHaloPx(emojiSize);
     const containerSize = emojiSize + halo * 2;
     const cx = getHeroColumnCenterX(side);
+    if (cx == null) return null;
+
+    const prof = emojiProfile();
+    const minGap = Math.max(thoughtSlotGapPx(), Math.round(10 * readCssPx("--ui-scale", 1)));
+    const hudRect = getBattleHudEl(side)?.getBoundingClientRect();
+    const stageRect = getAvatarAnchorRect(side);
+
+    let cy;
+    if (hudRect && hudRect.height > 12) {
+      const zoneTop = hudRect.bottom + minGap;
+      const corridorTop = visibleBattleCorridorTopPx();
+      const cyMin = zoneTop + emojiSize / 2;
+      const cyMax = corridorTop - minGap - emojiSize / 2;
+      const band = cyMax - cyMin;
+      const bias = prof.heroBelowZoneBias ?? 0.55;
+      if (band > emojiSize * 0.08) {
+        cy = cyMin + band * bias;
+      } else {
+        cy = cyMin;
+      }
+    } else if (stageRect) {
+      cy = stageRect.bottom + minGap + emojiSize / 2;
+    } else {
+      return null;
+    }
+
+    const maxCy = visibleViewportBottomPx() - containerSize / 2 - minGap;
+    if (Number.isFinite(maxCy) && cy > maxCy) cy = maxCy;
+
+    return {
+      cx,
+      cy,
+      emojiSize,
+      halo,
+      containerSize,
+      top: cy - containerSize / 2,
+      left: cx - containerSize / 2,
+      size: containerSize,
+    };
+  }
+
+  /** Позиция thought-slot в viewport (px). */
+  function getThoughtSlotAnchor(side) {
+    if (usesHeroBelowThoughtAnchors()) {
+      const underHero = getHeroBelowThoughtAnchor(side);
+      if (underHero) return underHero;
+    }
+
+    const floor = getCombatFloorRect();
+    const emojiSize = thoughtSlotEmojiSize();
+    const halo = thoughtSlotHaloPx(emojiSize);
+    const containerSize = emojiSize + halo * 2;
+    const cx = floor ? getHeroColumnCenterX(side) : null;
 
     if (floor && cx != null) {
       const gap = thoughtSlotGapPx();
@@ -277,9 +361,13 @@ const BattleHeroAnchor = (() => {
     thoughtSlotSize,
     getThoughtSlotEl,
     getAvatarAnchorRect,
+    getHeroColumnCenterX,
     getThoughtSlotAnchor,
     getThoughtSlotCenter,
     getFoeThoughtCenter,
+    emojiProfile,
+    satelliteScaleFactor,
+    usesHeroBelowThoughtAnchors,
   };
 })();
 

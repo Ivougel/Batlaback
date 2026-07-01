@@ -1109,6 +1109,36 @@ const ITEM_CATALOG = {
     shape: [[0, 0], [1, 0], [0, 1]], rarity: "legendary", cost: 0, craftOnly: true, tags: ["weapon", "melee"], damage: 18, cooldown: 3,
     effects: [{ type: "damage", value: 18, valueMin: 14, valueMax: 22 }],
   }),
+  charge_gem: defItem({
+    id: "charge_gem",
+    name: "Камень зарядов",
+    icon: "⚡",
+    color: "#a371f7",
+    shape: [[0, 0]],
+    rarity: "uncommon",
+    cost: 3,
+    tags: ["magic", "gem"],
+    cooldown: 2.0,
+    effects: [{ type: "gainStack", stack: "mana", value: 1 }],
+    description: "[при активации]: +1 мана.",
+  }),
+  storm_burst: defItem({
+    id: "storm_burst",
+    name: "Удар бури",
+    icon: "🌩️",
+    color: "#58a6ff",
+    shape: [[0, 0], [0, 1]],
+    rarity: "rare",
+    cost: 5,
+    tags: ["weapon", "magic"],
+    cooldown: 5.5,
+    staminaCost: 2,
+    effects: [
+      { type: "spendStack", stack: "mana", value: 1, attackBuff: 8 },
+      { type: "damage", value: 4, damageType: "magic" },
+    ],
+    description: "[при активации]: потратить 1 ману → +8 урона и магический удар.",
+  }),
 };
 
 Object.values(ITEM_CATALOG).forEach((item) => {

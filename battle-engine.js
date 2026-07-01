@@ -885,6 +885,9 @@ function applyGainStackEffect(state, effect, item, self, team, foe = null) {
     const icon = typeof getStackMeta === "function" ? getStackMeta(stack).icon : "📊";
     queueHitAnimation(state, item, targetTeam, `+${added}${icon}`, "#d29922");
   }
+  if (state && targetTeam) {
+    pushStackGainEvent(state, targetTeam, stack, added);
+  }
   if (state && team) {
     const watchSelf = effect.targetSide === "foe" ? self : target;
     const watchFoe = effect.targetSide === "foe" ? target : foe;
@@ -935,6 +938,9 @@ function applySpendStackEffect(state, effect, item, self, foe, rt, team) {
   if (typeof syncStackResourceSpend === "function") syncStackResourceSpend(self, stack, cost);
   if (extra && typeof syncStackResourceSpend === "function") {
     syncStackResourceSpend(self, extra.stack || "heat", Number(extra.value) || 1);
+  }
+  if (state && team) {
+    pushStackFireEvent(state, team, stack, cost);
   }
   if (effect.foePoison) {
     executeEffect(state, { type: "poison", value: effect.foePoison }, item, self, foe, rt, team);
@@ -1993,6 +1999,7 @@ function trySpikeRetaliation(state, target, targetTeam, attackerSide, attackerTe
     message: `${battleTeamLabel(targetTeam)}: шипы → ${battleTeamLabel(attackerTeam)} −${spikes} HP`,
   });
   queueHitAnimation(state, sourceItem, targetTeam, `📌 −${spikes}`, "#d29922");
+  pushStackFireEvent(state, targetTeam, "spikes", Math.min(spikes, 8));
   triggerProfileAvatarHitShake(attackerTeam);
 }
 
@@ -2128,6 +2135,34 @@ function getItemCooldownMult(item) {
 function pushEvent(state, event) {
   if (!state.events) state.events = [];
   state.events.push(event);
+}
+
+function stackEventEmoji(stackType) {
+  if (stackType === "poison") return "☠️";
+  if (stackType === "cold") return "❄️";
+  return typeof getStackMeta === "function" ? getStackMeta(stackType).icon : "📊";
+}
+
+function pushStackGainEvent(state, side, stackType, count) {
+  if (!state || !side) return;
+  pushEvent(state, {
+    type: "gainStack",
+    side,
+    stackType,
+    emoji: stackEventEmoji(stackType),
+    count: Math.max(1, count || 1),
+  });
+}
+
+function pushStackFireEvent(state, side, stackType, count) {
+  if (!state || !side) return;
+  pushEvent(state, {
+    type: "fireStack",
+    side,
+    stackType,
+    emoji: stackEventEmoji(stackType),
+    count: Math.max(1, count || 1),
+  });
 }
 
 function createBattleState(playerItems, enemyItems, playerClassId = null, enemyClassId = null, battleRound = 1, prepMeta = {}) {
@@ -2648,6 +2683,12 @@ function activateItem(state, item, self, foe, team) {
     applySpendStackEffect(state, effect, item, self, foe, rt, team);
   });
   allEffects.forEach((effect) => {
+    if (effect.type !== "gainStack") return;
+    const tr = effect.trigger || effect.phase;
+    if (tr === "on_hit" || tr === "on_block" || tr === "battle_start" || tr === "passive" || tr === "on_miss") return;
+    applyGainStackEffect(state, effect, item, self, team, foe);
+  });
+  allEffects.forEach((effect) => {
     if (effect.type !== "onActivate") return;
     if (effect.hpCost) {
       const pay = Math.min(Number(effect.hpCost), Math.max(0, self.hp - 1));
@@ -3031,6 +3072,7 @@ function executeEffect(state, effect, item, self, foe, rt, team, execOptions = {
         message: `${battleTeamLabel(team)} · ${def.name}: +${added} яда${effNote} (×${foe.poisonStacks}) → ${battleTeamLabel(victimTeam)}`,
       });
       queueHitAnimation(state, item, team, `☠ +${added} яд`, "#3fb950");
+      pushStackGainEvent(state, victimTeam, "poison", added);
       if (typeof emitEffectAttackVisual === "function") {
         emitEffectAttackVisual(state, item, team, effect, {
           damage: 0,

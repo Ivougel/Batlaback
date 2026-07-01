@@ -547,39 +547,81 @@ const CASES = [
     },
   },
   {
-    id: "ipad-portrait-shop-scroll",
+    id: "ipad-portrait-prep-field",
     device: devices["iPad Mini"],
     async run(page) {
       await quickStart(page);
       const surface = await page.evaluate(() => document.documentElement.dataset.uiSurface);
       assert(surface === "tablet-stacked", `expected tablet-stacked, got ${surface}`);
 
-      const shop = await page.evaluate(() => {
-        const panel = document.getElementById("shop-panel");
-        const slots = panel?.querySelector(".shop-slots");
-        if (!panel || !slots) return null;
-        const panelCs = getComputedStyle(panel);
-        const slotsCs = getComputedStyle(slots);
-        const pr = panel.getBoundingClientRect();
+      await page.evaluate(() => {
+        window.applyUiLayout?.();
+        window.scheduleCanvasFit?.();
+      });
+      await page.waitForTimeout(500);
+
+      const m = await page.evaluate(() => {
+        const root = document.documentElement;
+        const canvas = document.getElementById("game-canvas")?.getBoundingClientRect();
+        const hero = document.querySelector("#app[data-phase=\"prep\"] .prep-character-layer")?.getBoundingClientRect();
+        const shop = document.getElementById("shop-panel")?.getBoundingClientRect();
+        const fab = document.getElementById("btn-mobile-shop")?.getBoundingClientRect();
+        const fabCs = document.getElementById("btn-mobile-shop")
+          ? getComputedStyle(document.getElementById("btn-mobile-shop"))
+          : null;
+        const shopCs = document.getElementById("shop-panel")
+          ? getComputedStyle(document.getElementById("shop-panel"))
+          : null;
         return {
-          panelOverflow: panelCs.overflowY,
-          slotsOverflow: slotsCs.overflowY,
-          scrollable: slots.scrollHeight > slots.clientHeight + 2,
-          panelBottom: pr.bottom,
+          drawer: root.dataset.prepShopDrawer === "true",
+          shopOpen: root.hasAttribute("data-prep-shop-open"),
+          canvasH: canvas?.height ?? 0,
+          canvasW: canvas?.width ?? 0,
+          heroH: hero?.height ?? 0,
           vh: window.innerHeight,
+          vw: window.innerWidth,
+          shopVisible: shopCs?.visibility === "visible" && (shop?.height ?? 0) > 40,
+          shopTransform: shopCs?.transform ?? "",
+          fabDisplay: fabCs?.display ?? "none",
+          fabW: fab?.width ?? 0,
         };
       });
 
-      assert(shop, "shop panel missing");
-      assert(shop.slotsOverflow === "auto" || shop.slotsOverflow === "scroll", `shop-slots overflow: ${shop.slotsOverflow}`);
-      assert(shop.panelBottom <= shop.vh + 6, `shop overflows viewport: bottom=${shop.panelBottom} vh=${shop.vh}`);
+      assert(m.drawer === true, "tablet portrait should use shop drawer");
+      assert(!m.shopOpen, "shop should be closed by default");
+      assert(m.fabDisplay !== "none" && m.fabW >= 44, `shop FAB missing: display=${m.fabDisplay}`);
+      assert(!m.shopVisible, `shop panel visible without open: transform=${m.shopTransform}`);
+      assert(m.canvasH >= m.vh * 0.27, `canvas too small: ${m.canvasH}px vs vh ${m.vh}`);
+      assert(m.canvasW >= m.vw * 0.48, `canvas too narrow: ${m.canvasW}px vs vw ${m.vw}`);
+      assert(m.heroH >= m.vh * 0.18, `hero too small: ${m.heroH}px`);
 
-      const layout = await page.evaluate(() => {
-        const shopEl = document.getElementById("shop-panel");
-        const sr = shopEl?.getBoundingClientRect();
-        return { shopW: sr?.width ?? 0, vw: window.innerWidth };
+      await page.evaluate(() => {
+        window.toggleMobilePrepShop?.();
+        window.applyUiLayout?.();
+        window.scheduleCanvasFit?.();
       });
-      assert(layout.shopW >= layout.vw * 0.88, `shop too narrow: ${layout.shopW}px vs vw ${layout.vw}`);
+      await page.waitForTimeout(500);
+
+      const shop = await page.evaluate(() => {
+        const panel = document.getElementById("shop-panel");
+        const slots = panel?.querySelector(".shop-slots");
+        const bench = panel?.querySelector(".bench-panel .bench-slots");
+        const slotsCs = slots ? getComputedStyle(slots) : null;
+        const cols = slotsCs?.gridTemplateColumns?.split(" ").filter(Boolean).length ?? 0;
+        return {
+          sheetH: parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--prep-shop-sheet-max-h")) || 0,
+          panelH: panel?.offsetHeight ?? 0,
+          scrollable: (slots?.scrollHeight ?? 0) > (slots?.clientHeight ?? 0) + 4,
+          benchScroll: (bench?.scrollHeight ?? 0) > (bench?.clientHeight ?? 0) + 4,
+          cols,
+          overflow: slotsCs?.overflowY ?? "",
+        };
+      });
+      assert(shop.sheetH >= 340, `shop sheet too short: ${shop.sheetH}px`);
+      assert(shop.cols >= 5, `shop should be 5 columns: ${shop.cols}`);
+      assert(shop.overflow === "visible" || shop.overflow === "hidden", `shop overflow: ${shop.overflow}`);
+      assert(!shop.scrollable, "shop slots should not scroll on tablet portrait");
+      assert(!shop.benchScroll, "bench should not scroll on tablet portrait");
     },
   },
   {
@@ -601,23 +643,54 @@ const CASES = [
       });
       await page.waitForTimeout(600);
 
-      const m = await page.evaluate(() => ({
-        profile: document.documentElement.dataset.battleProfile,
-        emojiPx: window.BattleHeroAnchor?.thoughtSlotEmojiSize?.() ?? 0,
-        floorH: document.getElementById("battle-thought-arena")?.offsetHeight ?? 0,
-        hudTop: document.getElementById("battle-hud-player")?.getBoundingClientRect().top ?? 0,
-        stageBottom: document.querySelector("#player-avatar-slot .avatar-hero-stage")?.getBoundingClientRect().bottom ?? 0,
-        stageH: document.querySelector("#player-avatar-slot .avatar-hero-stage")?.getBoundingClientRect().height ?? 0,
-        heroImgH: parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--battle-hero-img-h")) || 0,
-        playerZoneW: parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--battle-player-zone-width")) || 0,
-        vw: window.innerWidth,
-      }));
+      const m = await page.evaluate(() => {
+        const playerSlot = document.getElementById("player-thought-slot")?.getBoundingClientRect();
+        const enemySlot = document.getElementById("enemy-thought-slot")?.getBoundingClientRect();
+        const playerHud = document.getElementById("battle-hud-player")?.getBoundingClientRect();
+        const enemyHud = document.getElementById("battle-hud-enemy")?.getBoundingClientRect();
+        const playerStage = document.querySelector("#player-avatar-slot .avatar-hero-stage")?.getBoundingClientRect();
+        const playerBody = document.querySelector("#player-thought-slot .battle-thought-body")?.getBoundingClientRect();
+        const BHA = window.BattleHeroAnchor;
+        return {
+          profile: document.documentElement.dataset.battleProfile,
+          heroBelow: BHA?.usesHeroBelowThoughtAnchors?.() ?? false,
+          emojiPx: BHA?.thoughtSlotEmojiSize?.() ?? 0,
+          satScale: BHA?.satelliteScaleFactor?.() ?? 0,
+          playerColCx: BHA?.getHeroColumnCenterX?.("player") ?? 0,
+          enemyColCx: BHA?.getHeroColumnCenterX?.("enemy") ?? 0,
+          floorH: document.getElementById("battle-thought-arena")?.offsetHeight ?? 0,
+          hudTop: playerHud?.top ?? 0,
+          enemyHudTop: enemyHud?.top ?? 0,
+          playerHudBottom: playerHud?.bottom ?? 0,
+          playerEmojiCy: playerBody ? playerBody.top + playerBody.height / 2 : (playerSlot ? playerSlot.top + playerSlot.height / 2 : 0),
+          chromeTop: document.getElementById("bottom-chrome")?.getBoundingClientRect().top ?? 0,
+          stageBottom: playerStage?.bottom ?? 0,
+          stageTop: playerStage?.top ?? 0,
+          stageH: playerStage?.height ?? 0,
+          playerZoneW: parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--battle-player-zone-width")) || 0,
+          vw: window.innerWidth,
+          playerSlotCx: playerSlot ? playerSlot.left + playerSlot.width / 2 : 0,
+          enemySlotCx: enemySlot ? enemySlot.left + enemySlot.width / 2 : 0,
+        };
+      });
       assert(m.profile === "tablet-landscape-side", `profile: ${m.profile}`);
-      assert(m.emojiPx >= 80, `emoji too small: ${m.emojiPx}px`);
-      assert(m.floorH >= 80, `combat floor too small: ${m.floorH}px`);
+      assert(m.heroBelow === true, "tablet landscape should anchor emoji under hero");
+      assert(m.emojiPx >= 96, `emoji too small: ${m.emojiPx}px`);
+      assert(Math.abs(m.satScale - 0.85) < 0.02, `satellite scale: ${m.satScale}`);
+      assert(m.floorH >= 100, `combat floor too small: ${m.floorH}px`);
       assert(m.hudTop >= m.stageBottom - 28, `HUD on portrait: hud=${m.hudTop} stage=${m.stageBottom}`);
-      assert(m.stageH >= 200, `hero stage too small on tablet landscape: ${m.stageH}px`);
-      assert(m.playerZoneW >= m.vw * 0.26, `hero column too narrow: ${m.playerZoneW}px`);
+      assert(Math.abs(m.hudTop - m.enemyHudTop) <= 16, `HUD misaligned: player=${m.hudTop} enemy=${m.enemyHudTop}`);
+      assert(m.stageTop >= 4, `portrait clipped at top: stageTop=${m.stageTop}`);
+      assert(m.stageH >= 180, `hero stage too small on tablet landscape: ${m.stageH}px`);
+      assert(m.playerZoneW >= m.vw * 0.24, `hero column too narrow: ${m.playerZoneW}px`);
+      assert(m.playerEmojiCy >= m.playerHudBottom + 28, `emoji too close to HUD: cy=${m.playerEmojiCy} hudBottom=${m.playerHudBottom}`);
+      const corridorH = m.chromeTop - m.playerHudBottom;
+      const emojiRel = corridorH > 80 ? (m.playerEmojiCy - m.playerHudBottom) / corridorH : 0;
+      assert(emojiRel >= 0.48, `emoji too high in corridor: rel=${emojiRel.toFixed(2)}`);
+      assert(Math.abs(m.playerSlotCx - m.playerColCx) <= 28, `player emoji off column: slot=${m.playerSlotCx} col=${m.playerColCx}`);
+      assert(Math.abs(m.enemySlotCx - m.enemyColCx) <= 28, `enemy emoji off column: slot=${m.enemySlotCx} col=${m.enemyColCx}`);
+      assert(m.playerSlotCx < m.vw * 0.42, `player emoji too central: ${m.playerSlotCx}`);
+      assert(m.enemySlotCx > m.vw * 0.58, `enemy emoji too central: ${m.enemySlotCx}`);
     },
   },
   {

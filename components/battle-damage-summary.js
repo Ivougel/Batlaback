@@ -535,6 +535,58 @@ function getFlankHudStatusEl(team, selector) {
   return hud?.querySelector(selector) || null;
 }
 
+function hasActiveDotStacks(team, state) {
+  const store = state?.dotStacks?.[team];
+  if (!store?.order?.length) return false;
+  return store.order.some((uid) => (store.byUid[uid]?.dotDamage ?? 0) > 0);
+}
+
+function hasActiveBenefitStacks(team, state) {
+  const store = state?.benefitStacks?.[team];
+  if (!store?.order?.length) return false;
+  return store.order.some((uid) => (store.byUid[uid]?.benefit ?? 0) > 0);
+}
+
+function clearFlankHudStatusDisplays(team) {
+  const hud = document.getElementById(team === "player" ? "battle-hud-player" : "battle-hud-enemy");
+  if (!hud) return;
+  [
+    ".battle-hud-runtime-chips",
+    ".battle-hud-benefit-stacks",
+    ".battle-hud-dot-stacks",
+  ].forEach((selector) => {
+    const el = hud.querySelector(selector);
+    if (!el) return;
+    el.innerHTML = "";
+    el.hidden = true;
+  });
+  const debuffRow = hud.querySelector(".battle-hud-debuff-row");
+  if (debuffRow) {
+    debuffRow.innerHTML = "";
+    debuffRow.hidden = true;
+  }
+}
+
+function clearShellStatusDisplays(team) {
+  const slot = typeof getAvatarSlotEl === "function" ? getAvatarSlotEl(team) : null;
+  const shell = slot?.querySelector(".avatar-hero-shell");
+  if (!shell) return;
+  [
+    ".avatar-damage-stacks",
+    ".avatar-benefit-stacks:not(.battle-hud-benefit-stacks)",
+    ".avatar-dot-stacks:not(.battle-hud-dot-stacks)",
+  ].forEach((selector) => {
+    shell.querySelectorAll(selector).forEach((el) => {
+      el.innerHTML = "";
+      el.hidden = true;
+    });
+  });
+  shell.querySelectorAll(".avatar-hero-debuff-row:not(.battle-hud-debuff-row)").forEach((row) => {
+    row.innerHTML = "";
+    row.hidden = true;
+  });
+}
+
 function ensureBenefitStacksEl(shell, team = null) {
   const hudStacks = team ? getFlankHudStatusEl(team, ".battle-hud-benefit-stacks") : null;
   if (hudStacks) return hudStacks;
@@ -791,22 +843,8 @@ function clearBattleDamageSummary(state) {
   stackBounceTimers.clear();
   hideBattleCountdownOverlay();
   ["player", "enemy"].forEach((team) => {
-    const slot = typeof getAvatarSlotEl === "function" ? getAvatarSlotEl(team) : null;
-    const stacks = slot?.querySelector(".avatar-damage-stacks");
-    if (stacks) {
-      stacks.innerHTML = "";
-      stacks.hidden = true;
-    }
-    const benefits = slot?.querySelector(".avatar-benefit-stacks");
-    if (benefits) {
-      benefits.innerHTML = "";
-      benefits.hidden = true;
-    }
-    const dots = slot?.querySelector(".avatar-dot-stacks");
-    if (dots) {
-      dots.innerHTML = "";
-      dots.hidden = true;
-    }
+    clearShellStatusDisplays(team);
+    clearFlankHudStatusDisplays(team);
   });
 }
 

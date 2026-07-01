@@ -194,11 +194,11 @@
     },
     "tablet-portrait": {
       fitAvailH: PREP_STACKED_CONTENT_H, fitMinScale: SCALE_MIN, fitWidthRatio: 1,
-      canvasAvailShare: 0.34, canvasMaxCap: 240,
-      shopRowBase: 70, shopRowMin: 54, shopRowMax: 74,
-      heroSlotHeight: "min(360px, 42vh)", heroSlotMax: 380,
-      sceneAvatarH: 168, sceneAvatarW: 128, dollSlot: 36, characterGap: 8,
-      shopPanelW: 300,
+      canvasAvailShare: 0.48, canvasMaxCap: 375,
+      shopRowBase: 68, shopRowMin: 56, shopRowMax: 84,
+      heroSlotHeight: "min(400px, 44vh)", heroSlotMax: 420,
+      sceneAvatarH: 200, sceneAvatarW: 148, dollSlot: 38, characterGap: 8,
+      shopPanelW: 300, shopCols: 5,
     },
     "tablet-landscape": {
       fitAvailH: PREP_SIDE_CONTENT_H, fitMinScale: SCALE_MIN, fitWidthRatio: 1,
@@ -241,6 +241,13 @@
       Math.min(cfg.shopRowMax, cfg.shopRowBase * fitScale),
     ));
     root.style.setProperty("--prep-shop-row-h", `${shopRowH}px`);
+    const benchRowH = Math.max(44, Math.round(shopRowH * 0.78));
+    root.style.setProperty("--prep-bench-row-h", `${benchRowH}px`);
+    if (cfg.shopCols) {
+      root.style.setProperty("--prep-shop-cols", String(cfg.shopCols));
+    } else {
+      root.style.removeProperty("--prep-shop-cols");
+    }
     return cfg;
   }
 
@@ -275,13 +282,13 @@
       fxFloatScale: 0.86, fxProjectileScale: 0.88,
     },
     "tablet-landscape-side": {
-      heroFromVh: false, heroZoneShare: 0.52, heroMin: 220, heroMax: 400,
-      arenaVh: 0.15, arenaMin: 88,
-      colMin: 168, colMax: 320, colShare: 0.30,
-      imgRatio: 0.84, imgMin: 200, imgMax: 340,
-      portraitZoom: 1.0, chromePad: 14, portraitObjectY: "100%",
-      emojiScale: 1, floorShare: 0.22, heroShare: 0.52,
-      zoneShares: { player: 0.30, arena: 0.38, enemy: 0.30 },
+      heroFromVh: false, heroZoneShare: 0.44, heroMin: 200, heroMax: 360,
+      arenaVh: 0.22, arenaMin: 120,
+      colMin: 168, colMax: 300, colShare: 0.28,
+      imgRatio: 0.78, imgMin: 180, imgMax: 300,
+      portraitZoom: 0.96, chromePad: 14, portraitObjectY: "100%",
+      emojiScale: 1, floorShare: 0.30, heroShare: 0.44,
+      zoneShares: { player: 0.28, arena: 0.44, enemy: 0.28 },
       tabletSide: true,
       fxFloatScale: 1, fxProjectileScale: 1,
     },
@@ -422,13 +429,23 @@
 
       zones.chrome = 0;
       const fieldCol = document.querySelector("#app[data-phase=\"prep\"] .prep-field-column");
+      const shopPanel = document.getElementById("shop-panel");
       const fieldColZone = (root.dataset.prepViewportFit === "true"
         || root.dataset.prepMobileFit === "true"
         || root.dataset.uiSurface === "phone-landscape"
-        || root.dataset.uiSurface === "tablet-side")
+        || root.dataset.uiSurface === "tablet-side"
+        || root.dataset.uiSurface === "tablet-stacked")
         && fieldCol
         && getComputedStyle(fieldCol).display !== "none";
-      zones.used = zones.topBar + (fieldColZone ? fieldCol.offsetHeight : zones.canvas + zones.hero);
+      if (fieldColZone && root.dataset.uiSurface === "tablet-stacked" && root.dataset.prepShopDrawer !== "true") {
+        const rowH = Math.max(
+          fieldCol.offsetHeight,
+          shopPanel && getComputedStyle(shopPanel).display !== "none" ? shopPanel.offsetHeight : 0,
+        );
+        zones.used = zones.topBar + rowH + zones.toolbar;
+      } else {
+        zones.used = zones.topBar + (fieldColZone ? fieldCol.offsetHeight : zones.canvas + zones.hero);
+      }
     } else if (phase === "battle" || phase === "replay") {
       const sceneUi = document.getElementById("battle-scene-ui");
       const combatFloor = document.getElementById("battle-thought-arena");
@@ -626,6 +643,10 @@
     root.style.removeProperty("--class-modal-scroll-max-h");
   }
 
+  function isTabletLandscapeSideBattle(root = document.documentElement) {
+    return root.dataset.battleProfile === "tablet-landscape-side";
+  }
+
   function syncBattleHudAnchors() {
     const viewport = document.getElementById("prep-field-column");
     const app = document.getElementById("app");
@@ -636,6 +657,37 @@
     const vpRect = viewport.getBoundingClientRect();
     const root = document.documentElement;
     const useFlankZones = root.dataset.battleHeroPlacement === "flank-arena";
+    const tabletLandscapeSide = isTabletLandscapeSideBattle(root);
+
+    let sharedStageBottom = null;
+    if (tabletLandscapeSide && useFlankZones) {
+      const stageBottoms = ["player-avatar-slot", "enemy-avatar-slot"]
+        .map((slotId) => document.getElementById(slotId)?.querySelector(".avatar-hero-stage"))
+        .filter(Boolean)
+        .map((stage) => stage.getBoundingClientRect().bottom)
+        .filter((bottom) => bottom > 8);
+      if (stageBottoms.length) sharedStageBottom = Math.max(...stageBottoms);
+    }
+
+    let sharedHudTopPx = null;
+    if (tabletLandscapeSide) {
+      const barsGapEarly = Math.round(6 * readCssPx("--ui-scale", 1));
+      const hudOverlapEarly = readCssPx("--hero-hud-overlap", Math.round(10 * readCssPx("--ui-scale", 1)));
+      const heroRowTop = readCssPx("--battle-hero-row-top", 0);
+      const heroImgH = readCssPx(
+        "--battle-hero-img-h",
+        readCssPx("--tablet-battle-hero-img-h", 280),
+      );
+      const nameBand = Math.round(28 * readCssPx("--ui-scale", 1));
+      sharedHudTopPx = Math.max(
+        0,
+        Math.round(heroRowTop + nameBand + heroImgH + barsGapEarly - hudOverlapEarly),
+      );
+    } else if (sharedStageBottom != null) {
+      const barsGapEarly = Math.round(6 * readCssPx("--ui-scale", 1));
+      const hudOverlapEarly = readCssPx("--hero-hud-overlap", Math.round(16 * readCssPx("--ui-scale", 1)));
+      sharedHudTopPx = Math.max(0, Math.round(sharedStageBottom - vpRect.top + barsGapEarly - hudOverlapEarly));
+    }
 
     [
       {
@@ -670,7 +722,9 @@
       const upperRect = upper?.getBoundingClientRect();
 
       let anchorBottom = anchorRect.bottom;
-      if (badge) {
+      if (sharedStageBottom != null) {
+        anchorBottom = sharedStageBottom;
+      } else if (badge) {
         const badgeRect = badge.getBoundingClientRect();
         if (badgeRect.height > 2) anchorBottom = Math.max(anchorBottom, badgeRect.bottom);
       } else if (upperRect && upperRect.height > 8) {
@@ -687,7 +741,10 @@
         const zoneLeft = readCssPx(zoneLeftVar, hudLeft);
         const zoneW = readCssPx(zoneWidthVar, hudWidth);
         const panelRect = panel?.getBoundingClientRect();
-        if (panelRect && panelRect.width > 8) {
+        if (tabletLandscapeSide && stageRect && stageRect.width > 40) {
+          hudLeft = stageRect.left - vpRect.left;
+          hudWidth = Math.max(120, Math.min(zoneW, Math.round(stageRect.width)));
+        } else if (panelRect && panelRect.width > 8) {
           hudLeft = panelRect.left - vpRect.left;
           hudWidth = Math.max(120, Math.min(zoneW, panelRect.width));
         } else {
@@ -700,8 +757,10 @@
       const hudOverlap = useFlankZones
         ? readCssPx("--hero-hud-overlap", Math.round(16 * readCssPx("--ui-scale", 1)))
         : 0;
-      let hudTopPx = Math.max(0, Math.round(anchorBottom - vpRect.top + barsGap - hudOverlap));
-      if (stageRect && stageRect.height > 8) {
+      let hudTopPx = sharedHudTopPx != null
+        ? sharedHudTopPx
+        : Math.max(0, Math.round(anchorBottom - vpRect.top + barsGap - hudOverlap));
+      if (sharedHudTopPx == null && stageRect && stageRect.height > 8) {
         const minTop = Math.round(stageRect.bottom - vpRect.top + barsGap);
         if (hudTopPx < minTop) hudTopPx = minTop;
       }
@@ -816,12 +875,18 @@
     ].forEach((name) => root.style.removeProperty(name));
   }
 
+  function usesPrepShopDrawer() {
+    const root = document.documentElement;
+    return root.dataset.prepLayout === "mobile"
+      || root.dataset.prepShopDrawer === "true";
+  }
+
   function syncMobileOverlayAnchors(zones) {
     const root = document.documentElement;
     const app = document.getElementById("app");
     const phase = zones?.phase || app?.dataset.phase || "prep";
 
-    if (root.dataset.prepLayout !== "mobile") {
+    if (!usesPrepShopDrawer()) {
       [
         "--prep-shop-fab-top",
         "--prep-canvas-zone-bottom",
@@ -894,13 +959,24 @@
 
     if (toolbarTop > 0) {
       const appH = readCssPx("--app-h", vh);
-      const tokenCap = Math.min(Math.round(appH * 0.62), Math.round(vh * 0.62));
-      const peekTop = Math.max(canvasBottom, heroTop, Math.round(vh * 0.18));
-      const corridorCap = Math.max(160, Math.round(toolbarTop - gap - peekTop));
-      root.style.setProperty(
-        "--prep-shop-sheet-max-h",
-        `${Math.max(160, Math.min(tokenCap, corridorCap))}px`,
-      );
+      const isTabletDrawer = root.dataset.prepShopDrawer === "true"
+        && root.dataset.uiSurface === "tablet-stacked";
+      if (isTabletDrawer) {
+        const topBar = readCssPx("--zone-topbar-h", 0)
+          || document.getElementById("prep-top-bar")?.offsetHeight
+          || 48;
+        const sheetH = Math.max(340, Math.round(toolbarTop - topBar - gap * 2));
+        root.style.setProperty("--prep-shop-sheet-max-h", `${sheetH}px`);
+      } else {
+        const sheetShare = 0.62;
+        const tokenCap = Math.min(Math.round(appH * sheetShare), Math.round(vh * sheetShare));
+        const peekTop = Math.max(canvasBottom, heroTop, Math.round(vh * 0.18));
+        const corridorCap = Math.max(160, Math.round(toolbarTop - gap - peekTop));
+        root.style.setProperty(
+          "--prep-shop-sheet-max-h",
+          `${Math.max(160, Math.min(tokenCap, corridorCap))}px`,
+        );
+      }
       root.style.setProperty("--prep-shop-sheet-bottom", `${Math.max(0, Math.round(vh - toolbarTop))}px`);
     }
   }
@@ -914,7 +990,7 @@
     const root = document.documentElement;
     syncMobileOverlayAnchors({ phase: document.getElementById("app")?.dataset.phase || "prep" });
 
-    if (root.dataset.prepLayout !== "mobile") {
+    if (!usesPrepShopDrawer()) {
       return;
     }
     const phase = document.getElementById("app")?.dataset.phase;
@@ -1239,6 +1315,9 @@
           cx = anchor.cx;
           top = anchor.top;
           slotSize = anchor.size;
+          if (anchor.emojiSize) {
+            thoughtSlot.style.setProperty("--battle-thought-emoji-size", `${anchor.emojiSize}px`);
+          }
         }
       }
 
@@ -1356,6 +1435,7 @@
     const phoneLandscape = root.dataset.battlePhoneLandscape === "true";
     const phoneCompact = mobileStack || phoneLandscape;
     const tabletSide = isTabletSideLayout(root);
+    const tabletLandscapeSide = isTabletLandscapeSideBattle(root);
     if (mobileStack) {
       root.dataset.battleMobileStack = "true";
     } else {
@@ -1405,6 +1485,18 @@
         heroCardH,
         Math.max(phoneLandscape ? 92 : 104, Math.round(usableH * heroShare)),
       );
+    } else if (tabletLandscapeSide) {
+      const prof = BATTLE_PROFILES[root.dataset.battleProfile] || {};
+      const heroImgH = readCssPx(
+        "--battle-hero-img-h",
+        readCssPx("--tablet-battle-hero-img-h", Math.round(heroZoneH * 0.78)),
+      );
+      const nameBand = Math.round(30 * uiScale);
+      heroCardH = Math.min(heroZoneH, heroImgH + nameBand);
+      combatFloorMin = Math.max(
+        readCssPx("--battle-thought-arena-min-h", prof.arenaMin ?? 120),
+        Math.round(usableH * (prof.floorShare ?? 0.30)),
+      );
     }
 
     if (heroCardH + arenaGap + combatFloorMin > usableH) {
@@ -1416,10 +1508,12 @@
       rowGap,
       layoutH - heroCardH - arenaGap - combatFloorMin - toolbarReserve - rowGap,
     );
-    const heroRowTop = Math.max(
-      rowGap,
-      Math.min(sceneTop + rowGap, heroRowTopMax),
-    );
+    const heroRowTop = tabletLandscapeSide
+      ? Math.max(rowGap, sceneTop + Math.round(8 * uiScale))
+      : Math.max(
+        rowGap,
+        Math.min(sceneTop + rowGap, heroRowTopMax),
+      );
     const sceneOffsetX = sceneRect.left - layoutRect.left;
 
     const battleProf = BATTLE_PROFILES[root.dataset.battleProfile || ""] || {};
@@ -1458,7 +1552,9 @@
         }
         return h;
       })()
-      : Math.min(combatFloorMin, combatFloorAvailable);
+      : tabletLandscapeSide
+        ? Math.max(combatFloorMin, combatFloorAvailable)
+        : Math.min(combatFloorMin, combatFloorAvailable);
 
     placeBattleHeroPanel(
       document.getElementById("player-avatar-panel"),
@@ -1846,21 +1942,43 @@
       } else if (viewportFit) {
         const cssMax = getComputedStyle(root).getPropertyValue("--prep-canvas-max-h").trim();
         if (cssMax) maxH = parseFloat(cssMax) || maxH;
+        if (root.dataset.prepShopDrawer === "true" && fieldCol?.clientHeight > 80) {
+          stageW = fieldCol.clientWidth;
+          const canvasShare = 0.53;
+          maxH = Math.max(maxH, Math.round(fieldCol.clientHeight * canvasShare));
+          root.style.setProperty(
+            "--prep-tablet-canvas-cap",
+            `${Math.round(Math.min(fieldCol.clientHeight * canvasShare, maxH))}px`,
+          );
+        } else {
+          root.style.removeProperty("--prep-tablet-canvas-cap");
+        }
         if (root.dataset.uiSurface === "phone-landscape" && fieldCol?.clientHeight > 80) {
           stageW = Math.max(stageW, Math.floor(fieldCol.clientWidth * 0.5));
           maxH = Math.max(maxH, Math.round(fieldCol.clientHeight * 0.94));
         }
       }
 
-      const scale = Math.min(stageW / canvas.width, maxW / canvas.width, maxH / canvas.height);
+      const allowUpscale = mobileFit
+        || root.dataset.prepShopDrawer === "true"
+        || (viewportFit && root.dataset.uiSurface === "phone-landscape");
+      const scale = allowUpscale
+        ? Math.min(stageW / canvas.width, maxH / canvas.height)
+        : Math.min(stageW / canvas.width, maxW / canvas.width, maxH / canvas.height);
       if (scale <= 0) return;
 
       const w = Math.max(1, Math.floor(canvas.width * scale));
       const h = Math.max(1, Math.floor(canvas.height * scale));
-      setCanvasDisplaySize(canvas, w, h);
-      if (mobileFit) {
-        root.style.setProperty("--prep-canvas-display-w", `${w}px`);
-        root.style.setProperty("--prep-canvas-display-h", `${h}px`);
+      let outW = w;
+      let outH = h;
+      if (root.dataset.prepShopDrawer === "true" && root.dataset.uiSurface === "tablet-stacked") {
+        outW = Math.max(1, Math.round(w * 0.85));
+        outH = Math.max(1, Math.round(h * 0.85));
+      }
+      setCanvasDisplaySize(canvas, outW, outH);
+      if (mobileFit || root.dataset.prepShopDrawer === "true") {
+        root.style.setProperty("--prep-canvas-display-w", `${outW}px`);
+        root.style.setProperty("--prep-canvas-display-h", `${outH}px`);
       } else {
         root.style.removeProperty("--prep-canvas-display-w");
         root.style.removeProperty("--prep-canvas-display-h");
@@ -1884,17 +2002,52 @@
     syncFxCanvasGeometry();
   }
 
+  /** Подгонка строк магазина в tablet drawer — без вертикального скролла. */
+  function syncTabletPortraitShopRows() {
+    if (!usesPrepShopDrawer() || document.documentElement.dataset.uiSurface !== "tablet-stacked") return;
+    if (!document.documentElement.hasAttribute("data-prep-shop-open")) return;
+    const app = document.getElementById("app");
+    if (app?.dataset.phase !== "prep") return;
+
+    const panel = document.getElementById("shop-panel");
+    const slots = panel?.querySelector(".shop-slots");
+    if (!panel || !slots || panel.offsetHeight < 120) return;
+
+    const chrome = panel.querySelector(".shop-chrome");
+    const sell = panel.querySelector(".shop-sell-zone");
+    const benchPanel = panel.querySelector(".bench-panel");
+    const fixedH = (chrome?.offsetHeight ?? 0)
+      + (sell?.offsetHeight ?? 0)
+      + (benchPanel?.querySelector("h3")?.offsetHeight ?? 0)
+      + Math.round(16 * readCssPx("--ui-scale", 1));
+
+    const slotsArea = Math.max(120, panel.offsetHeight - fixedH);
+    const shopRows = 1;
+    const benchRows = 1;
+    const shopShare = 0.52;
+    const shopRowH = Math.floor((slotsArea * shopShare) / shopRows);
+    const benchRowH = Math.floor((slotsArea * (1 - shopShare)) / benchRows);
+    const rowH = Math.max(56, Math.min(96, shopRowH));
+    const benchH = Math.max(44, Math.min(72, benchRowH));
+
+    const root = document.documentElement;
+    root.style.setProperty("--prep-shop-row-h", `${rowH}px`);
+    root.style.setProperty("--prep-bench-row-h", `${benchH}px`);
+  }
+
   function scheduleCanvasFit() {
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         fitCanvasDisplaySize();
         syncPrepHeroSlotHeight();
+        syncTabletPortraitShopRows();
         const zones = measureLayoutZones();
         applyMeasuredZoneFit(zones);
         syncMobileShopFabPosition();
         if (document.documentElement.style.getPropertyValue("--zone-fit-shrink")) {
           requestAnimationFrame(() => {
             fitCanvasDisplaySize();
+            syncTabletPortraitShopRows();
             const refitZones = measureLayoutZones();
             applyMeasuredZoneFit(refitZones);
             syncMobileShopFabPosition();
@@ -1908,6 +2061,7 @@
     document.documentElement.dataset.prepViewportFit = "false";
     document.documentElement.dataset.prepSideFit = "false";
     document.documentElement.dataset.prepMobileFit = "false";
+    document.documentElement.dataset.prepShopDrawer = "false";
     document.documentElement.style.removeProperty("--prep-canvas-max-h");
     document.documentElement.style.removeProperty("--prep-canvas-max-h-base");
     document.documentElement.style.removeProperty("--zone-fit-shrink");
@@ -1919,6 +2073,7 @@
 
     if (prepLayout === "mobile") {
       document.documentElement.dataset.prepMobileFit = "true";
+      document.documentElement.dataset.prepShopDrawer = "true";
       let fitScale = Math.min(baseScale, available / cfg.fitAvailH, w / (DESIGN_W * cfg.fitWidthRatio));
       fitScale = Math.max(cfg.fitMinScale, Math.min(SCALE_MAX, fitScale));
       return Math.round(fitScale * 1000) / 1000;
@@ -1930,8 +2085,15 @@
       fitScale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, fitScale));
       const canvasMax = Math.round(Math.min(available * cfg.canvasAvailShare, cfg.canvasMaxCap * fitScale));
       document.documentElement.style.setProperty("--prep-canvas-max-h", `${canvasMax}px`);
+      const tabletDrawer = layoutProfile?.id === "tablet-portrait";
+      document.documentElement.dataset.prepShopDrawer = tabletDrawer ? "true" : "false";
+      if (!tabletDrawer) {
+        document.documentElement.removeAttribute("data-prep-shop-open");
+      }
       return Math.round(fitScale * 1000) / 1000;
     }
+
+    document.documentElement.dataset.prepShopDrawer = "false";
 
     if (prepLayout === "side" && w >= 600) {
       let fitScale = Math.min(baseScale, available / cfg.fitAvailH, w / DESIGN_W);
@@ -2155,6 +2317,7 @@
   window.fitPrepCanvasToStage = fitCanvasDisplaySize;
   window.scheduleCanvasFit = scheduleCanvasFit;
   window.syncMobileShopFabPosition = syncMobileShopFabPosition;
+  window.syncTabletPortraitShopRows = syncTabletPortraitShopRows;
   window.syncMobileOverlayAnchors = syncMobileOverlayAnchors;
   window.syncPrepMobileZoneAnchors = syncPrepMobileZoneAnchors;
   window.syncClassOverlayAnchors = syncClassOverlayAnchors;

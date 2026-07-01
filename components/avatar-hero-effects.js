@@ -282,6 +282,9 @@ function syncAvatarHeroEffects(team, profile, state) {
     shellDebuffRow.hidden = true;
     shellDebuffRow.innerHTML = "";
   }
+  if (isFlankArenaBattleHud() && typeof clearShellStatusDisplays === "function") {
+    clearShellStatusDisplays(team);
+  }
 
   shell.classList.toggle("avatar-hero-has-buffs", activeBuffs.length > 0);
   syncAvatarWeaponBadge(shell, profile);
@@ -291,7 +294,7 @@ function syncAvatarHeroEffects(team, profile, state) {
   if (isFlankArenaBattleHud() && state) {
     const sideState = team === "player" ? state.player : state.enemy;
     if (typeof syncBattleHudRuntimeChips === "function") {
-      syncBattleHudRuntimeChips(team, sideState);
+      syncBattleHudRuntimeChips(team, sideState, state);
     }
   }
   if (isFlankArenaBattleHud() && typeof syncBattleHudAnchors === "function") {

@@ -4,6 +4,13 @@
 (function initMobilePrepUi() {
   const OPEN_ATTR = "data-prep-shop-open";
 
+  function usesPrepShopDrawer() {
+    const root = document.documentElement;
+    return root.dataset.prepLayout === "mobile"
+      || root.dataset.prepShopDrawer === "true"
+      || root.dataset.uiSurface === "tablet-stacked";
+  }
+
   function isMobilePrepLayout() {
     return document.documentElement.dataset.prepLayout === "mobile";
   }
@@ -31,6 +38,9 @@
     if (typeof window.syncMobileOverlayAnchors === "function") {
       requestAnimationFrame(() => window.syncMobileOverlayAnchors({ phase: "prep" }));
     }
+    if (typeof window.syncTabletPortraitShopRows === "function") {
+      requestAnimationFrame(() => window.syncTabletPortraitShopRows());
+    }
     if (typeof scheduleCanvasFit === "function") scheduleCanvasFit();
   }
 
@@ -40,7 +50,7 @@
   }
 
   function toggleMobilePrepShop() {
-    if (!isMobilePrepLayout()) return;
+    if (!usesPrepShopDrawer()) return;
     setShopOpen(!document.documentElement.hasAttribute(OPEN_ATTR));
   }
 
@@ -71,13 +81,16 @@
       new MutationObserver(() => {
         if (app.dataset.phase !== "prep") closeMobilePrepShop();
         syncRotatePrompt();
-        if (!isMobilePrepLayout()) closeMobilePrepShop();
+        if (!usesPrepShopDrawer()) closeMobilePrepShop();
       }).observe(app, { attributes: true, attributeFilter: ["data-phase"] });
     }
 
-    new MutationObserver(syncRotatePrompt).observe(document.documentElement, {
+    new MutationObserver(() => {
+      syncRotatePrompt();
+      if (!usesPrepShopDrawer()) closeMobilePrepShop();
+    }).observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ["data-prep-layout", "data-orientation"],
+      attributeFilter: ["data-prep-layout", "data-orientation", "data-prep-shop-drawer", "data-ui-surface"],
     });
 
     syncRotatePrompt();
