@@ -1323,40 +1323,6 @@ body:has(#app[data-phase="replay"]) #battle-controls:not(.hidden) {
   transition: filter 0.45s ease, transform 0.25s ease;
 }
 
-.avatar-stack-orbit-ring {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 0;
-  height: 0;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.avatar-thought-slot > .avatar-stack-orbit-ring,
-.battle-thought-arena > .avatar-stack-orbit-ring {
-  z-index: 0;
-}
-
-.avatar-stack-orbit-particle {
-  position: absolute;
-  font-size: calc(13px * var(--ui-scale));
-  line-height: 1;
-  margin: calc(-8px * var(--ui-scale)) 0 0 calc(-8px * var(--ui-scale));
-  animation: avatar-stack-orbit linear infinite;
-  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.75));
-}
-
-@keyframes avatar-stack-orbit {
-  from {
-    transform: rotate(var(--orbit-a)) translateX(var(--orbit-r)) rotate(calc(-1 * var(--orbit-a)));
-  }
-  to {
-    transform: rotate(calc(var(--orbit-a) + 360deg)) translateX(var(--orbit-r)) rotate(calc(-1 * (var(--orbit-a) + 360deg)));
-  }
-}
-
 #app[data-phase="battle"] .avatar-hero-stage,
 #app[data-phase="replay"] .avatar-hero-stage {
   overflow: visible;

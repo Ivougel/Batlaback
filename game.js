@@ -165,6 +165,8 @@ let lobbyState = null;
 let lobbyViewFighterId = 0;
 let lobbyMatches = [];
 let lobbySpectateMatchId = 0;
+/** @type {Map<number, number>} */
+let lobbyBackgroundSimAcc = new Map();
 let lobbyPrepTimerRemaining = 0;
 let lobbyPrepTimerActive = false;
 let lobbyPrepOvertimeUsed = false;
@@ -520,7 +522,13 @@ function renderLobbyChrome(force = false) {
     lastLobbyRosterStripSig = stripSig;
     const stripHtml = renderLobbyRosterStrip(lobbyState, rosterOpts);
     if (stripPrep && phase === "prep") stripPrep.innerHTML = stripHtml;
-    if (stripBattle && isBattleUiPhase()) stripBattle.innerHTML = stripHtml;
+    if (stripBattle && isBattleUiPhase()) {
+      if (typeof setLobbyBattleDockStripHtml === "function") {
+        setLobbyBattleDockStripHtml(stripHtml);
+      } else {
+        stripBattle.innerHTML = stripHtml;
+      }
+    }
   }
   if (isBattleUiPhase() && typeof syncLobbyBattleDockChrome === "function") {
     syncLobbyBattleDockChrome(lobbyState, rosterOpts);
@@ -531,7 +539,11 @@ function renderLobbyChrome(force = false) {
       : "";
   }
   if (isBattleUiPhase() && typeof queuePrewarmBattleInventoryPopover === "function") {
-    queuePrewarmBattleInventoryPopover();
+    const dockOpen = typeof isLobbyBattleDockOpen === "function" && isLobbyBattleDockOpen();
+    const popoverOpen = typeof isBattleInventoryPopoverOpen === "function" && isBattleInventoryPopoverOpen();
+    if (!isLobbyMode() || dockOpen || popoverOpen) {
+      queuePrewarmBattleInventoryPopover();
+    }
   }
 }
 
@@ -3033,6 +3045,9 @@ function startBattle() {
         setBattleEnemyTeamLabel(getEnemyDisplayName());
       }
       if (isLobbyMode() && lobbyState) {
+        if (typeof disposeLobbyMatches === "function") disposeLobbyMatches(lobbyMatches);
+        lobbyMatches = [];
+        lobbyBackgroundSimAcc.clear();
         lobbyMatches = initLobbyRoundBattles(lobbyState, round);
         const playerIdx = lobbyMatches.findIndex((m) => m.isPlayerMatch);
         lobbySpectateMatchId = playerIdx >= 0 ? playerIdx : 0;
@@ -3084,7 +3099,12 @@ function startBattle() {
       renderPlayerProfiles();
       renderFightButton();
       renderLobbyChrome();
-      if (typeof queuePrewarmBattleInventoryPopover === "function") queuePrewarmBattleInventoryPopover();
+      if (typeof queuePrewarmBattleInventoryPopover === "function") {
+        const dockOpen = typeof isLobbyBattleDockOpen === "function" && isLobbyBattleDockOpen();
+        if (!isLobbyMode() || dockOpen) {
+          queuePrewarmBattleInventoryPopover();
+        }
+      }
       if (typeof updateBattleAnalyzer === "function" && battleState) {
         updateBattleAnalyzer(battleState, 0);
       }
@@ -3290,7 +3310,11 @@ function applyPostBattlePrep(battleWinner) {
       }
     }
 
+    if (typeof disposeLobbyMatches === "function") disposeLobbyMatches(lobbyMatches);
     lobbyMatches = [];
+    lobbyBackgroundSimAcc.clear();
+    battleState = null;
+    if (typeof clearBattleInventoryPopoverCache === "function") clearBattleInventoryPopoverCache();
 
     if (lobbyResult.playerEliminated || lobbyResult.lobbyWon || isLobbyRunOver(lobbyState)) {
       pendingGameOver = true;
@@ -3464,25 +3488,49 @@ function tickLobbyRoundBattles(dt, ts) {
   if (!isLobbyMode() || phase !== "battle" || !lobbyMatches.length) return false;
 
   let playerJustFinished = false;
-  lobbyMatches.forEach((match) => {
-    if (match.byeFighterId || !match.state || match.state.finished) return;
+  const bgInterval = 1 / (typeof getLobbyBackgroundSimHz === "function" ? getLobbyBackgroundSimHz() : 5);
+  const simOpts = { spectateMatchId: lobbySpectateMatchId };
 
-    if (match.isPlayerMatch) {
-      if (battleEndHandled) return;
+  const tickMatchStep = (match, stepDt) => {
+    if (match.isPlayerMatch && !battleEndHandled) {
       battleState = match.state;
       try {
-        tickSingleBattleState(match.state, dt);
-        if (!match.state.finished && typeof syncStackOrbitFromBattle === "function") {
-          syncStackOrbitFromBattle(match.state);
-        }
+        tickSingleBattleState(match.state, stepDt);
       } catch (err) {
         console.error("lobby player battleTick failed:", err);
       }
-      if (match.state.finished) playerJustFinished = true;
+    } else {
+      tickLobbyMatchState(match, stepDt, () => stepDt, lobbyState);
+    }
+    if (match.state?.finished) {
+      match.finished = true;
+      if (match.isPlayerMatch) playerJustFinished = true;
+    }
+  };
+
+  lobbyMatches.forEach((match, index) => {
+    if (match.byeFighterId || !match.state || match.state.finished) return;
+    if (match.isPlayerMatch && battleEndHandled) return;
+
+    const fullSim = typeof isLobbyMatchFullySimulated === "function"
+      ? isLobbyMatchFullySimulated(match, index, simOpts)
+      : index === lobbySpectateMatchId;
+
+    if (fullSim) {
+      lobbyBackgroundSimAcc.delete(match.id);
+      tickMatchStep(match, dt);
       return;
     }
 
-    tickLobbyMatchState(match, dt, getBattleSimDt, lobbyState);
+    let acc = (lobbyBackgroundSimAcc.get(match.id) || 0) + dt;
+    while (acc >= bgInterval && match.state && !match.state.finished) {
+      tickMatchStep(match, bgInterval);
+      acc -= bgInterval;
+    }
+    lobbyBackgroundSimAcc.set(match.id, acc);
+    if (match.state?.finished) {
+      lobbyBackgroundSimAcc.delete(match.id);
+    }
   });
 
   const displayState = getDisplayBattleState();
@@ -3494,13 +3542,17 @@ function tickLobbyRoundBattles(dt, ts) {
     flushBattleEvents();
   }
 
-  if (Math.floor(ts / 500) !== Math.floor((ts - dt * 1000) / 500)) {
+  const uiTickMs = typeof getLobbyBackgroundSimHz === "function" && getLobbyBackgroundSimHz() <= 3 ? 650 : 500;
+  if (Math.floor(ts / uiTickMs) !== Math.floor((ts - dt * 1000) / uiTickMs)) {
     renderBattleStats();
     renderPlayerProfiles();
     if (typeof refreshBattleInventoryPopover === "function") refreshBattleInventoryPopover();
   }
   if (Math.floor(ts / 400) !== Math.floor((ts - dt * 1000) / 400)) {
-    renderLobbyChrome();
+    if (!tickLobbyRoundBattles._lastChromeAt || ts - tickLobbyRoundBattles._lastChromeAt >= 400) {
+      tickLobbyRoundBattles._lastChromeAt = ts;
+      renderLobbyChrome();
+    }
   }
   if (typeof syncBattleInventoryPopoverFlash === "function") syncBattleInventoryPopoverFlash();
   tickBattlePresentation();
@@ -3509,6 +3561,12 @@ function tickLobbyRoundBattles(dt, ts) {
     endBattle();
   }
   return true;
+}
+
+function cleanupLobbyRoundTransition() {
+  if (typeof clearBattleInventoryPopoverCache === "function") clearBattleInventoryPopoverCache();
+  if (typeof closeBattleInventoryPopover === "function") closeBattleInventoryPopover();
+  if (typeof setLobbyBattleDockOpen === "function") setLobbyBattleDockOpen(false);
 }
 
 function finishLobbyRoundFromContinue() {
@@ -3520,6 +3578,7 @@ function finishLobbyRoundFromContinue() {
     console.error("finishLobbyRoundFromContinue failed:", err);
     updateUI();
   }
+  cleanupLobbyRoundTransition();
   lobbyRoundSettling = false;
   lastLobbyPlayerBattleWinner = null;
 }

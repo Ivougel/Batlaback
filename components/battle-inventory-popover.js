@@ -539,6 +539,12 @@ const BattleInventoryPopover = (() => {
     }
   }
 
+  function clearBattleInventoryPopoverCache() {
+    bodyHtmlCache.clear();
+    lastRenderSig.clear();
+    lastFlashSig.clear();
+  }
+
   function initBattleInventoryPopover() {
     if (listenersBound) return;
     listenersBound = true;
@@ -561,6 +567,7 @@ const BattleInventoryPopover = (() => {
     syncBattleInventoryPopoverFlash,
     prewarmBattleInventoryPopover,
     queuePrewarmBattleInventoryPopover,
+    clearBattleInventoryPopoverCache,
   };
 })();
 
@@ -594,6 +601,10 @@ function prewarmBattleInventoryPopover() {
 
 function queuePrewarmBattleInventoryPopover() {
   BattleInventoryPopover.queuePrewarmBattleInventoryPopover();
+}
+
+function clearBattleInventoryPopoverCache() {
+  BattleInventoryPopover.clearBattleInventoryPopoverCache();
 }
 
 window.openBattleInventoryPopover = openBattleInventoryPopover;

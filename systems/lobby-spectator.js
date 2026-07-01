@@ -105,6 +105,19 @@ function initLobbyRoundBattles(lobby, battleRound) {
   return matches;
 }
 
+function isLobbyMatchFullySimulated(match, matchIndex, opts = {}) {
+  const { spectateMatchId = 0 } = opts;
+  if (!match || match.byeFighterId || !match.state || match.state.finished) return false;
+  return matchIndex === spectateMatchId;
+}
+
+function getLobbyBackgroundSimHz() {
+  if (typeof window.BattleFxTier?.isLightBattleFx === "function" && window.BattleFxTier.isLightBattleFx()) {
+    return 3;
+  }
+  return 5;
+}
+
 function getLobbyMatchFighter(lobby, fighterId, side) {
   const match = lobby;
   const fighter = match.fighters[fighterId];
@@ -160,7 +173,8 @@ function tickLobbyMatchState(match, dt, simDtFn, lobby = null) {
   }
   if (state.finished) {
     match.finished = true;
-    if (typeof finalizeBattleReplay === "function") finalizeBattleReplay(state);
+    if (state.recording && typeof finalizeBattleReplay === "function") finalizeBattleReplay(state);
+    if (!match.isPlayerMatch) state.replayFrames = [];
     if (typeof CombatLog !== "undefined" && lobby) {
       const labels = getLobbyMatchLabels(lobby, match);
       const winner = state.winner === "player" ? labels.a : state.winner === "enemy" ? labels.b : null;
@@ -178,14 +192,60 @@ function tickLobbyMatchState(match, dt, simDtFn, lobby = null) {
 
 function fastForwardLobbyMatch(match) {
   if (!match?.state || match.state.finished || match.byeFighterId) return;
+  const state = match.state;
   try {
-    fastForwardBattle(match.state);
+    if (match.isPlayerMatch) {
+      fastForwardBattle(state);
+    } else {
+      liteFastForwardLobbyMatch(state);
+    }
   } catch (err) {
     console.error("fastForwardLobbyMatch failed:", err);
-    match.state.finished = true;
-    match.state.winner = match.state.winner || "draw";
+    state.finished = true;
+    state.winner = state.winner || "draw";
+  }
+  state.replayFrames = [];
+  state.recording = false;
+  match.finished = true;
+}
+
+function liteFastForwardLobbyMatch(state) {
+  if (!state || state.finished) return;
+  if (state.countdown?.active) {
+    state.countdown.active = false;
+    state.countdown.remaining = 0;
+    state.countdown.label = null;
+  }
+  state.recording = false;
+  let steps = 0;
+  while (!state.finished && steps < 80000) {
+    battleTick(state, 0.05);
+    steps += 1;
+  }
+  if (!state.finished && typeof resolveBattleTimeout === "function") {
+    resolveBattleTimeout(state);
+  }
+  state.replayFrames = [];
+}
+
+function disposeLobbyMatchState(match) {
+  if (!match) return;
+  const state = match.state;
+  if (state) {
+    state.replayFrames = [];
+    state.recording = false;
+    state.log = null;
+    state.floatingNumbers = null;
+    state.animations = null;
+    state.commentary = null;
+    match.state = null;
   }
   match.finished = true;
+}
+
+function disposeLobbyMatches(matches) {
+  if (!matches?.length) return;
+  matches.forEach(disposeLobbyMatchState);
 }
 
 function fastForwardRemainingLobbyMatches(matches) {
@@ -329,6 +389,31 @@ function renderLobbyPrepTimerHTML(remaining, active) {
 }
 
 let lobbyBattleDockOpen = false;
+let lobbyBattleDockStripHtml = "";
+
+function isLobbyBattleDockOpen() {
+  return lobbyBattleDockOpen;
+}
+
+function mountLobbyBattleDockStrip() {
+  const strip = document.getElementById("lobby-roster-strip-battle");
+  if (!strip || !lobbyBattleDockStripHtml) return;
+  if (strip.innerHTML !== lobbyBattleDockStripHtml) {
+    strip.innerHTML = lobbyBattleDockStripHtml;
+  }
+}
+
+function unmountLobbyBattleDockStrip() {
+  const strip = document.getElementById("lobby-roster-strip-battle");
+  if (!strip || !strip.innerHTML) return;
+  lobbyBattleDockStripHtml = strip.innerHTML;
+  strip.replaceChildren();
+}
+
+function setLobbyBattleDockStripHtml(html) {
+  lobbyBattleDockStripHtml = html || "";
+  if (lobbyBattleDockOpen) mountLobbyBattleDockStrip();
+}
 
 function renderLobbyBattleDockSummary(lobby, opts = {}) {
   if (!lobby) return "Параллельные бои";
@@ -346,21 +431,37 @@ function renderLobbyBattleDockSummary(lobby, opts = {}) {
 }
 
 function setLobbyBattleDockOpen(open) {
-  lobbyBattleDockOpen = !!open;
+  const next = !!open;
+  if (next === lobbyBattleDockOpen) return;
+  lobbyBattleDockOpen = next;
+
   const dock = document.getElementById("lobby-battle-dock");
   const toggle = document.getElementById("lobby-battle-dock-toggle");
   const panel = document.getElementById("lobby-battle-dock-panel");
-  dock?.classList.toggle("lobby-battle-dock--open", lobbyBattleDockOpen);
-  toggle?.setAttribute("aria-expanded", lobbyBattleDockOpen ? "true" : "false");
-  panel?.classList.toggle("hidden", !lobbyBattleDockOpen);
+  dock?.classList.toggle("lobby-battle-dock--open", next);
+  toggle?.setAttribute("aria-expanded", next ? "true" : "false");
+
+  if (next) {
+    panel?.classList.remove("hidden");
+    mountLobbyBattleDockStrip();
+    return;
+  }
+
+  panel?.classList.add("hidden");
+  requestAnimationFrame(() => {
+    if (lobbyBattleDockOpen) return;
+    unmountLobbyBattleDockStrip();
+  });
 }
 
 function syncLobbyBattleDockChrome(lobby, opts = {}) {
   const dock = document.getElementById("lobby-battle-dock");
   const toggleText = document.getElementById("lobby-battle-dock-toggle-text");
   if (!dock || dock.classList.contains("hidden")) return;
-  if (toggleText) toggleText.textContent = renderLobbyBattleDockSummary(lobby, opts);
-  setLobbyBattleDockOpen(lobbyBattleDockOpen);
+  const summary = renderLobbyBattleDockSummary(lobby, opts);
+  if (toggleText && toggleText.textContent !== summary) {
+    toggleText.textContent = summary;
+  }
 }
 
 function bindLobbyBattleDock() {
@@ -379,5 +480,5 @@ function bindLobbyBattleDock() {
     if (!lobbyBattleDockOpen || !dock || dock.classList.contains("hidden")) return;
     if (dock.contains(e.target)) return;
     setLobbyBattleDockOpen(false);
-  });
+  }, true);
 }

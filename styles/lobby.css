@@ -28,6 +28,7 @@
   width: min(96vw, 760px);
   max-width: calc(100vw - 16px);
   pointer-events: none;
+  contain: layout style;
 }
 
 .lobby-battle-dock.hidden {
@@ -88,15 +89,15 @@
   width: 100%;
   padding: 0.55rem 0.65rem 0.6rem;
   border-radius: 0.75rem;
-  background: rgba(13, 17, 23, 0.94);
+  background: rgba(13, 17, 23, 0.98);
   border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  contain: layout paint style;
 }
 
 .lobby-battle-dock-panel.hidden {
   display: none !important;
+  content-visibility: hidden;
 }
 
 .lobby-battle-dock .lobby-spectate-banner {
