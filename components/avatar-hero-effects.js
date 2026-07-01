@@ -317,29 +317,127 @@ function profileHeroShellSignature(profile) {
   ].join("|");
 }
 
-function ensureBattleHeroShells(state, playerProfile, enemyProfile) {
-  if (!state) return;
+function profileBarsSignature(profile) {
+  if (!profile) return "";
+  return `${profile.name}|${profile.classId}|${profile.hpMax}|${profile.staminaMax}`;
+}
+
+function syncAvatarHeroPortraitContent(team, profile, opts = {}) {
+  const slot = getAvatarSlotEl(team);
+  if (!slot || !profile) return false;
+
+  if (opts.forceRebuild) {
+    slot.innerHTML = renderAvatarHeroHTML(profile, team);
+    slot.dataset.heroShellSig = profileHeroShellSignature(profile);
+    resetHeroHpTracking(team);
+    return true;
+  }
+
+  const displayName = profile.name || (team === "player" ? "Игрок" : "ИИ");
+  const className = profile.className || "—";
+  let shell = slot.querySelector(".avatar-hero-shell");
+  if (!shell) {
+    slot.innerHTML = renderAvatarHeroHTML(profile, team);
+    slot.dataset.heroShellSig = profileHeroShellSignature(profile);
+    resetHeroHpTracking(team);
+    return true;
+  }
+
+  const nameEl = shell.querySelector(".avatar-hero-name");
+  if (nameEl) nameEl.textContent = displayName;
+
+  const avatar = shell.querySelector(".profile-avatar");
+  if (!avatar) {
+    slot.innerHTML = renderAvatarHeroHTML(profile, team);
+    slot.dataset.heroShellSig = profileHeroShellSignature(profile);
+    resetHeroHpTracking(team);
+    return true;
+  }
+
+  const gold = profile.gold ?? 0;
+  avatar.dataset.statusTitle = className;
+  avatar.dataset.statusDesc = `💰 ${gold} золота`;
+  avatar.setAttribute("aria-label", className);
+
+  if (profile.classIconSrc) {
+    let img = avatar.querySelector(".profile-avatar-img");
+    if (!img) {
+      avatar.innerHTML = `<div class="portrait-zoom-clip"><img class="profile-avatar-img" src="${escapeProfileHtml(profile.classIconSrc)}" alt="${escapeProfileHtml(className)}" draggable="false"></div>`;
+    } else if (img.getAttribute("src") !== profile.classIconSrc) {
+      img.src = profile.classIconSrc;
+      img.alt = className;
+    }
+  } else {
+    avatar.innerHTML = escapeProfileHtml(profile.classIcon || "❓");
+  }
+
+  syncAvatarWeaponBadge(shell, profile);
+  slot.dataset.heroShellSig = profileHeroShellSignature(profile);
+  return false;
+}
+
+function scheduleHeroPortraitLayoutSync() {
+  const run = () => {
+    if (typeof BattleHeroAnchor !== "undefined" && BattleHeroAnchor.invalidateMeasureCache) {
+      BattleHeroAnchor.invalidateMeasureCache();
+    }
+    if (typeof window.syncHeroEmotionSlotAnchors === "function") {
+      if (window.syncHeroEmotionSlotAnchors._layout) {
+        window.syncHeroEmotionSlotAnchors._layout.player = "";
+        window.syncHeroEmotionSlotAnchors._layout.enemy = "";
+      }
+      window.syncHeroEmotionSlotAnchors._rootEmoji = null;
+      window.syncHeroEmotionSlotAnchors();
+    }
+    if (typeof window.syncBattleSceneGridMetrics === "function") {
+      window.syncBattleSceneGridMetrics();
+    }
+    if (typeof window.scheduleBattleHeroRowSync === "function") {
+      window.scheduleBattleHeroRowSync(8);
+    }
+    if (typeof syncBattleHudAnchors === "function") syncBattleHudAnchors();
+  };
+  const imgs = ["player-avatar-slot", "enemy-avatar-slot"]
+    .map((id) => document.getElementById(id)?.querySelector(".profile-avatar-img"))
+    .filter(Boolean);
+  if (!imgs.length || imgs.every((img) => img.complete)) {
+    requestAnimationFrame(() => requestAnimationFrame(run));
+    return;
+  }
+  let pending = imgs.filter((img) => !img.complete).length;
+  const done = () => {
+    pending -= 1;
+    if (pending <= 0) requestAnimationFrame(run);
+  };
+  imgs.forEach((img) => {
+    if (img.complete) return;
+    img.addEventListener("load", done, { once: true });
+    img.addEventListener("error", done, { once: true });
+  });
+}
+
+function ensureBattleHeroShells(state, playerProfile, enemyProfile, opts = {}) {
   const battleHud = document.getElementById("battle-run-hud");
   if (battleHud) {
     battleHud.hidden = false;
     battleHud.removeAttribute("aria-hidden");
   }
+  let shellChanged = false;
   ["player", "enemy"].forEach((team) => {
-    const slot = getAvatarSlotEl(team);
-    if (!slot) return;
     const profile = team === "player" ? playerProfile : enemyProfile;
-    const sig = profileHeroShellSignature(profile);
-    const shell = slot.querySelector(".avatar-hero-shell");
-    if (!shell || slot.dataset.heroShellSig !== sig) {
-      slot.innerHTML = renderAvatarHeroHTML(profile, team);
-      slot.dataset.heroShellSig = sig;
-      resetHeroHpTracking(team);
-    }
+    if (!profile) return;
+    const rebuilt = syncAvatarHeroPortraitContent(team, profile, { forceRebuild: !!opts.force });
+    if (rebuilt) shellChanged = true;
     const barsEl = getBattleHudBarsEl(team);
-    if (barsEl && !barsEl.querySelector(".battle-hud-status-stack")) {
+    const barsSig = profileBarsSignature(profile);
+    if (barsEl && (!barsEl.querySelector(".battle-hud-status-stack") || barsEl.dataset.barsSig !== barsSig)) {
       barsEl.innerHTML = renderAvatarBarsHTML(profile, team);
+      barsEl.dataset.barsSig = barsSig;
     }
   });
+  if (shellChanged || opts.force) {
+    scheduleHeroPortraitLayoutSync();
+  }
   if (typeof syncBattleHudAnchors === "function") syncBattleHudAnchors();
 }
 

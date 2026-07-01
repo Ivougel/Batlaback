@@ -15,15 +15,100 @@
   margin-top: 0.15rem;
 }
 
-#lobby-battle-chrome {
-  width: 100%;
-  max-width: min(100%, 920px);
-  margin: 0 auto 0.35rem;
+.lobby-battle-dock {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--bottom-chrome-h-measured, var(--bottom-chrome-h, 44px)) + 10px);
+  transform: translateX(-50%);
+  z-index: var(--z-live-popover, 120);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  width: min(96vw, 760px);
+  max-width: calc(100vw - 16px);
+  pointer-events: none;
+}
+
+.lobby-battle-dock.hidden {
+  display: none !important;
+}
+
+.lobby-battle-dock > * {
   pointer-events: auto;
 }
 
-#lobby-battle-chrome:not(.hidden) {
-  display: block;
+.lobby-battle-dock-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  max-width: 100%;
+  min-height: 34px;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(56, 139, 253, 0.18);
+  border: 1px solid rgba(88, 166, 255, 0.42);
+  color: #dbeafe;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.2;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+  white-space: nowrap;
+}
+
+.lobby-battle-dock-toggle:hover {
+  background: rgba(56, 139, 253, 0.28);
+  border-color: rgba(125, 211, 252, 0.55);
+}
+
+.lobby-battle-dock--open .lobby-battle-dock-toggle {
+  background: rgba(56, 139, 253, 0.28);
+  border-color: rgba(125, 211, 252, 0.65);
+}
+
+.lobby-battle-dock-toggle-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: min(68vw, 520px);
+}
+
+.lobby-battle-dock-toggle-chevron {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  opacity: 0.85;
+  transition: transform 0.15s ease;
+}
+
+.lobby-battle-dock--open .lobby-battle-dock-toggle-chevron {
+  transform: rotate(180deg);
+}
+
+.lobby-battle-dock-panel {
+  width: 100%;
+  padding: 0.55rem 0.65rem 0.6rem;
+  border-radius: 0.75rem;
+  background: rgba(13, 17, 23, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.lobby-battle-dock-panel.hidden {
+  display: none !important;
+}
+
+.lobby-battle-dock .lobby-spectate-banner {
+  margin-bottom: 0.35rem;
+}
+
+.lobby-battle-dock .lobby-roster-strip--battle {
+  max-height: min(34vh, 9.5rem);
+  flex-wrap: wrap;
+  overflow-x: auto;
+  overflow-y: auto;
+  justify-content: center;
 }
 
 .lobby-battle-strip-label {
@@ -56,10 +141,7 @@
   color: #fde68a;
 }
 
-#app[data-lobby-spectate="watch"] #battle-scene-ui {
-  position: relative;
-}
-
+/* Золотая рамка наблюдения — не менять position у #battle-scene-ui (flank-arena: absolute + inset:0). */
 #app[data-lobby-spectate="watch"] #battle-scene-ui::before {
   content: "";
   position: absolute;
@@ -238,11 +320,6 @@ html[data-game-mode="lobby"] .prep-stats-row--lobby-hp b {
 
 html[data-game-mode="lobby"] #bottom-chrome-prep-left .prep-side-btn {
   display: none;
-}
-
-html[data-game-mode="lobby"] #app[data-phase="battle"] #lobby-battle-chrome:not(.hidden),
-html[data-game-mode="lobby"] #app[data-phase="replay"] #lobby-battle-chrome:not(.hidden) {
-  display: block;
 }
 
 #app[data-game-mode="lobby"][data-phase="battle"] #combat-feed-dock,

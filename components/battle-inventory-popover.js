@@ -111,13 +111,14 @@ const BattleInventoryPopover = (() => {
 
   function buildRenderSignature(data) {
     if (!data) return "";
+    const bpScore = data.backpackPower?.score ?? 0;
     const parts = data.items.map((item) => {
       const rt = item.runtime || {};
       const syn = (rt.activeSynergies || []).length;
       const cd = item.currentCooldown != null ? item.currentCooldown.toFixed(2) : "-";
       return `${item.uid}:${item.itemId}:${item.col},${item.row},${item.rotation || 0}:${cd}:${syn}`;
     });
-    return `${data.team}|${parts.join(";")}`;
+    return `${data.team}|${bpScore}|${parts.join(";")}`;
   }
 
   function renderPopoverContent(team) {
@@ -127,10 +128,22 @@ const BattleInventoryPopover = (() => {
     const bodyEl = el.querySelector(".battle-inventory-popover__body");
     if (!data || !titleEl || !bodyEl) return;
 
+    const backpackPower = typeof computeBackpackPower === "function"
+      ? computeBackpackPower(data.containers, data.items, data.classId)
+      : { score: 0, itemCount: 0, tier: { label: "—", className: "" } };
+    data.backpackPower = backpackPower;
+
     titleEl.textContent = `Рюкзак · ${getTeamTitle(team, data.classId)}`;
     const activeUids = collectActiveItemUids(team);
+    const powerHtml = typeof renderBackpackPowerStatHTML === "function"
+      ? renderBackpackPowerStatHTML(backpackPower, "battle-inventory-popover__bp")
+      : `<span class="battle-inventory-popover__power-value">${backpackPower.score ?? 0}</span>`;
     bodyEl.innerHTML = `
       ${renderBoardPreviewGrid(data.containers, data.items, team, { activeUids })}
+      <div class="battle-inventory-popover__power">
+        <span class="battle-inventory-popover__power-label">Сила рюкзака</span>
+        ${powerHtml}
+      </div>
       <div class="board-preview-section-title">Активные синергии</div>
       <div class="battle-inventory-popover__synergies">${renderBoardPreviewSynergies(data.items)}</div>
     `;

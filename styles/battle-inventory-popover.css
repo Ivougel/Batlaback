@@ -110,6 +110,48 @@
   font-size: var(--font-xs);
 }
 
+.battle-inventory-popover__power {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: calc(2px * var(--ui-scale, 1)) 0 calc(4px * var(--ui-scale, 1));
+  padding: calc(5px * var(--ui-scale, 1)) calc(6px * var(--ui-scale, 1));
+  border-radius: calc(6px * var(--ui-scale, 1));
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.battle-inventory-popover[data-team="enemy"] .battle-inventory-popover__power {
+  flex-direction: row-reverse;
+}
+
+.battle-inventory-popover__power-label {
+  font-size: var(--font-xs);
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
+.battle-inventory-popover__bp.stat-bp {
+  display: inline-flex;
+  align-items: baseline;
+  gap: calc(6px * var(--ui-scale, 1));
+  margin: 0;
+}
+
+.battle-inventory-popover__bp .stat-bp-score {
+  font-size: var(--font-md);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #e6edf3;
+}
+
+.battle-inventory-popover__bp .stat-bp-tier {
+  font-size: var(--font-xs);
+  font-weight: 600;
+}
+
 .battle-inventory-popover .bp-synergy-chips {
   max-height: 64px;
   overflow: auto;

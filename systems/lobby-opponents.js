@@ -3,7 +3,7 @@
  */
 
 const LOBBY_FIGHTER_COUNT = 8;
-const LOBBY_START_HP = 40;
+const LOBBY_START_HP = 100;
 const LOBBY_BOT_COUNT = LOBBY_FIGHTER_COUNT - 1;
 
 const LOBBY_BOT_NAMES = [
@@ -169,6 +169,7 @@ function startLobbyPrepRound(lobby, round) {
       grantLobbyFighterBag(fighter, round, lobby.gridW, lobby.gridH);
     }
   });
+  runLobbyBotsShopPhase(lobby, round);
   pickLobbyOpponent(lobby);
 }
 
@@ -228,9 +229,45 @@ function exportGhostFighterState(fighter) {
   };
 }
 
-function calcLobbyBattleDamage(winnerHp, winnerMaxHp) {
-  const ratio = winnerHp / Math.max(1, winnerMaxHp);
-  return Math.max(4, Math.ceil(ratio * 12) + 4);
+/** Бонус урона по раунду (как TFT / Magic Chess: растёт к поздней игре). */
+function calcLobbyRoundDamageBonus(battleRound = 1) {
+  const r = Math.max(1, Math.floor(battleRound) || 1);
+  if (r <= 1) return 0;
+  if (r === 2) return 2;
+  if (r === 3) return 5;
+  if (r === 4) return 8;
+  if (r === 5) return 10;
+  if (r === 6) return 12;
+  return 17;
+}
+
+/**
+ * Урон за исход боя (не «выжившие предметы» — рюкзак статичен).
+ * Сильнее бьёшь и чем больше HP осталось у победителя — тем больше урон по HP лобби.
+ */
+function calcLobbyWinPressureDamage(winnerSide, state) {
+  const winner = winnerSide === "player" ? state?.player : state?.enemy;
+  const loser = winnerSide === "player" ? state?.enemy : state?.player;
+  if (!winner || !loser) return 4;
+
+  const dealt = Math.max(0, winner.totalDamageDealt ?? 0);
+  const dealtScore = Math.min(8, Math.max(2, Math.round(dealt / 14)));
+
+  const winHpRatio = Math.max(0, Math.min(1, (winner.hp ?? 0) / Math.max(1, winner.maxHp ?? 1)));
+  const marginScore = Math.round(winHpRatio * 4);
+
+  return Math.max(4, dealtScore + marginScore);
+}
+
+function calcLobbyBattleDamage(finishedState, winnerSide, battleRound = 1) {
+  const winDmg = calcLobbyWinPressureDamage(winnerSide, finishedState);
+  const roundDmg = calcLobbyRoundDamageBonus(battleRound);
+  return winDmg + roundDmg;
+}
+
+function calcLobbyDrawDamage(battleRound = 1) {
+  const roundDmg = calcLobbyRoundDamageBonus(battleRound);
+  return Math.max(2, Math.ceil(roundDmg * 0.5) + 1);
 }
 
 function applyLobbyMatchHpResult(lobby, match) {
@@ -240,24 +277,21 @@ function applyLobbyMatchHpResult(lobby, match) {
   const state = match.state;
   if (!fighterA || !fighterB || !state?.finished) return null;
 
-  const aHp = state.player?.hp ?? 0;
-  const aMax = state.player?.maxHp ?? 1;
-  const bHp = state.enemy?.hp ?? 0;
-  const bMax = state.enemy?.maxHp ?? 1;
+  const battleRound = state.battleRound ?? 1;
   let summary = { matchId: match.id, isPlayerMatch: !!match.isPlayerMatch };
 
   if (state.winner === "player") {
-    const dmg = calcLobbyBattleDamage(aHp, aMax);
+    const dmg = calcLobbyBattleDamage(state, "player", battleRound);
     fighterB.hp = Math.max(0, fighterB.hp - dmg);
     if (fighterB.hp <= 0) fighterB.alive = false;
     summary = { ...summary, winnerId: fighterA.id, loserId: fighterB.id, damage: dmg, eliminated: !fighterB.alive };
   } else if (state.winner === "enemy") {
-    const dmg = calcLobbyBattleDamage(bHp, bMax);
+    const dmg = calcLobbyBattleDamage(state, "enemy", battleRound);
     fighterA.hp = Math.max(0, fighterA.hp - dmg);
     if (fighterA.hp <= 0) fighterA.alive = false;
     summary = { ...summary, winnerId: fighterB.id, loserId: fighterA.id, damage: dmg, eliminated: !fighterA.alive };
   } else {
-    const dmg = 6;
+    const dmg = calcLobbyDrawDamage(battleRound);
     fighterA.hp = Math.max(0, fighterA.hp - dmg);
     fighterB.hp = Math.max(0, fighterB.hp - dmg);
     if (fighterA.hp <= 0) fighterA.alive = false;
@@ -291,13 +325,10 @@ function applyLobbyBattleResult(lobby, battleWinner, finishedState) {
     return { playerEliminated: !player?.alive, lobbyWon: false };
   }
 
-  const pHp = finishedState?.player?.hp ?? 0;
-  const pMax = finishedState?.player?.maxHp ?? 1;
-  const eHp = finishedState?.enemy?.hp ?? 0;
-  const eMax = finishedState?.enemy?.maxHp ?? 1;
+  const battleRound = finishedState?.battleRound ?? 1;
 
   if (battleWinner === "player") {
-    const dmg = calcLobbyBattleDamage(pHp, pMax);
+    const dmg = calcLobbyBattleDamage(finishedState, "player", battleRound);
     opponent.hp = Math.max(0, opponent.hp - dmg);
     if (opponent.hp <= 0) opponent.alive = false;
     lobby.lastDamage = { target: "opponent", amount: dmg, eliminated: !opponent.alive };
@@ -308,7 +339,7 @@ function applyLobbyBattleResult(lobby, battleWinner, finishedState) {
     player.recentResults = [...(player.recentResults || []), "win"].slice(-5);
     opponent.recentResults = [...(opponent.recentResults || []), "loss"].slice(-5);
   } else if (battleWinner === "enemy") {
-    const dmg = calcLobbyBattleDamage(eHp, eMax);
+    const dmg = calcLobbyBattleDamage(finishedState, "enemy", battleRound);
     player.hp = Math.max(0, player.hp - dmg);
     if (player.hp <= 0) player.alive = false;
     lobby.lastDamage = { target: "player", amount: dmg, eliminated: !player.alive };
@@ -319,7 +350,7 @@ function applyLobbyBattleResult(lobby, battleWinner, finishedState) {
     player.recentResults = [...(player.recentResults || []), "loss"].slice(-5);
     opponent.recentResults = [...(opponent.recentResults || []), "win"].slice(-5);
   } else {
-    const dmg = 6;
+    const dmg = calcLobbyDrawDamage(battleRound);
     player.hp = Math.max(0, player.hp - dmg);
     opponent.hp = Math.max(0, opponent.hp - dmg);
     if (player.hp <= 0) player.alive = false;

@@ -46,6 +46,13 @@ html[data-battle-hero-placement="flank-arena"] .avatar-thought-slot .battle-thou
 .arena-equip-body--fx-flight {
   z-index: 45;
   pointer-events: none;
+  will-change: transform, opacity;
+  contain: layout style paint;
+  backface-visibility: hidden;
+}
+
+.arena-equip-body.is-attacking {
+  will-change: transform, opacity;
 }
 
 .avatar-attack-arena {
@@ -66,7 +73,6 @@ html[data-battle-hero-placement="flank-arena"] .avatar-thought-slot .battle-thou
     inset 0 1px 0 rgba(255, 255, 255, 0.06),
     0 8px 22px rgba(0, 0, 0, 0.45);
   filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.5));
-  will-change: transform, opacity;
   transform-origin: center center;
   line-height: 1;
   user-select: none;
@@ -182,4 +188,14 @@ html[data-battle-hero-placement="flank-arena"] .avatar-thought-slot .arena-equip
 .arena-equip-body.is-attacking.arena-equip-attack--reap,
 .arena-equip-body.is-attacking.arena-equip-attack--bash {
   filter: drop-shadow(0 8px 22px rgba(255, 180, 80, 0.5));
+}
+
+/* Лёгкий режим FX: проще тени при полёте оружия к эмодзи-аватару */
+html[data-battle-fx-light="true"] .arena-equip-body--fx-flight.is-attacking,
+html[data-battle-fx-light="true"] .arena-equip-body--fx-flight.arena-equip-body--weapon {
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.42));
+}
+
+html[data-battle-fx-light="true"] .arena-equip-body.is-attacking[class*="arena-equip-attack--"] {
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.42));
 }

@@ -10,9 +10,9 @@ const ArenaEquipment = (() => {
   const AIR_DRAG = 0.992;
   const MAX_DT = 0.032;
   const SYNC_INTERVAL_MS = 450;
-  const BURST_SPACING_SEC = 9.5;
-  const MIN_BURSTS = 2;
-  const MAX_BURSTS = 14;
+  const BURST_SPACING_SEC = 3.8;
+  const MIN_BURSTS = 6;
+  const MAX_BURSTS = 28;
 
   const PHASE_DUR = {
     lunge: 0.22,
@@ -384,13 +384,18 @@ const ArenaEquipment = (() => {
     if (body.el.parentElement !== fxLayer) fxLayer.appendChild(body.el);
     body.fxMounted = true;
     body.orbitSlotMounted = false;
+    body.fxTransformOnly = true;
     body.el.classList.add("arena-equip-body--fx-flight");
     body.el.classList.remove("arena-equip-body--thought-orbit");
+    body.el.style.position = "fixed";
+    body.el.style.left = "0";
+    body.el.style.top = "0";
   }
 
   function remountOrbitAfterAttack(body) {
     body.el.classList.remove("arena-equip-body--fx-flight");
     body.fxMounted = false;
+    body.fxTransformOnly = false;
     body.el.style.position = "";
     body.el.style.left = "";
     body.el.style.top = "";
@@ -632,13 +637,20 @@ const ArenaEquipment = (() => {
     if (body.attack || body.fxMounted) {
       const x = body.renderX ?? body.x;
       const y = body.renderY ?? body.y;
-      const transform = `translate(-50%, -50%) scale(${scale}) rotate(${rot}deg)`;
-      const posKey = `${Math.round(x)}|${Math.round(y)}|${transform}`;
+      const rx = Math.round(x);
+      const ry = Math.round(y);
+      const rr = Math.round(rot * 10) / 10;
+      const transform = body.fxTransformOnly
+        ? `translate3d(${rx}px, ${ry}px, 0) translate(-50%, -50%) scale(${scale}) rotate(${rr}deg)`
+        : `translate(-50%, -50%) scale(${scale}) rotate(${rr}deg)`;
+      const posKey = `${rx}|${ry}|${scale}|${rr}|${body.fxTransformOnly ? 1 : 0}`;
       if (body._arenaVisKey !== posKey) {
         body._arenaVisKey = posKey;
-        body.el.style.position = "fixed";
-        body.el.style.left = `${x}px`;
-        body.el.style.top = `${y}px`;
+        if (!body.fxTransformOnly) {
+          body.el.style.position = "fixed";
+          body.el.style.left = `${x}px`;
+          body.el.style.top = `${y}px`;
+        }
         body.el.style.transform = transform;
       }
       const opacity = String(body.opacity ?? 1);
@@ -744,7 +756,7 @@ const ArenaEquipment = (() => {
       attack: null,
       burstsTotal: 0,
       burstsDone: 0,
-      burstInterval: 7,
+      burstInterval: 3.5,
       nextAttackAt: 0,
       weaponIndex,
     };
@@ -792,7 +804,46 @@ const ArenaEquipment = (() => {
     });
   }
 
+  function assignWeaponBurstPlan(body, burstPlan, elapsed, weaponIndex) {
+    if (!body.isWeapon || !burstPlan) return;
+    body.burstsTotal = burstPlan.totalBursts;
+    const estChanged = body._burstPlanEst == null
+      || Math.abs((body._burstPlanEst || 0) - burstPlan.est) > 2;
+    if (estChanged || !body.burstInterval) {
+      body._burstPlanEst = burstPlan.est;
+      body.burstInterval = burstPlan.interval;
+    }
+    if (body.nextAttackAt == null || body.nextAttackAt <= 0) {
+      body.nextAttackAt = elapsed + 0.7 + weaponIndex * 0.45 + Math.random() * 0.35;
+    }
+  }
+
+  function canAutoWeaponAttack(body, sizeBySide) {
+    if (!body.isWeapon || body.attack) return false;
+    const cap = body.burstsTotal || 0;
+    if (cap > 0 && (body.burstsDone || 0) >= cap) return false;
+    const { w, h } = sizeBySide[body.side] || { w: 0, h: 0 };
+    if (usesEmojiAvatarEquipHome()) {
+      return !!getEmojiAvatarSlotEl(body.side);
+    }
+    return w >= 8 && h >= 8;
+  }
+
+  function maybeScheduleWeaponBursts(all, sizeBySide, elapsed) {
+    all.forEach((body) => {
+      if (!canAutoWeaponAttack(body, sizeBySide)) return;
+      if (elapsed < (body.nextAttackAt || 0)) return;
+      const { w, h } = sizeBySide[body.side] || { w: 0, h: 0 };
+      if (startAttack(body, w, h, elapsed)) {
+        body.burstsDone = (body.burstsDone || 0) + 1;
+      } else {
+        body.nextAttackAt = elapsed + 0.35;
+      }
+    });
+  }
+
   function startAttack(body, w, h, elapsed) {
+    if (body.attack) return false;
     const layer = getLayerEl(body.side);
     let fromX = body.renderX ?? body.x;
     let fromY = body.renderY ?? body.y;
@@ -804,7 +855,7 @@ const ArenaEquipment = (() => {
     if (usesEmojiAvatarEquipHome()) {
       const vpHome = getEquipViewportHome(body.side, body.slotId);
       const vpTarget = foeStrikeTargetViewport(body.side);
-      if (!vpHome?.x || !vpTarget) return;
+      if (!vpHome?.x || !vpTarget) return false;
       mountToFxForAttack(body);
       fromX = vpHome.x;
       fromY = vpHome.y;
@@ -867,7 +918,8 @@ const ArenaEquipment = (() => {
     body.el.classList.add("is-attacking");
     body.el.dataset.attackStyle = styleId;
     body.el.classList.add(`arena-equip-attack--${styleId}`);
-    body.nextAttackAt = elapsed + body.burstInterval * (0.85 + Math.random() * 0.3);
+    body.nextAttackAt = elapsed + body.burstInterval * (0.75 + Math.random() * 0.35);
+    return true;
   }
 
   function stepAttack(body, dt) {
@@ -877,7 +929,7 @@ const ArenaEquipment = (() => {
     ensureAttackFxMount(body);
 
     if (typeof ArenaAttackStyles !== "undefined" && ArenaAttackStyles.stepAttack && atk.styleId) {
-      if (atk.useEmojiAvatarArc) {
+      if (atk.useEmojiAvatarArc && atk.phase !== "strike") {
         const vpHome = getEquipViewportHome(body.side, body.slotId);
         if (vpHome?.x) {
           atk.homeVpX = vpHome.x;
@@ -1002,7 +1054,11 @@ const ArenaEquipment = (() => {
   function stepPhysics(ts) {
     if (paused) return;
 
-    const physicsGap = arenaPhysicsGapMs();
+    const all = getAllBodies();
+    if (!all.length) return;
+
+    const anyAttacking = all.some((b) => b.attack);
+    const physicsGap = anyAttacking ? 0 : arenaPhysicsGapMs();
     if (physicsGap > 0) {
       const now = performance.now();
       if (now - lastPhysicsStepAt < physicsGap) {
@@ -1019,8 +1075,6 @@ const ArenaEquipment = (() => {
     if (dt <= 0) return;
 
     const elapsed = activeBattle?.elapsed || 0;
-    const all = getAllBodies();
-    if (!all.length) return;
 
     const sizeBySide = {
       player: getSideArenaSize("player"),
@@ -1045,6 +1099,8 @@ const ArenaEquipment = (() => {
       }
       applyVisual(body);
     });
+
+    if (!paused) maybeScheduleWeaponBursts(all, sizeBySide, elapsed);
 
     ["player", "enemy"].forEach((side) => {
       const { w, h } = sizeBySide[side];
@@ -1111,6 +1167,7 @@ const ArenaEquipment = (() => {
         body = createBody(side, entry, home, weaponIndex);
       }
       if (!body) return;
+      if (body.isWeapon) assignWeaponBurstPlan(body, burstPlan, elapsed, weaponIndex);
 
       nextBodies.push(body);
       byUid.delete(entry.uid);
@@ -1151,7 +1208,7 @@ const ArenaEquipment = (() => {
     body.pendingHitAmount = Math.max(0, Number(amount) || 0);
     const { w, h } = getSideArenaSize(sourceTeam);
     const elapsed = activeBattle?.elapsed || 0;
-    startAttack(body, w, h, elapsed);
+    if (!startAttack(body, w, h, elapsed)) return;
     scheduleFrame();
   }
 

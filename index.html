@@ -24,7 +24,7 @@
   <link rel="stylesheet" href="styles/modal-scale.css?v=4">
   <link rel="stylesheet" href="styles/replay-chrome.css?v=1">
   <link rel="stylesheet" href="styles/emotion-thoughts.css?v=9">
-  <link rel="stylesheet" href="styles/arena-equipment.css?v=19">
+  <link rel="stylesheet" href="styles/arena-equipment.css?v=20">
   <link rel="stylesheet" href="styles/prep-drag-arc.css?v=4">
   <link rel="stylesheet" href="styles/battle-arena-layout.css?v=34">
   <link rel="stylesheet" href="styles/phone-landscape.css?v=9">
@@ -36,8 +36,8 @@
   <link rel="stylesheet" href="styles/desktop-prep.css?v=1">
   <link rel="stylesheet" href="styles/tablet-stacked.css?v=7">
   <link rel="stylesheet" href="styles/tablet-side.css?v=30">
-  <link rel="stylesheet" href="styles/battle-inventory-popover.css?v=3">
-  <link rel="stylesheet" href="styles/lobby.css?v=2">
+  <link rel="stylesheet" href="styles/battle-inventory-popover.css?v=4">
+  <link rel="stylesheet" href="styles/lobby.css?v=4">
   <script src="systems/layout-scales.js?v=2"></script>
   <script src="systems/battle-fx-tier.js?v=1"></script>
   <script src="systems/battle-hero-anchor.js?v=22"></script>
@@ -139,6 +139,16 @@
                   </div>
                   <div class="avatar-attack-arena" id="enemy-attack-arena" data-team="enemy" aria-hidden="true">
                     <div class="arena-equipment-layer" id="enemy-arena-equip-layer"></div>
+                  </div>
+                  <div class="lobby-battle-dock hidden" id="lobby-battle-dock" aria-label="Бои лобби">
+                    <button type="button" class="lobby-battle-dock-toggle btn-secondary" id="lobby-battle-dock-toggle" aria-expanded="false" aria-controls="lobby-battle-dock-panel" title="Параллельные бои лобби">
+                      <span class="lobby-battle-dock-toggle-icon" aria-hidden="true">⚔</span>
+                      <span class="lobby-battle-dock-toggle-text" id="lobby-battle-dock-toggle-text">Параллельные бои</span>
+                      <span class="lobby-battle-dock-toggle-chevron" aria-hidden="true">▾</span>
+                    </button>
+                    <div class="lobby-battle-dock-panel hidden" id="lobby-battle-dock-panel" role="region" aria-label="Параллельные бои">
+                      <div class="lobby-roster-strip lobby-roster-strip--battle" id="lobby-roster-strip-battle" role="tablist"></div>
+                    </div>
                   </div>
                 </div>
                 <div class="battle-thought-arena" id="battle-thought-arena" aria-live="polite" aria-label="Боевые эмоджи героев">
@@ -430,9 +440,6 @@
       </div>
     </div>
     <div class="bottom-chrome-center prep-toolbar-feed-home" id="prep-toolbar-feed-home">
-      <div class="lobby-chrome hidden" id="lobby-battle-chrome" aria-label="Бои лобби">
-        <div class="lobby-roster-strip lobby-roster-strip--battle" id="lobby-roster-strip-battle" role="tablist"></div>
-      </div>
       <div class="replay-timeline hidden" id="replay-timeline" aria-hidden="true">
         <span class="replay-timeline-label" aria-hidden="true">↻</span>
         <div class="replay-timeline-track" id="replay-timeline-track" role="slider" tabindex="0" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Прогресс повтора">
@@ -499,7 +506,7 @@
   <script src="systems/combat-profile.js?v=3"></script>
   <script src="components/run-stats.js"></script>
   <script src="components/player-characteristics.js"></script>
-  <script src="components/avatar-hero-effects.js?v=9"></script>
+  <script src="components/avatar-hero-effects.js?v=10"></script>
   <script src="systems/attack-events.js"></script>
   <script src="systems/arena-attack-styles.js?v=3"></script>
   <script src="systems/battle-analyzer.js"></script>
@@ -509,7 +516,7 @@
   <script src="components/accordion.js"></script>
   <script src="components/item-stats.js"></script>
   <script src="components/board-preview.js"></script>
-  <script src="components/battle-inventory-popover.js?v=4"></script>
+  <script src="components/battle-inventory-popover.js?v=5"></script>
   <script src="components/recipe-book.js"></script>
   <script src="components/settings.js"></script>
   <script src="components/combat-feed.js"></script>
@@ -536,12 +543,12 @@
   <script src="components/replay-timeline.js?v=1"></script>
   <script src="ai-engine.js"></script>
   <script src="hard-bot-engine.js"></script>
-  <script src="systems/lobby-opponents.js?v=3"></script>
-  <script src="systems/lobby-spectator.js?v=1"></script>
+  <script src="systems/lobby-opponents.js?v=6"></script>
+  <script src="systems/lobby-spectator.js?v=3"></script>
   <script src="battle-engine.js?v=2"></script>
   <script src="battle-float-layer.js?v=18"></script>
   <script src="components/thought-arena.js?v=14"></script>
-  <script src="components/arena-equipment.js?v=23"></script>
+  <script src="components/arena-equipment.js?v=25"></script>
   <script src="components/emotion-presenter.js?v=5"></script>
   <script src="emotion-engine.js?v=21"></script>
   <script src="battle-hud.js?v=6"></script>

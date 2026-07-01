@@ -189,55 +189,6 @@ function fastForwardRemainingLobbyMatches(matches) {
   });
 }
 
-function applyLobbyMatchHpResult(lobby, match) {
-  if (match.byeFighterId) return null;
-  const fighterA = lobby.fighters[match.fighterAId];
-  const fighterB = lobby.fighters[match.fighterBId];
-  const state = match.state;
-  if (!fighterA || !fighterB || !state?.finished) return null;
-
-  const aHp = state.player?.hp ?? 0;
-  const aMax = state.player?.maxHp ?? 1;
-  const bHp = state.enemy?.hp ?? 0;
-  const bMax = state.enemy?.maxHp ?? 1;
-  let summary = { matchId: match.id, isPlayerMatch: !!match.isPlayerMatch };
-
-  if (state.winner === "player") {
-    const dmg = calcLobbyBattleDamage(aHp, aMax);
-    fighterB.hp = Math.max(0, fighterB.hp - dmg);
-    if (fighterB.hp <= 0) fighterB.alive = false;
-    summary = { ...summary, winnerId: fighterA.id, loserId: fighterB.id, damage: dmg, eliminated: !fighterB.alive };
-  } else if (state.winner === "enemy") {
-    const dmg = calcLobbyBattleDamage(bHp, bMax);
-    fighterA.hp = Math.max(0, fighterA.hp - dmg);
-    if (fighterA.hp <= 0) fighterA.alive = false;
-    summary = { ...summary, winnerId: fighterB.id, loserId: fighterA.id, damage: dmg, eliminated: !fighterA.alive };
-  } else {
-    const dmg = 6;
-    fighterA.hp = Math.max(0, fighterA.hp - dmg);
-    fighterB.hp = Math.max(0, fighterB.hp - dmg);
-    if (fighterA.hp <= 0) fighterA.alive = false;
-    if (fighterB.hp <= 0) fighterB.alive = false;
-    summary = { ...summary, draw: true, damage: dmg };
-  }
-  return summary;
-}
-
-function applyAllLobbyMatchResults(lobby, matches) {
-  const summaries = [];
-  matches.forEach((match) => {
-    const s = applyLobbyMatchHpResult(lobby, match);
-    if (s) summaries.push(s);
-  });
-  const player = getLobbyPlayer(lobby);
-  const alive = getAliveLobbyFighters(lobby);
-  return {
-    summaries,
-    playerEliminated: !player?.alive,
-    lobbyWon: player?.alive && alive.length === 1 && alive[0].id === lobby.playerId,
-  };
-}
-
 function getLobbyFighterById(lobby, fighterId) {
   return lobby?.fighters?.[fighterId] ?? null;
 }
@@ -370,4 +321,58 @@ function renderLobbyPrepTimerHTML(remaining, active) {
     <span class="lobby-prep-timer-label">⏱</span>
     <b>${formatLobbyPrepTimer(remaining)}</b>
   </div>`;
+}
+
+let lobbyBattleDockOpen = false;
+
+function renderLobbyBattleDockSummary(lobby, opts = {}) {
+  if (!lobby) return "Параллельные бои";
+  const { spectateMatchId = 0, matches = [] } = opts;
+  const liveCount = countActiveLobbyMatches(matches);
+  const spectateMatch = matches[spectateMatchId];
+  if (spectateMatch && !spectateMatch.byeFighterId) {
+    const labels = getLobbyMatchLabels(lobby, spectateMatch);
+    const prefix = spectateMatch.isPlayerMatch ? "Ваш бой" : "Смотрите";
+    const liveSuffix = liveCount > 1 ? ` · live ${liveCount}` : "";
+    return `${prefix}: ${labels.a} vs ${labels.b}${liveSuffix}`;
+  }
+  if (liveCount > 0) return `Параллельные бои · live: ${liveCount}`;
+  return matches.length ? "Все бои завершены" : "Параллельные бои";
+}
+
+function setLobbyBattleDockOpen(open) {
+  lobbyBattleDockOpen = !!open;
+  const dock = document.getElementById("lobby-battle-dock");
+  const toggle = document.getElementById("lobby-battle-dock-toggle");
+  const panel = document.getElementById("lobby-battle-dock-panel");
+  dock?.classList.toggle("lobby-battle-dock--open", lobbyBattleDockOpen);
+  toggle?.setAttribute("aria-expanded", lobbyBattleDockOpen ? "true" : "false");
+  panel?.classList.toggle("hidden", !lobbyBattleDockOpen);
+}
+
+function syncLobbyBattleDockChrome(lobby, opts = {}) {
+  const dock = document.getElementById("lobby-battle-dock");
+  const toggleText = document.getElementById("lobby-battle-dock-toggle-text");
+  if (!dock || dock.classList.contains("hidden")) return;
+  if (toggleText) toggleText.textContent = renderLobbyBattleDockSummary(lobby, opts);
+  setLobbyBattleDockOpen(lobbyBattleDockOpen);
+}
+
+function bindLobbyBattleDock() {
+  const dock = document.getElementById("lobby-battle-dock");
+  const toggle = document.getElementById("lobby-battle-dock-toggle");
+  if (!dock || dock.dataset.bound === "1") return;
+  dock.dataset.bound = "1";
+
+  toggle?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setLobbyBattleDockOpen(!lobbyBattleDockOpen);
+  });
+
+  document.addEventListener("pointerdown", (e) => {
+    if (!lobbyBattleDockOpen || !dock || dock.classList.contains("hidden")) return;
+    if (dock.contains(e.target)) return;
+    setLobbyBattleDockOpen(false);
+  });
 }
