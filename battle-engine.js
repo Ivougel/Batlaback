@@ -885,9 +885,6 @@ function applyGainStackEffect(state, effect, item, self, team, foe = null) {
     const icon = typeof getStackMeta === "function" ? getStackMeta(stack).icon : "📊";
     queueHitAnimation(state, item, targetTeam, `+${added}${icon}`, "#d29922");
   }
-  if (state && targetTeam) {
-    pushStackGainEvent(state, targetTeam, stack, added);
-  }
   if (state && team) {
     const watchSelf = effect.targetSide === "foe" ? self : target;
     const watchFoe = effect.targetSide === "foe" ? target : foe;
@@ -2143,25 +2140,18 @@ function stackEventEmoji(stackType) {
   return typeof getStackMeta === "function" ? getStackMeta(stackType).icon : "📊";
 }
 
-function pushStackGainEvent(state, side, stackType, count) {
-  if (!state || !side) return;
-  pushEvent(state, {
-    type: "gainStack",
-    side,
-    stackType,
-    emoji: stackEventEmoji(stackType),
-    count: Math.max(1, count || 1),
-  });
-}
-
 function pushStackFireEvent(state, side, stackType, count) {
-  if (!state || !side) return;
+  if (!state || !side || state.finished) return;
+  const raw = Math.max(1, count || 1);
+  const visualCount = isTouchReplayProfile()
+    ? Math.min(raw, 2)
+    : Math.min(raw, 4);
   pushEvent(state, {
     type: "fireStack",
     side,
     stackType,
     emoji: stackEventEmoji(stackType),
-    count: Math.max(1, count || 1),
+    count: visualCount,
   });
 }
 
@@ -3072,7 +3062,6 @@ function executeEffect(state, effect, item, self, foe, rt, team, execOptions = {
         message: `${battleTeamLabel(team)} · ${def.name}: +${added} яда${effNote} (×${foe.poisonStacks}) → ${battleTeamLabel(victimTeam)}`,
       });
       queueHitAnimation(state, item, team, `☠ +${added} яд`, "#3fb950");
-      pushStackGainEvent(state, victimTeam, "poison", added);
       if (typeof emitEffectAttackVisual === "function") {
         emitEffectAttackVisual(state, item, team, effect, {
           damage: 0,

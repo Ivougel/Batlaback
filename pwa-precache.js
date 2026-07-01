@@ -226,6 +226,8 @@ self.PWA_PRECACHE_URLS = [
   "systems/battle-speed.js",
   "systems/battle-stacks.js",
   "systems/stack-orbit-vfx.js",
+  "systems/stack-orbit-vfx.js?v=2",
+  "systems/stack-orbit-vfx.js?v=3",
   "systems/combat-profile.js",
   "systems/combat-profile.js?v=3",
   "systems/combat.js",

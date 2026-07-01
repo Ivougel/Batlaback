@@ -3048,7 +3048,11 @@ function endBattle() {
     };
   }
 
-  showBattleResultPopup(battleSummary, finishedState.log || []);
+  const resultSummary = battleSummary;
+  const resultLog = finishedState.log || [];
+  requestAnimationFrame(() => {
+    showBattleResultPopup(resultSummary, resultLog);
+  });
 
   try {
     applyPostBattlePrep(battleWinner);
@@ -3207,6 +3211,8 @@ function gameLoop(ts) {
     }
     if (typeof syncBattleInventoryPopoverFlash === "function") syncBattleInventoryPopoverFlash();
   } else if (phase === "battle" && battleState?.finished) {
+    if (typeof resetStackOrbitVfx === "function") resetStackOrbitVfx();
+    clearBattleFloatLayer();
     endBattle();
   } else if (phase === "replay") {
     tickReplay(dt);
@@ -3340,7 +3346,6 @@ function handleBattleEvent(ev) {
       playPrepSfx("battle_miss");
       break;
     }
-    case "gainStack":
     case "fireStack": {
       if (typeof handleStackOrbitEvent === "function") handleStackOrbitEvent(ev);
       break;
@@ -3916,7 +3921,9 @@ function drawWorldLayer() {
     if (isBattleUiPhase() && typeof drawEmotionLayer === "function") {
       drawEmotionLayer(ctx, battleState, (Date.now() - battleStartTime) / 1000);
     }
-    if (typeof syncStackOrbitFromBattle === "function") syncStackOrbitFromBattle(battleState);
+    if (!battleState.finished && typeof syncStackOrbitFromBattle === "function") {
+      syncStackOrbitFromBattle(battleState);
+    }
   } else {
     if (typeof resetStackOrbitVfx === "function") resetStackOrbitVfx();
     clearBattleFloatLayer();
