@@ -171,17 +171,22 @@
     battle_poison: 90,
     battle_miss: 80,
     arc_hover: 120,
+    ui_hover: 85,
     ui_click: 60,
     ui_toggle: 60,
     ui_open: 70,
     ui_close: 70,
   };
 
-  const BUTTON_SFX_SELECTOR = [
+  const NAV_SFX_SELECTOR = [
     "button:not([disabled])",
     "[role='button']:not([aria-disabled='true'])",
     ".doll-slot",
+    "select:not([disabled])",
+    "a[href]:not([aria-disabled='true'])",
   ].join(", ");
+
+  const BUTTON_SFX_SELECTOR = NAV_SFX_SELECTOR;
 
   const BUTTON_SFX_SKIP_SELECTOR = [
     ".shop-card:not(.empty)",
@@ -222,6 +227,10 @@
     }
     if (id === "btn-escape-resume") return "ui_close";
 
+    if (el.matches("select")) {
+      return "ui_toggle";
+    }
+
     if (
       el.hasAttribute("aria-expanded")
       || el.hasAttribute("aria-pressed")
@@ -254,16 +263,46 @@
     return playGameSfx(sfxId);
   }
 
+  function playUiHoverSfx(target) {
+    if (typeof SFX.ui_hover !== "function") return false;
+    const el = findButtonSfxTarget(target);
+    if (!el) return false;
+    return playGameSfx("ui_hover");
+  }
+
+  let lastPointerDownAt = 0;
+
   function bindGlobalButtonSfx() {
     document.addEventListener("pointerdown", (event) => {
+      lastPointerDownAt = performance.now();
       if (event.button !== 0) return;
       const target = findButtonSfxTarget(event.target);
       if (!target) return;
       playButtonSfx(target);
     }, { capture: true, passive: true });
 
+    document.addEventListener("pointerover", (event) => {
+      if (event.pointerType !== "mouse") return;
+      const target = findButtonSfxTarget(event.target);
+      if (!target) return;
+      if (event.relatedTarget && target.contains(event.relatedTarget)) return;
+      if (performance.now() - lastPointerDownAt < 80) return;
+      playUiHoverSfx(target);
+    }, { capture: true, passive: true });
+
+    document.addEventListener("focusin", (event) => {
+      const target = findButtonSfxTarget(event.target);
+      if (!target) return;
+      if (performance.now() - lastPointerDownAt < 140) return;
+      playUiHoverSfx(target);
+    }, { capture: true });
+
     document.addEventListener("change", (event) => {
       const input = event.target;
+      if (input instanceof HTMLSelectElement) {
+        playGameSfx("ui_click");
+        return;
+      }
       if (!(input instanceof HTMLInputElement)) return;
       if (input.type === "checkbox" || input.type === "radio") {
         playGameSfx("ui_toggle");

@@ -207,21 +207,9 @@ body.is-ui-dragging * {
 
 .game-layout {
   display: block;
-  transition: opacity 200ms ease;
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
-}
-
-.game-layout.phase-transitioning {
-  opacity: 0.35;
-  transform: scale(1.015);
-  filter: saturate(1.08) brightness(1.04);
-  transition: opacity 200ms ease, transform 220ms ease, filter 220ms ease;
-}
-
-.game-layout {
-  transition: opacity 200ms ease, transform 220ms ease, filter 220ms ease;
 }
 
 /* ─── Фазы: prep / battle ─── */
@@ -2793,9 +2781,9 @@ button:disabled {
   overflow: hidden;
 }
 
-body:has(#class-overlay:not(.hidden)) #app,
-body:has(#battle-result-overlay:not(.hidden)) #app,
-body:has(#overlay:not(.hidden)) #app {
+body:not(.screen-app-visible):has(#class-overlay:not(.hidden)) #app,
+body:has(#battle-result-overlay:not(.hidden):not(.overlay-exiting)) #app,
+body:has(#overlay:not(.hidden):not(.overlay-exiting)) #app {
   visibility: hidden;
   pointer-events: none;
   overflow: hidden;

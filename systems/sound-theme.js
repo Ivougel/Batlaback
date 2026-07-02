@@ -1,6 +1,6 @@
 /**
  * Звуковое оформление (localStorage: bb-sound-theme).
- * classic — исходный шаблон; dopamine — juicy; gentle — мягкий 67 BPM.
+ * classic · dopamine · gentle · meat (Diablo) · mirror (Black Mirror UI).
  */
 
 const SOUND_THEME_STORAGE_KEY = "bb-sound-theme";
@@ -21,6 +21,20 @@ function getSoundThemeMeta(themeId = getSoundThemeId()) {
 function previewSoundTheme(themeId = getSoundThemeId()) {
   if (typeof playGameSfx !== "function" || typeof getSfxVolume !== "function") return;
   if (getSfxVolume() <= 0) return;
+
+  if (themeId === "mirror") {
+    playGameSfx("ui_hover");
+    window.setTimeout(() => playGameSfx("ui_click"), 180);
+    window.setTimeout(() => playGameSfx("ui_open"), 420);
+    return;
+  }
+
+  if (themeId === "meat") {
+    playGameSfx("ui_hover");
+    window.setTimeout(() => playGameSfx("ui_click"), 160);
+    window.setTimeout(() => playGameSfx("prep_place", { heavy: true }), 380);
+    return;
+  }
 
   if (themeId === "gentle") {
     playGameSfx("ui_click");

@@ -159,28 +159,45 @@ function showBattleResultPopup(summary, battleLog = []) {
     },
   ]);
 
+  const reveal = () => {
+    if (typeof startBattleResultTheater === "function") {
+      startBattleResultTheater(summary);
+    }
+    if (typeof refreshGamepadHints === "function") refreshGamepadHints();
+    const replayBtn = document.getElementById("btn-battle-replay");
+    if (replayBtn) {
+      const canReplay = typeof lastBattleReplay !== "undefined"
+        && lastBattleReplay?.frames?.length > 1;
+      replayBtn.classList.toggle("hidden", !canReplay);
+    }
+  };
+
+  if (typeof ScreenTransitions !== "undefined") {
+    void ScreenTransitions.showScreenOverlay(overlay, "result").then(reveal);
+    return;
+  }
+
   overlay.classList.remove("hidden");
-
-  if (typeof startBattleResultTheater === "function") {
-    startBattleResultTheater(summary);
-  }
-
-  if (typeof refreshGamepadHints === "function") refreshGamepadHints();
-
-  const replayBtn = document.getElementById("btn-battle-replay");
-  if (replayBtn) {
-    const canReplay = typeof lastBattleReplay !== "undefined"
-      && lastBattleReplay?.frames?.length > 1;
-    replayBtn.classList.toggle("hidden", !canReplay);
-  }
+  reveal();
 }
 
-function hideBattleResultPopup() {
+function hideBattleResultPopupAsync() {
   hideDetailPopup();
   if (typeof stopBattleResultTheater === "function") stopBattleResultTheater();
   const overlay = document.getElementById("battle-result-overlay");
-  overlay?.classList.add("hidden");
-  overlay?.removeAttribute("data-outcome");
+  if (!overlay || overlay.classList.contains("hidden")) return Promise.resolve();
+  if (typeof ScreenTransitions !== "undefined") {
+    return ScreenTransitions.hideScreenOverlay(overlay, "result").then(() => {
+      overlay.removeAttribute("data-outcome");
+    });
+  }
+  overlay.classList.add("hidden");
+  overlay.removeAttribute("data-outcome");
+  return Promise.resolve();
+}
+
+function hideBattleResultPopup() {
+  void hideBattleResultPopupAsync();
 }
 
 function showRunCompleteOverlay(runResults, runItemStats, roundNum, phase, boardSnapshot = null, goldStats = null) {
@@ -216,6 +233,10 @@ function showRunCompleteOverlay(runResults, runItemStats, roundNum, phase, board
     bindBoardPreviewButtons(accordionsEl, boardSnapshot);
   }
 
-  overlay.classList.remove("hidden");
+  if (typeof ScreenTransitions !== "undefined") {
+    void ScreenTransitions.showScreenOverlay(overlay, "runComplete");
+  } else {
+    overlay.classList.remove("hidden");
+  }
   if (typeof refreshGamepadHints === "function") refreshGamepadHints();
 }

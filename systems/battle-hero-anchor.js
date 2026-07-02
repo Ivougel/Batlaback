@@ -27,7 +27,13 @@ const BattleHeroAnchor = (() => {
     measureCache.combatFloor = undefined;
   }
 
-  /** Нормированные позиции слотов внутри combat floor (#battle-thought-arena). */
+  /** Множитель эмодзи на «волшебной линии» (duel floor, орбита, спутники) — все tier. */
+  const BATTLE_THOUGHT_EMOJI_SCALE = 1.32;
+
+  function battleThoughtEmojiScale() {
+    return BATTLE_THOUGHT_EMOJI_SCALE;
+  }
+
   const COMBAT_FLOOR_ANCHOR = {
     player: { x: 0.20, y: 0.40 },
     enemy: { x: 0.80, y: 0.40 },
@@ -155,8 +161,10 @@ const BattleHeroAnchor = (() => {
         }
       }
     }
-    const raw = Math.max(fromFloorH, fromFloorW, fromVmin, fromAvatar) * emojiMod;
-    return Math.round(Math.min(prof.maxPx, Math.max(prof.minPx, raw)));
+    const raw = Math.max(fromFloorH, fromFloorW, fromVmin, fromAvatar) * emojiMod * BATTLE_THOUGHT_EMOJI_SCALE;
+    const minPx = Math.round(prof.minPx * BATTLE_THOUGHT_EMOJI_SCALE);
+    const maxPx = Math.round(prof.maxPx * BATTLE_THOUGHT_EMOJI_SCALE);
+    return Math.round(Math.min(maxPx, Math.max(minPx, raw)));
   }
 
   function thoughtSlotHaloPx(emojiSize = thoughtSlotEmojiSize()) {
@@ -400,6 +408,7 @@ const BattleHeroAnchor = (() => {
     isMobilePortrait,
     isPhoneLandscape,
     battleEmojiScale,
+    battleThoughtEmojiScale,
     thoughtSlotEmojiSize,
     thoughtSlotHaloPx,
     thoughtSlotSize,

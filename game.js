@@ -1039,15 +1039,24 @@ const CLASS_INTRO_STEP_IDS = {
 let classSummaryTooltipPinned = false;
 let classSummaryTooltipKind = null;
 
-function setClassIntroStep(stepKey) {
+function setClassIntroStep(stepKey, options = {}) {
+  const overlay = document.getElementById("class-overlay");
+  const prevStep = overlay?.getAttribute("data-class-intro-step") || "mode";
+  const direction = options.direction
+    || (typeof ScreenTransitions !== "undefined"
+      ? ScreenTransitions.getIntroDirection(prevStep, stepKey)
+      : "forward");
+
   Object.entries(CLASS_INTRO_STEP_IDS).forEach(([key, id]) => {
     document.getElementById(id)?.classList.toggle("hidden", key !== stepKey);
   });
-  const overlay = document.getElementById("class-overlay");
   overlay?.setAttribute("data-class-intro-step", stepKey);
   overlay?.classList.toggle("class-overlay--summary", stepKey === "summary");
   if (stepKey === "summary" && typeof hideClassHeroShowcase === "function") {
     hideClassHeroShowcase();
+  }
+  if (prevStep !== stepKey && typeof ScreenTransitions !== "undefined") {
+    void ScreenTransitions.pulseIntroStep(overlay, direction);
   }
 }
 
@@ -2148,11 +2157,11 @@ function init() {
   document.getElementById("btn-prep-enemy")?.addEventListener("click", () => setPrepViewSide("enemy"));
   document.getElementById("btn-toggle-doll")?.addEventListener("click", togglePrepDollOpen);
   document.getElementById("btn-battle-continue")?.addEventListener("click", () => {
+    if (isPhaseTransitioning()) return;
     if (isLobbyMode() && lobbyRoundSettling) {
       finishLobbyRoundFromContinue();
     }
-    transitionToPhase("prep", () => {
-      hideBattleResultPopup();
+    const continueAfterResult = () => {
       releasePreviousBattleReplayFrames();
       if (typeof hideBattleCountdownOverlay === "function") hideBattleCountdownOverlay();
       if (pendingGameOver) {
@@ -2171,7 +2180,16 @@ function init() {
       ensureShopReady();
       renderShop();
       updateUI();
-    });
+    };
+    const runPrepTransition = () => {
+      transitionToPhase("prep", continueAfterResult);
+    };
+    if (typeof hideBattleResultPopupAsync === "function") {
+      void hideBattleResultPopupAsync().then(runPrepTransition);
+      return;
+    }
+    hideBattleResultPopup();
+    runPrepTransition();
   });
   document.getElementById("btn-battle-replay")?.addEventListener("click", () => {
     startBattleReplay();
@@ -2460,6 +2478,16 @@ function setPhase(newPhase) {
 }
 
 function transitionToPhase(newPhase, afterTransition) {
+  if (typeof ScreenTransitions !== "undefined") {
+    return ScreenTransitions.transitionPhase(
+      newPhase,
+      (nextPhase) => {
+        phase = nextPhase;
+        renderPhase();
+      },
+      afterTransition,
+    );
+  }
   const layout = document.querySelector(".game-layout");
   if (layout) layout.classList.add("phase-transitioning");
   window.setTimeout(() => {
@@ -2710,12 +2738,24 @@ function returnToMainMenu() {
   hideBoardPreviewPopup();
   hideBattleResultPopup();
   document.getElementById("overlay")?.classList.add("hidden");
+
+  const finishReturn = () => {
+    resetClassSelectOverlay();
+    ensureCompanionGrid();
+    setPhaseLabel("Выбор класса", false);
+    renderPhase();
+    renderFightButton();
+  };
+
+  const wasInGame = document.body.classList.contains("screen-app-visible");
+  if (wasInGame && typeof ScreenTransitions !== "undefined") {
+    void ScreenTransitions.crossfadeGameToMenu(finishReturn);
+    return;
+  }
+
+  document.body.classList.remove("screen-app-visible");
   document.getElementById("class-overlay")?.classList.remove("hidden");
-  resetClassSelectOverlay();
-  ensureCompanionGrid();
-  setPhaseLabel("Выбор класса", false);
-  renderPhase();
-  renderFightButton();
+  finishReturn();
 }
 
 function showClassSelect() {
@@ -2725,6 +2765,7 @@ function showClassSelect() {
 function startRunFromOverlay() {
   if (!pendingPlayerClass) return;
   if (!pendingPlayerCompanionId) return;
+  if (typeof ScreenTransitions !== "undefined" && ScreenTransitions.isScreenTransitioning()) return;
   if (!selectedEnemyClass) {
     selectedEnemyClass = pendingPlayerClass === "mage" ? "warrior" : "mage";
   }
@@ -2751,16 +2792,27 @@ function startRunFromOverlay() {
   dismissClassOverlayTooltip();
   hideClassSummaryTooltip();
   const overlay = document.getElementById("class-overlay");
-  overlay?.classList.add("hidden");
   overlay?.classList.remove("class-overlay--summary");
-  overlay?.setAttribute("aria-hidden", "true");
   const app = document.getElementById("app");
+  if (app) app.dataset.gameMode = gameMode;
+
+  const beginRun = () => {
+    restartGame();
+  };
+
+  if (typeof ScreenTransitions !== "undefined") {
+    void ScreenTransitions.crossfadeMenuToGame(beginRun);
+    return;
+  }
+
+  overlay?.classList.add("hidden");
+  overlay?.setAttribute("aria-hidden", "true");
+  document.body.classList.add("screen-app-visible");
   if (app) {
-    app.dataset.gameMode = gameMode;
     app.style.removeProperty("visibility");
     app.style.removeProperty("pointer-events");
   }
-  restartGame();
+  beginRun();
 }
 
 function startRun(classId) {
@@ -2968,6 +3020,7 @@ function isTypingTarget(el) {
 }
 
 function isPhaseTransitioning() {
+  if (typeof ScreenTransitions !== "undefined" && ScreenTransitions.isScreenTransitioning()) return true;
   return document.querySelector(".game-layout")?.classList.contains("phase-transitioning");
 }
 

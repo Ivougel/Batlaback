@@ -83,6 +83,9 @@
         tone(440, 0.1, { volume: 0.028, type: "sine" });
         window.setTimeout(() => tone(620, 0.08, { volume: 0.02, type: "sine" }), 40);
       },
+      ui_hover() {
+        tone(520, 0.04, { volume: 0.016, type: "sine", attack: 0.002, decay: 0.6 });
+      },
       arc_begin() {
         sfx.arc_hover();
       },
@@ -231,6 +234,9 @@
       arc_hover() {
         tone(523, 0.08, { volume: 0.024, type: "sine" });
         window.setTimeout(() => tone(659, 0.07, { volume: 0.018, type: "sine" }), 35);
+      },
+      ui_hover() {
+        tone(784, 0.035, { volume: 0.018, type: "sine", attack: 0.002, decay: 0.58 });
       },
       arc_begin() {
         sfx.arc_hover();
@@ -402,6 +408,9 @@
       arc_hover() {
         gentleTone(440, QUARTER, { volume: 0.018, attack: 0.03 });
       },
+      ui_hover() {
+        gentleTone(587, EIGHTH * 0.9, { volume: 0.014, attack: 0.018 });
+      },
       arc_begin() {
         sfx.arc_hover();
       },
@@ -458,6 +467,326 @@
     return sfx;
   }
 
+  /** Diablo — мокрое мясо, капли, тяжёлые удары. */
+  function buildMeatSfx(api) {
+    const { tone, noiseBurst, arpeggio } = api;
+    const sfx = {};
+
+    function squelch(vol = 0.075, heavy = false) {
+      const base = heavy ? 68 : 88;
+      tone(base, heavy ? 0.11 : 0.07, { volume: vol, type: "sawtooth", attack: 0.002, decay: 0.78 });
+      noiseBurst(heavy ? 0.08 : 0.055, { volume: vol * 0.85, freq: heavy ? 220 : 320, q: 2.2 });
+      window.setTimeout(() => {
+        tone(base * 0.62, heavy ? 0.14 : 0.09, { volume: vol * 0.55, type: "sine", attack: 0.004 });
+      }, heavy ? 35 : 22);
+    }
+
+    function drip(delayMs = 0, vol = 0.042) {
+      window.setTimeout(() => {
+        const f = 110 + Math.random() * 55;
+        tone(f, 0.045, { volume: vol, type: "triangle", attack: 0.001, decay: 0.72 });
+        noiseBurst(0.035, { volume: vol * 0.75, freq: 380 + Math.random() * 120, q: 2.4 });
+      }, delayMs);
+    }
+
+    function meatHover() {
+      drip(0, 0.028);
+    }
+
+    Object.assign(sfx, {
+      ui_hover() {
+        meatHover();
+      },
+      ui_click() {
+        squelch(0.072);
+        drip(55, 0.032);
+      },
+      ui_toggle() {
+        squelch(0.068);
+        window.setTimeout(() => drip(0, 0.03), 70);
+      },
+      ui_open() {
+        squelch(0.08, true);
+        drip(90, 0.038);
+        drip(160, 0.028);
+      },
+      ui_close() {
+        tone(140, 0.09, { volume: 0.07, type: "sawtooth", attack: 0.003 });
+        noiseBurst(0.07, { volume: 0.06, freq: 260, q: 1.6 });
+        window.setTimeout(() => squelch(0.055), 45);
+      },
+      ui_error() {
+        tone(95, 0.14, { volume: 0.085, type: "sawtooth" });
+        noiseBurst(0.09, { volume: 0.07, freq: 180, q: 1.2 });
+        window.setTimeout(() => tone(72, 0.16, { volume: 0.07, type: "square" }), 80);
+      },
+
+      prep_pickup() {
+        squelch(0.065);
+        drip(40, 0.035);
+      },
+      prep_place(opts = {}) {
+        squelch(opts.heavy ? 0.095 : 0.078, !!opts.heavy);
+        if (opts.heavy) drip(120, 0.04);
+      },
+      prep_reject() {
+        tone(110, 0.1, { volume: 0.08, type: "sawtooth" });
+        noiseBurst(0.06, { volume: 0.065, freq: 240, q: 1.8 });
+      },
+      prep_buy() {
+        arpeggio([110, 98, 88, 78], 0.07, { volume: 0.07, type: "sawtooth", duration: 0.12 });
+        drip(200, 0.038);
+        drip(280, 0.03);
+      },
+      prep_sell() {
+        arpeggio([130, 110, 95], 0.08, { volume: 0.065, type: "triangle", duration: 0.1 });
+      },
+      prep_refresh() {
+        squelch(0.06);
+        drip(60, 0.032);
+        drip(130, 0.028);
+      },
+      prep_freeze() {
+        tone(180, 0.08, { volume: 0.055, type: "triangle" });
+        noiseBurst(0.05, { volume: 0.04, freq: 900, q: 1.5 });
+      },
+      prep_rotate() {
+        squelch(0.05);
+      },
+      prep_craft() {
+        squelch(0.082, true);
+        drip(80, 0.036);
+        drip(150, 0.032);
+        drip(230, 0.028);
+      },
+      prep_gem() {
+        tone(220, 0.06, { volume: 0.06, type: "triangle" });
+        squelch(0.055);
+      },
+      gold() {
+        arpeggio([98, 110, 124], 0.06, { volume: 0.068, type: "sawtooth" });
+        drip(100, 0.035);
+      },
+
+      arc_hover() {
+        meatHover();
+      },
+      arc_begin() {
+        sfx.arc_hover();
+      },
+      arc_celebrate() {
+        squelch(0.07);
+        drip(70, 0.03);
+      },
+
+      battle_start() {
+        arpeggio([82, 73, 65, 58], 0.09, { volume: 0.09, type: "sawtooth", duration: 0.14 });
+        noiseBurst(0.08, { volume: 0.065, freq: 200, q: 1.4 });
+      },
+      battle_countdown_tick() {
+        squelch(0.06);
+      },
+      battle_countdown_go() {
+        squelch(0.095, true);
+        drip(60, 0.04);
+      },
+      battle_hit(opts = {}) {
+        const heavy = (Number(opts.amount) || 1) >= 8;
+        squelch(heavy ? 0.1 : 0.082, heavy);
+        drip(heavy ? 90 : 50, heavy ? 0.045 : 0.035);
+      },
+      battle_heal() {
+        tone(165, 0.08, { volume: 0.05, type: "sine" });
+        drip(40, 0.025);
+      },
+      battle_block() {
+        tone(200, 0.05, { volume: 0.065, type: "square" });
+        noiseBurst(0.04, { volume: 0.05, freq: 600, q: 1.2 });
+      },
+      battle_poison() {
+        tone(130, 0.12, { volume: 0.07, type: "sawtooth", detune: -20 });
+        noiseBurst(0.07, { volume: 0.055, freq: 300, q: 2 });
+      },
+      battle_miss() {
+        drip(0, 0.022);
+      },
+      battle_victory() {
+        arpeggio([98, 110, 124, 147], 0.1, { volume: 0.085, type: "sawtooth", duration: 0.15 });
+        drip(300, 0.04);
+        drip(420, 0.035);
+      },
+      battle_defeat() {
+        arpeggio([110, 98, 82, 65], 0.11, { volume: 0.08, type: "sawtooth", duration: 0.14 });
+      },
+      battle_draw() {
+        tone(100, 0.12, { volume: 0.065, type: "triangle" });
+        drip(80, 0.03);
+      },
+    });
+
+    return sfx;
+  }
+
+  /** Black Mirror — стеклянные тики смартфона, hover на каждой кнопке. */
+  function buildMirrorSfx(api) {
+    const { tone, noiseBurst, arpeggio } = api;
+    const sfx = {};
+
+    function glassTick(freq = 2800, vol = 0.026, pan = 0) {
+      tone(freq, 0.022, { volume: vol, type: "sine", attack: 0.0008, decay: 0.58, pan });
+      window.setTimeout(() => {
+        tone(freq * 1.498, 0.016, { volume: vol * 0.35, type: "sine", attack: 0.0006, decay: 0.5, pan });
+      }, 6);
+    }
+
+    function glassShimmer(freq = 3200, vol = 0.012) {
+      noiseBurst(0.014, { volume: vol, freq, q: 3.2 });
+    }
+
+    function mirrorHover() {
+      glassTick(3400, 0.018, (Math.random() - 0.5) * 0.25);
+      glassShimmer(4200, 0.006);
+    }
+
+    function mirrorTap() {
+      glassTick(2600, 0.032, 0);
+      window.setTimeout(() => tone(1900, 0.038, { volume: 0.022, type: "sine", attack: 0.002, decay: 0.72 }), 14);
+      glassShimmer(3600, 0.008);
+    }
+
+    function mirrorSlide(open = true) {
+      const notes = open ? [1800, 2200, 2600] : [2600, 2200, 1800];
+      arpeggio(notes, 0.028, { volume: 0.028, type: "sine", duration: 0.07, attack: 0.002, decay: 0.65 });
+      glassShimmer(open ? 5000 : 3800, 0.007);
+    }
+
+    Object.assign(sfx, {
+      ui_hover() {
+        mirrorHover();
+      },
+      ui_click() {
+        mirrorTap();
+      },
+      ui_toggle() {
+        glassTick(2400, 0.028, -0.12);
+        window.setTimeout(() => glassTick(2900, 0.026, 0.12), 38);
+      },
+      ui_open() {
+        mirrorSlide(true);
+      },
+      ui_close() {
+        mirrorSlide(false);
+      },
+      ui_error() {
+        glassTick(880, 0.034, 0);
+        window.setTimeout(() => glassTick(660, 0.03, 0), 55);
+        window.setTimeout(() => tone(520, 0.06, { volume: 0.022, type: "sine" }), 110);
+      },
+
+      prep_pickup() {
+        glassTick(2200, 0.028, -0.15);
+        window.setTimeout(() => glassTick(2800, 0.024, 0.15), 32);
+      },
+      prep_place(opts = {}) {
+        mirrorTap();
+        if (opts.heavy) {
+          window.setTimeout(() => tone(420, 0.05, { volume: 0.018, type: "sine" }), 20);
+        }
+      },
+      prep_reject() {
+        glassTick(700, 0.03);
+        window.setTimeout(() => glassTick(550, 0.026), 45);
+      },
+      prep_buy() {
+        arpeggio([2200, 2637, 3136, 3520], 0.032, { volume: 0.032, type: "sine", duration: 0.06, attack: 0.002 });
+        glassShimmer(4800, 0.01);
+      },
+      prep_sell() {
+        arpeggio([2800, 2349, 1976], 0.035, { volume: 0.026, type: "sine", duration: 0.065 });
+      },
+      prep_refresh() {
+        arpeggio([2000, 2400, 2800, 3200], 0.028, { volume: 0.028, type: "sine" });
+      },
+      prep_freeze() {
+        glassTick(3800, 0.03);
+        glassShimmer(5200, 0.012);
+      },
+      prep_rotate() {
+        glassTick(2100, 0.024, -0.1);
+        window.setTimeout(() => glassTick(2500, 0.022, 0.1), 28);
+      },
+      prep_craft() {
+        arpeggio([2200, 2772, 3296, 3920, 4400], 0.034, { volume: 0.034, type: "sine", duration: 0.07 });
+        glassShimmer(5500, 0.012);
+      },
+      prep_gem() {
+        arpeggio([3136, 3951, 4699], 0.03, { volume: 0.032, type: "sine" });
+        glassShimmer(6000, 0.014);
+      },
+      gold() {
+        arpeggio([3520, 4186, 4978], 0.028, { volume: 0.03, type: "sine" });
+        glassTick(5280, 0.022, 0.18);
+      },
+
+      arc_hover() {
+        mirrorHover();
+      },
+      arc_begin() {
+        sfx.arc_hover();
+      },
+      arc_celebrate() {
+        arpeggio([2800, 3322, 3951], 0.03, { volume: 0.024, type: "sine" });
+      },
+
+      battle_start() {
+        arpeggio([880, 1108, 1318, 1760], 0.04, { volume: 0.038, type: "sine" });
+        glassShimmer(3000, 0.008);
+      },
+      battle_countdown_tick() {
+        glassTick(2000, 0.028);
+      },
+      battle_countdown_go() {
+        arpeggio([1760, 2217, 2637, 3136], 0.028, { volume: 0.038, type: "sine" });
+        glassShimmer(4000, 0.01);
+      },
+      battle_hit(opts = {}) {
+        const heavy = (Number(opts.amount) || 1) >= 8;
+        tone(heavy ? 320 : 440, heavy ? 0.06 : 0.045, {
+          volume: heavy ? 0.038 : 0.028,
+          type: "sine",
+          attack: 0.002,
+        });
+        glassTick(heavy ? 1800 : 2400, heavy ? 0.032 : 0.024);
+      },
+      battle_heal() {
+        arpeggio([1760, 2093, 2637], 0.035, { volume: 0.028, type: "sine" });
+      },
+      battle_block() {
+        glassTick(4200, 0.034);
+        window.setTimeout(() => glassTick(3600, 0.026), 22);
+      },
+      battle_poison() {
+        glassTick(1200, 0.028);
+        window.setTimeout(() => tone(900, 0.07, { volume: 0.02, type: "sine", detune: -10 }), 40);
+      },
+      battle_miss() {
+        glassTick(1600, 0.018);
+      },
+      battle_victory() {
+        arpeggio([2637, 3136, 3520, 4186, 4699, 5280], 0.038, { volume: 0.036, type: "sine", duration: 0.08 });
+        glassShimmer(6200, 0.014);
+      },
+      battle_defeat() {
+        arpeggio([1760, 1568, 1397, 1175], 0.045, { volume: 0.028, type: "sine", duration: 0.09 });
+      },
+      battle_draw() {
+        arpeggio([1760, 1661, 1568], 0.05, { volume: 0.026, type: "sine" });
+      },
+    });
+
+    return sfx;
+  }
+
   const SOUND_THEME_META = {
     classic: {
       id: "classic",
@@ -477,12 +806,26 @@
       hint: "Мягкие колокольчики в такт 67 BPM — пастельная девчачья игра",
       emoji: "🌸",
     },
+    meat: {
+      id: "meat",
+      label: "Мясо",
+      hint: "Diablo — капает, хлюпает, тяжёлые удары и мокрые клики",
+      emoji: "🥩",
+    },
+    mirror: {
+      id: "mirror",
+      label: "Black Mirror",
+      hint: "Стеклянные тики смартфона — hover, тап и каждый переход по UI",
+      emoji: "📱",
+    },
   };
 
   const builders = {
     classic: buildClassicSfx,
     dopamine: buildDopamineSfx,
     gentle: buildGentleSfx,
+    meat: buildMeatSfx,
+    mirror: buildMirrorSfx,
   };
 
   function buildSfxTheme(themeId, api) {
