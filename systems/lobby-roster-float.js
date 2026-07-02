@@ -65,6 +65,65 @@ function readLobbyRosterFloatAppliedPosition(panel) {
   return null;
 }
 
+function captureLobbyRosterHandleAnchor() {
+  const panel = document.getElementById("lobby-prep-roster-panel");
+  const handle = document.getElementById("btn-lobby-roster-hide");
+  const field = document.getElementById("prep-field-column");
+  if (!panel || !handle || !field || panel.classList.contains("hidden")) return null;
+  const fieldRect = field.getBoundingClientRect();
+  const handleRect = handle.getBoundingClientRect();
+  return {
+    handleX: handleRect.left - fieldRect.left,
+    handleY: handleRect.top - fieldRect.top,
+    handleW: handleRect.width,
+    handleH: handleRect.height,
+  };
+}
+
+function syncLobbyRosterExpandDirection() {
+  const panel = document.getElementById("lobby-prep-roster-panel");
+  const field = document.getElementById("prep-field-column");
+  const handle = document.getElementById("btn-lobby-roster-hide");
+  if (!panel || !field || !handle || panel.classList.contains("hidden")) return;
+  if (panel.classList.contains("lobby-prep-roster-panel--collapsed")) {
+    panel.removeAttribute("data-lobby-roster-expand");
+    return;
+  }
+  const fieldRect = field.getBoundingClientRect();
+  const handleRect = handle.getBoundingClientRect();
+  const handleCenterX = handleRect.left + handleRect.width / 2 - fieldRect.left;
+  const ratio = fieldRect.width > 0 ? handleCenterX / fieldRect.width : 0.5;
+  if (ratio >= 0.58) panel.dataset.lobbyRosterExpand = "left";
+  else if (ratio <= 0.42) panel.dataset.lobbyRosterExpand = "right";
+  else panel.dataset.lobbyRosterExpand = "down";
+}
+
+function stabilizeLobbyRosterExpandPosition(anchor) {
+  const panel = document.getElementById("lobby-prep-roster-panel");
+  const handle = document.getElementById("btn-lobby-roster-hide");
+  if (!panel || !handle || panel.classList.contains("lobby-prep-roster-panel--collapsed") || !anchor) return;
+  const expand = panel.dataset.lobbyRosterExpand || "down";
+  requestAnimationFrame(() => {
+    const panelW = panel.offsetWidth;
+    const panelH = panel.offsetHeight;
+    const handleW = handle.offsetWidth || anchor.handleW;
+    const handleH = handle.offsetHeight || anchor.handleH;
+    let left = anchor.handleX;
+    let top = anchor.handleY;
+    if (expand === "left") left = anchor.handleX - (panelW - handleW);
+    else if (expand === "right") left = anchor.handleX;
+    else top = anchor.handleY;
+    applyLobbyRosterFloatPosition(left, top);
+    clampLobbyRosterFloatPosition();
+  });
+}
+
+function refreshLobbyRosterFloatLayout({ anchor } = {}) {
+  syncLobbyRosterExpandDirection();
+  if (anchor) stabilizeLobbyRosterExpandPosition(anchor);
+  else clampLobbyRosterFloatPosition();
+}
+
 function clampLobbyRosterFloatPosition() {
   const panel = document.getElementById("lobby-prep-roster-panel");
   if (!panel || panel.classList.contains("hidden") || panel.dataset.lobbyRosterPositioned !== "true") return;
@@ -78,6 +137,7 @@ function restoreLobbyRosterFloatPosition() {
   if (!panel || panel.classList.contains("hidden")) return;
   if (panel.dataset.lobbyRosterPositioned === "true") {
     clampLobbyRosterFloatPosition();
+    refreshLobbyRosterFloatLayout();
     return;
   }
   const saved = readLobbyRosterFloatPosition();
@@ -166,8 +226,8 @@ function initLobbyRosterFloat({ toggleCollapse } = {}) {
   handle.addEventListener("pointerdown", onLobbyRosterFloatPointerDown);
   restoreLobbyRosterFloatPosition();
   if (field && !lobbyRosterFloatResizeObserver) {
-    lobbyRosterFloatResizeObserver = new ResizeObserver(() => clampLobbyRosterFloatPosition());
+    lobbyRosterFloatResizeObserver = new ResizeObserver(() => refreshLobbyRosterFloatLayout());
     lobbyRosterFloatResizeObserver.observe(field);
   }
-  window.addEventListener("resize", clampLobbyRosterFloatPosition, { passive: true });
+  window.addEventListener("resize", () => refreshLobbyRosterFloatLayout(), { passive: true });
 }

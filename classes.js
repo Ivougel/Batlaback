@@ -1,6 +1,6 @@
 /**
  * Герои игрока — стартовый лоадаут и пассивные бонусы забега.
- * noviceLabel / heroLabel — имя героя; heroLore — описание персонажа на экране выбора.
+ * noviceLabel / heroLabel — имя героя; heroTagline — строка на плитке; heroLore — история в витрине.
  */
 const CLASS_HERO_ROSTER_COPY = {
   title: "Мартовичок · Роксивичок · Морковичок · Мыковичок",
@@ -13,7 +13,8 @@ const CLASS_CATALOG = {
     name: "Воин",
     noviceLabel: "Воин-мартовичок",
     heroLabel: "Воин-мартовичок",
-    heroLore: "Вертлявая попка. Её главная цель в жизни — оставаться таким же милым арбузиком на тропинке.",
+    heroTagline: "Корги, что клялась оставаться милым арбузиком на лугу — и пошла в бой с мечом.",
+    heroLore: "Мартовичок — упрямая корги-девочка: кличку скрестили с именем, характер не смягчили. На тропинке она милая, в рюкзаке — ржавый меч и железный шлем. За весь забег даёт чуть больше максимального здоровья и стоит на лапах, когда другие уже валятся.",
     icon: "⚔️",
     iconSrc: "img/sticker_warrior.png",
     heroPortraitSrc: "img/gem/Warior new.png",
@@ -28,7 +29,8 @@ const CLASS_CATALOG = {
     name: "Разбойник",
     noviceLabel: "Разбойник-роксивичок",
     heroLabel: "Разбойник-роксивичок",
-    heroLore: "Кошка-ниндзя: совмещает две жизни — минирует рисовые поля минами-какашками и сияет звездой чата в Telegram.",
+    heroTagline: "Кошка с двумя жизнями: хитрые ловушки днём, слава в чате — ночью.",
+    heroLore: "Роксивичок — рыжая разбойница, которая успевает и подстроить сюрприз на поляне, и засиять в переписке. Кинжал и яд всегда под лапой: бьёт чаще и быстрее, чем соперник успевает моргнуть.",
     icon: "🗡️",
     iconSrc: "img/sticker_rogue.png",
     heroPortraitSrc: "img/gem/roguenew.png",
@@ -43,7 +45,8 @@ const CLASS_CATALOG = {
     name: "Маг",
     noviceLabel: "Маг-морковичок",
     heroLabel: "Маг-морковичок",
-    heroLore: "Колдует магию: трансгрессирует какашки в ванну и насылает блестящую магию по полю боя.",
+    heroTagline: "Маг с блестящими заклинаниями — превращает хаос на поле в урон.",
+    heroLore: "Морковичок — колдунья с театральным жестом: на поле боя сыплет искры, усиливает мана-стаки и выжимает из посоха ученика лишний магический урон. Чем больше магии в рюкзаке, тем ярче финал раунда.",
     icon: "🔮",
     iconSrc: "img/sticker_mage.png",
     heroPortraitSrc: "img/gem/Magenew.png",
@@ -58,7 +61,8 @@ const CLASS_CATALOG = {
     name: "Жрец",
     noviceLabel: "Жрец-мыковичок",
     heroLabel: "Жрец-мыковичок",
-    heroLore: "Сочная святая ПОПка, оперная певица. Её печатают в журнале DOG — любимая жена известного писателя.",
+    heroTagline: "Жрица с оперным голосом и корзиной перекусов под рясой.",
+    heroLore: "Мыковичок — корги-сопрано, о которой пишут в журнале DOG. Благословляет яблоки и бананы: каждая еда в рюкзаке чуть раздувает максимум HP, а лечение от перекусов работает сильнее.",
     icon: "✨",
     iconSrc: "img/sticker_priest.png",
     heroPortraitSrc: "img/gem/priestnew.png",
@@ -141,6 +145,11 @@ function getHeroLore(classId) {
   return getClassById(classId)?.heroLore || "";
 }
 
+function getHeroTagline(classId) {
+  const cls = getClassById(classId);
+  return cls?.heroTagline || cls?.heroLore || "";
+}
+
 function syncClassHeroRosterCaption() {
   const titleEl = document.querySelector(".class-hero-roster-title");
   const hintEl = document.querySelector(".class-hero-roster-hint");
@@ -156,10 +165,17 @@ function syncClassPickerCardsFromCatalog() {
     const descEl = card.querySelector(".class-desc");
     const bonusEl = card.querySelector(".class-bonus");
     if (nameEl) nameEl.textContent = cls.noviceLabel || cls.heroLabel || cls.name;
+    const tagline = getHeroTagline(card.dataset.class);
     if (descEl) {
-      descEl.textContent = "";
-      descEl.classList.add("hidden");
-      descEl.setAttribute("aria-hidden", "true");
+      if (tagline) {
+        descEl.textContent = tagline;
+        descEl.classList.remove("hidden");
+        descEl.removeAttribute("aria-hidden");
+      } else {
+        descEl.textContent = "";
+        descEl.classList.add("hidden");
+        descEl.setAttribute("aria-hidden", "true");
+      }
     }
     if (bonusEl) bonusEl.textContent = cls.desc || "";
   });

@@ -590,7 +590,10 @@ function renderLobbyChrome(force = false) {
       : "";
   }
   syncLobbyRosterCollapse();
-  if (show && phase === "prep" && typeof restoreLobbyRosterFloatPosition === "function") {
+  if (show && phase === "prep" && typeof refreshLobbyRosterFloatLayout === "function") {
+    if (!lobbyRosterHidden) refreshLobbyRosterFloatLayout();
+    else if (typeof restoreLobbyRosterFloatPosition === "function") restoreLobbyRosterFloatPosition();
+  } else if (show && phase === "prep" && typeof restoreLobbyRosterFloatPosition === "function") {
     restoreLobbyRosterFloatPosition();
   }
   if (isBattleUiPhase() && typeof queuePrewarmBattleInventoryPopover === "function") {
@@ -662,9 +665,15 @@ function bindLobbyRosterClicks() {
   if (typeof initLobbyRosterFloat === "function") {
     initLobbyRosterFloat({
       toggleCollapse() {
+        const anchor = typeof captureLobbyRosterHandleAnchor === "function"
+          ? captureLobbyRosterHandleAnchor()
+          : null;
+        const wasCollapsed = lobbyRosterHidden;
         lobbyRosterHidden = !lobbyRosterHidden;
         syncLobbyRosterCollapse();
-        requestAnimationFrame(() => clampLobbyRosterFloatPosition());
+        if (typeof refreshLobbyRosterFloatLayout === "function") {
+          refreshLobbyRosterFloatLayout(wasCollapsed ? { anchor } : {});
+        }
       },
     });
   }
@@ -1273,8 +1282,8 @@ function syncClassOverlayUi() {
   } else if (playerStep && !playerStep.classList.contains("hidden")) {
     badge.textContent = `Шаг 2 из ${totalSteps} · Герой`;
     hint.textContent = pendingPlayerClass
-      ? "Выберите путь и нажмите «Да» — или нажмите героя ещё раз"
-      : "Имя и бонус на плитке · после выбора слева появится история";
+      ? "Нажмите героя ещё раз — к выбору спутника"
+      : "Читайте описание на плитке · после выбора слева — полная история";
   } else if (companionStep && !companionStep.classList.contains("hidden")) {
     badge.textContent = `Шаг 3 из ${totalSteps} · Спутник`;
     hint.textContent = "Выберите спутника · нажмите ещё раз — к саммари";

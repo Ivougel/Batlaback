@@ -1,5 +1,30 @@
 /* ─── Плавающий ростер противников (prep) ─── */
 
+.lobby-prep-roster-panel:not(.lobby-prep-roster-panel--collapsed) {
+  width: auto;
+  max-width: min(44vw, calc(var(--lobby-roster-emoji-size) * 12));
+}
+
+.lobby-prep-roster-panel[data-lobby-roster-expand="left"]:not(.lobby-prep-roster-panel--collapsed),
+.lobby-prep-roster-panel[data-lobby-roster-expand="right"]:not(.lobby-prep-roster-panel--collapsed) {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: calc(6px * var(--ui-scale));
+}
+
+.lobby-prep-roster-panel[data-lobby-roster-expand="left"]:not(.lobby-prep-roster-panel--collapsed) {
+  flex-direction: row-reverse;
+}
+
+.lobby-prep-roster-panel[data-lobby-roster-expand="left"]:not(.lobby-prep-roster-panel--collapsed) .lobby-prep-roster-body,
+.lobby-prep-roster-panel[data-lobby-roster-expand="right"]:not(.lobby-prep-roster-panel--collapsed) .lobby-prep-roster-body {
+  max-height: min(58vh, calc(var(--lobby-roster-emoji-size) * 15));
+}
+
+.lobby-prep-roster-panel[data-lobby-roster-expand="down"]:not(.lobby-prep-roster-panel--collapsed) .lobby-prep-roster-body {
+  width: 100%;
+}
+
 .lobby-prep-roster-panel {
   left: var(--lobby-roster-float-x, calc(6px * var(--ui-scale)));
   top: var(--lobby-roster-float-y, calc(var(--prep-scene-top, 8px) + 4px));

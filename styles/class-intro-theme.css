@@ -396,6 +396,18 @@ body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro .btn-primary {
 }
 
 #class-overlay .class-modal .class-card.glass-card[data-class] .class-desc {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  color: rgba(255, 253, 246, 0.9);
+  font-weight: 600;
+  line-height: 1.3;
+  opacity: 1;
+  padding-bottom: calc(2px * var(--ui-scale));
+}
+
+#class-overlay .class-modal .class-card.glass-card[data-class] .class-desc.hidden {
   display: none !important;
 }
 
