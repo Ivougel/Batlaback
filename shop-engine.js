@@ -96,8 +96,18 @@ function rollBBShopTier(ctx) {
   return "common";
 }
 
-function pickUniformItem(pool) {
+function pickUniformItem(pool, ctx = null) {
   if (!pool.length) return null;
+  if (ctx && typeof scoreShopItemPickWeight === "function") {
+    const weights = pool.map((item) => Math.max(0.05, scoreShopItemPickWeight(item, ctx)));
+    const total = weights.reduce((a, b) => a + b, 0);
+    let r = Math.random() * total;
+    for (let i = 0; i < pool.length; i++) {
+      r -= weights[i];
+      if (r <= 0) return pool[i].id;
+    }
+    return pool[pool.length - 1].id;
+  }
   return pool[Math.floor(Math.random() * pool.length)].id;
 }
 
@@ -200,7 +210,7 @@ function rollShopItem(ctx, opts = {}) {
   if (!pool.length) return null;
   const tier = getItemShopRarityTier(pool[0]);
   if (tier === "unique") return pickUniqueItem(pool, ctx);
-  return pickUniformItem(pool);
+  return pickUniformItem(pool, ctx);
 }
 
 function rollShopItemGuaranteed(ctx, opts = {}) {
@@ -217,7 +227,7 @@ function rollShopItemGuaranteed(ctx, opts = {}) {
   if (item) return item;
 
   const affordable = getAffordableShopItems(ctx.playerClass || null, ctx.gold ?? 0, ctx.round ?? 1);
-  if (affordable.length) return pickUniformItem(affordable);
+  if (affordable.length) return pickUniformItem(affordable, ctx);
   const eligible = getBaseShopPool(ctx.playerClass || null, ctx.round ?? 1);
   return eligible[0]?.id || null;
 }
@@ -235,6 +245,21 @@ function rollShopBatch(count, ctx) {
     if (uniquePool?.length && !ctx.bonusUniqueGranted) {
       slots.push(pickUniqueItem(uniquePool, ctx));
       ctx.bonusUniqueGranted = true;
+      continue;
+    }
+    const keyEntry = typeof tryRollShopKeyItem === "function" ? tryRollShopKeyItem(ctx) : null;
+    if (keyEntry) {
+      slots.push(keyEntry);
+      continue;
+    }
+    const enhEntry = typeof tryRollShopEnhancement === "function" ? tryRollShopEnhancement(ctx) : null;
+    if (enhEntry) {
+      slots.push(enhEntry);
+      continue;
+    }
+    const ampEntry = typeof tryRollShopAmplifier === "function" ? tryRollShopAmplifier(ctx) : null;
+    if (ampEntry) {
+      slots.push(ampEntry);
       continue;
     }
     slots.push(rollShopItemGuaranteed(ctx, {}));

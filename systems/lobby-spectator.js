@@ -77,13 +77,20 @@ function createLobbyMatchState(match, lobby, battleRound) {
   const fighterA = lobby.fighters[match.fighterAId];
   const fighterB = lobby.fighters[match.fighterBId];
   if (!fighterA || !fighterB) return null;
+  if (typeof syncLobbyFighterMutationMilestones === "function") {
+    syncLobbyFighterMutationMilestones(fighterA, battleRound);
+    syncLobbyFighterMutationMilestones(fighterB, battleRound);
+  }
   const state = createBattleState(
     fighterBattleItems(fighterA),
     fighterBattleItems(fighterB),
     fighterA.classId,
     fighterB.classId,
     battleRound,
-    {},
+    {
+      player: typeof lobbyFighterPrepMeta === "function" ? lobbyFighterPrepMeta(fighterA) : {},
+      enemy: typeof lobbyFighterPrepMeta === "function" ? lobbyFighterPrepMeta(fighterB) : {},
+    },
   );
   state.recording = !!match.isPlayerMatch;
   if (state.recording) {
@@ -279,6 +286,16 @@ function syncEnemyBoardFromLobbyFighter(fighter) {
   enemyClass = ghost.classId;
   enemyArchetype = fighter.archetype;
   enemyGold = ghost.gold;
+  if (ghost.companionId) enemyCompanionId = ghost.companionId;
+  enemyMutationFormId = ghost.mutationFormId ?? null;
+  enemyMutationId = ghost.mutationId ?? null;
+  if (ghost.enhancements) {
+    enemyEnhancements = {
+      head: ghost.enhancements.head ?? null,
+      chest: ghost.enhancements.chest ?? null,
+      boots: ghost.enhancements.boots ?? null,
+    };
+  }
 }
 
 function buildLobbyRosterStripSignature(lobby, opts = {}) {
@@ -294,7 +311,7 @@ function buildLobbyRosterStripSignature(lobby, opts = {}) {
     const hp = typeof getLobbyFighterLiveHp === "function"
       ? getLobbyFighterLiveHp(f.id, lobby, matches)
       : { current: f.hp, inBattle: false };
-    return `${f.id}:${f.alive ? 1 : 0}:${hp.current}:${hp.inBattle ? 1 : 0}:${f.id === lobby.currentOpponentId ? 1 : 0}`;
+    return `${f.id}:${f.alive ? 1 : 0}:${hp.current}:${hp.inBattle ? 1 : 0}:${f.id === lobby.currentOpponentId ? 1 : 0}:${f.mutationFormId || ""}:${f.mutationId || ""}`;
   }).join("|");
 
   if (phase === "battle" && matches.length) {
@@ -326,6 +343,7 @@ function renderLobbyFighterCard(fighter, lobby, opts = {}) {
     viewFighterId = 0,
     spectateMatchId = 0,
     matches = [],
+    round = 1,
     active = false,
     extraClass = "",
     disabled = false,
@@ -338,8 +356,12 @@ function renderLobbyFighterCard(fighter, lobby, opts = {}) {
     : { current: fighter.hp, max: LOBBY_START_HP, inBattle: false };
   const maxHp = hp.max || LOBBY_START_HP;
   const visual = typeof resolveLobbyFighterAvatarVisual === "function"
-    ? resolveLobbyFighterAvatarVisual(fighter, lobby, { phase, matches, spectateMatchId })
+    ? resolveLobbyFighterAvatarVisual(fighter, lobby, { phase, matches, spectateMatchId, round })
     : { emoji: "❓", mode: "idle", animClass: "" };
+
+  const mutationBadge = typeof renderLobbyMutationBadgeHtml === "function"
+    ? renderLobbyMutationBadgeHtml(fighter, round)
+    : "";
 
   const cls = [
     "lobby-fighter-card",
@@ -354,6 +376,7 @@ function renderLobbyFighterCard(fighter, lobby, opts = {}) {
   const emojiClasses = [
     "lobby-fighter-emoji",
     visual.mode === "prep-orbit" ? "lobby-fighter-emoji--prep-orbit" : "",
+    visual.isMutation ? "lobby-fighter-emoji--mutation" : "",
     visual.animClass || "",
   ].filter(Boolean).join(" ");
 
@@ -362,8 +385,9 @@ function renderLobbyFighterCard(fighter, lobby, opts = {}) {
   return `<button type="button" class="${cls}" ${dataAttrs} ${disabled ? "disabled" : ""} title="${cardTitle}">
     <span class="lobby-fighter-card-name">${fighter.isHuman ? "🧑 " : ""}${fighter.name}</span>
     ${renderLobbyFighterHpBar(hp.current, maxHp)}
-    <span class="lobby-fighter-card-avatar" data-lobby-fighter-avatar="${fighter.id}" aria-hidden="true">
+    <span class="lobby-fighter-card-avatar${visual.isMutation ? " lobby-fighter-card-avatar--mutation" : ""}" data-lobby-fighter-avatar="${fighter.id}" aria-hidden="true">
       <span class="${emojiClasses}">${visual.emoji}</span>
+      ${mutationBadge}
     </span>
   </button>`;
 }
@@ -456,6 +480,7 @@ function renderLobbyRosterStrip(lobby, opts = {}) {
     spectateMatchId = 0,
     matches = [],
     layout = "full",
+    round = 1,
   } = opts;
 
   if (phase === "battle" && matches.length && layout === "bottom") {
@@ -484,6 +509,7 @@ function renderLobbyRosterStrip(lobby, opts = {}) {
           phase,
           spectateMatchId,
           matches,
+          round,
           disabled: true,
           dataAttrs: `data-lobby-fighter-card="${fighter.id}"`,
         });
@@ -497,6 +523,7 @@ function renderLobbyRosterStrip(lobby, opts = {}) {
         phase,
         spectateMatchId,
         matches,
+        round,
         active: inSpectated,
         extraClass: match?.isPlayerMatch && fighter.isHuman ? "lobby-fighter-card--yours-match" : "",
         disabled: !match || !!match.byeFighterId,
@@ -516,6 +543,7 @@ function renderLobbyRosterStrip(lobby, opts = {}) {
       phase,
       viewFighterId,
       matches,
+      round,
       active,
       disabled,
       dataAttrs: `data-lobby-fighter="${fighter.id}"`,

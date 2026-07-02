@@ -1,0 +1,671 @@
+{
+  "generatedAt": "2026-07-02T13:18:13.987Z",
+  "pool": "v120",
+  "presets": {
+    "warrior_r1_tagged": {
+      "classId": "warrior",
+      "round": 1,
+      "archetype": "warrior",
+      "companionId": "s_blade",
+      "gold": 9,
+      "power": 32,
+      "itemCount": 3,
+      "tagCounts": {
+        "armor": 1,
+        "helmet": 1,
+        "weapon": 1,
+        "melee": 1,
+        "poison": 1,
+        "consumable": 1
+      },
+      "items": [
+        {
+          "itemId": "iron_helmet",
+          "col": 4,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "dagger",
+          "col": 5,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "poison_vial",
+          "col": 5,
+          "row": 3,
+          "rotation": 0
+        }
+      ],
+      "itemIds": [
+        "iron_helmet",
+        "dagger",
+        "poison_vial"
+      ],
+      "key": "warrior_r1_tagged",
+      "label": "Воин · архетип · R1 · pool120"
+    },
+    "warrior_r8_tagged": {
+      "classId": "warrior",
+      "round": 8,
+      "archetype": "warrior",
+      "companionId": "s_blade",
+      "gold": 66,
+      "power": 149,
+      "itemCount": 7,
+      "tagCounts": {
+        "weapon": 6,
+        "melee": 6,
+        "debuff": 1,
+        "shield": 1,
+        "armor": 1,
+        "poison": 1,
+        "spikes": 1,
+        "vampiric": 1,
+        "craft": 1
+      },
+      "items": [
+        {
+          "itemId": "rusty_sword",
+          "col": 3,
+          "row": 3,
+          "rotation": 0
+        },
+        {
+          "itemId": "broom",
+          "col": 5,
+          "row": 3,
+          "rotation": 0
+        },
+        {
+          "itemId": "dagger",
+          "col": 5,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "wooden_buckler",
+          "col": 4,
+          "row": 4,
+          "rotation": 1
+        },
+        {
+          "itemId": "poison_dagger",
+          "col": 4,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "ripsaw_blade",
+          "col": 2,
+          "row": 2,
+          "rotation": 1
+        },
+        {
+          "itemId": "hungry_blade",
+          "col": 3,
+          "row": 1,
+          "rotation": 1
+        }
+      ],
+      "itemIds": [
+        "rusty_sword",
+        "broom",
+        "dagger",
+        "wooden_buckler",
+        "poison_dagger",
+        "ripsaw_blade",
+        "hungry_blade"
+      ],
+      "key": "warrior_r8_tagged",
+      "label": "Воин · архетип · R8 · pool120"
+    },
+    "warrior_r16_tagged": {
+      "classId": "warrior",
+      "round": 16,
+      "archetype": "warrior",
+      "companionId": "s_blade",
+      "gold": 177,
+      "power": 123,
+      "itemCount": 5,
+      "tagCounts": {
+        "weapon": 3,
+        "spikes": 1,
+        "melee": 3,
+        "poison": 2,
+        "armor": 1,
+        "helmet": 1,
+        "craft": 1,
+        "cold": 1,
+        "food": 1,
+        "nature": 1
+      },
+      "items": [
+        {
+          "itemId": "ripsaw_blade",
+          "col": 4,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "poison_dagger",
+          "col": 4,
+          "row": 4,
+          "rotation": 1
+        },
+        {
+          "itemId": "cap_of_resilience",
+          "col": 5,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "snow_stick",
+          "col": 3,
+          "row": 3,
+          "rotation": 0
+        },
+        {
+          "itemId": "garlic",
+          "col": 3,
+          "row": 2,
+          "rotation": 0
+        }
+      ],
+      "itemIds": [
+        "ripsaw_blade",
+        "poison_dagger",
+        "cap_of_resilience",
+        "snow_stick",
+        "garlic"
+      ],
+      "key": "warrior_r16_tagged",
+      "label": "Воин · архетип · R16 · pool120"
+    },
+    "rogue_r1_tagged": {
+      "classId": "rogue",
+      "round": 1,
+      "archetype": "rogue",
+      "companionId": "s_shadow",
+      "gold": 11,
+      "power": 6,
+      "itemCount": 1,
+      "tagCounts": {
+        "food": 1,
+        "nature": 1,
+        "heal": 1
+      },
+      "items": [
+        {
+          "itemId": "healing_herb",
+          "col": 4,
+          "row": 3,
+          "rotation": 0
+        }
+      ],
+      "itemIds": [
+        "healing_herb"
+      ],
+      "key": "rogue_r1_tagged",
+      "label": "Разбойник · архетип · R1 · pool120"
+    },
+    "rogue_r8_tagged": {
+      "classId": "rogue",
+      "round": 8,
+      "archetype": "rogue",
+      "companionId": "s_shadow",
+      "gold": 99,
+      "power": 6,
+      "itemCount": 1,
+      "tagCounts": {
+        "utility": 1,
+        "magic": 1
+      },
+      "items": [
+        {
+          "itemId": "spark_stone",
+          "col": 4,
+          "row": 3,
+          "rotation": 0
+        }
+      ],
+      "itemIds": [
+        "spark_stone"
+      ],
+      "key": "rogue_r8_tagged",
+      "label": "Разбойник · архетип · R8 · pool120"
+    },
+    "rogue_r16_tagged": {
+      "classId": "rogue",
+      "round": 16,
+      "archetype": "rogue",
+      "companionId": "s_shadow",
+      "gold": 118,
+      "power": 163,
+      "itemCount": 7,
+      "tagCounts": {
+        "weapon": 2,
+        "spikes": 1,
+        "melee": 2,
+        "armor": 5,
+        "holy": 3,
+        "helmet": 1
+      },
+      "items": [
+        {
+          "itemId": "ripsaw_blade",
+          "col": 5,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "holy_armor",
+          "col": 3,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "titan_armor",
+          "col": 6,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "leather_armor",
+          "col": 5,
+          "row": 4,
+          "rotation": 1
+        },
+        {
+          "itemId": "holy_armor",
+          "col": 0,
+          "row": 0,
+          "rotation": 0
+        },
+        {
+          "itemId": "rusty_sword",
+          "col": 2,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "glowing_crown",
+          "col": 4,
+          "row": 1,
+          "rotation": 1
+        }
+      ],
+      "itemIds": [
+        "ripsaw_blade",
+        "holy_armor",
+        "titan_armor",
+        "leather_armor",
+        "rusty_sword",
+        "glowing_crown"
+      ],
+      "key": "rogue_r16_tagged",
+      "label": "Разбойник · архетип · R16 · pool120"
+    },
+    "mage_r1_tagged": {
+      "classId": "mage",
+      "round": 1,
+      "archetype": "mage",
+      "companionId": "s_arcane",
+      "gold": 7,
+      "power": 30,
+      "itemCount": 3,
+      "tagCounts": {
+        "weapon": 2,
+        "magic": 3,
+        "melee": 2,
+        "gem": 1
+      },
+      "items": [
+        {
+          "itemId": "apprentice_staff",
+          "col": 4,
+          "row": 4,
+          "rotation": 1
+        },
+        {
+          "itemId": "mana_crystal",
+          "col": 4,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "apprentice_staff",
+          "col": 5,
+          "row": 2,
+          "rotation": 0
+        }
+      ],
+      "itemIds": [
+        "apprentice_staff",
+        "mana_crystal"
+      ],
+      "key": "mage_r1_tagged",
+      "label": "Маг · архетип · R1 · pool120"
+    },
+    "mage_r8_tagged": {
+      "classId": "mage",
+      "round": 8,
+      "archetype": "mage",
+      "companionId": "s_arcane",
+      "gold": 68,
+      "power": 90,
+      "itemCount": 4,
+      "tagCounts": {
+        "weapon": 3,
+        "magic": 1,
+        "melee": 3,
+        "stun": 1,
+        "shoes": 1,
+        "armor": 1,
+        "luck": 1,
+        "debuff": 1
+      },
+      "items": [
+        {
+          "itemId": "apprentice_staff",
+          "col": 3,
+          "row": 4,
+          "rotation": 1
+        },
+        {
+          "itemId": "hammer",
+          "col": 4,
+          "row": 3,
+          "rotation": 1
+        },
+        {
+          "itemId": "leather_boots",
+          "col": 3,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "broom",
+          "col": 4,
+          "row": 1,
+          "rotation": 0
+        }
+      ],
+      "itemIds": [
+        "apprentice_staff",
+        "hammer",
+        "leather_boots",
+        "broom"
+      ],
+      "key": "mage_r8_tagged",
+      "label": "Маг · архетип · R8 · pool120"
+    },
+    "mage_r16_tagged": {
+      "classId": "mage",
+      "round": 16,
+      "archetype": "mage",
+      "companionId": "s_arcane",
+      "gold": 100,
+      "power": 279,
+      "itemCount": 10,
+      "tagCounts": {
+        "weapon": 6,
+        "spikes": 2,
+        "melee": 6,
+        "armor": 4,
+        "holy": 2,
+        "dark": 1,
+        "shoes": 1,
+        "luck": 1,
+        "craft": 4,
+        "debuff": 1,
+        "vampiric": 2,
+        "helmet": 1
+      },
+      "items": [
+        {
+          "itemId": "ripsaw_blade",
+          "col": 4,
+          "row": 3,
+          "rotation": 1
+        },
+        {
+          "itemId": "holy_armor",
+          "col": 3,
+          "row": 1,
+          "rotation": 1
+        },
+        {
+          "itemId": "villain_sword",
+          "col": 3,
+          "row": 3,
+          "rotation": 0
+        },
+        {
+          "itemId": "leather_boots",
+          "col": 4,
+          "row": 4,
+          "rotation": 1
+        },
+        {
+          "itemId": "thorn_whip",
+          "col": 4,
+          "row": 5,
+          "rotation": 1
+        },
+        {
+          "itemId": "holy_armor",
+          "col": 6,
+          "row": 5,
+          "rotation": 1
+        },
+        {
+          "itemId": "broom",
+          "col": 6,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "hungry_blade",
+          "col": 2,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "cap_of_resilience",
+          "col": 7,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "hungry_blade",
+          "col": 1,
+          "row": 1,
+          "rotation": 0
+        }
+      ],
+      "itemIds": [
+        "ripsaw_blade",
+        "holy_armor",
+        "villain_sword",
+        "leather_boots",
+        "thorn_whip",
+        "broom",
+        "hungry_blade",
+        "cap_of_resilience"
+      ],
+      "key": "mage_r16_tagged",
+      "label": "Маг · архетип · R16 · pool120"
+    },
+    "priest_r1_tagged": {
+      "classId": "priest",
+      "round": 1,
+      "archetype": "priest",
+      "companionId": "s_light",
+      "gold": 9,
+      "power": 19,
+      "itemCount": 3,
+      "tagCounts": {
+        "weapon": 1,
+        "magic": 2,
+        "melee": 1,
+        "accessory": 1,
+        "holy": 1,
+        "food": 1
+      },
+      "items": [
+        {
+          "itemId": "apprentice_staff",
+          "col": 3,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "star_of_courage",
+          "col": 4,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "blueberries",
+          "col": 4,
+          "row": 4,
+          "rotation": 0
+        }
+      ],
+      "itemIds": [
+        "apprentice_staff",
+        "star_of_courage",
+        "blueberries"
+      ],
+      "key": "priest_r1_tagged",
+      "label": "Жрец · архетип · R1 · pool120"
+    },
+    "priest_r8_tagged": {
+      "classId": "priest",
+      "round": 8,
+      "archetype": "priest",
+      "companionId": "s_light",
+      "gold": 78,
+      "power": 101,
+      "itemCount": 4,
+      "tagCounts": {
+        "weapon": 2,
+        "melee": 2,
+        "armor": 2,
+        "shield": 1,
+        "vampiric": 1,
+        "craft": 1
+      },
+      "items": [
+        {
+          "itemId": "knight_sword",
+          "col": 4,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "iron_shield",
+          "col": 2,
+          "row": 3,
+          "rotation": 0
+        },
+        {
+          "itemId": "hungry_blade",
+          "col": 3,
+          "row": 1,
+          "rotation": 0
+        },
+        {
+          "itemId": "leather_armor",
+          "col": 5,
+          "row": 2,
+          "rotation": 0
+        }
+      ],
+      "itemIds": [
+        "knight_sword",
+        "iron_shield",
+        "hungry_blade",
+        "leather_armor"
+      ],
+      "key": "priest_r8_tagged",
+      "label": "Жрец · архетип · R8 · pool120"
+    },
+    "priest_r16_tagged": {
+      "classId": "priest",
+      "round": 16,
+      "archetype": "priest",
+      "companionId": "s_light",
+      "gold": 164,
+      "power": 62,
+      "itemCount": 7,
+      "tagCounts": {
+        "food": 7,
+        "heal": 1,
+        "nature": 2,
+        "weapon": 1,
+        "melee": 1,
+        "craft": 1,
+        "potion": 1,
+        "cold": 1,
+        "pet": 1
+      },
+      "items": [
+        {
+          "itemId": "apple",
+          "col": 3,
+          "row": 3,
+          "rotation": 0
+        },
+        {
+          "itemId": "banana",
+          "col": 4,
+          "row": 4,
+          "rotation": 0
+        },
+        {
+          "itemId": "pan",
+          "col": 5,
+          "row": 3,
+          "rotation": 0
+        },
+        {
+          "itemId": "rage_potion",
+          "col": 4,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "snowcake",
+          "col": 5,
+          "row": 2,
+          "rotation": 0
+        },
+        {
+          "itemId": "cheese",
+          "col": 4,
+          "row": 3,
+          "rotation": 0
+        },
+        {
+          "itemId": "banana",
+          "col": 3,
+          "row": 2,
+          "rotation": 0
+        }
+      ],
+      "itemIds": [
+        "apple",
+        "banana",
+        "pan",
+        "rage_potion",
+        "snowcake",
+        "cheese"
+      ],
+      "key": "priest_r16_tagged",
+      "label": "Жрец · архетип · R16 · pool120"
+    }
+  }
+}

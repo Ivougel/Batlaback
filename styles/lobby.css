@@ -463,6 +463,49 @@
   50% { transform: scale(1.08); filter: drop-shadow(0 0 4px rgba(255, 220, 120, 0.45)); }
 }
 
+.lobby-fighter-emoji--mutation {
+  filter: drop-shadow(0 0 6px rgba(255, 120, 200, 0.55));
+}
+
+.lobby-fighter-card-avatar--mutation .lobby-fighter-emoji--prep-orbit {
+  animation-duration: 2.8s;
+}
+
+.lobby-fighter-card-avatar--form .lobby-fighter-emoji {
+  filter: drop-shadow(0 0 4px rgba(120, 200, 255, 0.4));
+}
+
+.lobby-mutation-badge {
+  position: absolute;
+  right: calc(-2px * var(--ui-scale));
+  bottom: calc(-2px * var(--ui-scale));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(14px * var(--ui-scale));
+  height: calc(14px * var(--ui-scale));
+  border-radius: 50%;
+  font-size: calc(9px * var(--ui-scale));
+  line-height: 1;
+  background: rgba(40, 28, 72, 0.95);
+  border: 1px solid rgba(160, 120, 255, 0.55);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  z-index: 2;
+}
+
+.lobby-mutation-badge--mutation {
+  border-color: rgba(255, 120, 200, 0.65);
+}
+
+.lobby-mutation-badge--form {
+  border-color: rgba(120, 200, 255, 0.55);
+}
+
+.lobby-fighter-card-avatar,
+.lobby-battle-bottom-chip-avatar {
+  position: relative;
+}
+
 #lobby-prep-chrome .lobby-fighter-card-list,
 .lobby-prep-roster-panel .lobby-fighter-card-list {
   flex-direction: column;

@@ -88,15 +88,37 @@ const ITEM_RECIPES = [
 const RECIPES_BY_INGREDIENT = new Map();
 const RECIPES_BY_OUTPUT = new Map();
 
-ITEM_RECIPES.forEach((recipe) => {
-  RECIPES_BY_OUTPUT.set(recipe.output, recipe);
-  recipe.inputs.forEach((input) => {
-    if (!RECIPES_BY_INGREDIENT.has(input.itemId)) {
-      RECIPES_BY_INGREDIENT.set(input.itemId, []);
-    }
-    RECIPES_BY_INGREDIENT.get(input.itemId).push(recipe);
+function rebuildCraftRecipeIndex() {
+  RECIPES_BY_INGREDIENT.clear();
+  RECIPES_BY_OUTPUT.clear();
+  ITEM_RECIPES.forEach((recipe) => {
+    RECIPES_BY_OUTPUT.set(recipe.output, recipe);
+    recipe.inputs.forEach((input) => {
+      if (!RECIPES_BY_INGREDIENT.has(input.itemId)) {
+        RECIPES_BY_INGREDIENT.set(input.itemId, []);
+      }
+      RECIPES_BY_INGREDIENT.get(input.itemId).push(recipe);
+    });
   });
-});
+}
+
+if (typeof getEnhancementCraftRecipes === "function") {
+  ITEM_RECIPES.push(...getEnhancementCraftRecipes());
+}
+
+function pruneCraftRecipesOutsidePool() {
+  if (typeof isItemInPool120 !== "function") return;
+  for (let i = ITEM_RECIPES.length - 1; i >= 0; i -= 1) {
+    const recipe = ITEM_RECIPES[i];
+    const ids = [recipe.output, ...recipe.inputs.map((input) => input.itemId)];
+    if (ids.some((id) => !isItemInPool120(id))) {
+      ITEM_RECIPES.splice(i, 1);
+    }
+  }
+}
+
+pruneCraftRecipesOutsidePool();
+rebuildCraftRecipeIndex();
 
 function recipeInputTotal(recipe) {
   return recipe.inputs.reduce((sum, input) => sum + input.count, 0);
@@ -196,7 +218,10 @@ function applyRecipe(containers, items, recipe, clusterItems) {
  * Пытается применить все подходящие рецепты на поле.
  * @returns {{ items: object[], crafted: object[] }}
  */
-function tryResolveCrafting(containers, items) {
+function tryResolveCrafting(containers, items, ctx = null) {
+  const craftCtx = ctx || (typeof getCraftContextFromGame === "function"
+    ? getCraftContextFromGame(typeof prepViewSide !== "undefined" ? prepViewSide : "player")
+    : {});
   const crafted = [];
   let nextItems = items;
   let changed = true;
@@ -206,6 +231,9 @@ function tryResolveCrafting(containers, items) {
     const components = getStrongCraftComponents(nextItems);
 
     for (const recipe of ITEM_RECIPES) {
+      if (typeof isCraftRecipeAvailable === "function" && !isCraftRecipeAvailable(recipe, craftCtx)) {
+        continue;
+      }
       let applied = null;
       for (const cluster of components) {
         if (!recipeMatchesCluster(cluster, recipe)) continue;
@@ -246,16 +274,22 @@ function getCraftTooltipLines(itemId) {
   const lines = [];
   const asOutput = getRecipeForOutput(itemId);
   if (asOutput) {
+    const ctx = typeof getCraftContextFromGame === "function" ? getCraftContextFromGame() : {};
+    const available = typeof isCraftRecipeAvailable !== "function" || isCraftRecipeAvailable(asOutput, ctx);
+    const hint = asOutput.hint && !available ? ` (${asOutput.hint})` : "";
     lines.push({
-      text: `⚗️ Крафт: ${formatRecipeInputs(asOutput)}`,
+      text: `⚗️ Крафт: ${formatRecipeInputs(asOutput)}${hint}`,
       style: "normal",
-      color: "#d2a8ff",
+      color: available ? "#d2a8ff" : "#8b949e",
     });
   }
 
   getRecipesUsingIngredient(itemId).forEach((recipe) => {
     const out = ITEM_CATALOG[recipe.output];
     if (!out) return;
+    const ctx = typeof getCraftContextFromGame === "function" ? getCraftContextFromGame() : {};
+    const available = typeof isCraftRecipeAvailable !== "function" || isCraftRecipeAvailable(recipe, ctx);
+    if (!available) return;
     lines.push({
       text: `⚗️ Рядом: ${formatRecipeInputs(recipe)} → ${out.icon} ${out.name}`,
       style: "normal",

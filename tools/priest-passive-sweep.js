@@ -71,7 +71,7 @@ const ctx = vm.createContext(sandbox);
 const ENGINE_FILES = [
   "classes.js",
   "items.js",
-  "items-bb-catalog.js",
+  "items-catalog.js",
   "systems/meta-effects.js",
   "backpack-engine.js",
   "systems/gem-sockets.js",

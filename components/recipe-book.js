@@ -96,7 +96,11 @@ function renderRecipeBookItemCard(def, meta = "") {
 }
 
 function renderRecipeBookRecipesSection() {
-  const rows = getAllCraftRecipes().map((recipe) => {
+  const ctx = typeof getCraftContextFromGame === "function" ? getCraftContextFromGame() : {};
+  const recipes = typeof getVisibleCraftRecipes === "function"
+    ? getVisibleCraftRecipes(ctx)
+    : getAllCraftRecipes();
+  const rows = recipes.map((recipe) => {
     const out = ITEM_CATALOG[recipe.output];
     return `
       <div class="recipe-book-recipe">
@@ -105,14 +109,14 @@ function renderRecipeBookRecipesSection() {
           <span class="recipe-book-arrow" aria-hidden="true">→</span>
           <span class="recipe-book-output">${out ? `${out.icon} ${out.name}` : recipe.output}</span>
         </div>
-        <p class="recipe-book-recipe-hint">Сложите все части вплотную — ребро к ребру</p>
+        <p class="recipe-book-recipe-hint">Сложите все части вплотную — ребро к ребру${recipe.hint ? ` · ${recipe.hint}` : ""}</p>
       </div>
     `;
   }).join("");
 
   return `
     <section class="recipe-book-section">
-      <h3 class="recipe-book-section-title">⚗️ Рецепты (${getAllCraftRecipes().length})</h3>
+      <h3 class="recipe-book-section-title">⚗️ Рецепты (${recipes.length})</h3>
       <div class="recipe-book-recipes">${rows}</div>
     </section>
   `;

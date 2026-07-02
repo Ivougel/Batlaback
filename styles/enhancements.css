@@ -1,0 +1,128 @@
+/**
+ * Слоты усилений в prep (отдельно от манекена).
+ */
+
+.prep-enhancement-strip {
+  flex: 1 1 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(8px * var(--ui-scale)) calc(10px * var(--ui-scale));
+  min-width: min(100%, 280px);
+  padding: calc(4px * var(--ui-scale)) 0;
+}
+
+.prep-enhancement-eyebrow {
+  font-size: calc(10px * var(--ui-scale));
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.65;
+  flex: 0 0 auto;
+}
+
+.prep-enhancement-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(6px * var(--ui-scale));
+  flex: 1 1 auto;
+}
+
+.enh-slot {
+  flex: 1 1 72px;
+  min-width: calc(68px * var(--ui-scale));
+  max-width: calc(120px * var(--ui-scale));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(2px * var(--ui-scale));
+  padding: calc(5px * var(--ui-scale)) calc(6px * var(--ui-scale));
+  border-radius: calc(8px * var(--ui-scale));
+  border: 1px dashed rgba(140, 120, 200, 0.35);
+  background: rgba(24, 20, 36, 0.55);
+  text-align: center;
+}
+
+.enh-slot--locked {
+  opacity: 0.45;
+  border-style: dotted;
+}
+
+.enh-slot--filled {
+  border-style: solid;
+  border-color: rgba(160, 130, 255, 0.55);
+  background: rgba(50, 36, 80, 0.5);
+}
+
+.enh-slot--empty {
+  border-color: rgba(120, 120, 140, 0.35);
+}
+
+.enh-slot-kicker {
+  font-size: calc(9px * var(--ui-scale));
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.7;
+}
+
+.enh-slot-icon {
+  font-size: calc(18px * var(--ui-scale));
+  line-height: 1;
+}
+
+.enh-slot--drop-target {
+  border-color: rgba(120, 220, 160, 0.85);
+  border-style: solid;
+  box-shadow: 0 0 0 1px rgba(120, 220, 160, 0.35);
+}
+
+.enh-slot--drop-invalid {
+  border-color: rgba(220, 100, 100, 0.75);
+}
+
+.enh-slot--dragging {
+  opacity: 0.55;
+}
+
+.shop-card--enhancement .shop-item-stack--enhancement {
+  align-items: center;
+}
+
+.shop-card--enhancement .item-icon-shell--enhancement {
+  width: calc(42px * var(--ui-scale));
+  height: calc(42px * var(--ui-scale));
+  display: grid;
+  place-items: center;
+  border-radius: calc(8px * var(--ui-scale));
+}
+
+.enh-shop-icon {
+  font-size: calc(22px * var(--ui-scale));
+  line-height: 1;
+}
+
+.enh-shop-slot-tag {
+  font-size: calc(9px * var(--ui-scale));
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.75;
+  text-align: center;
+}
+
+/* Усилители рюкзака (PR-C) */
+.shop-card--amplifier {
+  --shop-rarity-color: #5ec4a8;
+}
+
+.shop-card--amplifier .item-icon-shell {
+  background: rgba(60, 140, 120, 0.22);
+}
+
+#game-canvas.amplify-preview-mode {
+  box-shadow: 0 0 4px rgba(94, 196, 168, 0.1), inset 0 0 8px rgba(80, 180, 160, 0.04);
+}
+
+#app[data-phase="prep"] .prep-field-island:has(#game-canvas.amplify-preview-mode) .canvas-scale-wrap {
+  box-shadow:
+    0 14px 44px rgba(94, 196, 168, 0.1),
+    0 12px 40px rgba(0, 0, 0, 0.35);
+}

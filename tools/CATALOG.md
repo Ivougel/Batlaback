@@ -1,18 +1,29 @@
 # Каталог предметов
 
-Источник правды: **`tools/items-migrated.json`** (русский язык).
+Единый источник правды: **`tools/items-migrated.json`** (только ID из пула v120; полный архив: `tools/items-migrated-legacy.json`).
 
 ```
-tools/items-migrated.json  →  items-bb-catalog.js  →  ITEM_CATALOG
+tools/item-pool-120-manifest.json  →  tools/generate-item-pool-120.mjs
+  →  tools/items-migrated.json  →  items-catalog.js  →  ITEM_CATALOG
+  (+ enh / amplify / key / triple из systems/*.js)
 ```
 
-Ручные предметы — в **`items.js`** (`protectedIds` в JSON).
+Сборка:
+
+```bash
+bash tools/build-catalog.sh
+# или: npm run generate:item-pool
+```
+
+Логика предметов (`defItem`, слоты, магазин) — в **`items.js`** (без данных каталога).
 
 ## Сборка
 
 ```bash
 bash tools/build-catalog.sh
 ```
+
+После правки JSON всегда пересобирайте каталог. В рантайме подключаются только `items.js` + `items-catalog.js`.
 
 ## Поля предмета
 
@@ -30,5 +41,10 @@ bash tools/build-catalog.sh
 |------|------|
 | `tools/items-migrated.json` | править здесь |
 | `tools/build-catalog.sh` | сборка |
-| `tools/generate-bb-catalog.js` | генератор |
-| `items-bb-catalog.js` | результат (не править вручную) |
+| `tools/generate-items-catalog.js` | генератор |
+| `items-catalog.js` | результат (не править вручную) |
+| `items.js` | хелперы и `defItem`, без `ITEM_CATALOG` |
+
+## Миграция с двух файлов
+
+Однократно: `node tools/merge-manual-items-into-json.js` (уже выполнено — ручные предметы из старого `items.js` перенесены в JSON).

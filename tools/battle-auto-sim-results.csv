@@ -1,101 +1,101 @@
 simId,round,playerKey,enemyKey,playerLabel,enemyLabel,playerClass,enemyClass,winner,timeout,durationSec,playerEndHp,playerMaxHp,enemyEndHp,enemyMaxHp,playerDamageDealt,enemyDamageDealt,playerHealing,enemyHealing,playerBlock,enemyBlock,playerDamageTaken,enemyDamageTaken,playerHealVsTaken,playerHealRatio,enemyHealVsTaken,healAdvantagePlayer,healAdvantageEnemy
-1,1,priest_food,hardbot_style,Жрец: food sustain,Hard bot style,priest,warrior,enemy,false,55.1,0,127,262,318,4.6,64.1,61,8,56,52,188,0,0.32,13.29,,56.4,-56.1
-2,8,priest_food,hardbot_style,Жрец: food sustain,Hard bot style,priest,warrior,enemy,false,105.3,0,127,172,318,8.5,30.2,250,42,104,104,377,88.5,0.66,29.48,0.47,241.5,11.8
-3,1,priest_food,warrior_starter,Жрец: food sustain,Воин: старт,priest,warrior,player,false,52.4,70,127,0,118,4.5,3.2,62.2,0,52,52,119.2,118,0.52,13.71,0,57.7,-3.2
-4,8,priest_food,warrior_starter,Жрец: food sustain,Воин: старт,priest,warrior,player,false,47.3,76,127,0,118,3.5,3.8,68.6,0,48,44,119.8,118,0.57,19.43,0,65.1,-3.8
-5,1,priest_food,warrior_mid,Жрец: food sustain,Воин: mid,priest,warrior,enemy,false,58.4,0,127,36,130,3.9,89.8,101,50.1,56,137,228,143.9,0.44,25.63,0.35,97.1,-39.7
-6,8,priest_food,warrior_mid,Жрец: food sustain,Воин: mid,priest,warrior,enemy,false,59.3,0,127,24,130,5.8,86,119.3,63.5,56,137,246.3,169.8,0.48,20.72,0.37,113.6,-22.5
-7,1,priest_food,rogue_poison,Жрец: food sustain,Разбойник: яд,priest,rogue,enemy,false,27.4,0,127,95,108,1,134.9,12,0,24,0,139,13,0.09,12,0,11,-134.9
-8,8,priest_food,rogue_poison,Жрец: food sustain,Разбойник: яд,priest,rogue,enemy,false,26.1,0,127,79,108,1,117.2,13,0,24,0,140,29,0.09,13,0,12,-117.2
-9,1,priest_food,mage_staff,Жрец: food sustain,Маг: посох,priest,mage,enemy,false,38.1,0,127,36,108,15.5,170,98,0,36,0,225,71.5,0.44,6.31,0,82.5,-170
-10,8,priest_food,mage_staff,Жрец: food sustain,Маг: посох,priest,mage,enemy,false,35.4,0,127,26,108,13.8,147.7,86,0,36,0,213,81.8,0.4,6.25,0,72.2,-147.7
-11,1,priest_food,tank_block,Жрец: food sustain,Тank: блок,priest,warrior,player,false,62.4,60,127,0,118,4.1,0,89,41.4,60,827,156,159.4,0.57,21.76,0.26,84.9,41.4
-12,8,priest_food,tank_block,Жрец: food sustain,Тank: блок,priest,warrior,player,false,57.3,64,127,0,118,5.1,0,93,41.6,56,780,156,159.6,0.6,18.27,0.26,87.9,41.6
-13,1,priest_food,physical_burst,Жрец: food sustain,Физ burst,priest,warrior,enemy,false,41.4,0,127,32,118,14.4,151.4,93,0,40,0,220,86.4,0.42,6.45,0,78.6,-151.4
-14,8,priest_food,physical_burst,Жрец: food sustain,Физ burst,priest,warrior,enemy,false,35.2,0,127,43,118,11.4,149,83,0,32,0,210,75.4,0.4,7.26,0,71.6,-149
-15,1,priest_food,anti_heal_pressure,Жрец: food sustain,Anti-heal pressure,priest,rogue,enemy,false,26.9,0,127,85,108,10.6,147.2,30,0,24,0,157,22.6,0.19,2.82,0,19.4,-147.2
-16,8,priest_food,anti_heal_pressure,Жрец: food sustain,Anti-heal pressure,priest,rogue,enemy,false,27.1,0,127,65,108,11.1,128.6,32,0,24,0,159,43.1,0.2,2.89,0,20.9,-128.6
-17,1,priest_food,all_in_burst,Жрец: food sustain,All-in burst,priest,warrior,enemy,false,28.2,0,127,91,118,10.5,188.9,70,0,28,0,197,26.5,0.36,6.66,0,59.5,-188.9
-18,8,priest_food,all_in_burst,Жрец: food sustain,All-in burst,priest,warrior,enemy,false,28.7,0,127,67,118,10.8,175.5,71,0,28,0,198,50.8,0.36,6.6,0,60.3,-175.5
-19,1,priest_minimal,warrior_starter,Жрец: старт,Воин: старт,priest,warrior,player,false,57.9,9,114,0,118,0,32.7,48,0,0,56,152.7,118,0.31,,0,48,-32.7
-20,8,priest_minimal,warrior_starter,Жрец: старт,Воин: старт,priest,warrior,player,false,52.8,5,114,0,118,0,31.7,43,0,0,52,151.7,118,0.28,,0,43,-31.7
-21,1,priest_minimal,rogue_burst,Жрец: старт,Разбойник: burst,priest,rogue,enemy,false,12.8,0,114,108,108,0,122,5,0,0,0,119,0,0.04,,,5,-122
-22,8,priest_minimal,rogue_burst,Жрец: старт,Разбойник: burst,priest,rogue,enemy,false,11.2,0,114,108,108,0,118,4,0,0,0,118,0,0.03,,,4,-118
-23,1,heal_stack,hardbot_style,Хил-стак,Hard bot style,priest,warrior,enemy,true,120,64,139,173,318,0,47.2,352,45,0,116,427.3,90,0.82,,0.5,352,-2.2
-24,8,heal_stack,hardbot_style,Хил-стак,Hard bot style,priest,warrior,enemy,false,119.8,0,139,162,318,0,81.2,342,48,0,116,481,104,0.71,,0.46,342,-33.2
-25,1,heal_stack,dot_mix,Хил-стак,DoT mix,priest,rogue,enemy,false,24,0,139,108,108,0,160.5,20,0,0,0,159,0,0.13,,,20,-160.5
-26,8,heal_stack,dot_mix,Хил-стак,DoT mix,priest,rogue,enemy,false,22,0,139,101,108,0,155.9,21,1,0,0,160,8,0.13,,0.13,21,-154.9
-27,1,heal_stack,mage_fire,Хил-стак,Маг: огонь,priest,mage,enemy,false,25.4,0,139,108,108,0,208.7,69,0,0,0,208,0,0.33,,,69,-208.7
-28,8,heal_stack,mage_fire,Хил-стак,Маг: огонь,priest,mage,enemy,false,23,0,139,96,108,0,201.4,70,0,0,0,209,12,0.33,,0,70,-201.4
-29,1,heal_stack,poison_heavy,Хил-стак,Яд heavy,priest,rogue,enemy,false,28.9,0,139,98,108,0,149,14,2,0,0,153,12,0.09,,0.17,14,-147
-30,8,heal_stack,poison_heavy,Хил-стак,Яд heavy,priest,rogue,enemy,false,26.9,0,139,83,108,0,124.3,11,3,0,0,150,28,0.07,,0.11,11,-121.3
-31,1,sustain_mix,hardbot_style,Sustain mix,Hard bot style,priest,warrior,enemy,false,81.9,0,132,223,318,0,27.6,123,21,546,80,255,16,0.48,,1.31,123,-6.6
-32,8,sustain_mix,hardbot_style,Sustain mix,Hard bot style,priest,warrior,enemy,false,77.8,0,132,219,318,0,24.8,123,21,525,76,255,20,0.48,,1.05,123,-3.8
-33,1,sustain_mix,physical_burst,Sustain mix,Физ burst,priest,warrior,player,false,54.9,6,132,0,118,0,76,70,0,363,0,196,118,0.36,,0,70,-76
-34,8,sustain_mix,physical_burst,Sustain mix,Физ burst,priest,warrior,player,false,49.8,20,132,0,118,0,67.7,76,0,324,0,187.7,118,0.4,,0,76,-67.7
-35,1,sustain_mix,rogue_poison,Sustain mix,Разбойник: яд,priest,rogue,enemy,false,27.5,0,132,100,108,0,134.6,4,0,162,0,136,8,0.03,,0,4,-134.5
-36,8,sustain_mix,rogue_poison,Sustain mix,Разбойник: яд,priest,rogue,enemy,false,26.1,0,132,84,108,0,114.1,5,0,162,0,137,24,0.04,,0,5,-114.1
-37,1,tank_block,physical_burst,Тank: блок,Физ burst,warrior,warrior,player,false,54.9,18,118,0,118,0,16.7,37,0,741,0,136.7,118,0.27,,0,37,-16.7
-38,8,tank_block,physical_burst,Тank: блок,Физ burst,warrior,warrior,player,false,49.8,17,118,0,118,0,17.8,37,0,664,0,137.8,118,0.27,,0,37,-17.8
-39,1,tank_block,mage_fire,Тank: блок,Маг: огонь,warrior,mage,enemy,false,38.9,0,118,52,108,0,97.2,34,0,461,0,152,56,0.22,,0,34,-97.1
-40,8,tank_block,mage_fire,Тank: блок,Маг: огонь,warrior,mage,enemy,false,35.9,0,118,44,108,0,84.6,28,0,415,0,146,64,0.19,,0,28,-84.6
-41,1,tank_block,rogue_poison,Тank: блок,Разбойник: яд,warrior,rogue,enemy,false,24.8,0,118,108,108,0,131.5,4,0,289,0,122,0,0.03,,,4,-131.4
-42,8,tank_block,rogue_poison,Тank: блок,Разбойник: яд,warrior,rogue,enemy,false,24.5,0,118,92,108,0,109.3,4,0,289,0,122,16,0.03,,0,4,-109.3
-43,1,tank_block,all_in_burst,Тank: блок,All-in burst,warrior,warrior,enemy,false,51.7,0,118,14,118,0,56.9,42,0,707,0,160,104,0.26,,0,42,-56.9
-44,8,tank_block,all_in_burst,Тank: блок,All-in burst,warrior,warrior,enemy,false,46.8,0,118,10,118,0,40.1,28,0,621,0,146,108,0.19,,0,28,-40.1
-45,1,warrior_starter,warrior_starter,Воин: старт,Воин: старт,warrior,warrior,draw,false,56.9,0,118,0,118,3.8,3.2,0,0,56,56,118,118,0,0,0,-3.8,-3.2
-46,8,warrior_starter,warrior_starter,Воин: старт,Воин: старт,warrior,warrior,draw,false,51.8,0,118,0,118,4.4,4.4,0,0,52,48,118,118,0,0,0,-4.4,-4.4
-47,1,warrior_mid,warrior_heavy,Воин: mid,Воин: тяжёлый,warrior,warrior,enemy,false,46.4,0,130,93,160,0,108.9,58,13,108,474,188,80,0.31,,0.16,58,-95.9
-48,8,warrior_mid,warrior_heavy,Воин: mid,Воин: тяжёлый,warrior,warrior,enemy,false,43.8,0,130,85,160,0,103.3,50,13,100,444,180,88,0.28,,0.15,50,-90.3
-49,1,warrior_heavy,physical_burst,Воин: тяжёлый,Физ burst,warrior,warrior,player,false,26.6,158,160,0,118,132.8,8,6,0,278,0,8,118,0.75,0.05,0,-126.8,-8
-50,8,warrior_heavy,physical_burst,Воин: тяжёлый,Физ burst,warrior,warrior,player,false,22.7,154,160,0,118,117.1,6,4,0,226,0,10,118,0.4,0.03,0,-113.1,-6
-51,1,warrior_dual,warrior_mid,Воин: dual wield,Воин: mid,warrior,warrior,enemy,false,36.5,0,118,42,130,90.3,80,0,42,40,87,118,130.3,0,0,0.32,-90.3,-38
-52,8,warrior_dual,warrior_mid,Воин: dual wield,Воин: mid,warrior,warrior,enemy,false,33.4,0,118,37,130,87.1,73.8,0,42,36,79,118,135.1,0,0,0.31,-87.1,-31.8
-53,1,warrior_dual,tank_block,Воин: dual wield,Тank: блок,warrior,warrior,enemy,false,54.9,0,118,18,118,14.2,0,0,34.6,60,744,118,134.2,0,0,0.26,-14.2,34.6
-54,8,warrior_dual,tank_block,Воин: dual wield,Тank: блок,warrior,warrior,enemy,false,49.8,0,118,12,118,23.4,0,0,37,52,664,118,143.4,0,0,0.26,-23.4,37
-55,1,rogue_poison,heal_stack,Разбойник: яд,Хил-стак,rogue,priest,player,false,28,96,108,0,139,145.7,0,0,15,0,0,12,154,0,0,0.1,-145.7,15
-56,8,rogue_poison,heal_stack,Разбойник: яд,Хил-стак,rogue,priest,player,false,24.9,88,108,0,139,140.4,0,0,14,0,0,20,153,0,0,0.09,-140.3,14
-57,1,rogue_poison,tank_block,Разбойник: яд,Тank: блок,rogue,warrior,player,false,26.1,104,108,0,118,119.3,0,0,4,0,332,4,122,0,0,0.03,-119.3,4
-58,8,rogue_poison,tank_block,Разбойник: яд,Тank: блок,rogue,warrior,player,false,23.9,92,108,0,118,107.2,0,0,4,0,289,16,122,0,0,0.03,-107.2,4
-59,1,rogue_burst,mage_staff,Разбойник: burst,Маг: посох,rogue,mage,player,false,9.9,66,108,0,108,110,42,0,0,0,0,42,108,0,0,0,-110,-42
-60,8,rogue_burst,mage_staff,Разбойник: burst,Маг: посох,rogue,mage,player,false,11.8,41,108,0,108,109.4,66.6,0,0,0,0,66.6,108,0,0,0,-109.4,-66.6
-61,1,rogue_crit,heal_stack,Разбойник: crit,Хил-стак,rogue,priest,player,false,15.4,108,108,0,139,159.4,0,0,19,6,0,0,158,,0,0.12,-159.4,19
-62,8,rogue_crit,heal_stack,Разбойник: crit,Хил-стак,rogue,priest,player,false,11.4,108,108,0,139,154.9,0,0,8,4,0,0,147,,0,0.05,-154.9,8
-63,1,rogue_crit,glass_mage,Разбойник: crit,Стекло-маг,rogue,mage,player,false,9.5,67,108,0,118,123,41,0,0,4,0,41,118,0,0,0,-123,-41
-64,8,rogue_crit,glass_mage,Разбойник: crit,Стекло-маг,rogue,mage,player,false,13.7,33,108,0,118,124.4,75,0,3,6,0,75,121,0,0,0.02,-124.4,-72
-65,1,poison_heavy,sustain_mix,Яд heavy,Sustain mix,rogue,priest,player,false,26.6,104,108,0,132,132.8,0,0,4,0,162,4,136,0,0,0.03,-132.8,4
-66,8,poison_heavy,sustain_mix,Яд heavy,Sustain mix,rogue,priest,player,false,25.3,91,108,0,132,119,0,3,4,0,159,20,136,0.15,0.03,0.03,-116,4
-67,1,mage_staff,tank_block,Маг: посох,Тank: блок,mage,warrior,enemy,false,51.9,0,108,13,118,34.9,0,0,38,0,704,108,142.9,0,0,0.27,-34.9,38
-68,8,mage_staff,tank_block,Маг: посох,Тank: блок,mage,warrior,enemy,false,46.8,0,108,13,118,30.7,0,0,34,0,621,108,138.7,0,0,0.25,-30.7,34
-69,1,mage_fire,heal_stack,Маг: огонь,Хил-стак,mage,priest,player,false,25.1,108,108,0,139,216.5,0,0,73,0,0,0,212,,0,0.34,-216.5,73
-70,8,mage_fire,heal_stack,Маг: огонь,Хил-стак,mage,priest,player,false,24.9,88,108,0,139,195.5,0,0,68,0,0,20,207,0,0,0.33,-195.5,68
-71,1,mage_fire,hardbot_style,Маг: огонь,Hard bot style,mage,warrior,enemy,false,37.5,0,108,60,318,264.8,65.8,0,19,0,32,108,176.8,0,0,0.11,-264.8,-46.8
-72,8,mage_fire,hardbot_style,Маг: огонь,Hard bot style,mage,warrior,enemy,false,33.4,0,108,77,318,234,63.1,0,17,0,28,108,158,0,0,0.11,-234,-46
-73,1,mage_hybrid,tank_block,Маг: hybrid,Тank: блок,mage,warrior,player,false,42.9,58,120,0,118,86.3,0,10,40,0,581,72,158,0.14,0.12,0.25,-76.3,40
-74,8,mage_hybrid,tank_block,Маг: hybrid,Тank: блок,mage,warrior,player,false,38.1,58,120,0,118,78.4,0,10,32,0,501,72,150,0.14,0.13,0.21,-68.4,32
-75,1,mage_hybrid,warrior_mid,Маг: hybrid,Воин: mid,mage,warrior,player,false,28.5,9,120,0,130,164.4,120.1,17,39,0,66,128.1,169,0.13,0.1,0.23,-147.4,-81.1
-76,8,mage_hybrid,warrior_mid,Маг: hybrid,Воин: mid,mage,warrior,player,false,24.7,32,120,0,130,157,93,17,37,0,58,105,167,0.16,0.11,0.22,-140,-56
-77,1,glass_mage,physical_burst,Стекло-маг,Физ burst,mage,warrior,enemy,false,17.4,0,118,20,118,97.8,143.2,16,0,0,0,134,97.8,0.12,0.16,0,-81.8,-143.2
-78,8,glass_mage,physical_burst,Стекло-маг,Физ burst,mage,warrior,enemy,false,13.3,0,118,35,118,82.8,133.8,13,0,0,0,131,82.8,0.1,0.16,0,-69.8,-133.8
-79,1,glass_mage,rogue_poison,Стекло-маг,Разбойник: яд,mage,rogue,enemy,false,21.5,0,118,3,108,104.6,121.8,0,0,0,0,118,104.6,0,0,0,-104.6,-121.8
-80,8,glass_mage,rogue_poison,Стекло-маг,Разбойник: яд,mage,rogue,enemy,false,21.5,0,118,8,108,99.8,124.6,1,0,0,0,119,99.8,0.01,0.01,0,-98.8,-124.6
-81,1,hardbot_style,physical_burst,Hard bot style,Физ burst,warrior,warrior,player,false,38.4,135,318,0,118,71.6,191.1,22,0,36,0,105.1,118,0.21,0.31,0,-49.6,-191.1
-82,8,hardbot_style,physical_burst,Hard bot style,Физ burst,warrior,warrior,player,false,34.4,140,318,0,118,69.7,170.2,18,0,32,0,96.2,118,0.19,0.26,0,-51.7,-170.2
-83,1,hardbot_style,heal_stack,Hard bot style,Хил-стак,warrior,priest,player,true,120,173,318,59,139,45.5,0,45,346,116,0,90,425.5,0.5,0.99,0.81,-0.5,346
-84,8,hardbot_style,heal_stack,Hard bot style,Хил-стак,warrior,priest,player,true,120,165,318,41,139,64.6,0,49,367,120,0,102,464.6,0.48,0.76,0.79,-15.6,367
-85,1,scaling_hearts,priest_food,Scaling hearts,Жрец: food sustain,warrior,priest,player,false,114.4,239,330,0,127,9.4,9.4,102.1,244.2,112,112,93.2,371.2,1.1,10.84,0.66,92.7,234.9
-86,8,scaling_hearts,priest_food,Scaling hearts,Жрец: food sustain,warrior,priest,player,false,101.3,246,330,0,127,7.5,8.7,96.2,211.6,100,100,80.7,338.6,1.19,12.87,0.62,88.8,202.8
-87,1,scaling_hearts,physical_burst,Scaling hearts,Физ burst,warrior,warrior,player,false,48.4,110,330,0,118,30.7,264.3,78,0,48,0,198.3,118,0.39,2.54,0,47.3,-264.3
-88,8,scaling_hearts,physical_burst,Scaling hearts,Физ burst,warrior,warrior,player,false,44.3,114,330,0,118,26.2,239.4,69,0,44,0,185.4,118,0.37,2.64,0,42.8,-239.4
-89,1,scaling_hearts,mage_fire,Scaling hearts,Маг: огонь,warrior,mage,player,false,47.4,28,330,0,108,25.6,343.3,73,0,40,0,275.3,108,0.27,2.85,0,47.4,-343.3
-90,8,scaling_hearts,mage_fire,Scaling hearts,Маг: огонь,warrior,mage,player,false,42.3,25,330,0,108,26.1,329.4,66,0,36,0,271.4,108,0.24,2.53,0,39.9,-329.4
-91,1,all_in_burst,heal_stack,All-in burst,Хил-стак,warrior,priest,player,false,22.6,118,118,0,139,211.9,0,0,70,0,0,0,209,,0,0.33,-211.9,70
-92,8,all_in_burst,heal_stack,All-in burst,Хил-стак,warrior,priest,player,false,22.9,106,118,0,139,197.5,0,0,69,0,0,12,208,0,0,0.33,-197.5,69
-93,1,anti_heal_pressure,heal_stack,Anti-heal pressure,Хил-стак,rogue,priest,player,false,25.3,108,108,0,139,169.2,0,0,29,0,0,0,168,,0,0.17,-169.2,29
-94,8,anti_heal_pressure,heal_stack,Anti-heal pressure,Хил-стак,rogue,priest,player,false,23.6,96,108,0,139,154.4,0,0,27,0,0,12,166,0,0,0.16,-154.4,27
-95,1,anti_heal_pressure,sustain_mix,Anti-heal pressure,Sustain mix,rogue,priest,player,false,29.3,92,108,0,132,137.1,0,0,18,0,165,16,150,0,0,0.12,-137.1,18
-96,8,anti_heal_pressure,sustain_mix,Anti-heal pressure,Sustain mix,rogue,priest,player,false,28.8,76,108,0,132,117.2,0,0,17,0,162,32,149,0,0,0.11,-117.2,17
-97,1,dot_mix,tank_block,DoT mix,Тank: блок,rogue,warrior,player,false,24.3,108,108,0,118,124.6,0,0,6,0,289,0,124,,0,0.05,-124.6,6
-98,8,dot_mix,tank_block,DoT mix,Тank: блок,rogue,warrior,player,false,23,97,108,0,118,114.6,0,1,7,0,289,12,125,0.08,0.01,0.06,-113.6,7
-99,1,dot_mix,warrior_heavy,DoT mix,Воин: тяжёлый,rogue,warrior,player,false,27.4,26,108,0,160,170.7,108.7,27,5,0,256,108.7,165,0.25,0.16,0.03,-143.7,-103.7
-100,8,dot_mix,warrior_heavy,DoT mix,Воин: тяжёлый,rogue,warrior,player,false,27.5,0,108,0,160,148,110.9,27,5,0,256,134.9,165,0.2,0.18,0.03,-121,-105.9
+1,1,priest_food,hardbot_style,Жрец: food sustain,Hard bot style,priest,warrior,enemy,false,95.4,0,127,197,318,8.9,44,203,31,92,92,330,52.5,0.62,22.89,0.59,194.1,-13
+2,8,priest_food,hardbot_style,Жрец: food sustain,Hard bot style,priest,warrior,enemy,false,106.3,0,127,172,318,8.3,33.8,258,44,104,104,385,90.3,0.67,31.12,0.49,249.7,10.2
+3,1,priest_food,warrior_starter,Жрец: food sustain,Воин: старт,priest,warrior,player,false,52.4,71,127,0,118,4,4.4,64.3,0,48,52,120.4,118,0.53,16.11,0,60.3,-4.4
+4,8,priest_food,warrior_starter,Жрец: food sustain,Воин: старт,priest,warrior,player,false,47.3,72,127,0,118,5.9,4.2,65.3,0,44,44,120.2,118,0.54,11.07,0,59.4,-4.2
+5,1,priest_food,warrior_mid,Жрец: food sustain,Воин: mid,priest,warrior,enemy,false,61.4,0,127,29,130,4.4,94.9,116,55.3,60,145,243,156.4,0.48,26.13,0.35,111.6,-39.7
+6,8,priest_food,warrior_mid,Жрец: food sustain,Воин: mid,priest,warrior,enemy,false,59.3,0,127,24,130,5.5,83.9,120,63.5,60,140,247,169.5,0.49,22.02,0.37,114.6,-20.3
+7,1,priest_food,rogue_poison,Жрец: food sustain,Разбойник: яд,priest,rogue,enemy,false,25.2,0,127,103,108,1,133.8,9,0,24,0,136,5,0.07,9,0,8,-133.8
+8,8,priest_food,rogue_poison,Жрец: food sustain,Разбойник: яд,priest,rogue,enemy,false,24.6,0,127,82,108,2.2,116.4,9,0,24,0,136,26.2,0.07,4.15,0,6.8,-116.4
+9,1,priest_food,mage_staff,Жрец: food sustain,Маг: посох,priest,mage,enemy,false,39,0,127,33,108,15.4,161.6,88,0,36,0,215,75.4,0.41,5.72,0,72.6,-161.6
+10,8,priest_food,mage_staff,Жрец: food sustain,Маг: посох,priest,mage,enemy,false,33.8,0,127,29,108,19.2,148.6,79,0,32,0,206,79.2,0.38,4.11,0,59.8,-148.6
+11,1,priest_food,tank_block,Жрец: food sustain,Тank: блок,priest,warrior,player,false,62.4,57,127,0,118,4.9,0,86,41.5,60,827,156,159.5,0.55,17.59,0.26,81.1,41.5
+12,8,priest_food,tank_block,Жрец: food sustain,Тank: блок,priest,warrior,player,false,58.3,65,127,0,118,3.7,0,98,43.5,56,784,160,161.5,0.61,26.78,0.27,94.3,43.5
+13,1,priest_food,physical_burst,Жрец: food sustain,Физ burst,priest,warrior,enemy,false,37.9,0,127,46,118,15.7,154.4,81,0,36,0,208,71.7,0.39,5.17,0,65.3,-154.4
+14,8,priest_food,physical_burst,Жрец: food sustain,Физ burst,priest,warrior,enemy,false,35.5,0,127,36,118,13.6,141,80,0,32,0,207,81.6,0.39,5.9,0,66.4,-141
+15,1,priest_food,anti_heal_pressure,Жрец: food sustain,Anti-heal pressure,priest,rogue,enemy,false,27.9,0,127,79,108,12.8,139.3,27,0,24,0,154,28.8,0.18,2.11,0,14.2,-139.3
+16,8,priest_food,anti_heal_pressure,Жрец: food sustain,Anti-heal pressure,priest,rogue,enemy,false,27.4,0,127,58,108,13.7,127.9,34,0,24,0,161,49.7,0.21,2.49,0,20.3,-127.9
+17,1,priest_food,all_in_burst,Жрец: food sustain,All-in burst,priest,warrior,enemy,false,29.5,0,127,80,118,13.8,170.4,67,0,28,0,194,37.8,0.35,4.86,0,53.2,-170.4
+18,8,priest_food,all_in_burst,Жрец: food sustain,All-in burst,priest,warrior,enemy,false,27.8,0,127,73,118,8.9,178.7,64,0,24,0,191,44.9,0.34,7.19,0,55.1,-178.7
+19,1,priest_minimal,warrior_starter,Жрец: старт,Воин: старт,priest,warrior,player,false,57.9,6,114,0,118,0,35.5,48,0,0,56,155.5,118,0.31,,0,48,-35.5
+20,8,priest_minimal,warrior_starter,Жрец: старт,Воин: старт,priest,warrior,player,false,52.8,6,114,0,118,0,32.6,45,0,0,52,152.6,118,0.29,,0,45,-32.6
+21,1,priest_minimal,rogue_burst,Жрец: старт,Разбойник: burst,priest,rogue,enemy,false,9.1,0,114,108,108,0,117,3,0,0,0,117,0,0.03,,,3,-117
+22,8,priest_minimal,rogue_burst,Жрец: старт,Разбойник: burst,priest,rogue,enemy,false,15.8,0,114,108,108,0,124.5,8,0,0,0,122,0,0.07,,,8,-124.5
+23,1,heal_stack,hardbot_style,Хил-стак,Hard bot style,priest,warrior,enemy,true,120,63,139,173,318,0,39.5,343.5,45,0,116,419.6,90,0.82,,0.5,343.5,5.5
+24,8,heal_stack,hardbot_style,Хил-стак,Hard bot style,priest,warrior,enemy,true,120,9,139,165,318,0,78.6,349,49,0,116,478.6,102,0.73,,0.48,349,-29.6
+25,1,heal_stack,dot_mix,Хил-стак,DoT mix,priest,rogue,enemy,false,21.6,0,139,108,108,0,163.7,18,0,0,0,157,0,0.11,,,18,-163.7
+26,8,heal_stack,dot_mix,Хил-стак,DoT mix,priest,rogue,enemy,false,21.5,0,139,105,108,0,159.8,19,1,0,0,158,4,0.12,,0.25,19,-158.8
+27,1,heal_stack,mage_fire,Хил-стак,Маг: огонь,priest,mage,enemy,false,27.7,0,139,100,108,0,216.2,83,0,0,0,222,8,0.37,,0,83,-216.2
+28,8,heal_stack,mage_fire,Хил-стак,Маг: огонь,priest,mage,enemy,false,24.1,0,139,92,108,0,193.2,69,0,0,0,208,16,0.33,,0,69,-193.2
+29,1,heal_stack,poison_heavy,Хил-стак,Яд heavy,priest,rogue,enemy,false,28.1,0,139,96,108,0,146,13,0,0,0,152,12,0.09,,0,13,-146
+30,8,heal_stack,poison_heavy,Хил-стак,Яд heavy,priest,rogue,enemy,false,25.9,0,139,89,108,0,128,11,5,0,0,150,24,0.07,,0.21,11,-123
+31,1,sustain_mix,hardbot_style,Sustain mix,Hard bot style,priest,warrior,enemy,false,78.9,0,132,227,318,0,34.2,117,19,525,76,249,10,0.47,,1.9,117,-15.2
+32,8,sustain_mix,hardbot_style,Sustain mix,Hard bot style,priest,warrior,enemy,false,74.8,0,132,223,318,0,29.9,114,19,486,72,246,14,0.46,,1.36,114,-10.9
+33,1,sustain_mix,physical_burst,Sustain mix,Физ burst,priest,warrior,enemy,false,53.9,0,132,2,118,0,86.7,69,0,345,0,201,116,0.34,,0,69,-86.7
+34,8,sustain_mix,physical_burst,Sustain mix,Физ burst,priest,warrior,player,false,49.8,2,132,0,118,0,76.3,66,0,324,0,196.3,118,0.34,,0,66,-76.3
+35,1,sustain_mix,rogue_poison,Sustain mix,Разбойник: яд,priest,rogue,enemy,false,26.8,0,132,104,108,0,135.7,4,0,162,0,136,4,0.03,,0,4,-135.7
+36,8,sustain_mix,rogue_poison,Sustain mix,Разбойник: яд,priest,rogue,enemy,false,25.3,0,132,88,108,0,121.3,4,0,144,0,136,20,0.03,,0,4,-121.3
+37,1,tank_block,physical_burst,Тank: блок,Физ burst,warrior,warrior,player,false,54.9,18,118,0,118,0,14.8,35,0,741,0,134.8,118,0.26,,0,35,-14.8
+38,8,tank_block,physical_burst,Тank: блок,Физ burst,warrior,warrior,player,false,49.8,21,118,0,118,0,12.9,36,0,664,0,132.9,118,0.27,,0,36,-12.9
+39,1,tank_block,mage_fire,Тank: блок,Маг: огонь,warrior,mage,enemy,false,38.9,0,118,52,108,0,94.7,31,0,461,0,149,56,0.21,,0,31,-94.7
+40,8,tank_block,mage_fire,Тank: блок,Маг: огонь,warrior,mage,enemy,false,35.7,0,118,48,108,0,94.6,31,0,418,0,149,60,0.21,,0,31,-94.6
+41,1,tank_block,rogue_poison,Тank: блок,Разбойник: яд,warrior,rogue,enemy,false,27,0,118,100,108,0,117.6,4,0,332,0,122,8,0.03,,0,4,-117.5
+42,8,tank_block,rogue_poison,Тank: блок,Разбойник: яд,warrior,rogue,enemy,false,23.6,0,118,96,108,0,115.8,4,0,289,0,122,12,0.03,,0,4,-115.8
+43,1,tank_block,all_in_burst,Тank: блок,All-in burst,warrior,warrior,enemy,false,51.9,0,118,10,118,0,47.6,36,0,701,0,154,108,0.23,,0,36,-47.6
+44,8,tank_block,all_in_burst,Тank: блок,All-in burst,warrior,warrior,enemy,false,46.8,0,118,10,118,0,55.8,40,0,621,0,158,108,0.25,,0,40,-55.8
+45,1,warrior_starter,warrior_starter,Воин: старт,Воин: старт,warrior,warrior,draw,false,56.9,0,118,0,118,3.5,4.1,0,0,56,56,118,118,0,0,0,-3.5,-4
+46,8,warrior_starter,warrior_starter,Воин: старт,Воин: старт,warrior,warrior,draw,false,51.8,0,118,0,118,3.9,2.9,0,0,48,48,118,118,0,0,0,-3.8,-2.9
+47,1,warrior_mid,warrior_heavy,Воин: mid,Воин: тяжёлый,warrior,warrior,enemy,false,47.4,0,130,87,160,0,103.7,54,11,108,482,184,84,0.29,,0.13,54,-92.7
+48,8,warrior_mid,warrior_heavy,Воин: mid,Воин: тяжёлый,warrior,warrior,enemy,false,41.3,0,130,91,160,0,100,48,11,95,414,178,80,0.27,,0.14,48,-89
+49,1,warrior_heavy,physical_burst,Воин: тяжёлый,Физ burst,warrior,warrior,player,false,25.9,158,160,0,118,126.5,9,7,0,256,0,9,118,0.78,0.06,0,-119.5,-9
+50,8,warrior_heavy,physical_burst,Воин: тяжёлый,Физ burst,warrior,warrior,player,false,23.4,151,160,0,118,113.2,9,8,0,248,0,17,118,0.47,0.07,0,-105.1,-9
+51,1,warrior_dual,warrior_mid,Воин: dual wield,Воин: mid,warrior,warrior,enemy,false,36.5,0,118,46,130,88.1,82,0,44,40,87,118,128.1,0,0,0.34,-88.1,-38
+52,8,warrior_dual,warrior_mid,Воин: dual wield,Воин: mid,warrior,warrior,enemy,false,34.6,0,118,35,130,84.6,71.4,0,42,40,79,118,136.6,0,0,0.31,-84.6,-29.4
+53,1,warrior_dual,tank_block,Воин: dual wield,Тank: блок,warrior,warrior,enemy,false,54.9,0,118,10,118,29.9,0,0,42,60,741,118,149.9,0,0,0.28,-29.9,42
+54,8,warrior_dual,tank_block,Воин: dual wield,Тank: блок,warrior,warrior,enemy,false,49.8,0,118,7,118,34.1,0,0,43,56,664,118,154.1,0,0,0.28,-34.1,43
+55,1,rogue_poison,heal_stack,Разбойник: яд,Хил-стак,rogue,priest,player,false,26.3,104,108,0,139,159.5,0,0,14,0,0,4,153,0,0,0.09,-159.5,14
+56,8,rogue_poison,heal_stack,Разбойник: яд,Хил-стак,rogue,priest,player,false,25.5,88,108,0,139,139,0,0,14,0,0,20,153,0,0,0.09,-139,14
+57,1,rogue_poison,tank_block,Разбойник: яд,Тank: блок,rogue,warrior,player,false,25.4,108,108,0,118,128.4,0,0,4,0,319,0,122,,0,0.03,-128.4,4
+58,8,rogue_poison,tank_block,Разбойник: яд,Тank: блок,rogue,warrior,player,false,23.4,96,108,0,118,111.5,0,0,4,0,289,12,122,0,0,0.03,-111.5,4
+59,1,rogue_burst,mage_staff,Разбойник: burst,Маг: посох,rogue,mage,player,false,12.1,38,108,0,108,110,70,0,0,0,0,70,108,0,0,0,-110,-70
+60,8,rogue_burst,mage_staff,Разбойник: burst,Маг: посох,rogue,mage,player,false,14.3,11,108,0,108,116.7,97.2,0,0,0,0,97.2,108,0,0,0,-116.7,-97.2
+61,1,rogue_crit,heal_stack,Разбойник: crit,Хил-стак,rogue,priest,player,false,16.4,108,108,0,139,158.4,0,0,18,6,0,0,157,,0,0.11,-158.4,18
+62,8,rogue_crit,heal_stack,Разбойник: crit,Хил-стак,rogue,priest,player,false,15.1,108,108,0,139,155,0,0,15,6,0,0,154,,0,0.1,-155,15
+63,1,rogue_crit,glass_mage,Разбойник: crit,Стекло-маг,rogue,mage,player,false,9.4,66,108,0,118,123,42,0,0,4,0,42,118,0,0,0,-123,-42
+64,8,rogue_crit,glass_mage,Разбойник: crit,Стекло-маг,rogue,mage,player,false,16.1,49,108,0,118,120.4,58.6,0,1,6,0,58.6,119,0,0,0.01,-120.4,-57.6
+65,1,poison_heavy,sustain_mix,Яд heavy,Sustain mix,rogue,priest,player,false,27,100,108,0,132,129.8,0,0,4,0,162,8,136,0,0,0.03,-129.8,4
+66,8,poison_heavy,sustain_mix,Яд heavy,Sustain mix,rogue,priest,player,false,25.9,89,108,0,132,119.3,0,5,4,0,162,24,136,0.21,0.04,0.03,-114.3,4
+67,1,mage_staff,tank_block,Маг: посох,Тank: блок,mage,warrior,enemy,false,51.9,0,108,15,118,30,0,0,34.8,0,698,108,138,0,0,0.25,-30,34.8
+68,8,mage_staff,tank_block,Маг: посох,Тank: блок,mage,warrior,enemy,false,46.8,0,108,11,118,35.5,0,0,36,0,621,108,143.5,0,0,0.25,-35.5,36
+69,1,mage_fire,heal_stack,Маг: огонь,Хил-стак,mage,priest,player,false,24.9,108,108,0,139,212.1,0,0,71,0,0,0,210,,0,0.34,-212.1,71
+70,8,mage_fire,heal_stack,Маг: огонь,Хил-стак,mage,priest,player,false,21.7,104,108,0,139,199.4,0,0,62,0,0,4,201,0,0,0.31,-199.4,62
+71,1,mage_fire,hardbot_style,Маг: огонь,Hard bot style,mage,warrior,enemy,false,37.5,0,108,52,318,273.8,66.1,0,20,0,32,108,185.8,0,0,0.11,-273.8,-46
+72,8,mage_fire,hardbot_style,Маг: огонь,Hard bot style,mage,warrior,enemy,false,33.7,0,108,57,318,253.4,61.2,0,16,0,28,108,177.4,0,0,0.09,-253.4,-45.1
+73,1,mage_hybrid,tank_block,Маг: hybrid,Тank: блок,mage,warrior,player,false,39,74,120,0,118,102.3,0,10,40,0,505,56,158,0.18,0.1,0.25,-92.3,40
+74,8,mage_hybrid,tank_block,Маг: hybrid,Тank: блок,mage,warrior,player,false,37.5,62,120,0,118,85.4,0,10,34,0,495,68,152,0.15,0.12,0.22,-75.4,34
+75,1,mage_hybrid,warrior_mid,Маг: hybrid,Воин: mid,mage,warrior,player,false,28.5,10,120,0,130,164.8,120,18,40,0,66,128,170,0.14,0.11,0.24,-146.8,-80
+76,8,mage_hybrid,warrior_mid,Маг: hybrid,Воин: mid,mage,warrior,player,false,26.4,10,120,0,130,147.9,107.2,17,37,0,58,127.2,167,0.13,0.11,0.22,-130.9,-70.2
+77,1,glass_mage,physical_burst,Стекло-маг,Физ burst,mage,warrior,draw,false,17.6,0,118,0,118,120.6,147.2,22,0,0,0,140,118,0.16,0.18,0,-98.6,-147.2
+78,8,glass_mage,physical_burst,Стекло-маг,Физ burst,mage,warrior,enemy,false,15.1,0,118,23,118,94.6,133.7,15,0,0,0,133,94.6,0.11,0.16,0,-79.6,-133.7
+79,1,glass_mage,rogue_poison,Стекло-маг,Разбойник: яд,mage,rogue,player,false,20.8,10,118,0,108,110,107.7,0,0,0,0,107.7,108,0,0,0,-110,-107.7
+80,8,glass_mage,rogue_poison,Стекло-маг,Разбойник: яд,mage,rogue,player,false,20.1,6,118,0,108,109,111.6,0,0,0,0,111.6,108,0,0,0,-109,-111.6
+81,1,hardbot_style,physical_burst,Hard bot style,Физ burst,warrior,warrior,player,false,38.5,136,318,0,118,71,187.9,20,0,36,0,101.9,118,0.2,0.28,0,-51,-187.9
+82,8,hardbot_style,physical_burst,Hard bot style,Физ burst,warrior,warrior,player,false,35.4,118,318,0,118,65.7,189.6,18,0,36,0,117.6,118,0.15,0.27,0,-47.7,-189.6
+83,1,hardbot_style,heal_stack,Hard bot style,Хил-стак,warrior,priest,player,true,120,172,318,59,139,48,0,44,348,116,0,90,428,0.49,0.92,0.81,-4,348
+84,8,hardbot_style,heal_stack,Hard bot style,Хил-стак,warrior,priest,player,true,120,165,318,13,139,76.9,0,49,351,116,0,102,476.9,0.48,0.64,0.74,-27.9,351
+85,1,scaling_hearts,priest_food,Scaling hearts,Жрец: food sustain,warrior,priest,player,false,106.4,244,330,0,127,8.9,8.4,90.3,213.4,104,104,76.4,340.4,1.18,10.19,0.63,81.4,205
+86,8,scaling_hearts,priest_food,Scaling hearts,Жрец: food sustain,warrior,priest,player,false,102.3,243,330,0,127,9.4,7.6,94.4,216.5,100,100,81.6,343.5,1.16,10.05,0.63,85,208.9
+87,1,scaling_hearts,physical_burst,Scaling hearts,Физ burst,warrior,warrior,player,false,49.4,110,330,0,118,29.8,260.8,77,0,48,0,196.8,118,0.39,2.59,0,47.2,-260.8
+88,8,scaling_hearts,physical_burst,Scaling hearts,Физ burst,warrior,warrior,player,false,44.3,117,330,0,118,27.3,242.8,76,0,44,0,188.8,118,0.4,2.78,0,48.7,-242.7
+89,1,scaling_hearts,mage_fire,Scaling hearts,Маг: огонь,warrior,mage,player,false,48.4,6,330,0,108,23.7,366,76,0,40,0,300,108,0.25,3.21,0,52.3,-366
+90,8,scaling_hearts,mage_fire,Scaling hearts,Маг: огонь,warrior,mage,player,false,42.6,47,330,0,108,25.2,304,63,0,36,0,246,108,0.26,2.5,0,37.9,-304
+91,1,all_in_burst,heal_stack,All-in burst,Хил-стак,warrior,priest,player,false,26.3,114,118,0,139,238.1,0,0,90,0,0,4,229,0,0,0.39,-238.1,90
+92,8,all_in_burst,heal_stack,All-in burst,Хил-стак,warrior,priest,player,false,21.8,114,118,0,139,214.8,0,0,72,0,0,4,211,0,0,0.34,-214.8,72
+93,1,anti_heal_pressure,heal_stack,Anti-heal pressure,Хил-стак,rogue,priest,player,false,29,92,108,0,139,164.5,0,0,40,0,0,16,179,0,0,0.22,-164.5,40
+94,8,anti_heal_pressure,heal_stack,Anti-heal pressure,Хил-стак,rogue,priest,player,false,22.9,96,108,0,139,156.9,0,0,29,0,0,12,168,0,0,0.17,-156.9,29
+95,1,anti_heal_pressure,sustain_mix,Anti-heal pressure,Sustain mix,rogue,priest,player,false,28.6,96,108,0,132,134.3,0,0,14,0,165,12,146,0,0,0.1,-134.3,14
+96,8,anti_heal_pressure,sustain_mix,Anti-heal pressure,Sustain mix,rogue,priest,player,false,25.9,84,108,0,132,121.5,0,0,13,0,162,24,145,0,0,0.09,-121.5,13
+97,1,dot_mix,tank_block,DoT mix,Тank: блок,rogue,warrior,player,false,25,108,108,0,118,125,0,0,6,0,292,0,124,,0,0.05,-125,6
+98,8,dot_mix,tank_block,DoT mix,Тank: блок,rogue,warrior,player,false,23.5,98,108,0,118,114.2,0,2,4,0,289,12,122,0.17,0.02,0.03,-112.2,4
+99,1,dot_mix,warrior_heavy,DoT mix,Воин: тяжёлый,rogue,warrior,player,false,27.5,0,108,0,160,161.6,133.7,30,5,0,256,137.7,165,0.22,0.19,0.03,-131.6,-128.7
+100,8,dot_mix,warrior_heavy,DoT mix,Воин: тяжёлый,rogue,warrior,player,false,25.6,1,108,0,160,149.1,116.1,25,4,0,226,132.1,164,0.19,0.17,0.02,-124.1,-112.1

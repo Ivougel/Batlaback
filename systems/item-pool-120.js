@@ -1,0 +1,314 @@
+/**
+ * Пул v120 — единственный игровой каталог предметов.
+ * Сгенерировано tools/generate-item-pool-120.mjs
+ * @see docs/item-pool-120-gdd.md
+ */
+
+const ITEM_POOL_120_MANIFEST = {
+  "version": 1,
+  "name": "pool-120",
+  "description": "Курированный пул: 52 системных (без дубля dagger) + 68 предметов рюкзака",
+  "generatedAt": "2026-07-02T13:24:48.481Z",
+  "counts": {
+    "starter": 8,
+    "enhancement": 24,
+    "amplifier": 10,
+    "key": 4,
+    "triple_support": 7,
+    "core_shop": 68,
+    "total": 120
+  },
+  "layers": {
+    "starter": [
+      "rusty_sword",
+      "iron_helmet",
+      "dagger",
+      "poison_vial",
+      "apprentice_staff",
+      "mana_crystal",
+      "apple",
+      "banana"
+    ],
+    "enhancement": [
+      "enh_stray_charm",
+      "enh_ember_crown",
+      "enh_hymn_veil",
+      "enh_shadow_hood",
+      "enh_frost_circlet",
+      "enh_inquisitor_mask",
+      "enh_bard_crown",
+      "enh_oracle_diadem",
+      "enh_defeated_breastplate",
+      "enh_holy_aegis",
+      "enh_guardian_mail",
+      "enh_zealot_vestment",
+      "enh_plague_bindings",
+      "enh_arcane_robe",
+      "enh_juggernaut_plate",
+      "enh_rogue_vest",
+      "enh_mad_scholar_sandals",
+      "enh_assassin_treads",
+      "enh_swift_treads",
+      "enh_paladin_greaves",
+      "enh_frost_walkers",
+      "enh_trickster_slippers",
+      "enh_pyro_steps",
+      "enh_guardian_sabatons"
+    ],
+    "amplifier": [
+      "amplify_fire",
+      "amplify_holy",
+      "amplify_poison",
+      "amplify_magic",
+      "amplify_melee",
+      "amplify_staff",
+      "amplify_wand",
+      "amplify_twohand",
+      "amplify_chest",
+      "amplify_boots"
+    ],
+    "key": [
+      "key_ember_codex",
+      "key_hymn_folio",
+      "key_paladin_oath",
+      "key_shadow_pact"
+    ],
+    "triple_support": [
+      "fire_staff",
+      "weapon_holy_mace",
+      "armor_holy_choir",
+      "accessory_musical_slippers",
+      "boots_steadfast",
+      "armor_light_weave",
+      "dagger"
+    ],
+    "core_shop": [
+      "wooden_sword",
+      "broom",
+      "pan",
+      "storm_burst",
+      "spear",
+      "hungry_blade",
+      "ripsaw_blade",
+      "villain_sword",
+      "hammer",
+      "snow_stick",
+      "thorn_whip",
+      "knight_sword",
+      "iron_shield",
+      "wooden_buckler",
+      "garlic",
+      "fly_agaric",
+      "poison_dagger",
+      "pestilence_flask",
+      "smoke_bomb",
+      "chipped_ruby",
+      "lump_of_coal",
+      "fire_crystal",
+      "chipped_sapphire",
+      "snowball",
+      "star_of_courage",
+      "shiny_shell",
+      "shelly",
+      "divine_potion",
+      "chipped_amethyst",
+      "blueberries",
+      "charge_gem",
+      "spark_stone",
+      "frost_crystal",
+      "chipped_emerald",
+      "chipped_topaz",
+      "lucky_charm",
+      "health_stone",
+      "bandage",
+      "healing_herb",
+      "healing_herbs",
+      "pineapple",
+      "snowcake",
+      "cheese",
+      "rage_potion",
+      "health_potion",
+      "heroic_potion",
+      "stone_skin_potion",
+      "vampiric_potion",
+      "stone",
+      "pocket_sand",
+      "antitoxin",
+      "cork_charm",
+      "bag_of_stones",
+      "deck_of_cards",
+      "piggybank",
+      "leather_boots",
+      "cap_of_resilience",
+      "leather_armor",
+      "royal_helmet",
+      "titan_armor",
+      "glowing_crown",
+      "holy_armor",
+      "leather_pouch",
+      "protective_purse",
+      "fanny_pack",
+      "iron_patch",
+      "backpack",
+      "customer_card"
+    ]
+  },
+  "items": [
+    "rusty_sword",
+    "iron_helmet",
+    "dagger",
+    "poison_vial",
+    "apprentice_staff",
+    "mana_crystal",
+    "apple",
+    "banana",
+    "enh_stray_charm",
+    "enh_ember_crown",
+    "enh_hymn_veil",
+    "enh_shadow_hood",
+    "enh_frost_circlet",
+    "enh_inquisitor_mask",
+    "enh_bard_crown",
+    "enh_oracle_diadem",
+    "enh_defeated_breastplate",
+    "enh_holy_aegis",
+    "enh_guardian_mail",
+    "enh_zealot_vestment",
+    "enh_plague_bindings",
+    "enh_arcane_robe",
+    "enh_juggernaut_plate",
+    "enh_rogue_vest",
+    "enh_mad_scholar_sandals",
+    "enh_assassin_treads",
+    "enh_swift_treads",
+    "enh_paladin_greaves",
+    "enh_frost_walkers",
+    "enh_trickster_slippers",
+    "enh_pyro_steps",
+    "enh_guardian_sabatons",
+    "amplify_fire",
+    "amplify_holy",
+    "amplify_poison",
+    "amplify_magic",
+    "amplify_melee",
+    "amplify_staff",
+    "amplify_wand",
+    "amplify_twohand",
+    "amplify_chest",
+    "amplify_boots",
+    "key_ember_codex",
+    "key_hymn_folio",
+    "key_paladin_oath",
+    "key_shadow_pact",
+    "fire_staff",
+    "weapon_holy_mace",
+    "armor_holy_choir",
+    "accessory_musical_slippers",
+    "boots_steadfast",
+    "armor_light_weave",
+    "wooden_sword",
+    "broom",
+    "pan",
+    "storm_burst",
+    "spear",
+    "hungry_blade",
+    "ripsaw_blade",
+    "villain_sword",
+    "hammer",
+    "snow_stick",
+    "thorn_whip",
+    "knight_sword",
+    "iron_shield",
+    "wooden_buckler",
+    "garlic",
+    "fly_agaric",
+    "poison_dagger",
+    "pestilence_flask",
+    "smoke_bomb",
+    "chipped_ruby",
+    "lump_of_coal",
+    "fire_crystal",
+    "chipped_sapphire",
+    "snowball",
+    "star_of_courage",
+    "shiny_shell",
+    "shelly",
+    "divine_potion",
+    "chipped_amethyst",
+    "blueberries",
+    "charge_gem",
+    "spark_stone",
+    "frost_crystal",
+    "chipped_emerald",
+    "chipped_topaz",
+    "lucky_charm",
+    "health_stone",
+    "bandage",
+    "healing_herb",
+    "healing_herbs",
+    "pineapple",
+    "snowcake",
+    "cheese",
+    "rage_potion",
+    "health_potion",
+    "heroic_potion",
+    "stone_skin_potion",
+    "vampiric_potion",
+    "stone",
+    "pocket_sand",
+    "antitoxin",
+    "cork_charm",
+    "bag_of_stones",
+    "deck_of_cards",
+    "piggybank",
+    "leather_boots",
+    "cap_of_resilience",
+    "leather_armor",
+    "royal_helmet",
+    "titan_armor",
+    "glowing_crown",
+    "holy_armor",
+    "leather_pouch",
+    "protective_purse",
+    "fanny_pack",
+    "iron_patch",
+    "backpack",
+    "customer_card"
+  ]
+};
+
+const ITEM_POOL_120_ID_SET = new Set(ITEM_POOL_120_MANIFEST.items);
+
+function isItemPool120Enabled() {
+  return true;
+}
+
+function setItemPool120Enabled(_enabled) {
+  if (typeof document !== "undefined" && document.documentElement) {
+    document.documentElement.dataset.itemPool = "120";
+  }
+}
+
+function isItemInPool120(itemId) {
+  return ITEM_POOL_120_ID_SET.has(itemId);
+}
+
+function filterItemsToPool120(itemsOrDefs) {
+  return itemsOrDefs.filter((entry) => {
+    const id = typeof entry === "string" ? entry : entry?.id || entry?.itemId;
+    return id && isItemInPool120(id);
+  });
+}
+
+function getItemPool120Ids() {
+  return [...ITEM_POOL_120_ID_SET];
+}
+
+function getItemPool120Layer(itemId) {
+  for (const [layer, ids] of Object.entries(ITEM_POOL_120_MANIFEST.layers)) {
+    if (ids.includes(itemId)) return layer;
+  }
+  return null;
+}
+
+setItemPool120Enabled(true);

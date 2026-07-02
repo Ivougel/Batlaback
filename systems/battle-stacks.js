@@ -180,8 +180,8 @@ function isMeleeDamageType(damageType) {
 /** Плоский бонус за стаки усиление/жар/мана — общий потолок за удар. */
 const STACK_GLOBAL_FLAT_DAMAGE_CAP = 8;
 const STACK_GLOBAL_DAMAGE_PER = 1;
-/** Маг: мана-стаки сильнее вносят вклад в урон. */
-const MAGE_MANA_STACK_DAMAGE_MULT = 1.5;
+/** Маг: мана-стаки чуть сильнее вносят вклад в урон (новичок ~+25%). */
+const MAGE_MANA_STACK_DAMAGE_MULT = 1.25;
 
 function getGlobalStackFlatDamageBonus(side) {
   let bonus = getSideStack(side, "empower") * STACK_GLOBAL_DAMAGE_PER;

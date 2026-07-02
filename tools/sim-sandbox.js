@@ -28,7 +28,7 @@ const BATTLE_STUBS = [
 const ENGINE_FILES = [
   "classes.js",
   "items.js",
-  "items-bb-catalog.js",
+  "items-catalog.js",
   "systems/meta-effects.js",
   "systems/mechanic-tags.js",
   "systems/item-locale.js",
@@ -80,6 +80,7 @@ function createSimSandbox() {
 
   vm.runInContext(`
     if (typeof ITEM_CATALOG !== "undefined") globalThis.ITEM_CATALOG = ITEM_CATALOG;
+    if (typeof CRAFT_OUTPUT_IDS !== "undefined") globalThis.CRAFT_OUTPUT_IDS = CRAFT_OUTPUT_IDS;
     if (typeof CLASS_CATALOG !== "undefined") globalThis.CLASS_CATALOG = CLASS_CATALOG;
     if (typeof AI_ARCHETYPES !== "undefined") globalThis.AI_ARCHETYPES = AI_ARCHETYPES;
     if (typeof getClassById !== "undefined") globalThis.getClassById = getClassById;

@@ -15,7 +15,7 @@ const AI_ARCHETYPES = {
     id: "warrior",
     name: "Воин",
     priorityTags: ["weapon", "armor", "shield"],
-    secondaryTags: ["food"],
+    secondaryTags: [],
   },
   rogue: {
     id: "rogue",
@@ -255,6 +255,10 @@ function scoreBuildCoherence(def, archetype, items, bench, round) {
   if (archetype.id === "mage" && def.tags.includes("weapon") && !itemHasMagicDamage(def)) score -= 12;
   if (archetype.id === "rogue" && hasBlockOnlyItem(def) && combined.length >= 5) score -= 8;
   if (archetype.id === "mage" && hasBlockOnlyItem(def) && !scoutHasHeavyBlock(null, combined)) score -= 6;
+  if (archetype.id === "priest") {
+    if (def.tags.includes("food") || def.tags.includes("potion")) return 8;
+    if (def.tags.includes("weapon") || def.tags.includes("armor")) return -14;
+  }
 
   return score;
 }
@@ -292,6 +296,22 @@ function shouldSellForKillBuild(item, archetype, items, scout, round, battleWon)
   if (!def || !archetype) return false;
   if (!isLoadoutCommitted(round, items.length)) return false;
   if (itemMatchesKillArchetype(def, archetype)) return false;
+
+  if (archetype.id === "priest" && def.tags.includes("weapon") && !def.tags.includes("holy")) {
+    const foodN = typeof countFoodItemsInLoadout === "function"
+      ? countFoodItemsInLoadout(items)
+      : items.filter((i) => ITEM_CATALOG[i.itemId]?.tags?.includes("food")).length;
+    return foodN >= 2;
+  }
+  if (archetype.id === "priest" && def.tags.includes("armor") && !def.tags.includes("food")) {
+    const foodN = typeof countFoodItemsInLoadout === "function"
+      ? countFoodItemsInLoadout(items)
+      : items.filter((i) => ITEM_CATALOG[i.itemId]?.tags?.includes("food")).length;
+    return foodN >= 3;
+  }
+  if (archetype.id === "rogue" && def.tags.includes("weapon") && !hasBlockOnlyItem(def)) {
+    return countWeaponItems(items) > 2;
+  }
 
   const others = items.filter((i) => i.uid !== item.uid);
   const archetypeCount = countArchetypeItems(others, archetype);
@@ -534,6 +554,57 @@ function scoreItemForAI(
     const synergy = countSynergyPotential(itemId, items) + countSynergyPotential(itemId, bench);
     if (weapons >= 2 && synergy < AI_SYNERGY_POTENTIAL_WEIGHT) score -= 7;
     if (weapons >= 3) score -= 5;
+  }
+
+  if (archetype.id === "warrior" && round <= 4) {
+    if (def.tags.includes("weapon")) score += 10;
+    if (def.tags.includes("armor") || def.tags.includes("shield")) score += 8;
+  }
+
+  if (archetype.id === "priest") {
+    const foodN = typeof countFoodItemsInLoadout === "function"
+      ? countFoodItemsInLoadout([...items, ...bench])
+      : [...items, ...bench].filter((i) => ITEM_CATALOG[i.itemId]?.tags?.includes("food")).length;
+    if (def.tags.includes("food")) {
+      score += 38;
+      if (foodN < 3) score += 18;
+      if (foodN < 5) score += 8;
+    }
+    if (def.tags.includes("potion")) score += 14;
+    if (foodN < 3 && def.tags.includes("weapon") && !def.tags.includes("holy")) score -= 45;
+    if (def.tags.includes("weapon") && !def.tags.includes("holy")) score -= 28;
+    if (def.tags.includes("armor") && !def.tags.includes("food")) score -= 12;
+  }
+
+  if (archetype.id === "rogue" && def.tags?.includes("amplifier")) {
+    const ampN = [...items, ...bench].filter((i) =>
+      ITEM_CATALOG[i.itemId]?.tags?.includes("amplifier"),
+    ).length;
+    const weapons = countWeaponItems([...items, ...bench]);
+    if (ampN >= 1) score -= 18;
+    if (weapons < 1) score -= 30;
+  }
+
+  if (archetype.id === "rogue") {
+    const weapons = countWeaponItems([...items, ...bench]);
+    const early = round <= 8;
+    if (weapons < 2 && def.tags.includes("weapon") && !hasBlockOnlyItem(def)) score += early ? 24 : 16;
+    if (weapons < 1 && def.tags.includes("poison") && !def.tags.includes("weapon")) score -= 8;
+    if (weapons < 1 && def.tags.includes("gem")) score -= 28;
+  }
+
+  if (archetype.id === "mage" && round <= 6) {
+    if (itemHasMagicDamage(def) || def.tags.includes("gem") || def.tags.includes("magic")) score += 12;
+    if (def.tags.includes("food") || def.tags.includes("potion")) score -= 10;
+  }
+  if (archetype.id === "mage" && round >= 10) {
+    if (itemHasMagicDamage(def) || def.tags.includes("fire") || def.tags.includes("magic")) score += 16;
+    if (def.tags.includes("weapon") && !itemHasMagicDamage(def)) score -= 12;
+  }
+
+  if (archetype.id === "rogue" && round >= 12 && def.tags.includes("weapon")) {
+    const weapons = countWeaponItems([...items, ...bench]);
+    if (weapons >= 2) score -= 6;
   }
 
   score -= def.shape.length * 1.2;
@@ -1200,14 +1271,16 @@ function aiEnemyPrepPhase(
   const scoutItems = prepOpts.scoutItems ?? playerItems;
   const scoutClass = prepOpts.scoutClass ?? playerClass;
   const scout = buildPlayerScout(scoutItems);
-  const killArchetype = pickKillArchetype(
-    scout,
-    scoutClass,
-    round,
-    state.archetype,
-    state.items || [],
-    battleWon,
-  );
+  const killArchetype = prepOpts.forceArchetypeId && AI_ARCHETYPES[prepOpts.forceArchetypeId]
+    ? AI_ARCHETYPES[prepOpts.forceArchetypeId]
+    : pickKillArchetype(
+      scout,
+      scoutClass,
+      round,
+      state.archetype,
+      state.items || [],
+      battleWon,
+    );
   const next = {
     archetype: killArchetype,
     classId: killArchetype.id,

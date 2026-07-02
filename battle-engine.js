@@ -459,6 +459,9 @@ function createBattleSide(items, classId, prepMeta = {}) {
   };
 
   applyClassCombatBonus(side, classId);
+  if (typeof applyRunModifiersToSide === "function") {
+    applyRunModifiersToSide(side, prepMeta);
+  }
   assignDuplicateItemEfficiency(side);
   assignBlockSourceEfficiency(side);
   assignPoisonSourceEfficiency(side);
@@ -2292,6 +2295,7 @@ function battleTick(state, dt) {
   tickPoison(state, dt);
   tickGroundFire(state, dt);
   tickFatigue(state, dt);
+  if (typeof tickMutationCapstones === "function") tickMutationCapstones(state, dt);
   tickBattleAnimations(state, dt);
   if (typeof tickDamageFlights === "function") tickDamageFlights(state, dt);
 
@@ -3191,7 +3195,13 @@ function applyDamage(target, amount, state, sourceLabel, attackerTeam, attackerS
     dmg -= reduced;
   }
 
-  const hpDmg = dmg > 0 ? dmg : 0;
+  const atkSide = attackerSide || (attackerTeam === "player" ? state.player : state.enemy);
+  let hpDmg = dmg > 0 ? dmg : 0;
+  if (hpDmg > 0 && typeof modifyMutationCapstoneDamage === "function") {
+    hpDmg = modifyMutationCapstoneDamage(
+      state, attackerTeam, atkSide, target, targetTeam, hpDmg, effect,
+    );
+  }
   const blockCredits = blockAbs > 0
     ? creditBlockAbsorption(state, target, targetTeam, blockAbs)
     : new Map();
@@ -3208,8 +3218,16 @@ function applyDamage(target, amount, state, sourceLabel, attackerTeam, attackerS
       target.hp = Math.max(0, newHp);
     }
     tryActivateBattleRage(target, state, targetTeam, "Battle Rage");
-    const attackerSide = attackerTeam === "player" ? state.player : state.enemy;
-    trySpikeRetaliation(state, target, targetTeam, attackerSide, attackerTeam, sourceItem, effect?.damageType, options);
+    trySpikeRetaliation(state, target, targetTeam, atkSide, attackerTeam, sourceItem, effect?.damageType, options);
+    if (typeof onMutationCapstoneDamageDealt === "function") {
+      onMutationCapstoneDamageDealt(state, attackerTeam, atkSide, target, hpDmg, effect);
+    }
+    if (typeof onMutationCapstoneDamageTaken === "function") {
+      onMutationCapstoneDamageTaken(state, targetTeam, target, atkSide, hpDmg);
+    }
+    if (effect?.damageType === "fire" && typeof onMutationCapstoneFireDamage === "function") {
+      onMutationCapstoneFireDamage(state, attackerTeam, atkSide, hpDmg);
+    }
     const dmgType = effect?.damageType;
     pushEvent(state, {
       type: "damage",
@@ -3250,8 +3268,7 @@ function applyDamage(target, amount, state, sourceLabel, attackerTeam, attackerS
   }
 
   if (blockAbs > 0 || armorAbs > 0) {
-    const attackerSide = attackerTeam === "player" ? state.player : state.enemy;
-    processOnDefendEffects(state, target, attackerSide, targetTeam, {
+    processOnDefendEffects(state, target, atkSide, targetTeam, {
       blockAbs,
       armorAbs,
       hpDmg,

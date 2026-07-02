@@ -43,6 +43,13 @@ function getShopContextForSide(side = rt.getPrepViewSide(), opts = {}) {
       ? collectShopPoolModifiers(loadoutItems)
       : null,
     bonusUniqueGranted: rt.getSideState(side).bonusUniqueGranted,
+    enhancements: typeof rt.getSideEnhancements === "function" ? rt.getSideEnhancements(side) : null,
+    companionId: typeof rt.getSideCompanionId === "function" ? rt.getSideCompanionId(side) : null,
+    mutationId: typeof rt.getSideMutationId === "function" ? rt.getSideMutationId(side) : null,
+    mutationFormId: typeof rt.getSideMutationFormId === "function" ? rt.getSideMutationFormId(side) : null,
+    unlockedBuilds: typeof collectUnlockedBuilds === "function"
+      ? collectUnlockedBuilds(loadoutItems)
+      : new Set(),
   };
 }
 
@@ -56,6 +63,10 @@ function ensureSideShopArrays(st) {
   for (let i = 0; i < MAX_SHOP; i++) {
     if (st.shop[i] === undefined) st.shop[i] = null;
     if (st.shopFrozen[i] === undefined) st.shopFrozen[i] = false;
+    if (st.shop[i] && typeof parseEnhancementShopId === "function") {
+      const legacyId = parseEnhancementShopId(st.shop[i]);
+      if (legacyId) st.shop[i] = legacyId;
+    }
   }
 }
 
@@ -180,7 +191,9 @@ function toggleShopFreeze(index, side = rt.getPrepViewSide()) {
   if (rt.getPhase() !== "prep" || rt.getGameOver() || !rt.canEditPrepSide(side) || !rt.getSideState(side).shop[index]) return;
   const st = rt.getSideState(side);
   st.shopFrozen[index] = !st.shopFrozen[index];
-  const name = ITEM_CATALOG[st.shop[index]].name;
+  const name = typeof resolveShopEntryMeta === "function"
+    ? (resolveShopEntryMeta(st.shop[index])?.def?.name || st.shop[index])
+    : (ITEM_CATALOG[st.shop[index]]?.name || st.shop[index]);
   rt.log(st.shopFrozen[index] ? `📌 Закреплено: ${name}` : `📌 Снято закрепление: ${name}`);
   rt.playPrepSfx("prep_freeze");
   renderShop();
@@ -188,19 +201,19 @@ function toggleShopFreeze(index, side = rt.getPrepViewSide()) {
 
 function commitShopPurchase(index, side = rt.getPrepViewSide()) {
   const st = rt.getSideState(side);
-  const itemId = st.shop[index];
-  if (!itemId) return null;
-  const def = ITEM_CATALOG[itemId];
-  if (!def || st.gold < def.cost) return null;
+  const entryId = st.shop[index];
+  if (!entryId) return null;
+  const def = ITEM_CATALOG[entryId];
+  if (!def || st.gold < (def.cost ?? 0)) return null;
   st.gold -= def.cost;
   if (side === "player") rt.addGoldSpent(def.cost);
   st.shop[index] = null;
   st.shopFrozen[index] = false;
-  if (typeof applyShopBuyMeta === "function") {
+  if (typeof applyShopBuyMeta === "function" && !def.isEnhancementItem) {
     const ctx = getShopContextForSide(side);
-    applyShopBuyMeta(side, st.items, itemId, st, ctx, (msg) => rt.log(msg));
+    applyShopBuyMeta(side, st.items, entryId, st, ctx, (msg) => rt.log(msg));
   }
-  return itemId;
+  return entryId;
 }
 
 function buyFromShop(index, side = rt.getPrepViewSide()) {
@@ -283,11 +296,11 @@ function renderShopCardHTML(def, { extraClasses = "", innerBefore = "", dataAttr
 function getShopDisplayEntries(side = rt.getPrepViewSide()) {
   const st = rt.getSideState(side);
   return st.shop
-    .map((itemId, index) => ({
-      index,
-      itemId,
-      cost: itemId ? (ITEM_CATALOG[itemId]?.cost ?? 0) : -1,
-    }))
+    .map((entryId, index) => {
+      const meta = typeof resolveShopEntryMeta === "function" ? resolveShopEntryMeta(entryId) : null;
+      const cost = meta?.cost ?? (entryId ? (ITEM_CATALOG[entryId]?.cost ?? 0) : -1);
+      return { index, entryId, itemId: entryId, cost };
+    })
     .sort((a, b) => {
       if (a.cost !== b.cost) return b.cost - a.cost;
       return a.index - b.index;
@@ -314,6 +327,49 @@ function renderShop(side = rt.getPrepViewSide()) {
           if (!itemId) return `<div class="shop-card empty">—</div>`;
           const def = ITEM_CATALOG[itemId];
           if (!def) return `<div class="shop-card empty" title="Предмет не найден: ${itemId}">—</div>`;
+          if (def.isBuildKey) {
+            const frozen = st.shopFrozen[index];
+            const affordable = st.gold >= (def.cost ?? 0);
+            const pinBtn = editable
+              ? `<button type="button" class="shop-pin${frozen ? " active" : ""}" data-pin="${index}" title="${frozen ? "Открепить" : "❄️ Заморозить предмет"}">${frozen ? "📌" : "📍"}</button>`
+              : "";
+            return renderShopCardHTML(def, {
+              extraClasses: ["shop-card--build-key", frozen ? "frozen" : "", affordable || !editable ? "" : "unaffordable"].filter(Boolean).join(" "),
+              innerBefore: pinBtn,
+              shapeSize: "sm",
+              showShape: false,
+              dataAttrs: `data-index="${index}" data-item-id="${itemId}" data-build-key="1"${affordable || !editable ? "" : ' data-unaffordable="1" title="Недостаточно золота"'}`,
+            });
+          }
+          if (def.isAmplifierItem) {
+            const frozen = st.shopFrozen[index];
+            const affordable = st.gold >= (def.cost ?? 0);
+            const pinBtn = editable
+              ? `<button type="button" class="shop-pin${frozen ? " active" : ""}" data-pin="${index}" title="${frozen ? "Открепить" : "❄️ Заморозить предмет"}">${frozen ? "📌" : "📍"}</button>`
+              : "";
+            return renderShopCardHTML(def, {
+              extraClasses: ["shop-card--amplifier", frozen ? "frozen" : "", affordable || !editable ? "" : "unaffordable"].filter(Boolean).join(" "),
+              innerBefore: pinBtn,
+              shapeSize: "sm",
+              showShape: false,
+              dataAttrs: `data-index="${index}" data-item-id="${itemId}" data-amplifier="1"${affordable || !editable ? "" : ' data-unaffordable="1" title="Недостаточно золота"'}`,
+            });
+          }
+          if (def.isEnhancementItem) {
+            const enhDef = typeof getEnhancementDef === "function"
+              ? getEnhancementDef(def.enhancementId || itemId)
+              : def;
+            const frozen = st.shopFrozen[index];
+            const affordable = st.gold >= (def.cost ?? 0);
+            const pinBtn = editable
+              ? `<button type="button" class="shop-pin${frozen ? " active" : ""}" data-pin="${index}" title="${frozen ? "Открепить" : "❄️ Заморозить предмет"}">${frozen ? "📌" : "📍"}</button>`
+              : "";
+            return renderEnhancementShopCardHTML(enhDef || def, {
+              extraClasses: [frozen ? "frozen" : "", affordable || !editable ? "" : "unaffordable"].filter(Boolean).join(" "),
+              innerBefore: pinBtn,
+              dataAttrs: `data-index="${index}" data-item-id="${itemId}" data-enhancement="1"${affordable || !editable ? "" : ' data-unaffordable="1" title="Недостаточно золота"'}`,
+            });
+          }
           const frozen = st.shopFrozen[index];
           const affordable = st.gold >= (def.cost ?? 0);
           const pinBtn = editable
@@ -337,6 +393,13 @@ function renderShop(side = rt.getPrepViewSide()) {
   }
   el.innerHTML = html;
   el.querySelectorAll(".shop-card:not(.empty)").forEach((card) => {
+    if (card.dataset.enhancement === "1" && typeof bindEnhancementTooltipEvents === "function") {
+      const enhId = typeof getEnhancementIdFromItem === "function"
+        ? getEnhancementIdFromItem(card.dataset.itemId)
+        : card.dataset.itemId;
+      bindEnhancementTooltipEvents(card, enhId, "shop");
+      return;
+    }
     bindItemTooltipEvents(card, card.dataset.itemId, null, "shop");
   });
   if (!editable) return;

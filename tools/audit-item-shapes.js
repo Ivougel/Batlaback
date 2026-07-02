@@ -11,8 +11,8 @@ const ROOT = path.join(__dirname, "..");
 
 function loadCatalog() {
   const itemsJs = fs.readFileSync(path.join(ROOT, "items.js"), "utf8");
-  const bbJs = fs.readFileSync(path.join(ROOT, "items-bb-catalog.js"), "utf8");
-  const fn = new Function(`${itemsJs}\n${bbJs}\nreturn ITEM_CATALOG;`);
+  const catalogJs = fs.readFileSync(path.join(ROOT, "items-catalog.js"), "utf8");
+  const fn = new Function(`${itemsJs}\n${catalogJs}\nreturn ITEM_CATALOG;`);
   return fn();
 }
 

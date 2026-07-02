@@ -75,7 +75,12 @@ function canAddSlotItemToLoadout(items, itemId, excludeUid = null, alsoExcludeUi
   const exclude = new Set(alsoExcludeUids);
   if (excludeUid) exclude.add(excludeUid);
   const occ = getSlotOccupancy(items, exclude);
-  return isSlotAvailableForType(occ, def.slot);
+  if (!isSlotAvailableForType(occ, def.slot)) return false;
+  if (typeof canCompanionEquipItem === "function" && typeof getActiveCompanionIdForLoadout === "function") {
+    const companionId = getActiveCompanionIdForLoadout();
+    if (!canCompanionEquipItem(companionId, itemId, def)) return false;
+  }
+  return true;
 }
 
 function deriveDollFromItems(items) {

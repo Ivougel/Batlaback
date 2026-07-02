@@ -9,7 +9,7 @@ const path = require("path");
 
 const ROOT = path.join(__dirname, "..");
 const FILES = [
-  path.join(ROOT, "items-bb-catalog.js"),
+  path.join(ROOT, "items-catalog.js"),
   path.join(ROOT, "items.js"),
 ];
 

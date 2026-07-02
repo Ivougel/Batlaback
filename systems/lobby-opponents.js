@@ -32,12 +32,21 @@ function createLobbyFighter(id, name, classId, isHuman = false) {
   const containers = createStartingContainers();
   const items = applyClassStarters(containers, [], classId);
   const archetype = AI_ARCHETYPES[classId] || AI_ARCHETYPES.warrior;
+  const companionId = typeof defaultCompanionForClass === "function"
+    ? defaultCompanionForClass(classId)
+    : "s_stranger";
   return {
     id,
     name,
     isHuman,
     classId,
     archetype,
+    companionId,
+    mutationFormId: null,
+    mutationId: null,
+    enhancements: typeof createEmptyEnhancementLoadout === "function"
+      ? createEmptyEnhancementLoadout()
+      : { head: null, chest: null, boots: null },
     hp: LOBBY_START_HP,
     alive: true,
     gold: AI_ECON.START_GOLD,
@@ -160,6 +169,7 @@ function runLobbyBotsShopPhase(lobby, round) {
       scout.classId,
       { recentResults: (fighter.recentResults || []).slice(-3) },
     );
+    syncLobbyFighterMutationMilestones(fighter, round);
   });
 }
 
@@ -170,6 +180,9 @@ function startLobbyPrepRound(lobby, round) {
     }
   });
   runLobbyBotsShopPhase(lobby, round);
+  if (typeof syncAllLobbyFighterMutations === "function") {
+    syncAllLobbyFighterMutations(lobby, round);
+  }
   pickLobbyOpponent(lobby);
 }
 
@@ -205,6 +218,47 @@ function recordLobbyMatchOutcomes(lobby, matches) {
   });
 }
 
+function syncLobbyFighterMutationMilestones(fighter, round = 1) {
+  if (!fighter?.classId || typeof resolveMutationProgress !== "function") return null;
+  const progress = resolveMutationProgress({
+    classId: fighter.classId,
+    companionId: fighter.companionId,
+    items: fighter.items || [],
+    enhancements: fighter.enhancements || {},
+    round,
+  });
+  const pickId = typeof pickMutationIdForMilestone === "function"
+    ? pickMutationIdForMilestone(progress, round)
+    : null;
+  const formRound = typeof MUTATION_ROUND_FORM !== "undefined" ? MUTATION_ROUND_FORM : 8;
+  const finalRound = typeof MUTATION_ROUND_FINAL !== "undefined" ? MUTATION_ROUND_FINAL : 16;
+  if (round >= finalRound && pickId && !fighter.mutationId) {
+    fighter.mutationId = pickId;
+    if (!fighter.mutationFormId) fighter.mutationFormId = pickId;
+  } else if (round >= formRound && pickId && !fighter.mutationFormId) {
+    fighter.mutationFormId = pickId;
+  }
+  return progress;
+}
+
+function syncAllLobbyFighterMutations(lobby, round = 1) {
+  if (!lobby?.fighters) return;
+  lobby.fighters.forEach((fighter) => {
+    if (fighter.alive) syncLobbyFighterMutationMilestones(fighter, round);
+  });
+}
+
+function lobbyFighterPrepMeta(fighter) {
+  if (!fighter) return {};
+  return {
+    companionId: fighter.companionId,
+    mutationFormId: fighter.mutationFormId,
+    mutationId: fighter.mutationId,
+    enhancements: fighter.enhancements || {},
+    pendingShopBuffs: fighter.pendingShopBuffs || 0,
+  };
+}
+
 function importLobbyPlayerGlobals(lobby, globals) {
   const player = getLobbyPlayer(lobby);
   if (!player || !globals) return;
@@ -214,6 +268,17 @@ function importLobbyPlayerGlobals(lobby, globals) {
   player.items = cloneLobbyItems(globals.items);
   player.bench = Array.isArray(globals.bench) ? globals.bench.map((e) => (e ? { ...e } : null)) : [];
   if (globals.pendingShopBuffs != null) player.pendingShopBuffs = globals.pendingShopBuffs;
+  if (globals.companionId != null) player.companionId = globals.companionId;
+  if (globals.enhancements) {
+    player.enhancements = {
+      head: globals.enhancements.head ?? null,
+      chest: globals.enhancements.chest ?? null,
+      boots: globals.enhancements.boots ?? null,
+    };
+  }
+  if (globals.mutationFormId != null) player.mutationFormId = globals.mutationFormId;
+  if (globals.mutationId != null) player.mutationId = globals.mutationId;
+  syncLobbyFighterMutationMilestones(player, globals.round ?? 1);
 }
 
 function exportGhostFighterState(fighter) {
@@ -226,6 +291,10 @@ function exportGhostFighterState(fighter) {
     gold: fighter.gold,
     containers: cloneLobbyContainers(fighter.containers),
     items: cloneLobbyItems(fighter.items),
+    companionId: fighter.companionId,
+    mutationFormId: fighter.mutationFormId,
+    mutationId: fighter.mutationId,
+    enhancements: fighter.enhancements,
   };
 }
 

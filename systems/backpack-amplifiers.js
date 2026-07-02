@@ -1,0 +1,410 @@
+/**
+ * PR-C: усилители рюкзака — 1×1 предметы с подсветкой связанных клеток в prep.
+ * amplifySlot | amplifyFamily | amplifyEquip
+ * @see docs/enhancement-item-set-gdd.md
+ */
+
+const AMPLIFIER_FAMILY_COLORS = {
+  fire: { stroke: "rgba(255, 140, 60, 0.7)", fill: "rgba(255, 100, 40, 0.14)", glow: "#ff8c3c" },
+  holy: { stroke: "rgba(255, 220, 120, 0.75)", fill: "rgba(255, 210, 90, 0.14)", glow: "#ffd966" },
+  poison: { stroke: "rgba(120, 220, 100, 0.7)", fill: "rgba(80, 200, 90, 0.12)", glow: "#6fdc7a" },
+  magic: { stroke: "rgba(140, 180, 255, 0.75)", fill: "rgba(100, 150, 255, 0.12)", glow: "#79c0ff" },
+  melee: { stroke: "rgba(255, 120, 120, 0.7)", fill: "rgba(220, 80, 80, 0.12)", glow: "#f08888" },
+  speed: { stroke: "rgba(120, 230, 210, 0.7)", fill: "rgba(80, 210, 190, 0.12)", glow: "#5fd4c4" },
+};
+
+const AMPLIFIER_SLOT_COLORS = {
+  head: { stroke: "rgba(180, 150, 255, 0.75)", fill: "rgba(140, 110, 220, 0.14)", glow: "#b496ff" },
+  chest: { stroke: "rgba(150, 190, 255, 0.75)", fill: "rgba(110, 160, 240, 0.14)", glow: "#8cb4ff" },
+  boots: { stroke: "rgba(200, 170, 120, 0.75)", fill: "rgba(180, 140, 90, 0.14)", glow: "#c8aa78" },
+};
+
+const AMPLIFIER_EQUIP_COLORS = {
+  staff: { stroke: "rgba(170, 130, 255, 0.75)", fill: "rgba(140, 100, 230, 0.12)", glow: "#aa82ff" },
+  wand: { stroke: "rgba(200, 160, 255, 0.75)", fill: "rgba(170, 130, 240, 0.12)", glow: "#c8a0ff" },
+  twoHand: { stroke: "rgba(255, 170, 100, 0.75)", fill: "rgba(240, 130, 70, 0.12)", glow: "#ffaa64" },
+};
+
+const SHOP_AMPLIFIER_ROLL_CHANCE = 0.15;
+const SHOP_AMPLIFIER_MIN_ROUND = 3;
+
+/** Активные усилители (implemented: true). */
+const AMPLIFIER_CATALOG = {
+  amplify_fire: {
+    id: "amplify_fire",
+    name: "Огненный фокус",
+    icon: "🔥",
+    amplifyFamily: "fire",
+    rarity: "common",
+    implemented: true,
+    desc: "Подсвечивает огненные предметы в рюкзаке",
+    recommendedTriples: ["triple_pyro_mage"],
+  },
+  amplify_holy: {
+    id: "amplify_holy",
+    name: "Святой ориентир",
+    icon: "✨",
+    amplifyFamily: "holy",
+    rarity: "common",
+    implemented: true,
+    desc: "Подсвечивает святые предметы и усиления",
+    recommendedTriples: ["triple_zrecrela", "triple_paladin"],
+  },
+  amplify_poison: {
+    id: "amplify_poison",
+    name: "Ядовитый след",
+    icon: "☠️",
+    amplifyFamily: "poison",
+    rarity: "common",
+    implemented: true,
+    desc: "Подсвечивает ядовитые предметы",
+    recommendedTriples: ["triple_assassin"],
+  },
+  amplify_magic: {
+    id: "amplify_magic",
+    name: "Магический компас",
+    icon: "🔮",
+    amplifyFamily: "magic",
+    rarity: "rare",
+    implemented: true,
+    desc: "Подсвечивает магические предметы",
+  },
+  amplify_melee: {
+    id: "amplify_melee",
+    name: "Клинок-маяк",
+    icon: "⚔️",
+    amplifyFamily: "melee",
+    rarity: "common",
+    implemented: true,
+    desc: "Подсвечивает ближний бой",
+  },
+  amplify_staff: {
+    id: "amplify_staff",
+    name: "Посох-указатель",
+    icon: "🪄",
+    amplifyEquip: "staff",
+    rarity: "rare",
+    implemented: true,
+    desc: "Подсвечивает посохи в рюкзаке",
+    recommendedTriples: ["triple_pyro_mage"],
+  },
+  amplify_wand: {
+    id: "amplify_wand",
+    name: "Жезл-маяк",
+    icon: "✴️",
+    amplifyEquip: "wand",
+    rarity: "rare",
+    implemented: true,
+    desc: "Подсвечивает жезлы и палочки",
+  },
+  amplify_twohand: {
+    id: "amplify_twohand",
+    name: "Двуручный якорь",
+    icon: "🪓",
+    amplifyEquip: "twoHand",
+    rarity: "epic",
+    implemented: true,
+    desc: "Подсвечивает двуручное оружие",
+  },
+  amplify_chest: {
+    id: "amplify_chest",
+    name: "Кираса-маяк",
+    icon: "🦺",
+    amplifySlot: "chest",
+    rarity: "rare",
+    implemented: true,
+    desc: "Подсвечивает грудные усиления и броню",
+  },
+  amplify_boots: {
+    id: "amplify_boots",
+    name: "Следопыт",
+    icon: "👢",
+    amplifySlot: "boots",
+    rarity: "rare",
+    implemented: true,
+    desc: "Подсвечивает ботинки и усиления ног",
+  },
+};
+
+const AMPLIFIER_SHOP_COST_BY_RARITY = {
+  common: 2,
+  rare: 3,
+  epic: 4,
+  legendary: 5,
+};
+
+function getAmplifierDef(id) {
+  return id ? AMPLIFIER_CATALOG[id] || null : null;
+}
+
+function getAmplifierShopCost(def) {
+  if (!def) return 2;
+  return AMPLIFIER_SHOP_COST_BY_RARITY[def.rarity] || 3;
+}
+
+function getAmplifierItemDef(ampDef) {
+  if (!ampDef?.implemented) return null;
+  const hintParts = [];
+  if (ampDef.amplifyFamily) hintParts.push(`семейство «${ampDef.amplifyFamily}»`);
+  if (ampDef.amplifySlot) {
+    const slotLabel = typeof ENHANCEMENT_SLOT_META !== "undefined"
+      ? (ENHANCEMENT_SLOT_META[ampDef.amplifySlot]?.label || ampDef.amplifySlot)
+      : ampDef.amplifySlot;
+    hintParts.push(`слот «${slotLabel}»`);
+  }
+  if (ampDef.amplifyEquip) hintParts.push(`экипировка «${ampDef.amplifyEquip}»`);
+  return {
+    id: ampDef.id,
+    name: ampDef.name,
+    icon: ampDef.icon,
+    color: "#3d8b7a",
+    shape: [[0, 0]],
+    rarity: ampDef.rarity,
+    cost: getAmplifierShopCost(ampDef),
+    tags: ["utility", "amplifier", ...(ampDef.amplifyFamily ? [ampDef.amplifyFamily] : [])],
+    cooldown: 0,
+    description: ampDef.desc || "",
+    isAmplifierItem: true,
+    amplifierId: ampDef.id,
+    amplifyFamily: ampDef.amplifyFamily || null,
+    amplifySlot: ampDef.amplifySlot || null,
+    amplifyEquip: ampDef.amplifyEquip || null,
+    buildHints: `Усилитель · подсветка ${hintParts.join(" · ") || "связей"}`,
+  };
+}
+
+function registerAmplifierItemsInCatalog() {
+  if (typeof ITEM_CATALOG === "undefined") return;
+  Object.values(AMPLIFIER_CATALOG).forEach((ampDef) => {
+    const itemDef = getAmplifierItemDef(ampDef);
+    if (itemDef) ITEM_CATALOG[itemDef.id] = itemDef;
+  });
+}
+
+function getAmplifierIdFromItem(itemId) {
+  const def = typeof ITEM_CATALOG !== "undefined" ? ITEM_CATALOG[itemId] : null;
+  if (def?.amplifierId) return def.amplifierId;
+  if (AMPLIFIER_CATALOG[itemId]) return itemId;
+  return null;
+}
+
+function isAmplifierBackpackItem(itemId) {
+  const def = typeof ITEM_CATALOG !== "undefined" ? ITEM_CATALOG[itemId] : null;
+  return !!(def?.isAmplifierItem || AMPLIFIER_CATALOG[itemId]?.implemented);
+}
+
+function itemMatchesEquipType(def, equipType) {
+  if (!def || !equipType) return false;
+  const id = String(def.id || "");
+  const tags = def.tags || [];
+  const slot = typeof resolveItemSlot === "function" ? resolveItemSlot(def) : null;
+  const cellCount = typeof shapeCellCount === "function" ? shapeCellCount(def.shape) : (def.shape?.length || 0);
+
+  switch (equipType) {
+    case "staff":
+      return tags.includes("staff") || id.includes("staff");
+    case "wand":
+      return tags.includes("wand") || id.includes("wand") || id.includes("rod");
+    case "twoHand":
+      return slot === "twoHand" || (tags.includes("weapon") && cellCount >= 3);
+    case "rightHand":
+      return tags.includes("weapon") && slot !== "twoHand" && cellCount < 3;
+    default:
+      return false;
+  }
+}
+
+function itemMatchesAmplifierTarget(itemId, ampDef) {
+  if (!ampDef) return false;
+  const def = typeof ITEM_CATALOG !== "undefined" ? ITEM_CATALOG[itemId] : null;
+  if (!def) return false;
+  if (def.isAmplifierItem) return false;
+
+  if (ampDef.amplifyFamily) {
+    if (def.tags?.includes(ampDef.amplifyFamily)) return true;
+    if (def.isEnhancementItem && typeof getEnhancementDef === "function") {
+      const enhDef = getEnhancementDef(def.enhancementId || itemId);
+      if (enhDef?.families?.includes(ampDef.amplifyFamily)) return true;
+    }
+    return false;
+  }
+
+  if (ampDef.amplifySlot) {
+    if (def.isEnhancementItem && def.enhancementSlot === ampDef.amplifySlot) return true;
+    const slot = typeof resolveItemSlot === "function" ? resolveItemSlot(def) : null;
+    if (ampDef.amplifySlot === "head") {
+      return slot === "head" || def.tags?.includes("helmet");
+    }
+    if (ampDef.amplifySlot === "chest") {
+      return slot === "chest" || def.tags?.includes("armor");
+    }
+    if (ampDef.amplifySlot === "boots") {
+      return slot === "boots" || def.tags?.includes("boots") || def.tags?.includes("shoes");
+    }
+    return false;
+  }
+
+  if (ampDef.amplifyEquip) {
+    return itemMatchesEquipType(def, ampDef.amplifyEquip);
+  }
+
+  return false;
+}
+
+function collectAmplifiersInLoadout(items = [], options = {}) {
+  const excludeUid = options.excludeUid || null;
+  const extraItemId = options.extraItemId || null;
+  const out = [];
+
+  (items || []).forEach((item) => {
+    if (excludeUid && item.uid === excludeUid) return;
+    const ampId = getAmplifierIdFromItem(item.itemId);
+    const ampDef = getAmplifierDef(ampId);
+    if (ampDef?.implemented) out.push(ampDef);
+  });
+
+  if (extraItemId && isAmplifierBackpackItem(extraItemId)) {
+    const ampDef = getAmplifierDef(getAmplifierIdFromItem(extraItemId));
+    if (ampDef?.implemented) out.push(ampDef);
+  }
+
+  return out;
+}
+
+function collectAmplifyHighlightedItems(items = [], amplifiers = []) {
+  if (!amplifiers.length || !items?.length) return [];
+  const highlighted = [];
+  const seen = new Set();
+
+  items.forEach((item) => {
+    if (seen.has(item.uid)) return;
+    const matchedBy = amplifiers.filter((amp) => itemMatchesAmplifierTarget(item.itemId, amp));
+    if (!matchedBy.length) return;
+    seen.add(item.uid);
+    highlighted.push({ item, amplifiers: matchedBy });
+  });
+
+  return highlighted;
+}
+
+function getAmplifierVisualStyle(ampDef) {
+  if (!ampDef) {
+    return { stroke: "rgba(120, 200, 180, 0.7)", fill: "rgba(80, 180, 160, 0.12)", glow: "#6ecfb8" };
+  }
+  if (ampDef.amplifyFamily) return AMPLIFIER_FAMILY_COLORS[ampDef.amplifyFamily] || AMPLIFIER_FAMILY_COLORS.magic;
+  if (ampDef.amplifySlot) return AMPLIFIER_SLOT_COLORS[ampDef.amplifySlot] || AMPLIFIER_SLOT_COLORS.chest;
+  if (ampDef.amplifyEquip) return AMPLIFIER_EQUIP_COLORS[ampDef.amplifyEquip] || AMPLIFIER_EQUIP_COLORS.staff;
+  return { stroke: "rgba(120, 200, 180, 0.7)", fill: "rgba(80, 180, 160, 0.12)", glow: "#6ecfb8" };
+}
+
+function drawAmplifyCellHighlight(ctx, team, col, row, style, pulse, strong = false) {
+  if (typeof cellRect !== "function") return;
+  const rect = cellRect(team, col, row);
+  ctx.save();
+  ctx.fillStyle = style.fill;
+  ctx.strokeStyle = style.stroke;
+  ctx.lineWidth = strong ? 2.2 : 1.6;
+  ctx.shadowColor = style.glow;
+  ctx.shadowBlur = 6 + pulse * 5;
+  ctx.globalAlpha = 0.55 + pulse * 0.25;
+  if (typeof roundRect === "function") {
+    roundRect(rect.x + 1, rect.y + 1, rect.w - 2, rect.h - 2, 5);
+    ctx.fill();
+    ctx.globalAlpha = 0.75 + pulse * 0.2;
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawPrepAmplifyHighlights(ctx, time, side, items, dragContext = null) {
+  if (typeof phase !== "undefined" && phase !== "prep") return false;
+
+  const excludeUid = dragContext?.excludeUid || null;
+  const extraItemId = dragContext?.extraItemId || null;
+  const amplifiers = collectAmplifiersInLoadout(items, { excludeUid, extraItemId });
+  if (!amplifiers.length) return false;
+
+  const highlighted = collectAmplifyHighlightedItems(items, amplifiers);
+  if (!highlighted.length) return false;
+
+  const pulse = 0.5 + Math.sin((time || 0) * 2.8) * 0.5;
+  const strong = !!(dragContext?.extraItemId);
+
+  highlighted.forEach(({ item, amplifiers: matched }) => {
+    const style = getAmplifierVisualStyle(matched[0]);
+    if (typeof getItemCells !== "function") return;
+    getItemCells(item).forEach(([col, row]) => {
+      drawAmplifyCellHighlight(ctx, side, col, row, style, pulse, strong);
+    });
+  });
+
+  return true;
+}
+
+function getShopEligibleAmplifiers(ctx = {}) {
+  const roundNum = ctx.round ?? 1;
+  if (roundNum < SHOP_AMPLIFIER_MIN_ROUND) return [];
+  const loadoutItems = ctx.loadoutItems || [];
+  return Object.values(AMPLIFIER_CATALOG).filter((def) => {
+    if (!def.implemented) return false;
+    if (loadoutItems.some((item) => item?.itemId === def.id)) return false;
+    return true;
+  });
+}
+
+function scoreAmplifierShopBias(def, ctx = {}) {
+  let score = 1;
+  const mutationId = ctx.mutationId || ctx.mutationFormId;
+  if (mutationId && (def.recommendedTriples || []).some((tripleId) => {
+    const spec = typeof BUILD_UNLOCK_CATALOG !== "undefined" ? BUILD_UNLOCK_CATALOG[tripleId] : null;
+    return spec?.enhancementIds?.length;
+  })) {
+    score += 0.5;
+  }
+  const tags = ctx.loadoutTags || [];
+  if (def.amplifyFamily && tags.includes(def.amplifyFamily)) score += 1.25;
+  if (def.amplifySlot === "chest" && tags.includes("armor")) score += 0.75;
+  if (def.amplifySlot === "boots" && (tags.includes("boots") || tags.includes("shoes"))) score += 0.75;
+  return score;
+}
+
+function pickWeightedAmplifier(pool, ctx = {}) {
+  if (!pool.length) return null;
+  const weights = pool.map((def) => scoreAmplifierShopBias(def, ctx));
+  const total = weights.reduce((a, b) => a + b, 0);
+  let r = Math.random() * total;
+  for (let i = 0; i < pool.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return pool[i];
+  }
+  return pool[pool.length - 1];
+}
+
+function rollShopAmplifierEntry(ctx = {}) {
+  const pool = getShopEligibleAmplifiers(ctx);
+  if (!pool.length) return null;
+  const picked = pickWeightedAmplifier(pool, ctx);
+  return picked ? picked.id : null;
+}
+
+function tryRollShopAmplifier(ctx = {}) {
+  if ((ctx.round ?? 1) < SHOP_AMPLIFIER_MIN_ROUND) return null;
+  if (Math.random() > SHOP_AMPLIFIER_ROLL_CHANCE) return null;
+  return rollShopAmplifierEntry(ctx);
+}
+
+function buildAmplifierTooltipExtraLines(def) {
+  const lines = [];
+  if (def.amplifyFamily) lines.push(`Подсветка: тег «${def.amplifyFamily}»`);
+  if (def.amplifySlot) {
+    const slotLabel = typeof ENHANCEMENT_SLOT_META !== "undefined"
+      ? (ENHANCEMENT_SLOT_META[def.amplifySlot]?.label || def.amplifySlot)
+      : def.amplifySlot;
+    lines.push(`Подсветка: ${slotLabel} / броня`);
+  }
+  if (def.amplifyEquip) lines.push(`Подсветка: ${def.amplifyEquip}`);
+  lines.push("Положите 1×1 в рюкзак — подсветка активна");
+  return lines;
+}
+
+registerAmplifierItemsInCatalog();

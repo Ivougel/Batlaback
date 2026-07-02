@@ -1,6 +1,12 @@
 {
   "scripts": {
-    "test:layout": "node tools/layout-profiles.test.mjs",
+    "test:enhancements": "node tools/enhancement-system.test.mjs",
+    "test:mutations": "node tools/mutation-capstones.test.mjs",
+    "test:mutation-ui": "node tools/mutation-ui.test.mjs && node tools/lobby-mutations.test.mjs && npx playwright test tools/mutation-gallery.spec.mjs",
+    "test:item-pool": "node tools/item-pool-120.test.mjs",
+    "generate:item-pool": "node tools/generate-item-pool-120.mjs",
+    "generate:pool120-presets": "node tools/generate-class-pool120-presets.js",
+    "sim:balance-pool120": "node tools/generate-class-pool120-presets.js && node tools/class-balance-pool120-sim.js --json",
     "test:phases": "node tools/layout-phases.test.mjs",
     "test:geometry": "node tools/layout-geometry.test.mjs",
     "test:qa": "node tools/layout-qa-audit.mjs",

@@ -12,8 +12,8 @@ const OUT_PATH = path.join(__dirname, "items-balance-export.csv");
 
 function loadCatalog() {
   const itemsJs = fs.readFileSync(path.join(ROOT, "items.js"), "utf8");
-  const bbJs = fs.readFileSync(path.join(ROOT, "items-bb-catalog.js"), "utf8");
-  const fn = new Function(`${itemsJs}\n${bbJs}\nreturn { catalog: ITEM_CATALOG, craftIds: typeof CRAFT_OUTPUT_IDS !== "undefined" ? CRAFT_OUTPUT_IDS : new Set() };`);
+  const catalogJs = fs.readFileSync(path.join(ROOT, "items-catalog.js"), "utf8");
+  const fn = new Function(`${itemsJs}\n${catalogJs}\nreturn { catalog: ITEM_CATALOG, craftIds: typeof CRAFT_OUTPUT_IDS !== "undefined" ? CRAFT_OUTPUT_IDS : new Set() };`);
   return fn();
 }
 

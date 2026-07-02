@@ -103,6 +103,19 @@ let enemyBench = [];
 let enemyArchetype = null;
 let enemyClass = null;
 let playerClass = null;
+let pendingPlayerCompanionId = null;
+let playerCompanionId = "s_stranger";
+let enemyCompanionId = "s_stranger";
+let playerMutationFormId = null;
+let playerMutationId = null;
+let enemyMutationFormId = null;
+let enemyMutationId = null;
+let playerEnhancements = typeof createEmptyEnhancementLoadout === "function"
+  ? createEmptyEnhancementLoadout()
+  : { head: null, chest: null, boots: null };
+let enemyEnhancements = typeof createEmptyEnhancementLoadout === "function"
+  ? createEmptyEnhancementLoadout()
+  : { head: null, chest: null, boots: null };
 let goldSpentTotal = 0;
 let goldEarnedTotal = 0;
 let recentBattleResults = [];
@@ -355,6 +368,16 @@ function applyLobbyGhostToEnemy() {
   enemyClass = ghost.classId;
   enemyArchetype = ghost.archetype;
   enemyGold = ghost.gold;
+  if (ghost.companionId) enemyCompanionId = ghost.companionId;
+  enemyMutationFormId = ghost.mutationFormId ?? null;
+  enemyMutationId = ghost.mutationId ?? null;
+  if (ghost.enhancements) {
+    enemyEnhancements = {
+      head: ghost.enhancements.head ?? null,
+      chest: ghost.enhancements.chest ?? null,
+      boots: ghost.enhancements.boots ?? null,
+    };
+  }
 }
 
 function resetLobbyPrepTimer() {
@@ -400,6 +423,11 @@ function syncLobbyPlayerFromGlobals() {
     items: playerItems,
     bench,
     pendingShopBuffs: playerPendingShopBuffs,
+    companionId: playerCompanionId,
+    mutationFormId: playerMutationFormId,
+    mutationId: playerMutationId,
+    enhancements: playerEnhancements,
+    round,
   });
 }
 
@@ -534,8 +562,8 @@ function renderLobbyChrome(force = false) {
   }
 
   const rosterOpts = phase === "prep"
-    ? { phase: "prep", viewFighterId: lobbyViewFighterId }
-    : { phase: "battle", spectateMatchId: lobbySpectateMatchId, matches: lobbyMatches, layout: "bottom" };
+    ? { phase: "prep", viewFighterId: lobbyViewFighterId, round }
+    : { phase: "battle", spectateMatchId: lobbySpectateMatchId, matches: lobbyMatches, layout: "bottom", round };
   const stripSig = typeof buildLobbyRosterStripSignature === "function"
     ? buildLobbyRosterStripSignature(lobbyState, rosterOpts)
     : "";
@@ -598,7 +626,15 @@ function initLobbyRun() {
   lobbyViewFighterId = lobbyState.playerId;
   lobbyMatches = [];
   lobbySpectateMatchId = 0;
+  const player = getLobbyPlayer(lobbyState);
+  if (player) {
+    player.companionId = playerCompanionId;
+    player.enhancements = playerEnhancements;
+  }
   runLobbyBotsShopPhase(lobbyState, round);
+  if (typeof syncAllLobbyFighterMutations === "function") {
+    syncAllLobbyFighterMutations(lobbyState, round);
+  }
   pickLobbyOpponent(lobbyState);
   resetLobbyPrepTimer();
   setLobbyViewFighter(lobbyState.playerId);
@@ -702,6 +738,213 @@ function updatePrepSideUI() {
   updateShopGoldStat();
 }
 
+function getActiveCompanionIdForLoadout() {
+  return prepViewSide === "enemy" ? enemyCompanionId : playerCompanionId;
+}
+
+function getSideEnhancementsRaw(side = "player") {
+  return side === "enemy" ? enemyEnhancements : playerEnhancements;
+}
+
+function syncEnhancementsForSide(side = prepViewSide) {
+  const items = side === "enemy" ? enemyItems : playerItems;
+  if (typeof syncEnhancementsFromBackpack === "function") {
+    syncEnhancementsFromBackpack(items, getSideEnhancementsRaw(side), round);
+  }
+}
+
+function getSideEnhancements(side = "player") {
+  syncEnhancementsForSide(side);
+  return getSideEnhancementsRaw(side);
+}
+
+function bindEnhancementTooltipEvents(el, enhancementId, context = "shop") {
+  if (!el || !enhancementId || el.dataset.enhTooltipBound === "1") return;
+  el.dataset.enhTooltipBound = "1";
+  const showAt = (clientX, clientY) => {
+    const def = getEnhancementDef(enhancementId);
+    if (!def) return;
+    showEnhancementTooltipAt(clientX, clientY, def, context, el);
+  };
+  bindPointerTapTooltip(el, showAt);
+  el.addEventListener("mouseenter", (e) => {
+    if (isTouchUi() || dragPayload) return;
+    showAt(e.clientX, e.clientY);
+  });
+  el.addEventListener("mouseleave", () => {
+    if (isTouchUi() || sidebarTooltipPinned) return;
+    if (sidebarTooltipSource === context || sidebarTooltipSource === "enhancement") hideSidebarTooltip();
+  });
+}
+
+function showEnhancementTooltipAt(clientX, clientY, def, context = "shop", sourceEl = null, options = {}) {
+  const el = document.getElementById("sidebar-tooltip");
+  if (!el || !def || typeof buildEnhancementTooltipLines !== "function") return;
+  cancelScheduledTooltipHide();
+  sidebarTooltipPinned = !!options.pinned;
+  sidebarTooltipSource = context === "shop" ? "shop" : "enhancement";
+  tooltipItem = null;
+  fieldTooltipVisible = false;
+  el.classList.remove("synergy-tooltip");
+  if (sourceEl?.dataset?.unaffordable) {
+    const sideGold = getSideState(prepViewSide).gold;
+    const cost = getEnhancementShopCost(def);
+    el.innerHTML = `<div class="tt-line tt-title">Недостаточно золота</div><div class="tt-line tt-sub">${cost}💰 · у вас ${sideGold}💰</div>`;
+  } else {
+    el.innerHTML = renderTooltipLinesHtml(buildEnhancementTooltipLines(def, context));
+  }
+  el.style.borderColor = (typeof RARITY_COLORS !== "undefined" ? RARITY_COLORS[def.rarity] : null) || "#30363d";
+  el.classList.remove("hidden");
+  syncPrepTooltipDockVisibility();
+  const boundsKind = context === "shop" ? "shop" : "viewport";
+  positionSidebarTooltip(clientX, clientY, boundsKind, context);
+}
+
+function bindPrepEnhancementStrip(side = prepViewSide) {
+  const strip = document.getElementById("prep-enhancement-strip");
+  if (!strip) return;
+  strip.querySelectorAll(".enh-slot--filled").forEach((slotEl) => {
+    const enhId = slotEl.dataset.enhId;
+    if (!enhId) return;
+    bindEnhancementTooltipEvents(slotEl, enhId, "enhancement");
+  });
+}
+
+function getSideMutationRuntime(side = "player") {
+  syncEnhancementsForSide(side);
+  if (side === "enemy") {
+    return {
+      classId: enemyClass,
+      companionId: enemyCompanionId,
+      formId: enemyMutationFormId,
+      mutationId: enemyMutationId,
+      items: enemyItems,
+      enhancements: enemyEnhancements,
+    };
+  }
+  return {
+    classId: playerClass,
+    companionId: playerCompanionId,
+    formId: playerMutationFormId,
+    mutationId: playerMutationId,
+    items: playerItems,
+    enhancements: playerEnhancements,
+  };
+}
+
+function syncMutationMilestonesForSide(side = "player") {
+  if (typeof resolveMutationProgress !== "function" || typeof pickMutationIdForMilestone !== "function") return null;
+  const rt = getSideMutationRuntime(side);
+  if (!rt.classId) return null;
+  const progress = resolveMutationProgress({
+    classId: rt.classId,
+    companionId: rt.companionId,
+    items: rt.items,
+    enhancements: rt.enhancements,
+    round,
+  });
+
+  const pickId = pickMutationIdForMilestone(progress, round);
+  if (side === "enemy") {
+    if (round >= MUTATION_ROUND_FINAL && pickId && !enemyMutationId) {
+      enemyMutationId = pickId;
+      if (!enemyMutationFormId) enemyMutationFormId = pickId;
+    } else if (round >= MUTATION_ROUND_FORM && pickId && !enemyMutationFormId) {
+      enemyMutationFormId = pickId;
+    }
+  } else {
+    if (round >= MUTATION_ROUND_FINAL && pickId && !playerMutationId) {
+      playerMutationId = pickId;
+      if (!playerMutationFormId) playerMutationFormId = pickId;
+      const name = typeof getMutationById === "function" ? getMutationById(pickId)?.name : pickId;
+      log(`Мутация: ${name || pickId}`);
+      if (typeof triggerMutationMilestoneCelebration === "function") {
+        triggerMutationMilestoneCelebration("player", "mutation");
+      }
+    } else if (round >= MUTATION_ROUND_FORM && pickId && !playerMutationFormId) {
+      playerMutationFormId = pickId;
+      const name = typeof getMutationById === "function" ? getMutationById(pickId)?.formName : pickId;
+      log(`Форма: ${name || pickId}`);
+      if (typeof triggerMutationMilestoneCelebration === "function") {
+        triggerMutationMilestoneCelebration("player", "form");
+      }
+    }
+  }
+  return progress;
+}
+
+function syncAllMutationMilestones() {
+  const playerProgress = syncMutationMilestonesForSide("player");
+  if (isVersusMode()) syncMutationMilestonesForSide("enemy");
+  return playerProgress;
+}
+
+function getRunDisplayTitle(side = "player") {
+  const rt = getSideMutationRuntime(side);
+  if (typeof getMutationDisplayTitle === "function") {
+    return getMutationDisplayTitle(rt.classId, rt.formId, rt.mutationId);
+  }
+  const cls = getClassById(rt.classId);
+  return cls?.noviceLabel || cls?.name || "—";
+}
+
+function ensureCompanionGrid() {
+  const grid = document.getElementById("companion-grid");
+  if (!grid || grid.dataset.built === "1") return;
+  if (typeof COMPANION_CATALOG === "undefined") return;
+  grid.dataset.built = "1";
+  grid.innerHTML = Object.values(COMPANION_CATALOG).map((c) => `
+    <button type="button" class="class-card companion-card glass-card" data-companion="${c.id}">
+      <span class="companion-emoji" aria-hidden="true">${c.emoji}</span>
+      <span class="class-name">${c.name}</span>
+      <span class="class-desc">${c.desc}</span>
+    </button>
+  `).join("");
+  grid.querySelectorAll("[data-companion]").forEach((btn) => {
+    btn.addEventListener("click", () => selectCompanion(btn.dataset.companion));
+  });
+}
+
+function renderCompanionSelection() {
+  ensureCompanionGrid();
+  const grid = document.getElementById("companion-grid");
+  if (!grid) return;
+  grid.querySelectorAll("[data-companion]").forEach((btn) => {
+    btn.classList.toggle("selected", btn.dataset.companion === pendingPlayerCompanionId);
+  });
+}
+
+function showCompanionStep() {
+  document.getElementById("class-step-mode")?.classList.add("hidden");
+  document.getElementById("class-step-player")?.classList.add("hidden");
+  document.getElementById("class-step-companion")?.classList.remove("hidden");
+  document.getElementById("class-step-opponent")?.classList.add("hidden");
+  const novice = getClassById(pendingPlayerClass);
+  document.getElementById("class-modal-title").textContent = "Спутник";
+  document.getElementById("class-modal-subtitle").textContent = novice
+    ? `${novice.noviceLabel || novice.name}: выберите спутника на весь забег`
+    : "Выберите спутника";
+  if (typeof renderClassMutationGallery === "function") {
+    renderClassMutationGallery(pendingPlayerClass);
+  }
+  renderCompanionSelection();
+  syncClassOverlayUi();
+  syncClassMobileDock();
+}
+
+function selectCompanion(companionId) {
+  if (!COMPANION_CATALOG?.[companionId]) return;
+  pendingPlayerCompanionId = companionId;
+  renderCompanionSelection();
+  if (selectedGameMode === "lobby") {
+    updateStartRunButton();
+    syncClassOverlayUi();
+    syncClassMobileDock();
+    return;
+  }
+  showSecondClassStep();
+}
+
 function syncRunHudPhase() {
   const phaseEl = document.getElementById("run-hud-phase");
   if (!phaseEl) return;
@@ -718,22 +961,27 @@ function syncClassOverlayUi() {
   const hint = document.getElementById("class-action-hint");
   const modeStep = document.getElementById("class-step-mode");
   const playerStep = document.getElementById("class-step-player");
+  const companionStep = document.getElementById("class-step-companion");
   const opponentStep = document.getElementById("class-step-opponent");
   if (!badge || !hint) return;
 
+  const lobbySteps = selectedGameMode === "lobby";
+
   if (modeStep && !modeStep.classList.contains("hidden")) {
-    badge.textContent = "Шаг 1 из 3 · Режим";
+    badge.textContent = lobbySteps ? "Шаг 1 из 3 · Режим" : "Шаг 1 из 4 · Режим";
     hint.textContent = "Нажмите на режим — одиночная, лобби, PvP или сложный бот";
   } else if (playerStep && !playerStep.classList.contains("hidden")) {
-    if (selectedGameMode === "lobby") {
-      badge.textContent = "Шаг 2 из 2 · Ваш класс";
-      hint.textContent = "Выберите класс и нажмите «Начать лобби» внизу";
-    } else {
-      badge.textContent = "Шаг 2 из 3 · Ваш класс";
-      hint.textContent = "Нажмите на карточку класса — откроется выбор соперника";
-    }
+    badge.textContent = lobbySteps ? "Шаг 2 из 3 · Класс" : "Шаг 2 из 4 · Класс";
+    hint.textContent = pendingPlayerClass
+      ? "8 мутаций ниже — нажмите класс ещё раз, чтобы перейти к спутнику"
+      : "Выберите класс-новичок — стартовый профиль забега";
+  } else if (companionStep && !companionStep.classList.contains("hidden")) {
+    badge.textContent = lobbySteps ? "Шаг 3 из 3 · Спутник" : "Шаг 3 из 4 · Спутник";
+    hint.textContent = lobbySteps
+      ? "Спутник задаёт ось билда. Затем «Начать лобби»"
+      : "Спутник на весь забег. Затем выбор соперника";
   } else if (opponentStep && !opponentStep.classList.contains("hidden")) {
-    badge.textContent = "Шаг 3 из 3 · Соперник";
+    badge.textContent = "Шаг 4 из 4 · Соперник";
     const startLabel = selectedGameMode === "versus" ? "Начать игру" : "Начать забег";
     hint.textContent = `Выберите класс соперника, затем «${startLabel}» внизу экрана`;
   } else {
@@ -745,6 +993,7 @@ function syncClassOverlayUi() {
 function showGameModeStep() {
   document.getElementById("class-step-mode")?.classList.remove("hidden");
   document.getElementById("class-step-player")?.classList.add("hidden");
+  document.getElementById("class-step-companion")?.classList.add("hidden");
   document.getElementById("class-step-opponent")?.classList.add("hidden");
   document.getElementById("class-modal-title").textContent = "Режим игры";
   document.getElementById("class-modal-subtitle").textContent = "Выберите формат — бот, лобби, сложный бот или PvP с другом";
@@ -755,6 +1004,7 @@ function showGameModeStep() {
 function showPlayerClassStep() {
   document.getElementById("class-step-mode")?.classList.add("hidden");
   document.getElementById("class-step-player")?.classList.remove("hidden");
+  document.getElementById("class-step-companion")?.classList.add("hidden");
   document.getElementById("class-step-opponent")?.classList.add("hidden");
   document.getElementById("class-modal-title").textContent = selectedGameMode === "versus"
     ? "Игрок 1 — класс"
@@ -766,10 +1016,14 @@ function showPlayerClassStep() {
       : "Каждый класс получает стартовый набор и уникальный бонус на весь забег.";
   syncClassOverlayUi();
   syncClassMobileDock();
+  if (typeof renderClassMutationGallery === "function") {
+    renderClassMutationGallery(pendingPlayerClass);
+  }
 }
 
 function resetClassSelectOverlay() {
   pendingPlayerClass = null;
+  pendingPlayerCompanionId = null;
   selectedEnemyClass = null;
   selectedGameMode = "solo";
   selectedOpponentMode = "ai";
@@ -778,6 +1032,7 @@ function resetClassSelectOverlay() {
   });
   document.querySelectorAll(".class-card[data-class]").forEach((card) => card.classList.remove("selected"));
   document.querySelectorAll(".opponent-class-card").forEach((card) => card.classList.remove("selected"));
+  if (typeof renderClassMutationGallery === "function") renderClassMutationGallery(null);
   showGameModeStep();
   updateStartRunButton();
   syncClassOverlayUi();
@@ -787,6 +1042,7 @@ function resetClassSelectOverlay() {
 function showSecondClassStep() {
   document.getElementById("class-step-mode")?.classList.add("hidden");
   document.getElementById("class-step-player")?.classList.add("hidden");
+  document.getElementById("class-step-companion")?.classList.add("hidden");
   document.getElementById("class-step-opponent")?.classList.remove("hidden");
   const hint = document.getElementById("opponent-mode-hint");
   if (selectedGameMode === "versus") {
@@ -816,16 +1072,16 @@ function syncClassMobileDock() {
   const dock = document.getElementById("class-mobile-dock");
   const overlay = document.getElementById("class-overlay");
   const opponentStep = document.getElementById("class-step-opponent");
-  const playerStep = document.getElementById("class-step-player");
+  const companionStep = document.getElementById("class-step-companion");
   if (!dock) return;
   const overlayOpen = !!overlay && !overlay.classList.contains("hidden");
   const opponentVisible = !!opponentStep && !opponentStep.classList.contains("hidden");
-  const lobbyPlayerVisible = selectedGameMode === "lobby"
-    && !!playerStep
-    && !playerStep.classList.contains("hidden");
-  const show = overlayOpen && (opponentVisible || lobbyPlayerVisible);
+  const lobbyCompanionVisible = selectedGameMode === "lobby"
+    && !!companionStep
+    && !companionStep.classList.contains("hidden");
+  const show = overlayOpen && (opponentVisible || lobbyCompanionVisible);
   const dockBack = document.getElementById("btn-class-back");
-  if (dockBack) dockBack.classList.toggle("hidden", lobbyPlayerVisible);
+  if (dockBack) dockBack.classList.toggle("hidden", lobbyCompanionVisible);
   dock.classList.toggle("hidden", !show);
   dock.setAttribute("aria-hidden", show ? "false" : "true");
   if (typeof window.syncClassOverlayAnchors === "function") {
@@ -840,8 +1096,8 @@ function updateStartRunButton() {
   const btn = document.getElementById("btn-start-run");
   if (!btn) return;
   const ready = selectedGameMode === "lobby"
-    ? !!pendingPlayerClass
-    : !!(pendingPlayerClass && selectedEnemyClass);
+    ? !!(pendingPlayerClass && pendingPlayerCompanionId)
+    : !!(pendingPlayerClass && pendingPlayerCompanionId && selectedEnemyClass);
   btn.disabled = !ready;
   if (selectedGameMode === "versus") btn.textContent = "Начать игру";
   else if (selectedGameMode === "lobby") btn.textContent = "Начать лобби";
@@ -853,18 +1109,23 @@ function scrollClassPickerCardIntoView(card) {
 }
 
 function selectPlayerClass(classId) {
+  const reclick = pendingPlayerClass === classId;
   pendingPlayerClass = classId;
   document.querySelectorAll(".class-card[data-class]").forEach((card) => {
     card.classList.toggle("selected", card.dataset.class === classId);
   });
   scrollClassPickerCardIntoView(document.querySelector(`.class-card[data-class="${classId}"]`));
-  if (selectedGameMode === "lobby") {
-    updateStartRunButton();
-    syncClassOverlayUi();
-    syncClassMobileDock();
+  if (!pendingPlayerCompanionId && typeof defaultCompanionForClass === "function") {
+    pendingPlayerCompanionId = defaultCompanionForClass(classId);
+  }
+  if (typeof renderClassMutationGallery === "function") renderClassMutationGallery(classId);
+  if (reclick) {
+    showCompanionStep();
     return;
   }
-  showSecondClassStep();
+  syncClassOverlayUi();
+  syncClassMobileDock();
+  updateStartRunButton();
 }
 
 function selectGameMode(mode) {
@@ -1448,8 +1709,13 @@ function init() {
     showGameModeStep();
   });
   document.getElementById("btn-class-back")?.addEventListener("click", () => {
-    showPlayerClassStep();
+    const opponentStep = document.getElementById("class-step-opponent");
+    const companionStep = document.getElementById("class-step-companion");
+    if (opponentStep && !opponentStep.classList.contains("hidden")) showCompanionStep();
+    else if (companionStep && !companionStep.classList.contains("hidden")) showPlayerClassStep();
+    else showGameModeStep();
   });
+  document.getElementById("btn-class-back-player")?.addEventListener("click", () => showPlayerClassStep());
   document.getElementById("btn-start-run")?.addEventListener("click", startRunFromOverlay);
   bindLobbyRosterClicks();
   window.addEventListener("resize", syncClassMobileDock, { passive: true });
@@ -1857,10 +2123,19 @@ function refreshPrepHeroTooltip() {
   const titleEl = document.getElementById("prep-hero-tooltip-title");
   const descEl = document.getElementById("prep-hero-tooltip-desc");
   const classId = prepViewSide === "player" ? playerClass : enemyClass;
-  const cls = getClassById(classId);
-  if (titleEl) titleEl.textContent = cls?.name || "—";
+  const side = prepViewSide === "player" ? "player" : "enemy";
+  const rt = getSideMutationRuntime(side);
+  const companion = typeof getCompanionById === "function" ? getCompanionById(rt.companionId) : null;
+  if (titleEl) titleEl.textContent = getRunDisplayTitle(side);
   if (descEl) {
+    const cls = getClassById(classId);
     let desc = cls?.desc || "Описание класса недоступно.";
+    if (companion) desc += ` · Спутник: ${companion.emoji} ${companion.name}`;
+    if (rt.mutationId && typeof getMutationById === "function") {
+      desc += ` · Мутация: ${getMutationById(rt.mutationId)?.name || rt.mutationId}`;
+    } else if (rt.formId && typeof getMutationById === "function") {
+      desc += ` · Форма: ${getMutationById(rt.formId)?.formName || rt.formId}`;
+    }
     if (classId === "priest" && typeof countFoodItemsInLoadout === "function") {
       const items = prepViewSide === "player" ? playerItems : enemyItems;
       const foodCount = countFoodItemsInLoadout(items);
@@ -1981,6 +2256,7 @@ function returnToMainMenu() {
   document.getElementById("overlay")?.classList.add("hidden");
   document.getElementById("class-overlay")?.classList.remove("hidden");
   resetClassSelectOverlay();
+  ensureCompanionGrid();
   setPhaseLabel("Выбор класса", false);
   renderPhase();
   renderFightButton();
@@ -1992,9 +2268,18 @@ function showClassSelect() {
 
 function startRunFromOverlay() {
   if (!pendingPlayerClass) return;
+  if (!pendingPlayerCompanionId) return;
   if (selectedGameMode !== "lobby" && !selectedEnemyClass) return;
   gameMode = selectedGameMode;
   playerClass = pendingPlayerClass;
+  playerCompanionId = pendingPlayerCompanionId;
+  enemyCompanionId = typeof defaultCompanionForClass === "function"
+    ? defaultCompanionForClass(selectedEnemyClass || pendingPlayerClass)
+    : "s_stranger";
+  playerMutationFormId = null;
+  playerMutationId = null;
+  enemyMutationFormId = null;
+  enemyMutationId = null;
   opponentMode = selectedGameMode === "versus"
     ? "manual"
     : selectedGameMode === "hardbot"
@@ -2022,6 +2307,26 @@ function restartGame() {
     showClassSelect();
     return;
   }
+  if (!playerCompanionId) {
+    playerCompanionId = typeof defaultCompanionForClass === "function"
+      ? defaultCompanionForClass(playerClass)
+      : "s_stranger";
+  }
+  if (!enemyCompanionId) {
+    enemyCompanionId = typeof defaultCompanionForClass === "function"
+      ? defaultCompanionForClass(enemyClass || playerClass)
+      : "s_stranger";
+  }
+  playerMutationFormId = null;
+  playerMutationId = null;
+  enemyMutationFormId = null;
+  enemyMutationId = null;
+  playerEnhancements = typeof createEmptyEnhancementLoadout === "function"
+    ? createEmptyEnhancementLoadout()
+    : { head: null, chest: null, boots: null };
+  enemyEnhancements = typeof createEmptyEnhancementLoadout === "function"
+    ? createEmptyEnhancementLoadout()
+    : { head: null, chest: null, boots: null };
   phase = "prep";
   round = 1;
   gold = START_GOLD;
@@ -2518,7 +2823,8 @@ function syncUiDragState() {
 
 function applyCraftingForSide(side = prepViewSide) {
   const st = getSideState(side);
-  const result = tryResolveCrafting(st.containers, st.items);
+  const craftCtx = typeof getCraftContextFromGame === "function" ? getCraftContextFromGame(side) : {};
+  const result = tryResolveCrafting(st.containers, st.items, craftCtx);
   if (!result.crafted.length) return false;
   st.items = result.items;
   playPrepSfx("prep_craft");
@@ -2537,6 +2843,14 @@ function applyCraftingForSide(side = prepViewSide) {
 function notifyPrepDragRejectedFromDragFrom() {
   if (dragFrom?.type === "item" && dragFrom.item) {
     notifyPrepPlacementRejected(dragFrom.item);
+    return;
+  }
+  if (dragPayload?.itemId && typeof getEnhancementPlacementBlockReason === "function") {
+    const side = dragFrom?.side || prepViewSide;
+    const st = getSideState(side);
+    const excludeUid = dragFrom?.type === "item" ? dragFrom.item?.uid : null;
+    const reason = getEnhancementPlacementBlockReason(dragPayload.itemId, st.items, excludeUid);
+    if (reason) log(reason);
   }
 }
 
@@ -3374,6 +3688,8 @@ function renderFightButton() {
 }
 
 function recalcSynergies() {
+  syncEnhancementsForSide("player");
+  syncEnhancementsForSide("enemy");
   applySynergyModifiersToContainers(playerContainers, playerItems);
   applySynergyModifiersToContainers(enemyContainers, enemyItems);
   refreshActiveSynergies(playerItems, enemyItems);
@@ -3536,6 +3852,9 @@ function startBattle() {
         setBattleEnemyTeamLabel(getEnemyDisplayName());
       }
       if (isLobbyMode() && lobbyState) {
+        if (typeof syncAllLobbyFighterMutations === "function") {
+          syncAllLobbyFighterMutations(lobbyState, round);
+        }
         if (typeof disposeLobbyMatches === "function") disposeLobbyMatches(lobbyMatches);
         lobbyMatches = [];
         lobbyBackgroundSimAcc.clear();
@@ -3561,8 +3880,20 @@ function startBattle() {
           enemyClass,
           round,
           {
-            player: { pendingShopBuffs: playerPendingShopBuffs },
-            enemy: { pendingShopBuffs: enemyPendingShopBuffs },
+            player: {
+              pendingShopBuffs: playerPendingShopBuffs,
+              companionId: playerCompanionId,
+              mutationFormId: playerMutationFormId,
+              mutationId: playerMutationId,
+              enhancements: playerEnhancements,
+            },
+            enemy: {
+              pendingShopBuffs: enemyPendingShopBuffs,
+              companionId: enemyCompanionId,
+              mutationFormId: enemyMutationFormId,
+              mutationId: enemyMutationId,
+              enhancements: enemyEnhancements,
+            },
           },
         );
       }
@@ -3707,6 +4038,8 @@ function endBattle() {
     const battleResult = battleWinner === "player" ? "win" : battleWinner === "enemy" ? "loss" : "draw";
     runResults[round - 1] = battleResult;
     round++;
+    syncAllMutationMilestones();
+    if (isLobbyMode() && lobbyState) syncLobbyPlayerFromGlobals();
     resetShopForNewRound();
 
     setBattleControlsVisible(false);
@@ -4127,6 +4460,7 @@ function gameLoop(ts) {
   } else {
     synergyPreviewBuilt = null;
     canvas?.classList.remove("synergy-preview-mode");
+    canvas?.classList.remove("amplify-preview-mode");
   }
 
   if (phase === "battle" && tickLobbyRoundBattles(dt, ts)) {
@@ -4874,6 +5208,15 @@ function drawWorldLayer() {
     if (typeof drawPrepSynergyEnhancements === "function") {
       drawPrepSynergyEnhancements(ctx, synergyAnimTime, side, st.items);
     }
+    const ampDragCtx = (dragPayload?.itemId
+      && typeof isAmplifierBackpackItem === "function"
+      && isAmplifierBackpackItem(dragPayload.itemId)
+      && dragFrom?.type !== "item")
+      ? { extraItemId: dragPayload.itemId }
+      : null;
+    const hasAmplifyHighlights = typeof drawPrepAmplifyHighlights === "function"
+      && drawPrepAmplifyHighlights(ctx, synergyAnimTime, side, st.items, ampDragCtx);
+    canvas?.classList.toggle("amplify-preview-mode", !!hasAmplifyHighlights);
     if (canEditPrepSide(side) && dragPayload && getPrepDropPlacement(st, side)) {
       if (typeof drawPrepDropPreview === "function") drawPrepDropPreview(ctx, side, st);
       else drawDropPreview(ctx);
@@ -6330,6 +6673,13 @@ function updateTooltip(mx, my) {
 }
 
 function showSidebarTooltipAt(clientX, clientY, itemId, contentItem, context = "shop", sourceEl = null, options = {}) {
+  if (typeof isEnhancementBackpackItem === "function" && isEnhancementBackpackItem(itemId)) {
+    const def = typeof getEnhancementDef === "function" ? getEnhancementDef(getEnhancementIdFromItem(itemId)) : null;
+    if (def) {
+      showEnhancementTooltipAt(clientX, clientY, def, context, sourceEl, options);
+      return;
+    }
+  }
   const el = document.getElementById("sidebar-tooltip");
   const def = ITEM_CATALOG[itemId];
   if (!el || !def) return;
@@ -6423,7 +6773,7 @@ function tryShowPrepPointerTapTooltip(clientX, clientY) {
         pendingShopDrag = null;
         syncUiDragState();
         if (tipAlreadyVisible && sidebarTooltipSource === "shop") return true;
-        showSidebarTooltipAt(clientX, clientY, entry.itemId, null, "shop", card, { pinned: true });
+        showSidebarTooltipAt(clientX, clientY, entry, null, "shop", card, { pinned: true });
         return true;
       }
     }
@@ -6971,8 +7321,10 @@ function beginPendingShopDrag(index, e, side = prepViewSide) {
   if (phase !== "prep" || gameOver || !canEditPrepSide(side)) return;
   const st = getSideState(side);
   if (!st.shop[index]) return;
-  const def = ITEM_CATALOG[st.shop[index]];
-  if (!def || st.gold < def.cost) return;
+  const entryId = st.shop[index];
+  const enhMeta = typeof resolveShopEntryMeta === "function" ? resolveShopEntryMeta(entryId) : null;
+  const cost = enhMeta?.cost ?? ITEM_CATALOG[entryId]?.cost;
+  if (cost == null || st.gold < cost) return;
   e.preventDefault();
   pendingShopDrag = { index, startX: e.clientX, startY: e.clientY, side };
   shopDidDrag = false;
@@ -7022,16 +7374,18 @@ function startShopDrag(index, e, side = prepViewSide) {
   if (phase !== "prep" || gameOver || !canEditPrepSide(side)) return;
   const st = getSideState(side);
   if (!st.shop[index]) return;
-  const def = ITEM_CATALOG[st.shop[index]];
-  if (!def || st.gold < def.cost) return;
+  const entryId = st.shop[index];
+  const enhMeta = typeof resolveShopEntryMeta === "function" ? resolveShopEntryMeta(entryId) : null;
+  const cost = enhMeta?.cost ?? ITEM_CATALOG[entryId]?.cost;
+  if (cost == null || st.gold < cost) return;
   if (e?.preventDefault) e.preventDefault();
   clearTouchTapGesture();
   hideSidebarTooltip();
-  dragPayload = { itemId: st.shop[index], rotation: 0 };
+  dragPayload = { itemId: entryId, rotation: 0 };
   dragFrom = { type: "shop", index, side };
   prepSidebarDragUnlocked = false;
   prepSidebarStickyHover = null;
-  beginPrepDragArcFromCard(document.querySelector(`.shop-card[data-index="${index}"]`));
+  beginPrepDragArcFromCard(document.querySelector(`.shop-card[data-index="${index}"]`), entryId);
   startSynergyPreview();
   document.querySelector(`.shop-card[data-index="${index}"]`)?.classList.add("shop-dragging");
   syncUiDragState();
@@ -7099,8 +7453,12 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
 
   layer?.setAttribute("aria-hidden", "false");
 
-  const fillChar = (el, profile) => {
+  const fillChar = (el, profile, chrSide) => {
     if (!el) return;
+    if (typeof renderPrepCharacterHtml === "function") {
+      el.innerHTML = renderPrepCharacterHtml(chrSide, profile, round);
+      return;
+    }
     if (profile.classIconSrc) {
       el.innerHTML = `<img class="prep-character-img" src="${profile.classIconSrc}" alt="" draggable="false">`;
     } else {
@@ -7108,14 +7466,32 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
     }
   };
 
-  fillChar(prepPlayer, playerProfile);
-  fillChar(prepEnemy, enemyProfile);
+  fillChar(prepPlayer, playerProfile, "player");
+  fillChar(prepEnemy, enemyProfile, "enemy");
   prepPlayer?.toggleAttribute("hidden", prepViewSide !== "player");
   prepEnemy?.toggleAttribute("hidden", prepViewSide !== "enemy");
 
   const side = prepViewSide;
   const profile = side === "player" ? playerProfile : enemyProfile;
   const st = getSideState(side);
+  const mutRt = getSideMutationRuntime(side);
+  const mutationProgress = typeof resolveMutationProgress === "function"
+    ? resolveMutationProgress({
+      classId: mutRt.classId,
+      companionId: mutRt.companionId,
+      items: mutRt.items,
+      enhancements: mutRt.enhancements,
+      round,
+    })
+    : null;
+  const companion = typeof getCompanionById === "function" ? getCompanionById(mutRt.companionId) : null;
+  const displayTitle = getRunDisplayTitle(side);
+  const mutationHtml = typeof renderMutationProgressHtml === "function"
+    ? renderMutationProgressHtml(mutationProgress, mutRt.formId, mutRt.mutationId, round)
+    : "";
+  const enhancementHtml = typeof renderPrepEnhancementStripHtml === "function"
+    ? renderPrepEnhancementStripHtml(round, mutRt.enhancements)
+    : "";
 
   if (statsHud) {
     const lobbyPlayer = isLobbyMode() ? getLobbyPlayer(lobbyState) : null;
@@ -7129,14 +7505,19 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
         ? `${lobbyPlayer.hp}/${LOBBY_START_HP}`
         : profile.hpDisplay;
     const hpRowClass = lobbyPlayer ? " prep-stats-row--lobby-hp" : "";
+    const companionLabel = companion ? `${companion.emoji} ${companion.name}` : "—";
     statsHud.innerHTML = `
-      <div class="prep-stats-class">${profile.className || "—"}</div>
+      <div class="prep-stats-class">${displayTitle}</div>
       <div class="prep-stats-metrics">
+        <div class="prep-stats-row"><span>${companionLabel}</span></div>
         <div class="prep-stats-row"><span>💰</span><b>${st.gold}</b></div>
         <div class="prep-stats-row${hpRowClass}"><span>❤️</span><b>${hpLabel}</b></div>
         <div class="prep-stats-row"><span>Раунд</span><b>${roundLabel}</b></div>
       </div>
+      ${mutationHtml}
+      ${enhancementHtml}
     `;
+    bindPrepEnhancementStrip(side);
     if (!document.getElementById("prep-hero-tooltip")?.classList.contains("hidden")) {
       refreshPrepHeroTooltip();
     }
@@ -7350,6 +7731,10 @@ registerPrepShopRuntime({
   playPrepSfx,
   isSyntheticMouseFromTouch,
   isTouchUi,
+  getSideEnhancements,
+  getSideCompanionId: (side) => (side === "enemy" ? enemyCompanionId : playerCompanionId),
+  getSideMutationId: (side) => (side === "enemy" ? enemyMutationId : playerMutationId),
+  getSideMutationFormId: (side) => (side === "enemy" ? enemyMutationFormId : playerMutationFormId),
   beginPendingShopDrag,
   startBenchDrag,
 });

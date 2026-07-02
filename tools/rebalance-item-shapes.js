@@ -21,8 +21,8 @@ const DAMAGE_SPREAD = { common: 2, uncommon: 3, rare: 4, legendary: 5 };
 
 function loadCatalog() {
   const itemsJs = fs.readFileSync(ITEMS_JS, "utf8");
-  const bbJs = fs.readFileSync(path.join(ROOT, "items-bb-catalog.js"), "utf8");
-  const fn = new Function(`${itemsJs}\n${bbJs}\nreturn ITEM_CATALOG;`);
+  const catalogJs = fs.readFileSync(path.join(ROOT, "items-catalog.js"), "utf8");
+  const fn = new Function(`${itemsJs}\n${catalogJs}\nreturn ITEM_CATALOG;`);
   return fn();
 }
 
