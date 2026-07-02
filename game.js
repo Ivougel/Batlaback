@@ -2851,6 +2851,13 @@ function getPrepSidebarLinkTargetClient() {
 }
 
 function syncPrepSidebarBoardHover(clientX, clientY, side, st) {
+  if (isPointerOverShopDrawer(clientX, clientY)) {
+    prepDropPreviewHover = null;
+    hoverCell = null;
+    hoverSlot = null;
+    return false;
+  }
+
   let mx;
   let my;
 
@@ -2867,6 +2874,20 @@ function syncPrepSidebarBoardHover(clientX, clientY, side, st) {
     if (!projected) return false;
     mx = projected.x;
     my = projected.y;
+  }
+
+  // Если проекция попала в занятую клетку и предмет сейчас не размещается,
+  // показываем красную тень именно в этой точке (без автоснаппинга).
+  const directApplied = applyPrepBoardHoverFromCanvasXY(mx, my, side, st);
+  if (directApplied) {
+    const col = xToCol(mx, side);
+    const row = yToRow(my, side);
+    const slotOccupied = isSlotCell(st.containers, col, row)
+      && !!findItemAtSlot(st.items, col, row);
+    if (slotOccupied) {
+      const placement = getPrepDropPlacement(st, side);
+      if (placement && !placement.valid) return true;
+    }
   }
 
   return applyPrepBoardHoverFromNearestPlaceable(mx, my, side, st);
@@ -3057,6 +3078,20 @@ function getPrepDropPlacement(st, side = prepViewSide) {
     };
   }
 
+  // Для drag из магазина/скамьи: занятая клетка должна явно подсвечиваться как невалидная.
+  if (isPrepSidebarArcDrag()
+    && isSlotCell(st.containers, col, row)
+    && findItemAtSlot(st.items, col, row)) {
+    return {
+      kind: "item",
+      col,
+      row,
+      rotation: dragPayload.rotation || 0,
+      valid: false,
+      displaced: [],
+    };
+  }
+
   const placement = resolveLoadoutPlacementDisplacing(
     st.containers,
     dragPayload.itemId,
@@ -3138,6 +3173,12 @@ function getPrepArcDropState() {
   if (phase !== "prep" || !dragPayload) return "neutral";
   const side = dragFrom?.side || prepViewSide;
   const st = getSideState(side);
+
+  if (isPrepSidebarArcDrag()) {
+    const placement = getPrepDropPlacement(st, side);
+    if (!placement) return "neutral";
+    return placement.valid ? "valid" : "invalid";
+  }
 
   if (isPrepBackpackArcDrag()) {
     const pointer = createSyntheticPointerEvent(lastPointerClient.x, lastPointerClient.y);
@@ -4489,7 +4530,8 @@ function syncDragGhostOverlay(clientX, clientY) {
       ghostX = clientX;
       ghostY = clientY;
       arcRotation = null;
-      const linkTarget = getPrepSidebarLinkTargetClient();
+      const outsideShopArea = !isPointerOverShopDrawer(clientX, clientY);
+      const linkTarget = outsideShopArea ? getPrepSidebarLinkTargetClient() : null;
       PrepDragArc.sync(clientX, clientY, clientX, clientY, {
         linkPoint: linkTarget,
         grabAtPointer: true,
@@ -6525,6 +6567,7 @@ function finishDragDrop(e) {
   }
 
   const dropOnSell = isDropOnSell(dropE);
+  const dropBackToShop = isPrepSidebarArcDrag() && isPointerOverShopDrawer(dropClientX, dropClientY);
   const { x: mx, y: my } = canvasCoordsFromClient(dropClientX, dropClientY);
   const onBoard = isOnBoard(mx, my, side);
   const boardCol = onBoard ? xToCol(mx, side) : null;
@@ -6557,6 +6600,16 @@ function finishDragDrop(e) {
   if (dropOnSell) {
     restoreDraggedItem(side);
     notifyPrepDragRejectedFromDragFrom();
+    clearDragUiState();
+    renderBench();
+    recalcSynergies();
+    updateUI();
+    return;
+  }
+
+  if (dropBackToShop) {
+    // Пользователь передумал: вернул предмет в зону магазина — отменяем hold.
+    restoreDraggedItem(side);
     clearDragUiState();
     renderBench();
     recalcSynergies();
