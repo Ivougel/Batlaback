@@ -988,6 +988,25 @@ function syncClassOverlayUi() {
     badge.textContent = "";
     hint.textContent = "";
   }
+  syncClassHeroShowcase();
+}
+
+function syncClassHeroShowcase() {
+  const overlay = document.getElementById("class-overlay");
+  if (!overlay || overlay.classList.contains("hidden")) {
+    if (typeof hideClassHeroShowcase === "function") hideClassHeroShowcase();
+    return;
+  }
+  const modeStep = document.getElementById("class-step-mode");
+  if (modeStep && !modeStep.classList.contains("hidden")) {
+    if (typeof updateClassHeroRosterShowcase === "function") updateClassHeroRosterShowcase();
+    return;
+  }
+  if (typeof updateClassHeroShowcase !== "function") return;
+  const opponentStep = document.getElementById("class-step-opponent");
+  const onOpponent = opponentStep && !opponentStep.classList.contains("hidden");
+  const classId = onOpponent ? selectedEnemyClass : pendingPlayerClass;
+  updateClassHeroShowcase(classId || null);
 }
 
 function showGameModeStep() {
@@ -1150,6 +1169,7 @@ function selectOpponentClass(classId) {
     card.classList.toggle("selected", card.dataset.opponentClass === classId);
   });
   scrollClassPickerCardIntoView(document.querySelector(`.opponent-class-card[data-opponent-class="${classId}"]`));
+  syncClassHeroShowcase();
   updateStartRunButton();
 }
 

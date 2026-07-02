@@ -34,6 +34,7 @@
   <link rel="stylesheet" href="styles/battle-hud-compact.css?v=3">
   <link rel="stylesheet" href="styles/hero-card.css?v=1">
   <link rel="stylesheet" href="styles/class-picker.css?v=2">
+  <link rel="stylesheet" href="styles/class-hero-showcase.css?v=3">
   <link rel="stylesheet" href="styles/mobile-prep.css?v=22">
   <link rel="stylesheet" href="styles/desktop-prep.css?v=1">
   <link rel="stylesheet" href="styles/tablet-stacked.css?v=7">
@@ -214,6 +215,56 @@
         <span class="class-overlay-blob class-overlay-blob--purple"></span>
         <span class="class-overlay-blob class-overlay-blob--cyan"></span>
       </div>
+      <div class="class-overlay-shell">
+        <aside class="class-hero-showcase hidden" id="class-hero-showcase" aria-hidden="true">
+          <div class="class-hero-showcase-single" id="class-hero-showcase-single">
+            <div class="class-hero-showcase-frame">
+              <div class="hero-scene-hill hero-scene-hill--back" aria-hidden="true"></div>
+              <div class="hero-scene-hill hero-scene-hill--mid" aria-hidden="true"></div>
+              <div class="hero-scene-hill hero-scene-hill--front" aria-hidden="true"></div>
+              <div class="hero-scene-cloud hero-scene-cloud--1" aria-hidden="true"></div>
+              <div class="hero-scene-cloud hero-scene-cloud--2" aria-hidden="true"></div>
+              <div class="hero-scene-grass-texture" aria-hidden="true"></div>
+              <div class="class-hero-showcase-glow" aria-hidden="true"></div>
+              <div class="class-hero-showcase-sparkles" aria-hidden="true">
+                <span class="class-hero-sparkle class-hero-sparkle--1"></span>
+                <span class="class-hero-sparkle class-hero-sparkle--2"></span>
+                <span class="class-hero-sparkle class-hero-sparkle--3"></span>
+                <span class="class-hero-sparkle class-hero-sparkle--4"></span>
+                <span class="class-hero-sparkle class-hero-sparkle--5"></span>
+              </div>
+              <img class="class-hero-showcase-img" id="class-hero-showcase-img" alt="" draggable="false">
+              <div class="class-hero-showcase-caption">
+                <p class="class-hero-showcase-name" id="class-hero-showcase-name"></p>
+                <p class="class-hero-showcase-desc" id="class-hero-showcase-desc"></p>
+              </div>
+            </div>
+          </div>
+          <div class="class-hero-showcase-roster hidden" id="class-hero-showcase-roster" aria-hidden="true">
+            <div class="class-hero-roster-frame">
+              <div class="hero-scene-hill hero-scene-hill--back" aria-hidden="true"></div>
+              <div class="hero-scene-hill hero-scene-hill--mid" aria-hidden="true"></div>
+              <div class="hero-scene-hill hero-scene-hill--front" aria-hidden="true"></div>
+              <div class="hero-scene-cloud hero-scene-cloud--1" aria-hidden="true"></div>
+              <div class="hero-scene-cloud hero-scene-cloud--2" aria-hidden="true"></div>
+              <div class="hero-scene-grass-texture" aria-hidden="true"></div>
+              <div class="class-hero-showcase-glow" aria-hidden="true"></div>
+              <div class="class-hero-showcase-sparkles" aria-hidden="true">
+                <span class="class-hero-sparkle class-hero-sparkle--1"></span>
+                <span class="class-hero-sparkle class-hero-sparkle--2"></span>
+                <span class="class-hero-sparkle class-hero-sparkle--3"></span>
+                <span class="class-hero-sparkle class-hero-sparkle--4"></span>
+                <span class="class-hero-sparkle class-hero-sparkle--5"></span>
+                <span class="class-hero-sparkle class-hero-sparkle--6"></span>
+              </div>
+              <div class="class-hero-roster-grid" id="class-hero-roster-grid"></div>
+              <div class="class-hero-roster-caption">
+                <p class="class-hero-roster-title">Мартовичок · Роксивичок · Морковичок · Мыковичок</p>
+                <p class="class-hero-roster-hint">Класс, спутник и рюкзак — ваша сила в забеге</p>
+              </div>
+            </div>
+          </div>
+        </aside>
       <div class="modal class-modal">
         <header class="class-modal-header">
           <p class="class-modal-eyebrow">BACKPACK BATTLES</p>
@@ -258,25 +309,25 @@
         <div class="class-grid" id="player-class-grid">
           <button type="button" class="class-card glass-card" data-class="warrior">
             <span class="glass-card-icon glass-card-icon--class class-icon"><img src="img/sticker_warrior.png" alt="" class="class-sticker" draggable="false"></span>
-            <span class="class-name">Воин-новичок</span>
+            <span class="class-name">Воин-мартовичок</span>
             <span class="class-desc">Ржавый меч + железный шлем</span>
             <span class="class-bonus">+3% HP на весь забег</span>
           </button>
           <button type="button" class="class-card glass-card" data-class="rogue">
             <span class="glass-card-icon glass-card-icon--class class-icon"><img src="img/sticker_rogue.png" alt="" class="class-sticker" draggable="false"></span>
-            <span class="class-name">Разбойник-новичок</span>
+            <span class="class-name">Разбойник-роксивичок</span>
             <span class="class-desc">Кинжал + яд</span>
             <span class="class-bonus">+3% скорость атаки</span>
           </button>
           <button type="button" class="class-card glass-card" data-class="mage">
             <span class="glass-card-icon glass-card-icon--class class-icon"><img src="img/sticker_mage.png" alt="" class="class-sticker" draggable="false"></span>
-            <span class="class-name">Маг-новичок</span>
+            <span class="class-name">Маг-морковичок</span>
             <span class="class-desc">Посох ученика + мана-кристалл</span>
             <span class="class-bonus">+4% магический урон</span>
           </button>
           <button type="button" class="class-card glass-card" data-class="priest">
             <span class="glass-card-icon glass-card-icon--class class-icon"><img src="img/sticker_priest.png" alt="" class="class-sticker" draggable="false"></span>
-            <span class="class-name">Жрец-новичок</span>
+            <span class="class-name">Жрец-мыковичок</span>
             <span class="class-desc">Старт поддержки и holy</span>
             <span class="class-bonus">+1.5% HP за еду, еда +8% хил</span>
           </button>
@@ -320,6 +371,7 @@
           <button type="button" class="btn-primary btn-glass-start" id="btn-start-run" disabled>Начать забег</button>
         </div>
         <footer class="class-modal-footer">v1.0 · Backpack Battles</footer>
+      </div>
       </div>
     </div>
 
