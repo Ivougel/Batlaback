@@ -2880,24 +2880,15 @@ function getPrepGhostCanvasScale() {
 }
 
 function getPrepRemoteHoldGhostLayout(def, rotation) {
-  const shape = rotateShape(def.shape, rotation || 0);
-  if (!shape.length) return null;
-  let maxDx = 0;
-  let maxDy = 0;
-  shape.forEach(([dx, dy]) => {
-    maxDx = Math.max(maxDx, dx);
-    maxDy = Math.max(maxDy, dy);
-  });
-  const stride = GRID_STRIDE;
   const cell = layoutCell;
   const margin = CELL_TILE_PAD * 2;
-  const logicalW = (maxDx + 1) * stride + margin;
-  const logicalH = (maxDy + 1) * stride + margin;
+  const emojiBox = Math.max(28, cell * 1.35);
+  const logicalW = emojiBox + margin * 2;
+  const logicalH = emojiBox + margin * 2;
   const scale = getPrepGhostCanvasScale();
   return {
-    shape,
-    stride,
     cell,
+    emojiBox,
     logicalW,
     logicalH,
     clientW: logicalW * scale,
@@ -2907,35 +2898,19 @@ function getPrepRemoteHoldGhostLayout(def, rotation) {
 }
 
 function drawPrepRemoteHoldGhost(targetCtx, def, itemId, rotation, layout) {
-  const ghostItem = {
-    itemId,
-    col: 0,
-    row: 0,
-    rotation: rotation || 0,
-    uid: "__prep-remote-ghost__",
-  };
-  const { stride, cell } = layout;
-  const cellRectFn = (c, r) => ({
-    x: CELL_TILE_PAD + c * stride,
-    y: CELL_TILE_PAD + r * stride,
-    w: cell,
-    h: cell,
-  });
+  const icon = getItemIcons(def)?.[0] || "📦";
+  const cx = layout.logicalW / 2;
+  const cy = layout.logicalH / 2;
 
-  getItemCells(ghostItem).forEach(([c, r]) => {
-    const { x, y, w, h } = cellRectFn(c, r);
-    targetCtx.fillStyle = `${def.color}dd`;
-    roundRect(x + CELL_TILE_PAD, y + CELL_TILE_PAD, w - CELL_TILE_PAD * 2, h - CELL_TILE_PAD * 2, 5, targetCtx);
-    targetCtx.fill();
-    targetCtx.strokeStyle = RARITY_COLORS[def.rarity] || "#8b949e";
-    targetCtx.lineWidth = 1.5;
-    roundRect(x + CELL_TILE_PAD, y + CELL_TILE_PAD, w - CELL_TILE_PAD * 2, h - CELL_TILE_PAD * 2, 5, targetCtx);
-    targetCtx.stroke();
-  });
-  drawPlacedItemIcons(targetCtx, def, ghostItem, cellRectFn);
-  if (typeof drawItemSocketVisuals === "function") {
-    drawItemSocketVisuals(targetCtx, ghostItem, def, cellRectFn);
-  }
+  // В зоне хвата показываем только ключевой эмодзи предмета.
+  targetCtx.save();
+  targetCtx.font = `${Math.round(layout.emojiBox)}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+  targetCtx.textAlign = "center";
+  targetCtx.textBaseline = "middle";
+  targetCtx.shadowColor = "rgba(0,0,0,0.45)";
+  targetCtx.shadowBlur = 9;
+  targetCtx.fillText(icon, cx, cy);
+  targetCtx.restore();
 }
 
 function getPrepPlacementAnchorClient() {
@@ -6554,8 +6529,12 @@ function finishDragDrop(e) {
   const onBoard = isOnBoard(mx, my, side);
   const boardCol = onBoard ? xToCol(mx, side) : null;
   const boardRow = onBoard ? yToRow(my, side) : null;
-  const onBackpackSlot = onBoard && isSlotCell(st.containers, boardCol, boardRow);
-  const dropOnBench = !onBackpackSlot && isDropOnBench(dropE);
+  const sidebarPlacement = isPrepSidebarArcDrag() ? getPrepDropPlacement(st, side) : null;
+  const dropCol = sidebarPlacement?.col ?? boardCol;
+  const dropRow = sidebarPlacement?.row ?? boardRow;
+  const hasDropCell = dropCol != null && dropRow != null;
+  const onBackpackSlot = hasDropCell && isSlotCell(st.containers, dropCol, dropRow);
+  const dropOnBench = !hasDropCell && !onBackpackSlot && isDropOnBench(dropE);
 
   if (typeof tryFinishDragOnDoll === "function" && tryFinishDragOnDoll(dropE)) {
     clearDragUiState();
@@ -6611,9 +6590,9 @@ function finishDragDrop(e) {
       });
       prepArcCelebrate = true;
     }
-  } else if (isContainerItem(dragPayload.itemId) && isOnBoard(mx, my, side)) {
-    const col = xToCol(mx, side);
-    const row = yToRow(my, side);
+  } else if (isContainerItem(dragPayload.itemId) && hasDropCell) {
+    const col = dropCol;
+    const row = dropRow;
     const excludeUid = dragFrom.type === "container" ? dragFrom.container.uid : null;
     const canMove = dragFrom.type === "container"
       ? canMoveContainerWithItems(
@@ -6692,9 +6671,9 @@ function finishDragDrop(e) {
         if (typeof notifyPrepPlacementRejected === "function") notifyPrepPlacementRejected(item);
       });
     }
-  } else if (!isContainerItem(dragPayload.itemId) && isOnBoard(mx, my, side)) {
-    const col = xToCol(mx, side);
-    const row = yToRow(my, side);
+  } else if (!isContainerItem(dragPayload.itemId) && hasDropCell) {
+    const col = dropCol;
+    const row = dropRow;
     if (isSlotCell(st.containers, col, row) && tryGemSocketDrop(st, dragFrom, dragPayload, col, row, side)) {
       // камень вставлен в сокет
     } else if (isSlotCell(st.containers, col, row)) {
