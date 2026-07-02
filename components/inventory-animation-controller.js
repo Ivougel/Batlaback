@@ -2,7 +2,7 @@
  * Визуальный слой drag/drop инвентаря подготовки — без игровой логики.
  */
 
-const PREP_PLACE_DURATION = 0.2;
+const PREP_PLACE_DURATION = 0.28;
 const PREP_REJECT_DURATION = 0.28;
 
 const InventoryAnimationController = (() => {
@@ -15,6 +15,12 @@ const InventoryAnimationController = (() => {
   const cellPulses = new Map();
   let dragActive = false;
   let spreadPhase = 0;
+  let ghostSwingX = 0;
+  let ghostSwingY = 0;
+  let ghostSwingVx = 0;
+  let ghostSwingVy = 0;
+  let ghostFloatPhase = 0;
+  let ghostOrbitPhase = 0;
 
   function easeOutBack(t) {
     const c1 = 1.70158;
@@ -27,12 +33,21 @@ const InventoryAnimationController = (() => {
     lastDragClient = null;
     dragVelX = 0;
     dragVelY = 0;
+    ghostSwingX = 0;
+    ghostSwingY = 0;
+    ghostSwingVx = 0;
+    ghostSwingVy = 0;
+    ghostFloatPhase = Math.random() * Math.PI * 2;
+    ghostOrbitPhase = Math.random() * Math.PI * 2;
   }
 
   function onDragMove(clientX, clientY) {
     if (lastDragClient) {
       dragVelX = clientX - lastDragClient.x;
       dragVelY = clientY - lastDragClient.y;
+      ghostSwingVx += dragVelX * 0.045;
+      ghostSwingVy += dragVelY * 0.03;
+      ghostOrbitPhase += Math.max(-0.35, Math.min(0.35, dragVelX * 0.006));
     }
     lastDragClient = { x: clientX, y: clientY };
   }
@@ -48,6 +63,15 @@ const InventoryAnimationController = (() => {
     if (!el) return;
     const fullSize = !!opts.fullSize;
     const speed = Math.hypot(dragVelX, dragVelY);
+    const swingLimit = fullSize ? 12 : 8;
+    const swingX = Math.max(-swingLimit, Math.min(swingLimit, ghostSwingX));
+    const swingY = Math.max(-swingLimit, Math.min(swingLimit, ghostSwingY));
+    const floatAmp = fullSize ? 2.6 : 1.7;
+    const floatY = Math.sin(ghostFloatPhase) * floatAmp;
+    const orbitRadiusX = fullSize ? 9.5 : 4.5;
+    const orbitRadiusY = fullSize ? 6.5 : 3.2;
+    const orbitX = Math.cos(ghostOrbitPhase) * orbitRadiusX;
+    const orbitY = Math.sin(ghostOrbitPhase) * orbitRadiusY;
     const scale = fullSize
       ? 1
       : 1.05 + Math.min(0.05, speed * 0.0018);
@@ -56,7 +80,7 @@ const InventoryAnimationController = (() => {
       : arcRotation != null
         ? arcRotation * 0.35
         : Math.max(-10, Math.min(10, dragVelX * 0.12));
-    el.style.transform = `translate(-50%, -50%) scale(${scale}) rotate(${tilt}deg)`;
+    el.style.transform = `translate(-50%, -50%) translate(${(swingX + orbitX).toFixed(2)}px, ${(swingY + floatY + orbitY).toFixed(2)}px) scale(${scale}) rotate(${tilt}deg)`;
     el.style.filter = fullSize
       ? "drop-shadow(0 8px 20px rgba(0,0,0,0.5)) drop-shadow(0 2px 6px rgba(0,0,0,0.35))"
       : "drop-shadow(0 10px 22px rgba(0,0,0,0.55)) drop-shadow(0 3px 8px rgba(0,0,0,0.35))";
@@ -69,6 +93,11 @@ const InventoryAnimationController = (() => {
     el.style.transform = "translate(-50%, -50%)";
     el.style.filter = "drop-shadow(0 4px 14px rgba(0, 0, 0, 0.45))";
     el.style.opacity = "0.94";
+    ghostSwingX = 0;
+    ghostSwingY = 0;
+    ghostSwingVx = 0;
+    ghostSwingVy = 0;
+    ghostOrbitPhase = 0;
   }
 
   function itemVisualWeight(def) {
@@ -130,9 +159,9 @@ const InventoryAnimationController = (() => {
     const p = anim.t / anim.duration;
     if (anim.kind === "place") {
       const bounce = p < 0.45
-        ? 1.1 - (p / 0.45) * 0.15
+        ? 1.16 - (p / 0.45) * 0.22
         : 0.95 + easeOutBack((p - 0.45) / 0.55) * 0.05;
-      const lift = p < 0.35 ? -5 * (1 - p / 0.35) : 0;
+      const lift = p < 0.4 ? -10 * (1 - p / 0.4) : 0;
       return { scale: bounce, offsetY: lift, offsetX: 0, shake: 0 };
     }
     if (anim.kind === "reject") {
@@ -388,6 +417,20 @@ const InventoryAnimationController = (() => {
 
   function tick(dt) {
     spreadPhase += dt;
+    if (dragActive) {
+      ghostFloatPhase += dt * 6.5;
+      ghostOrbitPhase += dt * 4.2;
+      ghostSwingVx += (-ghostSwingX * 18 - ghostSwingVx * 7.5) * dt;
+      ghostSwingVy += (-ghostSwingY * 14 - ghostSwingVy * 6.2) * dt;
+      ghostSwingX += ghostSwingVx * dt;
+      ghostSwingY += ghostSwingVy * dt;
+    } else {
+      ghostSwingX = 0;
+      ghostSwingY = 0;
+      ghostSwingVx = 0;
+      ghostSwingVy = 0;
+      ghostOrbitPhase = 0;
+    }
     if (backpackShakeT > 0) {
       backpackShakeT = Math.max(0, backpackShakeT - dt);
       if (backpackShakeT <= 0) {
@@ -432,6 +475,13 @@ const InventoryAnimationController = (() => {
 
 function tickInventoryAnimationController(dt) {
   InventoryAnimationController.tick(dt);
+  if (typeof dragPayload !== "undefined" && dragPayload && typeof getDragGhostCanvas === "function") {
+    const el = getDragGhostCanvas();
+    if (el && !el.classList.contains("hidden")) {
+      const fullSize = typeof isPrepSidebarArcDrag === "function" && isPrepSidebarArcDrag();
+      InventoryAnimationController.applyDragGhostStyles(el, null, { fullSize });
+    }
+  }
 }
 
 function onPrepDragStart() {

@@ -111,6 +111,8 @@ let battleState = null;
 let dragPayload = null;
 let dragFrom = null;
 let prepSidebarDragUnlocked = false;
+/** Текущая «липкая» клетка при управлении из коридора (гистерезис, без скачков). */
+let prepSidebarStickyHover = null;
 let selectedBench = -1;
 let gameOver = false;
 let hoverCell = null;
@@ -2800,6 +2802,28 @@ function isPointerInsideShopDrawerBounds(clientX, clientY) {
   return clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom;
 }
 
+/** Доля ширины клетки — порог перехода в соседнюю (Schmitt trigger, см. snapgrid / Fitts). */
+const PREP_SIDEBAR_CELL_SWITCH_MARGIN = 0.28;
+
+/**
+ * Дискретный индекс оси с гистерезисом: палец должен явно пересечь границу клетки,
+ * иначе тень остаётся на текущей — без «прыжков на километр» от микродвижений.
+ */
+function quantizePrepSidebarAxis(norm, count, stickyIndex) {
+  const n = Math.max(0, Math.min(1, norm));
+  if (count <= 1) return 0;
+  if (stickyIndex == null || !Number.isFinite(stickyIndex)) {
+    return Math.max(0, Math.min(count - 1, Math.round(n * (count - 1))));
+  }
+  let idx = Math.max(0, Math.min(count - 1, stickyIndex));
+  const margin = PREP_SIDEBAR_CELL_SWITCH_MARGIN / count;
+  const upperEdge = (idx + 1) / count;
+  const lowerEdge = idx / count;
+  if (idx < count - 1 && n >= upperEdge + margin) idx += 1;
+  else if (idx > 0 && n <= lowerEdge - margin) idx -= 1;
+  return idx;
+}
+
 /** Зона управления дугой: коридор между рюкзаком и магазином (как на UX-макете). */
 function getPrepSidebarDragMapRect() {
   const backpack = getPrepBackpackClientRect();
@@ -2822,7 +2846,7 @@ function getPrepSidebarDragMapRect() {
   };
 }
 
-/** Проецирует палец (даже над магазином) на рюкзак — линейно по X и Y. */
+/** Проецирует палец на рюкзак: абсолютное 1:1 по коридору (CD ratio ≈ 1). */
 function projectClientPointToPrepBackpack(clientX, clientY) {
   if (!canvas || clientX == null || clientY == null) return null;
   const team = prepViewSide;
@@ -2843,13 +2867,35 @@ function projectClientPointToPrepBackpack(clientX, clientY) {
 
   const spanX = Math.max(1, mapRect.right - mapRect.left);
   const spanY = Math.max(1, mapRect.bottom - mapRect.top);
-  const normX = (clientX - mapRect.left) / spanX;
-  const normY = (clientY - mapRect.top) / spanY;
+  const normX = Math.max(0, Math.min(1, (clientX - mapRect.left) / spanX));
+  const normY = Math.max(0, Math.min(1, (clientY - mapRect.top) / spanY));
 
   return {
     x: ox + Math.max(inset, Math.min(gw - inset, normX * gw)),
     y: oy + Math.max(inset, Math.min(gh - inset, normY * gh)),
   };
+}
+
+function applyPrepSidebarCorridorHover(projected, side, st) {
+  const team = prepViewSide;
+  const ox = gridOrigin(team);
+  const oy = layoutBackpackY();
+  const normX = (projected.x - ox) / GRID_INNER_W;
+  const normY = (projected.y - oy) / GRID_INNER_H;
+  const col = quantizePrepSidebarAxis(normX, GRID_COLS, prepSidebarStickyHover?.col);
+  const row = quantizePrepSidebarAxis(normY, GRID_ROWS, prepSidebarStickyHover?.row);
+  prepSidebarStickyHover = { col, row };
+  const center = prepCellCanvasCenter(col, row, team);
+  const directApplied = applyPrepBoardHoverFromCanvasXY(center.x, center.y, side, st);
+  if (directApplied) {
+    const slotOccupied = isSlotCell(st.containers, col, row)
+      && !!findItemAtSlot(st.items, col, row);
+    if (slotOccupied) {
+      const placement = getPrepDropPlacement(st, side);
+      if (placement && !placement.valid) return true;
+    }
+  }
+  return applyPrepBoardHoverFromNearestPlaceable(center.x, center.y, side, st);
 }
 
 /** Точка тени на поле для зелёной дуги (магазин/скамья → ✊ → поле). */
@@ -2872,6 +2918,7 @@ function syncPrepSidebarBoardHover(clientX, clientY, side, st) {
   }
   if (!prepSidebarDragUnlocked && !inShopBounds) {
     prepSidebarDragUnlocked = true;
+    prepSidebarStickyHover = null;
   }
 
   let mx;
@@ -2882,14 +2929,14 @@ function syncPrepSidebarBoardHover(clientX, clientY, side, st) {
     if (isOnBoard(coords.x, coords.y, side)) {
       mx = coords.x;
       my = coords.y;
+      prepSidebarStickyHover = null;
     }
   }
 
   if (mx == null) {
     const projected = projectClientPointToPrepBackpack(clientX, clientY);
     if (!projected) return false;
-    mx = projected.x;
-    my = projected.y;
+    return applyPrepSidebarCorridorHover(projected, side, st);
   }
 
   // Если проекция попала в занятую клетку и предмет сейчас не размещается,
@@ -3286,6 +3333,7 @@ function clearDragUiState() {
   dragPayload = null;
   dragFrom = null;
   prepSidebarDragUnlocked = false;
+  prepSidebarStickyHover = null;
   prepDropPreviewHover = null;
   clearGamepadBoardFocus();
   if (typeof onPrepDragEnd === "function") onPrepDragEnd();
@@ -6982,6 +7030,7 @@ function startShopDrag(index, e, side = prepViewSide) {
   dragPayload = { itemId: st.shop[index], rotation: 0 };
   dragFrom = { type: "shop", index, side };
   prepSidebarDragUnlocked = false;
+  prepSidebarStickyHover = null;
   beginPrepDragArcFromCard(document.querySelector(`.shop-card[data-index="${index}"]`));
   startSynergyPreview();
   document.querySelector(`.shop-card[data-index="${index}"]`)?.classList.add("shop-dragging");
@@ -7006,6 +7055,7 @@ function startBenchDrag(index, e, side = prepViewSide) {
   dragPayload = { itemId: st.bench[index].itemId, rotation: st.bench[index].rotation || 0 };
   dragFrom = { type: "bench", index, side };
   prepSidebarDragUnlocked = false;
+  prepSidebarStickyHover = null;
   beginPrepDragArcFromCard(document.querySelector(`.bench-card[data-bench="${index}"]`));
   startSynergyPreview();
   syncUiDragState();
