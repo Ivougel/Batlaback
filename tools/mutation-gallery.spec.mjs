@@ -38,6 +38,20 @@ test("mutation gallery — 8 silhouettes after hero pick", async ({ page }) => {
   if (errors.length) throw new Error(errors.join("; "));
 });
 
+test("mutation intent yes advances to companion step", async ({ page }) => {
+  await page.goto(baseUrl, { waitUntil: "domcontentloaded", timeout: 20000 });
+  await page.waitForTimeout(1200);
+
+  await page.locator('[data-game-mode="solo"]').click();
+  await page.locator('#player-class-grid [data-class="warrior"]').click();
+  await page.locator('.mutation-silhouette[data-mutation-id="w_berserk"]').click();
+  await page.locator(".mutation-intent-popup-yes").click();
+
+  await expect(page.locator("#class-step-companion")).toBeVisible({ timeout: 5000 });
+  await expect(page.locator("#class-modal-subtitle")).toContainText("Воин-мартовичок");
+  await expect(page.locator("#class-modal-subtitle")).toContainText("с каким спутником пойдёте");
+});
+
 test("companion reclick advances to summary", async ({ page }) => {
   await page.goto(baseUrl, { waitUntil: "domcontentloaded", timeout: 20000 });
   await page.waitForTimeout(1200);

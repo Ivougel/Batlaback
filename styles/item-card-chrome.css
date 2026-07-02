@@ -14,24 +14,74 @@
   max-width: 100%;
 }
 
-/* Магазин: только иконка; footprint — оверлей на углу (BB-style) */
+/* Магазин: [иконка + footprint] | [цена] — без наложений */
 #app[data-phase="prep"] #shop-panel .shop-item-stack {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
+  gap: calc(5px * var(--ui-scale, 1));
   min-width: 0;
   max-width: 100%;
 }
 
+#app[data-phase="prep"] #shop-panel .shop-item-visual {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-item-stack > .cost,
+#app[data-phase="prep"] #shop-panel .shop-item-side-meta > .cost {
+  position: static;
+  flex: 0 0 auto;
+  align-self: center;
+  margin: 0;
+  z-index: 1;
+}
+
 #app[data-phase="prep"] #shop-panel .shop-item-visual .item-shape-mini--shop-overlay {
   position: absolute;
-  right: calc(-4px * var(--ui-scale, 1));
-  bottom: calc(-2px * var(--ui-scale, 1));
-  z-index: 3;
+  right: calc(-3px * var(--ui-scale, 1));
+  bottom: calc(-1px * var(--ui-scale, 1));
+  z-index: 2;
   margin: 0;
-  opacity: 0.95;
+  opacity: 0.92;
   pointer-events: none;
+}
+
+/* Усиления: иконка | (цена + слот) */
+.shop-item-stack--enhancement {
+  flex-direction: row;
+  align-items: center;
+  gap: calc(5px * var(--ui-scale, 1));
+}
+
+.shop-item-side-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(3px * var(--ui-scale, 1));
+  min-width: 0;
+  flex: 0 0 auto;
+}
+
+.shop-item-stack--enhancement .enh-shop-slot-tag {
+  flex: 0 0 auto;
+  align-self: center;
+  max-width: calc(56px * var(--ui-scale, 1));
+  padding: calc(2px * var(--ui-scale, 1)) calc(5px * var(--ui-scale, 1));
+  border-radius: calc(6px * var(--ui-scale, 1));
+  background: rgba(120, 90, 200, 0.18);
+  border: 1px solid rgba(160, 130, 255, 0.32);
+  line-height: 1.15;
+  white-space: normal;
+  word-break: break-word;
+  text-align: center;
 }
 
 .item-card-cluster > .shop-item-visual,
@@ -81,25 +131,7 @@
   grid-auto-rows: minmax(var(--prep-bench-row-h, calc(52px * var(--ui-scale, 1))), auto);
 }
 
-/* Усиления: иконка + слот-тег под ней */
-.shop-item-stack--enhancement {
-  flex-direction: column;
-  gap: calc(4px * var(--ui-scale, 1));
-}
-
-.shop-item-stack--enhancement .enh-shop-slot-tag {
-  flex: 0 0 auto;
-  align-self: center;
-  max-width: calc(72px * var(--ui-scale, 1));
-  padding: calc(2px * var(--ui-scale, 1)) calc(5px * var(--ui-scale, 1));
-  border-radius: calc(6px * var(--ui-scale, 1));
-  background: rgba(120, 90, 200, 0.18);
-  border: 1px solid rgba(160, 130, 255, 0.32);
-  line-height: 1.15;
-  white-space: normal;
-  word-break: break-word;
-  text-align: center;
-}
+/* Усиления: см. item-card-chrome.css (.shop-item-side-meta) */
 
 /* Viewport-fit / tablet: та же логика minmax */
 html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .shop-panel .shop-slots {

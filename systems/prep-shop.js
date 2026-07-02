@@ -283,6 +283,10 @@ function renderShopPinButton(index, frozen, editable) {
   return `<button type="button" class="shop-pin${frozen ? " active" : ""}" data-pin="${index}" title="${label}" aria-label="${label}" aria-pressed="${frozen ? "true" : "false"}"><span class="shop-pin-glyph" aria-hidden="true">${frozen ? "📌" : "📍"}</span></button>`;
 }
 
+function renderShopCostHTML(cost) {
+  return `<div class="cost shop-item-cost" aria-label="Цена ${cost}"><span class="cost-value">${cost}</span><span class="cost-coin" aria-hidden="true">💰</span></div>`;
+}
+
 function renderShopCardHTML(def, { extraClasses = "", innerBefore = "", dataAttrs = "", shapeSize = "md", showShape = true } = {}) {
   const classes = getRarityCardClasses(def.rarity, ["shop-card", extraClasses].filter(Boolean).join(" "));
   const shapeHtml = showShape
@@ -298,9 +302,9 @@ function renderShopCardHTML(def, { extraClasses = "", innerBefore = "", dataAttr
       <div class="shop-item-stack">
         <div class="shop-item-visual">
           <div class="${getItemIconShellClass(def)}" style="background:${def.color}33">${renderItemIconsHTML(def)}</div>
-          <div class="cost" aria-label="Цена ${def.cost}"><span class="cost-value">${def.cost}</span><span class="cost-coin" aria-hidden="true">💰</span></div>
           ${shapeHtml}
         </div>
+        ${renderShopCostHTML(def.cost)}
       </div>
     </div>
   </div>`;

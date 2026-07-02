@@ -7,8 +7,6 @@
 
 .lobby-prep-roster-panel {
   position: absolute;
-  left: calc(6px * var(--ui-scale));
-  top: calc(var(--prep-scene-top, 8px) + 4px);
   z-index: calc(var(--z-layer-hud) + 2);
   display: flex;
   flex-direction: column;
@@ -16,23 +14,15 @@
   width: min(calc(var(--lobby-roster-emoji-size) * 10.5), calc(var(--prep-hero-slot-width, 9.5rem) + 0.75rem));
   max-width: min(42vw, calc(var(--lobby-roster-emoji-size) * 11));
   pointer-events: auto;
-}
-
-.lobby-roster-toolbar {
-  display: flex;
-  justify-content: flex-end;
-  flex: 0 0 auto;
+  align-items: flex-start;
 }
 
 .lobby-roster-hide-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: calc(var(--lobby-roster-emoji-size) * 1.75);
-  height: calc(var(--lobby-roster-emoji-size) * 1.75);
   padding: 0;
   border: none;
-  border-radius: calc(8px * var(--ui-scale));
   background: transparent;
   color: inherit;
   font-size: var(--lobby-roster-emoji-size);
@@ -50,8 +40,7 @@
   outline-offset: 2px;
 }
 
-.lobby-prep-roster-panel--collapsed .lobby-roster-strip--prep-body,
-.lobby-prep-roster-panel--collapsed .lobby-prep-timer-slot {
+.lobby-prep-roster-panel--collapsed .lobby-prep-roster-body {
   display: none;
 }
 
@@ -703,9 +692,7 @@ html[data-game-mode="lobby"] #bottom-chrome-prep-left .prep-side-btn {
   pointer-events: auto;
 }
 
-html[data-prep-layout="mobile"] #app[data-phase="prep"] .lobby-prep-roster-panel {
-  left: calc(4px * var(--ui-scale));
-  top: calc(var(--prep-scene-top, 4px) + 2px);
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .lobby-prep-roster-panel:not([data-lobby-roster-positioned="true"]) {
   width: min(calc(var(--lobby-roster-emoji-size) * 9.5), 36vw);
 }
 

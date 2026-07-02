@@ -467,10 +467,8 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] #shop-panel .shop-card .
   line-height: 1.2;
 }
 
-html[data-prep-layout="mobile"] #app[data-phase="prep"] #shop-panel .shop-item-visual .cost {
-  right: 0;
-  bottom: 0;
-  z-index: 3;
+html[data-prep-layout="mobile"] #app[data-phase="prep"] #shop-panel .shop-item-stack > .cost {
+  z-index: 1;
 }
 
 html[data-prep-layout="mobile"] #app[data-phase="prep"] #shop-panel .shop-sell-zone {

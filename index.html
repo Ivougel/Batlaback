@@ -16,10 +16,10 @@
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="stylesheet" href="styles/tokens.css?v=15">
   <link rel="stylesheet" href="styles/layers.css?v=7">
-  <link rel="stylesheet" href="styles/bottom-chrome.css?v=12">
+  <link rel="stylesheet" href="styles/bottom-chrome.css?v=13">
   <link rel="stylesheet" href="styles.css?v=36">
   <link rel="stylesheet" href="styles/shop.css?v=2">
-  <link rel="stylesheet" href="styles/item-card-chrome.css?v=2">
+  <link rel="stylesheet" href="styles/item-card-chrome.css?v=3">
   <link rel="stylesheet" href="styles/shop-pin-chrome.css?v=2">
   <link rel="stylesheet" href="styles/prep-top-bar.css?v=2">
   <link rel="stylesheet" href="styles/mutations.css?v=1">
@@ -39,9 +39,9 @@
   <link rel="stylesheet" href="styles/battle-hud-compact.css?v=3">
   <link rel="stylesheet" href="styles/hero-card.css?v=1">
   <link rel="stylesheet" href="styles/class-picker.css?v=3">
-  <link rel="stylesheet" href="styles/class-hero-showcase.css?v=6">
+  <link rel="stylesheet" href="styles/class-hero-showcase.css?v=8">
   <link rel="stylesheet" href="styles/class-hero-portrait-frame.css?v=1">
-  <link rel="stylesheet" href="styles/class-intro-theme.css?v=3">
+  <link rel="stylesheet" href="styles/class-intro-theme.css?v=5">
   <link rel="stylesheet" href="styles/class-intro-summary.css?v=1">
   <link rel="stylesheet" href="styles/tablet-intro-typography.css?v=1">
   <link rel="stylesheet" href="styles/desktop-intro-layout.css?v=1">
@@ -51,6 +51,7 @@
   <link rel="stylesheet" href="styles/tablet-side.css?v=30">
   <link rel="stylesheet" href="styles/battle-inventory-popover.css?v=6">
   <link rel="stylesheet" href="styles/lobby.css?v=8">
+  <link rel="stylesheet" href="styles/lobby-roster-float.css?v=1">
   <link rel="stylesheet" href="styles/meadow-theme.css?v=1">
   <link rel="stylesheet" href="styles/prep-borderless.css?v=3">
   <link rel="stylesheet" href="styles/battle-borderless.css?v=1">
@@ -112,18 +113,18 @@
               </div>
             </header>
             <div class="prep-field-column scene-viewport" id="prep-field-column">
-              <aside class="lobby-prep-roster-panel hidden" id="lobby-prep-roster-panel" aria-label="Лобби">
-                <div class="lobby-roster-toolbar">
-                  <button type="button"
-                          class="lobby-roster-hide-btn"
-                          id="btn-lobby-roster-hide"
-                          aria-expanded="true"
-                          aria-controls="lobby-roster-strip-prep"
-                          title="Скрыть"
-                          aria-label="Скрыть список участников">🙈</button>
+              <aside class="lobby-prep-roster-panel hidden" id="lobby-prep-roster-panel" aria-label="Список противников">
+                <button type="button"
+                        class="lobby-roster-float-handle lobby-roster-hide-btn"
+                        id="btn-lobby-roster-hide"
+                        aria-expanded="true"
+                        aria-controls="lobby-prep-roster-body"
+                        title="Скрыть"
+                        aria-label="Скрыть список участников">🙈</button>
+                <div class="lobby-prep-roster-body" id="lobby-prep-roster-body">
+                  <div class="lobby-prep-timer-slot" id="lobby-prep-timer-slot"></div>
+                  <div class="lobby-roster-strip lobby-roster-strip--prep-body" id="lobby-roster-strip-prep" role="tablist" aria-label="Участники лобби"></div>
                 </div>
-                <div class="lobby-prep-timer-slot" id="lobby-prep-timer-slot"></div>
-                <div class="lobby-roster-strip lobby-roster-strip--prep-body" id="lobby-roster-strip-prep" role="tablist" aria-label="Участники лобби"></div>
               </aside>
 
               <!-- Layer 1 — Мир / сетка -->
@@ -301,7 +302,10 @@
                 <span class="class-hero-sparkle class-hero-sparkle--4"></span>
                 <span class="class-hero-sparkle class-hero-sparkle--5"></span>
               </div>
-              <img class="class-hero-showcase-img" id="class-hero-showcase-img" alt="" draggable="false">
+              <div class="class-hero-showcase-portrait">
+                <div class="class-hero-showcase-magic-ring" aria-hidden="true"></div>
+                <img class="class-hero-showcase-img" id="class-hero-showcase-img" alt="" draggable="false">
+              </div>
               <div class="class-hero-showcase-caption">
                 <p class="class-hero-showcase-name" id="class-hero-showcase-name"></p>
                 <p class="class-hero-showcase-desc" id="class-hero-showcase-desc"></p>
@@ -400,8 +404,10 @@
         <div class="class-step-actions class-step-actions-top">
           <button type="button" class="btn-secondary btn-glass-back" id="btn-class-back-player">← Герой</button>
         </div>
-        <p class="class-subtitle class-step-sub">Спутник задаёт ось урона и рамку экипа на весь забег. Сила — в рюкзаке.</p>
-        <div class="companion-grid" id="companion-grid"></div>
+        <p class="class-subtitle class-step-sub" id="class-companion-step-sub">Спутник задаёт ось урона и рамку экипа на весь забег.</p>
+        <div class="companion-step-scroll">
+          <div class="companion-grid" id="companion-grid"></div>
+        </div>
         </div>
         <div class="class-step hidden" id="class-step-summary">
           <div class="class-step-actions class-step-actions-top">
@@ -410,7 +416,8 @@
           <p class="class-summary-lead" id="class-summary-lead">Ваш выбор</p>
           <div class="class-summary-stage" id="class-summary-stage">
             <button type="button" class="class-summary-float class-summary-float--hero" id="class-summary-hero" data-summary-kind="hero" aria-describedby="class-summary-tooltip">
-              <div class="class-summary-float-frame">
+              <div class="class-summary-float-frame class-summary-float-frame--hero">
+                <div class="class-hero-showcase-magic-ring class-summary-magic-ring" aria-hidden="true"></div>
                 <img class="class-summary-hero-img" id="class-summary-hero-img" alt="" draggable="false">
               </div>
               <span class="class-summary-float-label" id="class-summary-hero-name"></span>
@@ -621,6 +628,7 @@
       </div>
     </div>
     <div class="bottom-chrome-start">
+      <button type="button" class="btn-secondary btn-chrome-back hidden" id="btn-chrome-back" aria-label="Назад в меню">← Назад</button>
       <div class="bottom-chrome-prep-left prep-toolbar-side-switch" id="bottom-chrome-prep-left">
         <button type="button" class="btn-secondary prep-side-btn active" id="btn-prep-player" data-prep-side="player" title="Мой стол" aria-label="Мой стол"><span class="prep-side-ico" aria-hidden="true">🧑</span><span class="prep-side-label">Мой стол</span></button>
         <button type="button" class="btn-secondary prep-side-btn" id="btn-prep-enemy" data-prep-side="enemy" title="Противник" aria-label="Противник"><span class="prep-side-ico" aria-hidden="true">🤖</span><span class="prep-side-label">Противник</span></button>
@@ -764,6 +772,7 @@
   <script src="systems/lobby-opponents.js?v=6"></script>
   <script src="systems/lobby-fighter-avatar.js?v=1"></script>
   <script src="systems/lobby-spectator.js?v=8"></script>
+  <script src="systems/lobby-roster-float.js?v=1"></script>
   <script src="battle-engine.js?v=2"></script>
   <script src="battle-float-layer.js?v=18"></script>
   <script src="components/thought-arena.js?v=14"></script>

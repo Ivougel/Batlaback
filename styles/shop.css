@@ -87,9 +87,12 @@
   flex-direction: column;
 }
 
-#app[data-phase="prep"][data-prep-side="enemy"] #shop-panel .shop-item-visual .cost {
-  right: auto;
-  left: -3px;
+#app[data-phase="prep"][data-prep-side="enemy"] #shop-panel .shop-item-stack {
+  flex-direction: row-reverse;
+}
+
+#app[data-phase="prep"][data-prep-side="enemy"] #shop-panel .shop-item-stack > .cost {
+  order: 0;
 }
 
 #app[data-phase="prep"] #shop-panel.shop-readonly .btn-recipe-book {
@@ -393,35 +396,38 @@ html[data-touch="true"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-
   gap: 1px;
 }
 
-#app[data-phase="prep"] #shop-panel .shop-item-visual .cost {
-  position: absolute;
-  right: -2px;
-  bottom: -3px;
-  z-index: 2;
+#app[data-phase="prep"] #shop-panel .shop-item-stack > .cost,
+#app[data-phase="prep"] #shop-panel .shop-item-side-meta > .cost {
   display: inline-flex;
   align-items: center;
-  gap: calc(1px * var(--ui-scale));
-  padding: calc(1px * var(--ui-scale)) calc(4px * var(--ui-scale));
-  border-radius: calc(6px * var(--ui-scale));
+  justify-content: center;
+  gap: calc(3px * var(--ui-scale, 1));
+  padding: calc(2px * var(--ui-scale, 1)) calc(6px * var(--ui-scale, 1));
+  min-height: calc(22px * var(--ui-scale, 1));
+  border-radius: calc(8px * var(--ui-scale, 1));
   background: rgba(13, 17, 23, 0.88);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.24);
   font-size: var(--font-sm);
-  font-weight: 600;
-  line-height: 1.1;
+  font-weight: 700;
+  line-height: 1;
   letter-spacing: 0;
+  white-space: nowrap;
   pointer-events: none;
 }
 
-#app[data-phase="prep"] #shop-panel .shop-item-visual .cost-value {
+#app[data-phase="prep"] #shop-panel .shop-item-stack > .cost .cost-value,
+#app[data-phase="prep"] #shop-panel .shop-item-side-meta > .cost .cost-value {
   font-variant-numeric: tabular-nums;
-  color: rgba(240, 193, 75, 0.88);
+  color: rgba(240, 193, 75, 0.92);
 }
 
-#app[data-phase="prep"] #shop-panel .shop-item-visual .cost-coin {
-  font-size: var(--font-sm);
+#app[data-phase="prep"] #shop-panel .shop-item-stack > .cost .cost-coin,
+#app[data-phase="prep"] #shop-panel .shop-item-side-meta > .cost .cost-coin {
+  font-size: calc(var(--font-sm) * 0.95);
   line-height: 1;
-  opacity: 0.85;
+  opacity: 0.9;
+  flex-shrink: 0;
 }
 
 /* Редкость: свечение иконки */
@@ -547,12 +553,12 @@ html[data-touch="true"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-
     gap: calc(4px * var(--ui-scale));
   }
 
-  #app[data-phase="prep"] #shop-panel .shop-item-visual .cost {
+  #app[data-phase="prep"] #shop-panel .shop-item-stack > .cost {
     white-space: nowrap;
     font-size: var(--font-sm);
   }
 
-  #app[data-phase="prep"] #shop-panel .shop-item-visual .cost-coin {
+  #app[data-phase="prep"] #shop-panel .shop-item-stack > .cost .cost-coin {
     font-size: var(--font-sm);
   }
 }
@@ -737,12 +743,12 @@ html[data-touch="true"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-
     gap: calc(4px * var(--ui-scale));
   }
 
-  #app[data-phase="prep"] #shop-panel .shop-item-visual .cost {
+  #app[data-phase="prep"] #shop-panel .shop-item-stack > .cost {
     white-space: nowrap;
     font-size: var(--font-sm);
   }
 
-  #app[data-phase="prep"] #shop-panel .shop-item-visual .cost-coin {
+  #app[data-phase="prep"] #shop-panel .shop-item-stack > .cost .cost-coin {
     font-size: var(--font-sm);
   }
 }

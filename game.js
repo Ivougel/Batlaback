@@ -590,6 +590,9 @@ function renderLobbyChrome(force = false) {
       : "";
   }
   syncLobbyRosterCollapse();
+  if (show && phase === "prep" && typeof restoreLobbyRosterFloatPosition === "function") {
+    restoreLobbyRosterFloatPosition();
+  }
   if (isBattleUiPhase() && typeof queuePrewarmBattleInventoryPopover === "function") {
     const popoverOpen = typeof isBattleInventoryPopoverOpen === "function" && isBattleInventoryPopoverOpen();
     if (!isLobbyMode() || popoverOpen) {
@@ -656,12 +659,15 @@ function bindLobbyRosterClicks() {
   prepPanel?.addEventListener("pointercancel", onRosterPointerEnd);
   prepPanel?.addEventListener("pointerleave", onRosterPointerEnd);
   document.getElementById("lobby-battle-roster-bar")?.addEventListener("pointerdown", onRosterPointerDown);
-  document.getElementById("btn-lobby-roster-hide")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    lobbyRosterHidden = !lobbyRosterHidden;
-    syncLobbyRosterCollapse();
-  });
+  if (typeof initLobbyRosterFloat === "function") {
+    initLobbyRosterFloat({
+      toggleCollapse() {
+        lobbyRosterHidden = !lobbyRosterHidden;
+        syncLobbyRosterCollapse();
+        requestAnimationFrame(() => clampLobbyRosterFloatPosition());
+      },
+    });
+  }
   document.getElementById("btn-lobby-return-table")?.addEventListener("click", (e) => {
     e.preventDefault();
     returnToLobbyPlayerMatch();
@@ -1198,14 +1204,25 @@ function showSummaryStep() {
   syncClassMobileDock();
 }
 
+function getCompanionStepHeroLabel() {
+  const cls = pendingPlayerClass ? getClassById(pendingPlayerClass) : null;
+  return cls?.heroLabel || cls?.noviceLabel || cls?.name || "героем";
+}
+
+function buildCompanionStepSubtitle() {
+  const heroName = getCompanionStepHeroLabel();
+  return `Окей, теперь вы ${heroName}, с каким спутником пойдёте сейчас? Они все разные, будьте внимательны`;
+}
+
 function showCompanionStep({ keepSelection = false } = {}) {
   hideClassSummaryTooltip();
   if (!keepSelection) pendingPlayerCompanionId = null;
   setClassIntroStep("companion");
   document.getElementById("class-modal-title").textContent = "Спутник";
-  document.getElementById("class-modal-subtitle").textContent = selectedGameMode === "lobby"
-    ? "Лобби из восьми бойцов — выберите спутника на весь забег"
-    : "Спутник задаёт ось урона и рамку экипа. Сила — в рюкзаке.";
+  const companionSubtitle = buildCompanionStepSubtitle();
+  document.getElementById("class-modal-subtitle").textContent = companionSubtitle;
+  const stepSub = document.getElementById("class-companion-step-sub");
+  if (stepSub) stepSub.textContent = companionSubtitle;
   renderCompanionSelection();
   syncClassOverlayUi();
   syncClassMobileDock();
@@ -1254,11 +1271,11 @@ function syncClassOverlayUi() {
   } else if (playerStep && !playerStep.classList.contains("hidden")) {
     badge.textContent = `Шаг 2 из ${totalSteps} · Герой`;
     hint.textContent = pendingPlayerClass
-      ? "Лор героини — слева. Нажмите ещё раз, чтобы выбрать спутника"
+      ? "Выберите путь и нажмите «Да» — или нажмите героя ещё раз"
       : "Имя и бонус на плитке · после выбора слева появится история";
   } else if (companionStep && !companionStep.classList.contains("hidden")) {
     badge.textContent = `Шаг 3 из ${totalSteps} · Спутник`;
-    hint.textContent = "Спутник на весь забег. Нажмите ещё раз — к саммари";
+    hint.textContent = "Выберите спутника · нажмите ещё раз — к саммари";
   } else if (summaryStep && !summaryStep.classList.contains("hidden")) {
     badge.textContent = `Шаг 4 из ${totalSteps} · Старт`;
     hint.textContent = "Наведите на героя или спутника · «Старт» по центру";
@@ -1272,6 +1289,20 @@ function syncClassOverlayUi() {
   }
   syncClassHeroShowcase();
   syncBottomChromeIntro();
+}
+
+function syncChromeNavButtons() {
+  const overlay = document.getElementById("class-overlay");
+  const overlayOpen = !!overlay && !overlay.classList.contains("hidden");
+  const modeStep = document.getElementById("class-step-mode");
+  const onMode = modeStep && !modeStep.classList.contains("hidden");
+  const introBack = document.getElementById("btn-class-back");
+  const prepBack = document.getElementById("btn-chrome-back");
+  const inBattle = phase === "battle" || phase === "replay";
+  const inPrep = phase === "prep" && !gameOver && !overlayOpen;
+
+  if (introBack) introBack.classList.toggle("hidden", !overlayOpen || onMode);
+  if (prepBack) prepBack.classList.toggle("hidden", !inPrep || inBattle);
 }
 
 function syncBottomChromeIntro() {
@@ -1307,6 +1338,7 @@ function syncBottomChromeIntro() {
   if (overlayOpen && typeof window.applyUiLayout === "function") {
     requestAnimationFrame(() => window.applyUiLayout());
   }
+  syncChromeNavButtons();
 }
 
 function syncClassHeroShowcase() {
@@ -1465,8 +1497,11 @@ function onMutationIntentSelected(mutationId) {
   pendingMutationIntentId = mutationId || null;
 }
 
-function onMutationIntentConfirmed(mutationId) {
+function onMutationIntentConfirmed(mutationId, classId) {
   pendingMutationIntentId = mutationId || null;
+  if (classId && !pendingPlayerClass) pendingPlayerClass = classId;
+  pendingPlayerCompanionId = null;
+  showCompanionStep({ keepSelection: false });
 }
 
 function selectPlayerClass(classId) {
@@ -2097,6 +2132,7 @@ function init() {
   });
   document.getElementById("btn-class-back-player")?.addEventListener("click", () => showPlayerClassStep());
   document.getElementById("btn-class-back-companion")?.addEventListener("click", () => showCompanionStep({ keepSelection: true }));
+  document.getElementById("btn-chrome-back")?.addEventListener("click", () => returnToMainMenu());
   bindClassSummaryInteractions();
   document.getElementById("btn-start-run")?.addEventListener("click", startRunFromOverlay);
   bindLobbyRosterClicks();
@@ -2385,6 +2421,7 @@ function renderPhase() {
   if (!isBattleUiPhase() && typeof resetBattleAuraFrame === "function") {
     resetBattleAuraFrame();
   }
+  syncChromeNavButtons();
 }
 
 function syncBattleHudVisibility() {

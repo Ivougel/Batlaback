@@ -316,6 +316,34 @@ body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro .btn-primary {
   gap: clamp(10px, 2cqh, 14px);
   max-width: 560px;
   margin: 0 auto;
+  padding-bottom: calc(6px * var(--ui-scale));
+}
+
+#class-overlay #class-step-companion:not(.hidden) .class-step-actions-top,
+#class-overlay #class-step-companion:not(.hidden) .class-step-sub {
+  flex-shrink: 0;
+}
+
+#class-overlay #class-step-companion:not(.hidden) .companion-step-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: min(52vh, 440px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding-right: calc(4px * var(--ui-scale));
+  margin-right: calc(-4px * var(--ui-scale));
+  scrollbar-gutter: stable;
+}
+
+#class-overlay #class-step-companion:not(.hidden) .companion-step-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+#class-overlay #class-step-companion:not(.hidden) .companion-step-scroll::-webkit-scrollbar-thumb {
+  background: rgba(92, 184, 92, 0.45);
+  border-radius: 999px;
 }
 
 /* Иконки режимов — пастель луга */

@@ -229,7 +229,7 @@ body:has(#app[data-phase="prep"]) {
     0 0 16px rgba(88, 166, 255, 0.35) !important;
 }
 
-#app[data-phase="prep"] #shop-panel .shop-item-visual .cost {
+#app[data-phase="prep"] #shop-panel .shop-item-stack > .cost {
   color: var(--juice-ink);
   font-weight: 900;
   text-shadow: var(--juice-text-outline);
@@ -445,6 +445,7 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] .btn-toggle-doll {
 
 /* ─── Лобби-ростер ─── */
 
+#app[data-phase="prep"] .lobby-roster-float-handle,
 #app[data-phase="prep"] .lobby-roster-hide-btn {
   background: rgba(255, 255, 255, 0.35);
   border: 2px solid rgba(255, 255, 255, 0.55);
@@ -452,10 +453,12 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] .btn-toggle-doll {
   box-shadow: var(--juice-shadow);
 }
 
+#app[data-phase="prep"] .lobby-roster-float-handle:hover,
 #app[data-phase="prep"] .lobby-roster-hide-btn:hover {
   background: rgba(255, 255, 255, 0.55);
 }
 
+#app[data-phase="prep"] .lobby-prep-roster-panel--collapsed .lobby-roster-float-handle,
 #app[data-phase="prep"] .lobby-prep-roster-panel--collapsed .lobby-roster-hide-btn {
   background: rgba(255, 255, 255, 0.72);
 }

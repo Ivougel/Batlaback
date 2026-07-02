@@ -183,6 +183,14 @@
   box-shadow: none;
 }
 
+#app[data-phase="prep"] .lobby-prep-roster-body {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
 #app[data-phase="prep"] .lobby-fighter-card {
   background: transparent;
   border: none;

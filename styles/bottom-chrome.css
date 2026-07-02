@@ -134,6 +134,32 @@ body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro {
   padding: 6px 14px;
 }
 
+.bottom-chrome-intro .btn-glass-start.hidden,
+.bottom-chrome-intro .btn-glass-back.hidden {
+  display: none !important;
+}
+
+.btn-chrome-back {
+  min-height: var(--touch-target-min);
+  white-space: nowrap;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+body:has(#app[data-phase="battle"]) .btn-chrome-back,
+body:has(#app[data-phase="replay"]) .btn-chrome-back,
+body:has(#class-overlay:not(.hidden)) .btn-chrome-back {
+  display: none !important;
+}
+
+body:has(#app[data-phase="prep"]):not(:has(#class-overlay:not(.hidden))) .btn-chrome-back:not(.hidden) {
+  display: inline-flex !important;
+}
+
+.btn-chrome-back.hidden {
+  display: none !important;
+}
+
 body:has(#class-overlay:not(.hidden)) .bottom-chrome {
   background: var(--meadow-chrome, rgba(13, 17, 23, 0.94));
   border-top: 2px solid var(--meadow-border-soft, rgba(80, 65, 50, 0.35));

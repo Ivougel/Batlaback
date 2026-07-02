@@ -1,5 +1,5 @@
 /**
- * Шаг «Саммари» — крупные герой и спутник, кнопка «Старт» по центру.
+ * Шаг «Саммари» — герой и спутник парят без рамок и обрезки.
  */
 
 #class-overlay.class-overlay--summary .class-hero-showcase {
@@ -12,16 +12,30 @@
   display: none;
 }
 
+#class-overlay.class-overlay--summary .class-modal {
+  overflow: visible;
+}
+
+#class-overlay.class-overlay--summary .class-overlay-shell .class-modal {
+  overflow: visible;
+}
+
 #class-overlay .class-modal #class-step-summary:not(.hidden) {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  min-height: min(52vh, 420px);
+  min-height: min(56vh, 460px);
   padding-top: calc(4px * var(--ui-scale));
+  overflow: visible;
+}
+
+html[data-prep-layout="mobile"] #class-overlay #class-step-summary:not(.hidden),
+html[data-ui-surface="tablet-stacked"] #class-overlay #class-step-summary:not(.hidden) {
+  overflow: visible;
 }
 
 .class-summary-lead {
-  margin: 0 0 calc(14px * var(--ui-scale));
+  margin: 0 0 calc(10px * var(--ui-scale));
   text-align: center;
   font-size: var(--font-lg);
   font-weight: 800;
@@ -35,10 +49,11 @@
   flex: 1;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: clamp(10px, 2.5vw, 28px);
-  min-height: min(44vh, 360px);
-  padding: clamp(8px, 1.5vw, 16px) 0 clamp(12px, 2vw, 20px);
+  align-items: end;
+  gap: clamp(8px, 2vw, 24px);
+  min-height: min(50vh, 440px);
+  padding: clamp(4px, 1vw, 12px) 0 clamp(8px, 1.5vw, 16px);
+  overflow: visible;
 }
 
 .class-summary-float {
@@ -51,10 +66,11 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: calc(10px * var(--ui-scale));
+  gap: calc(8px * var(--ui-scale));
   color: inherit;
   animation: class-summary-float 3.6s ease-in-out infinite;
   transform-origin: center bottom;
+  overflow: visible;
 }
 
 .class-summary-float--hero {
@@ -68,47 +84,67 @@
 .class-summary-float:focus-visible {
   outline: 2px solid var(--meadow-grass, #5cb85c);
   outline-offset: 6px;
-  border-radius: calc(16px * var(--ui-scale));
+  border-radius: calc(8px * var(--ui-scale));
 }
 
+/* Прозрачный якорь — без фона, рамки и обрезки */
 .class-summary-float-frame {
   position: relative;
-  width: min(34vw, 220px);
-  aspect-ratio: 0.82;
-  border-radius: calc(22px * var(--ui-scale));
-  background:
-    radial-gradient(ellipse 80% 60% at 50% 100%, rgba(92, 184, 92, 0.22), transparent 70%),
-    rgba(255, 255, 255, 0.55);
-  border: 2px solid var(--meadow-border-soft, rgba(92, 184, 92, 0.35));
-  box-shadow:
-    0 18px 40px rgba(45, 74, 40, 0.16),
-    inset 0 1px 0 rgba(255, 255, 255, 0.85);
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  overflow: hidden;
+  width: min(42vw, 300px);
+  height: min(50vh, 460px);
+  overflow: visible;
+  background: none;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+}
+
+.class-summary-float-frame--hero {
+  width: min(44vw, 320px);
+  height: min(52vh, 480px);
 }
 
 .class-summary-float-frame--companion {
   align-items: center;
-  aspect-ratio: 1;
-  width: min(28vw, 180px);
+  justify-content: center;
+  width: min(30vw, 200px);
+  height: min(34vh, 260px);
+}
+
+.class-summary-magic-ring {
+  width: min(76%, 250px);
+  height: min(84%, 400px);
+  bottom: 4%;
 }
 
 .class-summary-hero-img {
-  width: 108%;
-  max-height: 108%;
+  position: relative;
+  z-index: 2;
+  display: block;
+  width: auto;
+  height: min(48vh, 440px);
+  max-width: min(44vw, 320px);
   object-fit: contain;
   object-position: center bottom;
-  filter: drop-shadow(0 10px 18px rgba(45, 74, 40, 0.22));
+  filter:
+    drop-shadow(0 18px 36px rgba(45, 74, 40, 0.32))
+    drop-shadow(0 0 24px rgba(167, 139, 250, 0.14));
   pointer-events: none;
   user-select: none;
 }
 
 .class-summary-companion-emoji {
-  font-size: clamp(3.5rem, 10vw, 5.5rem);
+  position: relative;
+  z-index: 2;
+  font-size: clamp(4rem, 12vw, 6.5rem);
   line-height: 1;
-  filter: drop-shadow(0 8px 14px rgba(45, 74, 40, 0.18));
+  filter:
+    drop-shadow(0 0 22px rgba(255, 140, 50, 0.45))
+    drop-shadow(0 14px 28px rgba(45, 74, 40, 0.22));
 }
 
 .class-summary-float-label {
@@ -116,13 +152,15 @@
   font-weight: 800;
   color: var(--meadow-ink, #2d4a28);
   text-align: center;
-  max-width: min(36vw, 240px);
+  max-width: min(40vw, 260px);
   line-height: 1.25;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.65);
 }
 
 .class-summary-start {
   align-self: center;
   justify-self: center;
+  margin-bottom: calc(18px * var(--ui-scale));
   min-width: calc(148px * var(--ui-scale));
   min-height: calc(52px * var(--ui-scale));
   padding: calc(12px * var(--ui-scale)) calc(28px * var(--ui-scale));
@@ -182,7 +220,7 @@
 
 @keyframes class-summary-float {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+  50% { transform: translateY(-12px); }
 }
 
 @media (max-width: 720px) {
@@ -190,20 +228,28 @@
     grid-template-columns: 1fr;
     grid-template-rows: auto auto auto;
     justify-items: center;
+    align-items: center;
     min-height: auto;
-    gap: calc(14px * var(--ui-scale));
+    gap: calc(12px * var(--ui-scale));
   }
 
   .class-summary-float--hero { order: 1; }
-  .class-summary-start { order: 2; }
+  .class-summary-start { order: 2; margin-bottom: 0; }
   .class-summary-float--companion { order: 3; }
 
-  .class-summary-float-frame {
-    width: min(56vw, 200px);
+  .class-summary-float-frame--hero {
+    width: min(72vw, 280px);
+    height: min(44vh, 400px);
+  }
+
+  .class-summary-hero-img {
+    height: min(42vh, 380px);
+    max-width: min(72vw, 280px);
   }
 
   .class-summary-float-frame--companion {
-    width: min(44vw, 160px);
+    width: min(52vw, 180px);
+    height: min(28vh, 200px);
   }
 }
 

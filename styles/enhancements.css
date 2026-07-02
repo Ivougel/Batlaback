@@ -85,6 +85,11 @@
 
 .shop-card--enhancement .shop-item-stack--enhancement {
   align-items: center;
+  flex-direction: row;
+}
+
+.shop-card--enhancement .shop-item-side-meta {
+  align-items: center;
 }
 
 .shop-card--enhancement .item-icon-shell--enhancement {
