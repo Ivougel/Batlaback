@@ -1,158 +1,159 @@
 /**
- * Плавающий ростер лобби на экране подготовки: перетаскивание 👀 по полю и toggle списка.
+ * Плавающий ростер лобби: 👀 — фиксированный якорь, список раскрывается от него в сторону поля.
  */
 
 const LOBBY_ROSTER_FLOAT_STORAGE_KEY = "bb-lobby-roster-float-pos";
 const LOBBY_ROSTER_FLOAT_DRAG_PX = 8;
+const LOBBY_ROSTER_BODY_GAP_PX = 6;
 
 let lobbyRosterFloatDrag = null;
 let lobbyRosterFloatToggleCollapse = null;
 let lobbyRosterFloatResizeObserver = null;
+let lobbyRosterHandlePos = null;
 
-function readLobbyRosterFloatPosition() {
+function readLobbyRosterHandleStorage() {
   try {
     const raw = localStorage.getItem(LOBBY_ROSTER_FLOAT_STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    if (!Number.isFinite(parsed?.x) || !Number.isFinite(parsed?.y)) return null;
-    return { x: parsed.x, y: parsed.y };
+    const x = Number.isFinite(parsed?.handleX) ? parsed.handleX : parsed?.x;
+    const y = Number.isFinite(parsed?.handleY) ? parsed.handleY : parsed?.y;
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+    return { x, y };
   } catch {
     return null;
   }
 }
 
-function saveLobbyRosterFloatPosition(x, y) {
+function saveLobbyRosterHandleStorage(x, y) {
   try {
-    localStorage.setItem(LOBBY_ROSTER_FLOAT_STORAGE_KEY, JSON.stringify({ x, y }));
+    localStorage.setItem(
+      LOBBY_ROSTER_FLOAT_STORAGE_KEY,
+      JSON.stringify({ v: 2, handleX: x, handleY: y }),
+    );
   } catch {
-    /* ignore quota / private mode */
+    /* ignore */
   }
 }
 
-function getLobbyRosterFloatBounds() {
-  const field = document.getElementById("prep-field-column");
-  const panel = document.getElementById("lobby-prep-roster-panel");
-  if (!field || !panel || panel.classList.contains("hidden")) return null;
-  const fieldRect = field.getBoundingClientRect();
-  const panelRect = panel.getBoundingClientRect();
-  return {
-    field,
-    minX: 0,
-    minY: 0,
-    maxX: Math.max(0, fieldRect.width - panelRect.width),
-    maxY: Math.max(0, fieldRect.height - panelRect.height),
-  };
-}
-
-function applyLobbyRosterFloatPosition(x, y, { save = false } = {}) {
-  const panel = document.getElementById("lobby-prep-roster-panel");
-  const bounds = getLobbyRosterFloatBounds();
-  if (!panel || !bounds) return;
-  const clampedX = Math.max(bounds.minX, Math.min(x, bounds.maxX));
-  const clampedY = Math.max(bounds.minY, Math.min(y, bounds.maxY));
-  panel.style.setProperty("--lobby-roster-float-x", `${clampedX}px`);
-  panel.style.setProperty("--lobby-roster-float-y", `${clampedY}px`);
-  panel.dataset.lobbyRosterPositioned = "true";
-  if (save) saveLobbyRosterFloatPosition(clampedX, clampedY);
-}
-
-function readLobbyRosterFloatAppliedPosition(panel) {
-  const xRaw = panel.style.getPropertyValue("--lobby-roster-float-x").trim();
-  const yRaw = panel.style.getPropertyValue("--lobby-roster-float-y").trim();
-  const x = parseFloat(xRaw);
-  const y = parseFloat(yRaw);
-  if (Number.isFinite(x) && Number.isFinite(y)) return { x, y };
-  return null;
-}
-
-function captureLobbyRosterHandleAnchor() {
+function getLobbyRosterFloatNodes() {
   const panel = document.getElementById("lobby-prep-roster-panel");
   const handle = document.getElementById("btn-lobby-roster-hide");
+  const body = document.getElementById("lobby-prep-roster-body");
   const field = document.getElementById("prep-field-column");
   if (!panel || !handle || !field || panel.classList.contains("hidden")) return null;
-  const fieldRect = field.getBoundingClientRect();
-  const handleRect = handle.getBoundingClientRect();
+  return { panel, handle, body, field };
+}
+
+function isLobbyRosterCollapsed() {
+  const panel = document.getElementById("lobby-prep-roster-panel");
+  return !!panel?.classList.contains("lobby-prep-roster-panel--collapsed");
+}
+
+function resolveLobbyRosterExpandDirection(handleX, fieldWidth, handleWidth) {
+  const centerX = handleX + handleWidth / 2;
+  const ratio = fieldWidth > 0 ? centerX / fieldWidth : 0.5;
+  if (ratio >= 0.58) return "left";
+  if (ratio <= 0.42) return "right";
+  return "down";
+}
+
+function measureLobbyRosterBodySize(panel, body, expand) {
+  if (!panel || !body) return { width: 0, height: 0 };
+  const prevExpand = panel.dataset.lobbyRosterExpand;
+  panel.dataset.lobbyRosterExpand = expand;
+  const prevDisplay = body.style.display;
+  const prevVisibility = body.style.visibility;
+  body.style.display = "flex";
+  body.style.visibility = "hidden";
+  const width = body.offsetWidth;
+  const height = body.offsetHeight;
+  body.style.display = prevDisplay;
+  body.style.visibility = prevVisibility;
+  if (prevExpand) panel.dataset.lobbyRosterExpand = prevExpand;
+  else panel.removeAttribute("data-lobby-roster-expand");
+  return { width, height };
+}
+
+function readCurrentLobbyRosterHandlePos() {
+  const nodes = getLobbyRosterFloatNodes();
+  if (!nodes) return null;
+  const fieldRect = nodes.field.getBoundingClientRect();
+  const handleRect = nodes.handle.getBoundingClientRect();
   return {
-    handleX: handleRect.left - fieldRect.left,
-    handleY: handleRect.top - fieldRect.top,
-    handleW: handleRect.width,
-    handleH: handleRect.height,
+    x: handleRect.left - fieldRect.left,
+    y: handleRect.top - fieldRect.top,
   };
 }
 
-function syncLobbyRosterExpandDirection() {
-  const panel = document.getElementById("lobby-prep-roster-panel");
-  const field = document.getElementById("prep-field-column");
-  const handle = document.getElementById("btn-lobby-roster-hide");
-  if (!panel || !field || !handle || panel.classList.contains("hidden")) return;
-  if (panel.classList.contains("lobby-prep-roster-panel--collapsed")) {
-    panel.removeAttribute("data-lobby-roster-expand");
-    return;
-  }
+function clampLobbyRosterHandlePosition(handleX, handleY, { expanded = false, expand = "down" } = {}) {
+  const nodes = getLobbyRosterFloatNodes();
+  if (!nodes) return { x: handleX, y: handleY };
+  const { handle, body, field } = nodes;
   const fieldRect = field.getBoundingClientRect();
-  const handleRect = handle.getBoundingClientRect();
-  const handleCenterX = handleRect.left + handleRect.width / 2 - fieldRect.left;
-  const ratio = fieldRect.width > 0 ? handleCenterX / fieldRect.width : 0.5;
-  if (ratio >= 0.58) panel.dataset.lobbyRosterExpand = "left";
-  else if (ratio <= 0.42) panel.dataset.lobbyRosterExpand = "right";
-  else panel.dataset.lobbyRosterExpand = "down";
+  const handleW = handle.offsetWidth;
+  const handleH = handle.offsetHeight;
+  const gap = LOBBY_ROSTER_BODY_GAP_PX;
+  let minX = 0;
+  let minY = 0;
+  let maxX = Math.max(0, fieldRect.width - handleW);
+  let maxY = Math.max(0, fieldRect.height - handleH);
+
+  if (expanded && body) {
+    const bodySize = measureLobbyRosterBodySize(nodes.panel, body, expand);
+    if (expand === "left") minX = bodySize.width + gap;
+    else if (expand === "right") maxX = Math.max(minX, fieldRect.width - handleW - bodySize.width - gap);
+    else maxY = Math.max(minY, fieldRect.height - handleH - bodySize.height - gap);
+  }
+
+  return {
+    x: Math.max(minX, Math.min(handleX, maxX)),
+    y: Math.max(minY, Math.min(handleY, maxY)),
+  };
 }
 
-function stabilizeLobbyRosterExpandPosition(anchor) {
-  const panel = document.getElementById("lobby-prep-roster-panel");
-  const handle = document.getElementById("btn-lobby-roster-hide");
-  if (!panel || !handle || panel.classList.contains("lobby-prep-roster-panel--collapsed") || !anchor) return;
-  const expand = panel.dataset.lobbyRosterExpand || "down";
-  requestAnimationFrame(() => {
-    const panelW = panel.offsetWidth;
-    const panelH = panel.offsetHeight;
-    const handleW = handle.offsetWidth || anchor.handleW;
-    const handleH = handle.offsetHeight || anchor.handleH;
-    let left = anchor.handleX;
-    let top = anchor.handleY;
-    if (expand === "left") left = anchor.handleX - (panelW - handleW);
-    else if (expand === "right") left = anchor.handleX;
-    else top = anchor.handleY;
-    applyLobbyRosterFloatPosition(left, top);
-    clampLobbyRosterFloatPosition();
-  });
+function applyLobbyRosterHandlePosition(handleX, handleY, { save = false } = {}) {
+  const nodes = getLobbyRosterFloatNodes();
+  if (!nodes) return;
+  const { panel, handle } = nodes;
+  const expanded = !isLobbyRosterCollapsed();
+  const fieldRect = nodes.field.getBoundingClientRect();
+  const expand = expanded
+    ? resolveLobbyRosterExpandDirection(handleX, fieldRect.width, handle.offsetWidth)
+    : "down";
+
+  if (expanded) panel.dataset.lobbyRosterExpand = expand;
+  else panel.removeAttribute("data-lobby-roster-expand");
+
+  const clamped = clampLobbyRosterHandlePosition(handleX, handleY, { expanded, expand });
+  lobbyRosterHandlePos = clamped;
+  panel.style.setProperty("--lobby-roster-float-x", `${clamped.x}px`);
+  panel.style.setProperty("--lobby-roster-float-y", `${clamped.y}px`);
+  panel.dataset.lobbyRosterPositioned = "true";
+  if (save) saveLobbyRosterHandleStorage(clamped.x, clamped.y);
 }
 
-function refreshLobbyRosterFloatLayout({ anchor } = {}) {
-  syncLobbyRosterExpandDirection();
-  if (anchor) stabilizeLobbyRosterExpandPosition(anchor);
-  else clampLobbyRosterFloatPosition();
+function layoutLobbyRosterPanel({ save = false } = {}) {
+  const stored = lobbyRosterHandlePos || readLobbyRosterHandleStorage() || readCurrentLobbyRosterHandlePos();
+  if (!stored) return;
+  applyLobbyRosterHandlePosition(stored.x, stored.y, { save });
 }
 
-function clampLobbyRosterFloatPosition() {
-  const panel = document.getElementById("lobby-prep-roster-panel");
-  if (!panel || panel.classList.contains("hidden") || panel.dataset.lobbyRosterPositioned !== "true") return;
-  const saved = readLobbyRosterFloatAppliedPosition(panel) || readLobbyRosterFloatPosition();
-  if (!saved) return;
-  applyLobbyRosterFloatPosition(saved.x, saved.y);
+function refreshLobbyRosterFloatLayout() {
+  layoutLobbyRosterPanel();
 }
 
 function restoreLobbyRosterFloatPosition() {
-  const panel = document.getElementById("lobby-prep-roster-panel");
-  if (!panel || panel.classList.contains("hidden")) return;
-  if (panel.dataset.lobbyRosterPositioned === "true") {
-    clampLobbyRosterFloatPosition();
-    refreshLobbyRosterFloatLayout();
-    return;
-  }
-  const saved = readLobbyRosterFloatPosition();
-  if (!saved) return;
-  requestAnimationFrame(() => {
-    applyLobbyRosterFloatPosition(saved.x, saved.y);
-  });
+  const stored = readLobbyRosterHandleStorage();
+  if (!stored) return;
+  lobbyRosterHandlePos = stored;
+  requestAnimationFrame(() => layoutLobbyRosterPanel());
 }
 
 function clearLobbyRosterFloatDragState() {
   if (!lobbyRosterFloatDrag) return;
   const { handle, pointerId } = lobbyRosterFloatDrag;
-  if (handle?.hasPointerCapture?.(pointerId)) {
-    handle.releasePointerCapture(pointerId);
-  }
+  if (handle?.hasPointerCapture?.(pointerId)) handle.releasePointerCapture(pointerId);
   handle?.classList.remove("lobby-roster-float-handle--dragging");
   document.getElementById("lobby-prep-roster-panel")?.classList.remove("lobby-prep-roster-panel--dragging");
   lobbyRosterFloatDrag = null;
@@ -170,7 +171,7 @@ function onLobbyRosterFloatPointerMove(e) {
   }
   e.preventDefault();
   const fieldRect = lobbyRosterFloatDrag.fieldRect;
-  applyLobbyRosterFloatPosition(
+  applyLobbyRosterHandlePosition(
     e.clientX - fieldRect.left - lobbyRosterFloatDrag.offsetX,
     e.clientY - fieldRect.top - lobbyRosterFloatDrag.offsetY,
   );
@@ -184,9 +185,7 @@ function onLobbyRosterFloatPointerEnd(e) {
   window.removeEventListener("pointerup", onLobbyRosterFloatPointerEnd);
   window.removeEventListener("pointercancel", onLobbyRosterFloatPointerEnd);
   if (drag.moved) {
-    const panel = document.getElementById("lobby-prep-roster-panel");
-    const pos = panel ? readLobbyRosterFloatAppliedPosition(panel) : null;
-    if (pos) saveLobbyRosterFloatPosition(pos.x, pos.y);
+    if (lobbyRosterHandlePos) saveLobbyRosterHandleStorage(lobbyRosterHandlePos.x, lobbyRosterHandlePos.y);
     return;
   }
   lobbyRosterFloatToggleCollapse?.();
@@ -195,20 +194,19 @@ function onLobbyRosterFloatPointerEnd(e) {
 function onLobbyRosterFloatPointerDown(e) {
   if (e.button !== 0) return;
   const handle = e.currentTarget;
-  const panel = document.getElementById("lobby-prep-roster-panel");
-  const field = document.getElementById("prep-field-column");
-  if (!panel || !field || panel.classList.contains("hidden")) return;
+  const nodes = getLobbyRosterFloatNodes();
+  if (!nodes) return;
   e.preventDefault();
   e.stopPropagation();
-  const panelRect = panel.getBoundingClientRect();
+  const handleRect = handle.getBoundingClientRect();
   lobbyRosterFloatDrag = {
     handle,
     pointerId: e.pointerId,
     startClientX: e.clientX,
     startClientY: e.clientY,
-    offsetX: e.clientX - panelRect.left,
-    offsetY: e.clientY - panelRect.top,
-    fieldRect: field.getBoundingClientRect(),
+    offsetX: e.clientX - handleRect.left,
+    offsetY: e.clientY - handleRect.top,
+    fieldRect: nodes.field.getBoundingClientRect(),
     moved: false,
   };
   handle.setPointerCapture(e.pointerId);
@@ -226,8 +224,8 @@ function initLobbyRosterFloat({ toggleCollapse } = {}) {
   handle.addEventListener("pointerdown", onLobbyRosterFloatPointerDown);
   restoreLobbyRosterFloatPosition();
   if (field && !lobbyRosterFloatResizeObserver) {
-    lobbyRosterFloatResizeObserver = new ResizeObserver(() => refreshLobbyRosterFloatLayout());
+    lobbyRosterFloatResizeObserver = new ResizeObserver(() => layoutLobbyRosterPanel());
     lobbyRosterFloatResizeObserver.observe(field);
   }
-  window.addEventListener("resize", () => refreshLobbyRosterFloatLayout(), { passive: true });
+  window.addEventListener("resize", () => layoutLobbyRosterPanel(), { passive: true });
 }

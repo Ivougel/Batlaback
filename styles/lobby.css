@@ -8,13 +8,18 @@
 .lobby-prep-roster-panel {
   position: absolute;
   z-index: calc(var(--z-layer-hud) + 2);
-  display: flex;
-  flex-direction: column;
-  gap: calc(4px * var(--ui-scale));
-  width: min(calc(var(--lobby-roster-emoji-size) * 10.5), calc(var(--prep-hero-slot-width, 9.5rem) + 0.75rem));
-  max-width: min(42vw, calc(var(--lobby-roster-emoji-size) * 11));
-  pointer-events: auto;
+  display: block;
+  gap: 0;
+  width: auto !important;
+  max-width: none !important;
+  pointer-events: none;
+  overflow: visible;
   align-items: flex-start;
+}
+
+.lobby-prep-roster-panel .lobby-roster-float-handle,
+.lobby-prep-roster-panel .lobby-prep-roster-body {
+  pointer-events: auto;
 }
 
 .lobby-roster-hide-btn {

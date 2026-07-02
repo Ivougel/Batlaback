@@ -217,6 +217,7 @@ self.PWA_PRECACHE_URLS = [
   "styles/desktop-intro-layout.css?v=1",
   "styles/desktop-prep.css",
   "styles/desktop-prep.css?v=1",
+  "styles/desktop-prep.css?v=2",
   "styles/doll.css",
   "styles/doll.css?v=25",
   "styles/emotion-thoughts.css",

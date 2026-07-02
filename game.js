@@ -590,9 +590,8 @@ function renderLobbyChrome(force = false) {
       : "";
   }
   syncLobbyRosterCollapse();
-  if (show && phase === "prep" && typeof refreshLobbyRosterFloatLayout === "function") {
-    if (!lobbyRosterHidden) refreshLobbyRosterFloatLayout();
-    else if (typeof restoreLobbyRosterFloatPosition === "function") restoreLobbyRosterFloatPosition();
+  if (show && phase === "prep" && typeof layoutLobbyRosterPanel === "function") {
+    requestAnimationFrame(() => layoutLobbyRosterPanel());
   } else if (show && phase === "prep" && typeof restoreLobbyRosterFloatPosition === "function") {
     restoreLobbyRosterFloatPosition();
   }
@@ -665,14 +664,10 @@ function bindLobbyRosterClicks() {
   if (typeof initLobbyRosterFloat === "function") {
     initLobbyRosterFloat({
       toggleCollapse() {
-        const anchor = typeof captureLobbyRosterHandleAnchor === "function"
-          ? captureLobbyRosterHandleAnchor()
-          : null;
-        const wasCollapsed = lobbyRosterHidden;
         lobbyRosterHidden = !lobbyRosterHidden;
         syncLobbyRosterCollapse();
-        if (typeof refreshLobbyRosterFloatLayout === "function") {
-          refreshLobbyRosterFloatLayout(wasCollapsed ? { anchor } : {});
+        if (typeof layoutLobbyRosterPanel === "function") {
+          requestAnimationFrame(() => layoutLobbyRosterPanel());
         }
       },
     });

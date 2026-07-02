@@ -52,3 +52,68 @@ html[data-ui-surface="desktop"] #app[data-phase="prep"] .btn-refresh-shop,
 html[data-ui-surface="desktop"] #app[data-phase="prep"] .shop-action-row .btn-secondary {
   min-height: var(--touch-target-min);
 }
+
+/* ─── Prep: инвентарное поле по центру сцены ─── */
+
+html[data-ui-surface="desktop"] #app[data-phase="prep"] .prep-field-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+html[data-ui-surface="desktop"] #app[data-phase="prep"] .prep-field-island {
+  position: relative !important;
+  flex: 0 0 auto;
+  align-self: center;
+  left: auto !important;
+  top: auto !important;
+  margin: calc(var(--prep-scene-top) + var(--field-offset-y)) auto 0;
+  width: var(--prep-canvas-display-w, var(--prep-canvas-w)) !important;
+  height: var(--prep-canvas-display-h, var(--prep-canvas-h)) !important;
+  max-width: min(100%, var(--prep-canvas-display-w, var(--prep-canvas-w))) !important;
+  min-height: 0 !important;
+}
+
+html[data-ui-surface="desktop"] #app[data-phase="prep"] .battle-canvas-stage {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+/* Широкие экраны без data-ui-surface=desktop (планшет в альбомной) */
+@media (min-width: 1201px) {
+  html:not([data-prep-layout="mobile"]):not([data-prep-side-fit="true"]):not([data-ui-surface="tablet-side"]):not([data-ui-surface="phone-drawer"]) #app[data-phase="prep"] .prep-field-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  html:not([data-prep-layout="mobile"]):not([data-prep-side-fit="true"]):not([data-ui-surface="tablet-side"]):not([data-ui-surface="phone-drawer"]) #app[data-phase="prep"] .prep-field-island {
+    position: relative !important;
+    flex: 0 0 auto;
+    align-self: center;
+    left: auto !important;
+    top: auto !important;
+    margin: calc(var(--prep-scene-top) + var(--field-offset-y)) auto 0;
+    width: var(--prep-canvas-display-w, var(--prep-canvas-w)) !important;
+    height: var(--prep-canvas-display-h, var(--prep-canvas-h)) !important;
+    max-width: min(100%, var(--prep-canvas-display-w, var(--prep-canvas-w))) !important;
+    min-height: 0 !important;
+  }
+
+  html:not([data-prep-layout="mobile"]):not([data-prep-side-fit="true"]):not([data-ui-surface="tablet-side"]):not([data-ui-surface="phone-drawer"]) #app[data-phase="prep"] .battle-canvas-stage {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+  }
+}
