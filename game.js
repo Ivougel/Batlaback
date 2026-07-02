@@ -5210,9 +5210,11 @@ function drawWorldLayer() {
     }
     const ampDragCtx = (dragPayload?.itemId
       && typeof isAmplifierBackpackItem === "function"
-      && isAmplifierBackpackItem(dragPayload.itemId)
-      && dragFrom?.type !== "item")
-      ? { extraItemId: dragPayload.itemId }
+      && isAmplifierBackpackItem(dragPayload.itemId))
+      ? {
+        extraItemId: dragPayload.itemId,
+        excludeUid: dragFrom?.type === "item" ? dragFrom.item?.uid : null,
+      }
       : null;
     const hasAmplifyHighlights = typeof drawPrepAmplifyHighlights === "function"
       && drawPrepAmplifyHighlights(ctx, synergyAnimTime, side, st.items, ampDragCtx);
@@ -7492,6 +7494,12 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
   const enhancementHtml = typeof renderPrepEnhancementStripHtml === "function"
     ? renderPrepEnhancementStripHtml(round, mutRt.enhancements)
     : "";
+  const keyStatusHtml = typeof renderPrepBuildKeyStatusHtml === "function"
+    ? renderPrepBuildKeyStatusHtml(mutRt.items)
+    : "";
+  const ampStatusHtml = typeof renderPrepAmplifierStatusHtml === "function"
+    ? renderPrepAmplifierStatusHtml(mutRt.items)
+    : "";
 
   if (statsHud) {
     const lobbyPlayer = isLobbyMode() ? getLobbyPlayer(lobbyState) : null;
@@ -7516,6 +7524,8 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
       </div>
       ${mutationHtml}
       ${enhancementHtml}
+      ${keyStatusHtml}
+      ${ampStatusHtml}
     `;
     bindPrepEnhancementStrip(side);
     if (!document.getElementById("prep-hero-tooltip")?.classList.contains("hidden")) {

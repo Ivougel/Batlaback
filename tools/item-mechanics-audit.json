@@ -1,0 +1,1727 @@
+{
+  "summary": {
+    "ok": 239,
+    "warn": 1,
+    "fail": 0,
+    "total": 240
+  },
+  "integration": [
+    {
+      "name": "amplify_highlight_fire_staff",
+      "ok": true,
+      "detail": "highlighted 1"
+    },
+    {
+      "name": "amplify_drag_preview",
+      "ok": true,
+      "detail": "amplify_fire"
+    },
+    {
+      "name": "amplify_combat_bonus",
+      "ok": true,
+      "detail": "magicMult=1.02"
+    },
+    {
+      "name": "key_unlock_build",
+      "ok": true,
+      "detail": "triple_paladin"
+    },
+    {
+      "name": "offer_tag_shop_modifiers",
+      "ok": true,
+      "detail": "pyromancer"
+    },
+    {
+      "name": "battle_cooldown_activation",
+      "ok": true,
+      "detail": "cd=2.0222875781543475"
+    },
+    {
+      "name": "attackBuff_on_miss_broom",
+      "ok": true,
+      "detail": "pendingAttackBuff=2"
+    }
+  ],
+  "rows": [
+    {
+      "id": "rusty_sword",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "iron_helmet",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|battle_cooldown",
+      "issues": ""
+    },
+    {
+      "id": "dagger",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "poison_vial",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown",
+      "issues": ""
+    },
+    {
+      "id": "apprentice_staff",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "mana_crystal",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "apple",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown",
+      "issues": ""
+    },
+    {
+      "id": "banana",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_periodic",
+      "issues": ""
+    },
+    {
+      "id": "enh_stray_charm",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "enhancement_slot|enhancement_combat|enhancement_tag_bias",
+      "issues": ""
+    },
+    {
+      "id": "enh_ember_crown",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "enhancement_slot|enhancement_combat|enhancement_tag_bias",
+      "issues": ""
+    },
+    {
+      "id": "enh_hymn_veil",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "enhancement_slot|enhancement_combat|enhancement_tag_bias",
+      "issues": ""
+    },
+    {
+      "id": "enh_shadow_hood",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "enhancement_slot|enhancement_combat|enhancement_tag_bias",
+      "issues": ""
+    },
+    {
+      "id": "enh_frost_circlet",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "enhancement_slot|enhancement_combat|enhancement_tag_bias",
+      "issues": ""
+    },
+    {
+      "id": "enh_inquisitor_mask",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "enhancement_slot|enhancement_combat|enhancement_tag_bias",
+      "issues": ""
+    },
+    {
+      "id": "enh_bard_crown",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "enhancement_slot|enhancement_combat|enhancement_tag_bias",
+      "issues": ""
+    },
+    {
+      "id": "enh_oracle_diadem",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "enhancement_slot|enhancement_combat|enhancement_tag_bias",
+      "issues": ""
+    },
+    {
+      "id": "enh_defeated_breastplate",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "enhancement_slot|enhancement_combat|enhancement_tag_bias",
+      "issues": ""
+    },
+    {
+      "id": "enh_holy_aegis",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "enhancement_slot|enhancement_combat|enhancement_tag_bias",
+      "issues": ""
+    },
+    {
+      "id": "enh_guardian_mail",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "enhancement_slot|enhancement_combat|enhancement_tag_bias",
+      "issues": ""
+    },
+    {
+      "id": "enh_zealot_vestment",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "enhancement_slot|enhancement_combat|enhancement_tag_bias",
+      "issues": ""
+    },
+    {
+      "id": "enh_plague_bindings",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "enhancement_slot|enhancement_combat|enhancement_tag_bias",
+      "issues": ""
+    },
+    {
+      "id": "enh_arcane_robe",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "enhancement_slot|enhancement_combat|enhancement_tag_bias",
+      "issues": ""
+    },
+    {
+      "id": "enh_juggernaut_plate",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "enhancement_slot|enhancement_combat|enhancement_tag_bias",
+      "issues": ""
+    },
+    {
+      "id": "enh_rogue_vest",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "enhancement_slot|enhancement_combat|enhancement_tag_bias",
+      "issues": ""
+    },
+    {
+      "id": "enh_mad_scholar_sandals",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "enhancement_slot|enhancement_combat|enhancement_tag_bias",
+      "issues": ""
+    },
+    {
+      "id": "enh_assassin_treads",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "enhancement_slot|enhancement_combat|enhancement_tag_bias",
+      "issues": ""
+    },
+    {
+      "id": "enh_swift_treads",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "enhancement_slot|enhancement_combat|enhancement_tag_bias",
+      "issues": ""
+    },
+    {
+      "id": "enh_paladin_greaves",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "enhancement_slot|enhancement_combat|enhancement_tag_bias",
+      "issues": ""
+    },
+    {
+      "id": "enh_frost_walkers",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "enhancement_slot|enhancement_combat|enhancement_tag_bias",
+      "issues": ""
+    },
+    {
+      "id": "enh_trickster_slippers",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "enhancement_slot|enhancement_combat|enhancement_tag_bias",
+      "issues": ""
+    },
+    {
+      "id": "enh_pyro_steps",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "enhancement_slot|enhancement_combat|enhancement_tag_bias",
+      "issues": ""
+    },
+    {
+      "id": "enh_guardian_sabatons",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "enhancement_slot|enhancement_combat|enhancement_tag_bias",
+      "issues": ""
+    },
+    {
+      "id": "amplify_fire",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "amplify_highlight|amplify_combat",
+      "issues": ""
+    },
+    {
+      "id": "amplify_holy",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "amplify_highlight|amplify_combat",
+      "issues": ""
+    },
+    {
+      "id": "amplify_poison",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "amplify_highlight|amplify_combat",
+      "issues": ""
+    },
+    {
+      "id": "amplify_magic",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "amplify_highlight|amplify_combat",
+      "issues": ""
+    },
+    {
+      "id": "amplify_melee",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "amplify_highlight|amplify_combat",
+      "issues": ""
+    },
+    {
+      "id": "amplify_staff",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "amplify_highlight|amplify_combat",
+      "issues": ""
+    },
+    {
+      "id": "amplify_wand",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "amplify_highlight|amplify_combat",
+      "issues": ""
+    },
+    {
+      "id": "amplify_twohand",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "amplify_highlight|amplify_combat",
+      "issues": ""
+    },
+    {
+      "id": "amplify_chest",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "amplify_highlight|amplify_combat",
+      "issues": ""
+    },
+    {
+      "id": "amplify_boots",
+      "status": "OK",
+      "activity": "prep+battle",
+      "paths": "amplify_highlight|amplify_combat",
+      "issues": ""
+    },
+    {
+      "id": "key_ember_codex",
+      "status": "OK",
+      "activity": "prep_shop_craft",
+      "paths": "key_unlock_build",
+      "issues": ""
+    },
+    {
+      "id": "key_hymn_folio",
+      "status": "OK",
+      "activity": "prep_shop_craft",
+      "paths": "key_unlock_build",
+      "issues": ""
+    },
+    {
+      "id": "key_paladin_oath",
+      "status": "OK",
+      "activity": "prep_shop_craft",
+      "paths": "key_unlock_build",
+      "issues": ""
+    },
+    {
+      "id": "key_shadow_pact",
+      "status": "OK",
+      "activity": "prep_shop_craft",
+      "paths": "key_unlock_build",
+      "issues": ""
+    },
+    {
+      "id": "fire_staff",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "weapon_holy_mace",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "armor_holy_choir",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|battle_cooldown",
+      "issues": ""
+    },
+    {
+      "id": "accessory_musical_slippers",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "boots_steadfast",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "armor_light_weave",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "artifact_stone_cold",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_periodic|battle_passive|battle_on_hit",
+      "issues": ""
+    },
+    {
+      "id": "artifact_stone_heat",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive|battle_on_hit",
+      "issues": ""
+    },
+    {
+      "id": "beast_fang",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "blood_amulet",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "blood_harvester",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "blood_stone",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|battle_cooldown",
+      "issues": ""
+    },
+    {
+      "id": "box_of_riches",
+      "status": "OK",
+      "activity": "prep",
+      "paths": "meta_shop_enter|meta_shop_pool",
+      "issues": ""
+    },
+    {
+      "id": "corrupted_crystal",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|battle_periodic",
+      "issues": ""
+    },
+    {
+      "id": "cthulhu",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_periodic|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "cubert",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_periodic",
+      "issues": ""
+    },
+    {
+      "id": "dancing_dragon",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "djinn_lamp",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive|battle_periodic|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "fancy_fencing_rapier",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_on_hit|battle_on_miss|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "fanfare",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_periodic",
+      "issues": ""
+    },
+    {
+      "id": "flute",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_periodic|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "frozen_flame",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|meta_shop_pool",
+      "issues": ""
+    },
+    {
+      "id": "goobert",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "great_shield",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "happy_bomb",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_periodic",
+      "issues": ""
+    },
+    {
+      "id": "holdall",
+      "status": "OK",
+      "activity": "prep",
+      "paths": "container_slots",
+      "issues": ""
+    },
+    {
+      "id": "impractically_large_greatsword",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "katana",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_on_hit|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "king_crown",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_periodic|battle_passive|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "large_sack",
+      "status": "OK",
+      "activity": "prep",
+      "paths": "container_slots",
+      "issues": ""
+    },
+    {
+      "id": "leather_bag",
+      "status": "OK",
+      "activity": "prep",
+      "paths": "container_slots",
+      "issues": ""
+    },
+    {
+      "id": "lightsaber",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "lil_chestnut",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_periodic|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "mana_orb",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "mana_orb_charm",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "maneki_neko",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "mr_struggles",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_periodic|meta_shop_pool",
+      "issues": ""
+    },
+    {
+      "id": "mrs_struggles",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_periodic|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "offering_bowl",
+      "status": "OK",
+      "activity": "prep",
+      "paths": "container_slots",
+      "issues": ""
+    },
+    {
+      "id": "paradise_birb",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_periodic|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "pop",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_periodic|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "potion_belt",
+      "status": "OK",
+      "activity": "prep",
+      "paths": "container_slots",
+      "issues": ""
+    },
+    {
+      "id": "prismatic_orb",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive|battle_periodic|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "prismatic_sword",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive|battle_on_hit|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "relic_case",
+      "status": "OK",
+      "activity": "prep",
+      "paths": "container_slots",
+      "issues": ""
+    },
+    {
+      "id": "repeater",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|battle_periodic",
+      "issues": ""
+    },
+    {
+      "id": "ring_of_power",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "ruby_egg",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "rune_of_magic",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|battle_cooldown|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "rune_of_protection",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|battle_cooldown|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "shadow_blade",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "shield_of_valor",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "snowmaster",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_periodic|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "speed_amulet",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "spider_web",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown",
+      "issues": ""
+    },
+    {
+      "id": "stable_recombobulator",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|battle_periodic",
+      "issues": ""
+    },
+    {
+      "id": "stamina_sack",
+      "status": "OK",
+      "activity": "prep",
+      "paths": "container_slots",
+      "issues": ""
+    },
+    {
+      "id": "stone_golem",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|battle_cooldown|battle_on_hit",
+      "issues": ""
+    },
+    {
+      "id": "storage_chest",
+      "status": "OK",
+      "activity": "prep",
+      "paths": "container_slots",
+      "issues": ""
+    },
+    {
+      "id": "tim",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|battle_on_hit",
+      "issues": ""
+    },
+    {
+      "id": "time_dilator",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive|battle_periodic",
+      "issues": ""
+    },
+    {
+      "id": "unsettling_presence",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive|battle_periodic",
+      "issues": ""
+    },
+    {
+      "id": "unstable_recombobulator",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|battle_cooldown|battle_periodic",
+      "issues": ""
+    },
+    {
+      "id": "utility_pouch",
+      "status": "OK",
+      "activity": "prep",
+      "paths": "container_slots",
+      "issues": ""
+    },
+    {
+      "id": "walrus_tusk",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "war_hammer",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "whetstone",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "wolpertinger",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_periodic|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "wonky_snowman",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_on_hit",
+      "issues": ""
+    },
+    {
+      "id": "crossblades",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "eggscalibur",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "enchanted_staff",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "falcon_blade",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "hero_long_sword",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "hero_sword",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "manathirst",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "spectral_dagger",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_on_hit|battle_passive|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "the_fool",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "burning_coal",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|battle_on_hit|battle_periodic",
+      "issues": ""
+    },
+    {
+      "id": "flawed_amethyst",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "flawed_emerald",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "flawed_ruby",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "flawed_sapphire",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "flawed_topaz",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "lucky_clover",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "ace_of_spades",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_on_hit",
+      "issues": ""
+    },
+    {
+      "id": "carrot",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_periodic",
+      "issues": ""
+    },
+    {
+      "id": "forging_hammer",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "reverse",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "the_lovers",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "dragon_claws",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "jimbo",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|battle_cooldown",
+      "issues": ""
+    },
+    {
+      "id": "rat",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_periodic|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "regular_amethyst",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "regular_emerald",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "regular_ruby",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "regular_sapphire",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "regular_topaz",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "shortbow",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_on_hit|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "spell_scroll_frostbolt",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_periodic|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "burning_torch",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|battle_on_hit",
+      "issues": ""
+    },
+    {
+      "id": "chili_pepper",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_periodic|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "darkest_lotus",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "flame_badge",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|meta_shop_pool|meta_shop_enter",
+      "issues": ""
+    },
+    {
+      "id": "holo_fire_lizard",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "leaf_badge",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_periodic|meta_shop_pool|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "magic_badge",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|meta_shop_pool",
+      "issues": ""
+    },
+    {
+      "id": "puzzle_badge",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|battle_periodic",
+      "issues": ""
+    },
+    {
+      "id": "rainbow_badge",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_periodic|meta_shop_pool",
+      "issues": ""
+    },
+    {
+      "id": "shell_totem",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_periodic|battle_passive|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "sir_sand",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "skull_badge",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_periodic|meta_shop_pool",
+      "issues": ""
+    },
+    {
+      "id": "squirrel",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_periodic|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "stone_badge",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_periodic|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "torch",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_on_hit",
+      "issues": ""
+    },
+    {
+      "id": "twine_badge",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|meta_shop_pool|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "white_eyes_blue_dragon",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "wolf_badge",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|meta_shop_pool|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "axe",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_on_hit|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "dragonskin_boots",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|battle_cooldown",
+      "issues": ""
+    },
+    {
+      "id": "hedgehog",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive|battle_periodic",
+      "issues": ""
+    },
+    {
+      "id": "mana_potion",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "molten_dagger",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "spiked_collar",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "toad",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_periodic|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "bow_and_arrow",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_on_hit|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "wooden_sword",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_on_hit|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "broom",
+      "status": "WARN",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_on_miss|battle_on_hit|synergy_adjacency",
+      "issues": "attackBuff uses value field (handled by runtime alias)"
+    },
+    {
+      "id": "pan",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "storm_burst",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|battle_cooldown|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "spear",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_on_hit|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "hungry_blade",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|battle_cooldown|battle_on_hit|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "ripsaw_blade",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_on_hit|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "villain_sword",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "hammer",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_on_hit|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "snow_stick",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_on_hit|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "thorn_whip",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_on_hit|battle_passive|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "knight_sword",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "iron_shield",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "wooden_buckler",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "garlic",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_periodic",
+      "issues": ""
+    },
+    {
+      "id": "fly_agaric",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_periodic",
+      "issues": ""
+    },
+    {
+      "id": "poison_dagger",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_on_hit|battle_passive|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "pestilence_flask",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "smoke_bomb",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|battle_cooldown",
+      "issues": ""
+    },
+    {
+      "id": "chipped_ruby",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "lump_of_coal",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|battle_on_hit|battle_periodic",
+      "issues": ""
+    },
+    {
+      "id": "fire_crystal",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown",
+      "issues": ""
+    },
+    {
+      "id": "chipped_sapphire",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "snowball",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "star_of_courage",
+      "status": "OK",
+      "activity": "prep_indirect",
+      "paths": "synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "shiny_shell",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|battle_periodic",
+      "issues": ""
+    },
+    {
+      "id": "shelly",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_periodic|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "divine_potion",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "chipped_amethyst",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "blueberries",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_periodic|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "charge_gem",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "spark_stone",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "frost_crystal",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "chipped_emerald",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "chipped_topaz",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "lucky_charm",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "health_stone",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|battle_cooldown|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "bandage",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown",
+      "issues": ""
+    },
+    {
+      "id": "healing_herb",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "healing_herbs",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "pineapple",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_periodic|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "snowcake",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_periodic|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "cheese",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_periodic",
+      "issues": ""
+    },
+    {
+      "id": "rage_potion",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown",
+      "issues": ""
+    },
+    {
+      "id": "health_potion",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "heroic_potion",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "stone_skin_potion",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "vampiric_potion",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "stone",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive|battle_on_hit",
+      "issues": ""
+    },
+    {
+      "id": "pocket_sand",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "antitoxin",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown",
+      "issues": ""
+    },
+    {
+      "id": "cork_charm",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown",
+      "issues": ""
+    },
+    {
+      "id": "bag_of_stones",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "deck_of_cards",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|meta_shop_pool",
+      "issues": ""
+    },
+    {
+      "id": "piggybank",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "leather_boots",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_cooldown|battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "cap_of_resilience",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "leather_armor",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "royal_helmet",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|battle_cooldown|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "titan_armor",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "glowing_crown",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_periodic|battle_passive|synergy_adjacency",
+      "issues": ""
+    },
+    {
+      "id": "holy_armor",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive|battle_periodic",
+      "issues": ""
+    },
+    {
+      "id": "leather_pouch",
+      "status": "OK",
+      "activity": "prep",
+      "paths": "container_slots",
+      "issues": ""
+    },
+    {
+      "id": "protective_purse",
+      "status": "OK",
+      "activity": "prep",
+      "paths": "container_slots",
+      "issues": ""
+    },
+    {
+      "id": "fanny_pack",
+      "status": "OK",
+      "activity": "prep",
+      "paths": "container_slots",
+      "issues": ""
+    },
+    {
+      "id": "iron_patch",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive",
+      "issues": ""
+    },
+    {
+      "id": "backpack",
+      "status": "OK",
+      "activity": "prep",
+      "paths": "container_slots",
+      "issues": ""
+    },
+    {
+      "id": "customer_card",
+      "status": "OK",
+      "activity": "battle",
+      "paths": "battle_passive",
+      "issues": ""
+    }
+  ]
+}

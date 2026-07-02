@@ -1550,7 +1550,9 @@ function processOnMissItemEffects(state, item, self, foe, team) {
   collectItemBattleEffects(item).forEach((effect) => {
     if (effect.trigger !== "on_miss" && effect.phase !== "on_miss") return;
     if (effect.type === "gainStack") applyGainStackEffect(state, effect, item, self, team);
-    if (effect.attackBuff) rt.pendingAttackBuff = (rt.pendingAttackBuff || 0) + Number(effect.attackBuff);
+    if (effect.type === "attackBuff" || effect.attackBuff) {
+      rt.pendingAttackBuff = (rt.pendingAttackBuff || 0) + Number(effect.attackBuff ?? effect.value ?? 0);
+    }
     if (effect.type === "poison" && rollEffectChance(self, effect.chance ?? 1)) {
       executeEffect(state, effect, item, self, foe, rt, team);
     }

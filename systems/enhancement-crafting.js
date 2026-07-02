@@ -352,6 +352,32 @@ function scoreEnhancementWithBuildBias(def, ctx = {}) {
   return score;
 }
 
+function renderPrepBuildKeyStatusHtml(items = []) {
+  const unlocked = collectUnlockedBuilds(items);
+  const keys = (items || []).filter((item) => ITEM_CATALOG[item?.itemId]?.isBuildKey);
+  if (!keys.length && !unlocked.size) return "";
+
+  const keyChips = keys.map((item) => {
+    const def = ITEM_CATALOG[item.itemId];
+    const spec = BUILD_UNLOCK_CATALOG[def?.unlockBuild];
+    const label = spec?.label || def?.unlockBuild || def?.name;
+    return `<span class="prep-mod-chip prep-mod-chip--key is-active" title="${def?.description || ""}">${def?.icon || "🔑"} ${def?.name}: ветка «${label}»</span>`;
+  }).join("");
+
+  const unlockedOnly = [...unlocked].filter((buildId) => !keys.some((item) => ITEM_CATALOG[item.itemId]?.unlockBuild === buildId));
+  const unlockChips = unlockedOnly.map((buildId) => {
+    const spec = BUILD_UNLOCK_CATALOG[buildId];
+    return `<span class="prep-mod-chip prep-mod-chip--key is-active">${spec?.label || buildId}: bias магазина/крафта</span>`;
+  }).join("");
+
+  return `
+    <div class="prep-modifier-strip prep-modifier-strip--key" aria-label="Ключи веток">
+      <span class="prep-modifier-eyebrow">Ветки</span>
+      <div class="prep-modifier-chips">${keyChips}${unlockChips}</div>
+    </div>
+  `;
+}
+
 function scoreTripleSupportShopBias(item, ctx = {}) {
   if (!item?.recommendedTriple) return 0;
   return typeof scoreShopItemPickWeight === "function"

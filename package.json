@@ -6,7 +6,7 @@
     "test:item-pool": "node tools/item-pool-120.test.mjs",
     "generate:item-pool": "node tools/generate-item-pool-120.mjs",
     "patch:pool120-descriptions": "node tools/patch-pool120-item-descriptions.mjs",
-    "auto:item-descriptions": "node tools/auto-item-descriptions.mjs",
+    "audit:mechanics": "node tools/item-mechanics-audit.mjs",
     "export:pool120": "node tools/export-pool120-items.mjs",
     "generate:pool120-presets": "node tools/generate-class-pool120-presets.js",
     "sim:balance-pool120": "node tools/generate-class-pool120-presets.js && node tools/class-balance-pool120-sim.js --json",

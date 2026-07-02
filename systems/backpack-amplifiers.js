@@ -346,10 +346,10 @@ function drawAmplifyCellHighlight(ctx, team, col, row, style, pulse, strong = fa
   ctx.save();
   ctx.fillStyle = style.fill;
   ctx.strokeStyle = style.stroke;
-  ctx.lineWidth = strong ? 2.2 : 1.6;
+  ctx.lineWidth = strong ? 2.8 : 2.2;
   ctx.shadowColor = style.glow;
-  ctx.shadowBlur = 6 + pulse * 5;
-  ctx.globalAlpha = 0.55 + pulse * 0.25;
+  ctx.shadowBlur = 8 + pulse * 8;
+  ctx.globalAlpha = 0.65 + pulse * 0.3;
   if (typeof roundRect === "function") {
     roundRect(rect.x + 1, rect.y + 1, rect.w - 2, rect.h - 2, 5);
     ctx.fill();
@@ -434,6 +434,35 @@ function tryRollShopAmplifier(ctx = {}) {
   if ((ctx.round ?? 1) < SHOP_AMPLIFIER_MIN_ROUND) return null;
   if (Math.random() > SHOP_AMPLIFIER_ROLL_CHANCE) return null;
   return rollShopAmplifierEntry(ctx);
+}
+
+function renderPrepAmplifierStatusHtml(items = []) {
+  const amplifiers = collectAmplifiersInLoadout(items);
+  if (!amplifiers.length) return "";
+
+  const chips = amplifiers.map((ampDef) => {
+    const matches = items.filter((item) => itemMatchesAmplifierTarget(item.itemId, ampDef));
+    const active = matches.length > 0;
+    const target = ampDef.amplifyFamily
+      ? `тег «${ampDef.amplifyFamily}»`
+      : ampDef.amplifySlot
+        ? `слот «${ampDef.amplifySlot}»`
+        : ampDef.amplifyEquip
+          ? `экип «${ampDef.amplifyEquip}»`
+          : "связи";
+    const bonus = ampDef.combat ? " · бонус в бою" : "";
+    const state = active
+      ? `подсветка: ${matches.length} предм.${bonus}`
+      : `положите предмет с ${target}`;
+    return `<span class="prep-mod-chip prep-mod-chip--amp${active ? " is-active" : ""}" title="${ampDef.desc || ampDef.name}">${ampDef.icon} ${ampDef.name}: ${state}</span>`;
+  }).join("");
+
+  return `
+    <div class="prep-modifier-strip prep-modifier-strip--amp" aria-label="Усилители рюкзака">
+      <span class="prep-modifier-eyebrow">Усилители</span>
+      <div class="prep-modifier-chips">${chips}</div>
+    </div>
+  `;
 }
 
 function buildAmplifierTooltipExtraLines(def) {
