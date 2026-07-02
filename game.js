@@ -2670,12 +2670,206 @@ function applyPrepBoardHoverFromCanvasXY(mx, my, side, st) {
   return true;
 }
 
+function prepCellCanvasCenter(col, row, team = prepViewSide) {
+  const rect = cellRect(team, col, row);
+  return { x: rect.x + rect.w / 2, y: rect.y + rect.h / 2 };
+}
+
+function findNearestPrepPlaceableHover(mx, my, side, st) {
+  if (!dragPayload || !st) return null;
+  const team = prepViewSide;
+  let best = null;
+  let bestDist = Infinity;
+
+  const consider = (col, row) => {
+    if (col < 0 || col >= GRID_COLS || row < 0 || row >= GRID_ROWS) return;
+    if (!isPrepArcPlaceableCell(col, row)) return;
+    const center = prepCellCanvasCenter(col, row, team);
+    const dist = Math.hypot(center.x - mx, center.y - my);
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = { col, row };
+    }
+  };
+
+  if (isContainerItem(dragPayload.itemId)) {
+    for (let row = 0; row < GRID_ROWS; row += 1) {
+      for (let col = 0; col < GRID_COLS; col += 1) {
+        consider(col, row);
+      }
+    }
+  } else {
+    buildSlotSet(st.containers).forEach((key) => {
+      const [col, row] = key.split(",").map(Number);
+      consider(col, row);
+    });
+  }
+
+  return best;
+}
+
+function findNearestPrepSlotHover(mx, my, side, st) {
+  if (!dragPayload || !st) return null;
+  const team = prepViewSide;
+  let best = null;
+  let bestDist = Infinity;
+
+  const consider = (col, row) => {
+    if (col < 0 || col >= GRID_COLS || row < 0 || row >= GRID_ROWS) return;
+    const center = prepCellCanvasCenter(col, row, team);
+    const dist = Math.hypot(center.x - mx, center.y - my);
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = { col, row };
+    }
+  };
+
+  if (isContainerItem(dragPayload.itemId)) {
+    for (let row = 0; row < GRID_ROWS; row += 1) {
+      for (let col = 0; col < GRID_COLS; col += 1) {
+        consider(col, row);
+      }
+    }
+  } else {
+    buildSlotSet(st.containers).forEach((key) => {
+      const [col, row] = key.split(",").map(Number);
+      consider(col, row);
+    });
+  }
+
+  return best;
+}
+
+function applyPrepBoardHoverFromNearestPlaceable(mx, my, side, st) {
+  const nearest = findNearestPrepPlaceableHover(mx, my, side, st);
+  if (nearest) {
+    const { col, row } = nearest;
+    prepDropPreviewHover = { col, row };
+    if (isContainerItem(dragPayload.itemId)) {
+      hoverCell = { col, row };
+      hoverSlot = null;
+    } else {
+      hoverSlot = { col, row };
+      hoverCell = null;
+    }
+    return true;
+  }
+
+  const fallback = findNearestPrepSlotHover(mx, my, side, st);
+  if (!fallback) return false;
+  const center = prepCellCanvasCenter(fallback.col, fallback.row, prepViewSide);
+  return applyPrepBoardHoverFromCanvasXY(center.x, center.y, side, st);
+}
+
 function isPrepSidebarArcDrag() {
   return dragFrom?.type === "shop" || dragFrom?.type === "bench";
 }
 
 function shouldDrawPrepGridFigurePreview() {
-  return !isPrepSidebarArcDrag();
+  if (!isPrepSidebarArcDrag()) return true;
+  if (hoverSlot || hoverCell || prepDropPreviewHover) return true;
+  const st = typeof getSideState === "function" ? getSideState(prepViewSide) : null;
+  return !!(st && typeof getPrepDropPlacement === "function" && getPrepDropPlacement(st, prepViewSide));
+}
+
+function getPrepBackpackClientRect() {
+  const team = prepViewSide;
+  const tl = canvasPointToClient(gridOrigin(team), layoutBackpackY());
+  const br = canvasPointToClient(
+    gridOrigin(team) + GRID_INNER_W,
+    layoutBackpackY() + GRID_INNER_H,
+  );
+  if (!tl || !br) return null;
+  return {
+    left: Math.min(tl.x, br.x),
+    top: Math.min(tl.y, br.y),
+    right: Math.max(tl.x, br.x),
+    bottom: Math.max(tl.y, br.y),
+  };
+}
+
+/** Зона управления дугой: коридор между рюкзаком и магазином (как на UX-макете). */
+function getPrepSidebarDragMapRect() {
+  const backpack = getPrepBackpackClientRect();
+  if (!backpack) return null;
+  const shop = document.getElementById("shop-panel")?.getBoundingClientRect();
+  const bench = document.getElementById("bench-panel")?.getBoundingClientRect();
+  const sidebarLeft = Math.min(
+    shop?.left ?? Infinity,
+    bench?.left ?? Infinity,
+  );
+  const corridorLeft = backpack.right + 4;
+  const corridorRight = Number.isFinite(sidebarLeft)
+    ? Math.max(corridorLeft + 8, sidebarLeft - 4)
+    : Math.max(corridorLeft + 8, backpack.right + backpack.right - backpack.left);
+  return {
+    left: corridorLeft,
+    top: backpack.top,
+    right: corridorRight,
+    bottom: backpack.bottom,
+  };
+}
+
+/** Проецирует палец (даже над магазином) на рюкзак — линейно по X и Y. */
+function projectClientPointToPrepBackpack(clientX, clientY) {
+  if (!canvas || clientX == null || clientY == null) return null;
+  const team = prepViewSide;
+  const coords = canvasCoordsFromClient(clientX, clientY);
+  const ox = gridOrigin(team);
+  const oy = layoutBackpackY();
+  const gw = GRID_INNER_W;
+  const gh = GRID_INNER_H;
+  const inset = 0.5;
+
+  if (coords.x >= ox + inset && coords.x <= ox + gw - inset
+    && coords.y >= oy + inset && coords.y <= oy + gh - inset) {
+    return coords;
+  }
+
+  const mapRect = getPrepSidebarDragMapRect();
+  if (!mapRect) return null;
+
+  const spanX = Math.max(1, mapRect.right - mapRect.left);
+  const spanY = Math.max(1, mapRect.bottom - mapRect.top);
+  const normX = (clientX - mapRect.left) / spanX;
+  const normY = (clientY - mapRect.top) / spanY;
+
+  return {
+    x: ox + Math.max(inset, Math.min(gw - inset, normX * gw)),
+    y: oy + Math.max(inset, Math.min(gh - inset, normY * gh)),
+  };
+}
+
+/** Точка тени на поле для зелёной дуги (магазин/скамья → ✊ → поле). */
+function getPrepSidebarLinkTargetClient() {
+  const anchor = getPrepPlacementAnchorClient();
+  if (anchor) return anchor;
+  const col = hoverSlot?.col ?? hoverCell?.col ?? prepDropPreviewHover?.col;
+  const row = hoverSlot?.row ?? hoverCell?.row ?? prepDropPreviewHover?.row;
+  if (col == null || row == null) return null;
+  return boardCellClientCenter(col, row);
+}
+
+function syncPrepSidebarBoardHover(clientX, clientY, side, st) {
+  let mx;
+  let my;
+
+  if (!isPointerOverPrepSidebar(clientX, clientY)) {
+    const coords = canvasCoordsFromClient(clientX, clientY);
+    if (isOnBoard(coords.x, coords.y, side)) {
+      mx = coords.x;
+      my = coords.y;
+    }
+  }
+
+  if (mx == null) {
+    const projected = projectClientPointToPrepBackpack(clientX, clientY);
+    if (!projected) return false;
+    mx = projected.x;
+    my = projected.y;
+  }
+
+  return applyPrepBoardHoverFromNearestPlaceable(mx, my, side, st);
 }
 
 function getPrepGhostCanvasScale() {
@@ -2766,50 +2960,6 @@ function getPrepPlacementAnchorClient() {
   return canvasPointToClient(sx / shape.length, sy / shape.length);
 }
 
-/** ~одна клетка сетки в экранных px (для отступа фигуры от ✊). */
-function getPrepGrabMinOffsetClientPx() {
-  const stride = typeof GRID_STRIDE !== "undefined" ? GRID_STRIDE : 47;
-  if (!canvas || canvas.width <= 0) return stride;
-  const canvasRect = canvas.getBoundingClientRect();
-  if (canvasRect.width <= 0) return stride;
-  const scale = canvasRect.width / canvas.width;
-  return stride * scale;
-}
-
-/** Целевая точка фигуры от ✊. snapToIdeal: true — на точке посадки, если палец далеко. */
-function getPrepRemoteHoldFigureClient(grabX, grabY, idealX, idealY, { snapToIdeal = false } = {}) {
-  const minDist = getPrepGrabMinOffsetClientPx();
-  const dx = idealX - grabX;
-  const dy = idealY - grabY;
-  const dist = Math.hypot(dx, dy);
-
-  const offsetAlongIdeal = () => {
-    if (dist < 0.5) {
-      const boardCenter = canvasPointToClient(
-        gridOrigin(prepViewSide) + GRID_INNER_W / 2,
-        layoutBackpackY() + GRID_INNER_H / 2,
-      );
-      if (boardCenter) {
-        const bx = boardCenter.x - grabX;
-        const by = boardCenter.y - grabY;
-        const blen = Math.hypot(bx, by) || 1;
-        return { x: grabX + (bx / blen) * minDist, y: grabY + (by / blen) * minDist };
-      }
-      return { x: grabX - minDist, y: grabY };
-    }
-    const scale = minDist / dist;
-    return { x: grabX + dx * scale, y: grabY + dy * scale };
-  };
-
-  if (!snapToIdeal) {
-    return offsetAlongIdeal();
-  }
-  if (dist >= minDist) {
-    return { x: idealX, y: idealY };
-  }
-  return offsetAlongIdeal();
-}
-
 function isPointerOverPrepBackpack(clientX, clientY) {
   if (!canvas || phase !== "prep" || clientX == null || clientY == null) return false;
   if (isPointerOverPrepSidebar(clientX, clientY)) return false;
@@ -2821,35 +2971,9 @@ function isPointerOverPrepBackpack(clientX, clientY) {
     && coords.y >= oy && coords.y <= oy + GRID_INNER_H;
 }
 
-function getPrepSidebarRemoteHoldFigureClient(clientX, clientY) {
-  const holdDir = getPrepSidebarHoldIdealClient(clientX, clientY);
-  const overBoard = isPointerOverPrepBackpack(clientX, clientY);
-  const placementAnchor = overBoard ? getPrepPlacementAnchorClient() : null;
-  if (placementAnchor) {
-    return getPrepRemoteHoldFigureClient(
-      clientX, clientY, placementAnchor.x, placementAnchor.y, { snapToIdeal: true },
-    );
-  }
-  return getPrepRemoteHoldFigureClient(clientX, clientY, holdDir.x, holdDir.y);
-}
-
-function getPrepSidebarHoldIdealClient(grabX, grabY) {
-  const boardCenter = canvasPointToClient(
-    gridOrigin(prepViewSide) + GRID_INNER_W / 2,
-    layoutBackpackY() + GRID_INNER_H / 2,
-  );
-  return boardCenter || { x: grabX - getPrepGrabMinOffsetClientPx(), y: grabY };
-}
-
-function getPrepArcGhostRotation() {
-  const rot = ((dragPayload?.rotation || 0) % 4 + 4) % 4;
-  return rot * 90;
-}
-
 function getPrepDragGhostClientPos(clientX, clientY) {
   if (isPrepSidebarArcDrag()) {
-    const figure = getPrepSidebarRemoteHoldFigureClient(clientX, clientY);
-    return { x: figure.x, y: figure.y, rotation: getPrepArcGhostRotation() };
+    return { x: clientX, y: clientY, rotation: 0 };
   }
   const anchor = getDragGhostAnchorClient(clientX, clientY);
   if (phase === "prep"
@@ -2872,33 +2996,32 @@ function syncPrepDragBoardHover(clientX, clientY, ghostClientX, ghostClientY) {
   }
   const st = getSideState(side);
 
-  if (isPrepSidebarArcDrag() && isPointerOverPrepSidebar(clientX, clientY)) {
-    hoverCell = null;
-    hoverSlot = null;
-    if (typeof PrepDragArc !== "undefined" && PrepDragArc.isActive()) {
-      PrepDragArc.syncHoverCell(null, null);
-    }
-    return;
-  }
-
+  const tryCanvas = (mx, my) => applyPrepBoardHoverFromCanvasXY(mx, my, side, st);
   const tryClient = (cx, cy) => {
     const coords = canvasCoordsFromClient(cx, cy);
-    return applyPrepBoardHoverFromCanvasXY(coords.x, coords.y, side, st);
+    return tryCanvas(coords.x, coords.y);
   };
 
-  if (tryClient(clientX, clientY)) {
-    maybePrepArcHoverSound(hoverSlot?.col ?? hoverCell?.col, hoverSlot?.row ?? hoverCell?.row);
-    return;
-  }
-  if (!isPrepSidebarArcDrag() && ghostClientX != null && ghostClientY != null && tryClient(ghostClientX, ghostClientY)) {
-    maybePrepArcHoverSound(hoverSlot?.col ?? hoverCell?.col, hoverSlot?.row ?? hoverCell?.row);
-    return;
-  }
-  if (typeof PrepDragArc !== "undefined" && PrepDragArc.isActive() && isPrepArcDragSource()) {
-    const anchor = getDragGhostAnchorClient(clientX, clientY);
-    if (tryClient(anchor.x, anchor.y)) {
+  if (isPrepSidebarArcDrag()) {
+    if (syncPrepSidebarBoardHover(clientX, clientY, side, st)) {
       maybePrepArcHoverSound(hoverSlot?.col ?? hoverCell?.col, hoverSlot?.row ?? hoverCell?.row);
       return;
+    }
+  } else {
+    if (tryClient(clientX, clientY)) {
+      maybePrepArcHoverSound(hoverSlot?.col ?? hoverCell?.col, hoverSlot?.row ?? hoverCell?.row);
+      return;
+    }
+    if (ghostClientX != null && ghostClientY != null && tryClient(ghostClientX, ghostClientY)) {
+      maybePrepArcHoverSound(hoverSlot?.col ?? hoverCell?.col, hoverSlot?.row ?? hoverCell?.row);
+      return;
+    }
+    if (typeof PrepDragArc !== "undefined" && PrepDragArc.isActive() && isPrepArcDragSource()) {
+      const anchor = getDragGhostAnchorClient(clientX, clientY);
+      if (tryClient(anchor.x, anchor.y)) {
+        maybePrepArcHoverSound(hoverSlot?.col ?? hoverCell?.col, hoverSlot?.row ?? hoverCell?.row);
+        return;
+      }
     }
   }
 
@@ -4388,12 +4511,12 @@ function syncDragGhostOverlay(clientX, clientY) {
     && PrepDragArc.isActive()) {
     PrepDragArc.mountGhostToBody();
     if (sidebarDrag) {
-      const figure = getPrepSidebarRemoteHoldFigureClient(clientX, clientY);
-      ghostX = figure.x;
-      ghostY = figure.y;
+      ghostX = clientX;
+      ghostY = clientY;
       arcRotation = null;
+      const linkTarget = getPrepSidebarLinkTargetClient();
       PrepDragArc.sync(clientX, clientY, clientX, clientY, {
-        linkPoint: figure,
+        linkPoint: linkTarget,
         grabAtPointer: true,
         remoteHold: true,
         dropState: getPrepArcDropState(),
@@ -6817,6 +6940,7 @@ function startShopDrag(index, e, side = prepViewSide) {
   if (e?.clientX != null && e?.clientY != null) {
     lastPointerClient.x = e.clientX;
     lastPointerClient.y = e.clientY;
+    syncPrepDragBoardHover(e.clientX, e.clientY, e.clientX, e.clientY);
   }
   syncDragGhostOverlay(lastPointerClient.x, lastPointerClient.y);
 }
@@ -6838,6 +6962,7 @@ function startBenchDrag(index, e, side = prepViewSide) {
   if (e?.clientX != null && e?.clientY != null) {
     lastPointerClient.x = e.clientX;
     lastPointerClient.y = e.clientY;
+    syncPrepDragBoardHover(e.clientX, e.clientY, e.clientX, e.clientY);
   }
   syncDragGhostOverlay(lastPointerClient.x, lastPointerClient.y);
 }

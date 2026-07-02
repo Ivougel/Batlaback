@@ -434,10 +434,10 @@ const PrepDragArc = (() => {
     grabEmojiEl.setAttribute("font-size", String(15 + pulseA * 2));
   }
 
-  /** Прямая «верёвка» от эмодзи-хвата к фигуре на поле. */
-  function renderTetherLine(pointer, figurePoint, pulseA, pulseB) {
+  /** Зелёная дуга от ✊ к тени предмета на поле. */
+  function renderLinkArc(pointer, targetPoint, pulseA, pulseB) {
     if (!linkHaloPathEl || !linkCorePathEl) return;
-    if (!figurePoint || !pointer) {
+    if (!targetPoint || !pointer) {
       linkHaloPathEl.removeAttribute("d");
       linkCorePathEl.removeAttribute("d");
       linkAnchorEl?.setAttribute("r", "0");
@@ -445,48 +445,46 @@ const PrepDragArc = (() => {
     }
 
     const from = { x: pointer.x, y: pointer.y };
-    const to = { x: figurePoint.x, y: figurePoint.y };
+    const to = { x: targetPoint.x, y: targetPoint.y };
     const span = Math.hypot(to.x - from.x, to.y - from.y);
-    if (span < 8) {
+    if (span < 12) {
       linkHaloPathEl.removeAttribute("d");
       linkCorePathEl.removeAttribute("d");
       linkAnchorEl?.setAttribute("r", "0");
       return;
     }
 
-    const d = `M ${from.x.toFixed(1)} ${from.y.toFixed(1)} L ${to.x.toFixed(1)} ${to.y.toFixed(1)}`;
-    const dashPeriod = 4 + pulseB;
-    const dashGap = 4.5 + pulseA;
+    const { c1, c2 } = arcControls(from, to, viewportMin());
+    const d = pathD(from, c1, c2, to);
+    const dashPeriod = 3.5 + pulseB * 0.8;
+    const dashGap = 4 + pulseA * 0.6;
     const dashPattern = `${dashPeriod.toFixed(1)} ${dashGap.toFixed(1)}`;
-    const dashOffset = -pulsePhase * (DASH_OFFSET_SCALE * 1.2);
+    const dashOffset = -pulsePhase * (DASH_OFFSET_SCALE * 1.35);
 
     linkHaloPathEl.setAttribute("d", d);
     linkCorePathEl.setAttribute("d", d);
-    linkHaloPathEl.setAttribute("stroke", `rgba(168, 205, 255, ${(0.16 + pulseA * 0.12).toFixed(3)})`);
-    linkHaloPathEl.setAttribute("stroke-width", String(4.5 + pulseA * 2));
+    linkHaloPathEl.setAttribute("stroke", `rgba(100, 210, 140, ${(0.2 + pulseA * 0.14).toFixed(3)})`);
+    linkHaloPathEl.setAttribute("stroke-width", String(5 + pulseA * 2.2));
     linkHaloPathEl.setAttribute("stroke-dasharray", dashPattern);
     linkHaloPathEl.setAttribute("stroke-dashoffset", String(dashOffset));
+
     const linkStroke = dropState === "valid"
-      ? "rgba(130, 230, 160, 0.82)"
+      ? "rgba(90, 230, 130, 0.9)"
       : dropState === "invalid"
-        ? "rgba(255, 140, 130, 0.72)"
-        : "rgba(200, 230, 255, 0.75)";
+        ? "rgba(255, 130, 120, 0.78)"
+        : "rgba(120, 220, 155, 0.82)";
     linkCorePathEl.setAttribute("stroke", linkStroke);
-    linkCorePathEl.setAttribute("stroke-width", String(1.6 + pulseB * 0.4));
+    linkCorePathEl.setAttribute("stroke-width", String(1.8 + pulseB * 0.45));
     linkCorePathEl.setAttribute("stroke-dasharray", dashPattern);
     linkCorePathEl.setAttribute("stroke-dashoffset", String(dashOffset));
-    linkCorePathEl.style.opacity = String(0.5 + pulseB * 0.2);
+    linkCorePathEl.style.opacity = String(0.62 + pulseB * 0.22);
 
     if (linkAnchorEl) {
       linkAnchorEl.setAttribute("cx", to.x.toFixed(1));
       linkAnchorEl.setAttribute("cy", to.y.toFixed(1));
-      linkAnchorEl.setAttribute("r", String(5 + pulseB * 1.5));
-      linkAnchorEl.setAttribute("stroke-width", "1.4");
+      linkAnchorEl.setAttribute("r", String(5.5 + pulseB * 1.8));
+      linkAnchorEl.setAttribute("stroke-width", "1.5");
     }
-  }
-
-  function renderLinkArc(pointer, placement, pulseA, pulseB) {
-    renderTetherLine(pointer, placement, pulseA, pulseB);
   }
 
   function renderArc(geom, progress, dt) {
@@ -545,14 +543,14 @@ const PrepDragArc = (() => {
     renderBurst(dt);
 
     if (lastLinkPoint && lastGrabAtPointer) {
-      renderTetherLine(
+      renderLinkArc(
         { x: lastPointerX, y: lastPointerY },
         lastLinkPoint,
         pulseA,
         pulseB,
       );
     } else {
-      renderTetherLine(null, null, pulseA, pulseB);
+      renderLinkArc(null, null, pulseA, pulseB);
     }
 
     renderGrabHandle(

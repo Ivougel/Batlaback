@@ -130,6 +130,7 @@
 }
 
 .ui-drag-ghost--remote-hold {
+  z-index: 9249 !important;
   opacity: 1 !important;
 }
 
