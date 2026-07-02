@@ -1,0 +1,266 @@
+/**
+ * iPad / tablet PWA — intro и общие экраны между phone и desktop (1024×768 … 1280×800).
+ * Исправляет «ползущую» вёрстку: двойной safe-area, переполнение ростера, дубли подсказок.
+ */
+
+/* ─── Intro overlay: область над bottom-chrome ─── */
+
+html[data-ui-tier="tablet"] #class-overlay:not(.hidden) {
+  top: env(safe-area-inset-top, 0px);
+  bottom: max(var(--bottom-chrome-h-measured, 44px), var(--bottom-chrome-h, 44px));
+  padding:
+    max(4px, env(safe-area-inset-top))
+    max(8px, env(safe-area-inset-right))
+    4px
+    max(8px, env(safe-area-inset-left));
+  align-items: stretch;
+  justify-content: center;
+  overflow: hidden;
+}
+
+html[data-ui-tier="tablet"] #class-overlay .class-overlay-shell {
+  width: 100%;
+  max-width: min(1180px, 100%);
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  gap: clamp(8px, 1.2vw, 14px);
+}
+
+html[data-ui-tier="tablet"] #class-overlay .class-overlay-shell .class-modal {
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  padding:
+    max(8px, env(safe-area-inset-top))
+    max(12px, env(safe-area-inset-right))
+    8px
+    max(12px, env(safe-area-inset-left));
+}
+
+html[data-ui-tier="tablet"] #class-overlay .class-modal {
+  max-height: min(100%, var(--overlay-max-h, calc(100dvh - 56px)));
+}
+
+html[data-ui-tier="tablet"] #class-overlay .class-modal .class-step:not(.hidden) {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+html[data-ui-tier="tablet"] #class-overlay .class-modal #class-step-mode:not(.hidden) {
+  overflow: visible;
+}
+
+html[data-ui-tier="tablet"] #class-overlay .class-modal .game-mode-card.glass-card {
+  min-height: calc(64px * var(--ui-scale));
+  padding: calc(8px * var(--ui-scale)) calc(10px * var(--ui-scale));
+}
+
+html[data-ui-tier="tablet"] #class-overlay .class-modal .game-mode-card .glass-card-icon {
+  width: calc(48px * var(--ui-scale));
+  height: calc(48px * var(--ui-scale));
+  margin-bottom: 0;
+}
+
+
+html[data-ui-tier="tablet"][data-touch="true"] #class-overlay .class-controls-hint {
+  display: none;
+}
+
+/* На touch подсказка дублируется в bottom-chrome */
+html[data-ui-tier="tablet"][data-touch="true"] #class-overlay[data-class-intro-step="mode"] .class-action-hint,
+html[data-ui-tier="tablet"][data-touch="true"] #class-overlay[data-class-intro-step="mode"] .class-modal-header .class-subtitle {
+  display: none;
+}
+
+/* ─── Tablet landscape: side-by-side, компактный ростер ─── */
+
+html[data-ui-tier="tablet"][data-layout-profile="tablet-landscape"]:not([data-prep-layout="mobile"]) #class-overlay .class-overlay-shell {
+  flex-direction: row;
+  align-items: stretch;
+  padding: 0 clamp(6px, 1.2vw, 14px);
+}
+
+html[data-ui-tier="tablet"][data-layout-profile="tablet-landscape"]:not([data-prep-layout="mobile"]) #class-overlay .class-hero-showcase,
+html[data-ui-tier="tablet"][data-layout-profile="tablet-landscape"]:not([data-prep-layout="mobile"]) #class-overlay .class-hero-showcase--roster {
+  flex: 0 1 clamp(220px, 36vw, 360px);
+  min-width: 200px;
+  max-width: 360px;
+  width: auto;
+  padding:
+    6px 0
+    6px
+    max(4px, env(safe-area-inset-left));
+  align-items: stretch;
+  justify-content: center;
+  opacity: 1;
+  transform: none;
+}
+
+html[data-ui-tier="tablet"][data-layout-profile="tablet-landscape"]:not([data-prep-layout="mobile"]) #class-overlay .class-hero-roster-frame,
+html[data-ui-tier="tablet"][data-layout-profile="tablet-landscape"]:not([data-prep-layout="mobile"]) #class-overlay .class-hero-showcase-frame {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+}
+
+html[data-ui-tier="tablet"][data-layout-profile="tablet-landscape"]:not([data-prep-layout="mobile"]) #class-overlay .class-hero-roster-caption {
+  display: none;
+}
+
+html[data-ui-tier="tablet"][data-layout-profile="tablet-landscape"]:not([data-prep-layout="mobile"]) #class-overlay .class-overlay-shell .class-modal {
+  flex: 1 1 0;
+  min-width: 280px;
+  max-width: none;
+  width: auto;
+}
+
+html[data-ui-tier="tablet"][data-layout-profile="tablet-landscape"]:not([data-prep-layout="mobile"]) #class-overlay .class-modal-header {
+  margin-bottom: clamp(4px, 1vh, 10px);
+}
+
+html[data-ui-tier="tablet"][data-layout-profile="tablet-landscape"]:not([data-prep-layout="mobile"]) #class-overlay .class-modal #class-step-mode:not(.hidden) .game-mode-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  align-content: center;
+  gap: clamp(8px, 1vh, 12px);
+  padding: 8px;
+}
+
+html[data-ui-tier="tablet"][data-layout-profile="tablet-landscape"]:not([data-prep-layout="mobile"]) #class-overlay .class-modal .game-mode-card.glass-card {
+  min-height: calc(64px * var(--ui-scale));
+  padding: calc(8px * var(--ui-scale)) calc(10px * var(--ui-scale));
+  column-gap: calc(10px * var(--ui-scale));
+}
+
+html[data-ui-tier="tablet"][data-layout-profile="tablet-landscape"]:not([data-prep-layout="mobile"]) #class-overlay .class-modal .game-mode-card .glass-card-icon {
+  width: calc(48px * var(--ui-scale));
+  height: calc(48px * var(--ui-scale));
+}
+
+/* ─── Tablet portrait: колонка, скролл shell ─── */
+
+html[data-ui-tier="tablet"][data-layout-profile="tablet-portrait"] #class-overlay .class-overlay-shell {
+  flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+html[data-ui-tier="tablet"][data-layout-profile="tablet-portrait"] #class-overlay .class-hero-showcase,
+html[data-ui-tier="tablet"][data-layout-profile="tablet-portrait"] #class-overlay .class-hero-showcase--roster {
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: min(420px, 94vw);
+  padding-top: 4px;
+}
+
+html[data-ui-tier="tablet"][data-layout-profile="tablet-portrait"] #class-overlay .class-hero-roster-frame,
+html[data-ui-tier="tablet"][data-layout-profile="tablet-portrait"] #class-overlay .class-hero-showcase-frame {
+  height: min(32dvh, 280px);
+  max-height: min(32dvh, 280px);
+}
+
+html[data-ui-tier="tablet"][data-layout-profile="tablet-portrait"] #class-overlay .class-overlay-shell .class-modal {
+  flex: 1 1 auto;
+  height: auto;
+  max-height: none;
+}
+
+/* ─── Шаг summary на планшете ─── */
+
+html[data-ui-tier="tablet"] #class-overlay #class-step-summary:not(.hidden) {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+}
+
+html[data-ui-tier="tablet"] #class-overlay .class-summary-stage {
+  min-height: min(40vh, 340px);
+}
+
+html[data-ui-tier="tablet"][data-layout-profile="tablet-landscape"] #class-overlay.class-overlay--summary .class-overlay-shell {
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+html[data-ui-tier="tablet"][data-layout-profile="tablet-landscape"] #class-overlay.class-overlay--summary .class-overlay-shell .class-modal {
+  flex: 1 1 auto;
+  height: auto;
+  max-height: none;
+}
+
+/* ─── Bottom chrome intro: компактнее на touch ─── */
+
+html[data-ui-tier="tablet"][data-touch="true"] body:has(#class-overlay:not(.hidden)) .bottom-chrome {
+  min-height: 44px;
+  padding-top: 2px;
+  padding-bottom: calc(2px + env(safe-area-inset-bottom, 0px));
+}
+
+html[data-ui-tier="tablet"][data-touch="true"] body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro {
+  gap: 6px;
+}
+
+html[data-ui-tier="tablet"][data-touch="true"] body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro-center {
+  gap: 0;
+}
+
+html[data-ui-tier="tablet"][data-touch="true"] body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro-hint {
+  -webkit-line-clamp: 1;
+  font-size: var(--font-xs);
+  max-width: min(64vw, 24rem);
+}
+
+html[data-ui-tier="tablet"][data-touch="true"] body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro-controls {
+  display: none;
+}
+
+html[data-ui-tier="tablet"][data-touch="true"] body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro .btn-glass-start,
+html[data-ui-tier="tablet"][data-touch="true"] body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro .btn-glass-back {
+  padding: 6px 12px;
+  font-size: var(--font-sm);
+}
+
+/* ─── Prep / battle / replay на tablet PWA ─── */
+
+html[data-ui-tier="tablet"] #app[data-phase="prep"],
+html[data-ui-tier="tablet"] #app[data-phase="battle"],
+html[data-ui-tier="tablet"] #app[data-phase="replay"] {
+  height: var(--app-h);
+  max-height: var(--app-h);
+}
+
+@media (display-mode: standalone) {
+  html[data-ui-tier="tablet"] body {
+    min-height: var(--viewport-h, 100dvh);
+    max-height: var(--viewport-h, 100dvh);
+  }
+
+  html[data-ui-tier="tablet"] #class-overlay:not(.hidden) {
+    max-height: var(--viewport-h, 100dvh);
+  }
+
+  html[data-ui-tier="tablet"] .overlay:not(.hidden) {
+    max-height: var(--viewport-h, 100dvh);
+  }
+
+  html[data-ui-tier="tablet"] .bottom-chrome {
+    padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* ─── Прочие модалки на планшете ─── */
+
+html[data-ui-tier="tablet"] #settings-overlay:not(.hidden) .settings-modal,
+html[data-ui-tier="tablet"] #battle-result-overlay:not(.hidden) .battle-result-modal,
+html[data-ui-tier="tablet"] #overlay:not(.hidden) .run-complete-modal,
+html[data-ui-tier="tablet"] #battle-detail-overlay:not(.hidden) .battle-detail-modal {
+  max-height: min(92dvh, var(--overlay-max-h, calc(100dvh - 24px)));
+}

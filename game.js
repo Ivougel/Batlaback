@@ -1039,7 +1039,9 @@ function setClassIntroStep(stepKey) {
   Object.entries(CLASS_INTRO_STEP_IDS).forEach(([key, id]) => {
     document.getElementById(id)?.classList.toggle("hidden", key !== stepKey);
   });
-  document.getElementById("class-overlay")?.classList.toggle("class-overlay--summary", stepKey === "summary");
+  const overlay = document.getElementById("class-overlay");
+  overlay?.setAttribute("data-class-intro-step", stepKey);
+  overlay?.classList.toggle("class-overlay--summary", stepKey === "summary");
   if (stepKey === "summary" && typeof hideClassHeroShowcase === "function") {
     hideClassHeroShowcase();
   }
@@ -2744,9 +2746,16 @@ function startRunFromOverlay() {
   prepViewSide = "player";
   dismissClassOverlayTooltip();
   hideClassSummaryTooltip();
-  document.getElementById("class-overlay")?.classList.add("hidden");
+  const overlay = document.getElementById("class-overlay");
+  overlay?.classList.add("hidden");
+  overlay?.classList.remove("class-overlay--summary");
+  overlay?.setAttribute("aria-hidden", "true");
   const app = document.getElementById("app");
-  if (app) app.dataset.gameMode = gameMode;
+  if (app) {
+    app.dataset.gameMode = gameMode;
+    app.style.removeProperty("visibility");
+    app.style.removeProperty("pointer-events");
+  }
   restartGame();
 }
 
@@ -7947,8 +7956,13 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
 
   fillChar(prepPlayer, playerProfile, "player");
   fillChar(prepEnemy, enemyProfile, "enemy");
-  prepPlayer?.toggleAttribute("hidden", prepViewSide !== "player");
-  prepEnemy?.toggleAttribute("hidden", prepViewSide !== "enemy");
+  if (prepViewSide === "player") {
+    prepPlayer?.removeAttribute("hidden");
+    prepEnemy?.setAttribute("hidden", "");
+  } else {
+    prepEnemy?.removeAttribute("hidden");
+    prepPlayer?.setAttribute("hidden", "");
+  }
 
   const side = prepViewSide;
   const profile = side === "player" ? playerProfile : enemyProfile;
@@ -8018,6 +8032,11 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
       refreshPrepHeroTooltip();
     }
   }
+
+  requestAnimationFrame(() => {
+    window.syncPrepHeroSlotHeight?.();
+    window.applyUiLayout?.();
+  });
 }
 
 function renderPlayerProfiles(opts = {}) {

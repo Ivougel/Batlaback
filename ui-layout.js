@@ -2270,7 +2270,9 @@
       BattleFxTier.applyBattleFxTierFlags();
     }
 
-    const hudVisible = !isModalOpen();
+    const classOverlayOpen = isClassOverlayOpen();
+    const modalBlocksHud = isModalOpen() && !classOverlayOpen;
+    const hudVisible = !modalBlocksHud;
     const hudH = measureBottomChromeHeight();
     document.documentElement.style.setProperty("--bottom-chrome-h-measured", `${hudH}px`);
     document.documentElement.style.setProperty("--hud-offset", `${hudH}px`);
@@ -2281,10 +2283,19 @@
         : "calc(var(--viewport-h, 100dvh) - var(--hud-offset) - env(safe-area-inset-top) - env(safe-area-inset-bottom))",
     );
     applyBattleHudPin(hudVisible);
-    document.documentElement.style.setProperty(
-      "--overlay-max-h",
-      "calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 10px)",
-    );
+    if (classOverlayOpen) {
+      document.documentElement.style.setProperty(
+        "--overlay-max-h",
+        `calc(var(--viewport-h, 100dvh) - env(safe-area-inset-top) - ${hudH}px - 8px)`,
+      );
+      document.documentElement.style.setProperty("--class-intro-chrome-h", `${hudH}px`);
+    } else {
+      document.documentElement.style.setProperty(
+        "--overlay-max-h",
+        "calc(var(--viewport-h, 100dvh) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 10px)",
+      );
+      document.documentElement.style.removeProperty("--class-intro-chrome-h");
+    }
 
     const appPhase = document.getElementById("app")?.dataset.phase ?? "prep";
     syncTabletSideLayoutVars(h, appPhase);

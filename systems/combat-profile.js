@@ -443,7 +443,9 @@ function applyProfileIdentity(profile, classId, gold) {
   profile.classId = classId || null;
   profile.className = cls?.name || "Неизвестно";
   profile.classIcon = cls?.icon || "❓";
-  profile.classIconSrc = cls?.iconSrc || null;
+  profile.classIconSrc = typeof getClassHeroPortraitSrc === "function"
+    ? getClassHeroPortraitSrc(classId)
+    : (cls?.heroPortraitSrc || cls?.iconSrc || null);
   profile.gold = typeof gold === "number" ? gold : 0;
   return profile;
 }

@@ -589,13 +589,26 @@ function initPrepBuildEmojiBtn() {
 }
 
 function renderPrepCharacterHtml(side, profile, runRound = 1) {
-  if (typeof renderHeroPortraitFrameHTML === "function" && profile?.classId) {
-    return renderHeroPortraitFrameHTML(profile.classId, {
-      alt: profile?.className || "",
-    });
+  const classId = profile?.classId;
+  const portraitSrc = classId && typeof getClassHeroPortraitSrc === "function"
+    ? getClassHeroPortraitSrc(classId)
+    : (profile?.classIconSrc || null);
+  const alt = escapeMutationUiHtml(profile?.className || "");
+
+  if (portraitSrc) {
+    const fullBleed = document.documentElement.dataset.heroCardMode === "full-bleed";
+    if (fullBleed) {
+      return `<img class="prep-character-img prep-character-img--float" src="${escapeMutationUiHtml(portraitSrc)}" alt="${alt}" draggable="false">`;
+    }
+    if (typeof renderHeroPortraitFrameHTML === "function" && classId) {
+      return renderHeroPortraitFrameHTML(classId, {
+        alt: profile?.className || "",
+      });
+    }
+    return `<img class="prep-character-img" src="${escapeMutationUiHtml(portraitSrc)}" alt="${alt}" draggable="false">`;
   }
   if (profile?.classIconSrc) {
-    return `<img class="prep-character-img" src="${escapeMutationUiHtml(profile.classIconSrc)}" alt="" draggable="false">`;
+    return `<img class="prep-character-img" src="${escapeMutationUiHtml(profile.classIconSrc)}" alt="${alt}" draggable="false">`;
   }
   return `<span class="prep-character-emoji">${profile?.classIcon || "❓"}</span>`;
 }
