@@ -65,9 +65,11 @@ function renderAvatarBarsHTML(profile, team) {
     </div>
     <div class="battle-hud-status-stack">
       <div class="battle-hud-runtime-chips" aria-hidden="true" hidden></div>
-      <div class="avatar-benefit-stacks battle-hud-benefit-stacks" aria-hidden="true" hidden></div>
-      <div class="avatar-hero-debuff-row battle-hud-debuff-row" hidden></div>
-      <div class="avatar-dot-stacks battle-hud-dot-stacks" aria-hidden="true" hidden></div>
+      <div class="battle-hud-effects-grid">
+        <div class="avatar-benefit-stacks battle-hud-benefit-stacks" aria-hidden="true" hidden></div>
+        <div class="avatar-hero-debuff-row battle-hud-debuff-row" hidden></div>
+        <div class="avatar-dot-stacks battle-hud-dot-stacks" aria-hidden="true" hidden></div>
+      </div>
     </div>
   `;
 }
@@ -133,15 +135,15 @@ function renderAvatarHeroHTML(profile, team) {
 function renderDebuffChipHTML(chip) {
   const title = escapeProfileHtml((chip.lines || []).join("\n") || chip.title || "");
   const value = Math.ceil(Number(chip.value) || 0);
-  const valueHtml = value > 1
-    ? `<span class="avatar-bead-debuff-value">${value}</span>`
+  const valueHtml = value > 0
+    ? `<span class="battle-status-tile-badge avatar-bead-debuff-value">${value > 1 ? value : ""}</span>`
     : "";
-  return `<span class="avatar-bead avatar-bead-debuff avatar-bead-debuff-${escapeProfileHtml(chip.id)}"
+  return `<span class="battle-status-tile avatar-bead avatar-bead-debuff avatar-bead-debuff-${escapeProfileHtml(chip.id)}"
     data-status-id="${escapeProfileHtml(chip.id)}"
     data-status-title="${escapeProfileHtml(chip.title || "")}"
     data-status-desc="${title}"
     tabindex="0"
-    title="${title}"><span class="avatar-bead-debuff-icon">${chip.icon}</span>${valueHtml}</span>`;
+    title="${title}"><span class="battle-status-tile-surface" aria-hidden="true"></span><span class="avatar-bead-debuff-icon battle-status-tile-icon">${chip.icon}</span>${valueHtml}</span>`;
 }
 
 function collectPositiveBeads(profile) {
@@ -433,7 +435,11 @@ function ensureBattleHeroShells(state, playerProfile, enemyProfile, opts = {}) {
     if (rebuilt) shellChanged = true;
     const barsEl = getBattleHudBarsEl(team);
     const barsSig = profileBarsSignature(profile);
-    if (barsEl && (!barsEl.querySelector(".battle-hud-status-stack") || barsEl.dataset.barsSig !== barsSig)) {
+    if (barsEl && (
+      !barsEl.querySelector(".battle-hud-status-stack")
+      || !barsEl.querySelector(".battle-hud-effects-grid")
+      || barsEl.dataset.barsSig !== barsSig
+    )) {
       barsEl.innerHTML = renderAvatarBarsHTML(profile, team);
       barsEl.dataset.barsSig = barsSig;
     }

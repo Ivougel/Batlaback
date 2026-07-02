@@ -299,32 +299,9 @@ body:has(#app[data-phase="replay"]) .bottom-chrome {
   color: var(--meadow-ink-muted);
 }
 
-/* ─── Battle inventory popover ─── */
-
-.battle-inventory-popover {
-  background: var(--meadow-panel);
-  border: 2px solid var(--meadow-border);
-  box-shadow: 0 12px 32px var(--meadow-shadow);
-  color: var(--meadow-ink);
-}
-
-.battle-inventory-popover__title {
-  color: var(--meadow-ink);
-}
-
-.battle-inventory-popover__close {
-  color: var(--meadow-ink-muted);
-}
-
-.battle-inventory-popover .bp-cell {
-  background: rgba(255, 255, 255, 0.5);
-  border-color: var(--meadow-border-soft);
-}
-
 /* ─── Lobby ─── */
 
-.lobby-fighter-card,
-.lobby-battle-bottom-chip {
+.lobby-fighter-card {
   background: rgba(255, 252, 240, 0.9);
   border: 2px solid var(--meadow-border-soft);
   color: var(--meadow-ink);

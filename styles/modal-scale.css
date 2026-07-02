@@ -10,7 +10,7 @@
   text-align: center;
 }
 
-.overlay > .modal {
+.overlay > .modal:not(.battle-detail-modal--item-stats) {
   padding: calc(20px * var(--ui-scale));
   border-radius: calc(16px * var(--ui-scale));
   max-width: min(96vw, calc(440px * var(--ui-scale)));
@@ -115,7 +115,7 @@ html[data-ui-compact="true"] .modal h2 {
 @container game-modal (max-width: 520px) {
   .recipe-book-modal,
   .settings-modal,
-  .battle-detail-modal,
+  .battle-detail-modal:not(.battle-detail-modal--item-stats),
   .board-preview-modal {
     width: min(96cqw, 96vw);
   }
