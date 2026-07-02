@@ -1,0 +1,195 @@
+/**
+ * Escape menu — WoW-style game menu (Esc).
+ */
+
+.escape-menu-overlay {
+  --esc-backdrop: rgba(8, 12, 10, 0.62);
+  --esc-panel-top: #3d4a38;
+  --esc-panel-mid: #2d4a28;
+  --esc-panel-bottom: #1e2e1a;
+  --esc-border: rgba(232, 163, 23, 0.72);
+  --esc-border-inner: rgba(255, 248, 220, 0.22);
+  --esc-title: #f5c842;
+  --esc-text: #f0f6ea;
+  --esc-muted: rgba(240, 246, 234, 0.68);
+  --esc-btn-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.04) 100%);
+  --esc-btn-hover: linear-gradient(180deg, rgba(255, 252, 235, 0.24) 0%, rgba(245, 200, 66, 0.12) 100%);
+  --esc-btn-danger: linear-gradient(180deg, rgba(248, 81, 73, 0.22) 0%, rgba(180, 30, 24, 0.14) 100%);
+  --esc-glow: 0 0 28px rgba(245, 200, 66, 0.18);
+
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-system) + 5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding:
+    max(12px, env(safe-area-inset-top))
+    max(12px, env(safe-area-inset-right))
+    max(12px, env(safe-area-inset-bottom))
+    max(12px, env(safe-area-inset-left));
+  background: var(--esc-backdrop);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  animation: escape-menu-fade-in 0.18s ease-out;
+}
+
+.escape-menu-overlay.hidden {
+  display: none;
+}
+
+@keyframes escape-menu-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.escape-menu-panel {
+  position: relative;
+  width: min(100%, 380px);
+  padding: 22px 20px 16px;
+  border-radius: 14px;
+  border: 2px solid var(--esc-border);
+  background:
+    linear-gradient(180deg, var(--esc-panel-top) 0%, var(--esc-panel-mid) 42%, var(--esc-panel-bottom) 100%);
+  box-shadow:
+    var(--esc-glow),
+    0 18px 48px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 var(--esc-border-inner);
+  text-align: center;
+  animation: escape-menu-panel-in 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes escape-menu-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.escape-menu-panel::before,
+.escape-menu-panel::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--esc-border-inner), transparent);
+  pointer-events: none;
+}
+
+.escape-menu-panel::before { top: 10px; }
+.escape-menu-panel::after { bottom: 10px; }
+
+.escape-menu-title {
+  margin: 0 0 18px;
+  font-family: "Cinzel", "Palatino Linotype", serif;
+  font-size: clamp(1.15rem, 3.2vw, 1.45rem);
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--esc-title);
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.65),
+    0 0 18px rgba(245, 200, 66, 0.28);
+}
+
+.escape-menu-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.escape-menu-btn {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: var(--esc-btn-bg);
+  color: var(--esc-text);
+  font: inherit;
+  font-size: var(--font-md);
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.14s ease;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+.escape-menu-btn:hover,
+.escape-menu-btn:focus-visible {
+  background: var(--esc-btn-hover);
+  border-color: rgba(245, 200, 66, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 0 16px rgba(245, 200, 66, 0.18),
+    0 4px 12px rgba(0, 0, 0, 0.22);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.escape-menu-btn:active {
+  transform: translateY(0);
+}
+
+.escape-menu-btn--danger {
+  color: #ffd4cf;
+  border-color: rgba(248, 81, 73, 0.35);
+  background: var(--esc-btn-danger);
+}
+
+.escape-menu-btn--danger:hover,
+.escape-menu-btn--danger:focus-visible {
+  border-color: rgba(248, 81, 73, 0.62);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 0 16px rgba(248, 81, 73, 0.22),
+    0 4px 12px rgba(0, 0, 0, 0.22);
+}
+
+.escape-menu-hint {
+  margin: 14px 0 0;
+  font-size: var(--font-xs);
+  color: var(--esc-muted);
+  letter-spacing: 0.04em;
+}
+
+html[data-visual-theme="diablo"] .escape-menu-overlay {
+  --esc-backdrop: rgba(4, 2, 1, 0.78);
+  --esc-panel-top: #2a2218;
+  --esc-panel-mid: #1a1410;
+  --esc-panel-bottom: #100c08;
+  --esc-border: rgba(201, 162, 39, 0.78);
+  --esc-border-inner: rgba(240, 216, 120, 0.18);
+  --esc-title: #f0d878;
+  --esc-text: #f0e6d2;
+  --esc-muted: rgba(196, 180, 152, 0.72);
+  --esc-glow: 0 0 32px rgba(232, 90, 48, 0.16);
+}
+
+html[data-visual-theme="diablo"] .escape-menu-title {
+  font-family: "Cinzel", "Palatino Linotype", serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .escape-menu-overlay,
+  .escape-menu-panel {
+    animation: none !important;
+  }
+}
+
+#settings-overlay:not(.hidden) {
+  z-index: calc(var(--z-system) + 20);
+}

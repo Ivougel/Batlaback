@@ -26,7 +26,18 @@
     return document.getElementById("bottom-chrome");
   }
 
+  function isClassOverlayOpen() {
+    const el = document.getElementById("class-overlay");
+    return !!el && !el.classList.contains("hidden");
+  }
+
   function measureBottomChromeHeight() {
+    if (isClassOverlayOpen()) {
+      const bar = getBottomChrome();
+      if (!bar || bar.classList.contains("hidden")) return readCssPx("--bottom-chrome-h", 44);
+      if (getComputedStyle(bar).display === "none") return readCssPx("--bottom-chrome-h", 44);
+      return bar.offsetHeight || readCssPx("--bottom-chrome-h", 44);
+    }
     if (isModalOpen()) return 0;
     const bar = getBottomChrome();
     if (!bar || bar.classList.contains("hidden")) return readCssPx("--bottom-chrome-h", 44);
@@ -35,6 +46,10 @@
   }
 
   function isHudVisible() {
+    if (isClassOverlayOpen()) {
+      const bar = getBottomChrome();
+      return !!bar && !bar.classList.contains("hidden") && getComputedStyle(bar).display !== "none";
+    }
     const bar = getBottomChrome();
     if (!bar || bar.classList.contains("hidden")) return false;
     if (isModalOpen()) return false;
@@ -44,7 +59,7 @@
   }
 
   function isModalOpen() {
-    return ["class-overlay", "battle-result-overlay", "battle-detail-overlay", "overlay", "settings-overlay"].some((id) => {
+    return ["class-overlay", "battle-result-overlay", "battle-detail-overlay", "overlay", "settings-overlay", "escape-menu-overlay"].some((id) => {
       const el = document.getElementById(id);
       return el && !el.classList.contains("hidden");
     });
@@ -156,16 +171,28 @@
   }
 
   const TYPE_SCALE_BY_TIER = {
-    phone: { floor: 0.96, boost: 1.2 },
-    tablet: { floor: 0.94, boost: 1.08 },
-    desktop: { floor: 0.85, boost: 1 },
+    phone: { floor: 0.96, boost: 1.2, cap: 1.05 },
+    tablet: { floor: 1.02, boost: 1.18, cap: 1.14 },
+    desktop: { floor: 0.85, boost: 1, cap: 1.05 },
+  };
+
+  const INTRO_UI_SCALE_MIN = {
+    "tablet-landscape": 0.84,
+    "tablet-portrait": 0.78,
   };
 
   function computeTypeScale(uiScale, profile) {
     const cfg = TYPE_SCALE_BY_TIER[profile.tier] || TYPE_SCALE_BY_TIER.desktop;
+    const cap = cfg.cap ?? 1.05;
     let typeScale = uiScale * cfg.boost;
     if (profile.touchDev) typeScale = Math.max(typeScale, cfg.floor);
-    return roundScale(Math.max(cfg.floor, Math.min(1.05, typeScale)));
+    return roundScale(Math.max(cfg.floor, Math.min(cap, typeScale)));
+  }
+
+  function applyIntroUiScaleFloor(clamped, layoutProfile) {
+    if (!isClassOverlayOpen() || layoutProfile.tier !== "tablet") return clamped;
+    const min = INTRO_UI_SCALE_MIN[layoutProfile.id] ?? 0.8;
+    return roundScale(Math.max(min, clamped));
   }
 
   function computeGameScale(uiScale, profile) {
@@ -627,17 +654,13 @@
     const touchMin = readCssPx("--touch-target-min", 44);
     const fallback = Math.round(Math.max(72, touchMin + 24 * uiScale));
 
-    const overlay = document.getElementById("class-overlay");
-    const dock = document.getElementById("class-mobile-dock");
-    const dockVisible = overlay
-      && !overlay.classList.contains("hidden")
-      && dock
-      && !dock.classList.contains("hidden");
-
     let dockH = fallback;
-    if (dockVisible) {
-      const h = dock.getBoundingClientRect().height;
-      dockH = Math.max(fallback, Math.round(h));
+    if (isClassOverlayOpen()) {
+      const chrome = getBottomChrome();
+      if (chrome && getComputedStyle(chrome).display !== "none") {
+        const h = chrome.getBoundingClientRect().height;
+        dockH = Math.max(fallback, Math.round(h));
+      }
     }
     root.style.setProperty("--class-mobile-dock-h", `${dockH}px`);
     root.style.removeProperty("--class-modal-scroll-max-h");
@@ -2228,14 +2251,17 @@
     if (prepLayout !== "mobile") {
       clearMobileDisplayVars();
     }
-    const typeScale = computeTypeScale(clamped, layoutProfile);
-    const gameScale = computeGameScale(clamped, layoutProfile);
-    document.documentElement.style.setProperty("--type-scale", String(typeScale));
+    const preFitScale = clamped;
+    const gameScale = computeGameScale(preFitScale, layoutProfile);
     document.documentElement.style.setProperty("--game-scale", String(gameScale));
-    applyFluidGridMetrics(clamped);
-    clamped = applyPrepLayoutFit(w, h, prepLayout, clamped, touchDev, layoutProfile);
+    applyFluidGridMetrics(preFitScale);
+
+    clamped = applyPrepLayoutFit(w, h, prepLayout, preFitScale, touchDev, layoutProfile);
+    clamped = applyIntroUiScaleFloor(clamped, layoutProfile);
     applyPrepProfileVars(layoutProfile, clamped);
 
+    const typeScale = computeTypeScale(clamped, layoutProfile);
+    document.documentElement.style.setProperty("--type-scale", String(typeScale));
     document.documentElement.style.setProperty("--ui-scale", String(clamped));
     document.documentElement.style.setProperty("--viewport-h", `${Math.round(h)}px`);
     document.documentElement.style.setProperty("--viewport-w", `${Math.round(w)}px`);
@@ -2369,7 +2395,7 @@
         attributeFilter: ["class", "style"],
       });
     }
-    ["class-overlay", "battle-result-overlay", "battle-detail-overlay", "overlay", "settings-overlay"].forEach((id) => {
+    ["class-overlay", "battle-result-overlay", "battle-detail-overlay", "overlay", "settings-overlay", "escape-menu-overlay"].forEach((id) => {
       const el = document.getElementById(id);
       if (el) {
         new MutationObserver(scheduleLayout).observe(el, {

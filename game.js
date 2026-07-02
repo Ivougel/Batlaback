@@ -145,6 +145,7 @@ let prepTooltipsEnabled = true;
 let lastGamepadPrepFocus = null;
 let sidebarTooltipSource = null;
 let sidebarTooltipPinned = false;
+let tooltipDismissGesture = null;
 let lastRoundStats = null;
 let pendingGameOver = false;
 let lastBattleReplay = null;
@@ -189,6 +190,7 @@ let lobbyPrepOvertimeUsed = false;
 let lobbyRoundSettling = false;
 let lastLobbyPlayerBattleWinner = null;
 let lastLobbyRosterStripSig = "";
+let lobbyRosterHidden = false;
 let lastEndedBattleState = null;
 let prepViewSide = "player";
 let prepDollOpen = false;
@@ -230,6 +232,7 @@ let selectedGameMode = "solo";
 let selectedOpponentMode = "ai";
 let selectedEnemyClass = null;
 let pendingPlayerClass = null;
+let pendingMutationIntentId = null;
 let enemyShop = Array(MAX_SHOP).fill(null);
 let enemyShopFrozen = Array(MAX_SHOP).fill(false);
 let enemyShopReadyForRound = 0;
@@ -482,6 +485,10 @@ function applyLobbySpectatePresentation() {
   if (viewState && typeof syncStackOrbitFromBattle === "function" && !viewState.finished) {
     syncStackOrbitFromBattle(viewState, { force: true });
   }
+  if (viewState && typeof syncBattleAuraFrame === "function") {
+    const elapsed = battleStartTime ? (Date.now() - battleStartTime) / 1000 : 0;
+    syncBattleAuraFrame(viewState, elapsed);
+  }
   if (typeof closeBattleInventoryPopover === "function") closeBattleInventoryPopover();
   if (typeof queuePrewarmBattleInventoryPopover === "function") queuePrewarmBattleInventoryPopover();
 }
@@ -582,6 +589,7 @@ function renderLobbyChrome(force = false) {
       ? renderLobbyPrepTimerHTML(lobbyPrepTimerRemaining, true)
       : "";
   }
+  syncLobbyRosterCollapse();
   if (isBattleUiPhase() && typeof queuePrewarmBattleInventoryPopover === "function") {
     const popoverOpen = typeof isBattleInventoryPopoverOpen === "function" && isBattleInventoryPopoverOpen();
     if (!isLobbyMode() || popoverOpen) {
@@ -590,9 +598,35 @@ function renderLobbyChrome(force = false) {
   }
 }
 
+function syncLobbyRosterCollapse() {
+  const panel = document.getElementById("lobby-prep-roster-panel");
+  const btn = document.getElementById("btn-lobby-roster-hide");
+  if (!panel) return;
+  const collapsed = lobbyRosterHidden && phase === "prep";
+  panel.classList.toggle("lobby-prep-roster-panel--collapsed", collapsed);
+  if (btn) {
+    btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+    btn.setAttribute("aria-label", collapsed ? "Показать список участников" : "Скрыть список участников");
+    btn.title = collapsed ? "Показать" : "Скрыть";
+    btn.textContent = collapsed ? "👀" : "🙈";
+  }
+}
+
+function clearLobbyRosterTouchHighlights(root) {
+  root?.querySelectorAll(".lobby-fighter-card--touch").forEach((el) => {
+    el.classList.remove("lobby-fighter-card--touch");
+  });
+}
+
 function bindLobbyRosterClicks() {
   const onRosterPointerDown = (e) => {
     if (e.button !== 0) return;
+    const hideBtn = e.target.closest("#btn-lobby-roster-hide");
+    if (hideBtn) return;
+    const enemyCard = e.target.closest(".lobby-fighter-card:not(.lobby-fighter-card--yours)");
+    if (enemyCard && phase === "prep") {
+      enemyCard.classList.add("lobby-fighter-card--touch");
+    }
     const fighterBtn = e.target.closest("[data-lobby-fighter]");
     if (fighterBtn && isLobbyMode() && phase === "prep" && !fighterBtn.disabled) {
       e.preventDefault();
@@ -613,8 +647,21 @@ function bindLobbyRosterClicks() {
       if (Number.isFinite(idx)) setLobbySpectateMatch(idx);
     }
   };
-  document.getElementById("lobby-prep-roster-panel")?.addEventListener("pointerdown", onRosterPointerDown);
+  const onRosterPointerEnd = (e) => {
+    clearLobbyRosterTouchHighlights(e.currentTarget);
+  };
+  const prepPanel = document.getElementById("lobby-prep-roster-panel");
+  prepPanel?.addEventListener("pointerdown", onRosterPointerDown);
+  prepPanel?.addEventListener("pointerup", onRosterPointerEnd);
+  prepPanel?.addEventListener("pointercancel", onRosterPointerEnd);
+  prepPanel?.addEventListener("pointerleave", onRosterPointerEnd);
   document.getElementById("lobby-battle-roster-bar")?.addEventListener("pointerdown", onRosterPointerDown);
+  document.getElementById("btn-lobby-roster-hide")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    lobbyRosterHidden = !lobbyRosterHidden;
+    syncLobbyRosterCollapse();
+  });
   document.getElementById("btn-lobby-return-table")?.addEventListener("click", (e) => {
     e.preventDefault();
     returnToLobbyPlayerMatch();
@@ -731,7 +778,7 @@ function updatePrepSideUI() {
       setPrepSideBtnContent(enemyBtn, "🤖", "Противник");
     }
     if (title) title.textContent = "🛒 Магазин";
-    if (hint) hint.textContent = "Перетащите предмет в инвентарь или на скамейку · 📍 — заморозить";
+    if (hint) hint.textContent = "Перетащите предмет в инвентарь или на скамейку · 📍 слева — закрепить в магазине";
   }
   if (refreshBtn) refreshBtn.disabled = !editable;
   syncShopHintsVisibility();
@@ -778,6 +825,7 @@ function bindEnhancementTooltipEvents(el, enhancementId, context = "shop") {
 }
 
 function showEnhancementTooltipAt(clientX, clientY, def, context = "shop", sourceEl = null, options = {}) {
+  if (shouldSuppressTooltipReshow(sourceEl)) return;
   const el = document.getElementById("sidebar-tooltip");
   if (!el || !def || typeof buildEnhancementTooltipLines !== "function") return;
   cancelScheduledTooltipHide();
@@ -885,7 +933,7 @@ function getRunDisplayTitle(side = "player") {
     return getMutationDisplayTitle(rt.classId, rt.formId, rt.mutationId);
   }
   const cls = getClassById(rt.classId);
-  return cls?.noviceLabel || cls?.name || "—";
+  return cls?.heroLabel || cls?.noviceLabel || cls?.name || "—";
 }
 
 function ensureCompanionGrid() {
@@ -903,30 +951,261 @@ function ensureCompanionGrid() {
   grid.querySelectorAll("[data-companion]").forEach((btn) => {
     btn.addEventListener("click", () => selectCompanion(btn.dataset.companion));
   });
+  bindCompanionCardTooltips();
+}
+
+function dismissClassOverlayTooltip() {
+  if (sidebarTooltipSource === "companion") hideSidebarTooltip();
+}
+
+function showCompanionTooltipAt(clientX, clientY, companionId, sourceEl = null, options = {}) {
+  if (shouldSuppressTooltipReshow(sourceEl)) return;
+  const el = document.getElementById("sidebar-tooltip");
+  if (!el || typeof buildCompanionTooltipLines !== "function") return;
+  cancelScheduledTooltipHide();
+  sidebarTooltipPinned = !!options.pinned;
+  sidebarTooltipSource = "companion";
+  tooltipItem = null;
+  fieldTooltipVisible = false;
+  el.classList.remove("synergy-tooltip");
+  el.innerHTML = renderTooltipLinesHtml(buildCompanionTooltipLines(companionId));
+  el.style.borderColor = sourceEl?.classList.contains("selected") ? "#f5c842" : "#30363d";
+  el.classList.remove("hidden");
+  document.getElementById("prep-tooltip-dock")?.classList.add("hidden");
+  positionSidebarTooltip(clientX, clientY, "viewport", "companion");
+}
+
+function bindCompanionCardTooltips() {
+  document.querySelectorAll("#companion-grid [data-companion]").forEach((btn) => {
+    if (btn.dataset.companionTooltipBound === "1") return;
+    btn.dataset.companionTooltipBound = "1";
+    const companionId = btn.dataset.companion;
+    const showAt = (clientX, clientY, pinned = false) => {
+      showCompanionTooltipAt(clientX, clientY, companionId, btn, { pinned });
+    };
+
+    if (typeof bindPointerTapTooltip === "function") {
+      bindPointerTapTooltip(btn, (clientX, clientY) => showAt(clientX, clientY, true));
+    }
+    btn.addEventListener("mouseenter", (e) => {
+      if (isSyntheticMouseFromTouch()) return;
+      cancelScheduledTooltipHide();
+      showAt(e.clientX, e.clientY, false);
+    });
+    btn.addEventListener("mousemove", (e) => {
+      if (isSyntheticMouseFromTouch()) return;
+      positionSidebarTooltip(e.clientX, e.clientY, "viewport", "companion");
+    });
+    btn.addEventListener("mouseleave", () => {
+      if (sidebarTooltipPinned || sidebarTooltipSource !== "companion") return;
+      requestHideSidebarTooltip();
+    });
+    btn.style.cursor = "help";
+  });
 }
 
 function renderCompanionSelection() {
   ensureCompanionGrid();
   const grid = document.getElementById("companion-grid");
   if (!grid) return;
+  const suggested = pendingPlayerClass && typeof defaultCompanionForClass === "function"
+    ? defaultCompanionForClass(pendingPlayerClass)
+    : null;
   grid.querySelectorAll("[data-companion]").forEach((btn) => {
-    btn.classList.toggle("selected", btn.dataset.companion === pendingPlayerCompanionId);
+    const picked = btn.dataset.companion === pendingPlayerCompanionId;
+    btn.classList.toggle("selected", picked);
+    btn.classList.toggle("suggested", !pendingPlayerCompanionId && btn.dataset.companion === suggested);
   });
 }
 
-function showCompanionStep() {
-  document.getElementById("class-step-mode")?.classList.add("hidden");
-  document.getElementById("class-step-player")?.classList.add("hidden");
-  document.getElementById("class-step-companion")?.classList.remove("hidden");
-  document.getElementById("class-step-opponent")?.classList.add("hidden");
-  const novice = getClassById(pendingPlayerClass);
-  document.getElementById("class-modal-title").textContent = "Спутник";
-  document.getElementById("class-modal-subtitle").textContent = novice
-    ? `${novice.noviceLabel || novice.name}: выберите спутника на весь забег`
-    : "Выберите спутника";
-  if (typeof renderClassMutationGallery === "function") {
-    renderClassMutationGallery(pendingPlayerClass);
+const CLASS_INTRO_STEP_IDS = {
+  mode: "class-step-mode",
+  player: "class-step-player",
+  companion: "class-step-companion",
+  summary: "class-step-summary",
+  opponent: "class-step-opponent",
+};
+
+let classSummaryTooltipPinned = false;
+let classSummaryTooltipKind = null;
+
+function setClassIntroStep(stepKey) {
+  Object.entries(CLASS_INTRO_STEP_IDS).forEach(([key, id]) => {
+    document.getElementById(id)?.classList.toggle("hidden", key !== stepKey);
+  });
+  document.getElementById("class-overlay")?.classList.toggle("class-overlay--summary", stepKey === "summary");
+  if (stepKey === "summary" && typeof hideClassHeroShowcase === "function") {
+    hideClassHeroShowcase();
   }
+}
+
+function hideClassSummaryTooltip() {
+  classSummaryTooltipPinned = false;
+  classSummaryTooltipKind = null;
+  const tip = document.getElementById("class-summary-tooltip");
+  if (!tip) return;
+  tip.classList.add("hidden");
+  tip.setAttribute("aria-hidden", "true");
+  tip.style.left = "";
+  tip.style.top = "";
+}
+
+function buildClassSummaryTooltipHtml(kind) {
+  if (kind === "hero" && pendingPlayerClass) {
+    const cls = getClassById(pendingPlayerClass);
+    if (!cls) return "";
+    const title = typeof escapeClassHtml === "function"
+      ? escapeClassHtml(cls.heroLabel || cls.noviceLabel || cls.name)
+      : (cls.heroLabel || cls.noviceLabel || cls.name);
+    const body = typeof escapeClassHtml === "function"
+      ? escapeClassHtml(cls.heroLore || cls.desc || "")
+      : (cls.heroLore || cls.desc || "");
+    const bonus = typeof escapeClassHtml === "function"
+      ? escapeClassHtml(cls.desc || "")
+      : (cls.desc || "");
+    return `<p class="class-summary-tooltip-title">${title}</p>
+      <p class="class-summary-tooltip-body">${body}</p>
+      <p class="class-summary-tooltip-bonus">${bonus}</p>`;
+  }
+  if (kind === "companion" && pendingPlayerCompanionId) {
+    const companion = COMPANION_CATALOG?.[pendingPlayerCompanionId];
+    if (!companion) return "";
+    const title = typeof escapeClassHtml === "function"
+      ? escapeClassHtml(`${companion.emoji} ${companion.name}`)
+      : `${companion.emoji} ${companion.name}`;
+    const body = typeof escapeClassHtml === "function"
+      ? escapeClassHtml(companion.desc || "")
+      : (companion.desc || "");
+    return `<p class="class-summary-tooltip-title">${title}</p>
+      <p class="class-summary-tooltip-body">${body}</p>`;
+  }
+  return "";
+}
+
+function positionClassSummaryTooltip(anchorEl) {
+  const tip = document.getElementById("class-summary-tooltip");
+  if (!tip || !anchorEl) return;
+  tip.classList.remove("hidden");
+  tip.removeAttribute("aria-hidden");
+  const rect = anchorEl.getBoundingClientRect();
+  const tipW = tip.offsetWidth || 240;
+  const tipH = tip.offsetHeight || 96;
+  let left = rect.left + rect.width / 2 - tipW / 2;
+  let top = rect.top - tipH - 12;
+  if (top < 8) top = rect.bottom + 12;
+  left = Math.max(8, Math.min(left, window.innerWidth - tipW - 8));
+  tip.style.left = `${Math.round(left)}px`;
+  tip.style.top = `${Math.round(top)}px`;
+}
+
+function showClassSummaryTooltip(kind, anchorEl, options = {}) {
+  const tip = document.getElementById("class-summary-tooltip");
+  if (!tip || !anchorEl) return;
+  const html = buildClassSummaryTooltipHtml(kind);
+  if (!html) return;
+  tip.innerHTML = html;
+  classSummaryTooltipKind = kind;
+  classSummaryTooltipPinned = !!options.pinned;
+  positionClassSummaryTooltip(anchorEl);
+}
+
+function bindClassSummaryInteractions() {
+  const stage = document.getElementById("class-summary-stage");
+  if (!stage || stage.dataset.bound === "1") return;
+  stage.dataset.bound = "1";
+
+  stage.querySelectorAll("[data-summary-kind]").forEach((btn) => {
+    const kind = btn.dataset.summaryKind;
+    btn.addEventListener("pointerover", (event) => {
+      if (event.pointerType === "touch") return;
+      showClassSummaryTooltip(kind, btn);
+    });
+    btn.addEventListener("pointerout", () => {
+      if (!classSummaryTooltipPinned) hideClassSummaryTooltip();
+    });
+    btn.addEventListener("focus", () => showClassSummaryTooltip(kind, btn, { pinned: true }));
+    btn.addEventListener("blur", () => {
+      if (!classSummaryTooltipPinned) hideClassSummaryTooltip();
+    });
+    btn.addEventListener("click", (event) => {
+      const coarse = window.matchMedia?.("(hover: none)")?.matches || event.pointerType === "touch";
+      if (!coarse) return;
+      event.preventDefault();
+      if (classSummaryTooltipPinned && classSummaryTooltipKind === kind) {
+        hideClassSummaryTooltip();
+      } else {
+        showClassSummaryTooltip(kind, btn, { pinned: true });
+      }
+    });
+  });
+
+  document.getElementById("btn-class-summary-start")?.addEventListener("click", () => startRunFromOverlay());
+}
+
+function renderClassSummaryStep() {
+  const cls = pendingPlayerClass ? getClassById(pendingPlayerClass) : null;
+  const companion = pendingPlayerCompanionId ? COMPANION_CATALOG?.[pendingPlayerCompanionId] : null;
+  const lead = document.getElementById("class-summary-lead");
+  const heroImg = document.getElementById("class-summary-hero-img");
+  const heroName = document.getElementById("class-summary-hero-name");
+  const companionEmoji = document.getElementById("class-summary-companion-emoji");
+  const companionName = document.getElementById("class-summary-companion-name");
+  const startBtn = document.getElementById("btn-class-summary-start");
+  const heroFloat = document.getElementById("class-summary-hero");
+
+  const heroLabel = cls?.heroLabel || cls?.noviceLabel || cls?.name || "—";
+  if (lead) lead.textContent = `Ваш выбор: ${heroLabel} и ${companion?.name || "—"}`;
+  if (heroImg && pendingPlayerClass) {
+    const src = typeof getClassHeroPortraitSrc === "function"
+      ? getClassHeroPortraitSrc(pendingPlayerClass)
+      : "";
+    if (heroImg.getAttribute("src") !== src) heroImg.setAttribute("src", src || "");
+    heroImg.alt = heroLabel;
+  }
+  if (heroName) heroName.textContent = heroLabel;
+  if (companionEmoji) companionEmoji.textContent = companion?.emoji || "🐾";
+  if (companionName) companionName.textContent = companion?.name || "—";
+  if (heroFloat) {
+    if (pendingPlayerClass) heroFloat.dataset.class = pendingPlayerClass;
+    else heroFloat.removeAttribute("data-class");
+  }
+  if (startBtn) {
+    startBtn.disabled = !(pendingPlayerClass && pendingPlayerCompanionId);
+    if (selectedGameMode === "versus") startBtn.textContent = "Начать игру";
+    else if (selectedGameMode === "lobby") startBtn.textContent = "Начать лобби";
+    else startBtn.textContent = "Старт";
+  }
+}
+
+function showSummaryStep() {
+  dismissClassOverlayTooltip();
+  hideClassSummaryTooltip();
+  if (!pendingPlayerClass || !pendingPlayerCompanionId) return;
+  setClassIntroStep("summary");
+  if (!selectedEnemyClass) {
+    selectedEnemyClass = pendingPlayerClass === "mage" ? "warrior" : "mage";
+  }
+  const modeTitles = {
+    lobby: "Лобби",
+    versus: "Противостояние",
+    hardbot: "Сложный бот",
+    solo: "Одиночная",
+  };
+  document.getElementById("class-modal-title").textContent = modeTitles[selectedGameMode] || "Готовы?";
+  document.getElementById("class-modal-subtitle").textContent = "Наведите на героя или спутника — подробности о выборе";
+  renderClassSummaryStep();
+  syncClassOverlayUi();
+  syncClassMobileDock();
+}
+
+function showCompanionStep({ keepSelection = false } = {}) {
+  hideClassSummaryTooltip();
+  if (!keepSelection) pendingPlayerCompanionId = null;
+  setClassIntroStep("companion");
+  document.getElementById("class-modal-title").textContent = "Спутник";
+  document.getElementById("class-modal-subtitle").textContent = selectedGameMode === "lobby"
+    ? "Лобби из восьми бойцов — выберите спутника на весь забег"
+    : "Спутник задаёт ось урона и рамку экипа. Сила — в рюкзаке.";
   renderCompanionSelection();
   syncClassOverlayUi();
   syncClassMobileDock();
@@ -934,15 +1213,16 @@ function showCompanionStep() {
 
 function selectCompanion(companionId) {
   if (!COMPANION_CATALOG?.[companionId]) return;
+  const reclick = pendingPlayerCompanionId === companionId;
   pendingPlayerCompanionId = companionId;
   renderCompanionSelection();
-  if (selectedGameMode === "lobby") {
-    updateStartRunButton();
-    syncClassOverlayUi();
-    syncClassMobileDock();
+  if (reclick) {
+    showSummaryStep();
     return;
   }
-  showSecondClassStep();
+  syncClassOverlayUi();
+  syncClassMobileDock();
+  updateStartRunButton();
 }
 
 function syncRunHudPhase() {
@@ -962,33 +1242,71 @@ function syncClassOverlayUi() {
   const modeStep = document.getElementById("class-step-mode");
   const playerStep = document.getElementById("class-step-player");
   const companionStep = document.getElementById("class-step-companion");
+  const summaryStep = document.getElementById("class-step-summary");
   const opponentStep = document.getElementById("class-step-opponent");
   if (!badge || !hint) return;
 
-  const lobbySteps = selectedGameMode === "lobby";
+  const totalSteps = 4;
 
   if (modeStep && !modeStep.classList.contains("hidden")) {
-    badge.textContent = lobbySteps ? "Шаг 1 из 3 · Режим" : "Шаг 1 из 4 · Режим";
-    hint.textContent = "Нажмите на режим — одиночная, лобби, PvP или сложный бот";
+    badge.textContent = `Шаг 1 из ${totalSteps} · Режим`;
+    hint.textContent = "Четыре девочки-звери скрестили клички с именами — выберите режим";
   } else if (playerStep && !playerStep.classList.contains("hidden")) {
-    badge.textContent = lobbySteps ? "Шаг 2 из 3 · Класс" : "Шаг 2 из 4 · Класс";
+    badge.textContent = `Шаг 2 из ${totalSteps} · Герой`;
     hint.textContent = pendingPlayerClass
-      ? "8 мутаций ниже — нажмите класс ещё раз, чтобы перейти к спутнику"
-      : "Выберите класс-новичок — стартовый профиль забега";
+      ? "Лор героини — слева. Нажмите ещё раз, чтобы выбрать спутника"
+      : "Имя и бонус на плитке · после выбора слева появится история";
   } else if (companionStep && !companionStep.classList.contains("hidden")) {
-    badge.textContent = lobbySteps ? "Шаг 3 из 3 · Спутник" : "Шаг 3 из 4 · Спутник";
-    hint.textContent = lobbySteps
-      ? "Спутник задаёт ось билда. Затем «Начать лобби»"
-      : "Спутник на весь забег. Затем выбор соперника";
+    badge.textContent = `Шаг 3 из ${totalSteps} · Спутник`;
+    hint.textContent = "Спутник на весь забег. Нажмите ещё раз — к саммари";
+  } else if (summaryStep && !summaryStep.classList.contains("hidden")) {
+    badge.textContent = `Шаг 4 из ${totalSteps} · Старт`;
+    hint.textContent = "Наведите на героя или спутника · «Старт» по центру";
   } else if (opponentStep && !opponentStep.classList.contains("hidden")) {
     badge.textContent = "Шаг 4 из 4 · Соперник";
     const startLabel = selectedGameMode === "versus" ? "Начать игру" : "Начать забег";
-    hint.textContent = `Выберите класс соперника, затем «${startLabel}» внизу экрана`;
+    hint.textContent = `Выберите героиню соперника, затем «${startLabel}» внизу экрана`;
   } else {
     badge.textContent = "";
     hint.textContent = "";
   }
   syncClassHeroShowcase();
+  syncBottomChromeIntro();
+}
+
+function syncBottomChromeIntro() {
+  const overlay = document.getElementById("class-overlay");
+  const overlayOpen = !!overlay && !overlay.classList.contains("hidden");
+  const stepEl = document.getElementById("bottom-chrome-intro-step");
+  const hintEl = document.getElementById("bottom-chrome-intro-hint");
+  const badge = document.getElementById("class-step-badge");
+  const hint = document.getElementById("class-action-hint");
+  const modeStep = document.getElementById("class-step-mode");
+  const playerStep = document.getElementById("class-step-player");
+  const companionStep = document.getElementById("class-step-companion");
+  const summaryStep = document.getElementById("class-step-summary");
+  const opponentStep = document.getElementById("class-step-opponent");
+  const backBtn = document.getElementById("btn-class-back");
+  const startBtn = document.getElementById("btn-start-run");
+
+  if (stepEl) stepEl.textContent = badge?.textContent?.trim() || "Backpack Battles";
+  if (hintEl) hintEl.textContent = hint?.textContent?.trim() || "Выберите режим, героя и спутника";
+
+  const onMode = modeStep && !modeStep.classList.contains("hidden");
+  const onSummary = summaryStep && !summaryStep.classList.contains("hidden");
+  const onOpponent = opponentStep && !opponentStep.classList.contains("hidden");
+
+  if (backBtn) backBtn.classList.toggle("hidden", !overlayOpen || onMode);
+  if (startBtn) {
+    const showStart = overlayOpen && (onSummary || onOpponent);
+    startBtn.classList.toggle("hidden", !showStart);
+  }
+
+  updateStartRunButton();
+
+  if (overlayOpen && typeof window.applyUiLayout === "function") {
+    requestAnimationFrame(() => window.applyUiLayout());
+  }
 }
 
 function syncClassHeroShowcase() {
@@ -1002,6 +1320,11 @@ function syncClassHeroShowcase() {
     if (typeof updateClassHeroRosterShowcase === "function") updateClassHeroRosterShowcase();
     return;
   }
+  const summaryStep = document.getElementById("class-step-summary");
+  if (summaryStep && !summaryStep.classList.contains("hidden")) {
+    if (typeof hideClassHeroShowcase === "function") hideClassHeroShowcase();
+    return;
+  }
   if (typeof updateClassHeroShowcase !== "function") return;
   const opponentStep = document.getElementById("class-step-opponent");
   const onOpponent = opponentStep && !opponentStep.classList.contains("hidden");
@@ -1010,29 +1333,26 @@ function syncClassHeroShowcase() {
 }
 
 function showGameModeStep() {
-  document.getElementById("class-step-mode")?.classList.remove("hidden");
-  document.getElementById("class-step-player")?.classList.add("hidden");
-  document.getElementById("class-step-companion")?.classList.add("hidden");
-  document.getElementById("class-step-opponent")?.classList.add("hidden");
+  hideClassSummaryTooltip();
+  setClassIntroStep("mode");
   document.getElementById("class-modal-title").textContent = "Режим игры";
-  document.getElementById("class-modal-subtitle").textContent = "Выберите формат — бот, лобби, сложный бот или PvP с другом";
+  document.getElementById("class-modal-subtitle").textContent = "Зверушки скрестили клички с именами — выберите режим забега";
   syncClassOverlayUi();
   syncClassMobileDock();
 }
 
 function showPlayerClassStep() {
-  document.getElementById("class-step-mode")?.classList.add("hidden");
-  document.getElementById("class-step-player")?.classList.remove("hidden");
-  document.getElementById("class-step-companion")?.classList.add("hidden");
-  document.getElementById("class-step-opponent")?.classList.add("hidden");
+  dismissClassOverlayTooltip();
+  hideClassSummaryTooltip();
+  setClassIntroStep("player");
   document.getElementById("class-modal-title").textContent = selectedGameMode === "versus"
-    ? "Игрок 1 — класс"
-    : "Выберите класс";
+    ? "Игрок 1 — герой"
+    : "Выберите героя";
   document.getElementById("class-modal-subtitle").textContent = selectedGameMode === "versus"
-    ? "Первый игрок выбирает класс и стартовый набор."
+    ? "Первый игрок выбирает героиню — все четверо девочки с кличками на имя."
     : selectedGameMode === "lobby"
-      ? "8 бойцов в лобби: каждый раунд — бой с ghost-снимком другого участника."
-      : "Каждый класс получает стартовый набор и уникальный бонус на весь забег.";
+      ? "Лобби из восьми бойцов — кого из подружек отправим в рейтинг?"
+      : "Кого из девочек-зверушек отправим в забег? У каждой свой характер и бонус.";
   syncClassOverlayUi();
   syncClassMobileDock();
   if (typeof renderClassMutationGallery === "function") {
@@ -1040,8 +1360,29 @@ function showPlayerClassStep() {
   }
 }
 
+function selectGameMode(mode) {
+  if (mode !== "solo" && mode !== "versus" && mode !== "hardbot" && mode !== "lobby") return;
+  selectedGameMode = mode;
+  selectedOpponentMode = mode === "versus"
+    ? "manual"
+    : mode === "hardbot"
+      ? "hardbot"
+      : mode === "lobby"
+        ? "ghost"
+        : "ai";
+  pendingPlayerClass = null;
+  pendingPlayerCompanionId = null;
+  selectedEnemyClass = null;
+  document.querySelectorAll(".game-mode-card").forEach((card) => {
+    card.classList.toggle("selected", card.dataset.gameMode === mode);
+  });
+  if (typeof renderClassMutationGallery === "function") renderClassMutationGallery(null);
+  showPlayerClassStep();
+}
+
 function resetClassSelectOverlay() {
   pendingPlayerClass = null;
+  pendingMutationIntentId = null;
   pendingPlayerCompanionId = null;
   selectedEnemyClass = null;
   selectedGameMode = "solo";
@@ -1054,11 +1395,13 @@ function resetClassSelectOverlay() {
   if (typeof renderClassMutationGallery === "function") renderClassMutationGallery(null);
   showGameModeStep();
   updateStartRunButton();
+  if (typeof syncClassPickerCardsFromCatalog === "function") syncClassPickerCardsFromCatalog();
   syncClassOverlayUi();
   syncClassMobileDock();
 }
 
 function showSecondClassStep() {
+  dismissClassOverlayTooltip();
   document.getElementById("class-step-mode")?.classList.add("hidden");
   document.getElementById("class-step-player")?.classList.add("hidden");
   document.getElementById("class-step-companion")?.classList.add("hidden");
@@ -1089,20 +1432,11 @@ function showSecondClassStep() {
 
 function syncClassMobileDock() {
   const dock = document.getElementById("class-mobile-dock");
-  const overlay = document.getElementById("class-overlay");
-  const opponentStep = document.getElementById("class-step-opponent");
-  const companionStep = document.getElementById("class-step-companion");
-  if (!dock) return;
-  const overlayOpen = !!overlay && !overlay.classList.contains("hidden");
-  const opponentVisible = !!opponentStep && !opponentStep.classList.contains("hidden");
-  const lobbyCompanionVisible = selectedGameMode === "lobby"
-    && !!companionStep
-    && !companionStep.classList.contains("hidden");
-  const show = overlayOpen && (opponentVisible || lobbyCompanionVisible);
-  const dockBack = document.getElementById("btn-class-back");
-  if (dockBack) dockBack.classList.toggle("hidden", lobbyCompanionVisible);
-  dock.classList.toggle("hidden", !show);
-  dock.setAttribute("aria-hidden", show ? "false" : "true");
+  if (dock) {
+    dock.classList.add("hidden");
+    dock.setAttribute("aria-hidden", "true");
+  }
+  syncBottomChromeIntro();
   if (typeof window.syncClassOverlayAnchors === "function") {
     requestAnimationFrame(() => {
       window.syncClassOverlayAnchors();
@@ -1114,53 +1448,44 @@ function syncClassMobileDock() {
 function updateStartRunButton() {
   const btn = document.getElementById("btn-start-run");
   if (!btn) return;
-  const ready = selectedGameMode === "lobby"
-    ? !!(pendingPlayerClass && pendingPlayerCompanionId)
-    : !!(pendingPlayerClass && pendingPlayerCompanionId && selectedEnemyClass);
+  const ready = !!(pendingPlayerClass && pendingPlayerCompanionId);
   btn.disabled = !ready;
   if (selectedGameMode === "versus") btn.textContent = "Начать игру";
   else if (selectedGameMode === "lobby") btn.textContent = "Начать лобби";
-  else btn.textContent = "Начать забег";
+  else btn.textContent = "Старт";
+  const summaryBtn = document.getElementById("btn-class-summary-start");
+  if (summaryBtn) summaryBtn.disabled = !ready;
 }
 
 function scrollClassPickerCardIntoView(card) {
   card?.scrollIntoView?.({ block: "nearest", inline: "center", behavior: "smooth" });
 }
 
+function onMutationIntentSelected(mutationId) {
+  pendingMutationIntentId = mutationId || null;
+}
+
+function onMutationIntentConfirmed(mutationId) {
+  pendingMutationIntentId = mutationId || null;
+}
+
 function selectPlayerClass(classId) {
   const reclick = pendingPlayerClass === classId;
   pendingPlayerClass = classId;
+  if (!reclick) pendingMutationIntentId = null;
   document.querySelectorAll(".class-card[data-class]").forEach((card) => {
     card.classList.toggle("selected", card.dataset.class === classId);
   });
   scrollClassPickerCardIntoView(document.querySelector(`.class-card[data-class="${classId}"]`));
-  if (!pendingPlayerCompanionId && typeof defaultCompanionForClass === "function") {
-    pendingPlayerCompanionId = defaultCompanionForClass(classId);
-  }
   if (typeof renderClassMutationGallery === "function") renderClassMutationGallery(classId);
   if (reclick) {
-    showCompanionStep();
+    pendingPlayerCompanionId = null;
+    showCompanionStep({ keepSelection: false });
     return;
   }
   syncClassOverlayUi();
   syncClassMobileDock();
   updateStartRunButton();
-}
-
-function selectGameMode(mode) {
-  if (mode !== "solo" && mode !== "versus" && mode !== "hardbot" && mode !== "lobby") return;
-  selectedGameMode = mode;
-  selectedOpponentMode = mode === "versus"
-    ? "manual"
-    : mode === "hardbot"
-      ? "hardbot"
-      : mode === "lobby"
-        ? "ghost"
-        : "ai";
-  document.querySelectorAll(".game-mode-card").forEach((card) => {
-    card.classList.toggle("selected", card.dataset.gameMode === mode);
-  });
-  showPlayerClassStep();
 }
 
 function selectOpponentClass(classId) {
@@ -1475,23 +1800,52 @@ function requestHideSidebarTooltip() {
   else hideSidebarTooltip();
 }
 
-function bindTouchTooltipDismiss() {
-  if (document.documentElement.dataset.touchTooltipDismissBound) return;
-  document.documentElement.dataset.touchTooltipDismissBound = "1";
-  const dismissTooltipTargets = "#sidebar-tooltip, #prep-tooltip-dock, .shop-card, .bench-card, .doll-slot, #game-canvas, "
-    + ".battle-inventory-popover, .battle-inventory-popover .bp-cell, #board-preview-overlay .bp-cell, "
-    + ".combat-feed-msg-text--hinted, .profile-status-chip, .profile-stack-chip";
+function isSidebarTooltipVisible() {
+  const tooltip = document.getElementById("sidebar-tooltip");
+  return !!tooltip && !tooltip.classList.contains("hidden");
+}
+
+function shouldSuppressTooltipReshow(sourceEl) {
+  if (!tooltipDismissGesture) return false;
+  const sameSource = sourceEl && tooltipDismissGesture.sourceEl && sourceEl === tooltipDismissGesture.sourceEl;
+  tooltipDismissGesture = null;
+  return sameSource;
+}
+
+function dismissSidebarTooltipFromPointer(e) {
+  if (!isSidebarTooltipVisible()) return false;
+  tooltipDismissGesture = {
+    pointerId: e?.pointerId ?? null,
+    sourceEl: e?.target?.closest?.(".shop-card, .bench-card, .doll-slot, .profile-avatar, .combat-feed-msg-text--hinted, .profile-status-chip, .profile-stack-chip") || null,
+  };
+  hideSidebarTooltip();
+  tooltipItem = null;
+  if (typeof syncFieldTooltip === "function") syncFieldTooltip();
+  return true;
+}
+
+function bindGlobalTooltipDismiss() {
+  if (document.documentElement.dataset.globalTooltipDismissBound) return;
+  document.documentElement.dataset.globalTooltipDismissBound = "1";
   document.addEventListener("pointerdown", (e) => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
     if (isSyntheticMouseFromTouch()) return;
-    if (e.target.closest(dismissTooltipTargets)) return;
-    const tooltip = document.getElementById("sidebar-tooltip");
-    if (!tooltip || tooltip.classList.contains("hidden")) return;
-    if (!isTouchUi() && !sidebarTooltipPinned) return;
-    if (isTouchUi() && e.pointerType === "mouse" && !sidebarTooltipPinned) return;
-    hideSidebarTooltip();
-    tooltipItem = null;
-    syncFieldTooltip();
+    if (!isSidebarTooltipVisible()) return;
+    if (e.target.closest("#sidebar-tooltip, #prep-tooltip-dock")) return;
+    dismissSidebarTooltipFromPointer(e);
   }, true);
+  document.addEventListener("pointerup", () => {
+    window.setTimeout(() => {
+      tooltipDismissGesture = null;
+    }, 0);
+  }, true);
+  document.addEventListener("pointercancel", () => {
+    tooltipDismissGesture = null;
+  }, true);
+}
+
+function bindTouchTooltipDismiss() {
+  bindGlobalTooltipDismiss();
 }
 
 function bindTouchInput() {
@@ -1719,6 +2073,8 @@ function init() {
   document.querySelectorAll(".game-mode-card").forEach((btn) => {
     btn.addEventListener("click", () => selectGameMode(btn.dataset.gameMode));
   });
+  if (typeof syncClassPickerCardsFromCatalog === "function") syncClassPickerCardsFromCatalog();
+  if (typeof syncClassHeroRosterCaption === "function") syncClassHeroRosterCaption();
   document.querySelectorAll(".class-card[data-class]:not([disabled])").forEach((btn) => {
     btn.addEventListener("click", () => selectPlayerClass(btn.dataset.class));
   });
@@ -1729,13 +2085,19 @@ function init() {
     showGameModeStep();
   });
   document.getElementById("btn-class-back")?.addEventListener("click", () => {
+    const summaryStep = document.getElementById("class-step-summary");
     const opponentStep = document.getElementById("class-step-opponent");
     const companionStep = document.getElementById("class-step-companion");
-    if (opponentStep && !opponentStep.classList.contains("hidden")) showCompanionStep();
+    const playerStep = document.getElementById("class-step-player");
+    if (summaryStep && !summaryStep.classList.contains("hidden")) showCompanionStep({ keepSelection: true });
+    else if (opponentStep && !opponentStep.classList.contains("hidden")) showCompanionStep();
     else if (companionStep && !companionStep.classList.contains("hidden")) showPlayerClassStep();
+    else if (playerStep && !playerStep.classList.contains("hidden")) showGameModeStep();
     else showGameModeStep();
   });
   document.getElementById("btn-class-back-player")?.addEventListener("click", () => showPlayerClassStep());
+  document.getElementById("btn-class-back-companion")?.addEventListener("click", () => showCompanionStep({ keepSelection: true }));
+  bindClassSummaryInteractions();
   document.getElementById("btn-start-run")?.addEventListener("click", startRunFromOverlay);
   bindLobbyRosterClicks();
   window.addEventListener("resize", syncClassMobileDock, { passive: true });
@@ -1784,6 +2146,33 @@ function init() {
   if (typeof initBattleInventoryPopover === "function") initBattleInventoryPopover();
   initRecipeBookControls();
   initSettingsControls();
+  if (typeof initEscapeMenu === "function") {
+    initEscapeMenu({
+      returnToMainMenu,
+      closeNestedPopups,
+      getPhase: () => phase,
+      getGameOver: () => gameOver,
+      isPhaseTransitioning,
+      isTypingBlocked: () => false,
+      isActiveGameSession: () => !isPopupOpen("class-overlay")
+        && (phase === "prep" || phase === "battle" || phase === "replay"),
+      isBattleActive: () => phase === "battle" && !!battleState && !battleState.finished,
+      isBattlePaused: () => typeof isBattlePaused === "function" ? isBattlePaused() : !!battlePaused,
+      isReplayPlaying: () => phase === "replay" && !!replayPlayback?.playing,
+      togglePause: () => {
+        if (phase === "replay") {
+          replayPlayback.playing = !replayPlayback.playing;
+          battlePaused = !replayPlayback.playing;
+        } else {
+          toggleBattlePause();
+        }
+        updateBattleControlsUI();
+      },
+    });
+  }
+  if (typeof initVisualTheme === "function") initVisualTheme();
+  if (typeof initSoundTheme === "function") initSoundTheme();
+  if (typeof initPrepBuildEmojiBtn === "function") initPrepBuildEmojiBtn();
   if (typeof initLightBattleFxControls === "function") initLightBattleFxControls();
   if (typeof initCombatFeedControls === "function") initCombatFeedControls();
   initMusic();
@@ -1993,6 +2382,9 @@ function renderPhase() {
     window.scheduleBattleHeroRowSync();
   }
   if (typeof syncReplayTimeline === "function") syncReplayTimeline();
+  if (!isBattleUiPhase() && typeof resetBattleAuraFrame === "function") {
+    resetBattleAuraFrame();
+  }
 }
 
 function syncBattleHudVisibility() {
@@ -2248,6 +2640,7 @@ function bindBattleBuildStatsToggle() {
 }
 
 function returnToMainMenu() {
+  if (typeof hideEscapeMenu === "function") hideEscapeMenu();
   pendingGameOver = false;
   gameOver = false;
   playerClass = null;
@@ -2289,7 +2682,9 @@ function showClassSelect() {
 function startRunFromOverlay() {
   if (!pendingPlayerClass) return;
   if (!pendingPlayerCompanionId) return;
-  if (selectedGameMode !== "lobby" && !selectedEnemyClass) return;
+  if (!selectedEnemyClass) {
+    selectedEnemyClass = pendingPlayerClass === "mage" ? "warrior" : "mage";
+  }
   gameMode = selectedGameMode;
   playerClass = pendingPlayerClass;
   playerCompanionId = pendingPlayerCompanionId;
@@ -2310,6 +2705,8 @@ function startRunFromOverlay() {
   enemyClass = selectedEnemyClass || pendingPlayerClass;
   enemyArchetype = AI_ARCHETYPES[enemyClass] || AI_ARCHETYPES.warrior;
   prepViewSide = "player";
+  dismissClassOverlayTooltip();
+  hideClassSummaryTooltip();
   document.getElementById("class-overlay")?.classList.add("hidden");
   const app = document.getElementById("app");
   if (app) app.dataset.gameMode = gameMode;
@@ -2318,6 +2715,7 @@ function startRunFromOverlay() {
 
 function startRun(classId) {
   playerClass = classId;
+  dismissClassOverlayTooltip();
   document.getElementById("class-overlay").classList.add("hidden");
   restartGame();
 }
@@ -2454,7 +2852,7 @@ function isPopupOpen(id) {
   return !!(el && !el.classList.contains("hidden"));
 }
 
-function closeAllPopups() {
+function closeNestedPopups() {
   let closed = false;
 
   if (typeof hideDetailPopup === "function" && isDetailPopupOpen()) {
@@ -2509,6 +2907,10 @@ function closeAllPopups() {
   return closed;
 }
 
+function closeAllPopups() {
+  return typeof handleEscapeKey === "function" ? handleEscapeKey() : closeNestedPopups();
+}
+
 function isTypingTarget(el) {
   if (!el) return false;
   const tag = el.tagName;
@@ -2522,8 +2924,8 @@ function isPhaseTransitioning() {
 function handleEnterHotkey(e) {
   if (e.key !== "Enter" || isPhaseTransitioning()) return false;
   if (isPopupOpen("class-overlay")) {
-    const playerStepOpen = !document.getElementById("class-step-player")?.classList.contains("hidden");
-    if (selectedGameMode === "lobby" && playerStepOpen && pendingPlayerClass) {
+    const summaryStepOpen = !document.getElementById("class-step-summary")?.classList.contains("hidden");
+    if (summaryStepOpen && pendingPlayerClass && pendingPlayerCompanionId) {
       const startBtn = document.getElementById("btn-start-run");
       if (startBtn && !startBtn.disabled) {
         startRunFromOverlay();
@@ -2769,7 +3171,9 @@ function handleGlobalKeydown(e) {
   if (isTypingTarget(e.target)) return;
 
   if (e.key === "Escape") {
-    if (closeAllPopups()) e.preventDefault();
+    if (typeof handleEscapeKey === "function" ? handleEscapeKey() : closeNestedPopups()) {
+      e.preventDefault();
+    }
     return;
   }
 
@@ -3921,6 +4325,7 @@ function startBattle() {
       battleStartTime = Date.now();
       tickBattlePresentation._at = { emotion: 0, arena: 0 };
       if (typeof resetEmotionEngine === "function") resetEmotionEngine();
+      if (typeof resetBattleAuraFrame === "function") resetBattleAuraFrame();
       if (typeof initBattleHud === "function") initBattleHud();
       if (typeof hideBattleCountdownOverlay === "function") hideBattleCountdownOverlay();
       if (!isLobbyMode() && typeof initBattleCountdown === "function") initBattleCountdown(battleState);
@@ -3980,6 +4385,7 @@ function endBattle() {
   if (typeof closeBattleInventoryPopover === "function") closeBattleInventoryPopover();
   if (typeof clearBattleDamageSummary === "function") clearBattleDamageSummary(finishedState);
   if (typeof hideBattleCountdownOverlay === "function") hideBattleCountdownOverlay();
+  if (typeof resetBattleAuraFrame === "function") resetBattleAuraFrame();
 
   let battleSummary;
   try {
@@ -4311,6 +4717,9 @@ function tickBattlePresentation() {
     if (typeof tickBattleArenaPresentation === "function") {
       tickBattleArenaPresentation(presentState, elapsed);
     }
+  }
+  if (typeof syncBattleAuraFrame === "function") {
+    syncBattleAuraFrame(presentState, elapsed);
   }
 }
 
@@ -5306,14 +5715,20 @@ function drawFxLayer() {
   }
 }
 
+function meadowCssColor(varName, fallback) {
+  if (typeof document === "undefined" || !document.documentElement) return fallback;
+  const value = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+  return value || fallback;
+}
+
 function drawBackground() {
   if (phase === "prep") {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const w = canvas.width;
     const h = canvas.height;
     const glow = ctx.createRadialGradient(w * 0.5, h * 0.35, 0, w * 0.5, h * 0.55, Math.max(w, h) * 0.75);
-    glow.addColorStop(0, "rgba(72, 58, 42, 0.22)");
-    glow.addColorStop(0.55, "rgba(36, 30, 24, 0.08)");
+    glow.addColorStop(0, meadowCssColor("--canvas-glow-0", "rgba(143, 214, 148, 0.2)"));
+    glow.addColorStop(0.55, meadowCssColor("--canvas-glow-1", "rgba(92, 184, 92, 0.08)"));
     glow.addColorStop(1, "rgba(0, 0, 0, 0)");
     ctx.fillStyle = glow;
     ctx.fillRect(0, 0, w, h);
@@ -5323,7 +5738,7 @@ function drawBackground() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     return;
   }
-  ctx.fillStyle = "#12100d";
+  ctx.fillStyle = meadowCssColor("--canvas-battle-fill", "rgba(143, 214, 148, 0.35)");
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
@@ -5359,8 +5774,10 @@ function getFieldFrameRect(team) {
 }
 
 function gridCellFill(available, row, col) {
-  if (!available) return "#1a1612";
-  return (row + col) % 2 === 0 ? "#4a4038" : "#403830";
+  if (!available) return meadowCssColor("--canvas-cell-blocked", "#a8c49a");
+  const a = meadowCssColor("--canvas-cell-a", "#c5ddb8");
+  const b = meadowCssColor("--canvas-cell-b", "#b8d4a8");
+  return (row + col) % 2 === 0 ? a : b;
 }
 
 function getActiveExpansionDragItemId() {
@@ -6695,6 +7112,7 @@ function updateTooltip(mx, my) {
 }
 
 function showSidebarTooltipAt(clientX, clientY, itemId, contentItem, context = "shop", sourceEl = null, options = {}) {
+  if (shouldSuppressTooltipReshow(sourceEl)) return;
   if (typeof isEnhancementBackpackItem === "function" && isEnhancementBackpackItem(itemId)) {
     const def = typeof getEnhancementDef === "function" ? getEnhancementDef(getEnhancementIdFromItem(itemId)) : null;
     if (def) {
@@ -7477,6 +7895,8 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
 
   const fillChar = (el, profile, chrSide) => {
     if (!el) return;
+    if (profile?.classId) el.dataset.class = profile.classId;
+    else el.removeAttribute("data-class");
     if (typeof renderPrepCharacterHtml === "function") {
       el.innerHTML = renderPrepCharacterHtml(chrSide, profile, round);
       return;
@@ -7548,6 +7968,15 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
       ${ampStatusHtml}
     `;
     bindPrepEnhancementStrip(side);
+    if (typeof syncPrepBuildEmojiBtn === "function") {
+      syncPrepBuildEmojiBtn({
+        formId: mutRt.formId,
+        mutationId: mutRt.mutationId,
+        classId: mutRt.classId,
+        leaderId: mutationProgress?.leader?.id,
+        round,
+      });
+    }
     if (!document.getElementById("prep-hero-tooltip")?.classList.contains("hidden")) {
       refreshPrepHeroTooltip();
     }
@@ -7717,10 +8146,13 @@ function log(msg) {
 function buildItemCardHTML(def, { cardType = "item-card", extraClasses = "", tagsHtml = "", innerBefore = "", innerAfter = "", dataAttrs = "", showShape = true, shapeSize = "md" } = {}) {
   const classes = getRarityCardClasses(def.rarity, [cardType, extraClasses].filter(Boolean).join(" "));
   const shapeHtml = showShape ? renderItemShapeMiniHTML(def, { size: shapeSize }) : "";
+  const iconHtml = `<div class="${getItemIconShellClass(def)}" style="background:${def.color}33">${renderItemIconsHTML(def)}</div>`;
+  const visualHtml = showShape
+    ? `<div class="item-card-cluster">${iconHtml}${shapeHtml}</div>`
+    : iconHtml;
   return `<div class="${classes}"${dataAttrs ? ` ${dataAttrs}` : ""}>
     ${innerBefore}
-    <div class="${getItemIconShellClass(def)}" style="background:${def.color}33">${renderItemIconsHTML(def)}</div>
-    ${shapeHtml}
+    ${visualHtml}
     <div class="info"><div class="name">${def.name}</div>${tagsHtml ? `<div class="tags">${tagsHtml}</div>` : ""}</div>
     ${innerAfter}
   </div>`;

@@ -21,7 +21,7 @@ function loadUiSandbox() {
   sandbox.global = sandbox;
   sandbox.window = sandbox;
   const ctx = vm.createContext(sandbox);
-  for (const file of ["classes.js", "systems/mutations.js", "systems/mutation-ui.js"]) {
+  for (const file of ["classes.js", "systems/mutations.js", "systems/mutation-lore-quips.js", "systems/mutation-ui.js"]) {
     vm.runInContext(fs.readFileSync(path.join(ROOT, file), "utf8"), ctx);
   }
   vm.runInContext(`
@@ -29,6 +29,8 @@ function loadUiSandbox() {
       getMutationsForNoviceClass,
       getMutationById,
       getNoviceClassLabel,
+      getMutationLoreQuip,
+      formatMutationIntentLabel,
       buildClassMutationGalleryHtml,
       getPrepMutationBadgeMeta,
       renderLobbyMutationBadgeHtml,
@@ -52,11 +54,21 @@ function run() {
   const html = s.buildClassMutationGalleryHtml("priest");
   assert(html.includes("mutation-silhouette"), "галерея: силуэты");
   assert((html.match(/mutation-silhouette/g) || []).length >= 8, "галерея: 8 ячеек");
-  assert(html.includes("Жрец-новичок"), "галерея: подпись класса");
+  assert(html.includes("data-mutation-id"), "галерея: id мутации");
+  assert(html.includes('type="button"'), "галерея: кликабельные кнопки");
+  assert(html.includes("Жрец-мыковичок"), "галерея: подпись класса");
+  passed++;
+
+  const quip = s.getMutationLoreQuip("m_chaos");
+  assert(quip.includes("умная"), "лор-квип: хаотичный учёный");
   passed++;
 
   const escaped = s.escapeMutationUiHtml('<script>"&');
   assert(escaped === "&lt;script&gt;&quot;&amp;", "escape html");
+  passed++;
+
+  const intent = s.formatMutationIntentLabel("warrior", "w_berserk");
+  assert(intent.includes("Воин") && intent.includes("Берсерк"), "intent label: герой + путь");
   passed++;
 
   const formMeta = s.getPrepMutationBadgeMeta("p_paladin", null, 8);

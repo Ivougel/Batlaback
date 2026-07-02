@@ -88,8 +88,8 @@
 }
 
 @keyframes sun-pulse {
-  0%, 100% { opacity: 0.85; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.06); }
+  0%, 100% { opacity: 0.88; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.03); }
 }
 
 /* ─── Мультяшная сцена: холмы, облака, трава ─── */
@@ -208,6 +208,13 @@
   background: radial-gradient(ellipse at 50% 80%, rgba(88, 166, 255, 0.22) 0%, transparent 68%);
   pointer-events: none;
   z-index: 0;
+  transform-origin: 50% 85%;
+  animation: hero-glow-pulse 4.8s ease-in-out infinite;
+}
+
+@keyframes hero-glow-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.82; transform: scale(1.05); }
 }
 
 .class-hero-showcase-sparkles {
@@ -225,7 +232,7 @@
   background: radial-gradient(circle, #fff8e7 0%, rgba(240, 193, 75, 0.2) 70%, transparent 100%);
   box-shadow: 0 0 10px rgba(240, 193, 75, 0.85);
   opacity: 0;
-  animation: class-hero-sparkle 2.8s ease-in-out infinite;
+  animation: class-hero-sparkle 3.6s ease-in-out infinite;
 }
 
 .class-hero-sparkle--1 { left: 14%; top: 22%; animation-delay: 0s; }
@@ -261,15 +268,34 @@
 }
 
 .class-hero-showcase.is-visible .class-hero-showcase-img {
-  animation: class-hero-bounce 1.1s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+  animation:
+    hero-idle-enter 0.65s cubic-bezier(0.16, 1, 0.3, 1) both,
+    hero-idle-breathe 3.4s ease-in-out 0.65s infinite;
 }
 
-@keyframes class-hero-bounce {
-  0%, 100% { transform: translateY(4%) scaleY(1) scaleX(1) rotate(0deg); }
-  10% { transform: translateY(6%) scaleY(0.9) scaleX(1.08) rotate(-2deg); }
-  45% { transform: translateY(-12%) scaleY(1.06) scaleX(0.96) rotate(2deg); }
-  70% { transform: translateY(4%) scaleY(0.95) scaleX(1.04) rotate(-1deg); }
-  85% { transform: translateY(1%) scaleY(1.02) scaleX(0.99) rotate(0deg); }
+@keyframes hero-idle-enter {
+  from {
+    opacity: 0.55;
+    transform: translateY(7%) scale(0.97);
+    filter:
+      drop-shadow(0 10px 28px rgba(0, 0, 0, 0.35))
+      drop-shadow(0 0 16px rgba(88, 166, 255, 0.08));
+  }
+  to {
+    opacity: 0.9;
+    transform: translateY(4%) scale(1);
+    filter:
+      drop-shadow(0 18px 42px rgba(0, 0, 0, 0.55))
+      drop-shadow(0 0 28px rgba(88, 166, 255, 0.12));
+  }
+}
+
+/* Медленное «дыхание» — стандарт idle на character select (3–4 с, ~1.5% travel) */
+@keyframes hero-idle-breathe {
+  0%, 100% { transform: translateY(4%) scaleY(1) scaleX(1); }
+  35% { transform: translateY(3.2%) scaleY(1.006) scaleX(0.999); }
+  55% { transform: translateY(2.6%) scaleY(1.01) scaleX(0.998); }
+  80% { transform: translateY(3.6%) scaleY(1.003) scaleX(0.999); }
 }
 
 .class-hero-showcase-caption {
@@ -379,6 +405,11 @@ html[data-prep-layout="mobile"] .class-hero-showcase-img {
   justify-content: center;
 }
 
+.class-hero-showcase.hidden {
+  display: none !important;
+}
+
+.class-hero-showcase-single.hidden,
 .class-hero-showcase-roster.hidden {
   display: none;
 }
@@ -404,6 +435,16 @@ html[data-prep-layout="mobile"] .class-hero-showcase-img {
   overflow: hidden;
 }
 
+.class-hero-roster-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(167, 139, 250, 0.08) 0%, transparent 40%, rgba(240, 193, 75, 0.06) 100%);
+  mix-blend-mode: overlay;
+  z-index: 2;
+  pointer-events: none;
+}
+
 .class-hero-roster-grid {
   position: relative;
   z-index: 1;
@@ -414,6 +455,8 @@ html[data-prep-layout="mobile"] .class-hero-showcase-img {
   gap: calc(8px * var(--ui-scale));
   min-height: 0;
   padding: calc(4px * var(--ui-scale)) 0;
+  background: none;
+  border: none;
 }
 
 .class-hero-roster-cell {
@@ -424,44 +467,37 @@ html[data-prep-layout="mobile"] .class-hero-showcase-img {
   justify-content: flex-end;
   min-height: 0;
   padding: calc(6px * var(--ui-scale)) calc(4px * var(--ui-scale)) calc(4px * var(--ui-scale));
-  border-radius: calc(14px * var(--ui-scale));
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(8, 8, 16, 0.35) 100%);
-  overflow: hidden;
-  animation: class-hero-roster-fade-in 0.5s ease both;
-  animation-delay: calc(var(--roster-i, 0) * 0.1s);
+  background: none;
+  border: none;
+  box-shadow: none;
+  overflow: visible;
+  animation: class-hero-roster-fade-in 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--roster-i, 0) * 0.12s);
+}
+
+.class-hero-roster-cell::after {
+  content: "";
+  position: absolute;
+  bottom: 4%;
+  left: 50%;
+  width: 46%;
+  height: 10px;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.35) 0%, transparent 75%);
+  transform: translateX(-50%);
+  z-index: 0;
+  pointer-events: none;
+  animation: hero-shadow-breathe 3.4s ease-in-out infinite;
+  animation-delay: calc(0.65s + var(--roster-i, 0) * 0.55s);
+}
+
+@keyframes hero-shadow-breathe {
+  0%, 100% { transform: translateX(-50%) scaleX(1); opacity: 0.32; }
+  55% { transform: translateX(-50%) scaleX(0.88); opacity: 0.24; }
 }
 
 @keyframes class-hero-roster-fade-in {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.class-hero-roster-cell[data-class="warrior"] {
-  border-color: rgba(248, 81, 73, 0.28);
-  box-shadow: inset 0 0 24px rgba(248, 81, 73, 0.08);
-}
-
-.class-hero-roster-cell[data-class="rogue"] {
-  border-color: rgba(120, 220, 100, 0.26);
-  box-shadow: inset 0 0 24px rgba(120, 220, 100, 0.08);
-}
-
-.class-hero-roster-cell[data-class="mage"] {
-  border-color: rgba(140, 180, 255, 0.3);
-  box-shadow: inset 0 0 24px rgba(140, 180, 255, 0.1);
-}
-
-.class-hero-roster-cell[data-class="priest"] {
-  border-color: rgba(240, 193, 75, 0.3);
-  box-shadow: inset 0 0 24px rgba(240, 193, 75, 0.1);
-}
-
-.class-hero-roster-cell-glow {
-  position: absolute;
-  inset: 20% 8% 28%;
-  background: radial-gradient(ellipse at 50% 90%, rgba(88, 166, 255, 0.18) 0%, transparent 70%);
-  pointer-events: none;
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .class-hero-roster-img {
@@ -475,9 +511,34 @@ html[data-prep-layout="mobile"] .class-hero-showcase-img {
   object-position: center bottom;
   opacity: 0.88;
   filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.5));
-  transform: translateY(6%);
-  animation: class-hero-bounce 1.1s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
-  animation-delay: calc(var(--roster-i, 0) * 0.35s);
+  transform: translateY(5%);
+  animation:
+    hero-roster-idle-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both,
+    hero-roster-idle-breathe 3.6s ease-in-out infinite;
+  animation-delay:
+    calc(var(--roster-i, 0) * 0.12s),
+    calc(0.6s + var(--roster-i, 0) * 0.55s);
+  animation-duration:
+    0.6s,
+    calc(3.2s + var(--roster-i, 0) * 0.2s);
+}
+
+@keyframes hero-roster-idle-enter {
+  from {
+    opacity: 0.5;
+    transform: translateY(8%) scale(0.96);
+  }
+  to {
+    opacity: 0.88;
+    transform: translateY(5%) scale(1);
+  }
+}
+
+@keyframes hero-roster-idle-breathe {
+  0%, 100% { transform: translateY(5%) scaleY(1) scaleX(1); }
+  40% { transform: translateY(4.2%) scaleY(1.005) scaleX(0.999); }
+  60% { transform: translateY(3.6%) scaleY(1.008) scaleX(0.998); }
+  85% { transform: translateY(4.6%) scaleY(1.002) scaleX(0.999); }
 }
 
 .class-hero-roster-label {
@@ -494,7 +555,7 @@ html[data-prep-layout="mobile"] .class-hero-showcase-img {
 
 .class-hero-roster-caption {
   position: relative;
-  z-index: 2;
+  z-index: 3;
   flex-shrink: 0;
   margin-top: calc(8px * var(--ui-scale));
   padding: calc(10px * var(--ui-scale)) calc(12px * var(--ui-scale));
@@ -550,8 +611,10 @@ html[data-prep-layout="mobile"] .class-hero-roster-caption {
 @media (prefers-reduced-motion: reduce) {
   .class-hero-showcase-frame::after,
   .class-hero-roster-frame::after,
+  .class-hero-showcase-glow,
   .class-hero-showcase-img,
   .class-hero-roster-img,
+  .class-hero-roster-cell::after,
   .hero-scene-cloud {
     animation: none !important;
   }

@@ -1,0 +1,369 @@
+/**
+ * «Вклад предметов» — полноширинные горизонтальные DPS-метры.
+ */
+
+.battle-detail-overlay:has(.battle-detail-modal--item-stats) {
+  align-items: center;
+  justify-content: center;
+  padding:
+    max(10px, env(safe-area-inset-top))
+    max(12px, env(safe-area-inset-right))
+    max(10px, env(safe-area-inset-bottom))
+    max(12px, env(safe-area-inset-left));
+}
+
+.battle-detail-modal--item-stats {
+  width: min(96vw, 1280px);
+  max-width: 1280px;
+  max-height: min(92vh, 900px);
+  margin: 0 auto;
+  border-radius: calc(18px * var(--ui-scale));
+  background: var(--meadow-panel);
+  border: 2px solid var(--meadow-border-soft);
+  box-shadow:
+    0 16px 48px var(--meadow-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  color: var(--meadow-ink);
+}
+
+.battle-detail-modal--item-stats .battle-detail-header {
+  padding: clamp(12px, 1.8vw, 16px) clamp(14px, 2vw, 20px);
+  background: rgba(92, 184, 92, 0.1);
+  border-bottom: 1px solid var(--meadow-border-soft);
+}
+
+.battle-detail-modal--item-stats .battle-detail-header h3 {
+  margin: 0;
+  color: var(--meadow-grass-dark);
+  font-size: var(--font-xl);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.battle-detail-modal--item-stats .battle-detail-copy,
+.battle-detail-modal--item-stats .battle-detail-close {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--meadow-border-soft);
+  border-radius: calc(10px * var(--ui-scale));
+  color: var(--meadow-ink);
+  min-width: calc(36px * var(--ui-scale));
+  min-height: calc(36px * var(--ui-scale));
+}
+
+.battle-detail-modal--item-stats .battle-detail-copy:hover,
+.battle-detail-modal--item-stats .battle-detail-close:hover {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: var(--meadow-border);
+  color: var(--meadow-grass-dark);
+}
+
+.battle-detail-modal--item-stats .battle-detail-copy.copied {
+  border-color: var(--meadow-grass);
+  color: var(--meadow-grass-dark);
+}
+
+/* Команды друг под другом — каждая таблица на всю ширину */
+.battle-detail-modal--item-stats .battle-detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(20px, 3vw, 32px);
+  padding: clamp(14px, 2vw, 22px);
+}
+
+.battle-detail-modal--item-stats .is-team {
+  margin-bottom: 0;
+  min-width: 0;
+}
+
+.battle-detail-modal--item-stats .is-team-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: calc(10px * var(--ui-scale));
+  padding-bottom: calc(8px * var(--ui-scale));
+  border-bottom: 2px solid var(--meadow-border-soft);
+}
+
+.battle-detail-modal--item-stats .is-team-label {
+  color: var(--meadow-grass-dark);
+  font-size: var(--font-lg);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+/* Сводка команды — горизонтальные чипы */
+.battle-detail-modal--item-stats .is-team-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(8px * var(--ui-scale));
+  margin-bottom: calc(12px * var(--ui-scale));
+}
+
+.battle-detail-modal--item-stats .is-summary-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(6px * var(--ui-scale));
+  padding: calc(6px * var(--ui-scale)) calc(12px * var(--ui-scale));
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid var(--meadow-border-soft);
+  font-size: var(--font-sm);
+  font-weight: 700;
+  color: var(--meadow-ink);
+}
+
+.battle-detail-modal--item-stats .is-chip-label {
+  color: var(--meadow-ink-muted);
+  font-weight: 600;
+}
+
+.battle-detail-modal--item-stats .is-chip-val {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+.battle-detail-modal--item-stats .is-chip-dmg { border-color: rgba(196, 74, 58, 0.35); }
+.battle-detail-modal--item-stats .is-chip-phys { border-color: rgba(196, 134, 26, 0.35); }
+.battle-detail-modal--item-stats .is-chip-magic { border-color: rgba(123, 79, 191, 0.35); }
+.battle-detail-modal--item-stats .is-chip-heal { border-color: rgba(61, 158, 74, 0.35); }
+.battle-detail-modal--item-stats .is-chip-block { border-color: rgba(122, 138, 114, 0.35); }
+.battle-detail-modal--item-stats .is-chip-poison { border-color: rgba(106, 61, 158, 0.35); }
+
+.battle-detail-modal--item-stats .is-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: none;
+  border-radius: calc(12px * var(--ui-scale));
+  background: rgba(255, 255, 255, 0.52);
+  box-shadow: inset 0 0 0 1px var(--meadow-border-soft);
+}
+
+.battle-detail-modal--item-stats .is-meter-table {
+  width: 100%;
+  min-width: 560px;
+  font-size: max(var(--font-md), calc(0.88rem * var(--type-scale, 1)));
+}
+
+.battle-detail-modal--item-stats .is-meter-table thead {
+  background: rgba(92, 184, 92, 0.12);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.battle-detail-modal--item-stats .is-meter-table th {
+  padding: calc(11px * var(--ui-scale)) calc(10px * var(--ui-scale));
+  color: var(--meadow-ink-muted);
+  font-weight: 700;
+  border-bottom: 1px solid var(--meadow-border-soft);
+  white-space: nowrap;
+}
+
+.battle-detail-modal--item-stats .is-meter-table td {
+  padding: calc(10px * var(--ui-scale)) calc(10px * var(--ui-scale));
+  border-top-color: rgba(92, 184, 92, 0.16);
+  color: var(--meadow-ink);
+  vertical-align: middle;
+}
+
+.battle-detail-modal--item-stats .is-meter-table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.battle-detail-modal--item-stats .is-meter-table tbody tr:hover {
+  background: rgba(92, 184, 92, 0.1);
+}
+
+.battle-detail-modal--item-stats .is-meter-table tfoot {
+  background: rgba(232, 163, 23, 0.1);
+}
+
+.battle-detail-modal--item-stats .is-meter-table .is-total-row td {
+  border-top: 2px solid rgba(232, 163, 23, 0.38);
+  font-weight: 800;
+  color: var(--meadow-ink);
+}
+
+.battle-detail-modal--item-stats .is-meter-table .is-total-row .is-name {
+  color: var(--meadow-gold);
+}
+
+.battle-detail-modal--item-stats .is-col-item {
+  min-width: 160px;
+  width: 22%;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: inherit;
+}
+
+.battle-detail-modal--item-stats .is-meter-table thead .is-col-item {
+  background: rgba(92, 184, 92, 0.12);
+}
+
+.battle-detail-modal--item-stats .is-meter-table tbody .is-col-item,
+.battle-detail-modal--item-stats .is-meter-table .is-item-cell {
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.battle-detail-modal--item-stats .is-meter-table tbody tr:nth-child(even) .is-item-cell {
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.battle-detail-modal--item-stats .is-meter-table tbody tr:hover .is-item-cell {
+  background: rgba(92, 184, 92, 0.14);
+}
+
+.battle-detail-modal--item-stats .is-col-hero {
+  min-width: 200px;
+  width: 28%;
+}
+
+.battle-detail-modal--item-stats .is-col-meter {
+  min-width: 110px;
+  width: 14%;
+}
+
+.battle-detail-modal--item-stats .is-col-atk {
+  width: 48px;
+  text-align: center !important;
+}
+
+.battle-detail-modal--item-stats .is-item-cell {
+  display: flex;
+  align-items: center;
+  gap: calc(8px * var(--ui-scale));
+  white-space: nowrap;
+}
+
+.battle-detail-modal--item-stats .is-item-cell .is-icon {
+  font-size: calc(1.35rem * var(--ui-scale));
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.battle-detail-modal--item-stats .is-item-cell .is-name {
+  color: var(--meadow-ink);
+  font-weight: 700;
+  overflow: visible;
+  text-overflow: unset;
+  white-space: nowrap;
+}
+
+.battle-detail-modal--item-stats .is-meter {
+  gap: calc(8px * var(--ui-scale));
+  min-height: calc(24px * var(--ui-scale));
+}
+
+.battle-detail-modal--item-stats .is-meter-track {
+  background: rgba(45, 74, 40, 0.1);
+  height: calc(10px * var(--ui-scale));
+  border-radius: 999px;
+  min-width: 48px;
+  flex: 1;
+}
+
+.battle-detail-modal--item-stats .is-meter-hero .is-meter-track {
+  height: calc(14px * var(--ui-scale));
+  min-width: 72px;
+}
+
+.battle-detail-modal--item-stats .is-meter-fill {
+  border-radius: 999px;
+}
+
+.battle-detail-modal--item-stats .is-meter-dmg .is-meter-fill {
+  background: linear-gradient(90deg, #c44a3a, #e86a5a);
+  box-shadow: none;
+}
+
+.battle-detail-modal--item-stats .is-meter-phys .is-meter-fill {
+  background: linear-gradient(90deg, #c4861a, #e8a317);
+  box-shadow: none;
+}
+
+.battle-detail-modal--item-stats .is-meter-magic .is-meter-fill {
+  background: linear-gradient(90deg, #7b4fbf, #a878e8);
+  box-shadow: none;
+}
+
+.battle-detail-modal--item-stats .is-meter-heal .is-meter-fill {
+  background: linear-gradient(90deg, #3d9e4a, #5cb85c);
+  box-shadow: none;
+}
+
+.battle-detail-modal--item-stats .is-meter-block .is-meter-fill {
+  background: linear-gradient(90deg, #7a8a72, #9aaa92);
+  box-shadow: none;
+}
+
+.battle-detail-modal--item-stats .is-meter-poison .is-meter-fill {
+  background: linear-gradient(90deg, #6a3d9e, #9a5fd4);
+  box-shadow: none;
+}
+
+.battle-detail-modal--item-stats .is-meter-val {
+  color: var(--meadow-ink);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  min-width: calc(36px * var(--ui-scale));
+  white-space: nowrap;
+}
+
+.battle-detail-modal--item-stats .is-share-pct {
+  font-size: var(--font-sm);
+  font-weight: 700;
+  color: var(--meadow-ink-muted);
+  min-width: calc(36px * var(--ui-scale));
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.battle-detail-modal--item-stats .is-meter-empty .is-meter-val,
+.battle-detail-modal--item-stats .is-atk.is-muted {
+  color: var(--meadow-ink-muted);
+  font-weight: 600;
+}
+
+.battle-detail-modal--item-stats .is-atk {
+  color: var(--meadow-grass-dark);
+  font-weight: 800;
+  font-size: var(--font-md);
+}
+
+.battle-detail-modal--item-stats .is-empty {
+  color: var(--meadow-ink-muted);
+  padding: calc(12px * var(--ui-scale)) 0;
+}
+
+@media (max-width: 640px) {
+  .battle-detail-modal--item-stats {
+    width: min(98vw, 100%);
+    max-width: none;
+    max-height: 94vh;
+  }
+
+  .battle-detail-modal--item-stats .is-col-item {
+    min-width: 120px;
+    width: 34%;
+  }
+
+  .battle-detail-modal--item-stats .is-col-hero {
+    min-width: 150px;
+    width: 38%;
+  }
+
+  .battle-detail-modal--item-stats .is-col-meter {
+    min-width: 90px;
+  }
+
+  .battle-detail-modal--item-stats .is-item-cell .is-icon {
+    font-size: calc(1.15rem * var(--ui-scale));
+  }
+}
+
+html[data-ui-tier="phone"] .battle-detail-modal--item-stats {
+  width: min(98vw, 100%);
+  max-width: none;
+}

@@ -79,10 +79,8 @@
 }
 
 #app[data-phase="prep"][data-prep-side="enemy"] #shop-panel .shop-card {
-  flex-direction: row-reverse;
   justify-content: flex-start;
   text-align: right;
-  padding: calc(2px * var(--ui-scale)) calc(4px * var(--ui-scale)) calc(2px * var(--ui-scale)) calc(22px * var(--ui-scale));
 }
 
 #app[data-phase="prep"][data-prep-side="enemy"] #shop-panel .shop-card .shop-item-main {
@@ -92,11 +90,6 @@
 #app[data-phase="prep"][data-prep-side="enemy"] #shop-panel .shop-item-visual .cost {
   right: auto;
   left: -3px;
-}
-
-#app[data-phase="prep"][data-prep-side="enemy"] .shop-pin {
-  right: auto;
-  left: 2px;
 }
 
 #app[data-phase="prep"] #shop-panel.shop-readonly .btn-recipe-book {
@@ -208,11 +201,11 @@
   min-width: 0;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-auto-rows: var(--shop-card-row-h);
+  grid-auto-rows: minmax(var(--shop-card-row-h), auto);
   align-content: start;
   justify-items: stretch;
   gap: calc(5px * var(--ui-scale));
-  overflow-x: hidden;
+  overflow-x: visible;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -225,15 +218,13 @@
 
 #app[data-phase="prep"] #shop-panel .shop-card {
   position: relative;
-  flex-direction: row;
   align-items: center;
   justify-content: flex-start;
   text-align: left;
   gap: calc(4px * var(--ui-scale));
-  height: var(--shop-card-row-h);
+  height: auto;
   min-height: var(--shop-card-row-h);
-  max-height: var(--shop-card-row-h);
-  padding: calc(2px * var(--ui-scale)) calc(22px * var(--ui-scale)) calc(2px * var(--ui-scale)) calc(4px * var(--ui-scale));
+  max-height: none;
   overflow: visible;
   background: transparent;
   border: none;
@@ -269,13 +260,7 @@
 }
 
 #app[data-phase="prep"] #shop-panel .shop-item-stack {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: calc(4px * var(--ui-scale));
-  min-width: 0;
-  max-width: 100%;
+  gap: calc(6px * var(--ui-scale));
 }
 
 #app[data-phase="prep"] #shop-panel .shop-item-visual {
@@ -285,6 +270,7 @@
   align-items: center;
   justify-content: center;
   padding: 0;
+  overflow: visible;
 }
 
 #app[data-phase="prep"] #shop-panel .shop-card .shop-item-visual .icon {
@@ -379,7 +365,7 @@ html[data-touch="true"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-
 
 #app[data-phase="prep"] #shop-panel .bench-panel .bench-card:not(.empty) {
   justify-content: center;
-  overflow: hidden;
+  overflow: visible;
   gap: calc(4px * var(--ui-scale));
 }
 
@@ -436,22 +422,6 @@ html[data-touch="true"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-
   font-size: var(--font-sm);
   line-height: 1;
   opacity: 0.85;
-}
-
-#app[data-phase="prep"] #shop-panel .shop-pin {
-  top: 2px;
-  right: 2px;
-  width: 18px;
-  height: 18px;
-  font-size: var(--font-xs);
-  border-radius: 4px;
-  opacity: 0.45;
-  z-index: 3;
-}
-
-#app[data-phase="prep"] #shop-panel .shop-pin:hover,
-#app[data-phase="prep"] #shop-panel .shop-pin.active {
-  opacity: 0.92;
 }
 
 /* Редкость: свечение иконки */
@@ -922,30 +892,6 @@ html[data-touch="true"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-
   cursor: help;
 }
 
-.shop-pin {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: none;
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.35);
-  cursor: pointer;
-  font-size: var(--font-xs);
-  line-height: 1;
-  opacity: 0.55;
-  transition: opacity 0.15s, background 0.15s;
-  z-index: 1;
-}
-
-.shop-pin:hover,
-.shop-pin.active {
-  opacity: 1;
-  background: rgba(88, 166, 255, 0.25);
-}
-
 .shop-hint {
   font-size: var(--font-sm);
   color: var(--muted);
@@ -980,16 +926,8 @@ html[data-prep-layout="stacked"] #app[data-phase="prep"] #shop-panel .shop-slots
   max-height: min(42dvh, 360px);
 }
 
-html[data-prep-layout="stacked"] #app[data-phase="prep"][data-prep-side="enemy"] #shop-panel .shop-card {
-  flex-direction: row;
-  justify-content: flex-start;
-  text-align: left;
-  padding: calc(6px * var(--ui-scale)) calc(28px * var(--ui-scale)) calc(6px * var(--ui-scale)) calc(8px * var(--ui-scale));
-}
-
-html[data-prep-layout="stacked"] #app[data-phase="prep"][data-prep-side="enemy"] .shop-pin {
-  left: auto;
-  right: 4px;
+html[data-prep-layout="stacked"] #app[data-phase="prep"][data-prep-side="enemy"] #shop-panel .shop-card:not(.empty) {
+  flex-direction: row-reverse;
 }
 
 html[data-prep-layout="stacked"] .shop-panel {
@@ -1002,11 +940,6 @@ html[data-prep-layout="stacked"] .bench-panel .bench-card {
 }
 
 html[data-prep-layout="stacked"] #app[data-phase="prep"] #shop-panel .shop-action-row .btn-secondary {
-  min-height: 44px;
-}
-
-html[data-prep-layout="stacked"] .shop-pin {
-  min-width: 44px;
   min-height: 44px;
 }
 
@@ -1158,6 +1091,7 @@ html[data-prep-layout="side"] #app[data-phase="prep"] #shop-panel .shop-action-r
   :root {
     --shop-panel-w: 380px;
   }
+}
 
 /* --- Shop panel --- */
 
@@ -1203,15 +1137,7 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .shop-panel .shop-sl
   min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  grid-auto-rows: var(--prep-shop-row-h, calc(96px * var(--ui-scale)));
   max-height: none;
-}
-
-html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .shop-panel .shop-card,
-html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .shop-panel .shop-card.empty {
-  height: var(--prep-shop-row-h, calc(96px * var(--ui-scale)));
-  min-height: var(--prep-shop-row-h, calc(96px * var(--ui-scale)));
-  max-height: var(--prep-shop-row-h, calc(96px * var(--ui-scale)));
 }
 
 html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #shop-panel .shop-sell-zone {

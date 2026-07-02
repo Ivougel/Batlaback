@@ -12,12 +12,12 @@ const PrepDragArc = (() => {
   const DASH_OFFSET_SCALE = 13;
 
   const RARITY_PALETTE = {
-    common:    { a: "#9eb4d4", b: "#8ecde8", c: "#a8b8d0" },
-    rare:      { a: "#7eb8ff", b: "#5ecfff", c: "#88a8e8" },
-    epic:      { a: "#c49bff", b: "#a878ff", c: "#b8a0e8" },
-    legendary: { a: "#ffc86a", b: "#ffb040", c: "#e8b060" },
-    unique:    { a: "#7affc4", b: "#50e8a8", c: "#88e8c0" },
-    godly:     { a: "#ff8a9a", b: "#ff6080", c: "#ffa0b0" },
+    common:    { a: "#7a9ec8", b: "#5eb8e8", c: "#8b3dff" },
+    rare:      { a: "#4a9eff", b: "#2ec8ff", c: "#7c4dff" },
+    epic:      { a: "#b86bff", b: "#9b58ff", c: "#e040fb" },
+    legendary: { a: "#ffb830", b: "#ff9a10", c: "#ff6bcb" },
+    unique:    { a: "#3ee89a", b: "#20d878", c: "#58a6ff" },
+    godly:     { a: "#ff6080", b: "#ff3860", c: "#ffb830" },
   };
 
   const VALIDITY_TINT = {
@@ -182,7 +182,7 @@ const PrepDragArc = (() => {
       gradStopA.setAttribute("stop-color", pal.a);
       gradStopB.setAttribute("stop-color", pal.b);
       gradStopC.setAttribute("stop-color", pal.c);
-      const op = dropState === "valid" ? 0.52 : dropState === "invalid" ? 0.38 : 0.44;
+      const op = dropState === "valid" ? 0.88 : dropState === "invalid" ? 0.72 : 0.82;
       [gradStopA, gradStopB, gradStopC].forEach((s) => s.setAttribute("stop-opacity", String(op * boost)));
     }
     layerEl?.classList.toggle("prep-drag-arc-layer--valid", dropState === "valid");
@@ -200,9 +200,9 @@ const PrepDragArc = (() => {
       layerEl.innerHTML = `
         <defs>
           <linearGradient id="prep-drag-arc-grad" gradientUnits="userSpaceOnUse">
-            <stop id="prep-drag-arc-stop-a" offset="0%" stop-color="#b8a0e8" stop-opacity="0.44"/>
-            <stop id="prep-drag-arc-stop-b" offset="50%" stop-color="#8ecde8" stop-opacity="0.5"/>
-            <stop id="prep-drag-arc-stop-c" offset="100%" stop-color="#a99ad4" stop-opacity="0.4"/>
+            <stop id="prep-drag-arc-stop-a" offset="0%" stop-color="#9b58ff" stop-opacity="0.85"/>
+            <stop id="prep-drag-arc-stop-b" offset="50%" stop-color="#c77dff" stop-opacity="0.92"/>
+            <stop id="prep-drag-arc-stop-c" offset="100%" stop-color="#7c4dff" stop-opacity="0.8"/>
           </linearGradient>
           <filter id="prep-drag-arc-shimmer" x="-30%" y="-30%" width="160%" height="160%">
             <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="2" seed="4" result="noise">
@@ -463,8 +463,8 @@ const PrepDragArc = (() => {
 
     linkHaloPathEl.setAttribute("d", d);
     linkCorePathEl.setAttribute("d", d);
-    linkHaloPathEl.setAttribute("stroke", `rgba(100, 210, 140, ${(0.2 + pulseA * 0.14).toFixed(3)})`);
-    linkHaloPathEl.setAttribute("stroke-width", String(5 + pulseA * 2.2));
+    linkHaloPathEl.setAttribute("stroke", `rgba(78, 220, 120, ${(0.45 + pulseA * 0.2).toFixed(3)})`);
+    linkHaloPathEl.setAttribute("stroke-width", String(9 + pulseA * 3));
     linkHaloPathEl.setAttribute("stroke-dasharray", dashPattern);
     linkHaloPathEl.setAttribute("stroke-dashoffset", String(dashOffset));
 
@@ -475,10 +475,10 @@ const PrepDragArc = (() => {
         : "rgba(120, 220, 155, 0.82)";
     linkCorePathEl.setAttribute("stroke", linkStroke);
     const linkWidth = dropState === "invalid"
-      ? 2.35 + pulseB * 0.55
+      ? 3.6 + pulseB * 0.7
       : dropState === "valid"
-        ? 2.1 + pulseB * 0.5
-        : 1.8 + pulseB * 0.45;
+        ? 3.2 + pulseB * 0.65
+        : 2.8 + pulseB * 0.55;
     linkCorePathEl.setAttribute("stroke-width", String(linkWidth));
     linkCorePathEl.setAttribute("stroke-dasharray", dashPattern);
     linkCorePathEl.setAttribute("stroke-dashoffset", String(dashOffset));
@@ -510,12 +510,12 @@ const PrepDragArc = (() => {
     const flowOffset = -pulsePhase * DASH_OFFSET_SCALE + 9;
     const dashPattern = `${dashPeriod.toFixed(1)} ${dashGap.toFixed(1)}`;
 
-    const haloWidth = 4.5 + pulseA * 2;
-    const coreWidth = 1.2 + pulseA * 0.35;
-    const flowWidth = 1 + pulseB * 0.3;
-    const haloOpacity = 0.08 + pulseA * 0.06;
-    const coreOpacity = 0.3 + pulseB * 0.12;
-    const flowOpacity = 0.22 + pulseA * 0.1;
+    const haloWidth = 10 + pulseA * 4;
+    const coreWidth = 3.2 + pulseA * 1.1;
+    const flowWidth = 2.2 + pulseB * 0.8;
+    const haloOpacity = 0.38 + pulseA * 0.18;
+    const coreOpacity = 0.88 + pulseB * 0.1;
+    const flowOpacity = 0.55 + pulseA * 0.2;
 
     [haloPathEl, flowPathEl, corePathEl].forEach((el) => {
       if (!el) return;
@@ -524,13 +524,13 @@ const PrepDragArc = (() => {
     if (measurePathEl) measurePathEl.setAttribute("d", d);
 
     if (haloPathEl) {
-      haloPathEl.setAttribute("stroke", `rgba(148, 188, 230, ${haloOpacity.toFixed(3)})`);
+      haloPathEl.setAttribute("stroke", `rgba(139, 61, 255, ${haloOpacity.toFixed(3)})`);
       haloPathEl.setAttribute("stroke-width", String(haloWidth));
       haloPathEl.setAttribute("stroke-dasharray", dashPattern);
       haloPathEl.setAttribute("stroke-dashoffset", String(dashOffset));
     }
     if (flowPathEl) {
-      flowPathEl.setAttribute("stroke", `rgba(200, 230, 255, ${flowOpacity.toFixed(3)})`);
+      flowPathEl.setAttribute("stroke", `rgba(199, 125, 255, ${flowOpacity.toFixed(3)})`);
       flowPathEl.setAttribute("stroke-width", String(flowWidth));
       flowPathEl.setAttribute("stroke-dasharray", `2 ${(dashPeriod + dashGap).toFixed(1)}`);
       flowPathEl.setAttribute("stroke-dashoffset", String(flowOffset));

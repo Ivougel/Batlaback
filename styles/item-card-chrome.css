@@ -1,0 +1,131 @@
+/**
+ * Item card chrome — иконка + footprint (Backpack Battles style).
+ * Горизонтальный кластер: герой слева, сетка формы справа; контент не обрезается.
+ */
+
+.item-card-cluster,
+#app[data-phase="prep"] #shop-panel .bench-card .item-card-cluster {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: calc(6px * var(--ui-scale, 1));
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Магазин: только иконка; footprint — оверлей на углу (BB-style) */
+#app[data-phase="prep"] #shop-panel .shop-item-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  max-width: 100%;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-item-visual .item-shape-mini--shop-overlay {
+  position: absolute;
+  right: calc(-4px * var(--ui-scale, 1));
+  bottom: calc(-2px * var(--ui-scale, 1));
+  z-index: 3;
+  margin: 0;
+  opacity: 0.95;
+  pointer-events: none;
+}
+
+.item-card-cluster > .shop-item-visual,
+.item-card-cluster > .item-icon-shell,
+.item-card-cluster > .icon {
+  flex-shrink: 0;
+}
+
+.item-card-cluster .item-shape-mini,
+#app[data-phase="prep"] #shop-panel .shop-card .item-shape-mini,
+#app[data-phase="prep"] #shop-panel .bench-card .item-shape-mini {
+  flex: 0 0 auto;
+  align-self: center;
+  margin: 0;
+  opacity: 0.88;
+}
+
+/* Мягкая подложка footprint — читаемость на любом фоне */
+.item-shape-mini {
+  padding: calc(3px * var(--ui-scale, 1));
+  background: rgba(0, 0, 0, 0.24);
+  border-radius: calc(6px * var(--ui-scale, 1));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Карточки магазина/скамейки: min-height, без жёсткого max-height */
+#app[data-phase="prep"] #shop-panel .shop-slots {
+  grid-auto-rows: minmax(var(--shop-card-row-h, calc(96px * var(--ui-scale, 1))), auto);
+  align-items: stretch;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-card:not(.empty),
+#app[data-phase="prep"] #shop-panel .shop-card.empty {
+  height: auto;
+  max-height: none;
+  min-height: var(--shop-card-row-h, calc(96px * var(--ui-scale, 1)));
+  overflow: visible;
+}
+
+#app[data-phase="prep"] #shop-panel .bench-panel .bench-card:not(.empty) {
+  height: auto;
+  max-height: none;
+  overflow: visible;
+}
+
+#app[data-phase="prep"] #shop-panel .bench-panel .bench-slots {
+  grid-auto-rows: minmax(var(--prep-bench-row-h, calc(52px * var(--ui-scale, 1))), auto);
+}
+
+/* Усиления: иконка + слот-тег под ней */
+.shop-item-stack--enhancement {
+  flex-direction: column;
+  gap: calc(4px * var(--ui-scale, 1));
+}
+
+.shop-item-stack--enhancement .enh-shop-slot-tag {
+  flex: 0 0 auto;
+  align-self: center;
+  max-width: calc(72px * var(--ui-scale, 1));
+  padding: calc(2px * var(--ui-scale, 1)) calc(5px * var(--ui-scale, 1));
+  border-radius: calc(6px * var(--ui-scale, 1));
+  background: rgba(120, 90, 200, 0.18);
+  border: 1px solid rgba(160, 130, 255, 0.32);
+  line-height: 1.15;
+  white-space: normal;
+  word-break: break-word;
+  text-align: center;
+}
+
+/* Viewport-fit / tablet: та же логика minmax */
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .shop-panel .shop-slots {
+  grid-auto-rows: minmax(var(--prep-shop-row-h, calc(96px * var(--ui-scale, 1))), auto);
+}
+
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .shop-panel .shop-card,
+html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .shop-panel .shop-card.empty {
+  height: auto;
+  max-height: none;
+  min-height: var(--prep-shop-row-h, calc(96px * var(--ui-scale, 1)));
+}
+
+html[data-prep-shop-drawer="true"][data-layout-profile="tablet-portrait"] #app[data-phase="prep"] #shop-panel .shop-slots {
+  grid-auto-rows: minmax(var(--prep-shop-row-h, 68px), auto);
+}
+
+html[data-prep-shop-drawer="true"][data-layout-profile="tablet-portrait"] #app[data-phase="prep"] .shop-panel .shop-card,
+html[data-prep-shop-drawer="true"][data-layout-profile="tablet-portrait"] #app[data-phase="prep"] .shop-panel .shop-card.empty {
+  height: auto;
+  max-height: none;
+  min-height: var(--prep-shop-row-h, 68px);
+}
+
+html[data-prep-shop-drawer="true"][data-layout-profile="tablet-portrait"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-card {
+  height: auto;
+  max-height: none;
+  min-height: var(--prep-bench-row-h, 52px);
+}

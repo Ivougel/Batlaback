@@ -1,15 +1,24 @@
 /**
- * Классы игрока — стартовый лоадаут и пассивные бонусы забега.
+ * Герои игрока — стартовый лоадаут и пассивные бонусы забега.
+ * noviceLabel / heroLabel — имя героя; heroLore — описание персонажа на экране выбора.
  */
+const CLASS_HERO_ROSTER_COPY = {
+  title: "Мартовичок · Роксивичок · Морковичок · Мыковичок",
+  hint: "Девочки-звери собрались, чтобы скрестить кличку с именем — и решить, кто идёт в забег.",
+};
+
 const CLASS_CATALOG = {
   warrior: {
     id: "warrior",
     name: "Воин",
     noviceLabel: "Воин-мартовичок",
+    heroLabel: "Воин-мартовичок",
+    heroLore: "Вертлявая попка. Её главная цель в жизни — оставаться таким же милым арбузиком на тропинке.",
     icon: "⚔️",
     iconSrc: "img/sticker_warrior.png",
     heroPortraitSrc: "img/gem/Warior new.png",
     desc: "+3% максимального здоровья",
+    loadoutDesc: "Ржавый меч · железный шлем",
     starterItems: ["rusty_sword", "iron_helmet"],
     combatBonus: { type: "maxHpMult", value: 0.03 },
     priorityTags: ["weapon", "armor", "shield"],
@@ -18,10 +27,13 @@ const CLASS_CATALOG = {
     id: "rogue",
     name: "Разбойник",
     noviceLabel: "Разбойник-роксивичок",
+    heroLabel: "Разбойник-роксивичок",
+    heroLore: "Кошка-ниндзя: совмещает две жизни — минирует рисовые поля минами-какашками и сияет звездой чата в Telegram.",
     icon: "🗡️",
     iconSrc: "img/sticker_rogue.png",
     heroPortraitSrc: "img/gem/roguenew.png",
     desc: "+3% скорость атаки",
+    loadoutDesc: "Кинжал · яд",
     starterItems: ["dagger", "poison_vial"],
     combatBonus: { type: "attackSpeedMult", value: 0.03 },
     priorityTags: ["weapon", "poison"],
@@ -30,10 +42,13 @@ const CLASS_CATALOG = {
     id: "mage",
     name: "Маг",
     noviceLabel: "Маг-морковичок",
+    heroLabel: "Маг-морковичок",
+    heroLore: "Колдует магию: трансгрессирует какашки в ванну и насылает блестящую магию по полю боя.",
     icon: "🔮",
     iconSrc: "img/sticker_mage.png",
     heroPortraitSrc: "img/gem/Magenew.png",
     desc: "+4% магический урон · мана-стаки +25% к урону",
+    loadoutDesc: "Посох ученика · мана-кристалл",
     starterItems: ["apprentice_staff", "mana_crystal"],
     combatBonus: { type: "magicDamageMult", value: 0.04 },
     priorityTags: ["magic", "gem", "fire"],
@@ -42,10 +57,13 @@ const CLASS_CATALOG = {
     id: "priest",
     name: "Жрец",
     noviceLabel: "Жрец-мыковичок",
+    heroLabel: "Жрец-мыковичок",
+    heroLore: "Сочная святая ПОПка, оперная певица. Её печатают в журнале DOG — любимая жена известного писателя.",
     icon: "✨",
     iconSrc: "img/sticker_priest.png",
     heroPortraitSrc: "img/gem/priestnew.png",
     desc: "+1.5% макс. HP за еду · еда лечит на 8% сильнее",
+    loadoutDesc: "Яблоко · банан",
     starterItems: ["apple", "banana"],
     combatBonus: { type: "foodInventory", maxHpPctPerFood: 0.015, foodHealMult: 0.08 },
     priorityTags: ["food", "potion", "nature"],
@@ -77,12 +95,100 @@ function pickRandomClassId() {
   return keys[Math.floor(Math.random() * keys.length)];
 }
 
+function getHeroLabel(classId) {
+  const cls = getClassById(classId);
+  return cls?.heroLabel || cls?.noviceLabel || cls?.name || null;
+}
+
 function getClassHeroPortraitSrc(classId) {
   const cls = getClassById(classId);
   return cls?.heroPortraitSrc || cls?.iconSrc || null;
 }
 
+/** Волшебная рамка героя (prep / HUD) — свой стиль на каждый класс. */
+function renderHeroPortraitFrameHTML(classId, options = {}) {
+  const cls = getClassById(classId);
+  const safeClass = cls ? classId : "warrior";
+  const { alt = cls?.name || "" } = options;
+  const src = getClassHeroPortraitSrc(classId);
+  const safeAlt = escapeClassHtml(alt);
+
+  if (!src && !cls?.icon) {
+    return `<span class="prep-character-emoji">❓</span>`;
+  }
+
+  const portraitHtml = src
+    ? `<img class="hero-portrait-frame__img prep-character-img" src="${escapeClassHtml(src)}" alt="${safeAlt}" draggable="false">`
+    : `<span class="prep-character-emoji hero-portrait-frame__emoji">${cls.icon}</span>`;
+
+  const sparkles = [1, 2, 3, 4, 5, 6].map(
+    (i) => `<span class="hero-portrait-sparkle hero-portrait-sparkle--${i}" aria-hidden="true"></span>`,
+  ).join("");
+
+  return `<div class="hero-portrait-frame" data-class="${escapeClassHtml(safeClass)}">
+    <div class="hero-portrait-frame__scene" aria-hidden="true">
+      <div class="hero-portrait-frame__sun"></div>
+      <div class="hero-portrait-frame__glow"></div>
+      <div class="hero-portrait-frame__sparkles">${sparkles}</div>
+      <div class="hero-portrait-frame__grass"></div>
+    </div>
+    ${portraitHtml}
+    <div class="hero-portrait-frame__ornament" aria-hidden="true"></div>
+  </div>`;
+}
+
+function getHeroLore(classId) {
+  return getClassById(classId)?.heroLore || "";
+}
+
+function syncClassHeroRosterCaption() {
+  const titleEl = document.querySelector(".class-hero-roster-title");
+  const hintEl = document.querySelector(".class-hero-roster-hint");
+  if (titleEl) titleEl.textContent = CLASS_HERO_ROSTER_COPY.title;
+  if (hintEl) hintEl.textContent = CLASS_HERO_ROSTER_COPY.hint;
+}
+
+function syncClassPickerCardsFromCatalog() {
+  document.querySelectorAll(".class-card.glass-card[data-class]").forEach((card) => {
+    const cls = getClassById(card.dataset.class);
+    if (!cls) return;
+    const nameEl = card.querySelector(".class-name");
+    const descEl = card.querySelector(".class-desc");
+    const bonusEl = card.querySelector(".class-bonus");
+    if (nameEl) nameEl.textContent = cls.noviceLabel || cls.heroLabel || cls.name;
+    if (descEl) {
+      descEl.textContent = "";
+      descEl.classList.add("hidden");
+      descEl.setAttribute("aria-hidden", "true");
+    }
+    if (bonusEl) bonusEl.textContent = cls.desc || "";
+  });
+  document.querySelectorAll(".opponent-class-card[data-opponent-class]").forEach((card) => {
+    const cls = getClassById(card.dataset.opponentClass);
+    if (!cls) return;
+    const nameEl = card.querySelector(".class-name");
+    const descEl = card.querySelector(".class-desc");
+    if (nameEl) nameEl.textContent = cls.noviceLabel || cls.heroLabel || cls.name;
+    if (descEl) {
+      descEl.textContent = cls.desc || cls.loadoutDesc || "";
+      descEl.classList.remove("hidden");
+      descEl.removeAttribute("aria-hidden");
+    }
+  });
+}
+
 const CLASS_HERO_ROSTER_ORDER = ["warrior", "rogue", "mage", "priest"];
+
+function setClassHeroShowcaseMode(mode) {
+  const single = document.getElementById("class-hero-showcase-single");
+  const roster = document.getElementById("class-hero-showcase-roster");
+  if (!single || !roster) return;
+  const showRoster = mode === "roster";
+  single.classList.toggle("hidden", showRoster);
+  roster.classList.toggle("hidden", !showRoster);
+  single.setAttribute("aria-hidden", showRoster ? "true" : "false");
+  roster.setAttribute("aria-hidden", showRoster ? "false" : "true");
+}
 
 function hideClassHeroShowcase() {
   const showcase = document.getElementById("class-hero-showcase");
@@ -99,33 +205,29 @@ function hideClassHeroShowcase() {
 
 function ensureClassHeroRosterGrid() {
   const grid = document.getElementById("class-hero-roster-grid");
-  if (!grid || grid.dataset.built === "1") return;
+  if (!grid || grid.dataset.built === "2") return;
   grid.innerHTML = CLASS_HERO_ROSTER_ORDER.map((classId, index) => {
     const cls = getClassById(classId);
     const src = getClassHeroPortraitSrc(classId);
     if (!cls || !src) return "";
     return `
       <div class="class-hero-roster-cell" data-class="${classId}" style="--roster-i:${index}">
-        <div class="class-hero-roster-cell-glow" aria-hidden="true"></div>
         <img class="class-hero-roster-img" src="${escapeClassHtml(src)}" alt="${escapeClassHtml(cls.noviceLabel || cls.name)}" draggable="false">
-        <span class="class-hero-roster-label">${escapeClassHtml(cls.noviceLabel || cls.name)}</span>
+        <span class="class-hero-roster-label">${escapeClassHtml(cls.heroLabel || cls.noviceLabel || cls.name)}</span>
       </div>
     `;
   }).join("");
-  grid.dataset.built = "1";
+  grid.dataset.built = "2";
 }
 
 function updateClassHeroRosterShowcase() {
   const showcase = document.getElementById("class-hero-showcase");
-  const single = document.getElementById("class-hero-showcase-single");
-  const roster = document.getElementById("class-hero-showcase-roster");
   const overlay = document.getElementById("class-overlay");
-  if (!showcase || !roster) return;
+  if (!showcase) return;
 
   ensureClassHeroRosterGrid();
-  single?.classList.add("hidden");
-  roster.classList.remove("hidden");
-  roster.setAttribute("aria-hidden", "false");
+  syncClassHeroRosterCaption();
+  setClassHeroShowcaseMode("roster");
 
   showcase.classList.remove("hidden");
   showcase.classList.add("is-visible", "class-hero-showcase--roster");
@@ -136,8 +238,6 @@ function updateClassHeroRosterShowcase() {
 
 function updateClassHeroShowcase(classId) {
   const showcase = document.getElementById("class-hero-showcase");
-  const single = document.getElementById("class-hero-showcase-single");
-  const roster = document.getElementById("class-hero-showcase-roster");
   const img = document.getElementById("class-hero-showcase-img");
   const nameEl = document.getElementById("class-hero-showcase-name");
   const descEl = document.getElementById("class-hero-showcase-desc");
@@ -150,16 +250,14 @@ function updateClassHeroShowcase(classId) {
     return;
   }
 
-  roster?.classList.add("hidden");
-  roster?.setAttribute("aria-hidden", "true");
-  single?.classList.remove("hidden");
+  setClassHeroShowcaseMode("single");
   showcase.classList.remove("class-hero-showcase--roster");
 
   const src = getClassHeroPortraitSrc(classId);
   if (img.getAttribute("src") !== src) img.setAttribute("src", src || "");
-  img.alt = cls.noviceLabel || cls.name;
-  if (nameEl) nameEl.textContent = cls.noviceLabel || cls.name;
-  if (descEl) descEl.textContent = cls.desc || "";
+  img.alt = cls.heroLabel || cls.noviceLabel || cls.name;
+  if (nameEl) nameEl.textContent = cls.heroLabel || cls.noviceLabel || cls.name;
+  if (descEl) descEl.textContent = cls.heroLore || cls.desc || "";
 
   showcase.dataset.class = classId;
   showcase.classList.remove("hidden");

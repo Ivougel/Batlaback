@@ -1,0 +1,37 @@
+.pass-laugh-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 125;
+  pointer-events: none;
+  overflow: hidden;
+  contain: strict;
+}
+
+.pass-laugh-layer:not(.pass-laugh-layer--active) {
+  visibility: hidden;
+}
+
+.pass-laugh-ball {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  line-height: 1;
+  transform-origin: center center;
+  will-change: transform, opacity;
+  user-select: none;
+  filter: drop-shadow(0 3px 6px rgba(20, 30, 18, 0.18));
+}
+
+.settings-pass-btn {
+  width: 100%;
+  justify-content: center;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.settings-row--pass {
+  margin-top: calc(4px * var(--ui-scale));
+  padding-top: calc(8px * var(--ui-scale));
+  border-top: 1px solid rgba(92, 184, 92, 0.22);
+}

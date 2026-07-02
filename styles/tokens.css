@@ -10,15 +10,76 @@
  */
 
 :root {
-  /* Colors */
-  --bg: #0d1117;
-  --panel: #161b22;
-  --border: #30363d;
-  --gold: #f0c14b;
-  --hp: #f85149;
-  --accent: #58a6ff;
-  --text: #e6edf3;
-  --muted: #8b949e;
+  /* ─── Meadow world (весёлые звери на лугу) ─── */
+  --meadow-sky-top: #7ec8e3;
+  --meadow-sky-mid: #a8dadc;
+  --meadow-grass-mid: #8fd694;
+  --meadow-grass: #5cb85c;
+  --meadow-grass-dark: #4a9e4a;
+  --meadow-cream: #fff9eb;
+  --meadow-cream-deep: #f5edd4;
+  --meadow-ink: #2d4a28;
+  --meadow-ink-muted: #5a7354;
+  --meadow-gold: #e8a317;
+  --meadow-gold-bright: #f5c842;
+  --meadow-panel: rgba(255, 252, 240, 0.94);
+  --meadow-panel-solid: #fff9eb;
+  --meadow-border: rgba(92, 184, 92, 0.42);
+  --meadow-border-soft: rgba(92, 184, 92, 0.28);
+  --meadow-shadow: rgba(46, 100, 50, 0.18);
+  --meadow-overlay: rgba(45, 74, 40, 0.72);
+  --meadow-chrome: rgba(255, 249, 235, 0.96);
+
+  /* Prep juice — читаемость на лугу (Clash / BB dopamine HUD) */
+  --juice-ink: #1a3318;
+  --juice-ink-soft: #3d5c38;
+  --juice-panel: rgba(255, 252, 240, 0.96);
+  --juice-panel-soft: rgba(255, 255, 255, 0.82);
+  --juice-stroke: rgba(255, 255, 255, 0.92);
+  --juice-shadow: 0 4px 18px rgba(30, 60, 28, 0.22);
+  --juice-shadow-lift: 0 6px 22px rgba(30, 60, 28, 0.28);
+  --juice-text-outline: 0 1px 0 rgba(255, 255, 255, 0.75);
+  --juice-text-legible:
+    0 1px 0 rgba(255, 255, 255, 0.95),
+    0 0 14px rgba(255, 255, 255, 0.6),
+    0 1px 4px rgba(26, 51, 24, 0.4);
+  --juice-magic: #8b3dff;
+  --juice-magic-bright: #c77dff;
+  --juice-magic-glow: rgba(139, 61, 255, 0.55);
+
+  /* Алиасы для class-intro-theme */
+  --intro-sky-top: var(--meadow-sky-top);
+  --intro-sky-mid: var(--meadow-sky-mid);
+  --intro-grass-mid: var(--meadow-grass-mid);
+  --intro-grass: var(--meadow-grass);
+  --intro-grass-dark: var(--meadow-grass-dark);
+  --intro-cream: var(--meadow-cream);
+  --intro-cream-deep: var(--meadow-cream-deep);
+  --intro-ink: var(--meadow-ink);
+  --intro-ink-muted: var(--meadow-ink-muted);
+  --intro-gold: var(--meadow-gold);
+  --intro-gold-bright: var(--meadow-gold-bright);
+  --intro-panel-border: rgba(255, 255, 255, 0.72);
+  --intro-card-border: var(--meadow-border);
+  --intro-shadow: var(--meadow-shadow);
+
+  /* Canvas grid (prep рюкзак) */
+  --canvas-cell-a: #c5ddb8;
+  --canvas-cell-b: #b8d4a8;
+  --canvas-cell-blocked: #a8c49a;
+  --canvas-glow-0: rgba(143, 214, 148, 0.2);
+  --canvas-glow-1: rgba(92, 184, 92, 0.08);
+  --canvas-battle-fill: rgba(143, 214, 148, 0.35);
+
+  /* Colors — semantic (meadow remap) */
+  --bg: var(--meadow-sky-mid);
+  --panel: var(--meadow-panel);
+  --border: var(--meadow-border);
+  --gold: var(--meadow-gold-bright);
+  --hp: #e05a4f;
+  --accent: var(--meadow-grass-dark);
+  --text: var(--meadow-ink);
+  --muted: var(--meadow-ink-muted);
   --ui-scale: 1;
   --type-scale: 1;
   --game-scale: 1;
@@ -50,13 +111,16 @@
   --avatar-battle-size: calc(282px * var(--ui-scale));
   --hero-portrait-bleed: 1.12;
   --hero-hud-overlap: calc(16px * var(--ui-scale));
-  --hero-name-scrim: linear-gradient(180deg, rgba(13, 17, 23, 0.78) 0%, rgba(13, 17, 23, 0.2) 55%, transparent 100%);
-  --hero-chrome-scrim: linear-gradient(180deg, transparent 0%, rgba(13, 17, 23, 0.45) 28%, rgba(13, 17, 23, 0.92) 100%);
+  --hero-name-scrim: linear-gradient(180deg, rgba(45, 74, 40, 0.82) 0%, rgba(45, 74, 40, 0.22) 55%, transparent 100%);
+  --hero-chrome-scrim: linear-gradient(180deg, transparent 0%, rgba(45, 74, 40, 0.42) 28%, rgba(45, 74, 40, 0.9) 100%);
   --hero-card-min-portrait-h: calc(140px * var(--ui-scale));
   --avatar-effects-panel-h: calc(68px * var(--ui-scale));
   --battle-avatar-card-w: calc(210px * var(--ui-scale));
 
   --combatant-icon-gap: calc(36px * var(--ui-scale));
+  /* Лобби-ростер prep: якорь масштаба — эмодзи кнопки «скрыть» и аватары в списке */
+  --lobby-roster-emoji-size: calc(1.25rem * var(--ui-scale));
+  --lobby-roster-avatar-size: calc(var(--lobby-roster-emoji-size) * 1.88);
   --class-sticker-size: calc(160px * var(--game-scale));
   --game-item-icon-size: calc(54px * var(--game-scale));
   --game-item-icon-font: 2.025rem;
@@ -133,7 +197,13 @@
   --doll-layer-w: var(--prep-doll-slot-width);
   --doll-layer-h: var(--prep-hero-slot-height);
   --shop-panel-w: 320px;
-  --shop-card-row-h: calc(132px * var(--ui-scale, 1));
+  --prep-build-emoji-btn-scale: 1;
+  --prep-build-emoji-btn-size: clamp(
+    calc(2.6rem * var(--ui-scale, 1)),
+    calc(var(--shop-panel-w) * 0.18 * var(--prep-build-emoji-btn-scale, 1)),
+    calc(4.5rem * var(--ui-scale, 1))
+  );
+  --shop-card-row-h: calc(96px * var(--ui-scale, 1));
   --shop-item-icon-size: calc(72px * var(--game-scale, 1));
   --shop-item-icon-font: calc(56px * var(--game-scale, 1));
   --shop-item-icon-duo-width: calc(var(--shop-item-icon-size) * 2.05);

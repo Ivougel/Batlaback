@@ -16,6 +16,10 @@ const LayoutScales = (() => {
     return readCssPx("--game-scale", uiScale());
   }
 
+  function lobbyRosterEmojiSize() {
+    return readCssPx("--lobby-roster-emoji-size", Math.round(20 * uiScale()));
+  }
+
   function typeScale() {
     return readCssPx("--type-scale", 1);
   }
@@ -65,6 +69,7 @@ const LayoutScales = (() => {
     readCssPx,
     uiScale,
     gameScale,
+    lobbyRosterEmojiSize,
     typeScale,
     typePx,
     gamePx,

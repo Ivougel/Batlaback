@@ -46,6 +46,8 @@ function showDetailPopup(title, bodyHtml, getCopyText) {
 
   titleEl.textContent = title;
   bodyEl.innerHTML = bodyHtml;
+  overlay.querySelector(".battle-detail-modal")
+    ?.classList.toggle("battle-detail-modal--item-stats", !!bodyEl.querySelector(".is-meter-table"));
   detailPopupCopyFn = typeof getCopyText === "function" ? getCopyText : null;
   if (copyBtn) {
     copyBtn.classList.toggle("hidden", !detailPopupCopyFn);
@@ -62,7 +64,9 @@ function hideDetailPopup() {
   overlay?.classList.add("hidden");
   overlay?.setAttribute("aria-hidden", "true");
   detailPopupCopyFn = null;
-  document.getElementById("battle-detail-body").innerHTML = "";
+  const bodyEl = document.getElementById("battle-detail-body");
+  bodyEl.innerHTML = "";
+  overlay?.querySelector(".battle-detail-modal")?.classList.remove("battle-detail-modal--item-stats");
   if (typeof refreshGamepadHints === "function") refreshGamepadHints();
   if (typeof applyUiLayout === "function") applyUiLayout();
 }

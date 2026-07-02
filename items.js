@@ -472,7 +472,7 @@ function renderItemShapeMiniHTML(def, options = {}) {
   const { minCol, minRow, cols, rows } = getShapeBounds(shape);
   const maxDim = Math.max(cols, rows);
   const cellPx = size === "sm"
-    ? (maxDim <= 2 ? 7 : maxDim === 3 ? 6 : 5)
+    ? (maxDim <= 2 ? 8 : maxDim === 3 ? 7 : 6)
     : (maxDim <= 2 ? 10 : maxDim === 3 ? 8 : 6);
   const color = def.color || "#58a6ff";
   const label = `${cols}×${rows}`;

@@ -275,9 +275,22 @@ function sellSelected(side = rt.getPrepViewSide()) {
   rt.updateUI();
 }
 
-function renderShopCardHTML(def, { extraClasses = "", innerBefore = "", dataAttrs = "", shapeSize = "md" } = {}) {
+function renderShopPinButton(index, frozen, editable) {
+  if (!editable) return "";
+  const label = frozen
+    ? "Открепить — предмет снова может исчезнуть при обновлении"
+    : "Закрепить — оставить в магазине после обновления";
+  return `<button type="button" class="shop-pin${frozen ? " active" : ""}" data-pin="${index}" title="${label}" aria-label="${label}" aria-pressed="${frozen ? "true" : "false"}"><span class="shop-pin-glyph" aria-hidden="true">${frozen ? "📌" : "📍"}</span></button>`;
+}
+
+function renderShopCardHTML(def, { extraClasses = "", innerBefore = "", dataAttrs = "", shapeSize = "md", showShape = true } = {}) {
   const classes = getRarityCardClasses(def.rarity, ["shop-card", extraClasses].filter(Boolean).join(" "));
-  const shapeHtml = renderItemShapeMiniHTML(def, { size: shapeSize });
+  const shapeHtml = showShape
+    ? renderItemShapeMiniHTML(def, { size: shapeSize }).replace(
+      'class="item-shape-mini',
+      'class="item-shape-mini item-shape-mini--shop-overlay',
+    )
+    : "";
   const rarityColor = getRarityNameColor(def.rarity);
   return `<div class="${classes}"${dataAttrs ? ` ${dataAttrs}` : ""} style="--shop-rarity-color:${rarityColor}">
     ${innerBefore}
@@ -286,8 +299,8 @@ function renderShopCardHTML(def, { extraClasses = "", innerBefore = "", dataAttr
         <div class="shop-item-visual">
           <div class="${getItemIconShellClass(def)}" style="background:${def.color}33">${renderItemIconsHTML(def)}</div>
           <div class="cost" aria-label="Цена ${def.cost}"><span class="cost-value">${def.cost}</span><span class="cost-coin" aria-hidden="true">💰</span></div>
+          ${shapeHtml}
         </div>
-        ${shapeHtml}
       </div>
     </div>
   </div>`;
@@ -330,9 +343,7 @@ function renderShop(side = rt.getPrepViewSide()) {
           if (def.isBuildKey) {
             const frozen = st.shopFrozen[index];
             const affordable = st.gold >= (def.cost ?? 0);
-            const pinBtn = editable
-              ? `<button type="button" class="shop-pin${frozen ? " active" : ""}" data-pin="${index}" title="${frozen ? "Открепить" : "❄️ Заморозить предмет"}">${frozen ? "📌" : "📍"}</button>`
-              : "";
+            const pinBtn = renderShopPinButton(index, frozen, editable);
             return renderShopCardHTML(def, {
               extraClasses: ["shop-card--build-key", frozen ? "frozen" : "", affordable || !editable ? "" : "unaffordable"].filter(Boolean).join(" "),
               innerBefore: pinBtn,
@@ -344,9 +355,7 @@ function renderShop(side = rt.getPrepViewSide()) {
           if (def.isAmplifierItem) {
             const frozen = st.shopFrozen[index];
             const affordable = st.gold >= (def.cost ?? 0);
-            const pinBtn = editable
-              ? `<button type="button" class="shop-pin${frozen ? " active" : ""}" data-pin="${index}" title="${frozen ? "Открепить" : "❄️ Заморозить предмет"}">${frozen ? "📌" : "📍"}</button>`
-              : "";
+            const pinBtn = renderShopPinButton(index, frozen, editable);
             return renderShopCardHTML(def, {
               extraClasses: ["shop-card--amplifier", frozen ? "frozen" : "", affordable || !editable ? "" : "unaffordable"].filter(Boolean).join(" "),
               innerBefore: pinBtn,
@@ -361,9 +370,7 @@ function renderShop(side = rt.getPrepViewSide()) {
               : def;
             const frozen = st.shopFrozen[index];
             const affordable = st.gold >= (def.cost ?? 0);
-            const pinBtn = editable
-              ? `<button type="button" class="shop-pin${frozen ? " active" : ""}" data-pin="${index}" title="${frozen ? "Открепить" : "❄️ Заморозить предмет"}">${frozen ? "📌" : "📍"}</button>`
-              : "";
+            const pinBtn = renderShopPinButton(index, frozen, editable);
             return renderEnhancementShopCardHTML(enhDef || def, {
               extraClasses: [frozen ? "frozen" : "", affordable || !editable ? "" : "unaffordable"].filter(Boolean).join(" "),
               innerBefore: pinBtn,
@@ -372,9 +379,7 @@ function renderShop(side = rt.getPrepViewSide()) {
           }
           const frozen = st.shopFrozen[index];
           const affordable = st.gold >= (def.cost ?? 0);
-          const pinBtn = editable
-            ? `<button type="button" class="shop-pin${frozen ? " active" : ""}" data-pin="${index}" title="${frozen ? "Открепить" : "❄️ Заморозить предмет"}">${frozen ? "📌" : "📍"}</button>`
-            : "";
+          const pinBtn = renderShopPinButton(index, frozen, editable);
           return renderShopCardHTML(def, {
             extraClasses: [frozen ? "frozen" : "", affordable || !editable ? "" : "unaffordable"].filter(Boolean).join(" "),
             innerBefore: pinBtn,

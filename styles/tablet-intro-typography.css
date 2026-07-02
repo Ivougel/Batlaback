@@ -1,0 +1,134 @@
+/**
+ * Intro / class overlay — читаемая типографика на планшетах (iPad mini и др.).
+ * Дополняет --type-scale из ui-layout.js; не трогает phone-drawer.
+ */
+
+/* ─── Шаг «Режим»: 2×2 вместо 3 колонок — больше места под текст ─── */
+
+html[data-ui-tier="tablet"] #class-overlay .class-modal #class-step-mode:not(.hidden) .game-mode-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, auto);
+  max-width: min(100%, 560px);
+  gap: clamp(10px, 1.6cqh, 16px);
+  overflow: visible;
+  padding: 12px;
+}
+
+html[data-ui-tier="tablet"] #class-overlay .class-modal .game-mode-card.glass-card {
+  min-height: calc(84px * var(--ui-scale));
+  padding: calc(12px * var(--ui-scale)) calc(14px * var(--ui-scale));
+  column-gap: calc(14px * var(--ui-scale));
+  row-gap: calc(4px * var(--ui-scale));
+}
+
+html[data-ui-tier="tablet"] #class-overlay .class-modal .game-mode-card .glass-card-icon {
+  width: calc(56px * var(--ui-scale));
+  height: calc(56px * var(--ui-scale));
+}
+
+html[data-ui-tier="tablet"] #class-overlay .class-modal .game-mode-card .class-name {
+  font-size: max(var(--font-lg), calc(1.05rem * var(--type-scale, 1)));
+}
+
+html[data-ui-tier="tablet"] #class-overlay .class-modal .game-mode-card .class-desc {
+  font-size: max(var(--font-sm), calc(0.875rem * var(--type-scale, 1)));
+  line-height: 1.35;
+}
+
+html[data-ui-tier="tablet"] #class-overlay .class-modal .game-mode-card .class-badge {
+  font-size: max(var(--font-sm), calc(0.8rem * var(--type-scale, 1)));
+  padding: calc(3px * var(--ui-scale)) calc(10px * var(--ui-scale));
+}
+
+/* ─── Заголовки модалки ─── */
+
+html[data-ui-tier="tablet"] #class-overlay .class-modal-title {
+  font-size: clamp(1.35rem, 4.8cqw, calc(var(--font-2xl) * 1.05));
+  line-height: 1.15;
+}
+
+html[data-ui-tier="tablet"] #class-overlay .class-modal-eyebrow {
+  font-size: max(var(--font-sm), calc(0.875rem * var(--type-scale, 1)));
+}
+
+html[data-ui-tier="tablet"] #class-overlay .class-step-badge {
+  font-size: max(var(--font-sm), calc(0.875rem * var(--type-scale, 1)));
+}
+
+html[data-ui-tier="tablet"] #class-overlay .class-action-hint {
+  font-size: max(var(--font-md), calc(0.95rem * var(--type-scale, 1)));
+  line-height: 1.4;
+  padding: calc(10px * var(--ui-scale)) calc(14px * var(--ui-scale));
+}
+
+html[data-ui-tier="tablet"] #class-overlay .class-controls-hint {
+  font-size: max(var(--font-sm), calc(0.875rem * var(--type-scale, 1)));
+}
+
+html[data-ui-tier="tablet"] #class-overlay .class-modal-footer {
+  font-size: var(--font-sm);
+  opacity: 0.72;
+}
+
+/* ─── Витрина / ростер героев ─── */
+
+html[data-ui-tier="tablet"] #class-overlay .class-hero-roster-label {
+  font-size: max(var(--font-sm), calc(0.8rem * var(--type-scale, 1)));
+  line-height: 1.25;
+}
+
+html[data-ui-tier="tablet"] #class-overlay .class-hero-roster-title {
+  font-size: clamp(1.05rem, 2.4vw, 1.25rem);
+}
+
+html[data-ui-tier="tablet"] #class-overlay .class-hero-roster-hint,
+html[data-ui-tier="tablet"] #class-overlay .class-hero-showcase-desc {
+  font-size: max(var(--font-sm), calc(0.875rem * var(--type-scale, 1)));
+  line-height: 1.4;
+}
+
+html[data-ui-tier="tablet"] #class-overlay .class-hero-showcase-name {
+  font-size: clamp(1.1rem, 2.4vw, 1.35rem);
+}
+
+/* ─── Карточки героев (шаг 2+) ─── */
+
+html[data-ui-tier="tablet"] #class-overlay .class-modal .class-card.glass-card[data-class] .class-name,
+html[data-ui-tier="tablet"] #class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class] .class-name {
+  font-size: max(var(--font-lg), calc(1.05rem * var(--type-scale, 1)));
+}
+
+html[data-ui-tier="tablet"] #class-overlay .class-modal .class-card.glass-card[data-class] .class-bonus {
+  font-size: max(var(--font-sm), calc(0.875rem * var(--type-scale, 1)));
+}
+
+/* ─── Нижняя панель intro ─── */
+
+html[data-ui-tier="tablet"] body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro-step {
+  font-size: var(--font-md);
+}
+
+html[data-ui-tier="tablet"] body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro-hint {
+  font-size: var(--font-sm);
+  line-height: 1.3;
+  max-width: min(58vw, 32rem);
+}
+
+html[data-ui-tier="tablet"] body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro-controls {
+  font-size: var(--font-sm);
+}
+
+html[data-ui-tier="tablet"] body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro .btn-glass-start,
+html[data-ui-tier="tablet"] body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro .btn-glass-back {
+  font-size: var(--font-md);
+  padding: 8px 16px;
+}
+
+/* Портрет: показываем подпись ростера (на ландшафте она уже видна) */
+html[data-ui-tier="tablet"][data-layout-profile="tablet-portrait"] #class-overlay .class-hero-roster-caption {
+  display: block;
+}
+
+html[data-ui-tier="tablet"][data-layout-profile="tablet-portrait"] #class-overlay .class-hero-roster-frame {
+  height: min(40dvh, 340px);
+}

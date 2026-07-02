@@ -7,7 +7,6 @@ function initBattleControls(handlers) {
   if (!panel) return;
 
   document.getElementById("btn-battle-pause")?.addEventListener("click", () => {
-    if (typeof playGameSfx === "function") playGameSfx("ui_toggle");
     if (phase === "replay") {
       replayPlayback.playing = !replayPlayback.playing;
       battlePaused = !replayPlayback.playing;
@@ -19,7 +18,6 @@ function initBattleControls(handlers) {
 
   panel.querySelectorAll("[data-speed]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      if (typeof playGameSfx === "function") playGameSfx("ui_click");
       const speed = parseInt(btn.dataset.speed, 10);
       if (phase === "replay" && replayPlayback) {
         replayPlayback.speed = speed;
@@ -33,7 +31,6 @@ function initBattleControls(handlers) {
   });
 
   document.getElementById("btn-battle-skip")?.addEventListener("click", () => {
-    if (typeof playGameSfx === "function") playGameSfx("ui_click");
     if (phase === "replay") {
       finishBattleReplay();
       return;

@@ -71,6 +71,10 @@
   touch-action: manipulation;
 }
 
+#class-overlay .class-modal #class-step-mode:not(.hidden) {
+  overflow: visible;
+}
+
 /* Шаг 1 (режим): компактные плитки по центру, без растягивания на весь экран */
 #class-overlay .class-modal #class-step-mode:not(.hidden) {
   justify-content: center;
@@ -90,11 +94,13 @@
   max-width: 560px;
   margin: 0 auto;
   min-height: 0;
+  padding: 12px;
   padding-bottom: 0;
   gap: clamp(8px, 1.2cqh, 12px);
   grid-template-columns: 1fr;
   grid-template-rows: repeat(3, auto);
   align-content: center;
+  overflow: visible;
 }
 
 #class-overlay .class-modal .class-grid {
@@ -108,6 +114,12 @@
     grid-template-rows: auto;
     max-width: 720px;
   }
+}
+
+/* Планшет: 2×2 задаётся в tablet-intro-typography.css */
+html[data-ui-tier="tablet"] #class-overlay .class-modal #class-step-mode:not(.hidden) .game-mode-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: min(100%, 560px);
 }
 
 @container class-overlay-modal (max-height: 480px) {
@@ -251,6 +263,7 @@
 /* Game mode cards — compact row tiles (фиксированная высота, не столбцы) */
 #class-overlay .class-modal .game-mode-card.glass-card {
   position: relative;
+  overflow: visible;
   min-height: calc(72px * var(--ui-scale));
   height: auto;
   max-height: none;
@@ -307,11 +320,11 @@
 #class-overlay .class-modal .game-mode-card.selected::before {
   content: "✓";
   position: absolute;
-  top: calc(8px * var(--ui-scale));
-  right: calc(8px * var(--ui-scale));
-  z-index: 2;
-  width: calc(22px * var(--ui-scale));
-  height: calc(22px * var(--ui-scale));
+  top: 12px;
+  right: 12px;
+  z-index: 3;
+  width: calc(24px * var(--ui-scale));
+  height: calc(24px * var(--ui-scale));
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -320,6 +333,10 @@
   font-weight: 800;
   color: #0d1117;
   background: var(--accent);
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  box-shadow:
+    0 0 12px rgba(245, 200, 66, 0.55),
+    0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
 #class-overlay .class-step-sub {

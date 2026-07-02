@@ -1,21 +1,26 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-visual-theme="meadow">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#0d1117">
+  <meta name="theme-color" content="#5cb85c">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&family=Cinzel:wght@600;700;800&family=Crimson+Pro:wght@600;700&display=swap" rel="stylesheet">
   <title>Backpack Battles — Автобатлер</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles/tokens.css?v=12">
-  <link rel="stylesheet" href="styles/layers.css?v=6">
-  <link rel="stylesheet" href="styles/bottom-chrome.css?v=10">
+  <link rel="stylesheet" href="styles/tokens.css?v=15">
+  <link rel="stylesheet" href="styles/layers.css?v=7">
+  <link rel="stylesheet" href="styles/bottom-chrome.css?v=12">
   <link rel="stylesheet" href="styles.css?v=36">
-  <link rel="stylesheet" href="styles/shop.css?v=1">
+  <link rel="stylesheet" href="styles/shop.css?v=2">
+  <link rel="stylesheet" href="styles/item-card-chrome.css?v=2">
+  <link rel="stylesheet" href="styles/shop-pin-chrome.css?v=2">
   <link rel="stylesheet" href="styles/prep-top-bar.css?v=2">
   <link rel="stylesheet" href="styles/mutations.css?v=1">
   <link rel="stylesheet" href="styles/enhancements.css?v=3">
@@ -27,26 +32,64 @@
   <link rel="stylesheet" href="styles/replay-chrome.css?v=1">
   <link rel="stylesheet" href="styles/emotion-thoughts.css?v=9">
   <link rel="stylesheet" href="styles/arena-equipment.css?v=20">
-  <link rel="stylesheet" href="styles/prep-drag-arc.css?v=9">
+  <link rel="stylesheet" href="styles/prep-drag-arc.css?v=10">
   <link rel="stylesheet" href="styles/battle-arena-layout.css?v=34">
   <link rel="stylesheet" href="styles/phone-landscape.css?v=9">
   <link rel="stylesheet" href="styles/battle-scale.css?v=3">
   <link rel="stylesheet" href="styles/battle-hud-compact.css?v=3">
   <link rel="stylesheet" href="styles/hero-card.css?v=1">
-  <link rel="stylesheet" href="styles/class-picker.css?v=2">
-  <link rel="stylesheet" href="styles/class-hero-showcase.css?v=3">
+  <link rel="stylesheet" href="styles/class-picker.css?v=3">
+  <link rel="stylesheet" href="styles/class-hero-showcase.css?v=6">
+  <link rel="stylesheet" href="styles/class-hero-portrait-frame.css?v=1">
+  <link rel="stylesheet" href="styles/class-intro-theme.css?v=3">
+  <link rel="stylesheet" href="styles/class-intro-summary.css?v=1">
+  <link rel="stylesheet" href="styles/tablet-intro-typography.css?v=1">
+  <link rel="stylesheet" href="styles/desktop-intro-layout.css?v=1">
   <link rel="stylesheet" href="styles/mobile-prep.css?v=22">
   <link rel="stylesheet" href="styles/desktop-prep.css?v=1">
   <link rel="stylesheet" href="styles/tablet-stacked.css?v=7">
   <link rel="stylesheet" href="styles/tablet-side.css?v=30">
   <link rel="stylesheet" href="styles/battle-inventory-popover.css?v=6">
   <link rel="stylesheet" href="styles/lobby.css?v=8">
+  <link rel="stylesheet" href="styles/meadow-theme.css?v=1">
+  <link rel="stylesheet" href="styles/prep-borderless.css?v=3">
+  <link rel="stylesheet" href="styles/battle-borderless.css?v=1">
+  <link rel="stylesheet" href="styles/item-stats-report.css?v=2">
+  <link rel="stylesheet" href="styles/prep-juice.css?v=3">
+  <link rel="stylesheet" href="styles/battle-result-glass.css?v=1">
+  <link rel="stylesheet" href="styles/battle-aura-frame.css?v=2">
+  <link rel="stylesheet" href="styles/battle-result-theater.css?v=1">
+  <link rel="stylesheet" href="styles/ui-ornament-frame.css?v=1">
+  <link rel="stylesheet" href="styles/escape-menu.css?v=1">
+  <link rel="stylesheet" href="styles/pass-laugh-balls.css?v=1">
+  <link rel="stylesheet" href="styles/theme-diablo.css?v=2">
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("bb-visual-theme") || "meadow";
+        if (t !== "meadow" && t !== "diablo") t = "meadow";
+        document.documentElement.setAttribute("data-visual-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-visual-theme", "meadow");
+      }
+    })();
+  </script>
   <script src="systems/layout-scales.js?v=2"></script>
   <script src="systems/battle-fx-tier.js?v=1"></script>
   <script src="systems/battle-hero-anchor.js?v=22"></script>
   <script src="ui-layout.js?v=97"></script>
 </head>
 <body>
+  <div id="ui-ornament-frame" class="ui-ornament-frame" aria-hidden="true">
+    <span class="ui-ornament-corner ui-ornament-corner--tl" aria-hidden="true">❧</span>
+    <span class="ui-ornament-corner ui-ornament-corner--tr" aria-hidden="true">❧</span>
+    <span class="ui-ornament-corner ui-ornament-corner--bl" aria-hidden="true">❧</span>
+    <span class="ui-ornament-corner ui-ornament-corner--br" aria-hidden="true">❧</span>
+    <span class="ui-ornament-edge ui-ornament-edge--top" aria-hidden="true"></span>
+    <span class="ui-ornament-edge ui-ornament-edge--bottom" aria-hidden="true"></span>
+    <span class="ui-ornament-edge ui-ornament-edge--left" aria-hidden="true"></span>
+    <span class="ui-ornament-edge ui-ornament-edge--right" aria-hidden="true"></span>
+  </div>
   <div id="app" data-phase="prep">
     <main class="game-layout">
       <section class="board-section">
@@ -70,8 +113,17 @@
             </header>
             <div class="prep-field-column scene-viewport" id="prep-field-column">
               <aside class="lobby-prep-roster-panel hidden" id="lobby-prep-roster-panel" aria-label="Лобби">
+                <div class="lobby-roster-toolbar">
+                  <button type="button"
+                          class="lobby-roster-hide-btn"
+                          id="btn-lobby-roster-hide"
+                          aria-expanded="true"
+                          aria-controls="lobby-roster-strip-prep"
+                          title="Скрыть"
+                          aria-label="Скрыть список участников">🙈</button>
+                </div>
                 <div class="lobby-prep-timer-slot" id="lobby-prep-timer-slot"></div>
-                <div class="lobby-roster-strip" id="lobby-roster-strip-prep" role="tablist" aria-label="Участники лобби"></div>
+                <div class="lobby-roster-strip lobby-roster-strip--prep-body" id="lobby-roster-strip-prep" role="tablist" aria-label="Участники лобби"></div>
               </aside>
 
               <!-- Layer 1 — Мир / сетка -->
@@ -167,11 +219,26 @@
                 </div>
               </div>
 
+              <div class="battle-aura-frame hidden" id="battle-aura-frame" aria-hidden="true">
+                <div class="battle-aura-frame-glow" aria-hidden="true"></div>
+                <div class="battle-aura-runners" id="battle-aura-runners" aria-hidden="true"></div>
+              </div>
+
             </div>
           </div>
           <div class="shop-panel" id="shop-panel">
             <div class="shop-chrome">
               <div class="shop-panel-header">
+                <button type="button"
+                        class="prep-build-emoji-btn hidden"
+                        id="prep-build-emoji-btn"
+                        data-mutation-id=""
+                        data-emoji-slot="build"
+                        aria-label="Путь сборки"
+                        title="Путь сборки">
+                  <span class="prep-build-emoji-btn-glow" aria-hidden="true"></span>
+                  <span class="prep-build-emoji-btn-glyph" aria-hidden="true"></span>
+                </button>
                 <div class="shop-panel-heading">
                   <h3 id="shop-panel-title">🛒 Магазин</h3>
                   <span class="shop-side-stat" id="shop-side-stat">Игрок 1</span>
@@ -179,8 +246,8 @@
                 <button type="button" class="btn-secondary btn-refresh-shop" id="btn-refresh">🔄 Обновить (1💰)</button>
                 <button type="button" class="prep-shop-drawer-close" id="btn-prep-shop-close" aria-label="Закрыть магазин">✕</button>
               </div>
-              <p class="shop-hint" id="shop-panel-hint">✚ — навигация · A — выбрать · ← — доска · 📍 — заморозить</p>
-              <p class="shop-hint shop-hint-touch">Коснитесь — подсказка · перетащите на поле · 📍 — закрепить · два пальца — поворот</p>
+              <p class="shop-hint" id="shop-panel-hint">✚ — навигация · A — выбрать · ← — доска · 📍 слева — закрепить</p>
+              <p class="shop-hint shop-hint-touch">Коснитесь — подсказка · перетащите на поле · 📍 слева — закрепить · два пальца — поворот</p>
             </div>
             <div class="shop-objects">
               <div class="shop-slots" id="shop-slots"></div>
@@ -212,19 +279,20 @@
   <div class="layer-system" id="layer-system">
   <div class="overlay hidden" id="class-overlay">
       <div class="class-overlay-bg" aria-hidden="true">
+        <div class="hero-scene-hill hero-scene-hill--back"></div>
+        <div class="hero-scene-hill hero-scene-hill--mid"></div>
+        <div class="hero-scene-hill hero-scene-hill--front"></div>
+        <div class="hero-scene-cloud hero-scene-cloud--1"></div>
+        <div class="hero-scene-cloud hero-scene-cloud--2"></div>
+        <div class="hero-scene-grass-texture"></div>
+        <div class="intro-scene-sun"></div>
         <span class="class-overlay-blob class-overlay-blob--purple"></span>
         <span class="class-overlay-blob class-overlay-blob--cyan"></span>
       </div>
       <div class="class-overlay-shell">
         <aside class="class-hero-showcase hidden" id="class-hero-showcase" aria-hidden="true">
-          <div class="class-hero-showcase-single" id="class-hero-showcase-single">
+          <div class="class-hero-showcase-single hidden" id="class-hero-showcase-single" aria-hidden="true">
             <div class="class-hero-showcase-frame">
-              <div class="hero-scene-hill hero-scene-hill--back" aria-hidden="true"></div>
-              <div class="hero-scene-hill hero-scene-hill--mid" aria-hidden="true"></div>
-              <div class="hero-scene-hill hero-scene-hill--front" aria-hidden="true"></div>
-              <div class="hero-scene-cloud hero-scene-cloud--1" aria-hidden="true"></div>
-              <div class="hero-scene-cloud hero-scene-cloud--2" aria-hidden="true"></div>
-              <div class="hero-scene-grass-texture" aria-hidden="true"></div>
               <div class="class-hero-showcase-glow" aria-hidden="true"></div>
               <div class="class-hero-showcase-sparkles" aria-hidden="true">
                 <span class="class-hero-sparkle class-hero-sparkle--1"></span>
@@ -242,12 +310,6 @@
           </div>
           <div class="class-hero-showcase-roster hidden" id="class-hero-showcase-roster" aria-hidden="true">
             <div class="class-hero-roster-frame">
-              <div class="hero-scene-hill hero-scene-hill--back" aria-hidden="true"></div>
-              <div class="hero-scene-hill hero-scene-hill--mid" aria-hidden="true"></div>
-              <div class="hero-scene-hill hero-scene-hill--front" aria-hidden="true"></div>
-              <div class="hero-scene-cloud hero-scene-cloud--1" aria-hidden="true"></div>
-              <div class="hero-scene-cloud hero-scene-cloud--2" aria-hidden="true"></div>
-              <div class="hero-scene-grass-texture" aria-hidden="true"></div>
               <div class="class-hero-showcase-glow" aria-hidden="true"></div>
               <div class="class-hero-showcase-sparkles" aria-hidden="true">
                 <span class="class-hero-sparkle class-hero-sparkle--1"></span>
@@ -260,7 +322,7 @@
               <div class="class-hero-roster-grid" id="class-hero-roster-grid"></div>
               <div class="class-hero-roster-caption">
                 <p class="class-hero-roster-title">Мартовичок · Роксивичок · Морковичок · Мыковичок</p>
-                <p class="class-hero-roster-hint">Класс, спутник и рюкзак — ваша сила в забеге</p>
+                <p class="class-hero-roster-hint">Девочки-звери собрались, чтобы скрестить кличку с именем — и решить, кто идёт в забег.</p>
               </div>
             </div>
           </div>
@@ -268,11 +330,11 @@
       <div class="modal class-modal">
         <header class="class-modal-header">
           <p class="class-modal-eyebrow">BACKPACK BATTLES</p>
-          <p class="class-step-badge" id="class-step-badge">Шаг 1 из 3</p>
+          <p class="class-step-badge" id="class-step-badge">Шаг 1 из 4</p>
           <h2 class="class-modal-title" id="class-modal-title">Режим игры</h2>
-          <p class="class-subtitle" id="class-modal-subtitle">Выберите формат — одиночный или с другом</p>
+          <p class="class-subtitle" id="class-modal-subtitle">Зверушки скрестили клички с именами — выберите режим забега</p>
         </header>
-        <p class="class-action-hint" id="class-action-hint" role="status">Нажмите на режим игры</p>
+        <p class="class-action-hint" id="class-action-hint" role="status">Четыре девочки-звери скрестили клички с именами — выберите режим</p>
         <p class="class-controls-hint">✚ — выбор · A — подтвердить · B — назад · + — начать</p>
         <div class="class-step" id="class-step-mode">
           <div class="game-mode-grid">
@@ -310,25 +372,25 @@
           <button type="button" class="class-card glass-card" data-class="warrior">
             <span class="glass-card-icon glass-card-icon--class class-icon"><img src="img/sticker_warrior.png" alt="" class="class-sticker" draggable="false"></span>
             <span class="class-name">Воин-мартовичок</span>
-            <span class="class-desc">Ржавый меч + железный шлем</span>
+            <span class="class-desc hidden" aria-hidden="true"></span>
             <span class="class-bonus">+3% HP на весь забег</span>
           </button>
           <button type="button" class="class-card glass-card" data-class="rogue">
             <span class="glass-card-icon glass-card-icon--class class-icon"><img src="img/sticker_rogue.png" alt="" class="class-sticker" draggable="false"></span>
             <span class="class-name">Разбойник-роксивичок</span>
-            <span class="class-desc">Кинжал + яд</span>
+            <span class="class-desc hidden" aria-hidden="true"></span>
             <span class="class-bonus">+3% скорость атаки</span>
           </button>
           <button type="button" class="class-card glass-card" data-class="mage">
             <span class="glass-card-icon glass-card-icon--class class-icon"><img src="img/sticker_mage.png" alt="" class="class-sticker" draggable="false"></span>
             <span class="class-name">Маг-морковичок</span>
-            <span class="class-desc">Посох ученика + мана-кристалл</span>
+            <span class="class-desc hidden" aria-hidden="true"></span>
             <span class="class-bonus">+4% магический урон</span>
           </button>
           <button type="button" class="class-card glass-card" data-class="priest">
             <span class="glass-card-icon glass-card-icon--class class-icon"><img src="img/sticker_priest.png" alt="" class="class-sticker" draggable="false"></span>
             <span class="class-name">Жрец-мыковичок</span>
-            <span class="class-desc">Старт поддержки и holy</span>
+            <span class="class-desc hidden" aria-hidden="true"></span>
             <span class="class-bonus">+1.5% HP за еду, еда +8% хил</span>
           </button>
         </div>
@@ -336,10 +398,32 @@
         </div>
         <div class="class-step hidden" id="class-step-companion">
         <div class="class-step-actions class-step-actions-top">
-          <button type="button" class="btn-secondary btn-glass-back" id="btn-class-back-player">← Класс</button>
+          <button type="button" class="btn-secondary btn-glass-back" id="btn-class-back-player">← Герой</button>
         </div>
         <p class="class-subtitle class-step-sub">Спутник задаёт ось урона и рамку экипа на весь забег. Сила — в рюкзаке.</p>
         <div class="companion-grid" id="companion-grid"></div>
+        </div>
+        <div class="class-step hidden" id="class-step-summary">
+          <div class="class-step-actions class-step-actions-top">
+            <button type="button" class="btn-secondary btn-glass-back" id="btn-class-back-companion">← Спутник</button>
+          </div>
+          <p class="class-summary-lead" id="class-summary-lead">Ваш выбор</p>
+          <div class="class-summary-stage" id="class-summary-stage">
+            <button type="button" class="class-summary-float class-summary-float--hero" id="class-summary-hero" data-summary-kind="hero" aria-describedby="class-summary-tooltip">
+              <div class="class-summary-float-frame">
+                <img class="class-summary-hero-img" id="class-summary-hero-img" alt="" draggable="false">
+              </div>
+              <span class="class-summary-float-label" id="class-summary-hero-name"></span>
+            </button>
+            <button type="button" class="btn-primary class-summary-start" id="btn-class-summary-start">Старт</button>
+            <button type="button" class="class-summary-float class-summary-float--companion" id="class-summary-companion" data-summary-kind="companion" aria-describedby="class-summary-tooltip">
+              <div class="class-summary-float-frame class-summary-float-frame--companion">
+                <span class="class-summary-companion-emoji" id="class-summary-companion-emoji" aria-hidden="true"></span>
+              </div>
+              <span class="class-summary-float-label" id="class-summary-companion-name"></span>
+            </button>
+          </div>
+          <div class="class-summary-tooltip hidden" id="class-summary-tooltip" role="tooltip" aria-hidden="true"></div>
         </div>
         <div class="class-step hidden" id="class-step-opponent">
           <p class="class-subtitle class-step-sub" id="opponent-mode-hint">ИИ сам покупает предметы и расставляет билд между боями.</p>
@@ -366,16 +450,24 @@
             </button>
           </div>
         </div>
-        <div class="class-mobile-dock hidden" id="class-mobile-dock" aria-hidden="true">
-          <button type="button" class="btn-secondary btn-glass-back" id="btn-class-back">← Назад</button>
-          <button type="button" class="btn-primary btn-glass-start" id="btn-start-run" disabled>Начать забег</button>
-        </div>
+        <div class="class-mobile-dock hidden" id="class-mobile-dock" aria-hidden="true" hidden></div>
         <footer class="class-modal-footer">v1.0 · Backpack Battles</footer>
       </div>
       </div>
     </div>
 
     <div class="overlay hidden" id="battle-result-overlay">
+      <div class="battle-result-theater hidden" id="battle-result-theater" aria-hidden="true">
+        <div class="br-theater-sparkles" aria-hidden="true"></div>
+        <div class="br-theater-fighter br-theater-fighter--player hidden" id="br-theater-player" aria-hidden="true">
+          <span class="br-theater-emoji" aria-hidden="true">🍉</span>
+          <span class="br-theater-bubble" role="status"></span>
+        </div>
+        <div class="br-theater-fighter br-theater-fighter--enemy hidden" id="br-theater-enemy" aria-hidden="true">
+          <span class="br-theater-emoji" aria-hidden="true">🪄</span>
+          <span class="br-theater-bubble" role="status"></span>
+        </div>
+      </div>
       <div class="modal battle-result-modal">
         <h2 id="battle-result-title">Бой завершён</h2>
         <p id="battle-result-subtitle" class="battle-result-subtitle"></p>
@@ -440,6 +532,18 @@
       </div>
     </div>
 
+  <div class="escape-menu-overlay hidden" id="escape-menu-overlay" aria-hidden="true">
+    <div class="escape-menu-panel" role="dialog" aria-modal="true" aria-labelledby="escape-menu-title">
+      <h2 class="escape-menu-title" id="escape-menu-title">Меню игры</h2>
+      <nav class="escape-menu-actions" aria-label="Действия меню">
+        <button type="button" class="escape-menu-btn" id="btn-escape-resume">Продолжить игру</button>
+        <button type="button" class="escape-menu-btn" id="btn-escape-settings">Настройки</button>
+        <button type="button" class="escape-menu-btn escape-menu-btn--danger hidden" id="btn-escape-main-menu">Выйти в главное меню</button>
+      </nav>
+      <p class="escape-menu-hint">Esc — закрыть меню</p>
+    </div>
+  </div>
+
   <div class="overlay settings-overlay hidden" id="settings-overlay" aria-hidden="true">
     <div class="modal settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
       <div class="settings-header">
@@ -447,6 +551,30 @@
         <button type="button" class="settings-close" id="btn-settings-close" aria-label="Закрыть">✕</button>
       </div>
       <div class="settings-body">
+        <div class="settings-row settings-row--theme">
+          <span class="settings-label" id="settings-theme-label">🎨 Тема оформления</span>
+        </div>
+        <div class="settings-theme-picker" role="radiogroup" aria-labelledby="settings-theme-label">
+          <label class="settings-theme-option">
+            <input type="radio" name="visual-theme" value="meadow">
+            <span class="settings-theme-copy">
+              <span class="settings-theme-name">🌿 Луг</span>
+              <span class="settings-theme-hint">Текущий вид — звери, прозрачный HUD, яркая дуга</span>
+            </span>
+          </label>
+          <label class="settings-theme-option">
+            <input type="radio" name="visual-theme" value="diablo">
+            <span class="settings-theme-copy">
+              <span class="settings-theme-name">🔥 Sanctuary</span>
+              <span class="settings-theme-hint">Diablo — камень, золото и кровь на том же заднике</span>
+            </span>
+          </label>
+        </div>
+        <div class="settings-row settings-row--select">
+          <label class="settings-label" for="settings-sound-theme" id="settings-sound-theme-label">🔊 Звуковое оформление</label>
+        </div>
+        <select id="settings-sound-theme" class="settings-select" aria-labelledby="settings-sound-theme-label" aria-describedby="settings-sound-theme-hint"></select>
+        <p class="settings-select-hint" id="settings-sound-theme-hint"></p>
         <div class="settings-row">
           <label class="settings-label" for="settings-music-volume">🎵 Громкость музыки</label>
           <span class="settings-value" id="settings-music-volume-value">60%</span>
@@ -469,12 +597,29 @@
           <label class="settings-label settings-checkbox-label" for="settings-light-battle-fx">Облегчённые боевые эффекты</label>
           <input type="checkbox" id="settings-light-battle-fx" class="settings-checkbox" checked aria-label="Облегчённые боевые эффекты">
         </div>
+        <div class="settings-row settings-row--pass">
+          <button type="button" class="btn-secondary settings-pass-btn" id="btn-settings-buy-pass">🎫 Купить пропуск</button>
+        </div>
       </div>
     </div>
   </div>
   </div>
 
   <div id="bottom-chrome" class="bottom-chrome scene-chrome" aria-live="polite">
+    <div class="bottom-chrome-intro" id="bottom-chrome-intro" aria-label="Навигация забега">
+      <div class="bottom-chrome-intro-start">
+        <button type="button" class="btn-secondary prep-settings-btn" id="btn-settings-intro" aria-label="Настройки" aria-expanded="false" aria-controls="settings-overlay" title="Настройки">⚙️</button>
+      </div>
+      <div class="bottom-chrome-intro-center">
+        <span class="bottom-chrome-intro-step" id="bottom-chrome-intro-step">Шаг 1 · Режим</span>
+        <span class="bottom-chrome-intro-hint" id="bottom-chrome-intro-hint">Выберите формат игры</span>
+        <span class="bottom-chrome-intro-controls" aria-hidden="true">✚ — выбор · A — подтвердить · B — назад</span>
+      </div>
+      <div class="bottom-chrome-intro-end">
+        <button type="button" class="btn-secondary btn-glass-back hidden" id="btn-class-back">← Назад</button>
+        <button type="button" class="btn-primary btn-glass-start hidden" id="btn-start-run" disabled>Начать забег</button>
+      </div>
+    </div>
     <div class="bottom-chrome-start">
       <div class="bottom-chrome-prep-left prep-toolbar-side-switch" id="bottom-chrome-prep-left">
         <button type="button" class="btn-secondary prep-side-btn active" id="btn-prep-player" data-prep-side="player" title="Мой стол" aria-label="Мой стол"><span class="prep-side-ico" aria-hidden="true">🧑</span><span class="prep-side-label">Мой стол</span></button>
@@ -547,9 +692,10 @@
   </div>
 
   <script src="components/layer-host.js"></script>
-  <script src="classes.js"></script>
-  <script src="systems/mutations.js?v=2"></script>
-  <script src="systems/mutation-ui.js?v=1"></script>
+  <script src="classes.js?v=2"></script>
+  <script src="systems/mutations.js?v=3"></script>
+  <script src="systems/mutation-lore-quips.js?v=1"></script>
+  <script src="systems/mutation-ui.js?v=7"></script>
   <script src="systems/mutation-capstones.js?v=1"></script>
   <script src="systems/item-pool-120.js?v=1"></script>
   <script src="items.js"></script>
@@ -583,9 +729,14 @@
   <script src="components/board-preview.js"></script>
   <script src="components/battle-inventory-popover.js?v=8"></script>
   <script src="components/recipe-book.js"></script>
+  <script src="systems/visual-theme.js?v=1"></script>
   <script src="components/settings.js"></script>
+  <script src="components/pass-laugh-balls.js?v=1"></script>
+  <script src="components/escape-menu.js"></script>
   <script src="components/combat-feed.js?v=2"></script>
   <script src="components/mobile-prep-ui.js"></script>
+  <script src="components/battle-aura-frame.js"></script>
+  <script src="components/battle-result-theater.js"></script>
   <script src="components/battle-result.js"></script>
   <script src="components/synergy-effect.js"></script>
   <script src="components/synergy-panel.js"></script>
@@ -594,7 +745,9 @@
   <script src="systems/battle-stacks.js"></script>
   <script src="systems/stack-orbit-vfx.js?v=8"></script>
   <script src="systems/battle-debuffs.js"></script>
-  <script src="systems/sfx.js?v=1"></script>
+  <script src="systems/sfx-themes.js?v=2"></script>
+  <script src="systems/sfx.js?v=3"></script>
+  <script src="systems/sound-theme.js?v=2"></script>
   <script src="systems/music.js"></script>
   <script src="systems/input-mode.js"></script>
   <script src="systems/gamepad.js"></script>

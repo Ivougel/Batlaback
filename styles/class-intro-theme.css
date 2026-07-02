@@ -1,0 +1,677 @@
+#class-overlay {
+  --intro-sky-top: #7ec8e3;
+  --intro-sky-mid: #a8dadc;
+  --intro-grass-mid: #8fd694;
+  --intro-grass: #5cb85c;
+  --intro-grass-dark: #4a9e4a;
+  --intro-cream: #fff9eb;
+  --intro-cream-deep: #f5edd4;
+  --intro-ink: #2d4a28;
+  --intro-ink-muted: #5a7354;
+  --intro-gold: #e8a317;
+  --intro-gold-bright: #f5c842;
+  --intro-panel-border: rgba(255, 255, 255, 0.72);
+  --intro-card-border: rgba(92, 184, 92, 0.42);
+  --intro-shadow: rgba(46, 100, 50, 0.18);
+  --intro-magic-glow:
+    0 0 0 1px rgba(255, 255, 255, 0.5),
+    0 0 14px rgba(167, 139, 250, 0.18),
+    0 0 28px rgba(92, 184, 92, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82);
+  --intro-magic-glow-hover:
+    0 0 0 1px rgba(245, 200, 66, 0.45),
+    0 0 18px rgba(245, 200, 66, 0.26),
+    0 0 36px rgba(167, 139, 250, 0.16),
+    inset 0 0 16px rgba(245, 200, 66, 0.06);
+  --intro-magic-glow-selected:
+    0 0 0 2px rgba(245, 200, 66, 0.62),
+    0 0 22px rgba(245, 200, 66, 0.36),
+    0 0 44px rgba(167, 139, 250, 0.14),
+    inset 0 0 20px rgba(255, 252, 235, 0.32);
+  --intro-btn-glow:
+    0 0 0 1px rgba(255, 255, 255, 0.55),
+    0 0 14px rgba(167, 139, 250, 0.22),
+    0 0 28px rgba(92, 184, 92, 0.12);
+  --intro-btn-glow-strong:
+    0 0 0 2px rgba(245, 200, 66, 0.42),
+    0 0 20px rgba(245, 200, 66, 0.4),
+    0 0 40px rgba(167, 139, 250, 0.18),
+    0 4px 12px rgba(46, 100, 50, 0.1);
+
+  background: linear-gradient(
+    180deg,
+    var(--intro-sky-top) 0%,
+    var(--intro-sky-mid) 30%,
+    var(--intro-grass-mid) 58%,
+    var(--intro-grass) 100%
+  );
+  align-items: stretch;
+}
+
+#class-overlay .class-overlay-shell {
+  position: relative;
+  z-index: 5;
+}
+
+/* ─── Общая meadow-сцена на весь экран ─── */
+
+.class-overlay-bg {
+  background: linear-gradient(
+    180deg,
+    var(--intro-sky-top) 0%,
+    var(--intro-sky-mid) 28%,
+    var(--intro-grass-mid) 55%,
+    var(--intro-grass) 100%
+  );
+}
+
+.class-overlay-bg .hero-scene-hill {
+  position: absolute;
+  left: -8%;
+  width: 116%;
+  border-radius: 50% 50% 0 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.class-overlay-bg .hero-scene-hill--back {
+  bottom: 0;
+  height: 28%;
+  background: #7bc47f;
+  opacity: 0.5;
+}
+
+.class-overlay-bg .hero-scene-hill--mid {
+  bottom: -2%;
+  height: 22%;
+  background: #6ab86e;
+  opacity: 0.7;
+}
+
+.class-overlay-bg .hero-scene-hill--front {
+  bottom: -6%;
+  height: 16%;
+  background: var(--intro-grass);
+}
+
+.class-overlay-bg .hero-scene-cloud {
+  z-index: 2;
+  opacity: 0.88;
+}
+
+.class-overlay-bg .hero-scene-grass-texture {
+  z-index: 3;
+  height: 10%;
+  opacity: 0.85;
+}
+
+.intro-scene-sun {
+  position: absolute;
+  top: 6%;
+  right: 10%;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff6c8 0%, #ffe985 55%, transparent 75%);
+  box-shadow: 0 0 48px 14px rgba(255, 221, 89, 0.45);
+  z-index: 2;
+  pointer-events: none;
+  animation: sun-pulse 4.2s ease-in-out infinite;
+}
+
+.class-overlay-blob--purple {
+  width: min(480px, 80vw);
+  height: min(480px, 80vw);
+  left: -8%;
+  top: -6%;
+  background: radial-gradient(circle, rgba(240, 193, 75, 0.22) 0%, transparent 68%);
+}
+
+.class-overlay-blob--cyan {
+  width: min(520px, 85vw);
+  height: min(520px, 85vw);
+  right: -10%;
+  bottom: 8%;
+  background: radial-gradient(circle, rgba(167, 139, 250, 0.14) 0%, transparent 68%);
+}
+
+/* ─── Панель модалки — солнечная «доска объявлений» ─── */
+
+#class-overlay .class-overlay-shell .class-modal {
+  background: linear-gradient(
+    165deg,
+    rgba(255, 252, 240, 0.94) 0%,
+    rgba(255, 245, 218, 0.9) 55%,
+    rgba(250, 240, 210, 0.92) 100%
+  );
+  border: 2px solid var(--intro-panel-border);
+  border-radius: calc(22px * var(--ui-scale));
+  box-shadow:
+    0 16px 48px var(--intro-shadow),
+    0 4px 16px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+#class-overlay .class-modal-eyebrow {
+  color: var(--intro-ink-muted);
+  letter-spacing: 0.12em;
+}
+
+#class-overlay .class-step-badge {
+  color: var(--intro-gold);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+#class-overlay .class-modal-title {
+  background: linear-gradient(95deg, #c8860a 0%, var(--intro-gold-bright) 42%, var(--intro-grass-dark) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.5));
+}
+
+#class-overlay .class-modal-header .class-subtitle,
+#class-overlay .class-subtitle,
+#class-overlay .class-step-sub {
+  color: var(--intro-ink-muted);
+}
+
+#class-overlay .class-action-hint {
+  background: rgba(92, 184, 92, 0.14);
+  border: 1px solid rgba(92, 184, 92, 0.38);
+  color: var(--intro-ink);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+#class-overlay .class-controls-hint {
+  color: var(--intro-ink-muted);
+  opacity: 0.85;
+}
+
+body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro-step {
+  color: var(--intro-ink, var(--juice-ink, #2d4a28));
+  font-weight: 900;
+  text-shadow: var(--juice-text-legible, none);
+}
+
+body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro-hint {
+  color: var(--intro-ink-muted, var(--juice-ink-soft, #5a7354));
+  font-weight: 700;
+}
+
+body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro-controls {
+  color: var(--intro-ink-muted, var(--juice-ink-soft, #5a7354));
+}
+
+body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro .btn-secondary,
+body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro .btn-primary {
+  min-height: var(--touch-target-min);
+}
+
+#class-overlay .class-modal-footer {
+  color: var(--intro-ink-muted);
+  opacity: 0.65;
+}
+
+/* ─── Карточки — солнечные плитки на лугу ─── */
+
+#class-overlay .class-modal .glass-card {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.82) 0%,
+    rgba(244, 252, 238, 0.9) 100%
+  );
+  border: 2px solid var(--intro-card-border);
+  border-radius: calc(18px * var(--ui-scale));
+  color: var(--intro-ink);
+  box-shadow: var(--intro-magic-glow);
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.25s ease;
+}
+
+#class-overlay .class-modal .glass-card:hover:not(:disabled):not(.class-card-disabled) {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(250, 255, 244, 0.95) 100%
+  );
+  border-color: rgba(92, 184, 92, 0.62);
+  transform: translateY(-2px);
+  box-shadow: var(--intro-magic-glow-hover);
+}
+
+#class-overlay .class-modal .glass-card .class-name {
+  color: var(--intro-ink);
+}
+
+#class-overlay .class-modal .glass-card .class-desc,
+#class-overlay .class-modal .glass-card .class-bonus {
+  color: var(--intro-ink-muted);
+}
+
+/* Единое золотое выделение — не заливает hero-карточки светлым фоном */
+#class-overlay .class-modal .game-mode-card.selected,
+#class-overlay .class-modal .companion-card.glass-card.selected {
+  border-color: rgba(232, 163, 23, 0.9);
+  box-shadow: var(--intro-magic-glow-selected);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 252, 235, 0.98) 0%,
+    rgba(255, 244, 210, 0.95) 100%
+  );
+}
+
+#class-overlay .class-modal .game-mode-card.selected::before,
+#class-overlay .class-modal .class-card.glass-card.selected::before,
+#class-overlay .class-modal .opponent-class-card.glass-card.selected::before,
+#class-overlay .class-modal .companion-card.glass-card.selected::before {
+  background: var(--intro-gold-bright);
+  color: var(--intro-ink);
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  box-shadow:
+    0 0 14px rgba(245, 200, 66, 0.58),
+    0 2px 8px rgba(200, 134, 10, 0.22);
+}
+
+#class-overlay .class-modal .companion-card.glass-card.selected::before {
+  content: "✓";
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 3;
+  width: calc(24px * var(--ui-scale));
+  height: calc(24px * var(--ui-scale));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(13px * var(--ui-scale));
+  font-weight: 800;
+}
+
+#class-overlay .class-modal .companion-card.glass-card {
+  position: relative;
+  min-height: calc(108px * var(--ui-scale));
+  padding: calc(14px * var(--ui-scale)) calc(12px * var(--ui-scale));
+}
+
+#class-overlay .class-modal .companion-card .companion-emoji {
+  font-size: calc(36px * var(--ui-scale));
+  filter: drop-shadow(0 4px 8px rgba(46, 100, 50, 0.2));
+  margin-bottom: calc(6px * var(--ui-scale));
+}
+
+#class-overlay .class-modal .companion-card.glass-card {
+  cursor: help;
+}
+
+#class-overlay .companion-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(10px, 2cqh, 14px);
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+/* Иконки режимов — пастель луга */
+#class-overlay .glass-card-icon--solo {
+  background: linear-gradient(145deg, rgba(92, 184, 92, 0.35), rgba(143, 214, 148, 0.25));
+}
+
+#class-overlay .glass-card-icon--versus {
+  background: linear-gradient(145deg, rgba(232, 120, 60, 0.35), rgba(245, 180, 80, 0.25));
+}
+
+#class-overlay .glass-card-icon--hardbot {
+  background: linear-gradient(145deg, rgba(140, 100, 200, 0.32), rgba(180, 140, 220, 0.22));
+}
+
+#class-overlay .glass-card-icon--lobby {
+  background: linear-gradient(145deg, rgba(232, 163, 23, 0.35), rgba(245, 200, 66, 0.25));
+}
+
+#class-overlay .class-badge--solo {
+  background: rgba(92, 184, 92, 0.2);
+  color: var(--intro-grass-dark);
+}
+
+#class-overlay .class-badge--versus {
+  background: rgba(232, 120, 60, 0.18);
+  color: #a84e18;
+}
+
+#class-overlay .class-badge--hardbot {
+  background: rgba(140, 100, 200, 0.18);
+  color: #5c3d8a;
+}
+
+#class-overlay .class-badge--lobby {
+  background: rgba(232, 163, 23, 0.22);
+  color: #8a5e08;
+}
+
+/* Hero-карточки классов — тёмный scrim, лор только в витрине слева */
+#class-overlay .class-modal .class-card.glass-card[data-class]::after,
+#class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class]::after {
+  height: 46%;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(8, 12, 8, 0.72) 36%,
+    rgba(6, 10, 6, 0.96) 100%
+  );
+}
+
+#class-overlay .class-modal .class-card.glass-card[data-class] .class-desc {
+  display: none !important;
+}
+
+#class-overlay .class-modal .class-card.glass-card[data-class] .class-name,
+#class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class] .class-name,
+#class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class] .class-desc {
+  color: #fffdf6;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.9),
+    0 2px 10px rgba(0, 0, 0, 0.65);
+}
+
+#class-overlay .class-modal .class-card.glass-card[data-class] .class-bonus {
+  color: #ffe566;
+  font-weight: 800;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+  opacity: 1;
+}
+
+#class-overlay .class-modal .class-card.glass-card[data-class].selected,
+#class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class].selected {
+  background: transparent;
+  box-shadow:
+    0 0 0 2px rgba(245, 200, 66, 0.72),
+    0 0 24px rgba(245, 200, 66, 0.38),
+    0 0 48px rgba(167, 139, 250, 0.14);
+}
+
+#class-overlay .class-modal .class-card.glass-card[data-class].selected::after,
+#class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class].selected::after {
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(8, 12, 8, 0.78) 32%,
+    rgba(4, 8, 4, 0.98) 100%
+  );
+}
+
+#class-overlay .class-modal .class-card.glass-card[data-class] .glass-card-icon--class,
+#class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class] .glass-card-icon--class {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(160, 200, 150, 0.12) 100%);
+}
+
+/* Галерея мутаций — читаемый пергамент */
+#class-overlay .mutation-gallery {
+  background: rgba(255, 252, 240, 0.92);
+  border: 2px solid rgba(92, 184, 92, 0.55);
+  box-shadow:
+    0 4px 16px rgba(46, 100, 50, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+
+#class-overlay .mutation-gallery-eyebrow {
+  color: #4a3068;
+  font-weight: 900;
+}
+
+#class-overlay .mutation-gallery-hint {
+  color: var(--intro-ink-muted);
+  font-weight: 700;
+  opacity: 1;
+}
+
+#class-overlay .mutation-silhouette {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(92, 184, 92, 0.45);
+  filter: none;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.4),
+    0 0 12px rgba(167, 139, 250, 0.1);
+}
+
+#class-overlay .mutation-silhouette:hover {
+  border-color: rgba(92, 184, 92, 0.72);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.55),
+    0 0 16px rgba(167, 139, 250, 0.2),
+    0 0 28px rgba(92, 184, 92, 0.12);
+}
+
+#class-overlay .mutation-silhouette--lore-active {
+  background: linear-gradient(180deg, rgba(255, 252, 235, 0.98) 0%, rgba(255, 244, 210, 0.95) 100%);
+  border-color: rgba(232, 163, 23, 0.85);
+  box-shadow:
+    0 0 0 2px rgba(245, 200, 66, 0.45),
+    0 0 20px rgba(245, 200, 66, 0.32),
+    0 0 40px rgba(167, 139, 250, 0.16);
+}
+
+#class-overlay .mutation-silhouette--lore-active .mutation-silhouette-form {
+  color: var(--intro-ink-muted);
+  font-weight: 700;
+  text-shadow: none;
+}
+
+body:has(#class-overlay:not(.hidden)) .mutation-lore-popup {
+  border-color: rgba(232, 163, 23, 0.72);
+  background: linear-gradient(180deg, rgba(255, 252, 240, 0.98) 0%, rgba(255, 244, 218, 0.97) 100%);
+  box-shadow:
+    0 0 0 2px rgba(245, 200, 66, 0.35),
+    0 0 22px rgba(245, 200, 66, 0.22),
+    0 0 40px rgba(167, 139, 250, 0.12),
+    0 12px 32px rgba(46, 100, 50, 0.18);
+}
+
+body:has(#class-overlay:not(.hidden)) .mutation-lore-popup-name {
+  color: var(--intro-ink);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+body:has(#class-overlay:not(.hidden)) .mutation-lore-popup-form {
+  color: var(--intro-ink-muted);
+}
+
+body:has(#class-overlay:not(.hidden)) .mutation-lore-popup-quip {
+  border-top-color: rgba(92, 184, 92, 0.35);
+  color: #6b4a10;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+body:has(#class-overlay:not(.hidden)) .mutation-lore-popup-glow {
+  background: radial-gradient(circle at 50% 18%, rgba(245, 200, 66, 0.2) 0%, transparent 70%);
+}
+
+#class-overlay .mutation-silhouette-name {
+  color: var(--intro-ink);
+  font-weight: 800;
+  opacity: 1;
+}
+
+#class-overlay .mutation-silhouette-form {
+  color: var(--intro-ink-muted);
+  font-weight: 700;
+  opacity: 1;
+}
+
+/* Витрина героя — тёмная подпись с лором */
+#class-overlay .class-hero-showcase-caption,
+#class-overlay .class-hero-roster-caption {
+  background: linear-gradient(180deg, rgba(22, 32, 20, 0.82) 0%, rgba(12, 18, 10, 0.94) 100%);
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
+}
+
+#class-overlay .class-hero-showcase-name,
+#class-overlay .class-hero-roster-title {
+  color: #fffdf6;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+}
+
+#class-overlay .class-hero-showcase-desc,
+#class-overlay .class-hero-roster-hint {
+  color: rgba(255, 252, 240, 0.92);
+  font-weight: 600;
+  line-height: 1.4;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
+}
+
+#class-overlay .class-hero-roster-label {
+  color: #fffdf6;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.75);
+  font-weight: 800;
+}
+
+/* Кнопки */
+#class-overlay .btn-glass-back {
+  background: rgba(255, 255, 255, 0.65);
+  border: 2px solid rgba(92, 184, 92, 0.4);
+  color: var(--intro-ink);
+  box-shadow: 0 2px 8px rgba(46, 100, 50, 0.1);
+}
+
+#class-overlay .btn-glass-back:hover {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(92, 184, 92, 0.6);
+}
+
+#class-overlay .btn-glass-start {
+  background: linear-gradient(180deg, var(--intro-gold-bright) 0%, var(--intro-gold) 100%);
+  border: 2px solid rgba(200, 134, 10, 0.5);
+  color: var(--intro-ink);
+  font-weight: 800;
+  box-shadow:
+    0 4px 16px rgba(200, 134, 10, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+#class-overlay .btn-glass-start:hover:not(:disabled) {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+
+#class-overlay .btn-glass-start:disabled {
+  opacity: 0.45;
+  filter: grayscale(0.3);
+}
+
+/* Mobile dock */
+#class-overlay:not(.hidden) .class-mobile-dock:not(.hidden) {
+  background: linear-gradient(180deg, transparent 0%, rgba(255, 250, 235, 0.92) 24%);
+}
+
+html[data-ui-surface="tablet-stacked"] #class-overlay:not(.hidden) .class-mobile-dock:not(.hidden) {
+  background: linear-gradient(180deg, transparent 0%, rgba(255, 250, 235, 0.95) 30%);
+}
+
+html[data-prep-layout="mobile"] #class-overlay:not(.hidden) .class-mobile-dock:not(.hidden) {
+  background: linear-gradient(180deg, transparent 0%, rgba(255, 250, 235, 0.96) 18%);
+  border-top: 1px solid rgba(92, 184, 92, 0.25);
+}
+
+/* ─── Hero showcase — прозрачные рамки, общий луг сзади ─── */
+
+#class-overlay .class-hero-showcase-glow {
+  background: radial-gradient(ellipse at 50% 82%, rgba(245, 200, 66, 0.2) 0%, transparent 68%);
+}
+
+#class-overlay .class-hero-showcase-frame,
+#class-overlay .class-hero-roster-frame {
+  background: transparent;
+  mask-image: none;
+  -webkit-mask-image: none;
+  box-shadow: none;
+}
+
+#class-overlay .class-hero-showcase-frame::after,
+#class-overlay .class-hero-roster-frame::after {
+  display: none;
+}
+
+#class-overlay .class-hero-roster-frame::before {
+  mix-blend-mode: soft-light;
+  opacity: 0.65;
+}
+
+#class-overlay .class-hero-showcase[data-class="warrior"] .class-hero-showcase-frame,
+#class-overlay .class-hero-showcase[data-class="rogue"] .class-hero-showcase-frame,
+#class-overlay .class-hero-showcase[data-class="mage"] .class-hero-showcase-frame,
+#class-overlay .class-hero-showcase[data-class="priest"] .class-hero-showcase-frame {
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-scene-sun {
+    animation: none !important;
+  }
+}
+
+/* ─── Магическое сияние кнопок + без обрезки теней ─── */
+
+#class-overlay .class-modal #class-step-mode:not(.hidden) {
+  overflow: visible;
+}
+
+#class-overlay .class-modal .class-step-actions .btn-secondary,
+#class-overlay .class-modal .btn-glass-back {
+  box-shadow: var(--intro-btn-glow);
+  transition: box-shadow 0.25s ease, transform 0.18s ease, border-color 0.18s ease;
+}
+
+#class-overlay .class-modal .class-step-actions .btn-secondary:hover,
+#class-overlay .class-modal .btn-glass-back:hover {
+  box-shadow: var(--intro-magic-glow-hover);
+  transform: translateY(-1px);
+}
+
+body:has(#class-overlay:not(.hidden)) .bottom-chrome .btn-glass-back,
+body:has(#class-overlay:not(.hidden)) .bottom-chrome .prep-settings-btn,
+body:has(#class-overlay:not(.hidden)) .bottom-chrome #btn-settings-intro {
+  box-shadow: var(--intro-btn-glow) !important;
+  transition: box-shadow 0.25s ease, transform 0.18s ease;
+}
+
+body:has(#class-overlay:not(.hidden)) .bottom-chrome .btn-glass-back:hover,
+body:has(#class-overlay:not(.hidden)) .bottom-chrome .prep-settings-btn:hover,
+body:has(#class-overlay:not(.hidden)) .bottom-chrome #btn-settings-intro:hover {
+  box-shadow: var(--intro-magic-glow-hover) !important;
+  transform: translateY(-1px);
+}
+
+body:has(#class-overlay:not(.hidden)) .bottom-chrome .btn-glass-start {
+  box-shadow: var(--intro-btn-glow-strong) !important;
+  transition: box-shadow 0.25s ease, transform 0.18s ease;
+}
+
+body:has(#class-overlay:not(.hidden)) .bottom-chrome .btn-glass-start:hover:not(:disabled) {
+  box-shadow:
+    0 0 0 2px rgba(245, 200, 66, 0.55),
+    0 0 26px rgba(245, 200, 66, 0.48),
+    0 0 52px rgba(167, 139, 250, 0.22),
+    0 4px 14px rgba(46, 100, 50, 0.12) !important;
+  transform: translateY(-1px);
+}
+
+#class-overlay .class-modal .class-card.glass-card.selected::before,
+#class-overlay .class-modal .opponent-class-card.glass-card.selected::before {
+  top: 12px;
+  right: 12px;
+  z-index: 4;
+  border: 2px solid rgba(255, 255, 255, 0.92);
+}
+
+#class-overlay .class-modal .class-badge {
+  box-shadow:
+    0 0 10px rgba(167, 139, 250, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}

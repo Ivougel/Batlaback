@@ -1,20 +1,27 @@
 /**
- * Карточки вклада предметов — таблица с DPS-метрами.
+ * Карточки вклада предметов — горизонтальные DPS-метры (полная ширина).
  */
 
 function maxStat(items, key) {
   return items.reduce((m, s) => Math.max(m, s[key] || 0), 0);
 }
 
-function renderMeterBar(value, max, type) {
+function getItemBlockValue(stat) {
+  return stat.damageBlocked || stat.blockDone || 0;
+}
+
+function renderMeterBar(value, max, type, { hero = false, sharePct = null } = {}) {
   const v = Number(value) || 0;
   if (v <= 0) {
-    return `<div class="is-meter is-meter-${type} is-meter-empty"><span class="is-meter-val">—</span></div>`;
+    return `<div class="is-meter is-meter-${type} is-meter-empty${hero ? " is-meter-hero" : ""}"><span class="is-meter-val">—</span></div>`;
   }
   const pct = max > 0 ? Math.max(6, Math.round((v / max) * 100)) : 0;
-  return `<div class="is-meter is-meter-${type}">
+  const shareHtml = sharePct != null && sharePct > 0
+    ? `<span class="is-share-pct">${sharePct}%</span>`
+    : "";
+  return `<div class="is-meter is-meter-${type}${hero ? " is-meter-hero" : ""}">
     <div class="is-meter-track"><div class="is-meter-fill" style="width:${pct}%"></div></div>
-    <span class="is-meter-val">${formatStatNumber(v)}</span>
+    <span class="is-meter-val">${formatStatNumber(v)}</span>${shareHtml}
   </div>`;
 }
 
@@ -25,7 +32,7 @@ function sumItemStats(items) {
       acc.physicalDamageDealt += stat.physicalDamageDealt || 0;
       acc.magicDamageDealt += stat.magicDamageDealt || 0;
       acc.healingDone += stat.healingDone || 0;
-      acc.block += stat.damageBlocked || stat.blockDone || 0;
+      acc.block += getItemBlockValue(stat);
       acc.poisonApplied += stat.poisonApplied || 0;
       acc.activations += stat.activations || 0;
       return acc;
@@ -42,40 +49,120 @@ function sumItemStats(items) {
   );
 }
 
-function renderItemStatsTotalRow(totals) {
-  const fmt = (value) => (value > 0 ? formatStatNumber(value) : "—");
-  return `<tr class="is-total-row">
-    <td class="is-item-cell"><span class="is-name">Итого</span></td>
-    <td class="is-total-val">${fmt(totals.physicalDamageDealt)}</td>
-    <td class="is-total-val">${fmt(totals.magicDamageDealt)}</td>
-    <td class="is-total-val">${fmt(totals.damageDealt)}</td>
-    <td class="is-total-val">${fmt(totals.healingDone)}</td>
-    <td class="is-total-val">${fmt(totals.block)}</td>
-    <td class="is-total-val">${fmt(totals.poisonApplied)}</td>
-    <td class="is-atk-cell is-total-val">${totals.activations > 0 ? totals.activations : "—"}</td>
-  </tr>`;
+function getDamageSharePct(value, teamTotal) {
+  const v = Number(value) || 0;
+  const t = Number(teamTotal) || 0;
+  if (v <= 0 || t <= 0) return null;
+  return Math.round((v / t) * 100);
 }
 
-function renderItemMeterRow(stat, maxPhys, maxMagic, maxDmg, maxHeal, maxBlock, maxPoison) {
-  const attacks = stat.activations > 0
-    ? `<span class="is-atk">${stat.activations}</span>`
-    : `<span class="is-atk is-muted">—</span>`;
-  const blockValue = stat.damageBlocked || stat.blockDone || 0;
-  const physDmg = stat.physicalDamageDealt || 0;
-  const magicDmg = stat.magicDamageDealt || 0;
+function buildVisibleMetricColumns(totals) {
+  const cols = [
+    { id: "dmg", label: "⚔ Всего", type: "dmg", hero: true },
+  ];
+  if (totals.physicalDamageDealt > 0) cols.push({ id: "phys", label: "🗡 Физ", type: "phys" });
+  if (totals.magicDamageDealt > 0) cols.push({ id: "magic", label: "✨ Маг", type: "magic" });
+  if (totals.healingDone > 0) cols.push({ id: "heal", label: "❤ Лечение", type: "heal" });
+  if (totals.block > 0) cols.push({ id: "block", label: "🛡 Блок", type: "block" });
+  if (totals.poisonApplied > 0) cols.push({ id: "poison", label: "☠ Яд", type: "poison" });
+  if (totals.activations > 0) cols.push({ id: "atk", label: "🔄", type: "atk", isAtk: true });
+  return cols;
+}
+
+function getMetricValue(stat, colId) {
+  switch (colId) {
+    case "dmg": return stat.damageDealt || 0;
+    case "phys": return stat.physicalDamageDealt || 0;
+    case "magic": return stat.magicDamageDealt || 0;
+    case "heal": return stat.healingDone || 0;
+    case "block": return getItemBlockValue(stat);
+    case "poison": return stat.poisonApplied || 0;
+    case "atk": return stat.activations || 0;
+    default: return 0;
+  }
+}
+
+function getMetricMax(sorted, colId) {
+  switch (colId) {
+    case "dmg": return maxStat(sorted, "damageDealt");
+    case "phys": return maxStat(sorted, "physicalDamageDealt");
+    case "magic": return maxStat(sorted, "magicDamageDealt");
+    case "heal": return maxStat(sorted, "healingDone");
+    case "block": return sorted.reduce((m, s) => Math.max(m, getItemBlockValue(s)), 0);
+    case "poison": return maxStat(sorted, "poisonApplied");
+    default: return 0;
+  }
+}
+
+function getTotalMetricValue(totals, colId) {
+  switch (colId) {
+    case "dmg": return totals.damageDealt;
+    case "phys": return totals.physicalDamageDealt;
+    case "magic": return totals.magicDamageDealt;
+    case "heal": return totals.healingDone;
+    case "block": return totals.block;
+    case "poison": return totals.poisonApplied;
+    case "atk": return totals.activations;
+    default: return 0;
+  }
+}
+
+function renderTeamSummaryChips(totals) {
+  const chips = [];
+  if (totals.damageDealt > 0) {
+    chips.push(`<span class="is-summary-chip is-chip-dmg"><span class="is-chip-icon">⚔</span><span class="is-chip-label">Урон</span><span class="is-chip-val">${formatStatNumber(totals.damageDealt)}</span></span>`);
+    if (totals.physicalDamageDealt > 0) {
+      chips.push(`<span class="is-summary-chip is-chip-phys"><span class="is-chip-icon">🗡</span><span class="is-chip-val">${formatStatNumber(totals.physicalDamageDealt)}</span></span>`);
+    }
+    if (totals.magicDamageDealt > 0) {
+      chips.push(`<span class="is-summary-chip is-chip-magic"><span class="is-chip-icon">✨</span><span class="is-chip-val">${formatStatNumber(totals.magicDamageDealt)}</span></span>`);
+    }
+  }
+  if (totals.healingDone > 0) {
+    chips.push(`<span class="is-summary-chip is-chip-heal"><span class="is-chip-icon">❤</span><span class="is-chip-label">Лечение</span><span class="is-chip-val">${formatStatNumber(totals.healingDone)}</span></span>`);
+  }
+  if (totals.block > 0) {
+    chips.push(`<span class="is-summary-chip is-chip-block"><span class="is-chip-icon">🛡</span><span class="is-chip-label">Блок</span><span class="is-chip-val">${formatStatNumber(totals.block)}</span></span>`);
+  }
+  if (totals.poisonApplied > 0) {
+    chips.push(`<span class="is-summary-chip is-chip-poison"><span class="is-chip-icon">☠</span><span class="is-chip-val">${formatStatNumber(totals.poisonApplied)}</span></span>`);
+  }
+  if (!chips.length) return "";
+  return `<div class="is-team-summary">${chips.join("")}</div>`;
+}
+
+function renderItemMeterRow(stat, columns, maxByCol, teamTotalDmg) {
+  const cells = columns.map((col) => {
+    if (col.isAtk) {
+      const atk = stat.activations || 0;
+      return `<td class="is-atk-cell">${atk > 0 ? `<span class="is-atk">${atk}</span>` : `<span class="is-atk is-muted">—</span>`}</td>`;
+    }
+    const val = getMetricValue(stat, col.id);
+    const sharePct = col.id === "dmg" ? getDamageSharePct(val, teamTotalDmg) : null;
+    return `<td class="${col.hero ? "is-col-hero" : "is-col-meter"}">${renderMeterBar(val, maxByCol[col.id], col.type, { hero: col.hero, sharePct })}</td>`;
+  });
 
   return `<tr>
     <td class="is-item-cell">
       <span class="is-icon">${stat.icon}</span>
       <span class="is-name">${stat.name}</span>
     </td>
-    <td>${renderMeterBar(physDmg, maxPhys, "phys")}</td>
-    <td>${renderMeterBar(magicDmg, maxMagic, "magic")}</td>
-    <td>${renderMeterBar(stat.damageDealt, maxDmg, "dmg")}</td>
-    <td>${renderMeterBar(stat.healingDone, maxHeal, "heal")}</td>
-    <td>${renderMeterBar(blockValue, maxBlock, "block")}</td>
-    <td>${renderMeterBar(stat.poisonApplied, maxPoison, "poison")}</td>
-    <td class="is-atk-cell">${attacks}</td>
+    ${cells.join("")}
+  </tr>`;
+}
+
+function renderItemStatsTotalRow(totals, columns) {
+  const fmt = (value) => (value > 0 ? formatStatNumber(value) : "—");
+  const cells = columns.map((col) => {
+    if (col.isAtk) {
+      return `<td class="is-atk-cell is-total-val">${totals.activations > 0 ? totals.activations : "—"}</td>`;
+    }
+    return `<td class="is-total-val">${fmt(getTotalMetricValue(totals, col.id))}</td>`;
+  });
+
+  return `<tr class="is-total-row">
+    <td class="is-item-cell"><span class="is-name">Итого</span></td>
+    ${cells.join("")}
   </tr>`;
 }
 
@@ -95,42 +182,36 @@ function renderItemMeterTable(items, teamLabel, { showBoardButton = false, board
   }
 
   const sorted = sortItemStatsForDisplay(items);
-
-  const maxPhys = maxStat(sorted, "physicalDamageDealt");
-  const maxMagic = maxStat(sorted, "magicDamageDealt");
-  const maxDmg = maxStat(sorted, "damageDealt");
-  const maxHeal = maxStat(sorted, "healingDone");
-  const maxBlock = sorted.reduce(
-    (m, s) => Math.max(m, s.damageBlocked || s.blockDone || 0),
-    0,
-  );
-  const maxPoison = maxStat(sorted, "poisonApplied");
   const totals = sumItemStats(sorted);
+  const columns = buildVisibleMetricColumns(totals);
+  const maxByCol = Object.fromEntries(
+    columns.filter((c) => !c.isAtk).map((c) => [c.id, getMetricMax(sorted, c.id)]),
+  );
+
+  const headerCells = columns.map((col) => {
+    const cls = col.isAtk ? "is-col-atk" : (col.hero ? "is-col-hero" : "is-col-meter");
+    return `<th class="${cls}">${col.label}</th>`;
+  }).join("");
 
   return `<div class="is-team">
     <div class="is-team-head">
       <div class="is-team-label">${teamLabel}</div>
       ${boardBtn}
     </div>
+    ${renderTeamSummaryChips(totals)}
     <div class="is-table-wrap">
       <table class="is-meter-table">
         <thead>
           <tr>
             <th class="is-col-item">Предмет</th>
-            <th class="is-col-meter">🗡 Физ</th>
-            <th class="is-col-meter">✨ Маг</th>
-            <th class="is-col-meter">⚔ Всего</th>
-            <th class="is-col-meter">❤ Лечение</th>
-            <th class="is-col-meter">🛡 Блок</th>
-            <th class="is-col-meter">☠ Яд</th>
-            <th class="is-col-atk">🔄</th>
+            ${headerCells}
           </tr>
         </thead>
         <tbody>
-          ${sorted.map((s) => renderItemMeterRow(s, maxPhys, maxMagic, maxDmg, maxHeal, maxBlock, maxPoison)).join("")}
+          ${sorted.map((s) => renderItemMeterRow(s, columns, maxByCol, totals.damageDealt)).join("")}
         </tbody>
         <tfoot>
-          ${renderItemStatsTotalRow(totals)}
+          ${renderItemStatsTotalRow(totals, columns)}
         </tfoot>
       </table>
     </div>
@@ -151,12 +232,15 @@ function formatItemStatsTeamCopyBlock(teamLabel, items) {
   }
 
   const sorted = sortItemStatsForDisplay(items);
-  const header = "Предмет\tФиз\tМаг\tВсего\tЛечение\tБлок\tЯд\tАктивации";
+  const totals = sumItemStats(sorted);
+  const header = "Предмет\tДоля%\tФиз\tМаг\tВсего\tЛечение\tБлок\tЯд\tАктивации";
   const rows = sorted.map((stat) => {
-    const blockValue = stat.damageBlocked || stat.blockDone || 0;
+    const blockValue = getItemBlockValue(stat);
     const name = `${stat.icon || ""} ${stat.name || stat.itemId || "—"}`.trim();
+    const share = getDamageSharePct(stat.damageDealt, totals.damageDealt);
     return [
       name,
+      share != null ? `${share}%` : "—",
       formatStatNumber(stat.physicalDamageDealt || 0),
       formatStatNumber(stat.magicDamageDealt || 0),
       formatStatNumber(stat.damageDealt),
@@ -166,9 +250,9 @@ function formatItemStatsTeamCopyBlock(teamLabel, items) {
       String(stat.activations || 0),
     ].join("\t");
   });
-  const totals = sumItemStats(sorted);
   const totalRow = [
     "Итого",
+    "100%",
     formatStatNumber(totals.physicalDamageDealt),
     formatStatNumber(totals.magicDamageDealt),
     formatStatNumber(totals.damageDealt),

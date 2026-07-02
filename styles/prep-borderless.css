@@ -1,0 +1,292 @@
+/**
+ * Prep — без подложек и обводок: элементы лежат прямо на лугу.
+ */
+
+#app[data-phase="prep"] .prep-top-bar {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+#app[data-phase="prep"] .prep-top-bar .run-hud-phase {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+#app[data-phase="prep"] .prep-top-bar .prep-stats-class {
+  border: none;
+  padding-right: 0;
+  font-weight: 800;
+  font-size: max(var(--font-md), calc(0.95rem * var(--type-scale, 1)));
+  line-height: 1.25;
+  white-space: normal;
+  max-width: min(100%, 42vw);
+}
+
+#app[data-phase="prep"] .mutation-progress {
+  background: transparent;
+  border: none;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+#app[data-phase="prep"] .mutation-progress-bar {
+  background: rgba(45, 74, 40, 0.12);
+}
+
+#app[data-phase="prep"] .prep-enhancement-strip {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+#app[data-phase="prep"] .enh-slot {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: calc(2px * var(--ui-scale)) calc(4px * var(--ui-scale));
+}
+
+#app[data-phase="prep"] .enh-slot--filled {
+  background: transparent;
+  border: none;
+}
+
+#app[data-phase="prep"] .enh-slot--drop-target {
+  box-shadow: none;
+  outline: 2px dashed rgba(92, 184, 92, 0.55);
+  outline-offset: 2px;
+}
+
+#app[data-phase="prep"] .prep-modifier-strip {
+  border: none;
+  padding-top: 0;
+}
+
+#app[data-phase="prep"] .prep-mod-chip {
+  background: transparent;
+  border: none;
+  color: var(--meadow-ink-muted);
+  padding: 2px 4px;
+}
+
+#app[data-phase="prep"] .prep-mod-chip.is-active {
+  background: transparent;
+  border: none;
+  color: var(--meadow-grass-dark);
+  font-weight: 700;
+}
+
+#app[data-phase="prep"] #shop-panel {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+#app[data-phase="prep"] .bench-panel {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+#app[data-phase="prep"] .shop-card,
+#app[data-phase="prep"] .bench-card {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-card:not(.empty) {
+  padding:
+    calc(4px * var(--ui-scale, 1))
+    calc(6px * var(--ui-scale, 1))
+    calc(4px * var(--ui-scale, 1))
+    calc(4px * var(--ui-scale, 1));
+}
+
+#app[data-phase="prep"] .bench-card {
+  padding: calc(6px * var(--ui-scale)) calc(4px * var(--ui-scale));
+}
+
+#app[data-phase="prep"] .shop-card.rarity-common,
+#app[data-phase="prep"] .shop-card.rarity-uncommon,
+#app[data-phase="prep"] .shop-card.rarity-rare,
+#app[data-phase="prep"] .shop-card.rarity-epic,
+#app[data-phase="prep"] .shop-card.rarity-legendary,
+#app[data-phase="prep"] .bench-card.rarity-common,
+#app[data-phase="prep"] .bench-card.rarity-uncommon,
+#app[data-phase="prep"] .bench-card.rarity-rare,
+#app[data-phase="prep"] .bench-card.rarity-epic,
+#app[data-phase="prep"] .bench-card.rarity-legendary {
+  border: none;
+  box-shadow: none;
+}
+
+#app[data-phase="prep"] .shop-card:hover:not(.empty):not(.unaffordable),
+#app[data-phase="prep"] .bench-card:hover:not(.empty) {
+  background: rgba(255, 255, 255, 0.22);
+  border: none;
+  transform: translateY(-1px);
+}
+
+#app[data-phase="prep"] #shop-panel .shop-sell-zone {
+  background: transparent;
+  border: none;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-sell-zone.sell-drop-target {
+  background: rgba(255, 255, 255, 0.18);
+  outline: 2px dashed rgba(92, 184, 92, 0.5);
+  outline-offset: 2px;
+}
+
+#app[data-phase="prep"] .shop-action-row .btn-secondary,
+#app[data-phase="prep"] .btn-recipe-book,
+#app[data-phase="prep"] .btn-refresh-shop {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: var(--meadow-ink);
+  font-weight: 700;
+}
+
+#app[data-phase="prep"] .shop-action-row .btn-secondary:hover,
+#app[data-phase="prep"] .btn-recipe-book:hover,
+#app[data-phase="prep"] .btn-refresh-shop:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border: none;
+}
+
+/* Нижняя панель — стили в prep-juice.css (meadow chrome) */
+
+#app[data-phase="prep"] .doll-slot {
+  background: transparent;
+  border: none;
+}
+
+#app[data-phase="prep"] #game-canvas {
+  box-shadow: none;
+}
+
+/* ─── Lobby roster (prep) ─── */
+
+#app[data-phase="prep"] .lobby-prep-roster-panel,
+#app[data-phase="prep"] #lobby-prep-roster-panel {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+#app[data-phase="prep"] .lobby-fighter-card {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+#app[data-phase="prep"] .lobby-fighter-card--yours,
+#app[data-phase="prep"] .lobby-fighter-card--yours-match {
+  outline: 2px solid rgba(92, 184, 92, 0.45);
+  outline-offset: 1px;
+}
+
+#app[data-phase="prep"] .lobby-fighter-card:not(.lobby-fighter-card--yours):not(.lobby-fighter-card--yours-match):hover:not(:disabled),
+#app[data-phase="prep"] .lobby-fighter-card:not(.lobby-fighter-card--yours):not(.lobby-fighter-card--yours-match):focus-visible:not(:disabled),
+#app[data-phase="prep"] .lobby-fighter-card:not(.lobby-fighter-card--yours):not(.lobby-fighter-card--yours-match).lobby-fighter-card--touch:not(:disabled) {
+  background: rgba(255, 255, 255, 0.14);
+  outline: 2px solid rgba(245, 200, 66, 0.55);
+  outline-offset: 1px;
+}
+
+#app[data-phase="prep"] .lobby-fighter-card--active:not(.lobby-fighter-card--yours):not(.lobby-fighter-card--yours-match),
+#app[data-phase="prep"] .lobby-fighter-card--next:not(.lobby-fighter-card--yours):not(.lobby-fighter-card--yours-match) {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  outline: none;
+}
+
+#app[data-phase="prep"] .lobby-fighter-card-avatar {
+  background: transparent;
+  border: none;
+}
+
+#app[data-phase="prep"] .lobby-fighter-emoji {
+  filter: none;
+}
+
+#app[data-phase="prep"] .lobby-roster-chip {
+  background: transparent;
+  border: none;
+}
+
+#app[data-phase="prep"] .lobby-roster-chip:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.14);
+  border: none;
+}
+
+/* ─── Усиления: полоска без панели ─── */
+
+#app[data-phase="prep"] .prep-enhancement-strip {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+/* ─── Магазин / скамейка: без цветных квадратов за иконками ─── */
+
+#app[data-phase="prep"] #shop-panel .shop-item-visual .icon,
+#app[data-phase="prep"] #shop-panel .bench-panel .bench-card .icon,
+#app[data-phase="prep"] .shop-card--amplifier .item-icon-shell,
+#app[data-phase="prep"] .shop-card--enhancement .item-icon-shell--enhancement {
+  background: transparent !important;
+  border: none;
+  box-shadow: none !important;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-card.rarity-common .shop-item-visual .icon,
+#app[data-phase="prep"] #shop-panel .shop-card.rarity-uncommon .shop-item-visual .icon,
+#app[data-phase="prep"] #shop-panel .shop-card.rarity-rare .shop-item-visual .icon,
+#app[data-phase="prep"] #shop-panel .shop-card.rarity-epic .shop-item-visual .icon,
+#app[data-phase="prep"] #shop-panel .shop-card.rarity-legendary .shop-item-visual .icon,
+#app[data-phase="prep"] #shop-panel .shop-card.frozen .shop-item-visual .icon,
+#app[data-phase="prep"] #shop-panel .shop-card.frozen.rarity-uncommon .shop-item-visual .icon,
+#app[data-phase="prep"] #shop-panel .shop-card.frozen.rarity-rare .shop-item-visual .icon,
+#app[data-phase="prep"] #shop-panel .shop-card.frozen.rarity-epic .shop-item-visual .icon,
+#app[data-phase="prep"] #shop-panel .shop-card.frozen.rarity-legendary .shop-item-visual .icon {
+  box-shadow: none !important;
+}
+
+/* ─── Герой prep: без тени под ногами ─── */
+
+html[data-hero-card-mode="full-bleed"] #app[data-phase="prep"] .prep-character-img {
+  filter: none;
+}
+
+/* ─── Кнопка «Экипировка» ─── */
+
+#app[data-phase="prep"] .btn-toggle-doll {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: var(--meadow-ink);
+  font-weight: 700;
+}
+
+#app[data-phase="prep"] .btn-toggle-doll:hover,
+#app[data-phase="prep"] .btn-toggle-doll.active {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: var(--meadow-grass-dark);
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .btn-toggle-doll {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}

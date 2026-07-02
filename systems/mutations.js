@@ -146,9 +146,34 @@ function getMutationsForNoviceClass(classId) {
 }
 
 function getNoviceClassLabel(classId) {
+  if (typeof getHeroLabel === "function") {
+    const hero = getHeroLabel(classId);
+    if (hero) return hero;
+  }
   const cls = typeof getClassById === "function" ? getClassById(classId) : null;
-  if (!cls) return "Новичок";
-  return cls.noviceLabel || `${cls.name}-новичок`;
+  if (!cls) return "Герой";
+  return cls.heroLabel || cls.noviceLabel || cls.name;
+}
+
+function formatHeroBuildTitle(heroLabel, buildPart) {
+  const hero = String(heroLabel || "").trim();
+  const part = String(buildPart || "").trim().toLowerCase();
+  if (!hero) return part || "—";
+  if (!part) return hero;
+  return `${hero.toLowerCase()}-${part}`;
+}
+
+function getMutationDisplayTitle(classId, formId, mutationId) {
+  const hero = getNoviceClassLabel(classId);
+  if (mutationId) {
+    const m = getMutationById(mutationId);
+    if (m) return formatHeroBuildTitle(hero, m.name);
+  }
+  if (formId) {
+    const m = getMutationById(formId);
+    if (m) return formatHeroBuildTitle(hero, m.formName);
+  }
+  return hero;
 }
 
 function defaultCompanionForClass(classId) {
@@ -159,6 +184,19 @@ function defaultCompanionForClass(classId) {
     priest: "s_light",
   };
   return map[classId] || "s_stranger";
+}
+
+function defaultClassForCompanion(companionId) {
+  const map = {
+    s_blade: "warrior",
+    s_shadow: "rogue",
+    s_arcane: "mage",
+    s_light: "priest",
+    s_spark: "mage",
+    s_frost: "mage",
+    s_stranger: "warrior",
+  };
+  return map[companionId] || "warrior";
 }
 
 function estimateItemPowerScore(itemId) {
@@ -293,18 +331,6 @@ function pickMutationIdForMilestone(progress, round) {
   return null;
 }
 
-function getMutationDisplayTitle(classId, formId, mutationId) {
-  if (mutationId) {
-    const m = getMutationById(mutationId);
-    if (m) return m.name;
-  }
-  if (formId) {
-    const m = getMutationById(formId);
-    if (m) return `${m.formName} (${getNoviceClassLabel(classId)})`;
-  }
-  return getNoviceClassLabel(classId);
-}
-
 function canCompanionEquipItem(companionId, itemId, def = null) {
   const companion = getCompanionById(companionId);
   const itemDef = def || (typeof ITEM_CATALOG !== "undefined" ? ITEM_CATALOG[itemId] : null);
@@ -398,4 +424,116 @@ function renderMutationProgressHtml(progress, formId, mutationId, round) {
       ${altHtml}
     </div>
   `;
+}
+
+const COMPANION_COMBAT_LABELS = {
+  allMult: "Все множители урона (damageMult и magicDamageMult)",
+  damageMult: "Физический урон (damageMult)",
+  magicDamageMult: "Магический урон (magicDamageMult)",
+  cooldownMult: "Кулдаун предметов (cooldownMult)",
+  shieldBlockMult: "Блок щитом (shieldBlockMult)",
+};
+
+const COMPANION_TAG_LABELS = {
+  fire: "огонь",
+  cold: "холод",
+  holy: "holy",
+  poison: "яд",
+  heal: "хил",
+};
+
+const COMPANION_EQUIP_RESTRICT_LABELS = {
+  no_two_hand: "Двуручное оружие нельзя надеть на манекен",
+  no_shield: "Щит нельзя надеть на манекен (leftHand и тег shield)",
+};
+
+function formatCompanionSignedPct(value) {
+  const pct = Math.round(Math.abs(value) * 1000) / 10;
+  const sign = value >= 0 ? "+" : "−";
+  return `${sign}${Number.isInteger(pct) ? pct : pct.toFixed(1)}%`;
+}
+
+function formatCompanionMultLine(key, value) {
+  const label = COMPANION_COMBAT_LABELS[key] || key;
+  if (key === "cooldownMult") {
+    const factor = 1 + value;
+    const speedPct = Math.round(Math.abs(value) * 1000) / 10;
+    if (value < 0) {
+      return `${label} ← ×${factor.toFixed(2)} · предметы перезаряжаются на ${speedPct}% быстрее`;
+    }
+    if (value > 0) {
+      return `${label} ← ×${factor.toFixed(2)} · предметы перезаряжаются на ${speedPct}% медленнее`;
+    }
+    return `${label} без изменений`;
+  }
+  if (key === "shieldBlockMult") {
+    const sign = value >= 0 ? "+" : "−";
+    const pct = Math.round(Math.abs(value) * 100);
+    return `${label} ← shieldBlockMult ${sign} ${pct} п.п. (аддитивно)`;
+  }
+  const factor = 1 + value;
+  return `${label} ← ×${factor.toFixed(factor % 1 === 0 ? 0 : 2)} (${formatCompanionSignedPct(value)} к множителю)`;
+}
+
+function formatCompanionTagMultLine(tag, value) {
+  const label = COMPANION_TAG_LABELS[tag] || tag;
+  const factor = 1 + value;
+  return `Эффекты с тегом «${label}» ← ×${factor.toFixed(2)} (${formatCompanionSignedPct(value)})`;
+}
+
+function buildCompanionTooltipLines(companionId) {
+  const companion = getCompanionById(companionId);
+  if (!companion) return [{ text: "Спутник не найден", style: "normal" }];
+
+  const lines = [
+    { text: `${companion.emoji} ${companion.name}`, style: "title" },
+    { text: companion.desc, style: "sub", color: "#8b949e" },
+    { text: "Бой (формулы забега)", style: "label", color: "#7dd3fc" },
+  ];
+
+  const combat = companion.combat || {};
+  if (combat.allMult) lines.push({ text: formatCompanionMultLine("allMult", combat.allMult), style: "normal" });
+  if (combat.damageMult) lines.push({ text: formatCompanionMultLine("damageMult", combat.damageMult), style: "normal" });
+  if (combat.magicDamageMult) lines.push({ text: formatCompanionMultLine("magicDamageMult", combat.magicDamageMult), style: "normal" });
+  if (combat.cooldownMult) lines.push({ text: formatCompanionMultLine("cooldownMult", combat.cooldownMult), style: "normal" });
+  if (combat.shieldBlockMult) lines.push({ text: formatCompanionMultLine("shieldBlockMult", combat.shieldBlockMult), style: "normal" });
+
+  const tagEntries = Object.entries(COMPANION_TAG_LABELS)
+    .map(([tag]) => [tag, combat[`${tag}TagMult`]])
+    .filter(([, value]) => value);
+  if (tagEntries.length) {
+    lines.push({ text: "Модификаторы тегов", style: "label", color: "#7dd3fc" });
+    tagEntries.forEach(([tag, value]) => {
+      lines.push({ text: formatCompanionTagMultLine(tag, value), style: "normal" });
+    });
+  }
+
+  if (companion.equipRestrict?.length) {
+    lines.push({ text: "Ограничения экипа", style: "label", color: "#7dd3fc" });
+    companion.equipRestrict.forEach((rule) => {
+      lines.push({
+        text: COMPANION_EQUIP_RESTRICT_LABELS[rule] || rule,
+        style: "normal",
+        color: "#f0a060",
+      });
+    });
+  } else {
+    lines.push({ text: "Экип: без ограничений на манекене", style: "sub", color: "#86efac" });
+  }
+
+  if (companion.mutationBias?.length) {
+    lines.push({ text: "Мутации", style: "label", color: "#7dd3fc" });
+    lines.push({
+      text: "+4 к очкам ветки для: "
+        + companion.mutationBias.map((id) => getMutationById(id)?.name || id).join(", "),
+      style: "normal",
+    });
+    lines.push({
+      text: "Если мутация в companionBias спутника → score ×1.25",
+      style: "sub",
+      color: "#8b949e",
+    });
+  }
+
+  return lines;
 }

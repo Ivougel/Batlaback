@@ -1,0 +1,639 @@
+/**
+ * Тема Sanctuary (Diablo) — тот же луг на заднике, но проклятый: камень, золото, кровь.
+ * Активна при html[data-visual-theme="diablo"].
+ */
+
+html[data-visual-theme="diablo"] {
+  --meadow-sky-top: #2a1820;
+  --meadow-sky-mid: #1f1418;
+  --meadow-grass-mid: #1a2214;
+  --meadow-grass: #0c1008;
+  --meadow-grass-dark: #8b6914;
+  --meadow-cream: #2a2218;
+  --meadow-cream-deep: #1e1810;
+  --meadow-ink: #e8dcc8;
+  --meadow-ink-muted: #a89878;
+  --meadow-gold: #c9a227;
+  --meadow-gold-bright: #f0d878;
+  --meadow-panel: rgba(22, 16, 12, 0.94);
+  --meadow-panel-solid: #1a1410;
+  --meadow-border: rgba(201, 162, 39, 0.45);
+  --meadow-border-soft: rgba(139, 105, 20, 0.35);
+  --meadow-shadow: rgba(0, 0, 0, 0.55);
+  --meadow-overlay: rgba(8, 4, 2, 0.82);
+  --meadow-chrome: rgba(26, 20, 14, 0.96);
+
+  --juice-ink: #f0e6d2;
+  --juice-ink-soft: #c4b498;
+  --juice-panel: rgba(22, 16, 12, 0.92);
+  --juice-panel-soft: rgba(32, 24, 18, 0.88);
+  --juice-stroke: rgba(201, 162, 39, 0.55);
+  --juice-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+  --juice-shadow-lift: 0 8px 28px rgba(0, 0, 0, 0.55);
+  --juice-text-outline: 0 1px 2px rgba(0, 0, 0, 0.85);
+  --juice-text-legible:
+    0 1px 2px rgba(0, 0, 0, 0.9),
+    0 0 12px rgba(180, 40, 20, 0.25);
+  --juice-magic: #e85a30;
+  --juice-magic-bright: #ff9050;
+  --juice-magic-glow: rgba(232, 90, 48, 0.65);
+
+  --canvas-cell-a: #3d3228;
+  --canvas-cell-b: #352a20;
+  --canvas-cell-blocked: #2a2218;
+  --canvas-glow-0: rgba(180, 50, 20, 0.22);
+  --canvas-glow-1: rgba(120, 30, 10, 0.12);
+  --canvas-battle-fill: rgba(40, 28, 18, 0.55);
+
+  --bg: #0f0c08;
+  --text: var(--meadow-ink);
+  --muted: var(--meadow-ink-muted);
+  --accent: var(--meadow-gold);
+  --gold: var(--meadow-gold-bright);
+  --border: var(--meadow-border);
+  --panel: var(--meadow-panel);
+  --hp: #c41e3a;
+}
+
+/* ─── Типографика ─── */
+
+html[data-visual-theme="diablo"] body,
+html[data-visual-theme="diablo"] #battle-result-overlay,
+html[data-visual-theme="diablo"] #overlay {
+  font-family: "Crimson Pro", "Palatino Linotype", Georgia, serif;
+  font-weight: 600;
+}
+
+html[data-visual-theme="diablo"] h1,
+html[data-visual-theme="diablo"] h2,
+html[data-visual-theme="diablo"] h3,
+html[data-visual-theme="diablo"] .shop-panel h3,
+html[data-visual-theme="diablo"] .prep-stats-class,
+html[data-visual-theme="diablo"] .btn-primary,
+html[data-visual-theme="diablo"] .btn-fight-header {
+  font-family: "Cinzel", "Palatino Linotype", serif;
+  letter-spacing: 0.04em;
+}
+
+/* ─── Задник: тот же градиент луга, но проклятый ─── */
+
+html[data-visual-theme="diablo"] body {
+  background: linear-gradient(
+    180deg,
+    #2a1820 0%,
+    #1a1210 38%,
+    #12100c 72%,
+    #0a0806 100%
+  );
+}
+
+html[data-visual-theme="diablo"] .scene-bg {
+  background:
+    radial-gradient(ellipse 70% 45% at 50% 8%, rgba(180, 40, 20, 0.35) 0%, transparent 55%),
+    radial-gradient(ellipse 90% 60% at 20% 90%, rgba(40, 80, 20, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse 80% 55% at 75% 12%, rgba(201, 162, 39, 0.08) 0%, transparent 58%),
+    linear-gradient(
+      180deg,
+      #3d2830 0%,
+      #2a1c22 28%,
+      #1e2818 58%,
+      #0f180c 100%
+    );
+}
+
+html[data-visual-theme="diablo"] #class-overlay {
+  --intro-sky-top: #2a1820;
+  --intro-sky-mid: #1f1418;
+  --intro-grass-mid: #1a2214;
+  --intro-grass: #0c1008;
+  --intro-grass-dark: #8b6914;
+  --intro-cream: #2a2218;
+  --intro-cream-deep: #1e1810;
+  --intro-ink: #e8dcc8;
+  --intro-ink-muted: #a89878;
+  --intro-gold: #c9a227;
+  --intro-gold-bright: #f0d878;
+  --intro-panel-border: rgba(201, 162, 39, 0.45);
+  --intro-card-border: rgba(139, 105, 20, 0.35);
+  --intro-shadow: rgba(0, 0, 0, 0.55);
+
+  background: linear-gradient(
+    180deg,
+    #2a1820 0%,
+    #1a1210 45%,
+    #0f180c 100%
+  );
+}
+
+/* Intro-сцена: проклятый луг вместо солнечного */
+html[data-visual-theme="diablo"] #class-overlay .class-overlay-bg {
+  background:
+    radial-gradient(ellipse 70% 45% at 50% 8%, rgba(180, 40, 20, 0.35) 0%, transparent 55%),
+    radial-gradient(ellipse 90% 60% at 20% 90%, rgba(40, 80, 20, 0.12) 0%, transparent 50%),
+    linear-gradient(
+      180deg,
+      var(--intro-sky-top) 0%,
+      var(--intro-sky-mid) 28%,
+      var(--intro-grass-mid) 55%,
+      var(--intro-grass) 100%
+    );
+}
+
+html[data-visual-theme="diablo"] #class-overlay .class-overlay-bg .hero-scene-hill--back {
+  background: #1a2818;
+  opacity: 0.55;
+}
+
+html[data-visual-theme="diablo"] #class-overlay .class-overlay-bg .hero-scene-hill--mid {
+  background: #142010;
+  opacity: 0.72;
+}
+
+html[data-visual-theme="diablo"] #class-overlay .class-overlay-bg .hero-scene-hill--front {
+  background: #0c1008;
+}
+
+html[data-visual-theme="diablo"] #class-overlay .class-overlay-bg .hero-scene-cloud {
+  opacity: 0.22;
+  background: #3a3038;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.45));
+}
+
+html[data-visual-theme="diablo"] #class-overlay .class-overlay-bg .hero-scene-cloud::before,
+html[data-visual-theme="diablo"] #class-overlay .class-overlay-bg .hero-scene-cloud::after {
+  background: #3a3038;
+}
+
+html[data-visual-theme="diablo"] #class-overlay .class-overlay-bg .hero-scene-grass-texture {
+  opacity: 0.45;
+  background-image: repeating-linear-gradient(
+    100deg,
+    #1a2214 0px, #1a2214 4px,
+    #0f180c 4px, #0f180c 8px
+  );
+}
+
+html[data-visual-theme="diablo"] #class-overlay .intro-scene-sun {
+  background: radial-gradient(circle, #ff9050 0%, #c41e3a 45%, transparent 72%);
+  box-shadow:
+    0 0 48px 14px rgba(196, 30, 58, 0.35),
+    0 0 80px 24px rgba(180, 40, 20, 0.2);
+  animation: none;
+}
+
+html[data-visual-theme="diablo"] #class-overlay .class-overlay-blob--purple {
+  background: radial-gradient(circle, rgba(180, 40, 20, 0.28) 0%, transparent 68%);
+}
+
+html[data-visual-theme="diablo"] #class-overlay .class-overlay-blob--cyan {
+  background: radial-gradient(circle, rgba(201, 162, 39, 0.12) 0%, transparent 68%);
+}
+
+html[data-visual-theme="diablo"] #class-overlay .class-overlay-shell .class-modal {
+  background: linear-gradient(165deg, #2a2218 0%, #1a1410 100%);
+  border: 2px solid var(--meadow-border);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(201, 162, 39, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+html[data-visual-theme="diablo"] #class-overlay .class-modal-title {
+  background: linear-gradient(95deg, #c9a227 0%, #f0d878 50%, #e85a30 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.8));
+}
+
+html[data-visual-theme="diablo"] #class-overlay .class-step-badge {
+  color: var(--meadow-gold-bright);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+}
+
+html[data-visual-theme="diablo"] #class-overlay .class-action-hint {
+  background: rgba(60, 30, 20, 0.55);
+  border: 1px solid var(--meadow-border-soft);
+  color: var(--meadow-ink);
+  box-shadow: inset 0 1px 0 rgba(201, 162, 39, 0.12);
+}
+
+html[data-visual-theme="diablo"] #class-overlay .class-modal .glass-card {
+  background: linear-gradient(180deg, rgba(42, 34, 24, 0.92) 0%, rgba(26, 20, 16, 0.95) 100%);
+  border: 2px solid var(--meadow-border-soft);
+  color: var(--meadow-ink);
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(201, 162, 39, 0.08);
+}
+
+html[data-visual-theme="diablo"] #class-overlay .class-modal .glass-card:hover:not(:disabled):not(.class-card-disabled) {
+  background: linear-gradient(180deg, rgba(58, 44, 32, 0.95) 0%, rgba(34, 26, 20, 0.98) 100%);
+  border-color: var(--meadow-gold);
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.45),
+    0 0 16px rgba(180, 40, 20, 0.15);
+}
+
+html[data-visual-theme="diablo"] #class-overlay .class-modal .glass-card.selected,
+html[data-visual-theme="diablo"] #class-overlay .class-modal .game-mode-card.selected {
+  border-color: var(--meadow-gold);
+  box-shadow:
+    0 0 0 3px rgba(201, 162, 39, 0.35),
+    0 10px 28px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(201, 162, 39, 0.2);
+  background: linear-gradient(180deg, rgba(58, 40, 28, 0.98) 0%, rgba(36, 26, 18, 0.96) 100%);
+}
+
+html[data-visual-theme="diablo"] #class-overlay .class-modal .game-mode-card.selected::before,
+html[data-visual-theme="diablo"] #class-overlay .class-modal .class-card.glass-card.selected::before,
+html[data-visual-theme="diablo"] #class-overlay .class-modal .opponent-class-card.glass-card.selected::before,
+html[data-visual-theme="diablo"] #class-overlay .class-modal .companion-card.glass-card.selected::before {
+  background: var(--meadow-gold);
+  color: #1a1410;
+  box-shadow: 0 2px 10px rgba(180, 40, 20, 0.35);
+}
+
+html[data-visual-theme="diablo"] #class-overlay .glass-card-icon--solo {
+  background: linear-gradient(145deg, rgba(60, 100, 40, 0.35), rgba(30, 50, 20, 0.25));
+}
+
+html[data-visual-theme="diablo"] #class-overlay .glass-card-icon--versus {
+  background: linear-gradient(145deg, rgba(180, 50, 20, 0.35), rgba(120, 30, 10, 0.25));
+}
+
+html[data-visual-theme="diablo"] #class-overlay .glass-card-icon--hardbot {
+  background: linear-gradient(145deg, rgba(100, 40, 120, 0.32), rgba(60, 20, 80, 0.22));
+}
+
+html[data-visual-theme="diablo"] #class-overlay .glass-card-icon--lobby {
+  background: linear-gradient(145deg, rgba(201, 162, 39, 0.35), rgba(140, 90, 20, 0.25));
+}
+
+html[data-visual-theme="diablo"] #class-overlay .mutation-gallery {
+  background: rgba(22, 16, 12, 0.75);
+  border-color: var(--meadow-border-soft);
+}
+
+html[data-visual-theme="diablo"] #class-overlay .mutation-silhouette {
+  background: rgba(32, 24, 18, 0.65);
+  border-color: rgba(139, 105, 20, 0.35);
+}
+
+html[data-visual-theme="diablo"] #class-overlay .btn-glass-back {
+  background: linear-gradient(180deg, #3a3028 0%, #2a2218 100%);
+  border: 2px solid var(--meadow-border-soft);
+  color: var(--meadow-ink);
+}
+
+html[data-visual-theme="diablo"] #class-overlay .btn-glass-start {
+  background: linear-gradient(180deg, #5c3a20 0%, #3a2214 50%, #2a1810 100%);
+  border: 2px solid var(--meadow-gold);
+  color: var(--meadow-gold-bright);
+  box-shadow:
+    0 4px 0 #1a1008,
+    0 0 20px rgba(201, 162, 39, 0.35);
+}
+
+html[data-visual-theme="diablo"] #class-overlay .class-hero-showcase-glow {
+  background: radial-gradient(ellipse at 50% 82%, rgba(180, 40, 20, 0.22) 0%, transparent 68%);
+}
+
+html[data-visual-theme="diablo"] #class-overlay .class-hero-showcase-caption,
+html[data-visual-theme="diablo"] #class-overlay .class-hero-roster-caption {
+  background: linear-gradient(180deg, rgba(42, 34, 24, 0.75) 0%, rgba(26, 20, 16, 0.92) 100%);
+  border: 1px solid var(--meadow-border-soft);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+}
+
+/* ─── Кнопки ─── */
+
+html[data-visual-theme="diablo"] .btn-primary,
+html[data-visual-theme="diablo"] body:has(#app[data-phase="prep"]) .bottom-chrome .btn-fight-header {
+  background: linear-gradient(180deg, #5c3a20 0%, #3a2214 50%, #2a1810 100%);
+  border: 2px solid var(--meadow-gold);
+  color: var(--meadow-gold-bright);
+  box-shadow:
+    0 4px 0 #1a1008,
+    0 0 20px rgba(201, 162, 39, 0.35),
+    inset 0 1px 0 rgba(255, 220, 150, 0.15);
+  animation: none;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+html[data-visual-theme="diablo"] .btn-secondary {
+  background: linear-gradient(180deg, #3a3028 0%, #2a2218 100%);
+  border: 2px solid var(--meadow-border-soft);
+  color: var(--meadow-ink);
+  box-shadow: inset 0 1px 0 rgba(255, 220, 150, 0.08), 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+html[data-visual-theme="diablo"] .btn-secondary:hover:not(:disabled) {
+  border-color: var(--meadow-gold);
+  color: var(--meadow-gold-bright);
+}
+
+/* ─── Модалки ─── */
+
+html[data-visual-theme="diablo"] .overlay {
+  background: var(--meadow-overlay);
+}
+
+html[data-visual-theme="diablo"] .overlay > .modal,
+html[data-visual-theme="diablo"] .modal {
+  background: linear-gradient(165deg, #2a2218 0%, #1a1410 100%);
+  border: 2px solid var(--meadow-border);
+  box-shadow:
+    0 0 40px rgba(180, 40, 20, 0.2),
+    0 16px 48px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(201, 162, 39, 0.2);
+  color: var(--meadow-ink);
+}
+
+html[data-visual-theme="diablo"] .overlay h2,
+html[data-visual-theme="diablo"] .modal h2 {
+  color: var(--meadow-gold-bright);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+}
+
+html[data-visual-theme="diablo"] #battle-result-overlay .battle-result-modal,
+html[data-visual-theme="diablo"] #overlay .run-complete-modal {
+  background: rgba(22, 16, 12, 0.88);
+  border: 2px solid var(--meadow-border);
+  backdrop-filter: blur(16px);
+}
+
+html[data-visual-theme="diablo"] #battle-result-overlay .br-stat,
+html[data-visual-theme="diablo"] #overlay .br-stat {
+  color: var(--meadow-ink) !important;
+}
+
+html[data-visual-theme="diablo"] #battle-result-overlay .br-side-title {
+  color: var(--meadow-gold-bright);
+}
+
+html[data-visual-theme="diablo"] #battle-result-overlay .br-side-enemy .br-side-title {
+  color: #e85a50;
+}
+
+/* ─── Prep: каменные панели вместо прозрачного луга ─── */
+
+html[data-visual-theme="diablo"] #app[data-phase="prep"] .prep-top-bar {
+  background: rgba(22, 16, 12, 0.82);
+  border-bottom: 2px solid var(--meadow-border-soft);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+html[data-visual-theme="diablo"] #app[data-phase="prep"] .prep-top-bar .run-hud-phase {
+  background: rgba(60, 20, 16, 0.65);
+  border-color: rgba(180, 50, 30, 0.45);
+  color: var(--meadow-gold-bright);
+}
+
+html[data-visual-theme="diablo"] #app[data-phase="prep"] .mutation-progress {
+  background: rgba(22, 16, 12, 0.75);
+  border: 2px solid var(--meadow-border-soft);
+  border-radius: calc(10px * var(--ui-scale));
+}
+
+html[data-visual-theme="diablo"] #app[data-phase="prep"] .mutation-progress-fill {
+  background: linear-gradient(90deg, #8b0000 0%, #c9a227 55%, #f0d878 100%);
+  box-shadow: 0 0 12px rgba(180, 40, 20, 0.5);
+}
+
+html[data-visual-theme="diablo"] #app[data-phase="prep"] .mutation-progress-target {
+  color: var(--meadow-gold-bright);
+}
+
+html[data-visual-theme="diablo"] #app[data-phase="prep"] .prep-enhancement-strip {
+  background: rgba(22, 16, 12, 0.7);
+  border: 2px solid var(--meadow-border-soft);
+  border-radius: calc(10px * var(--ui-scale));
+}
+
+html[data-visual-theme="diablo"] #app[data-phase="prep"] .enh-slot {
+  background: rgba(32, 24, 18, 0.85);
+  border-color: rgba(139, 105, 20, 0.45);
+}
+
+html[data-visual-theme="diablo"] #app[data-phase="prep"] #shop-panel {
+  background: rgba(22, 16, 12, 0.88);
+  border-left: 2px solid var(--meadow-border);
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.45);
+}
+
+html[data-visual-theme="diablo"] #app[data-phase="prep"] .shop-card,
+html[data-visual-theme="diablo"] #app[data-phase="prep"] .bench-card {
+  background: rgba(32, 24, 18, 0.9);
+  border: 2px solid var(--meadow-border-soft);
+  box-shadow: inset 0 1px 0 rgba(201, 162, 39, 0.12);
+}
+
+html[data-visual-theme="diablo"] #app[data-phase="prep"] .shop-card:hover:not(.empty):not(.unaffordable),
+html[data-visual-theme="diablo"] #app[data-phase="prep"] .bench-card:hover:not(.empty) {
+  background: rgba(48, 36, 26, 0.95);
+  border-color: var(--meadow-gold);
+  box-shadow: 0 0 16px rgba(201, 162, 39, 0.25);
+}
+
+html[data-visual-theme="diablo"] #app[data-phase="prep"] #shop-panel .shop-item-visual .icon,
+html[data-visual-theme="diablo"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-card .icon {
+  background: rgba(18, 12, 8, 0.92) !important;
+  border-color: var(--meadow-border-soft) !important;
+}
+
+html[data-visual-theme="diablo"] #app[data-phase="prep"] .shop-card.rarity-legendary .shop-item-visual .icon {
+  box-shadow:
+    0 0 0 2px var(--meadow-gold),
+    0 0 20px rgba(201, 162, 39, 0.45) !important;
+}
+
+html[data-visual-theme="diablo"] #app[data-phase="prep"] .btn-recipe-book,
+html[data-visual-theme="diablo"] #app[data-phase="prep"] .shop-action-row .btn-secondary {
+  background: linear-gradient(180deg, #3a2838 0%, #2a1c28 100%);
+  border-color: rgba(140, 60, 120, 0.5);
+  color: #e8c8e8;
+}
+
+html[data-visual-theme="diablo"] #app[data-phase="prep"] .btn-refresh-shop,
+html[data-visual-theme="diablo"] #app[data-phase="prep"] #shop-panel .btn-sell-drop {
+  background: linear-gradient(180deg, #4a3820 0%, #3a2818 100%);
+  border-color: var(--meadow-border);
+  color: var(--meadow-gold-bright);
+}
+
+html[data-visual-theme="diablo"] #app[data-phase="prep"] .bench-panel {
+  background: rgba(22, 16, 12, 0.75);
+  border: 2px solid var(--meadow-border-soft);
+}
+
+html[data-visual-theme="diablo"] body:has(#app[data-phase="prep"]) .bottom-chrome {
+  background: rgba(18, 12, 8, 0.92);
+  border-top: 2px solid var(--meadow-border);
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.5);
+}
+
+html[data-visual-theme="diablo"] #app[data-phase="prep"] #game-canvas {
+  box-shadow:
+    0 0 0 2px var(--meadow-border-soft),
+    0 0 24px rgba(180, 40, 20, 0.2),
+    0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+/* ─── Магическая дуга → огонь ─── */
+
+html[data-visual-theme="diablo"] .prep-drag-arc-core {
+  filter:
+    drop-shadow(0 0 10px rgba(232, 90, 48, 0.75))
+    drop-shadow(0 0 20px rgba(180, 40, 20, 0.45));
+}
+
+html[data-visual-theme="diablo"] .prep-drag-arc-layer--valid .prep-drag-arc-link-core {
+  filter:
+    drop-shadow(0 0 10px rgba(201, 162, 39, 0.65))
+    drop-shadow(0 0 6px rgba(232, 90, 48, 0.45));
+}
+
+/* ─── Настройки: выбор темы ─── */
+
+html[data-visual-theme="diablo"] .settings-theme-option.is-selected {
+  border-color: var(--meadow-gold);
+  background: rgba(60, 30, 20, 0.65);
+  box-shadow: 0 0 16px rgba(180, 40, 20, 0.25);
+}
+
+html[data-visual-theme="diablo"] .settings-select {
+  border-color: rgba(180, 140, 80, 0.45);
+  background-color: rgba(20, 14, 12, 0.75);
+  color: #f0e6d8;
+}
+
+html[data-visual-theme="diablo"] .settings-select:hover {
+  border-color: rgba(200, 160, 80, 0.65);
+  background-color: rgba(32, 22, 18, 0.85);
+}
+
+html[data-visual-theme="diablo"] .settings-select:focus-visible {
+  border-color: var(--meadow-gold);
+  box-shadow: 0 0 0 2px rgba(200, 160, 80, 0.28);
+}
+
+/* ─── Нижняя панель: контраст вместо белых кнопок prep-juice ─── */
+
+html[data-visual-theme="diablo"] body:has(#app[data-phase="prep"]) .bottom-chrome .btn-secondary,
+html[data-visual-theme="diablo"] body:has(#app[data-phase="prep"]) .bottom-chrome .prep-side-btn,
+html[data-visual-theme="diablo"] body:has(#app[data-phase="prep"]) .bottom-chrome .prep-settings-btn,
+html[data-visual-theme="diablo"] body:has(#app[data-phase="prep"]) .bottom-chrome .btn-combat-feed,
+html[data-visual-theme="diablo"] body:has(#class-overlay:not(.hidden)) .bottom-chrome .btn-secondary,
+html[data-visual-theme="diablo"] body:has(#class-overlay:not(.hidden)) .bottom-chrome .prep-settings-btn {
+  background: linear-gradient(180deg, #3a3028 0%, #2a2218 100%);
+  border: 2px solid var(--meadow-border-soft);
+  color: var(--meadow-ink);
+  font-weight: 700;
+  box-shadow: inset 0 1px 0 rgba(255, 220, 150, 0.08), 0 2px 8px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
+}
+
+html[data-visual-theme="diablo"] body:has(#app[data-phase="prep"]) .bottom-chrome .prep-side-btn.active,
+html[data-visual-theme="diablo"] body:has(#app[data-phase="prep"]) .bottom-chrome .btn-combat-feed--open {
+  background: rgba(201, 162, 39, 0.18);
+  border-color: var(--meadow-gold);
+  color: var(--meadow-gold-bright);
+}
+
+html[data-visual-theme="diablo"] body:has(#app[data-phase="prep"]) .bottom-chrome .btn-secondary:hover,
+html[data-visual-theme="diablo"] body:has(#app[data-phase="prep"]) .bottom-chrome .prep-side-btn:hover,
+html[data-visual-theme="diablo"] body:has(#class-overlay:not(.hidden)) .bottom-chrome .btn-secondary:hover {
+  border-color: var(--meadow-gold);
+  color: var(--meadow-gold-bright);
+  background: linear-gradient(180deg, #4a3828 0%, #3a2818 100%);
+}
+
+html[data-visual-theme="diablo"] body:has(#app[data-phase="battle"]) .bottom-chrome .bc-btn,
+html[data-visual-theme="diablo"] body:has(#app[data-phase="replay"]) .bottom-chrome .bc-btn {
+  background: linear-gradient(180deg, #3a3028 0%, #2a2218 100%);
+  border: 2px solid var(--meadow-border-soft);
+  color: var(--meadow-ink);
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
+}
+
+html[data-visual-theme="diablo"] body:has(#app[data-phase="battle"]) .bottom-chrome .bc-btn:hover,
+html[data-visual-theme="diablo"] body:has(#app[data-phase="replay"]) .bottom-chrome .bc-btn:hover {
+  border-color: var(--meadow-gold);
+  color: var(--meadow-gold-bright);
+}
+
+html[data-visual-theme="diablo"] body:has(#app[data-phase="battle"]) .bottom-chrome .bc-btn.active,
+html[data-visual-theme="diablo"] body:has(#app[data-phase="replay"]) .bottom-chrome .bc-btn.active {
+  background: rgba(201, 162, 39, 0.22);
+  border-color: var(--meadow-gold);
+  color: var(--meadow-gold-bright);
+}
+
+html[data-visual-theme="diablo"] body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro-step {
+  color: var(--meadow-gold-bright);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+}
+
+html[data-visual-theme="diablo"] body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro-hint,
+html[data-visual-theme="diablo"] body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro-controls {
+  color: var(--meadow-ink-muted);
+}
+
+/* ─── Модалка результата: кнопки копирования и вторичные ─── */
+
+html[data-visual-theme="diablo"] #battle-result-overlay .popup-trigger-copy-btn,
+html[data-visual-theme="diablo"] #overlay .popup-trigger-copy-btn,
+html[data-visual-theme="diablo"] #battle-result-overlay .accordion-copy-btn,
+html[data-visual-theme="diablo"] #overlay .accordion-copy-btn,
+html[data-visual-theme="diablo"] .battle-detail-copy {
+  background: linear-gradient(180deg, #3a3028 0%, #2a2218 100%);
+  border: 2px solid var(--meadow-border-soft);
+  color: var(--meadow-gold-bright);
+}
+
+html[data-visual-theme="diablo"] #battle-result-overlay .battle-result-actions .btn-secondary,
+html[data-visual-theme="diablo"] #overlay .btn-secondary {
+  background: linear-gradient(180deg, #3a3028 0%, #2a2218 100%);
+  border: 2px solid var(--meadow-border-soft);
+  color: var(--meadow-ink);
+  font-weight: 700;
+}
+
+/* ─── Театр результата боя ─── */
+
+html[data-visual-theme="diablo"] #battle-result-overlay[data-outcome="player"]:not(.hidden) .battle-result-modal {
+  background: linear-gradient(165deg, #2a2218 0%, #1a1410 100%);
+  border-color: var(--meadow-gold);
+}
+
+html[data-visual-theme="diablo"] #battle-result-overlay[data-outcome="enemy"]:not(.hidden) .battle-result-modal {
+  background: linear-gradient(165deg, #2a1820 0%, #1a1018 100%);
+  border-color: rgba(180, 40, 20, 0.55);
+}
+
+html[data-visual-theme="diablo"] #battle-result-overlay .br-theater-bubble {
+  background: rgba(42, 34, 24, 0.95);
+  border-color: var(--meadow-border-soft);
+  color: var(--meadow-ink);
+}
+
+/* ─── Боевая аура арены ─── */
+
+html[data-visual-theme="diablo"] .battle-aura-frame-glow::before {
+  background: conic-gradient(
+    from var(--aura-spin),
+    hsl(35, 90%, 58%) 0deg,
+    hsl(15, 85%, 42%) 90deg,
+    hsl(280, 60%, 22%) 200deg,
+    hsl(35, 90%, 58%) 360deg
+  );
+}
+
+html[data-visual-theme="diablo"] .battle-aura-frame-glow {
+  box-shadow:
+    inset 0 0 0 2px hsla(35, 90%, 55%, calc(0.45 + var(--aura-intensity) * 0.5)),
+    inset 0 0 calc(16px + var(--aura-intensity) * 36px) hsla(15, 80%, 40%, calc(0.15 + var(--aura-intensity) * 0.4)),
+    0 0 calc(10px + var(--aura-progress) * 28px) hsla(35, 95%, 50%, calc(0.25 + var(--aura-progress) * 0.5));
+}

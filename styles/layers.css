@@ -123,9 +123,15 @@
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 90% 70% at 28% 72%, rgba(62, 48, 36, 0.55) 0%, transparent 62%),
-    radial-gradient(ellipse 55% 45% at 72% 18%, rgba(48, 40, 32, 0.4) 0%, transparent 58%),
-    linear-gradient(165deg, #1c1713 0%, #12100d 42%, #0c0a08 100%);
+    radial-gradient(ellipse 80% 55% at 75% 12%, rgba(255, 246, 200, 0.35) 0%, transparent 58%),
+    radial-gradient(ellipse 90% 65% at 25% 85%, rgba(92, 184, 92, 0.28) 0%, transparent 62%),
+    linear-gradient(
+      180deg,
+      var(--meadow-sky-top) 0%,
+      var(--meadow-sky-mid) 32%,
+      var(--meadow-grass-mid) 62%,
+      var(--meadow-grass) 100%
+    );
 }
 
 .prep-field-column.scene-viewport {
@@ -145,12 +151,12 @@
 
 .run-hud-phase {
   padding: 4px 10px;
-  background: rgba(10, 8, 6, 0.82);
-  border: 1px solid rgba(90, 72, 54, 0.45);
+  background: rgba(255, 252, 240, 0.88);
+  border: 1px solid var(--meadow-border);
   border-radius: 4px;
   font-size: var(--font-xs);
   font-weight: 700;
-  color: #8b7d6a;
+  color: var(--meadow-grass-dark);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   backdrop-filter: blur(3px);

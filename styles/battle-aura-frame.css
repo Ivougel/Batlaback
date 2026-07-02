@@ -1,0 +1,208 @@
+/**
+ * Боевая аура — магическая сияющая обводка арены.
+ * Холодные тона в начале → тёмные к концу боя; эмодзи бегут по краю.
+ */
+
+@property --aura-spin {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.battle-aura-frame {
+  --aura-progress: 0;
+  --aura-intensity: 0;
+  --aura-hue: 195;
+  position: absolute;
+  inset: 0;
+  z-index: 46;
+  pointer-events: none;
+  overflow: visible;
+  border-radius: calc(10px * var(--ui-scale, 1));
+}
+
+#app[data-phase="battle"] .battle-aura-frame:not(.hidden),
+#app[data-phase="replay"] .battle-aura-frame:not(.hidden) {
+  display: block;
+}
+
+#app[data-phase="prep"] .battle-aura-frame,
+#app:not([data-phase="battle"]):not([data-phase="replay"]) .battle-aura-frame {
+  display: none !important;
+}
+
+.battle-aura-frame.hidden {
+  display: none !important;
+}
+
+.battle-aura-frame-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow:
+    inset 0 0 0 2px hsla(var(--aura-hue), 92%, 68%, calc(0.42 + var(--aura-intensity) * 0.5)),
+    inset 0 0 calc(16px + var(--aura-intensity) * 36px) hsla(var(--aura-hue), 100%, 58%, calc(0.12 + var(--aura-intensity) * 0.38)),
+    0 0 calc(10px + var(--aura-progress) * 28px) hsla(var(--aura-hue), 95%, 62%, calc(0.2 + var(--aura-progress) * 0.45));
+  animation: battle-aura-breathe 2.8s ease-in-out infinite;
+}
+
+.battle-aura-frame-glow::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 3px;
+  --aura-spin: 0deg;
+  background: conic-gradient(
+    from var(--aura-spin),
+    hsl(195, 95%, 72%) 0deg,
+    hsl(220, 88%, 58%) 70deg,
+    hsl(calc(260 + var(--aura-progress) * 40), 82%, 42%) 150deg,
+    hsl(calc(300 + var(--aura-progress) * 20), 70%, 22%) 230deg,
+    hsl(195, 95%, 72%) 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: calc(0.5 + var(--aura-progress) * 0.45 + var(--aura-intensity) * 0.2);
+  animation: battle-aura-spin 5.5s linear infinite;
+  filter: blur(0.2px);
+}
+
+.battle-aura-frame-glow::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: calc(8px * var(--ui-scale, 1));
+  box-shadow:
+    inset 0 0 calc(24px + var(--aura-progress) * 40px) hsla(var(--aura-hue), 90%, 35%, calc(0.08 + var(--aura-progress) * 0.28));
+  opacity: calc(0.35 + var(--aura-progress) * 0.65);
+}
+
+.battle-aura-frame[data-finished="true"] .battle-aura-frame-glow {
+  animation: battle-aura-finish-flash 0.9s ease-out 1;
+}
+
+.battle-aura-frame[data-finished="true"] .battle-aura-frame-glow::before {
+  opacity: 0.95;
+  animation-duration: 2.2s;
+}
+
+.battle-aura-runners {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  border-radius: inherit;
+}
+
+.battle-aura-runner {
+  position: absolute;
+  font-size: max(16px, calc(1.1rem * var(--ui-scale, 1)));
+  line-height: 1;
+  filter:
+    drop-shadow(0 0 6px hsla(var(--aura-hue), 100%, 70%, 0.85))
+    drop-shadow(0 2px 8px rgba(0, 0, 0, 0.45));
+  z-index: 2;
+  will-change: left, top, right, bottom, transform, opacity;
+}
+
+.battle-aura-runner--top {
+  top: 0;
+  left: 0;
+  transform: translate(-50%, -55%);
+  animation-name: battle-aura-run-top;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+.battle-aura-runner--right {
+  top: 0;
+  right: 0;
+  transform: translate(55%, -50%);
+  animation-name: battle-aura-run-right;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+.battle-aura-runner--bottom {
+  bottom: 0;
+  right: 0;
+  transform: translate(50%, 55%);
+  animation-name: battle-aura-run-bottom;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+.battle-aura-runner--left {
+  bottom: 0;
+  left: 0;
+  transform: translate(-55%, 50%);
+  animation-name: battle-aura-run-left;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes battle-aura-spin {
+  to { --aura-spin: 360deg; }
+}
+
+@keyframes battle-aura-breathe {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(calc(1.05 + var(--aura-intensity) * 0.12)); }
+}
+
+@keyframes battle-aura-finish-flash {
+  0% { filter: brightness(1.35); }
+  100% { filter: brightness(1); }
+}
+
+@keyframes battle-aura-run-top {
+  from { left: -4%; opacity: 0; }
+  8% { opacity: 1; }
+  92% { opacity: 1; }
+  to { left: 104%; opacity: 0; }
+}
+
+@keyframes battle-aura-run-right {
+  from { top: -4%; opacity: 0; }
+  8% { opacity: 1; }
+  92% { opacity: 1; }
+  to { top: 104%; opacity: 0; }
+}
+
+@keyframes battle-aura-run-bottom {
+  from { right: -4%; opacity: 0; }
+  8% { opacity: 1; }
+  92% { opacity: 1; }
+  to { right: 104%; opacity: 0; }
+}
+
+@keyframes battle-aura-run-left {
+  from { bottom: -4%; opacity: 0; }
+  8% { opacity: 1; }
+  92% { opacity: 1; }
+  to { bottom: 104%; opacity: 0; }
+}
+
+/* Глобальная рамка приглушается — акцент на боевой ауре */
+body:has(#app[data-phase="battle"]) .ui-ornament-frame,
+body:has(#app[data-phase="replay"]) .ui-ornament-frame {
+  opacity: 0.22;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .battle-aura-frame-glow,
+  .battle-aura-frame-glow::before,
+  .battle-aura-runner {
+    animation: none !important;
+  }
+
+  .battle-aura-runner {
+    opacity: 0.85;
+  }
+}

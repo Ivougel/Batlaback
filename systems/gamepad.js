@@ -59,8 +59,19 @@ const GP_HINT_SETS = {
     { keys: "B", label: "назад" },
   ],
   classPlayer: [
-    { keys: "✚", label: "класс" },
+    { keys: "✚", label: "герой" },
     { keys: "A", label: "выбрать" },
+    { keys: "B", label: "назад" },
+  ],
+  classCompanion: [
+    { keys: "✚", label: "спутник" },
+    { keys: "A", label: "выбрать" },
+    { keys: "B", label: "назад" },
+  ],
+  classSummary: [
+    { keys: "✚", label: "герой / спутник" },
+    { keys: "A", label: "инфо" },
+    { keys: "+", label: "старт" },
     { keys: "B", label: "назад" },
   ],
   classOpponent: [
@@ -584,9 +595,9 @@ function getMenuContext() {
   if (gpHandlers?.isPopupOpen?.("overlay")) return "runComplete";
   if (gpHandlers?.isPopupOpen?.("class-overlay")) {
     if (!document.getElementById("class-step-mode")?.classList.contains("hidden")) return "classMode";
-    if (!document.getElementById("class-step-player")?.classList.contains("hidden")) {
-      return gpHandlers?.getSelectedGameMode?.() === "lobby" ? "classPlayerLobby" : "classPlayer";
-    }
+    if (!document.getElementById("class-step-player")?.classList.contains("hidden")) return "classPlayer";
+    if (!document.getElementById("class-step-companion")?.classList.contains("hidden")) return "classCompanion";
+    if (!document.getElementById("class-step-summary")?.classList.contains("hidden")) return "classSummary";
     return "classOpponent";
   }
   if (gpHandlers?.getPhase?.() === "battle" || gpHandlers?.getPhase?.() === "replay") return "battle";
@@ -693,14 +704,25 @@ function queryAccordionFocusables(containerSelector) {
 
 function queryMenuFocusables(context) {
   if (context === "classMode") return [...document.querySelectorAll("#class-step-mode .game-mode-card")];
-  if (context === "classPlayer") {
-    return [...document.querySelectorAll("#class-step-player .class-card[data-class]:not([disabled])")];
+  if (context === "classCompanion") {
+    return [
+      ...document.querySelectorAll("#class-step-companion .companion-card"),
+      document.getElementById("btn-class-back-player"),
+    ].filter(Boolean);
   }
-  if (context === "classPlayerLobby") {
+  if (context === "classSummary") {
+    return [
+      document.getElementById("class-summary-hero"),
+      document.getElementById("btn-class-summary-start"),
+      document.getElementById("class-summary-companion"),
+      document.getElementById("btn-class-back-companion"),
+      document.getElementById("btn-start-run"),
+    ].filter(Boolean);
+  }
+  if (context === "classPlayer") {
     return [
       ...document.querySelectorAll("#class-step-player .class-card[data-class]:not([disabled])"),
       document.getElementById("btn-class-back-mode"),
-      document.getElementById("btn-start-run"),
     ].filter(Boolean);
   }
   if (context === "classOpponent") {
@@ -995,7 +1017,7 @@ function handleOverlayNavigation(pad, prevButtons, dt) {
       markGamepadInput();
       return true;
     }
-    if (context === "classOpponent" || context === "classPlayerLobby") {
+    if (context === "classOpponent" || context === "classSummary") {
       document.getElementById("btn-start-run")?.click();
     }
     else if (context === "battleResult") document.getElementById("btn-battle-continue")?.click();

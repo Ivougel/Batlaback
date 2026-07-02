@@ -124,6 +124,7 @@ function showBattleResultPopup(summary, battleLog = []) {
   const overlay = document.getElementById("battle-result-overlay");
   if (!overlay) return;
 
+  overlay.dataset.outcome = summary.winner || "draw";
   document.getElementById("battle-result-title").textContent = summary.title;
 
   let subtitle = `Раунд ${summary.roundNum}`;
@@ -160,6 +161,10 @@ function showBattleResultPopup(summary, battleLog = []) {
 
   overlay.classList.remove("hidden");
 
+  if (typeof startBattleResultTheater === "function") {
+    startBattleResultTheater(summary);
+  }
+
   if (typeof refreshGamepadHints === "function") refreshGamepadHints();
 
   const replayBtn = document.getElementById("btn-battle-replay");
@@ -172,7 +177,10 @@ function showBattleResultPopup(summary, battleLog = []) {
 
 function hideBattleResultPopup() {
   hideDetailPopup();
-  document.getElementById("battle-result-overlay")?.classList.add("hidden");
+  if (typeof stopBattleResultTheater === "function") stopBattleResultTheater();
+  const overlay = document.getElementById("battle-result-overlay");
+  overlay?.classList.add("hidden");
+  overlay?.removeAttribute("data-outcome");
 }
 
 function showRunCompleteOverlay(runResults, runItemStats, roundNum, phase, boardSnapshot = null, goldStats = null) {

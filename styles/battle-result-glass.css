@@ -1,0 +1,173 @@
+/**
+ * Экран результата боя / конца забега — прозрачные блоки, читаемый текст.
+ */
+
+#battle-result-overlay,
+#overlay {
+  font-family: "Nunito", "SF Pro Rounded", "Segoe UI", system-ui, sans-serif;
+}
+
+#battle-result-overlay .battle-result-modal,
+#overlay .run-complete-modal {
+  background: rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 2px solid rgba(255, 255, 255, 0.52);
+  box-shadow: 0 16px 48px rgba(30, 60, 28, 0.22);
+}
+
+#battle-result-overlay .battle-result-modal > h2,
+#overlay .run-complete-modal > h2 {
+  color: var(--juice-ink);
+  font-weight: 900;
+  text-align: center;
+  text-shadow: var(--juice-text-legible);
+}
+
+#battle-result-overlay .battle-result-subtitle,
+#overlay #overlay-text {
+  color: var(--juice-ink);
+  font-weight: 700;
+  text-shadow: var(--juice-text-legible);
+}
+
+/* Блоки без подложек */
+#battle-result-overlay .result-static-block,
+#overlay .result-static-block,
+#battle-result-overlay .accordion-section,
+#overlay .accordion-section {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+#battle-result-overlay .result-static-block-title,
+#overlay .result-static-block-title,
+#battle-result-overlay .accordion-header-row,
+#overlay .accordion-header-row {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid rgba(92, 184, 92, 0.28);
+  color: var(--juice-ink);
+  font-weight: 900;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+#battle-result-overlay .result-static-block-body,
+#overlay .result-static-block-body,
+#battle-result-overlay .accordion-body,
+#overlay .accordion-body {
+  color: var(--juice-ink);
+  padding-left: 0;
+  padding-right: 0;
+}
+
+#battle-result-overlay .accordion-header,
+#overlay .accordion-header {
+  color: var(--juice-ink);
+  font-weight: 800;
+}
+
+/* Статистика боя — тёмный текст вместо #e6edf3 */
+#battle-result-overlay .br-side-title,
+#overlay .br-side-title {
+  color: var(--meadow-grass-dark);
+  font-weight: 900;
+  font-size: var(--font-md);
+  text-shadow: var(--juice-text-legible);
+}
+
+#battle-result-overlay .br-side-enemy .br-side-title,
+#overlay .br-side-enemy .br-side-title {
+  color: #b83228;
+}
+
+#battle-result-overlay .br-stat,
+#overlay .br-stat {
+  color: var(--juice-ink) !important;
+  font-weight: 700;
+  font-size: var(--font-md);
+  text-shadow: var(--juice-text-legible);
+}
+
+#battle-result-overlay .br-stat-sub,
+#overlay .br-stat-sub {
+  color: var(--juice-ink-soft) !important;
+  font-weight: 600;
+}
+
+#battle-result-overlay .battle-log-split,
+#overlay .battle-log-split {
+  color: var(--juice-ink-soft);
+}
+
+#battle-result-overlay .br-gold,
+#overlay .br-gold {
+  color: #8a5a00;
+  font-weight: 800;
+  border-top: 1px dashed rgba(200, 134, 10, 0.45);
+  background: transparent;
+  text-shadow: var(--juice-text-legible);
+}
+
+#battle-result-overlay .br-class-winner,
+#overlay .br-class-winner {
+  background: transparent;
+  border: 2px dashed rgba(245, 200, 66, 0.55);
+  color: #8a5a00;
+  font-weight: 800;
+  text-shadow: var(--juice-text-legible);
+}
+
+/* Кнопки «Вклад» / «Лог» */
+#battle-result-overlay .popup-trigger-row,
+#overlay .popup-trigger-row {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid rgba(92, 184, 92, 0.25);
+  border-radius: 0;
+  margin-bottom: 6px;
+}
+
+#battle-result-overlay .popup-trigger-btn,
+#overlay .popup-trigger-btn {
+  color: var(--juice-ink);
+  font-weight: 800;
+  padding-left: 0;
+}
+
+#battle-result-overlay .popup-trigger-btn:hover,
+#overlay .popup-trigger-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+#battle-result-overlay .popup-trigger-copy-btn,
+#overlay .popup-trigger-copy-btn,
+#battle-result-overlay .accordion-copy-btn,
+#overlay .accordion-copy-btn {
+  background: rgba(255, 255, 255, 0.55);
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  color: var(--juice-ink);
+}
+
+#battle-result-overlay .battle-result-controls-hint,
+#overlay .run-complete-hint {
+  color: var(--juice-ink-soft);
+  font-weight: 600;
+  text-shadow: var(--juice-text-outline);
+}
+
+#battle-result-overlay .battle-result-actions .btn-primary,
+#overlay .btn-primary {
+  font-weight: 900;
+}
+
+#battle-result-overlay .battle-result-actions .btn-secondary,
+#overlay .btn-secondary {
+  background: rgba(255, 255, 255, 0.65);
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  color: var(--juice-ink);
+  font-weight: 800;
+}

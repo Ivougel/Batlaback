@@ -133,6 +133,8 @@ function buildBattleSummary(state, meta) {
     battleTime: state.elapsed,
     playerClassName,
     enemyClassName,
+    playerClassId: state.player.classId,
+    enemyClassId: state.enemy.classId,
     classWinnerLine,
     player: {
       hp: Math.ceil(state.player.hp),

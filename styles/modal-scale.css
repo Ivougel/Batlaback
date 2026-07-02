@@ -35,6 +35,7 @@ html[data-ui-compact="true"] .modal h2 {
   margin-bottom: calc(6px * var(--ui-scale));
 }
 
+#settings-overlay:not(.hidden),
 #recipe-book-overlay:not(.hidden),
 #settings-overlay:not(.hidden),
 #battle-result-overlay:not(.hidden),

@@ -1,0 +1,263 @@
+/**
+ * Intro / class overlay — полноэкранная двухколоночная раскладка на десктопе.
+ * Левая половина: ростер героев. Правая: панель выбора режима / класса.
+ */
+
+@media (min-width: 1280px) and (min-height: 800px) {
+  html:not([data-prep-layout="mobile"]) #class-overlay {
+    align-items: stretch;
+    justify-content: stretch;
+  }
+
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-overlay-shell {
+    width: 100%;
+    max-width: min(1720px, 100%);
+    height: calc(100dvh - var(--hud-offset, 0px) - env(safe-area-inset-top));
+    max-height: none;
+    margin: 0 auto;
+    padding:
+      max(16px, env(safe-area-inset-top))
+      clamp(20px, 3vw, 48px)
+      max(12px, env(safe-area-inset-bottom))
+      clamp(20px, 3vw, 48px);
+    gap: clamp(20px, 2.5vw, 40px);
+    align-items: stretch;
+    justify-content: center;
+  }
+
+  /* ─── Левая колонка: герои ─── */
+
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-hero-showcase,
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-hero-showcase--roster {
+    flex: 1 1 42%;
+    min-width: 400px;
+    max-width: none;
+    width: auto;
+    padding: 0;
+    opacity: 1;
+    transform: none;
+    align-items: stretch;
+    justify-content: center;
+  }
+
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-hero-roster-frame,
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-hero-showcase-frame {
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: none;
+    min-height: 0;
+    padding: clamp(16px, 2vh, 24px);
+  }
+
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-hero-roster-grid {
+    gap: clamp(10px, 1.2vh, 16px);
+    padding: clamp(8px, 1vh, 14px) 0;
+  }
+
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-hero-roster-caption {
+    display: block;
+    margin-top: clamp(10px, 1.5vh, 16px);
+    padding: clamp(12px, 1.5vh, 18px) clamp(14px, 1.5vw, 20px);
+  }
+
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-hero-showcase-caption {
+    display: block;
+  }
+
+  /* ─── Правая колонка: модалка ─── */
+
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-overlay-shell .class-modal {
+    flex: 1 1 58%;
+    width: auto;
+    min-width: 520px;
+    max-width: none;
+    height: 100%;
+    max-height: 100%;
+    margin: 0;
+    padding: clamp(24px, 2.8vh, 40px) clamp(28px, 2.8vw, 44px);
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+  }
+
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-modal-header {
+    text-align: left;
+    margin-bottom: clamp(10px, 1.5vh, 18px);
+  }
+
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-modal-title {
+    font-size: clamp(1.75rem, 2.8vw, 2.35rem);
+    line-height: 1.12;
+    margin-bottom: 6px;
+  }
+
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-modal-eyebrow {
+    font-size: var(--font-sm);
+    letter-spacing: 0.14em;
+  }
+
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-step-badge {
+    font-size: var(--font-sm);
+  }
+
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-modal-header .class-subtitle {
+    font-size: var(--font-md);
+    line-height: 1.35;
+  }
+
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-action-hint {
+    font-size: var(--font-md);
+    line-height: 1.4;
+    padding: clamp(10px, 1.2vh, 14px) clamp(14px, 1.5vw, 18px);
+    margin-bottom: clamp(12px, 1.8vh, 20px);
+  }
+
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-modal-footer {
+    font-size: var(--font-sm);
+    opacity: 0.72;
+    text-align: right;
+    margin-top: auto;
+  }
+
+  /* ─── Сетка режимов: просторная 2×2 ─── */
+
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-modal #class-step-mode:not(.hidden) {
+    justify-content: center;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-modal #class-step-mode:not(.hidden) .game-mode-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    max-width: 100%;
+    width: 100%;
+    flex: 1 1 auto;
+    min-height: min(420px, 52vh);
+    gap: clamp(14px, 1.8vh, 22px);
+    align-content: stretch;
+    overflow: visible;
+    padding: 14px;
+  }
+
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-modal .game-mode-card.glass-card {
+    min-height: clamp(108px, 13vh, 148px);
+    height: 100%;
+    padding: clamp(14px, 1.6vh, 20px) clamp(16px, 1.6vw, 24px);
+    column-gap: clamp(14px, 1.2vw, 18px);
+    row-gap: clamp(4px, 0.6vh, 8px);
+  }
+
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-modal .game-mode-card .glass-card-icon {
+    width: clamp(56px, 4.5vw, 72px);
+    height: clamp(56px, 4.5vw, 72px);
+  }
+
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-modal .game-mode-card .class-name {
+    font-size: var(--font-lg);
+    font-weight: 800;
+  }
+
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-modal .game-mode-card .class-desc {
+    font-size: var(--font-lg);
+    line-height: 1.35;
+  }
+
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-modal .game-mode-card .class-badge {
+    font-size: var(--font-sm);
+    padding: calc(4px * var(--ui-scale)) calc(10px * var(--ui-scale));
+  }
+
+  /* ─── Шаг выбора героя ─── */
+
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-modal .class-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(14px, 1.8vh, 22px);
+    flex: 1 1 auto;
+    min-height: min(480px, 56vh);
+  }
+
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-modal .class-card.glass-card[data-class] .class-name,
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class] .class-name {
+    font-size: var(--font-lg);
+  }
+
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-modal .class-card.glass-card[data-class] .class-bonus {
+    font-size: var(--font-md);
+  }
+
+  /* ─── Ростер: читаемые подписи ─── */
+
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-hero-roster-label {
+    font-size: var(--font-sm);
+    line-height: 1.25;
+  }
+
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-hero-roster-title {
+    font-size: clamp(1.1rem, 1.6vw, 1.35rem);
+  }
+
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-hero-roster-hint,
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-hero-showcase-desc {
+    font-size: var(--font-md);
+    line-height: 1.4;
+  }
+
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-hero-showcase-name {
+    font-size: clamp(1.15rem, 1.8vw, 1.4rem);
+  }
+
+  /* ─── Нижняя панель ─── */
+
+  html:not([data-prep-layout="mobile"]) body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro {
+    gap: clamp(12px, 1.5vw, 24px);
+    padding: 0 clamp(8px, 1vw, 16px);
+  }
+
+  html:not([data-prep-layout="mobile"]) body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro-step {
+    font-size: var(--font-md);
+  }
+
+  html:not([data-prep-layout="mobile"]) body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro-hint {
+    font-size: var(--font-md);
+    line-height: 1.35;
+    max-width: min(48vw, 36rem);
+    opacity: 1;
+  }
+
+  html:not([data-prep-layout="mobile"]) body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro-controls {
+    font-size: var(--font-sm);
+    opacity: 0.78;
+  }
+
+  html:not([data-prep-layout="mobile"]) body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro .btn-glass-start,
+  html:not([data-prep-layout="mobile"]) body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro .btn-glass-back {
+    font-size: var(--font-md);
+    min-height: 48px;
+    padding: 10px 22px;
+  }
+
+  html:not([data-prep-layout="mobile"]) body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro .btn-glass-start {
+    font-size: var(--font-lg);
+    font-weight: 800;
+    padding: 10px 28px;
+  }
+
+  /* Геймпад-подсказка не нужна с мышью */
+  html:not([data-prep-layout="mobile"])[data-touch="false"] #class-overlay .class-controls-hint {
+    display: none;
+  }
+}
+
+/* Ультраширокие: чуть больше воздуха по краям */
+@media (min-width: 1600px) and (min-height: 900px) {
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-overlay-shell {
+    max-width: min(1840px, 96vw);
+    gap: clamp(28px, 3vw, 52px);
+  }
+
+  html:not([data-prep-layout="mobile"]) #class-overlay .class-modal #class-step-mode:not(.hidden) .game-mode-grid {
+    min-height: min(460px, 54vh);
+  }
+}

@@ -30,11 +30,123 @@
   display: none;
 }
 
-body:has(#class-overlay:not(.hidden)) .bottom-chrome,
 body:has(#battle-result-overlay:not(.hidden)) .bottom-chrome,
 body:has(#battle-detail-overlay:not(.hidden)) .bottom-chrome,
 body:has(#overlay:not(.hidden)) .bottom-chrome {
   display: none !important;
+}
+
+/* ─── Intro (выбор героя): единая нижняя панель вместо class-mobile-dock ─── */
+
+#class-overlay:not(.hidden) {
+  bottom: max(
+    var(--bottom-chrome-h-measured, 0px),
+    var(--bottom-chrome-h, 44px)
+  );
+}
+
+body:has(#class-overlay:not(.hidden)) .bottom-chrome {
+  z-index: 105;
+}
+
+body:has(#class-overlay:not(.hidden)) .bottom-chrome-start,
+body:has(#class-overlay:not(.hidden)) .bottom-chrome-center,
+body:has(#class-overlay:not(.hidden)) .bottom-chrome-end {
+  display: none !important;
+}
+
+body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro {
+  display: grid;
+}
+
+.bottom-chrome-intro {
+  display: none;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr) minmax(0, auto);
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.bottom-chrome-intro-start,
+.bottom-chrome-intro-end {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.bottom-chrome-intro-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  text-align: center;
+  padding: 0 4px;
+}
+
+.bottom-chrome-intro-step {
+  font-size: var(--font-sm);
+  font-weight: 800;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.bottom-chrome-intro-hint {
+  font-size: var(--font-xs);
+  font-weight: 600;
+  line-height: 1.2;
+  opacity: 0.88;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-width: min(52vw, 28rem);
+}
+
+.bottom-chrome-intro-controls {
+  font-size: var(--font-xs);
+  opacity: 0.55;
+  white-space: nowrap;
+}
+
+.bottom-chrome-intro .prep-settings-btn {
+  min-width: var(--touch-target-min);
+  padding: 6px 10px;
+  font-size: var(--font-md);
+}
+
+.bottom-chrome-intro .btn-glass-back {
+  min-height: var(--touch-target-min);
+  white-space: nowrap;
+}
+
+.bottom-chrome-intro .btn-glass-start {
+  min-height: var(--touch-target-min);
+  white-space: nowrap;
+  font-weight: 800;
+  padding: 6px 14px;
+}
+
+body:has(#class-overlay:not(.hidden)) .bottom-chrome {
+  background: var(--meadow-chrome, rgba(13, 17, 23, 0.94));
+  border-top: 2px solid var(--meadow-border-soft, rgba(80, 65, 50, 0.35));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+html[data-prep-layout="mobile"] body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro-hint {
+  -webkit-line-clamp: 1;
+}
+
+html[data-prep-layout="mobile"] body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro-controls {
+  display: none;
 }
 
 .bottom-chrome-start,
@@ -128,8 +240,12 @@ html[data-game-mode="lobby"] body:has(#app[data-phase="replay"]) .btn-lobby-retu
 }
 
 body:has(#app[data-phase="prep"]) .bottom-chrome {
-  background: #14110e;
-  border-top-color: rgba(80, 65, 50, 0.35);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 252, 240, 0.82) 0%,
+    rgba(255, 255, 255, 0.94) 100%
+  );
+  border-top-color: var(--meadow-border-soft);
 }
 
 .bottom-chrome .btn-secondary,

@@ -143,123 +143,26 @@
     });
   }
 
-  const SFX = {
-    ui_click() {
-      tone(640, 0.05, { volume: 0.07, type: "triangle" });
-    },
-    ui_toggle() {
-      tone(480, 0.04, { volume: 0.06, type: "square" });
-      window.setTimeout(() => tone(620, 0.05, { volume: 0.055, type: "triangle" }), 35);
-    },
-    ui_open() {
-      tone(380, 0.06, { volume: 0.06, type: "sine" });
-      window.setTimeout(() => tone(520, 0.07, { volume: 0.065, type: "triangle" }), 40);
-    },
-    ui_close() {
-      tone(520, 0.05, { volume: 0.055, type: "triangle" });
-      window.setTimeout(() => tone(360, 0.07, { volume: 0.05, type: "sine" }), 35);
-    },
-    ui_error() {
-      tone(220, 0.1, { volume: 0.09, type: "sawtooth" });
-      window.setTimeout(() => tone(180, 0.12, { volume: 0.08, type: "sawtooth" }), 60);
-    },
+  let SFX = {};
 
-    prep_pickup() {
-      tone(420, 0.07, { volume: 0.065, type: "triangle" });
-      window.setTimeout(() => tone(560, 0.06, { volume: 0.05, type: "sine" }), 30);
-    },
-    prep_place(opts = {}) {
-      const heavy = !!opts.heavy;
-      tone(heavy ? 180 : 240, heavy ? 0.14 : 0.1, { volume: heavy ? 0.1 : 0.08, type: "sine" });
-      noiseBurst(heavy ? 0.06 : 0.04, { volume: heavy ? 0.05 : 0.035, freq: heavy ? 500 : 700 });
-    },
-    prep_reject() {
-      tone(160, 0.08, { volume: 0.08, type: "sawtooth" });
-      window.setTimeout(() => tone(130, 0.1, { volume: 0.07, type: "square" }), 45);
-    },
-    prep_buy() {
-      arpeggio([880, 1100, 1320], 0.045, { volume: 0.075, type: "sine" });
-    },
-    prep_sell() {
-      arpeggio([660, 520, 390], 0.05, { volume: 0.07, type: "triangle" });
-    },
-    prep_refresh() {
-      arpeggio([440, 554, 659, 880], 0.04, { volume: 0.065, type: "triangle" });
-    },
-    prep_freeze() {
-      tone(1200, 0.06, { volume: 0.05, type: "sine" });
-      window.setTimeout(() => tone(900, 0.08, { volume: 0.045, type: "triangle" }), 40);
-    },
-    prep_rotate() {
-      tone(500, 0.04, { volume: 0.055, type: "triangle", detune: -30 });
-      window.setTimeout(() => tone(680, 0.05, { volume: 0.05, type: "sine", detune: 20 }, 25));
-    },
-    prep_craft() {
-      arpeggio([523, 659, 784, 1047], 0.055, { volume: 0.08, type: "sine" });
-      window.setTimeout(() => noiseBurst(0.08, { volume: 0.04, freq: 1400, q: 1.2 }), 180);
-    },
-    prep_gem() {
-      arpeggio([988, 1319, 1568], 0.05, { volume: 0.075, type: "triangle" });
-    },
-    gold() {
-      arpeggio([988, 1319], 0.04, { volume: 0.07, type: "sine" });
-    },
+  function rebuildGameSfxTheme(themeId) {
+    const build = globalThis.SfxThemes?.build;
+    if (typeof build !== "function") return;
+    SFX = build(themeId, { tone, noiseBurst, arpeggio });
+    if (document.documentElement) {
+      document.documentElement.dataset.soundTheme = themeId;
+    }
+  }
 
-    arc_hover() {
-      tone(440, 0.1, { volume: 0.028, type: "sine" });
-      window.setTimeout(() => tone(620, 0.08, { volume: 0.02, type: "sine" }), 40);
-    },
-    arc_begin() {
-      SFX.arc_hover();
-    },
-    arc_celebrate() {
-      tone(740, 0.1, { volume: 0.032, type: "triangle" });
-      window.setTimeout(() => tone(980, 0.12, { volume: 0.028, type: "sine" }), 55);
-      window.setTimeout(() => tone(1180, 0.08, { volume: 0.018, type: "sine" }), 110);
-    },
+  function readInitialSoundThemeId() {
+    try {
+      const stored = localStorage.getItem("bb-sound-theme");
+      if (stored && SfxThemes?.META?.[stored]) return stored;
+    } catch (_) { /* ignore */ }
+    return SfxThemes?.defaultId || "classic";
+  }
 
-    battle_start() {
-      arpeggio([220, 277, 330, 440], 0.07, { volume: 0.09, type: "square" });
-    },
-    battle_countdown_tick() {
-      tone(520, 0.07, { volume: 0.08, type: "square" });
-    },
-    battle_countdown_go() {
-      arpeggio([440, 554, 659], 0.045, { volume: 0.1, type: "triangle" });
-      noiseBurst(0.05, { volume: 0.045, freq: 800 });
-    },
-    battle_hit(opts = {}) {
-      const amt = Number(opts.amount) || 1;
-      const heavy = amt >= 8;
-      const base = heavy ? 140 : 200;
-      tone(base, heavy ? 0.12 : 0.08, { volume: heavy ? 0.1 : 0.075, type: "square" });
-      noiseBurst(heavy ? 0.07 : 0.045, { volume: heavy ? 0.07 : 0.05, freq: heavy ? 600 : 900 });
-    },
-    battle_heal(opts = {}) {
-      const amt = Math.min(3, 1 + Math.floor((Number(opts.amount) || 1) / 10));
-      arpeggio([523, 659, 784].slice(0, amt), 0.05, { volume: 0.065, type: "sine" });
-    },
-    battle_block() {
-      tone(1800, 0.05, { volume: 0.06, type: "triangle" });
-      window.setTimeout(() => tone(1200, 0.07, { volume: 0.05, type: "sine" }), 25);
-    },
-    battle_poison() {
-      tone(280, 0.12, { volume: 0.07, type: "sawtooth" });
-      window.setTimeout(() => tone(240, 0.14, { volume: 0.06, type: "triangle", detune: -40 }), 70);
-    },
-    battle_miss() {
-      tone(300, 0.06, { volume: 0.045, type: "triangle" });
-    },
-    battle_victory() {
-      arpeggio([523, 659, 784, 1047, 1319], 0.08, { volume: 0.085, type: "triangle" });
-    },
-    battle_defeat() {
-      arpeggio([392, 349, 311, 262], 0.1, { volume: 0.08, type: "sawtooth" });
-    },
-    battle_draw() {
-      arpeggio([440, 440, 415], 0.12, { volume: 0.07, type: "sine" });
-    },
-  };
+  rebuildGameSfxTheme(readInitialSoundThemeId());
 
   const RATE_LIMITS = {
     battle_hit: 40,
@@ -269,7 +172,108 @@
     battle_miss: 80,
     arc_hover: 120,
     ui_click: 60,
+    ui_toggle: 60,
+    ui_open: 70,
+    ui_close: 70,
   };
+
+  const BUTTON_SFX_SELECTOR = [
+    "button:not([disabled])",
+    "[role='button']:not([aria-disabled='true'])",
+    ".doll-slot",
+  ].join(", ");
+
+  const BUTTON_SFX_SKIP_SELECTOR = [
+    ".shop-card:not(.empty)",
+    ".bench-card",
+    ".shop-pin",
+    "#btn-refresh",
+    "#btn-sell",
+    "#btn-fight",
+  ].join(", ");
+
+  const BUTTON_SFX_CLOSE_RE = /(?:close|закрыть|✕|×)/i;
+  const BUTTON_SFX_CLOSE_CLASS_RE = /(?:^|\s|-)(?:[\w-]*-close|btn-close|settings-close|recipe-book-close|board-preview-close|battle-detail-close|prep-shop-drawer-close)(?:\s|$)/;
+
+  function isInteractiveDisabled(el) {
+    if (!el) return true;
+    if (el.disabled) return true;
+    if (el.getAttribute("aria-disabled") === "true") return true;
+    if (el.classList.contains("disabled")) return true;
+    return false;
+  }
+
+  function resolveButtonSfx(el) {
+    if (!el || isInteractiveDisabled(el)) return null;
+
+    const sfxHost = el.closest("[data-sfx]");
+    const explicit = sfxHost?.dataset.sfx;
+    if (explicit === "none") return null;
+    if (explicit && SFX[explicit]) return explicit;
+
+    if (el.matches(BUTTON_SFX_SKIP_SELECTOR)) return null;
+
+    const id = el.id || "";
+    const cls = typeof el.className === "string" ? el.className : "";
+    const label = `${el.getAttribute("aria-label") || ""} ${el.title || ""} ${el.textContent || ""}`.trim().toLowerCase();
+
+    if (BUTTON_SFX_CLOSE_RE.test(label) || BUTTON_SFX_CLOSE_CLASS_RE.test(cls)) {
+      return "ui_close";
+    }
+    if (id === "btn-escape-resume") return "ui_close";
+
+    if (
+      el.hasAttribute("aria-expanded")
+      || el.hasAttribute("aria-pressed")
+      || el.classList.contains("prep-side-btn")
+      || el.classList.contains("bc-speed")
+      || id === "btn-battle-pause"
+      || id === "btn-lobby-roster-hide"
+      || id === "btn-combat-feed"
+      || el.classList.contains("combat-feed-toggle")
+      || el.classList.contains("shop-pin")
+    ) {
+      return "ui_toggle";
+    }
+
+    return "ui_click";
+  }
+
+  function findButtonSfxTarget(target) {
+    if (!target?.closest) return null;
+    const el = target.closest(BUTTON_SFX_SELECTOR);
+    if (!el || isInteractiveDisabled(el)) return null;
+    return el;
+  }
+
+  function playButtonSfx(target) {
+    const el = typeof target === "string" ? document.querySelector(target) : target;
+    const host = el?.closest ? el.closest(BUTTON_SFX_SELECTOR) || el : el;
+    const sfxId = resolveButtonSfx(host);
+    if (!sfxId) return false;
+    return playGameSfx(sfxId);
+  }
+
+  function bindGlobalButtonSfx() {
+    document.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0) return;
+      const target = findButtonSfxTarget(event.target);
+      if (!target) return;
+      playButtonSfx(target);
+    }, { capture: true, passive: true });
+
+    document.addEventListener("change", (event) => {
+      const input = event.target;
+      if (!(input instanceof HTMLInputElement)) return;
+      if (input.type === "checkbox" || input.type === "radio") {
+        playGameSfx("ui_toggle");
+        return;
+      }
+      if (input.type === "range") {
+        playGameSfx("ui_click");
+      }
+    }, { capture: true });
+  }
 
   function playGameSfx(id, options = {}) {
     if (!id || getSfxVolume() <= 0) return false;
@@ -287,6 +291,7 @@
 
   function initGameSfx() {
     bindUnlock();
+    bindGlobalButtonSfx();
     syncSfxVolumeUi(getSfxVolume());
   }
 
@@ -294,7 +299,15 @@
   window.setSfxVolume = setSfxVolume;
   window.syncSfxVolumeUi = syncSfxVolumeUi;
   window.playGameSfx = playGameSfx;
-  window.GameSfx = { play: playGameSfx, getVolume: getSfxVolume, setVolume: setSfxVolume };
+  window.playButtonSfx = playButtonSfx;
+  window.rebuildGameSfxTheme = rebuildGameSfxTheme;
+  window.GameSfx = {
+    play: playGameSfx,
+    playButton: playButtonSfx,
+    getVolume: getSfxVolume,
+    setVolume: setSfxVolume,
+    rebuildTheme: rebuildGameSfxTheme,
+  };
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initGameSfx);

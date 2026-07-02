@@ -1,0 +1,47 @@
+/**
+ * Battle / replay — без теней и подложек за портретами героев.
+ */
+
+/* Портреты: убрать drop-shadow (hero-card.css, tablet-side.css) */
+html[data-hero-card-mode="full-bleed"][data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-scene-ui .profile-avatar-img,
+html[data-hero-card-mode="full-bleed"][data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-scene-ui .profile-avatar-img,
+html[data-hero-card-mode="full-bleed"][data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-scene-avatar .profile-avatar-img,
+html[data-hero-card-mode="full-bleed"][data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-scene-avatar .profile-avatar-img,
+html[data-hero-card-mode="full-bleed"][data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-scene-avatar .portrait-zoom-clip img,
+html[data-hero-card-mode="full-bleed"][data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-scene-avatar .portrait-zoom-clip img,
+html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="battle"] .portrait-zoom-clip img,
+html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="replay"] .portrait-zoom-clip img {
+  filter: none;
+}
+
+/* Контейнер аватара — без тёмной плашки (meadow-theme / styles.css) */
+#app[data-phase="battle"] .battle-scene-ui .profile-avatar,
+#app[data-phase="replay"] .battle-scene-ui .profile-avatar,
+#app[data-phase="battle"] .battle-scene-avatar .profile-avatar,
+#app[data-phase="replay"] .battle-scene-avatar .profile-avatar,
+#app[data-phase="battle"] .field-avatar-wrap .profile-avatar,
+#app[data-phase="replay"] .field-avatar-wrap .profile-avatar {
+  background: transparent;
+  border: none;
+  padding: 0;
+  box-shadow: none;
+}
+
+/* Имя героя — без градиентной подложки */
+html[data-hero-card-mode="full-bleed"][data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .avatar-hero-name,
+html[data-hero-card-mode="full-bleed"][data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar-hero-name,
+html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-name,
+html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-name {
+  background: transparent;
+}
+
+/* HUD под барами — без scrim-панели (phone/tablet portrait) */
+html[data-hero-card-mode="full-bleed"][data-battle-hud-html="true"][data-battle-profile="phone-portrait"] #app[data-phase="battle"] .battle-hud-side,
+html[data-hero-card-mode="full-bleed"][data-battle-hud-html="true"][data-battle-profile="phone-portrait"] #app[data-phase="replay"] .battle-hud-side,
+html[data-hero-card-mode="full-bleed"][data-battle-hud-html="true"][data-battle-profile="tablet-portrait"] #app[data-phase="battle"] .battle-hud-side,
+html[data-hero-card-mode="full-bleed"][data-battle-hud-html="true"][data-battle-profile="tablet-portrait"] #app[data-phase="replay"] .battle-hud-side {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+}
