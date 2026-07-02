@@ -433,7 +433,8 @@ function escapeEnhancementHtml(text) {
     .replace(/"/g, "&quot;");
 }
 
-function renderPrepEnhancementStripHtml(round, enhancements = {}) {
+function renderPrepEnhancementStripHtml(round, enhancements = {}, options = {}) {
+  const heroCard = !!options.heroCard;
   const slots = getEquippedEnhancementSummary(enhancements);
   const cells = slots.map((slot) => {
     const unlocked = isEnhancementSlotUnlocked(slot.slotId, round);
@@ -444,7 +445,15 @@ function renderPrepEnhancementStripHtml(round, enhancements = {}) {
         : `${slot.label} — положите усиление 1×1 в рюкзак`)
       : `Откроется на раунде ${slot.unlockRound}`;
     const icon = def?.icon || ENHANCEMENT_SLOT_META[slot.slotId]?.icon || "◻️";
-    const name = def?.name || (unlocked ? "Пусто" : `R${slot.unlockRound}`);
+    const slotLabel = heroCard ? String(slot.label).toUpperCase() : slot.label;
+    let nameHtml = "";
+    if (def?.name) {
+      nameHtml = `<span class="enh-slot-name">${escapeEnhancementHtml(def.name)}</span>`;
+    } else if (!unlocked) {
+      nameHtml = `<span class="enh-slot-name">${escapeEnhancementHtml(`R${slot.unlockRound}`)}</span>`;
+    } else if (!heroCard) {
+      nameHtml = `<span class="enh-slot-name">Пусто</span>`;
+    }
     const stateClass = !unlocked
       ? "enh-slot--locked"
       : def
@@ -452,15 +461,19 @@ function renderPrepEnhancementStripHtml(round, enhancements = {}) {
         : "enh-slot--empty";
     return `
       <div class="enh-slot ${stateClass}" data-enh-slot="${slot.slotId}" data-enh-id="${def?.id || ""}" title="${escapeEnhancementHtml(title)}">
-        <span class="enh-slot-kicker">${escapeEnhancementHtml(slot.label)}</span>
+        <span class="enh-slot-kicker">${escapeEnhancementHtml(slotLabel)}</span>
         <span class="enh-slot-icon" aria-hidden="true">${icon}</span>
-        <span class="enh-slot-name">${escapeEnhancementHtml(name)}</span>
+        ${nameHtml}
       </div>
     `;
   }).join("");
 
+  const stripClass = heroCard
+    ? "prep-enhancement-strip prep-enhancement-strip--hero-card"
+    : "prep-enhancement-strip";
+
   return `
-    <div class="prep-enhancement-strip" id="prep-enhancement-strip" aria-label="Слоты усилений">
+    <div class="${stripClass}" id="prep-enhancement-strip" aria-label="Слоты усилений">
       <span class="prep-enhancement-eyebrow">Усиления</span>
       <div class="prep-enhancement-slots">${cells}</div>
     </div>

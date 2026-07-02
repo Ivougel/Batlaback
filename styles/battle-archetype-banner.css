@@ -1,0 +1,107 @@
+/**
+ * Знамя архетипа (форма / мутация) над портретом героя в бою.
+ */
+
+.avatar-hero-stage {
+  position: relative;
+}
+
+.avatar-hero-archetype-banner {
+  position: absolute;
+  top: calc(-2px * var(--ui-scale, 1));
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: auto;
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.38));
+  transform-origin: center bottom;
+  animation: avatar-archetype-banner-idle 3.6s ease-in-out infinite;
+}
+
+.avatar-hero-shell-player .avatar-hero-archetype-banner {
+  right: calc(-4px * var(--ui-scale, 1));
+  left: auto;
+}
+
+.avatar-hero-shell-enemy .avatar-hero-archetype-banner {
+  left: calc(-4px * var(--ui-scale, 1));
+  right: auto;
+}
+
+.avatar-hero-archetype-banner-pole {
+  display: block;
+  width: calc(3px * var(--ui-scale, 1));
+  height: calc(14px * var(--ui-scale, 1));
+  border-radius: 999px;
+  background: linear-gradient(180deg, #d4a574 0%, #6b4423 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.avatar-hero-archetype-banner-cloth {
+  display: grid;
+  place-items: center;
+  min-width: calc(28px * var(--ui-scale, 1));
+  min-height: calc(28px * var(--ui-scale, 1));
+  margin-top: calc(-2px * var(--ui-scale, 1));
+  padding: calc(3px * var(--ui-scale, 1));
+  border-radius: calc(8px * var(--ui-scale, 1));
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  background:
+    linear-gradient(145deg, rgba(72, 38, 110, 0.94), rgba(28, 16, 44, 0.96));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.28);
+}
+
+.avatar-hero-archetype-banner--form .avatar-hero-archetype-banner-cloth {
+  border-color: rgba(140, 180, 255, 0.42);
+  background:
+    linear-gradient(145deg, rgba(38, 58, 110, 0.94), rgba(16, 24, 44, 0.96));
+}
+
+.avatar-hero-archetype-banner--mutation .avatar-hero-archetype-banner-cloth {
+  border-color: rgba(255, 120, 200, 0.48);
+  background:
+    linear-gradient(145deg, rgba(92, 28, 88, 0.95), rgba(36, 12, 40, 0.97));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 12px rgba(180, 80, 220, 0.28);
+}
+
+.avatar-hero-archetype-banner-emoji {
+  font-size: calc(1.05rem * var(--ui-scale, 1));
+  line-height: 1;
+}
+
+.avatar-hero-archetype-banner:focus-visible {
+  outline: 2px solid rgba(245, 200, 66, 0.85);
+  outline-offset: 2px;
+}
+
+@keyframes avatar-archetype-banner-idle {
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  35% { transform: rotate(-2deg) translateY(-1px); }
+  70% { transform: rotate(2deg) translateY(-2px); }
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .avatar-hero-archetype-banner,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar-hero-archetype-banner {
+  top: calc(2px * var(--ui-scale, 1));
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .avatar-hero-shell-player .avatar-hero-archetype-banner,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar-hero-shell-player .avatar-hero-archetype-banner {
+  right: calc(6px * var(--ui-scale, 1));
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .avatar-hero-shell-enemy .avatar-hero-archetype-banner,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar-hero-shell-enemy .avatar-hero-archetype-banner {
+  left: calc(6px * var(--ui-scale, 1));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avatar-hero-archetype-banner {
+    animation: none;
+  }
+}

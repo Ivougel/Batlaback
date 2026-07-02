@@ -673,6 +673,8 @@ function syncBattleHudSurfaceFlags() {
 
 window.isMobilePortraitBattleHud = isMobilePortraitBattleHud;
 window.isCompactBattleHud = isCompactBattleHud;
+window.buildStatusChipEntries = buildStatusChipEntries;
+window.renderRuntimeChipHTML = renderRuntimeChipHTML;
 window.syncBattleHudRuntimeChips = syncBattleHudRuntimeChips;
 window.syncBattleHudSurfaceFlags = syncBattleHudSurfaceFlags;
 

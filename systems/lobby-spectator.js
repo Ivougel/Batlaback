@@ -433,11 +433,19 @@ function renderLobbyBattleBottomChip(fighter, lobby, opts = {}) {
     ? `data-lobby-fighter-card="${fighter.id}" data-lobby-spectate="${matchIndex}"`
     : `data-lobby-fighter-card="${fighter.id}"`;
   const cardTitle = `${fighter.name} · ${fighter.alive ? `${Math.ceil(hp.current)} HP` : "выбыл"}`;
+  const battleCtx = typeof getLobbyFighterBattleContext === "function"
+    ? getLobbyFighterBattleContext(fighter.id, lobby, matches)
+    : null;
+  const statusHtml = typeof renderLobbyBattleStatusHTML === "function"
+    ? renderLobbyBattleStatusHTML(battleCtx)
+    : "";
+  const hasStatus = !!statusHtml;
 
-  return `<button type="button" class="${cls}" ${dataAttrs} ${disabled ? "disabled" : ""} title="${cardTitle}" aria-label="${cardTitle}">
+  return `<button type="button" class="${cls}${hasStatus ? " lobby-battle-bottom-chip--has-status" : ""}" ${dataAttrs} ${disabled ? "disabled" : ""} title="${cardTitle}" aria-label="${cardTitle}">
     <span class="lobby-battle-bottom-chip-avatar" data-lobby-fighter-avatar="${fighter.id}" aria-hidden="true">
       <span class="${emojiClasses}">${visual.emoji}</span>
     </span>
+    <span class="lobby-battle-bottom-chip-status" data-lobby-fighter-status="${fighter.id}" aria-hidden="true"${hasStatus ? "" : " hidden"}>${statusHtml}</span>
     <span class="lobby-battle-bottom-chip-hp" aria-hidden="true">♥ ${Math.ceil(hp.current)}</span>
   </button>`;
 }
@@ -558,13 +566,44 @@ function formatLobbyPrepTimer(seconds) {
   return m > 0 ? `${m}:${String(r).padStart(2, "0")}` : String(r);
 }
 
-function renderLobbyPrepTimerHTML(remaining, active) {
+function renderLobbyPrepTimerHTML(remaining, active, opts = {}) {
   if (!active) return "";
-  const urgent = remaining <= 10;
-  return `<div class="lobby-prep-timer${urgent ? " lobby-prep-timer--urgent" : ""}" aria-live="polite">
-    <span class="lobby-prep-timer-label">⏱</span>
-    <b>${formatLobbyPrepTimer(remaining)}</b>
+  const total = Math.max(1, Number(opts.total) || (typeof LOBBY_PREP_SECONDS !== "undefined" ? LOBBY_PREP_SECONDS : 50));
+  const seconds = Math.max(0, Math.ceil(remaining));
+  const urgent = seconds <= 10;
+  const critical = seconds <= 5;
+  const pct = Math.max(0, Math.min(1, remaining / total));
+  const ringR = 34;
+  const ringLen = 2 * Math.PI * ringR;
+  const ringOffset = ringLen * (1 - pct);
+  const display = formatLobbyPrepTimer(remaining);
+  const isShort = !display.includes(":");
+  const cls = [
+    "prep-timer-hero",
+    urgent ? "prep-timer-hero--urgent" : "",
+    critical ? "prep-timer-hero--critical" : "",
+  ].filter(Boolean).join(" ");
+  const unitHtml = isShort
+    ? `<span class="prep-timer-hero__unit">сек</span>`
+    : `<span class="prep-timer-hero__unit prep-timer-hero__unit--clock">до боя</span>`;
+
+  return `<div class="${cls}" role="timer" aria-live="assertive" aria-label="До боя ${display}">
+    <div class="prep-timer-hero__glow" aria-hidden="true"></div>
+    <div class="prep-timer-hero__ring" aria-hidden="true">
+      <svg viewBox="0 0 80 80" focusable="false">
+        <circle class="prep-timer-hero__ring-track" cx="40" cy="40" r="${ringR}"></circle>
+        <circle class="prep-timer-hero__ring-fill" cx="40" cy="40" r="${ringR}"
+          style="stroke-dasharray:${ringLen.toFixed(2)};stroke-dashoffset:${ringOffset.toFixed(2)}"></circle>
+      </svg>
+    </div>
+    <div class="prep-timer-hero__core">
+      <span class="prep-timer-hero__eyebrow">Подготовка</span>
+      <span class="prep-timer-hero__value">${display}</span>
+      ${unitHtml}
+    </div>
   </div>`;
 }
+
+window.renderLobbyPrepTimerHTML = renderLobbyPrepTimerHTML;
 
 window.findLobbyPlayerMatchIndex = findLobbyPlayerMatchIndex;

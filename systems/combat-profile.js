@@ -370,6 +370,8 @@ function collectBattleStatusEffects(side, items, battleState = null) {
   return { buffs, debuffs };
 }
 
+window.collectBattleStatusEffects = collectBattleStatusEffects;
+
 function computeCombatProfile(items, classId, displayName) {
   const cloned = cloneItemsForProfile(items);
   const side = createBattleSide(cloned, classId);
@@ -489,6 +491,49 @@ function enrichProfileWeaponBadge(profile, items, classId) {
   profile.weaponLabel = badge.label;
   return profile;
 }
+
+function enrichProfileArchetypeBanner(profile, formId, mutationId, round = 1, leaderId = null) {
+  let meta = typeof getPrepMutationBadgeMeta === "function"
+    ? getPrepMutationBadgeMeta(formId, mutationId, round)
+    : null;
+  let pathId = typeof resolvePrepBuildPathId === "function"
+    ? resolvePrepBuildPathId(formId, mutationId, leaderId, round)
+    : (mutationId || formId || leaderId || null);
+
+  if (!meta && leaderId && typeof getMutationUiEmoji === "function") {
+    const def = typeof getMutationById === "function" ? getMutationById(leaderId) : null;
+    meta = {
+      kind: "form",
+      label: def?.formName || def?.name || leaderId,
+      sub: typeof MUTATION_ROUND_FORM !== "undefined" ? `R${MUTATION_ROUND_FORM}` : "форма",
+      emoji: getMutationUiEmoji(leaderId),
+    };
+    pathId = leaderId;
+  }
+
+  if (meta) {
+    profile.archetypeEmoji = meta.emoji;
+    profile.archetypeLabel = meta.label;
+    profile.archetypeSub = meta.sub;
+    profile.archetypeKind = meta.kind;
+    profile.archetypeFormId = formId || null;
+    profile.archetypeMutationId = mutationId || null;
+    profile.archetypeRound = round;
+    profile.archetypePathId = pathId;
+    return profile;
+  }
+  profile.archetypeEmoji = null;
+  profile.archetypeLabel = null;
+  profile.archetypeSub = null;
+  profile.archetypeKind = null;
+  profile.archetypeFormId = null;
+  profile.archetypeMutationId = null;
+  profile.archetypeRound = round;
+  profile.archetypePathId = null;
+  return profile;
+}
+
+window.enrichProfileArchetypeBanner = enrichProfileArchetypeBanner;
 
 function getBackpackPowerTier(score) {
   if (score < 45) return { label: "Слабый", className: "bp-tier-weak" };

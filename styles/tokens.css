@@ -163,6 +163,11 @@
   --prep-hero-slot-bottom: var(--gap-sm);
   --prep-hero-slot-height: min(360px, 40vh);
   --prep-hero-slot-height-max: 380px;
+  /* Hero card HUD: портрет = кроп головы/плеч, высота = stats + mutation */
+  --prep-hero-card-portrait-ratio: 1;
+  --prep-hero-card-body-gap: calc(6px * var(--ui-scale));
+  --prep-hero-card-portrait-w: calc(84px * var(--ui-scale));
+  --prep-hero-card-portrait-h: calc(84px * var(--ui-scale));
   --zone-topbar-h: 0px;
   --zone-toolbar-h: 0px;
   --zone-canvas-h: 0px;

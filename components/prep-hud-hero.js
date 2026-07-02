@@ -23,6 +23,9 @@ function syncPrepHudHero(profile, options = {}) {
   const portrait = document.getElementById("prep-hud-hero-portrait");
   const img = document.getElementById("prep-hud-hero-img");
   const roundEl = document.getElementById("prep-hud-hero-round");
+  const portraitSlot = document.querySelector(".prep-hero-card__portrait");
+  const root = document.documentElement;
+  const heroCardHud = root.dataset.prepLayout === "side" || root.dataset.uiSurface === "tablet-side";
   if (!badge || !portrait || !img) return;
 
   const side = options.side || prepViewSide || "player";
@@ -46,17 +49,28 @@ function syncPrepHudHero(profile, options = {}) {
     img.alt = heroName;
     img.hidden = false;
     portrait.removeAttribute("data-fallback");
+    if (heroCardHud) {
+      root.style.setProperty("--prep-hero-card-portrait-src", `url("${src.replace(/"/g, '\\"')}")`);
+      portraitSlot?.classList.add("prep-hero-card__portrait--ready");
+    } else {
+      root.style.removeProperty("--prep-hero-card-portrait-src");
+      portraitSlot?.classList.remove("prep-hero-card__portrait--ready");
+    }
   } else {
     img.removeAttribute("src");
     img.alt = heroName;
     img.hidden = true;
     portrait.dataset.fallback = profile?.classIcon || "🧙";
+    root.style.removeProperty("--prep-hero-card-portrait-src");
+    portraitSlot?.classList.remove("prep-hero-card__portrait--ready");
   }
 
   if (profile?.classId) portrait.dataset.class = profile.classId;
   else portrait.removeAttribute("data-class");
 
-  if (side !== prepHudLastSide || options.forceMood) {
+  if (heroCardHud) {
+    portrait.dataset.mood = "calm";
+  } else if (side !== prepHudLastSide || options.forceMood) {
     portrait.dataset.mood = pickPrepHudMood();
     prepHudLastSide = side;
   }

@@ -74,6 +74,61 @@ function renderAvatarBarsHTML(profile, team) {
   `;
 }
 
+function renderAvatarArchetypeBannerHTML(profile) {
+  if (!profile?.archetypeEmoji) return "";
+  const label = escapeProfileHtml(profile.archetypeLabel || "Архетип");
+  const sub = profile.archetypeSub ? escapeProfileHtml(profile.archetypeSub) : "";
+  const title = sub ? `${label} · ${sub}` : label;
+  const kind = escapeProfileHtml(profile.archetypeKind || "form");
+  const pathId = escapeProfileHtml(profile.archetypePathId || "");
+  return `
+    <div class="avatar-hero-archetype-banner avatar-hero-archetype-banner--${kind}"
+         data-archetype-path="${pathId}"
+         title="${title}"
+         aria-label="${title}"
+         tabindex="0">
+      <span class="avatar-hero-archetype-banner-pole" aria-hidden="true"></span>
+      <span class="avatar-hero-archetype-banner-cloth" aria-hidden="true">
+        <span class="avatar-hero-archetype-banner-emoji">${profile.archetypeEmoji}</span>
+      </span>
+    </div>`;
+}
+
+function syncAvatarArchetypeBanner(shell, profile) {
+  if (!shell) return;
+  const stage = shell.querySelector(".avatar-hero-stage");
+  if (!stage) return;
+  const sig = profile?.archetypePathId
+    ? `${profile.archetypePathId}:${profile.archetypeEmoji}:${profile.archetypeKind}`
+    : "";
+  let banner = stage.querySelector(".avatar-hero-archetype-banner");
+  if (!sig) {
+    banner?.remove();
+    shell.classList.remove("avatar-hero-has-archetype");
+    return;
+  }
+  if (!banner) {
+    stage.insertAdjacentHTML("afterbegin", renderAvatarArchetypeBannerHTML(profile));
+    banner = stage.querySelector(".avatar-hero-archetype-banner");
+    if (typeof bindAvatarArchetypeBannerInteractions === "function") {
+      bindAvatarArchetypeBannerInteractions(banner);
+    }
+  } else if (banner.dataset.archetypeSig !== sig) {
+    banner.outerHTML = renderAvatarArchetypeBannerHTML(profile);
+    banner = stage.querySelector(".avatar-hero-archetype-banner");
+    if (typeof bindAvatarArchetypeBannerInteractions === "function") {
+      bindAvatarArchetypeBannerInteractions(banner);
+    }
+  }
+  if (banner) {
+    banner.dataset.archetypeSig = sig;
+    if (typeof bindAvatarArchetypeBannerInteractions === "function") {
+      bindAvatarArchetypeBannerInteractions(banner);
+    }
+  }
+  shell.classList.toggle("avatar-hero-has-archetype", !!sig);
+}
+
 function renderAvatarWeaponBadgeHTML(profile) {
   const icon = profile.weaponIcon || "⚔️";
   const kind = profile.weaponKind || "melee";
@@ -108,6 +163,7 @@ function renderAvatarHeroHTML(profile, team) {
       <div class="avatar-hero-upper">
         <div class="avatar-hero-name">${displayName}</div>
         <div class="avatar-hero-stage">
+          ${renderAvatarArchetypeBannerHTML(profile)}
           <div class="profile-avatar profile-avatar-${team}"
                data-status-title="${className}"
                data-status-desc="${tooltipDesc}"
@@ -291,6 +347,7 @@ function syncAvatarHeroEffects(team, profile, state) {
   shell.classList.toggle("avatar-hero-has-buffs", activeBuffs.length > 0);
   syncAvatarWeaponBadge(shell, profile);
   shell.classList.toggle("avatar-hero-has-debuffs", debuffs.length > 0);
+  syncAvatarArchetypeBanner(shell, profile);
   barsRoot.classList.toggle("avatar-hero-has-buffs", activeBuffs.length > 0);
   barsRoot.classList.toggle("avatar-hero-has-debuffs", debuffs.length > 0);
   if (isFlankArenaBattleHud() && state) {
@@ -316,6 +373,8 @@ function profileHeroShellSignature(profile) {
     profile.classId,
     profile.className,
     profile.classIconSrc || profile.classIcon,
+    profile.archetypePathId || "",
+    profile.archetypeEmoji || "",
   ].join("|");
 }
 
@@ -374,6 +433,7 @@ function syncAvatarHeroPortraitContent(team, profile, opts = {}) {
   }
 
   syncAvatarWeaponBadge(shell, profile);
+  syncAvatarArchetypeBanner(shell, profile);
   slot.dataset.heroShellSig = profileHeroShellSignature(profile);
   return false;
 }

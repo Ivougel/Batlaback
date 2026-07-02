@@ -23,6 +23,7 @@
   <link rel="stylesheet" href="styles/shop-pin-chrome.css?v=2">
   <link rel="stylesheet" href="styles/prep-top-bar.css?v=2">
   <link rel="stylesheet" href="styles/mutations.css?v=1">
+  <link rel="stylesheet" href="styles/battle-archetype-banner.css?v=1">
   <link rel="stylesheet" href="styles/enhancements.css?v=3">
   <link rel="stylesheet" href="styles/doll.css?v=25">
   <link rel="stylesheet" href="styles/combat-feed.css?v=3">
@@ -61,6 +62,8 @@
   <link rel="stylesheet" href="styles/item-stats-report.css?v=3">
   <link rel="stylesheet" href="styles/prep-juice.css?v=3">
   <link rel="stylesheet" href="styles/prep-forest-hud.css?v=1">
+  <link rel="stylesheet" href="styles/prep-hero-card.css?v=4">
+  <link rel="stylesheet" href="styles/prep-timer-hero.css?v=1">
   <link rel="stylesheet" href="styles/battle-result-glass.css?v=1">
   <link rel="stylesheet" href="styles/battle-aura-frame.css?v=2">
   <link rel="stylesheet" href="styles/battle-result-theater.css?v=3">
@@ -83,7 +86,7 @@
   <script src="systems/layout-scales.js?v=2"></script>
   <script src="systems/battle-fx-tier.js?v=1"></script>
   <script src="systems/battle-hero-anchor.js?v=23"></script>
-  <script src="ui-layout.js?v=100"></script>
+  <script src="ui-layout.js?v=102"></script>
 </head>
 <body>
   <div id="ui-ornament-frame" class="ui-ornament-frame" aria-hidden="true">
@@ -102,17 +105,28 @@
         <div class="battle-arena" id="battle-arena">
           <div class="prep-left-column" id="prep-left-column">
             <header class="prep-top-bar" id="prep-top-bar" aria-label="Статус забега">
-              <div class="prep-hud-hero-badge hidden" id="run-hud-phase" role="img" aria-label="Подготовка">
-                <div class="prep-hud-hero-portrait" id="prep-hud-hero-portrait" data-mood="breathe">
-                  <span class="prep-hud-hero-portrait__aura" aria-hidden="true"></span>
-                  <span class="prep-hud-hero-portrait__ring" aria-hidden="true"></span>
-                  <span class="prep-hud-hero-portrait__vine prep-hud-hero-portrait__vine--l" aria-hidden="true">🌿</span>
-                  <span class="prep-hud-hero-portrait__vine prep-hud-hero-portrait__vine--r" aria-hidden="true">🍃</span>
-                  <img class="prep-hud-hero-portrait__img" id="prep-hud-hero-img" alt="" draggable="false">
+              <div class="prep-hero-card" id="prep-hero-card">
+                <div class="prep-hero-card__portrait">
+                  <div class="prep-hud-hero-badge hidden" id="run-hud-phase" role="img" aria-label="Подготовка">
+                    <div class="prep-hud-hero-portrait" id="prep-hud-hero-portrait" data-mood="breathe">
+                      <span class="prep-hud-hero-portrait__aura" aria-hidden="true"></span>
+                      <span class="prep-hud-hero-portrait__ring" aria-hidden="true"></span>
+                      <span class="prep-hud-hero-portrait__vine prep-hud-hero-portrait__vine--l" aria-hidden="true">🌿</span>
+                      <span class="prep-hud-hero-portrait__vine prep-hud-hero-portrait__vine--r" aria-hidden="true">🍃</span>
+                      <img class="prep-hud-hero-portrait__img" id="prep-hud-hero-img" alt="" draggable="false">
+                    </div>
+                    <span class="prep-hud-hero-round" id="prep-hud-hero-round" aria-hidden="true"></span>
+                  </div>
                 </div>
-                <span class="prep-hud-hero-round" id="prep-hud-hero-round" aria-hidden="true"></span>
+                <div class="prep-hero-card__body">
+                  <div class="prep-stats-hud" id="prep-stats-hud" aria-live="polite"></div>
+                </div>
+                <div class="prep-hero-card__actions" id="prep-hero-card-actions" aria-label="Действия">
+                  <div class="prep-hero-card__timer" id="prep-hero-card-timer" aria-hidden="true"></div>
+                  <div class="prep-hero-card__view-tag hidden" id="prep-hero-card-view-tag" aria-live="polite"></div>
+                  <div class="prep-hero-card__doll-mount" id="prep-hero-card-doll-mount"></div>
+                </div>
               </div>
-              <div class="prep-stats-hud" id="prep-stats-hud" aria-live="polite"></div>
               <div class="prep-hud-chrome" id="prep-hud-chrome">
                 <div class="prep-hero-tooltip hidden" id="prep-hero-tooltip" role="dialog" aria-labelledby="prep-hero-tooltip-title">
                   <div class="prep-hero-tooltip-title" id="prep-hero-tooltip-title"></div>
@@ -714,6 +728,7 @@
         <div class="gamepad-hints-list" id="gamepad-hints-list"></div>
       </div>
       <div class="bottom-chrome-prep-right prep-toolbar-actions" id="bottom-chrome-prep-right">
+        <div class="lobby-prep-timer-bottom hidden" id="lobby-prep-timer-bottom" aria-live="assertive"></div>
         <button class="btn-primary btn-fight-header" id="btn-fight" type="button" aria-label="В бой">⚔️ В бой!</button>
       </div>
     </div>
@@ -802,7 +817,7 @@
   <script src="ai-engine.js"></script>
   <script src="hard-bot-engine.js"></script>
   <script src="systems/lobby-opponents.js?v=6"></script>
-  <script src="systems/lobby-fighter-avatar.js?v=1"></script>
+  <script src="systems/lobby-fighter-avatar.js?v=2"></script>
   <script src="systems/lobby-spectator.js?v=8"></script>
   <script src="systems/lobby-roster-float.js?v=2"></script>
   <script src="battle-engine.js?v=2"></script>
@@ -815,7 +830,7 @@
   <script src="systems/prep-shop.js?v=1"></script>
   <script src="systems/doll-engine.js"></script>
   <script src="systems/screen-transitions.js?v=1"></script>
-  <script src="components/prep-hud-hero.js?v=1"></script>
+  <script src="components/prep-hud-hero.js?v=2"></script>
   <script src="game.js?v=69"></script>
   <script src="pwa-register.js"></script>
 </body>

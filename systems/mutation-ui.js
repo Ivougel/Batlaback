@@ -643,3 +643,41 @@ function triggerMutationMilestoneCelebration(side, milestone = "mutation") {
     mutationRevealTimer = null;
   }, MUTATION_REVEAL_MS);
 }
+
+const avatarArchetypeBannerBound = new WeakSet();
+
+function bindAvatarArchetypeBannerInteractions(banner) {
+  if (!banner || avatarArchetypeBannerBound.has(banner)) return;
+  avatarArchetypeBannerBound.add(banner);
+
+  banner.addEventListener("pointerover", () => {
+    if (isCoarseMutationPointer()) return;
+    const pathId = banner.dataset.archetypePath;
+    if (!pathId) return;
+    showMutationLorePopup(banner, pathId);
+  });
+
+  banner.addEventListener("pointerout", (event) => {
+    if (isCoarseMutationPointer() || mutationLorePopupPinned) return;
+    const to = event.relatedTarget;
+    if (to?.closest?.(`#${MUTATION_LORE_POPUP_ID}`)) return;
+    if (to?.closest?.(".avatar-hero-archetype-banner")) return;
+    hideMutationLorePopup();
+  });
+
+  banner.addEventListener("click", (event) => {
+    const pathId = banner.dataset.archetypePath;
+    if (!pathId) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (isCoarseMutationPointer()) {
+      if (mutationLorePopupCell === banner && mutationLorePopupPinned) hideMutationLorePopup();
+      else showMutationLorePopup(banner, pathId, { pin: true });
+      return;
+    }
+    showMutationLorePopup(banner, pathId, { pin: true });
+  });
+}
+
+window.bindAvatarArchetypeBannerInteractions = bindAvatarArchetypeBannerInteractions;
+window.getPrepMutationBadgeMeta = getPrepMutationBadgeMeta;

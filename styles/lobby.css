@@ -198,6 +198,41 @@
   white-space: nowrap;
 }
 
+.lobby-battle-bottom-chip-status {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.14rem;
+  width: 100%;
+  min-height: 0.62rem;
+  max-width: 3.4rem;
+}
+
+.lobby-battle-bottom-chip-status[hidden] {
+  display: none !important;
+}
+
+.lobby-battle-bottom-status-emoji {
+  display: inline-block;
+  font-size: 0.62rem;
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
+  flex: 0 0 auto;
+}
+
+.lobby-battle-bottom-status-emoji--more {
+  font-size: 0.48rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.72);
+  filter: none;
+}
+
+.lobby-battle-bottom-chip--has-status {
+  min-width: 2.65rem;
+  padding-bottom: 0.1rem;
+}
+
 .lobby-battle-bottom-chip--out .lobby-battle-bottom-chip-hp {
   color: #fca5a5;
 }

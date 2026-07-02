@@ -141,6 +141,10 @@
     return root.dataset.uiSurface === "tablet-side";
   }
 
+  function isPrepHeroCardHud(root = document.documentElement) {
+    return root.dataset.prepLayout === "side" || root.dataset.uiSurface === "tablet-side";
+  }
+
   function computeTabletPrepHeroHeight(columnH, sceneTop = 14) {
     const usable = Math.max(220, columnH - sceneTop - 12);
     return Math.round(Math.min(300, Math.max(168, usable * 0.32)));
@@ -692,6 +696,41 @@
     const maxH = readCssPx("--prep-hero-slot-height-max", 380);
     const rowH = Math.max(108, Math.min(maxH, rowBottom - rowTop - bottomPad));
     root.style.setProperty("--prep-hero-slot-height", `${Math.round(rowH)}px`);
+  }
+
+  function syncPrepHeroCardPortraitSize() {
+    const root = document.documentElement;
+    if (!isPrepHeroCardHud(root)) {
+      root.style.removeProperty("--prep-hero-card-portrait-w");
+      root.style.removeProperty("--prep-hero-card-portrait-h");
+      return;
+    }
+
+    const card = document.getElementById("prep-hero-card");
+    const statsRow = card?.querySelector(".prep-hero-card__stats-row");
+    if (!statsRow) return;
+
+    const statsH = statsRow.getBoundingClientRect().height;
+    const mutation = card.querySelector(".mutation-progress--hero-card");
+    const mutH = mutation ? mutation.getBoundingClientRect().height : 0;
+    if (statsH < 8 && !syncPrepHeroCardPortraitSize._retry) {
+      syncPrepHeroCardPortraitSize._retry = true;
+      requestAnimationFrame(() => {
+        syncPrepHeroCardPortraitSize._retry = false;
+        syncPrepHeroCardPortraitSize();
+      });
+      return;
+    }
+
+    const gap = readCssPx("--prep-hero-card-body-gap", 6);
+    const uiScale = readCssPx("--ui-scale", 1);
+    const minSide = Math.round(72 * uiScale);
+    const portraitH = Math.max(minSide, Math.round(statsH + mutH + (mutH > 0 ? gap : 0)));
+    const ratio = readCssPx("--prep-hero-card-portrait-ratio", 1);
+    const portraitW = Math.max(minSide, Math.round(portraitH * ratio));
+
+    root.style.setProperty("--prep-hero-card-portrait-h", `${portraitH}px`);
+    root.style.setProperty("--prep-hero-card-portrait-w", `${portraitW}px`);
   }
 
   function syncClassOverlayAnchors() {
@@ -2439,6 +2478,8 @@
     scheduleCanvasFit();
     syncMobileShopFabPosition();
     syncPrepHeroSlotHeight();
+    window.syncPrepHeroCardChrome?.();
+    syncPrepHeroCardPortraitSize();
 
     if (typeof window.applyGridMetricsFromCss === "function") {
       window.applyGridMetricsFromCss();
@@ -2557,6 +2598,7 @@
   window.syncBattleSceneGridMetrics = syncBattleSceneGridMetrics;
   window.scheduleBattleHeroRowSync = scheduleBattleHeroRowSync;
   window.syncPrepHeroSlotHeight = syncPrepHeroSlotHeight;
+  window.syncPrepHeroCardPortraitSize = syncPrepHeroCardPortraitSize;
   window.measureLayoutZones = measureLayoutZones;
   window.syncHeroEmotionSlotAnchors = syncHeroEmotionSlotAnchors;
 })();

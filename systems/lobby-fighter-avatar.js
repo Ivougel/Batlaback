@@ -156,6 +156,102 @@ function syncLobbyFighterAvatarEl(el, visual) {
   el.classList.toggle("lobby-fighter-card-avatar--form", !!visual.isForm);
 }
 
+function getLobbyFighterBattleContext(fighterId, lobby, matches) {
+  const match = findLobbyMatchForFighter(matches, fighterId);
+  if (!match?.state || match.state.finished || match.byeFighterId) return null;
+  const team = match.fighterAId === fighterId ? "player" : "enemy";
+  const sideState = team === "player" ? match.state.player : match.state.enemy;
+  if (!sideState) return null;
+  return { match, team, sideState, battleState: match.state };
+}
+
+function escapeLobbyStatusAttr(text) {
+  return String(text || "")
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;");
+}
+
+function collectLobbyFighterStatusChips(ctx) {
+  if (!ctx?.sideState) return [];
+  const side = ctx.sideState;
+  const items = side.items || [];
+  if (typeof collectBattleStatusEffects === "function") {
+    const { buffs, debuffs } = collectBattleStatusEffects(side, items, ctx.battleState);
+    return [...(buffs || []), ...(debuffs || [])];
+  }
+  if (typeof buildStatusChipEntries === "function") {
+    return buildStatusChipEntries(side).map((chip) => ({
+      id: chip.theme?.id || chip.icon,
+      icon: chip.icon,
+      value: chip.label,
+      title: chip.icon,
+      lines: [`${chip.icon} ${chip.label}`],
+    }));
+  }
+  return [];
+}
+
+function buildLobbyFighterStatusSignature(chips) {
+  return chips.map((chip) => `${chip.id}:${chip.icon}`).join("|");
+}
+
+function renderLobbyBattleStatusChipHTML(chip) {
+  const icon = chip.icon || "•";
+  const title = escapeLobbyStatusAttr((chip.lines || []).join(" · ") || chip.title || icon);
+  return `<span class="lobby-battle-bottom-status-emoji" data-status-id="${escapeLobbyStatusAttr(chip.id)}" title="${title}" aria-hidden="true">${icon}</span>`;
+}
+
+function renderLobbyBattleStatusHTML(ctx, maxVisible = 5) {
+  const chips = collectLobbyFighterStatusChips(ctx);
+  if (!chips.length) return "";
+  const seen = new Set();
+  const unique = chips.filter((chip) => {
+    const key = chip.id || chip.icon;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  const visible = unique.slice(0, maxVisible);
+  const overflow = unique.length - visible.length;
+  const overflowHtml = overflow > 0
+    ? `<span class="lobby-battle-bottom-status-emoji lobby-battle-bottom-status-emoji--more" title="+${overflow}">+${overflow}</span>`
+    : "";
+  return visible.map(renderLobbyBattleStatusChipHTML).join("") + overflowHtml;
+}
+
+function syncLobbyBattleBottomChipMetrics(lobby, opts = {}) {
+  if (!lobby) return;
+  const matches = opts.matches || [];
+  const phase = opts.phase || document.getElementById("app")?.dataset.phase || "prep";
+  if (phase !== "battle" && phase !== "replay") return;
+
+  document.querySelectorAll(".lobby-battle-bottom-chip[data-lobby-fighter-card]").forEach((chip) => {
+    const fighterId = Number(chip.dataset.lobbyFighterCard);
+    const fighter = lobby.fighters?.[fighterId];
+    if (!fighter) return;
+
+    const hp = getLobbyFighterLiveHp(fighterId, lobby, matches);
+    const hpEl = chip.querySelector(".lobby-battle-bottom-chip-hp");
+    if (hpEl) hpEl.textContent = `♥ ${Math.ceil(hp.current)}`;
+    chip.classList.toggle("lobby-battle-bottom-chip--live", !!hp.inBattle);
+
+    const statusEl = chip.querySelector("[data-lobby-fighter-status]");
+    if (!statusEl) return;
+    const ctx = getLobbyFighterBattleContext(fighterId, lobby, matches);
+    const chips = collectLobbyFighterStatusChips(ctx);
+    const sig = buildLobbyFighterStatusSignature(chips);
+    if (statusEl.dataset.statusSig === sig) {
+      statusEl.hidden = chips.length === 0;
+      return;
+    }
+    statusEl.dataset.statusSig = sig;
+    statusEl.hidden = chips.length === 0;
+    statusEl.innerHTML = renderLobbyBattleStatusHTML(ctx);
+    chip.classList.toggle("lobby-battle-bottom-chip--has-status", chips.length > 0);
+  });
+}
+
 function syncLobbyFighterAvatars(lobby, opts = {}) {
   if (!lobby) return;
   const phase = opts.phase || document.getElementById("app")?.dataset.phase || "prep";
@@ -168,7 +264,12 @@ function syncLobbyFighterAvatars(lobby, opts = {}) {
     const visual = resolveLobbyFighterAvatarVisual(fighter, lobby, rosterOpts);
     syncLobbyFighterAvatarEl(mount, visual);
   });
+  syncLobbyBattleBottomChipMetrics(lobby, rosterOpts);
 }
+
+window.syncLobbyBattleBottomChipMetrics = syncLobbyBattleBottomChipMetrics;
+window.getLobbyFighterBattleContext = getLobbyFighterBattleContext;
+window.renderLobbyBattleStatusHTML = renderLobbyBattleStatusHTML;
 
 window.syncLobbyFighterAvatars = syncLobbyFighterAvatars;
 window.getLobbyFighterLiveHp = getLobbyFighterLiveHp;

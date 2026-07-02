@@ -387,7 +387,7 @@ function tickMutationCapstones(state, dt) {
   }
 }
 
-function renderMutationProgressHtml(progress, formId, mutationId, round) {
+function renderMutationProgressHtml(progress, formId, mutationId, round, options = {}) {
   if (!progress) return "";
   const leader = progress.leader;
   const alt = progress.ranked.slice(1, 3);
@@ -402,6 +402,24 @@ function renderMutationProgressHtml(progress, formId, mutationId, round) {
     : round >= MUTATION_ROUND_FORM
       ? "форма"
       : "рост";
+
+  if (options.heroCard) {
+    const leaderLabel = leader?.name || "—";
+    return `
+      <div class="mutation-progress mutation-progress--hero-card" role="status" aria-live="polite">
+        <div class="mutation-progress-head">
+          <span class="mutation-progress-eyebrow">Класс</span>
+          <strong class="mutation-progress-target">${String(targetName || "—").toUpperCase()}</strong>
+        </div>
+        <div class="mutation-progress-bar" aria-hidden="true">
+          <div class="mutation-progress-fill" style="width:${Math.min(100, pct)}%"></div>
+        </div>
+        <div class="mutation-progress-meta">
+          <span class="mutation-progress-discipline">${String(leaderLabel).toUpperCase()} ${pct}%</span>
+        </div>
+      </div>
+    `;
+  }
 
   const altHtml = alt.length
     ? `<div class="mutation-progress-alts">${alt.map((a) => `<span>${a.name} ${a.pct}%</span>`).join("")}</div>`
