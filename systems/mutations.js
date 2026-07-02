@@ -349,6 +349,9 @@ function applyRunModifiersToSide(side, prepMeta = {}) {
   if (typeof applyEnhancementRunModifiers === "function") {
     applyEnhancementRunModifiers(side, prepMeta);
   }
+  if (typeof applyAmplifierRunModifiers === "function") {
+    applyAmplifierRunModifiers(side, prepMeta);
+  }
   applyMutationMilestoneBonus(side, prepMeta.mutationFormId, prepMeta.mutationId);
 }
 

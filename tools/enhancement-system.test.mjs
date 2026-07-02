@@ -330,6 +330,13 @@ function testAmplifiers(sb) {
   assert(pool.length === 10, "10 усилителей в пуле R3+");
   const blocked = sb.getShopEligibleAmplifiers({ round: 2, loadoutItems: [] });
   assert(blocked.length === 0, "до R3 пул пуст");
+
+  const side = { hp: 100, maxHp: 100, damageMult: 1, magicDamageMult: 1, cooldownMult: 1 };
+  sb.applyAmplifierCombatBonus(side, items);
+  assert(side.magicDamageMult > 1, "бонус при fire_staff + amplify_fire");
+  const lonely = { hp: 100, maxHp: 100, damageMult: 1, magicDamageMult: 1, cooldownMult: 1 };
+  sb.applyAmplifierCombatBonus(lonely, [{ uid: "a", itemId: "amplify_fire", col: 0, row: 0 }]);
+  assert(lonely.magicDamageMult === 1, "без пары — без бонуса");
 }
 
 function testMutationTags(sb) {

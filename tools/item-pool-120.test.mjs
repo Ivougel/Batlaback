@@ -42,16 +42,17 @@ function run() {
   const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, "tools/item-pool-120-manifest.json"), "utf8"));
   let passed = 0;
 
-  assert(manifest.items.length === 120, "manifest: 120 items");
-  assert(new Set(manifest.items).size === 120, "manifest: unique ids");
+  assert(manifest.items.length === 240, "manifest: 240 items");
+  assert(new Set(manifest.items).size === 240, "manifest: unique ids");
   passed++;
 
-  assert(s.getItemPool120Ids().length === 120, "runtime set size");
+  assert(s.getItemPool120Ids().length === 240, "runtime set size");
   passed++;
 
   assert(s.isItemInPool120("apple"), "starter apple");
   assert(s.isItemInPool120("enh_hymn_veil"), "enhancement");
   assert(s.isItemInPool120("amplify_fire"), "amplifier");
+  assert(s.isItemInPool120("katana"), "expansion katana");
   assert(!s.isItemInPool120("artifact_stone_death"), "excluded artifact");
   passed++;
 

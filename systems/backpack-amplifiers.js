@@ -37,7 +37,8 @@ const AMPLIFIER_CATALOG = {
     amplifyFamily: "fire",
     rarity: "common",
     implemented: true,
-    desc: "Подсвечивает огненные предметы в рюкзаке",
+    desc: "Подсвечивает огонь в рюкзаке. Если есть огненный предмет: +2% маг. урона.",
+    combat: { magicDamageMult: 0.02 },
     recommendedTriples: ["triple_pyro_mage"],
   },
   amplify_holy: {
@@ -47,7 +48,8 @@ const AMPLIFIER_CATALOG = {
     amplifyFamily: "holy",
     rarity: "common",
     implemented: true,
-    desc: "Подсвечивает святые предметы и усиления",
+    desc: "Подсвечивает святые предметы. Если есть святой предмет: +1% ко всему урону.",
+    combat: { allMult: 0.01 },
     recommendedTriples: ["triple_zrecrela", "triple_paladin"],
   },
   amplify_poison: {
@@ -57,7 +59,8 @@ const AMPLIFIER_CATALOG = {
     amplifyFamily: "poison",
     rarity: "common",
     implemented: true,
-    desc: "Подсвечивает ядовитые предметы",
+    desc: "Подсвечивает яд в рюкзаке. Если есть ядовитый предмет: +1.5% урона.",
+    combat: { damageMult: 0.015 },
     recommendedTriples: ["triple_assassin"],
   },
   amplify_magic: {
@@ -67,7 +70,8 @@ const AMPLIFIER_CATALOG = {
     amplifyFamily: "magic",
     rarity: "rare",
     implemented: true,
-    desc: "Подсвечивает магические предметы",
+    desc: "Подсвечивает магию. Если есть магический предмет: +2.5% маг. урона.",
+    combat: { magicDamageMult: 0.025 },
   },
   amplify_melee: {
     id: "amplify_melee",
@@ -76,7 +80,8 @@ const AMPLIFIER_CATALOG = {
     amplifyFamily: "melee",
     rarity: "common",
     implemented: true,
-    desc: "Подсвечивает ближний бой",
+    desc: "Подсвечивает ближний бой. Если есть melee-предмет: +2% урона.",
+    combat: { damageMult: 0.02 },
   },
   amplify_staff: {
     id: "amplify_staff",
@@ -85,7 +90,8 @@ const AMPLIFIER_CATALOG = {
     amplifyEquip: "staff",
     rarity: "rare",
     implemented: true,
-    desc: "Подсвечивает посохи в рюкзаке",
+    desc: "Подсвечивает посохи. Если есть посох: +2% маг. урона.",
+    combat: { magicDamageMult: 0.02 },
     recommendedTriples: ["triple_pyro_mage"],
   },
   amplify_wand: {
@@ -95,7 +101,8 @@ const AMPLIFIER_CATALOG = {
     amplifyEquip: "wand",
     rarity: "rare",
     implemented: true,
-    desc: "Подсвечивает жезлы и палочки",
+    desc: "Подсвечивает жезлы. Если есть жезл: +1.5% маг. урона.",
+    combat: { magicDamageMult: 0.015 },
   },
   amplify_twohand: {
     id: "amplify_twohand",
@@ -104,7 +111,8 @@ const AMPLIFIER_CATALOG = {
     amplifyEquip: "twoHand",
     rarity: "epic",
     implemented: true,
-    desc: "Подсвечивает двуручное оружие",
+    desc: "Подсвечивает двуручное оружие. Если есть двуручник: +2.5% урона.",
+    combat: { damageMult: 0.025 },
   },
   amplify_chest: {
     id: "amplify_chest",
@@ -113,7 +121,8 @@ const AMPLIFIER_CATALOG = {
     amplifySlot: "chest",
     rarity: "rare",
     implemented: true,
-    desc: "Подсвечивает грудные усиления и броню",
+    desc: "Подсвечивает броню и грудные усиления. Если есть броня/грудь: +2 HP.",
+    combat: { maxHp: 2 },
   },
   amplify_boots: {
     id: "amplify_boots",
@@ -122,7 +131,8 @@ const AMPLIFIER_CATALOG = {
     amplifySlot: "boots",
     rarity: "rare",
     implemented: true,
-    desc: "Подсвечивает ботинки и усиления ног",
+    desc: "Подсвечивает обувь и ботинки. Если есть обувь/ботинки: −1.5% перезарядки.",
+    combat: { cooldownMult: -0.015 },
   },
 };
 
@@ -285,6 +295,39 @@ function collectAmplifyHighlightedItems(items = [], amplifiers = []) {
   });
 
   return highlighted;
+}
+
+function loadoutHasAmplifierMatch(items, ampDef) {
+  return (items || []).some((item) => itemMatchesAmplifierTarget(item.itemId, ampDef));
+}
+
+function applyAmplifierCombatBonus(side, items = []) {
+  if (!side) return;
+  const loadout = items.length ? items : (side.items || []);
+  const amplifiers = collectAmplifiersInLoadout(loadout);
+  if (!amplifiers.length) return;
+
+  side.amplifierIds = amplifiers.map((a) => a.id);
+  amplifiers.forEach((ampDef) => {
+    if (!ampDef.combat || !loadoutHasAmplifierMatch(loadout, ampDef)) return;
+    const b = ampDef.combat;
+    if (b.allMult) {
+      side.damageMult *= 1 + b.allMult;
+      side.magicDamageMult *= 1 + b.allMult;
+    }
+    if (b.damageMult) side.damageMult *= 1 + b.damageMult;
+    if (b.magicDamageMult) side.magicDamageMult *= 1 + b.magicDamageMult;
+    if (b.cooldownMult) side.cooldownMult *= 1 + b.cooldownMult;
+    if (b.maxHp) {
+      side.maxHp += Number(b.maxHp) || 0;
+      side.hp = Math.min(side.maxHp, (side.hp || 0) + (Number(b.maxHp) || 0));
+    }
+  });
+}
+
+function applyAmplifierRunModifiers(side, prepMeta = {}) {
+  const items = prepMeta.loadoutItems || prepMeta.items || side?.items || [];
+  applyAmplifierCombatBonus(side, items);
 }
 
 function getAmplifierVisualStyle(ampDef) {
