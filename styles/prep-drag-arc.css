@@ -73,6 +73,18 @@
   filter: drop-shadow(0 0 3px rgba(148, 188, 230, 0.28));
 }
 
+.prep-drag-arc-layer--valid .prep-drag-arc-link-core {
+  filter:
+    drop-shadow(0 0 4px rgba(90, 230, 130, 0.65))
+    drop-shadow(0 0 10px rgba(90, 230, 130, 0.35));
+}
+
+.prep-drag-arc-layer--invalid .prep-drag-arc-link-core {
+  filter:
+    drop-shadow(0 0 4px rgba(255, 100, 90, 0.72))
+    drop-shadow(0 0 11px rgba(255, 100, 90, 0.42));
+}
+
 .prep-drag-arc-layer--valid .prep-drag-arc-anchor--link {
   stroke: rgba(120, 220, 150, 0.62);
   fill: rgba(100, 210, 140, 0.12);
@@ -99,11 +111,27 @@
 .prep-drag-arc-layer--valid .prep-drag-arc-grab-ring {
   stroke: rgba(120, 220, 150, 0.62);
   fill: rgba(100, 210, 140, 0.12);
+  filter:
+    drop-shadow(0 0 5px rgba(100, 210, 140, 0.55))
+    drop-shadow(0 0 11px rgba(100, 210, 140, 0.25));
 }
 
 .prep-drag-arc-layer--invalid .prep-drag-arc-grab-ring {
-  stroke: rgba(255, 130, 120, 0.55);
-  fill: rgba(255, 100, 90, 0.08);
+  stroke: rgba(255, 105, 95, 0.88);
+  fill: rgba(255, 90, 80, 0.16);
+  filter:
+    drop-shadow(0 0 6px rgba(255, 90, 80, 0.7))
+    drop-shadow(0 0 13px rgba(255, 90, 80, 0.32));
+}
+
+.prep-drag-arc-layer--valid .prep-drag-arc-core,
+.prep-drag-arc-layer--valid .prep-drag-arc-flow {
+  opacity: 0.9 !important;
+}
+
+.prep-drag-arc-layer--invalid .prep-drag-arc-core,
+.prep-drag-arc-layer--invalid .prep-drag-arc-flow {
+  opacity: 0.96 !important;
 }
 
 .prep-drag-arc-layer--fade .prep-drag-arc-grab,

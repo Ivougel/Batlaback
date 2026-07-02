@@ -469,15 +469,22 @@ const PrepDragArc = (() => {
     linkHaloPathEl.setAttribute("stroke-dashoffset", String(dashOffset));
 
     const linkStroke = dropState === "valid"
-      ? "rgba(90, 230, 130, 0.9)"
+      ? "rgba(78, 245, 126, 0.96)"
       : dropState === "invalid"
-        ? "rgba(255, 130, 120, 0.78)"
+        ? "rgba(255, 92, 82, 0.96)"
         : "rgba(120, 220, 155, 0.82)";
     linkCorePathEl.setAttribute("stroke", linkStroke);
-    linkCorePathEl.setAttribute("stroke-width", String(1.8 + pulseB * 0.45));
+    const linkWidth = dropState === "invalid"
+      ? 2.35 + pulseB * 0.55
+      : dropState === "valid"
+        ? 2.1 + pulseB * 0.5
+        : 1.8 + pulseB * 0.45;
+    linkCorePathEl.setAttribute("stroke-width", String(linkWidth));
     linkCorePathEl.setAttribute("stroke-dasharray", dashPattern);
     linkCorePathEl.setAttribute("stroke-dashoffset", String(dashOffset));
-    linkCorePathEl.style.opacity = String(0.62 + pulseB * 0.22);
+    linkCorePathEl.style.opacity = String(
+      (dropState === "invalid" ? 0.86 : dropState === "valid" ? 0.78 : 0.62) + pulseB * 0.2,
+    );
 
     if (linkAnchorEl) {
       linkAnchorEl.setAttribute("cx", to.x.toFixed(1));

@@ -110,6 +110,7 @@ let battleStartTime = 0;
 let battleState = null;
 let dragPayload = null;
 let dragFrom = null;
+let prepSidebarDragUnlocked = false;
 let selectedBench = -1;
 let gameOver = false;
 let hoverCell = null;
@@ -2788,6 +2789,17 @@ function getPrepBackpackClientRect() {
   };
 }
 
+function getShopDrawerRect() {
+  return document.getElementById("shop-panel")?.getBoundingClientRect() || null;
+}
+
+function isPointerInsideShopDrawerBounds(clientX, clientY) {
+  if (clientX == null || clientY == null) return false;
+  const r = getShopDrawerRect();
+  if (!r) return false;
+  return clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom;
+}
+
 /** Зона управления дугой: коридор между рюкзаком и магазином (как на UX-макете). */
 function getPrepSidebarDragMapRect() {
   const backpack = getPrepBackpackClientRect();
@@ -2851,11 +2863,15 @@ function getPrepSidebarLinkTargetClient() {
 }
 
 function syncPrepSidebarBoardHover(clientX, clientY, side, st) {
-  if (isPointerOverShopDrawer(clientX, clientY)) {
+  const inShopBounds = isPointerInsideShopDrawerBounds(clientX, clientY);
+  if (!prepSidebarDragUnlocked && inShopBounds) {
     prepDropPreviewHover = null;
     hoverCell = null;
     hoverSlot = null;
     return false;
+  }
+  if (!prepSidebarDragUnlocked && !inShopBounds) {
+    prepSidebarDragUnlocked = true;
   }
 
   let mx;
@@ -3269,6 +3285,7 @@ function clearDragUiState() {
   document.getElementById("shop-sell-zone")?.classList.remove("sell-drop-target");
   dragPayload = null;
   dragFrom = null;
+  prepSidebarDragUnlocked = false;
   prepDropPreviewHover = null;
   clearGamepadBoardFocus();
   if (typeof onPrepDragEnd === "function") onPrepDragEnd();
@@ -4530,7 +4547,7 @@ function syncDragGhostOverlay(clientX, clientY) {
       ghostX = clientX;
       ghostY = clientY;
       arcRotation = null;
-      const outsideShopArea = !isPointerOverShopDrawer(clientX, clientY);
+      const outsideShopArea = !isPointerInsideShopDrawerBounds(clientX, clientY);
       const linkTarget = outsideShopArea ? getPrepSidebarLinkTargetClient() : null;
       PrepDragArc.sync(clientX, clientY, clientX, clientY, {
         linkPoint: linkTarget,
@@ -6567,7 +6584,7 @@ function finishDragDrop(e) {
   }
 
   const dropOnSell = isDropOnSell(dropE);
-  const dropBackToShop = isPrepSidebarArcDrag() && isPointerOverShopDrawer(dropClientX, dropClientY);
+  const dropBackToShop = isPrepSidebarArcDrag() && isPointerInsideShopDrawerBounds(dropClientX, dropClientY);
   const { x: mx, y: my } = canvasCoordsFromClient(dropClientX, dropClientY);
   const onBoard = isOnBoard(mx, my, side);
   const boardCol = onBoard ? xToCol(mx, side) : null;
@@ -6964,6 +6981,7 @@ function startShopDrag(index, e, side = prepViewSide) {
   hideSidebarTooltip();
   dragPayload = { itemId: st.shop[index], rotation: 0 };
   dragFrom = { type: "shop", index, side };
+  prepSidebarDragUnlocked = false;
   beginPrepDragArcFromCard(document.querySelector(`.shop-card[data-index="${index}"]`));
   startSynergyPreview();
   document.querySelector(`.shop-card[data-index="${index}"]`)?.classList.add("shop-dragging");
@@ -6987,6 +7005,7 @@ function startBenchDrag(index, e, side = prepViewSide) {
   renderBench();
   dragPayload = { itemId: st.bench[index].itemId, rotation: st.bench[index].rotation || 0 };
   dragFrom = { type: "bench", index, side };
+  prepSidebarDragUnlocked = false;
   beginPrepDragArcFromCard(document.querySelector(`.bench-card[data-bench="${index}"]`));
   startSynergyPreview();
   syncUiDragState();
