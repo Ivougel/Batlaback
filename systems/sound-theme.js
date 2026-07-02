@@ -1,6 +1,6 @@
 /**
  * Звуковое оформление (localStorage: bb-sound-theme).
- * classic · dopamine · gentle · meat (Diablo) · mirror (Black Mirror UI).
+ * classic · dopamine · gentle · meat (Diablo) · mirror (Black Mirror UI) · forest (дубовый мох).
  */
 
 const SOUND_THEME_STORAGE_KEY = "bb-sound-theme";
@@ -39,6 +39,14 @@ function previewSoundTheme(themeId = getSoundThemeId()) {
   if (themeId === "gentle") {
     playGameSfx("ui_click");
     window.setTimeout(() => playGameSfx("gold"), 450);
+    return;
+  }
+
+  if (themeId === "forest") {
+    playGameSfx("ui_hover");
+    window.setTimeout(() => playGameSfx("ui_click"), 180);
+    window.setTimeout(() => playGameSfx("prep_place", { heavy: true }), 400);
+    window.setTimeout(() => playGameSfx("gold"), 720);
     return;
   }
 

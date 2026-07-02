@@ -78,6 +78,39 @@
   color: var(--meadow-gold);
 }
 
+/* Компактный dock — тёмное стекло поверх арены (mobile / replay) */
+.battle-inventory-popover--compact .bp-grid-wrap {
+  background: rgba(0, 0, 0, 0.38);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.battle-inventory-popover--compact .bp-cell {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.battle-inventory-popover--compact .bp-cell.bp-slot {
+  background: color-mix(in srgb, var(--bp-fill, #5cb85c) 18%, rgba(0, 0, 0, 0.35));
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.battle-inventory-popover--compact .bp-cell.bp-has-item {
+  background: color-mix(in srgb, var(--bp-fill, #58a6ff) 28%, rgba(0, 0, 0, 0.42));
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.battle-inventory-popover--compact .synergy-chip {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: rgba(230, 240, 225, 0.92);
+}
+
+.battle-inventory-popover--compact .stat-bp.bp-tier-mid .stat-bp-tier,
+.battle-inventory-popover--compact .stat-bp.bp-tier-strong .stat-bp-tier,
+.battle-inventory-popover--compact .stat-bp.bp-tier-elite .stat-bp-tier {
+  color: rgba(200, 230, 170, 0.95);
+}
+
 /* ─── Bottom chrome: скорость, пропуск, геймпад ─── */
 
 body:has(#app[data-phase="battle"]) .bottom-chrome .bc-btn,

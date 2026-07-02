@@ -7,11 +7,14 @@
 
 html[data-ui-tier="tablet"] #class-overlay:not(.hidden) {
   top: env(safe-area-inset-top, 0px);
-  bottom: max(var(--bottom-chrome-h-measured, 44px), var(--bottom-chrome-h, 44px));
+  bottom: var(
+    --class-intro-chrome-h,
+    max(var(--bottom-chrome-h-measured, 44px), var(--bottom-chrome-h, 44px))
+  );
   padding:
     max(4px, env(safe-area-inset-top))
     max(8px, env(safe-area-inset-right))
-    4px
+    0
     max(8px, env(safe-area-inset-left));
   align-items: stretch;
   justify-content: center;
@@ -199,9 +202,14 @@ html[data-ui-tier="tablet"][data-layout-profile="tablet-landscape"] #class-overl
 /* ─── Bottom chrome intro: компактнее на touch ─── */
 
 html[data-ui-tier="tablet"][data-touch="true"] body:has(#class-overlay:not(.hidden)) .bottom-chrome {
-  min-height: 44px;
-  padding-top: 2px;
-  padding-bottom: calc(2px + env(safe-area-inset-bottom, 0px));
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transform: translateY(var(--intro-chrome-pin-y, 0px));
+  min-height: var(--bottom-chrome-h, 44px);
+  padding-top: 4px;
+  padding-bottom: max(4px, env(safe-area-inset-bottom, 0px));
 }
 
 html[data-ui-tier="tablet"][data-touch="true"] body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro {
@@ -239,20 +247,16 @@ html[data-ui-tier="tablet"] #app[data-phase="replay"] {
 
 @media (display-mode: standalone) {
   html[data-ui-tier="tablet"] body {
-    min-height: var(--viewport-h, 100dvh);
-    max-height: var(--viewport-h, 100dvh);
+    min-height: 100dvh;
+    max-height: none;
   }
 
   html[data-ui-tier="tablet"] #class-overlay:not(.hidden) {
-    max-height: var(--viewport-h, 100dvh);
+    max-height: 100dvh;
   }
 
   html[data-ui-tier="tablet"] .overlay:not(.hidden) {
-    max-height: var(--viewport-h, 100dvh);
-  }
-
-  html[data-ui-tier="tablet"] .bottom-chrome {
-    padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px));
+    max-height: 100dvh;
   }
 }
 

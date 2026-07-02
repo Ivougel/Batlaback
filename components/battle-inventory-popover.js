@@ -321,22 +321,72 @@ const BattleInventoryPopover = (() => {
     };
   }
 
-  function positionPopover(team) {
-    const el = ensurePopoverEl(team);
-    if (el.classList.contains("hidden")) return;
+  function getPopoverMaxWidth() {
+    const uiScale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--ui-scale")) || 1;
+    const tier = document.documentElement.dataset.uiTier || "";
+    const w = window.innerWidth;
+    if (tier === "phone" || w < 520) {
+      return Math.round(Math.min(196 * uiScale, w - 24));
+    }
+    if (tier === "tablet" || w < 960) {
+      return Math.round(Math.min(228 * uiScale, w * 0.34));
+    }
+    return Math.round(Math.min(268 * uiScale, 320));
+  }
 
-    const rect = getPortraitAnchorRect(team);
-    if (!rect || !rect.width) return;
+  function shouldUseDockLayout() {
+    const tier = document.documentElement.dataset.uiTier || "";
+    if (tier === "phone" || tier === "tablet") return true;
+    return window.innerWidth < 980;
+  }
 
+  function shouldSinglePopoverMode() {
+    return shouldUseDockLayout() || phase === "replay";
+  }
+
+  function getBottomChromeInset() {
+    const chrome = document.getElementById("bottom-chrome");
+    if (!chrome || chrome.classList.contains("hidden")) return 12;
+    const rect = chrome.getBoundingClientRect();
+    if (!rect.height) return 12;
+    return Math.max(12, window.innerHeight - rect.top + 8);
+  }
+
+  function applyPopoverWidth(el) {
+    const maxW = getPopoverMaxWidth();
+    el.style.width = `${maxW}px`;
+    el.style.maxWidth = `${maxW}px`;
+  }
+
+  function positionPopoverDock(team, el, bounds) {
+    const margin = 8;
+    const chromeInset = getBottomChromeInset();
+    applyPopoverWidth(el);
+
+    el.style.visibility = "hidden";
+    el.style.left = "-9999px";
+    el.style.top = "0";
+    const tipW = el.offsetWidth;
+    const tipH = el.offsetHeight;
+
+    let left = team === "enemy"
+      ? bounds.right - tipW - margin
+      : bounds.left + margin;
+    left = Math.max(bounds.left + margin, Math.min(left, bounds.right - tipW - margin));
+
+    let top = bounds.bottom - tipH - chromeInset;
+    top = Math.max(bounds.top + margin, Math.min(top, bounds.bottom - tipH - margin));
+
+    el.style.left = `${Math.round(left)}px`;
+    el.style.top = `${Math.round(top)}px`;
+    el.style.visibility = "";
+    el.classList.add("battle-inventory-popover--dock");
+  }
+
+  function positionPopoverAnchor(team, el, rect, bounds) {
     const margin = 10;
     const gap = 8;
-    const bounds = getTooltipBounds();
-
-    const panelW = Math.min(
-      Math.max(rect.width, 156),
-      bounds.right - bounds.left - margin * 2,
-    );
-    el.style.width = `${Math.round(panelW)}px`;
+    applyPopoverWidth(el);
 
     el.style.visibility = "hidden";
     el.style.left = "-9999px";
@@ -345,8 +395,11 @@ const BattleInventoryPopover = (() => {
     const tipH = el.offsetHeight;
 
     let left = team === "enemy" ? rect.right - tipW : rect.left;
-    let top = rect.top - tipH - gap;
+    let top = rect.bottom + gap;
 
+    if (top + tipH > bounds.bottom - getBottomChromeInset()) {
+      top = rect.top - tipH - gap;
+    }
     if (top < bounds.top + margin) {
       top = bounds.top + margin;
     }
@@ -357,6 +410,26 @@ const BattleInventoryPopover = (() => {
     el.style.left = `${Math.round(left)}px`;
     el.style.top = `${Math.round(top)}px`;
     el.style.visibility = "";
+    el.classList.remove("battle-inventory-popover--dock");
+  }
+
+  function positionPopover(team) {
+    const el = ensurePopoverEl(team);
+    if (el.classList.contains("hidden")) return;
+
+    const rect = getPortraitAnchorRect(team);
+    if (!rect || !rect.width) return;
+
+    const bounds = getTooltipBounds();
+    el.classList.toggle("battle-inventory-popover--compact", shouldUseDockLayout());
+    el.classList.toggle("battle-inventory-popover--replay", phase === "replay");
+
+    if (shouldUseDockLayout()) {
+      positionPopoverDock(team, el, bounds);
+      return;
+    }
+
+    positionPopoverAnchor(team, el, rect, bounds);
   }
 
   function isBattleInventoryPopoverOpen() {
@@ -371,8 +444,9 @@ const BattleInventoryPopover = (() => {
       const el = popoverEls.get(side);
       if (!el || el.classList.contains("hidden")) return;
       el.classList.add("hidden");
-      el.classList.remove("battle-inventory-popover--loading");
+      el.classList.remove("battle-inventory-popover--loading", "battle-inventory-popover--dock", "battle-inventory-popover--compact", "battle-inventory-popover--replay");
       el.style.removeProperty("width");
+      el.style.removeProperty("max-width");
       el.setAttribute("aria-hidden", "true");
       lastRenderSig.delete(side);
       lastFlashSig.delete(side);
@@ -398,6 +472,10 @@ const BattleInventoryPopover = (() => {
   function openBattleInventoryPopover(team) {
     if (!isLiveBattlePhase() || !getLiveSideData(team)) return;
     if (typeof hideSidebarTooltip === "function") hideSidebarTooltip();
+    if (shouldSinglePopoverMode()) {
+      const other = team === "player" ? "enemy" : "player";
+      if (isTeamPopoverOpen(other)) closeBattleInventoryPopover(other);
+    }
     const el = ensurePopoverEl(team);
     el.classList.remove("hidden");
     el.setAttribute("aria-hidden", "false");

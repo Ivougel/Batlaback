@@ -1,43 +1,579 @@
 /**
- * Театр результата боя — анимации, летающие герои, настроение победы/поражения.
+ * Театр результата боя — полноразмерные герои, вариативные idle-анимации, premium juice.
+ * Победитель: 6 moods · Проигравший: 6 moods · Ничья: 3 moods
  */
 
+/* ─── Backdrop ─── */
+
 #battle-result-overlay:not(.hidden) {
-  background:
-    radial-gradient(ellipse 90% 70% at 50% 40%, rgba(92, 184, 92, 0.28) 0%, transparent 62%),
-    radial-gradient(ellipse 120% 90% at 50% 100%, rgba(245, 200, 66, 0.18) 0%, transparent 55%),
-    rgba(12, 24, 14, 0.72);
-  animation: br-backdrop-breathe 5s ease-in-out infinite;
+  background: transparent;
 }
 
-#battle-result-overlay[data-outcome="player"]:not(.hidden) {
-  background:
-    radial-gradient(ellipse 80% 60% at 50% 30%, rgba(245, 200, 66, 0.42) 0%, transparent 58%),
-    radial-gradient(ellipse 100% 80% at 20% 80%, rgba(92, 184, 92, 0.32) 0%, transparent 50%),
-    rgba(18, 32, 16, 0.78);
+#battle-result-overlay:not(.hidden) .battle-result-modal {
+  position: relative;
+  z-index: 4;
 }
 
-#battle-result-overlay[data-outcome="enemy"]:not(.hidden) {
-  background:
-    radial-gradient(ellipse 80% 60% at 50% 35%, rgba(140, 80, 180, 0.38) 0%, transparent 58%),
-    radial-gradient(ellipse 90% 70% at 80% 75%, rgba(80, 40, 120, 0.28) 0%, transparent 52%),
-    rgba(20, 12, 28, 0.82);
+.battle-result-theater {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
 }
 
-#battle-result-overlay[data-outcome="draw"]:not(.hidden) {
+.br-theater-backdrop {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 120% 90% at 50% 110%, rgba(40, 20, 60, 0.55) 0%, transparent 58%),
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(60, 30, 90, 0.35) 0%, transparent 55%),
+    linear-gradient(180deg, #1a0e28 0%, #120820 45%, #0a0612 100%);
+}
+
+#battle-result-overlay[data-outcome="player"]:not(.hidden) .br-theater-backdrop {
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 40%, rgba(92, 184, 92, 0.32) 0%, transparent 62%),
+    radial-gradient(ellipse 120% 90% at 50% 100%, rgba(245, 200, 66, 0.22) 0%, transparent 55%),
+    linear-gradient(180deg, #142818 0%, #0c180e 50%, #081008 100%);
+}
+
+#battle-result-overlay[data-outcome="enemy"]:not(.hidden) .br-theater-backdrop {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 35%, rgba(140, 80, 180, 0.42) 0%, transparent 58%),
+    radial-gradient(ellipse 90% 70% at 80% 75%, rgba(80, 40, 120, 0.32) 0%, transparent 52%),
+    linear-gradient(180deg, #1a0e28 0%, #120820 50%, #0a0612 100%);
+}
+
+#battle-result-overlay[data-outcome="draw"]:not(.hidden) .br-theater-backdrop {
   background:
     radial-gradient(ellipse 90% 65% at 50% 40%, rgba(120, 160, 200, 0.32) 0%, transparent 58%),
-    rgba(16, 20, 28, 0.78);
+    linear-gradient(180deg, #141820 0%, #0c1018 100%);
 }
 
-@keyframes br-backdrop-breathe {
-  0%, 100% { filter: brightness(1); }
-  50% { filter: brightness(1.06); }
+.br-theater-dotgrid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.35;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.14) 0 1px, transparent 1.5px);
+  background-size: 22px 22px;
+  mask-image: radial-gradient(ellipse 85% 75% at 50% 45%, #000 20%, transparent 78%);
 }
 
-#battle-result-overlay:not(.hidden):not(.overlay-entering):not(.overlay-exiting) .battle-result-modal {
+.br-theater-vignette {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 50%, transparent 35%, rgba(0, 0, 0, 0.55) 100%);
+  animation: br-vignette-breathe 6s ease-in-out infinite;
+}
+
+.br-theater-sparkles {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle, rgba(245, 200, 66, 0.95) 0 1.5px, transparent 2px),
+    radial-gradient(circle, rgba(255, 255, 255, 0.85) 0 1px, transparent 1.5px);
+  background-size: 80px 80px, 120px 120px;
+  background-position: 0 0, 40px 40px;
+  opacity: 0.28;
+  animation: br-sparkle-drift 14s linear infinite;
+}
+
+#battle-result-overlay[data-outcome="enemy"] .br-theater-sparkles {
+  opacity: 0.22;
+  filter: hue-rotate(220deg);
+}
+
+#battle-result-overlay[data-outcome="player"] .br-theater-sparkles {
+  opacity: 0.38;
+  filter: hue-rotate(40deg);
+}
+
+@keyframes br-vignette-breathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.88; }
+}
+
+@keyframes br-sparkle-drift {
+  from { background-position: 0 0, 40px 40px; }
+  to { background-position: 80px 120px, 120px 160px; }
+}
+
+/* ─── Fighter layout — крупные портреты по бокам, как на макете ─── */
+
+.br-theater-fighter {
+  --br-anim-delay: 0s;
+  --br-anim-rate: 1;
+  --br-sway-offset: 0px;
+  position: absolute;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  width: min(38vw, 420px);
+  height: min(92dvh, 920px);
+  gap: calc(6px * var(--ui-scale, 1));
+  transform-origin: center bottom;
+}
+
+.br-theater-fighter--player {
+  left: 0;
+  align-items: flex-start;
+  padding-left: max(0px, env(safe-area-inset-left));
+}
+
+.br-theater-fighter--enemy {
+  right: 0;
+  align-items: flex-end;
+  padding-right: max(0px, env(safe-area-inset-right));
+}
+
+.br-theater-fighter--entering.br-theater-fighter--player {
+  animation: br-hero-enter-left 0.72s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.br-theater-fighter--entering.br-theater-fighter--enemy {
+  animation: br-hero-enter-right 0.72s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes br-hero-enter-left {
+  from {
+    opacity: 0;
+    transform: translateX(-18%) translateY(8%) scale(0.88);
+    filter: blur(6px) brightness(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) translateY(0) scale(1);
+    filter: blur(0) brightness(1);
+  }
+}
+
+@keyframes br-hero-enter-right {
+  from {
+    opacity: 0;
+    transform: translateX(18%) translateY(8%) scale(0.88);
+    filter: blur(6px) brightness(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) translateY(0) scale(1);
+    filter: blur(0) brightness(1);
+  }
+}
+
+/* ─── Head: emoji + bubble ─── */
+
+.br-theater-head {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(6px * var(--ui-scale, 1));
+  margin-bottom: calc(-8px * var(--ui-scale, 1));
+  padding: 0 calc(12px * var(--ui-scale, 1));
+}
+
+.br-theater-fighter--player .br-theater-head {
+  align-items: flex-start;
+  margin-left: 8%;
+}
+
+.br-theater-fighter--enemy .br-theater-head {
+  align-items: flex-end;
+  margin-right: 8%;
+}
+
+.br-theater-emoji-badge {
+  font-size: clamp(1.6rem, 4.5vmin, 2.4rem);
+  line-height: 1;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.45));
+  animation: br-badge-float 2.8s ease-in-out infinite;
+  animation-delay: var(--br-anim-delay);
+}
+
+.br-theater-fighter--winner .br-theater-emoji-badge {
+  animation:
+    br-badge-float 2.8s ease-in-out infinite,
+    br-badge-spark 1.4s ease-in-out infinite;
+  animation-delay: var(--br-anim-delay), calc(var(--br-anim-delay) + 0.2s);
+}
+
+.br-theater-fighter--loser .br-theater-emoji-badge {
+  opacity: 0.72;
+  animation: br-badge-droop 3.2s ease-in-out infinite;
+  animation-delay: var(--br-anim-delay);
+}
+
+@keyframes br-badge-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes br-badge-spark {
+  0%, 100% { filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.45)); }
+  50% { filter: drop-shadow(0 0 16px rgba(245, 200, 66, 0.75)); }
+}
+
+@keyframes br-badge-droop {
+  0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.72; }
+  50% { transform: translateY(4px) rotate(-6deg); opacity: 0.58; }
+}
+
+.br-theater-bubble {
+  position: relative;
+  display: inline-block;
+  max-width: min(220px, 42vw);
+  padding: 10px 14px;
+  border-radius: 18px;
+  background: rgba(255, 252, 240, 0.96);
+  border: 2px solid rgba(92, 184, 92, 0.45);
+  color: var(--juice-ink, #2d4a28);
+  font-size: max(12px, calc(0.82rem * var(--type-scale, 1)));
+  font-weight: 800;
+  line-height: 1.25;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
+}
+
+.br-theater-fighter--enemy .br-theater-bubble {
+  border-color: rgba(140, 80, 200, 0.45);
+}
+
+.br-theater-fighter--winner .br-theater-bubble {
+  border-color: rgba(245, 200, 66, 0.55);
+  box-shadow: 0 6px 24px rgba(245, 200, 66, 0.18);
+}
+
+.br-theater-fighter--loser .br-theater-bubble {
+  opacity: 0.88;
+  border-color: rgba(120, 120, 140, 0.4);
+}
+
+.br-theater-bubble--pop {
+  animation: br-bubble-pop 0.48s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.br-theater-fighter--player .br-theater-bubble::after {
+  content: "";
+  position: absolute;
+  left: 24px;
+  bottom: -8px;
+  border: 8px solid transparent;
+  border-top-color: rgba(255, 252, 240, 0.96);
+}
+
+.br-theater-fighter--enemy .br-theater-bubble::after {
+  content: "";
+  position: absolute;
+  right: 24px;
+  bottom: -8px;
+  border: 8px solid transparent;
+  border-top-color: rgba(255, 252, 240, 0.96);
+}
+
+@keyframes br-bubble-pop {
+  0% { transform: scale(0.72) translateY(6px); opacity: 0; }
+  65% { transform: scale(1.05) translateY(-2px); opacity: 1; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+/* ─── Portrait stage ─── */
+
+.br-theater-portrait-stage {
+  position: relative;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.br-theater-portrait {
   position: relative;
   z-index: 2;
+  width: auto;
+  max-width: 118%;
+  height: min(78dvh, 780px);
+  max-height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  transform-origin: center bottom;
+  filter:
+    drop-shadow(0 0 22px rgba(255, 255, 255, 0.35))
+    drop-shadow(0 20px 48px rgba(0, 0, 0, 0.55));
+  animation-duration: calc(var(--base-mood-dur, 3.2s) * var(--br-anim-rate));
+  animation-delay: var(--br-anim-delay);
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+.br-theater-portrait--fallback {
+  display: none;
+}
+
+.br-theater-aura {
+  position: absolute;
+  left: 50%;
+  bottom: 8%;
+  width: 70%;
+  height: 45%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.br-theater-glow-ring {
+  position: absolute;
+  left: 50%;
+  bottom: 12%;
+  width: 55%;
+  aspect-ratio: 1;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+}
+
+.br-theater-fighter--winner .br-theater-aura {
+  opacity: 1;
+  background: radial-gradient(ellipse, rgba(245, 200, 66, 0.42) 0%, transparent 68%);
+  animation: br-aura-pulse 2.4s ease-in-out infinite;
+  animation-delay: var(--br-anim-delay);
+}
+
+.br-theater-fighter--winner .br-theater-glow-ring {
+  opacity: 0.65;
+  box-shadow:
+    0 0 40px 12px rgba(245, 200, 66, 0.28),
+    0 0 80px 24px rgba(245, 200, 66, 0.12);
+  animation: br-glow-ring-spin 8s linear infinite;
+}
+
+.br-theater-fighter--loser .br-theater-aura {
+  opacity: 0.55;
+  background: radial-gradient(ellipse, rgba(80, 60, 100, 0.35) 0%, transparent 70%);
+  animation: br-aura-dim 4s ease-in-out infinite;
+}
+
+.br-theater-fighter--loser .br-theater-portrait {
+  filter:
+    drop-shadow(0 0 14px rgba(255, 255, 255, 0.18))
+    drop-shadow(0 16px 36px rgba(0, 0, 0, 0.5))
+    saturate(0.82)
+    brightness(0.88);
+}
+
+@keyframes br-aura-pulse {
+  0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.85; }
+  50% { transform: translateX(-50%) scale(1.12); opacity: 1; }
+}
+
+@keyframes br-aura-dim {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 0.62; }
+}
+
+@keyframes br-glow-ring-spin {
+  from { transform: translateX(-50%) rotate(0deg); }
+  to { transform: translateX(-50%) rotate(360deg); }
+}
+
+/* ─── Winner moods (6) ─── */
+
+.br-theater-fighter--winner[data-mood="triumph"] .br-theater-portrait {
+  --base-mood-dur: 2.6s;
+  animation-name: br-win-triumph;
+}
+
+.br-theater-fighter--winner[data-mood="swagger"] .br-theater-portrait {
+  --base-mood-dur: 3.4s;
+  animation-name: br-win-swagger;
+}
+
+.br-theater-fighter--winner[data-mood="salute"] .br-theater-portrait {
+  --base-mood-dur: 2.8s;
+  animation-name: br-win-salute;
+}
+
+.br-theater-fighter--winner[data-mood="sparkle"] .br-theater-portrait {
+  --base-mood-dur: 3.6s;
+  animation-name: br-win-sparkle;
+}
+
+.br-theater-fighter--winner[data-mood="flex"] .br-theater-portrait {
+  --base-mood-dur: 2.4s;
+  animation-name: br-win-flex;
+}
+
+.br-theater-fighter--winner[data-mood="hop"] .br-theater-portrait {
+  --base-mood-dur: 1.8s;
+  animation-name: br-win-hop;
+}
+
+@keyframes br-win-triumph {
+  0%, 100% { transform: translateY(0) scale(1) rotate(0deg); }
+  20% { transform: translateY(-3.5%) scale(1.04) rotate(-1.5deg); }
+  45% { transform: translateY(-1.2%) scale(1.02) rotate(1deg); }
+  70% { transform: translateY(-4%) scale(1.05) rotate(-0.5deg); }
+}
+
+@keyframes br-win-swagger {
+  0%, 100% { transform: translateX(0) translateY(0) rotate(0deg) scale(1); }
+  25% { transform: translateX(calc(2% + var(--br-sway-offset))) translateY(-1%) rotate(2deg) scale(1.02); }
+  50% { transform: translateX(calc(-1.5% - var(--br-sway-offset))) translateY(-2%) rotate(-1.5deg) scale(1.01); }
+  75% { transform: translateX(calc(1.5% + var(--br-sway-offset))) translateY(-0.5%) rotate(1deg) scale(1.02); }
+}
+
+@keyframes br-win-salute {
+  0%, 100% { transform: translateY(0) scale(1) rotate(0deg); }
+  15% { transform: translateY(-2%) scale(1.03) rotate(-2deg); }
+  30% { transform: translateY(-4%) scale(1.04) rotate(-3deg); }
+  45% { transform: translateY(-2%) scale(1.02) rotate(-1deg); }
+  60% { transform: translateY(-3.5%) scale(1.035) rotate(-2.5deg); }
+}
+
+@keyframes br-win-sparkle {
+  0%, 100% {
+    transform: translateY(0) scale(1) rotate(0deg);
+    filter: drop-shadow(0 0 22px rgba(255, 255, 255, 0.35)) drop-shadow(0 20px 48px rgba(0, 0, 0, 0.55));
+  }
+  33% {
+    transform: translateY(-2.5%) scale(1.03) rotate(1.5deg);
+    filter: drop-shadow(0 0 32px rgba(245, 200, 66, 0.55)) drop-shadow(0 20px 48px rgba(0, 0, 0, 0.55)) brightness(1.08);
+  }
+  66% {
+    transform: translateY(-1%) scale(1.015) rotate(-1deg);
+    filter: drop-shadow(0 0 26px rgba(255, 255, 255, 0.45)) drop-shadow(0 20px 48px rgba(0, 0, 0, 0.55));
+  }
+}
+
+@keyframes br-win-flex {
+  0%, 100% { transform: translateY(0) scaleX(1) scaleY(1); }
+  35% { transform: translateY(-1.5%) scaleX(1.04) scaleY(1.06); }
+  55% { transform: translateY(-2.5%) scaleX(1.05) scaleY(1.07); }
+  75% { transform: translateY(-1%) scaleX(1.03) scaleY(1.04); }
+}
+
+@keyframes br-win-hop {
+  0%, 100% { transform: translateY(0) scale(1); }
+  18% { transform: translateY(-5%) scale(1.04); }
+  36% { transform: translateY(0) scale(0.98); }
+  54% { transform: translateY(-3.5%) scale(1.03); }
+  72% { transform: translateY(0) scale(0.99); }
+}
+
+/* ─── Loser moods (6) ─── */
+
+.br-theater-fighter--loser[data-mood="slump"] .br-theater-portrait {
+  --base-mood-dur: 3.8s;
+  animation-name: br-lose-slump;
+}
+
+.br-theater-fighter--loser[data-mood="wilt"] .br-theater-portrait {
+  --base-mood-dur: 4.2s;
+  animation-name: br-lose-wilt;
+}
+
+.br-theater-fighter--loser[data-mood="stagger"] .br-theater-portrait {
+  --base-mood-dur: 2.6s;
+  animation-name: br-lose-stagger;
+}
+
+.br-theater-fighter--loser[data-mood="sulk"] .br-theater-portrait {
+  --base-mood-dur: 3.4s;
+  animation-name: br-lose-sulk;
+}
+
+.br-theater-fighter--loser[data-mood="deflate"] .br-theater-portrait {
+  --base-mood-dur: 3s;
+  animation-name: br-lose-deflate;
+}
+
+.br-theater-fighter--loser[data-mood="shake"] .br-theater-portrait {
+  --base-mood-dur: 1.6s;
+  animation-name: br-lose-shake;
+}
+
+@keyframes br-lose-slump {
+  0%, 100% { transform: translateY(0) scale(1) rotate(0deg); }
+  50% { transform: translateY(2.5%) scale(0.97) rotate(1.5deg); }
+}
+
+@keyframes br-lose-wilt {
+  0%, 100% { transform: translateY(0) scaleY(1) rotate(0deg); }
+  40% { transform: translateY(3%) scaleY(0.96) rotate(2deg); }
+  70% { transform: translateY(4%) scaleY(0.94) rotate(2.5deg); }
+}
+
+@keyframes br-lose-stagger {
+  0%, 100% { transform: translateX(0) translateY(0) rotate(0deg); }
+  20% { transform: translateX(-1.2%) translateY(1%) rotate(-1.5deg); }
+  45% { transform: translateX(1%) translateY(2%) rotate(1.2deg); }
+  70% { transform: translateX(-0.8%) translateY(1.5%) rotate(-0.8deg); }
+}
+
+@keyframes br-lose-sulk {
+  0%, 100% { transform: translateY(0) rotate(0deg) scale(0.98); }
+  55% { transform: translateY(3.5%) rotate(3deg) scale(0.95); }
+}
+
+@keyframes br-lose-deflate {
+  0%, 100% { transform: scale(0.98); }
+  50% { transform: scale(0.93); }
+}
+
+@keyframes br-lose-shake {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  15% { transform: translateX(-0.6%) rotate(-0.8deg); }
+  30% { transform: translateX(0.5%) rotate(0.6deg); }
+  45% { transform: translateX(-0.4%) rotate(-0.5deg); }
+  60% { transform: translateX(0.3%) rotate(0.4deg); }
+}
+
+/* ─── Draw moods (3) ─── */
+
+.br-theater-fighter--draw[data-mood="breathe"] .br-theater-portrait {
+  --base-mood-dur: 3.6s;
+  animation-name: br-draw-breathe;
+}
+
+.br-theater-fighter--draw[data-mood="shrug"] .br-theater-portrait {
+  --base-mood-dur: 3.2s;
+  animation-name: br-draw-shrug;
+}
+
+.br-theater-fighter--draw[data-mood="sway"] .br-theater-portrait {
+  --base-mood-dur: 4s;
+  animation-name: br-draw-sway;
+}
+
+@keyframes br-draw-breathe {
+  0%, 100% { transform: translateY(0) scaleY(1); }
+  50% { transform: translateY(-1.2%) scaleY(1.008); }
+}
+
+@keyframes br-draw-shrug {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  30% { transform: translateY(-1%) rotate(-1deg); }
+  60% { transform: translateY(-0.5%) rotate(1deg); }
+}
+
+@keyframes br-draw-sway {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  50% { transform: translateX(calc(1.5% + var(--br-sway-offset))) rotate(1deg); }
+}
+
+/* ─── Modal (центральная панель) ─── */
+
+#battle-result-overlay:not(.hidden):not(.overlay-entering):not(.overlay-exiting) .battle-result-modal {
   animation: br-modal-arrive 0.62s cubic-bezier(0.34, 1.45, 0.64, 1) both;
   background:
     linear-gradient(165deg, rgba(255, 252, 240, 0.94) 0%, rgba(255, 245, 218, 0.9) 100%);
@@ -82,7 +618,6 @@
 }
 
 #battle-result-overlay[data-outcome="player"]:not(.hidden) .battle-result-modal > h2 {
-  color: #5c3d00;
   background: linear-gradient(95deg, #c8860a, #f5c842, #4a9e4a);
   -webkit-background-clip: text;
   background-clip: text;
@@ -96,140 +631,6 @@
 @keyframes br-title-glow {
   0%, 100% { filter: brightness(1); }
   50% { filter: brightness(1.12); }
-}
-
-/* Летающие герои */
-.battle-result-theater {
-  position: fixed;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.br-theater-fighter {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: calc(10px * var(--ui-scale, 1));
-  width: min(28vw, 200px);
-  text-align: center;
-}
-
-.br-theater-fighter--player {
-  left: 6%;
-  top: 14%;
-  animation: br-fly-player 7s ease-in-out infinite;
-}
-
-.br-theater-fighter--enemy {
-  right: 6%;
-  top: 16%;
-  animation: br-fly-enemy 6.2s ease-in-out infinite;
-}
-
-.br-theater-fighter--winner .br-theater-emoji {
-  animation: br-emoji-celebrate 1.1s ease-in-out infinite;
-  filter: drop-shadow(0 0 16px rgba(245, 200, 66, 0.65));
-}
-
-.br-theater-fighter--loser .br-theater-emoji {
-  animation: br-emoji-sulk 2.4s ease-in-out infinite;
-  opacity: 0.88;
-}
-
-.br-theater-emoji {
-  font-size: clamp(4.5rem, 16vmin, 8.5rem);
-  line-height: 1;
-  display: block;
-  filter: drop-shadow(0 10px 28px rgba(0, 0, 0, 0.4));
-}
-
-.br-theater-bubble {
-  position: relative;
-  display: inline-block;
-  max-width: min(200px, 38vw);
-  padding: 10px 14px;
-  border-radius: 18px;
-  background: rgba(255, 252, 240, 0.95);
-  border: 2px solid rgba(92, 184, 92, 0.45);
-  color: var(--juice-ink, #2d4a28);
-  font-size: max(12px, calc(0.82rem * var(--type-scale, 1)));
-  font-weight: 800;
-  line-height: 1.25;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
-}
-
-.br-theater-fighter--enemy .br-theater-bubble {
-  border-color: rgba(140, 80, 200, 0.45);
-}
-
-.br-theater-bubble--pop {
-  animation: br-bubble-pop 0.45s cubic-bezier(0.34, 1.4, 0.64, 1);
-}
-
-.br-theater-fighter--player .br-theater-bubble::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: -8px;
-  margin-left: -8px;
-  border: 8px solid transparent;
-  border-top-color: rgba(255, 252, 240, 0.95);
-}
-
-.br-theater-sparkles {
-  position: absolute;
-  inset: 0;
-  background-image:
-    radial-gradient(circle, rgba(245, 200, 66, 0.9) 0 1.5px, transparent 2px),
-    radial-gradient(circle, rgba(255, 255, 255, 0.85) 0 1px, transparent 1.5px);
-  background-size: 80px 80px, 120px 120px;
-  background-position: 0 0, 40px 40px;
-  opacity: 0.35;
-  animation: br-sparkle-drift 12s linear infinite;
-}
-
-#battle-result-overlay[data-outcome="enemy"] .br-theater-sparkles {
-  opacity: 0.2;
-  filter: hue-rotate(220deg);
-}
-
-@keyframes br-fly-player {
-  0%, 100% { transform: translate(0, 0) rotate(-6deg); }
-  25% { transform: translate(18px, -24px) rotate(4deg); }
-  50% { transform: translate(8px, 12px) rotate(-2deg); }
-  75% { transform: translate(-14px, -10px) rotate(7deg); }
-}
-
-@keyframes br-fly-enemy {
-  0%, 100% { transform: translate(0, 0) rotate(5deg); }
-  30% { transform: translate(-20px, 16px) rotate(-5deg); }
-  60% { transform: translate(-8px, -18px) rotate(3deg); }
-  85% { transform: translate(12px, 8px) rotate(-4deg); }
-}
-
-@keyframes br-emoji-celebrate {
-  0%, 100% { transform: scale(1) rotate(0deg); }
-  25% { transform: scale(1.12) rotate(-8deg); }
-  75% { transform: scale(1.08) rotate(8deg); }
-}
-
-@keyframes br-emoji-sulk {
-  0%, 100% { transform: translateY(0) scale(0.96); }
-  50% { transform: translateY(6px) scale(0.92); }
-}
-
-@keyframes br-bubble-pop {
-  0% { transform: scale(0.7); opacity: 0; }
-  70% { transform: scale(1.06); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
-}
-
-@keyframes br-sparkle-drift {
-  from { background-position: 0 0, 40px 40px; }
-  to { background-position: 80px 120px, 120px 160px; }
 }
 
 #battle-result-overlay .br-class-winner {
@@ -251,73 +652,82 @@
   50% { box-shadow: 0 5px 0 #c4861a, 0 12px 32px rgba(245, 200, 66, 0.5); }
 }
 
+/* ─── Responsive ─── */
+
 @media (max-width: 720px) {
-  .br-theater-fighter--player { left: 2%; top: 8%; }
-  .br-theater-fighter--enemy { right: 2%; top: 10%; }
-  .br-theater-fighter { width: min(34vw, 140px); }
-  .br-theater-emoji { font-size: clamp(3.5rem, 14vmin, 5.5rem); }
-  .br-theater-bubble { max-width: 130px; font-size: 10px; padding: 8px 10px; }
+  .br-theater-fighter {
+    width: min(44vw, 200px);
+    height: min(72dvh, 560px);
+  }
+
+  .br-theater-portrait {
+    height: min(58dvh, 480px);
+  }
+
+  .br-theater-head {
+    margin-bottom: -4px;
+  }
+
+  .br-theater-fighter--player .br-theater-head,
+  .br-theater-fighter--enemy .br-theater-head {
+    margin-left: 4%;
+    margin-right: 4%;
+  }
+
+  .br-theater-bubble {
+    max-width: 130px;
+    font-size: 10px;
+    padding: 8px 10px;
+  }
+
+  .br-theater-emoji-badge {
+    font-size: 1.4rem;
+  }
 }
 
-/* Планшет (iPad Mini и др.) — крупные герои по бокам модалки */
 html[data-ui-tier="tablet"] #battle-result-overlay:not(.hidden) .br-theater-fighter {
-  width: min(32vw, 260px);
-  gap: calc(14px * var(--ui-scale, 1));
+  width: min(34vw, 480px);
+  height: min(94dvh, 980px);
 }
 
-html[data-ui-tier="tablet"] #battle-result-overlay:not(.hidden) .br-theater-fighter--player {
-  left: 3%;
-  top: 12%;
-}
-
-html[data-ui-tier="tablet"] #battle-result-overlay:not(.hidden) .br-theater-fighter--enemy {
-  right: 3%;
-  top: 14%;
-}
-
-html[data-ui-tier="tablet"] #battle-result-overlay:not(.hidden) .br-theater-emoji {
-  font-size: clamp(6rem, 22vmin, 11rem);
-  filter: drop-shadow(0 14px 36px rgba(0, 0, 0, 0.45));
+html[data-ui-tier="tablet"] #battle-result-overlay:not(.hidden) .br-theater-portrait {
+  height: min(82dvh, 860px);
+  max-width: 125%;
 }
 
 html[data-ui-tier="tablet"] #battle-result-overlay:not(.hidden) .br-theater-bubble {
-  max-width: min(260px, 44vw);
+  max-width: min(280px, 46vw);
   padding: 12px 16px;
   font-size: max(0.88rem, calc(0.95rem * var(--type-scale, 1)));
-  border-radius: 20px;
 }
 
-html[data-ui-tier="tablet"][data-orientation="landscape"] #battle-result-overlay:not(.hidden) .br-theater-fighter--player {
-  left: 5%;
-  top: 10%;
-}
-
-html[data-ui-tier="tablet"][data-orientation="landscape"] #battle-result-overlay:not(.hidden) .br-theater-fighter--enemy {
-  right: 5%;
-  top: 12%;
-}
-
-html[data-ui-tier="tablet"][data-orientation="landscape"] #battle-result-overlay:not(.hidden) .br-theater-emoji {
-  font-size: clamp(6.5rem, 24vmin, 12rem);
-}
-
-/* Desktop — тоже крупнее, но не перекрываем узкую модалку */
-html[data-ui-surface="desktop"] #battle-result-overlay:not(.hidden) .br-theater-emoji {
-  font-size: clamp(5rem, 12vmin, 9rem);
+html[data-ui-tier="tablet"][data-orientation="landscape"] #battle-result-overlay:not(.hidden) .br-theater-portrait {
+  height: min(88dvh, 900px);
 }
 
 html[data-ui-surface="desktop"] #battle-result-overlay:not(.hidden) .br-theater-fighter {
-  width: min(22vw, 240px);
+  width: min(28vw, 440px);
+}
+
+html[data-ui-surface="desktop"] #battle-result-overlay:not(.hidden) .br-theater-portrait {
+  height: min(76dvh, 820px);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #battle-result-overlay:not(.hidden),
+  .br-theater-vignette,
+  .br-theater-sparkles,
+  .br-theater-fighter--entering,
+  .br-theater-emoji-badge,
+  .br-theater-portrait,
+  .br-theater-aura,
+  .br-theater-glow-ring,
   #battle-result-overlay:not(.hidden) .battle-result-modal,
   #battle-result-overlay:not(.hidden) .battle-result-modal > h2,
-  .br-theater-fighter,
-  .br-theater-fighter--winner .br-theater-emoji,
-  .br-theater-sparkles,
   #battle-result-overlay .battle-result-actions .btn-primary {
     animation: none !important;
+  }
+
+  .br-theater-fighter--loser .br-theater-portrait {
+    filter: saturate(0.85) brightness(0.9);
   }
 }

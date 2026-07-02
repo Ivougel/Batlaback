@@ -787,6 +787,247 @@
     return sfx;
   }
 
+  /**
+   * Лес / дубовый мох — глухие лесные звуки.
+   * Референс: желудь падает на мох у подножия дуба.
+   * - Низкий thump 80–180 Hz, без ярких верхов
+   * - Короткий удар + мягкий «хвост» мха (медленный decay)
+   * - Шум через bandpass 160–320 Hz — органическая «глухость»
+   * - Лёгкий rustle 500–900 Hz на hover — шёпот листвы
+   */
+  function buildForestSfx(api) {
+    const { tone, noiseBurst, arpeggio } = api;
+    const sfx = {};
+
+    const SINE = "sine";
+    const TRI = "triangle";
+
+    /** Ядро пресета — глухой удар желудя о мох. */
+    function acornThud(opts = {}) {
+      const {
+        vol = 0.058,
+        heavy = false,
+        pan = 0,
+        baseHz = heavy ? 78 : 96 + Math.random() * 18,
+      } = opts;
+      const bodyDur = heavy ? 0.16 : 0.11;
+      const thumpDur = heavy ? 0.09 : 0.065;
+
+      tone(baseHz, bodyDur, {
+        volume: vol,
+        type: SINE,
+        attack: heavy ? 0.012 : 0.008,
+        decay: 0.96,
+        pan,
+      });
+      tone(baseHz * 0.58, bodyDur * 1.15, {
+        volume: vol * 0.42,
+        type: TRI,
+        attack: 0.018,
+        decay: 0.98,
+        pan,
+      });
+      noiseBurst(thumpDur, {
+        volume: vol * 0.72,
+        freq: heavy ? 190 : 220 + Math.random() * 60,
+        q: heavy ? 3.8 : 3.2,
+      });
+      window.setTimeout(() => {
+        tone(baseHz * 0.42, heavy ? 0.14 : 0.1, {
+          volume: vol * 0.28,
+          type: SINE,
+          attack: 0.022,
+          decay: 0.99,
+          pan,
+        });
+        noiseBurst(heavy ? 0.07 : 0.045, {
+          volume: vol * 0.35,
+          freq: 140 + Math.random() * 40,
+          q: 2.6,
+        });
+      }, heavy ? 38 : 24);
+    }
+
+    /** Мягкий шелест — hover, лёгкие действия. */
+    function leafRustle(vol = 0.022, pan = 0) {
+      noiseBurst(0.055, {
+        volume: vol,
+        freq: 520 + Math.random() * 280,
+        q: 1.4,
+      });
+      tone(180 + Math.random() * 40, 0.07, {
+        volume: vol * 0.55,
+        type: TRI,
+        attack: 0.014,
+        decay: 0.94,
+        pan,
+      });
+    }
+
+    /** Два-три желудя каскадом — награды, покупки. */
+    function acornCascade(notes, gapMs = 95, vol = 0.05) {
+      notes.forEach((mult, i) => {
+        window.setTimeout(() => {
+          acornThud({
+            vol: vol * (0.88 + i * 0.04),
+            baseHz: 88 * mult,
+            pan: (i % 2 === 0 ? -1 : 1) * 0.18,
+          });
+        }, i * gapMs);
+      });
+    }
+
+    /** Глухой «сухой» щелчок ветки — toggle. */
+    function twigSnap(vol = 0.042, pan = 0) {
+      tone(210 + Math.random() * 35, 0.05, {
+        volume: vol,
+        type: TRI,
+        attack: 0.004,
+        decay: 0.82,
+        pan,
+      });
+      noiseBurst(0.032, { volume: vol * 0.65, freq: 380 + Math.random() * 120, q: 2.2 });
+    }
+
+    function forestHover() {
+      leafRustle(0.016, (Math.random() - 0.5) * 0.35);
+    }
+
+    Object.assign(sfx, {
+      ui_hover() {
+        forestHover();
+      },
+      ui_click() {
+        acornThud({ vol: 0.052, pan: (Math.random() - 0.5) * 0.2 });
+      },
+      ui_toggle() {
+        twigSnap(0.04, -0.1);
+        window.setTimeout(() => acornThud({ vol: 0.038, baseHz: 102 }), 55);
+      },
+      ui_open() {
+        acornThud({ vol: 0.055, heavy: false, pan: -0.12 });
+        window.setTimeout(() => leafRustle(0.024, 0.1), 70);
+        window.setTimeout(() => acornThud({ vol: 0.042, baseHz: 88, pan: 0.08 }), 140);
+      },
+      ui_close() {
+        acornThud({ vol: 0.048, baseHz: 92, pan: 0.1 });
+        window.setTimeout(() => leafRustle(0.02, -0.08), 60);
+      },
+      ui_error() {
+        tone(72, 0.14, { volume: 0.062, type: SINE, attack: 0.01, decay: 0.97 });
+        noiseBurst(0.08, { volume: 0.048, freq: 160, q: 2.8 });
+        window.setTimeout(() => tone(58, 0.16, { volume: 0.05, type: TRI, attack: 0.014 }), 80);
+      },
+
+      prep_pickup() {
+        leafRustle(0.028, -0.14);
+        window.setTimeout(() => acornThud({ vol: 0.046, baseHz: 104, pan: -0.1 }), 35);
+      },
+      prep_place(opts = {}) {
+        acornThud({ vol: opts.heavy ? 0.072 : 0.058, heavy: !!opts.heavy, pan: 0.06 });
+        if (opts.heavy) {
+          window.setTimeout(() => leafRustle(0.026, 0.12), 90);
+        }
+      },
+      prep_reject() {
+        tone(68, 0.1, { volume: 0.058, type: SINE, attack: 0.008, decay: 0.95 });
+        noiseBurst(0.06, { volume: 0.05, freq: 175, q: 3 });
+      },
+      prep_buy() {
+        acornCascade([1, 1.08, 1.18, 1.28], 105, 0.052);
+        window.setTimeout(() => leafRustle(0.022, 0.15), 380);
+      },
+      prep_sell() {
+        acornCascade([1.22, 1.08, 0.94], 110, 0.044);
+      },
+      prep_refresh() {
+        leafRustle(0.03, 0);
+        window.setTimeout(() => acornThud({ vol: 0.05, baseHz: 98 }), 60);
+        window.setTimeout(() => acornThud({ vol: 0.042, baseHz: 106, pan: -0.12 }), 150);
+      },
+      prep_freeze() {
+        tone(140, 0.09, { volume: 0.038, type: SINE, attack: 0.02, decay: 0.96 });
+        noiseBurst(0.05, { volume: 0.028, freq: 420, q: 1.8 });
+      },
+      prep_rotate() {
+        twigSnap(0.036, -0.08);
+        window.setTimeout(() => acornThud({ vol: 0.04, baseHz: 100, pan: 0.1 }), 40);
+      },
+      prep_craft() {
+        acornThud({ vol: 0.062, heavy: true, pan: 0 });
+        window.setTimeout(() => acornCascade([1.05, 1.15, 1.25], 90, 0.048), 120);
+        window.setTimeout(() => leafRustle(0.028, 0.18), 340);
+      },
+      prep_gem() {
+        acornCascade([1.12, 1.28, 1.42], 88, 0.05);
+      },
+      gold() {
+        acornCascade([1.18, 1.32, 1.48], 92, 0.054);
+        window.setTimeout(() => leafRustle(0.024, 0.2), 280);
+      },
+
+      arc_hover() {
+        forestHover();
+      },
+      arc_begin() {
+        sfx.arc_hover();
+      },
+      arc_celebrate() {
+        acornCascade([1, 1.1, 1.2], 85, 0.038);
+      },
+
+      battle_start() {
+        acornThud({ vol: 0.068, heavy: true, pan: 0 });
+        window.setTimeout(() => acornCascade([0.95, 1.05, 1.12], 100, 0.055), 140);
+        leafRustle(0.032, 0);
+      },
+      battle_countdown_tick() {
+        acornThud({ vol: 0.05, baseHz: 94 + Math.random() * 12 });
+      },
+      battle_countdown_go() {
+        acornCascade([1, 1.1, 1.22, 1.35], 88, 0.058);
+        leafRustle(0.03, 0);
+      },
+      battle_hit(opts = {}) {
+        const heavy = (Number(opts.amount) || 1) >= 8;
+        acornThud({ vol: heavy ? 0.078 : 0.062, heavy, pan: (Math.random() - 0.5) * 0.25 });
+        if (heavy) {
+          window.setTimeout(() => leafRustle(0.034, 0.1), 70);
+        }
+      },
+      battle_heal(opts = {}) {
+        const steps = Math.min(3, 1 + Math.floor((Number(opts.amount) || 1) / 12));
+        acornCascade([1.05, 1.15, 1.25].slice(0, steps), 100, 0.042);
+      },
+      battle_block() {
+        twigSnap(0.048, 0);
+        window.setTimeout(() => acornThud({ vol: 0.044, baseHz: 118, pan: -0.08 }), 28);
+      },
+      battle_poison() {
+        tone(82, 0.12, { volume: 0.05, type: TRI, attack: 0.012, decay: 0.96, detune: -18 });
+        noiseBurst(0.07, { volume: 0.04, freq: 200, q: 2.5 });
+      },
+      battle_miss() {
+        leafRustle(0.018, 0);
+      },
+      battle_victory() {
+        acornCascade([0.92, 1, 1.08, 1.16, 1.26, 1.38], 98, 0.056);
+        window.setTimeout(() => leafRustle(0.034, 0.2), 520);
+        window.setTimeout(() => acornThud({ vol: 0.048, baseHz: 86, pan: -0.15 }), 640);
+      },
+      battle_defeat() {
+        acornCascade([1.18, 1.02, 0.88, 0.74], 115, 0.05);
+        window.setTimeout(() => tone(62, 0.18, { volume: 0.048, type: SINE, attack: 0.016, decay: 0.98 }), 420);
+      },
+      battle_draw() {
+        acornThud({ vol: 0.046, baseHz: 96 });
+        window.setTimeout(() => acornThud({ vol: 0.04, baseHz: 96, pan: 0.12 }), 180);
+      },
+    });
+
+    return sfx;
+  }
+
   const SOUND_THEME_META = {
     classic: {
       id: "classic",
@@ -818,6 +1059,12 @@
       hint: "Стеклянные тики смартфона — hover, тап и каждый переход по UI",
       emoji: "📱",
     },
+    forest: {
+      id: "forest",
+      label: "Дубовый мох",
+      hint: "Глухой лес — желудь на мох, шелест листвы, мягкие удары без ярких верхов",
+      emoji: "🌳",
+    },
   };
 
   const builders = {
@@ -826,6 +1073,7 @@
     gentle: buildGentleSfx,
     meat: buildMeatSfx,
     mirror: buildMirrorSfx,
+    forest: buildForestSfx,
   };
 
   function buildSfxTheme(themeId, api) {

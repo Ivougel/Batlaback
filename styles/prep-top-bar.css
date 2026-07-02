@@ -31,6 +31,11 @@
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.22);
 }
 
+.prep-top-bar .prep-hud-hero-badge {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
 .prep-top-bar .run-hud-phase {
   flex: 0 0 auto;
   margin: 0;

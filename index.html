@@ -16,7 +16,7 @@
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="stylesheet" href="styles/tokens.css?v=15">
   <link rel="stylesheet" href="styles/layers.css?v=7">
-  <link rel="stylesheet" href="styles/bottom-chrome.css?v=13">
+  <link rel="stylesheet" href="styles/bottom-chrome.css?v=14">
   <link rel="stylesheet" href="styles.css?v=36">
   <link rel="stylesheet" href="styles/shop.css?v=2">
   <link rel="stylesheet" href="styles/item-card-chrome.css?v=3">
@@ -29,7 +29,7 @@
   <link rel="stylesheet" href="styles/surface-profiles.css?v=3">
   <link rel="stylesheet" href="styles/container-queries.css?v=2">
   <link rel="stylesheet" href="styles/modal-scale.css?v=5">
-  <link rel="stylesheet" href="styles/replay-chrome.css?v=1">
+  <link rel="stylesheet" href="styles/replay-chrome.css?v=2">
   <link rel="stylesheet" href="styles/emotion-thoughts.css?v=9">
   <link rel="stylesheet" href="styles/arena-equipment.css?v=20">
   <link rel="stylesheet" href="styles/prep-drag-arc.css?v=10">
@@ -45,24 +45,25 @@
   <link rel="stylesheet" href="styles/class-intro-summary.css?v=1">
   <link rel="stylesheet" href="styles/tablet-intro-typography.css?v=1">
   <link rel="stylesheet" href="styles/desktop-intro-layout.css?v=1">
-  <link rel="stylesheet" href="styles/tablet-pwa-layout.css?v=1">
+  <link rel="stylesheet" href="styles/tablet-pwa-layout.css?v=2">
   <link rel="stylesheet" href="styles/mobile-prep.css?v=22">
   <link rel="stylesheet" href="styles/desktop-prep.css?v=2">
   <link rel="stylesheet" href="styles/desktop-battle.css?v=2">
   <link rel="stylesheet" href="styles/tablet-stacked.css?v=7">
   <link rel="stylesheet" href="styles/tablet-side.css?v=30">
-  <link rel="stylesheet" href="styles/battle-inventory-popover.css?v=7">
+  <link rel="stylesheet" href="styles/battle-inventory-popover.css?v=8">
   <link rel="stylesheet" href="styles/lobby.css?v=8">
   <link rel="stylesheet" href="styles/lobby-roster-float.css?v=2">
   <link rel="stylesheet" href="styles/meadow-theme.css?v=2">
-  <link rel="stylesheet" href="styles/battle-theme-ui.css?v=1">
+  <link rel="stylesheet" href="styles/battle-theme-ui.css?v=2">
   <link rel="stylesheet" href="styles/prep-borderless.css?v=3">
   <link rel="stylesheet" href="styles/battle-borderless.css?v=1">
   <link rel="stylesheet" href="styles/item-stats-report.css?v=3">
   <link rel="stylesheet" href="styles/prep-juice.css?v=3">
+  <link rel="stylesheet" href="styles/prep-forest-hud.css?v=1">
   <link rel="stylesheet" href="styles/battle-result-glass.css?v=1">
   <link rel="stylesheet" href="styles/battle-aura-frame.css?v=2">
-  <link rel="stylesheet" href="styles/battle-result-theater.css?v=2">
+  <link rel="stylesheet" href="styles/battle-result-theater.css?v=3">
   <link rel="stylesheet" href="styles/screen-transitions.css?v=1">
   <link rel="stylesheet" href="styles/ui-ornament-frame.css?v=1">
   <link rel="stylesheet" href="styles/escape-menu.css?v=1">
@@ -82,7 +83,7 @@
   <script src="systems/layout-scales.js?v=2"></script>
   <script src="systems/battle-fx-tier.js?v=1"></script>
   <script src="systems/battle-hero-anchor.js?v=23"></script>
-  <script src="ui-layout.js?v=99"></script>
+  <script src="ui-layout.js?v=100"></script>
 </head>
 <body>
   <div id="ui-ornament-frame" class="ui-ornament-frame" aria-hidden="true">
@@ -101,7 +102,16 @@
         <div class="battle-arena" id="battle-arena">
           <div class="prep-left-column" id="prep-left-column">
             <header class="prep-top-bar" id="prep-top-bar" aria-label="Статус забега">
-              <div class="run-hud-phase" id="run-hud-phase" aria-hidden="true"></div>
+              <div class="prep-hud-hero-badge hidden" id="run-hud-phase" role="img" aria-label="Подготовка">
+                <div class="prep-hud-hero-portrait" id="prep-hud-hero-portrait" data-mood="breathe">
+                  <span class="prep-hud-hero-portrait__aura" aria-hidden="true"></span>
+                  <span class="prep-hud-hero-portrait__ring" aria-hidden="true"></span>
+                  <span class="prep-hud-hero-portrait__vine prep-hud-hero-portrait__vine--l" aria-hidden="true">🌿</span>
+                  <span class="prep-hud-hero-portrait__vine prep-hud-hero-portrait__vine--r" aria-hidden="true">🍃</span>
+                  <img class="prep-hud-hero-portrait__img" id="prep-hud-hero-img" alt="" draggable="false">
+                </div>
+                <span class="prep-hud-hero-round" id="prep-hud-hero-round" aria-hidden="true"></span>
+              </div>
               <div class="prep-stats-hud" id="prep-stats-hud" aria-live="polite"></div>
               <div class="prep-hud-chrome" id="prep-hud-chrome">
                 <div class="prep-hero-tooltip hidden" id="prep-hero-tooltip" role="dialog" aria-labelledby="prep-hero-tooltip-title">
@@ -469,14 +479,32 @@
 
     <div class="overlay hidden" id="battle-result-overlay">
       <div class="battle-result-theater hidden" id="battle-result-theater" aria-hidden="true">
-        <div class="br-theater-sparkles" aria-hidden="true"></div>
+        <div class="br-theater-backdrop" aria-hidden="true">
+          <div class="br-theater-dotgrid"></div>
+          <div class="br-theater-sparkles"></div>
+          <div class="br-theater-vignette"></div>
+        </div>
         <div class="br-theater-fighter br-theater-fighter--player hidden" id="br-theater-player" aria-hidden="true">
-          <span class="br-theater-emoji" aria-hidden="true">🍉</span>
-          <span class="br-theater-bubble" role="status"></span>
+          <div class="br-theater-head">
+            <span class="br-theater-emoji-badge" aria-hidden="true"></span>
+            <span class="br-theater-bubble" role="status"></span>
+          </div>
+          <div class="br-theater-portrait-stage">
+            <div class="br-theater-aura" aria-hidden="true"></div>
+            <div class="br-theater-glow-ring" aria-hidden="true"></div>
+            <img class="br-theater-portrait" alt="" draggable="false">
+          </div>
         </div>
         <div class="br-theater-fighter br-theater-fighter--enemy hidden" id="br-theater-enemy" aria-hidden="true">
-          <span class="br-theater-emoji" aria-hidden="true">🪄</span>
-          <span class="br-theater-bubble" role="status"></span>
+          <div class="br-theater-head">
+            <span class="br-theater-emoji-badge" aria-hidden="true"></span>
+            <span class="br-theater-bubble" role="status"></span>
+          </div>
+          <div class="br-theater-portrait-stage">
+            <div class="br-theater-aura" aria-hidden="true"></div>
+            <div class="br-theater-glow-ring" aria-hidden="true"></div>
+            <img class="br-theater-portrait" alt="" draggable="false">
+          </div>
         </div>
       </div>
       <div class="modal battle-result-modal">
@@ -739,7 +767,7 @@
   <script src="components/accordion.js"></script>
   <script src="components/item-stats.js"></script>
   <script src="components/board-preview.js"></script>
-  <script src="components/battle-inventory-popover.js?v=8"></script>
+  <script src="components/battle-inventory-popover.js?v=9"></script>
   <script src="components/recipe-book.js"></script>
   <script src="systems/visual-theme.js?v=1"></script>
   <script src="components/settings.js"></script>
@@ -757,9 +785,9 @@
   <script src="systems/battle-stacks.js"></script>
   <script src="systems/stack-orbit-vfx.js?v=8"></script>
   <script src="systems/battle-debuffs.js"></script>
-  <script src="systems/sfx-themes.js?v=3"></script>
+  <script src="systems/sfx-themes.js?v=4"></script>
   <script src="systems/sfx.js?v=4"></script>
-  <script src="systems/sound-theme.js?v=3"></script>
+  <script src="systems/sound-theme.js?v=4"></script>
   <script src="systems/music.js"></script>
   <script src="systems/input-mode.js"></script>
   <script src="systems/gamepad.js"></script>
@@ -787,6 +815,7 @@
   <script src="systems/prep-shop.js?v=1"></script>
   <script src="systems/doll-engine.js"></script>
   <script src="systems/screen-transitions.js?v=1"></script>
+  <script src="components/prep-hud-hero.js?v=1"></script>
   <script src="game.js?v=69"></script>
   <script src="pwa-register.js"></script>
 </body>

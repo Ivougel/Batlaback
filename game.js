@@ -1258,14 +1258,12 @@ function selectCompanion(companionId) {
 }
 
 function syncRunHudPhase() {
-  const phaseEl = document.getElementById("run-hud-phase");
-  if (!phaseEl) return;
-  const labels = { prep: "Подготовка", battle: "Бой", replay: "Повтор" };
-  const label = labels[phase] || "";
-  phaseEl.textContent = label;
-  phaseEl.hidden = !label;
-  if (label) phaseEl.removeAttribute("aria-hidden");
-  else phaseEl.setAttribute("aria-hidden", "true");
+  const badge = document.getElementById("run-hud-phase");
+  if (!badge) return;
+  if (phase !== "prep" || gameOver) {
+    badge.classList.add("hidden");
+    badge.setAttribute("aria-hidden", "true");
+  }
 }
 
 function syncClassOverlayUi() {
@@ -4260,6 +4258,8 @@ function skipBattle() {
 function startBattleReplay() {
   if (!lastBattleReplay?.frames?.length || !lastBattlePrepSnapshot) return;
   hideBattleResultPopup();
+  closeBattleInventoryPopover();
+  closeBattleBuildStatsPopover();
   resetBattlePause();
   phase = "replay";
   renderPhase();
@@ -8088,6 +8088,10 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
     if (!document.getElementById("prep-hero-tooltip")?.classList.contains("hidden")) {
       refreshPrepHeroTooltip();
     }
+  }
+
+  if (typeof syncPrepHudHero === "function") {
+    syncPrepHudHero(profile, { side });
   }
 
   requestAnimationFrame(() => {

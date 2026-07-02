@@ -231,3 +231,101 @@ html:not([data-battle-fx-light="true"]) .battle-inventory-popover .bp-cell.bp-ce
 .battle-inventory-popover .bp-synergies-empty {
   color: var(--meadow-ink-muted);
 }
+
+/* ─── Компактный dock-режим (mobile / tablet / replay) ─── */
+
+.battle-inventory-popover--compact {
+  padding: calc(6px * var(--ui-scale, 1));
+  gap: calc(4px * var(--ui-scale, 1));
+  max-height: min(38vh, calc(100dvh - var(--bottom-chrome-h, 52px) - env(safe-area-inset-bottom) - 32px));
+  background: linear-gradient(
+    165deg,
+    rgba(22, 28, 22, 0.94) 0%,
+    rgba(14, 18, 14, 0.92) 100%
+  );
+  border-color: rgba(92, 184, 92, 0.35);
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: #e8f0e4;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.battle-inventory-popover--compact .battle-inventory-popover__title {
+  font-size: var(--font-xs);
+  color: rgba(200, 230, 190, 0.95);
+}
+
+.battle-inventory-popover--compact .battle-inventory-popover__close {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: rgba(230, 240, 225, 0.85);
+}
+
+.battle-inventory-popover--compact .bp-grid-wrap {
+  padding: calc(3px * var(--ui-scale, 1));
+  background: rgba(0, 0, 0, 0.35);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.battle-inventory-popover--compact .bp-grid {
+  width: min(100%, calc(var(--bp-cols) * 18px));
+}
+
+.battle-inventory-popover--compact .board-preview-section-title,
+.battle-inventory-popover--compact .battle-inventory-popover__power-label {
+  color: rgba(180, 210, 170, 0.82);
+}
+
+.battle-inventory-popover--compact .battle-inventory-popover__power {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+  padding: calc(4px * var(--ui-scale, 1));
+  margin: 0;
+}
+
+.battle-inventory-popover--compact .battle-inventory-popover__bp .stat-bp-score {
+  color: #f0f6ec;
+}
+
+.battle-inventory-popover--compact .bp-synergy-chips {
+  max-height: 48px;
+}
+
+.battle-inventory-popover--dock {
+  animation: battle-inv-dock-in 0.22s cubic-bezier(0, 0, 0.2, 1) both;
+}
+
+@keyframes battle-inv-dock-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Replay: центр арены свободен, попапы у нижних углов */
+body:has(#app[data-phase="replay"]) .battle-inventory-popover--replay.battle-inventory-popover--dock[data-team="player"] {
+  transform-origin: left bottom;
+}
+
+body:has(#app[data-phase="replay"]) .battle-inventory-popover--replay.battle-inventory-popover--dock[data-team="enemy"] {
+  transform-origin: right bottom;
+}
+
+body:has(.battle-inventory-popover:not(.hidden)) #app[data-phase="replay"] .battle-thought-arena,
+body:has(.battle-inventory-popover:not(.hidden)) #app[data-phase="battle"] .battle-thought-arena {
+  opacity: 0.35;
+  transition: opacity 0.2s ease;
+}
+
+@media (min-width: 980px) {
+  .battle-inventory-popover:not(.battle-inventory-popover--compact) {
+    width: min(calc(240px * var(--ui-scale, 1)), calc(100vw - 16px)) !important;
+    max-width: min(calc(268px * var(--ui-scale, 1)), calc(100vw - 16px)) !important;
+  }
+}

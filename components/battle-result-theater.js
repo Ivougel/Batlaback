@@ -1,5 +1,6 @@
 /**
- * Театр результата боя: летающие эмодзи-герои и смешные реплики.
+ * Театр результата боя: полноразмерные портреты героев, реплики и вариативные idle-анимации.
+ * Победитель / проигравший получают разные наборы движений; каждый раз — случайный вариант.
  */
 
 const BATTLE_THEATER_HERO = {
@@ -31,14 +32,29 @@ const BATTLE_THEATER_GENERIC = {
   draw: ["Ничья!", "Обнялись", "Силы равны"],
 };
 
+/** 6 победных + 6 пораженческих + 3 ничейных — каждый раз случайный */
+const BATTLE_THEATER_WIN_MOODS = ["triumph", "swagger", "salute", "sparkle", "flex", "hop"];
+const BATTLE_THEATER_LOSE_MOODS = ["slump", "wilt", "stagger", "sulk", "deflate", "shake"];
+const BATTLE_THEATER_DRAW_MOODS = ["breathe", "shrug", "sway"];
+
 let battleTheaterTimer = null;
 let battleTheaterBubbleTimer = null;
+let battleTheaterMoodTimer = null;
 
 function pickTheaterLine(classId, won) {
   const pack = BATTLE_THEATER_HERO[classId] || null;
   const pool = won
     ? (pack?.win || BATTLE_THEATER_GENERIC.win)
     : (pack?.lose || BATTLE_THEATER_GENERIC.lose);
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function pickTheaterMood(outcome) {
+  const pool = outcome === "win"
+    ? BATTLE_THEATER_WIN_MOODS
+    : outcome === "lose"
+      ? BATTLE_THEATER_LOSE_MOODS
+      : BATTLE_THEATER_DRAW_MOODS;
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
@@ -59,6 +75,90 @@ function getTheaterEmoji(classId) {
     || "🐾";
 }
 
+function getTheaterPortraitSrc(classId) {
+  if (typeof getClassHeroPortraitSrc === "function") {
+    return getClassHeroPortraitSrc(classId);
+  }
+  const cls = typeof getClassById === "function" ? getClassById(classId) : null;
+  return cls?.heroPortraitSrc || cls?.iconSrc || null;
+}
+
+function getTheaterHeroLabel(classId) {
+  if (typeof getHeroLabel === "function") return getHeroLabel(classId);
+  const cls = typeof getClassById === "function" ? getClassById(classId) : null;
+  return cls?.heroLabel || cls?.name || "";
+}
+
+function randomizeTheaterMotion(el) {
+  if (!el) return;
+  const delay = -(Math.random() * 4).toFixed(2);
+  const rate = (0.88 + Math.random() * 0.26).toFixed(3);
+  const sway = (Math.random() * 14 - 7).toFixed(1);
+  el.style.setProperty("--br-anim-delay", `${delay}s`);
+  el.style.setProperty("--br-anim-rate", rate);
+  el.style.setProperty("--br-sway-offset", `${sway}px`);
+}
+
+function applyTheaterFighterState(el, {
+  classId,
+  role,
+  winner,
+  entering = false,
+}) {
+  if (!el) return;
+
+  const isWinner = winner === role;
+  const isLoser = winner !== "draw" && !isWinner;
+  const outcome = winner === "draw" ? "draw" : isWinner ? "win" : "lose";
+  const mood = pickTheaterMood(outcome);
+
+  el.dataset.class = classId;
+  el.dataset.mood = mood;
+  el.dataset.outcome = outcome;
+  el.classList.toggle("br-theater-fighter--winner", isWinner);
+  el.classList.toggle("br-theater-fighter--loser", isLoser);
+  el.classList.toggle("br-theater-fighter--draw", winner === "draw");
+  el.classList.toggle("br-theater-fighter--entering", entering);
+
+  randomizeTheaterMotion(el);
+
+  const portrait = el.querySelector(".br-theater-portrait");
+  const badge = el.querySelector(".br-theater-emoji-badge");
+  const src = getTheaterPortraitSrc(classId);
+  const label = getTheaterHeroLabel(classId);
+
+  if (portrait) {
+    if (src) {
+      portrait.src = src;
+      portrait.alt = label;
+      portrait.classList.remove("br-theater-portrait--fallback");
+    } else {
+      portrait.removeAttribute("src");
+      portrait.alt = label;
+      portrait.classList.add("br-theater-portrait--fallback");
+    }
+  }
+  if (badge) badge.textContent = getTheaterEmoji(classId);
+}
+
+function rerollTheaterMoods(summary) {
+  const winner = summary?.winner || "draw";
+  const playerEl = document.getElementById("br-theater-player");
+  const enemyEl = document.getElementById("br-theater-enemy");
+  if (!playerEl || !enemyEl) return;
+
+  applyTheaterFighterState(playerEl, {
+    classId: resolveTheaterClassId("player", summary),
+    role: "player",
+    winner,
+  });
+  applyTheaterFighterState(enemyEl, {
+    classId: resolveTheaterClassId("enemy", summary),
+    role: "enemy",
+    winner,
+  });
+}
+
 function stopBattleResultTheater() {
   if (battleTheaterTimer) {
     clearInterval(battleTheaterTimer);
@@ -68,13 +168,22 @@ function stopBattleResultTheater() {
     clearTimeout(battleTheaterBubbleTimer);
     battleTheaterBubbleTimer = null;
   }
+  if (battleTheaterMoodTimer) {
+    clearInterval(battleTheaterMoodTimer);
+    battleTheaterMoodTimer = null;
+  }
   const theater = document.getElementById("battle-result-theater");
   if (!theater) return;
   theater.classList.add("hidden");
   theater.setAttribute("aria-hidden", "true");
+  theater.removeAttribute("data-outcome");
   theater.querySelectorAll(".br-theater-fighter").forEach((el) => {
     el.classList.add("hidden");
+    el.classList.remove("br-theater-fighter--entering");
     el.setAttribute("aria-hidden", "true");
+    delete el.dataset.mood;
+    delete el.dataset.outcome;
+    delete el.dataset.class;
   });
 }
 
@@ -95,18 +204,15 @@ function cycleTheaterBubbles(summary) {
     ? BATTLE_THEATER_GENERIC.draw[Math.floor(Math.random() * BATTLE_THEATER_GENERIC.draw.length)]
     : pickTheaterLine(enemyId, enemyWon);
 
-  if (playerBubble) {
-    playerBubble.textContent = playerLine;
-    playerBubble.classList.remove("br-theater-bubble--pop");
-    void playerBubble.offsetWidth;
-    playerBubble.classList.add("br-theater-bubble--pop");
-  }
-  if (enemyBubble) {
-    enemyBubble.textContent = enemyLine;
-    enemyBubble.classList.remove("br-theater-bubble--pop");
-    void enemyBubble.offsetWidth;
-    enemyBubble.classList.add("br-theater-bubble--pop");
-  }
+  [playerBubble, enemyBubble].forEach((bubble) => {
+    if (!bubble) return;
+    bubble.classList.remove("br-theater-bubble--pop");
+    void bubble.offsetWidth;
+    bubble.classList.add("br-theater-bubble--pop");
+  });
+
+  if (playerBubble) playerBubble.textContent = playerLine;
+  if (enemyBubble) enemyBubble.textContent = enemyLine;
 }
 
 function startBattleResultTheater(summary) {
@@ -119,30 +225,40 @@ function startBattleResultTheater(summary) {
   const enemyEl = document.getElementById("br-theater-enemy");
   if (!playerEl || !enemyEl) return;
 
-  const playerId = resolveTheaterClassId("player", summary);
-  const enemyId = resolveTheaterClassId("enemy", summary);
   const winner = summary?.winner || "draw";
-
-  const playerEmoji = playerEl.querySelector(".br-theater-emoji");
-  const enemyEmoji = enemyEl.querySelector(".br-theater-emoji");
-  if (playerEmoji) playerEmoji.textContent = getTheaterEmoji(playerId);
-  if (enemyEmoji) enemyEmoji.textContent = getTheaterEmoji(enemyId);
 
   theater.classList.remove("hidden");
   theater.setAttribute("aria-hidden", "false");
   theater.dataset.outcome = winner;
 
+  applyTheaterFighterState(playerEl, {
+    classId: resolveTheaterClassId("player", summary),
+    role: "player",
+    winner,
+    entering: true,
+  });
+  applyTheaterFighterState(enemyEl, {
+    classId: resolveTheaterClassId("enemy", summary),
+    role: "enemy",
+    winner,
+    entering: true,
+  });
+
   [playerEl, enemyEl].forEach((el) => {
     el.classList.remove("hidden");
     el.setAttribute("aria-hidden", "false");
-    el.classList.toggle("br-theater-fighter--winner", winner === "player" && el === playerEl || winner === "enemy" && el === enemyEl);
-    el.classList.toggle("br-theater-fighter--loser", winner === "player" && el === enemyEl || winner === "enemy" && el === playerEl);
-    el.classList.toggle("br-theater-fighter--draw", winner === "draw");
   });
 
   cycleTheaterBubbles(summary);
 
-  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    battleTheaterTimer = window.setInterval(() => cycleTheaterBubbles(summary), 2800);
+  window.setTimeout(() => {
+    playerEl.classList.remove("br-theater-fighter--entering");
+    enemyEl.classList.remove("br-theater-fighter--entering");
+  }, 720);
+
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!reduced) {
+    battleTheaterTimer = window.setInterval(() => cycleTheaterBubbles(summary), 3200);
+    battleTheaterMoodTimer = window.setInterval(() => rerollTheaterMoods(summary), 6800);
   }
 }

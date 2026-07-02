@@ -31,8 +31,50 @@
     return !!el && !el.classList.contains("hidden");
   }
 
+  function visualViewportBottom() {
+    const vv = window.visualViewport;
+    return vv ? vv.offsetTop + vv.height : window.innerHeight;
+  }
+
+  /** Intro: резерв под chrome = от его top до низа layout viewport (после pin). */
+  function syncIntroChromeDock() {
+    const root = document.documentElement;
+    const bar = getBottomChrome();
+    if (!isClassOverlayOpen() || !bar || bar.classList.contains("hidden")) {
+      root.style.removeProperty("--intro-chrome-pin-y");
+      return null;
+    }
+    if (getComputedStyle(bar).display === "none") {
+      root.style.removeProperty("--intro-chrome-pin-y");
+      return null;
+    }
+
+    const viewBottom = visualViewportBottom();
+    const layoutBottom = window.innerHeight;
+    const rect = bar.getBoundingClientRect();
+    const gap = Math.max(0, viewBottom - rect.bottom);
+
+    if (gap > 1.5) {
+      root.style.setProperty("--intro-chrome-pin-y", `${Math.round(gap)}px`);
+    } else {
+      root.style.removeProperty("--intro-chrome-pin-y");
+    }
+
+    const pinY = gap > 1.5 ? gap : 0;
+    const chromeTop = rect.top + pinY;
+    const reserve = Math.max(
+      Math.round(layoutBottom - chromeTop),
+      bar.offsetHeight,
+      readCssPx("--bottom-chrome-h", 44),
+    );
+    root.style.setProperty("--class-intro-chrome-h", `${reserve}px`);
+    return reserve;
+  }
+
   function measureBottomChromeHeight() {
     if (isClassOverlayOpen()) {
+      const docked = syncIntroChromeDock();
+      if (docked != null) return docked;
       const bar = getBottomChrome();
       if (!bar || bar.classList.contains("hidden")) return readCssPx("--bottom-chrome-h", 44);
       if (getComputedStyle(bar).display === "none") return readCssPx("--bottom-chrome-h", 44);
@@ -660,10 +702,15 @@
 
     let dockH = fallback;
     if (isClassOverlayOpen()) {
-      const chrome = getBottomChrome();
-      if (chrome && getComputedStyle(chrome).display !== "none") {
-        const h = chrome.getBoundingClientRect().height;
-        dockH = Math.max(fallback, Math.round(h));
+      const introReserve = readCssPx("--class-intro-chrome-h", 0);
+      if (introReserve > 0) {
+        dockH = Math.round(introReserve);
+      } else {
+        const chrome = getBottomChrome();
+        if (chrome && getComputedStyle(chrome).display !== "none") {
+          const h = chrome.getBoundingClientRect().height;
+          dockH = Math.max(fallback, Math.round(h));
+        }
       }
     }
     root.style.setProperty("--class-mobile-dock-h", `${dockH}px`);
@@ -2351,8 +2398,15 @@
         "--overlay-max-h",
         `calc(var(--viewport-h, 100dvh) - env(safe-area-inset-top) - ${hudH}px - 8px)`,
       );
-      document.documentElement.style.setProperty("--class-intro-chrome-h", `${hudH}px`);
+      requestAnimationFrame(() => {
+        if (!isClassOverlayOpen()) return;
+        const dockH = syncIntroChromeDock();
+        if (dockH == null) return;
+        document.documentElement.style.setProperty("--bottom-chrome-h-measured", `${dockH}px`);
+        document.documentElement.style.setProperty("--hud-offset", `${dockH}px`);
+      });
     } else {
+      document.documentElement.style.removeProperty("--intro-chrome-pin-y");
       document.documentElement.style.setProperty(
         "--overlay-max-h",
         "calc(var(--viewport-h, 100dvh) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 10px)",

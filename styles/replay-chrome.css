@@ -98,3 +98,39 @@ html[data-ui-tier="phone"] body:has(#app[data-phase="replay"]) .replay-timeline-
 html[data-ui-tier="phone"] body:has(#app[data-phase="replay"]) .replay-timeline-label {
   display: none;
 }
+
+/* Replay — бейдж режима, арена по центру не перекрывается попапами */
+body:has(#app[data-phase="replay"]) #app::after {
+  content: "↻ Повтор";
+  position: fixed;
+  top: max(8px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 900;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: var(--font-xs);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(230, 237, 243, 0.92);
+  background: rgba(13, 17, 23, 0.72);
+  border: 1px solid rgba(88, 166, 255, 0.35);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+
+body:has(#app[data-phase="replay"]) .battle-inventory-popover:not(.hidden) {
+  z-index: calc(var(--z-live-popover, 950) + 2);
+}
+
+html[data-ui-tier="phone"] body:has(#app[data-phase="replay"]) .bottom-chrome .battle-controls-hint,
+html[data-ui-tier="tablet"] body:has(#app[data-phase="replay"]) .bottom-chrome .battle-controls-hint {
+  display: none;
+}
+
+html[data-ui-tier="phone"] body:has(#app[data-phase="replay"]) .bottom-chrome .bc-skip,
+html[data-ui-tier="tablet"] body:has(#app[data-phase="replay"]) .bottom-chrome .bc-skip {
+  font-size: var(--font-xs);
+  padding-inline: 8px;
+}

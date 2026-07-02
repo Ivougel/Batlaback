@@ -39,9 +39,9 @@ body:has(#overlay:not(.hidden)) .bottom-chrome {
 /* ─── Intro (выбор героя): единая нижняя панель вместо class-mobile-dock ─── */
 
 #class-overlay:not(.hidden) {
-  bottom: max(
-    var(--bottom-chrome-h-measured, 0px),
-    var(--bottom-chrome-h, 44px)
+  bottom: var(
+    --class-intro-chrome-h,
+    max(var(--bottom-chrome-h-measured, 0px), var(--bottom-chrome-h, 44px))
   );
 }
 
