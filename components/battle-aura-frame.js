@@ -17,6 +17,94 @@ let auraLastPlayerHp = null;
 let auraLastEnemyHp = null;
 let auraLastRunnerAt = 0;
 let auraActive = false;
+let auraLayoutKey = "";
+
+function clearBattleAuraFrameLayout() {
+  const frame = document.getElementById("battle-aura-frame");
+  if (!frame) return;
+  frame.style.removeProperty("top");
+  frame.style.removeProperty("left");
+  frame.style.removeProperty("width");
+  frame.style.removeProperty("height");
+  frame.style.removeProperty("right");
+  frame.style.removeProperty("bottom");
+  frame.style.removeProperty("--aura-runner-track-inset");
+  auraLayoutKey = "";
+}
+
+function measureAuraRunnerTrackInsetPx(frame) {
+  if (!frame) return 0;
+  const probe = document.createElement("span");
+  probe.className = "battle-aura-runner";
+  probe.setAttribute("aria-hidden", "true");
+  probe.textContent = "✨";
+  probe.style.cssText = "position:absolute;left:-9999px;top:0;visibility:hidden;pointer-events:none;animation:none;";
+  frame.appendChild(probe);
+  const rect = probe.getBoundingClientRect();
+  probe.remove();
+  const half = Math.ceil(Math.max(rect.width, rect.height) * 0.52);
+  return Math.max(6, half);
+}
+
+/** Совмещает ауру с #battle-thought-arena и подбирает inset траектории в px. */
+function syncBattleAuraFrameLayout() {
+  const frame = document.getElementById("battle-aura-frame");
+  const arena = document.getElementById("battle-thought-arena");
+  const host = document.querySelector(".prep-field-column.scene-viewport")
+    || document.getElementById("prep-field-column");
+  if (!frame || !host) return;
+
+  const app = document.getElementById("app");
+  const phase = app?.dataset?.phase;
+  if (phase !== "battle" && phase !== "replay") {
+    clearBattleAuraFrameLayout();
+    return;
+  }
+
+  const arenaRect = arena?.getBoundingClientRect();
+  const useArena = arena
+    && arenaRect
+    && arenaRect.width > 24
+    && arenaRect.height > 24
+    && getComputedStyle(arena).display !== "none";
+
+  let layoutKey;
+  if (useArena) {
+    const hostRect = host.getBoundingClientRect();
+    const top = Math.round(arenaRect.top - hostRect.top);
+    const left = Math.round(arenaRect.left - hostRect.left);
+    const width = Math.round(arenaRect.width);
+    const height = Math.round(arenaRect.height);
+    layoutKey = `${left}|${top}|${width}|${height}`;
+    if (auraLayoutKey !== layoutKey) {
+      auraLayoutKey = layoutKey;
+      frame.style.top = `${top}px`;
+      frame.style.left = `${left}px`;
+      frame.style.width = `${width}px`;
+      frame.style.height = `${height}px`;
+      frame.style.right = "auto";
+      frame.style.bottom = "auto";
+    }
+  } else {
+    layoutKey = "full";
+    if (auraLayoutKey !== layoutKey) {
+      auraLayoutKey = layoutKey;
+      frame.style.removeProperty("top");
+      frame.style.removeProperty("left");
+      frame.style.removeProperty("width");
+      frame.style.removeProperty("height");
+      frame.style.right = "";
+      frame.style.bottom = "";
+    }
+  }
+
+  const insetPx = measureAuraRunnerTrackInsetPx(frame);
+  const insetKey = String(insetPx);
+  if (frame.dataset.runnerInsetPx !== insetKey) {
+    frame.dataset.runnerInsetPx = insetKey;
+    frame.style.setProperty("--aura-runner-track-inset", `${insetPx}px`);
+  }
+}
 
 function resetBattleAuraFrame() {
   auraIntensity = 0;
@@ -34,6 +122,7 @@ function resetBattleAuraFrame() {
     frame.style.removeProperty("--aura-hue");
   }
   if (runners) runners.innerHTML = "";
+  clearBattleAuraFrameLayout();
 }
 
 function pickAuraRunnerEmoji(state) {
@@ -113,6 +202,7 @@ function syncBattleAuraFrame(state, elapsed) {
   }
 
   auraActive = true;
+  syncBattleAuraFrameLayout();
   frame.classList.remove("hidden");
   frame.setAttribute("aria-hidden", "false");
 

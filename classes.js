@@ -109,10 +109,34 @@ function getClassHeroPortraitSrc(classId) {
   return cls?.heroPortraitSrc || cls?.iconSrc || null;
 }
 
-/** Бust/стикер для HUD-карточки — не дублирует full-body на поле prep. */
+/** Bust/стикер для HUD-карточки и плиток выбора класса. */
 function getClassHudPortraitSrc(classId) {
   const cls = getClassById(classId);
-  return cls?.hudPortraitSrc || cls?.iconSrc || null;
+  return cls?.hudPortraitSrc || cls?.heroPortraitSrc || cls?.iconSrc || null;
+}
+
+function syncClassPickPortrait(card, classId) {
+  if (!card || !classId) return;
+  let wrap = card.querySelector(".glass-card-icon--class");
+  if (!wrap) {
+    wrap = document.createElement("span");
+    wrap.className = "glass-card-icon glass-card-icon--class class-icon class-pick-portrait";
+    card.insertBefore(wrap, card.firstChild);
+  } else {
+    wrap.classList.add("class-pick-portrait");
+  }
+  wrap.dataset.class = classId;
+  let img = wrap.querySelector(".class-pick-portrait-media, .class-sticker");
+  if (!img) {
+    img = document.createElement("img");
+    img.draggable = false;
+    wrap.replaceChildren(img);
+  }
+  img.className = "class-pick-portrait-media";
+  const cls = getClassById(classId);
+  const src = getClassHudPortraitSrc(classId);
+  if (src) img.src = src;
+  img.alt = cls?.noviceLabel || cls?.name || "";
 }
 
 /** Волшебная рамка героя (prep / HUD) — свой стиль на каждый класс. */
@@ -196,6 +220,7 @@ function syncClassPickerCardsFromCatalog() {
       }
     }
     if (bonusEl) bonusEl.textContent = cls.desc || "";
+    syncClassPickPortrait(card, card.dataset.class);
   });
   document.querySelectorAll(".opponent-class-card[data-opponent-class]").forEach((card) => {
     ensureClassCardFoot(card, [".class-name", ".class-desc"]);
@@ -209,6 +234,7 @@ function syncClassPickerCardsFromCatalog() {
       descEl.classList.remove("hidden");
       descEl.removeAttribute("aria-hidden");
     }
+    syncClassPickPortrait(card, card.dataset.opponentClass);
   });
 }
 

@@ -13,6 +13,8 @@
   --aura-progress: 0;
   --aura-intensity: 0;
   --aura-hue: 195;
+  /* Половина эмодзи — траектория строго внутри обводки */
+  --aura-runner-track-inset: calc(var(--battle-aura-runner-size, 7vmin) * 0.52);
   position: absolute;
   inset: 0;
   z-index: 46;
@@ -102,6 +104,11 @@
 
 .battle-aura-runner {
   position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1em;
+  height: 1em;
   font-size: var(--battle-aura-runner-size, 7vmin);
   line-height: 1;
   filter:
@@ -112,36 +119,36 @@
 }
 
 .battle-aura-runner--top {
-  top: 0;
-  left: 0;
-  transform: translate(-50%, -55%);
+  top: var(--aura-runner-track-inset);
+  left: var(--aura-runner-track-inset);
+  transform: translate(-50%, -50%);
   animation-name: battle-aura-run-top;
   animation-timing-function: linear;
   animation-fill-mode: forwards;
 }
 
 .battle-aura-runner--right {
-  top: 0;
-  right: 0;
-  transform: translate(55%, -50%);
+  top: var(--aura-runner-track-inset);
+  right: var(--aura-runner-track-inset);
+  transform: translate(50%, -50%);
   animation-name: battle-aura-run-right;
   animation-timing-function: linear;
   animation-fill-mode: forwards;
 }
 
 .battle-aura-runner--bottom {
-  bottom: 0;
-  right: 0;
-  transform: translate(50%, 55%);
+  bottom: var(--aura-runner-track-inset);
+  right: var(--aura-runner-track-inset);
+  transform: translate(50%, 50%);
   animation-name: battle-aura-run-bottom;
   animation-timing-function: linear;
   animation-fill-mode: forwards;
 }
 
 .battle-aura-runner--left {
-  bottom: 0;
-  left: 0;
-  transform: translate(-55%, 50%);
+  bottom: var(--aura-runner-track-inset);
+  left: var(--aura-runner-track-inset);
+  transform: translate(-50%, 50%);
   animation-name: battle-aura-run-left;
   animation-timing-function: linear;
   animation-fill-mode: forwards;
@@ -162,31 +169,31 @@
 }
 
 @keyframes battle-aura-run-top {
-  from { left: -4%; opacity: 0; }
-  8% { opacity: 1; }
-  92% { opacity: 1; }
-  to { left: 104%; opacity: 0; }
+  from { left: var(--aura-runner-track-inset); opacity: 0; }
+  6% { opacity: 1; }
+  94% { opacity: 1; }
+  to { left: calc(100% - var(--aura-runner-track-inset)); opacity: 0; }
 }
 
 @keyframes battle-aura-run-right {
-  from { top: -4%; opacity: 0; }
-  8% { opacity: 1; }
-  92% { opacity: 1; }
-  to { top: 104%; opacity: 0; }
+  from { top: var(--aura-runner-track-inset); opacity: 0; }
+  6% { opacity: 1; }
+  94% { opacity: 1; }
+  to { top: calc(100% - var(--aura-runner-track-inset)); opacity: 0; }
 }
 
 @keyframes battle-aura-run-bottom {
-  from { right: -4%; opacity: 0; }
-  8% { opacity: 1; }
-  92% { opacity: 1; }
-  to { right: 104%; opacity: 0; }
+  from { right: var(--aura-runner-track-inset); opacity: 0; }
+  6% { opacity: 1; }
+  94% { opacity: 1; }
+  to { right: calc(100% - var(--aura-runner-track-inset)); opacity: 0; }
 }
 
 @keyframes battle-aura-run-left {
-  from { bottom: -4%; opacity: 0; }
-  8% { opacity: 1; }
-  92% { opacity: 1; }
-  to { bottom: 104%; opacity: 0; }
+  from { bottom: var(--aura-runner-track-inset); opacity: 0; }
+  6% { opacity: 1; }
+  94% { opacity: 1; }
+  to { bottom: calc(100% - var(--aura-runner-track-inset)); opacity: 0; }
 }
 
 /* Глобальная рамка приглушается — акцент на боевой ауре */

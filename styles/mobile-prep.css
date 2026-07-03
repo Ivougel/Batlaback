@@ -51,16 +51,10 @@ html[data-prep-layout="mobile"] .class-modal .game-mode-card .glass-card-icon {
   margin-bottom: 10px;
 }
 
-html[data-prep-layout="mobile"] #class-overlay .class-modal .class-card.glass-card[data-class],
-html[data-prep-layout="mobile"] #class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class] {
-  --class-pick-hero-min-h: clamp(180px, 32vh, 280px);
-  --class-pick-card-min-h: clamp(300px, 48vh, 420px);
-  padding-bottom: 14px;
-}
-
-html[data-prep-layout="mobile"] #class-overlay .class-modal .class-card.glass-card[data-class] .glass-card-icon--class .class-sticker,
-html[data-prep-layout="mobile"] #class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class] .glass-card-icon--class .class-sticker {
-  max-height: min(36vh, 300px);
+html[data-prep-layout="mobile"] #class-overlay .class-modal .class-card.glass-card[data-class] .class-pick-portrait-media,
+html[data-prep-layout="mobile"] #class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class] .class-pick-portrait-media {
+  --prep-hud-portrait-bust-scale: 1.92;
+  --prep-hud-portrait-bust-y: 12%;
 }
 
 html[data-prep-layout="mobile"] .class-mobile-dock .btn-glass-start,

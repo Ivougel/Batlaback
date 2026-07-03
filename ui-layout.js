@@ -1930,6 +1930,7 @@
     syncFlankArenaHeroAnchors();
     if (typeof syncFxCanvasGeometry === "function") syncFxCanvasGeometry();
     if (typeof syncBattleHudAnchors === "function") syncBattleHudAnchors();
+    if (typeof syncBattleAuraFrameLayout === "function") syncBattleAuraFrameLayout();
   }
 
   function scheduleBattleHeroRowSync(attempts = 6) {

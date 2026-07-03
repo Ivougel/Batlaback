@@ -465,8 +465,8 @@ body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro .btn-primary {
   );
 }
 
-#class-overlay .class-modal .class-card.glass-card[data-class] .glass-card-icon--class,
-#class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class] .glass-card-icon--class {
+#class-overlay .class-modal .class-card.glass-card[data-class] .glass-card-icon--class:not(.class-pick-portrait),
+#class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class] .glass-card-icon--class:not(.class-pick-portrait) {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(160, 200, 150, 0.12) 100%);
 }
 
