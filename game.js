@@ -5262,9 +5262,10 @@ function syncTdHintBar() {
   const textEl = document.getElementById("td-hint-text");
   if (!bar || !textEl) return;
 
-  if (!isTdRunLive() || tdHintsDisabled) {
+  if (!isTdMode() || !isTdRunLive() || tdHintsDisabled) {
     bar.classList.add("hidden");
     bar.removeAttribute("data-hint-id");
+    textEl.textContent = "";
     return;
   }
 
@@ -5272,6 +5273,7 @@ function syncTdHintBar() {
   if (!hint || tdHintsDismissed.has(hint.id)) {
     bar.classList.add("hidden");
     bar.removeAttribute("data-hint-id");
+    textEl.textContent = "";
     return;
   }
 

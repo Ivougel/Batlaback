@@ -60,6 +60,12 @@ html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-field-column {
   box-sizing: border-box;
 }
 
+html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-field-column > .layer-world {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* ─── Prep: герой + кукла — слоты под полем (tokens + doll.css) ─── */
 
 html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-field-island {
@@ -69,7 +75,7 @@ html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-field-island {
   left: auto !important;
   top: auto !important;
   order: 1;
-  margin: calc(var(--prep-scene-top) + var(--field-offset-y)) auto 0;
+  margin: 0 auto;
   width: var(--prep-canvas-display-w, var(--prep-canvas-w)) !important;
   height: var(--prep-canvas-display-h, var(--prep-canvas-h)) !important;
   max-width: calc(100% - 16px) !important;

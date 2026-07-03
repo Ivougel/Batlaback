@@ -172,6 +172,44 @@
     return Math.round(Math.min(300, Math.max(168, usable * 0.32)));
   }
 
+  const PREP_GRID_COLS = 9;
+  const PREP_GRID_ROWS = 7;
+
+  /** iPad / tablet-side prep: крупные ячейки, сетка заполняет колонку поля. */
+  function syncTabletSidePrepGridMetrics() {
+    const root = document.documentElement;
+    const app = document.getElementById("app");
+    if (!usesTabletPrepHeroLayout(root) || app?.dataset.phase !== "prep") return false;
+    if (app?.dataset.gameMode === "td") return false;
+
+    const fieldCol = document.getElementById("prep-field-column");
+    const layerWorld = fieldCol?.querySelector(".layer-world");
+    if (!fieldCol || fieldCol.clientWidth < 120 || fieldCol.clientHeight < 120) return false;
+
+    const uiScale = readCssPx("--ui-scale", 1);
+    const gap = Math.max(1, Math.round(readCssPx("--cell-gap", 1)));
+    const sceneTop = readCssPx("--prep-scene-top", 14);
+    const pad = Math.round(10 * uiScale);
+
+    const colW = layerWorld?.clientWidth > 0 ? layerWorld.clientWidth : fieldCol.clientWidth;
+    const colH = layerWorld?.clientHeight > 0 ? layerWorld.clientHeight : fieldCol.clientHeight;
+    const availW = Math.max(200, colW - pad * 2);
+    const heroOverlapH = Math.round(readCssPx("--tablet-prep-hero-h", 0) * 0.28);
+    const availH = Math.max(200, colH - sceneTop - pad - heroOverlapH);
+
+    const minCell = Math.round(44 * uiScale);
+    const maxCell = Math.round(84 * uiScale);
+    const byW = Math.floor((availW - (PREP_GRID_COLS - 1) * gap) / PREP_GRID_COLS);
+    const byH = Math.floor((availH - (PREP_GRID_ROWS - 1) * gap) / PREP_GRID_ROWS);
+    const cell = Math.min(maxCell, Math.max(minCell, Math.min(byW, byH)));
+
+    const prev = readCssPx("--cell-size", 0);
+    if (Math.abs(prev - cell) < 1) return false;
+
+    root.style.setProperty("--cell-size", `${cell}px`);
+    return true;
+  }
+
   function shouldUseStackedPrep(w, h, tier) {
     if (shouldUseMobilePrepLayout(w, h, tier)) return false;
 
@@ -2181,6 +2219,7 @@
       if (usesTabletPrepHeroLayout(root)) {
         const stage = canvas.closest(".battle-canvas-stage");
         const fieldCol = canvas.closest(".prep-field-column");
+        const layerWorld = fieldCol?.querySelector(".layer-world");
         const stageW = fieldCol?.clientWidth ?? stage?.clientWidth ?? canvas.width;
         if (stageW > 0) {
           const sceneTop = readCssPx("--prep-scene-top", 14);
@@ -2189,10 +2228,19 @@
             : Math.max(320, (window.visualViewport?.height ?? window.innerHeight) - measurePrepChromeHeight());
           const heroH = computeTabletPrepHeroHeight(columnH, sceneTop);
           root.style.setProperty("--tablet-prep-hero-h", `${heroH}px`);
-          const maxH = Math.max(120, columnH - heroH - sceneTop - 20);
-          const scale = Math.min(stageW / canvas.width, maxH / canvas.height, 1);
-          const w = Math.max(1, Math.floor(canvas.width * scale));
-          const ch = Math.max(1, Math.floor(canvas.height * scale));
+          if (syncTabletSidePrepGridMetrics() && typeof window.applyGridMetricsFromCss === "function") {
+            window.applyGridMetricsFromCss();
+          }
+          const uiScale = readCssPx("--ui-scale", 1);
+          const pad = Math.round(10 * uiScale);
+          const fitW = layerWorld?.clientWidth > 0 ? layerWorld.clientWidth : stageW;
+          const fitH = layerWorld?.clientHeight > 0 ? layerWorld.clientHeight : columnH;
+          const heroOverlapH = Math.round(heroH * 0.28);
+          const maxH = Math.max(160, fitH - sceneTop - pad - heroOverlapH);
+          const scale = Math.min(fitW / canvas.width, maxH / canvas.height);
+          const finalScale = Math.min(Math.max(scale, 0.9), 1.06);
+          const w = Math.max(1, Math.floor(canvas.width * finalScale));
+          const ch = Math.max(1, Math.floor(canvas.height * finalScale));
           root.style.setProperty("--prep-canvas-display-w", `${w}px`);
           root.style.setProperty("--prep-canvas-display-h", `${ch}px`);
           setCanvasDisplaySize(canvas, w, ch);
@@ -2559,6 +2607,9 @@
     syncPrepHeroSlotHeight();
     window.syncPrepHeroCardChrome?.();
 
+    if (usesTabletPrepHeroLayout() && appPhase === "prep") {
+      syncTabletSidePrepGridMetrics();
+    }
     if (typeof window.applyGridMetricsFromCss === "function") {
       window.applyGridMetricsFromCss();
     }
