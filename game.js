@@ -323,6 +323,18 @@ function syncTdRunLiveDom() {
   if (!app) return;
   if (tdRunLive && isTdMode()) app.dataset.tdRunLive = "true";
   else app.removeAttribute("data-td-run-live");
+  syncPrepHeroHudDom();
+}
+
+function isPrepHeroHudVisible() {
+  return (phase === "prep" || isTdRunLive()) && isPrepHeroCardHud();
+}
+
+function syncPrepHeroHudDom() {
+  const app = document.getElementById("app");
+  if (!app) return;
+  if (isTdRunLive() && isPrepHeroCardHud()) app.dataset.prepHeroHud = "true";
+  else app.removeAttribute("data-prep-hero-hud");
 }
 
 function getTdMaxWaves() {
@@ -620,7 +632,7 @@ function positionStandingsDropdown() {
 function syncPrepBottomStats({ gold, hpLabel, roundLabel, lobbyHp = false } = {}) {
   const bar = document.getElementById("prep-bottom-stats");
   if (!bar) return;
-  const show = phase === "prep" && isPrepHeroCardHud();
+  const show = isPrepHeroHudVisible();
   bar.toggleAttribute("hidden", !show);
   if (!show) return;
   const goldEl = document.getElementById("prep-bottom-stat-gold");
@@ -647,7 +659,7 @@ function syncPrepBottomBarChrome() {
     closeStandingsDropdown();
   }
 
-  if (!isPrep || !isPrepHeroCardHud()) {
+  if ((!isPrep && !isTdRunLive()) || !isPrepHeroCardHud()) {
     document.getElementById("prep-bottom-stats")?.setAttribute("hidden", "");
   }
 }
@@ -2629,6 +2641,7 @@ function renderPhase() {
   setBattleControlsVisible(isBattleUiPhase());
   syncBattleArenaLayout();
   syncTdBattleChrome();
+  syncPrepHeroHudDom();
   if (isTdMode() && tdRunLive && phase === "prep" && tdState && !gameOver
     && !(typeof ScreenTransitions !== "undefined" && ScreenTransitions.isScreenTransitioning())) {
     requestAnimationFrame(() => startTdRun());
@@ -9033,14 +9046,23 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
   const prepPlayer = document.getElementById("prep-character-player");
   const prepEnemy = document.getElementById("prep-character-enemy");
   const statsHud = document.getElementById("prep-stats-hud");
-  if (phase !== "prep") {
+  const showHeroHud = isPrepHeroHudVisible();
+  if (phase !== "prep" && !isTdRunLive()) {
     layer?.setAttribute("aria-hidden", "true");
     prepPlayer?.setAttribute("hidden", "");
     prepEnemy?.setAttribute("hidden", "");
     return;
   }
 
-  layer?.setAttribute("aria-hidden", "false");
+  if (phase === "prep") {
+    layer?.setAttribute("aria-hidden", "false");
+  } else {
+    layer?.setAttribute("aria-hidden", "true");
+    prepPlayer?.setAttribute("hidden", "");
+    prepEnemy?.setAttribute("hidden", "");
+  }
+
+  if (!showHeroHud && phase !== "prep") return;
 
   const fillChar = (el, profile, chrSide) => {
     if (!el) return;
@@ -9057,14 +9079,16 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
     }
   };
 
-  fillChar(prepPlayer, playerProfile, "player");
-  fillChar(prepEnemy, enemyProfile, "enemy");
-  if (prepViewSide === "player") {
-    prepPlayer?.removeAttribute("hidden");
-    prepEnemy?.setAttribute("hidden", "");
-  } else {
-    prepEnemy?.removeAttribute("hidden");
-    prepPlayer?.setAttribute("hidden", "");
+  if (phase === "prep") {
+    fillChar(prepPlayer, playerProfile, "player");
+    fillChar(prepEnemy, enemyProfile, "enemy");
+    if (prepViewSide === "player") {
+      prepPlayer?.removeAttribute("hidden");
+      prepEnemy?.setAttribute("hidden", "");
+    } else {
+      prepEnemy?.removeAttribute("hidden");
+      prepPlayer?.setAttribute("hidden", "");
+    }
   }
 
   const side = prepViewSide;
@@ -9114,7 +9138,13 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
       : lobbyPlayer
         ? `${lobbyPlayer.hp}/${LOBBY_START_HP}`
         : isTdRunLive() && tdState && side === "player"
-          ? `🏰${(tdState.towers || []).filter((t) => t.alive).length} · база ${tdState.baseLives}❤️`
+          ? (() => {
+            const commander = (tdState.towers || []).find((t) => t.isCommander || t.slotId === 0);
+            if (commander?.hero?.maxHp) {
+              return `${Math.ceil(commander.hero.hp)}/${commander.hero.maxHp}`;
+            }
+            return profile.hpDisplay;
+          })()
         : isTdMode() && side === "player" && tdHeroHp !== null
           ? `${Math.ceil(tdHeroHp)}/${profile.hpDisplay?.split("/")?.[1] || profile.hpDisplay || "—"}`
           : profile.hpDisplay;

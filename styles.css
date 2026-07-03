@@ -5801,12 +5801,12 @@ html[data-touch="true"] .bottom-chrome-hints .prep-hint-key {
   display: none !important;
 }
 
-#app[data-phase="battle"] .prep-character-layer,
-#app[data-phase="battle"] .prep-top-bar,
-#app[data-phase="battle"] .prep-stats-hud,
-#app[data-phase="replay"] .prep-character-layer,
-#app[data-phase="replay"] .prep-top-bar,
-#app[data-phase="replay"] .prep-stats-hud {
+#app[data-phase="battle"]:not([data-prep-hero-hud="true"]) .prep-character-layer,
+#app[data-phase="battle"]:not([data-prep-hero-hud="true"]) .prep-top-bar,
+#app[data-phase="battle"]:not([data-prep-hero-hud="true"]) .prep-stats-hud,
+#app[data-phase="replay"]:not([data-prep-hero-hud="true"]) .prep-character-layer,
+#app[data-phase="replay"]:not([data-prep-hero-hud="true"]) .prep-top-bar,
+#app[data-phase="replay"]:not([data-prep-hero-hud="true"]) .prep-stats-hud {
   display: none !important;
 }
 

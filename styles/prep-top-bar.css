@@ -119,7 +119,7 @@
   left: 0;
 }
 
-#app[data-phase="battle"] .prep-top-bar,
-#app[data-phase="replay"] .prep-top-bar {
+#app[data-phase="battle"]:not([data-prep-hero-hud="true"]) .prep-top-bar,
+#app[data-phase="replay"]:not([data-prep-hero-hud="true"]) .prep-top-bar {
   display: none !important;
 }

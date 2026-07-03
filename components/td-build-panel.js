@@ -89,7 +89,7 @@ const TdBuildPanel = (() => {
             <span class="td-build-tower__meta">${slot?.label || "Слот"} · HP ${hp}/${maxHp} · 📦 ${items}</span>
           </div>
         </div>
-        <p class="td-build-hint td-build-hint--compact">🎒 Рюкзак слева на карте. Из магазина — <b>перетащите дугой</b> (сумки тоже). ZR — поворот.</p>`;
+        <p class="td-build-hint td-build-hint--compact">🎒 Рюкзак 6×6 слева на карте. Из магазина — <b>перетащите дугой</b> (сумки тоже). ZR — поворот.</p>`;
       return;
     }
 

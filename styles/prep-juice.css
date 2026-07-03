@@ -5,17 +5,17 @@
 
 /* ─── Типографика (Nunito — округлый F2P-стандарт) ─── */
 
-body:has(#app[data-phase="prep"]) {
+body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) {
   font-family: "Nunito", "SF Pro Rounded", "Segoe UI", system-ui, sans-serif;
   font-weight: 700;
   -webkit-font-smoothing: antialiased;
 }
 
-#app[data-phase="prep"] .prep-stats-class,
-#app[data-phase="prep"] .prep-stats-metric,
-#app[data-phase="prep"] .shop-panel h3,
-#app[data-phase="prep"] .bench-panel h3,
-#app[data-phase="prep"] .mutation-progress-target {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-stats-class,
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-stats-metric,
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .shop-panel h3,
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .bench-panel h3,
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .mutation-progress-target {
   font-family: inherit;
   font-weight: 800;
   letter-spacing: 0.01em;
@@ -23,7 +23,7 @@ body:has(#app[data-phase="prep"]) {
 
 /* ─── Верхняя полоска: прозрачно на лугу ─── */
 
-#app[data-phase="prep"] .prep-top-bar {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-top-bar {
   background: transparent;
   border-bottom: none;
   box-shadow: none;
@@ -31,7 +31,7 @@ body:has(#app[data-phase="prep"]) {
   -webkit-backdrop-filter: none;
 }
 
-#app[data-phase="prep"] .prep-top-bar .run-hud-phase {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-top-bar .run-hud-phase {
   background: rgba(255, 255, 255, 0.38);
   border: 2px solid rgba(255, 255, 255, 0.55);
   border-radius: calc(10px * var(--ui-scale));
@@ -41,15 +41,15 @@ body:has(#app[data-phase="prep"]) {
   text-shadow: var(--juice-text-legible);
 }
 
-#app[data-phase="prep"] .prep-top-bar .prep-stats-class {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-top-bar .prep-stats-class {
   color: var(--juice-ink);
   font-size: max(var(--font-lg), calc(1.05rem * var(--type-scale, 1)));
   text-shadow: var(--juice-text-legible);
 }
 
-#app[data-phase="prep"] .prep-top-bar .prep-stats-hud,
-#app[data-phase="prep"] .prep-top-bar .prep-stats-row,
-#app[data-phase="prep"] .prep-top-bar .prep-stats-metric {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-top-bar .prep-stats-hud,
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-top-bar .prep-stats-row,
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-top-bar .prep-stats-metric {
   color: var(--juice-ink);
   font-weight: 800;
   text-shadow: var(--juice-text-legible);
@@ -57,7 +57,7 @@ body:has(#app[data-phase="prep"]) {
 
 /* ─── Мутации: без плашки ─── */
 
-#app[data-phase="prep"] .mutation-progress {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .mutation-progress {
   background: transparent;
   border: none;
   border-radius: 0;
@@ -65,33 +65,33 @@ body:has(#app[data-phase="prep"]) {
   padding: calc(6px * var(--ui-scale)) 0;
 }
 
-#app[data-phase="prep"] .mutation-progress-eyebrow {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .mutation-progress-eyebrow {
   color: #5c3d8a;
   opacity: 1;
   font-weight: 800;
   text-shadow: var(--juice-text-legible);
 }
 
-#app[data-phase="prep"] .mutation-progress-target {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .mutation-progress-target {
   color: #3d2560;
   font-weight: 900;
   text-shadow: var(--juice-text-legible);
 }
 
-#app[data-phase="prep"] .mutation-progress-bar {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .mutation-progress-bar {
   height: calc(10px * var(--ui-scale));
   background: rgba(45, 74, 40, 0.14);
   border: 1px solid rgba(140, 100, 200, 0.22);
   box-shadow: inset 0 1px 3px rgba(30, 60, 28, 0.12);
 }
 
-#app[data-phase="prep"] .mutation-progress-fill {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .mutation-progress-fill {
   background: linear-gradient(90deg, #7c4dff 0%, #ff6bcb 55%, var(--meadow-gold-bright) 100%);
   box-shadow: 0 0 10px rgba(124, 77, 255, 0.45);
 }
 
-#app[data-phase="prep"] .mutation-progress-meta,
-#app[data-phase="prep"] .mutation-progress-alts {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .mutation-progress-meta,
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .mutation-progress-alts {
   color: var(--juice-ink);
   opacity: 1;
   font-weight: 700;
@@ -100,7 +100,7 @@ body:has(#app[data-phase="prep"]) {
 
 /* ─── Усиления: без плашки ─── */
 
-#app[data-phase="prep"] .prep-enhancement-strip {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-enhancement-strip {
   background: transparent;
   border: none;
   border-radius: 0;
@@ -108,14 +108,14 @@ body:has(#app[data-phase="prep"]) {
   box-shadow: none;
 }
 
-#app[data-phase="prep"] .prep-enhancement-eyebrow {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-enhancement-eyebrow {
   color: var(--juice-ink);
   opacity: 1;
   font-weight: 800;
   text-shadow: var(--juice-text-legible);
 }
 
-#app[data-phase="prep"] .enh-slot {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .enh-slot {
   background: transparent;
   border: 2px dashed rgba(140, 100, 200, 0.5);
   border-radius: calc(10px * var(--ui-scale));
@@ -124,13 +124,13 @@ body:has(#app[data-phase="prep"]) {
   text-shadow: var(--juice-text-legible);
 }
 
-#app[data-phase="prep"] .enh-slot--filled {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .enh-slot--filled {
   border-style: solid;
   border-color: rgba(140, 100, 200, 0.55);
   background: rgba(255, 255, 255, 0.28);
 }
 
-#app[data-phase="prep"] .enh-slot--drop-target {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .enh-slot--drop-target {
   outline: none;
   border-color: var(--meadow-grass);
   box-shadow: 0 0 0 3px rgba(92, 184, 92, 0.35);
@@ -138,7 +138,7 @@ body:has(#app[data-phase="prep"]) {
 
 /* ─── Магазин: прозрачно, кнопки остаются ─── */
 
-#app[data-phase="prep"] #shop-panel {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel {
   background: transparent;
   border-left: none;
   box-shadow: none;
@@ -146,25 +146,25 @@ body:has(#app[data-phase="prep"]) {
   -webkit-backdrop-filter: none;
 }
 
-#app[data-phase="prep"] #shop-panel .shop-panel h3,
-#app[data-phase="prep"] .shop-panel h3 {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-panel h3,
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .shop-panel h3 {
   color: var(--juice-ink);
   font-weight: 900;
   font-size: var(--font-xl);
   text-shadow: var(--juice-text-legible);
 }
 
-#app[data-phase="prep"] #shop-panel .shop-hint,
-#app[data-phase="prep"] #shop-panel .shop-hint-touch,
-#app[data-phase="prep"] #shop-panel .shop-sell-hint {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-hint,
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-hint-touch,
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-sell-hint {
   color: var(--juice-ink);
   font-weight: 700;
   opacity: 1;
   text-shadow: var(--juice-text-legible);
 }
 
-#app[data-phase="prep"] .shop-card,
-#app[data-phase="prep"] .bench-card {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .shop-card,
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .bench-card {
   background: transparent;
   border: none;
   border-radius: calc(14px * var(--ui-scale));
@@ -172,8 +172,8 @@ body:has(#app[data-phase="prep"]) {
   transition: transform 0.12s ease, filter 0.12s ease;
 }
 
-#app[data-phase="prep"] .shop-card:hover:not(.empty):not(.unaffordable),
-#app[data-phase="prep"] .bench-card:hover:not(.empty) {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .shop-card:hover:not(.empty):not(.unaffordable),
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .bench-card:hover:not(.empty) {
   background: rgba(255, 255, 255, 0.22);
   border: none;
   box-shadow: none;
@@ -181,62 +181,62 @@ body:has(#app[data-phase="prep"]) {
   filter: drop-shadow(0 4px 12px rgba(30, 60, 28, 0.15));
 }
 
-#app[data-phase="prep"] .shop-card.unaffordable {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .shop-card.unaffordable {
   opacity: 0.55;
 }
 
 /* Иконки предметов — белая «подушка» + rarity fanfare */
-#app[data-phase="prep"] #shop-panel .shop-item-visual .icon,
-#app[data-phase="prep"] #shop-panel .bench-panel .bench-card .icon,
-#app[data-phase="prep"] .shop-card--amplifier .item-icon-shell,
-#app[data-phase="prep"] .shop-card--enhancement .item-icon-shell--enhancement {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-item-visual .icon,
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .bench-panel .bench-card .icon,
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .shop-card--amplifier .item-icon-shell,
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .shop-card--enhancement .item-icon-shell--enhancement {
   background: rgba(255, 255, 255, 0.94) !important;
   border: 2px solid rgba(255, 255, 255, 0.95);
   box-shadow: 0 2px 8px rgba(30, 60, 28, 0.12) !important;
 }
 
-#app[data-phase="prep"] #shop-panel .shop-card.rarity-common .shop-item-visual .icon {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-card.rarity-common .shop-item-visual .icon {
   box-shadow: 0 0 0 2px rgba(120, 130, 140, 0.45), 0 2px 8px rgba(30, 60, 28, 0.1) !important;
 }
 
-#app[data-phase="prep"] #shop-panel .shop-card.rarity-uncommon .shop-item-visual .icon {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-card.rarity-uncommon .shop-item-visual .icon {
   box-shadow:
     0 0 0 2px rgba(63, 185, 80, 0.65),
     0 0 14px rgba(63, 185, 80, 0.28) !important;
 }
 
-#app[data-phase="prep"] #shop-panel .shop-card.rarity-rare .shop-item-visual .icon {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-card.rarity-rare .shop-item-visual .icon {
   box-shadow:
     0 0 0 2px rgba(58, 140, 255, 0.7),
     0 0 18px rgba(58, 140, 255, 0.32) !important;
 }
 
-#app[data-phase="prep"] #shop-panel .shop-card.rarity-epic .shop-item-visual .icon {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-card.rarity-epic .shop-item-visual .icon {
   box-shadow:
     0 0 0 2px rgba(163, 113, 247, 0.75),
     0 0 20px rgba(163, 113, 247, 0.35) !important;
 }
 
-#app[data-phase="prep"] #shop-panel .shop-card.rarity-legendary .shop-item-visual .icon {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-card.rarity-legendary .shop-item-visual .icon {
   box-shadow:
     0 0 0 3px rgba(245, 200, 66, 0.8),
     0 0 24px rgba(245, 200, 66, 0.4) !important;
 }
 
-#app[data-phase="prep"] #shop-panel .shop-card.frozen .shop-item-visual .icon {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-card.frozen .shop-item-visual .icon {
   box-shadow:
     0 0 0 2px rgba(88, 166, 255, 0.85),
     0 0 16px rgba(88, 166, 255, 0.35) !important;
 }
 
-#app[data-phase="prep"] #shop-panel .shop-item-stack > .cost {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-item-stack > .cost {
   color: var(--juice-ink);
   font-weight: 900;
   text-shadow: var(--juice-text-outline);
 }
 
 /* Кнопки магазина */
-#app[data-phase="prep"] .btn-refresh-shop {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .btn-refresh-shop {
   background: linear-gradient(180deg, #fff 0%, #f5edd4 100%);
   border: 2px solid var(--meadow-border);
   color: var(--juice-ink);
@@ -246,13 +246,13 @@ body:has(#app[data-phase="prep"]) {
   min-height: var(--touch-target-min);
 }
 
-#app[data-phase="prep"] .btn-refresh-shop:hover:not(:disabled) {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .btn-refresh-shop:hover:not(:disabled) {
   filter: brightness(1.04);
   transform: translateY(-1px);
 }
 
-#app[data-phase="prep"] .shop-action-row .btn-secondary,
-#app[data-phase="prep"] .btn-recipe-book {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .shop-action-row .btn-secondary,
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .btn-recipe-book {
   background: linear-gradient(180deg, #f3e8ff 0%, #e8d4ff 100%);
   border: 2px solid rgba(124, 77, 255, 0.45);
   color: #4a2d7a;
@@ -262,20 +262,20 @@ body:has(#app[data-phase="prep"]) {
   min-height: var(--touch-target-min);
 }
 
-#app[data-phase="prep"] .shop-action-row .btn-secondary:hover,
-#app[data-phase="prep"] .btn-recipe-book:hover {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .shop-action-row .btn-secondary:hover,
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .btn-recipe-book:hover {
   background: linear-gradient(180deg, #faf5ff 0%, #efe0ff 100%);
   border-color: rgba(124, 77, 255, 0.65);
   transform: translateY(-1px);
 }
 
-#app[data-phase="prep"] #shop-panel .shop-sell-zone {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-sell-zone {
   background: transparent;
   border: 2px dashed rgba(200, 134, 10, 0.45);
   border-radius: calc(12px * var(--ui-scale));
 }
 
-#app[data-phase="prep"] #shop-panel .shop-sell-zone.sell-drop-target {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-sell-zone.sell-drop-target {
   background: rgba(245, 200, 66, 0.22);
   border-color: var(--meadow-gold);
   box-shadow: 0 0 0 3px rgba(245, 200, 66, 0.35), inset 0 0 20px rgba(245, 200, 66, 0.15);
@@ -284,7 +284,7 @@ body:has(#app[data-phase="prep"]) {
 
 /* ─── Скамейка: прозрачно ─── */
 
-#app[data-phase="prep"] .bench-panel {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .bench-panel {
   background: transparent;
   border: none;
   border-radius: 0;
@@ -292,13 +292,13 @@ body:has(#app[data-phase="prep"]) {
   padding: calc(4px * var(--ui-scale)) 0;
 }
 
-#app[data-phase="prep"] .bench-panel h3 {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .bench-panel h3 {
   color: var(--juice-ink);
   font-weight: 900;
   text-shadow: var(--juice-text-legible);
 }
 
-#app[data-phase="prep"] .bench-card.empty {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .bench-card.empty {
   color: var(--juice-ink);
   font-weight: 800;
   opacity: 0.85;
@@ -307,7 +307,7 @@ body:has(#app[data-phase="prep"]) {
 
 /* ─── Нижняя панель: луг (meadow chrome) ─── */
 
-body:has(#app[data-phase="prep"]) .bottom-chrome {
+body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome {
   background: linear-gradient(
     180deg,
     rgba(255, 252, 240, 0.82) 0%,
@@ -321,13 +321,13 @@ body:has(#app[data-phase="prep"]) .bottom-chrome {
 
 /* ─── Bottom bar: единый визуальный язык (.bottombar-btn) ─── */
 
-body:has(#app[data-phase="prep"]) .bottom-chrome,
+body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome,
 body:has(#class-overlay:not(.hidden)) .bottom-chrome {
   --bottombar-btn-radius: calc(10px * var(--ui-scale, 1));
   --bottombar-btn-h: max(40px, var(--touch-target-min));
 }
 
-body:has(#app[data-phase="prep"]) .bottom-chrome .bottombar-btn,
+body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .bottombar-btn,
 body:has(#class-overlay:not(.hidden)) .bottom-chrome .bottombar-btn {
   display: inline-flex;
   align-items: center;
@@ -356,7 +356,7 @@ body:has(#class-overlay:not(.hidden)) .bottom-chrome .bottombar-btn {
     background 0.12s ease;
 }
 
-body:has(#app[data-phase="prep"]) .bottom-chrome .bottombar-btn:hover,
+body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .bottombar-btn:hover,
 body:has(#class-overlay:not(.hidden)) .bottom-chrome .bottombar-btn:hover {
   transform: translateY(-1px);
   background: linear-gradient(180deg, #ffffff 0%, #f5faf2 100%);
@@ -367,7 +367,7 @@ body:has(#class-overlay:not(.hidden)) .bottom-chrome .bottombar-btn:hover {
     inset 0 1px 0 rgba(255, 255, 255, 0.92);
 }
 
-body:has(#app[data-phase="prep"]) .bottom-chrome .bottombar-btn:active,
+body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .bottombar-btn:active,
 body:has(#class-overlay:not(.hidden)) .bottom-chrome .bottombar-btn:active {
   transform: translateY(1px);
   box-shadow:
@@ -375,8 +375,8 @@ body:has(#class-overlay:not(.hidden)) .bottom-chrome .bottombar-btn:active {
     inset 0 2px 4px rgba(30, 60, 28, 0.08);
 }
 
-body:has(#app[data-phase="prep"]) .bottom-chrome .bottombar-btn.active,
-body:has(#app[data-phase="prep"]) .bottom-chrome .prep-side-btn.active,
+body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .bottombar-btn.active,
+body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .prep-side-btn.active,
 body:has(#class-overlay:not(.hidden)) .bottom-chrome .bottombar-btn.active {
   background: linear-gradient(180deg, #ecfae8 0%, #d8f0d4 100%);
   border-color: var(--meadow-grass-dark);
@@ -389,18 +389,18 @@ body:has(#class-overlay:not(.hidden)) .bottom-chrome .bottombar-btn.active {
     inset 0 0 0 1px rgba(92, 184, 92, 0.2);
 }
 
-body:has(#app[data-phase="prep"]) .bottom-chrome .bottombar-btn--icon {
+body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .bottombar-btn--icon {
   min-width: var(--bottombar-btn-h);
   padding: calc(6px * var(--ui-scale, 1)) calc(8px * var(--ui-scale, 1));
   font-size: max(var(--font-md), calc(1rem * var(--type-scale, 1)));
 }
 
-body:has(#app[data-phase="prep"]) .bottom-chrome .btn-combat-feed.bottombar-btn:not(.hud-orb-btn) {
+body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .btn-combat-feed.bottombar-btn:not(.hud-orb-btn) {
   gap: calc(6px * var(--ui-scale, 1));
   padding: calc(6px * var(--ui-scale, 1)) calc(14px * var(--ui-scale, 1));
 }
 
-body:has(#app[data-phase="prep"]) .bottom-chrome .hud-orb-btn.bottombar-btn {
+body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .hud-orb-btn.bottombar-btn {
   background: transparent;
   border: none;
   box-shadow: none;
@@ -410,19 +410,19 @@ body:has(#app[data-phase="prep"]) .bottom-chrome .hud-orb-btn.bottombar-btn {
   border-radius: 50%;
 }
 
-body:has(#app[data-phase="prep"]) .bottom-chrome .hud-orb-btn.bottombar-btn:hover {
+body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .hud-orb-btn.bottombar-btn:hover {
   background: transparent;
   border: none;
   box-shadow: none;
   transform: none;
 }
 
-body:has(#app[data-phase="prep"]) .bottom-chrome .hud-orb-btn.bottombar-btn:active {
+body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .hud-orb-btn.bottombar-btn:active {
   transform: scale(0.96);
 }
 
-body:has(#app[data-phase="prep"]) .bottom-chrome .btn-combat-feed--open.bottombar-btn:not(.hud-orb-btn),
-body:has(#app[data-phase="prep"]) .bottom-chrome .standings-toggle.bottombar-btn.active {
+body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .btn-combat-feed--open.bottombar-btn:not(.hud-orb-btn),
+body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .standings-toggle.bottombar-btn.active {
   background: linear-gradient(180deg, #fff8e0 0%, #ffeab8 100%);
   border-color: var(--meadow-gold);
   color: var(--juice-ink);
@@ -432,7 +432,7 @@ body:has(#app[data-phase="prep"]) .bottom-chrome .standings-toggle.bottombar-btn
     inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
-body:has(#app[data-phase="prep"]) .bottom-chrome .hud-stats-pill:not(.hud-stats-pill--metrics) {
+body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .hud-stats-pill:not(.hud-stats-pill--metrics) {
   background: linear-gradient(180deg, #ffffff 0%, #f2f6f0 100%);
   border: 2px solid var(--meadow-border-soft);
   box-shadow:
@@ -441,15 +441,15 @@ body:has(#app[data-phase="prep"]) .bottom-chrome .hud-stats-pill:not(.hud-stats-
     inset 0 1px 0 rgba(255, 255, 255, 0.88);
 }
 
-body:has(#app[data-phase="prep"]) .bottom-chrome .btn-combat-feed-chevron {
+body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .btn-combat-feed-chevron {
   font-size: 0.85em;
   opacity: 0.72;
   line-height: 1;
 }
 
 /* CTA «В бой!» — главный дофаминовый якорь */
-body:has(#app[data-phase="prep"]) .bottom-chrome .btn-primary,
-body:has(#app[data-phase="prep"]) .bottom-chrome .btn-fight-header {
+body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .btn-primary,
+body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .btn-fight-header {
   background: linear-gradient(180deg, #ffe566 0%, #f5c842 45%, #e8a317 100%);
   border: 2px solid rgba(180, 110, 0, 0.45);
   color: var(--juice-ink);
@@ -468,8 +468,8 @@ body:has(#app[data-phase="prep"]) .bottom-chrome .btn-fight-header {
   animation: prep-fight-cta-pulse 2.4s ease-in-out infinite;
 }
 
-body:has(#app[data-phase="prep"]) .bottom-chrome .btn-primary:hover:not(:disabled),
-body:has(#app[data-phase="prep"]) .bottom-chrome .btn-fight-header:hover:not(:disabled) {
+body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .btn-primary:hover:not(:disabled),
+body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .btn-fight-header:hover:not(:disabled) {
   filter: brightness(1.06);
   transform: translateY(-2px);
   box-shadow:
@@ -494,13 +494,13 @@ body:has(#app[data-phase="prep"]) .bottom-chrome .btn-fight-header:hover:not(:di
 }
 
 @media (prefers-reduced-motion: reduce) {
-  body:has(#app[data-phase="prep"]) .bottom-chrome .bottombar-btn,
+  body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .bottombar-btn,
   body:has(#class-overlay:not(.hidden)) .bottom-chrome .bottombar-btn {
     transition: none;
   }
 
-  body:has(#app[data-phase="prep"]) .bottom-chrome .bottombar-btn:hover,
-  body:has(#app[data-phase="prep"]) .bottom-chrome .bottombar-btn:active,
+  body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .bottombar-btn:hover,
+  body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .bottombar-btn:active,
   body:has(#class-overlay:not(.hidden)) .bottom-chrome .bottombar-btn:hover,
   body:has(#class-overlay:not(.hidden)) .bottom-chrome .bottombar-btn:active {
     transform: none;
@@ -508,15 +508,15 @@ body:has(#app[data-phase="prep"]) .bottom-chrome .btn-fight-header:hover:not(:di
 }
 
 @media (prefers-reduced-motion: reduce) {
-  body:has(#app[data-phase="prep"]) .bottom-chrome .btn-primary,
-  body:has(#app[data-phase="prep"]) .bottom-chrome .btn-fight-header {
+  body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .btn-primary,
+  body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .btn-fight-header {
     animation: none;
   }
 }
 
 /* ─── Экипировка ─── */
 
-#app[data-phase="prep"] .btn-toggle-doll {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .btn-toggle-doll {
   background: rgba(255, 255, 255, 0.55);
   border: 2px solid rgba(255, 255, 255, 0.7);
   color: var(--juice-ink);
@@ -525,30 +525,30 @@ body:has(#app[data-phase="prep"]) .bottom-chrome .btn-fight-header:hover:not(:di
   border-radius: calc(12px * var(--ui-scale));
 }
 
-#app[data-phase="prep"] .btn-toggle-doll.active {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .btn-toggle-doll.active {
   border-color: var(--meadow-gold);
   color: #8a5a00;
   background: rgba(245, 200, 66, 0.35);
 }
 
-html[data-prep-layout="mobile"] #app[data-phase="prep"] .btn-toggle-doll {
+html[data-prep-layout="mobile"] #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .btn-toggle-doll {
   background: rgba(255, 255, 255, 0.72);
   border: 2px solid rgba(255, 255, 255, 0.85);
   box-shadow: var(--juice-shadow);
 }
 
-#app[data-phase="prep"] .prep-build-emoji-btn {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-build-emoji-btn {
   background: rgba(255, 255, 255, 0.42);
   border: 2px solid rgba(255, 255, 255, 0.62);
   box-shadow: var(--juice-shadow);
 }
 
-#app[data-phase="prep"] .prep-build-emoji-btn:hover:not(:disabled) {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-build-emoji-btn:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.62);
   border-color: rgba(140, 100, 200, 0.55);
 }
 
-#app[data-phase="prep"] .prep-build-emoji-btn--lore-active {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-build-emoji-btn--lore-active {
   border-color: rgba(245, 200, 66, 0.72);
   box-shadow:
     0 0 0 2px rgba(245, 200, 66, 0.28),
@@ -557,73 +557,73 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] .btn-toggle-doll {
 
 /* ─── Лобби-ростер ─── */
 
-#app[data-phase="prep"] .lobby-roster-float-handle,
-#app[data-phase="prep"] .lobby-roster-hide-btn {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .lobby-roster-float-handle,
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .lobby-roster-hide-btn {
   background: rgba(255, 255, 255, 0.35);
   border: 2px solid rgba(255, 255, 255, 0.55);
   border-radius: calc(10px * var(--ui-scale));
   box-shadow: var(--juice-shadow);
 }
 
-#app[data-phase="prep"] .lobby-roster-float-handle:hover,
-#app[data-phase="prep"] .lobby-roster-hide-btn:hover {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .lobby-roster-float-handle:hover,
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .lobby-roster-hide-btn:hover {
   background: rgba(255, 255, 255, 0.55);
 }
 
-#app[data-phase="prep"] .lobby-prep-roster-panel--collapsed .lobby-roster-float-handle,
-#app[data-phase="prep"] .lobby-prep-roster-panel--collapsed .lobby-roster-hide-btn {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .lobby-prep-roster-panel--collapsed .lobby-roster-float-handle,
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .lobby-prep-roster-panel--collapsed .lobby-roster-hide-btn {
   background: rgba(255, 255, 255, 0.72);
 }
 
-#app[data-phase="prep"] .lobby-fighter-card-name {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .lobby-fighter-card-name {
   color: var(--juice-ink);
   font-weight: 800;
 }
 
-#app[data-phase="prep"] .lobby-fighter-card--yours,
-#app[data-phase="prep"] .lobby-fighter-card--yours-match {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .lobby-fighter-card--yours,
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .lobby-fighter-card--yours-match {
   background: rgba(255, 255, 255, 0.28);
   border: 2px solid rgba(92, 184, 92, 0.55);
   border-radius: calc(12px * var(--ui-scale));
   box-shadow: none;
 }
 
-#app[data-phase="prep"] .lobby-fighter-card:not(.lobby-fighter-card--yours):not(.lobby-fighter-card--yours-match) {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .lobby-fighter-card:not(.lobby-fighter-card--yours):not(.lobby-fighter-card--yours-match) {
   background: transparent;
   border: none;
   border-radius: calc(12px * var(--ui-scale));
   box-shadow: none;
 }
 
-#app[data-phase="prep"] .lobby-fighter-card:not(.lobby-fighter-card--yours):not(.lobby-fighter-card--yours-match):hover:not(:disabled),
-#app[data-phase="prep"] .lobby-fighter-card:not(.lobby-fighter-card--yours):not(.lobby-fighter-card--yours-match):focus-visible:not(:disabled),
-#app[data-phase="prep"] .lobby-fighter-card:not(.lobby-fighter-card--yours):not(.lobby-fighter-card--yours-match).lobby-fighter-card--touch:not(:disabled) {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .lobby-fighter-card:not(.lobby-fighter-card--yours):not(.lobby-fighter-card--yours-match):hover:not(:disabled),
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .lobby-fighter-card:not(.lobby-fighter-card--yours):not(.lobby-fighter-card--yours-match):focus-visible:not(:disabled),
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .lobby-fighter-card:not(.lobby-fighter-card--yours):not(.lobby-fighter-card--yours-match).lobby-fighter-card--touch:not(:disabled) {
   background: rgba(255, 255, 255, 0.28);
   border: 2px solid var(--meadow-gold-bright);
   box-shadow: 0 0 0 3px rgba(245, 200, 66, 0.35);
 }
 
-#app[data-phase="prep"] .lobby-fighter-card--active:not(.lobby-fighter-card--yours):not(.lobby-fighter-card--yours-match),
-#app[data-phase="prep"] .lobby-fighter-card--next:not(.lobby-fighter-card--yours):not(.lobby-fighter-card--yours-match) {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .lobby-fighter-card--active:not(.lobby-fighter-card--yours):not(.lobby-fighter-card--yours-match),
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .lobby-fighter-card--next:not(.lobby-fighter-card--yours):not(.lobby-fighter-card--yours-match) {
   outline: none;
   border: none;
   box-shadow: none;
   background: transparent;
 }
 
-#app[data-phase="prep"] .lobby-fighter-card-avatar {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .lobby-fighter-card-avatar {
   background: rgba(255, 255, 255, 0.85);
   border: 2px solid var(--meadow-border-soft);
 }
 
 /* ─── Рюкзак: лёгкая рамка ─── */
 
-#app[data-phase="prep"] #game-canvas {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #game-canvas {
   border-radius: calc(12px * var(--ui-scale));
   box-shadow: 0 4px 20px rgba(30, 60, 28, 0.14);
 }
 
-#app[data-phase="prep"] .prep-mod-chip:not(.prep-mod-chip--icon-only) {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-mod-chip:not(.prep-mod-chip--icon-only) {
   background: rgba(255, 255, 255, 0.35);
   border: 2px solid rgba(255, 255, 255, 0.5);
   color: var(--juice-ink);
@@ -633,7 +633,7 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] .btn-toggle-doll {
   text-shadow: var(--juice-text-legible);
 }
 
-#app[data-phase="prep"] .prep-mod-chip--icon-only {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-mod-chip--icon-only {
   width: calc(36px * var(--ui-scale, 1));
   height: calc(36px * var(--ui-scale, 1));
   padding: 0;
@@ -641,14 +641,14 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] .btn-toggle-doll {
   text-shadow: none;
 }
 
-#app[data-phase="prep"] .prep-mod-chip:not(.prep-mod-chip--icon-only).is-active {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-mod-chip:not(.prep-mod-chip--icon-only).is-active {
   background: rgba(92, 184, 92, 0.2);
   border-color: var(--meadow-grass-dark);
   color: var(--juice-ink);
   font-weight: 900;
 }
 
-#app[data-phase="prep"] .prep-mod-chip--icon-only.is-active {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-mod-chip--icon-only.is-active {
   background:
     radial-gradient(circle at 35% 28%, rgba(255, 255, 255, 0.16) 0%, transparent 42%),
     linear-gradient(180deg, rgba(52, 42, 22, 0.96), rgba(22, 16, 10, 0.98));
@@ -658,7 +658,7 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] .btn-toggle-doll {
 }
 
 /* Продать — золотая кнопка в зоне магазина */
-#app[data-phase="prep"] #shop-panel .btn-sell-drop {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .btn-sell-drop {
   background: linear-gradient(180deg, #fff8e8 0%, #ffe4a8 100%);
   border: 2px solid rgba(200, 134, 10, 0.5);
   color: var(--juice-ink);
@@ -668,7 +668,7 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] .btn-toggle-doll {
   min-height: var(--touch-target-min);
 }
 
-#app[data-phase="prep"] #shop-panel .btn-sell-drop:hover {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .btn-sell-drop:hover {
   filter: brightness(1.04);
   transform: translateY(-1px);
 }
@@ -689,8 +689,8 @@ html[data-visual-theme="meadow"] body:has(#class-overlay:not(.hidden)) .bottom-c
 }
 
 /* Side / tablet: одна компактная полоса */
-html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .bottom-chrome .bottombar-btn,
-html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .bottom-chrome .bottombar-btn {
+html[data-prep-layout="side"] body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .bottombar-btn,
+html[data-ui-surface="tablet-side"] body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .bottombar-btn {
   border-width: 1px;
   box-shadow:
     0 1px 0 rgba(30, 60, 28, 0.1),
@@ -698,8 +698,8 @@ html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .bottom-ch
     inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
-html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .bottom-chrome .hud-stats-pill:not(.hud-stats-pill--metrics),
-html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .bottom-chrome .hud-stats-pill:not(.hud-stats-pill--metrics) {
+html[data-prep-layout="side"] body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .hud-stats-pill:not(.hud-stats-pill--metrics),
+html[data-ui-surface="tablet-side"] body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .hud-stats-pill:not(.hud-stats-pill--metrics) {
   border-width: 1px;
   box-shadow:
     0 1px 0 rgba(30, 60, 28, 0.08),
@@ -707,8 +707,8 @@ html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .bottom-ch
     inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 
-html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .bottom-chrome .btn-fight-header,
-html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .bottom-chrome .btn-fight-header {
+html[data-prep-layout="side"] body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .btn-fight-header,
+html[data-ui-surface="tablet-side"] body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .btn-fight-header {
   min-height: var(--bottombar-btn-h, 36px);
   padding: calc(4px * var(--ui-scale, 1)) calc(14px * var(--ui-scale, 1));
   font-size: var(--font-sm);
