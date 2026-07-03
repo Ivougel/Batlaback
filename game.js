@@ -2105,6 +2105,8 @@ function bindTouchInput() {
   const onDown = (kind, id, x, y, e) => {
     if (activeGesture) return;
     if (ignoreTarget(e.target)) return;
+    // TD-магазин сам стартует drag через pointerdown; не перехватывать pointer на board-section.
+    if (e.target?.closest?.(".td-build-shop-card")) return;
 
     markTouchInteraction();
 
@@ -4813,14 +4815,16 @@ function syncTdHeroHudFromSelection() {
   renderPlayerProfiles();
 }
 
-function renderTdBuildPanel() {
+function renderTdBuildPanel(opts = {}) {
   if (typeof TdBuildPanel === "undefined" || !isTdRunLive()) return;
+  const dragActive = !!(dragPayload || pendingShopDrag || pendingBenchDrag);
   const st = getSideState("player");
   TdBuildPanel.render({
     tdState,
     gold,
     shop: st.shop || [],
     selectedSlotId: selectedTdSlotId,
+    preserveShopDom: dragActive && !opts.force,
   });
 }
 
@@ -5185,7 +5189,7 @@ function finalizeTdTowerLoadoutEdit() {
     tdSyncTowerCombat(tower, tdState?.prepMeta || {});
   }
   syncTdLoadoutSheetChrome();
-  renderTdBuildPanel();
+  renderTdBuildPanel({ force: true });
 }
 
 function beginTdBuildShopDrag(index, e) {

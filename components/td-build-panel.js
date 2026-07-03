@@ -11,6 +11,7 @@ const TdBuildPanel = (() => {
   let onRecruit = null;
   let onSelectSlot = null;
   let onShopDragStart = null;
+  let shopDragBound = false;
 
   const RECRUIT_CLASSES = ["warrior", "rogue", "mage", "priest"];
 
@@ -31,6 +32,31 @@ const TdBuildPanel = (() => {
     onRecruit = opts.onRecruit || null;
     onSelectSlot = opts.onSelectSlot || null;
     onShopDragStart = opts.onShopDragStart || null;
+    bindShopDragEvents();
+  }
+
+  function bindShopDragEvents() {
+    if (!shopEl || shopDragBound) return;
+    shopDragBound = true;
+
+    const handleDragStart = (e) => {
+      const card = e.target?.closest?.(
+        ".td-build-shop-card:not(.td-build-shop-card--locked):not(.td-build-shop-card--empty)",
+      );
+      if (!card || !shopEl.contains(card)) return;
+      if (e.button != null && e.button !== 0) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const idx = Number(card.getAttribute("data-shop-index"));
+      if (Number.isNaN(idx) || typeof onShopDragStart !== "function") return;
+      onShopDragStart(idx, e);
+    };
+
+    shopEl.addEventListener("pointerdown", handleDragStart);
+    shopEl.addEventListener("mousedown", (e) => {
+      if (typeof window !== "undefined" && window.isSyntheticMouseFromTouch?.()) return;
+      handleDragStart(e);
+    });
   }
 
   function setVisible(visible) {
@@ -154,21 +180,6 @@ const TdBuildPanel = (() => {
           <span class="td-build-shop-card__cost">${cost}</span>
         </div>`;
     }).join("");
-
-    shopEl.querySelectorAll("[data-shop-index]").forEach((card) => {
-      if (card.classList.contains("td-build-shop-card--locked")) return;
-      const onDragStart = (e) => {
-        if (e.button != null && e.button !== 0) return;
-        e.preventDefault();
-        e.stopPropagation();
-        try {
-          card.setPointerCapture(e.pointerId);
-        } catch (_) {}
-        const idx = Number(card.getAttribute("data-shop-index"));
-        if (typeof onShopDragStart === "function") onShopDragStart(idx, e);
-      };
-      card.addEventListener("pointerdown", onDragStart);
-    });
   }
 
   function renderWaveRow(tdState) {
@@ -187,6 +198,7 @@ const TdBuildPanel = (() => {
       gold = 0,
       shop = [],
       selectedSlotId = null,
+      preserveShopDom = false,
     } = ctx || {};
 
     if (!tdState) {
@@ -203,7 +215,7 @@ const TdBuildPanel = (() => {
       : null;
 
     renderMain(tdState, gold, selectedSlotId);
-    renderShopGrid(shop, gold, !!tower);
+    if (!preserveShopDom) renderShopGrid(shop, gold, !!tower);
   }
 
   return { init, setVisible, render };

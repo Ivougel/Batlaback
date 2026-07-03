@@ -185,17 +185,23 @@ function commitShopPurchase(index, side = rt.getPrepViewSide()) {
   const st = rt.getSideState(side);
   const entryId = st.shop[index];
   if (!entryId) return null;
-  const def = ITEM_CATALOG[entryId];
-  if (!def || st.gold < (def.cost ?? 0)) return null;
-  st.gold -= def.cost;
-  if (side === "player") rt.addGoldSpent(def.cost);
+  const meta = typeof resolveShopEntryMeta === "function"
+    ? resolveShopEntryMeta(entryId)
+    : null;
+  const def = meta?.def || ITEM_CATALOG[entryId];
+  const cost = meta?.cost ?? def?.cost ?? 0;
+  const purchasedId = meta?.entryId || entryId;
+  if (!def || st.gold < cost) return null;
+  st.gold -= cost;
+  if (side === "player") rt.addGoldSpent(cost);
   st.shop[index] = null;
   st.shopFrozen[index] = false;
-  if (typeof applyShopBuyMeta === "function" && !def.isEnhancementItem) {
+  const isEnhancement = meta?.kind === "enhancement" || !!def.isEnhancementItem;
+  if (typeof applyShopBuyMeta === "function" && !isEnhancement) {
     const ctx = getShopContextForSide(side);
-    applyShopBuyMeta(side, st.items, entryId, st, ctx, (msg) => rt.log(msg));
+    applyShopBuyMeta(side, st.items, purchasedId, st, ctx, (msg) => rt.log(msg));
   }
-  return entryId;
+  return purchasedId;
 }
 
 function buyFromShop(index, side = rt.getPrepViewSide()) {
