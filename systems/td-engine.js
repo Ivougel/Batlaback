@@ -5,12 +5,25 @@
 
 const TD_MAX_WAVES = 99;
 const TD_PIG_EMOJI = "🐷";
-const TD_CANVAS_W = 960;
-const TD_CANVAS_H = 640;
-/**
- * Доли карты (референс Kingdom Rush: путь 70px при 1200px ширины ≈ 5.8%).
- * TowerWard / Defender's Quest: читаемость важнее точных пикселей — держим пропорции стабильными.
- */
+/** Мировые координаты карты (больше вьюпорта — pan/zoom по оверворлду). */
+const TD_CANVAS_W = 3000;
+const TD_CANVAS_H = 3000;
+/** Игровой хаб (слоты, центр) — центральная доля мира. */
+const TD_PLAYFIELD_MIN = 0.26;
+const TD_PLAYFIELD_MAX = 0.74;
+
+function tdPlayfieldCoord(u) {
+  return TD_PLAYFIELD_MIN + u * (TD_PLAYFIELD_MAX - TD_PLAYFIELD_MIN);
+}
+
+/** Абсолютные размеры в px мира (стабильны при TD_CANVAS_W=3000). */
+const TD_PATH_WIDTH_PX = 58;
+const TD_PATH_RIM_PX = 72;
+const TD_UNIT_SIZE_PX = 42;
+const TD_HERO_RADIUS_PX = 74;
+const TD_SLOT_RADIUS_PX = 66;
+const TD_SPAWN_RING_PX = 30;
+/** @deprecated доли — fallback для старых размеров */
 const TD_PATH_WIDTH_FRAC = 0.058;
 const TD_PATH_RIM_FRAC = 0.072;
 const TD_UNIT_SIZE_FRAC = 0.045;
@@ -30,11 +43,11 @@ const TD_DIFF_EXP_BASE = 1.55;
 
 /** Слоты постройки: pathId = какая дорожка сюда leak'ит (null = только атака). */
 const TD_MAP_SLOTS = [
-  { id: 0, x: 0.5, y: 0.62, pathId: 2, label: "Юг" },
-  { id: 1, x: 0.5, y: 0.22, pathId: 0, label: "Север" },
-  { id: 2, x: 0.82, y: 0.48, pathId: 1, label: "Восток" },
-  { id: 3, x: 0.18, y: 0.48, pathId: 3, label: "Запад" },
-  { id: 4, x: 0.5, y: 0.42, pathId: null, label: "Центр" },
+  { id: 0, x: tdPlayfieldCoord(0.5), y: tdPlayfieldCoord(0.78), pathId: 2, label: "Юг" },
+  { id: 1, x: tdPlayfieldCoord(0.5), y: tdPlayfieldCoord(0.18), pathId: 0, label: "Север" },
+  { id: 2, x: tdPlayfieldCoord(0.88), y: tdPlayfieldCoord(0.48), pathId: 1, label: "Восток" },
+  { id: 3, x: tdPlayfieldCoord(0.12), y: tdPlayfieldCoord(0.48), pathId: 3, label: "Запад" },
+  { id: 4, x: tdPlayfieldCoord(0.5), y: tdPlayfieldCoord(0.42), pathId: null, label: "Центр" },
 ];
 
 const TD_RECRUIT_COST = {
@@ -132,36 +145,180 @@ function tdSeededRandom(seed) {
   };
 }
 
+function tdQuadBezierPoint(p0, p1, p2, t) {
+  const u = 1 - t;
+  return {
+    x: u * u * p0.x + 2 * u * t * p1.x + t * t * p2.x,
+    y: u * u * p0.y + 2 * u * t * p1.y + t * t * p2.y,
+  };
+}
+
+function tdSampleQuadraticChain(segments, stepsPerSeg = 14) {
+  const points = [];
+  segments.forEach((seg) => {
+    for (let i = 0; i <= stepsPerSeg; i += 1) {
+      if (i === 0 && points.length) continue;
+      points.push(tdQuadBezierPoint(seg.from, seg.ctrl, seg.to, i / stepsPerSeg));
+    }
+  });
+  return points;
+}
+
+function tdPathBasis(start, end) {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const len = Math.hypot(dx, dy) || 1;
+  return {
+    len,
+    ux: dx / len,
+    uy: dy / len,
+    px: -dy / len,
+    py: dx / len,
+  };
+}
+
+/** Точка вдоль хорды start→end: along/perp — доли длины хорды. */
+function tdPathPt(start, basis, along, perp = 0) {
+  return {
+    x: start.x + basis.ux * basis.len * along + basis.px * basis.len * perp,
+    y: start.y + basis.uy * basis.len * along + basis.py * basis.len * perp,
+  };
+}
+
+function tdPathPolylineLength(path) {
+  if (!path?.length) return 0;
+  let len = 0;
+  for (let i = 1; i < path.length; i += 1) {
+    len += tdDist(path[i - 1], path[i]);
+  }
+  return len;
+}
+
+function tdPathStraightLength(path) {
+  if (!path?.length) return 0;
+  return tdDist(path[0], path[path.length - 1]);
+}
+
+/** Запад: пологая дуга вниз-вверх (капля). */
+function tdBuildWestWindingPath(start, end, rng) {
+  const b = tdPathBasis(start, end);
+  const j = 1 + (rng() - 0.5) * 0.06;
+  const p = (v) => v * j;
+  const a = (along, perp) => tdPathPt(start, b, along, p(perp));
+  return tdSampleQuadraticChain([
+    { from: start, ctrl: a(0.1, 0.26), to: a(0.24, 0.18) },
+    { from: a(0.24, 0.18), ctrl: a(0.38, -0.24), to: a(0.5, -0.17) },
+    { from: a(0.5, -0.17), ctrl: a(0.62, 0.22), to: a(0.72, 0.14) },
+    { from: a(0.72, 0.14), ctrl: a(0.82, -0.12), to: a(0.9, -0.06) },
+    { from: a(0.9, -0.06), ctrl: a(0.96, 0.02), to: end },
+  ]);
+}
+
+/** Север: резкий зигзаг с выраженным изломом. */
+function tdBuildNorthWindingPath(start, end, rng) {
+  const b = tdPathBasis(start, end);
+  const j = 1 + (rng() - 0.5) * 0.08;
+  const p = (v) => v * j;
+  const a = (along, perp) => tdPathPt(start, b, along, p(perp));
+  return tdSampleQuadraticChain([
+    { from: start, ctrl: a(0.1, 0.26), to: a(0.22, 0.2) },
+    { from: a(0.22, 0.2), ctrl: a(0.34, -0.24), to: a(0.46, -0.18) },
+    { from: a(0.46, -0.18), ctrl: a(0.56, 0.22), to: a(0.66, 0.16) },
+    { from: a(0.66, 0.16), ctrl: a(0.78, -0.12), to: a(0.88, -0.06) },
+    { from: a(0.88, -0.06), ctrl: a(0.94, 0.02), to: end },
+  ]);
+}
+
+/** Восток: плавная S-образная змейка. */
+function tdBuildEastWindingPath(start, end, rng) {
+  const b = tdPathBasis(start, end);
+  const j = 1 + (rng() - 0.5) * 0.07;
+  const p = (v) => v * j;
+  const a = (along, perp) => tdPathPt(start, b, along, p(perp));
+  return tdSampleQuadraticChain([
+    { from: start, ctrl: a(0.1, 0.2), to: a(0.22, 0.14) },
+    { from: a(0.22, 0.14), ctrl: a(0.36, -0.22), to: a(0.48, -0.16) },
+    { from: a(0.48, -0.16), ctrl: a(0.58, 0.2), to: a(0.68, 0.14) },
+    { from: a(0.68, 0.14), ctrl: a(0.78, -0.16), to: a(0.86, -0.1) },
+    { from: a(0.86, -0.1), ctrl: a(0.94, 0.04), to: end },
+  ]);
+}
+
+/** Юг: два изгиба перед слотом игрока — не прямая в лоб. */
+function tdBuildSouthWindingPath(start, end, rng) {
+  const b = tdPathBasis(start, end);
+  const j = 1 + (rng() - 0.5) * 0.08;
+  const p = (v) => v * j;
+  const a = (along, perp) => tdPathPt(start, b, along, p(perp));
+  return tdSampleQuadraticChain([
+    { from: start, ctrl: a(0.11, -0.2), to: a(0.24, -0.14) },
+    { from: a(0.24, -0.14), ctrl: a(0.38, 0.22), to: a(0.5, 0.18) },
+    { from: a(0.5, 0.18), ctrl: a(0.62, -0.16), to: a(0.74, -0.1) },
+    { from: a(0.74, -0.1), ctrl: a(0.86, 0.1), to: a(0.93, 0.05) },
+    { from: a(0.93, 0.05), ctrl: a(0.97, 0.01), to: end },
+  ]);
+}
+
+const TD_LANE_PATH_BUILDERS = [
+  tdBuildNorthWindingPath,
+  tdBuildEastWindingPath,
+  tdBuildSouthWindingPath,
+  tdBuildWestWindingPath,
+];
+
+function tdBuildWindingLanePath(start, end, pathId, rng) {
+  const builder = TD_LANE_PATH_BUILDERS[pathId % TD_LANE_PATH_BUILDERS.length]
+    || tdBuildWestWindingPath;
+  return builder(start, end, rng);
+}
+
+function tdPathSpeedScale(path) {
+  if (!path?.length) return 1;
+  const curved = tdPathPolylineLength(path);
+  const straight = tdPathStraightLength(path);
+  if (curved <= 1e-6 || straight <= 1e-6) return 1;
+  return straight / curved;
+}
+
 /** Фиксированная карта забега: 4 дорожки к слотам + декор. */
 function generateTdRunMap(runSeed = 1) {
   const rng = tdSeededRandom(runSeed * 7919 + 42);
   const slots = TD_MAP_SLOTS.map((s) => ({ ...s }));
 
   const pathStarts = [
-    { x: 0.5, y: 0.04 },
-    { x: 0.96, y: 0.48 },
-    { x: 0.5, y: 0.96 },
-    { x: 0.04, y: 0.48 },
+    { x: 0.5, y: -0.09 },
+    { x: 1.09, y: 0.5 },
+    { x: 0.5, y: 1.09 },
+    { x: -0.09, y: 0.5 },
   ];
 
   const paths = pathStarts.map((start, pathId) => {
     const slot = slots.find((s) => s.pathId === pathId);
     const end = slot ? { x: slot.x, y: slot.y } : { x: 0.5, y: 0.5 };
-    const mid = {
-      x: tdClamp(start.x + (end.x - start.x) * 0.45 + (rng() - 0.5) * 0.06, 0.06, 0.94),
-      y: tdClamp(start.y + (end.y - start.y) * 0.45 + (rng() - 0.5) * 0.06, 0.06, 0.94),
-    };
-    return [start, mid, end];
+    return tdBuildWindingLanePath(start, end, pathId, rng);
   });
+
+  const pathLengths = paths.map(tdPathPolylineLength);
+  const pathStraightLengths = paths.map(tdPathStraightLength);
 
   const decor = [];
   const decorEmojis = ["🌲", "🌳", "🪨", "🌿", "🍄", "🪵"];
-  for (let i = 0; i < 14 + Math.floor(rng() * 10); i++) {
+  const decorCount = 48 + Math.floor(rng() * 28);
+  for (let i = 0; i < decorCount; i++) {
+    const inPlay = rng() < 0.45;
+    const x = inPlay
+      ? TD_PLAYFIELD_MIN + rng() * (TD_PLAYFIELD_MAX - TD_PLAYFIELD_MIN)
+      : rng() * 0.94 + 0.03;
+    const y = inPlay
+      ? TD_PLAYFIELD_MIN + rng() * (TD_PLAYFIELD_MAX - TD_PLAYFIELD_MIN)
+      : rng() * 0.94 + 0.03;
     decor.push({
-      x: rng() * 0.88 + 0.06,
-      y: rng() * 0.88 + 0.06,
+      x,
+      y,
       emoji: decorEmojis[Math.floor(rng() * decorEmojis.length)],
-      scale: 0.65 + rng() * 0.55,
+      scale: 0.55 + rng() * 0.85,
+      rotate: (rng() - 0.5) * 1.1,
+      depth: 0.25 + rng() * 0.75,
     });
   }
 
@@ -170,6 +327,8 @@ function generateTdRunMap(runSeed = 1) {
     seed: runSeed,
     slots,
     paths,
+    pathLengths,
+    pathStraightLengths,
     decor,
     grassLight: `hsl(${108 + grassHue}, 38%, ${32 + Math.floor(rng() * 8)}%)`,
     grassDark: `hsl(${112 + grassHue}, 42%, ${22 + Math.floor(rng() * 6)}%)`,
@@ -187,15 +346,37 @@ function tdLerpPath(stateOrPaths, pathId, t) {
   if (!path?.length) return { x: 0.5, y: 0.5 };
   if (t <= 0) return { x: path[0].x, y: path[0].y };
   if (t >= 1) return { x: path[path.length - 1].x, y: path[path.length - 1].y };
-  const segLen = 1 / (path.length - 1);
-  const segIdx = Math.min(path.length - 2, Math.floor(t / segLen));
-  const localT = (t - segIdx * segLen) / segLen;
-  const a = path[segIdx];
-  const b = path[segIdx + 1];
-  return {
-    x: a.x + (b.x - a.x) * localT,
-    y: a.y + (b.y - a.y) * localT,
-  };
+
+  const totalLen = tdPathPolylineLength(path);
+  if (totalLen <= 1e-8) return { x: path[0].x, y: path[0].y };
+
+  let dist = t * totalLen;
+  for (let i = 1; i < path.length; i += 1) {
+    const segLen = tdDist(path[i - 1], path[i]);
+    if (dist <= segLen) {
+      const localT = segLen > 1e-8 ? dist / segLen : 0;
+      const a = path[i - 1];
+      const b = path[i];
+      return {
+        x: a.x + (b.x - a.x) * localT,
+        y: a.y + (b.y - a.y) * localT,
+      };
+    }
+    dist -= segLen;
+  }
+  const last = path[path.length - 1];
+  return { x: last.x, y: last.y };
+}
+
+function tdGetPathSpeedScale(state, pathId) {
+  const map = state?.map;
+  if (!map?.paths?.[pathId]) return 1;
+  if (map.pathLengths?.[pathId] && map.pathStraightLengths?.[pathId]) {
+    const curved = map.pathLengths[pathId];
+    const straight = map.pathStraightLengths[pathId];
+    if (curved > 1e-6 && straight > 1e-6) return straight / curved;
+  }
+  return tdPathSpeedScale(map.paths[pathId]);
 }
 
 function tdPigSizeScale(strength) {
@@ -628,6 +809,7 @@ function tdApplyTowerItemActivation(state, tower, atkItem) {
 }
 
 function tdSpawnPig(state, spawn) {
+  const speedScale = tdGetPathSpeedScale(state, spawn.pathId);
   state.pigs.push({
     id: state.nextPigId++,
     pathId: spawn.pathId,
@@ -636,7 +818,7 @@ function tdSpawnPig(state, spawn) {
     maxHp: spawn.maxHp,
     strength: spawn.strength,
     damage: spawn.damage,
-    speed: spawn.speed,
+    speed: spawn.speed * speedScale,
     sizeScale: tdPigSizeScale(spawn.strength),
   });
 }

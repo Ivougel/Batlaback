@@ -315,7 +315,8 @@ html[data-game-mode="td"] #app[data-td-run-live="true"] .battle-arena {
 }
 
 html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-left-column {
-  display: block;
+  display: flex;
+  flex-direction: column;
   flex: 1 1 auto;
   min-width: 0;
   max-width: none;

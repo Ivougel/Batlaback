@@ -6,23 +6,31 @@ const TdArena = (() => {
   /** @type {Map<string, HTMLImageElement>} */
   const portraitCache = new Map();
   let mountEl = null;
+  let viewportEl = null;
   let canvasEl = null;
   let resetBtnEl = null;
+  let zoomInBtnEl = null;
+  let zoomOutBtnEl = null;
   let ctx = null;
   let gesturesBound = false;
   let onTapHandler = null;
   let displayW = 0;
   let displayH = 0;
 
-  const MIN_ZOOM = 0.72;
-  const MAX_ZOOM = 3;
-  /** Как в раннем TdArena: вписать карту и слегка увеличить (до ×1.55), чтобы поле было крупным по центру. */
-  const MAP_FIT_BOOST_MAX = 1.55;
+  const MIN_ZOOM = 0.34;
+  const MAX_ZOOM = 2.6;
+  /** При zoom=1 видна ~38% ширины/высоты мира — остальное за кадром. */
+  const VISIBLE_WORLD_FRAC_W = 0.38;
+  const VISIBLE_WORLD_FRAC_H = 0.38;
+  const CAMERA_OVERSCROLL_PX = 140;
+  const CAMERA_ANIM_MS = 360;
   const TAP_MOVE_PX = 10;
   const TAP_TIME_MS = 300;
   const DOUBLE_TAP_MS = 320;
 
   const camera = { cx: 0, cy: 0, zoom: 1 };
+  let cameraTween = null;
+  let cameraAnimFrame = 0;
 
   /** @type {Map<number, { x: number, y: number }>} */
   const activePointers = new Map();
@@ -34,34 +42,169 @@ const TdArena = (() => {
 
   function init() {
     mountEl = document.getElementById("td-arena-mount");
+    viewportEl = document.getElementById("td-map-viewport");
     canvasEl = document.getElementById("td-arena-canvas");
     resetBtnEl = document.getElementById("td-arena-reset-view");
+    zoomInBtnEl = document.getElementById("td-arena-zoom-in");
+    zoomOutBtnEl = document.getElementById("td-arena-zoom-out");
     ctx = canvasEl?.getContext("2d") || null;
+    ensureMapChrome();
+  }
+
+  function ensureMapChrome() {
+    if (!mountEl) return;
+    if (!viewportEl && canvasEl) {
+      viewportEl = document.createElement("div");
+      viewportEl.id = "td-map-viewport";
+      viewportEl.className = "td-map-viewport";
+      mountEl.insertBefore(viewportEl, canvasEl);
+      viewportEl.appendChild(canvasEl);
+    }
+    if (!mountEl.querySelector(".td-map-vignette")) {
+      const vignette = document.createElement("div");
+      vignette.className = "td-map-vignette";
+      vignette.setAttribute("aria-hidden", "true");
+      mountEl.appendChild(vignette);
+    }
+    ensureZoomControls();
     ensureResetButton();
+    bindZoomControlHandlers();
+  }
+
+  function ensureZoomControls() {
+    if (!mountEl) return;
+    let wrap = document.getElementById("td-map-zoom-controls");
+    if (!wrap) {
+      wrap = document.createElement("div");
+      wrap.id = "td-map-zoom-controls";
+      wrap.className = "td-map-zoom-controls";
+      wrap.innerHTML = `
+        <button type="button" class="td-map-zoom-btn" id="td-arena-zoom-in" title="Приблизить" aria-label="Приблизить карту">+</button>
+        <button type="button" class="td-map-zoom-btn" id="td-arena-zoom-out" title="Отдалить" aria-label="Отдалить карту">−</button>
+      `;
+      mountEl.appendChild(wrap);
+    }
+    zoomInBtnEl = document.getElementById("td-arena-zoom-in");
+    zoomOutBtnEl = document.getElementById("td-arena-zoom-out");
+  }
+
+  function bindZoomControlHandlers() {
+    ensureZoomControls();
+    if (zoomInBtnEl && !zoomInBtnEl.dataset.bound) {
+      zoomInBtnEl.dataset.bound = "1";
+      zoomInBtnEl.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        zoomAtViewportCenter(1.12);
+        requestRedraw();
+      });
+    }
+    if (zoomOutBtnEl && !zoomOutBtnEl.dataset.bound) {
+      zoomOutBtnEl.dataset.bound = "1";
+      zoomOutBtnEl.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        zoomAtViewportCenter(1 / 1.12);
+        requestRedraw();
+      });
+    }
   }
 
   function ensureResetButton() {
-    if (!mountEl || resetBtnEl) return;
-    resetBtnEl = document.createElement("button");
-    resetBtnEl.type = "button";
-    resetBtnEl.id = "td-arena-reset-view";
-    resetBtnEl.className = "td-arena-reset-view hidden";
-    resetBtnEl.title = "Сбросить вид карты";
-    resetBtnEl.setAttribute("aria-label", "Сбросить вид карты");
-    resetBtnEl.textContent = "⌖";
-    resetBtnEl.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      resetCamera();
-      requestRedraw();
-    });
-    mountEl.appendChild(resetBtnEl);
+    if (!mountEl) return;
+    if (!resetBtnEl) {
+      resetBtnEl = document.createElement("button");
+      resetBtnEl.type = "button";
+      resetBtnEl.id = "td-arena-reset-view";
+      resetBtnEl.className = "td-arena-reset-view hidden";
+      resetBtnEl.title = "К центру карты";
+      resetBtnEl.setAttribute("aria-label", "К центру карты");
+      resetBtnEl.textContent = "⌖";
+      mountEl.appendChild(resetBtnEl);
+    }
+    if (!resetBtnEl.dataset.bound) {
+      resetBtnEl.dataset.bound = "1";
+      resetBtnEl.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        animateCameraHome();
+      });
+    }
   }
 
   function getBitmapSize() {
-    const w = typeof TD_CANVAS_W === "number" ? TD_CANVAS_W : 960;
-    const h = typeof TD_CANVAS_H === "number" ? TD_CANVAS_H : 640;
+    const w = typeof TD_CANVAS_W === "number" ? TD_CANVAS_W : 3000;
+    const h = typeof TD_CANVAS_H === "number" ? TD_CANVAS_H : 3000;
     return { w, h };
+  }
+
+  function getWorldBounds() {
+    const { w, h } = getBitmapSize();
+    const marginX = w * 0.1;
+    const marginY = h * 0.1;
+    return {
+      minX: -marginX,
+      maxX: w + marginX,
+      minY: -marginY,
+      maxY: h + marginY,
+    };
+  }
+
+  function getCameraHome() {
+    const slots = typeof TD_MAP_SLOTS !== "undefined" ? TD_MAP_SLOTS : [];
+    const centerSlot = slots.find((s) => s.pathId == null) || slots[4] || { x: 0.5, y: 0.5 };
+    const { w, h } = getBitmapSize();
+    return {
+      cx: centerSlot.x * w,
+      cy: centerSlot.y * h,
+      zoom: 1,
+    };
+  }
+
+  function lerp(a, b, t) {
+    return a + (b - a) * t;
+  }
+
+  function cancelCameraTween() {
+    cameraTween = null;
+    if (cameraAnimFrame) {
+      cancelAnimationFrame(cameraAnimFrame);
+      cameraAnimFrame = 0;
+    }
+  }
+
+  function stepCameraTween() {
+    if (!cameraTween) return;
+    const now = performance.now();
+    const t = Math.min(1, (now - cameraTween.startTime) / cameraTween.duration);
+    const ease = 1 - Math.pow(1 - t, 3);
+    camera.cx = lerp(cameraTween.from.cx, cameraTween.to.cx, ease);
+    camera.cy = lerp(cameraTween.from.cy, cameraTween.to.cy, ease);
+    camera.zoom = lerp(cameraTween.from.zoom, cameraTween.to.zoom, ease);
+    clampCamera();
+    syncResetButtonVisibility();
+    requestRedraw();
+    if (t >= 1) {
+      cameraTween = null;
+      cameraAnimFrame = 0;
+      return;
+    }
+    cameraAnimFrame = requestAnimationFrame(stepCameraTween);
+  }
+
+  function animateCameraTo(target, durationMs = CAMERA_ANIM_MS) {
+    cancelCameraTween();
+    cameraTween = {
+      from: { cx: camera.cx, cy: camera.cy, zoom: camera.zoom },
+      to: { cx: target.cx, cy: target.cy, zoom: target.zoom },
+      startTime: performance.now(),
+      duration: durationMs,
+    };
+    cameraAnimFrame = requestAnimationFrame(stepCameraTween);
+  }
+
+  function animateCameraHome() {
+    animateCameraTo(getCameraHome());
   }
 
   function clamp(v, lo, hi) {
@@ -70,19 +213,25 @@ const TdArena = (() => {
 
   function getViewRect() {
     const rect = getDisplayRect();
-    if (rect?.width && rect?.height) {
+    if (rect && rect.width > 8 && rect.height > 8) {
       return { width: rect.width, height: rect.height };
     }
-    if (displayW > 0 && displayH > 0) {
+    if (displayW > 8 && displayH > 8) {
       return { width: displayW, height: displayH };
+    }
+    const mountRect = mountEl?.getBoundingClientRect();
+    if (mountRect && mountRect.width > 8 && mountRect.height > 8) {
+      return { width: mountRect.width, height: mountRect.height };
     }
     return null;
   }
 
   function getBaseScale(viewRect, w, h) {
     if (!viewRect?.width || !viewRect?.height) return 1;
-    const fit = Math.min(viewRect.width / w, viewRect.height / h);
-    return Math.min(fit * MAP_FIT_BOOST_MAX, MAP_FIT_BOOST_MAX);
+    return Math.min(
+      viewRect.width / (w * VISIBLE_WORLD_FRAC_W),
+      viewRect.height / (h * VISIBLE_WORLD_FRAC_H),
+    );
   }
 
   function getViewScale(viewRect, w, h) {
@@ -93,33 +242,62 @@ const TdArena = (() => {
     const viewRect = getViewRect();
     if (!viewRect) return;
     const { w, h } = getBitmapSize();
+    const bounds = getWorldBounds();
     const scale = getViewScale(viewRect, w, h);
     const halfVisW = viewRect.width / scale / 2;
     const halfVisH = viewRect.height / scale / 2;
-    camera.cx = clamp(camera.cx, halfVisW, w - halfVisW);
-    camera.cy = clamp(camera.cy, halfVisH, h - halfVisH);
+    const overscroll = CAMERA_OVERSCROLL_PX;
+
+    let minCx = bounds.minX + halfVisW - overscroll;
+    let maxCx = bounds.maxX - halfVisW + overscroll;
+    let minCy = bounds.minY + halfVisH - overscroll;
+    let maxCy = bounds.maxY - halfVisH + overscroll;
+
+    if (minCx > maxCx) {
+      const mid = (bounds.minX + bounds.maxX) / 2;
+      minCx = mid;
+      maxCx = mid;
+    }
+    if (minCy > maxCy) {
+      const mid = (bounds.minY + bounds.maxY) / 2;
+      minCy = mid;
+      maxCy = mid;
+    }
+
+    camera.cx = clamp(camera.cx, minCx, maxCx);
+    camera.cy = clamp(camera.cy, minCy, maxCy);
     camera.zoom = clamp(camera.zoom, MIN_ZOOM, MAX_ZOOM);
   }
 
   function resetCamera() {
-    const { w, h } = getBitmapSize();
-    camera.cx = w / 2;
-    camera.cy = h / 2;
-    camera.zoom = 1;
+    const home = getCameraHome();
+    camera.cx = home.cx;
+    camera.cy = home.cy;
+    camera.zoom = home.zoom;
     syncResetButtonVisibility();
   }
 
   function isCameraMoved() {
-    const { w, h } = getBitmapSize();
-    const moved = Math.abs(camera.cx - w / 2) > 2
-      || Math.abs(camera.cy - h / 2) > 2
-      || Math.abs(camera.zoom - 1) > 0.02;
+    const home = getCameraHome();
+    const moved = Math.abs(camera.cx - home.cx) > 24
+      || Math.abs(camera.cy - home.cy) > 24
+      || Math.abs(camera.zoom - home.zoom) > 0.03;
     return moved;
   }
 
   function syncResetButtonVisibility() {
     if (!resetBtnEl) return;
-    resetBtnEl.classList.toggle("hidden", !isCameraMoved());
+    resetBtnEl.classList.toggle("hidden", !isCameraMoved() && !cameraTween);
+  }
+
+  function zoomAtViewportCenter(factor) {
+    const viewRect = getViewRect();
+    const rect = getDisplayRect();
+    if (!viewRect || !rect) return;
+    cancelCameraTween();
+    const cx = rect.left + viewRect.width / 2;
+    const cy = rect.top + viewRect.height / 2;
+    zoomAt(cx, cy, camera.zoom * factor);
   }
 
   function applyCameraTransform(ctx2, viewRect, w, h, dpr = 1) {
@@ -153,6 +331,7 @@ const TdArena = (() => {
   }
 
   function zoomAt(clientX, clientY, newZoom) {
+    cancelCameraTween();
     const viewRect = getViewRect();
     const rect = getDisplayRect();
     if (!viewRect || !rect) return;
@@ -171,6 +350,7 @@ const TdArena = (() => {
   }
 
   function panByScreenDelta(dx, dy) {
+    cancelCameraTween();
     const viewRect = getViewRect();
     if (!viewRect) return;
     const { w, h } = getBitmapSize();
@@ -206,8 +386,7 @@ const TdArena = (() => {
         tapTimer = null;
       }
       lastTapAt = 0;
-      resetCamera();
-      requestRedraw();
+      animateCameraHome();
       return;
     }
     lastTapAt = now;
@@ -364,16 +543,27 @@ const TdArena = (() => {
     }
   }
 
+  function measureStageSize() {
+    const fieldCol = document.getElementById("prep-field-column");
+    const mountRect = mountEl?.getBoundingClientRect();
+    let colW = Math.floor(mountRect?.width || 0);
+    let colH = Math.floor(mountRect?.height || 0);
+    if (colW <= 8 || colH <= 8) {
+      colW = Math.floor(fieldCol?.clientWidth || 0);
+      colH = Math.floor(fieldCol?.clientHeight || 0);
+    }
+    if (colW <= 8 || colH <= 8) {
+      const objectsLayer = document.getElementById("layer-objects");
+      const layerRect = objectsLayer?.getBoundingClientRect();
+      colW = Math.floor(layerRect?.width || 0);
+      colH = Math.floor(layerRect?.height || 0);
+    }
+    return { colW, colH };
+  }
+
   function resize() {
     if (!canvasEl || !mountEl) return;
-    const fieldCol = document.getElementById("prep-field-column");
-    const leftCol = document.getElementById("prep-left-column");
-    const colW = Math.floor(
-      fieldCol?.clientWidth || leftCol?.clientWidth || mountEl.clientWidth || 0,
-    );
-    const colH = Math.floor(
-      fieldCol?.clientHeight || leftCol?.clientHeight || mountEl.clientHeight || 0,
-    );
+    const { colW, colH } = measureStageSize();
     if (colW <= 8 || colH <= 8) {
       requestAnimationFrame(resize);
       return;
@@ -402,12 +592,11 @@ const TdArena = (() => {
   function bindResizeObserver() {
     if (resizeObserver || typeof ResizeObserver === "undefined") return;
     const fieldCol = document.getElementById("prep-field-column");
-    const leftCol = document.getElementById("prep-left-column");
-    const target = fieldCol || leftCol;
-    if (!target) return;
+    const objectsLayer = document.getElementById("layer-objects");
+    const targets = [mountEl, fieldCol, objectsLayer].filter(Boolean);
+    if (!targets.length) return;
     resizeObserver = new ResizeObserver(() => resize());
-    resizeObserver.observe(target);
-    if (leftCol && leftCol !== target) resizeObserver.observe(leftCol);
+    targets.forEach((el) => resizeObserver.observe(el));
   }
 
   function getDisplayRect() {
@@ -443,6 +632,85 @@ const TdArena = (() => {
     return img;
   }
 
+  function pointOnPath(path, t) {
+    if (typeof tdLerpPath === "function") return tdLerpPath([path], 0, t);
+    if (!path?.length) return { x: 0.5, y: 0.5 };
+    if (t <= 0) return { x: path[0].x, y: path[0].y };
+    if (t >= 1) return { x: path[path.length - 1].x, y: path[path.length - 1].y };
+    const segLen = 1 / (path.length - 1);
+    const segIdx = Math.min(path.length - 2, Math.floor(t / segLen));
+    const localT = (t - segIdx * segLen) / segLen;
+    const a = path[segIdx];
+    const b = path[segIdx + 1];
+    return {
+      x: a.x + (b.x - a.x) * localT,
+      y: a.y + (b.y - a.y) * localT,
+    };
+  }
+
+  function tangentOnPath(path, t) {
+    const eps = 0.012;
+    const a = pointOnPath(path, Math.max(0, t - eps));
+    const b = pointOnPath(path, Math.min(1, t + eps));
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const len = Math.hypot(dx, dy) || 1;
+    return { x: dx / len, y: dy / len, angle: Math.atan2(dy, dx) };
+  }
+
+  function getParallaxOffset(depth = 0.5) {
+    const { w, h } = getBitmapSize();
+    const factor = (1 - depth) * 0.045;
+    return {
+      x: (camera.cx - w / 2) * factor,
+      y: (camera.cy - h / 2) * factor,
+    };
+  }
+
+  function getLanePendingQueue(tdState, pathId) {
+    return (tdState.spawnQueue || []).filter((s) => s.pathId === pathId);
+  }
+
+  function isLaneActive(tdState, pathId) {
+    if (!tdState || tdState.wavePhase === "done") return false;
+    if (tdState.wavePhase === "break") return false;
+    const onPath = (tdState.pigs || []).some((p) => p.pathId === pathId);
+    const pending = getLanePendingQueue(tdState, pathId).length > 0;
+    return onPath || pending;
+  }
+
+  function laneHasWaveTraffic(tdState, pathId) {
+    if (!tdState || tdState.wavePhase === "break" || tdState.wavePhase === "done") return false;
+    return isLaneActive(tdState, pathId);
+  }
+
+  function pigQueueIconScale(strength) {
+    const s = typeof strength === "number" ? strength : 50;
+    return 0.82 + (s / 100) * 0.42;
+  }
+
+  function strokePath(ctx2, path, w, h) {
+    ctx2.beginPath();
+    path.forEach((pt, i) => {
+      const x = pt.x * w;
+      const y = pt.y * h;
+      if (i === 0) ctx2.moveTo(x, y);
+      else ctx2.lineTo(x, y);
+    });
+  }
+
+  function tdWorldPx(pxConst, fracConst, dim) {
+    if (typeof pxConst === "number") return pxConst;
+    return Math.max(8, dim * (typeof fracConst === "number" ? fracConst : 0.05));
+  }
+
+  function getPathWidths(w) {
+    return {
+      rimW: tdWorldPx(typeof TD_PATH_RIM_PX !== "undefined" ? TD_PATH_RIM_PX : null, TD_PATH_RIM_FRAC, w),
+      pathW: tdWorldPx(typeof TD_PATH_WIDTH_PX !== "undefined" ? TD_PATH_WIDTH_PX : null, TD_PATH_WIDTH_FRAC, w),
+    };
+  }
+
   function drawGrass(ctx2, tdState, w, h) {
     const map = tdState.map || {};
     const grd = ctx2.createLinearGradient(0, 0, 0, h);
@@ -450,90 +718,317 @@ const TdArena = (() => {
     grd.addColorStop(1, map.grassDark || "#2d5228");
     ctx2.fillStyle = grd;
     ctx2.fillRect(0, 0, w, h);
+
+    const edge = ctx2.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.22, w / 2, h / 2, Math.max(w, h) * 0.72);
+    edge.addColorStop(0, "rgba(0,0,0,0)");
+    edge.addColorStop(0.72, "rgba(0,0,0,0.06)");
+    edge.addColorStop(1, "rgba(0,0,0,0.22)");
+    ctx2.fillStyle = edge;
+    ctx2.fillRect(0, 0, w, h);
   }
 
   function drawDecor(ctx2, tdState, w, h) {
     (tdState.map?.decor || []).forEach((d) => {
-      const cx = d.x * w;
-      const cy = d.y * h;
-      const size = Math.min(w, h) * 0.04 * d.scale;
+      const parallax = getParallaxOffset(d.depth ?? 0.5);
+      const cx = d.x * w + parallax.x;
+      const cy = d.y * h + parallax.y;
+      const baseSize = tdWorldPx(46, 0.04, Math.min(w, h)) * (d.scale || 1);
+      const rot = d.rotate || 0;
+      ctx2.save();
+      ctx2.translate(cx, cy);
+      ctx2.rotate(rot);
       if (typeof drawCellEmojiAt === "function") {
-        drawCellEmojiAt(ctx2, d.emoji, cx, cy, size);
+        drawCellEmojiAt(ctx2, d.emoji, 0, 0, baseSize);
+      }
+      ctx2.restore();
+    });
+  }
+
+  function drawPathChevrons(ctx2, path, w, h, animTime, pathW) {
+    const steps = 18;
+    const flowSpeed = 0.55;
+    const flowOffset = (animTime * flowSpeed) % 1;
+    const chevLen = pathW * 0.32;
+    const chevW = pathW * 0.22;
+
+    for (let i = 0; i < steps; i += 1) {
+      const t = ((i / steps) + flowOffset) % 1;
+      if (t < 0.04 || t > 0.94) continue;
+      const pt = pointOnPath(path, t);
+      const tan = tangentOnPath(path, t);
+      const cx = pt.x * w;
+      const cy = pt.y * h;
+      const fade = t < 0.12 ? (t - 0.04) / 0.08 : t > 0.86 ? (0.94 - t) / 0.08 : 1;
+
+      ctx2.save();
+      ctx2.translate(cx, cy);
+      ctx2.rotate(tan.angle);
+      ctx2.globalAlpha = 0.1 + fade * 0.18;
+      ctx2.fillStyle = "rgba(255,255,255,0.9)";
+      ctx2.beginPath();
+      ctx2.moveTo(-chevLen * 0.35, -chevW);
+      ctx2.lineTo(chevLen * 0.45, 0);
+      ctx2.lineTo(-chevLen * 0.35, chevW);
+      ctx2.closePath();
+      ctx2.fill();
+      ctx2.restore();
+    }
+  }
+
+  function drawWaveQueueIcon(ctx2, cx, cy, radius, spawn, w) {
+    const scale = pigQueueIconScale(spawn.strength);
+    const r = radius * scale;
+    const strong = (spawn.strength || 0) > 55;
+
+    ctx2.save();
+    ctx2.beginPath();
+    ctx2.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx2.fillStyle = strong ? "rgba(60, 20, 10, 0.72)" : "rgba(30, 18, 8, 0.65)";
+    ctx2.fill();
+    ctx2.strokeStyle = strong ? "rgba(255, 160, 100, 0.75)" : "rgba(255,255,255,0.6)";
+    ctx2.lineWidth = Math.max(1.5, w * 0.002);
+    ctx2.shadowColor = "rgba(0,0,0,0.35)";
+    ctx2.shadowBlur = 4;
+    ctx2.stroke();
+    ctx2.shadowBlur = 0;
+
+    const emoji = typeof TD_PIG_EMOJI === "string" ? TD_PIG_EMOJI : "🐷";
+    if (typeof drawCellEmojiAt === "function") {
+      drawCellEmojiAt(ctx2, emoji, cx, cy, r * 1.55);
+    }
+    ctx2.restore();
+  }
+
+  function drawWaveQueues(ctx2, tdState, w, h) {
+    if (!tdState || tdState.wavePhase === "break") return;
+    const paths = tdState.map?.paths || [];
+    const iconR = tdWorldPx(28, 0.014, Math.min(w, h));
+
+    paths.forEach((path, pathId) => {
+      const pending = getLanePendingQueue(tdState, pathId);
+      if (!pending.length) return;
+
+      const maxIcons = 14;
+      const visible = pending.slice(0, maxIcons);
+      const hidden = pending.length - visible.length;
+
+      const maxT = 0.76;
+      const startT = 0.05;
+      const step = visible.length > 1
+        ? Math.min(0.1, (maxT - startT) / (visible.length - 1))
+        : 0;
+
+      visible.forEach((spawn, i) => {
+        const t = startT + i * step;
+        const pt = pointOnPath(path, t);
+        drawWaveQueueIcon(ctx2, pt.x * w, pt.y * h, iconR, spawn, w);
+      });
+
+      if (hidden > 0) {
+        const pt = pointOnPath(path, Math.min(maxT, startT + visible.length * step));
+        const cx = pt.x * w;
+        const cy = pt.y * h;
+        ctx2.save();
+        ctx2.font = `bold ${Math.max(9, w * 0.01)}px system-ui,sans-serif`;
+        ctx2.fillStyle = "rgba(255,255,255,0.85)";
+        ctx2.textAlign = "center";
+        ctx2.textBaseline = "middle";
+        ctx2.fillText(`+${hidden}`, cx, cy);
+        ctx2.restore();
       }
     });
   }
 
-  function drawPathSpawns(ctx2, tdState, w, h) {
+  function drawSpawnPortals(ctx2, tdState, w, h, animTime) {
     const paths = tdState.map?.paths || [];
-    const r = Math.min(w, h) * (typeof TD_SPAWN_RING_FRAC === "number" ? TD_SPAWN_RING_FRAC : 0.028);
+    const baseR = tdWorldPx(
+      typeof TD_SPAWN_RING_PX !== "undefined" ? TD_SPAWN_RING_PX : null,
+      TD_SPAWN_RING_FRAC,
+      Math.min(w, h),
+    );
+    const pulse = 0.5 + 0.5 * Math.sin(animTime * 3.9);
+
     paths.forEach((path, pathId) => {
       const start = path?.[0];
       if (!start) return;
       const cx = start.x * w;
       const cy = start.y * h;
+      const active = isLaneActive(tdState, pathId);
+      const r = baseR * (active ? 1.25 + pulse * 0.3 : 1);
+
       ctx2.save();
+      ctx2.globalAlpha = active ? 1 : 0.38;
+
+      if (active) {
+        const glowR = r * (1.8 + pulse * 0.45);
+        const grd = ctx2.createRadialGradient(cx, cy, r * 0.2, cx, cy, glowR);
+        grd.addColorStop(0, `rgba(255, 120, 70, ${0.35 + pulse * 0.25})`);
+        grd.addColorStop(0.55, `rgba(255, 80, 40, ${0.18 + pulse * 0.12})`);
+        grd.addColorStop(1, "rgba(255, 60, 30, 0)");
+        ctx2.fillStyle = grd;
+        ctx2.beginPath();
+        ctx2.arc(cx, cy, glowR, 0, Math.PI * 2);
+        ctx2.fill();
+      }
+
       ctx2.beginPath();
       ctx2.arc(cx, cy, r * 1.35, 0, Math.PI * 2);
-      ctx2.fillStyle = "rgba(239, 68, 68, 0.22)";
-      ctx2.strokeStyle = "rgba(252, 165, 165, 0.75)";
-      ctx2.lineWidth = 2;
+      ctx2.fillStyle = active ? "rgba(239, 68, 68, 0.28)" : "rgba(80, 50, 50, 0.18)";
+      ctx2.strokeStyle = active ? "rgba(252, 165, 165, 0.85)" : "rgba(120, 90, 90, 0.4)";
+      ctx2.lineWidth = active ? 2.5 : 1.5;
       ctx2.fill();
       ctx2.stroke();
-      ctx2.font = `bold ${Math.max(14, r * 1.1)}px system-ui,sans-serif`;
-      ctx2.textAlign = "center";
-      ctx2.textBaseline = "middle";
-      ctx2.fillStyle = "#fecaca";
-      ctx2.fillText("🐷", cx, cy);
+
+      if (active) {
+        ctx2.beginPath();
+        ctx2.arc(cx, cy, r * 0.55, 0, Math.PI * 2);
+        ctx2.strokeStyle = `rgba(255, 200, 150, ${0.45 + pulse * 0.35})`;
+        ctx2.lineWidth = 1.5;
+        ctx2.stroke();
+      }
+
       ctx2.restore();
     });
   }
 
-  function drawPaths(ctx2, tdState, w, h) {
+  function drawLaneBadges(ctx2, tdState, w, h) {
+    if (!tdState) return;
+    const paths = tdState.map?.paths || [];
+    const maxWaves = typeof TD_MAX_WAVES === "number" ? TD_MAX_WAVES : 99;
+
+    paths.forEach((path, pathId) => {
+      const start = path?.[0];
+      if (!start) return;
+      const tan = tangentOnPath(path, 0.03);
+      const perpX = -tan.y;
+      const perpY = tan.x;
+      const cx = start.x * w + perpX * Math.min(w, h) * 0.055;
+      const cy = start.y * h + perpY * Math.min(w, h) * 0.055;
+
+      let text = null;
+      let accent = "#bfdbfe";
+
+      if (tdState.wavePhase === "break") {
+        const secs = Math.max(0, Math.ceil(tdState.breakTimer || 0));
+        text = `через ${secs}с`;
+        accent = "#fde68a";
+      } else if (laneHasWaveTraffic(tdState, pathId)) {
+        text = `волна ${tdState.wave}/${maxWaves}`;
+        const pending = getLanePendingQueue(tdState, pathId).length;
+        const alive = (tdState.pigs || []).filter((p) => p.pathId === pathId).length;
+        const laneTotal = pending + alive;
+        if (laneTotal > 0) text = `${text} · ${laneTotal}🐷`;
+      } else {
+        return;
+      }
+
+      ctx2.save();
+      ctx2.font = `bold ${Math.max(9, w * 0.011)}px system-ui,sans-serif`;
+      const tw = ctx2.measureText(text).width + 12;
+      const th = Math.max(16, w * 0.018);
+      const bx = cx - tw / 2;
+      const by = cy - th / 2;
+
+      ctx2.fillStyle = "rgba(8, 12, 18, 0.78)";
+      ctx2.strokeStyle = `${accent}55`;
+      ctx2.lineWidth = 1;
+      const rad = th * 0.35;
+      if (typeof roundRect === "function") {
+        roundRect(bx, by, tw, th, rad, ctx2);
+      } else {
+        ctx2.beginPath();
+        ctx2.rect(bx, by, tw, th);
+      }
+      ctx2.fill();
+      ctx2.stroke();
+
+      ctx2.fillStyle = accent;
+      ctx2.textAlign = "center";
+      ctx2.textBaseline = "middle";
+      ctx2.fillText(text, cx, cy);
+      ctx2.restore();
+    });
+  }
+
+  function drawPaths(ctx2, tdState, w, h, animTime = 0) {
     const map = tdState.map || {};
     const pathFill = map.pathColor || "rgba(139, 90, 43, 0.55)";
+    const { rimW, pathW } = getPathWidths(w);
+
     (map.paths || []).forEach((path) => {
-      ctx2.beginPath();
-      path.forEach((pt, i) => {
-        const x = pt.x * w;
-        const y = pt.y * h;
-        if (i === 0) ctx2.moveTo(x, y);
-        else ctx2.lineTo(x, y);
-      });
-      ctx2.strokeStyle = "rgba(40, 25, 10, 0.4)";
-      ctx2.lineWidth = Math.max(16, w * (typeof TD_PATH_RIM_FRAC === "number" ? TD_PATH_RIM_FRAC : 0.058));
+      strokePath(ctx2, path, w, h);
+      ctx2.strokeStyle = "rgba(20, 12, 5, 0.55)";
+      ctx2.lineWidth = rimW * 1.12;
       ctx2.lineCap = "round";
       ctx2.lineJoin = "round";
       ctx2.stroke();
 
-      ctx2.beginPath();
-      path.forEach((pt, i) => {
-        const x = pt.x * w;
-        const y = pt.y * h;
-        if (i === 0) ctx2.moveTo(x, y);
-        else ctx2.lineTo(x, y);
-      });
-      ctx2.strokeStyle = pathFill;
-      ctx2.lineWidth = Math.max(12, w * (typeof TD_PATH_WIDTH_FRAC === "number" ? TD_PATH_WIDTH_FRAC : 0.058));
+      strokePath(ctx2, path, w, h);
+      ctx2.strokeStyle = "rgba(40, 25, 10, 0.45)";
+      ctx2.lineWidth = rimW;
       ctx2.stroke();
+
+      strokePath(ctx2, path, w, h);
+      ctx2.strokeStyle = pathFill;
+      ctx2.lineWidth = pathW;
+      ctx2.stroke();
+
+      strokePath(ctx2, path, w, h);
+      ctx2.strokeStyle = "rgba(0, 0, 0, 0.22)";
+      ctx2.lineWidth = pathW * 1.08;
+      ctx2.globalCompositeOperation = "multiply";
+      ctx2.stroke();
+      ctx2.globalCompositeOperation = "source-over";
+
+      strokePath(ctx2, path, w, h);
+      ctx2.strokeStyle = "rgba(255, 235, 200, 0.12)";
+      ctx2.lineWidth = pathW * 0.42;
+      ctx2.stroke();
+
+      drawPathChevrons(ctx2, path, w, h, animTime, pathW);
     });
-    drawPathSpawns(ctx2, tdState, w, h);
   }
 
-  function drawBuildSlots(ctx2, tdState, w, h, selectedSlotId) {
+  function drawBuildSlots(ctx2, tdState, w, h, selectedSlotId, animTime = 0) {
     const slots = tdState.map?.slots || TD_MAP_SLOTS || [];
     slots.forEach((slot) => {
       const cx = slot.x * w;
       const cy = slot.y * h;
-      const r = Math.min(w, h) * (typeof TD_SLOT_RADIUS_FRAC === "number" ? TD_SLOT_RADIUS_FRAC : 0.055);
+      const r = tdWorldPx(
+        typeof TD_SLOT_RADIUS_PX !== "undefined" ? TD_SLOT_RADIUS_PX : null,
+        TD_SLOT_RADIUS_FRAC,
+        Math.min(w, h),
+      );
       const tower = (tdState.towers || []).find((t) => t.slotId === slot.id && t.alive);
       const selected = slot.id === selectedSlotId;
+      const isCenter = slot.pathId == null;
 
       ctx2.save();
+
+      if (isCenter) {
+        const breathe = 0.5 + 0.5 * Math.sin(animTime * (Math.PI * 2 / 3));
+        const auraR = r * (2.2 + breathe * 0.35);
+        const grd = ctx2.createRadialGradient(cx, cy, r * 0.3, cx, cy, auraR);
+        grd.addColorStop(0, `rgba(120, 200, 255, ${0.18 + breathe * 0.12})`);
+        grd.addColorStop(0.6, `rgba(80, 160, 220, ${0.08 + breathe * 0.06})`);
+        grd.addColorStop(1, "rgba(60, 140, 200, 0)");
+        ctx2.fillStyle = grd;
+        ctx2.beginPath();
+        ctx2.arc(cx, cy, auraR, 0, Math.PI * 2);
+        ctx2.fill();
+        ctx2.shadowColor = `rgba(120, 200, 255, ${0.2 + breathe * 0.15})`;
+        ctx2.shadowBlur = 18 + breathe * 14;
+      }
+
       ctx2.beginPath();
       ctx2.arc(cx, cy, r * 1.15, 0, Math.PI * 2);
       if (tower) {
         ctx2.fillStyle = selected ? "rgba(168, 85, 247, 0.35)" : "rgba(255, 230, 180, 0.3)";
         ctx2.strokeStyle = selected ? "rgba(168, 85, 247, 0.9)" : "rgba(180, 140, 60, 0.55)";
+      } else if (isCenter) {
+        ctx2.fillStyle = selected ? "rgba(96, 200, 255, 0.22)" : "rgba(120, 200, 255, 0.12)";
+        ctx2.strokeStyle = selected ? "rgba(120, 220, 255, 0.95)" : "rgba(120, 200, 255, 0.55)";
+        ctx2.setLineDash([]);
       } else {
         ctx2.fillStyle = selected ? "rgba(96, 165, 250, 0.25)" : "rgba(255,255,255,0.08)";
         ctx2.strokeStyle = selected ? "rgba(96, 165, 250, 0.85)" : "rgba(255,255,255,0.25)";
@@ -543,17 +1038,18 @@ const TdArena = (() => {
       ctx2.fill();
       ctx2.stroke();
       ctx2.setLineDash([]);
+      ctx2.shadowBlur = 0;
 
       if (!tower) {
         ctx2.font = `bold ${Math.max(10, r * 0.45)}px system-ui,sans-serif`;
-        ctx2.fillStyle = "rgba(255,255,255,0.7)";
+        ctx2.fillStyle = isCenter ? "rgba(200, 235, 255, 0.9)" : "rgba(255,255,255,0.7)";
         ctx2.textAlign = "center";
         ctx2.textBaseline = "middle";
         ctx2.fillText("+", cx, cy);
       }
 
       ctx2.font = `600 ${Math.max(9, r * 0.32)}px system-ui,sans-serif`;
-      ctx2.fillStyle = selected ? "#bfdbfe" : "rgba(255,255,255,0.55)";
+      ctx2.fillStyle = selected ? "#bfdbfe" : isCenter ? "rgba(180, 230, 255, 0.85)" : "rgba(255,255,255,0.55)";
       ctx2.textAlign = "center";
       ctx2.textBaseline = "top";
       ctx2.fillText(slot.label || "", cx, cy + r * 1.35);
@@ -591,7 +1087,11 @@ const TdArena = (() => {
 
       const cx = slot.x * w;
       const cy = slot.y * h;
-      const baseR = Math.min(w, h) * (typeof TD_HERO_RADIUS_FRAC === "number" ? TD_HERO_RADIUS_FRAC : 0.062);
+      const baseR = tdWorldPx(
+        typeof TD_HERO_RADIUS_PX !== "undefined" ? TD_HERO_RADIUS_PX : null,
+        TD_HERO_RADIUS_FRAC,
+        Math.min(w, h),
+      );
       const pulse = 1 + Math.sin(animTime * 2.5 + tower.slotId) * 0.025;
 
       const portrait = loadPortrait(tower.classId);
@@ -632,7 +1132,11 @@ const TdArena = (() => {
       const pos = tdLerpPath(tdState, pig.pathId, pig.t);
       const cx = pos.x * w;
       const cy = pos.y * h;
-      const size = Math.min(w, h) * (typeof TD_UNIT_SIZE_FRAC === "number" ? TD_UNIT_SIZE_FRAC : 0.045) * pig.sizeScale;
+      const size = tdWorldPx(
+        typeof TD_UNIT_SIZE_PX !== "undefined" ? TD_UNIT_SIZE_PX : null,
+        TD_UNIT_SIZE_FRAC,
+        Math.min(w, h),
+      ) * pig.sizeScale;
       const hpRatio = Math.max(0, pig.hp / pig.maxHp);
 
       ctx2.save();
@@ -824,7 +1328,7 @@ const TdArena = (() => {
 
   function drawMapHintScreen(ctx2, viewW) {
     if (!isCameraMoved()) return;
-    const hint = "Двойной тап — весь обзор";
+    const hint = "Двойной тап — к центру · колёсико — зум";
     ctx2.font = `${Math.max(10, viewW * 0.012)}px system-ui,sans-serif`;
     ctx2.textAlign = "right";
     ctx2.textBaseline = "bottom";
@@ -854,8 +1358,11 @@ const TdArena = (() => {
     applyCameraTransform(ctx, viewRect, w, h, dpr);
     drawGrass(ctx, tdState, w, h);
     drawDecor(ctx, tdState, w, h);
-    drawPaths(ctx, tdState, w, h);
-    drawBuildSlots(ctx, tdState, w, h, sel);
+    drawPaths(ctx, tdState, w, h, animTime);
+    drawSpawnPortals(ctx, tdState, w, h, animTime);
+    drawWaveQueues(ctx, tdState, w, h);
+    drawLaneBadges(ctx, tdState, w, h);
+    drawBuildSlots(ctx, tdState, w, h, sel, animTime);
     drawPigs(ctx, tdState, w, h);
     drawAttackFx(ctx, tdState, w, h);
     drawTowers(ctx, tdState, w, h, animTime);
