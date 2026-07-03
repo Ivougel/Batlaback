@@ -447,7 +447,8 @@ const PrepDragArc = (() => {
     const from = { x: pointer.x, y: pointer.y };
     const to = { x: targetPoint.x, y: targetPoint.y };
     const span = Math.hypot(to.x - from.x, to.y - from.y);
-    if (span < 12) {
+    const maxSpan = Math.min(320, (window.visualViewport?.width ?? window.innerWidth) * 0.42);
+    if (span < 12 || span > maxSpan) {
       linkHaloPathEl.removeAttribute("d");
       linkCorePathEl.removeAttribute("d");
       linkAnchorEl?.setAttribute("r", "0");

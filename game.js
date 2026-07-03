@@ -2603,8 +2603,10 @@ function applyPhaseCanvasLayout() {
     canvas.width = PREP_CANVAS_W;
     canvas.height = PREP_CANVAS_H;
   } else if (isTdMode() && isBattleUiPhase()) {
-    canvas.width = typeof TD_CANVAS_W === "number" ? TD_CANVAS_W : 960;
-    canvas.height = typeof TD_CANVAS_H === "number" ? TD_CANVAS_H : 640;
+    if (!isTdLoadoutEditPhase()) {
+      canvas.width = typeof TD_CANVAS_W === "number" ? TD_CANVAS_W : 960;
+      canvas.height = typeof TD_CANVAS_H === "number" ? TD_CANVAS_H : 640;
+    }
   } else {
     canvas.width = BATTLE_CANVAS_W;
     canvas.height = BATTLE_CANVAS_H;
@@ -2618,6 +2620,7 @@ function applyPhaseCanvasLayout() {
   if (typeof window.fitCanvasDisplaySize === "function") {
     window.fitCanvasDisplaySize();
   }
+  if (isTdLoadoutEditPhase()) syncTdLoadoutLayout();
   if (typeof window.syncFxCanvasGeometry === "function") {
     requestAnimationFrame(() => window.syncFxCanvasGeometry());
   }
@@ -3928,6 +3931,11 @@ function isPrepSidebarArcDrag() {
   return dragFrom?.type === "shop" || dragFrom?.type === "bench";
 }
 
+/** TD build panel: дуга магазин→рюкзак без ✊ и «луча» remote-hold (ломается на iPad). */
+function useTdBuildSidebarArcDrag() {
+  return isPrepSidebarArcDrag() && isTdLoadoutEditPhase();
+}
+
 function shouldDrawPrepGridFigurePreview() {
   if (!isPrepSidebarArcDrag()) return true;
   if (hoverSlot || hoverCell || prepDropPreviewHover) return true;
@@ -4150,7 +4158,18 @@ function getPrepSidebarLinkTargetClient() {
   const col = hoverSlot?.col ?? hoverCell?.col ?? prepDropPreviewHover?.col;
   const row = hoverSlot?.row ?? hoverCell?.row ?? prepDropPreviewHover?.row;
   if (col == null || row == null) return null;
-  return boardCellClientCenter(col, row);
+  const target = boardCellClientCenter(col, row);
+  if (useTdBuildSidebarArcDrag()) {
+    const backpack = getPrepBackpackClientRect();
+    if (!backpack) return null;
+    const pad = 28;
+    const inBackpack = target.x >= backpack.left - pad
+      && target.x <= backpack.right + pad
+      && target.y >= backpack.top - pad
+      && target.y <= backpack.bottom + pad;
+    if (!inBackpack) return null;
+  }
+  return target;
 }
 
 function syncPrepSidebarBoardHover(clientX, clientY, side, st) {
@@ -6778,7 +6797,7 @@ function syncDragGhostOverlay(clientX, clientY) {
     && typeof PrepDragArc !== "undefined"
     && PrepDragArc.isActive()) {
     PrepDragArc.mountGhostToBody();
-    if (sidebarDrag) {
+    if (sidebarDrag && !useTdBuildSidebarArcDrag()) {
       ghostX = clientX;
       ghostY = clientY;
       arcRotation = null;
@@ -6802,6 +6821,8 @@ function syncDragGhostOverlay(clientX, clientY) {
         dropState: getPrepArcDropState(),
         itemId: dragPayload.itemId,
         linkPoint: null,
+        grabAtPointer: false,
+        remoteHold: false,
       });
       el.classList.add("ui-drag-ghost--arc-flight");
       el.classList.remove("ui-drag-ghost--remote-hold");
@@ -6818,6 +6839,7 @@ function syncDragGhostOverlay(clientX, clientY) {
   if (!def) return;
 
   const remoteHoldGhost = sidebarDrag
+    && !useTdBuildSidebarArcDrag()
     && isLoadoutInteractionPhase()
     && typeof PrepDragArc !== "undefined"
     && PrepDragArc.isActive();
