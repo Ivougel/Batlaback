@@ -242,6 +242,13 @@ html[data-game-mode="td"] #app[data-td-loadout-open="true"] .td-arena-mount {
 }
 
 .td-run-sheet:not(.hidden) {
+  /* Прозрачная область sheet не должна перекрывать TD-магазин справа. */
+  pointer-events: none;
+}
+
+.td-run-sheet:not(.hidden) .td-run-sheet__backdrop,
+.td-run-sheet:not(.hidden) .td-loadout-sheet__panel,
+.td-run-sheet:not(.hidden) .td-hero-sheet__panel {
   pointer-events: auto;
 }
 

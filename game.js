@@ -4384,10 +4384,25 @@ function getPrepDropPlacement(st, side = prepViewSide) {
     };
   }
 
-  // Для drag из магазина/скамьи: занятая клетка должна явно подсвечиваться как невалидная.
+  // Для drag из магазина/скамьи: занятая клетка — невалидно, кроме вставки камня в сокет.
   if (isPrepSidebarArcDrag()
     && isSlotCell(st.containers, col, row)
     && findItemAtSlot(st.items, col, row)) {
+    if (typeof isGemItem === "function" && isGemItem(dragPayload.itemId)
+      && typeof findSocketHostAt === "function") {
+      const excludeUid = dragFrom?.type === "item" ? dragFrom.item?.uid : null;
+      const host = findSocketHostAt(st.items, col, row, dragPayload.itemId, excludeUid);
+      if (host) {
+        return {
+          kind: "item",
+          col,
+          row,
+          rotation: dragPayload.rotation || 0,
+          valid: true,
+          displaced: [],
+        };
+      }
+    }
     return {
       kind: "item",
       col,
@@ -8794,11 +8809,11 @@ function tryGemSocketDrop(st, dragFrom, dragPayload, col, row, side) {
   if (!host) return false;
 
   let gemId = dragPayload.itemId;
+  let purchasedGemId = null;
 
   if (dragFrom.type === "shop") {
-    const bought = commitShopPurchase(dragFrom.index, side);
-    if (!bought) return false;
-    gemId = bought;
+    // Покупку откладываем до успешной вставки в сокет.
+    purchasedGemId = dragFrom.index;
   } else if (dragFrom.type === "bench") {
     st.bench.splice(dragFrom.index, 1);
     if (selectedBench === dragFrom.index) selectedBench = -1;
@@ -8808,6 +8823,11 @@ function tryGemSocketDrop(st, dragFrom, dragPayload, col, row, side) {
 
   const hostIdx = st.items.findIndex((i) => i.uid === host.uid);
   if (hostIdx < 0) return false;
+  if (dragFrom.type === "shop") {
+    const bought = commitShopPurchase(purchasedGemId, side);
+    if (!bought) return false;
+    gemId = bought;
+  }
   const socketed = socketGemIntoItem(st.items[hostIdx], gemId);
   if (!socketed) return false;
 
