@@ -760,12 +760,12 @@
     if (!showHud) {
       root.style.removeProperty("--prep-hero-card-portrait-w");
       root.style.removeProperty("--prep-hero-card-portrait-h");
+      root.style.removeProperty("--prep-hud-portrait-bust-scale");
       return;
     }
 
     const topBar = document.getElementById("prep-top-bar");
-    const heroCard = document.getElementById("prep-hero-card");
-    if (!topBar || !heroCard) return;
+    if (!topBar) return;
 
     const hudW = topBar.clientWidth;
     if (hudW < 96) return;
@@ -776,12 +776,17 @@
     const maxW = readCssPx("--prep-hero-card-portrait-w-max", 320 * uiScale);
     const portraitW = Math.round(Math.max(minW, Math.min(maxW, hudW * share)));
 
-    const measuredH = Math.max(heroCard.offsetHeight, topBar.offsetHeight);
-    const minH = Math.round(168 * uiScale);
-    const portraitH = Math.max(minH, measuredH);
+    const aspect = readCssPx("--prep-hero-card-portrait-ratio", 0.86);
+    const maxH = readCssPx("--prep-hero-card-portrait-h-max", 280 * uiScale);
+    const minH = readCssPx("--prep-hero-card-portrait-h-min", 168 * uiScale);
+    const portraitH = Math.round(Math.max(minH, Math.min(maxH, portraitW / Math.max(0.72, aspect))));
+
+    const refW = 156;
+    const bustScale = Math.max(1.32, Math.min(2.05, 1.96 * (refW / portraitW)));
 
     root.style.setProperty("--prep-hero-card-portrait-w", `${portraitW}px`);
     root.style.setProperty("--prep-hero-card-portrait-h", `${portraitH}px`);
+    root.style.setProperty("--prep-hud-portrait-bust-scale", bustScale.toFixed(3));
   }
 
   let prepHeroCardPortraitObserver = null;
@@ -789,13 +794,11 @@
   function ensurePrepHeroCardPortraitObserver() {
     if (prepHeroCardPortraitObserver || typeof ResizeObserver === "undefined") return;
     const topBar = document.getElementById("prep-top-bar");
-    const heroCard = document.getElementById("prep-hero-card");
     if (!topBar) return;
     prepHeroCardPortraitObserver = new ResizeObserver(() => {
       syncPrepHeroCardPortraitSize();
     });
     prepHeroCardPortraitObserver.observe(topBar);
-    if (heroCard) prepHeroCardPortraitObserver.observe(heroCard);
   }
 
   function syncClassOverlayAnchors() {

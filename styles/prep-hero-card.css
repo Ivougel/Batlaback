@@ -41,6 +41,7 @@ html[data-ui-surface="tablet-side"] #app:is([data-phase="prep"], [data-prep-hero
   display: contents;
 }
 
+html:is([data-prep-layout="side"], [data-ui-surface="tablet-side"], [data-ui-surface="desktop"]) #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-hero-card__portrait,
 html[data-prep-layout="side"] #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-hero-card__portrait,
 html[data-ui-surface="tablet-side"] #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-hero-card__portrait {
   grid-column: 1;
@@ -48,9 +49,10 @@ html[data-ui-surface="tablet-side"] #app:is([data-phase="prep"], [data-prep-hero
   position: relative;
   width: 100%;
   min-width: 0;
-  height: 100%;
-  min-height: var(--prep-hero-card-portrait-h, calc(168px * var(--ui-scale, 1)));
-  align-self: stretch;
+  height: var(--prep-hero-card-portrait-h, calc(188px * var(--ui-scale, 1)));
+  max-height: var(--prep-hero-card-portrait-h, calc(280px * var(--ui-scale, 1)));
+  min-height: 0;
+  align-self: start;
   display: flex;
   padding: 0;
   overflow: hidden;

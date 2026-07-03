@@ -167,13 +167,15 @@
   --prep-hero-float-min-h: min(44vh, 400px);
   --prep-hero-float-max-w: min(46vw, 360px);
   /* Hero card HUD: портрет = кроп головы/плеч, высота = stats + mutation */
-  --prep-hero-card-portrait-ratio: 0.92;
+  --prep-hero-card-portrait-ratio: 0.86;
   --prep-hero-card-portrait-w-share: 0.38;
   --prep-hero-card-body-gap: calc(6px * var(--ui-scale));
   --prep-hero-card-portrait-w: calc(200px * var(--ui-scale));
   --prep-hero-card-portrait-h: calc(188px * var(--ui-scale));
   --prep-hero-card-portrait-w-min: calc(148px * var(--ui-scale));
   --prep-hero-card-portrait-w-max: calc(320px * var(--ui-scale));
+  --prep-hero-card-portrait-h-min: calc(168px * var(--ui-scale));
+  --prep-hero-card-portrait-h-max: calc(280px * var(--ui-scale));
   --prep-hud-portrait-bust-scale: 2.05;
   --prep-hud-portrait-bust-y: 10%;
   --prep-hud-portrait-bust-x: 50%;

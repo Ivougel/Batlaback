@@ -26,7 +26,9 @@ function syncPrepHudHero(profile, options = {}) {
   const roundEl = document.getElementById("prep-hud-hero-round");
   const legacyBadge = document.getElementById("run-hud-phase");
   const root = document.documentElement;
-  const heroCardHud = root.dataset.prepLayout === "side" || root.dataset.uiSurface === "tablet-side";
+  const heroCardHud = root.dataset.prepLayout === "side"
+    || root.dataset.uiSurface === "tablet-side"
+    || root.dataset.uiSurface === "desktop";
   if (!portraitFrame || !img) return;
 
   const side = options.side || prepViewSide || "player";
