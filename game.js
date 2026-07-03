@@ -121,6 +121,9 @@ let goldEarnedTotal = 0;
 let recentBattleResults = [];
 let battleStartTime = 0;
 let battleState = null;
+let tdState = null;
+/** HP героя между волнами TD (null = полное HP). */
+let tdHeroHp = null;
 let dragPayload = null;
 let dragFrom = null;
 let prepSidebarDragUnlocked = false;
@@ -293,6 +296,14 @@ function isHardBotMode() {
 
 function isLobbyMode() {
   return gameMode === "lobby";
+}
+
+function isTdMode() {
+  return gameMode === "td";
+}
+
+function getTdMaxWaves() {
+  return typeof TD_MAX_WAVES === "number" ? TD_MAX_WAVES : 99;
 }
 
 function getEnemyDisplayName() {
@@ -1284,6 +1295,7 @@ function showSummaryStep() {
     versus: "Противостояние",
     hardbot: "Сложный бот",
     solo: "Одиночная",
+    td: "Tower Defense",
   };
   document.getElementById("class-modal-title").textContent = modeTitles[selectedGameMode] || "Готовы?";
   document.getElementById("class-modal-subtitle").textContent = "Наведите на героя или спутника — подробности о выборе";
@@ -1474,7 +1486,9 @@ function showPlayerClassStep() {
     ? "Первый игрок выбирает героиню — все четверо девочки с кличками на имя."
     : selectedGameMode === "lobby"
       ? "Лобби из восьми бойцов — кого из подружек отправим в рейтинг?"
-      : "Кого из девочек-зверушек отправим в забег? У каждой свой характер и бонус.";
+      : selectedGameMode === "td"
+        ? "Герой в центре — предметы стреляют по свиньям. Переживите 99 волн!"
+        : "Кого из девочек-зверушек отправим в забег? У каждой свой характер и бонус.";
   syncClassOverlayUi();
   syncClassMobileDock();
   if (typeof renderClassMutationGallery === "function") {
@@ -1483,7 +1497,7 @@ function showPlayerClassStep() {
 }
 
 function selectGameMode(mode) {
-  if (mode !== "solo" && mode !== "versus" && mode !== "hardbot" && mode !== "lobby") return;
+  if (mode !== "solo" && mode !== "versus" && mode !== "hardbot" && mode !== "lobby" && mode !== "td") return;
   selectedGameMode = mode;
   selectedOpponentMode = mode === "versus"
     ? "manual"
@@ -1491,7 +1505,9 @@ function selectGameMode(mode) {
       ? "hardbot"
       : mode === "lobby"
         ? "ghost"
-        : "ai";
+        : mode === "td"
+          ? "td"
+          : "ai";
   pendingPlayerClass = null;
   pendingPlayerCompanionId = null;
   selectedEnemyClass = null;
@@ -1574,6 +1590,7 @@ function updateStartRunButton() {
   btn.disabled = !ready;
   if (selectedGameMode === "versus") btn.textContent = "Начать игру";
   else if (selectedGameMode === "lobby") btn.textContent = "Начать лобби";
+  else if (selectedGameMode === "td") btn.textContent = "В оборону!";
   else btn.textContent = "Старт";
   const summaryBtn = document.getElementById("btn-class-summary-start");
   if (summaryBtn) summaryBtn.disabled = !ready;
@@ -2860,7 +2877,9 @@ function startRunFromOverlay() {
       ? "hardbot"
       : selectedGameMode === "lobby"
         ? "ghost"
-        : "ai";
+        : selectedGameMode === "td"
+          ? "td"
+          : "ai";
   enemyClass = selectedEnemyClass || pendingPlayerClass;
   enemyArchetype = AI_ARCHETYPES[enemyClass] || AI_ARCHETYPES.warrior;
   prepViewSide = "player";
@@ -2870,6 +2889,7 @@ function startRunFromOverlay() {
   overlay?.classList.remove("class-overlay--summary");
   const app = document.getElementById("app");
   if (app) app.dataset.gameMode = gameMode;
+  document.documentElement.dataset.gameMode = gameMode;
 
   const beginRun = () => {
     restartGame();
@@ -2976,11 +2996,23 @@ function restartGame() {
   } else if (opponentMode === "ghost") {
     lobbyState = null;
     initLobbyRun();
+  } else if (opponentMode === "td") {
+    enemyArchetype = AI_ARCHETYPES.warrior;
+    enemyClass = playerClass;
+    enemyGold = 0;
+    enemyContainers = [];
+    enemyItems = [];
+    enemyBench = [];
+    enemyShop = Array(MAX_SHOP).fill(null);
+    enemyShopFrozen = Array(MAX_SHOP).fill(false);
+    enemyShopReadyForRound = 0;
   } else {
     initManualEnemyState();
   }
   prepViewSide = "player";
   battleState = null;
+  tdState = null;
+  tdHeroHp = null;
   clearBattleFloatLayer();
   replayPlayback = null;
   lastBattleReplay = null;
@@ -3019,9 +3051,11 @@ function restartGame() {
     ? "Режим противостояния: Tab или кнопки — переключить магазин между игроками."
     : isLobbyMode()
       ? `Лобби: ${LOBBY_FIGHTER_COUNT} бойцов, ${LOBBY_START_HP} HP. 🏆 внизу — список участников. Таймер ${LOBBY_PREP_SECONDS}с.`
-      : isHardBotMode()
-        ? "Сложный бот: каждый раунд подбирает лучшую экипировку. Расставьте предметы и в бой!"
-        : "Расставьте предметы и в бой! Tab — посмотреть билд бота.");
+      : isTdMode()
+        ? `Tower Defense: ${getTdMaxWaves()} волн свиней! Соберите билд — предметы защищают героя в центре.`
+        : isHardBotMode()
+          ? "Сложный бот: каждый раунд подбирает лучшую экипировку. Расставьте предметы и в бой!"
+          : "Расставьте предметы и в бой! Tab — посмотреть билд бота.");
 }
 
 function isPopupOpen(id) {
@@ -4266,6 +4300,8 @@ function canStartBattle() {
     if (!lobbyState || !getLobbyPlayer(lobbyState)?.alive) return false;
     if (isLobbyRunOver(lobbyState)) return false;
     if (!getLobbyOpponent(lobbyState)) return false;
+  } else if (isTdMode()) {
+    if (round > getTdMaxWaves()) return false;
   } else if (round > RUN_BATTLES) {
     return false;
   }
@@ -4280,6 +4316,11 @@ function renderFightButton() {
   const visible = phase === "prep" && !gameOver;
   btn.classList.toggle("hidden", !visible);
   if (visible) btn.disabled = !canStartBattle();
+  if (visible && isTdMode()) {
+    btn.textContent = `🐷 Волна ${Math.min(round, getTdMaxWaves())}`;
+  } else if (visible) {
+    btn.textContent = "⚔️ Бой";
+  }
   if (visible && isVersusMode() && enemyItems.length === 0) {
     btn.title = "Игрок 2: положите предметы на стол";
   } else if (visible && playerItems.length === 0) {
@@ -4306,6 +4347,22 @@ function recalcSynergies() {
 
 function skipBattle() {
   if (phase !== "battle") return;
+  if (isTdMode() && tdState) {
+    if (tdState.finished) {
+      endTdWave();
+      return;
+    }
+    try {
+      fastForwardTd(tdState);
+    } catch (err) {
+      console.error("skipBattle TD fastForward failed:", err);
+      tdState.finished = true;
+      tdState.winner = tdState.hero.hp > 0 ? "player" : "enemy";
+    }
+    renderBattleStats();
+    if (tdState?.finished) endTdWave();
+    return;
+  }
   if (!battleState) {
     transitionToPhase("prep", () => {
       battleEndHandled = false;
@@ -4445,6 +4502,56 @@ function startBattle() {
       lastRoundStats = null;
       resetBattlePause();
       applySynergyModifiersToContainers(playerContainers, playerItems);
+
+      if (isTdMode()) {
+        applySynergyModifiersToContainers(playerContainers, playerItems);
+        lastBattlePrepSnapshot = {
+          playerItems: flattenContainersForBattle(playerContainers, playerItems).map(clonePrepBattleItem),
+          enemyItems: [],
+          playerClass,
+          enemyClass: playerClass,
+        };
+        tdState = createTdState(
+          lastBattlePrepSnapshot.playerItems,
+          playerClass,
+          round,
+          {
+            player: {
+              pendingShopBuffs: playerPendingShopBuffs,
+              companionId: playerCompanionId,
+              mutationFormId: playerMutationFormId,
+              mutationId: playerMutationId,
+              enhancements: playerEnhancements,
+            },
+          },
+        );
+        if (tdHeroHp !== null && tdState.hero) {
+          tdState.hero.hp = Math.min(tdHeroHp, tdState.hero.maxHp);
+        }
+        battleState = null;
+        if (typeof setBattleEnemyTeamLabel === "function") {
+          setBattleEnemyTeamLabel("🐷 Свиньи");
+        }
+        if (typeof resetStackOrbitVfx === "function") resetStackOrbitVfx();
+        battleStartTime = Date.now();
+        tickBattlePresentation._at = { emotion: 0, arena: 0 };
+        if (typeof resetEmotionEngine === "function") resetEmotionEngine();
+        if (typeof resetBattleAuraFrame === "function") resetBattleAuraFrame();
+        if (typeof initBattleHud === "function") initBattleHud();
+        if (typeof hideBattleCountdownOverlay === "function") hideBattleCountdownOverlay();
+        playerPendingShopBuffs = 0;
+        setBattleSpeed(savedBattleSpeed);
+        updateBattleControlsUI();
+        setPhaseLabel(`Волна ${round}!`, true);
+        log(`🐷 Волна ${round}/${getTdMaxWaves()}: свиньи идут!`);
+        playPrepSfx("battle_start");
+        renderBattleStats();
+        renderPlayerProfiles();
+        renderFightButton();
+        renderLobbyChrome();
+        return;
+      }
+
       applySynergyModifiersToContainers(enemyContainers, enemyItems);
       lastBattlePrepSnapshot = {
         playerItems: flattenContainersForBattle(playerContainers, playerItems).map(clonePrepBattleItem),
@@ -4547,6 +4654,102 @@ function startBattle() {
       });
     }
   });
+}
+
+function endTdWave() {
+  if (!tdState || battleEndHandled) return;
+  battleEndHandled = true;
+
+  const finishedState = tdState;
+  const battleWinner = finishedState.winner;
+  tdState = null;
+  clearBattleFloatLayer();
+  if (typeof resetStackOrbitVfx === "function") resetStackOrbitVfx();
+  if (typeof closeBattleHudPopups === "function") closeBattleHudPopups();
+  if (typeof closeBattleInventoryPopover === "function") closeBattleInventoryPopover();
+  if (typeof hideBattleCountdownOverlay === "function") hideBattleCountdownOverlay();
+  if (typeof resetBattleAuraFrame === "function") resetBattleAuraFrame();
+
+  let battleSummary;
+  try {
+    lastRoundStats = finishedState.itemDamageStats;
+    accumulateRunItemStats(runItemStats, finishedState.itemDamageStats);
+    let goldReward = 0;
+
+    const piggyGold = getLoadoutGoldPerRoundBonus(playerItems);
+    if (piggyGold > 0) {
+      gold += piggyGold;
+      goldEarnedTotal += piggyGold;
+      log(`Копилки и сокровища: +${piggyGold}💰`);
+    }
+
+    if (battleWinner === "player") {
+      goldReward = ROUND_GOLD + WIN_GOLD;
+    } else {
+      goldReward = ROUND_GOLD;
+    }
+    if (typeof applyRoundGoldWithShopMeta === "function") {
+      goldReward = applyRoundGoldWithShopMeta("player", goldReward, playerItems, (msg) => log(msg));
+    }
+    gold += goldReward;
+    goldEarnedTotal += goldReward;
+
+    const allWavesCleared = battleWinner === "player" && round >= getTdMaxWaves();
+    if (battleWinner === "player") {
+      recentBattleResults.push("win");
+      log(allWavesCleared
+        ? `🏆 Все ${getTdMaxWaves()} волн пережиты! +${goldReward}💰`
+        : `Волна ${round} отбита! +${goldReward}💰`);
+      playPrepSfx("battle_victory");
+    } else {
+      recentBattleResults.push("loss");
+      log(`Оборона палала на волне ${round}. +${goldReward}💰`);
+      playPrepSfx("battle_defeat");
+    }
+    if (goldReward > 0) playPrepSfx("gold");
+
+    battleSummary = buildTdWaveSummary(finishedState, { roundNum: round, goldReward });
+    if (recentBattleResults.length > 5) recentBattleResults.shift();
+
+    const battleResult = battleWinner === "player" ? "win" : "loss";
+    runResults[round - 1] = battleResult;
+    if (battleWinner === "player") {
+      tdHeroHp = finishedState.hero.hp;
+    }
+    round++;
+    syncAllMutationMilestones();
+    resetShopForNewRound();
+    setBattleControlsVisible(false);
+    resetBattlePause();
+  } catch (err) {
+    console.error("endTdWave failed:", err);
+    battleSummary = buildTdWaveSummary(finishedState, { roundNum: round, goldReward: 0 });
+  }
+
+  requestAnimationFrame(() => {
+    showBattleResultPopup(battleSummary, finishedState.log || []);
+  });
+
+  try {
+    if (battleWinner === "enemy") {
+      pendingGameOver = true;
+      gameOver = true;
+      updateUI();
+      renderRunStats();
+      return;
+    }
+    if (round > getTdMaxWaves()) {
+      pendingGameOver = true;
+      gameOver = true;
+      updateUI();
+      renderRunStats();
+      return;
+    }
+    applyPostBattlePrep("player");
+  } catch (err) {
+    console.error("applyPostBattlePrep after TD failed:", err);
+    updateUI();
+  }
 }
 
 function endBattle() {
@@ -4769,9 +4972,36 @@ function applyPostBattlePrep(battleWinner) {
     return;
   }
 
-  if (round > RUN_BATTLES) {
+  if (round > RUN_BATTLES && !isTdMode()) {
     pendingGameOver = true;
     updateUI();
+    return;
+  }
+
+  if (isTdMode()) {
+    if (round > getTdMaxWaves()) {
+      pendingGameOver = true;
+      updateUI();
+      return;
+    }
+    const playerBag = grantBagReward(playerContainers, round, GRID_COLS, GRID_ROWS, playerItems);
+    if (playerBag.granted) {
+      playerContainers = playerBag.containers;
+      const bagName = ITEM_CATALOG[playerBag.bagId]?.name || "Сумка";
+      log(`🎒 Новая сумка: ${bagName}! Инвентарь расширен.`);
+      if (typeof CombatLog !== "undefined") {
+        CombatLog.notifyBackpack(ITEM_CATALOG[playerBag.bagId]);
+      }
+    }
+    resetShopForNewRoundForSide("player");
+    prepViewSide = "player";
+    recalcSynergies();
+    renderBattleStats();
+    renderPlayerProfiles();
+    pendingGameOver = false;
+    updateUI();
+    renderRunStats();
+    renderFightButton();
     return;
   }
 
@@ -5075,6 +5305,23 @@ function gameLoop(ts) {
 
   if (phase === "battle" && tickLobbyRoundBattles(dt, ts)) {
     // все пары лобби тикают параллельно
+  } else if (phase === "battle" && isTdMode() && tdState && !tdState.finished) {
+    const simDt = getBattleSimDt(dt);
+    if (simDt > 0) {
+      try {
+        tdTick(tdState, simDt);
+      } catch (err) {
+        console.error("tdTick failed:", err);
+      }
+    }
+    if (Math.floor(ts / 500) !== Math.floor((ts - dt * 1000) / 500)) {
+      renderBattleStats();
+      renderPlayerProfiles();
+    }
+  } else if (phase === "battle" && isTdMode() && tdState?.finished) {
+    if (typeof resetStackOrbitVfx === "function") resetStackOrbitVfx();
+    clearBattleFloatLayer();
+    endTdWave();
   } else if (phase === "battle" && battleState && !battleState.finished) {
     const countdownDt = typeof getBattleCountdownDt === "function" ? getBattleCountdownDt(dt) : dt;
     if (countdownDt > 0 && typeof tickBattleCountdown === "function") {
@@ -5834,6 +6081,10 @@ function drawWorldLayer() {
       else drawDropPreview(ctx);
     }
     ctx.restore();
+  } else if (isBattleUiPhase() && isTdMode() && tdState) {
+    if (typeof TdArena !== "undefined") {
+      TdArena.draw(ctx, tdState, canvas.width, canvas.height, synergyAnimTime);
+    }
   } else if (isBattleUiPhase()) {
     const viewState = getDisplayBattleState();
     if (shouldDrawCanvasLoadoutInBattle()) {
@@ -5854,7 +6105,7 @@ function drawWorldLayer() {
       }
     }
   }
-  if (isBattleUiPhase() && getDisplayBattleState()) {
+  if (isBattleUiPhase() && getDisplayBattleState() && !(isTdMode() && tdState)) {
     const viewState = getDisplayBattleState();
     if (shouldDrawCanvasLoadoutInBattle()) {
       drawPlacedItems(viewState.player.items, "player", false, true);
@@ -8166,7 +8417,9 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
     const viewedFighter = isLobbyMode() ? getLobbyFighterById(lobbyState, lobbyViewFighterId) : null;
     const roundLabel = isLobbyMode()
       ? `${round}`
-      : `${Math.min(round, RUN_BATTLES)}/${RUN_BATTLES}`;
+      : isTdMode()
+        ? `${Math.min(round, getTdMaxWaves())}/${getTdMaxWaves()}`
+        : `${Math.min(round, RUN_BATTLES)}/${RUN_BATTLES}`;
     const hpLabel = viewedFighter
       ? `${viewedFighter.hp}/${LOBBY_START_HP}`
       : lobbyPlayer
@@ -8355,7 +8608,7 @@ function renderPlayerProfiles(opts = {}) {
   const buildStatsEl = document.getElementById("battle-build-stats-content");
   const statsOptions = {
     round,
-    maxRound: isLobbyMode() ? round : RUN_BATTLES,
+    maxRound: isLobbyMode() ? round : isTdMode() ? getTdMaxWaves() : RUN_BATTLES,
     itemCount: Math.max(playerItems.length, enemyItems.length, 1),
   };
 

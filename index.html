@@ -16,7 +16,7 @@
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="stylesheet" href="styles/tokens.css?v=18">
   <link rel="stylesheet" href="styles/layers.css?v=7">
-  <link rel="stylesheet" href="styles/bottom-chrome.css?v=20">
+  <link rel="stylesheet" href="styles/bottom-chrome.css?v=21">
   <link rel="stylesheet" href="styles.css?v=37">
   <link rel="stylesheet" href="styles/shop.css?v=6">
   <link rel="stylesheet" href="styles/item-card-chrome.css?v=3">
@@ -26,7 +26,7 @@
   <link rel="stylesheet" href="styles/battle-archetype-banner.css?v=1">
   <link rel="stylesheet" href="styles/enhancements.css?v=3">
   <link rel="stylesheet" href="styles/doll.css?v=25">
-  <link rel="stylesheet" href="styles/combat-feed.css?v=4">
+  <link rel="stylesheet" href="styles/combat-feed.css?v=5">
   <link rel="stylesheet" href="styles/surface-profiles.css?v=3">
   <link rel="stylesheet" href="styles/container-queries.css?v=2">
   <link rel="stylesheet" href="styles/modal-scale.css?v=5">
@@ -34,7 +34,7 @@
   <link rel="stylesheet" href="styles/emotion-thoughts.css?v=10">
   <link rel="stylesheet" href="styles/arena-equipment.css?v=20">
   <link rel="stylesheet" href="styles/prep-drag-arc.css?v=10">
-  <link rel="stylesheet" href="styles/battle-arena-layout.css?v=36">
+  <link rel="stylesheet" href="styles/battle-arena-layout.css?v=37">
   <link rel="stylesheet" href="styles/phone-landscape.css?v=9">
   <link rel="stylesheet" href="styles/battle-scale.css?v=4">
   <link rel="stylesheet" href="styles/battle-hud-compact.css?v=3">
@@ -56,15 +56,16 @@
   <link rel="stylesheet" href="styles/tablet-side.css?v=31">
   <link rel="stylesheet" href="styles/battle-inventory-popover.css?v=8">
   <link rel="stylesheet" href="styles/lobby.css?v=8">
+  <link rel="stylesheet" href="styles/td-mode.css?v=1">
   <link rel="stylesheet" href="styles/lobby-roster-float.css?v=2">
   <link rel="stylesheet" href="styles/meadow-theme.css?v=2">
   <link rel="stylesheet" href="styles/battle-theme-ui.css?v=2">
   <link rel="stylesheet" href="styles/prep-borderless.css?v=3">
   <link rel="stylesheet" href="styles/battle-borderless.css?v=1">
   <link rel="stylesheet" href="styles/item-stats-report.css?v=3">
-  <link rel="stylesheet" href="styles/prep-juice.css?v=5">
+  <link rel="stylesheet" href="styles/prep-juice.css?v=6">
   <link rel="stylesheet" href="styles/prep-forest-hud.css?v=2">
-  <link rel="stylesheet" href="styles/prep-timer-hero.css?v=2">
+  <link rel="stylesheet" href="styles/prep-timer-hero.css?v=3">
   <link rel="stylesheet" href="styles/battle-result-glass.css?v=1">
   <link rel="stylesheet" href="styles/battle-aura-frame.css?v=2">
   <link rel="stylesheet" href="styles/battle-result-theater.css?v=3">
@@ -86,8 +87,8 @@
   </script>
   <script src="systems/layout-scales.js?v=2"></script>
   <script src="systems/battle-fx-tier.js?v=1"></script>
-  <script src="systems/battle-hero-anchor.js?v=26"></script>
-  <script src="ui-layout.js?v=105"></script>
+  <script src="systems/battle-hero-anchor.js?v=27"></script>
+  <script src="ui-layout.js?v=106"></script>
 </head>
 <body>
   <div id="ui-ornament-frame" class="ui-ornament-frame" aria-hidden="true">
@@ -373,6 +374,12 @@
               <span class="class-name">Лобби</span>
               <span class="class-desc">8 бойцов, ghost-снимки и HP — как в auto-battler</span>
               <span class="class-badge class-badge--lobby">Рейтинг</span>
+            </button>
+            <button type="button" class="class-card game-mode-card glass-card" data-game-mode="td">
+              <span class="glass-card-icon glass-card-icon--td class-icon" aria-hidden="true">🐷</span>
+              <span class="class-name">Tower Defense</span>
+              <span class="class-desc">Герой в центре — 99 волн свиней по тропинкам</span>
+              <span class="class-badge class-badge--td">Оборона</span>
             </button>
           </div>
         </div>
@@ -704,10 +711,24 @@
       </div>
     </div>
     <div class="bottom-chrome-center prep-toolbar-feed-home" id="prep-toolbar-feed-home">
-      <div class="prep-bottom-stats hud-stats-pill" id="prep-bottom-stats" hidden aria-live="polite" aria-label="Ресурсы забега">
-        <span class="prep-bottom-stat prep-bottom-stat--gold" title="Золото"><span class="prep-bottom-stat-ico" aria-hidden="true">💰</span><b id="prep-bottom-stat-gold">0</b></span>
-        <span class="prep-bottom-stat prep-bottom-stat--hp" title="Здоровье"><span class="prep-bottom-stat-ico" aria-hidden="true">❤️</span><b id="prep-bottom-stat-hp">100</b></span>
-        <span class="prep-bottom-stat prep-bottom-stat--round" title="Раунд"><span class="prep-bottom-stat-label">Раунд</span><b id="prep-bottom-stat-round">1</b></span>
+      <div class="prep-bottom-stats" id="prep-bottom-stats" hidden aria-live="polite" aria-label="Ресурсы забега">
+        <div class="hud-orb hud-orb--gold" title="Золото">
+          <span class="hud-orb__glow" aria-hidden="true"></span>
+          <span class="hud-orb__ring" aria-hidden="true">
+            <svg viewBox="0 0 80 80" focusable="false" aria-hidden="true">
+              <circle class="hud-orb__ring-track" cx="40" cy="40" r="34"></circle>
+              <circle class="hud-orb__ring-fill hud-orb__ring-fill--full" cx="40" cy="40" r="34"></circle>
+            </svg>
+          </span>
+          <span class="hud-orb__core">
+            <span class="hud-orb__ico" aria-hidden="true">💰</span>
+            <b class="hud-orb__value" id="prep-bottom-stat-gold">0</b>
+          </span>
+        </div>
+        <div class="hud-stats-pill hud-stats-pill--metrics">
+          <span class="prep-bottom-stat prep-bottom-stat--hp" title="Здоровье"><span class="prep-bottom-stat-ico" aria-hidden="true">❤️</span><b id="prep-bottom-stat-hp">100</b></span>
+          <span class="prep-bottom-stat prep-bottom-stat--round" title="Раунд"><span class="prep-bottom-stat-label">Раунд</span><b id="prep-bottom-stat-round">1</b></span>
+        </div>
       </div>
       <div class="replay-timeline hidden" id="replay-timeline" aria-hidden="true">
         <span class="replay-timeline-label" aria-hidden="true">↻</span>
@@ -729,9 +750,19 @@
             </div>
           </div>
         </div>
-        <button type="button" class="btn-secondary btn-combat-feed bottombar-btn" id="btn-combat-feed" aria-expanded="false" aria-controls="combat-feed-panel">
-          <span class="btn-combat-feed-label">📜 События</span>
-          <span class="btn-combat-feed-chevron" aria-hidden="true">▾</span>
+        <button type="button" class="btn-combat-feed hud-orb hud-orb-btn hud-orb--event bottombar-btn" id="btn-combat-feed" aria-expanded="false" aria-controls="combat-feed-panel" aria-label="События" title="Журнал событий">
+          <span class="hud-orb__glow" aria-hidden="true"></span>
+          <span class="hud-orb__ring" aria-hidden="true">
+            <svg viewBox="0 0 80 80" focusable="false" aria-hidden="true">
+              <circle class="hud-orb__ring-track" cx="40" cy="40" r="34"></circle>
+              <circle class="hud-orb__ring-fill hud-orb__ring-fill--full" cx="40" cy="40" r="34"></circle>
+            </svg>
+          </span>
+          <span class="hud-orb__core">
+            <span class="hud-orb__ico hud-orb__ico--solo" aria-hidden="true">📜</span>
+          </span>
+          <span class="btn-combat-feed-label" aria-hidden="true">📜 События</span>
+          <span class="btn-combat-feed-chevron hud-orb__chevron" aria-hidden="true">▾</span>
         </button>
       </div>
     </div>
@@ -838,9 +869,11 @@
   <script src="systems/lobby-fighter-avatar.js?v=4"></script>
   <script src="systems/lobby-spectator.js?v=8"></script>
   <script src="systems/lobby-roster-float.js?v=2"></script>
+  <script src="systems/td-engine.js?v=1"></script>
   <script src="battle-engine.js?v=2"></script>
   <script src="battle-float-layer.js?v=18"></script>
-  <script src="components/thought-arena.js?v=15"></script>
+  <script src="components/td-arena.js?v=1"></script>
+  <script src="components/thought-arena.js?v=16"></script>
   <script src="components/arena-equipment.js?v=25"></script>
   <script src="components/emotion-presenter.js?v=5"></script>
   <script src="emotion-engine.js?v=21"></script>

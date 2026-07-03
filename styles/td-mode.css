@@ -1,0 +1,29 @@
+/* Tower Defense mode */
+
+#app[data-game-mode="td"] .hint-enemy,
+#app[data-game-mode="td"] .battle-scene-avatar-enemy,
+#app[data-game-mode="td"] #enemy-avatar-panel,
+#app[data-game-mode="td"] #enemy-attack-arena,
+#app[data-game-mode="td"] #battle-hud-enemy,
+#app[data-game-mode="td"] .btn-enemy-stats {
+  display: none !important;
+}
+
+#app[data-game-mode="td"][data-phase="battle"] .battle-scene-avatar-player {
+  opacity: 0.15;
+  pointer-events: none;
+}
+
+#app[data-game-mode="td"][data-phase="battle"] #battle-thought-arena {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#app[data-game-mode="td"] .game-mode-card[data-game-mode="td"] .class-badge--td {
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  color: #fff;
+}
+
+#app[data-game-mode="td"] .prep-stats-row--round b {
+  font-variant-numeric: tabular-nums;
+}
