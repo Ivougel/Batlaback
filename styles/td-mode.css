@@ -281,6 +281,53 @@ html[data-game-mode="td"] #app[data-td-run-live="true"] .td-arena-mount {
   color: #fde68a;
 }
 
+.td-build-panel__wave {
+  font-size: calc(11px * var(--ui-scale, 1));
+  font-weight: 700;
+  color: #bfdbfe;
+  font-variant-numeric: tabular-nums;
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"][data-td-tower-edit="true"] #prep-field-island {
+  visibility: visible !important;
+  pointer-events: auto !important;
+  position: absolute !important;
+  left: calc(8px * var(--ui-scale, 1)) !important;
+  bottom: calc(8px * var(--ui-scale, 1)) !important;
+  top: auto !important;
+  width: min(40vw, 300px) !important;
+  height: auto !important;
+  max-height: min(44vh, 340px) !important;
+  z-index: 26 !important;
+  overflow: visible !important;
+  border-radius: calc(12px * var(--ui-scale, 1));
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+  background: rgba(8, 14, 10, 0.55);
+  backdrop-filter: blur(6px);
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"][data-td-tower-edit="true"] #prep-field-island .battle-canvas-stage,
+html[data-game-mode="td"] #app[data-td-run-live="true"][data-td-tower-edit="true"] #prep-field-island .canvas-scale-wrap {
+  width: 100% !important;
+  height: auto !important;
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"][data-td-tower-edit="true"] #game-canvas {
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  max-height: min(40vh, 300px);
+  pointer-events: auto;
+  cursor: grab;
+}
+
+html[data-prep-layout="mobile"] html[data-game-mode="td"] #app[data-td-run-live="true"][data-td-tower-edit="true"] #prep-field-island {
+  width: min(92vw, 320px) !important;
+  left: 50% !important;
+  transform: translateX(-50%);
+  bottom: calc(42dvh + 8px) !important;
+}
+
 .td-build-panel__guide {
   margin: 0;
   padding: calc(6px * var(--ui-scale, 1)) calc(10px * var(--ui-scale, 1));

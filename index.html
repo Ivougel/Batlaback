@@ -56,7 +56,7 @@
   <link rel="stylesheet" href="styles/tablet-side.css?v=31">
   <link rel="stylesheet" href="styles/battle-inventory-popover.css?v=8">
   <link rel="stylesheet" href="styles/lobby.css?v=8">
-  <link rel="stylesheet" href="styles/td-mode.css?v=7">
+  <link rel="stylesheet" href="styles/td-mode.css?v=8">
   <link rel="stylesheet" href="styles/lobby-roster-float.css?v=2">
   <link rel="stylesheet" href="styles/meadow-theme.css?v=2">
   <link rel="stylesheet" href="styles/battle-theme-ui.css?v=2">
@@ -286,10 +286,11 @@
           <aside class="td-build-panel hidden" id="td-build-panel" aria-label="Постройка и улучшения">
             <header class="td-build-panel__head">
               <div class="td-build-panel__title">🏰 Постройка</div>
+              <div class="td-build-panel__wave" id="td-build-wave">🌊 1/99</div>
               <div class="td-build-panel__gold" id="td-build-gold">0 💰</div>
               <button type="button" class="btn-secondary btn-refresh-shop" id="btn-td-refresh" title="Обновить магазин (1💰)">🔄</button>
             </header>
-            <p class="td-build-panel__guide">Клик по карте → построй или улучши башню</p>
+            <p class="td-build-panel__guide">Клик по башне на карте → рюкзак слева · из магазина — drag дугой</p>
             <div class="td-build-panel__slots" id="td-build-slots"></div>
             <div class="td-build-panel__main" id="td-build-main"></div>
             <section class="td-build-panel__shop-section" aria-label="Улучшения">
@@ -933,7 +934,7 @@
   <script src="battle-engine.js?v=2"></script>
   <script src="battle-float-layer.js?v=18"></script>
   <script src="components/td-arena.js?v=4"></script>
-  <script src="components/td-build-panel.js?v=1"></script>
+  <script src="components/td-build-panel.js?v=2"></script>
   <script src="components/thought-arena.js?v=16"></script>
   <script src="components/arena-equipment.js?v=25"></script>
   <script src="components/emotion-presenter.js?v=5"></script>

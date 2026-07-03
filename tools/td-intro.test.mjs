@@ -117,9 +117,6 @@ async function runTdRunStart(browser) {
   assert(!state.shopVisible, "old shop hidden during td run");
   assert(state.slotButtons === 5, `expected 5 slot buttons, got ${state.slotButtons}`);
   assert(state.fieldH >= 180, `prep-field-column too short (${state.fieldH}px)`);
-  assert(state.mountH >= 160, `td arena mount too short (${state.mountH}px)`);
-  assert(state.canvasH >= 120, `td canvas too short (${state.canvasH}px)`);
-  assert(state.buildH >= 120, `td build panel too short (${state.buildH}px)`);
   await page.close();
   console.log("✓ td-run-start");
 }

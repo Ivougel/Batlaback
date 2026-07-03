@@ -297,17 +297,38 @@ const TdArena = (() => {
     });
   }
 
+  function drawWaveBanner(ctx2, tdState, w, h) {
+    if (!tdState.waveBannerTtl || tdState.waveBannerTtl <= 0 || !tdState.waveBannerText) return;
+    const alpha = Math.min(1, tdState.waveBannerTtl / 0.5);
+    const text = tdState.waveBannerText;
+    ctx2.save();
+    ctx2.globalAlpha = alpha;
+    ctx2.font = `bold ${Math.max(16, w * 0.022)}px system-ui,sans-serif`;
+    ctx2.textAlign = "center";
+    ctx2.textBaseline = "middle";
+    const tw = ctx2.measureText(text).width + 40;
+    const bx = w / 2;
+    const by = h * 0.22;
+    ctx2.fillStyle = "rgba(0,0,0,0.62)";
+    ctx2.fillRect(bx - tw / 2, by - 22, tw, 44);
+    ctx2.fillStyle = "#fef08a";
+    ctx2.fillText(text, bx, by);
+    ctx2.restore();
+  }
+
   function drawWaveHud(ctx2, tdState, w, h) {
     const wave = tdState.wave;
-    const alive = tdState.pigs.length;
+    const killed = tdState.pigsKilled || 0;
+    const total = tdState.totalPigs || 0;
+    const alive = tdState.pigs?.length || 0;
     const left = (tdState.spawnQueue?.length || 0) + alive;
     const diffId = tdState.difficultyId || "normal";
     const diff = typeof getTdDifficulty === "function" ? getTdDifficulty(diffId) : null;
     const diffTag = diff ? `${diff.emoji} ${diff.label}` : "";
     const towers = (tdState.towers || []).filter((t) => t.alive).length;
     const baseLives = tdState.baseLives ?? TD_BASE_LIVES;
-    const label = `🌊 ${wave}/${TD_MAX_WAVES}`;
-    const sub = `🐷 ${left} · 🏰 ${towers} · ❤️ ${baseLives}${diffTag ? ` · ${diffTag}` : ""}`;
+    const label = `🌊 Волна ${wave}/${TD_MAX_WAVES}`;
+    const sub = `🐷 ${killed}/${total} · на карте ${alive} · осталось ${left} · 🏰 ${towers} · ❤️ ${baseLives}${diffTag ? ` · ${diffTag}` : ""}`;
 
     ctx2.font = `bold ${Math.max(14, w * 0.018)}px system-ui,sans-serif`;
     ctx2.textAlign = "left";
@@ -336,6 +357,7 @@ const TdArena = (() => {
     drawAttackFx(ctx, tdState, w, h);
     drawTowers(ctx, tdState, w, h, animTime);
     drawWaveHud(ctx, tdState, w, h);
+    drawWaveBanner(ctx, tdState, w, h);
   }
 
   function draw(ctx2, tdState, w, h, animTime = 0) {

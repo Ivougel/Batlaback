@@ -3,7 +3,7 @@
  * Магазин и расстановка во время волн.
  */
 
-const TD_MAX_WAVES = 50;
+const TD_MAX_WAVES = 99;
 const TD_PIG_EMOJI = "🐷";
 const TD_CANVAS_W = 960;
 const TD_CANVAS_H = 640;
@@ -384,6 +384,36 @@ function tdEquipItemOnTower(state, slotId, itemFromBench, prepMeta = {}) {
   return { ok: true, tower };
 }
 
+/** Предмет/сумка на конкретную клетку рюкзака башни (ручная укладка). */
+function tdPlaceOnTowerLoadout(tower, itemId, col, row, rotation, uid, prepMeta = {}) {
+  if (!tower || !itemId) return { ok: false, reason: "Нет башни" };
+  const def = ITEM_CATALOG[itemId];
+  if (!def) return { ok: false, reason: "Неизвестный предмет" };
+  if (def.isContainer) {
+    if (!canPlaceInLoadoutOnSlots(itemId, col, row, rotation, tower.containers)) {
+      return { ok: false, reason: "Сюда нельзя поставить сумку" };
+    }
+    tower.containers.push(createContainer(itemId, col, row, rotation));
+    const placed = tower.containers[tower.containers.length - 1];
+    if (uid && placed) placed.uid = uid;
+    tdSyncTowerCombat(tower, prepMeta);
+    return { ok: true, tower };
+  }
+  if (!canPlaceInLoadout(itemId, col, row, rotation, tower.containers, tower.items)) {
+    return { ok: false, reason: "Нет места в рюкзаке" };
+  }
+  tower.items.push({
+    uid: uid || `td-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+    itemId,
+    col,
+    row,
+    rotation: rotation || 0,
+    runtime: {},
+  });
+  tdSyncTowerCombat(tower, prepMeta);
+  return { ok: true, tower };
+}
+
 function tdStartWave(state) {
   const difficultyId = state.difficultyId || "normal";
   const pathCount = state.map?.paths?.length || 4;
@@ -396,6 +426,8 @@ function tdStartWave(state) {
   state.totalPigs = state.spawnQueue.length;
   state.pigs = [];
   state.waveJustCleared = false;
+  state.waveBannerText = `🌊 Волна ${state.wave} началась!`;
+  state.waveBannerTtl = 3.2;
 }
 
 function createTdRunState(commanderClassId, prepMeta = {}) {
@@ -644,6 +676,7 @@ function tdHitTestSlot(normX, normY, state = null) {
 function tdTick(state, dt) {
   if (!state || state.finished || state.paused) return;
   state.elapsed += dt;
+  if (state.waveBannerTtl > 0) state.waveBannerTtl = Math.max(0, state.waveBannerTtl - dt);
 
   state.attackFx = state.attackFx
     .map((fx) => ({ ...fx, ttl: fx.ttl - dt }))

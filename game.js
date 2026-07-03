@@ -2610,6 +2610,7 @@ function syncTdBattleChrome() {
   if (typeof TdBuildPanel !== "undefined") {
     TdBuildPanel.setVisible(isTdRunLive());
   }
+  syncTdTowerEditDom();
 }
 
 function renderPhase() {
@@ -3578,12 +3579,19 @@ function handleGlobalKeydown(e) {
 
 function restoreDraggedItem(side = prepViewSide) {
   if (!dragFrom) return;
-  const st = getSideState(side);
+  const st = getLoadoutEditState(side);
   if (dragFrom.type === "item") {
     st.items = [...st.items, dragFrom.item];
   } else if (dragFrom.type === "container") {
     st.containers = [...st.containers, dragFrom.container];
     st.items = [...st.items, ...dragFrom.carriedItems];
+  }
+  if (isTdLoadoutEditPhase() && side === "player") {
+    const tower = getTdEditTower();
+    if (tower) {
+      tower.containers = st.containers;
+      tower.items = st.items;
+    }
   }
 }
 
@@ -3687,10 +3695,10 @@ function resolveContainerPlacementAtCursor(st, cursorCol, cursorRow) {
 }
 
 function isPrepArcPlaceableCell(col, row) {
-  if (phase !== "prep" || !dragPayload) return false;
+  if (!isLoadoutInteractionPhase() || !dragPayload) return false;
   const side = dragFrom?.side || prepViewSide;
   if (!canEditPrepSide(side)) return false;
-  const st = getSideState(side);
+  const st = getLoadoutEditState(side);
 
   if (isContainerItem(dragPayload.itemId)) {
     return !!resolveContainerPlacementAtCursor(st, col, row);
@@ -3775,7 +3783,9 @@ function findNearestPrepPlaceableHover(mx, my, side, st) {
   let bestDist = Infinity;
 
   const consider = (col, row) => {
-    if (col < 0 || col >= GRID_COLS || row < 0 || row >= GRID_ROWS) return;
+    const maxCols = getActiveGridCols();
+    const maxRows = getActiveGridRows();
+    if (col < 0 || col >= maxCols || row < 0 || row >= maxRows) return;
     if (!isPrepArcPlaceableCell(col, row)) return;
     const center = prepCellCanvasCenter(col, row, team);
     const dist = Math.hypot(center.x - mx, center.y - my);
@@ -3786,8 +3796,8 @@ function findNearestPrepPlaceableHover(mx, my, side, st) {
   };
 
   if (isContainerItem(dragPayload.itemId)) {
-    for (let row = 0; row < GRID_ROWS; row += 1) {
-      for (let col = 0; col < GRID_COLS; col += 1) {
+    for (let row = 0; row < getActiveGridRows(); row += 1) {
+      for (let col = 0; col < getActiveGridCols(); col += 1) {
         consider(col, row);
       }
     }
@@ -3808,7 +3818,9 @@ function findNearestPrepSlotHover(mx, my, side, st) {
   let bestDist = Infinity;
 
   const consider = (col, row) => {
-    if (col < 0 || col >= GRID_COLS || row < 0 || row >= GRID_ROWS) return;
+    const maxCols = getActiveGridCols();
+    const maxRows = getActiveGridRows();
+    if (col < 0 || col >= maxCols || row < 0 || row >= maxRows) return;
     const center = prepCellCanvasCenter(col, row, team);
     const dist = Math.hypot(center.x - mx, center.y - my);
     if (dist < bestDist) {
@@ -3818,8 +3830,8 @@ function findNearestPrepSlotHover(mx, my, side, st) {
   };
 
   if (isContainerItem(dragPayload.itemId)) {
-    for (let row = 0; row < GRID_ROWS; row += 1) {
-      for (let col = 0; col < GRID_COLS; col += 1) {
+    for (let row = 0; row < getActiveGridRows(); row += 1) {
+      for (let col = 0; col < getActiveGridCols(); col += 1) {
         consider(col, row);
       }
     }
@@ -4136,14 +4148,14 @@ function getPrepDragGhostClientPos(clientX, clientY) {
 
 function syncPrepDragBoardHover(clientX, clientY, ghostClientX, ghostClientY) {
   prepDropPreviewHover = null;
-  if (phase !== "prep" || !dragPayload) return;
+  if (!isLoadoutInteractionPhase() || !dragPayload) return;
   const side = dragFrom?.side || prepViewSide;
   if (!canEditPrepSide(side)) {
     hoverCell = null;
     hoverSlot = null;
     return;
   }
-  const st = getSideState(side);
+  const st = getLoadoutEditState(side);
 
   const tryCanvas = (mx, my) => applyPrepBoardHoverFromCanvasXY(mx, my, side, st);
   const tryClient = (cx, cy) => {
@@ -4187,7 +4199,9 @@ function syncPrepDropPreviewHover(clientX, clientY, ghostClientX, ghostClientY) 
 }
 
 function getPrepDropPlacement(st, side = prepViewSide) {
-  if (!dragPayload || phase !== "prep") return null;
+  if (!dragPayload || !isLoadoutInteractionPhase()) return null;
+  const gridW = getActiveGridCols();
+  const gridH = getActiveGridRows();
   const col = hoverSlot?.col ?? hoverCell?.col ?? prepDropPreviewHover?.col;
   const row = hoverSlot?.row ?? hoverCell?.row ?? prepDropPreviewHover?.row;
   if (col == null || row == null) return null;
@@ -4207,16 +4221,16 @@ function getPrepDropPlacement(st, side = prepViewSide) {
         st.containers,
         st.items,
         excludeUid,
-        GRID_COLS,
-        GRID_ROWS,
+        gridW,
+        gridH,
       )
       : canPlaceContainer(
         dragPayload.itemId,
         resolved.col,
         resolved.row,
         resolved.rotation,
-        GRID_COLS,
-        GRID_ROWS,
+        gridW,
+        gridH,
         st.containers,
         excludeUid,
         st.items,
@@ -4628,8 +4642,99 @@ function selectTdSlot(slotId) {
   if (slotId == null || !tdState) return;
   selectedTdSlotId = slotId;
   tdState.selectedSlotId = slotId;
+  syncTdTowerEditDom();
   renderTdBuildPanel();
+  if (isTdLoadoutEditPhase()) {
+    recalcSynergies();
+    draw();
+    fitCanvasDisplaySize?.();
+  }
   playPrepSfx("ui_click");
+}
+
+function isTdLoadoutEditPhase() {
+  return isTdRunLive() && selectedTdSlotId != null && typeof tdGetTowerAtSlot === "function"
+    && !!tdGetTowerAtSlot(tdState, selectedTdSlotId);
+}
+
+function getTdEditTower() {
+  return isTdLoadoutEditPhase() ? tdGetTowerAtSlot(tdState, selectedTdSlotId) : null;
+}
+
+function isLoadoutInteractionPhase() {
+  return phase === "prep" || isTdLoadoutEditPhase();
+}
+
+function getActiveGridCols() {
+  return isTdLoadoutEditPhase() ? TD_TOWER_COLS : GRID_COLS;
+}
+
+function getActiveGridRows() {
+  return isTdLoadoutEditPhase() ? TD_TOWER_ROWS : GRID_ROWS;
+}
+
+function getTdEditGridBounds() {
+  const innerW = TD_TOWER_COLS * GRID_CELL + (TD_TOWER_COLS - 1) * GRID_CELL_GAP;
+  const innerH = TD_TOWER_ROWS * GRID_CELL + (TD_TOWER_ROWS - 1) * GRID_CELL_GAP;
+  const ox = Math.max(0, (canvas.width - innerW) / 2);
+  const oy = Math.max(0, (canvas.height - innerH) / 2);
+  return { innerW, innerH, ox, oy };
+}
+
+function getLoadoutEditState(side = prepViewSide) {
+  if (isTdLoadoutEditPhase() && side === "player") {
+    const tower = getTdEditTower();
+    const base = getSideState("player");
+    return {
+      ...base,
+      containers: tower.containers,
+      items: tower.items,
+    };
+  }
+  return getSideState(side);
+}
+
+function syncTdTowerEditDom() {
+  const app = document.getElementById("app");
+  if (!app) return;
+  if (isTdLoadoutEditPhase()) app.dataset.tdTowerEdit = "true";
+  else app.removeAttribute("data-td-tower-edit");
+}
+
+function applyCraftingForTower(tower) {
+  if (!tower) return false;
+  const craftCtx = typeof getCraftContextFromGame === "function" ? getCraftContextFromGame("player") : {};
+  const result = tryResolveCrafting(tower.containers, tower.items, craftCtx);
+  if (!result.crafted.length) return false;
+  tower.items = result.items;
+  playPrepSfx("prep_craft");
+  result.crafted.forEach((recipe) => {
+    const out = ITEM_CATALOG[recipe.output];
+    if (out) {
+      log(`⚗️ Крафт: ${out.icon} ${out.name}`);
+      if (typeof CombatLog !== "undefined") CombatLog.notifyCraft(out);
+    }
+  });
+  return true;
+}
+
+function finalizeTdTowerLoadoutEdit() {
+  const tower = getTdEditTower();
+  if (!tower) return;
+  applyCraftingForTower(tower);
+  if (typeof tdSyncTowerCombat === "function") {
+    tdSyncTowerCombat(tower, tdState?.prepMeta || {});
+  }
+  renderTdBuildPanel();
+}
+
+function beginTdBuildShopDrag(index, e) {
+  if (!isTdLoadoutEditPhase()) {
+    log("👆 Сначала выберите башню на карте");
+    playPrepSfx("ui_error");
+    return;
+  }
+  beginPendingShopDrag(index, e, "player");
 }
 
 function bindTdCanvasEvents() {
@@ -4673,6 +4778,8 @@ function handleTdRecruit(classId) {
   goldSpentTotal += result.cost;
   playPrepSfx("buy");
   renderTdBuildPanel();
+  syncTdTowerEditDom();
+  draw();
   updateUI();
   const slotLabel = TD_MAP_SLOTS.find((s) => s.id === selectedTdSlotId)?.label || "слот";
   const clsName = typeof getClassById === "function" ? getClassById(classId)?.name : classId;
@@ -4680,28 +4787,7 @@ function handleTdRecruit(classId) {
 }
 
 function handleTdBuyUpgrade(shopIndex) {
-  if (!tdState || selectedTdSlotId == null) {
-    log("👆 Сначала выберите башню на карте");
-    playPrepSfx("ui_error");
-    return;
-  }
-  const tower = typeof tdGetTowerAtSlot === "function"
-    ? tdGetTowerAtSlot(tdState, selectedTdSlotId)
-    : null;
-  if (!tower) {
-    log("Постройте башню в этом слоте");
-    playPrepSfx("ui_error");
-    return;
-  }
-  if (typeof buyFromShopForTdTower !== "function") return;
-  buyFromShopForTdTower(shopIndex, "player", (entry) => {
-    const result = tdEquipItemOnTower(tdState, selectedTdSlotId, entry, tdState.prepMeta || {});
-    if (!result.ok) return false;
-    const def = ITEM_CATALOG[entry.itemId];
-    log(`⚡ ${def?.name || entry.itemId} → ${TD_MAP_SLOTS.find((s) => s.id === selectedTdSlotId)?.label || "башня"}`);
-    renderTdBuildPanel();
-    return true;
-  });
+  beginTdBuildShopDrag(shopIndex, { clientX: 0, clientY: 0, preventDefault() {} });
 }
 
 function handleTdEquipFromBench(benchIdx) {
@@ -4747,6 +4833,7 @@ function onTdWaveClearedInRun() {
   recentBattleResults.push("win");
   if (recentBattleResults.length > 5) recentBattleResults.shift();
   log(`✅ Волна ${clearedWave} отбита! +${goldReward}💰`);
+  if (tdState.waveBannerText) log(`${tdState.waveBannerText} Свиней: ${tdState.totalPigs || "?"}`);
   resetShopForNewRound();
   ensureShopReadyForSide("player");
   renderShop();
@@ -4790,7 +4877,10 @@ function finishTdRunStart() {
     renderTdBuildPanel();
     syncTdBattleChrome();
     setPhaseLabel(`🐷 Волна 1/${getTdMaxWaves()}`, true);
-    log("🐷 Оборона! Клик по башне или + на карте. Справа — постройка и улучшения.");
+    log(`🐷 Оборона! Клик по башне — рюкзак слева. Из магазина — перетащите дугой на рюкзак.`);
+    if (tdState?.waveBannerText) {
+      log(`${tdState.waveBannerText} Свиней: ${tdState.totalPigs || "?"}`);
+    }
     playPrepSfx("battle_start");
     renderFightButton();
     updateUI();
@@ -4843,7 +4933,7 @@ function startTdRun() {
     TdBuildPanel.init({
       onRecruit: handleTdRecruit,
       onSelectSlot: selectTdSlot,
-      onBuyUpgrade: handleTdBuyUpgrade,
+      onShopDragStart: beginTdBuildShopDrag,
     });
   }
 
@@ -5789,11 +5879,13 @@ function gameLoop(ts) {
 }
 
 function layoutGridOrigin(team) {
+  if (isTdLoadoutEditPhase()) return getTdEditGridBounds().ox;
   if (phase === "prep") return 0;
   return team === "player" ? 0 : ENEMY_X;
 }
 
 function layoutBackpackY() {
+  if (isTdLoadoutEditPhase()) return getTdEditGridBounds().oy;
   return 0;
 }
 
@@ -5925,6 +6017,10 @@ function yToRow(y, team = "player") {
   return Math.floor((y - layoutBackpackY()) / stride);
 }
 function isOnBoard(mx, my, team = "player") {
+  if (isTdLoadoutEditPhase()) {
+    const g = getTdEditGridBounds();
+    return mx >= g.ox && mx < g.ox + g.innerW && my >= g.oy && my < g.oy + g.innerH;
+  }
   const ox = layoutGridOrigin(team);
   const oy = layoutBackpackY();
   return mx >= ox && mx < ox + GRID_INNER_W && my >= oy && my < oy + GRID_INNER_H;
@@ -6487,6 +6583,30 @@ function drawWorldLayer() {
       else drawDropPreview(ctx);
     }
     ctx.restore();
+  } else if (isTdLoadoutEditPhase()) {
+    const tower = getTdEditTower();
+    if (tower) {
+      ctx.save();
+      const frameOptions = {
+        showFullPlacementGrid: shouldShowFullContainerPlacementGrid(),
+        containers: tower.containers,
+        items: tower.items,
+      };
+      drawBackpackFrame("player", frameOptions);
+      drawContainers(tower.containers, "player", false);
+      drawSynergyVisuals(ctx, synergyAnimTime, synergyPreviewBuilt, "under", "player");
+      drawLoadoutItems(tower.items, "player", false);
+      if (typeof drawAllPrepItemIdleEffects === "function") {
+        drawAllPrepItemIdleEffects(ctx, tower.items, "player", synergyAnimTime);
+      }
+      drawSynergyVisuals(ctx, synergyAnimTime, synergyPreviewBuilt, "over", "player");
+      const st = getLoadoutEditState("player");
+      if (canEditPrepSide("player") && dragPayload && getPrepDropPlacement(st, "player")) {
+        if (typeof drawPrepDropPreview === "function") drawPrepDropPreview(ctx, "player", st);
+        else drawDropPreview(ctx);
+      }
+      ctx.restore();
+    }
   } else if (isBattleUiPhase()) {
     const viewState = getDisplayBattleState();
     if (shouldDrawCanvasLoadoutInBattle()) {
@@ -6527,9 +6647,9 @@ function drawWorldLayer() {
 function drawFxLayer() {
   if (!fxCtx || !fxCanvas) return;
   fxCtx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
-  if (phase === "prep") {
+  if (phase === "prep" || isTdLoadoutEditPhase()) {
     const side = prepViewSide;
-    const st = getSideState(side);
+    const st = getLoadoutEditState(side);
     const shake = typeof getPrepBackpackShakeOffset === "function"
       ? getPrepBackpackShakeOffset()
       : { x: 0, y: 0 };
@@ -6559,7 +6679,7 @@ function drawBackground() {
   if (isTdMode() && isBattleUiPhase() && tdState) {
     return;
   }
-  if (phase === "prep") {
+  if (phase === "prep" || isTdLoadoutEditPhase()) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const w = canvas.width;
     const h = canvas.height;
@@ -6622,7 +6742,7 @@ function getActiveExpansionDragItemId() {
 }
 
 function shouldShowFullContainerPlacementGrid() {
-  if (phase !== "prep") return false;
+  if (!isLoadoutInteractionPhase()) return false;
   const itemId = getActiveExpansionDragItemId();
   return itemId != null && isShopExpansionContainer(itemId);
 }
@@ -7792,8 +7912,8 @@ function findContainerAtCanvasPoint(mx, my, containers, team = "player") {
 function hitTest(mx, my) {
   const side = prepViewSide;
   if (!canEditPrepSide(side)) return null;
-  if (isOnBoard(mx, my, side) && phase === "prep") {
-    const st = getSideState(side);
+  if (isOnBoard(mx, my, side) && isLoadoutInteractionPhase()) {
+    const st = getLoadoutEditState(side);
     const col = xToCol(mx, side);
     const row = yToRow(my, side);
     if (!isSlotCell(st.containers, col, row)) {
@@ -8128,7 +8248,7 @@ function bindItemTooltipEvents(el, itemId, contentItem, context = "shop") {
 }
 
 function onMouseDown(e) {
-  if (phase !== "prep" || gameOver || !canEditPrepSide()) return;
+  if (!isLoadoutInteractionPhase() || gameOver || !canEditPrepSide()) return;
   const side = prepViewSide;
   const st = getSideState(side);
   const { x: mx, y: my } = canvasCoordsFromEvent(e);
@@ -8250,7 +8370,7 @@ function finishDragDrop(e) {
   const { x: dropClientX, y: dropClientY } = getDropPointerClient(e);
 
   const side = dragFrom.side || prepViewSide;
-  const st = getSideState(side);
+  const st = getLoadoutEditState(side);
   if (!canEditPrepSide(side)) {
     restoreDraggedItem(side);
     notifyPrepDragRejectedFromDragFrom();
@@ -8531,7 +8651,15 @@ function finishDragDrop(e) {
 
   maybeCelebratePrepArcDrop(prepArcCelebrate);
   clearDragUiState();
-  if (canEditPrepSide(side)) applyCraftingForSide(side);
+  if (isTdLoadoutEditPhase() && side === "player") {
+    const tower = getTdEditTower();
+    if (tower) {
+      tower.containers = st.containers;
+      tower.items = st.items;
+    }
+    finalizeTdTowerLoadoutEdit();
+    draw();
+  } else if (canEditPrepSide(side)) applyCraftingForSide(side);
   if (typeof hasActiveDisplaceAnimations === "function" && hasActiveDisplaceAnimations(side)) {
     recalcSynergies();
     updateUI();
@@ -8595,7 +8723,7 @@ function tryBuyFromPendingShopDrag(clientX, clientY) {
 }
 
 function beginPendingShopDrag(index, e, side = prepViewSide) {
-  if (phase !== "prep" || gameOver || !canEditPrepSide(side)) return;
+  if (!isLoadoutInteractionPhase() || gameOver || !canEditPrepSide(side)) return;
   const st = getSideState(side);
   if (!st.shop[index]) return;
   const entryId = st.shop[index];
@@ -8621,7 +8749,7 @@ function updatePendingShopDrag(e) {
 }
 
 function beginPrepDragArcFromCard(cardEl, itemIdOverride = null) {
-  if (phase !== "prep" || !cardEl || typeof PrepDragArc === "undefined") return;
+  if (!isLoadoutInteractionPhase() || !cardEl || typeof PrepDragArc === "undefined") return;
   const c = getElementClientCenter(cardEl);
   if (!c) return;
   const itemId = itemIdOverride || cardEl.dataset.itemId || dragPayload?.itemId;
@@ -8629,10 +8757,10 @@ function beginPrepDragArcFromCard(cardEl, itemIdOverride = null) {
 }
 
 function beginPrepDragArcFromBackpack(col, row, side = prepViewSide) {
-  if (phase !== "prep" || typeof PrepDragArc === "undefined") return;
+  if (!isLoadoutInteractionPhase() || typeof PrepDragArc === "undefined") return;
   const c = boardCellClientCenter(col, row, side);
   if (!c) return;
-  const st = getSideState(side);
+  const st = getLoadoutEditState(side);
   const kind = isContainerItem(dragPayload?.itemId)
     ? "c"
     : (isSlotCell(st.containers, col, row) ? "s" : "c");
@@ -8648,7 +8776,7 @@ function beginPrepDragArcFromBackpack(col, row, side = prepViewSide) {
 }
 
 function startShopDrag(index, e, side = prepViewSide) {
-  if (phase !== "prep" || gameOver || !canEditPrepSide(side)) return;
+  if (!isLoadoutInteractionPhase() || gameOver || !canEditPrepSide(side)) return;
   const st = getSideState(side);
   if (!st.shop[index]) return;
   const entryId = st.shop[index];
@@ -8662,9 +8790,12 @@ function startShopDrag(index, e, side = prepViewSide) {
   dragFrom = { type: "shop", index, side };
   prepSidebarDragUnlocked = false;
   prepSidebarStickyHover = null;
-  beginPrepDragArcFromCard(document.querySelector(`.shop-card[data-index="${index}"]`), entryId);
+  const cardSel = isTdLoadoutEditPhase()
+    ? `.td-build-shop-card[data-shop-index="${index}"]`
+    : `.shop-card[data-index="${index}"]`;
+  beginPrepDragArcFromCard(document.querySelector(cardSel), entryId);
   startSynergyPreview();
-  document.querySelector(`.shop-card[data-index="${index}"]`)?.classList.add("shop-dragging");
+  document.querySelector(cardSel)?.classList.add("shop-dragging");
   syncUiDragState();
   if (typeof onPrepDragStart === "function") onPrepDragStart();
   if (e?.clientX != null && e?.clientY != null) {

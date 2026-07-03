@@ -1,5 +1,5 @@
 /**
- * TdBuildPanel — Legion TD: слоты, постройка, улучшения одним кликом.
+ * TdBuildPanel — Legion TD: слоты, постройка, магазин с drag→рюкзак.
  */
 
 const TdBuildPanel = (() => {
@@ -8,9 +8,10 @@ const TdBuildPanel = (() => {
   let mainEl = null;
   let shopEl = null;
   let goldEl = null;
+  let waveEl = null;
   let onRecruit = null;
   let onSelectSlot = null;
-  let onBuyUpgrade = null;
+  let onShopDragStart = null;
 
   const RECRUIT_CLASSES = ["warrior", "rogue", "mage", "priest"];
 
@@ -20,9 +21,10 @@ const TdBuildPanel = (() => {
     mainEl = document.getElementById("td-build-main");
     shopEl = document.getElementById("td-build-shop");
     goldEl = document.getElementById("td-build-gold");
+    waveEl = document.getElementById("td-build-wave");
     onRecruit = opts.onRecruit || null;
     onSelectSlot = opts.onSelectSlot || null;
-    onBuyUpgrade = opts.onBuyUpgrade || null;
+    onShopDragStart = opts.onShopDragStart || null;
   }
 
   function setVisible(visible) {
@@ -79,16 +81,15 @@ const TdBuildPanel = (() => {
       const hp = Math.ceil(tower.hero?.hp || 0);
       const maxHp = tower.hero?.maxHp || 0;
       const items = tower.items?.length || 0;
-      const maxItems = TD_TOWER_COLS * TD_TOWER_ROWS;
       mainEl.innerHTML = `
         <div class="td-build-tower">
           <span class="td-build-tower__icon">${cls?.icon || "🛡️"}</span>
           <div class="td-build-tower__body">
             <strong>${cls?.name || tower.classId}</strong>
-            <span class="td-build-tower__meta">${slot?.label || "Слот"} · HP ${hp}/${maxHp} · 📦 ${items}/${maxItems}</span>
+            <span class="td-build-tower__meta">${slot?.label || "Слот"} · HP ${hp}/${maxHp} · 📦 ${items}</span>
           </div>
         </div>
-        <p class="td-build-hint td-build-hint--compact">Предметы ниже — сразу в эту башню. Башня стреляет сама.</p>`;
+        <p class="td-build-hint td-build-hint--compact">🎒 Рюкзак слева на карте. Из магазина — <b>перетащите дугой</b> (сумки тоже). ZR — поворот.</p>`;
       return;
     }
 
@@ -120,7 +121,7 @@ const TdBuildPanel = (() => {
     if (!shopEl) return;
     const slots = shop || [];
     if (!hasTower) {
-      shopEl.innerHTML = `<p class="td-build-shop-empty">Выберите построенную башню — тогда можно купить улучшение.</p>`;
+      shopEl.innerHTML = `<p class="td-build-shop-empty">Постройте или выберите башню — затем тащите предметы в рюкзак.</p>`;
       return;
     }
 
@@ -134,24 +135,38 @@ const TdBuildPanel = (() => {
       const def = meta.def || ITEM_CATALOG[entryId] || {};
       const cost = meta.cost ?? def.cost ?? 0;
       const afford = gold >= cost;
+      const isBag = !!def.isContainer;
       return `
-        <button type="button"
+        <div role="button" tabindex="0"
           class="td-build-shop-card${afford ? "" : " td-build-shop-card--locked"}"
           data-shop-index="${index}"
-          ${afford ? "" : "disabled"}
-          title="${def.name || entryId} · ${cost}💰">
+          data-item-id="${entryId}"
+          ${afford ? "" : "aria-disabled=\"true\""}
+          title="${def.name || entryId} · ${cost}💰 · перетащите на рюкзак">
           <span class="td-build-shop-card__icon">${def.icon || "📦"}</span>
-          <span class="td-build-shop-card__name">${def.name || entryId}</span>
+          <span class="td-build-shop-card__name">${def.name || entryId}${isBag ? " 🎒" : ""}</span>
           <span class="td-build-shop-card__cost">${cost}💰</span>
-        </button>`;
+        </div>`;
     }).join("");
 
-    shopEl.querySelectorAll("[data-shop-index]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const idx = Number(btn.getAttribute("data-shop-index"));
-        if (typeof onBuyUpgrade === "function") onBuyUpgrade(idx);
+    shopEl.querySelectorAll("[data-shop-index]").forEach((card) => {
+      if (card.classList.contains("td-build-shop-card--locked")) return;
+      card.addEventListener("mousedown", (e) => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        const idx = Number(card.getAttribute("data-shop-index"));
+        if (typeof onShopDragStart === "function") onShopDragStart(idx, e);
       });
     });
+  }
+
+  function renderWaveRow(tdState) {
+    if (!waveEl || !tdState) return;
+    const wave = tdState.wave || 1;
+    const max = typeof TD_MAX_WAVES === "number" ? TD_MAX_WAVES : 99;
+    const killed = tdState.pigsKilled || 0;
+    const total = tdState.totalPigs || 0;
+    waveEl.textContent = `🌊 ${wave}/${max} · 🐷 ${killed}/${total}`;
   }
 
   function render(ctx) {
@@ -172,6 +187,7 @@ const TdBuildPanel = (() => {
 
     setVisible(true);
     if (goldEl) goldEl.textContent = `${gold} 💰`;
+    renderWaveRow(tdState);
 
     const tower = selectedSlotId != null && typeof tdGetTowerAtSlot === "function"
       ? tdGetTowerAtSlot(tdState, selectedSlotId)
