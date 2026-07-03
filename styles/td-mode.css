@@ -351,7 +351,7 @@ html[data-prep-layout="mobile"] html[data-game-mode="td"] #app[data-td-run-live=
   width: var(--td-loadout-overlay-w) !important;
   left: 50% !important;
   transform: translateX(-50%);
-  bottom: calc(var(--td-panel-share) + 8px) !important;
+  bottom: calc(42dvh + 8px) !important;
 }
 
 .td-build-panel__guide {

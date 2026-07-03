@@ -2069,10 +2069,15 @@
           "--battle-grid-gap-display",
         ].forEach((name) => root.style.removeProperty(name));
         const fieldCol = canvas.closest(".prep-field-column");
+        const island = document.getElementById("prep-field-island");
+        const useIsland = app?.dataset.tdTowerEdit === "true" && island;
+        const islandRect = useIsland ? island.getBoundingClientRect() : null;
         const stageW = fieldCol?.clientWidth ?? 0;
         const stageH = fieldCol?.clientHeight ?? 0;
-        if (stageW > 0 && stageH > 0 && canvas.width > 0 && canvas.height > 0) {
-          const scale = Math.min(stageW / canvas.width, stageH / canvas.height, 1.5);
+        const fitW = islandRect && islandRect.width > 40 ? islandRect.width : stageW;
+        const fitH = islandRect && islandRect.height > 40 ? islandRect.height : stageH;
+        if (fitW > 0 && fitH > 0 && canvas.width > 0 && canvas.height > 0) {
+          const scale = Math.min(fitW / canvas.width, fitH / canvas.height, useIsland ? 2 : 1.5);
           const w = Math.max(1, Math.floor(canvas.width * scale));
           const h = Math.max(1, Math.floor(canvas.height * scale));
           root.style.setProperty("--battle-canvas-display-w", `${w}px`);

@@ -14,6 +14,8 @@ const TD_MAX_ACTIVATIONS_PER_TICK = 8;
 const TD_TOWER_COLS = 6;
 const TD_TOWER_ROWS = 6;
 const TD_BASE_LIVES = 12;
+/** Золото за убитую свинью (начисляется в game.js из pendingGold). */
+const TD_GOLD_PER_PIG_KILL = 2;
 const TD_DIFF_EXP_BASE = 1.55;
 
 /** Слоты постройки: pathId = какая дорожка сюда leak'ит (null = только атака). */
@@ -426,7 +428,6 @@ function tdStartWave(state) {
   state.pigsLeaked = 0;
   state.totalPigs = state.spawnQueue.length;
   state.pigs = [];
-  state.waveJustCleared = false;
   state.waveBannerText = `🌊 Волна ${state.wave} началась!`;
   state.waveBannerTtl = 3.2;
 }
@@ -555,6 +556,7 @@ function tdApplyTowerItemActivation(state, tower, atkItem) {
       if (target.hp <= 0) {
         state.pigs = state.pigs.filter((p) => p.id !== target.id);
         state.pigsKilled += 1;
+        state.pendingGold = (state.pendingGold || 0) + TD_GOLD_PER_PIG_KILL;
       }
       didSomething = true;
     } else if (eff.type === "heal") {
@@ -649,8 +651,8 @@ function tdAdvanceWave(state) {
     return;
   }
   state.wave += 1;
-  state.waveJustCleared = true;
   tdStartWave(state);
+  state.waveJustCleared = true;
   state.log.push(`🌊 Волна ${state.wave}…`);
 }
 
@@ -825,4 +827,9 @@ function fastForwardTd(state, maxSec = 300) {
     tdTick(state, 0.05);
     elapsed += 0.05;
   }
+}
+
+if (typeof window !== "undefined") {
+  window.TD_TOWER_COLS = TD_TOWER_COLS;
+  window.TD_TOWER_ROWS = TD_TOWER_ROWS;
 }

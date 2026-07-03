@@ -2610,7 +2610,7 @@ function syncTdBattleChrome() {
   if (typeof TdBuildPanel !== "undefined") {
     TdBuildPanel.setVisible(isTdRunLive());
   }
-  syncTdTowerEditDom();
+  syncTdLoadoutLayout();
 }
 
 function renderPhase() {
@@ -4699,13 +4699,9 @@ function selectTdSlot(slotId) {
   if (slotId == null || !tdState) return;
   selectedTdSlotId = slotId;
   tdState.selectedSlotId = slotId;
-  syncTdTowerEditDom();
+  syncTdLoadoutLayout();
   renderTdBuildPanel();
-  if (isTdLoadoutEditPhase()) {
-    recalcSynergies();
-    draw();
-    fitCanvasDisplaySize?.();
-  }
+  if (isTdLoadoutEditPhase()) recalcSynergies();
   playPrepSfx("ui_click");
 }
 
@@ -4731,11 +4727,14 @@ function getActiveGridRows() {
 }
 
 function getTdEditGridBounds() {
-  const innerW = TD_TOWER_COLS * GRID_CELL + (TD_TOWER_COLS - 1) * GRID_CELL_GAP;
-  const innerH = TD_TOWER_ROWS * GRID_CELL + (TD_TOWER_ROWS - 1) * GRID_CELL_GAP;
-  const ox = Math.max(0, (canvas.width - innerW) / 2);
-  const oy = Math.max(0, (canvas.height - innerH) / 2);
-  return { innerW, innerH, ox, oy };
+  const cols = TD_TOWER_COLS;
+  const rows = TD_TOWER_ROWS;
+  const cell = GRID_CELL;
+  const gap = GRID_CELL_GAP;
+  const innerW = cols * cell + (cols - 1) * gap;
+  const innerH = rows * cell + (rows - 1) * gap;
+  const pad = Math.round(18 * readCssPx("--ui-scale", 1));
+  return { innerW, innerH, ox: pad, oy: pad };
 }
 
 function getLoadoutEditState(side = prepViewSide) {
@@ -4757,6 +4756,69 @@ function syncTdTowerEditDom() {
   if (isTdLoadoutEditPhase()) app.dataset.tdTowerEdit = "true";
   else app.removeAttribute("data-td-tower-edit");
 }
+
+/** Подогнать 6×6 рюкзак башни под оверлей (клетки 44–56px). */
+function syncTdLoadoutLayout() {
+  syncTdTowerEditDom();
+  const root = document.documentElement;
+  if (!isTdLoadoutEditPhase()) {
+    root.style.removeProperty("--td-tower-cell-size");
+    if (isTdMode() && isBattleUiPhase() && canvas) applyPhaseCanvasLayout();
+    return;
+  }
+
+  const island = document.getElementById("prep-field-island");
+  const uiScale = readCssPx("--ui-scale", 1);
+  const cols = TD_TOWER_COLS;
+  const rows = TD_TOWER_ROWS;
+  const gap = Math.max(2, Math.round(2 * uiScale));
+  const minCell = Math.round(readCssPx("--td-loadout-cell-min", 44) * Math.max(1, uiScale * 0.92));
+  const maxCell = Math.round(readCssPx("--td-loadout-cell-max", 56) * uiScale);
+  const framePad = Math.round(18 * uiScale);
+
+  let rect = island?.getBoundingClientRect();
+  if (!rect || rect.width < 48) {
+    const vw = window.visualViewport?.width ?? window.innerWidth;
+    const vh = window.visualViewport?.height ?? window.innerHeight;
+    rect = { width: vw * 0.52, height: Math.min(vh * 0.48, 420) };
+  }
+
+  const islandPad = Math.round(12 * uiScale);
+  const availW = Math.max(200, rect.width - islandPad * 2);
+  const availH = Math.max(200, rect.height - islandPad * 2);
+  const byW = Math.floor((availW - (cols - 1) * gap) / cols);
+  const byH = Math.floor((availH - (rows - 1) * gap) / rows);
+  const cell = Math.min(maxCell, Math.max(minCell, Math.min(byW, byH)));
+
+  root.style.setProperty("--cell-size", `${cell}px`);
+  root.style.setProperty("--cell-gap", `${gap}px`);
+  root.style.setProperty("--td-tower-cell-size", `${cell}px`);
+
+  GRID_CELL = cell;
+  GRID_CELL_GAP = gap;
+  GRID_STRIDE = cell + gap;
+  CELL = cell;
+  layoutCell = cell;
+
+  const innerW = cols * cell + (cols - 1) * gap;
+  const innerH = rows * cell + (rows - 1) * gap;
+  if (canvas) {
+    canvas.width = innerW + framePad * 2;
+    canvas.height = innerH + framePad * 2;
+    layoutCanvasH = canvas.height;
+    if (fxCanvas) {
+      fxCanvas.width = canvas.width;
+      fxCanvas.height = canvas.height;
+    }
+  }
+
+  requestAnimationFrame(() => {
+    window.fitCanvasDisplaySize?.();
+    draw();
+  });
+}
+
+window.syncTdLoadoutLayout = syncTdLoadoutLayout;
 
 function applyCraftingForTower(tower) {
   if (!tower) return false;
@@ -4835,8 +4897,7 @@ function handleTdRecruit(classId) {
   goldSpentTotal += result.cost;
   playPrepSfx("buy");
   renderTdBuildPanel();
-  syncTdTowerEditDom();
-  draw();
+  syncTdLoadoutLayout();
   updateUI();
   const slotLabel = TD_MAP_SLOTS.find((s) => s.id === selectedTdSlotId)?.label || "слот";
   const clsName = typeof getClassById === "function" ? getClassById(classId)?.name : classId;
@@ -4880,16 +4941,31 @@ function awardTdWaveGold(won) {
   return goldReward;
 }
 
+function flushTdPendingKillGold() {
+  if (!tdState?.pendingGold) return 0;
+  let amount = tdState.pendingGold;
+  tdState.pendingGold = 0;
+  if (typeof getTdDifficultyGoldMult === "function") {
+    amount = Math.round(amount * getTdDifficultyGoldMult(tdRunDifficultyId));
+  }
+  if (amount <= 0) return 0;
+  gold += amount;
+  goldEarnedTotal += amount;
+  renderTdBuildPanel();
+  return amount;
+}
+
 function onTdWaveClearedInRun() {
   if (!tdState || !tdState.waveJustCleared) return;
   tdState.waveJustCleared = false;
   const clearedWave = tdState.wave - 1;
+  const killGold = flushTdPendingKillGold();
   const goldReward = awardTdWaveGold(true);
   round = tdState.wave;
   runResults[clearedWave - 1] = "win";
   recentBattleResults.push("win");
   if (recentBattleResults.length > 5) recentBattleResults.shift();
-  log(`✅ Волна ${clearedWave} отбита! +${goldReward}💰`);
+  log(`✅ Волна ${clearedWave} отбита! +${goldReward}💰${killGold > 0 ? ` (+${killGold} за свиней)` : ""}`);
   if (tdState.waveBannerText) log(`${tdState.waveBannerText} Свиней: ${tdState.totalPigs || "?"}`);
   resetShopForNewRound();
   ensureShopReadyForSide("player");
@@ -5865,6 +5941,7 @@ function gameLoop(ts) {
       }
     }
     if (tdState.waveJustCleared) onTdWaveClearedInRun();
+    else flushTdPendingKillGold();
     if (Math.floor(ts / 500) !== Math.floor((ts - dt * 1000) / 500)) {
       renderBattleStats();
       renderPlayerProfiles();
@@ -6814,10 +6891,12 @@ function drawBackpackFrame(team, options = {}) {
   } = options;
   const revealAllBoardCells = showFullPlacementGrid;
   const activeCells = revealAllBoardCells ? null : buildActiveVisualCellSet(containers, items);
+  const gridCols = isTdLoadoutEditPhase() ? getActiveGridCols() : GRID_COLS;
+  const gridRows = isTdLoadoutEditPhase() ? getActiveGridRows() : GRID_ROWS;
 
-  for (let row = 0; row < GRID_ROWS; row++) {
-    for (let col = 0; col < GRID_COLS; col++) {
-      const available = isBoardCellAvailable(col, row, GRID_COLS, GRID_ROWS);
+  for (let row = 0; row < gridRows; row++) {
+    for (let col = 0; col < gridCols; col++) {
+      const available = isBoardCellAvailable(col, row, gridCols, gridRows);
       if (!available) continue;
 
       const key = `${col},${row}`;

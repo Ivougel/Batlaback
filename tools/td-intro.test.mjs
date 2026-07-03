@@ -95,6 +95,10 @@ async function runTdRunStart(browser) {
     const canvasRect = canvas?.getBoundingClientRect();
     const fieldRect = fieldCol?.getBoundingClientRect();
     const buildRect = buildPanel?.getBoundingClientRect();
+    const arena = document.querySelector(".battle-arena")?.getBoundingClientRect();
+    const mapShare = fieldRect && buildRect && buildRect.width > 0
+      ? fieldRect.width / (fieldRect.width + buildRect.width)
+      : 0;
     return {
       phase: document.getElementById("app")?.dataset.phase,
       tdRunLive: document.getElementById("app")?.dataset.tdRunLive,
@@ -106,6 +110,8 @@ async function runTdRunStart(browser) {
       canvasH: canvasRect?.height ?? 0,
       fieldH: fieldRect?.height ?? 0,
       buildH: buildRect?.height ?? 0,
+      mapShare,
+      towerCols: window.TD_TOWER_COLS,
       slotButtons: buildPanel?.querySelectorAll(".td-build-slot")?.length ?? 0,
     };
   });
@@ -116,6 +122,8 @@ async function runTdRunStart(browser) {
   assert(!state.buildPanelHidden, "td build panel visible");
   assert(!state.shopVisible, "old shop hidden during td run");
   assert(state.slotButtons === 5, `expected 5 slot buttons, got ${state.slotButtons}`);
+  assert(state.towerCols === 6, `tower grid cols should be 6, got ${state.towerCols}`);
+  assert(state.mapShare >= 0.58 && state.mapShare <= 0.72, `map share out of range: ${state.mapShare}`);
   assert(state.fieldH >= 180, `prep-field-column too short (${state.fieldH}px)`);
   assert(state.mountH >= 160, `td arena mount too short (${state.mountH}px)`);
   assert(state.canvasH >= 120, `td canvas too short (${state.canvasH}px)`);
