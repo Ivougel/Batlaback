@@ -1,10 +1,9 @@
 /**
- * TdBuildPanel — Legion TD: слоты, постройка, магазин с drag→рюкзак.
+ * TdBuildPanel — Legion TD: постройка, компактный магазин drag→рюкзак.
  */
 
 const TdBuildPanel = (() => {
   let panelEl = null;
-  let slotsEl = null;
   let mainEl = null;
   let shopEl = null;
   let goldEl = null;
@@ -15,9 +14,16 @@ const TdBuildPanel = (() => {
 
   const RECRUIT_CLASSES = ["warrior", "rogue", "mage", "priest"];
 
+  const SLOT_SHORT = {
+    Юг: "Ю",
+    Север: "С",
+    Восток: "В",
+    Запад: "З",
+    Центр: "Ц",
+  };
+
   function init(opts = {}) {
     panelEl = document.getElementById("td-build-panel");
-    slotsEl = document.getElementById("td-build-slots");
     mainEl = document.getElementById("td-build-main");
     shopEl = document.getElementById("td-build-shop");
     goldEl = document.getElementById("td-build-gold");
@@ -34,40 +40,35 @@ const TdBuildPanel = (() => {
     panelEl.setAttribute("aria-hidden", visible ? "false" : "true");
   }
 
-  function renderSlotRow(tdState, selectedSlotId) {
-    if (!slotsEl) return;
-    const slots = tdState?.map?.slots || TD_MAP_SLOTS || [];
-    slotsEl.innerHTML = slots.map((slot) => {
-      const tower = typeof tdGetTowerAtSlot === "function"
-        ? tdGetTowerAtSlot(tdState, slot.id)
-        : (tdState?.towers || []).find((t) => t.slotId === slot.id && t.alive);
-      const selected = slot.id === selectedSlotId;
-      const cls = tower && typeof getClassById === "function" ? getClassById(tower.classId) : null;
-      const icon = tower ? (cls?.icon || "🛡️") : "+";
-      const hp = tower ? Math.ceil(tower.hero?.hp || 0) : 0;
-      const maxHp = tower?.hero?.maxHp || 0;
-      return `
-        <button type="button"
-          class="td-build-slot${selected ? " td-build-slot--selected" : ""}${tower ? " td-build-slot--built" : ""}"
-          data-slot-id="${slot.id}"
-          title="${slot.label}${tower ? ` · ${cls?.name || ""} ${hp}/${maxHp}` : " · пусто"}">
-          <span class="td-build-slot__icon" aria-hidden="true">${icon}</span>
-          <span class="td-build-slot__label">${slot.label}</span>
-        </button>`;
-    }).join("");
+  const CLASS_SHORT = {
+    warrior: "Воин",
+    rogue: "Разб",
+    mage: "Маг",
+    priest: "Жрец",
+  };
 
-    slotsEl.querySelectorAll("[data-slot-id]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const id = Number(btn.getAttribute("data-slot-id"));
-        if (typeof onSelectSlot === "function") onSelectSlot(id);
-      });
-    });
+  function shortClassLabel(classId, fullName) {
+    if (CLASS_SHORT[classId]) return CLASS_SHORT[classId];
+    return shortItemLabel(fullName || classId, 5);
+  }
+
+  function shortSlotLabel(label) {
+    return SLOT_SHORT[label] || label?.[0] || "?";
+  }
+
+  function shortItemLabel(name, maxLen = 8) {
+    if (!name) return "?";
+    const text = String(name).replace(/\s+/g, " ").trim();
+    if (text.length <= maxLen) return text;
+    const first = text.split(" ")[0];
+    if (first.length <= maxLen) return first;
+    return `${text.slice(0, maxLen - 1)}…`;
   }
 
   function renderMain(tdState, gold, selectedSlotId) {
     if (!mainEl) return;
     if (selectedSlotId == null) {
-      mainEl.innerHTML = `<p class="td-build-hint">👆 Кликните слот на карте или кнопку выше</p>`;
+      mainEl.innerHTML = `<p class="td-build-hint">👆 карта</p>`;
       return;
     }
 
@@ -81,29 +82,31 @@ const TdBuildPanel = (() => {
       const hp = Math.ceil(tower.hero?.hp || 0);
       const maxHp = tower.hero?.maxHp || 0;
       const items = tower.items?.length || 0;
+      const slotTag = shortSlotLabel(slot?.label);
+      const classShort = shortClassLabel(tower.classId, cls?.name);
       mainEl.innerHTML = `
-        <div class="td-build-tower">
+        <div class="td-build-tower" title="${cls?.name || tower.classId} · ${slot?.label || "Слот"} · HP ${hp}/${maxHp}">
           <span class="td-build-tower__icon">${cls?.icon || "🛡️"}</span>
           <div class="td-build-tower__body">
-            <strong>${cls?.name || tower.classId}</strong>
-            <span class="td-build-tower__meta">${slot?.label || "Слот"} · HP ${hp}/${maxHp} · 📦 ${items}</span>
+            <strong class="td-build-tower__name">${classShort}</strong>
+            <span class="td-build-tower__meta">${slotTag} ${hp}/${maxHp} ·${items}</span>
           </div>
-        </div>
-        <p class="td-build-hint td-build-hint--compact">🎒 Рюкзак 6×6 под картой. Из магазина — <b>перетащите дугой</b> (сумки тоже). ZR — поворот.</p>`;
+        </div>`;
       return;
     }
 
-    let html = `<p class="td-build-hint">Построить на «${slot?.label || "слот"}»:</p><div class="td-build-units">`;
+    let html = `<div class="td-build-units">`;
     RECRUIT_CLASSES.forEach((classId) => {
       const cls = typeof getClassById === "function" ? getClassById(classId) : null;
       const cost = typeof tdGetRecruitCost === "function" ? tdGetRecruitCost(classId) : 30;
       const afford = gold >= cost;
+      const name = cls?.name || classId;
       html += `
         <button type="button" class="td-build-unit${afford ? "" : " td-build-unit--disabled"}"
-          data-recruit-class="${classId}" ${afford ? "" : "disabled"}>
+          data-recruit-class="${classId}" ${afford ? "" : "disabled"}
+          title="${name} · ${cost}💰">
           <span class="td-build-unit__icon">${cls?.icon || "?"}</span>
-          <span class="td-build-unit__name">${cls?.name || classId}</span>
-          <span class="td-build-unit__cost">${cost}💰</span>
+          <span class="td-build-unit__cost">${cost}</span>
         </button>`;
     });
     html += `</div>`;
@@ -121,7 +124,7 @@ const TdBuildPanel = (() => {
     if (!shopEl) return;
     const slots = shop || [];
     if (!hasTower) {
-      shopEl.innerHTML = `<p class="td-build-shop-empty">Постройте или выберите башню — затем тащите предметы в рюкзак.</p>`;
+      shopEl.innerHTML = `<p class="td-build-shop-empty">👆 башня</p>`;
       return;
     }
 
@@ -135,17 +138,20 @@ const TdBuildPanel = (() => {
       const def = meta.def || ITEM_CATALOG[entryId] || {};
       const cost = meta.cost ?? def.cost ?? 0;
       const afford = gold >= cost;
+      const fullName = def.name || entryId;
+      const shortName = shortItemLabel(fullName, 5);
       const isBag = !!def.isContainer;
+      const bagMark = isBag ? "🎒" : "";
       return `
         <div role="button" tabindex="0"
           class="td-build-shop-card${afford ? "" : " td-build-shop-card--locked"}"
           data-shop-index="${index}"
           data-item-id="${entryId}"
           ${afford ? "" : "aria-disabled=\"true\""}
-          title="${def.name || entryId} · ${cost}💰 · перетащите на рюкзак">
+          title="${fullName}${isBag ? " · сумка" : ""} · ${cost}💰">
           <span class="td-build-shop-card__icon">${def.icon || "📦"}</span>
-          <span class="td-build-shop-card__name">${def.name || entryId}${isBag ? " 🎒" : ""}</span>
-          <span class="td-build-shop-card__cost">${cost}💰</span>
+          <span class="td-build-shop-card__name">${shortName}${bagMark}</span>
+          <span class="td-build-shop-card__cost">${cost}</span>
         </div>`;
     }).join("");
 
@@ -164,9 +170,7 @@ const TdBuildPanel = (() => {
     if (!waveEl || !tdState) return;
     const wave = tdState.wave || 1;
     const max = typeof TD_MAX_WAVES === "number" ? TD_MAX_WAVES : 99;
-    const killed = tdState.pigsKilled || 0;
-    const total = tdState.totalPigs || 0;
-    waveEl.textContent = `🌊 ${wave}/${max} · 🐷 ${killed}/${total}`;
+    waveEl.textContent = `${wave}/${max}`;
   }
 
   function render(ctx) {
@@ -186,14 +190,13 @@ const TdBuildPanel = (() => {
     }
 
     setVisible(true);
-    if (goldEl) goldEl.textContent = `${gold} 💰`;
+    if (goldEl) goldEl.textContent = `${gold}`;
     renderWaveRow(tdState);
 
     const tower = selectedSlotId != null && typeof tdGetTowerAtSlot === "function"
       ? tdGetTowerAtSlot(tdState, selectedSlotId)
       : null;
 
-    renderSlotRow(tdState, selectedSlotId);
     renderMain(tdState, gold, selectedSlotId);
     renderShopGrid(shop, gold, !!tower);
   }

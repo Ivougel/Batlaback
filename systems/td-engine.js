@@ -524,6 +524,51 @@ function tdPickTargetPigForTower(pigs, tower, map) {
   return best;
 }
 
+function tdResolveTowerAttackVisual(def, effect) {
+  if (typeof resolveItemAttackVisual === "function") {
+    return resolveItemAttackVisual(def, effect);
+  }
+  if (effect?.type === "heal" || effect?.type === "block" || effect?.type === "grantBlockBuff") return "support";
+  if (effect?.type === "poison" || effect?.type === "groundFire") return "aoe";
+  return "slash";
+}
+
+function tdEmitTowerAttackFx(state, tower, atkItem, def, effect, extra = {}) {
+  const slot = tdGetSlotDef(tower.slotId);
+  const visual = tdResolveTowerAttackVisual(def, effect);
+  const cfg = typeof ATTACK_VISUAL_CONFIG !== "undefined"
+    ? (ATTACK_VISUAL_CONFIG[visual] || ATTACK_VISUAL_CONFIG.slash)
+    : { attackType: "melee", duration: 0.42 };
+  const fromX = slot?.x ?? 0.5;
+  const fromY = slot?.y ?? 0.5;
+  let toX = fromX;
+  let toY = fromY;
+  const target = extra.target || null;
+  if (target) {
+    const pos = tdLerpPath(state.map?.paths || [], target.pathId, target.t);
+    toX = pos.x;
+    toY = pos.y;
+  }
+  const duration = cfg.duration || 0.42;
+  state.attackFx.push({
+    itemId: atkItem.itemId,
+    icon: def?.icon || atkItem.icon || "⚔️",
+    uid: atkItem.uid,
+    visual,
+    attackType: cfg.attackType || "melee",
+    effectType: effect?.type || "damage",
+    targetId: target?.id ?? null,
+    towerSlotId: tower.slotId,
+    damage: extra.damage || 0,
+    ttl: duration,
+    maxTtl: duration,
+    fromX,
+    fromY,
+    toX,
+    toY,
+  });
+}
+
 function tdApplyTowerItemActivation(state, tower, atkItem) {
   const def = ITEM_CATALOG[atkItem.itemId];
   if (!def || !tower.alive) return false;
@@ -540,18 +585,7 @@ function tdApplyTowerItemActivation(state, tower, atkItem) {
       const dmg = Math.max(1, Math.round((base + atkItem.damageBonus) * (hero.damageMult || 1)));
       target.hp -= dmg;
       tdRecordItemDamage(state, atkItem.itemId, tower.slotId, dmg);
-      const slot = tdGetSlotDef(tower.slotId);
-      state.attackFx.push({
-        itemId: atkItem.itemId,
-        icon: def.icon,
-        uid: atkItem.uid,
-        targetId: target.id,
-        towerSlotId: tower.slotId,
-        damage: dmg,
-        ttl: 0.4,
-        fromX: slot?.x ?? 0.5,
-        fromY: slot?.y ?? 0.5,
-      });
+      tdEmitTowerAttackFx(state, tower, atkItem, def, eff, { target, damage: dmg });
       atkItem.flashTimer = 0.35;
       if (target.hp <= 0) {
         state.pigs = state.pigs.filter((p) => p.id !== target.id);
@@ -564,12 +598,14 @@ function tdApplyTowerItemActivation(state, tower, atkItem) {
       const heal = Math.round(base * (atkItem.healSourceEfficiency || 1));
       hero.hp = Math.min(hero.maxHp, hero.hp + heal);
       hero.totalHealingDone = (hero.totalHealingDone || 0) + heal;
+      tdEmitTowerAttackFx(state, tower, atkItem, def, eff);
       atkItem.flashTimer = 0.35;
       didSomething = true;
     } else if (eff.type === "block" || eff.type === "grantBlockBuff") {
       const base = eff.value || 3;
       const block = Math.round(base * (atkItem.blockSourceEfficiency || 1));
       hero.block = (hero.block || 0) + block;
+      tdEmitTowerAttackFx(state, tower, atkItem, def, eff);
       atkItem.flashTimer = 0.35;
       didSomething = true;
     }

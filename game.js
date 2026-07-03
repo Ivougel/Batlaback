@@ -644,6 +644,8 @@ function syncPrepBottomStats({ gold, hpLabel, roundLabel, lobbyHp = false } = {}
   if (hpEl && hpLabel != null) hpEl.textContent = hpLabel;
   if (roundEl && roundLabel != null) roundEl.textContent = roundLabel;
   bar.classList.toggle("prep-bottom-stats--lobby-hp", !!lobbyHp);
+  const roundCaption = bar.querySelector(".prep-bottom-stat--round .prep-bottom-stat-label");
+  if (roundCaption) roundCaption.textContent = isTdRunLive() ? "Волна" : isTdMode() ? "Волна" : "Раунд";
 }
 
 function syncPrepBottomBarChrome() {
@@ -2106,6 +2108,18 @@ function bindTouchInput() {
     markTouchInteraction();
 
     if ((phase === "battle" || phase === "replay") && e.target?.closest?.("#game-canvas") && !dragPayload) {
+      if (isTdLoadoutEditPhase() && tdLoadoutSheetOpen) {
+        activeGesture = gestureKey(kind, id);
+        lastTouchEventAt = Date.now();
+        if (e.cancelable) e.preventDefault();
+        if (kind === "pointer") {
+          try {
+            boardSection?.setPointerCapture(id);
+          } catch (_) {}
+        }
+        gamepadPointerDownAt(x, y);
+        return;
+      }
       activeGesture = gestureKey(kind, id);
       lastTouchEventAt = Date.now();
       if (e.cancelable) e.preventDefault();
@@ -2120,7 +2134,7 @@ function bindTouchInput() {
       return;
     }
 
-    if (phase !== "prep" || gameOver) return;
+    if (!isLoadoutInteractionPhase() || gameOver) return;
     activeGesture = gestureKey(kind, id);
     lastTouchEventAt = Date.now();
     if (e.cancelable) e.preventDefault();
@@ -4714,9 +4728,14 @@ function selectTdSlot(slotId) {
   if (slotId == null || !tdState) return;
   selectedTdSlotId = slotId;
   tdState.selectedSlotId = slotId;
-  if (!isTdLoadoutEditPhase()) tdLoadoutSheetOpen = false;
+  if (isTdLoadoutEditPhase()) {
+    tdLoadoutSheetOpen = true;
+  } else {
+    tdLoadoutSheetOpen = false;
+  }
   syncTdLoadoutSheetDom();
   syncTdLoadoutLayout();
+  syncTdTowerEditDom();
   renderTdBuildPanel();
   if (isTdLoadoutEditPhase()) recalcSynergies();
   playPrepSfx("ui_click");
@@ -4777,10 +4796,31 @@ function syncTdTowerEditDom() {
 let tdLoadoutSheetOpen = false;
 let tdHeroSheetOpen = false;
 let tdRunCompactBound = false;
+let tdLoadoutIslandHome = null;
+
+function mountTdLoadoutIsland() {
+  const island = document.getElementById("prep-field-island");
+  const body = document.getElementById("td-loadout-sheet-body");
+  if (!island || !body || body.contains(island)) return;
+  tdLoadoutIslandHome = {
+    parent: island.parentElement,
+    next: island.nextSibling,
+  };
+  body.appendChild(island);
+}
+
+function unmountTdLoadoutIsland() {
+  const island = document.getElementById("prep-field-island");
+  const home = tdLoadoutIslandHome;
+  if (!island || !home?.parent) return;
+  if (home.next) home.parent.insertBefore(island, home.next);
+  else home.parent.appendChild(island);
+  tdLoadoutIslandHome = null;
+}
 
 function syncTdLoadoutSheetDom() {
   const app = document.getElementById("app");
-  const backdrop = document.getElementById("td-loadout-backdrop");
+  const sheet = document.getElementById("td-loadout-sheet");
   const fab = document.getElementById("btn-td-loadout");
   const canEdit = isTdLoadoutEditPhase();
   const open = canEdit && tdLoadoutSheetOpen;
@@ -4788,7 +4828,15 @@ function syncTdLoadoutSheetDom() {
     if (open) app.dataset.tdLoadoutOpen = "true";
     else app.removeAttribute("data-td-loadout-open");
   }
-  backdrop?.classList.toggle("hidden", !open);
+  if (open) {
+    sheet?.classList.remove("hidden");
+    sheet?.setAttribute("aria-hidden", "false");
+    mountTdLoadoutIsland();
+  } else {
+    sheet?.classList.add("hidden");
+    sheet?.setAttribute("aria-hidden", "true");
+    unmountTdLoadoutIsland();
+  }
   if (fab) {
     const showFab = canEdit && !open;
     fab.hidden = !showFab;
@@ -4806,6 +4854,7 @@ function openTdLoadoutSheet() {
 function closeTdLoadoutSheet() {
   tdLoadoutSheetOpen = false;
   syncTdLoadoutSheetDom();
+  syncTdLoadoutLayout();
 }
 
 function openTdHeroSheet() {
@@ -4862,15 +4911,13 @@ function bindTdRunCompactUi() {
   tdRunCompactBound = true;
   document.getElementById("btn-td-loadout")?.addEventListener("click", openTdLoadoutSheet);
   document.getElementById("td-loadout-backdrop")?.addEventListener("click", closeTdLoadoutSheet);
+  document.getElementById("td-loadout-sheet-close")?.addEventListener("click", closeTdLoadoutSheet);
   document.getElementById("btn-td-hero-sheet")?.addEventListener("click", (e) => {
     e.stopPropagation();
     toggleTdHeroSheet();
   });
   document.getElementById("td-hero-sheet-backdrop")?.addEventListener("click", closeTdHeroSheet);
   document.getElementById("td-hero-sheet-close")?.addEventListener("click", closeTdHeroSheet);
-  document.getElementById("prep-hero-card-portrait")?.addEventListener("click", () => {
-    if (isTdRunLive()) toggleTdHeroSheet();
-  });
 }
 
 /** Подогнать 6×6 рюкзак башни под док снизу (клетки 44–56px). */
@@ -4894,11 +4941,16 @@ function syncTdLoadoutLayout() {
 
   let rect = island?.getBoundingClientRect();
   if (!rect || rect.width < 48 || rect.height < 48) {
-    const dock = island?.closest(".layer-world");
-    const dockRect = dock?.getBoundingClientRect();
-    if (dockRect && dockRect.width >= 48 && dockRect.height >= 48) {
-      rect = dockRect;
+    const panel = document.querySelector("#td-loadout-sheet .td-loadout-sheet__panel");
+    const panelRect = panel?.getBoundingClientRect();
+    if (panelRect && panelRect.width >= 48 && panelRect.height >= 48) {
+      rect = panelRect;
     } else {
+      const dock = island?.closest(".layer-world");
+      const dockRect = dock?.getBoundingClientRect();
+      if (dockRect && dockRect.width >= 48 && dockRect.height >= 48) {
+        rect = dockRect;
+      } else {
       const fieldCol = document.getElementById("prep-field-column");
       const colRect = fieldCol?.getBoundingClientRect();
       const loadoutShare = readCssPx("--td-col-loadout-share", 50) / 100;
@@ -4906,6 +4958,7 @@ function syncTdLoadoutLayout() {
         width: colRect?.width ?? window.innerWidth * 0.5,
         height: (colRect?.height ?? window.innerHeight * 0.5) * loadoutShare,
       };
+      }
     }
   }
 
@@ -4985,24 +5038,16 @@ function beginTdBuildShopDrag(index, e) {
 
 function bindTdCanvasEvents() {
   if (tdCanvasBound) return;
-  const canvas = document.getElementById("td-arena-canvas");
-  if (!canvas) return;
+  if (typeof TdArena?.bindGestures !== "function") return;
   tdCanvasBound = true;
 
-  const pickSlot = (clientX, clientY) => {
-    if (!isTdRunLive() || typeof TdArena?.hitTestSlot !== "function") return;
-    const slotId = TdArena.hitTestSlot(clientX, clientY, tdState);
-    if (slotId == null) return;
-    selectTdSlot(slotId);
-  };
-
-  canvas.addEventListener("pointerdown", (e) => {
-    if (!isTdRunLive()) return;
-    e.preventDefault();
-    pickSlot(e.clientX, e.clientY);
-  });
-  canvas.addEventListener("click", (e) => {
-    pickSlot(e.clientX, e.clientY);
+  TdArena.bindGestures({
+    onTap: (clientX, clientY) => {
+      if (!isTdRunLive() || typeof TdArena?.hitTestSlot !== "function") return;
+      const slotId = TdArena.hitTestSlot(clientX, clientY, tdState);
+      if (slotId == null) return;
+      selectTdSlot(slotId);
+    },
   });
 }
 
@@ -5139,7 +5184,7 @@ function finishTdRunStart() {
     renderTdBuildPanel();
     syncTdBattleChrome();
     setPhaseLabel(`🐷 Волна 1/${getTdMaxWaves()}`, true);
-    log(`🐷 Оборона! Клик по башне — рюкзак 6×6 под картой. Из магазина — перетащите дугой на рюкзак.`);
+    log(`🐷 Оборона! Тап по слоту — постройка. Карту водите пальцем, щипок — зум, двойной тап — весь обзор.`);
     if (tdState?.waveBannerText) {
       log(`${tdState.waveBannerText} Свиней: ${tdState.totalPigs || "?"}`);
     }
@@ -6690,7 +6735,7 @@ function updatePointerFromClient(clientX, clientY) {
 }
 
 function gamepadPointerDownAt(clientX, clientY) {
-  if (phase !== "prep" || gameOver || !canEditPrepSide()) return;
+  if (!isLoadoutInteractionPhase() || gameOver || !canEditPrepSide()) return;
   updatePointerFromClient(clientX, clientY);
   const synthetic = createSyntheticPointerEvent(clientX, clientY);
   const target = document.elementFromPoint(clientX, clientY);
@@ -6766,6 +6811,10 @@ function gamepadPointerDownAt(clientX, clientY) {
   }
 
   if (isTouchUi() && target?.closest?.("#game-canvas")) {
+    if (isTdLoadoutEditPhase() && tdLoadoutSheetOpen) {
+      onMouseDown(synthetic);
+      return;
+    }
     armPointerTapTooltip(clientX, clientY, () => {
       pendingCanvasPick = null;
       updatePointerFromClient(clientX, clientY);
@@ -9270,7 +9319,7 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
       ? `<div class="prep-stats-row prep-stats-row--td-diff"><span>Сложность</span><b>${tdFormatDifficultyLabel(tdRunDifficultyId)}</b></div>`
       : "";
     const heroCardName = getPrepHeroCardName(profile);
-    const metricsInBottomBar = heroCardHud;
+    const metricsInBottomBar = heroCardHud && !isTdRunLive();
     const metricsHtml = metricsInBottomBar
       ? `<div class="prep-stats-row prep-stats-row--companion"><span>${companionLabel}</span></div>`
       : `

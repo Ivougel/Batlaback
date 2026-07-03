@@ -1,139 +1,218 @@
 /**
- * TD Run compact — iPad Mini landscape PWA (~1024×768).
- * Карта на всю левую колонку; шапка ~52px; рюкзак и детали героя — в полупрозрачных sheet.
+ * TD Run — макет iPad Mini landscape PWA:
+ * карта ~66% + узкий магазин ~34%; полная карточка героя поверх карты; рюкзак — sheet.
  */
 
 html[data-game-mode="td"] #app[data-td-run-live="true"] {
-  --td-compact-bar-h: calc(52px * var(--ui-scale, 1));
-  --td-compact-portrait: calc(44px * var(--ui-scale, 1));
+  --td-overlay-portrait-w: calc(108px * var(--ui-scale, 1));
+  --td-overlay-portrait-h: calc(148px * var(--ui-scale, 1));
+  --td-chrome-panel-w: min(var(--td-panel-share, 34%), var(--td-panel-max-w, 20rem));
 }
 
-/* ─── Компактная шапка героя (~−8rem vs полная карточка) ─── */
+/* ─── Левая колонка = только карта (герой — оверлей) ─── */
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-left-column {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0 !important;
+  height: 100%;
+  overflow: hidden;
+  background: #1a2e18;
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-field-column {
+  position: relative !important;
+  inset: auto !important;
+  display: block !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  width: 100% !important;
+  height: auto !important;
+  overflow: hidden;
+  align-items: stretch !important;
+  justify-content: stretch !important;
+}
+
+html[data-ui-surface="tablet-side"] html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-field-column {
+  position: relative !important;
+  inset: auto !important;
+  display: block !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  margin: 0 !important;
+}
 
 html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-top-bar {
-  padding:
-    calc(4px * var(--ui-scale, 1))
-    calc(8px * var(--ui-scale, 1));
+  position: absolute;
+  top: calc(6px * var(--ui-scale, 1));
+  left: calc(6px * var(--ui-scale, 1));
+  right: calc(6px * var(--ui-scale, 1));
+  z-index: 24;
+  flex: none;
+  padding: 0;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  pointer-events: none;
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-top-bar::before {
+  display: none;
 }
 
 html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card {
-  display: grid !important;
-  grid-template-columns: var(--td-compact-portrait) minmax(0, 1fr) auto;
-  grid-template-rows: 1fr;
-  align-items: center;
-  gap: calc(8px * var(--ui-scale, 1));
-  min-height: var(--td-compact-bar-h) !important;
-  max-height: var(--td-compact-bar-h);
-  border-radius: calc(10px * var(--ui-scale, 1));
+  pointer-events: auto;
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: var(--td-overlay-portrait-w) minmax(0, 1fr);
+  grid-template-rows: auto auto auto;
+  align-items: stretch;
+  min-height: var(--td-overlay-portrait-h);
+  border-radius: calc(12px * var(--ui-scale, 1));
+  overflow: hidden;
+  background: rgba(14, 12, 10, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(92, 72, 48, 0.55);
+  box-shadow:
+    0 10px 36px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card__body,
+html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card__body .prep-stats-hud {
+  display: contents;
 }
 
 html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card__portrait {
   grid-column: 1;
-  grid-row: 1;
-  width: var(--td-compact-portrait);
-  min-width: var(--td-compact-portrait);
-  height: var(--td-compact-portrait);
-  min-height: var(--td-compact-portrait);
-  border-radius: calc(8px * var(--ui-scale, 1));
-  cursor: pointer;
-}
-
-html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card__body {
-  display: block !important;
-  grid-column: 2;
-  grid-row: 1;
+  grid-row: 1 / -1;
+  position: relative;
+  width: 100%;
   min-width: 0;
+  height: 100%;
+  min-height: var(--td-overlay-portrait-h);
+  align-self: stretch;
+  display: flex;
+  padding: calc(6px * var(--ui-scale, 1));
   overflow: hidden;
 }
 
-html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card__body .prep-stats-hud {
-  display: block !important;
+html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card__portrait .hero-portrait-frame {
+  width: 100%;
+  height: 100%;
+  border-radius: calc(8px * var(--ui-scale, 1));
+  box-shadow:
+    0 0 0 3px #c0392b,
+    0 0 0 5px rgba(192, 57, 43, 0.28);
 }
 
 html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card__stats-row {
-  display: flex !important;
-  flex-wrap: nowrap;
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: calc(6px * var(--ui-scale, 1)) calc(10px * var(--ui-scale, 1));
-  padding: 0 !important;
+  gap: calc(6px * var(--ui-scale, 1)) calc(12px * var(--ui-scale, 1));
   min-width: 0;
+  padding:
+    calc(8px * var(--ui-scale, 1))
+    calc(48px * var(--ui-scale, 1))
+    calc(4px * var(--ui-scale, 1))
+    calc(8px * var(--ui-scale, 1));
+  pointer-events: none;
 }
 
-html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-stats-class {
-  font-size: calc(12px * var(--ui-scale, 1));
-  font-weight: 800;
+html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card__stats-row .prep-stats-class {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0;
+  border: none;
+  max-width: none;
+  font-size: max(var(--font-md), calc(1rem * var(--ui-scale, 1)));
+  font-weight: 900;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 9rem;
-  border: none !important;
-  padding: 0 !important;
 }
 
 html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-stats-metrics {
   display: flex;
-  flex-wrap: nowrap;
-  gap: calc(4px * var(--ui-scale, 1)) calc(8px * var(--ui-scale, 1));
+  flex-wrap: wrap;
+  gap: calc(4px * var(--ui-scale, 1)) calc(10px * var(--ui-scale, 1));
   min-width: 0;
-  font-size: calc(11px * var(--ui-scale, 1));
-}
-
-html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-stats-row--companion {
-  display: none !important;
 }
 
 html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-stats-hud .mutation-progress,
+html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-stats-hud .mutation-progress--hero-card {
+  grid-column: 2;
+  grid-row: 2;
+  display: block !important;
+  min-width: 0;
+  margin: 0 calc(8px * var(--ui-scale, 1)) calc(4px * var(--ui-scale, 1));
+  padding: calc(6px * var(--ui-scale, 1)) calc(8px * var(--ui-scale, 1));
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(200, 160, 56, 0.38);
+  border-radius: calc(8px * var(--ui-scale, 1));
+  pointer-events: none;
+}
+
 html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-stats-hud .prep-enhancement-strip,
+html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-stats-hud .prep-enhancement-strip--hero-card {
+  grid-column: 2;
+  grid-row: 3;
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: stretch;
+  gap: calc(6px * var(--ui-scale, 1));
+  min-width: 0;
+  margin: 0;
+  padding:
+    calc(4px * var(--ui-scale, 1))
+    calc(8px * var(--ui-scale, 1))
+    calc(6px * var(--ui-scale, 1));
+  border-top: 1px solid rgba(200, 160, 56, 0.3);
+  pointer-events: auto;
+}
+
 html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-stats-hud .prep-modifier-strip {
   display: none !important;
 }
 
-html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card__build-slot,
-html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card__doll-mount,
+html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card__build-slot {
+  grid-column: 2;
+  grid-row: 1;
+  z-index: 2;
+  justify-self: end;
+  align-self: center;
+  margin: calc(6px * var(--ui-scale, 1)) calc(8px * var(--ui-scale, 1)) 0 0;
+  pointer-events: auto;
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card__actions,
+html[data-game-mode="td"] #app[data-td-run-live="true"] .btn-td-hero-sheet,
 html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hud-chrome {
   display: none !important;
 }
 
-html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card__actions {
-  grid-column: 3;
-  grid-row: 1;
-  display: flex;
-  align-items: center;
-  gap: calc(4px * var(--ui-scale, 1));
-  margin: 0;
-  padding: 0;
+html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card__doll-mount {
+  display: none !important;
 }
 
-html[data-game-mode="td"] #app[data-td-run-live="true"] .btn-td-hero-sheet {
-  min-width: calc(36px * var(--ui-scale, 1));
-  min-height: calc(36px * var(--ui-scale, 1));
-  padding: 0;
-  font-size: calc(18px * var(--ui-scale, 1));
-  line-height: 1;
-  border-radius: calc(8px * var(--ui-scale, 1));
-}
-
-/* ─── Карта на всю высоту (без постоянного дока рюкзака) ─── */
-
-html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-field-column {
-  flex: 1 1 auto !important;
-}
+/* ─── Слои карты ─── */
 
 html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-field-column > .layer-objects,
 html[data-game-mode="td"] #app[data-td-run-live="true"][data-td-tower-edit="true"] .prep-field-column > .layer-objects {
   position: absolute !important;
   inset: 0 !important;
-  flex: none !important;
-  order: unset !important;
+  z-index: 12;
 }
 
 html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-field-column > .layer-world {
-  position: absolute !important;
-  inset: 0 !important;
-  flex: none !important;
-  order: unset !important;
-  pointer-events: none;
-  z-index: 1;
+  display: none !important;
 }
 
 html[data-game-mode="td"] #app[data-td-run-live="true"]:not([data-td-loadout-open="true"]) #layer-world .prep-field-island {
@@ -141,57 +220,172 @@ html[data-game-mode="td"] #app[data-td-run-live="true"]:not([data-td-loadout-ope
   pointer-events: none !important;
 }
 
-html[data-game-mode="td"] #app[data-td-loadout-open="true"] .prep-field-column > .layer-world {
-  pointer-events: auto;
-  z-index: calc(var(--z-live-popover) - 1);
-}
-
 html[data-game-mode="td"] #app[data-td-loadout-open="true"] .prep-field-column > .layer-fx {
   z-index: var(--z-live-popover);
   pointer-events: none;
 }
 
-.td-loadout-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: calc(var(--z-live-popover) - 1);
-  border: none;
-  padding: 0;
-  margin: 0;
-  background: rgba(4, 8, 6, 0.52);
-  backdrop-filter: blur(3px);
-  cursor: pointer;
+html[data-game-mode="td"] #app[data-td-loadout-open="true"] .td-arena-mount {
+  pointer-events: none;
 }
 
-.td-loadout-backdrop.hidden {
+/* ─── Sheet рюкзака (поверх карты, магазин не затемняется) ─── */
+
+.td-run-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-live-popover) + 1);
+  pointer-events: none;
+}
+
+.td-run-sheet:not(.hidden) {
+  pointer-events: auto;
+}
+
+.td-run-sheet.hidden {
   display: none !important;
 }
 
-/* ─── FAB рюкзака ─── */
+.td-run-sheet__backdrop {
+  position: absolute;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.td-loadout-sheet__backdrop {
+  left: 0;
+  top: 0;
+  bottom: var(--bottom-chrome-h, 44px);
+  width: calc(100% - var(--td-chrome-panel-w, 34%));
+  background: rgba(4, 8, 6, 0.52);
+}
+
+.td-loadout-sheet__panel {
+  position: absolute;
+  left: calc((100% - var(--td-chrome-panel-w, 34%)) * 0.5);
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  width: min(48vw, calc(22rem * var(--ui-scale, 1)));
+  max-width: calc(100vw - var(--td-chrome-panel-w, 34%) - 24px);
+  max-height: min(68dvh, calc(100dvh - var(--bottom-chrome-h, 44px) - 24px));
+  box-sizing: border-box;
+  border-radius: calc(14px * var(--ui-scale, 1));
+  border: 2px solid rgba(74, 222, 128, 0.4);
+  background: rgba(8, 14, 10, 0.96);
+  box-shadow: 0 20px 56px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+.td-run-sheet__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: calc(8px * var(--ui-scale, 1)) calc(10px * var(--ui-scale, 1));
+  border-bottom: 1px solid rgba(74, 222, 128, 0.22);
+}
+
+.td-run-sheet__title {
+  margin: 0;
+  font-size: calc(13px * var(--ui-scale, 1));
+  font-weight: 700;
+  color: #d1fae5;
+}
+
+.td-run-sheet__close {
+  flex: none;
+  width: calc(28px * var(--ui-scale, 1));
+  height: calc(28px * var(--ui-scale, 1));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: calc(8px * var(--ui-scale, 1));
+  background: rgba(0, 0, 0, 0.35);
+  color: #e5e7eb;
+  font-size: calc(18px * var(--ui-scale, 1));
+  line-height: 1;
+  cursor: pointer;
+}
+
+.td-run-sheet__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(6px * var(--ui-scale, 1));
+}
+
+html[data-game-mode="td"] #td-loadout-sheet .prep-field-island {
+  visibility: visible !important;
+  position: relative !important;
+  inset: auto !important;
+  width: 100% !important;
+  height: auto !important;
+  max-width: none !important;
+  max-height: none !important;
+  overflow: visible !important;
+  pointer-events: auto !important;
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+
+html[data-game-mode="td"] #td-loadout-sheet .prep-field-island .battle-canvas-stage,
+html[data-game-mode="td"] #td-loadout-sheet .prep-field-island .canvas-scale-wrap {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+html[data-game-mode="td"] #td-loadout-sheet #game-canvas {
+  display: block !important;
+  width: var(--battle-canvas-display-w, auto) !important;
+  height: var(--battle-canvas-display-h, auto) !important;
+  max-width: 100%;
+  max-height: min(56dvh, 100%);
+  pointer-events: auto;
+  cursor: grab;
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-field-column > .td-loadout-fab {
+  z-index: 20;
+  pointer-events: auto;
+}
+
+/* ─── FAB рюкзака (как на макете — слева снизу на карте) ─── */
 
 .td-loadout-fab {
   position: absolute;
-  left: calc(10px * var(--ui-scale, 1));
-  bottom: calc(10px * var(--ui-scale, 1));
-  z-index: 18;
-  min-width: calc(48px * var(--ui-scale, 1));
-  min-height: calc(48px * var(--ui-scale, 1));
+  left: calc(8px * var(--ui-scale, 1));
+  bottom: calc(8px * var(--ui-scale, 1));
+  z-index: 20;
+  min-width: calc(44px * var(--ui-scale, 1));
+  min-height: calc(44px * var(--ui-scale, 1));
   padding: 0;
-  border: 2px solid rgba(74, 222, 128, 0.55);
-  border-radius: calc(14px * var(--ui-scale, 1));
-  background: rgba(8, 14, 10, 0.82);
-  backdrop-filter: blur(8px);
-  color: #ecfdf5;
-  font-size: calc(22px * var(--ui-scale, 1));
+  border: 2px solid rgba(192, 57, 43, 0.75);
+  border-radius: calc(10px * var(--ui-scale, 1));
+  background: rgba(12, 8, 8, 0.88);
+  backdrop-filter: blur(6px);
+  color: #fecaca;
+  font-size: calc(20px * var(--ui-scale, 1));
   line-height: 1;
   cursor: pointer;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
   touch-action: manipulation;
-}
-
-.td-loadout-fab:hover {
-  background: rgba(20, 40, 28, 0.92);
-  border-color: rgba(74, 222, 128, 0.85);
 }
 
 .td-loadout-fab.hidden,
@@ -203,214 +397,145 @@ html[data-game-mode="td"] #app[data-td-loadout-open="true"] .td-loadout-fab {
   display: none !important;
 }
 
-/* ─── Полупрозрачные sheet (герой / рюкзак) ─── */
-
-.td-run-sheet {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-live-popover);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding:
-    calc(8px * var(--ui-scale, 1))
-    calc(8px * var(--ui-scale, 1))
-    calc(8px + env(safe-area-inset-bottom, 0px))
-    calc(8px * var(--ui-scale, 1));
-  pointer-events: none;
-}
-
-.td-run-sheet.hidden {
+/* Sheet героя — не используется в TD-макете */
+html[data-game-mode="td"] #td-hero-sheet {
   display: none !important;
 }
 
-.td-run-sheet:not(.hidden) {
-  pointer-events: auto;
+/* ─── Bottom chrome: контролы на карте, статы в колонке магазина ─── */
+
+body:has(#app[data-td-run-live="true"]) .bottom-chrome {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--td-chrome-panel-w);
+  align-items: center;
+  gap: 0;
+  padding-left: max(8px, env(safe-area-inset-left));
+  padding-right: 0;
+  background: rgba(13, 17, 23, 0.94);
 }
 
-.td-run-sheet__backdrop {
-  position: absolute;
-  inset: 0;
-  border: none;
-  padding: 0;
-  margin: 0;
-  background: rgba(4, 8, 6, 0.52);
-  backdrop-filter: blur(3px);
-  cursor: pointer;
-}
-
-.td-run-sheet__panel {
-  position: relative;
-  z-index: 1;
-  width: min(calc(100% - 16px), calc(26rem * var(--ui-scale, 1)));
-  max-height: min(78dvh, calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 24px));
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  border-radius: calc(14px * var(--ui-scale, 1));
-  border: 1px solid rgba(74, 222, 128, 0.35);
-  background: rgba(10, 16, 12, 0.88);
-  backdrop-filter: blur(12px);
-  box-shadow:
-    0 16px 48px rgba(0, 0, 0, 0.55),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  color: #ecfdf5;
-  pointer-events: auto;
-}
-
-.td-hero-sheet__panel {
-  width: min(calc(100% - 16px), calc(22rem * var(--ui-scale, 1)));
-}
-
-.td-run-sheet__head {
+body:has(#app[data-td-run-live="true"]) .bottom-chrome-start {
+  grid-column: 1;
   display: flex;
   align-items: center;
-  gap: calc(8px * var(--ui-scale, 1));
-  padding: calc(8px * var(--ui-scale, 1)) calc(10px * var(--ui-scale, 1));
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  flex-shrink: 0;
+  gap: 8px;
+  min-width: 0;
+  padding-right: 8px;
 }
 
-.td-run-sheet__title {
-  margin: 0;
-  font-size: calc(13px * var(--ui-scale, 1));
-  font-weight: 800;
-  color: #bbf7d0;
+body:has(#app[data-td-run-live="true"]) .bottom-chrome-center {
+  grid-column: 2;
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+  padding:
+    4px
+    max(8px, env(safe-area-inset-right))
+    calc(4px + env(safe-area-inset-bottom, 0px))
+    8px;
+  background: rgba(12, 17, 14, 0.98);
+  border-left: 1px solid rgba(74, 222, 128, 0.22);
+  border-top: 1px solid rgba(74, 222, 128, 0.15);
 }
 
-.td-run-sheet__close {
+body:has(#app[data-td-run-live="true"]) .bottom-chrome-end {
+  display: none !important;
+}
+
+body:has(#app[data-td-run-live="true"]) .combat-feed-dock,
+body:has(#app[data-td-run-live="true"]) .bottom-chrome-gamepad,
+body:has(#app[data-td-run-live="true"]) .battle-controls-hint {
+  display: none !important;
+}
+
+body:has(#app[data-td-run-live="true"]) .prep-bottom-stats {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
   margin-left: auto;
-  min-width: calc(32px * var(--ui-scale, 1));
-  min-height: calc(32px * var(--ui-scale, 1));
-  padding: 0;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: calc(8px * var(--ui-scale, 1));
-  background: rgba(255, 255, 255, 0.06);
-  color: #fff;
-  font-size: calc(18px * var(--ui-scale, 1));
-  line-height: 1;
-  cursor: pointer;
 }
 
-.td-run-sheet__close:hover {
-  background: rgba(255, 255, 255, 0.12);
+body:has(#app[data-td-run-live="true"]) .prep-bottom-stats[hidden] {
+  display: none !important;
 }
 
-.td-run-sheet__body {
-  overflow: auto;
-  padding: calc(8px * var(--ui-scale, 1)) calc(10px * var(--ui-scale, 1)) calc(10px * var(--ui-scale, 1));
-  -webkit-overflow-scrolling: touch;
-}
-
-.td-run-sheet__body .mutation-progress,
-.td-run-sheet__body .prep-enhancement-strip,
-.td-run-sheet__body .prep-modifier-strip {
-  margin-top: calc(6px * var(--ui-scale, 1));
-}
-
-/* Рюкзак башни — sheet поверх карты (центр левой половины экрана) */
-
-html[data-game-mode="td"] #app[data-td-loadout-open="true"] #layer-world .prep-field-island {
-  visibility: visible !important;
-  pointer-events: auto !important;
-  position: fixed !important;
-  left: 25vw;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: min(46vw, calc(24rem * var(--ui-scale, 1))) !important;
-  height: auto !important;
-  max-height: min(72dvh, calc(100dvh - 48px)) !important;
-  max-width: calc(50vw - 20px) !important;
-  z-index: calc(var(--z-live-popover) + 1) !important;
+body:has(#app[data-td-run-live="true"]) .bottom-chrome .battle-controls:not(.hidden) {
   display: flex !important;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  padding: calc(10px * var(--ui-scale, 1));
-  border-radius: calc(14px * var(--ui-scale, 1));
-  border: 2px solid rgba(74, 222, 128, 0.4);
-  background: rgba(8, 14, 10, 0.9);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 20px 56px rgba(0, 0, 0, 0.6);
-  overflow: visible !important;
 }
 
-html[data-game-mode="td"] #app[data-td-loadout-open="true"] #prep-field-island .battle-canvas-stage,
-html[data-game-mode="td"] #app[data-td-loadout-open="true"] #prep-field-island .canvas-scale-wrap {
-  width: 100% !important;
-  height: 100% !important;
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-}
+/* ─── Панель постройки (узкая колонка ~116–132px) ─── */
 
-html[data-game-mode="td"] #app[data-td-loadout-open="true"] #game-canvas {
-  display: block !important;
-  width: var(--battle-canvas-display-w, auto) !important;
-  height: var(--battle-canvas-display-h, auto) !important;
-  max-width: 100%;
-  max-height: min(64dvh, 100%);
-  pointer-events: auto;
-  cursor: grab;
-}
-
-html[data-prep-layout="mobile"] html[data-game-mode="td"] #app[data-td-loadout-open="true"] #layer-world .prep-field-island {
-  left: 50%;
-  max-width: calc(100vw - 24px) !important;
-  width: min(92vw, calc(24rem * var(--ui-scale, 1))) !important;
-}
-
-/* ─── Панель постройки: убрать подсказки, больше магазин ─── */
-
-html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-panel__guide {
-  display: none;
-}
-
-html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-panel__help {
-  flex: 0 0 auto;
-  min-width: calc(28px * var(--ui-scale, 1));
-  min-height: calc(28px * var(--ui-scale, 1));
-  padding: 0;
-  margin-left: calc(4px * var(--ui-scale, 1));
-  font-size: calc(13px * var(--ui-scale, 1));
-  font-weight: 800;
-  line-height: 1;
-  border-radius: calc(6px * var(--ui-scale, 1));
-  opacity: 0.75;
-}
-
-html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-panel__help:hover {
-  opacity: 1;
-}
-
+html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-panel__guide,
 html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-hint--compact {
   display: none;
 }
 
 html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-panel__head {
-  padding: calc(6px * var(--ui-scale, 1)) calc(8px * var(--ui-scale, 1));
+  padding: calc(4px * var(--ui-scale, 1));
+  gap: calc(3px * var(--ui-scale, 1));
 }
 
-html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-panel__slots {
-  padding: calc(6px * var(--ui-scale, 1)) calc(6px * var(--ui-scale, 1)) calc(2px * var(--ui-scale, 1));
+html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-panel__title {
+  font-size: calc(11px * var(--ui-scale, 1));
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-panel__wave,
+html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-panel__gold {
+  font-size: calc(8px * var(--ui-scale, 1));
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-panel__help,
+html[data-game-mode="td"] #app[data-td-run-live="true"] .btn-td-refresh-shop {
+  min-width: calc(20px * var(--ui-scale, 1)) !important;
+  min-height: calc(20px * var(--ui-scale, 1)) !important;
+  width: calc(20px * var(--ui-scale, 1));
+  height: calc(20px * var(--ui-scale, 1));
+  font-size: calc(10px * var(--ui-scale, 1)) !important;
 }
 
 html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-panel__main {
-  padding: calc(4px * var(--ui-scale, 1)) calc(8px * var(--ui-scale, 1));
-}
-
-html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-tower__meta {
-  font-size: calc(10px * var(--ui-scale, 1));
+  padding: calc(2px * var(--ui-scale, 1)) calc(4px * var(--ui-scale, 1));
 }
 
 html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-panel__shop-section {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: auto;
+  padding: calc(2px * var(--ui-scale, 1)) calc(3px * var(--ui-scale, 1)) calc(4px * var(--ui-scale, 1));
 }
 
-html[data-battle-profile="tablet-landscape-side"] html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-left-column {
-  min-height: 0 !important;
-  max-height: none;
+html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-panel__shop-title {
+  font-size: calc(9px * var(--ui-scale, 1));
+  margin-bottom: calc(2px * var(--ui-scale, 1));
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-shop-card {
+  grid-template-columns: 1fr auto;
+  min-height: calc(30px * var(--ui-scale, 1));
+  padding: calc(2px * var(--ui-scale, 1)) calc(3px * var(--ui-scale, 1));
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-shop-card__name {
+  display: none;
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-shop-card__icon {
+  justify-self: center;
+  font-size: calc(1.05rem * var(--ui-scale, 1));
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-shop-card__cost {
+  font-size: calc(8px * var(--ui-scale, 1));
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-tower__name {
+  font-size: calc(9px * var(--ui-scale, 1));
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-tower__meta {
+  font-size: calc(7px * var(--ui-scale, 1));
+}
+
+html[data-prep-layout="mobile"] html[data-game-mode="td"] #td-loadout-sheet .td-loadout-sheet__panel {
+  max-width: calc(100vw - 24px);
+  left: 50%;
 }
