@@ -195,7 +195,7 @@
     ".bench-card",
     ".shop-pin",
     "#btn-refresh",
-    "#btn-sell",
+    "#sell-drop-zone",
     "#btn-fight",
   ].join(", ");
 

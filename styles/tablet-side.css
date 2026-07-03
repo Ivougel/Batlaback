@@ -62,8 +62,8 @@ html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-field-column {
 
 html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-field-column > .layer-world {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-start;
+  justify-content: flex-end;
 }
 
 /* ─── Prep: герой + кукла — слоты под полем (tokens + doll.css) ─── */
@@ -71,11 +71,11 @@ html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-field-column >
 html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-field-island {
   position: relative !important;
   flex: 0 0 auto;
-  align-self: center;
+  align-self: flex-end;
   left: auto !important;
   top: auto !important;
   order: 1;
-  margin: 0 auto;
+  margin: 0 0 0 auto;
   width: var(--prep-canvas-display-w, var(--prep-canvas-w)) !important;
   height: var(--prep-canvas-display-h, var(--prep-canvas-h)) !important;
   max-width: calc(100% - 16px) !important;

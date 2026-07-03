@@ -2,8 +2,8 @@
  * Backpack Battles — браузерный автобатлер с рюкзаком
  */
 
-const GRID_COLS = 9;
-const GRID_ROWS = 7;
+const GRID_COLS = 7;
+const GRID_ROWS = 9;
 const FRAME_EDGE = 2;
 const SHOP_FIELD_GAP = 12;
 const BACKPACK_COLS = GRID_COLS;
@@ -2400,7 +2400,9 @@ function bindTouchInput() {
   const boardSection = document.querySelector(".board-section");
   const shopPanel = document.getElementById("shop-panel");
   const tdBuildPanel = document.getElementById("td-build-panel");
-  const touchTargets = [boardSection, canvas, shopPanel, tdBuildPanel].filter(Boolean);
+  const benchPopover = document.getElementById("prep-bench-popover");
+  const benchFab = document.getElementById("btn-prep-bench-fab");
+  const touchTargets = [boardSection, canvas, shopPanel, tdBuildPanel, benchPopover, benchFab].filter(Boolean);
   const captureOpts = { passive: false, capture: true };
   const bubbleOpts = { passive: false };
   let activeGesture = null;
@@ -2660,7 +2662,7 @@ function init() {
   document.getElementById("btn-fight").addEventListener("click", startBattle);
   document.getElementById("btn-refresh")?.addEventListener("click", () => refreshShop(true));
   document.getElementById("btn-td-refresh")?.addEventListener("click", () => refreshShop(true));
-  document.getElementById("btn-sell").addEventListener("click", sellSelected);
+  document.getElementById("sell-drop-zone")?.addEventListener("click", sellSelected);
   document.getElementById("btn-restart").addEventListener("click", returnToMainMenu);
   document.querySelectorAll(".game-mode-card").forEach((btn) => {
     btn.addEventListener("click", () => selectGameMode(btn.dataset.gameMode));
@@ -3009,6 +3011,11 @@ function renderPhase() {
   syncBattleArenaLayout();
   syncTdBattleChrome();
   syncPrepHeroHudDom();
+  if (phase !== "prep") {
+    window.forceHidePrepBenchChrome?.();
+    window.closePrepBenchPopover?.();
+  }
+  window.syncPrepBenchFabVisibility?.();
   if (isTdMode() && tdRunLive && phase === "prep" && tdState && !gameOver
     && !(typeof ScreenTransitions !== "undefined" && ScreenTransitions.isScreenTransitioning())) {
     requestAnimationFrame(() => startTdRun());
@@ -4408,17 +4415,32 @@ function getTdPrepDragMapRect(backpack, shopRect) {
 }
 
 /** Зона управления дугой: коридор между рюкзаком и магазином (как на UX-макете). */
+function getPrepBenchCommerceRect() {
+  if (typeof usesPrepBenchPopover === "function" && usesPrepBenchPopover()) {
+    const popover = document.getElementById("prep-bench-popover");
+    if (popover && !popover.hidden && !popover.classList.contains("hidden")) {
+      const panel = popover.querySelector(".prep-bench-popover__panel");
+      const panelRect = panel?.getBoundingClientRect();
+      if (panelRect && panelRect.width > 0 && panelRect.height > 0) return panelRect;
+    }
+    const fab = document.getElementById("btn-prep-bench-fab");
+    const fabRect = fab && !fab.hidden ? fab.getBoundingClientRect() : null;
+    if (fabRect && fabRect.width > 0 && fabRect.height > 0) return fabRect;
+    return null;
+  }
+  const panel = document.getElementById("bench-panel");
+  const rect = panel?.getBoundingClientRect();
+  return rect && rect.width > 0 && rect.height > 0 ? rect : null;
+}
+
+/** Зона управления дугой: коридор между рюкзаком и магазином (как на UX-макете). */
 function getPrepSidebarDragMapRect() {
   const backpack = getPrepBackpackClientRect();
   if (!backpack) return null;
   const shop = (isTdLoadoutEditPhase()
     ? document.getElementById("td-build-panel")
     : document.getElementById("shop-panel"))?.getBoundingClientRect();
-  const bench = isTdLoadoutEditPhase()
-    ? null
-    : (typeof usesPrepBenchPopover === "function" && usesPrepBenchPopover()
-      ? document.getElementById("btn-prep-bench-fab")?.getBoundingClientRect()
-      : document.getElementById("bench-panel")?.getBoundingClientRect());
+  const bench = isTdLoadoutEditPhase() ? null : getPrepBenchCommerceRect();
 
   if (isTdLoadoutEditPhase()) {
     const tdMap = getTdPrepDragMapRect(backpack, shop);
@@ -4882,7 +4904,7 @@ function getPrepArcSidebarAnchorClient(clientX, clientY) {
     if (benchCenter) return benchCenter;
   }
   if (isDropOnSell(pointer)) {
-    const sellCenter = getElementClientCenter(document.getElementById("shop-sell-zone"));
+    const sellCenter = getElementClientCenter(document.getElementById("sell-drop-zone") || document.getElementById("shop-sell-zone"));
     if (sellCenter) return sellCenter;
   }
   return null;
@@ -4984,6 +5006,14 @@ function maybeCelebratePrepArcDrop(success) {
   return true;
 }
 
+function hasPrepBoardDropTarget() {
+  return !!(hoverSlot || hoverCell || prepDropPreviewHover);
+}
+
+function setPrepBenchDragPassthrough(active) {
+  document.documentElement.toggleAttribute("data-prep-bench-drag", !!active);
+}
+
 function clearDragUiState() {
   document.querySelectorAll(".shop-card.shop-dragging, .td-build-shop-card.shop-dragging").forEach((el) => el.classList.remove("shop-dragging"));
   pendingShopDrag = null;
@@ -4991,12 +5021,15 @@ function clearDragUiState() {
   pendingEnhancementDrag = null;
   pendingCanvasPick = null;
   shopDidDrag = false;
+  setPrepBenchDragPassthrough(false);
   endSynergyPreview();
   synergyPreviewBuilt = null;
   canvas?.classList.remove("synergy-preview-mode");
   document.getElementById("bench-panel")?.classList.remove("bench-drop-target");
   document.getElementById("btn-prep-bench-fab")?.classList.remove("bench-drop-target");
   document.getElementById("shop-sell-zone")?.classList.remove("sell-drop-target");
+  document.getElementById("sell-drop-zone")?.classList.remove("is-drag-target");
+  document.getElementById("sell-drop-zone")?.classList.remove("is-drag-active");
   dragPayload = null;
   dragFrom = null;
   prepSidebarDragUnlocked = false;
@@ -5616,7 +5649,7 @@ function syncCampaignChrome() {
   const progressEl = document.getElementById("campaign-hint-progress");
   const textEl = document.getElementById("campaign-hint-text");
   const refreshBtn = document.getElementById("btn-refresh");
-  const sellBtn = document.getElementById("btn-sell");
+  const sellBtn = document.getElementById("sell-drop-zone");
   if (!isCampaignMode() || phase !== "prep" || gameOver || typeof Campaign === "undefined" || !Campaign.isActive()) {
     bar?.classList.add("hidden");
     refreshBtn?.classList.remove("hidden-by-campaign");
@@ -6089,6 +6122,8 @@ function startBattle() {
     dragFrom = null;
     synergyPreviewBuilt = null;
   }
+  window.forceHidePrepBenchChrome?.();
+  window.closePrepBenchPopover?.();
 
   applyCraftingForSide("player");
   if (isVersusMode()) applyCraftingForSide("enemy");
@@ -7203,31 +7238,40 @@ function isOnBoard(mx, my, team = "player") {
 }
 
 function isDropOnSell(e) {
-  const zone = document.getElementById("shop-sell-zone");
+  const icon = document.getElementById("sell-drop-zone");
+  const zone = icon || document.getElementById("shop-sell-zone");
   if (!zone || !e) return false;
-  if (e.target?.closest?.("#shop-sell-zone")) return true;
+  if (e.target?.closest?.("#sell-drop-zone, #shop-sell-zone")) return true;
   const r = zone.getBoundingClientRect();
-  const pad = isTouchUi() ? 14 : 0;
+  const pad = isTouchUi() ? 18 : 8;
   return e.clientX >= r.left - pad && e.clientX <= r.right + pad
     && e.clientY >= r.top - pad && e.clientY <= r.bottom + pad;
 }
 
 function isDropOnBench(e) {
-  if (!e) return false;
+  if (!e || phase !== "prep") return false;
+  if (dragFrom?.type === "bench" && hasPrepBoardDropTarget()) return false;
   const pad = isTouchUi() ? 14 : 0;
+
+  if (e.target?.closest?.("#btn-prep-bench-close")) return false;
 
   if (typeof usesPrepBenchPopover === "function" && usesPrepBenchPopover()) {
     const fab = document.getElementById("btn-prep-bench-fab");
     if (fab && !fab.hidden) {
-      if (e.target?.closest?.("#btn-prep-bench-fab, #prep-bench-popover")) {
-        if (typeof openPrepBenchPopover === "function") openPrepBenchPopover();
+      const fr = fab.getBoundingClientRect();
+      const onFab = fr.width > 0
+        && e.clientX >= fr.left - pad && e.clientX <= fr.right + pad
+        && e.clientY >= fr.top - pad && e.clientY <= fr.bottom + pad;
+      if (onFab || e.target?.closest?.("#btn-prep-bench-fab")) {
+        if (dragPayload && dragFrom?.type !== "bench" && typeof openPrepBenchPopover === "function") {
+          openPrepBenchPopover();
+        }
         return true;
       }
-      const fr = fab.getBoundingClientRect();
-      if (fr.width > 0
-        && e.clientX >= fr.left - pad && e.clientX <= fr.right + pad
-        && e.clientY >= fr.top - pad && e.clientY <= fr.bottom + pad) {
-        if (typeof openPrepBenchPopover === "function") openPrepBenchPopover();
+      if (e.target?.closest?.("#bench-panel, #bench-slots, .bench-card")) {
+        if (dragPayload && dragFrom?.type !== "bench" && typeof openPrepBenchPopover === "function") {
+          openPrepBenchPopover();
+        }
         return true;
       }
     }
@@ -7623,11 +7667,14 @@ function updatePointerFromClient(clientX, clientY) {
       benchFab.classList.toggle("bench-drop-target", onBench);
     }
     const sellZone = document.getElementById("shop-sell-zone");
+    const sellIcon = document.getElementById("sell-drop-zone");
+    const onSell = !!(dragPayload && dragFrom?.type !== "shop" && isDropOnSell(synthetic));
     if (sellZone) {
-      sellZone.classList.toggle(
-        "sell-drop-target",
-        !!(dragPayload && dragFrom?.type !== "shop" && isDropOnSell(synthetic)),
-      );
+      sellZone.classList.toggle("sell-drop-target", onSell);
+    }
+    if (sellIcon) {
+      sellIcon.classList.toggle("is-drag-target", onSell);
+      sellIcon.classList.toggle("is-drag-active", !!(dragPayload && dragFrom?.type !== "shop"));
     }
     syncPrepShopDragBackdrop(clientX, clientY);
   } else if ((phase === "battle" || phase === "replay") && battleState && !isTouchUi()) {
@@ -10104,11 +10151,14 @@ function startBenchDrag(index, e, side = prepViewSide) {
   clearTouchTapGesture();
   hideSidebarTooltip();
   selectedBench = index;
-  renderBench();
+  document.querySelectorAll("#bench-slots .bench-card").forEach((card) => {
+    card.classList.toggle("selected", +card.dataset.bench === index);
+  });
   dragPayload = { itemId: st.bench[index].itemId, rotation: st.bench[index].rotation || 0 };
   dragFrom = { type: "bench", index, side };
-  prepSidebarDragUnlocked = false;
+  prepSidebarDragUnlocked = typeof usesPrepBenchPopover === "function" && usesPrepBenchPopover();
   prepSidebarStickyHover = null;
+  setPrepBenchDragPassthrough(true);
   beginPrepDragArcFromCard(document.querySelector(`.bench-card[data-bench="${index}"]`));
   startSynergyPreview();
   syncUiDragState();

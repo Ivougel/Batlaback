@@ -1,0 +1,222 @@
+/**
+ * Prep zone layout — tablet-side / iPad mini PWA.
+ * Красная зона: сетка 7×9, прижата вправо.
+ * Зелёная зона: компактный магазин + иконка продажи.
+ */
+
+/* ─── Красная зона: поле на всю высоту, сетка справа ─── */
+
+html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-field-column {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: stretch;
+  min-height: 0;
+  height: 100%;
+}
+
+html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-field-column > .layer-world {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding-top: var(--prep-scene-top, 8px);
+  padding-right: calc(6px * var(--ui-scale, 1));
+  padding-left: calc(4px * var(--ui-scale, 1));
+  box-sizing: border-box;
+}
+
+html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-field-island {
+  position: relative !important;
+  flex: 0 0 auto;
+  align-self: flex-end;
+  margin-left: auto;
+  margin-right: 0;
+  left: auto !important;
+  top: auto !important;
+  width: var(--prep-canvas-display-w, var(--prep-canvas-w)) !important;
+  height: var(--prep-canvas-display-h, var(--prep-canvas-h)) !important;
+  max-width: calc(100% - var(--prep-hero-reserve-w, 0px)) !important;
+}
+
+html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .battle-canvas-stage {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  width: 100%;
+  height: 100%;
+}
+
+html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-field-island .canvas-scale-wrap {
+  margin-left: auto;
+}
+
+/* Портрет слева — не перекрывается сеткой */
+html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-character-layer {
+  z-index: 4;
+  pointer-events: none;
+  max-width: calc(var(--prep-hero-slot-width, 28%) + 4%);
+}
+
+/* ─── Зелёная зона: компактный магазин (высота по контенту) ─── */
+
+html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .game-layout {
+  align-items: start;
+}
+
+html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel {
+  align-self: start;
+  height: auto;
+  max-height: none;
+  flex: 0 0 auto;
+  overflow: visible;
+  padding: calc(6px * var(--ui-scale, 1)) calc(8px * var(--ui-scale, 1));
+}
+
+html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel .shop-chrome {
+  flex-shrink: 0;
+  padding-bottom: calc(2px * var(--ui-scale, 1));
+}
+
+html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel .btn-refresh-shop {
+  min-height: calc(28px * var(--ui-scale, 1));
+  padding: calc(4px * var(--ui-scale, 1)) calc(8px * var(--ui-scale, 1));
+  font-size: var(--font-xs);
+  font-weight: 700;
+}
+
+html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel .shop-objects {
+  flex: 0 0 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(2px * var(--ui-scale, 1));
+}
+
+html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel .shop-slots {
+  flex: 0 0 auto;
+  min-height: 0 !important;
+  grid-auto-rows: minmax(var(--prep-shop-row-h, 40px), auto);
+  gap: calc(2px * var(--ui-scale, 1));
+  overflow: visible;
+}
+
+html[data-ui-surface="tablet-side"][data-prep-bench-popover="true"] #app[data-phase="prep"] #shop-panel .shop-slots {
+  min-height: 0 !important;
+}
+
+html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel .shop-card {
+  min-height: var(--prep-shop-row-h, 40px);
+  gap: calc(2px * var(--ui-scale, 1));
+}
+
+html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel .shop-item-visual .icon,
+html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel .shop-card--enhancement .item-icon-shell--enhancement {
+  width: calc(32px * var(--ui-scale, 1));
+  height: calc(32px * var(--ui-scale, 1));
+}
+
+html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel .shop-item-stack > .cost {
+  font-size: var(--font-xs);
+  padding: calc(2px * var(--ui-scale, 1)) calc(5px * var(--ui-scale, 1));
+}
+
+/* ─── Зона продажи: компактная иконка-мишень ─── */
+
+#app[data-phase="prep"] #shop-panel .shop-sell-zone {
+  flex-shrink: 0;
+  margin-top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(4px * var(--ui-scale, 1));
+  border: none;
+  background: transparent;
+}
+
+html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel .shop-sell-zone {
+  margin-top: 0 !important;
+  padding: calc(2px * var(--ui-scale, 1)) 0 calc(4px * var(--ui-scale, 1));
+}
+
+#app[data-phase="prep"] .sell-drop-zone {
+  width: calc(36px * var(--ui-scale, 1));
+  height: calc(36px * var(--ui-scale, 1));
+  min-width: calc(36px * var(--ui-scale, 1));
+  min-height: calc(36px * var(--ui-scale, 1));
+  border-radius: 50%;
+  border: 1px solid rgba(240, 193, 75, 0.28);
+  background: rgba(18, 22, 28, 0.72);
+  color: #f0c14b;
+  font-size: calc(18px * var(--ui-scale, 1));
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  opacity: 0.5;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  touch-action: none;
+}
+
+#app[data-phase="prep"] .sell-drop-zone.is-drag-active {
+  opacity: 0.82;
+}
+
+#app[data-phase="prep"] .sell-drop-zone.is-drag-target {
+  transform: scale(1.4);
+  opacity: 1;
+  border-color: rgba(240, 193, 75, 0.75);
+  box-shadow: 0 0 16px rgba(240, 193, 75, 0.6);
+}
+
+#app[data-phase="prep"] #shop-panel .shop-sell-zone.sell-drop-target {
+  background: transparent;
+  box-shadow: none;
+  border: none;
+}
+
+/* Рецепты в нижнем баре (все prep-раскладки) */
+body:has(#app[data-phase="prep"]) .bottom-chrome .recipes-toggle {
+  border-color: rgba(188, 140, 255, 0.45);
+  color: #d2a8ff;
+  background: rgba(163, 113, 247, 0.12);
+}
+
+body:has(#app[data-phase="prep"]) .bottom-chrome .recipes-toggle:hover {
+  border-color: rgba(188, 140, 255, 0.75);
+  background: rgba(163, 113, 247, 0.2);
+}
+
+/* Скрыть рецепты в магазине (если остался дубликат) */
+#app[data-phase="prep"] #shop-panel .btn-recipe-book {
+  display: none !important;
+}
+
+/* ─── iPad mini 7 PWA landscape (1133×744) ─── */
+
+@media (width: 1133px) and (height: 744px) {
+  html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel {
+    width: min(var(--shop-panel-w, 200px), 200px);
+    min-width: 0;
+    max-width: 200px;
+    padding: 4px 6px;
+  }
+
+  html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel .shop-slots {
+    min-height: 0 !important;
+    --prep-shop-row-h: 38px;
+  }
+
+  html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-field-column > .layer-world {
+    padding-right: 4px;
+  }
+
+  html[data-hero-card-mode="full-bleed"][data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-character-img {
+    max-width: 90%;
+  }
+}

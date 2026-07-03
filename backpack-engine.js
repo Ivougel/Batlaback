@@ -6,7 +6,7 @@
 const STRONG_OFFSETS = [[0, -1], [0, 1], [-1, 0], [1, 0]];
 const WEAK_OFFSETS = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
 
-function getStarterBagOrigin(gridW = 9, gridH = 7, bagW = 3, bagH = 3) {
+function getStarterBagOrigin(gridW = 7, gridH = 9, bagW = 3, bagH = 3) {
   return {
     col: Math.floor((gridW - bagW) / 2),
     row: Math.floor((gridH - bagH) / 2),
@@ -96,7 +96,7 @@ function createContainer(itemId, col, row, rotation = 0) {
   };
 }
 
-function createStartingContainers(gridW = 9, gridH = 7) {
+function createStartingContainers(gridW = 7, gridH = 9) {
   const { col, row } = getStarterBagOrigin(gridW, gridH);
   return [createContainer("starter_bag", col, row, 0)];
 }

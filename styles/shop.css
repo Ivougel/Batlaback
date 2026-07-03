@@ -115,16 +115,18 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] .shop-panel-header .prep
   display: flex;
   flex-direction: column;
   gap: calc(4px * var(--ui-scale));
+  min-height: 0;
 }
 
 #app[data-phase="prep"] #shop-panel .shop-sell-zone {
   flex-shrink: 0;
+  margin-top: auto;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   gap: calc(6px * var(--ui-scale));
+  width: 100%;
   padding: calc(10px * var(--ui-scale)) calc(4px * var(--ui-scale));
-  margin-top: calc(4px * var(--ui-scale));
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
   border-radius: calc(8px * var(--ui-scale));
@@ -137,15 +139,19 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] .shop-panel-header .prep
   box-shadow: inset 0 0 0 2px rgba(240, 193, 75, 0.22);
 }
 
-#app[data-phase="prep"] #shop-panel .shop-action-row {
+#app[data-phase="prep"] #shop-panel .shop-action-row,
+#app[data-phase="prep"] #shop-panel .shop-side-dock {
   display: flex;
-  gap: calc(8px * var(--ui-scale));
+  flex-direction: column;
+  align-items: stretch;
+  gap: calc(6px * var(--ui-scale));
   width: 100%;
-  max-width: calc(320px * var(--ui-scale));
+  max-width: 100%;
 }
 
 #app[data-phase="prep"] #shop-panel .shop-action-row .btn-secondary {
-  flex: 1 1 0;
+  flex: 0 0 auto;
+  width: 100%;
   min-width: 0;
   min-height: var(--touch-target-min);
   padding: calc(12px * var(--ui-scale)) calc(10px * var(--ui-scale));
@@ -1155,7 +1161,7 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .shop-panel .shop-sl
 
 html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #shop-panel .shop-sell-zone {
   padding: calc(6px * var(--ui-scale)) calc(4px * var(--ui-scale));
-  margin-top: calc(4px * var(--ui-scale));
+  margin-top: auto;
 }
 
 html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #shop-panel .shop-action-row .btn-secondary {

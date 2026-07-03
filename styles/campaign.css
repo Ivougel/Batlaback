@@ -54,7 +54,7 @@ html[data-game-mode="campaign"] #app[data-phase="prep"] .campaign-hint-bar__text
 }
 
 html[data-game-mode="campaign"] #app[data-phase="prep"] #btn-refresh.hidden-by-campaign,
-html[data-game-mode="campaign"] #app[data-phase="prep"] #btn-sell.hidden-by-campaign {
+html[data-game-mode="campaign"] #app[data-phase="prep"] #sell-drop-zone.hidden-by-campaign {
   display: none !important;
 }
 

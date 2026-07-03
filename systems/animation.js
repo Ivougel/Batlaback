@@ -313,15 +313,15 @@ function queueHitAnimation(state, item, team, text, color) {
 function getTeamGridCenter(team) {
   const innerW = typeof GRID_INNER_W !== "undefined"
     ? GRID_INNER_W
-    : (typeof GRID_COLS !== "undefined" ? GRID_COLS : 9)
+    : (typeof GRID_COLS !== "undefined" ? GRID_COLS : 7)
       * (typeof GRID_CELL !== "undefined" ? GRID_CELL : 88)
-      + ((typeof GRID_COLS !== "undefined" ? GRID_COLS : 9) - 1)
+      + ((typeof GRID_COLS !== "undefined" ? GRID_COLS : 7) - 1)
       * (typeof GRID_CELL_GAP !== "undefined" ? GRID_CELL_GAP : 4);
   const innerH = typeof GRID_INNER_H !== "undefined"
     ? GRID_INNER_H
-    : (typeof GRID_ROWS !== "undefined" ? GRID_ROWS : 7)
+    : (typeof GRID_ROWS !== "undefined" ? GRID_ROWS : 9)
       * (typeof GRID_CELL !== "undefined" ? GRID_CELL : 88)
-      + ((typeof GRID_ROWS !== "undefined" ? GRID_ROWS : 7) - 1)
+      + ((typeof GRID_ROWS !== "undefined" ? GRID_ROWS : 9) - 1)
       * (typeof GRID_CELL_GAP !== "undefined" ? GRID_CELL_GAP : 4);
   const originX = typeof GRID_PLAYER_X !== "undefined" ? GRID_PLAYER_X : 8;
   const gap = typeof GRID_GAP !== "undefined" ? GRID_GAP : 96;

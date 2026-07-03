@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="styles/layers.css?v=7">
   <link rel="stylesheet" href="styles/bottom-chrome.css?v=24">
   <link rel="stylesheet" href="styles.css?v=39">
-  <link rel="stylesheet" href="styles/shop.css?v=6">
+  <link rel="stylesheet" href="styles/shop.css?v=7">
   <link rel="stylesheet" href="styles/item-card-chrome.css?v=3">
   <link rel="stylesheet" href="styles/shop-pin-chrome.css?v=3">
   <link rel="stylesheet" href="styles/prep-top-bar.css?v=2">
@@ -51,12 +51,13 @@
   <link rel="stylesheet" href="styles/tablet-intro-typography.css?v=1">
   <link rel="stylesheet" href="styles/desktop-intro-layout.css?v=1">
   <link rel="stylesheet" href="styles/tablet-pwa-layout.css?v=6">
-  <link rel="stylesheet" href="styles/mobile-prep.css?v=22">
+  <link rel="stylesheet" href="styles/mobile-prep.css?v=23">
   <link rel="stylesheet" href="styles/desktop-prep.css?v=2">
   <link rel="stylesheet" href="styles/desktop-battle.css?v=2">
   <link rel="stylesheet" href="styles/tablet-stacked.css?v=7">
-  <link rel="stylesheet" href="styles/prep-bench-popover.css?v=1">
-  <link rel="stylesheet" href="styles/tablet-side.css?v=34">
+  <link rel="stylesheet" href="styles/prep-bench-popover.css?v=6">
+  <link rel="stylesheet" href="styles/tablet-side.css?v=35">
+  <link rel="stylesheet" href="styles/prep-tablet-zone-layout.css?v=2">
   <link rel="stylesheet" href="styles/battle-inventory-popover.css?v=8">
   <link rel="stylesheet" href="styles/lobby.css?v=8">
   <link rel="stylesheet" href="styles/td-mode.css?v=22">
@@ -92,7 +93,7 @@
   <script src="systems/layout-scales.js?v=2"></script>
   <script src="systems/battle-fx-tier.js?v=1"></script>
   <script src="systems/battle-hero-anchor.js?v=27"></script>
-  <script src="ui-layout.js?v=111"></script>
+  <script src="ui-layout.js?v=112"></script>
 </head>
 <body>
   <div id="ui-ornament-frame" class="ui-ornament-frame" aria-hidden="true">
@@ -313,11 +314,7 @@
             <div class="shop-objects">
               <div class="shop-slots" id="shop-slots"></div>
               <div class="shop-sell-zone" id="shop-sell-zone">
-                <div class="shop-action-row">
-                  <button type="button" class="btn-secondary btn-sell-drop" id="btn-sell">💰 Продать</button>
-                  <button type="button" class="btn-secondary btn-recipe-book" id="btn-recipe-book">⚗️ Рецепты</button>
-                </div>
-                <span class="shop-sell-hint">Перетащите предмет · полная стоимость</span>
+                <button type="button" class="sell-drop-zone" id="sell-drop-zone" aria-label="Продать предмет" title="Перетащите сюда, чтобы продать">💰</button>
               </div>
             </div>
           </div>
@@ -854,6 +851,7 @@
         <button type="button" class="btn-secondary prep-side-btn bottombar-btn active" id="btn-prep-player" data-prep-side="player" title="Мой стол" aria-label="Мой стол"><span class="prep-side-ico" aria-hidden="true">🧑</span><span class="prep-side-label">Мой стол</span></button>
         <button type="button" class="btn-secondary prep-side-btn bottombar-btn" id="btn-prep-enemy" data-prep-side="enemy" title="Противник" aria-label="Противник"><span class="prep-side-ico" aria-hidden="true">🤖</span><span class="prep-side-label">Противник</span></button>
         <button type="button" class="btn-secondary btn-prep-hero-info bottombar-btn bottombar-btn--icon" id="btn-prep-hero-info" aria-expanded="false" aria-controls="prep-hero-tooltip" title="Инфо о герое">ℹ️</button>
+        <button type="button" class="btn-secondary btn-recipe-book bottombar-btn bottombar-btn--icon recipes-toggle" id="btn-recipe-book" aria-label="Рецепты" title="Рецепты">🍳</button>
         <button type="button" class="btn-secondary prep-settings-btn bottombar-btn bottombar-btn--icon" id="btn-settings" aria-label="Настройки" aria-expanded="false" aria-controls="settings-overlay">⚙️</button>
         <div class="standings-anchor hidden" id="standings-anchor">
           <button type="button" class="btn-secondary bottombar-btn standings-toggle" id="btn-standings-toggle" aria-expanded="false" aria-controls="standings-dropdown" aria-label="Турнирная таблица" title="Участники лобби">🏆 <span class="standings-alive-count" id="standings-alive-count">0</span></button>
@@ -944,6 +942,7 @@
 
   <div id="prep-shop-backdrop" class="prep-shop-backdrop hidden" aria-hidden="true"></div>
   <div class="prep-bench-popover hidden" id="prep-bench-popover" role="dialog" aria-labelledby="prep-bench-popover-title" aria-hidden="true">
+    <div class="prep-bench-popover__backdrop" id="prep-bench-popover-backdrop" aria-hidden="true"></div>
     <div class="prep-bench-popover__panel">
       <header class="prep-bench-popover__head">
         <h3 class="prep-bench-popover__title" id="prep-bench-popover-title">📦 Скамейка</h3>
@@ -1014,7 +1013,7 @@
   <script src="components/escape-menu.js"></script>
   <script src="components/combat-feed.js?v=2"></script>
   <script src="components/mobile-prep-ui.js"></script>
-  <script src="components/prep-bench-popover.js"></script>
+  <script src="components/prep-bench-popover.js?v=2"></script>
   <script src="components/battle-aura-frame.js"></script>
   <script src="components/battle-result-theater.js"></script>
   <script src="components/battle-result.js"></script>
@@ -1062,7 +1061,7 @@
   <script src="systems/screen-transitions.js?v=1"></script>
   <script src="components/prep-hud-collapse.js?v=1"></script>
   <script src="components/prep-hud-hero.js?v=3"></script>
-  <script src="game.js?v=92"></script>
+  <script src="game.js?v=96"></script>
   <script src="pwa-register.js"></script>
 </body>
 </html>

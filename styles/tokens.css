@@ -145,10 +145,10 @@
   --frame-pad: 8px;
   --frame-title-h: 22px;
   --grid-gap: 36px;
-  --prep-canvas-w: calc(9 * var(--cell-size) + 8 * var(--cell-gap));
-  --prep-canvas-h: calc(7 * var(--cell-size) + 6 * var(--cell-gap));
-  --battle-canvas-w: calc(2 * (9 * var(--cell-size) + 8 * var(--cell-gap)) + var(--grid-gap));
-  --battle-canvas-h: calc(7 * var(--cell-size) + 6 * var(--cell-gap));
+  --prep-canvas-w: calc(7 * var(--cell-size) + 6 * var(--cell-gap));
+  --prep-canvas-h: calc(9 * var(--cell-size) + 8 * var(--cell-gap));
+  --battle-canvas-w: calc(2 * (7 * var(--cell-size) + 6 * var(--cell-gap)) + var(--grid-gap));
+  --battle-canvas-h: calc(9 * var(--cell-size) + 8 * var(--cell-gap));
   --field-base-x: 12px;
   --field-offset-x: 0px;
   --field-offset-y: 0px;

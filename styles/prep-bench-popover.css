@@ -10,13 +10,13 @@ html[data-prep-bench-popover="true"] #app[data-phase="prep"] #shop-panel .shop-o
 }
 
 html[data-prep-bench-popover="true"] #app[data-phase="prep"] #shop-panel .shop-slots {
-  min-height: calc(var(--shop-card-row-h, 88px) * 2);
+  min-height: 0;
 }
 
 html[data-prep-bench-popover="true"] #app[data-phase="prep"] #shop-panel .shop-sell-zone {
-  margin-top: calc(2px * var(--ui-scale, 1));
-  padding-top: calc(6px * var(--ui-scale, 1));
-  padding-bottom: calc(6px * var(--ui-scale, 1));
+  margin-top: 0;
+  padding-top: calc(4px * var(--ui-scale, 1));
+  padding-bottom: calc(4px * var(--ui-scale, 1));
 }
 
 html[data-prep-bench-popover="true"] #app[data-phase="prep"] #shop-panel .shop-action-row {
@@ -95,6 +95,28 @@ html[data-prep-bench-open="true"] .prep-bench-fab {
 
 /* ─── Popover ─── */
 
+.prep-bench-popover.hidden,
+.prep-bench-popover[hidden] {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+/* Только экран подготовки */
+html:not(:has(#app[data-phase="prep"])) .prep-bench-popover,
+html:not(:has(#app[data-phase="prep"])) .prep-bench-fab,
+html[data-game-phase="battle"] .prep-bench-popover,
+html[data-game-phase="battle"] .prep-bench-fab,
+html[data-game-phase="replay"] .prep-bench-popover,
+html[data-game-phase="replay"] .prep-bench-fab,
+#app[data-phase="battle"] ~ #prep-bench-popover,
+#app[data-phase="battle"] ~ #btn-prep-bench-fab,
+#app[data-phase="replay"] ~ #prep-bench-popover,
+#app[data-phase="replay"] ~ #btn-prep-bench-fab {
+  display: none !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
 .prep-bench-popover {
   position: fixed;
   inset: 0;
@@ -111,11 +133,18 @@ html[data-prep-bench-open="true"] .prep-bench-fab {
   background: transparent;
 }
 
-.prep-bench-popover:not(.hidden) {
+/* Корень popover не ловит клики — только backdrop и панель */
+.prep-bench-popover__backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
   pointer-events: auto;
+  background: transparent;
 }
 
 .prep-bench-popover__panel {
+  position: relative;
+  z-index: 1;
   pointer-events: auto;
   width: min(calc(var(--shop-panel-w, 248px) - 4px), 92vw);
   max-width: 320px;
@@ -209,4 +238,10 @@ html[data-prep-bench-popover="true"] #prep-bench-popover .bench-panel.bench-drop
 html[data-visual-theme="diablo"][data-prep-bench-popover="true"] .prep-bench-popover__panel {
   background: rgba(14, 12, 10, 0.96);
   border-color: rgba(192, 57, 43, 0.45);
+}
+
+/* Во время drag — пропускаем события на поле; дуга (z≈9250) рисуется поверх */
+html[data-prep-bench-drag="true"] .prep-bench-popover__backdrop,
+html[data-prep-bench-drag="true"] .prep-bench-popover__panel {
+  pointer-events: none !important;
 }

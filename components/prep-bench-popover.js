@@ -38,15 +38,44 @@
     return document.documentElement.hasAttribute(OPEN_ATTR);
   }
 
+  function isPrepPhase() {
+    return document.getElementById("app")?.dataset.phase === "prep";
+  }
+
+  function forceHidePrepBenchChrome() {
+    document.documentElement.removeAttribute(OPEN_ATTR);
+    const popover = document.getElementById("prep-bench-popover");
+    const fab = document.getElementById("btn-prep-bench-fab");
+    if (popover) {
+      popover.classList.add("hidden");
+      popover.hidden = true;
+      popover.setAttribute("aria-hidden", "true");
+    }
+    if (fab) {
+      fab.classList.add("hidden");
+      fab.hidden = true;
+      fab.setAttribute("aria-hidden", "true");
+      fab.setAttribute("aria-expanded", "false");
+      fab.classList.remove("bench-drop-target");
+    }
+    const benchPanel = document.getElementById("bench-panel");
+    benchPanel?.classList.remove("bench-drop-target");
+  }
+
   function setOpen(open) {
-    if (!usesPrepBenchPopover()) return;
-    const next = !!open;
+    const next = !!(open && usesPrepBenchPopover() && isPrepPhase());
     document.documentElement.toggleAttribute(OPEN_ATTR, next);
     const popover = document.getElementById("prep-bench-popover");
     const fab = document.getElementById("btn-prep-bench-fab");
-    popover?.classList.toggle("hidden", !next);
-    popover?.setAttribute("aria-hidden", next ? "false" : "true");
+    if (popover) {
+      popover.classList.toggle("hidden", !next);
+      popover.hidden = !next;
+      popover.setAttribute("aria-hidden", next ? "false" : "true");
+    }
     fab?.setAttribute("aria-expanded", next ? "true" : "false");
+    if (!next) {
+      forceHidePrepBenchChrome();
+    }
     if (typeof window.syncPrepBenchFabPosition === "function") {
       requestAnimationFrame(() => window.syncPrepBenchFabPosition());
     }
@@ -56,7 +85,8 @@
   }
 
   function closePrepBenchPopover() {
-    if (isOpen()) setOpen(false);
+    setOpen(false);
+    if (!isPrepPhase()) forceHidePrepBenchChrome();
   }
 
   function togglePrepBenchPopover() {
@@ -72,12 +102,16 @@
   function syncFabVisibility() {
     syncBenchMount();
     const fab = document.getElementById("btn-prep-bench-fab");
-    if (!fab) return;
-    const show = usesPrepBenchPopover()
-      && document.getElementById("app")?.dataset.phase === "prep";
-    fab.classList.toggle("hidden", !show);
-    fab.hidden = !show;
-    if (!show) closePrepBenchPopover();
+    const show = usesPrepBenchPopover() && isPrepPhase();
+    if (!show) {
+      forceHidePrepBenchChrome();
+      return;
+    }
+    if (fab) {
+      fab.classList.toggle("hidden", !show);
+      fab.hidden = !show;
+      fab.setAttribute("aria-hidden", show ? "false" : "true");
+    }
   }
 
   function syncPrepBenchFabBadge() {
@@ -97,10 +131,20 @@
   }
 
   function bind() {
-    document.getElementById("btn-prep-bench-fab")?.addEventListener("click", togglePrepBenchPopover);
-    document.getElementById("btn-prep-bench-close")?.addEventListener("click", closePrepBenchPopover);
-    document.getElementById("prep-bench-popover")?.addEventListener("click", (e) => {
-      if (e.target?.id === "prep-bench-popover") closePrepBenchPopover();
+    document.getElementById("btn-prep-bench-fab")?.addEventListener("click", (e) => {
+      if (!isPrepPhase()) return;
+      e.stopPropagation();
+      togglePrepBenchPopover();
+    });
+    document.getElementById("btn-prep-bench-close")?.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      closePrepBenchPopover();
+    });
+    document.getElementById("prep-bench-popover-backdrop")?.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      closePrepBenchPopover();
     });
 
     document.addEventListener("keydown", (e) => {
@@ -110,17 +154,21 @@
     const app = document.getElementById("app");
     if (app) {
       new MutationObserver(() => {
-        if (app.dataset.phase !== "prep") closePrepBenchPopover();
+        if (app.dataset.phase !== "prep") forceHidePrepBenchChrome();
         syncFabVisibility();
       }).observe(app, { attributes: true, attributeFilter: ["data-phase"] });
     }
 
+    const root = document.documentElement;
     new MutationObserver(() => {
+      if (root.dataset.gamePhase && root.dataset.gamePhase !== "prep") {
+        forceHidePrepBenchChrome();
+      }
       syncFabVisibility();
-      if (!usesPrepBenchPopover()) closePrepBenchPopover();
-    }).observe(document.documentElement, {
+      if (!usesPrepBenchPopover()) forceHidePrepBenchChrome();
+    }).observe(root, {
       attributes: true,
-      attributeFilter: ["data-prep-bench-popover", "data-prep-layout", "data-prep-shop-drawer", "data-ui-surface"],
+      attributeFilter: ["data-prep-bench-popover", "data-prep-layout", "data-prep-shop-drawer", "data-ui-surface", "data-game-phase"],
     });
 
     syncFabVisibility();
@@ -131,6 +179,8 @@
   window.togglePrepBenchPopover = togglePrepBenchPopover;
   window.openPrepBenchPopover = openPrepBenchPopover;
   window.syncPrepBenchFabBadge = syncPrepBenchFabBadge;
+  window.syncPrepBenchFabVisibility = syncFabVisibility;
+  window.forceHidePrepBenchChrome = forceHidePrepBenchChrome;
   window.syncBenchMount = syncBenchMount;
   window.isPrepBenchPopoverOpen = isOpen;
 

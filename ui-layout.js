@@ -174,8 +174,8 @@
     return Math.round(Math.min(300, Math.max(168, usable * 0.32)));
   }
 
-  const PREP_GRID_COLS = 9;
-  const PREP_GRID_ROWS = 7;
+  const PREP_GRID_COLS = 7;
+  const PREP_GRID_ROWS = 9;
 
   /** iPad mini 7 PWA landscape — точечный брейкпоинт (1133×744). */
   function isIpadMiniPwaLandscape() {
@@ -198,25 +198,37 @@
     const uiScale = readCssPx("--ui-scale", 1);
     const gap = Math.max(1, Math.round(readCssPx("--cell-gap", 1)));
     const sceneTop = readCssPx("--prep-scene-top", 14);
-    const pad = Math.round(10 * uiScale);
+    const pad = Math.round(8 * uiScale);
 
     const colW = layerWorld?.clientWidth > 0 ? layerWorld.clientWidth : fieldCol.clientWidth;
     const colH = layerWorld?.clientHeight > 0 ? layerWorld.clientHeight : fieldCol.clientHeight;
-    const heroReserveW = isIpadMiniPwaLandscape() ? Math.round(colW * 0.2) : 0;
-    const availW = Math.max(200, colW - pad * 2 - heroReserveW);
-    const heroOverlapH = Math.round(readCssPx("--tablet-prep-hero-h", 0) * 0.28);
-    const availH = Math.max(200, colH - sceneTop - pad - heroOverlapH);
 
-    const minCell = Math.round(44 * uiScale);
-    const maxCell = Math.round(84 * uiScale);
+    const heroLayer = document.querySelector("#app[data-phase=\"prep\"] .prep-character-layer");
+    let heroReserveW = 0;
+    if (heroLayer && getComputedStyle(heroLayer).display !== "none") {
+      const heroRect = heroLayer.getBoundingClientRect();
+      const colRect = fieldCol.getBoundingClientRect();
+      if (heroRect.width > 48 && heroRect.right > colRect.left) {
+        heroReserveW = Math.max(0, Math.round(heroRect.right - colRect.left + pad));
+      }
+    } else if (isIpadMiniPwaLandscape()) {
+      heroReserveW = Math.round(colW * 0.22);
+    }
+
+    const availW = Math.max(180, colW - pad * 2 - heroReserveW);
+    const availH = Math.max(220, colH - sceneTop - pad);
+
+    const minCell = Math.round(36 * uiScale);
+    const maxCell = Math.round(isIpadMiniPwaLandscape() ? 78 : 84 * uiScale);
     const byW = Math.floor((availW - (PREP_GRID_COLS - 1) * gap) / PREP_GRID_COLS);
     const byH = Math.floor((availH - (PREP_GRID_ROWS - 1) * gap) / PREP_GRID_ROWS);
     const cell = Math.min(maxCell, Math.max(minCell, Math.min(byW, byH)));
 
     const prev = readCssPx("--cell-size", 0);
-    if (Math.abs(prev - cell) < 1) return false;
+    if (Math.abs(prev - cell) < 1 && readCssPx("--prep-hero-reserve-w", -1) === heroReserveW) return false;
 
     root.style.setProperty("--cell-size", `${cell}px`);
+    root.style.setProperty("--prep-hero-reserve-w", `${heroReserveW}px`);
     return true;
   }
 
@@ -345,11 +357,11 @@
     },
     "tablet-landscape": {
       fitAvailH: PREP_SIDE_CONTENT_H, fitMinScale: SCALE_MIN, fitWidthRatio: 1,
-      canvasAvailShare: 0.36, canvasMaxCap: 260,
-      shopRowBase: 64, shopRowMin: 52, shopRowMax: 72,
+      canvasAvailShare: 0.52, canvasMaxCap: 420,
+      shopRowBase: 46, shopRowMin: 38, shopRowMax: 52,
       heroSlotHeight: "min(54vh, 520px)", heroSlotMax: 560,
       sceneAvatarH: 148, sceneAvatarW: 118, dollSlot: 38, characterGap: 8,
-      shopPanelW: 248,
+      shopPanelW: 220,
     },
     "desktop-portrait": {
       fitAvailH: PREP_STACKED_CONTENT_H, fitMinScale: SCALE_MIN, fitWidthRatio: 1,
@@ -2387,16 +2399,15 @@
             window.applyGridMetricsFromCss();
           }
           const uiScale = readCssPx("--ui-scale", 1);
-          const pad = Math.round(10 * uiScale);
+          const pad = Math.round(8 * uiScale);
           const fitW = layerWorld?.clientWidth > 0 ? layerWorld.clientWidth : stageW;
           const fitH = layerWorld?.clientHeight > 0 ? layerWorld.clientHeight : columnH;
-          const heroOverlapH = Math.round(heroH * 0.28);
-          const maxH = Math.max(160, fitH - sceneTop - pad - heroOverlapH);
+          const maxH = Math.max(200, fitH - sceneTop - pad);
           const scale = Math.min(fitW / canvas.width, maxH / canvas.height);
           const ipadMini = isIpadMiniPwaLandscape();
           const finalScale = Math.min(
-            Math.max(scale, ipadMini ? 0.88 : 0.9),
-            ipadMini ? 0.96 : 1.06,
+            Math.max(scale, ipadMini ? 0.92 : 0.9),
+            ipadMini ? 1.02 : 1.08,
           );
           const w = Math.max(1, Math.floor(canvas.width * finalScale));
           const ch = Math.max(1, Math.floor(canvas.height * finalScale));
