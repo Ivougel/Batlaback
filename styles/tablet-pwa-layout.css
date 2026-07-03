@@ -287,11 +287,41 @@ html[data-ui-tier="tablet"][data-layout-profile="tablet-landscape"] body:has(#cl
 
 /* ─── Prep / battle / replay на tablet PWA ─── */
 
+html[data-ui-tier="tablet"] {
+  --pwa-safe-top: max(12px, env(safe-area-inset-top, 0px), constant(safe-area-inset-top, 0px));
+  --pwa-safe-bottom: max(8px, env(safe-area-inset-bottom, 0px), constant(safe-area-inset-bottom, 0px));
+  --pwa-safe-left: env(safe-area-inset-left, 0px);
+  --pwa-safe-right: env(safe-area-inset-right, 0px);
+}
+
 html[data-ui-tier="tablet"] #app[data-phase="prep"],
 html[data-ui-tier="tablet"] #app[data-phase="battle"],
 html[data-ui-tier="tablet"] #app[data-phase="replay"] {
   height: var(--app-h);
   max-height: var(--app-h);
+}
+
+/*
+ * iPad mini (744×1133 / 1133×744) и tablet PWA standalone:
+ * «рамка» safe-area на #app — статус-бар не наезжает на HUD.
+ * Горизонталь переносим с body на #app, чтобы не было двойного inset.
+ */
+@media (display-mode: standalone), (min-width: 700px) and (max-width: 1200px) {
+  html[data-ui-tier="tablet"] body {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  html[data-ui-tier="tablet"] #app[data-phase="prep"],
+  html[data-ui-tier="tablet"] #app[data-phase="battle"],
+  html[data-ui-tier="tablet"] #app[data-phase="replay"] {
+    box-sizing: border-box;
+    padding-top: var(--pwa-safe-top);
+    padding-bottom: max(8px, env(safe-area-inset-bottom, 0px), constant(safe-area-inset-bottom, 0px));
+    padding-left: var(--pwa-safe-left);
+    padding-right: var(--pwa-safe-right);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
 }
 
 @media (display-mode: standalone) {
@@ -309,16 +339,9 @@ html[data-ui-tier="tablet"] #app[data-phase="replay"] {
     max-height: var(--viewport-h, 100dvh);
   }
 
-  /* Prep/battle: safe-area в chrome, не в #app — иначе двойной зазор над home indicator */
-  html[data-ui-tier="tablet"] #app[data-phase="prep"],
-  html[data-ui-tier="tablet"] #app[data-phase="battle"],
-  html[data-ui-tier="tablet"] #app[data-phase="replay"] {
-    padding-bottom: 6px;
-  }
-
   html[data-ui-tier="tablet"] .bottom-chrome {
     padding-bottom: max(
-      6px,
+      8px,
       env(safe-area-inset-bottom, 0px),
       constant(safe-area-inset-bottom, 0px)
     );
@@ -331,6 +354,48 @@ html[data-ui-tier="tablet"] #app[data-phase="replay"] {
       rgba(255, 255, 255, 0.98) 55%,
       rgba(255, 255, 255, 1) 100%
     );
+  }
+}
+
+/* ─── iPad mini / tablet: компактный bottom chrome (скорость / пауза) ─── */
+
+@media (min-width: 700px) and (max-width: 1200px), (pointer: coarse) and (min-width: 700px) {
+  html[data-ui-tier="tablet"] body:has(#app[data-phase="prep"]) .bottom-chrome,
+  html[data-ui-tier="tablet"] body:has(#app[data-phase="battle"]) .bottom-chrome,
+  html[data-ui-tier="tablet"] body:has(#app[data-phase="replay"]) .bottom-chrome,
+  html[data-ui-tier="tablet"] body:has(#app[data-td-run-live="true"]) .bottom-chrome {
+    --bottom-chrome-h: 40px;
+    --bottombar-btn-h: 40px;
+    min-height: 40px;
+    padding-top: 6px;
+    padding-bottom: max(8px, env(safe-area-inset-bottom, 0px), constant(safe-area-inset-bottom, 0px));
+    gap: 8px;
+  }
+
+  html[data-ui-tier="tablet"] .bottom-chrome .bc-btn {
+    min-width: 32px;
+    min-height: 40px;
+    height: 40px;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    border-radius: 7px;
+  }
+
+  html[data-ui-tier="tablet"] .bottom-chrome .bc-skip {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
+
+  html[data-ui-tier="tablet"] .bottom-chrome .bottombar-btn {
+    min-height: 40px;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
+
+  html[data-ui-tier="tablet"] .bottom-chrome .bottombar-btn--icon {
+    min-width: 40px;
+    width: 40px;
+    padding: 6px;
   }
 }
 

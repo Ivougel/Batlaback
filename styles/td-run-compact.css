@@ -4,8 +4,9 @@
  */
 
 html[data-game-mode="td"] #app[data-td-run-live="true"] {
-  --td-overlay-portrait-w: calc(108px * var(--ui-scale, 1));
-  --td-overlay-portrait-h: calc(148px * var(--ui-scale, 1));
+  --td-hud-bar-h: calc(48px * var(--ui-scale, 1));
+  --td-overlay-portrait-w: calc(44px * var(--ui-scale, 1));
+  --td-overlay-portrait-h: calc(44px * var(--ui-scale, 1));
   --td-chrome-panel-w: min(var(--td-panel-share, 34%), var(--td-panel-max-w, 20rem));
   --td-loadout-dock-left: clamp(8px, 1.2vw, 16px);
   --td-loadout-dock-bottom: calc(var(--bottom-chrome-h, 44px) + clamp(8px, 1vh, 12px));
@@ -72,117 +73,239 @@ html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-top-bar::before {
 }
 
 html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card {
+  position: relative;
   pointer-events: auto;
   width: 100%;
   min-width: 0;
-  display: grid;
-  grid-template-columns: var(--td-overlay-portrait-w) minmax(0, 1fr);
-  grid-template-rows: auto auto auto;
-  align-items: stretch;
-  min-height: var(--td-overlay-portrait-h);
-  border-radius: calc(12px * var(--ui-scale, 1));
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: calc(6px * var(--ui-scale, 1));
+  min-height: 0;
+  height: var(--td-hud-bar-h);
+  max-height: var(--td-hud-bar-h);
+  padding: calc(3px * var(--ui-scale, 1)) calc(4px * var(--ui-scale, 1));
+  border-radius: calc(10px * var(--ui-scale, 1));
   overflow: hidden;
   background: rgba(14, 12, 10, 0.9);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(92, 72, 48, 0.55);
   box-shadow:
-    0 10px 36px rgba(0, 0, 0, 0.5),
+    0 6px 24px rgba(0, 0, 0, 0.45),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
-html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card__body,
+html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card__body {
+  display: flex !important;
+  flex: 1 1 auto;
+  min-width: 0;
+  align-items: center;
+}
+
 html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card__body .prep-stats-hud {
-  display: contents;
+  display: flex !important;
+  flex: 1 1 auto;
+  flex-direction: row;
+  align-items: center;
+  gap: calc(6px * var(--ui-scale, 1));
+  min-width: 0;
+  padding: 0 calc(34px * var(--ui-scale, 1)) 0 0;
 }
 
 html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card__portrait {
-  grid-column: 1;
-  grid-row: 1 / -1;
   position: relative;
-  width: 100%;
-  min-width: 0;
-  height: 100%;
-  min-height: var(--td-overlay-portrait-h);
-  align-self: stretch;
+  flex: 0 0 var(--td-overlay-portrait-w);
+  width: var(--td-overlay-portrait-w);
+  height: var(--td-overlay-portrait-h);
+  min-width: var(--td-overlay-portrait-w);
+  min-height: 0;
+  align-self: center;
   display: flex;
-  padding: calc(6px * var(--ui-scale, 1));
+  padding: calc(2px * var(--ui-scale, 1));
   overflow: hidden;
 }
 
 html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card__portrait .hero-portrait-frame {
   width: 100%;
   height: 100%;
-  border-radius: calc(8px * var(--ui-scale, 1));
+  border-radius: calc(6px * var(--ui-scale, 1));
   box-shadow:
-    0 0 0 3px #c0392b,
-    0 0 0 5px rgba(192, 57, 43, 0.28);
+    0 0 0 2px #c0392b,
+    0 0 0 3px rgba(192, 57, 43, 0.28);
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card__portrait .hero-portrait-frame[data-hud-portrait="bust"] .hero-portrait-media {
+  object-position: center 12%;
 }
 
 html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card__stats-row {
-  grid-column: 2;
-  grid-row: 1;
   display: flex;
-  flex-wrap: wrap;
+  flex: 0 1 auto;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: calc(6px * var(--ui-scale, 1)) calc(12px * var(--ui-scale, 1));
+  gap: calc(4px * var(--ui-scale, 1)) calc(8px * var(--ui-scale, 1));
   min-width: 0;
-  padding:
-    calc(8px * var(--ui-scale, 1))
-    calc(48px * var(--ui-scale, 1))
-    calc(4px * var(--ui-scale, 1))
-    calc(8px * var(--ui-scale, 1));
+  max-width: 38%;
+  padding: 0;
   pointer-events: none;
 }
 
 html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card__stats-row .prep-stats-class {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
   margin: 0;
   padding: 0;
   border: none;
-  max-width: none;
-  font-size: max(var(--font-md), calc(1rem * var(--ui-scale, 1)));
+  max-width: 9.5em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: max(var(--font-sm), calc(0.82rem * var(--ui-scale, 1)));
   font-weight: 900;
   white-space: nowrap;
 }
 
 html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-stats-metrics {
-  display: flex;
-  flex-wrap: wrap;
-  gap: calc(4px * var(--ui-scale, 1)) calc(10px * var(--ui-scale, 1));
+  display: flex !important;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: calc(2px * var(--ui-scale, 1)) calc(6px * var(--ui-scale, 1));
   min-width: 0;
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card__stats-row .prep-stats-metrics .prep-stats-row {
+  display: flex !important;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: calc(2px * var(--ui-scale, 1));
+  font-size: max(10px, calc(0.72rem * var(--ui-scale, 1)));
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card__stats-row .prep-stats-metrics .prep-stats-row--companion,
+html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card__stats-row .prep-stats-metrics .prep-stats-row--td-diff {
+  display: none !important;
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card__stats-row .prep-stats-row--round span:first-child {
+  display: none;
 }
 
 html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-stats-hud .mutation-progress,
 html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-stats-hud .mutation-progress--hero-card {
-  grid-column: 2;
-  grid-row: 2;
-  display: block !important;
+  display: flex !important;
+  flex: 1 1 0;
+  flex-direction: row;
+  align-items: center;
+  gap: calc(5px * var(--ui-scale, 1));
   min-width: 0;
-  margin: 0 calc(8px * var(--ui-scale, 1)) calc(4px * var(--ui-scale, 1));
-  padding: calc(6px * var(--ui-scale, 1)) calc(8px * var(--ui-scale, 1));
+  margin: 0;
+  padding: calc(2px * var(--ui-scale, 1)) calc(6px * var(--ui-scale, 1));
   background: rgba(0, 0, 0, 0.22);
   border: 1px solid rgba(200, 160, 56, 0.38);
-  border-radius: calc(8px * var(--ui-scale, 1));
+  border-radius: calc(6px * var(--ui-scale, 1));
   pointer-events: none;
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-stats-hud .mutation-progress--hero-card .mutation-progress-head {
+  display: flex;
+  flex-direction: column;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 7.5em;
+  margin: 0;
+  gap: 0;
+  line-height: 1.05;
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-stats-hud .mutation-progress--hero-card .mutation-progress-eyebrow {
+  font-size: max(8px, calc(0.52rem * var(--ui-scale, 1)));
+  letter-spacing: 0.06em;
+  opacity: 0.82;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-stats-hud .mutation-progress--hero-card .mutation-progress-target {
+  font-size: max(9px, calc(0.58rem * var(--ui-scale, 1)));
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-stats-hud .mutation-progress--hero-card .mutation-progress-bar {
+  flex: 1 1 48px;
+  min-width: 36px;
+  height: calc(6px * var(--ui-scale, 1));
+  margin: 0;
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-stats-hud .mutation-progress--hero-card .mutation-progress-meta {
+  flex: 0 0 auto;
+  margin: 0;
+  font-size: max(9px, calc(0.58rem * var(--ui-scale, 1)));
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-stats-hud .mutation-progress--hero-card .mutation-progress-alts {
+  display: none !important;
 }
 
 html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-stats-hud .prep-enhancement-strip,
 html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-stats-hud .prep-enhancement-strip--hero-card {
-  grid-column: 2;
-  grid-row: 3;
-  display: grid !important;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: stretch;
-  gap: calc(6px * var(--ui-scale, 1));
+  display: flex !important;
+  flex: 0 0 auto;
+  flex-direction: row;
+  align-items: center;
+  gap: calc(4px * var(--ui-scale, 1));
   min-width: 0;
   margin: 0;
-  padding:
-    calc(4px * var(--ui-scale, 1))
-    calc(8px * var(--ui-scale, 1))
-    calc(6px * var(--ui-scale, 1));
-  border-top: 1px solid rgba(200, 160, 56, 0.3);
+  padding: 0 0 0 calc(4px * var(--ui-scale, 1));
+  border: none;
+  border-left: 1px solid rgba(200, 160, 56, 0.28);
   pointer-events: auto;
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-stats-hud .prep-enhancement-strip--hero-card .prep-enhancement-eyebrow {
+  display: none;
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-stats-hud .prep-enhancement-strip--hero-card .prep-enhancement-slots {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: calc(3px * var(--ui-scale, 1));
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-stats-hud .prep-enhancement-strip--hero-card .enh-slot {
+  flex: 0 0 auto;
+  min-width: 0;
+  max-width: none;
+  min-height: 0;
+  flex-direction: row;
+  align-items: center;
+  gap: calc(2px * var(--ui-scale, 1));
+  padding: calc(2px * var(--ui-scale, 1)) calc(4px * var(--ui-scale, 1));
+  border-radius: calc(6px * var(--ui-scale, 1));
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-stats-hud .prep-enhancement-strip--hero-card .enh-slot-kicker {
+  display: none;
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-stats-hud .prep-enhancement-strip--hero-card .enh-slot-icon {
+  font-size: calc(14px * var(--ui-scale, 1));
+  line-height: 1;
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-stats-hud .prep-enhancement-strip--hero-card .enh-slot-name {
+  font-size: max(8px, calc(0.52rem * var(--ui-scale, 1)));
+  max-width: 2.4em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-stats-hud .prep-modifier-strip {
@@ -190,13 +313,27 @@ html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-stats-hud .prep-mo
 }
 
 html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card__build-slot {
-  grid-column: 2;
-  grid-row: 1;
+  position: absolute;
+  top: 50%;
+  right: calc(4px * var(--ui-scale, 1));
   z-index: 2;
-  justify-self: end;
-  align-self: center;
-  margin: calc(6px * var(--ui-scale, 1)) calc(8px * var(--ui-scale, 1)) 0 0;
+  transform: translateY(-50%);
+  margin: 0;
   pointer-events: auto;
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .hud-collapse-toggle {
+  position: absolute;
+  top: calc(2px * var(--ui-scale, 1));
+  right: calc(2px * var(--ui-scale, 1));
+  z-index: 3;
+  width: calc(22px * var(--ui-scale, 1));
+  height: calc(22px * var(--ui-scale, 1));
+  min-width: calc(22px * var(--ui-scale, 1));
+  min-height: calc(22px * var(--ui-scale, 1));
+  padding: 0;
+  font-size: calc(10px * var(--ui-scale, 1));
+  line-height: 1;
 }
 
 html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card__actions,
