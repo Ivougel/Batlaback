@@ -7,7 +7,7 @@
   position: fixed;
   left: 0;
   right: 0;
-  bottom: 0;
+  bottom: calc(-1 * var(--bottom-chrome-pin-y, 0px));
   flex-shrink: 0;
   z-index: var(--z-chrome);
   display: grid;
@@ -15,7 +15,6 @@
   align-items: center;
   gap: 8px;
   min-height: var(--bottom-chrome-h, 44px);
-  bottom: calc(-1 * var(--bottom-chrome-pin-y, 0px));
   padding:
     4px
     max(10px, env(safe-area-inset-right))
@@ -25,6 +24,18 @@
   border-top: 1px solid #30363d;
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
+}
+
+/* iPad PWA: залить зазор под home indicator тем же фоном, что и панель */
+.bottom-chrome::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: calc(env(safe-area-inset-bottom, 0px) + var(--bottom-chrome-pin-y, 0px));
+  background: inherit;
+  pointer-events: none;
 }
 
 .bottom-chrome.hidden {
@@ -164,10 +175,43 @@ body:has(#app[data-phase="prep"]):not(:has(#class-overlay:not(.hidden))) .btn-ch
 }
 
 body:has(#class-overlay:not(.hidden)) .bottom-chrome {
+  --bottom-chrome-h: 36px;
+  min-height: 36px;
+  gap: 6px;
+  padding-top: 2px;
+  padding-bottom: 2px;
   background: var(--meadow-chrome, rgba(13, 17, 23, 0.94));
-  border-top: 2px solid var(--meadow-border-soft, rgba(80, 65, 50, 0.35));
+  border-top: 1px solid var(--meadow-border-soft, rgba(80, 65, 50, 0.35));
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+}
+
+html[data-visual-theme="meadow"] body:has(#class-overlay:not(.hidden)) .bottom-chrome {
+  background: linear-gradient(
+    180deg,
+    rgba(143, 214, 148, 0.22) 0%,
+    rgba(92, 184, 92, 0.9) 55%,
+    rgba(74, 158, 74, 0.96) 100%
+  );
+  border-top: 1px solid rgba(255, 255, 255, 0.38);
+}
+
+html[data-visual-theme="diablo"] body:has(#class-overlay:not(.hidden)) .bottom-chrome {
+  background: linear-gradient(180deg, rgba(42, 34, 24, 0.98) 0%, rgba(15, 12, 8, 1) 100%);
+  border-top: 1px solid rgba(201, 162, 39, 0.28);
+}
+
+body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro .prep-settings-btn,
+body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro .btn-glass-back {
+  min-height: 32px;
+  min-width: 32px;
+  padding: 4px 10px;
+  font-size: var(--font-sm);
+}
+
+body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro-step {
+  font-size: var(--font-sm);
+  line-height: 1.1;
 }
 
 html[data-prep-layout="mobile"] body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro-hint {
