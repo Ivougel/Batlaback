@@ -16,7 +16,7 @@
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="stylesheet" href="styles/tokens.css?v=18">
   <link rel="stylesheet" href="styles/layers.css?v=7">
-  <link rel="stylesheet" href="styles/bottom-chrome.css?v=23">
+  <link rel="stylesheet" href="styles/bottom-chrome.css?v=24">
   <link rel="stylesheet" href="styles.css?v=37">
   <link rel="stylesheet" href="styles/shop.css?v=6">
   <link rel="stylesheet" href="styles/item-card-chrome.css?v=3">
@@ -166,6 +166,18 @@
               <button type="button" class="td-hint-dismiss" id="td-hint-dismiss" aria-label="Скрыть подсказку. Shift+клик — отключить все подсказки" title="Скрыть подсказку">✕</button>
             </div>
             <div class="prep-field-column scene-viewport" id="prep-field-column">
+              <aside class="lobby-prep-roster-panel hidden" id="lobby-prep-roster-panel" aria-label="Список противников">
+                <button type="button"
+                        class="lobby-roster-float-handle lobby-roster-hide-btn"
+                        id="btn-lobby-roster-hide"
+                        aria-expanded="true"
+                        aria-controls="lobby-prep-roster-body"
+                        title="Скрыть список"
+                        aria-label="Скрыть список участников">🙈</button>
+                <div class="lobby-prep-roster-body" id="lobby-prep-roster-body">
+                  <div class="lobby-roster-strip lobby-roster-strip--prep-body" id="lobby-roster-strip-prep" role="tablist" aria-label="Участники лобби"></div>
+                </div>
+              </aside>
               <button type="button" class="td-loadout-fab hidden" id="btn-td-loadout" aria-label="Рюкзак башни 6×6" title="Рюкзак 6×6" hidden>🎒</button>
               <div class="layer layer-world" id="layer-world">
                 <div class="scene-bg" aria-hidden="true"></div>
@@ -799,11 +811,9 @@
         <button type="button" class="btn-secondary prep-side-btn bottombar-btn" id="btn-prep-enemy" data-prep-side="enemy" title="Противник" aria-label="Противник"><span class="prep-side-ico" aria-hidden="true">🤖</span><span class="prep-side-label">Противник</span></button>
         <button type="button" class="btn-secondary btn-prep-hero-info bottombar-btn bottombar-btn--icon" id="btn-prep-hero-info" aria-expanded="false" aria-controls="prep-hero-tooltip" title="Инфо о герое">ℹ️</button>
         <button type="button" class="btn-secondary prep-settings-btn bottombar-btn bottombar-btn--icon" id="btn-settings" aria-label="Настройки" aria-expanded="false" aria-controls="settings-overlay">⚙️</button>
-        <div class="standings-anchor" id="standings-anchor">
+        <div class="standings-anchor hidden" id="standings-anchor">
           <button type="button" class="btn-secondary bottombar-btn standings-toggle" id="btn-standings-toggle" aria-expanded="false" aria-controls="standings-dropdown" aria-label="Турнирная таблица" title="Участники лобби">🏆 <span class="standings-alive-count" id="standings-alive-count">0</span></button>
-          <div class="standings-dropdown hidden" id="standings-dropdown" role="region" aria-label="Список участников лобби">
-            <div class="lobby-roster-strip lobby-roster-strip--prep-body" id="lobby-roster-strip-prep" role="tablist" aria-label="Участники лобби"></div>
-          </div>
+          <div class="standings-dropdown hidden" id="standings-dropdown" role="region" aria-label="Список участников лобби"></div>
         </div>
       </div>
       <div class="battle-controls hidden" id="battle-controls">
@@ -989,7 +999,7 @@
   <script src="systems/screen-transitions.js?v=1"></script>
   <script src="components/prep-hud-collapse.js?v=1"></script>
   <script src="components/prep-hud-hero.js?v=3"></script>
-  <script src="game.js?v=85"></script>
+  <script src="game.js?v=86"></script>
   <script src="pwa-register.js"></script>
 </body>
 </html>

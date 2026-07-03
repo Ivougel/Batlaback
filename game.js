@@ -197,6 +197,7 @@ let lobbyPrepOvertimeUsed = false;
 let lobbyRoundSettling = false;
 let lastLobbyPlayerBattleWinner = null;
 let lastLobbyRosterStripSig = "";
+let lobbyRosterHidden = false;
 let lastEndedBattleState = null;
 let prepViewSide = "player";
 let prepDollOpen = false;
@@ -654,7 +655,8 @@ function syncPrepBottomStats({ gold, hpLabel, roundLabel, lobbyHp = false } = {}
 function syncPrepBottomBarChrome() {
   const standingsAnchor = document.getElementById("standings-anchor");
   const isPrep = phase === "prep";
-  const showStandings = isPrep && isLobbyMode() && !!lobbyState;
+  // В лобби список соперников — плавающая кнопка 👀 на поле, не нижняя панель.
+  const showStandings = false;
   standingsAnchor?.toggleAttribute("hidden", !showStandings);
 
   if (showStandings && lobbyState) {
@@ -708,10 +710,12 @@ function bindStandingsToggle() {
 }
 
 function renderLobbyChrome(force = false) {
+  const prepRosterPanel = document.getElementById("lobby-prep-roster-panel");
   const battleRosterBar = document.getElementById("lobby-battle-roster-bar");
   const stripPrep = document.getElementById("lobby-roster-strip-prep");
   const stripBattle = document.getElementById("lobby-roster-strip-battle");
   const show = isLobbyMode() && !!lobbyState;
+  prepRosterPanel?.classList.toggle("hidden", !show || phase !== "prep");
   battleRosterBar?.classList.toggle("hidden", !show || !isBattleUiPhase());
   syncPrepBottomBarChrome();
   if (!show) {
@@ -758,6 +762,26 @@ function renderLobbyChrome(force = false) {
       queuePrewarmBattleInventoryPopover();
     }
   }
+  syncLobbyRosterCollapse();
+  if (show && phase === "prep" && typeof layoutLobbyRosterPanel === "function") {
+    requestAnimationFrame(() => layoutLobbyRosterPanel());
+  } else if (show && phase === "prep" && typeof restoreLobbyRosterFloatPosition === "function") {
+    restoreLobbyRosterFloatPosition();
+  }
+}
+
+function syncLobbyRosterCollapse() {
+  const panel = document.getElementById("lobby-prep-roster-panel");
+  const btn = document.getElementById("btn-lobby-roster-hide");
+  if (!panel) return;
+  const collapsed = lobbyRosterHidden && phase === "prep";
+  panel.classList.toggle("lobby-prep-roster-panel--collapsed", collapsed);
+  if (btn) {
+    btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+    btn.setAttribute("aria-label", collapsed ? "Показать список участников" : "Скрыть список участников");
+    btn.title = collapsed ? "Показать список" : "Скрыть список";
+    btn.textContent = collapsed ? "👀" : "🙈";
+  }
 }
 
 function clearLobbyRosterTouchHighlights(root) {
@@ -769,6 +793,8 @@ function clearLobbyRosterTouchHighlights(root) {
 function bindLobbyRosterClicks() {
   const onRosterPointerDown = (e) => {
     if (e.button !== 0) return;
+    const hideBtn = e.target.closest("#btn-lobby-roster-hide");
+    if (hideBtn) return;
     const enemyCard = e.target.closest(".lobby-fighter-card:not(.lobby-fighter-card--yours)");
     if (enemyCard && phase === "prep") {
       enemyCard.classList.add("lobby-fighter-card--touch");
@@ -802,8 +828,24 @@ function bindLobbyRosterClicks() {
   standingsDropdown?.addEventListener("pointerup", onRosterPointerEnd);
   standingsDropdown?.addEventListener("pointercancel", onRosterPointerEnd);
   standingsDropdown?.addEventListener("pointerleave", onRosterPointerEnd);
+  const prepPanel = document.getElementById("lobby-prep-roster-panel");
+  prepPanel?.addEventListener("pointerdown", onRosterPointerDown);
+  prepPanel?.addEventListener("pointerup", onRosterPointerEnd);
+  prepPanel?.addEventListener("pointercancel", onRosterPointerEnd);
+  prepPanel?.addEventListener("pointerleave", onRosterPointerEnd);
   document.getElementById("lobby-battle-roster-bar")?.addEventListener("pointerdown", onRosterPointerDown);
   bindStandingsToggle();
+  if (typeof initLobbyRosterFloat === "function") {
+    initLobbyRosterFloat({
+      toggleCollapse() {
+        lobbyRosterHidden = !lobbyRosterHidden;
+        syncLobbyRosterCollapse();
+        if (typeof layoutLobbyRosterPanel === "function") {
+          requestAnimationFrame(() => layoutLobbyRosterPanel());
+        }
+      },
+    });
+  }
   document.getElementById("btn-lobby-return-table")?.addEventListener("click", (e) => {
     e.preventDefault();
     returnToLobbyPlayerMatch();

@@ -701,11 +701,6 @@ body:has(#app[data-phase="prep"]) .bottom-chrome-prep-left {
   overflow: visible;
 }
 
-#lobby-prep-roster-panel,
-.lobby-prep-roster-panel {
-  display: none !important;
-}
-
 .prep-bottom-stats {
   display: inline-flex;
   align-items: center;
