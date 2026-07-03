@@ -10,8 +10,9 @@ const TD_CANVAS_H = 640;
 const TD_SPAWN_INTERVAL = 0.55;
 const TD_WAVE_BREAK = 1.4;
 const TD_MAX_ACTIVATIONS_PER_TICK = 8;
-const TD_TOWER_COLS = 5;
-const TD_TOWER_ROWS = 4;
+/** Рюкзак одной башни — компактное поле 6×6 (Legion TD / backpack-hybrid). */
+const TD_TOWER_COLS = 6;
+const TD_TOWER_ROWS = 6;
 const TD_BASE_LIVES = 12;
 const TD_DIFF_EXP_BASE = 1.55;
 
