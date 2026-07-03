@@ -81,6 +81,18 @@ html[data-ui-tier="tablet"][data-touch="true"] #class-overlay[data-class-intro-s
   display: none;
 }
 
+html[data-ui-tier="tablet"][data-touch="true"] #class-overlay #class-step-td-difficulty:not(.hidden) .class-step-actions-top {
+  display: none;
+}
+
+html[data-ui-tier="tablet"] #class-overlay .class-modal #class-step-td-difficulty:not(.hidden) {
+  overflow-y: auto;
+}
+
+html[data-ui-tier="tablet"] #class-overlay .class-modal .td-difficulty-card.glass-card {
+  min-height: calc(64px * var(--ui-scale));
+}
+
 /* ─── Tablet landscape: side-by-side, компактный ростер ─── */
 
 html[data-ui-tier="tablet"][data-layout-profile="tablet-landscape"]:not([data-prep-layout="mobile"]) #class-overlay .class-overlay-shell {

@@ -236,7 +236,8 @@ html[data-visual-theme="diablo"] #class-overlay .class-modal .glass-card:hover:n
 }
 
 html[data-visual-theme="diablo"] #class-overlay .class-modal .glass-card.selected,
-html[data-visual-theme="diablo"] #class-overlay .class-modal .game-mode-card.selected {
+html[data-visual-theme="diablo"] #class-overlay .class-modal .game-mode-card.selected,
+html[data-visual-theme="diablo"] #class-overlay .class-modal .td-difficulty-card.selected {
   border-color: var(--meadow-gold);
   box-shadow:
     0 0 0 3px rgba(201, 162, 39, 0.35),

@@ -20,11 +20,17 @@
 
 .td-difficulty-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11.5rem), 1fr));
+  grid-template-columns: 1fr;
   gap: calc(10px * var(--ui-scale, 1));
   width: 100%;
   max-width: 52rem;
   margin: 0 auto;
+}
+
+@container class-overlay-modal (min-width: 560px) {
+  #class-overlay .class-modal #class-step-td-difficulty:not(.hidden) .td-difficulty-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .td-difficulty-card {

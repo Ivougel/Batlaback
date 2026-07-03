@@ -1154,20 +1154,26 @@ let classSummaryTooltipKind = null;
 function setClassIntroStep(stepKey, options = {}) {
   const overlay = document.getElementById("class-overlay");
   const prevStep = overlay?.getAttribute("data-class-intro-step") || "mode";
+  let resolvedKey = stepKey;
+  const targetId = CLASS_INTRO_STEP_IDS[resolvedKey];
+  if (!targetId || !document.getElementById(targetId)) {
+    console.warn(`[intro] missing step "${stepKey}" — fallback to mode`);
+    resolvedKey = "mode";
+  }
   const direction = options.direction
     || (typeof ScreenTransitions !== "undefined"
-      ? ScreenTransitions.getIntroDirection(prevStep, stepKey)
+      ? ScreenTransitions.getIntroDirection(prevStep, resolvedKey)
       : "forward");
 
   Object.entries(CLASS_INTRO_STEP_IDS).forEach(([key, id]) => {
-    document.getElementById(id)?.classList.toggle("hidden", key !== stepKey);
+    document.getElementById(id)?.classList.toggle("hidden", key !== resolvedKey);
   });
-  overlay?.setAttribute("data-class-intro-step", stepKey);
-  overlay?.classList.toggle("class-overlay--summary", stepKey === "summary");
-  if (stepKey === "summary" && typeof hideClassHeroShowcase === "function") {
+  overlay?.setAttribute("data-class-intro-step", resolvedKey);
+  overlay?.classList.toggle("class-overlay--summary", resolvedKey === "summary");
+  if (resolvedKey === "summary" && typeof hideClassHeroShowcase === "function") {
     hideClassHeroShowcase();
   }
-  if (prevStep !== stepKey && typeof ScreenTransitions !== "undefined") {
+  if (prevStep !== resolvedKey && typeof ScreenTransitions !== "undefined") {
     void ScreenTransitions.pulseIntroStep(overlay, direction);
   }
 }
@@ -1405,7 +1411,7 @@ function syncClassOverlayUi() {
     hint.textContent = "Четыре девочки-звери скрестили клички с именами — выберите режим";
   } else if (document.getElementById("class-step-td-difficulty") && !document.getElementById("class-step-td-difficulty").classList.contains("hidden")) {
     badge.textContent = `Шаг 2 из ${totalSteps} · Сложность`;
-    hint.textContent = "5 ступеней · ×1.55 между уровнями · нажмите ещё раз — к герою";
+    hint.textContent = "5 ступеней · ×1.55 между уровнями · выберите сложность";
   } else if (playerStep && !playerStep.classList.contains("hidden")) {
     badge.textContent = selectedGameMode === "td"
       ? `Шаг 3 из ${totalSteps} · Герой`
@@ -1496,6 +1502,11 @@ function syncClassHeroShowcase() {
     if (typeof updateClassHeroRosterShowcase === "function") updateClassHeroRosterShowcase();
     return;
   }
+  const tdDifficultyStep = document.getElementById("class-step-td-difficulty");
+  if (tdDifficultyStep && !tdDifficultyStep.classList.contains("hidden")) {
+    if (typeof hideClassHeroShowcase === "function") hideClassHeroShowcase();
+    return;
+  }
   const summaryStep = document.getElementById("class-step-summary");
   if (summaryStep && !summaryStep.classList.contains("hidden")) {
     if (typeof hideClassHeroShowcase === "function") hideClassHeroShowcase();
@@ -1528,15 +1539,9 @@ function showTdDifficultyStep() {
 
 function selectTdDifficulty(difficultyId) {
   if (typeof getTdDifficulty === "function" && !getTdDifficulty(difficultyId)) return;
-  const reclick = selectedTdDifficulty === difficultyId;
   selectedTdDifficulty = difficultyId;
   renderTdDifficultySelection();
-  if (reclick) {
-    showPlayerClassStep();
-    return;
-  }
-  syncClassOverlayUi();
-  syncClassMobileDock();
+  showPlayerClassStep();
 }
 
 function showGameModeStep() {
@@ -1560,7 +1565,7 @@ function showPlayerClassStep() {
     : selectedGameMode === "lobby"
       ? "Лобби из восьми бойцов — кого из подружек отправим в рейтинг?"
       : selectedGameMode === "td"
-        ? "Герой в центре — предметы стреляют по свиньям. Переживите 99 волн!"
+        ? "Командир на стартовом слоте — набирайте башни и экипировку. 50 волн без пауз."
         : "Кого из девочек-зверушек отправим в забег? У каждой свой характер и бонус.";
   syncClassOverlayUi();
   syncClassMobileDock();

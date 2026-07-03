@@ -118,11 +118,12 @@ const BattleHeroAnchor = (() => {
       ...FLOOR_EMOJI_PROFILE,
       floorRatio: 0.52,
       floorWidthRatio: 0.20,
-      vminRatio: 0.10,
-      minPx: 80,
-      maxPx: 148,
+      vminRatio: 0.12,
+      minPx: 96,
+      maxPx: 168,
       haloRatio: 0.28,
       satelliteScale: 0.62,
+      heroBelowZoneBias: 0.38,
     },
     "tablet-portrait": {
       ...FLOOR_EMOJI_PROFILE,
@@ -349,7 +350,8 @@ const BattleHeroAnchor = (() => {
 
     const floorBottom = visibleCombatFloorBottom(floor) ?? floor.bottom;
     const usableH = Math.max(0, floorBottom - floor.top);
-    const cx = floor.left + floor.width * anchorNorm.x;
+    const heroCx = getHeroColumnCenterX(side);
+    const cx = heroCx != null ? heroCx : floor.left + floor.width * anchorNorm.x;
     const cy = floor.top + usableH * anchorNorm.y;
 
     return {
@@ -477,6 +479,12 @@ const BattleHeroAnchor = (() => {
 
   /** Позиция thought-slot в viewport (px). */
   function getThoughtSlotAnchor(side) {
+    // iPad mini / tablet-side landscape: крупный эмодзи под HUD в колонке героя.
+    if (currentBattleProfile() === "tablet-landscape-side" && usesCombatFloorAnchors() && !usesHeadBadgeAnchors()) {
+      const underHero = getHeroBelowThoughtAnchor(side);
+      if (underHero) return underHero;
+    }
+
     if (usesCombatFloorAnchors() && !usesHeadBadgeAnchors()) {
       const floorAnchor = getCombatFloorThoughtAnchor(side);
       if (floorAnchor) return floorAnchor;
@@ -606,6 +614,7 @@ const BattleHeroAnchor = (() => {
     usesHeadBadgeAnchors,
     getHeadBadgeThoughtAnchor,
     getCombatFloorThoughtAnchor,
+    getHeroBelowThoughtAnchor,
     usesHeroBelowThoughtAnchors,
     invalidateMeasureCache,
   };

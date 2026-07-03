@@ -81,6 +81,12 @@
   align-items: center;
 }
 
+#class-overlay .class-modal #class-step-td-difficulty:not(.hidden) {
+  justify-content: flex-start;
+  align-items: stretch;
+  overflow-y: auto;
+}
+
 #class-overlay .class-modal .class-step:not(.hidden) .class-grid {
   flex: 1 1 auto;
   min-height: 0;
@@ -103,6 +109,20 @@
   overflow: visible;
 }
 
+#class-overlay .class-modal #class-step-td-difficulty:not(.hidden) .td-difficulty-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 0 12px;
+  padding-bottom: 0;
+  gap: clamp(8px, 1.2cqh, 12px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
 #class-overlay .class-modal .class-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
@@ -119,6 +139,11 @@
 /* Планшет: 2×2 задаётся в tablet-intro-typography.css */
 html[data-ui-tier="tablet"] #class-overlay .class-modal #class-step-mode:not(.hidden) .game-mode-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: min(100%, 560px);
+}
+
+html[data-ui-tier="tablet"] #class-overlay .class-modal #class-step-td-difficulty:not(.hidden) .td-difficulty-grid {
+  grid-template-columns: 1fr;
   max-width: min(100%, 560px);
 }
 

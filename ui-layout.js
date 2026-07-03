@@ -1437,7 +1437,7 @@
       let slotSize = size;
       let emojiSize = null;
 
-      if (combatFloor && typeof BattleHeroAnchor !== "undefined") {
+      if (typeof BattleHeroAnchor !== "undefined") {
         const anchor = BattleHeroAnchor.getThoughtSlotAnchor(side);
         if (anchor) {
           cx = anchor.cx;
@@ -1462,8 +1462,20 @@
           }
         }
         if (cx == null || top == null) {
+          const rescue = typeof BattleHeroAnchor !== "undefined"
+            ? (BattleHeroAnchor.getHeroBelowThoughtAnchor?.(side)
+              || BattleHeroAnchor.getThoughtSlotAnchor?.(side))
+            : null;
+          if (rescue) {
+            cx = rescue.cx;
+            top = rescue.top;
+            slotSize = rescue.size ?? slotSize;
+            emojiSize = rescue.emojiSize || emojiSize;
+          }
+        }
+        if (cx == null || top == null) {
           cx = ar.left + ar.width / 2;
-          top = ar.top - slotSize * 0.42;
+          top = ar.bottom + Math.round(6 * readCssPx("--ui-scale", 1));
         }
       }
 

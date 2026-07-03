@@ -657,6 +657,7 @@ const CASES = [
         const playerHud = document.getElementById("battle-hud-player")?.getBoundingClientRect();
         const enemyHud = document.getElementById("battle-hud-enemy")?.getBoundingClientRect();
         const playerStage = document.querySelector("#player-avatar-slot .avatar-hero-stage")?.getBoundingClientRect();
+        const playerPanel = document.getElementById("player-avatar-panel")?.getBoundingClientRect();
         const playerBody = document.querySelector("#player-thought-slot .battle-thought-body")?.getBoundingClientRect();
         const BHA = window.BattleHeroAnchor;
         const floorAnchor = BHA?.getCombatFloorThoughtAnchor?.("player");
@@ -682,6 +683,7 @@ const CASES = [
           vw: window.innerWidth,
           playerSlotCx: playerSlot ? playerSlot.left + playerSlot.width / 2 : 0,
           enemySlotCx: enemySlot ? enemySlot.left + enemySlot.width / 2 : 0,
+          playerColCx: playerPanel ? playerPanel.left + playerPanel.width / 2 : 0,
           anchorCx: floorAnchor?.cx ?? 0,
           anchorCy: floorAnchor?.cy ?? 0,
         };
@@ -689,7 +691,7 @@ const CASES = [
       assert(m.profile === "tablet-landscape-side", `profile: ${m.profile}`);
       assert(m.headBadge === false, "tablet landscape should use combat floor emoji");
       assert(m.heroBelow === false, "combat floor replaces below-hero anchor");
-      assert(m.emojiPx >= 64 && m.emojiPx <= 155, `emoji size out of range: ${m.emojiPx}px`);
+      assert(m.emojiPx >= 88 && m.emojiPx <= 175, `emoji size out of range: ${m.emojiPx}px`);
       assert(Math.abs(m.satScale - 0.62) < 0.06, `satellite scale: ${m.satScale}`);
       assert(m.floorH >= 100, `combat floor too small: ${m.floorH}px`);
       assert(m.hudTop >= m.stageBottom - 28, `HUD on portrait: hud=${m.hudTop} stage=${m.stageBottom}`);
@@ -697,15 +699,13 @@ const CASES = [
       assert(m.stageTop >= 4, `portrait clipped at top: stageTop=${m.stageTop}`);
       assert(m.stageH >= 180, `hero stage too small on tablet landscape: ${m.stageH}px`);
       assert(m.playerZoneW >= m.vw * 0.24, `hero column too narrow: ${m.playerZoneW}px`);
-      assert(m.playerEmojiCy >= m.floorTop + m.floorH * 0.38, `emoji too high on floor: cy=${m.playerEmojiCy}`);
-      assert(m.playerEmojiCy <= m.floorTop + m.floorH * 0.82, `emoji too low on floor: cy=${m.playerEmojiCy}`);
-      assert(m.playerEmojiCy > m.stageBottom + 8, `emoji should sit on combat floor below portrait`);
-      const expectedPlayerCx = m.floorLeft + m.floorW * 0.20;
-      const expectedEnemyCx = m.floorLeft + m.floorW * 0.80;
-      assert(Math.abs(m.playerSlotCx - expectedPlayerCx) <= 36, `player emoji off floor anchor: slot=${m.playerSlotCx} want=${expectedPlayerCx}`);
-      assert(Math.abs(m.enemySlotCx - expectedEnemyCx) <= 36, `enemy emoji off floor anchor: slot=${m.enemySlotCx} want=${expectedEnemyCx}`);
-      assert(m.playerSlotCx < m.vw * 0.42, `player emoji too central: ${m.playerSlotCx}`);
-      assert(m.enemySlotCx > m.vw * 0.58, `enemy emoji too central: ${m.enemySlotCx}`);
+      assert(m.playerEmojiCy > m.playerHudBottom + 4, `emoji should sit below HUD: cy=${m.playerEmojiCy} hud=${m.playerHudBottom}`);
+      assert(m.playerEmojiCy < m.chromeTop - 24, `emoji should stay above toolbar: cy=${m.playerEmojiCy}`);
+      assert(m.playerEmojiCy > m.stageBottom + 8, `emoji should sit below portrait`);
+      assert(m.playerColCx > 0, "player column center missing");
+      assert(Math.abs(m.playerSlotCx - m.playerColCx) <= 48, `player emoji off column: slot=${m.playerSlotCx} want~=${m.playerColCx}`);
+      assert(m.playerSlotCx < m.vw * 0.38, `player emoji too central: ${m.playerSlotCx}`);
+      assert(m.enemySlotCx > m.vw * 0.62, `enemy emoji too central: ${m.enemySlotCx}`);
     },
   },
   {

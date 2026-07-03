@@ -216,9 +216,9 @@ html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="fl
 
 html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="battle"] .avatar-thought-slot .battle-thought-body,
 html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="replay"] .avatar-thought-slot .battle-thought-body {
-  width: var(--battle-thought-emoji-size, 36px);
-  height: var(--battle-thought-emoji-size, 36px);
-  font-size: max(1em, calc(var(--battle-thought-emoji-size, 36px) * 0.88));
+  width: var(--battle-thought-emoji-size, 96px);
+  height: var(--battle-thought-emoji-size, 96px);
+  font-size: max(1em, calc(var(--battle-thought-emoji-size, 96px) * 0.88));
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
 }
 

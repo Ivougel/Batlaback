@@ -41,6 +41,9 @@ self.addEventListener("fetch", (event) => {
     caches.match(request).then((cached) => {
       const isVersionedAsset = /[?&]v=\d+/.test(request.url)
         || /\/(game|ui-layout|battle-hero-anchor|avatar-hero-effects|pwa-precache)\.js/.test(request.url);
+      const isShellDoc = request.mode === "navigate"
+        || request.destination === "document"
+        || /\/index\.html(?:$|[?#])/.test(new URL(request.url).pathname + new URL(request.url).search);
       const network = fetch(request)
         .then((response) => {
           if (response && response.status === 200 && response.type === "basic") {
@@ -51,7 +54,7 @@ self.addEventListener("fetch", (event) => {
         })
         .catch(() => cached);
 
-      if (isVersionedAsset) {
+      if (isVersionedAsset || isShellDoc) {
         return network.catch(() => cached);
       }
       return cached || network;
