@@ -139,7 +139,7 @@ const TdBuildPanel = (() => {
       const cost = meta.cost ?? def.cost ?? 0;
       const afford = gold >= cost;
       const fullName = def.name || entryId;
-      const shortName = shortItemLabel(fullName, 5);
+      const shortName = shortItemLabel(fullName, 7);
       const isBag = !!def.isContainer;
       const bagMark = isBag ? "🎒" : "";
       return `
@@ -157,12 +157,14 @@ const TdBuildPanel = (() => {
 
     shopEl.querySelectorAll("[data-shop-index]").forEach((card) => {
       if (card.classList.contains("td-build-shop-card--locked")) return;
-      card.addEventListener("mousedown", (e) => {
-        if (e.button !== 0) return;
+      const onDragStart = (e) => {
+        if (e.button != null && e.button !== 0) return;
         e.preventDefault();
         const idx = Number(card.getAttribute("data-shop-index"));
         if (typeof onShopDragStart === "function") onShopDragStart(idx, e);
-      });
+      };
+      card.addEventListener("mousedown", onDragStart);
+      card.addEventListener("pointerdown", onDragStart);
     });
   }
 

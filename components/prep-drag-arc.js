@@ -586,8 +586,13 @@ const PrepDragArc = (() => {
     });
   }
 
+  function isPrepArcPhase() {
+    if (typeof isLoadoutInteractionPhase === "function") return isLoadoutInteractionPhase();
+    return typeof phase !== "undefined" && phase === "prep";
+  }
+
   function isPrepArcDrag() {
-    if (typeof phase === "undefined" || phase !== "prep") return false;
+    if (!isPrepArcPhase()) return false;
     if (typeof dragFrom === "undefined" || !dragFrom) return false;
     return dragFrom.type === "shop"
       || dragFrom.type === "bench"
@@ -600,7 +605,7 @@ const PrepDragArc = (() => {
   }
 
   function begin({ fromX: fx, fromY: fy, itemId: id, originCol, originRow, originKind }) {
-    if (typeof phase !== "undefined" && phase !== "prep") return;
+    if (!isPrepArcPhase()) return;
     active = true;
     celebrating = false;
     fromX = fx;

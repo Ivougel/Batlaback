@@ -465,74 +465,147 @@ body:has(#app[data-td-run-live="true"]) .bottom-chrome .battle-controls:not(.hid
   display: flex !important;
 }
 
-/* ─── Панель постройки (узкая колонка ~116–132px) ─── */
+/* ─── Панель постройки (планшет: читаемая колонка ~152–176px) ─── */
 
 html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-panel__guide,
 html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-hint--compact {
   display: none;
 }
 
-html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-panel__head {
-  padding: calc(4px * var(--ui-scale, 1));
-  gap: calc(3px * var(--ui-scale, 1));
+html[data-ui-surface="tablet-side"] html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-panel__head {
+  padding: calc(8px * var(--ui-scale, 1)) calc(8px * var(--ui-scale, 1)) calc(6px * var(--ui-scale, 1));
+  gap: calc(6px * var(--ui-scale, 1));
+  border-bottom: 1px solid rgba(200, 160, 56, 0.28);
 }
 
-html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-panel__title {
+html[data-ui-surface="tablet-side"] html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-panel__title {
+  font-size: calc(1.1rem * var(--ui-scale, 1));
+}
+
+html[data-ui-surface="tablet-side"] html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-panel__wave,
+html[data-ui-surface="tablet-side"] html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-panel__gold {
+  font-size: calc(12px * var(--ui-scale, 1));
+  font-weight: 800;
+}
+
+html[data-ui-surface="tablet-side"] html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-panel__gold::after {
+  font-size: calc(10px * var(--ui-scale, 1));
+}
+
+html[data-ui-surface="tablet-side"] html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-panel__help,
+html[data-ui-surface="tablet-side"] html[data-game-mode="td"] #app[data-td-run-live="true"] .btn-td-refresh-shop {
+  min-width: calc(32px * var(--ui-scale, 1)) !important;
+  min-height: calc(32px * var(--ui-scale, 1)) !important;
+  width: calc(32px * var(--ui-scale, 1));
+  height: calc(32px * var(--ui-scale, 1));
+  font-size: calc(14px * var(--ui-scale, 1)) !important;
+  border-radius: calc(8px * var(--ui-scale, 1));
+  border-color: rgba(200, 160, 56, 0.35);
+  background: rgba(0, 0, 0, 0.28);
+}
+
+html[data-ui-surface="tablet-side"] html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-panel__main {
+  padding: calc(6px * var(--ui-scale, 1)) calc(8px * var(--ui-scale, 1));
+  border-bottom: 1px solid rgba(200, 160, 56, 0.16);
+}
+
+html[data-ui-surface="tablet-side"] html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-panel__shop-section {
+  padding: calc(6px * var(--ui-scale, 1)) calc(8px * var(--ui-scale, 1)) calc(8px * var(--ui-scale, 1));
+}
+
+html[data-ui-surface="tablet-side"] html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-panel__shop-title {
+  font-size: calc(12px * var(--ui-scale, 1));
+  margin-bottom: calc(6px * var(--ui-scale, 1));
+  color: #e8d4a8;
+  letter-spacing: 0.02em;
+}
+
+html[data-ui-surface="tablet-side"] html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-panel__shop-title::after {
+  content: " В башню";
+  font-weight: 800;
+}
+
+html[data-ui-surface="tablet-side"] html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-shop-card {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  min-height: calc(48px * var(--ui-scale, 1));
+  padding: calc(6px * var(--ui-scale, 1)) calc(8px * var(--ui-scale, 1));
+  gap: calc(6px * var(--ui-scale, 1));
+}
+
+html[data-ui-surface="tablet-side"] html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-shop-card__name {
+  display: block;
   font-size: calc(11px * var(--ui-scale, 1));
 }
 
-html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-panel__wave,
-html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-panel__gold {
-  font-size: calc(8px * var(--ui-scale, 1));
+html[data-ui-surface="tablet-side"] html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-shop-card__icon {
+  font-size: calc(1.5rem * var(--ui-scale, 1));
 }
 
-html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-panel__help,
-html[data-game-mode="td"] #app[data-td-run-live="true"] .btn-td-refresh-shop {
-  min-width: calc(20px * var(--ui-scale, 1)) !important;
-  min-height: calc(20px * var(--ui-scale, 1)) !important;
-  width: calc(20px * var(--ui-scale, 1));
-  height: calc(20px * var(--ui-scale, 1));
-  font-size: calc(10px * var(--ui-scale, 1)) !important;
+html[data-ui-surface="tablet-side"] html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-shop-card__cost {
+  font-size: calc(11px * var(--ui-scale, 1));
 }
 
-html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-panel__main {
-  padding: calc(2px * var(--ui-scale, 1)) calc(4px * var(--ui-scale, 1));
+html[data-ui-surface="tablet-side"] html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-units {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: calc(6px * var(--ui-scale, 1));
 }
 
-html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-panel__shop-section {
-  padding: calc(2px * var(--ui-scale, 1)) calc(3px * var(--ui-scale, 1)) calc(4px * var(--ui-scale, 1));
+html[data-ui-surface="tablet-side"] html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-unit {
+  min-height: calc(52px * var(--ui-scale, 1));
+  padding: calc(6px * var(--ui-scale, 1));
+  border-radius: calc(10px * var(--ui-scale, 1));
+  border-color: rgba(200, 160, 56, 0.28);
+  background: rgba(28, 22, 16, 0.75);
 }
 
-html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-panel__shop-title {
-  font-size: calc(9px * var(--ui-scale, 1));
-  margin-bottom: calc(2px * var(--ui-scale, 1));
+html[data-ui-surface="tablet-side"] html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-unit__icon {
+  font-size: calc(1.45rem * var(--ui-scale, 1));
 }
 
-html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-shop-card {
-  grid-template-columns: 1fr auto;
-  min-height: calc(30px * var(--ui-scale, 1));
-  padding: calc(2px * var(--ui-scale, 1)) calc(3px * var(--ui-scale, 1));
+html[data-ui-surface="tablet-side"] html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-unit__cost {
+  font-size: calc(11px * var(--ui-scale, 1));
+  font-weight: 800;
 }
 
-html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-shop-card__name {
-  display: none;
-}
-
-html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-shop-card__icon {
-  justify-self: center;
-  font-size: calc(1.05rem * var(--ui-scale, 1));
-}
-
-html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-shop-card__cost {
-  font-size: calc(8px * var(--ui-scale, 1));
-}
-
-html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-tower__name {
+html[data-ui-surface="tablet-side"] html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-unit__cost::after {
   font-size: calc(9px * var(--ui-scale, 1));
 }
 
-html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-tower__meta {
-  font-size: calc(7px * var(--ui-scale, 1));
+html[data-ui-surface="tablet-side"] html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-tower__icon {
+  font-size: calc(1.5rem * var(--ui-scale, 1));
+}
+
+html[data-ui-surface="tablet-side"] html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-tower__name {
+  font-size: calc(12px * var(--ui-scale, 1));
+  font-weight: 800;
+}
+
+html[data-ui-surface="tablet-side"] html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-tower__meta {
+  font-size: calc(10px * var(--ui-scale, 1));
+}
+
+html[data-ui-surface="tablet-side"] html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-hint,
+html[data-ui-surface="tablet-side"] html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-shop-empty {
+  font-size: calc(11px * var(--ui-scale, 1));
+  padding: calc(4px * var(--ui-scale, 1)) 0;
+}
+
+/* Фолбэк для TD run без tablet-side: умеренный размер, не микро */
+html[data-game-mode="td"] #app[data-td-run-live="true"]:not([data-prep-layout="mobile"]) .td-build-panel__wave,
+html[data-game-mode="td"] #app[data-td-run-live="true"]:not([data-prep-layout="mobile"]) .td-build-panel__gold {
+  font-size: calc(11px * var(--ui-scale, 1));
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"]:not([data-prep-layout="mobile"]) .td-build-shop-card__name {
+  display: block;
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"]:not([data-prep-layout="mobile"]) .td-build-shop-card {
+  min-height: calc(42px * var(--ui-scale, 1));
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"]:not([data-prep-layout="mobile"]) .td-build-shop-card__icon {
+  font-size: calc(1.25rem * var(--ui-scale, 1));
 }
 
 html[data-prep-layout="mobile"] html[data-game-mode="td"] #td-loadout-sheet .td-loadout-sheet__panel {

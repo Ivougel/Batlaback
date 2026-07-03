@@ -199,10 +199,10 @@ html[data-game-mode="td"] {
 }
 
 html[data-battle-profile="tablet-landscape-side"][data-game-mode="td"] {
-  --td-map-share: 82%;
-  --td-panel-share: 18%;
-  --td-panel-max-w: 8.25rem;
-  --td-panel-min-w: 7.25rem;
+  --td-map-share: 78%;
+  --td-panel-share: 22%;
+  --td-panel-max-w: 11rem;
+  --td-panel-min-w: 9.5rem;
   --td-loadout-anchor-x: 33%;
 }
 
@@ -305,8 +305,11 @@ html[data-game-mode="td"] #app[data-td-run-live="true"] #td-build-panel {
   max-width: var(--td-panel-max-w, 8.25rem);
   min-height: 0;
   overflow: hidden;
-  background: rgba(12, 17, 14, 0.96);
-  border-left: 1px solid rgba(74, 222, 128, 0.25);
+  background: linear-gradient(180deg, rgba(20, 16, 12, 0.97), rgba(12, 10, 8, 0.98));
+  border-left: 1px solid rgba(200, 160, 56, 0.32);
+  box-shadow: -6px 0 28px rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 html[data-prep-layout="mobile"] html[data-game-mode="td"] #app[data-td-run-live="true"] #td-build-panel {
@@ -315,7 +318,7 @@ html[data-prep-layout="mobile"] html[data-game-mode="td"] #app[data-td-run-live=
   max-width: none;
   max-height: min(42dvh, calc(var(--app-h, 100dvh) * 0.42));
   border-left: none;
-  border-top: 1px solid rgba(74, 222, 128, 0.3);
+  border-top: 1px solid rgba(200, 160, 56, 0.35);
   border-radius: 14px 14px 0 0;
 }
 
@@ -500,20 +503,21 @@ html[data-game-mode="td"] #app[data-td-run-live="true"] .scene-bg {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1px;
-  padding: calc(3px * var(--ui-scale, 1)) calc(2px * var(--ui-scale, 1));
-  min-height: calc(36px * var(--ui-scale, 1));
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: calc(6px * var(--ui-scale, 1));
-  background: rgba(255, 255, 255, 0.07);
-  color: #fff;
+  gap: calc(3px * var(--ui-scale, 1));
+  padding: calc(5px * var(--ui-scale, 1)) calc(4px * var(--ui-scale, 1));
+  min-height: calc(40px * var(--ui-scale, 1));
+  border: 1px solid rgba(200, 160, 56, 0.28);
+  border-radius: calc(8px * var(--ui-scale, 1));
+  background: rgba(28, 22, 16, 0.75);
+  color: #f5ebe0;
   cursor: pointer;
   font: inherit;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .td-build-unit:hover:not(:disabled) {
-  background: rgba(74, 222, 128, 0.2);
-  border-color: rgba(74, 222, 128, 0.55);
+  background: rgba(42, 34, 22, 0.92);
+  border-color: rgba(200, 160, 56, 0.55);
 }
 
 .td-build-unit--disabled,
@@ -605,21 +609,25 @@ html[data-game-mode="td"] #app[data-td-run-live="true"] .scene-bg {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: calc(3px * var(--ui-scale, 1));
-  padding: calc(3px * var(--ui-scale, 1)) calc(4px * var(--ui-scale, 1));
-  border: 1px solid rgba(168, 85, 247, 0.32);
-  border-radius: calc(6px * var(--ui-scale, 1));
-  background: rgba(168, 85, 247, 0.1);
-  color: #fff;
+  gap: calc(6px * var(--ui-scale, 1));
+  padding: calc(6px * var(--ui-scale, 1)) calc(8px * var(--ui-scale, 1));
+  border: 1px solid rgba(200, 160, 56, 0.32);
+  border-radius: calc(10px * var(--ui-scale, 1));
+  background: rgba(28, 22, 16, 0.88);
+  color: #f5ebe0;
   cursor: grab;
   font: inherit;
   text-align: left;
-  min-height: calc(34px * var(--ui-scale, 1));
+  min-height: calc(44px * var(--ui-scale, 1));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .td-build-shop-card:hover:not(:disabled) {
-  background: rgba(168, 85, 247, 0.28);
-  border-color: rgba(168, 85, 247, 0.65);
+  background: rgba(42, 34, 22, 0.95);
+  border-color: rgba(200, 160, 56, 0.58);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 .td-build-shop-card--locked,
@@ -637,31 +645,37 @@ html[data-game-mode="td"] #app[data-td-run-live="true"] .scene-bg {
 }
 
 .td-build-shop-card__icon {
-  font-size: calc(0.95rem * var(--ui-scale, 1));
+  font-size: calc(1.35rem * var(--ui-scale, 1));
   line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
 }
 
 .td-build-shop-card__name {
   min-width: 0;
-  font-size: calc(8px * var(--ui-scale, 1));
-  font-weight: 600;
-  line-height: 1.15;
+  font-size: calc(11px * var(--ui-scale, 1));
+  font-weight: 700;
+  line-height: 1.2;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: rgba(245, 235, 224, 0.92);
 }
 
 .td-build-shop-card__cost {
-  font-size: calc(9px * var(--ui-scale, 1));
+  font-size: calc(11px * var(--ui-scale, 1));
   color: #fde68a;
   font-variant-numeric: tabular-nums;
-  font-weight: 700;
+  font-weight: 800;
+  padding: calc(2px * var(--ui-scale, 1)) calc(5px * var(--ui-scale, 1));
+  border-radius: calc(6px * var(--ui-scale, 1));
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(253, 230, 138, 0.22);
 }
 
 .td-build-shop-card__cost::after {
   content: "💰";
-  font-size: calc(7px * var(--ui-scale, 1));
-  margin-left: 1px;
+  font-size: calc(9px * var(--ui-scale, 1));
+  margin-left: 2px;
 }
 
 .td-build-shop-empty {

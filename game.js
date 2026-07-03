@@ -4423,9 +4423,9 @@ function getPrepArcSidebarAnchorClient(clientX, clientY) {
 }
 
 function getPrepArcDropState() {
-  if (phase !== "prep" || !dragPayload) return "neutral";
+  if (!isLoadoutInteractionPhase() || !dragPayload) return "neutral";
   const side = dragFrom?.side || prepViewSide;
-  const st = getSideState(side);
+  const st = getLoadoutEditState(side);
 
   if (isPrepSidebarArcDrag()) {
     const placement = getPrepDropPlacement(st, side);
@@ -4456,16 +4456,16 @@ function getPrepArcDropState() {
         st.containers,
         st.items,
         excludeUid,
-        GRID_COLS,
-        GRID_ROWS,
+        getActiveGridCols(),
+        getActiveGridRows(),
       )
       : canPlaceContainer(
         dragPayload.itemId,
         hoverCell.col,
         hoverCell.row,
         dragPayload.rotation || 0,
-        GRID_COLS,
-        GRID_ROWS,
+        getActiveGridCols(),
+        getActiveGridRows(),
         st.containers,
         excludeUid,
         st.items,
@@ -4510,7 +4510,7 @@ function maybeCelebratePrepArcDrop(success) {
 }
 
 function clearDragUiState() {
-  document.querySelectorAll(".shop-card.shop-dragging").forEach((el) => el.classList.remove("shop-dragging"));
+  document.querySelectorAll(".shop-card.shop-dragging, .td-build-shop-card.shop-dragging").forEach((el) => el.classList.remove("shop-dragging"));
   pendingShopDrag = null;
   pendingBenchDrag = null;
   pendingCanvasPick = null;
@@ -4713,6 +4713,55 @@ function tickReplay(rawDt) {
   }
 }
 
+function getTdHudTower() {
+  if (!isTdRunLive() || !tdState || selectedTdSlotId == null) return null;
+  if (typeof tdGetTowerAtSlot !== "function") return null;
+  return tdGetTowerAtSlot(tdState, selectedTdSlotId);
+}
+
+function buildTdTowerHudProfile(baseProfile, tower) {
+  if (!tower) return baseProfile;
+  const cls = typeof getClassById === "function" ? getClassById(tower.classId) : null;
+  const hero = tower.hero;
+  const profile = { ...baseProfile };
+  profile.classId = tower.classId;
+  profile.className = cls?.name || tower.classId;
+  profile.classIcon = cls?.icon || "🛡️";
+  if (typeof getClassHeroPortraitSrc === "function") {
+    profile.classIconSrc = getClassHeroPortraitSrc(tower.classId);
+  }
+  if (hero?.maxHp) {
+    profile.hpCurrent = Math.ceil(hero.hp);
+    profile.hpMax = hero.maxHp;
+    profile.hpDisplay = `${Math.ceil(hero.hp)}/${hero.maxHp}`;
+    profile.liveBattle = true;
+  }
+  return profile;
+}
+
+function getTdHudMutationRuntime(tower) {
+  if (!tower) return null;
+  const isCommander = tower.slotId === 0 || tower.isCommander;
+  const prep = tdState?.prepMeta || {};
+  return {
+    classId: tower.classId,
+    companionId: isCommander ? prep.companionId : null,
+    formId: isCommander ? prep.mutationFormId : null,
+    mutationId: isCommander ? prep.mutationId : null,
+    items: tower.items || [],
+    enhancements: isCommander ? (prep.enhancements || []) : [],
+  };
+}
+
+function syncTdHeroHudFromSelection() {
+  if (!isTdRunLive()) return;
+  const tower = getTdHudTower();
+  if (tower?.classId && typeof TdArena !== "undefined" && typeof TdArena.loadPortrait === "function") {
+    TdArena.loadPortrait(tower.classId);
+  }
+  renderPlayerProfiles();
+}
+
 function renderTdBuildPanel() {
   if (typeof TdBuildPanel === "undefined" || !isTdRunLive()) return;
   const st = getSideState("player");
@@ -4738,6 +4787,7 @@ function selectTdSlot(slotId) {
   syncTdTowerEditDom();
   renderTdBuildPanel();
   if (isTdLoadoutEditPhase()) recalcSynergies();
+  else syncTdHeroHudFromSelection();
   playPrepSfx("ui_click");
 }
 
@@ -4998,6 +5048,7 @@ function syncTdLoadoutLayout() {
 }
 
 window.syncTdLoadoutLayout = syncTdLoadoutLayout;
+window.isLoadoutInteractionPhase = isLoadoutInteractionPhase;
 
 function applyCraftingForTower(tower) {
   if (!tower) return false;
@@ -6349,13 +6400,13 @@ function isDropOnSell(e) {
 function isDropOnBench(e) {
   const panel = document.getElementById("bench-panel");
   if (!panel || !e) return false;
-  if (canvas && phase === "prep") {
+  if (canvas && isLoadoutInteractionPhase()) {
     const side = dragFrom?.side || prepViewSide;
     const { x: mx, y: my } = canvasCoordsFromClient(e.clientX, e.clientY);
     if (isOnBoard(mx, my, side)) {
       const col = xToCol(mx, side);
       const row = yToRow(my, side);
-      if (isSlotCell(getSideState(side).containers, col, row)) return false;
+      if (isSlotCell(getLoadoutEditState(side).containers, col, row)) return false;
     }
   }
   if (e.target?.closest?.("#bench-panel")) return true;
@@ -6535,7 +6586,7 @@ function hideDragGhostOverlay() {
 
 /** Призрак drag: центр якорной клетки превью, не середина всей фигуры. */
 function getDragGhostAnchorClient(clientX, clientY) {
-  if (phase !== "prep" || !dragPayload || !canvas) {
+  if (!isLoadoutInteractionPhase() || !dragPayload || !canvas) {
     return { x: clientX, y: clientY };
   }
 
@@ -6555,7 +6606,7 @@ function getDragGhostAnchorClient(clientX, clientY) {
   }
 
   if (!isContainerItem(dragPayload.itemId) && hoverSlot) {
-    const st = getSideState(side);
+    const st = getLoadoutEditState(side);
     const placement = resolveLoadoutPlacementDisplacing(
       st.containers,
       dragPayload.itemId,
@@ -6740,9 +6791,11 @@ function gamepadPointerDownAt(clientX, clientY) {
   const synthetic = createSyntheticPointerEvent(clientX, clientY);
   const target = document.elementFromPoint(clientX, clientY);
 
-  const shopCard = target?.closest?.(".shop-card:not(.empty)");
+  const shopCard = target?.closest?.(".shop-card:not(.empty), .td-build-shop-card:not(.td-build-shop-card--locked):not(.td-build-shop-card--empty)");
   if (shopCard && canEditPrepSide(prepViewSide)) {
-    const index = +shopCard.dataset.index;
+    const index = shopCard.dataset.shopIndex != null
+      ? +shopCard.dataset.shopIndex
+      : +shopCard.dataset.index;
     if (!Number.isNaN(index)) {
       beginPendingShopDrag(index, synthetic, prepViewSide);
       if (isTouchUi()) {
@@ -7885,7 +7938,7 @@ function isPointerOverPrepSidebar(clientX, clientY) {
   const hit = document.elementFromPoint(clientX, clientY);
   if (!hit) return false;
   return !!hit.closest(
-    "#shop-panel, .run-stats-anchor, #prep-run-stats-anchor, #run-stats-popover, #sidebar-tooltip, #prep-tooltip-dock, #recipe-book-overlay, #combat-feed-dock, #combat-feed-panel, #combat-feed-scroll, #prep-doll-layer",
+    "#shop-panel, #td-build-panel, .td-build-shop-card, .run-stats-anchor, #prep-run-stats-anchor, #run-stats-popover, #sidebar-tooltip, #prep-tooltip-dock, #recipe-book-overlay, #combat-feed-dock, #combat-feed-panel, #combat-feed-scroll, #prep-doll-layer",
   );
 }
 
@@ -7893,7 +7946,7 @@ function isPointerOverShopDrawer(clientX, clientY) {
   if (clientX == null || clientY == null) return false;
   const hit = document.elementFromPoint(clientX, clientY);
   if (!hit) return false;
-  return !!hit.closest("#shop-panel");
+  return !!hit.closest("#shop-panel, #td-build-panel, .td-build-shop-card");
 }
 
 function syncPrepShopDragBackdrop(clientX, clientY) {
@@ -8793,16 +8846,16 @@ function finishDragDrop(e) {
         st.containers,
         st.items,
         excludeUid,
-        GRID_COLS,
-        GRID_ROWS,
+        getActiveGridCols(),
+        getActiveGridRows(),
       )
       : canPlaceContainer(
         dragPayload.itemId,
         col,
         row,
         dragPayload.rotation || 0,
-        GRID_COLS,
-        GRID_ROWS,
+        getActiveGridCols(),
+        getActiveGridRows(),
         st.containers,
         excludeUid,
         st.items,
@@ -9257,9 +9310,16 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
   }
 
   const side = prepViewSide;
-  const profile = side === "player" ? playerProfile : enemyProfile;
+  let profile = side === "player" ? playerProfile : enemyProfile;
+  let mutRt = getSideMutationRuntime(side);
+  if (isTdRunLive() && side === "player") {
+    const hudTower = getTdHudTower();
+    if (hudTower) {
+      profile = buildTdTowerHudProfile(profile, hudTower);
+      mutRt = getTdHudMutationRuntime(hudTower) || mutRt;
+    }
+  }
   const st = getSideState(side);
-  const mutRt = getSideMutationRuntime(side);
   const mutationProgress = typeof resolveMutationProgress === "function"
     ? resolveMutationProgress({
       classId: mutRt.classId,
@@ -9304,9 +9364,9 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
         ? `${lobbyPlayer.hp}/${LOBBY_START_HP}`
         : isTdRunLive() && tdState && side === "player"
           ? (() => {
-            const commander = (tdState.towers || []).find((t) => t.isCommander || t.slotId === 0);
-            if (commander?.hero?.maxHp) {
-              return `${Math.ceil(commander.hero.hp)}/${commander.hero.maxHp}`;
+            const tower = getTdHudTower();
+            if (tower?.hero?.maxHp) {
+              return `${Math.ceil(tower.hero.hp)}/${tower.hero.maxHp}`;
             }
             return profile.hpDisplay;
           })()
