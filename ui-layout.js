@@ -36,17 +36,38 @@
     return vv ? vv.offsetTop + vv.height : window.innerHeight;
   }
 
-  /** Intro: резерв под chrome = от его top до низа layout viewport (после pin). */
-  function syncIntroChromeDock() {
+  function isPwaStandalone() {
+    return window.matchMedia("(display-mode: standalone)").matches
+      || window.navigator.standalone === true;
+  }
+
+  /** PWA/tablet: прижать chrome к visualViewport.bottom (иначе белая полоса под home indicator). */
+  function syncBottomChromeDock() {
     const root = document.documentElement;
     const bar = getBottomChrome();
-    if (!isClassOverlayOpen() || !bar || bar.classList.contains("hidden")) {
-      root.style.removeProperty("--intro-chrome-pin-y");
-      return null;
+    root.style.removeProperty("--class-intro-chrome-h");
+
+    if (!bar || bar.classList.contains("hidden") || getComputedStyle(bar).display === "none") {
+      root.style.removeProperty("--bottom-chrome-pin-y");
+      return;
     }
-    if (getComputedStyle(bar).display === "none") {
-      root.style.removeProperty("--intro-chrome-pin-y");
-      return null;
+    if (isModalOpen() && !isClassOverlayOpen()) {
+      root.style.removeProperty("--bottom-chrome-pin-y");
+      return;
+    }
+
+    const tier = root.dataset.uiTier;
+    const touch = root.dataset.touch === "true";
+    const shouldPin = (tier === "tablet" && touch) || isPwaStandalone();
+    if (!shouldPin) {
+      root.style.removeProperty("--bottom-chrome-pin-y");
+      if (isClassOverlayOpen()) {
+        root.style.setProperty(
+          "--class-intro-chrome-h",
+          `${Math.max(bar.offsetHeight, readCssPx("--bottom-chrome-h", 44))}px`,
+        );
+      }
+      return;
     }
 
     const viewBottom = visualViewportBottom();
@@ -55,36 +76,40 @@
     const gap = Math.max(0, viewBottom - rect.bottom);
 
     if (gap > 1.5) {
-      root.style.setProperty("--intro-chrome-pin-y", `${Math.round(gap)}px`);
+      root.style.setProperty("--bottom-chrome-pin-y", `${Math.round(gap)}px`);
     } else {
-      root.style.removeProperty("--intro-chrome-pin-y");
+      root.style.removeProperty("--bottom-chrome-pin-y");
     }
 
-    const pinY = gap > 1.5 ? gap : 0;
-    const chromeTop = rect.top + pinY;
-    const reserve = Math.max(
-      Math.round(layoutBottom - chromeTop),
-      bar.offsetHeight,
-      readCssPx("--bottom-chrome-h", 44),
-    );
-    root.style.setProperty("--class-intro-chrome-h", `${reserve}px`);
-    return reserve;
+    if (isClassOverlayOpen()) {
+      const pinY = gap > 1.5 ? gap : 0;
+      const chromeTop = rect.top + pinY;
+      const reserve = Math.max(
+        Math.round(layoutBottom - chromeTop),
+        bar.offsetHeight,
+        readCssPx("--bottom-chrome-h", 44),
+      );
+      root.style.setProperty("--class-intro-chrome-h", `${reserve}px`);
+    }
   }
 
   function measureBottomChromeHeight() {
+    syncBottomChromeDock();
+    const pinY = readCssPx("--bottom-chrome-pin-y", 0);
+
     if (isClassOverlayOpen()) {
-      const docked = syncIntroChromeDock();
-      if (docked != null) return docked;
+      const reserve = readCssPx("--class-intro-chrome-h", 0);
+      if (reserve > 0) return reserve;
       const bar = getBottomChrome();
       if (!bar || bar.classList.contains("hidden")) return readCssPx("--bottom-chrome-h", 44);
       if (getComputedStyle(bar).display === "none") return readCssPx("--bottom-chrome-h", 44);
-      return bar.offsetHeight || readCssPx("--bottom-chrome-h", 44);
+      return bar.offsetHeight + pinY || readCssPx("--bottom-chrome-h", 44);
     }
     if (isModalOpen()) return 0;
     const bar = getBottomChrome();
     if (!bar || bar.classList.contains("hidden")) return readCssPx("--bottom-chrome-h", 44);
     if (getComputedStyle(bar).display === "none") return readCssPx("--bottom-chrome-h", 44);
-    return bar.offsetHeight || readCssPx("--bottom-chrome-h", 44);
+    return (bar.offsetHeight || readCssPx("--bottom-chrome-h", 44)) + pinY;
   }
 
   function isHudVisible() {
@@ -1404,18 +1429,35 @@
       const thoughtSlot = document.getElementById(slotId);
       if (!thoughtSlot) return;
 
+      const avatar = document.getElementById(side === "enemy" ? "enemy-avatar-slot" : "player-avatar-slot")
+        ?.querySelector(".profile-avatar");
+      if (avatar && !avatar.querySelector(".hero-portrait-head-badge-anchor")) {
+        avatar.insertAdjacentHTML("beforeend", '<span class="hero-portrait-head-badge-anchor" aria-hidden="true"></span>');
+      }
+
       let cx;
       let top;
       let slotSize = size;
       let emojiSize = null;
 
       if (combatFloor && typeof BattleHeroAnchor !== "undefined") {
-        const anchor = BattleHeroAnchor.getThoughtSlotAnchor(side);
-        if (anchor) {
-          cx = anchor.cx;
-          top = anchor.top;
-          slotSize = anchor.size;
-          emojiSize = anchor.emojiSize || null;
+        if (BattleHeroAnchor.usesHeadBadgeAnchors?.()) {
+          const badge = BattleHeroAnchor.getHeadBadgeThoughtAnchor(side);
+          if (badge) {
+            cx = badge.cx;
+            top = badge.top;
+            slotSize = badge.size;
+            emojiSize = badge.emojiSize || null;
+          }
+        }
+        if (cx == null || top == null) {
+          const anchor = BattleHeroAnchor.getThoughtSlotAnchor(side);
+          if (anchor) {
+            cx = anchor.cx;
+            top = anchor.top;
+            slotSize = anchor.size;
+            emojiSize = anchor.emojiSize || null;
+          }
         }
       }
 
@@ -2402,21 +2444,25 @@
         "--overlay-max-h",
         `calc(var(--viewport-h, 100dvh) - env(safe-area-inset-top) - ${hudH}px - 8px)`,
       );
-      requestAnimationFrame(() => {
-        if (!isClassOverlayOpen()) return;
-        const dockH = syncIntroChromeDock();
-        if (dockH == null) return;
-        document.documentElement.style.setProperty("--bottom-chrome-h-measured", `${dockH}px`);
-        document.documentElement.style.setProperty("--hud-offset", `${dockH}px`);
-      });
     } else {
-      document.documentElement.style.removeProperty("--intro-chrome-pin-y");
       document.documentElement.style.setProperty(
         "--overlay-max-h",
         "calc(var(--viewport-h, 100dvh) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 10px)",
       );
-      document.documentElement.style.removeProperty("--class-intro-chrome-h");
     }
+
+    requestAnimationFrame(() => {
+      syncBottomChromeDock();
+      const dockH = measureBottomChromeHeight();
+      document.documentElement.style.setProperty("--bottom-chrome-h-measured", `${dockH}px`);
+      document.documentElement.style.setProperty("--hud-offset", `${dockH}px`);
+      document.documentElement.style.setProperty(
+        "--app-h",
+        hudVisible
+          ? "calc(var(--viewport-h, 100dvh) - var(--hud-offset) - env(safe-area-inset-top))"
+          : "calc(var(--viewport-h, 100dvh) - var(--hud-offset) - env(safe-area-inset-top) - env(safe-area-inset-bottom))",
+      );
+    });
 
     const appPhase = document.getElementById("app")?.dataset.phase ?? "prep";
     syncTabletSideLayoutVars(h, appPhase);

@@ -39,6 +39,8 @@ self.addEventListener("fetch", (event) => {
 
   event.respondWith(
     caches.match(request).then((cached) => {
+      const isVersionedAsset = /[?&]v=\d+/.test(request.url)
+        || /\/(game|ui-layout|battle-hero-anchor|avatar-hero-effects|pwa-precache)\.js/.test(request.url);
       const network = fetch(request)
         .then((response) => {
           if (response && response.status === 200 && response.type === "basic") {
@@ -49,6 +51,9 @@ self.addEventListener("fetch", (event) => {
         })
         .catch(() => cached);
 
+      if (isVersionedAsset) {
+        return network.catch(() => cached);
+      }
       return cached || network;
     }),
   );

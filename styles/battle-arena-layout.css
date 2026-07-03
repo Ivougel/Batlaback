@@ -284,22 +284,21 @@ html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .profil
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .hero-portrait-head-badge-anchor,
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .hero-portrait-head-badge-anchor {
   position: absolute;
-  top: var(--portrait-head-badge-top, 10%);
+  top: var(--portrait-head-badge-top, 7%);
+  left: var(--portrait-head-badge-x, 50%);
+  right: auto;
   width: 1px;
   height: 1px;
   pointer-events: none;
   z-index: 12;
+  transform: translateX(-50%);
 }
 
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .profile-avatar-player .hero-portrait-head-badge-anchor,
-html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .profile-avatar-player .hero-portrait-head-badge-anchor {
-  right: var(--portrait-head-badge-inset, 6%);
-  left: auto;
-}
-
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .profile-avatar-player .hero-portrait-head-badge-anchor,
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .profile-avatar-enemy .hero-portrait-head-badge-anchor,
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .profile-avatar-enemy .hero-portrait-head-badge-anchor {
-  left: var(--portrait-head-badge-inset, 6%);
+  left: var(--portrait-head-badge-x, 50%);
   right: auto;
 }
 

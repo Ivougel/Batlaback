@@ -383,16 +383,22 @@ body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro .btn-primary {
   color: #8a5e08;
 }
 
-/* Hero-карточки классов — тёмный scrim, лор только в витрине слева */
+/* Hero-карточки классов — тёмная подпись с лором внизу */
 #class-overlay .class-modal .class-card.glass-card[data-class]::after,
 #class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class]::after {
-  height: 46%;
+  height: 44%;
   background: linear-gradient(
     180deg,
     transparent 0%,
-    rgba(8, 12, 8, 0.72) 36%,
-    rgba(6, 10, 6, 0.96) 100%
+    rgba(12, 18, 10, 0.28) 32%,
+    rgba(12, 18, 10, 0.78) 78%,
+    rgba(8, 12, 8, 0.94) 100%
   );
+}
+
+#class-overlay .class-modal .class-card.glass-card[data-class] .class-card-foot,
+#class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class] .class-card-foot {
+  border-radius: 0 0 calc(14px * var(--ui-scale)) calc(14px * var(--ui-scale));
 }
 
 #class-overlay .class-modal .class-card.glass-card[data-class] .class-desc {
@@ -400,11 +406,10 @@ body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro .btn-primary {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
-  color: rgba(255, 253, 246, 0.9);
+  color: rgba(235, 245, 225, 0.94);
   font-weight: 600;
-  line-height: 1.3;
+  line-height: 1.35;
   opacity: 1;
-  padding-bottom: calc(2px * var(--ui-scale));
 }
 
 #class-overlay .class-modal .class-card.glass-card[data-class] .class-desc.hidden {
@@ -412,18 +417,21 @@ body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro .btn-primary {
 }
 
 #class-overlay .class-modal .class-card.glass-card[data-class] .class-name,
-#class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class] .class-name,
-#class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class] .class-desc {
+#class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class] .class-name {
   color: #fffdf6;
-  text-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.9),
-    0 2px 10px rgba(0, 0, 0, 0.65);
+  text-shadow: none;
+}
+
+#class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class] .class-desc {
+  color: rgba(220, 232, 210, 0.9);
+  text-shadow: none;
+  font-weight: 600;
 }
 
 #class-overlay .class-modal .class-card.glass-card[data-class] .class-bonus {
   color: #ffe566;
   font-weight: 800;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+  text-shadow: none;
   opacity: 1;
 }
 
@@ -436,13 +444,24 @@ body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro .btn-primary {
     0 0 48px rgba(167, 139, 250, 0.14);
 }
 
+#class-overlay .class-modal .class-card.glass-card[data-class].selected .class-card-foot,
+#class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class].selected .class-card-foot {
+  background: linear-gradient(
+    180deg,
+    rgba(28, 38, 22, 0.96) 0%,
+    rgba(12, 18, 10, 0.99) 100%
+  );
+  border-top-color: rgba(245, 200, 66, 0.35);
+}
+
 #class-overlay .class-modal .class-card.glass-card[data-class].selected::after,
 #class-overlay .class-modal .opponent-class-card.glass-card[data-opponent-class].selected::after {
   background: linear-gradient(
     180deg,
     transparent 0%,
-    rgba(8, 12, 8, 0.78) 32%,
-    rgba(4, 8, 4, 0.98) 100%
+    rgba(12, 18, 10, 0.42) 28%,
+    rgba(8, 12, 8, 0.88) 72%,
+    rgba(4, 8, 4, 0.96) 100%
   );
 }
 
@@ -452,8 +471,30 @@ body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro .btn-primary {
 }
 
 /* Галерея мутаций — читаемый пергамент */
+#class-overlay .mutation-gallery-wrap {
+  flex-shrink: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-top: calc(8px * var(--ui-scale));
+}
+
+#class-overlay #class-step-player:not(.hidden) .class-grid {
+  flex: 0 1 auto;
+  max-height: min(44vh, 360px);
+}
+
+#class-overlay #class-step-player:not(.hidden) .mutation-gallery-wrap:not(.hidden) {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 #class-overlay .mutation-gallery {
-  background: rgba(255, 252, 240, 0.92);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 252, 240, 0.97) 0%,
+    rgba(255, 246, 220, 0.95) 100%
+  );
   border: 2px solid rgba(92, 184, 92, 0.55);
   box-shadow:
     0 4px 16px rgba(46, 100, 50, 0.14),
@@ -461,31 +502,62 @@ body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro .btn-primary {
 }
 
 #class-overlay .mutation-gallery-eyebrow {
-  color: #4a3068;
+  color: #3d2858;
   font-weight: 900;
+  font-size: max(var(--font-sm), calc(0.88rem * var(--type-scale, 1)));
+  letter-spacing: 0.02em;
 }
 
 #class-overlay .mutation-gallery-hint {
-  color: var(--intro-ink-muted);
+  color: var(--intro-ink);
   font-weight: 700;
+  font-size: max(var(--font-xs), calc(0.76rem * var(--type-scale, 1)));
+  line-height: 1.4;
   opacity: 1;
 }
 
 #class-overlay .mutation-silhouette {
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(92, 184, 92, 0.45);
+  background: rgba(255, 255, 255, 0.88);
+  border: 1.5px solid rgba(92, 184, 92, 0.5);
   filter: none;
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.4),
-    0 0 12px rgba(167, 139, 250, 0.1);
+    0 1px 0 rgba(255, 255, 255, 0.9),
+    0 2px 8px rgba(46, 100, 50, 0.1);
+  padding: calc(9px * var(--ui-scale)) calc(6px * var(--ui-scale)) calc(8px * var(--ui-scale));
+  gap: calc(3px * var(--ui-scale));
 }
 
 #class-overlay .mutation-silhouette:hover {
-  border-color: rgba(92, 184, 92, 0.72);
+  border-color: rgba(92, 184, 92, 0.78);
+  background: rgba(255, 255, 255, 0.98);
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.55),
-    0 0 16px rgba(167, 139, 250, 0.2),
-    0 0 28px rgba(92, 184, 92, 0.12);
+    0 0 16px rgba(167, 139, 250, 0.16),
+    0 4px 12px rgba(46, 100, 50, 0.12);
+  filter: none;
+}
+
+#class-overlay .mutation-silhouette-icon {
+  font-size: calc(24px * var(--ui-scale));
+  opacity: 0.92;
+  filter: none;
+}
+
+#class-overlay .mutation-silhouette-name {
+  color: var(--intro-ink);
+  font-weight: 900;
+  font-size: max(calc(9px * var(--ui-scale)), calc(0.68rem * var(--type-scale, 1)));
+  letter-spacing: 0.04em;
+  opacity: 1;
+  line-height: 1.15;
+}
+
+#class-overlay .mutation-silhouette-form {
+  color: var(--intro-ink-muted);
+  font-weight: 700;
+  font-size: max(calc(8px * var(--ui-scale)), calc(0.62rem * var(--type-scale, 1)));
+  opacity: 1;
+  line-height: 1.2;
 }
 
 #class-overlay .mutation-silhouette--lore-active {
@@ -530,18 +602,6 @@ body:has(#class-overlay:not(.hidden)) .mutation-lore-popup-quip {
 
 body:has(#class-overlay:not(.hidden)) .mutation-lore-popup-glow {
   background: radial-gradient(circle at 50% 18%, rgba(245, 200, 66, 0.2) 0%, transparent 70%);
-}
-
-#class-overlay .mutation-silhouette-name {
-  color: var(--intro-ink);
-  font-weight: 800;
-  opacity: 1;
-}
-
-#class-overlay .mutation-silhouette-form {
-  color: var(--intro-ink-muted);
-  font-weight: 700;
-  opacity: 1;
 }
 
 /* Витрина героя — тёмная подпись с лором */

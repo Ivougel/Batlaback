@@ -16,8 +16,8 @@
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="stylesheet" href="styles/tokens.css?v=18">
   <link rel="stylesheet" href="styles/layers.css?v=7">
-  <link rel="stylesheet" href="styles/bottom-chrome.css?v=19">
-  <link rel="stylesheet" href="styles.css?v=36">
+  <link rel="stylesheet" href="styles/bottom-chrome.css?v=20">
+  <link rel="stylesheet" href="styles.css?v=37">
   <link rel="stylesheet" href="styles/shop.css?v=6">
   <link rel="stylesheet" href="styles/item-card-chrome.css?v=3">
   <link rel="stylesheet" href="styles/shop-pin-chrome.css?v=3">
@@ -34,21 +34,21 @@
   <link rel="stylesheet" href="styles/emotion-thoughts.css?v=10">
   <link rel="stylesheet" href="styles/arena-equipment.css?v=20">
   <link rel="stylesheet" href="styles/prep-drag-arc.css?v=10">
-  <link rel="stylesheet" href="styles/battle-arena-layout.css?v=35">
+  <link rel="stylesheet" href="styles/battle-arena-layout.css?v=36">
   <link rel="stylesheet" href="styles/phone-landscape.css?v=9">
   <link rel="stylesheet" href="styles/battle-scale.css?v=4">
   <link rel="stylesheet" href="styles/battle-hud-compact.css?v=3">
   <link rel="stylesheet" href="styles/hero-card.css?v=4">
   <link rel="stylesheet" href="styles/hero-portrait-frame.css?v=5">
   <link rel="stylesheet" href="styles/prep-hero-card.css?v=13">
-  <link rel="stylesheet" href="styles/class-picker.css?v=3">
+  <link rel="stylesheet" href="styles/class-picker.css?v=4">
   <link rel="stylesheet" href="styles/class-hero-showcase.css?v=8">
   <link rel="stylesheet" href="styles/class-hero-portrait-frame.css?v=1">
-  <link rel="stylesheet" href="styles/class-intro-theme.css?v=5">
+  <link rel="stylesheet" href="styles/class-intro-theme.css?v=6">
   <link rel="stylesheet" href="styles/class-intro-summary.css?v=1">
   <link rel="stylesheet" href="styles/tablet-intro-typography.css?v=1">
   <link rel="stylesheet" href="styles/desktop-intro-layout.css?v=1">
-  <link rel="stylesheet" href="styles/tablet-pwa-layout.css?v=2">
+  <link rel="stylesheet" href="styles/tablet-pwa-layout.css?v=3">
   <link rel="stylesheet" href="styles/mobile-prep.css?v=22">
   <link rel="stylesheet" href="styles/desktop-prep.css?v=2">
   <link rel="stylesheet" href="styles/desktop-battle.css?v=2">
@@ -86,8 +86,8 @@
   </script>
   <script src="systems/layout-scales.js?v=2"></script>
   <script src="systems/battle-fx-tier.js?v=1"></script>
-  <script src="systems/battle-hero-anchor.js?v=25"></script>
-  <script src="ui-layout.js?v=103"></script>
+  <script src="systems/battle-hero-anchor.js?v=26"></script>
+  <script src="ui-layout.js?v=105"></script>
 </head>
 <body>
   <div id="ui-ornament-frame" class="ui-ornament-frame" aria-hidden="true">
@@ -383,27 +383,35 @@
         <div class="class-grid" id="player-class-grid">
           <button type="button" class="class-card glass-card" data-class="warrior">
             <span class="glass-card-icon glass-card-icon--class class-icon"><img src="img/sticker_warrior.png" alt="" class="class-sticker" draggable="false"></span>
-            <span class="class-name">Воин-мартовичок</span>
-            <span class="class-desc hidden" aria-hidden="true"></span>
-            <span class="class-bonus">+3% HP на весь забег</span>
+            <div class="class-card-foot">
+              <span class="class-name">Воин-мартовичок</span>
+              <span class="class-desc hidden" aria-hidden="true"></span>
+              <span class="class-bonus">+3% HP на весь забег</span>
+            </div>
           </button>
           <button type="button" class="class-card glass-card" data-class="rogue">
             <span class="glass-card-icon glass-card-icon--class class-icon"><img src="img/sticker_rogue.png" alt="" class="class-sticker" draggable="false"></span>
-            <span class="class-name">Разбойник-роксивичок</span>
-            <span class="class-desc hidden" aria-hidden="true"></span>
-            <span class="class-bonus">+3% скорость атаки</span>
+            <div class="class-card-foot">
+              <span class="class-name">Разбойник-роксивичок</span>
+              <span class="class-desc hidden" aria-hidden="true"></span>
+              <span class="class-bonus">+3% скорость атаки</span>
+            </div>
           </button>
           <button type="button" class="class-card glass-card" data-class="mage">
             <span class="glass-card-icon glass-card-icon--class class-icon"><img src="img/sticker_mage.png" alt="" class="class-sticker" draggable="false"></span>
-            <span class="class-name">Маг-морковичок</span>
-            <span class="class-desc hidden" aria-hidden="true"></span>
-            <span class="class-bonus">+4% магический урон</span>
+            <div class="class-card-foot">
+              <span class="class-name">Маг-морковичок</span>
+              <span class="class-desc hidden" aria-hidden="true"></span>
+              <span class="class-bonus">+4% магический урон</span>
+            </div>
           </button>
           <button type="button" class="class-card glass-card" data-class="priest">
             <span class="glass-card-icon glass-card-icon--class class-icon"><img src="img/sticker_priest.png" alt="" class="class-sticker" draggable="false"></span>
-            <span class="class-name">Жрец-мыковичок</span>
-            <span class="class-desc hidden" aria-hidden="true"></span>
-            <span class="class-bonus">+1.5% HP за еду, еда +8% хил</span>
+            <div class="class-card-foot">
+              <span class="class-name">Жрец-мыковичок</span>
+              <span class="class-desc hidden" aria-hidden="true"></span>
+              <span class="class-bonus">+1.5% HP за еду, еда +8% хил</span>
+            </div>
           </button>
         </div>
         <div class="mutation-gallery-wrap hidden" id="class-mutation-gallery" aria-live="polite"></div>
@@ -445,23 +453,31 @@
           <div class="class-grid class-grid--opponent" id="opponent-class-grid">
             <button type="button" class="class-card opponent-class-card glass-card" data-opponent-class="warrior">
               <span class="glass-card-icon glass-card-icon--class class-icon"><img src="img/sticker_warrior.png" alt="" class="class-sticker" draggable="false"></span>
-              <span class="class-name">Воин</span>
-              <span class="class-desc">Ржавый меч + железный шлем</span>
+              <div class="class-card-foot">
+                <span class="class-name">Воин</span>
+                <span class="class-desc">Ржавый меч + железный шлем</span>
+              </div>
             </button>
             <button type="button" class="class-card opponent-class-card glass-card" data-opponent-class="rogue">
               <span class="glass-card-icon glass-card-icon--class class-icon"><img src="img/sticker_rogue.png" alt="" class="class-sticker" draggable="false"></span>
-              <span class="class-name">Разбойник</span>
-              <span class="class-desc">Кинжал + яд</span>
+              <div class="class-card-foot">
+                <span class="class-name">Разбойник</span>
+                <span class="class-desc">Кинжал + яд</span>
+              </div>
             </button>
             <button type="button" class="class-card opponent-class-card glass-card" data-opponent-class="mage">
               <span class="glass-card-icon glass-card-icon--class class-icon"><img src="img/sticker_mage.png" alt="" class="class-sticker" draggable="false"></span>
-              <span class="class-name">Маг</span>
-              <span class="class-desc">Посох ученика + мана-кристалл</span>
+              <div class="class-card-foot">
+                <span class="class-name">Маг</span>
+                <span class="class-desc">Посох ученика + мана-кристалл</span>
+              </div>
             </button>
             <button type="button" class="class-card opponent-class-card glass-card" data-opponent-class="priest">
               <span class="glass-card-icon glass-card-icon--class class-icon"><img src="img/sticker_priest.png" alt="" class="class-sticker" draggable="false"></span>
-              <span class="class-name">Жрец</span>
-              <span class="class-desc">Яблоко + банан</span>
+              <div class="class-card-foot">
+                <span class="class-name">Жрец</span>
+                <span class="class-desc">Яблоко + банан</span>
+              </div>
             </button>
           </div>
         </div>

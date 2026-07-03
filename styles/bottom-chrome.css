@@ -15,6 +15,7 @@
   align-items: center;
   gap: 8px;
   min-height: var(--bottom-chrome-h, 44px);
+  transform: translateY(var(--bottom-chrome-pin-y, 0px));
   padding:
     4px
     max(10px, env(safe-area-inset-right))

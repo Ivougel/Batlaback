@@ -206,7 +206,6 @@ html[data-ui-tier="tablet"][data-touch="true"] body:has(#class-overlay:not(.hidd
   left: 0;
   right: 0;
   bottom: 0;
-  transform: translateY(var(--intro-chrome-pin-y, 0px));
   min-height: var(--bottom-chrome-h, 44px);
   padding-top: 4px;
   padding-bottom: max(4px, env(safe-area-inset-bottom, 0px));
@@ -247,16 +246,41 @@ html[data-ui-tier="tablet"] #app[data-phase="replay"] {
 
 @media (display-mode: standalone) {
   html[data-ui-tier="tablet"] body {
-    min-height: 100dvh;
+    min-height: var(--viewport-h, 100dvh);
     max-height: none;
+    background: var(--bg);
   }
 
   html[data-ui-tier="tablet"] #class-overlay:not(.hidden) {
-    max-height: 100dvh;
+    max-height: var(--viewport-h, 100dvh);
   }
 
   html[data-ui-tier="tablet"] .overlay:not(.hidden) {
-    max-height: 100dvh;
+    max-height: var(--viewport-h, 100dvh);
+  }
+
+  /* Prep/battle: safe-area в chrome, не в #app — иначе двойной зазор над home indicator */
+  html[data-ui-tier="tablet"] #app[data-phase="prep"],
+  html[data-ui-tier="tablet"] #app[data-phase="battle"],
+  html[data-ui-tier="tablet"] #app[data-phase="replay"] {
+    padding-bottom: 6px;
+  }
+
+  html[data-ui-tier="tablet"] .bottom-chrome {
+    padding-bottom: max(
+      6px,
+      env(safe-area-inset-bottom, 0px),
+      constant(safe-area-inset-bottom, 0px)
+    );
+  }
+
+  html[data-visual-theme="meadow"] body:has(#app[data-phase="prep"]) .bottom-chrome {
+    background: linear-gradient(
+      180deg,
+      rgba(255, 252, 240, 0.82) 0%,
+      rgba(255, 255, 255, 0.98) 55%,
+      rgba(255, 255, 255, 1) 100%
+    );
   }
 }
 

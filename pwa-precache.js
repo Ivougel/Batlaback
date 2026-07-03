@@ -1,5 +1,5 @@
 // Auto-generated — node tools/generate-pwa-precache.js
-self.PWA_CACHE_VERSION = "bb-pwa-v8";
+self.PWA_CACHE_VERSION = "bb-pwa-v9";
 self.PWA_PRECACHE_URLS = [
   "ai-engine.js",
   "backpack-engine.js",
@@ -176,7 +176,7 @@ self.PWA_PRECACHE_URLS = [
   "pwa-register.js",
   "shop-engine.js",
   "styles.css",
-  "styles.css?v=36",
+  "styles.css?v=37",
   "styles/arena-equipment.css",
   "styles/arena-equipment.css?v=20",
   "styles/battle-archetype-banner.css",
@@ -200,7 +200,7 @@ self.PWA_PRECACHE_URLS = [
   "styles/battle-theme-ui.css",
   "styles/battle-theme-ui.css?v=2",
   "styles/bottom-chrome.css",
-  "styles/bottom-chrome.css?v=19",
+  "styles/bottom-chrome.css?v=20",
   "styles/class-hero-portrait-frame.css",
   "styles/class-hero-portrait-frame.css?v=1",
   "styles/class-hero-showcase.css",
@@ -282,7 +282,7 @@ self.PWA_PRECACHE_URLS = [
   "styles/tablet-intro-typography.css",
   "styles/tablet-intro-typography.css?v=1",
   "styles/tablet-pwa-layout.css",
-  "styles/tablet-pwa-layout.css?v=2",
+  "styles/tablet-pwa-layout.css?v=3",
   "styles/tablet-side.css",
   "styles/tablet-side.css?v=31",
   "styles/tablet-stacked.css",
@@ -364,5 +364,5 @@ self.PWA_PRECACHE_URLS = [
   "systems/visual-theme.js",
   "systems/visual-theme.js?v=1",
   "ui-layout.js",
-  "ui-layout.js?v=103"
+  "ui-layout.js?v=105"
 ];

@@ -163,8 +163,20 @@ function syncClassHeroRosterCaption() {
   if (hintEl) hintEl.textContent = CLASS_HERO_ROSTER_COPY.hint;
 }
 
+function ensureClassCardFoot(card, selectors = [".class-name", ".class-desc", ".class-bonus"]) {
+  if (card.querySelector(".class-card-foot")) return;
+  const foot = document.createElement("div");
+  foot.className = "class-card-foot";
+  selectors.forEach((sel) => {
+    const el = card.querySelector(sel);
+    if (el) foot.appendChild(el);
+  });
+  if (foot.childElementCount) card.appendChild(foot);
+}
+
 function syncClassPickerCardsFromCatalog() {
   document.querySelectorAll(".class-card.glass-card[data-class]").forEach((card) => {
+    ensureClassCardFoot(card);
     const cls = getClassById(card.dataset.class);
     if (!cls) return;
     const nameEl = card.querySelector(".class-name");
@@ -186,6 +198,7 @@ function syncClassPickerCardsFromCatalog() {
     if (bonusEl) bonusEl.textContent = cls.desc || "";
   });
   document.querySelectorAll(".opponent-class-card[data-opponent-class]").forEach((card) => {
+    ensureClassCardFoot(card, [".class-name", ".class-desc"]);
     const cls = getClassById(card.dataset.opponentClass);
     if (!cls) return;
     const nameEl = card.querySelector(".class-name");

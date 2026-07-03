@@ -2337,7 +2337,8 @@ html[data-battle-hud-pin="true"] body {
   }
 
   #app[data-phase="battle"],
-  #app[data-phase="replay"] {
+  #app[data-phase="replay"],
+  #app[data-phase="prep"] {
     padding-bottom: 6px;
   }
 

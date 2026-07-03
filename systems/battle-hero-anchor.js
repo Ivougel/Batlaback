@@ -88,33 +88,33 @@ const BattleHeroAnchor = (() => {
     "phone-portrait": {
       floorRatio: 0.12, vminRatio: 0.048, minPx: 24, maxPx: 36,
       haloRatio: 0.5, avatarRatio: 0.07, avatarWidthRatio: 0.22,
-      headBadge: true, headBadgeYRatio: 0.08, headBadgeInnerXRatio: 0.88,
+      headBadge: true, headBadgeYRatio: 0.07, headBadgeInnerXRatio: 0.5,
     },
     "phone-landscape": {
       floorRatio: 0.14, vminRatio: 0.05, minPx: 26, maxPx: 38,
       haloRatio: 0.48, avatarRatio: 0.075, avatarWidthRatio: 0.23,
-      headBadge: true, headBadgeYRatio: 0.08, headBadgeInnerXRatio: 0.88,
+      headBadge: true, headBadgeYRatio: 0.07, headBadgeInnerXRatio: 0.5,
     },
     "tablet-landscape-side": {
       floorRatio: 0.10, vminRatio: 0.042, minPx: 28, maxPx: 40,
       haloRatio: 0.48, avatarRatio: 0.072, avatarWidthRatio: 0.24,
-      headBadge: true, headBadgeYRatio: 0.08, headBadgeInnerXRatio: 0.88,
+      headBadge: true, headBadgeYRatio: 0.07, headBadgeInnerXRatio: 0.5,
       satelliteScale: 0.72, heroBelow: false,
     },
     "tablet-portrait": {
       floorRatio: 0.11, vminRatio: 0.045, minPx: 26, maxPx: 38,
       haloRatio: 0.5, avatarRatio: 0.07, avatarWidthRatio: 0.22,
-      headBadge: true, headBadgeYRatio: 0.08, headBadgeInnerXRatio: 0.88,
+      headBadge: true, headBadgeYRatio: 0.07, headBadgeInnerXRatio: 0.5,
     },
     "desktop-portrait": {
       floorRatio: 0.12, vminRatio: 0.048, minPx: 28, maxPx: 42,
       haloRatio: 0.48, avatarRatio: 0.075, avatarWidthRatio: 0.24,
-      headBadge: true, headBadgeYRatio: 0.08, headBadgeInnerXRatio: 0.88,
+      headBadge: true, headBadgeYRatio: 0.07, headBadgeInnerXRatio: 0.5,
     },
     "desktop-landscape": {
       floorRatio: 0.10, vminRatio: 0.044, minPx: 28, maxPx: 42,
       haloRatio: 0.48, avatarRatio: 0.072, avatarWidthRatio: 0.24,
-      headBadge: true, headBadgeYRatio: 0.08, headBadgeInnerXRatio: 0.88,
+      headBadge: true, headBadgeYRatio: 0.07, headBadgeInnerXRatio: 0.5,
       satelliteScale: 0.72,
     },
   };
@@ -329,13 +329,11 @@ const BattleHeroAnchor = (() => {
     if (!ar) return null;
 
     const prof = emojiProfile();
-    const headYRatio = prof.headBadgeYRatio ?? 0.08;
-    const innerXRatio = prof.headBadgeInnerXRatio ?? 0.88;
+    const headYRatio = prof.headBadgeYRatio ?? 0.07;
+    const headXRatio = prof.headBadgeInnerXRatio ?? 0.5;
 
     const cy = ar.top + ar.height * headYRatio;
-    const cx = side === "player"
-      ? ar.left + ar.width * innerXRatio
-      : ar.left + ar.width * (1 - innerXRatio);
+    const cx = ar.left + ar.width * headXRatio;
 
     return {
       cx,
