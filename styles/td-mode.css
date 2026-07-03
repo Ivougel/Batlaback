@@ -4,6 +4,9 @@
 #app[data-game-mode="td"] .battle-scene-avatar-enemy,
 #app[data-game-mode="td"] #enemy-avatar-panel,
 #app[data-game-mode="td"] #enemy-attack-arena,
+#app[data-game-mode="td"] #player-attack-arena,
+#app[data-game-mode="td"] #battle-thought-arena .arena-equipment-layer,
+#app[data-game-mode="td"] #arena-equip-fx-layer,
 #app[data-game-mode="td"] #battle-hud-enemy,
 #app[data-game-mode="td"] .btn-enemy-stats {
   display: none !important;

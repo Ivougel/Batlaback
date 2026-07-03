@@ -1057,28 +1057,6 @@ const TdArena = (() => {
     });
   }
 
-  function drawTowerItemOrbit(ctx2, tower, cx, cy, heroR, w) {
-    (tower.attackItems || []).forEach((atk) => {
-      const angle = atk.orbitAngle || 0;
-      const orbitR = heroR * 1.75;
-      const ix = cx + Math.cos(angle) * orbitR;
-      const iy = cy + Math.sin(angle) * orbitR * 0.72;
-      const def = ITEM_CATALOG?.[atk.itemId];
-      const icon = atk.icon || def?.icon || "⚔️";
-      const size = heroR * (atk.flashTimer > 0 ? 0.5 : 0.38);
-
-      ctx2.save();
-      if (atk.flashTimer > 0) {
-        ctx2.shadowColor = "#fbbf24";
-        ctx2.shadowBlur = 10;
-      }
-      if (typeof drawCellEmojiAt === "function") {
-        drawCellEmojiAt(ctx2, icon, ix, iy, size);
-      }
-      ctx2.restore();
-    });
-  }
-
   function drawTowers(ctx2, tdState, w, h, animTime) {
     (tdState.towers || []).forEach((tower) => {
       if (!tower.alive) return;
@@ -1110,7 +1088,7 @@ const TdArena = (() => {
         }
       }
 
-      drawTowerItemOrbit(ctx2, tower, cx, cy, drawR, w);
+      // В TD не рисуем орбиту предметов рюкзака — только портрет башни.
 
       const hero = tower.hero;
       if (!hero) return;
