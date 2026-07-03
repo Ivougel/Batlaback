@@ -547,7 +547,7 @@ html[data-visual-theme="diablo"] body:has(#class-overlay:not(.hidden)) .bottom-c
 
 html[data-visual-theme="diablo"] body:has(#app[data-phase="prep"]) .bottom-chrome .bottombar-btn.active,
 html[data-visual-theme="diablo"] body:has(#app[data-phase="prep"]) .bottom-chrome .prep-side-btn.active,
-html[data-visual-theme="diablo"] body:has(#app[data-phase="prep"]) .bottom-chrome .btn-combat-feed--open.bottombar-btn,
+html[data-visual-theme="diablo"] body:has(#app[data-phase="prep"]) .bottom-chrome .btn-combat-feed--open.bottombar-btn:not(.hud-orb-btn),
 html[data-visual-theme="diablo"] body:has(#app[data-phase="prep"]) .bottom-chrome .standings-toggle.bottombar-btn.active {
   background: linear-gradient(180deg, #4a3828 0%, #3a2818 100%);
   border-color: var(--meadow-gold);
@@ -566,7 +566,7 @@ html[data-visual-theme="diablo"] body:has(#class-overlay:not(.hidden)) .bottom-c
   transform: translateY(-1px);
 }
 
-html[data-visual-theme="diablo"] body:has(#app[data-phase="prep"]) .bottom-chrome .hud-stats-pill {
+html[data-visual-theme="diablo"] body:has(#app[data-phase="prep"]) .bottom-chrome .hud-stats-pill--metrics {
   background: linear-gradient(180deg, #3a3028 0%, #2a2218 100%);
   border: 2px solid var(--meadow-border-soft);
   box-shadow:
@@ -575,7 +575,8 @@ html[data-visual-theme="diablo"] body:has(#app[data-phase="prep"]) .bottom-chrom
     0 4px 10px rgba(0, 0, 0, 0.4);
 }
 
-html[data-visual-theme="diablo"] body:has(#app[data-phase="prep"]) .bottom-chrome .hud-stats-pill .prep-bottom-stat b {
+html[data-visual-theme="diablo"] body:has(#app[data-phase="prep"]) .bottom-chrome .hud-stats-pill--metrics .prep-bottom-stat b,
+html[data-visual-theme="diablo"] body:has(#app[data-phase="prep"]) .bottom-chrome .hud-stats-pill:not(.hud-stats-pill--metrics) .prep-bottom-stat b {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
 }
 
@@ -583,7 +584,7 @@ html[data-visual-theme="diablo"] body:has(#app[data-phase="prep"]) .bottom-chrom
 html[data-visual-theme="diablo"] body:has(#app[data-phase="prep"]) .bottom-chrome .btn-secondary,
 html[data-visual-theme="diablo"] body:has(#app[data-phase="prep"]) .bottom-chrome .prep-side-btn,
 html[data-visual-theme="diablo"] body:has(#app[data-phase="prep"]) .bottom-chrome .prep-settings-btn,
-html[data-visual-theme="diablo"] body:has(#app[data-phase="prep"]) .bottom-chrome .btn-combat-feed,
+html[data-visual-theme="diablo"] body:has(#app[data-phase="prep"]) .bottom-chrome .btn-combat-feed:not(.hud-orb-btn),
 html[data-visual-theme="diablo"] body:has(#class-overlay:not(.hidden)) .bottom-chrome .btn-secondary,
 html[data-visual-theme="diablo"] body:has(#class-overlay:not(.hidden)) .bottom-chrome .prep-settings-btn {
   background: linear-gradient(180deg, #3a3028 0%, #2a2218 100%);
@@ -595,7 +596,7 @@ html[data-visual-theme="diablo"] body:has(#class-overlay:not(.hidden)) .bottom-c
 }
 
 html[data-visual-theme="diablo"] body:has(#app[data-phase="prep"]) .bottom-chrome .prep-side-btn.active,
-html[data-visual-theme="diablo"] body:has(#app[data-phase="prep"]) .bottom-chrome .btn-combat-feed--open {
+html[data-visual-theme="diablo"] body:has(#app[data-phase="prep"]) .bottom-chrome .btn-combat-feed--open:not(.hud-orb-btn) {
   background: rgba(201, 162, 39, 0.18);
   border-color: var(--meadow-gold);
   color: var(--meadow-gold-bright);

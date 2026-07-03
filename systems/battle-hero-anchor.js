@@ -27,16 +27,28 @@ const BattleHeroAnchor = (() => {
     measureCache.combatFloor = undefined;
   }
 
-  /** Множитель эмодзи на «волшебной линии» — компактный бейдж на голове. */
+  /** Множитель эмодзи на боевом полу арены. */
   const BATTLE_THOUGHT_EMOJI_SCALE = 1;
 
   function battleThoughtEmojiScale() {
     return BATTLE_THOUGHT_EMOJI_SCALE;
   }
 
+  /** Нормализованные точки на зелёном полу (красные маркеры на макете). */
   const COMBAT_FLOOR_ANCHOR = {
-    player: { x: 0.20, y: 0.40 },
-    enemy: { x: 0.80, y: 0.40 },
+    player: { x: 0.20, y: 0.58 },
+    enemy: { x: 0.80, y: 0.58 },
+  };
+
+  const FLOOR_EMOJI_PROFILE = {
+    headBadge: false,
+    floorRatio: 0.50,
+    floorWidthRatio: 0.21,
+    haloRatio: 0.30,
+    avatarRatio: 0,
+    avatarWidthRatio: 0,
+    minPx: 64,
+    maxPx: 144,
   };
 
   function viewportMin() {
@@ -86,36 +98,56 @@ const BattleHeroAnchor = (() => {
 
   const EMOJI_SIZE_BY_PROFILE = {
     "phone-portrait": {
-      floorRatio: 0.12, vminRatio: 0.048, minPx: 24, maxPx: 36,
-      haloRatio: 0.5, avatarRatio: 0.07, avatarWidthRatio: 0.22,
-      headBadge: true, headBadgeYRatio: 0.07, headBadgeInnerXRatio: 0.5,
+      ...FLOOR_EMOJI_PROFILE,
+      floorRatio: 0.46,
+      floorWidthRatio: 0.24,
+      vminRatio: 0.11,
+      minPx: 72,
+      maxPx: 120,
+      haloRatio: 0.28,
     },
     "phone-landscape": {
-      floorRatio: 0.14, vminRatio: 0.05, minPx: 26, maxPx: 38,
-      haloRatio: 0.48, avatarRatio: 0.075, avatarWidthRatio: 0.23,
-      headBadge: true, headBadgeYRatio: 0.07, headBadgeInnerXRatio: 0.5,
+      ...FLOOR_EMOJI_PROFILE,
+      floorRatio: 0.48,
+      floorWidthRatio: 0.22,
+      vminRatio: 0.10,
+      minPx: 68,
+      maxPx: 130,
     },
     "tablet-landscape-side": {
-      floorRatio: 0.10, vminRatio: 0.042, minPx: 28, maxPx: 40,
-      haloRatio: 0.48, avatarRatio: 0.072, avatarWidthRatio: 0.24,
-      headBadge: true, headBadgeYRatio: 0.07, headBadgeInnerXRatio: 0.5,
-      satelliteScale: 0.72, heroBelow: false,
+      ...FLOOR_EMOJI_PROFILE,
+      floorRatio: 0.52,
+      floorWidthRatio: 0.20,
+      vminRatio: 0.10,
+      minPx: 80,
+      maxPx: 148,
+      haloRatio: 0.28,
+      satelliteScale: 0.62,
     },
     "tablet-portrait": {
-      floorRatio: 0.11, vminRatio: 0.045, minPx: 26, maxPx: 38,
-      haloRatio: 0.5, avatarRatio: 0.07, avatarWidthRatio: 0.22,
-      headBadge: true, headBadgeYRatio: 0.07, headBadgeInnerXRatio: 0.5,
+      ...FLOOR_EMOJI_PROFILE,
+      floorRatio: 0.44,
+      floorWidthRatio: 0.23,
+      vminRatio: 0.10,
+      minPx: 72,
+      maxPx: 118,
     },
     "desktop-portrait": {
-      floorRatio: 0.12, vminRatio: 0.048, minPx: 28, maxPx: 42,
-      haloRatio: 0.48, avatarRatio: 0.075, avatarWidthRatio: 0.24,
-      headBadge: true, headBadgeYRatio: 0.07, headBadgeInnerXRatio: 0.5,
+      ...FLOOR_EMOJI_PROFILE,
+      floorRatio: 0.46,
+      floorWidthRatio: 0.22,
+      vminRatio: 0.10,
+      minPx: 76,
+      maxPx: 132,
     },
     "desktop-landscape": {
-      floorRatio: 0.10, vminRatio: 0.044, minPx: 28, maxPx: 42,
-      haloRatio: 0.48, avatarRatio: 0.072, avatarWidthRatio: 0.24,
-      headBadge: true, headBadgeYRatio: 0.07, headBadgeInnerXRatio: 0.5,
-      satelliteScale: 0.72,
+      ...FLOOR_EMOJI_PROFILE,
+      floorRatio: 0.50,
+      floorWidthRatio: 0.20,
+      vminRatio: 0.095,
+      minPx: 80,
+      maxPx: 152,
+      satelliteScale: 0.62,
     },
   };
 
@@ -170,13 +202,15 @@ const BattleHeroAnchor = (() => {
     const emojiMod = battleEmojiScale();
     const uiScale = readCssPx("--ui-scale", 1);
 
-    let fromFloorH = 0;
-    let fromFloorW = 0;
-    if (floor && !prof.headBadge) {
-      fromFloorH = Math.round(floor.height * prof.floorRatio);
-      fromFloorW = Math.round(floor.width * 0.11);
+    let fromFloor = 0;
+    if (floor && usesCombatFloorAnchors() && !prof.headBadge) {
+      const floorBottom = visibleCombatFloorBottom(floor) ?? floor.bottom;
+      const usableH = Math.max(0, floorBottom - floor.top);
+      const fromFloorH = usableH * (prof.floorRatio ?? 0.5);
+      const fromFloorW = floor.width * (prof.floorWidthRatio ?? 0.21);
+      fromFloor = Math.max(fromFloorH, fromFloorW);
     }
-    const fromVmin = Math.round(vmin * prof.vminRatio * Math.max(0.92, uiScale));
+    const fromVmin = Math.round(vmin * (prof.vminRatio ?? 0.1) * Math.max(0.92, uiScale));
     let fromAvatar = 0;
     const avatarRatio = prof.avatarRatio ?? 0;
     const avatarWidthRatio = prof.avatarWidthRatio ?? 0;
@@ -192,7 +226,7 @@ const BattleHeroAnchor = (() => {
         }
       }
     }
-    const raw = Math.max(fromFloorH, fromFloorW, fromVmin, fromAvatar) * emojiMod * BATTLE_THOUGHT_EMOJI_SCALE;
+    const raw = Math.max(fromFloor, fromVmin, fromAvatar) * emojiMod * BATTLE_THOUGHT_EMOJI_SCALE;
     const minPx = Math.round(prof.minPx);
     const maxPx = Math.round(prof.maxPx);
     return Math.round(Math.min(maxPx, Math.max(minPx, raw)));
@@ -298,11 +332,39 @@ const BattleHeroAnchor = (() => {
 
   function usesHeroBelowThoughtAnchors() {
     if (usesHeadBadgeAnchors()) return false;
+    if (usesCombatFloorAnchors() && !emojiProfile().headBadge) return false;
     const prof = emojiProfile();
     return prof.heroBelow === true || currentBattleProfile() === "tablet-landscape-side";
   }
 
-  /** Компактный бейдж на голове — верх-внутрь к центру экрана. */
+  /** Крупный эмодзи-аватар на боевом полу (точки x20/y58 и x80/y58). */
+  function getCombatFloorThoughtAnchor(side) {
+    const floor = getCombatFloorRect();
+    if (!floor) return null;
+
+    const anchorNorm = COMBAT_FLOOR_ANCHOR[side] || COMBAT_FLOOR_ANCHOR.player;
+    const emojiSize = thoughtSlotEmojiSize();
+    const halo = thoughtSlotHaloPx(emojiSize);
+    const containerSize = emojiSize + halo * 2;
+
+    const floorBottom = visibleCombatFloorBottom(floor) ?? floor.bottom;
+    const usableH = Math.max(0, floorBottom - floor.top);
+    const cx = floor.left + floor.width * anchorNorm.x;
+    const cy = floor.top + usableH * anchorNorm.y;
+
+    return {
+      cx,
+      cy,
+      emojiSize,
+      halo,
+      containerSize,
+      top: cy - containerSize / 2,
+      left: cx - containerSize / 2,
+      size: containerSize,
+    };
+  }
+
+  /** @deprecated Компактный бейдж на голове — только если headBadge включён в профиле. */
   function getHeadBadgeThoughtAnchor(side) {
     const emojiSize = thoughtSlotEmojiSize();
     const halo = thoughtSlotHaloPx(emojiSize);
@@ -415,6 +477,11 @@ const BattleHeroAnchor = (() => {
 
   /** Позиция thought-slot в viewport (px). */
   function getThoughtSlotAnchor(side) {
+    if (usesCombatFloorAnchors() && !usesHeadBadgeAnchors()) {
+      const floorAnchor = getCombatFloorThoughtAnchor(side);
+      if (floorAnchor) return floorAnchor;
+    }
+
     if (usesHeadBadgeAnchors()) {
       const badge = getHeadBadgeThoughtAnchor(side);
       if (badge) return badge;
@@ -538,6 +605,7 @@ const BattleHeroAnchor = (() => {
     satelliteScaleFactor,
     usesHeadBadgeAnchors,
     getHeadBadgeThoughtAnchor,
+    getCombatFloorThoughtAnchor,
     usesHeroBelowThoughtAnchors,
     invalidateMeasureCache,
   };

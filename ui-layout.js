@@ -1441,23 +1441,12 @@
       let emojiSize = null;
 
       if (combatFloor && typeof BattleHeroAnchor !== "undefined") {
-        if (BattleHeroAnchor.usesHeadBadgeAnchors?.()) {
-          const badge = BattleHeroAnchor.getHeadBadgeThoughtAnchor(side);
-          if (badge) {
-            cx = badge.cx;
-            top = badge.top;
-            slotSize = badge.size;
-            emojiSize = badge.emojiSize || null;
-          }
-        }
-        if (cx == null || top == null) {
-          const anchor = BattleHeroAnchor.getThoughtSlotAnchor(side);
-          if (anchor) {
-            cx = anchor.cx;
-            top = anchor.top;
-            slotSize = anchor.size;
-            emojiSize = anchor.emojiSize || null;
-          }
+        const anchor = BattleHeroAnchor.getThoughtSlotAnchor(side);
+        if (anchor) {
+          cx = anchor.cx;
+          top = anchor.top;
+          slotSize = anchor.size;
+          emojiSize = anchor.emojiSize || null;
         }
       }
 
@@ -1821,6 +1810,7 @@
   function syncBattleSceneGridMetrics() {
     const root = document.documentElement;
     if (!isBattleUiPhase()) return;
+    if (document.getElementById("app")?.dataset.gameMode === "td") return;
 
     if (root.dataset.battleHeroPlacement !== "flank-arena" || root.dataset.battleArenaLayout !== "true") {
       const canvas = document.getElementById("game-canvas");
@@ -1960,6 +1950,7 @@
 
   /** Единая раскладка боя: player | arena | enemy на всех tier. */
   function fitFlankArenaBattleLayout(root, canvas, fieldCol, stageW) {
+    if (document.getElementById("app")?.dataset.gameMode === "td") return;
     const vh = window.visualViewport?.height ?? window.innerHeight;
     const hudReserve = measureBattleHudReserve();
     const cssW = readCssPx("--battle-canvas-w", canvas.width);
@@ -2057,6 +2048,31 @@
     }
 
     if (phase === "battle" || phase === "replay") {
+      const app = document.getElementById("app");
+      if (app?.dataset.gameMode === "td") {
+        setBattleArenaLayout(false);
+        setBattleHeroPlacement(null);
+        root.dataset.battleMobileFit = "false";
+        [
+          "--battle-canvas-display-w",
+          "--battle-canvas-display-h",
+          "--battle-field-display-w",
+          "--battle-grid-gap-display",
+        ].forEach((name) => root.style.removeProperty(name));
+        const fieldCol = canvas.closest(".prep-field-column");
+        const stageW = fieldCol?.clientWidth ?? 0;
+        const stageH = fieldCol?.clientHeight ?? 0;
+        if (stageW > 0 && stageH > 0 && canvas.width > 0 && canvas.height > 0) {
+          const scale = Math.min(stageW / canvas.width, stageH / canvas.height, 1.5);
+          const w = Math.max(1, Math.floor(canvas.width * scale));
+          const h = Math.max(1, Math.floor(canvas.height * scale));
+          root.style.setProperty("--battle-canvas-display-w", `${w}px`);
+          root.style.setProperty("--battle-canvas-display-h", `${h}px`);
+          setCanvasDisplaySize(canvas, w, h);
+        }
+        syncFxCanvasGeometry();
+        return;
+      }
       const stage = canvas.closest(".battle-canvas-stage");
       const fieldCol = canvas.closest(".prep-field-column");
       const stageW = fieldCol?.clientWidth ?? stage?.clientWidth ?? 0;

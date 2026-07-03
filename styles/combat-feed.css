@@ -35,7 +35,6 @@
   background: rgba(22, 27, 34, 0.92);
   color: #c9d1d9;
   font-size: var(--font-sm);
-  min-height: var(--touch-target-min);
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
@@ -45,6 +44,29 @@
     border-color 0.18s ease,
     box-shadow 0.18s ease,
     color 0.18s ease;
+}
+
+.btn-combat-feed.hud-orb-btn {
+  gap: 0;
+  padding: 0;
+  min-height: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: none;
+  color: inherit;
+}
+
+.btn-combat-feed.hud-orb-btn:hover {
+  background: transparent;
+  border: none;
+  color: inherit;
+}
+
+.btn-combat-feed.hud-orb-btn.btn-combat-feed--open {
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .btn-combat-feed:hover {

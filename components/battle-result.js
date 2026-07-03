@@ -177,7 +177,13 @@ function showBattleResultPopup(summary, battleLog = []) {
 
   const subtitleEl = document.getElementById("battle-result-subtitle");
   if (subtitleEl) {
-    subtitleEl.textContent = summary.roundNum != null ? `Раунд ${summary.roundNum}` : "";
+    subtitleEl.textContent = summary.tdSubtitle
+      || (summary.roundNum != null ? `Раунд ${summary.roundNum}` : "");
+  }
+
+  const continueBtn = document.getElementById("btn-battle-continue");
+  if (continueBtn) {
+    continueBtn.textContent = summary.isTd ? "🛒 В магазин" : "Продолжить";
   }
 
   const accordionsEl = document.getElementById("battle-result-accordions");

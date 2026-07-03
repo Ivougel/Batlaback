@@ -56,7 +56,7 @@
   <link rel="stylesheet" href="styles/tablet-side.css?v=31">
   <link rel="stylesheet" href="styles/battle-inventory-popover.css?v=8">
   <link rel="stylesheet" href="styles/lobby.css?v=8">
-  <link rel="stylesheet" href="styles/td-mode.css?v=1">
+  <link rel="stylesheet" href="styles/td-mode.css?v=3">
   <link rel="stylesheet" href="styles/lobby-roster-float.css?v=2">
   <link rel="stylesheet" href="styles/meadow-theme.css?v=2">
   <link rel="stylesheet" href="styles/battle-theme-ui.css?v=2">
@@ -223,6 +223,9 @@
                 <div class="battle-thought-arena" id="battle-thought-arena" aria-live="polite" aria-label="Боевые эмоджи героев">
                   <div class="arena-equipment-layer" id="arena-equipment-layer" aria-hidden="true"></div>
                 </div>
+                <div class="td-arena-mount hidden" id="td-arena-mount" aria-hidden="true">
+                  <canvas id="td-arena-canvas" aria-label="Tower Defense"></canvas>
+                </div>
               </div>
 
               <!-- Layer 3 — FX -->
@@ -380,6 +383,43 @@
               <span class="class-name">Tower Defense</span>
               <span class="class-desc">Герой в центре — 99 волн свиней по тропинкам</span>
               <span class="class-badge class-badge--td">Оборона</span>
+            </button>
+          </div>
+        </div>
+        <div class="class-step hidden" id="class-step-td-difficulty">
+          <div class="class-step-actions class-step-actions-top">
+            <button type="button" class="btn-secondary btn-glass-back" id="btn-class-back-mode-td">← Режим игры</button>
+          </div>
+          <div class="td-difficulty-grid" id="td-difficulty-grid">
+            <button type="button" class="class-card td-difficulty-card glass-card" data-td-difficulty="easy">
+              <span class="glass-card-icon class-icon" aria-hidden="true">🌱</span>
+              <span class="class-name">Лёгкий</span>
+              <span class="class-desc">Мало свиней, слабый урон · для знакомства</span>
+              <span class="class-badge class-badge--td-easy">×0.65</span>
+            </button>
+            <button type="button" class="class-card td-difficulty-card glass-card selected" data-td-difficulty="normal">
+              <span class="glass-card-icon class-icon" aria-hidden="true">⚔️</span>
+              <span class="class-name">Нормальный</span>
+              <span class="class-desc">Базовый баланс · эталон 99 волн</span>
+              <span class="class-badge class-badge--td-normal">×1.0</span>
+            </button>
+            <button type="button" class="class-card td-difficulty-card glass-card" data-td-difficulty="hard">
+              <span class="glass-card-icon class-icon" aria-hidden="true">🔥</span>
+              <span class="class-name">Сложный</span>
+              <span class="class-desc">Больше стай и HP · нужен крепкий билд</span>
+              <span class="class-badge class-badge--td-hard">×1.55</span>
+            </button>
+            <button type="button" class="class-card td-difficulty-card glass-card" data-td-difficulty="nightmare">
+              <span class="glass-card-icon class-icon" aria-hidden="true">💀</span>
+              <span class="class-name">Кошмар</span>
+              <span class="class-desc">Быстрые толстые свиньи · мало ошибок</span>
+              <span class="class-badge class-badge--td-nightmare">×2.4</span>
+            </button>
+            <button type="button" class="class-card td-difficulty-card glass-card" data-td-difficulty="ultra">
+              <span class="glass-card-icon class-icon" aria-hidden="true">☠️</span>
+              <span class="class-name">Ультра</span>
+              <span class="class-desc">Экспоненциальный ад · только для ветеранов</span>
+              <span class="class-badge class-badge--td-ultra">×3.7</span>
             </button>
           </div>
         </div>
@@ -869,10 +909,10 @@
   <script src="systems/lobby-fighter-avatar.js?v=4"></script>
   <script src="systems/lobby-spectator.js?v=8"></script>
   <script src="systems/lobby-roster-float.js?v=2"></script>
-  <script src="systems/td-engine.js?v=1"></script>
+  <script src="systems/td-engine.js?v=4"></script>
   <script src="battle-engine.js?v=2"></script>
   <script src="battle-float-layer.js?v=18"></script>
-  <script src="components/td-arena.js?v=1"></script>
+  <script src="components/td-arena.js?v=3"></script>
   <script src="components/thought-arena.js?v=16"></script>
   <script src="components/arena-equipment.js?v=25"></script>
   <script src="components/emotion-presenter.js?v=5"></script>

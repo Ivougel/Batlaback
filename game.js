@@ -232,6 +232,10 @@ function togglePrepDollOpen(e) {
 }
 let selectedGameMode = "solo";
 let selectedOpponentMode = "ai";
+/** Выбранная сложность TD в интро (easy … ultra). */
+let selectedTdDifficulty = "normal";
+/** Активная сложность текущего TD-забега. */
+let tdRunDifficultyId = "normal";
 let selectedEnemyClass = null;
 let pendingPlayerClass = null;
 let pendingMutationIntentId = null;
@@ -1114,11 +1118,16 @@ function renderCompanionSelection() {
 
 const CLASS_INTRO_STEP_IDS = {
   mode: "class-step-mode",
+  tdDifficulty: "class-step-td-difficulty",
   player: "class-step-player",
   companion: "class-step-companion",
   summary: "class-step-summary",
   opponent: "class-step-opponent",
 };
+
+function getClassIntroTotalSteps() {
+  return selectedGameMode === "td" ? 5 : 4;
+}
 
 let classSummaryTooltipPinned = false;
 let classSummaryTooltipKind = null;
@@ -1259,7 +1268,12 @@ function renderClassSummaryStep() {
   const heroFloat = document.getElementById("class-summary-hero");
 
   const heroLabel = cls?.heroLabel || cls?.noviceLabel || cls?.name || "—";
-  if (lead) lead.textContent = `Ваш выбор: ${heroLabel} и ${companion?.name || "—"}`;
+  if (lead) {
+    const diffLine = selectedGameMode === "td" && typeof tdFormatDifficultyLabel === "function"
+      ? ` · ${tdFormatDifficultyLabel(selectedTdDifficulty)}`
+      : "";
+    lead.textContent = `Ваш выбор: ${heroLabel} и ${companion?.name || "—"}${diffLine}`;
+  }
   if (heroImg && pendingPlayerClass) {
     const src = typeof getClassHeroPortraitSrc === "function"
       ? getClassHeroPortraitSrc(pendingPlayerClass)
@@ -1365,21 +1379,30 @@ function syncClassOverlayUi() {
   const opponentStep = document.getElementById("class-step-opponent");
   if (!badge || !hint) return;
 
-  const totalSteps = 4;
+  const totalSteps = getClassIntroTotalSteps();
 
   if (modeStep && !modeStep.classList.contains("hidden")) {
     badge.textContent = `Шаг 1 из ${totalSteps} · Режим`;
     hint.textContent = "Четыре девочки-звери скрестили клички с именами — выберите режим";
+  } else if (document.getElementById("class-step-td-difficulty") && !document.getElementById("class-step-td-difficulty").classList.contains("hidden")) {
+    badge.textContent = `Шаг 2 из ${totalSteps} · Сложность`;
+    hint.textContent = "5 ступеней · ×1.55 между уровнями · нажмите ещё раз — к герою";
   } else if (playerStep && !playerStep.classList.contains("hidden")) {
-    badge.textContent = `Шаг 2 из ${totalSteps} · Герой`;
+    badge.textContent = selectedGameMode === "td"
+      ? `Шаг 3 из ${totalSteps} · Герой`
+      : `Шаг 2 из ${totalSteps} · Герой`;
     hint.textContent = pendingPlayerClass
       ? "Нажмите героя ещё раз — к выбору спутника"
       : "Читайте описание на плитке · после выбора слева — полная история";
   } else if (companionStep && !companionStep.classList.contains("hidden")) {
-    badge.textContent = `Шаг 3 из ${totalSteps} · Спутник`;
+    badge.textContent = selectedGameMode === "td"
+      ? `Шаг 4 из ${totalSteps} · Спутник`
+      : `Шаг 3 из ${totalSteps} · Спутник`;
     hint.textContent = "Выберите спутника · нажмите ещё раз — к саммари";
   } else if (summaryStep && !summaryStep.classList.contains("hidden")) {
-    badge.textContent = `Шаг 4 из ${totalSteps} · Старт`;
+    badge.textContent = selectedGameMode === "td"
+      ? `Шаг ${totalSteps} из ${totalSteps} · Старт`
+      : `Шаг 4 из ${totalSteps} · Старт`;
     hint.textContent = "Наведите на героя или спутника · «Старт» по центру";
   } else if (opponentStep && !opponentStep.classList.contains("hidden")) {
     badge.textContent = "Шаг 4 из 4 · Соперник";
@@ -1466,6 +1489,37 @@ function syncClassHeroShowcase() {
   updateClassHeroShowcase(classId || null);
 }
 
+function renderTdDifficultySelection() {
+  document.querySelectorAll(".td-difficulty-card").forEach((card) => {
+    card.classList.toggle("selected", card.dataset.tdDifficulty === selectedTdDifficulty);
+  });
+}
+
+function showTdDifficultyStep() {
+  dismissClassOverlayTooltip();
+  hideClassSummaryTooltip();
+  setClassIntroStep("tdDifficulty");
+  document.getElementById("class-modal-title").textContent = "Сложность обороны";
+  document.getElementById("class-modal-subtitle").textContent =
+    "Ступени растут по экспоненте ×1.55 — от знакомства до ультра";
+  renderTdDifficultySelection();
+  syncClassOverlayUi();
+  syncClassMobileDock();
+}
+
+function selectTdDifficulty(difficultyId) {
+  if (typeof getTdDifficulty === "function" && !getTdDifficulty(difficultyId)) return;
+  const reclick = selectedTdDifficulty === difficultyId;
+  selectedTdDifficulty = difficultyId;
+  renderTdDifficultySelection();
+  if (reclick) {
+    showPlayerClassStep();
+    return;
+  }
+  syncClassOverlayUi();
+  syncClassMobileDock();
+}
+
 function showGameModeStep() {
   hideClassSummaryTooltip();
   setClassIntroStep("mode");
@@ -1515,7 +1569,11 @@ function selectGameMode(mode) {
     card.classList.toggle("selected", card.dataset.gameMode === mode);
   });
   if (typeof renderClassMutationGallery === "function") renderClassMutationGallery(null);
-  showPlayerClassStep();
+  if (mode === "td") {
+    showTdDifficultyStep();
+  } else {
+    showPlayerClassStep();
+  }
 }
 
 function resetClassSelectOverlay() {
@@ -1525,6 +1583,7 @@ function resetClassSelectOverlay() {
   selectedEnemyClass = null;
   selectedGameMode = "solo";
   selectedOpponentMode = "ai";
+  selectedTdDifficulty = "normal";
   document.querySelectorAll(".game-mode-card").forEach((card) => {
     card.classList.toggle("selected", card.dataset.gameMode === "solo");
   });
@@ -2168,6 +2227,7 @@ function init() {
 
   canvas = document.getElementById("game-canvas");
   ctx = canvas.getContext("2d");
+  if (typeof TdArena !== "undefined" && typeof TdArena.init === "function") TdArena.init();
   fxCanvas = document.getElementById("canvas-fx");
   fxCtx = fxCanvas?.getContext("2d") || null;
   applyPhaseCanvasLayout();
@@ -2215,6 +2275,9 @@ function init() {
   document.querySelectorAll(".game-mode-card").forEach((btn) => {
     btn.addEventListener("click", () => selectGameMode(btn.dataset.gameMode));
   });
+  document.querySelectorAll(".td-difficulty-card").forEach((btn) => {
+    btn.addEventListener("click", () => selectTdDifficulty(btn.dataset.tdDifficulty));
+  });
   if (typeof syncClassPickerCardsFromCatalog === "function") syncClassPickerCardsFromCatalog();
   if (typeof syncClassHeroRosterCaption === "function") syncClassHeroRosterCaption();
   document.querySelectorAll(".class-card[data-class]:not([disabled])").forEach((btn) => {
@@ -2224,17 +2287,24 @@ function init() {
     btn.addEventListener("click", () => selectOpponentClass(btn.dataset.opponentClass));
   });
   document.getElementById("btn-class-back-mode")?.addEventListener("click", () => {
-    showGameModeStep();
+    if (selectedGameMode === "td") showTdDifficultyStep();
+    else showGameModeStep();
   });
+  document.getElementById("btn-class-back-mode-td")?.addEventListener("click", () => showGameModeStep());
   document.getElementById("btn-class-back")?.addEventListener("click", () => {
     const summaryStep = document.getElementById("class-step-summary");
     const opponentStep = document.getElementById("class-step-opponent");
     const companionStep = document.getElementById("class-step-companion");
     const playerStep = document.getElementById("class-step-player");
+    const tdDifficultyStep = document.getElementById("class-step-td-difficulty");
     if (summaryStep && !summaryStep.classList.contains("hidden")) showCompanionStep({ keepSelection: true });
     else if (opponentStep && !opponentStep.classList.contains("hidden")) showCompanionStep();
     else if (companionStep && !companionStep.classList.contains("hidden")) showPlayerClassStep();
-    else if (playerStep && !playerStep.classList.contains("hidden")) showGameModeStep();
+    else if (playerStep && !playerStep.classList.contains("hidden")) {
+      if (selectedGameMode === "td") showTdDifficultyStep();
+      else showGameModeStep();
+    }
+    else if (tdDifficultyStep && !tdDifficultyStep.classList.contains("hidden")) showGameModeStep();
     else showGameModeStep();
   });
   document.getElementById("btn-class-back-player")?.addEventListener("click", () => showPlayerClassStep());
@@ -2256,6 +2326,8 @@ function init() {
     const continueAfterResult = () => {
       releasePreviousBattleReplayFrames();
       if (typeof hideBattleCountdownOverlay === "function") hideBattleCountdownOverlay();
+      const continueBtn = document.getElementById("btn-battle-continue");
+      if (continueBtn) continueBtn.textContent = "Продолжить";
       if (pendingGameOver) {
         showRunComplete();
         pendingGameOver = false;
@@ -2266,12 +2338,14 @@ function init() {
         setLobbyViewFighter(lobbyState.playerId);
         renderLobbyChrome();
       }
-      setPhaseLabel("Подготовка", false);
+      setPhaseLabel(isTdMode() ? "Закуп перед волной" : "Подготовка", false);
       updatePrepSideUI();
       renderFightButton();
       ensureShopReady();
       renderShop();
+      renderBench();
       updateUI();
+      if (isTdMode()) syncTdBattleChrome();
     };
     const runPrepTransition = () => {
       transitionToPhase("prep", continueAfterResult);
@@ -2446,6 +2520,9 @@ function applyPhaseCanvasLayout() {
   if (phase === "prep") {
     canvas.width = PREP_CANVAS_W;
     canvas.height = PREP_CANVAS_H;
+  } else if (isTdMode() && isBattleUiPhase()) {
+    canvas.width = typeof TD_CANVAS_W === "number" ? TD_CANVAS_W : 960;
+    canvas.height = typeof TD_CANVAS_H === "number" ? TD_CANVAS_H : 640;
   } else {
     canvas.width = BATTLE_CANVAS_W;
     canvas.height = BATTLE_CANVAS_H;
@@ -2492,19 +2569,35 @@ function getEnemyCharacteristicsState() {
   };
 }
 
+function syncTdBattleChrome() {
+  const live = isTdMode() && isBattleUiPhase() && !!tdState;
+  if (typeof TdArena !== "undefined") {
+    if (typeof TdArena.init === "function") TdArena.init();
+    if (typeof TdArena.setVisible === "function") TdArena.setVisible(live);
+    if (live && typeof TdArena.resize === "function") TdArena.resize();
+  }
+  if (live) {
+    document.documentElement.removeAttribute("data-battle-hero-placement");
+    document.documentElement.dataset.battleArenaLayout = "false";
+  }
+}
+
 function renderPhase() {
   const app = document.getElementById("app");
   const root = document.documentElement;
   if (app) {
     app.dataset.phase = getAppDataPhase();
+    app.dataset.gameMode = gameMode;
     if (phase === "prep") app.dataset.prepSide = prepViewSide;
   }
   if (root) {
     root.dataset.gamePhase = phase === "battle" || phase === "replay" ? phase : phase === "prep" ? "prep" : "";
+    root.dataset.gameMode = gameMode;
   }
   applyPhaseCanvasLayout();
   setBattleControlsVisible(isBattleUiPhase());
   syncBattleArenaLayout();
+  syncTdBattleChrome();
   const battleSceneUi = document.getElementById("battle-scene-ui");
   if (battleSceneUi) battleSceneUi.setAttribute("aria-hidden", isBattleUiPhase() ? "false" : "true");
   renderPlayerProfiles();
@@ -2523,6 +2616,11 @@ function renderPhase() {
   if (phase !== "prep") setPrepDollOpen(false);
   if (phase !== "prep" && typeof closeMobilePrepShop === "function") closeMobilePrepShop();
   if (typeof applyUiLayout === "function") scheduleLayoutAfterPhase();
+  if (isTdMode() && isBattleUiPhase()) {
+    requestAnimationFrame(() => {
+      if (typeof TdArena !== "undefined" && typeof TdArena.resize === "function") TdArena.resize();
+    });
+  }
   syncRunHudPhase();
   syncBattleHudVisibility();
   renderLobbyChrome();
@@ -2543,7 +2641,7 @@ function renderPhase() {
 function syncBattleHudVisibility() {
   const battleHud = document.getElementById("battle-run-hud");
   const runHud = document.getElementById("run-hud");
-  const live = isBattleUiPhase();
+  const live = isBattleUiPhase() && !isTdMode();
   if (battleHud) {
     battleHud.hidden = !live;
     if (live) battleHud.removeAttribute("aria-hidden");
@@ -2883,6 +2981,9 @@ function startRunFromOverlay() {
   enemyClass = selectedEnemyClass || pendingPlayerClass;
   enemyArchetype = AI_ARCHETYPES[enemyClass] || AI_ARCHETYPES.warrior;
   prepViewSide = "player";
+  if (selectedGameMode === "td") {
+    tdRunDifficultyId = selectedTdDifficulty;
+  }
   dismissClassOverlayTooltip();
   hideClassSummaryTooltip();
   const overlay = document.getElementById("class-overlay");
@@ -3052,7 +3153,7 @@ function restartGame() {
     : isLobbyMode()
       ? `Лобби: ${LOBBY_FIGHTER_COUNT} бойцов, ${LOBBY_START_HP} HP. 🏆 внизу — список участников. Таймер ${LOBBY_PREP_SECONDS}с.`
       : isTdMode()
-        ? `Tower Defense: ${getTdMaxWaves()} волн свиней! Соберите билд — предметы защищают героя в центре.`
+        ? `Tower Defense (${typeof tdFormatDifficultyLabel === "function" ? tdFormatDifficultyLabel(tdRunDifficultyId) : tdRunDifficultyId}): ${getTdMaxWaves()} волн! Предметы защищают героя в центре.`
         : isHardBotMode()
           ? "Сложный бот: каждый раунд подбирает лучшую экипировку. Расставьте предметы и в бой!"
           : "Расставьте предметы и в бой! Tab — посмотреть билд бота.");
@@ -4494,6 +4595,39 @@ function startBattle() {
   applyCraftingForSide("player");
   if (isVersusMode()) applyCraftingForSide("enemy");
 
+  if (isTdMode()) {
+    applySynergyModifiersToContainers(playerContainers, playerItems);
+    lastBattlePrepSnapshot = {
+      playerItems: flattenContainersForBattle(playerContainers, playerItems).map(clonePrepBattleItem),
+      enemyItems: [],
+      playerClass,
+      enemyClass: playerClass,
+    };
+    if (typeof TdArena !== "undefined") {
+      if (typeof TdArena.init === "function") TdArena.init();
+      if (typeof TdArena.loadPortrait === "function") TdArena.loadPortrait(playerClass);
+    }
+    tdState = createTdState(
+      lastBattlePrepSnapshot.playerItems,
+      playerClass,
+      round,
+      {
+        difficultyId: tdRunDifficultyId,
+        player: {
+          pendingShopBuffs: playerPendingShopBuffs,
+          companionId: playerCompanionId,
+          mutationFormId: playerMutationFormId,
+          mutationId: playerMutationId,
+          enhancements: playerEnhancements,
+        },
+      },
+    );
+    if (tdHeroHp !== null && tdState.hero) {
+      tdState.hero.hp = Math.min(tdHeroHp, tdState.hero.maxHp);
+    }
+    battleState = null;
+  }
+
   transitionToPhase("battle", () => {
     try {
       releasePreviousBattleReplayFrames();
@@ -4504,31 +4638,7 @@ function startBattle() {
       applySynergyModifiersToContainers(playerContainers, playerItems);
 
       if (isTdMode()) {
-        applySynergyModifiersToContainers(playerContainers, playerItems);
-        lastBattlePrepSnapshot = {
-          playerItems: flattenContainersForBattle(playerContainers, playerItems).map(clonePrepBattleItem),
-          enemyItems: [],
-          playerClass,
-          enemyClass: playerClass,
-        };
-        tdState = createTdState(
-          lastBattlePrepSnapshot.playerItems,
-          playerClass,
-          round,
-          {
-            player: {
-              pendingShopBuffs: playerPendingShopBuffs,
-              companionId: playerCompanionId,
-              mutationFormId: playerMutationFormId,
-              mutationId: playerMutationId,
-              enhancements: playerEnhancements,
-            },
-          },
-        );
-        if (tdHeroHp !== null && tdState.hero) {
-          tdState.hero.hp = Math.min(tdHeroHp, tdState.hero.maxHp);
-        }
-        battleState = null;
+        if (!tdState) throw new Error("tdState missing");
         if (typeof setBattleEnemyTeamLabel === "function") {
           setBattleEnemyTeamLabel("🐷 Свиньи");
         }
@@ -4537,18 +4647,20 @@ function startBattle() {
         tickBattlePresentation._at = { emotion: 0, arena: 0 };
         if (typeof resetEmotionEngine === "function") resetEmotionEngine();
         if (typeof resetBattleAuraFrame === "function") resetBattleAuraFrame();
-        if (typeof initBattleHud === "function") initBattleHud();
         if (typeof hideBattleCountdownOverlay === "function") hideBattleCountdownOverlay();
         playerPendingShopBuffs = 0;
         setBattleSpeed(savedBattleSpeed);
         updateBattleControlsUI();
         setPhaseLabel(`Волна ${round}!`, true);
-        log(`🐷 Волна ${round}/${getTdMaxWaves()}: свиньи идут!`);
+        const diffTag = typeof tdFormatDifficultyLabel === "function"
+          ? tdFormatDifficultyLabel(tdRunDifficultyId)
+          : "";
+        log(`🐷 ${diffTag ? `${diffTag} · ` : ""}Волна ${round}/${getTdMaxWaves()}: свиньи идут!`);
         playPrepSfx("battle_start");
         renderBattleStats();
-        renderPlayerProfiles();
         renderFightButton();
         renderLobbyChrome();
+        syncTdBattleChrome();
         return;
       }
 
@@ -4691,6 +4803,9 @@ function endTdWave() {
     if (typeof applyRoundGoldWithShopMeta === "function") {
       goldReward = applyRoundGoldWithShopMeta("player", goldReward, playerItems, (msg) => log(msg));
     }
+    if (typeof getTdDifficultyGoldMult === "function") {
+      goldReward = Math.round(goldReward * getTdDifficultyGoldMult(tdRunDifficultyId));
+    }
     gold += goldReward;
     goldEarnedTotal += goldReward;
 
@@ -4708,7 +4823,11 @@ function endTdWave() {
     }
     if (goldReward > 0) playPrepSfx("gold");
 
-    battleSummary = buildTdWaveSummary(finishedState, { roundNum: round, goldReward });
+    battleSummary = buildTdWaveSummary(finishedState, {
+      roundNum: round,
+      goldReward,
+      difficultyId: tdRunDifficultyId,
+    });
     if (recentBattleResults.length > 5) recentBattleResults.shift();
 
     const battleResult = battleWinner === "player" ? "win" : "loss";
@@ -4723,10 +4842,15 @@ function endTdWave() {
     resetBattlePause();
   } catch (err) {
     console.error("endTdWave failed:", err);
-    battleSummary = buildTdWaveSummary(finishedState, { roundNum: round, goldReward: 0 });
+    battleSummary = buildTdWaveSummary(finishedState, {
+      roundNum: round,
+      goldReward: 0,
+      difficultyId: tdRunDifficultyId,
+    });
   }
 
   requestAnimationFrame(() => {
+    syncTdBattleChrome();
     showBattleResultPopup(battleSummary, finishedState.log || []);
   });
 
@@ -5002,6 +5126,7 @@ function applyPostBattlePrep(battleWinner) {
     updateUI();
     renderRunStats();
     renderFightButton();
+    ensureShopReadyForSide("player");
     return;
   }
 
@@ -6036,6 +6161,9 @@ function rotateDragItem() {
 function draw() {
   drawWorldLayer();
   drawFxLayer();
+  if (isTdMode() && isBattleUiPhase() && tdState && typeof TdArena !== "undefined" && typeof TdArena.drawFrame === "function") {
+    TdArena.drawFrame(tdState, synergyAnimTime);
+  }
 }
 
 function drawWorldLayer() {
@@ -6081,10 +6209,6 @@ function drawWorldLayer() {
       else drawDropPreview(ctx);
     }
     ctx.restore();
-  } else if (isBattleUiPhase() && isTdMode() && tdState) {
-    if (typeof TdArena !== "undefined") {
-      TdArena.draw(ctx, tdState, canvas.width, canvas.height, synergyAnimTime);
-    }
   } else if (isBattleUiPhase()) {
     const viewState = getDisplayBattleState();
     if (shouldDrawCanvasLoadoutInBattle()) {
@@ -6154,6 +6278,9 @@ function meadowCssColor(varName, fallback) {
 }
 
 function drawBackground() {
+  if (isTdMode() && isBattleUiPhase() && tdState) {
+    return;
+  }
   if (phase === "prep") {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const w = canvas.width;
@@ -8424,18 +8551,24 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
       ? `${viewedFighter.hp}/${LOBBY_START_HP}`
       : lobbyPlayer
         ? `${lobbyPlayer.hp}/${LOBBY_START_HP}`
-        : profile.hpDisplay;
+        : isTdMode() && side === "player" && tdHeroHp !== null
+          ? `${Math.ceil(tdHeroHp)}/${profile.hpDisplay?.split("/")?.[1] || profile.hpDisplay || "—"}`
+          : profile.hpDisplay;
     const hpRowClass = lobbyPlayer ? " prep-stats-row--lobby-hp" : "";
     const companionLabel = companion ? `${companion.emoji} ${companion.name}` : "—";
+    const tdDiffRow = isTdMode() && typeof tdFormatDifficultyLabel === "function"
+      ? `<div class="prep-stats-row prep-stats-row--td-diff"><span>Сложность</span><b>${tdFormatDifficultyLabel(tdRunDifficultyId)}</b></div>`
+      : "";
     const heroCardName = getPrepHeroCardName(profile);
     const metricsInBottomBar = heroCardHud;
     const metricsHtml = metricsInBottomBar
       ? `<div class="prep-stats-row prep-stats-row--companion"><span>${companionLabel}</span></div>`
       : `
         <div class="prep-stats-row prep-stats-row--companion"><span>${companionLabel}</span></div>
+        ${tdDiffRow}
         <div class="prep-stats-row"><span>💰</span><b>${st.gold}</b></div>
         <div class="prep-stats-row${hpRowClass}"><span>❤️</span><b>${hpLabel}</b></div>
-        <div class="prep-stats-row prep-stats-row--round"><span>Раунд</span><b>${roundLabel}</b></div>`;
+        <div class="prep-stats-row prep-stats-row--round"><span>Волна</span><b>${roundLabel}</b></div>`;
     syncPrepBottomStats({
       gold: st.gold,
       hpLabel,
@@ -8454,9 +8587,10 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
       <div class="prep-stats-class">${displayTitle}</div>
       <div class="prep-stats-metrics">
         <div class="prep-stats-row"><span>${companionLabel}</span></div>
+        ${tdDiffRow}
         <div class="prep-stats-row"><span>💰</span><b>${st.gold}</b></div>
         <div class="prep-stats-row${hpRowClass}"><span>❤️</span><b>${hpLabel}</b></div>
-        <div class="prep-stats-row"><span>Раунд</span><b>${roundLabel}</b></div>
+        <div class="prep-stats-row"><span>${isTdMode() ? "Волна" : "Раунд"}</span><b>${roundLabel}</b></div>
       </div>`;
     statsHud.innerHTML = `
       ${statsHeaderHtml}

@@ -395,12 +395,33 @@ body:has(#app[data-phase="prep"]) .bottom-chrome .bottombar-btn--icon {
   font-size: max(var(--font-md), calc(1rem * var(--type-scale, 1)));
 }
 
-body:has(#app[data-phase="prep"]) .bottom-chrome .btn-combat-feed.bottombar-btn {
+body:has(#app[data-phase="prep"]) .bottom-chrome .btn-combat-feed.bottombar-btn:not(.hud-orb-btn) {
   gap: calc(6px * var(--ui-scale, 1));
   padding: calc(6px * var(--ui-scale, 1)) calc(14px * var(--ui-scale, 1));
 }
 
-body:has(#app[data-phase="prep"]) .bottom-chrome .btn-combat-feed--open.bottombar-btn,
+body:has(#app[data-phase="prep"]) .bottom-chrome .hud-orb-btn.bottombar-btn {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border-radius: 50%;
+}
+
+body:has(#app[data-phase="prep"]) .bottom-chrome .hud-orb-btn.bottombar-btn:hover {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  transform: none;
+}
+
+body:has(#app[data-phase="prep"]) .bottom-chrome .hud-orb-btn.bottombar-btn:active {
+  transform: scale(0.96);
+}
+
+body:has(#app[data-phase="prep"]) .bottom-chrome .btn-combat-feed--open.bottombar-btn:not(.hud-orb-btn),
 body:has(#app[data-phase="prep"]) .bottom-chrome .standings-toggle.bottombar-btn.active {
   background: linear-gradient(180deg, #fff8e0 0%, #ffeab8 100%);
   border-color: var(--meadow-gold);
@@ -411,7 +432,7 @@ body:has(#app[data-phase="prep"]) .bottom-chrome .standings-toggle.bottombar-btn
     inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
-body:has(#app[data-phase="prep"]) .bottom-chrome .hud-stats-pill {
+body:has(#app[data-phase="prep"]) .bottom-chrome .hud-stats-pill:not(.hud-stats-pill--metrics) {
   background: linear-gradient(180deg, #ffffff 0%, #f2f6f0 100%);
   border: 2px solid var(--meadow-border-soft);
   box-shadow:
@@ -660,8 +681,8 @@ html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .bottom-ch
     inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
-html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .bottom-chrome .hud-stats-pill,
-html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .bottom-chrome .hud-stats-pill {
+html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .bottom-chrome .hud-stats-pill:not(.hud-stats-pill--metrics),
+html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .bottom-chrome .hud-stats-pill:not(.hud-stats-pill--metrics) {
   border-width: 1px;
   box-shadow:
     0 1px 0 rgba(30, 60, 28, 0.08),
