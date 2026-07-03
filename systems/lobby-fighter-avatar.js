@@ -349,6 +349,29 @@ function renderLobbyBattleStatusHTML(ctx, maxVisible = 5) {
   return visible.map(renderLobbyBattleStatusChipHTML).join("") + overflowHtml;
 }
 
+function syncLobbyFighterCardHp(lobby, opts = {}) {
+  if (!lobby) return;
+  const matches = opts.matches || [];
+  const maxHp = typeof LOBBY_START_HP !== "undefined" ? LOBBY_START_HP : 100;
+
+  document.querySelectorAll("[data-lobby-fighter-card], [data-lobby-fighter]").forEach((card) => {
+    const fighterId = Number(card.dataset.lobbyFighterCard || card.dataset.lobbyFighter);
+    const fighter = lobby.fighters?.[fighterId];
+    if (!fighter) return;
+
+    const hp = getLobbyFighterLiveHp(fighterId, lobby, matches);
+    const fill = card.querySelector(".lobby-fighter-card-hp-fill");
+    const val = card.querySelector(".lobby-fighter-card-hp-val");
+    if (fill) {
+      const pct = Math.max(0, Math.min(100, (hp.current / Math.max(1, maxHp)) * 100));
+      fill.style.width = `${pct}%`;
+    }
+    if (val) val.textContent = `♥ ${Math.ceil(hp.current)}`;
+    card.classList.toggle("lobby-fighter-card--live", !!hp.inBattle);
+    card.classList.toggle("lobby-fighter-card--out", !fighter.alive);
+  });
+}
+
 function syncLobbyBattleBottomChipMetrics(lobby, opts = {}) {
   if (!lobby) return;
   const matches = opts.matches || [];
@@ -385,9 +408,11 @@ function syncLobbyFighterAvatars(lobby, opts = {}) {
     const visual = resolveLobbyFighterAvatarVisual(fighter, lobby, rosterOpts);
     syncLobbyFighterAvatarEl(mount, visual);
   });
+  syncLobbyFighterCardHp(lobby, rosterOpts);
   syncLobbyBattleBottomChipMetrics(lobby, rosterOpts);
 }
 
+window.syncLobbyFighterCardHp = syncLobbyFighterCardHp;
 window.syncLobbyBattleBottomChipMetrics = syncLobbyBattleBottomChipMetrics;
 window.getLobbyFighterBattleContext = getLobbyFighterBattleContext;
 window.renderLobbyBattleStatusHTML = renderLobbyBattleStatusHTML;

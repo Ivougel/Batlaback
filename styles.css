@@ -1319,6 +1319,47 @@ body:has(#app[data-phase="replay"]) #battle-controls:not(.hidden) {
   overflow: visible;
 }
 
+.avatar-stack-orbit-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.avatar-thought-slot > .avatar-stack-orbit-ring,
+.battle-thought-arena > .avatar-stack-orbit-ring {
+  z-index: 0;
+}
+
+.avatar-stack-orbit-particle {
+  position: absolute;
+  font-size: calc(13px * var(--ui-scale));
+  line-height: 1;
+  margin: calc(-8px * var(--ui-scale)) 0 0 calc(-8px * var(--ui-scale));
+  animation: avatar-stack-orbit linear infinite;
+  animation-duration: var(--emoji-orbit-base-duration, 4.5s);
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.75));
+}
+
+@keyframes avatar-stack-orbit {
+  from {
+    transform: rotate(var(--orbit-a)) translateX(var(--orbit-r)) rotate(calc(-1 * var(--orbit-a)));
+  }
+  to {
+    transform: rotate(calc(var(--orbit-a) + 360deg)) translateX(var(--orbit-r)) rotate(calc(-1 * (var(--orbit-a) + 360deg)));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avatar-stack-orbit-particle {
+    animation: none;
+  }
+}
+
 .avatar-damage-stacks {
   position: absolute;
   bottom: 100%;
@@ -3587,6 +3628,25 @@ html[data-game-phase="prep"] #prep-tooltip-dock .sidebar-tooltip.hidden {
   display: none;
 }
 
+/* Плавающая подсказка у слотов hero HUD (усиления, спутник) — вне dock */
+html[data-game-phase="prep"] #sidebar-tooltip.sidebar-tooltip--floating {
+  position: fixed !important;
+  width: auto;
+  max-width: calc(320px * var(--ui-scale));
+  margin: 0;
+  padding: calc(12px * var(--ui-scale)) calc(14px * var(--ui-scale));
+  background: #161b22;
+  border: 1.5px solid #30363d;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+  z-index: 10001;
+  max-height: min(50vh, 360px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .sidebar-tooltip {
   position: fixed;
   z-index: 9999;
@@ -4615,6 +4675,45 @@ html[data-touch="true"] .sidebar-tooltip.synergy-tooltip .synergy-tt-source {
 
 .settings-row--theme {
   margin-bottom: calc(-4px * var(--ui-scale));
+}
+
+.settings-orbit-presets {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: calc(6px * var(--ui-scale));
+}
+
+.settings-orbit-preset {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(38px * var(--ui-scale));
+  padding: calc(8px * var(--ui-scale)) calc(6px * var(--ui-scale));
+  border: 2px solid var(--border, rgba(92, 184, 92, 0.28));
+  border-radius: calc(10px * var(--ui-scale));
+  cursor: pointer;
+  font-size: var(--font-sm);
+  font-weight: 800;
+  text-align: center;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.settings-orbit-preset:hover {
+  border-color: var(--accent, rgba(92, 184, 92, 0.55));
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.settings-orbit-preset.is-selected {
+  border-color: var(--gold, #f5c842);
+  background: rgba(92, 184, 92, 0.12);
+  box-shadow: 0 0 0 1px rgba(245, 200, 66, 0.25);
+}
+
+.settings-orbit-preset input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .settings-row {

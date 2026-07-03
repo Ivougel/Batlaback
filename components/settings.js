@@ -16,6 +16,7 @@ function showSettingsPopup() {
   }
   if (typeof syncCombatFeedSettingsUi === "function") syncCombatFeedSettingsUi();
   if (typeof syncLightBattleFxSettingsUi === "function") syncLightBattleFxSettingsUi();
+  if (typeof syncEmojiOrbitSpeedSettingsUi === "function") syncEmojiOrbitSpeedSettingsUi();
   if (typeof syncVisualThemeSettingsUi === "function") syncVisualThemeSettingsUi();
   if (typeof syncSoundThemeSettingsUi === "function") syncSoundThemeSettingsUi();
   overlay.classList.remove("hidden");

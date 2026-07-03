@@ -2653,6 +2653,7 @@
     ensurePrepHeroCardPortraitObserver();
     syncPrepHeroCardPortraitSize();
     window.syncPrepHeroCardChrome?.();
+    if (typeof syncPrepBuildEmojiBtnMount === "function") syncPrepBuildEmojiBtnMount();
 
     if (usesTabletPrepHeroLayout() && appPhase === "prep") {
       syncTabletSidePrepGridMetrics();

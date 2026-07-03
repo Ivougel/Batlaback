@@ -326,6 +326,10 @@ function buildLobbyRosterStripSignature(lobby, opts = {}) {
   return `prep:${viewFighterId}:${fighterSig}`;
 }
 
+function isLobbyRosterPrepStripHtml(stripHtml) {
+  return typeof stripHtml === "string" && stripHtml.includes('data-lobby-fighter="');
+}
+
 function renderLobbyFighterHpBar(current, max) {
   const pct = Math.max(0, Math.min(100, (current / Math.max(1, max)) * 100));
   return `

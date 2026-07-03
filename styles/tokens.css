@@ -116,6 +116,8 @@
   --hero-card-min-portrait-h: calc(140px * var(--ui-scale));
   --avatar-effects-panel-h: calc(68px * var(--ui-scale));
   --battle-avatar-card-w: calc(210px * var(--ui-scale));
+  /* Бегущие эмодзи по обводке арены (battle-aura-frame) — 7% меньшей стороны viewport */
+  --battle-aura-runner-size: 7vmin;
 
   --combatant-icon-gap: calc(36px * var(--ui-scale));
   /* Лобби-ростер prep: якорь масштаба — эмодзи кнопки «скрыть» и аватары в списке */

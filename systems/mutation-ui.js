@@ -508,20 +508,44 @@ let prepBuildEmojiBtnBound = false;
 
 function isPrepBuildEmojiHeroHudMount() {
   const root = document.documentElement;
-  return root.dataset.prepLayout === "side" || root.dataset.uiSurface === "tablet-side";
+  return root.dataset.prepLayout === "side"
+    || root.dataset.uiSurface === "tablet-side"
+    || root.dataset.uiSurface === "desktop";
+}
+
+function restorePrepBuildEmojiHeroSlot(heroCard, heroSlot) {
+  if (!heroCard || !heroSlot || heroCard.contains(heroSlot)) return;
+  const actions = heroCard.querySelector(".prep-hero-card__actions");
+  if (actions) heroCard.insertBefore(heroSlot, actions);
+  else heroCard.appendChild(heroSlot);
 }
 
 function syncPrepBuildEmojiBtnMount() {
   const btn = document.getElementById("prep-build-emoji-btn");
   const heroSlot = document.getElementById("prep-hero-card-build-slot");
+  const heroCard = document.getElementById("prep-hero-card");
+  const statsRow = document.querySelector(".prep-hero-card__stats-row");
   const shopHeader = document.querySelector(".shop-panel-header");
   if (!btn) return;
 
   const heroHud = isPrepBuildEmojiHeroHudMount();
-  const target = heroHud ? heroSlot : shopHeader;
-  if (target && !target.contains(btn)) {
-    target.appendChild(btn);
+
+  if (heroHud && heroSlot) {
+    heroSlot.classList.add("prep-hero-card__build-slot--hud-inline");
+    btn.classList.add("prep-build-emoji-btn--hud-float");
+    if (statsRow && !statsRow.contains(heroSlot)) {
+      statsRow.insertBefore(heroSlot, statsRow.firstChild);
+    }
+    if (!heroSlot.contains(btn)) heroSlot.appendChild(btn);
+  } else {
+    if (heroSlot) {
+      heroSlot.classList.remove("prep-hero-card__build-slot--hud-inline");
+      restorePrepBuildEmojiHeroSlot(heroCard, heroSlot);
+    }
+    btn.classList.remove("prep-build-emoji-btn--hud-float");
+    if (shopHeader && !shopHeader.contains(btn)) shopHeader.appendChild(btn);
   }
+
   if (heroSlot) {
     if (heroHud && !btn.classList.contains("hidden")) heroSlot.removeAttribute("aria-hidden");
     else heroSlot.setAttribute("aria-hidden", "true");

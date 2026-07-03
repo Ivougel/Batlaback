@@ -197,6 +197,7 @@ let lobbyPrepOvertimeUsed = false;
 let lobbyRoundSettling = false;
 let lastLobbyPlayerBattleWinner = null;
 let lastLobbyRosterStripSig = "";
+let lastLobbyRosterStripPhase = "";
 let lobbyRosterHidden = false;
 let lastEndedBattleState = null;
 let prepViewSide = "player";
@@ -533,6 +534,7 @@ function applyLobbySpectatePresentation() {
   if (!match?.state || match.byeFighterId) return;
 
   lastLobbyRosterStripSig = "";
+  lastLobbyRosterStripPhase = "";
   renderLobbyChrome(true);
   renderPlayerProfiles({ lightSpectate: true });
 
@@ -742,15 +744,23 @@ function renderLobbyChrome(force = false) {
   const stripSig = typeof buildLobbyRosterStripSignature === "function"
     ? buildLobbyRosterStripSignature(lobbyState, rosterOpts)
     : "";
-  if (force || stripSig !== lastLobbyRosterStripSig) {
+  const rosterPhaseChanged = phase !== lastLobbyRosterStripPhase;
+  if (force || rosterPhaseChanged || stripSig !== lastLobbyRosterStripSig) {
     lastLobbyRosterStripSig = stripSig;
+    lastLobbyRosterStripPhase = phase;
     const stripHtml = renderLobbyRosterStrip(lobbyState, rosterOpts);
-    if (stripPrep && phase === "prep") stripPrep.innerHTML = stripHtml;
+    const prepStrip = typeof isLobbyRosterPrepStripHtml === "function"
+      ? isLobbyRosterPrepStripHtml(stripHtml)
+      : stripHtml.includes("lobby-fighter-card-list");
+    if (stripPrep && (phase === "prep" || prepStrip)) stripPrep.innerHTML = stripHtml;
     if (stripBattle && isBattleUiPhase()) stripBattle.innerHTML = stripHtml;
   }
   syncLobbyReturnTableButton();
   if (show && typeof syncLobbyFighterAvatars === "function") {
     syncLobbyFighterAvatars(lobbyState, rosterOpts);
+  }
+  if (show && typeof syncLobbyFighterCardHp === "function") {
+    syncLobbyFighterCardHp(lobbyState, rosterOpts);
   }
   const bottomTimer = document.getElementById("lobby-prep-timer-bottom");
   const heroTimer = document.getElementById("prep-hero-card-timer");
@@ -994,6 +1004,7 @@ function getSideEnhancements(side = "player") {
 function bindEnhancementTooltipEvents(el, enhancementId, context = "shop") {
   if (!el || !enhancementId || el.dataset.enhTooltipBound === "1") return;
   el.dataset.enhTooltipBound = "1";
+  el.removeAttribute("title");
   const showAt = (clientX, clientY) => {
     const def = getEnhancementDef(enhancementId);
     if (!def) return;
@@ -1955,7 +1966,7 @@ function hideSidebarTooltip() {
   const wasCombatFeed = sidebarTooltipSource === "combat-feed";
   if (el) {
     el.classList.add("hidden");
-    el.classList.remove("combat-feed-hint-tooltip");
+    el.classList.remove("combat-feed-hint-tooltip", "sidebar-tooltip--floating");
   }
   syncPrepTooltipDockVisibility();
   fieldTooltipVisible = false;
@@ -1995,8 +2006,15 @@ function syncPrepTooltipDockVisibility() {
   dock.classList.toggle("hidden", el.classList.contains("hidden"));
 }
 
-function shouldUsePrepTooltipDock() {
-  return phase === "prep";
+function shouldUsePrepTooltipDock(placement) {
+  if (phase !== "prep" || !isMobilePrepPortrait()) return false;
+  if (sidebarTooltipSource === "enhancement"
+    || sidebarTooltipSource === "companion"
+    || sidebarTooltipSource === "combat-feed") {
+    return false;
+  }
+  const ctx = placement || sidebarTooltipSource;
+  return ctx === "shop" || ctx === "bench" || ctx === "field" || ctx === "inventory" || ctx === "doll";
 }
 
 function positionMobilePrepTooltipDock(dock) {
@@ -2528,7 +2546,7 @@ function init() {
       if (isLobbyMode() && lobbyState) {
         resetLobbyPrepTimer();
         setLobbyViewFighter(lobbyState.playerId);
-        renderLobbyChrome();
+        renderLobbyChrome(true);
       }
       setPhaseLabel(isTdMode() ? "Закуп перед волной" : isCampaignMode() ? "Обучение" : "Подготовка", false);
       updatePrepSideUI();
@@ -2593,6 +2611,7 @@ function init() {
   if (typeof initSoundTheme === "function") initSoundTheme();
   if (typeof initPrepBuildEmojiBtn === "function") initPrepBuildEmojiBtn();
   if (typeof initLightBattleFxControls === "function") initLightBattleFxControls();
+  if (typeof initEmojiOrbitSpeedControls === "function") initEmojiOrbitSpeedControls();
   if (typeof initCombatFeedControls === "function") initCombatFeedControls();
   initMusic();
   initGamepadControls({
@@ -6366,7 +6385,7 @@ function applyPostBattlePrep(battleWinner) {
       pendingGameOver = true;
       updateUI();
       renderRunStats();
-      renderLobbyChrome();
+      renderLobbyChrome(true);
       return;
     }
 
@@ -6382,7 +6401,7 @@ function applyPostBattlePrep(battleWinner) {
     pendingGameOver = false;
     updateUI();
     renderRunStats();
-    renderLobbyChrome();
+    renderLobbyChrome(true);
     return;
   }
 
@@ -8665,12 +8684,28 @@ function getCorridorTooltipPosition(placement, clientX, clientY, tipW, tipH, mar
   return null;
 }
 
+function positionHeroHudTooltip(clientX, clientY, tipW, tipH, margin, gap) {
+  const vv = window.visualViewport;
+  const viewLeft = (vv?.offsetLeft ?? 0) + margin;
+  const viewTop = (vv?.offsetTop ?? 0) + margin;
+  const viewRight = viewLeft + (vv?.width ?? window.innerWidth) - margin * 2;
+  const viewBottom = (vv?.offsetTop ?? 0) + (vv?.height ?? window.innerHeight) - margin;
+
+  let left = clientX - tipW / 2;
+  let top = clientY + gap;
+  if (top + tipH > viewBottom) top = clientY - tipH - gap;
+  top = Math.max(viewTop, Math.min(top, viewBottom - tipH));
+  left = Math.max(viewLeft, Math.min(left, viewRight - tipW));
+  return { left, top };
+}
+
 function positionSidebarTooltip(clientX, clientY, boundsKind = "viewport", placement = "auto") {
   const el = document.getElementById("sidebar-tooltip");
   const dock = document.getElementById("prep-tooltip-dock");
   if (!el || el.classList.contains("hidden")) return;
 
-  if (shouldUsePrepTooltipDock()) {
+  if (shouldUsePrepTooltipDock(placement)) {
+    el.classList.remove("sidebar-tooltip--floating");
     positionPrepTooltipDock();
     el.style.left = "";
     el.style.top = "";
@@ -8683,7 +8718,8 @@ function positionSidebarTooltip(clientX, clientY, boundsKind = "viewport", place
     return;
   }
 
-  dock?.classList.remove("hidden");
+  el.classList.add("sidebar-tooltip--floating");
+  dock?.classList.add("hidden");
 
   const bounds = getTooltipBounds(boundsKind);
   const margin = 10;
@@ -8698,7 +8734,11 @@ function positionSidebarTooltip(clientX, clientY, boundsKind = "viewport", place
   let left;
   let top;
 
-  if (placement === "shop" || placement === "bench" || placement === "field" || placement === "doll" || placement === "inventory") {
+  if (placement === "enhancement" || placement === "companion") {
+    const heroHudPos = positionHeroHudTooltip(clientX, clientY, tipW, tipH, margin, gap);
+    left = heroHudPos.left;
+    top = heroHudPos.top;
+  } else if (placement === "shop" || placement === "bench" || placement === "field" || placement === "doll" || placement === "inventory") {
     const corridorPos = getCorridorTooltipPosition(placement, clientX, clientY, tipW, tipH, margin, gap);
     if (corridorPos) {
       left = corridorPos.left;
@@ -9066,7 +9106,7 @@ function showSidebarTooltip(e, itemId, contentItem, context = "shop") {
 }
 
 function moveSidebarTooltip(e, boundsKind = "viewport", placement = "auto") {
-  if (shouldUsePrepTooltipDock()) {
+  if (shouldUsePrepTooltipDock(placement)) {
     positionPrepTooltipDock();
     syncPrepTooltipDockVisibility();
     return;

@@ -390,12 +390,23 @@ html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-stats-hud .prep-mo
   display: none !important;
 }
 
-html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card__build-slot {
+html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card__build-slot:not(.prep-hero-card__build-slot--hud-inline) {
   position: absolute;
   top: 50%;
   right: calc(4px * var(--ui-scale, 1));
   z-index: 2;
   transform: translateY(-50%);
+  margin: 0;
+  pointer-events: auto;
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card__stats-row .prep-hero-card__build-slot--hud-inline {
+  position: relative;
+  top: auto;
+  right: auto;
+  transform: none;
+  z-index: calc(var(--z-chrome, 50) + 1);
+  flex: 0 0 auto;
   margin: 0;
   pointer-events: auto;
 }

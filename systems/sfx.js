@@ -5,6 +5,8 @@
 (function initGameSfx() {
   const SFX_VOLUME_KEY = "bb-sfx-volume";
   const DEFAULT_VOLUME = 0.75;
+  /** Общий буст громкости всех звуковых пресетов (поверх слайдера в настройках). */
+  const SFX_PRESET_GAIN = 1.5;
 
   let ctx = null;
   let master = null;
@@ -91,7 +93,7 @@
     osc.type = type;
     osc.frequency.setValueAtTime(freq, t0);
     if (detune) osc.detune.setValueAtTime(detune, t0);
-    const peak = Math.max(0.0001, volume * getSfxVolume());
+    const peak = Math.max(0.0001, volume * SFX_PRESET_GAIN);
     gain.gain.setValueAtTime(0.0001, t0);
     gain.gain.linearRampToValueAtTime(peak, t0 + attack);
     gain.gain.exponentialRampToValueAtTime(0.0001, t0 + Math.max(attack + 0.01, duration * decay));
@@ -123,7 +125,7 @@
     filter.frequency.value = freq;
     filter.Q.value = q;
     const gain = c.createGain();
-    const peak = Math.max(0.0001, volume * getSfxVolume());
+    const peak = Math.max(0.0001, volume * SFX_PRESET_GAIN);
     gain.gain.setValueAtTime(peak, t0);
     gain.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
     src.connect(filter);

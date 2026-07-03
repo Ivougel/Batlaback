@@ -793,10 +793,26 @@
    * - Низкий thump 80–180 Hz, без ярких верхов
    * - Короткий удар + мягкий «хвост» мха (медленный decay)
    * - Шум через bandpass 160–320 Hz — органическая «глухость»
-   * - Лёгкий rustle 500–900 Hz на hover — шёпот листвы
+   * - Лёгкий rustle 500–900 Hz — шёпот листвы (награды, не hover)
    */
   function buildForestSfx(api) {
-    const { tone, noiseBurst, arpeggio } = api;
+    /** Пресет изначально глуше классики — поднимаем общий gain. */
+    const FOREST_GAIN = 3.4;
+    const tone = (hz, dur, opts = {}) => {
+      const o = { ...opts };
+      if (o.volume != null) o.volume *= FOREST_GAIN;
+      return api.tone(hz, dur, o);
+    };
+    const noiseBurst = (dur, opts = {}) => {
+      const o = { ...opts };
+      if (o.volume != null) o.volume *= FOREST_GAIN;
+      return api.noiseBurst(dur, o);
+    };
+    const arpeggio = (notes, gap, opts = {}) => {
+      const o = { ...opts };
+      if (o.volume != null) o.volume *= FOREST_GAIN;
+      return api.arpeggio(notes, gap, o);
+    };
     const sfx = {};
 
     const SINE = "sine";
@@ -805,47 +821,54 @@
     /** Ядро пресета — глухой удар желудя о мох. */
     function acornThud(opts = {}) {
       const {
-        vol = 0.058,
+        vol = 0.065,
         heavy = false,
         pan = 0,
-        baseHz = heavy ? 78 : 96 + Math.random() * 18,
+        baseHz = heavy ? 66 : 76 + Math.random() * 12,
       } = opts;
-      const bodyDur = heavy ? 0.16 : 0.11;
-      const thumpDur = heavy ? 0.09 : 0.065;
+      const bodyDur = heavy ? 0.17 : 0.12;
+      const thumpDur = heavy ? 0.095 : 0.07;
 
       tone(baseHz, bodyDur, {
         volume: vol,
         type: SINE,
-        attack: heavy ? 0.012 : 0.008,
-        decay: 0.96,
+        attack: heavy ? 0.014 : 0.01,
+        decay: 0.97,
         pan,
       });
-      tone(baseHz * 0.58, bodyDur * 1.15, {
-        volume: vol * 0.42,
+      tone(baseHz * 0.5, bodyDur * 1.2, {
+        volume: vol * 0.5,
         type: TRI,
-        attack: 0.018,
-        decay: 0.98,
+        attack: 0.02,
+        decay: 0.99,
+        pan,
+      });
+      tone(baseHz * 0.32, bodyDur * 1.35, {
+        volume: vol * 0.26,
+        type: SINE,
+        attack: 0.024,
+        decay: 0.99,
         pan,
       });
       noiseBurst(thumpDur, {
-        volume: vol * 0.72,
-        freq: heavy ? 190 : 220 + Math.random() * 60,
-        q: heavy ? 3.8 : 3.2,
+        volume: vol * 0.78,
+        freq: heavy ? 138 : 158 + Math.random() * 38,
+        q: heavy ? 4.2 : 3.6,
       });
       window.setTimeout(() => {
-        tone(baseHz * 0.42, heavy ? 0.14 : 0.1, {
-          volume: vol * 0.28,
+        tone(baseHz * 0.38, heavy ? 0.15 : 0.11, {
+          volume: vol * 0.34,
           type: SINE,
-          attack: 0.022,
+          attack: 0.024,
           decay: 0.99,
           pan,
         });
-        noiseBurst(heavy ? 0.07 : 0.045, {
-          volume: vol * 0.35,
-          freq: 140 + Math.random() * 40,
-          q: 2.6,
+        noiseBurst(heavy ? 0.075 : 0.05, {
+          volume: vol * 0.4,
+          freq: 96 + Math.random() * 28,
+          q: 3,
         });
-      }, heavy ? 38 : 24);
+      }, heavy ? 40 : 26);
     }
 
     /** Мягкий шелест — hover, лёгкие действия. */
@@ -890,7 +913,27 @@
     }
 
     function forestHover() {
-      leafRustle(0.016, (Math.random() - 0.5) * 0.35);
+      acornThud({
+        vol: 0.04,
+        baseHz: 78 + Math.random() * 10,
+        pan: (Math.random() - 0.5) * 0.22,
+      });
+    }
+
+    /** Подбор предмета — тихий глухой «сдвиг с мха», без яркого шелеста. */
+    function forestPickup(pan = -0.1) {
+      noiseBurst(0.038, {
+        volume: 0.02,
+        freq: 118 + Math.random() * 28,
+        q: 3.5,
+      });
+      window.setTimeout(() => {
+        acornThud({
+          vol: 0.036,
+          baseHz: 74 + Math.random() * 8,
+          pan,
+        });
+      }, 16);
     }
 
     Object.assign(sfx, {
@@ -898,7 +941,7 @@
         forestHover();
       },
       ui_click() {
-        acornThud({ vol: 0.052, pan: (Math.random() - 0.5) * 0.2 });
+        acornThud({ vol: 0.058, baseHz: 72 + Math.random() * 10, pan: (Math.random() - 0.5) * 0.2 });
       },
       ui_toggle() {
         twigSnap(0.04, -0.1);
@@ -920,8 +963,7 @@
       },
 
       prep_pickup() {
-        leafRustle(0.028, -0.14);
-        window.setTimeout(() => acornThud({ vol: 0.046, baseHz: 104, pan: -0.1 }), 35);
+        forestPickup(-0.12);
       },
       prep_place(opts = {}) {
         acornThud({ vol: opts.heavy ? 0.072 : 0.058, heavy: !!opts.heavy, pan: 0.06 });

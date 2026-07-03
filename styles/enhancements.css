@@ -256,6 +256,20 @@
   transform: translateX(-50%) translateY(0);
 }
 
+/* В hero-card popover вниз — иначе обрезается верхом карточки / viewport */
+html:is([data-prep-layout="side"], [data-ui-surface="tablet-side"]) #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-hero-card .prep-mod-chip-popover {
+  bottom: auto;
+  top: calc(100% + 8px);
+  transform: translateX(-50%) translateY(-4px);
+}
+
+html:is([data-prep-layout="side"], [data-ui-surface="tablet-side"]) #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-hero-card .prep-mod-chip-popover::after {
+  top: auto;
+  bottom: 100%;
+  border-top-color: transparent;
+  border-bottom-color: rgba(245, 200, 66, 0.42);
+}
+
 .prep-mod-chip.is-active {
   border-color: rgba(94, 196, 168, 0.45);
   background: rgba(60, 140, 120, 0.18);
