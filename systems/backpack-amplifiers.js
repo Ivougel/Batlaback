@@ -436,11 +436,41 @@ function tryRollShopAmplifier(ctx = {}) {
   return rollShopAmplifierEntry(ctx);
 }
 
-function renderPrepAmplifierStatusHtml(items = []) {
-  const amplifiers = collectAmplifiersInLoadout(items);
-  if (!amplifiers.length) return "";
+function escapePrepModChipHtml(text) {
+  return String(text ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/"/g, "&quot;");
+}
 
-  const chips = amplifiers.map((ampDef) => {
+/** Компактный emoji-чип с popover-подсказкой при наведении. */
+function renderPrepModIconChipHtml({
+  icon = "◻️",
+  tipTitle = "",
+  tipLines = [],
+  active = false,
+  kind = "amp",
+  ariaLabel = "",
+} = {}) {
+  const label = escapePrepModChipHtml(ariaLabel || tipTitle || icon);
+  const tipBody = [tipTitle, ...tipLines]
+    .filter(Boolean)
+    .map(escapePrepModChipHtml)
+    .join("<br>");
+  return `
+    <span class="prep-mod-chip prep-mod-chip--icon-only prep-mod-chip--${kind}${active ? " is-active" : ""}"
+          tabindex="0"
+          role="button"
+          aria-label="${label}">
+      <span class="prep-mod-chip-emoji" aria-hidden="true">${icon}</span>
+      <span class="prep-mod-chip-popover" role="tooltip">${tipBody}</span>
+    </span>
+  `.trim();
+}
+
+function collectAmplifierIconChips(items = []) {
+  const amplifiers = collectAmplifiersInLoadout(items);
+  return amplifiers.map((ampDef) => {
     const matches = items.filter((item) => itemMatchesAmplifierTarget(item.itemId, ampDef));
     const active = matches.length > 0;
     const target = ampDef.amplifyFamily
@@ -451,16 +481,41 @@ function renderPrepAmplifierStatusHtml(items = []) {
           ? `экип «${ampDef.amplifyEquip}»`
           : "связи";
     const bonus = ampDef.combat ? " · бонус в бою" : "";
-    const state = active
+    const stateLine = active
       ? `подсветка: ${matches.length} предм.${bonus}`
       : `положите предмет с ${target}`;
-    return `<span class="prep-mod-chip prep-mod-chip--amp${active ? " is-active" : ""}" title="${ampDef.desc || ampDef.name}">${ampDef.icon} ${ampDef.name}: ${state}</span>`;
-  }).join("");
+    return {
+      icon: ampDef.icon,
+      tipTitle: ampDef.name,
+      tipLines: [stateLine, ampDef.desc || ""].filter(Boolean),
+      active,
+      kind: "amp",
+      ariaLabel: `${ampDef.name}: ${stateLine}`,
+    };
+  });
+}
 
+function renderPrepAmplifierStatusHtml(items = []) {
+  const chips = collectAmplifierIconChips(items);
+  if (!chips.length) return "";
+  const chipsHtml = chips.map((chip) => renderPrepModIconChipHtml(chip)).join("");
   return `
-    <div class="prep-modifier-strip prep-modifier-strip--amp" aria-label="Усилители рюкзака">
-      <span class="prep-modifier-eyebrow">Усилители</span>
-      <div class="prep-modifier-chips">${chips}</div>
+    <div class="prep-modifier-strip prep-modifier-strip--amp prep-modifier-strip--icons" aria-label="Усилители рюкзака">
+      <div class="prep-modifier-chips prep-modifier-chips--icons">${chipsHtml}</div>
+    </div>
+  `;
+}
+
+function renderPrepModifierStripHtml(items = []) {
+  const chips = [
+    ...collectAmplifierIconChips(items),
+    ...(typeof collectPrepBuildKeyIconChips === "function" ? collectPrepBuildKeyIconChips(items) : []),
+  ];
+  if (!chips.length) return "";
+  const chipsHtml = chips.map((chip) => renderPrepModIconChipHtml(chip)).join("");
+  return `
+    <div class="prep-modifier-strip prep-modifier-strip--combined prep-modifier-strip--icons" aria-label="Модификаторы билда">
+      <div class="prep-modifier-chips prep-modifier-chips--icons">${chipsHtml}</div>
     </div>
   `;
 }

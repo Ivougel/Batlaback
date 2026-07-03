@@ -16,7 +16,7 @@
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="stylesheet" href="styles/tokens.css?v=18">
   <link rel="stylesheet" href="styles/layers.css?v=7">
-  <link rel="stylesheet" href="styles/bottom-chrome.css?v=21">
+  <link rel="stylesheet" href="styles/bottom-chrome.css?v=22">
   <link rel="stylesheet" href="styles.css?v=37">
   <link rel="stylesheet" href="styles/shop.css?v=6">
   <link rel="stylesheet" href="styles/item-card-chrome.css?v=3">
@@ -24,7 +24,7 @@
   <link rel="stylesheet" href="styles/prep-top-bar.css?v=2">
   <link rel="stylesheet" href="styles/mutations.css?v=1">
   <link rel="stylesheet" href="styles/battle-archetype-banner.css?v=1">
-  <link rel="stylesheet" href="styles/enhancements.css?v=3">
+  <link rel="stylesheet" href="styles/enhancements.css?v=4">
   <link rel="stylesheet" href="styles/doll.css?v=25">
   <link rel="stylesheet" href="styles/combat-feed.css?v=5">
   <link rel="stylesheet" href="styles/surface-profiles.css?v=3">
@@ -40,7 +40,7 @@
   <link rel="stylesheet" href="styles/battle-hud-compact.css?v=3">
   <link rel="stylesheet" href="styles/hero-card.css?v=4">
   <link rel="stylesheet" href="styles/hero-portrait-frame.css?v=5">
-  <link rel="stylesheet" href="styles/prep-hero-card.css?v=13">
+  <link rel="stylesheet" href="styles/prep-hero-card.css?v=14">
   <link rel="stylesheet" href="styles/class-picker.css?v=4">
   <link rel="stylesheet" href="styles/class-hero-showcase.css?v=8">
   <link rel="stylesheet" href="styles/class-hero-portrait-frame.css?v=1">
@@ -48,7 +48,7 @@
   <link rel="stylesheet" href="styles/class-intro-summary.css?v=1">
   <link rel="stylesheet" href="styles/tablet-intro-typography.css?v=1">
   <link rel="stylesheet" href="styles/desktop-intro-layout.css?v=1">
-  <link rel="stylesheet" href="styles/tablet-pwa-layout.css?v=3">
+  <link rel="stylesheet" href="styles/tablet-pwa-layout.css?v=4">
   <link rel="stylesheet" href="styles/mobile-prep.css?v=22">
   <link rel="stylesheet" href="styles/desktop-prep.css?v=2">
   <link rel="stylesheet" href="styles/desktop-battle.css?v=2">
@@ -56,14 +56,14 @@
   <link rel="stylesheet" href="styles/tablet-side.css?v=31">
   <link rel="stylesheet" href="styles/battle-inventory-popover.css?v=8">
   <link rel="stylesheet" href="styles/lobby.css?v=8">
-  <link rel="stylesheet" href="styles/td-mode.css?v=3">
+  <link rel="stylesheet" href="styles/td-mode.css?v=4">
   <link rel="stylesheet" href="styles/lobby-roster-float.css?v=2">
   <link rel="stylesheet" href="styles/meadow-theme.css?v=2">
   <link rel="stylesheet" href="styles/battle-theme-ui.css?v=2">
   <link rel="stylesheet" href="styles/prep-borderless.css?v=3">
   <link rel="stylesheet" href="styles/battle-borderless.css?v=1">
   <link rel="stylesheet" href="styles/item-stats-report.css?v=3">
-  <link rel="stylesheet" href="styles/prep-juice.css?v=6">
+  <link rel="stylesheet" href="styles/prep-juice.css?v=7">
   <link rel="stylesheet" href="styles/prep-forest-hud.css?v=2">
   <link rel="stylesheet" href="styles/prep-timer-hero.css?v=3">
   <link rel="stylesheet" href="styles/battle-result-glass.css?v=1">
@@ -88,7 +88,7 @@
   <script src="systems/layout-scales.js?v=2"></script>
   <script src="systems/battle-fx-tier.js?v=1"></script>
   <script src="systems/battle-hero-anchor.js?v=27"></script>
-  <script src="ui-layout.js?v=106"></script>
+  <script src="ui-layout.js?v=107"></script>
 </head>
 <body>
   <div id="ui-ornament-frame" class="ui-ornament-frame" aria-hidden="true">
@@ -226,6 +226,12 @@
                 <div class="td-arena-mount hidden" id="td-arena-mount" aria-hidden="true">
                   <canvas id="td-arena-canvas" aria-label="Tower Defense"></canvas>
                 </div>
+                <aside class="td-tower-panel hidden" id="td-tower-panel" aria-label="Слот башни">
+                  <header class="td-tower-panel-header">
+                    <h3 id="td-tower-panel-title">Слот</h3>
+                  </header>
+                  <div class="td-tower-panel-body" id="td-tower-panel-body"></div>
+                </aside>
               </div>
 
               <!-- Layer 3 — FX -->
@@ -381,7 +387,7 @@
             <button type="button" class="class-card game-mode-card glass-card" data-game-mode="td">
               <span class="glass-card-icon glass-card-icon--td class-icon" aria-hidden="true">🐷</span>
               <span class="class-name">Tower Defense</span>
-              <span class="class-desc">Герой в центре — 99 волн свиней по тропинкам</span>
+              <span class="class-desc">Башни-герои на карте · магазин во время волн</span>
               <span class="class-badge class-badge--td">Оборона</span>
             </button>
           </div>
@@ -846,8 +852,8 @@
   <script src="items-catalog.js"></script>
   <script src="systems/enhancements.js?v=5"></script>
   <script src="systems/enhancement-catalog-ext.js?v=1"></script>
-  <script src="systems/enhancement-crafting.js?v=2"></script>
-  <script src="systems/backpack-amplifiers.js?v=1"></script>
+  <script src="systems/enhancement-crafting.js?v=3"></script>
+  <script src="systems/backpack-amplifiers.js?v=2"></script>
   <script src="systems/meta-effects.js"></script>
   <script src="systems/triple-support-items.js?v=1"></script>
   <script src="shop-engine.js"></script>
@@ -909,10 +915,11 @@
   <script src="systems/lobby-fighter-avatar.js?v=4"></script>
   <script src="systems/lobby-spectator.js?v=8"></script>
   <script src="systems/lobby-roster-float.js?v=2"></script>
-  <script src="systems/td-engine.js?v=4"></script>
+  <script src="systems/td-engine.js?v=5"></script>
   <script src="battle-engine.js?v=2"></script>
   <script src="battle-float-layer.js?v=18"></script>
-  <script src="components/td-arena.js?v=3"></script>
+  <script src="components/td-arena.js?v=4"></script>
+  <script src="components/td-tower-panel.js?v=1"></script>
   <script src="components/thought-arena.js?v=16"></script>
   <script src="components/arena-equipment.js?v=25"></script>
   <script src="components/emotion-presenter.js?v=5"></script>
@@ -922,7 +929,7 @@
   <script src="systems/doll-engine.js"></script>
   <script src="systems/screen-transitions.js?v=1"></script>
   <script src="components/prep-hud-hero.js?v=3"></script>
-  <script src="game.js?v=72"></script>
+  <script src="game.js?v=73"></script>
   <script src="pwa-register.js"></script>
 </body>
 </html>

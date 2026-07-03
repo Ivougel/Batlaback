@@ -67,18 +67,35 @@
   padding-top: 0;
 }
 
-#app[data-phase="prep"] .prep-mod-chip {
+#app[data-phase="prep"] .prep-mod-chip:not(.prep-mod-chip--icon-only) {
   background: transparent;
   border: none;
   color: var(--meadow-ink-muted);
   padding: 2px 4px;
 }
 
-#app[data-phase="prep"] .prep-mod-chip.is-active {
+#app[data-phase="prep"] .prep-mod-chip:not(.prep-mod-chip--icon-only).is-active {
   background: transparent;
   border: none;
   color: var(--meadow-grass-dark);
   font-weight: 700;
+}
+
+#app[data-phase="prep"] .prep-mod-chip--icon-only {
+  background:
+    radial-gradient(circle at 35% 28%, rgba(255, 255, 255, 0.14) 0%, transparent 42%),
+    linear-gradient(180deg, rgba(42, 32, 18, 0.94), rgba(18, 12, 8, 0.98));
+  border-color: rgba(200, 160, 56, 0.38);
+  color: var(--juice-ink);
+}
+
+#app[data-phase="prep"] .prep-mod-chip--icon-only.is-active {
+  border-color: rgba(92, 184, 92, 0.72);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 0 1px rgba(92, 184, 92, 0.18),
+    0 0 12px rgba(92, 184, 92, 0.14),
+    0 3px 10px rgba(30, 60, 28, 0.18);
 }
 
 #app[data-phase="prep"] #shop-panel {

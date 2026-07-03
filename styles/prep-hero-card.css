@@ -153,12 +153,32 @@ html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-enhancement-st
 
 html[data-prep-layout="side"] #app[data-phase="prep"] .prep-modifier-strip,
 html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-modifier-strip,
+html[data-prep-layout="side"] #app[data-phase="prep"] .prep-modifier-strip--combined,
+html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-modifier-strip--combined,
 html[data-prep-layout="side"] #app[data-phase="prep"] .prep-build-key-status,
 html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-build-key-status,
 html[data-prep-layout="side"] #app[data-phase="prep"] .prep-amp-status,
 html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-amp-status {
   grid-column: 2;
   grid-row: 4;
+  min-width: 0;
+  overflow: visible;
+  pointer-events: auto;
+}
+
+html[data-prep-layout="side"] #app[data-phase="prep"] .prep-modifier-chips--icons,
+html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-modifier-chips--icons {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: visible;
+  max-width: 100%;
+  padding-bottom: calc(2px * var(--ui-scale, 1));
+  scrollbar-width: none;
+}
+
+html[data-prep-layout="side"] #app[data-phase="prep"] .prep-modifier-chips--icons::-webkit-scrollbar,
+html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-modifier-chips--icons::-webkit-scrollbar {
+  display: none;
 }
 
 html[data-prep-layout="side"] #app[data-phase="prep"] .prep-hero-card__stats-row .prep-stats-class,

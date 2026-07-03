@@ -71,22 +71,19 @@
     }
 
     const viewBottom = visualViewportBottom();
-    const layoutBottom = window.innerHeight;
     const rect = bar.getBoundingClientRect();
     const gap = Math.max(0, viewBottom - rect.bottom);
+    const pinY = gap > 0.5 ? Math.round(gap) : 0;
 
-    if (gap > 1.5) {
-      root.style.setProperty("--bottom-chrome-pin-y", `${Math.round(gap)}px`);
+    if (pinY > 0) {
+      root.style.setProperty("--bottom-chrome-pin-y", `${pinY}px`);
     } else {
       root.style.removeProperty("--bottom-chrome-pin-y");
     }
 
     if (isClassOverlayOpen()) {
-      const pinY = gap > 1.5 ? gap : 0;
-      const chromeTop = rect.top + pinY;
       const reserve = Math.max(
-        Math.round(layoutBottom - chromeTop),
-        bar.offsetHeight,
+        Math.round(bar.offsetHeight + pinY),
         readCssPx("--bottom-chrome-h", 44),
       );
       root.style.setProperty("--class-intro-chrome-h", `${reserve}px`);

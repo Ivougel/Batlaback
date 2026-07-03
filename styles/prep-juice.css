@@ -623,7 +623,7 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] .btn-toggle-doll {
   box-shadow: 0 4px 20px rgba(30, 60, 28, 0.14);
 }
 
-#app[data-phase="prep"] .prep-mod-chip {
+#app[data-phase="prep"] .prep-mod-chip:not(.prep-mod-chip--icon-only) {
   background: rgba(255, 255, 255, 0.35);
   border: 2px solid rgba(255, 255, 255, 0.5);
   color: var(--juice-ink);
@@ -633,8 +633,25 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] .btn-toggle-doll {
   text-shadow: var(--juice-text-legible);
 }
 
-#app[data-phase="prep"] .prep-mod-chip.is-active {
+#app[data-phase="prep"] .prep-mod-chip--icon-only {
+  width: calc(36px * var(--ui-scale, 1));
+  height: calc(36px * var(--ui-scale, 1));
+  padding: 0;
+  border-radius: 50%;
+  text-shadow: none;
+}
+
+#app[data-phase="prep"] .prep-mod-chip:not(.prep-mod-chip--icon-only).is-active {
   background: rgba(92, 184, 92, 0.2);
+  border-color: var(--meadow-grass-dark);
+  color: var(--juice-ink);
+  font-weight: 900;
+}
+
+#app[data-phase="prep"] .prep-mod-chip--icon-only.is-active {
+  background:
+    radial-gradient(circle at 35% 28%, rgba(255, 255, 255, 0.16) 0%, transparent 42%),
+    linear-gradient(180deg, rgba(52, 42, 22, 0.96), rgba(22, 16, 10, 0.98));
   border-color: var(--meadow-grass-dark);
   color: var(--juice-ink);
   font-weight: 900;

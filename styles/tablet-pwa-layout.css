@@ -7,15 +7,16 @@
 
 html[data-ui-tier="tablet"] #class-overlay:not(.hidden) {
   top: env(safe-area-inset-top, 0px);
-  bottom: var(
-    --class-intro-chrome-h,
-    max(var(--bottom-chrome-h-measured, 44px), var(--bottom-chrome-h, 44px))
-  );
+  bottom: 0;
   padding:
     max(4px, env(safe-area-inset-top))
     max(8px, env(safe-area-inset-right))
-    0
+    var(
+      --class-intro-chrome-h,
+      max(var(--bottom-chrome-h-measured, 44px), var(--bottom-chrome-h, 44px))
+    )
     max(8px, env(safe-area-inset-left));
+  box-sizing: border-box;
   align-items: stretch;
   justify-content: center;
   overflow: hidden;
@@ -232,6 +233,43 @@ html[data-ui-tier="tablet"][data-touch="true"] body:has(#class-overlay:not(.hidd
 html[data-ui-tier="tablet"][data-touch="true"] body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro .btn-glass-start,
 html[data-ui-tier="tablet"][data-touch="true"] body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro .btn-glass-back {
   padding: 6px 12px;
+  font-size: var(--font-sm);
+}
+
+/* iPad landscape: одна строка, без дубля подсказки — экономим ~28px по высоте */
+html[data-ui-tier="tablet"][data-layout-profile="tablet-landscape"] body:has(#class-overlay:not(.hidden)) .bottom-chrome {
+  --bottombar-btn-h: 36px;
+  min-height: 38px;
+  padding:
+    2px
+    max(8px, env(safe-area-inset-right))
+    max(2px, env(safe-area-inset-bottom, 0px))
+    max(8px, env(safe-area-inset-left));
+}
+
+html[data-ui-tier="tablet"][data-layout-profile="tablet-landscape"] body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro {
+  gap: 6px;
+}
+
+html[data-ui-tier="tablet"][data-layout-profile="tablet-landscape"] body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro-center {
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 0;
+}
+
+html[data-ui-tier="tablet"][data-layout-profile="tablet-landscape"] body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro-step {
+  font-size: var(--font-sm);
+}
+
+html[data-ui-tier="tablet"][data-layout-profile="tablet-landscape"] body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro-hint {
+  display: none;
+}
+
+html[data-ui-tier="tablet"][data-layout-profile="tablet-landscape"] body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro .prep-settings-btn,
+html[data-ui-tier="tablet"][data-layout-profile="tablet-landscape"] body:has(#class-overlay:not(.hidden)) .bottom-chrome-intro .btn-glass-back {
+  min-height: 36px;
+  min-width: 36px;
+  padding: 4px 10px;
   font-size: var(--font-sm);
 }
 

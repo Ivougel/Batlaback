@@ -122,8 +122,12 @@ let recentBattleResults = [];
 let battleStartTime = 0;
 let battleState = null;
 let tdState = null;
-/** HP героя между волнами TD (null = полное HP). */
+/** HP героя между волнами TD (legacy). */
 let tdHeroHp = null;
+/** Непрерывный TD-забег: магазин и слоты во время боя. */
+let tdRunLive = false;
+let selectedTdSlotId = 0;
+let tdCanvasBound = false;
 let dragPayload = null;
 let dragFrom = null;
 let prepSidebarDragUnlocked = false;
@@ -304,6 +308,21 @@ function isLobbyMode() {
 
 function isTdMode() {
   return gameMode === "td";
+}
+
+function isTdRunLive() {
+  return isTdMode() && tdRunLive && phase === "battle" && !!tdState && !tdState.finished;
+}
+
+function getShopPhase() {
+  return isTdRunLive() ? "prep" : phase;
+}
+
+function syncTdRunLiveDom() {
+  const app = document.getElementById("app");
+  if (!app) return;
+  if (tdRunLive && isTdMode()) app.dataset.tdRunLive = "true";
+  else app.removeAttribute("data-td-run-live");
 }
 
 function getTdMaxWaves() {
@@ -2570,7 +2589,8 @@ function getEnemyCharacteristicsState() {
 }
 
 function syncTdBattleChrome() {
-  const live = isTdMode() && isBattleUiPhase() && !!tdState;
+  const live = isTdMode() && (isTdRunLive() || (isBattleUiPhase() && !!tdState));
+  syncTdRunLiveDom();
   if (typeof TdArena !== "undefined") {
     if (typeof TdArena.init === "function") TdArena.init();
     if (typeof TdArena.setVisible === "function") TdArena.setVisible(live);
@@ -2580,6 +2600,7 @@ function syncTdBattleChrome() {
     document.documentElement.removeAttribute("data-battle-hero-placement");
     document.documentElement.dataset.battleArenaLayout = "false";
   }
+  if (live && typeof renderTdTowerPanel === "function") renderTdTowerPanel();
 }
 
 function renderPhase() {
@@ -2602,19 +2623,19 @@ function renderPhase() {
   if (battleSceneUi) battleSceneUi.setAttribute("aria-hidden", isBattleUiPhase() ? "false" : "true");
   renderPlayerProfiles();
   if (typeof refreshGamepadHints === "function") refreshGamepadHints();
-  if (phase === "prep" && !gameOver) {
+  if ((phase === "prep" || isTdRunLive()) && !gameOver) {
     ensureShopReadyForSide("player");
     if (isEnemyPrepEditable()) ensureShopReadyForSide("enemy");
-    updatePrepSideUI();
+    if (phase === "prep") updatePrepSideUI();
     renderShop();
     renderBench();
-    syncPrepTooltipDockVisibility();
+    if (phase === "prep") syncPrepTooltipDockVisibility();
   }
   renderFightButton();
   if (phase !== "prep") closeAllFighterCharacteristicsPopups();
   if (!isBattleUiPhase() && typeof closeBattleInventoryPopover === "function") closeBattleInventoryPopover();
-  if (phase !== "prep") setPrepDollOpen(false);
-  if (phase !== "prep" && typeof closeMobilePrepShop === "function") closeMobilePrepShop();
+  if (phase !== "prep" && !isTdRunLive()) setPrepDollOpen(false);
+  if (phase !== "prep" && !isTdRunLive() && typeof closeMobilePrepShop === "function") closeMobilePrepShop();
   if (typeof applyUiLayout === "function") scheduleLayoutAfterPhase();
   if (isTdMode() && isBattleUiPhase()) {
     requestAnimationFrame(() => {
@@ -3114,6 +3135,9 @@ function restartGame() {
   battleState = null;
   tdState = null;
   tdHeroHp = null;
+  tdRunLive = false;
+  selectedTdSlotId = 0;
+  syncTdRunLiveDom();
   clearBattleFloatLayer();
   replayPlayback = null;
   lastBattleReplay = null;
@@ -3147,13 +3171,14 @@ function restartGame() {
     renderBench();
     updatePrepSideUI();
     if (typeof applyUiLayout === "function") applyUiLayout();
+    if (isTdMode() && !gameOver) startTdRun();
   });
   log(isVersusMode()
     ? "Режим противостояния: Tab или кнопки — переключить магазин между игроками."
     : isLobbyMode()
       ? `Лобби: ${LOBBY_FIGHTER_COUNT} бойцов, ${LOBBY_START_HP} HP. 🏆 внизу — список участников. Таймер ${LOBBY_PREP_SECONDS}с.`
       : isTdMode()
-        ? `Tower Defense (${typeof tdFormatDifficultyLabel === "function" ? tdFormatDifficultyLabel(tdRunDifficultyId) : tdRunDifficultyId}): ${getTdMaxWaves()} волн! Предметы защищают героя в центре.`
+        ? `Tower Defense (${typeof tdFormatDifficultyLabel === "function" ? tdFormatDifficultyLabel(tdRunDifficultyId) : tdRunDifficultyId}): ${getTdMaxWaves()} волн · башни на карте, магазин в бою.`
         : isHardBotMode()
           ? "Сложный бот: каждый раунд подбирает лучшую экипировку. Расставьте предметы и в бой!"
           : "Расставьте предметы и в бой! Tab — посмотреть билд бота.");
@@ -4414,7 +4439,7 @@ function canStartBattle() {
 function renderFightButton() {
   const btn = document.getElementById("btn-fight");
   if (!btn) return;
-  const visible = phase === "prep" && !gameOver;
+  const visible = phase === "prep" && !gameOver && !isTdRunLive() && !isTdMode();
   btn.classList.toggle("hidden", !visible);
   if (visible) btn.disabled = !canStartBattle();
   if (visible && isTdMode()) {
@@ -4450,7 +4475,7 @@ function skipBattle() {
   if (phase !== "battle") return;
   if (isTdMode() && tdState) {
     if (tdState.finished) {
-      endTdWave();
+      endTdRun();
       return;
     }
     try {
@@ -4458,10 +4483,10 @@ function skipBattle() {
     } catch (err) {
       console.error("skipBattle TD fastForward failed:", err);
       tdState.finished = true;
-      tdState.winner = tdState.hero.hp > 0 ? "player" : "enemy";
+      tdState.winner = (tdState.towers || []).some((t) => t.alive && t.hero?.hp > 0) ? "player" : "enemy";
     }
     renderBattleStats();
-    if (tdState?.finished) endTdWave();
+    if (tdState?.finished) endTdRun();
     return;
   }
   if (!battleState) {
@@ -4568,6 +4593,161 @@ function tickReplay(rawDt) {
   ) {
     finishBattleReplay();
   }
+}
+
+function renderTdTowerPanel() {
+  if (typeof TdTowerPanel === "undefined" || !isTdRunLive()) return;
+  TdTowerPanel.render({
+    tdState,
+    gold,
+    bench,
+    selectedSlotId: selectedTdSlotId,
+  });
+}
+
+function bindTdCanvasEvents() {
+  if (tdCanvasBound) return;
+  const canvas = document.getElementById("td-arena-canvas");
+  if (!canvas) return;
+  tdCanvasBound = true;
+  canvas.addEventListener("click", (e) => {
+    if (!isTdRunLive() || typeof TdArena?.hitTestSlot !== "function") return;
+    const slotId = TdArena.hitTestSlot(e.clientX, e.clientY);
+    if (slotId == null) return;
+    selectedTdSlotId = slotId;
+    if (tdState) tdState.selectedSlotId = slotId;
+    renderTdTowerPanel();
+    playPrepSfx("ui_click");
+  });
+}
+
+function handleTdRecruit(classId) {
+  if (!tdState || selectedTdSlotId == null) return;
+  const check = tdCanRecruitAtSlot(tdState, selectedTdSlotId, classId, gold);
+  if (!check.ok) {
+    log(check.reason || "Не удалось нанять");
+    playPrepSfx("ui_error");
+    return;
+  }
+  const result = tdRecruitTower(tdState, selectedTdSlotId, classId, tdState.prepMeta || {});
+  if (!result.ok) {
+    log(result.reason || "Не удалось нанять");
+    playPrepSfx("ui_error");
+    return;
+  }
+  gold -= result.cost;
+  goldSpentTotal += result.cost;
+  playPrepSfx("buy");
+  renderTdTowerPanel();
+  updateUI();
+  const slotLabel = TD_MAP_SLOTS.find((s) => s.id === selectedTdSlotId)?.label || "слот";
+  const clsName = typeof getClassById === "function" ? getClassById(classId)?.name : classId;
+  log(`🏰 ${clsName} на ${slotLabel} (−${result.cost}💰)`);
+}
+
+function handleTdEquipFromBench(benchIdx) {
+  if (!tdState || selectedTdSlotId == null) return;
+  const item = bench[benchIdx];
+  if (!item) return;
+  const benchItem = { ...item };
+  const result = tdEquipItemOnTower(tdState, selectedTdSlotId, benchItem, tdState.prepMeta || {});
+  if (!result.ok) {
+    log(result.reason || "Не удалось экипировать");
+    playPrepSfx("ui_error");
+    return;
+  }
+  bench.splice(benchIdx, 1);
+  playPrepSfx("prep_place");
+  renderBench();
+  renderTdTowerPanel();
+  const def = ITEM_CATALOG[item.itemId];
+  log(`📦 ${def?.name || item.itemId} → башня`);
+}
+
+function awardTdWaveGold(won) {
+  let goldReward = won ? ROUND_GOLD + WIN_GOLD : ROUND_GOLD;
+  if (typeof applyRoundGoldWithShopMeta === "function") {
+    goldReward = applyRoundGoldWithShopMeta("player", goldReward, [], (msg) => log(msg));
+  }
+  if (typeof getTdDifficultyGoldMult === "function") {
+    goldReward = Math.round(goldReward * getTdDifficultyGoldMult(tdRunDifficultyId));
+  }
+  gold += goldReward;
+  goldEarnedTotal += goldReward;
+  if (goldReward > 0) playPrepSfx("gold");
+  return goldReward;
+}
+
+function onTdWaveClearedInRun() {
+  if (!tdState || !tdState.waveJustCleared) return;
+  tdState.waveJustCleared = false;
+  const clearedWave = tdState.wave - 1;
+  const goldReward = awardTdWaveGold(true);
+  round = tdState.wave;
+  runResults[clearedWave - 1] = "win";
+  recentBattleResults.push("win");
+  if (recentBattleResults.length > 5) recentBattleResults.shift();
+  log(`✅ Волна ${clearedWave} отбита! +${goldReward}💰`);
+  resetShopForNewRound();
+  ensureShopReadyForSide("player");
+  renderShop();
+  renderBench();
+  setPhaseLabel(`🐷 Волна ${tdState.wave}/${getTdMaxWaves()}`, false);
+  updateUI();
+  renderRunStats();
+}
+
+function startTdRun() {
+  if (!isTdMode() || gameOver || tdRunLive) return;
+
+  tdRunLive = true;
+  selectedTdSlotId = 0;
+  battleEndHandled = false;
+  tdState = createTdRunState(playerClass, {
+    difficultyId: tdRunDifficultyId,
+    runSeed: (Date.now() % 99999) + 1,
+    player: {
+      pendingShopBuffs: playerPendingShopBuffs,
+      companionId: playerCompanionId,
+      mutationFormId: playerMutationFormId,
+      mutationId: playerMutationId,
+      enhancements: playerEnhancements,
+      difficultyId: tdRunDifficultyId,
+    },
+  });
+  tdState.selectedSlotId = selectedTdSlotId;
+  battleState = null;
+
+  if (typeof TdArena !== "undefined") {
+    TdArena.init();
+    if (playerClass) TdArena.loadPortrait(playerClass);
+    bindTdCanvasEvents();
+  }
+  if (typeof TdTowerPanel !== "undefined") {
+    TdTowerPanel.init({
+      onRecruit: handleTdRecruit,
+      onEquipBench: handleTdEquipFromBench,
+    });
+  }
+
+  syncTdRunLiveDom();
+  transitionToPhase("battle", () => {
+    tooltipItem = null;
+    resetBattlePause();
+    playerPendingShopBuffs = 0;
+    setBattleSpeed(savedBattleSpeed);
+    updateBattleControlsUI();
+    ensureShopReadyForSide("player");
+    renderShop();
+    renderBench();
+    renderTdTowerPanel();
+    syncTdBattleChrome();
+    setPhaseLabel(`🐷 Волна 1/${getTdMaxWaves()}`, true);
+    log(`🐷 Оборона! Клик по слоту на карте — нанять героя. Магазин открыт во время волн.`);
+    playPrepSfx("battle_start");
+    renderFightButton();
+    updateUI();
+  });
 }
 
 function startBattle() {
@@ -4768,6 +4948,10 @@ function startBattle() {
   });
 }
 
+function endTdRun() {
+  endTdWave();
+}
+
 function endTdWave() {
   if (!tdState || battleEndHandled) return;
   battleEndHandled = true;
@@ -4775,6 +4959,9 @@ function endTdWave() {
   const finishedState = tdState;
   const battleWinner = finishedState.winner;
   tdState = null;
+  tdRunLive = false;
+  syncTdRunLiveDom();
+  if (typeof TdTowerPanel !== "undefined") TdTowerPanel.setVisible(false);
   clearBattleFloatLayer();
   if (typeof resetStackOrbitVfx === "function") resetStackOrbitVfx();
   if (typeof closeBattleHudPopups === "function") closeBattleHudPopups();
@@ -4788,7 +4975,11 @@ function endTdWave() {
     accumulateRunItemStats(runItemStats, finishedState.itemDamageStats);
     let goldReward = 0;
 
-    const piggyGold = getLoadoutGoldPerRoundBonus(playerItems);
+    let piggyGold = 0;
+    (finishedState.towers || []).forEach((tower) => {
+      piggyGold += getLoadoutGoldPerRoundBonus(tower.items || []);
+    });
+    if (piggyGold <= 0) piggyGold = getLoadoutGoldPerRoundBonus(playerItems);
     if (piggyGold > 0) {
       gold += piggyGold;
       goldEarnedTotal += piggyGold;
@@ -4801,7 +4992,7 @@ function endTdWave() {
       goldReward = ROUND_GOLD;
     }
     if (typeof applyRoundGoldWithShopMeta === "function") {
-      goldReward = applyRoundGoldWithShopMeta("player", goldReward, playerItems, (msg) => log(msg));
+      goldReward = applyRoundGoldWithShopMeta("player", goldReward, [], (msg) => log(msg));
     }
     if (typeof getTdDifficultyGoldMult === "function") {
       goldReward = Math.round(goldReward * getTdDifficultyGoldMult(tdRunDifficultyId));
@@ -4809,41 +5000,36 @@ function endTdWave() {
     gold += goldReward;
     goldEarnedTotal += goldReward;
 
-    const allWavesCleared = battleWinner === "player" && round >= getTdMaxWaves();
+    const allWavesCleared = finishedState.runVictory || (battleWinner === "player" && finishedState.wave >= getTdMaxWaves());
     if (battleWinner === "player") {
       recentBattleResults.push("win");
       log(allWavesCleared
-        ? `🏆 Все ${getTdMaxWaves()} волн пережиты! +${goldReward}💰`
-        : `Волна ${round} отбита! +${goldReward}💰`);
+        ? `🏆 Карта пройдена! ${getTdMaxWaves()} волн! +${goldReward}💰`
+        : `Волна ${finishedState.wave} отбита! +${goldReward}💰`);
       playPrepSfx("battle_victory");
     } else {
       recentBattleResults.push("loss");
-      log(`Оборона палала на волне ${round}. +${goldReward}💰`);
+      log(`Оборона палала на волне ${finishedState.wave}. +${goldReward}💰`);
       playPrepSfx("battle_defeat");
     }
     if (goldReward > 0) playPrepSfx("gold");
 
     battleSummary = buildTdWaveSummary(finishedState, {
-      roundNum: round,
+      roundNum: finishedState.wave,
       goldReward,
       difficultyId: tdRunDifficultyId,
     });
     if (recentBattleResults.length > 5) recentBattleResults.shift();
 
-    const battleResult = battleWinner === "player" ? "win" : "loss";
-    runResults[round - 1] = battleResult;
-    if (battleWinner === "player") {
-      tdHeroHp = finishedState.hero.hp;
-    }
-    round++;
+    runResults[finishedState.wave - 1] = battleWinner === "player" ? "win" : "loss";
+    round = finishedState.wave;
     syncAllMutationMilestones();
-    resetShopForNewRound();
     setBattleControlsVisible(false);
     resetBattlePause();
   } catch (err) {
     console.error("endTdWave failed:", err);
     battleSummary = buildTdWaveSummary(finishedState, {
-      roundNum: round,
+      roundNum: finishedState.wave,
       goldReward: 0,
       difficultyId: tdRunDifficultyId,
     });
@@ -4854,26 +5040,10 @@ function endTdWave() {
     showBattleResultPopup(battleSummary, finishedState.log || []);
   });
 
-  try {
-    if (battleWinner === "enemy") {
-      pendingGameOver = true;
-      gameOver = true;
-      updateUI();
-      renderRunStats();
-      return;
-    }
-    if (round > getTdMaxWaves()) {
-      pendingGameOver = true;
-      gameOver = true;
-      updateUI();
-      renderRunStats();
-      return;
-    }
-    applyPostBattlePrep("player");
-  } catch (err) {
-    console.error("applyPostBattlePrep after TD failed:", err);
-    updateUI();
-  }
+  pendingGameOver = true;
+  gameOver = true;
+  updateUI();
+  renderRunStats();
 }
 
 function endBattle() {
@@ -5431,7 +5601,8 @@ function gameLoop(ts) {
   if (phase === "battle" && tickLobbyRoundBattles(dt, ts)) {
     // все пары лобби тикают параллельно
   } else if (phase === "battle" && isTdMode() && tdState && !tdState.finished) {
-    const simDt = getBattleSimDt(dt);
+    tdState.paused = !!(dragPayload || pendingShopDrag);
+    const simDt = tdState.paused ? 0 : getBattleSimDt(dt);
     if (simDt > 0) {
       try {
         tdTick(tdState, simDt);
@@ -5439,14 +5610,16 @@ function gameLoop(ts) {
         console.error("tdTick failed:", err);
       }
     }
+    if (tdState.waveJustCleared) onTdWaveClearedInRun();
     if (Math.floor(ts / 500) !== Math.floor((ts - dt * 1000) / 500)) {
       renderBattleStats();
       renderPlayerProfiles();
+      renderTdTowerPanel();
     }
   } else if (phase === "battle" && isTdMode() && tdState?.finished) {
     if (typeof resetStackOrbitVfx === "function") resetStackOrbitVfx();
     clearBattleFloatLayer();
-    endTdWave();
+    endTdRun();
   } else if (phase === "battle" && battleState && !battleState.finished) {
     const countdownDt = typeof getBattleCountdownDt === "function" ? getBattleCountdownDt(dt) : dt;
     if (countdownDt > 0 && typeof tickBattleCountdown === "function") {
@@ -6162,7 +6335,7 @@ function draw() {
   drawWorldLayer();
   drawFxLayer();
   if (isTdMode() && isBattleUiPhase() && tdState && typeof TdArena !== "undefined" && typeof TdArena.drawFrame === "function") {
-    TdArena.drawFrame(tdState, synergyAnimTime);
+    TdArena.drawFrame(tdState, synergyAnimTime, selectedTdSlotId);
   }
 }
 
@@ -8538,12 +8711,17 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
   const ampStatusHtml = typeof renderPrepAmplifierStatusHtml === "function"
     ? renderPrepAmplifierStatusHtml(mutRt.items)
     : "";
+  const modifierStripHtml = typeof renderPrepModifierStripHtml === "function"
+    ? renderPrepModifierStripHtml(mutRt.items)
+    : `${keyStatusHtml}${ampStatusHtml}`;
 
   if (statsHud) {
     const lobbyPlayer = isLobbyMode() ? getLobbyPlayer(lobbyState) : null;
     const viewedFighter = isLobbyMode() ? getLobbyFighterById(lobbyState, lobbyViewFighterId) : null;
     const roundLabel = isLobbyMode()
       ? `${round}`
+      : isTdRunLive() && tdState
+        ? `${tdState.wave}/${getTdMaxWaves()}`
       : isTdMode()
         ? `${Math.min(round, getTdMaxWaves())}/${getTdMaxWaves()}`
         : `${Math.min(round, RUN_BATTLES)}/${RUN_BATTLES}`;
@@ -8551,6 +8729,8 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
       ? `${viewedFighter.hp}/${LOBBY_START_HP}`
       : lobbyPlayer
         ? `${lobbyPlayer.hp}/${LOBBY_START_HP}`
+        : isTdRunLive() && tdState && side === "player"
+          ? `🏰${(tdState.towers || []).filter((t) => t.alive).length} · база ${tdState.baseLives}❤️`
         : isTdMode() && side === "player" && tdHeroHp !== null
           ? `${Math.ceil(tdHeroHp)}/${profile.hpDisplay?.split("/")?.[1] || profile.hpDisplay || "—"}`
           : profile.hpDisplay;
@@ -8596,8 +8776,7 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
       ${statsHeaderHtml}
       ${mutationHtml}
       ${enhancementHtml}
-      ${keyStatusHtml}
-      ${ampStatusHtml}
+      ${modifierStripHtml}
     `;
     bindPrepEnhancementStrip(side);
     if (typeof syncPrepBuildEmojiBtn === "function") {
@@ -8874,7 +9053,7 @@ window.syncPrepHeroCardChrome = syncPrepHeroCardChrome;
 
 registerPrepShopRuntime({
   getPrepViewSide: () => prepViewSide,
-  getPhase: () => phase,
+  getPhase: () => getShopPhase(),
   getRound: () => round,
   getGameOver: () => gameOver,
   getSelectedBench: () => selectedBench,

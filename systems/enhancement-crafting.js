@@ -352,28 +352,53 @@ function scoreEnhancementWithBuildBias(def, ctx = {}) {
   return score;
 }
 
-function renderPrepBuildKeyStatusHtml(items = []) {
+function collectPrepBuildKeyIconChips(items = []) {
   const unlocked = collectUnlockedBuilds(items);
   const keys = (items || []).filter((item) => ITEM_CATALOG[item?.itemId]?.isBuildKey);
-  if (!keys.length && !unlocked.size) return "";
+  const chips = [];
 
-  const keyChips = keys.map((item) => {
+  keys.forEach((item) => {
     const def = ITEM_CATALOG[item.itemId];
     const spec = BUILD_UNLOCK_CATALOG[def?.unlockBuild];
     const label = spec?.label || def?.unlockBuild || def?.name;
-    return `<span class="prep-mod-chip prep-mod-chip--key is-active" title="${def?.description || ""}">${def?.icon || "🔑"} ${def?.name}: ветка «${label}»</span>`;
-  }).join("");
+    chips.push({
+      icon: def?.icon || "🔑",
+      tipTitle: def?.name || "Ключ ветки",
+      tipLines: [`ветка «${label}»`, def?.description || ""].filter(Boolean),
+      active: true,
+      kind: "key",
+      ariaLabel: `${def?.name || "Ключ"}: ветка «${label}»`,
+    });
+  });
 
-  const unlockedOnly = [...unlocked].filter((buildId) => !keys.some((item) => ITEM_CATALOG[item.itemId]?.unlockBuild === buildId));
-  const unlockChips = unlockedOnly.map((buildId) => {
-    const spec = BUILD_UNLOCK_CATALOG[buildId];
-    return `<span class="prep-mod-chip prep-mod-chip--key is-active">${spec?.label || buildId}: bias магазина/крафта</span>`;
-  }).join("");
+  [...unlocked]
+    .filter((buildId) => !keys.some((item) => ITEM_CATALOG[item.itemId]?.unlockBuild === buildId))
+    .forEach((buildId) => {
+      const spec = BUILD_UNLOCK_CATALOG[buildId];
+      chips.push({
+        icon: "🗝️",
+        tipTitle: spec?.label || buildId,
+        tipLines: ["Ветка открыта", "bias магазина / крафта"],
+        active: true,
+        kind: "key",
+        ariaLabel: `${spec?.label || buildId}: bias магазина/крафта`,
+      });
+    });
 
+  return chips;
+}
+
+function renderPrepBuildKeyStatusHtml(items = []) {
+  const chips = collectPrepBuildKeyIconChips(items);
+  if (!chips.length) return "";
+  const chipsHtml = chips.map((chip) => (
+    typeof renderPrepModIconChipHtml === "function"
+      ? renderPrepModIconChipHtml(chip)
+      : `${chip.icon}`
+  )).join("");
   return `
-    <div class="prep-modifier-strip prep-modifier-strip--key" aria-label="Ключи веток">
-      <span class="prep-modifier-eyebrow">Ветки</span>
-      <div class="prep-modifier-chips">${keyChips}${unlockChips}</div>
+    <div class="prep-modifier-strip prep-modifier-strip--key prep-modifier-strip--icons" aria-label="Ключи веток">
+      <div class="prep-modifier-chips prep-modifier-chips--icons">${chipsHtml}</div>
     </div>
   `;
 }

@@ -1,18 +1,35 @@
 /**
- * Tower Defense — 99 волн свиней к герою в центре.
- * Карта генерируется случайно для каждой волны.
+ * Tower Defense — башни-герои на слотах карты, непрерывный забег.
+ * Магазин и расстановка во время волн.
  */
 
-const TD_MAX_WAVES = 99;
+const TD_MAX_WAVES = 50;
 const TD_PIG_EMOJI = "🐷";
-const TD_CENTER = { x: 0.5, y: 0.5 };
 const TD_CANVAS_W = 960;
 const TD_CANVAS_H = 640;
 const TD_SPAWN_INTERVAL = 0.55;
-const TD_WAVE_BREAK = 0.6;
-const TD_MAX_ACTIVATIONS_PER_TICK = 3;
-/** Множитель сложности между ступенями: 1.55^4 ≈ 5.7× от лёгкого к ультра. */
+const TD_WAVE_BREAK = 1.4;
+const TD_MAX_ACTIVATIONS_PER_TICK = 8;
+const TD_TOWER_COLS = 5;
+const TD_TOWER_ROWS = 4;
+const TD_BASE_LIVES = 12;
 const TD_DIFF_EXP_BASE = 1.55;
+
+/** Слоты постройки: pathId = какая дорожка сюда leak'ит (null = только атака). */
+const TD_MAP_SLOTS = [
+  { id: 0, x: 0.5, y: 0.62, pathId: 2, label: "Юг" },
+  { id: 1, x: 0.5, y: 0.22, pathId: 0, label: "Север" },
+  { id: 2, x: 0.82, y: 0.48, pathId: 1, label: "Восток" },
+  { id: 3, x: 0.18, y: 0.48, pathId: 3, label: "Запад" },
+  { id: 4, x: 0.5, y: 0.42, pathId: null, label: "Центр" },
+];
+
+const TD_RECRUIT_COST = {
+  warrior: 28,
+  rogue: 32,
+  mage: 36,
+  priest: 30,
+};
 
 const TD_DIFFICULTIES = {
   easy: {
@@ -29,7 +46,7 @@ const TD_DIFFICULTIES = {
     index: 1,
     emoji: "⚔️",
     label: "Нормальный",
-    desc: "Базовый баланс · эталон 99 волн",
+    desc: "Базовый баланс · эталон волн",
     goldMult: 1,
     spawnIntervalMult: 1,
   },
@@ -77,7 +94,6 @@ function getTdDifficultyGoldMult(id) {
   return getTdDifficulty(id).goldMult;
 }
 
-/** Комбинированный множитель волны: сложность × поздний забег. */
 function tdWaveDifficultyMult(wave, difficultyId) {
   const diffScale = getTdDifficultyScale(difficultyId);
   const diff = getTdDifficulty(difficultyId);
@@ -103,50 +119,44 @@ function tdSeededRandom(seed) {
   };
 }
 
-/** Случайная карта: 3–5 тропинок с края к центру + декор. */
-function generateTdMap(waveNum, runSeed = 1) {
-  const rng = tdSeededRandom(waveNum * 9973 + runSeed * 7919 + 42);
-  const center = { x: TD_CENTER.x, y: TD_CENTER.y };
-  const numPaths = 3 + Math.floor(rng() * 3);
-  const paths = [];
+/** Фиксированная карта забега: 4 дорожки к слотам + декор. */
+function generateTdRunMap(runSeed = 1) {
+  const rng = tdSeededRandom(runSeed * 7919 + 42);
+  const slots = TD_MAP_SLOTS.map((s) => ({ ...s }));
 
-  for (let i = 0; i < numPaths; i++) {
-    const angle = (i / numPaths) * Math.PI * 2 + (rng() - 0.5) * 0.65;
-    const dist = 0.38 + rng() * 0.1;
-    const start = {
-      x: tdClamp(center.x + Math.cos(angle) * dist, 0.04, 0.96),
-      y: tdClamp(center.y + Math.sin(angle) * dist, 0.04, 0.96),
+  const pathStarts = [
+    { x: 0.5, y: 0.04 },
+    { x: 0.96, y: 0.48 },
+    { x: 0.5, y: 0.96 },
+    { x: 0.04, y: 0.48 },
+  ];
+
+  const paths = pathStarts.map((start, pathId) => {
+    const slot = slots.find((s) => s.pathId === pathId);
+    const end = slot ? { x: slot.x, y: slot.y } : { x: 0.5, y: 0.5 };
+    const mid = {
+      x: tdClamp(start.x + (end.x - start.x) * 0.45 + (rng() - 0.5) * 0.06, 0.06, 0.94),
+      y: tdClamp(start.y + (end.y - start.y) * 0.45 + (rng() - 0.5) * 0.06, 0.06, 0.94),
     };
-    const bends = 1 + Math.floor(rng() * 2);
-    const path = [start];
-    for (let b = 0; b < bends; b++) {
-      const t = (b + 1) / (bends + 1);
-      path.push({
-        x: tdClamp(start.x + (center.x - start.x) * t + (rng() - 0.5) * 0.22, 0.06, 0.94),
-        y: tdClamp(start.y + (center.y - start.y) * t + (rng() - 0.5) * 0.22, 0.06, 0.94),
-      });
-    }
-    path.push({ ...center });
-    paths.push(path);
-  }
+    return [start, mid, end];
+  });
 
   const decor = [];
   const decorEmojis = ["🌲", "🌳", "🪨", "🌿", "🍄", "🪵"];
-  const count = 12 + Math.floor(rng() * 18);
-  for (let i = 0; i < count; i++) {
+  for (let i = 0; i < 14 + Math.floor(rng() * 10); i++) {
     decor.push({
-      x: rng() * 0.92 + 0.04,
-      y: rng() * 0.92 + 0.04,
+      x: rng() * 0.88 + 0.06,
+      y: rng() * 0.88 + 0.06,
       emoji: decorEmojis[Math.floor(rng() * decorEmojis.length)],
-      scale: 0.7 + rng() * 0.6,
+      scale: 0.65 + rng() * 0.55,
     });
   }
 
   const grassHue = Math.floor(rng() * 24);
   return {
-    seed: waveNum * 9973 + runSeed,
+    seed: runSeed,
+    slots,
     paths,
-    center,
     decor,
     grassLight: `hsl(${108 + grassHue}, 38%, ${32 + Math.floor(rng() * 8)}%)`,
     grassDark: `hsl(${112 + grassHue}, 42%, ${22 + Math.floor(rng() * 6)}%)`,
@@ -161,7 +171,7 @@ function tdGetPaths(state) {
 function tdLerpPath(stateOrPaths, pathId, t) {
   const paths = Array.isArray(stateOrPaths) ? stateOrPaths : tdGetPaths(stateOrPaths);
   const path = paths[pathId % Math.max(1, paths.length)];
-  if (!path?.length) return { ...TD_CENTER };
+  if (!path?.length) return { x: 0.5, y: 0.5 };
   if (t <= 0) return { x: path[0].x, y: path[0].y };
   if (t >= 1) return { x: path[path.length - 1].x, y: path[path.length - 1].y };
   const segLen = 1 / (path.length - 1);
@@ -181,16 +191,16 @@ function tdPigSizeScale(strength) {
 
 function tdWavePigCount(wave, difficultyId = "normal") {
   const mult = tdWaveDifficultyMult(wave, difficultyId);
-  const base = 3 + Math.floor(wave * 0.32);
+  const base = 3 + Math.floor(wave * 0.34);
   const scaled = Math.round(base * Math.pow(mult, 0.72));
-  const cap = Math.round(26 + 10 * Math.pow(getTdDifficultyScale(difficultyId), 0.35));
+  const cap = Math.round(24 + 10 * Math.pow(getTdDifficultyScale(difficultyId), 0.35));
   return Math.min(Math.max(2, scaled), cap);
 }
 
 function tdRollPigStrength(wave, rng, difficultyId = "normal") {
   const mult = tdWaveDifficultyMult(wave, difficultyId);
   const base = (8 + wave * 0.85) * Math.pow(mult, 0.82);
-  const spread = rng() * 18 * Math.pow(mult, 0.35) + (wave > 50 ? rng() * 12 : 0);
+  const spread = rng() * 18 * Math.pow(mult, 0.35) + (wave > 30 ? rng() * 12 : 0);
   return Math.min(100, Math.round(base + spread));
 }
 
@@ -230,6 +240,13 @@ function buildWaveSpawnQueue(wave, pathCount, difficultyId = "normal", rng = Mat
   return queue;
 }
 
+function createTdTowerLoadout(classId) {
+  const { col, row } = getStarterBagOrigin(TD_TOWER_COLS, TD_TOWER_ROWS);
+  const containers = [createContainer("starter_bag", col, row, 0)];
+  const items = applyClassStarters(containers, [], classId);
+  return { containers, items, classId };
+}
+
 function cloneTdBattleItem(item) {
   const def = ITEM_CATALOG[item.itemId];
   if (!def || def.isContainer) return null;
@@ -247,7 +264,7 @@ function cloneTdBattleItem(item) {
     itemId: item.itemId,
     icon: def.icon,
     cooldown: cd,
-    timer: cd * (0.2 + Math.random() * 0.4),
+    timer: cd * (0.15 + Math.random() * 0.35),
     damageBonus: item.runtime?.damageBonus || 0,
     blockSourceEfficiency: item.runtime?.blockSourceEfficiency ?? 1,
     healSourceEfficiency: item.runtime?.healSourceEfficiency ?? 1,
@@ -256,108 +273,250 @@ function cloneTdBattleItem(item) {
   };
 }
 
-function createTdState(playerItems, classId, waveNum, prepMeta = {}) {
-  const hero = createBattleSide(playerItems, classId, prepMeta.player || prepMeta);
-  const attackItems = hero.items
-    .map(cloneTdBattleItem)
-    .filter(Boolean);
-
-  attackItems.forEach((atk, i) => {
-    atk.orbitAngle = (i / Math.max(1, attackItems.length)) * Math.PI * 2;
+function tdSyncTowerCombat(tower, prepMeta = {}) {
+  if (!tower) return;
+  applySynergyModifiersToContainers(tower.containers, tower.items);
+  const flat = flattenContainersForBattle(tower.containers, tower.items).map((it) => {
+    const c = clonePrepBattleItem(it);
+    return c;
   });
-
-  if (!attackItems.length) {
-    attackItems.push({
-      uid: "td-fallback",
+  tower.hero = createBattleSide(flat, tower.classId, prepMeta);
+  tower.attackItems = tower.hero.items.map(cloneTdBattleItem).filter(Boolean);
+  tower.attackItems.forEach((atk, i) => {
+    atk.towerSlotId = tower.slotId;
+    atk.orbitAngle = (i / Math.max(1, tower.attackItems.length)) * Math.PI * 2;
+  });
+  if (!tower.attackItems.length) {
+    tower.attackItems.push({
+      uid: `td-fallback-${tower.slotId}`,
       itemId: "rusty_sword",
       icon: "⚔️",
-      cooldown: 1.8,
-      timer: 0.3,
+      cooldown: 2,
+      timer: 0.4,
       damageBonus: 0,
       blockSourceEfficiency: 1,
       healSourceEfficiency: 1,
       orbitAngle: 0,
       flashTimer: 0,
+      towerSlotId: tower.slotId,
     });
   }
+  tower.alive = tower.hero.hp > 0;
+}
 
-  const difficultyId = prepMeta.difficultyId || prepMeta.player?.difficultyId || "normal";
-  const map = generateTdMap(waveNum, prepMeta.runSeed || 1);
-  const spawnQueue = buildWaveSpawnQueue(waveNum, map.paths.length, difficultyId);
-  const spawnGap = TD_SPAWN_INTERVAL * getTdDifficulty(difficultyId).spawnIntervalMult;
-  const totalSpawnDelay = spawnQueue.length > 0
-    ? spawnQueue[spawnQueue.length - 1].delay + spawnGap
-    : 0;
-
-  return {
-    mode: "td",
-    wave: waveNum,
-    difficultyId,
-    map,
-    hero,
+function createTdTower(slotId, classId, prepMeta = {}, free = false) {
+  const slot = TD_MAP_SLOTS.find((s) => s.id === slotId);
+  if (!slot) return null;
+  const loadout = createTdTowerLoadout(classId);
+  const tower = {
+    slotId,
     classId,
+    ...loadout,
+    hero: null,
+    attackItems: [],
+    alive: true,
+    free,
+    orbitPhase: Math.random() * Math.PI * 2,
+  };
+  tdSyncTowerCombat(tower, prepMeta);
+  return tower;
+}
+
+function tdGetTowerAtSlot(state, slotId) {
+  return (state.towers || []).find((t) => t.slotId === slotId && t.alive);
+}
+
+function tdGetSlotDef(slotId) {
+  return TD_MAP_SLOTS.find((s) => s.id === slotId) || null;
+}
+
+function tdGetRecruitCost(classId) {
+  return TD_RECRUIT_COST[classId] ?? 35;
+}
+
+function tdCanRecruitAtSlot(state, slotId, classId, gold) {
+  if (tdGetTowerAtSlot(state, slotId)) return { ok: false, reason: "Слот занят" };
+  if (!TD_MAP_SLOTS.some((s) => s.id === slotId)) return { ok: false, reason: "Нет слота" };
+  if (!getClassById(classId)) return { ok: false, reason: "Неизвестный класс" };
+  const cost = tdGetRecruitCost(classId);
+  if (gold < cost) return { ok: false, reason: `Нужно ${cost}💰` };
+  return { ok: true, cost };
+}
+
+function tdRecruitTower(state, slotId, classId, prepMeta = {}) {
+  if (tdGetTowerAtSlot(state, slotId)) return { ok: false, reason: "Слот занят" };
+  if (!TD_MAP_SLOTS.some((s) => s.id === slotId)) return { ok: false, reason: "Нет слота" };
+  if (!getClassById(classId)) return { ok: false, reason: "Неизвестный класс" };
+  const tower = createTdTower(slotId, classId, prepMeta);
+  if (!tower) return { ok: false, reason: "Не удалось создать башню" };
+  state.towers.push(tower);
+  return { ok: true, tower, cost: tdGetRecruitCost(classId) };
+}
+
+function tdAutoPlaceItemOnTower(tower, itemId, uid) {
+  const def = ITEM_CATALOG[itemId];
+  if (!def || def.isContainer) return false;
+  for (let rot = 0; rot < 4; rot++) {
+    for (let row = 0; row < TD_TOWER_ROWS; row++) {
+      for (let col = 0; col < TD_TOWER_COLS; col++) {
+        if (!canPlaceInLoadout(itemId, col, row, rot, tower.containers, tower.items)) continue;
+        tower.items.push({
+          uid,
+          itemId,
+          col,
+          row,
+          rotation: rot,
+          runtime: {},
+        });
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function tdEquipItemOnTower(state, slotId, itemFromBench, prepMeta = {}) {
+  const tower = tdGetTowerAtSlot(state, slotId);
+  if (!tower || !itemFromBench) return { ok: false, reason: "Нет башни или предмета" };
+  const placed = tdAutoPlaceItemOnTower(tower, itemFromBench.itemId, itemFromBench.uid);
+  if (!placed) return { ok: false, reason: "Нет места в рюкзаке башни" };
+  tdSyncTowerCombat(tower, prepMeta);
+  return { ok: true, tower };
+}
+
+function tdStartWave(state) {
+  const difficultyId = state.difficultyId || "normal";
+  const pathCount = state.map?.paths?.length || 4;
+  state.spawnQueue = buildWaveSpawnQueue(state.wave, pathCount, difficultyId);
+  state.spawnElapsed = 0;
+  state.wavePhase = "spawning";
+  state.breakTimer = 0;
+  state.pigsKilled = 0;
+  state.pigsLeaked = 0;
+  state.totalPigs = state.spawnQueue.length;
+  state.pigs = [];
+  state.waveJustCleared = false;
+}
+
+function createTdRunState(commanderClassId, prepMeta = {}) {
+  const difficultyId = prepMeta.difficultyId || "normal";
+  const runSeed = prepMeta.runSeed || Math.floor(Math.random() * 99999);
+  const map = generateTdRunMap(runSeed);
+  const towers = [];
+  const commander = createTdTower(0, commanderClassId, prepMeta.player || prepMeta, true);
+  if (commander) towers.push(commander);
+
+  const state = {
+    mode: "td",
+    runMode: "towers",
+    continuous: true,
+    wave: 1,
+    difficultyId,
+    runSeed,
+    commanderClassId,
+    map,
+    towers,
+    baseLives: TD_BASE_LIVES,
     pigs: [],
-    attackItems,
-    spawnQueue,
+    spawnQueue: [],
     spawnElapsed: 0,
-    totalSpawnDelay,
     wavePhase: "spawning",
     breakTimer: 0,
     elapsed: 0,
     finished: false,
+    runVictory: false,
     winner: null,
-    pigsKilled: 0,
-    pigsLeaked: 0,
-    totalPigs: spawnQueue.length,
+    paused: false,
+    selectedSlotId: 0,
     events: [],
     log: [],
     itemDamageStats: {},
     nextPigId: 1,
     attackFx: [],
+    prepMeta: prepMeta.player || prepMeta,
   };
+
+  tdStartWave(state);
+  return state;
 }
 
-function tdRecordItemDamage(state, itemId, amount) {
-  const key = `player:${itemId}`;
+/** @deprecated — совместимость; используйте createTdRunState */
+function createTdState(playerItems, classId, waveNum, prepMeta = {}) {
+  const state = createTdRunState(classId, prepMeta);
+  state.wave = waveNum;
+  tdStartWave(state);
+  if (playerItems?.length) {
+    const tower = state.towers[0];
+    if (tower) {
+      tower.items = playerItems.map(clonePrepBattleItem);
+      tdSyncTowerCombat(tower, prepMeta.player || prepMeta);
+    }
+  }
+  return state;
+}
+
+function tdRecordItemDamage(state, itemId, slotId, amount) {
+  const key = `tower${slotId}:${itemId}`;
   if (!state.itemDamageStats[key]) {
-    state.itemDamageStats[key] = { team: "player", itemId, damageDealt: 0, activations: 0 };
+    state.itemDamageStats[key] = { team: "player", itemId, slotId, damageDealt: 0, activations: 0 };
   }
   state.itemDamageStats[key].damageDealt += amount;
   state.itemDamageStats[key].activations += 1;
 }
 
-function tdPickTargetPig(pigs) {
-  if (!pigs.length) return null;
-  let best = pigs[0];
-  for (const pig of pigs) {
-    if (pig.t > best.t) best = pig;
-  }
+function tdDist(a, b) {
+  const dx = a.x - b.x;
+  const dy = a.y - b.y;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+function tdPickTargetPigForTower(pigs, tower, map) {
+  if (!pigs.length || !tower?.alive) return null;
+  const slot = tdGetSlotDef(tower.slotId);
+  if (!slot) return pigs[0];
+
+  let best = null;
+  let bestScore = -Infinity;
+  pigs.forEach((pig) => {
+    const pos = tdLerpPath(map.paths, pig.pathId, pig.t);
+    let score = pig.t;
+    if (slot.pathId != null && pig.pathId === slot.pathId) score += 2;
+    else score -= tdDist(pos, slot) * 0.5;
+    if (score > bestScore) {
+      bestScore = score;
+      best = pig;
+    }
+  });
   return best;
 }
 
-function tdApplyItemActivation(state, atkItem) {
+function tdApplyTowerItemActivation(state, tower, atkItem) {
   const def = ITEM_CATALOG[atkItem.itemId];
-  if (!def) return;
-  const hero = state.hero;
+  if (!def || !tower.alive) return false;
+  const hero = tower.hero;
   let didSomething = false;
 
   (def.effects || []).forEach((eff) => {
     if (eff.type === "damage") {
-      const target = tdPickTargetPig(state.pigs);
+      const target = tdPickTargetPigForTower(state.pigs, tower, state.map);
       if (!target) return;
       const base = typeof getEffectAverageDamage === "function"
         ? getEffectAverageDamage(eff, def)
         : (eff.value || 3);
       const dmg = Math.max(1, Math.round((base + atkItem.damageBonus) * (hero.damageMult || 1)));
       target.hp -= dmg;
-      tdRecordItemDamage(state, atkItem.itemId, dmg);
+      tdRecordItemDamage(state, atkItem.itemId, tower.slotId, dmg);
+      const slot = tdGetSlotDef(tower.slotId);
       state.attackFx.push({
         itemId: atkItem.itemId,
         icon: def.icon,
         uid: atkItem.uid,
         targetId: target.id,
+        towerSlotId: tower.slotId,
         damage: dmg,
         ttl: 0.4,
+        fromX: slot?.x ?? 0.5,
+        fromY: slot?.y ?? 0.5,
       });
       atkItem.flashTimer = 0.35;
       if (target.hp <= 0) {
@@ -384,6 +543,7 @@ function tdApplyItemActivation(state, atkItem) {
   if (didSomething) {
     atkItem.timer = atkItem.cooldown * (hero.cooldownMult || 1);
   }
+  return didSomething;
 }
 
 function tdSpawnPig(state, spawn) {
@@ -400,8 +560,19 @@ function tdSpawnPig(state, spawn) {
   });
 }
 
-function tdPigReachHero(state, pig) {
-  const hero = state.hero;
+function tdPigReachSlot(state, pig) {
+  const slotDef = TD_MAP_SLOTS.find((s) => s.pathId === pig.pathId);
+  const slotId = slotDef?.id;
+  const tower = slotId != null ? tdGetTowerAtSlot(state, slotId) : null;
+
+  if (!tower) {
+    state.baseLives = Math.max(0, (state.baseLives || 0) - 1);
+    state.pigsLeaked += 1;
+    state.log.push(`🐷 Прорыв! База −1 (${state.baseLives}❤️)`);
+    return;
+  }
+
+  const hero = tower.hero;
   let dmg = pig.damage;
   if (hero.block > 0) {
     const absorbed = Math.min(hero.block, dmg);
@@ -414,28 +585,82 @@ function tdPigReachHero(state, pig) {
   }
   hero.hp -= dmg;
   state.pigsLeaked += 1;
-  state.log.push(`🐷 Свинья (${pig.strength}) добралась! −${Math.round(dmg)} HP`);
+  const cls = typeof getClassById === "function" ? getClassById(tower.classId) : null;
+  state.log.push(`🐷 Удар по ${cls?.name || "башне"} (${slotDef?.label}) −${Math.round(dmg)} HP`);
+  if (hero.hp <= 0) {
+    hero.hp = 0;
+    tower.alive = false;
+    tower.attackItems = [];
+    state.log.push(`💀 Башня ${cls?.name || ""} пала!`);
+  }
+}
+
+function tdCheckDefeat(state) {
+  const livingTowers = (state.towers || []).filter((t) => t.alive && t.hero?.hp > 0);
+  if (livingTowers.length === 0 || (state.baseLives ?? 0) <= 0) {
+    state.finished = true;
+    state.winner = "enemy";
+    state.wavePhase = "done";
+    return true;
+  }
+  return false;
+}
+
+function tdAdvanceWave(state) {
+  if (state.wave >= TD_MAX_WAVES) {
+    state.finished = true;
+    state.runVictory = true;
+    state.winner = "player";
+    state.wavePhase = "done";
+    state.log.push(`🏆 Карта пройдена! ${TD_MAX_WAVES} волн!`);
+    return;
+  }
+  state.wave += 1;
+  state.waveJustCleared = true;
+  tdStartWave(state);
+  state.log.push(`🌊 Волна ${state.wave}…`);
+}
+
+function tdHitTestSlot(normX, normY, radius = 0.07) {
+  let best = null;
+  let bestD = radius;
+  TD_MAP_SLOTS.forEach((slot) => {
+    const d = tdDist({ x: normX, y: normY }, slot);
+    if (d < bestD) {
+      bestD = d;
+      best = slot.id;
+    }
+  });
+  return best;
 }
 
 function tdTick(state, dt) {
-  if (!state || state.finished) return;
+  if (!state || state.finished || state.paused) return;
   state.elapsed += dt;
 
   state.attackFx = state.attackFx
     .map((fx) => ({ ...fx, ttl: fx.ttl - dt }))
     .filter((fx) => fx.ttl > 0);
 
-  state.attackItems.forEach((atk) => {
-    if (atk.flashTimer > 0) atk.flashTimer -= dt;
-    atk.orbitAngle += dt * 0.6;
+  (state.towers || []).forEach((tower) => {
+    if (!tower.alive) return;
+    tower.orbitPhase = (tower.orbitPhase || 0) + dt * 0.6;
+    (tower.attackItems || []).forEach((atk) => {
+      if (atk.flashTimer > 0) atk.flashTimer -= dt;
+      atk.orbitAngle = (atk.orbitAngle || 0) + dt * 0.55;
+    });
   });
 
   if (state.wavePhase === "break") {
     state.breakTimer -= dt;
     if (state.breakTimer <= 0) {
-      state.wavePhase = "done";
-      state.finished = true;
-      state.winner = state.hero.hp > 0 ? "player" : "enemy";
+      if (state.continuous) {
+        tdAdvanceWave(state);
+      } else {
+        state.wavePhase = "done";
+        state.finished = true;
+        state.winner = (state.towers || []).some((t) => t.alive) ? "player" : "enemy";
+      }
     }
     return;
   }
@@ -453,36 +678,37 @@ function tdTick(state, dt) {
   state.pigs.forEach((pig) => {
     pig.t += pig.speed * dt;
     if (pig.t >= 1) {
-      tdPigReachHero(state, pig);
+      tdPigReachSlot(state, pig);
       pig.t = 1.01;
       pig.dead = true;
     }
   });
   state.pigs = state.pigs.filter((p) => !p.dead);
 
+  if (tdCheckDefeat(state)) return;
+
   let activations = 0;
-  state.attackItems.forEach((atk) => {
-    atk.timer -= dt;
-    if (atk.timer <= 0 && activations < TD_MAX_ACTIVATIONS_PER_TICK) {
-      const before = state.pigs.length;
-      tdApplyItemActivation(state, atk);
-      if (before !== state.pigs.length || atk.flashTimer > 0) {
-        activations += 1;
+  (state.towers || []).forEach((tower) => {
+    if (!tower.alive) return;
+    (tower.attackItems || []).forEach((atk) => {
+      if (activations >= TD_MAX_ACTIVATIONS_PER_TICK) return;
+      atk.timer -= dt;
+      if (atk.timer <= 0) {
+        const before = state.pigs.length;
+        const acted = tdApplyTowerItemActivation(state, tower, atk);
+        if (acted) activations += 1;
+        if (before !== state.pigs.length || atk.flashTimer > 0) {
+          /* counted */
+        }
+        if (atk.timer <= 0) atk.timer = 0.1;
       }
-      if (atk.timer <= 0) atk.timer = 0.12;
-    }
+    });
   });
 
-  if (state.hero.hp <= 0) {
-    state.hero.hp = 0;
-    state.finished = true;
-    state.winner = "enemy";
-    state.wavePhase = "done";
-    return;
-  }
+  if (tdCheckDefeat(state)) return;
 
   const allSpawned = !state.spawnQueue.length;
-  if (allSpawned && state.pigs.length === 0 && state.wavePhase !== "break" && state.wavePhase !== "done") {
+  if (allSpawned && state.pigs.length === 0 && state.wavePhase === "fighting") {
     state.wavePhase = "break";
     state.breakTimer = TD_WAVE_BREAK;
     state.log.push(`✅ Волна ${state.wave} отбита! (${state.pigsKilled} 🐷)`);
@@ -491,10 +717,11 @@ function tdTick(state, dt) {
 
 function buildTdWaveSummary(state, meta = {}) {
   const won = state.winner === "player";
-  const allWaves = state.wave >= TD_MAX_WAVES && won;
-  const playerClassName = typeof getClassById === "function"
-    ? (getClassById(state.classId)?.name || state.classId || "Игрок")
-    : "Игрок";
+  const allWaves = state.runVictory || (state.wave >= TD_MAX_WAVES && won);
+  const living = (state.towers || []).filter((t) => t.alive);
+  const totalHp = living.reduce((n, t) => n + (t.hero?.hp || 0), 0);
+  const maxHp = living.reduce((n, t) => n + (t.hero?.maxHp || 0), 0);
+
   const playerItems = Object.values(state.itemDamageStats || {})
     .filter((s) => s.team === "player")
     .sort((a, b) => b.damageDealt - a.damageDealt)
@@ -504,26 +731,30 @@ function buildTdWaveSummary(state, meta = {}) {
     });
 
   const diffLabel = tdFormatDifficultyLabel(state.difficultyId || meta.difficultyId || "normal");
+  const commanderName = typeof getClassById === "function"
+    ? (getClassById(state.commanderClassId)?.name || "Командир")
+    : "Командир";
+
   return {
     winner: state.winner,
-    title: allWaves ? "🏆 Победа!" : won ? "Волна отбита!" : "Оборона палала",
+    title: allWaves ? "🏆 Карта пройдена!" : won ? "Волна отбита!" : "Оборона палала",
     roundNum: meta.roundNum || state.wave,
     goldReward: meta.goldReward || 0,
     battleTime: state.elapsed,
-    playerClassName,
+    playerClassName: commanderName,
     enemyClassName: "🐷 Свиньи",
     difficultyLabel: diffLabel,
     classWinnerLine: allWaves
       ? `Все ${TD_MAX_WAVES} волн на ${diffLabel}!`
       : won
-        ? `Волна ${state.wave} (${diffLabel}): ${state.pigsKilled} 🐷 · HP ${Math.ceil(state.hero.hp)}/${state.hero.maxHp}`
+        ? `Волна ${state.wave} (${diffLabel}): ${state.pigsKilled} 🐷 · башни ${living.length} · база ${state.baseLives}❤️`
         : `Прорыв на волне ${state.wave} · ${diffLabel}`,
     player: {
-      hp: Math.ceil(state.hero.hp),
-      maxHp: state.hero.maxHp,
+      hp: Math.ceil(totalHp),
+      maxHp: maxHp || 1,
       damage: Object.values(state.itemDamageStats || {}).reduce((n, s) => n + (s.damageDealt || 0), 0),
-      heal: state.hero.totalHealingDone || 0,
-      block: state.hero.totalDamageBlocked || 0,
+      heal: living.reduce((n, t) => n + (t.hero?.totalHealingDone || 0), 0),
+      block: living.reduce((n, t) => n + (t.hero?.totalDamageBlocked || 0), 0),
     },
     enemy: {
       hp: 0,
@@ -537,6 +768,8 @@ function buildTdWaveSummary(state, meta = {}) {
       pigsLeaked: state.pigsLeaked,
       totalPigs: state.totalPigs,
       wave: state.wave,
+      baseLives: state.baseLives,
+      towerCount: living.length,
     },
     isTd: true,
     tdSubtitle: won
