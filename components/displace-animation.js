@@ -5,6 +5,10 @@
 
 const DISPLACE_STAGGER = ITEM_FLIGHT_STAGGER;
 
+function isUsableClientRect(r) {
+  return !!(r && r.width > 4 && r.height > 4);
+}
+
 function getCanvasClientScale() {
   const canvasEl = document.getElementById("game-canvas");
   if (!canvasEl) return { x: 1, y: 1 };
@@ -17,13 +21,18 @@ function getCanvasClientScale() {
 
 function canvasPointToClient(x, y) {
   const canvasEl = document.getElementById("game-canvas");
-  if (!canvasEl) return { x, y };
+  if (!canvasEl) return null;
   const canvasRect = canvasEl.getBoundingClientRect();
+  if (!isUsableClientRect(canvasRect)) return null;
   const scale = getCanvasClientScale();
   return {
     x: canvasRect.left + x * scale.x,
     y: canvasRect.top + y * scale.y,
   };
+}
+
+function rectCenter(r) {
+  return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
 }
 
 function getItemVisualCenterOnBoard(item, team) {
@@ -41,26 +50,82 @@ function getItemVisualCenterOnBoard(item, team) {
 
 function getItemVisualCenterClient(item, team) {
   const center = getItemVisualCenterOnBoard(item, team);
-  return canvasPointToClient(center.x, center.y);
+  return canvasPointToClient(center.x, center.y) || center;
 }
 
-function getBenchSlotClientPoint(side, slotIndex) {
+function usesBenchPopoverMode() {
+  return typeof usesPrepBenchPopover === "function" && usesPrepBenchPopover();
+}
+
+function isBenchPopoverOpen() {
+  return document.documentElement.hasAttribute("data-prep-bench-open");
+}
+
+function getPrepBenchFabClientPoint() {
+  const fab = document.getElementById("btn-prep-bench-fab");
+  if (!fab || fab.hidden) return null;
+  if (getComputedStyle(fab).display === "none") return null;
+  const r = fab.getBoundingClientRect();
+  return isUsableClientRect(r) ? rectCenter(r) : null;
+}
+
+function getBenchSlotsClientPoint(slotIndex) {
   const slotsEl = document.getElementById("bench-slots");
-  if (!slotsEl) {
-    const fallback = canvasPointToClient(uiPx(48), 320);
-    return { x: fallback.x, y: fallback.y };
+  if (!slotsEl) return null;
+
+  const panel = document.getElementById("bench-panel");
+  if (panel) {
+    const panelStyle = getComputedStyle(panel);
+    if (panelStyle.display === "none" || panelStyle.visibility === "hidden") return null;
   }
+
+  if (usesBenchPopoverMode() && !isBenchPopoverOpen()) return null;
 
   const maxBench = typeof MAX_BENCH !== "undefined" ? MAX_BENCH : 6;
   const idx = Math.min(Math.max(0, slotIndex), maxBench - 1);
   const cards = slotsEl.querySelectorAll(".bench-card");
-  const targetEl = cards[idx] || slotsEl;
-  const iconEl = targetEl.classList?.contains("empty") ? null : targetEl.querySelector(".icon");
-  const tr = (iconEl || targetEl).getBoundingClientRect();
+  const targetEl = cards[idx] || cards[cards.length - 1] || slotsEl;
+  const iconEl = targetEl.classList?.contains("empty")
+    ? targetEl
+    : (targetEl.querySelector(".icon") || targetEl);
+  const tr = iconEl.getBoundingClientRect();
+  return isUsableClientRect(tr) ? rectCenter(tr) : null;
+}
 
+function getBenchSlotClientPoint(side, slotIndex) {
+  const slotPt = getBenchSlotsClientPoint(slotIndex);
+  if (slotPt) return slotPt;
+
+  const fabPt = getPrepBenchFabClientPoint();
+  if (fabPt) return fabPt;
+
+  if (isBenchPopoverOpen()) {
+    const panel = document.querySelector("#prep-bench-popover .prep-bench-popover__panel");
+    const pr = panel?.getBoundingClientRect();
+    if (isUsableClientRect(pr)) return rectCenter(pr);
+  }
+
+  const benchPanel = document.getElementById("bench-panel");
+  if (benchPanel) {
+    const br = benchPanel.getBoundingClientRect();
+    if (isUsableClientRect(br)) return rectCenter(br);
+  }
+
+  const shop = document.getElementById("shop-panel")?.getBoundingClientRect();
+  if (isUsableClientRect(shop)) {
+    return { x: shop.left + shop.width * 0.5, y: shop.top + shop.height * 0.82 };
+  }
+
+  const canvasFallback = canvasPointToClient(
+    typeof uiPx === "function" ? uiPx(48) : 48,
+    typeof uiPx === "function" ? uiPx(320) : 320,
+  );
+  if (canvasFallback) return canvasFallback;
+
+  const vv = window.visualViewport;
   return {
-    x: tr.left + tr.width / 2,
-    y: tr.top + tr.height / 2,
+    x: (vv?.width ?? window.innerWidth) - 56,
+    y: (vv?.height ?? window.innerHeight) - 96,
   };
 }
 

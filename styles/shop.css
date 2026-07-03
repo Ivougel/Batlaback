@@ -216,6 +216,13 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] .shop-panel-header .prep
   justify-self: center;
 }
 
+/* Двухэмодзийные предметы — всегда на всю ширину ряда (читаемость + touch) */
+#app[data-phase="prep"] #shop-panel .shop-card:has(.icon--duo) {
+  grid-column: 1 / -1;
+  width: 100%;
+  justify-self: stretch;
+}
+
 #app[data-phase="prep"] #shop-panel .shop-card.empty {
   display: none;
 }
@@ -298,8 +305,12 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] .shop-panel-header .prep
 #app[data-phase="prep"] #shop-panel .shop-card .shop-item-visual .icon.icon--duo {
   width: var(--shop-item-icon-duo-width);
   height: var(--shop-item-icon-size);
-  font-size: calc(var(--shop-item-icon-font) * 0.66);
-  border-radius: calc(14px * var(--ui-scale));
+  font-size: calc(var(--shop-item-icon-font) * 0.72);
+  border-radius: 0;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0;
 }
 
 #app[data-phase="prep"] #shop-panel .shop-card .shop-item-visual .icon .icon-duo,

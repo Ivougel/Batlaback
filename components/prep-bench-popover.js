@@ -39,6 +39,9 @@
   }
 
   function isPrepPhase() {
+    if (typeof window.isLivePrepSession === "function") {
+      return window.isLivePrepSession();
+    }
     return document.getElementById("app")?.dataset.phase === "prep";
   }
 

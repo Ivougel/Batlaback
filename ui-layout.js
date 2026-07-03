@@ -358,10 +358,10 @@
     "tablet-landscape": {
       fitAvailH: PREP_SIDE_CONTENT_H, fitMinScale: SCALE_MIN, fitWidthRatio: 1,
       canvasAvailShare: 0.52, canvasMaxCap: 420,
-      shopRowBase: 46, shopRowMin: 38, shopRowMax: 52,
+      shopRowBase: 88, shopRowMin: 72, shopRowMax: 100,
       heroSlotHeight: "min(54vh, 520px)", heroSlotMax: 560,
       sceneAvatarH: 148, sceneAvatarW: 118, dollSlot: 38, characterGap: 8,
-      shopPanelW: 220,
+      shopPanelW: 320,
     },
     "desktop-portrait": {
       fitAvailH: PREP_STACKED_CONTENT_H, fitMinScale: SCALE_MIN, fitWidthRatio: 1,
@@ -395,8 +395,16 @@
       cfg.shopRowMin,
       Math.min(cfg.shopRowMax, cfg.shopRowBase * fitScale),
     ));
-    root.style.setProperty("--prep-shop-row-h", `${shopRowH}px`);
-    const benchRowH = Math.max(44, Math.round(shopRowH * 0.78));
+    const ipadMiniBoost = layoutProfile.id === "tablet-landscape" && isIpadMiniPwaLandscape();
+    const rowH = ipadMiniBoost ? Math.max(shopRowH, 92) : shopRowH;
+    root.style.setProperty("--prep-shop-row-h", `${rowH}px`);
+    const shopIconSize = Math.round(rowH * (ipadMiniBoost ? 0.72 : 0.68));
+    const shopIconFont = Math.round(rowH * (ipadMiniBoost ? 0.56 : 0.52));
+    root.style.setProperty("--shop-card-row-h", `${rowH}px`);
+    root.style.setProperty("--shop-item-icon-size", `${shopIconSize}px`);
+    root.style.setProperty("--shop-item-icon-font", `${shopIconFont}px`);
+    root.style.setProperty("--shop-item-icon-duo-width", `${Math.round(shopIconSize * 1.72)}px`);
+    const benchRowH = Math.max(44, Math.round(rowH * 0.78));
     root.style.setProperty("--prep-bench-row-h", `${benchRowH}px`);
     if (cfg.shopCols) {
       root.style.setProperty("--prep-shop-cols", String(cfg.shopCols));
@@ -1267,8 +1275,10 @@
     const shop = document.getElementById("shop-panel");
     const chrome = getBottomChrome();
     const shopRect = shop?.getBoundingClientRect();
+    const surface = root.dataset.uiSurface;
     const uiScale = readCssPx("--ui-scale", 1);
-    const fabSize = Math.round(readCssPx("--prep-bench-fab-size", 44 * uiScale));
+    const baseFabPx = (surface === "tablet-side" || surface === "desktop") ? 75 : 44;
+    const fabSize = Math.round(readCssPx("--prep-bench-fab-size", baseFabPx * uiScale));
     const gap = Math.round(6 * uiScale);
 
     if (shopRect && shopRect.width > 8) {
@@ -1296,20 +1306,25 @@
     root.style.setProperty("--prep-bench-fab-size", `${fabSize}px`);
   }
 
-  function syncMobileShopFabPosition() {
-    const root = document.documentElement;
-    syncMobileOverlayAnchors({ phase: document.getElementById("app")?.dataset.phase || "prep" });
-
-    if (!usesPrepShopDrawer()) {
-      return;
-    }
+  function syncOpenPrepTooltipDock() {
+    if (typeof window.isLivePrepSession === "function" && !window.isLivePrepSession()) return;
     const phase = document.getElementById("app")?.dataset.phase;
     if (phase !== "prep") return;
-
     const tip = document.getElementById("sidebar-tooltip");
     if (tip && !tip.classList.contains("hidden")
       && typeof window.positionPrepTooltipDock === "function") {
       window.positionPrepTooltipDock();
+    }
+  }
+
+  function syncMobileShopFabPosition() {
+    const root = document.documentElement;
+    syncMobileOverlayAnchors({ phase: document.getElementById("app")?.dataset.phase || "prep" });
+
+    syncOpenPrepTooltipDock();
+
+    if (!usesPrepShopDrawer()) {
+      return;
     }
   }
 

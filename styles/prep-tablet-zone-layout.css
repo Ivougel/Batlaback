@@ -99,9 +99,19 @@ html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel .shop-ob
 html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel .shop-slots {
   flex: 0 0 auto;
   min-height: 0 !important;
-  grid-auto-rows: minmax(var(--prep-shop-row-h, 40px), auto);
-  gap: calc(2px * var(--ui-scale, 1));
+  grid-auto-rows: minmax(var(--prep-shop-row-h, 88px), auto);
+  gap: calc(8px * var(--ui-scale, 1));
   overflow: visible;
+}
+
+/* Touch: одна колонка — крупные карточки, удобнее попадать пальцем */
+html[data-ui-surface="tablet-side"][data-touch="true"] #app[data-phase="prep"] #shop-panel .shop-slots {
+  grid-template-columns: 1fr;
+}
+
+html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel .shop-card:not(.empty):last-child:nth-child(odd) {
+  width: 100%;
+  justify-self: stretch;
 }
 
 html[data-ui-surface="tablet-side"][data-prep-bench-popover="true"] #app[data-phase="prep"] #shop-panel .shop-slots {
@@ -109,19 +119,34 @@ html[data-ui-surface="tablet-side"][data-prep-bench-popover="true"] #app[data-ph
 }
 
 html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel .shop-card {
-  min-height: var(--prep-shop-row-h, 40px);
-  gap: calc(2px * var(--ui-scale, 1));
+  min-height: var(--prep-shop-row-h, 88px);
+  gap: calc(4px * var(--ui-scale, 1));
 }
 
 html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel .shop-item-visual .icon,
 html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel .shop-card--enhancement .item-icon-shell--enhancement {
-  width: calc(32px * var(--ui-scale, 1));
-  height: calc(32px * var(--ui-scale, 1));
+  width: var(--shop-item-icon-size, calc(64px * var(--ui-scale, 1)));
+  height: var(--shop-item-icon-size, calc(64px * var(--ui-scale, 1)));
+  font-size: var(--shop-item-icon-font, calc(48px * var(--ui-scale, 1)));
+}
+
+html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel .shop-item-visual .icon.icon--duo {
+  width: var(--shop-item-icon-duo-width, calc(var(--shop-item-icon-size, 64px) * 1.72));
+  font-size: calc(var(--shop-item-icon-font, 48px) * 0.72);
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0;
 }
 
 html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel .shop-item-stack > .cost {
-  font-size: var(--font-xs);
-  padding: calc(2px * var(--ui-scale, 1)) calc(5px * var(--ui-scale, 1));
+  font-size: var(--font-sm);
+  padding: calc(4px * var(--ui-scale, 1)) calc(8px * var(--ui-scale, 1));
+  min-height: calc(28px * var(--ui-scale, 1));
+}
+
+html[data-touch="true"][data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel .shop-card:not(.empty)::before {
+  inset: -20px;
 }
 
 /* ─── Зона продажи: компактная иконка-мишень ─── */
@@ -201,15 +226,21 @@ body:has(#app[data-phase="prep"]) .bottom-chrome .recipes-toggle:hover {
 
 @media (width: 1133px) and (height: 744px) {
   html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel {
-    width: min(var(--shop-panel-w, 200px), 200px);
+    width: min(var(--shop-panel-w, 320px), 340px);
     min-width: 0;
-    max-width: 200px;
-    padding: 4px 6px;
+    max-width: 340px;
+    flex-basis: min(var(--shop-panel-w, 320px), 340px);
+    padding: calc(6px * var(--ui-scale, 1)) calc(8px * var(--ui-scale, 1));
+  }
+
+  html[data-ui-surface="tablet-side"][data-prep-bench-popover="true"] #app[data-phase="prep"] #shop-panel {
+    width: min(var(--shop-panel-w, 320px), 340px) !important;
+    max-width: 340px !important;
+    flex: 0 0 min(var(--shop-panel-w, 320px), 340px) !important;
   }
 
   html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel .shop-slots {
     min-height: 0 !important;
-    --prep-shop-row-h: 38px;
   }
 
   html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-field-column > .layer-world {
@@ -219,4 +250,81 @@ body:has(#app[data-phase="prep"]) .bottom-chrome .recipes-toggle:hover {
   html[data-hero-card-mode="full-bleed"][data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-character-img {
     max-width: 90%;
   }
+}
+
+/* ─── Тултип предметов: полоса между героем и сеткой (компактная карточка) ─── */
+
+html[data-ui-surface="tablet-side"][data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--hero-grid:not(.hidden) {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: calc(4px * var(--ui-scale, 1));
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  pointer-events: none;
+  overflow: visible;
+}
+
+html[data-ui-surface="tablet-side"][data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--hero-grid .sidebar-tooltip:not(.hidden) {
+  width: min(100%, calc(248px * var(--ui-scale, 1)));
+  max-width: min(100%, calc(248px * var(--ui-scale, 1)));
+  max-height: min(38vh, calc(260px * var(--ui-scale, 1)));
+  margin: 0;
+  padding: calc(8px * var(--ui-scale, 1)) calc(10px * var(--ui-scale, 1));
+  background: rgba(14, 17, 22, 0.94);
+  border: 1px solid rgba(88, 166, 255, 0.22);
+  border-radius: calc(10px * var(--ui-scale, 1));
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.42),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  pointer-events: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+html[data-ui-surface="tablet-side"][data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--hero-grid .sidebar-tooltip .tt-title {
+  font-size: var(--font-sm);
+  line-height: 1.25;
+}
+
+html[data-ui-surface="tablet-side"][data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--hero-grid .sidebar-tooltip .tt-line {
+  font-size: var(--font-xs);
+  line-height: 1.3;
+}
+
+html[data-ui-surface="tablet-side"][data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--hero-grid .sidebar-tooltip .tt-sub {
+  font-size: calc(var(--font-xs) * 0.92);
+  line-height: 1.25;
+}
+
+/* Prep-only chrome: не intro (#class-overlay), не battle/replay */
+body:not(.screen-app-visible) #prep-tooltip-dock,
+body:has(#class-overlay:not(.hidden)) #prep-tooltip-dock {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+body:not(.screen-app-visible) .prep-bench-fab,
+body:not(.screen-app-visible) .prep-bench-popover,
+body:has(#class-overlay:not(.hidden)) .prep-bench-fab,
+body:has(#class-overlay:not(.hidden)) .prep-bench-popover {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+html:not([data-game-phase="prep"]) #prep-tooltip-dock.prep-tooltip-dock--hero-grid {
+  display: none !important;
+}
+
+/* Intro не должен оставаться поверх живого забега (iPad PWA) */
+body.screen-app-visible #class-overlay:not(.hidden):not(.overlay-exiting):not(.overlay-entering) {
+  display: none !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
 }

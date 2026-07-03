@@ -2153,6 +2153,55 @@ function isMobilePrepPortrait() {
   return document.documentElement.dataset.prepLayout === "mobile" && phase === "prep";
 }
 
+/** Живой prep-забег: не intro (#class-overlay), не battle/replay. */
+function isLivePrepSession() {
+  if (phase !== "prep") return false;
+  if (!document.body.classList.contains("screen-app-visible")) return false;
+  if (isPopupOpen("class-overlay")) return false;
+  return document.getElementById("app")?.dataset.phase === "prep";
+}
+
+function isTabletSidePrepTooltipDock() {
+  return isLivePrepSession() && document.documentElement.dataset.uiSurface === "tablet-side";
+}
+
+function getPrepHeroGridTooltipZone(margin = 10) {
+  const heroLayer = document.getElementById("prep-character-layer");
+  const fieldIsland = document.getElementById("prep-field-island");
+  const canvas = document.getElementById("game-canvas");
+  const topBar = document.getElementById("prep-top-bar");
+  const bottomChrome = document.getElementById("bottom-chrome");
+  const enemySide = document.getElementById("app")?.dataset.prepSide === "enemy";
+
+  const gridRect = fieldIsland?.getBoundingClientRect() ?? canvas?.getBoundingClientRect();
+  const heroRect = heroLayer?.getBoundingClientRect();
+  const topBarRect = topBar?.getBoundingClientRect();
+  const bottomRect = bottomChrome?.getBoundingClientRect();
+  const vv = window.visualViewport;
+  const viewTop = vv?.offsetTop ?? 0;
+  const viewBottom = (vv?.offsetTop ?? 0) + (vv?.height ?? window.innerHeight);
+
+  if (!gridRect || gridRect.width < 40) return null;
+
+  let left;
+  let right;
+  if (enemySide) {
+    if (!heroRect || heroRect.width < 24) return null;
+    left = gridRect.right + margin;
+    right = heroRect.left - margin;
+  } else {
+    left = heroRect && heroRect.width > 24 ? heroRect.right + margin : margin;
+    right = gridRect.left - margin;
+  }
+  if (right - left < 72) return null;
+
+  const top = (topBarRect?.bottom ?? viewTop) + margin;
+  const bottom = (bottomRect?.top ?? viewBottom) - margin;
+  if (bottom <= top + 48) return null;
+
+  return { left, right, top, bottom };
+}
+
 function setPrepTooltipDockPassthrough(active) {
   const dock = document.getElementById("prep-tooltip-dock");
   if (!dock) return;
@@ -2165,21 +2214,24 @@ function syncPrepTooltipDockVisibility() {
   const dock = document.getElementById("prep-tooltip-dock");
   if (!dock) return;
 
-  if (phase !== "prep") {
-    dock.classList.remove("hidden", "prep-tooltip-dock--passthrough");
+  if (!isLivePrepSession()) {
+    dock.classList.add("hidden");
+    dock.classList.remove("prep-tooltip-dock--passthrough", "prep-tooltip-dock--item", "prep-tooltip-dock--hero-grid");
     return;
   }
 
-  if (isMobilePrepPortrait()) {
-    const hasItemTip = el && !el.classList.contains("hidden");
+  if (isMobilePrepPortrait() || isTabletSidePrepTooltipDock()) {
+    const hasItemTip = el && !el.classList.contains("hidden")
+      && !el.classList.contains("sidebar-tooltip--floating");
     dock.classList.remove("prep-tooltip-dock--passthrough");
     dock.classList.toggle("hidden", !hasItemTip);
     dock.classList.toggle("prep-tooltip-dock--item", hasItemTip);
+    dock.classList.toggle("prep-tooltip-dock--hero-grid", isTabletSidePrepTooltipDock());
     if (hasItemTip) positionPrepTooltipDock();
     return;
   }
 
-  dock.classList.remove("prep-tooltip-dock--item");
+  dock.classList.remove("prep-tooltip-dock--item", "prep-tooltip-dock--hero-grid");
 
   if (!el) return;
 
@@ -2194,14 +2246,16 @@ function syncPrepTooltipDockVisibility() {
 }
 
 function shouldUsePrepTooltipDock(placement) {
-  if (phase !== "prep" || !isMobilePrepPortrait()) return false;
+  if (!isLivePrepSession()) return false;
   if (sidebarTooltipSource === "enhancement"
     || sidebarTooltipSource === "companion"
     || sidebarTooltipSource === "combat-feed") {
     return false;
   }
   const ctx = placement || sidebarTooltipSource;
-  return ctx === "shop" || ctx === "bench" || ctx === "field" || ctx === "inventory" || ctx === "doll";
+  const itemCtx = ctx === "shop" || ctx === "bench" || ctx === "field" || ctx === "inventory" || ctx === "doll";
+  if (!itemCtx) return false;
+  return isMobilePrepPortrait() || isTabletSidePrepTooltipDock();
 }
 
 function positionMobilePrepTooltipDock(dock) {
@@ -2273,12 +2327,42 @@ function positionMobilePrepTooltipDock(dock) {
   dock.style.height = "auto";
 }
 
+function positionTabletSidePrepTooltipDock(dock) {
+  const root = document.documentElement;
+  const uiScale = parseFloat(getComputedStyle(root).getPropertyValue("--ui-scale")) || 1;
+  const margin = Math.round(6 * uiScale);
+  const zone = getPrepHeroGridTooltipZone(margin);
+
+  if (!zone) {
+    dock.style.left = `${margin}px`;
+    dock.style.top = `${margin}px`;
+    dock.style.width = `${Math.round(200 * uiScale)}px`;
+    dock.style.maxHeight = `${Math.round(220 * uiScale)}px`;
+    dock.style.height = "auto";
+    return;
+  }
+
+  const zoneW = zone.right - zone.left;
+  const zoneH = zone.bottom - zone.top;
+
+  dock.style.left = `${zone.left}px`;
+  dock.style.top = `${zone.top}px`;
+  dock.style.width = `${zoneW}px`;
+  dock.style.maxHeight = `${zoneH}px`;
+  dock.style.height = `${zoneH}px`;
+}
+
 function positionPrepTooltipDock() {
   const dock = document.getElementById("prep-tooltip-dock");
   if (!dock) return;
 
   if (isMobilePrepPortrait()) {
     positionMobilePrepTooltipDock(dock);
+    return;
+  }
+
+  if (isTabletSidePrepTooltipDock()) {
+    positionTabletSidePrepTooltipDock(dock);
     return;
   }
 
@@ -3006,6 +3090,7 @@ function renderPhase() {
     root.dataset.gamePhase = phase === "battle" || phase === "replay" ? phase : phase === "prep" ? "prep" : "";
     root.dataset.gameMode = gameMode;
   }
+  syncClassOverlayHiddenDuringGame();
   applyPhaseCanvasLayout();
   setBattleControlsVisible(isBattleUiPhase());
   syncBattleArenaLayout();
@@ -3031,8 +3116,8 @@ function renderPhase() {
     renderShop();
     renderBench();
     if (isTdRunLive()) renderTdBuildPanel();
-    if (phase === "prep") syncPrepTooltipDockVisibility();
   }
+  syncPrepTooltipDockVisibility();
   renderFightButton();
   if (phase !== "prep") closeAllFighterCharacteristicsPopups();
   if (!isBattleUiPhase() && typeof closeBattleInventoryPopover === "function") closeBattleInventoryPopover();
@@ -3617,6 +3702,18 @@ function restartGame() {
 function isPopupOpen(id) {
   const el = document.getElementById(id);
   return !!(el && !el.classList.contains("hidden"));
+}
+
+/** Intro не должен оставаться поверх живого забега (PWA / resize). */
+function syncClassOverlayHiddenDuringGame() {
+  const overlay = document.getElementById("class-overlay");
+  if (!overlay || !document.body.classList.contains("screen-app-visible")) return;
+  if (typeof ScreenTransitions !== "undefined" && ScreenTransitions.isScreenTransitioning()) return;
+  if (overlay.classList.contains("overlay-exiting")) return;
+  if (overlay.classList.contains("hidden")) return;
+  overlay.classList.add("hidden");
+  overlay.setAttribute("aria-hidden", "true");
+  overlay.classList.remove("overlay-entering");
 }
 
 function closeNestedPopups() {
@@ -9422,7 +9519,7 @@ function showSidebarTooltipAt(clientX, clientY, itemId, contentItem, context = "
       : context === "field" || context === "inventory" ? "field"
         : "viewport";
   positionSidebarTooltip(clientX, clientY, boundsKind, context);
-  if (isMobilePrepPortrait() && (context === "shop" || context === "bench" || context === "field" || context === "inventory" || context === "doll")) {
+  if (shouldUsePrepTooltipDock(context)) {
     requestAnimationFrame(() => {
       positionPrepTooltipDock();
       syncPrepTooltipDockVisibility();
@@ -10666,6 +10763,7 @@ function renderBattleStats() {
 
 window.positionPrepTooltipDock = positionPrepTooltipDock;
 window.syncPrepTooltipDockVisibility = syncPrepTooltipDockVisibility;
+window.isLivePrepSession = isLivePrepSession;
 window.bindPointerTapTooltip = bindPointerTapTooltip;
 window.syncPrepHeroCardChrome = syncPrepHeroCardChrome;
 

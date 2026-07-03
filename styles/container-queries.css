@@ -34,14 +34,10 @@
 }
 
 @container shop-panel (max-width: 340px) {
-  #shop-panel .shop-card,
-  #shop-panel .shop-card.empty {
-    min-height: 54px;
-  }
-
-  #shop-panel .shop-item-visual {
-    width: calc(52px * var(--game-scale));
-    height: calc(52px * var(--game-scale));
+  /* Не ужимаем иконки на tablet-side/desktop — размеры из ui-layout (--shop-item-icon-size). */
+  html:not([data-ui-surface="tablet-side"]):not([data-ui-surface="desktop"]) #shop-panel .shop-card,
+  html:not([data-ui-surface="tablet-side"]):not([data-ui-surface="desktop"]) #shop-panel .shop-card.empty {
+    min-height: var(--shop-card-row-h, 54px);
   }
 }
 

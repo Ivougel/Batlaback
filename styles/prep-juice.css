@@ -195,8 +195,26 @@ body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) {
   box-shadow: 0 2px 8px rgba(30, 60, 28, 0.12) !important;
 }
 
+/* Двойные эмодзи — без подложки, только глифы */
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-item-visual .icon.icon--duo,
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .bench-panel .bench-card .icon.icon--duo {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0;
+}
+
 #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-card.rarity-common .shop-item-visual .icon {
   box-shadow: 0 0 0 2px rgba(120, 130, 140, 0.45), 0 2px 8px rgba(30, 60, 28, 0.1) !important;
+}
+
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-card.rarity-common .shop-item-visual .icon.icon--duo,
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-card.rarity-uncommon .shop-item-visual .icon.icon--duo,
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-card.rarity-rare .shop-item-visual .icon.icon--duo,
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-card.rarity-epic .shop-item-visual .icon.icon--duo,
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-card.rarity-legendary .shop-item-visual .icon.icon--duo,
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-card.frozen .shop-item-visual .icon.icon--duo {
+  box-shadow: none !important;
 }
 
 #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-card.rarity-uncommon .shop-item-visual .icon {
