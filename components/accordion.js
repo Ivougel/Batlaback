@@ -127,8 +127,23 @@ function createAccordionSection(title, bodyHtml, openByDefault = false, options 
 function createStaticResultBlock(title, bodyHtml) {
   const block = document.createElement("div");
   block.className = "result-static-block";
+  const titleText = String(title || "");
+  const titleHtml = titleText.includes("🏆")
+    ? `<span class="result-static-block-trophy-wrap">
+        <span class="result-static-block-trophy-icon" aria-hidden="true">🏆</span>
+        <span class="class-hero-showcase-sparkles result-trophy-sparkles" aria-hidden="true">
+          <span class="class-hero-sparkle class-hero-sparkle--1"></span>
+          <span class="class-hero-sparkle class-hero-sparkle--2"></span>
+          <span class="class-hero-sparkle class-hero-sparkle--3"></span>
+          <span class="class-hero-sparkle class-hero-sparkle--4"></span>
+          <span class="class-hero-sparkle class-hero-sparkle--5"></span>
+          <span class="class-hero-sparkle class-hero-sparkle--6"></span>
+        </span>
+        <span class="result-static-block-trophy-label">${escapeHtml(titleText.replace(/^🏆\s*/, ""))}</span>
+      </span>`
+    : titleText;
   block.innerHTML = `
-    <div class="result-static-block-title">${title}</div>
+    <div class="result-static-block-title">${titleHtml}</div>
     <div class="result-static-block-body">${bodyHtml}</div>
   `;
   return block;

@@ -19,6 +19,13 @@ async function quickStart(page) {
   await page.evaluate(() => {
     selectGameMode("solo");
     selectPlayerClass("warrior");
+    if (typeof selectCompanion === "function") {
+      selectCompanion(
+        typeof defaultCompanionForClass === "function"
+          ? defaultCompanionForClass("warrior")
+          : "s_stranger",
+      );
+    }
     selectOpponentClass("mage");
     startRunFromOverlay();
   });
@@ -653,6 +660,7 @@ const CASES = [
         const BHA = window.BattleHeroAnchor;
         return {
           profile: document.documentElement.dataset.battleProfile,
+          headBadge: BHA?.usesHeadBadgeAnchors?.() ?? false,
           heroBelow: BHA?.usesHeroBelowThoughtAnchors?.() ?? false,
           emojiPx: BHA?.thoughtSlotEmojiSize?.() ?? 0,
           satScale: BHA?.satelliteScaleFactor?.() ?? 0,
@@ -674,19 +682,18 @@ const CASES = [
         };
       });
       assert(m.profile === "tablet-landscape-side", `profile: ${m.profile}`);
-      assert(m.heroBelow === true, "tablet landscape should anchor emoji under hero");
-      assert(m.emojiPx >= 96, `emoji too small: ${m.emojiPx}px`);
-      assert(Math.abs(m.satScale - 0.85) < 0.02, `satellite scale: ${m.satScale}`);
+      assert(m.headBadge === true, "tablet landscape should use head badge emoji");
+      assert(m.heroBelow === false, "head badge replaces below-hero anchor");
+      assert(m.emojiPx >= 24 && m.emojiPx <= 48, `emoji size out of range: ${m.emojiPx}px`);
+      assert(Math.abs(m.satScale - 0.72) < 0.04, `satellite scale: ${m.satScale}`);
       assert(m.floorH >= 100, `combat floor too small: ${m.floorH}px`);
       assert(m.hudTop >= m.stageBottom - 28, `HUD on portrait: hud=${m.hudTop} stage=${m.stageBottom}`);
       assert(Math.abs(m.hudTop - m.enemyHudTop) <= 16, `HUD misaligned: player=${m.hudTop} enemy=${m.enemyHudTop}`);
       assert(m.stageTop >= 4, `portrait clipped at top: stageTop=${m.stageTop}`);
       assert(m.stageH >= 180, `hero stage too small on tablet landscape: ${m.stageH}px`);
       assert(m.playerZoneW >= m.vw * 0.24, `hero column too narrow: ${m.playerZoneW}px`);
-      assert(m.playerEmojiCy >= m.playerHudBottom + 28, `emoji too close to HUD: cy=${m.playerEmojiCy} hudBottom=${m.playerHudBottom}`);
-      const corridorH = m.chromeTop - m.playerHudBottom;
-      const emojiRel = corridorH > 80 ? (m.playerEmojiCy - m.playerHudBottom) / corridorH : 0;
-      assert(emojiRel >= 0.48, `emoji too high in corridor: rel=${emojiRel.toFixed(2)}`);
+      assert(m.playerEmojiCy <= m.stageTop + m.stageH * 0.28, `emoji should sit on head: cy=${m.playerEmojiCy} stageTop=${m.stageTop}`);
+      assert(m.playerEmojiCy >= m.stageTop - 8, `emoji above head: cy=${m.playerEmojiCy} stageTop=${m.stageTop}`);
       assert(Math.abs(m.playerSlotCx - m.playerColCx) <= 28, `player emoji off column: slot=${m.playerSlotCx} col=${m.playerColCx}`);
       assert(Math.abs(m.enemySlotCx - m.enemyColCx) <= 28, `enemy emoji off column: slot=${m.enemySlotCx} col=${m.enemyColCx}`);
       assert(m.playerSlotCx < m.vw * 0.42, `player emoji too central: ${m.playerSlotCx}`);
@@ -705,6 +712,78 @@ const CASES = [
       assert(shop && shop.w > 120, "shop missing");
       assert(shop.left >= island.right - 24, `shop should be right of field: shop.left=${shop.left} island.right=${island.right}`);
       assert(shop.right <= vw + 2, "shop overflows viewport");
+    },
+  },
+  {
+    id: "desktop-prep-hero-portrait-visibility",
+    device: { viewport: { width: 1440, height: 1080 } },
+    async run(page) {
+      await quickStart(page);
+      await page.waitForFunction(
+        () => document.getElementById("prep-hero-card-portrait-frame")?.dataset.hudPortrait === "bust",
+        { timeout: 8000 },
+      );
+      const m = await page.evaluate(async () => {
+        const frame = document.getElementById("prep-hero-card-portrait-frame");
+        const portrait = document.getElementById("prep-hero-card-portrait");
+        const img = document.getElementById("prep-hud-hero-img");
+        if (!frame || !portrait || !img) return { ok: false, reason: "missing nodes" };
+        if (img.decode) {
+          try { await img.decode(); } catch { /* ignore */ }
+        }
+        const fr = frame.getBoundingClientRect();
+        const pr = portrait.getBoundingClientRect();
+        const ir = img.getBoundingClientRect();
+        const frameCs = getComputedStyle(frame);
+        const bustScale = parseFloat(frameCs.getPropertyValue("--prep-hud-portrait-bust-scale"))
+          || parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--prep-hud-portrait-bust-scale"))
+          || 0;
+        const interW = Math.max(0, Math.min(ir.right, fr.right) - Math.max(ir.left, fr.left));
+        let bustInk = { left: false, mid: false, right: false };
+        if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+          const canvas = document.createElement("canvas");
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0);
+          const y0 = Math.floor(img.naturalHeight * 0.04);
+          const bandH = Math.max(8, Math.floor(img.naturalHeight * 0.28));
+          const colHasInk = (x) => {
+            const data = ctx.getImageData(x, y0, 1, bandH).data;
+            for (let i = 3; i < data.length; i += 4) {
+              if (data[i] > 24) return true;
+            }
+            return false;
+          };
+          bustInk = {
+            left: colHasInk(Math.floor(img.naturalWidth * 0.18)),
+            mid: colHasInk(Math.floor(img.naturalWidth * 0.5)),
+            right: colHasInk(Math.floor(img.naturalWidth * 0.82)),
+          };
+        }
+        return {
+          ok: true,
+          prepLayout: document.documentElement.dataset.prepLayout,
+          portraitW: pr.width,
+          frameW: fr.width,
+          frameH: fr.height,
+          hudPortrait: frame.dataset.hudPortrait || "",
+          bustScale,
+          imgHidden: img.hidden,
+          imgW: ir.width,
+          imgH: ir.height,
+          interRatio: fr.width > 0 ? interW / fr.width : 0,
+          bustInk,
+        };
+      });
+      assert(m.ok, m.reason || "portrait probe failed");
+      assert(m.prepLayout === "side", `expected side prep layout, got ${m.prepLayout}`);
+      assert(m.portraitW >= 140, `portrait column too narrow: ${m.portraitW}px`);
+      assert(m.hudPortrait === "bust", `expected bust portrait mode, got ${m.hudPortrait}`);
+      assert(m.bustScale > 0 && m.bustScale <= 2.2, `bust scale out of range: ${m.bustScale}`);
+      assert(!m.imgHidden && m.imgW > 48 && m.imgH > 64, `hero img not visible: ${m.imgW}x${m.imgH}`);
+      assert(m.interRatio >= 0.88, `portrait horizontal crop too tight: ${(m.interRatio * 100).toFixed(0)}%`);
+      assert(m.bustInk.left && m.bustInk.mid && m.bustInk.right, `bust band missing sprite ink: ${JSON.stringify(m.bustInk)}`);
     },
   },
   {

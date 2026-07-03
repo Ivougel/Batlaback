@@ -301,37 +301,102 @@ function renderItemStatsSection(playerItems, enemyItems, options = {}) {
     });
 }
 
+function renderBrAnimatedStat(kind, value, displayText, extra = "") {
+  return `<span class="result-stat-num" data-br-count data-br-kind="${kind}" data-br-value="${Number(value)}"${extra}>${escapeHtml(displayText)}</span>`;
+}
+
 function renderBattleResultBlock(summary) {
   const p = summary.player;
   const e = summary.enemy;
-  const playerName = typeof getPlayerProfileName === "function" ? getPlayerProfileName() : "Игрок";
+  const playerName = typeof getPlayerProfileName === "function" ? getPlayerProfileName() : "Вы";
   const enemyName = typeof getEnemyDisplayName === "function" ? getEnemyDisplayName() : "ИИ";
+  const playerWon = summary.winner === "player";
+  const enemyWon = summary.winner === "enemy";
+  const youColCls = playerWon ? " result-stat-value--winner" : enemyWon ? " result-stat-value--loser" : "";
+  const enemyColCls = enemyWon ? " result-stat-value--winner" : playerWon ? " result-stat-value--loser" : "";
+  const youNameCls = playerWon ? " result-stats-name--winner" : enemyWon ? " result-stats-name--loser" : "";
+  const enemyNameCls = enemyWon ? " result-stats-name--winner" : playerWon ? " result-stats-name--loser" : "";
+  const playerClass = summary.playerClassName
+    ? `<span class="result-stats-class"> · ${escapeHtml(summary.playerClassName)}</span>`
+    : "";
+  const enemyClass = summary.enemyClassName
+    ? `<span class="result-stats-class"> · ${escapeHtml(summary.enemyClassName)}</span>`
+    : "";
+
+  const pHpIcon = "❤️";
+  const eHpIcon = e.hp <= 0 ? "💀" : "❤️";
+  const pHpText = `${pHpIcon} ${p.hp}/${p.maxHp}`;
+  const eHpText = `${eHpIcon} ${e.hp}/${e.maxHp}`;
+  const pDmgText = formatStatNumber(p.damage);
+  const eDmgText = formatStatNumber(e.damage);
+  const pHealText = formatStatNumber(p.heal);
+  const eHealText = formatStatNumber(e.heal);
+  const pBlockText = formatStatNumber(p.block);
+  const eBlockText = formatStatNumber(e.block);
+  const timeText = formatBattleTime(summary.battleTime);
+  const pSplit = formatDamageTypeSplit(p.physicalDamage, p.magicDamage);
+  const eSplit = formatDamageTypeSplit(e.physicalDamage, e.magicDamage);
+
   const goldLine = summary.goldReward > 0
     ? `<div class="br-gold">+${summary.goldReward} 💰 за раунд</div>`
     : "";
-  const classWinnerLine = summary.classWinnerLine
-    ? `<div class="br-class-winner">${escapeHtml(summary.classWinnerLine)}</div>`
-    : "";
 
   return `
-    <div class="br-side br-side-player">
-      <div class="br-side-title">${escapeHtml(playerName)}${summary.playerClassName ? ` · ${escapeHtml(summary.playerClassName)}` : ""}</div>
-      <div class="br-stat">❤️ ${p.hp}/${p.maxHp} HP</div>
-      <div class="br-stat">⚔ ${formatStatNumber(p.damage)} урона по HP</div>
-      <div class="br-stat br-stat-sub">${formatDamageTypeSplit(p.physicalDamage, p.magicDamage)}</div>
-      <div class="br-stat">❤ ${formatStatNumber(p.heal)} лечения</div>
-      <div class="br-stat">🛡 ${formatStatNumber(p.block)} блока</div>
-      <div class="br-stat">⏱ ${formatBattleTime(summary.battleTime)}</div>
+    <div class="result-stats-table">
+      <div class="result-stats-header">
+        <span class="result-stats-name result-stats-name--you${youNameCls}">${escapeHtml(playerName)}${playerClass}</span>
+        <span class="result-stats-header-gap" aria-hidden="true"></span>
+        <span class="result-stats-name result-stats-name--enemy${enemyNameCls}">${escapeHtml(enemyName)}${enemyClass}</span>
+      </div>
+      <div class="result-stat-row">
+        <span class="result-stat-value result-stat-value--you${youColCls}">
+          ${renderBrAnimatedStat("hp", p.hp, pHpText, ` data-br-max="${p.maxHp}" data-br-icon="${pHpIcon}"`)}
+        </span>
+        <span class="result-stat-label">HP</span>
+        <span class="result-stat-value result-stat-value--enemy${enemyColCls}">
+          ${renderBrAnimatedStat("hp", e.hp, eHpText, ` data-br-max="${e.maxHp}" data-br-icon="${eHpIcon}"`)}
+        </span>
+      </div>
+      <div class="result-stat-row">
+        <span class="result-stat-value result-stat-value--you${youColCls}">
+          ${renderBrAnimatedStat("num", p.damage, pDmgText, ' data-br-prefix="⚔ " data-br-suffix=""')}
+        </span>
+        <span class="result-stat-label">Урон</span>
+        <span class="result-stat-value result-stat-value--enemy${enemyColCls}">
+          ${renderBrAnimatedStat("num", e.damage, eDmgText, ' data-br-prefix="⚔ " data-br-suffix=""')}
+        </span>
+      </div>
+      <div class="result-stat-row result-stat-row--sub">
+        <span class="result-stat-value result-stat-value--you result-stat-sub${youColCls}">${escapeHtml(pSplit)}</span>
+        <span class="result-stat-label result-stat-label--sub"></span>
+        <span class="result-stat-value result-stat-value--enemy result-stat-sub${enemyColCls}">${escapeHtml(eSplit)}</span>
+      </div>
+      <div class="result-stat-row">
+        <span class="result-stat-value result-stat-value--you${youColCls}">
+          ${renderBrAnimatedStat("num", p.heal, pHealText, ' data-br-prefix="❤ " data-br-suffix=" леч."')}
+        </span>
+        <span class="result-stat-label">Лечение</span>
+        <span class="result-stat-value result-stat-value--enemy${enemyColCls}">
+          ${renderBrAnimatedStat("num", e.heal, eHealText, ' data-br-prefix="❤ " data-br-suffix=" леч."')}
+        </span>
+      </div>
+      <div class="result-stat-row">
+        <span class="result-stat-value result-stat-value--you${youColCls}">
+          ${renderBrAnimatedStat("num", p.block, pBlockText, ' data-br-prefix="🛡 " data-br-suffix=" блок"')}
+        </span>
+        <span class="result-stat-label">Блок</span>
+        <span class="result-stat-value result-stat-value--enemy${enemyColCls}">
+          ${renderBrAnimatedStat("num", e.block, eBlockText, ' data-br-prefix="🛡 " data-br-suffix=" блок"')}
+        </span>
+      </div>
+      <div class="result-stat-row">
+        <span class="result-stat-value result-stat-value--you${youColCls}">
+          ${renderBrAnimatedStat("time", summary.battleTime || 0, timeText, ' data-br-prefix="⏱ "')}
+        </span>
+        <span class="result-stat-label">Время</span>
+        <span class="result-stat-value result-stat-value--enemy result-stat-value--empty${enemyColCls}">—</span>
+      </div>
     </div>
-    <div class="br-side br-side-enemy">
-      <div class="br-side-title">${escapeHtml(enemyName)}${summary.enemyClassName ? ` · ${escapeHtml(summary.enemyClassName)}` : ""}</div>
-      <div class="br-stat">${e.hp <= 0 ? "💀" : "❤️"} ${e.hp}/${e.maxHp} HP</div>
-      <div class="br-stat">⚔ ${formatStatNumber(e.damage)} урона по HP</div>
-      <div class="br-stat br-stat-sub">${formatDamageTypeSplit(e.physicalDamage, e.magicDamage)}</div>
-      <div class="br-stat">❤ ${formatStatNumber(e.heal)} лечения</div>
-      <div class="br-stat">🛡 ${formatStatNumber(e.block)} блока</div>
-    </div>
-    ${classWinnerLine}
     ${goldLine}
   `;
 }

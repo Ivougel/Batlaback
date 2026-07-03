@@ -70,7 +70,74 @@
   font-weight: 800;
 }
 
-/* Статистика боя — тёмный текст вместо #e6edf3 */
+/* Статистика боя — сравнительная таблица */
+#battle-result-overlay .result-stats-name--you,
+#overlay .result-stats-name--you {
+  color: var(--meadow-grass-dark);
+}
+
+#battle-result-overlay .result-stats-name--enemy,
+#overlay .result-stats-name--enemy {
+  color: #b83228;
+}
+
+#battle-result-overlay .result-stat-value,
+#overlay .result-stat-value {
+  color: var(--juice-ink) !important;
+  font-weight: 700;
+  text-shadow: var(--juice-text-legible);
+}
+
+#battle-result-overlay .result-stats-name--winner,
+#overlay .result-stats-name--winner,
+#battle-result-overlay .result-stat-value--winner,
+#overlay .result-stat-value--winner {
+  color: #8a5a00 !important;
+}
+
+#battle-result-overlay .result-stat-value--loser,
+#overlay .result-stat-value--loser {
+  color: var(--juice-ink-soft) !important;
+  opacity: 0.72;
+}
+
+#battle-result-overlay .result-stat-row--sub .result-stat-sub,
+#overlay .result-stat-row--sub .result-stat-sub {
+  color: var(--juice-ink-soft) !important;
+  font-weight: 600;
+}
+
+#battle-result-overlay .result-stat-label,
+#overlay .result-stat-label {
+  color: var(--juice-ink-soft);
+  font-weight: 800;
+}
+
+#battle-result-overlay .battle-result-headline,
+#overlay .battle-result-headline {
+  font-size: clamp(1.45rem, 4.5vw, 2rem);
+  text-shadow: var(--juice-text-legible);
+}
+
+#battle-result-overlay .battle-result-help-btn {
+  background: rgba(255, 255, 255, 0.55);
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  color: var(--juice-ink);
+}
+
+#battle-result-overlay .battle-result-help-tooltip {
+  background: rgba(255, 252, 240, 0.96);
+  border: 2px solid rgba(92, 184, 92, 0.35);
+  color: var(--juice-ink);
+}
+
+#battle-result-overlay .battle-result-key-pills .key-pill {
+  background: rgba(92, 184, 92, 0.12);
+  border-color: rgba(92, 184, 92, 0.35);
+  color: var(--juice-ink);
+}
+
+/* legacy br-side (run complete / fallback) */
 #battle-result-overlay .br-side-title,
 #overlay .br-side-title {
   color: var(--meadow-grass-dark);
@@ -114,11 +181,7 @@
 
 #battle-result-overlay .br-class-winner,
 #overlay .br-class-winner {
-  background: transparent;
-  border: 2px dashed rgba(245, 200, 66, 0.55);
-  color: #8a5a00;
-  font-weight: 800;
-  text-shadow: var(--juice-text-legible);
+  display: none;
 }
 
 /* Кнопки «Вклад» / «Лог» */
@@ -154,9 +217,7 @@
 
 #battle-result-overlay .battle-result-controls-hint,
 #overlay .run-complete-hint {
-  color: var(--juice-ink-soft);
-  font-weight: 600;
-  text-shadow: var(--juice-text-outline);
+  display: none;
 }
 
 #battle-result-overlay .battle-result-actions .btn-primary,

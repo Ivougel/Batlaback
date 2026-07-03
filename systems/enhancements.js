@@ -451,7 +451,7 @@ function renderPrepEnhancementStripHtml(round, enhancements = {}, options = {}) 
       nameHtml = `<span class="enh-slot-name">${escapeEnhancementHtml(def.name)}</span>`;
     } else if (!unlocked) {
       nameHtml = `<span class="enh-slot-name">${escapeEnhancementHtml(`R${slot.unlockRound}`)}</span>`;
-    } else if (!heroCard) {
+    } else {
       nameHtml = `<span class="enh-slot-name">Пусто</span>`;
     }
     const stateClass = !unlocked

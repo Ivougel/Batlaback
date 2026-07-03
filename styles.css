@@ -3718,6 +3718,91 @@ html[data-touch="true"] .sidebar-tooltip.synergy-tooltip .synergy-tt-source {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
+}
+
+.battle-result-headline {
+  text-align: center;
+  font-size: clamp(1.35rem, 4.2vw, 1.85rem);
+  font-weight: 900;
+  line-height: 1.15;
+  margin: 0 0 4px;
+  color: var(--gold, #f0c14b);
+  letter-spacing: 0.01em;
+}
+
+#battle-result-overlay[data-outcome="enemy"] .battle-result-headline {
+  color: #e06c75;
+}
+
+#battle-result-overlay[data-outcome="draw"] .battle-result-headline {
+  color: #79c0ff;
+}
+
+.battle-result-help {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 6;
+}
+
+.battle-result-help-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--muted);
+  font-size: var(--font-md);
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.battle-result-help-btn:hover,
+.battle-result-help-btn:focus-visible {
+  color: var(--gold);
+  border-color: rgba(240, 193, 75, 0.55);
+  outline: none;
+}
+
+.battle-result-help-tooltip {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 160px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(13, 17, 23, 0.96);
+  border: 1px solid #30363d;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.battle-result-help-tooltip.hidden {
+  display: none;
+}
+
+.battle-result-key-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+
+.battle-result-key-pills .key-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  font-size: 11px;
+  font-weight: 800;
+  color: #e6edf3;
+  cursor: default;
 }
 
 #battle-result-accordions {
@@ -3730,7 +3815,7 @@ html[data-touch="true"] .sidebar-tooltip.synergy-tooltip .synergy-tt-source {
 .battle-result-modal > h2,
 .battle-result-modal > .battle-result-subtitle,
 .battle-result-modal > .battle-result-actions,
-.battle-result-modal > .battle-result-controls-hint {
+.battle-result-modal > .battle-result-help {
   flex-shrink: 0;
 }
 
@@ -4062,16 +4147,127 @@ html[data-touch="true"] .sidebar-tooltip.synergy-tooltip .synergy-tt-source {
 }
 
 .br-class-winner {
-  grid-column: 1 / -1;
-  text-align: center;
-  color: #d4a96a;
+  display: none;
+}
+
+/* Сравнительная таблица статов результата боя */
+.result-stats-table {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 4px 12px;
+}
+
+.result-stats-header,
+.result-stat-row {
+  display: contents;
+}
+
+.result-stats-name {
+  font-weight: 800;
+  font-size: var(--font-md);
+  margin-bottom: 2px;
+}
+
+.result-stats-name--you {
+  text-align: left;
+  color: var(--accent);
+}
+
+.result-stats-name--enemy {
+  text-align: right;
+  color: #f85149;
+}
+
+.result-stats-name--winner {
+  color: var(--gold, #f0c14b);
+}
+
+.result-stats-name--loser {
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+.result-stats-class {
+  font-weight: 600;
+  font-size: var(--font-sm);
+  opacity: 0.85;
+}
+
+.result-stat-value {
+  font-size: var(--font-md);
   font-weight: 700;
-  font-size: var(--font-lg);
-  margin-top: 10px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: rgba(212, 169, 106, 0.1);
-  border: 1px solid rgba(212, 169, 106, 0.25);
+  white-space: nowrap;
+}
+
+.result-stat-value--you {
+  text-align: left;
+}
+
+.result-stat-value--enemy {
+  text-align: right;
+}
+
+.result-stat-value--winner {
+  color: var(--gold, #f0c14b);
+}
+
+.result-stat-value--loser {
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+.result-stat-value--empty {
+  opacity: 0.45;
+}
+
+.result-stat-label {
+  text-align: center;
+  font-size: var(--font-sm);
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.result-stat-row--sub .result-stat-sub {
+  font-size: var(--font-sm);
+  font-weight: 600;
+  opacity: 0.88;
+}
+
+.result-static-block-trophy-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.result-static-block-trophy-icon {
+  position: relative;
+  z-index: 2;
+  font-size: 1.15em;
+  line-height: 1;
+}
+
+.result-trophy-sparkles {
+  position: absolute;
+  left: -6px;
+  top: -8px;
+  width: 36px;
+  height: 36px;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .battle-result-modal {
+    animation: none !important;
+  }
+
+  .result-trophy-sparkles .class-hero-sparkle {
+    animation: none !important;
+    opacity: 0.6;
+  }
 }
 
 /* Item stats — DPS meter table */

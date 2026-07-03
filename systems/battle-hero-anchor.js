@@ -27,8 +27,8 @@ const BattleHeroAnchor = (() => {
     measureCache.combatFloor = undefined;
   }
 
-  /** Множитель эмодзи на «волшебной линии» (duel floor, орбита, спутники) — все tier. */
-  const BATTLE_THOUGHT_EMOJI_SCALE = 1.32;
+  /** Множитель эмодзи на «волшебной линии» — компактный бейдж на голове. */
+  const BATTLE_THOUGHT_EMOJI_SCALE = 1;
 
   function battleThoughtEmojiScale() {
     return BATTLE_THOUGHT_EMOJI_SCALE;
@@ -85,16 +85,38 @@ const BattleHeroAnchor = (() => {
   }
 
   const EMOJI_SIZE_BY_PROFILE = {
-    "phone-portrait": { floorRatio: 0.32, vminRatio: 0.14, minPx: 76, maxPx: 112, haloRatio: 0.22, avatarRatio: 0.34, slotCenterRatio: 0.38 },
-    "phone-landscape": { floorRatio: 0.66, vminRatio: 0.17, minPx: 80, maxPx: 128, haloRatio: 0.28, avatarRatio: 0.40 },
-    "tablet-landscape-side": {
-      floorRatio: 0.48, vminRatio: 0.145, minPx: 96, maxPx: 168,
-      haloRatio: 0.44, avatarRatio: 0.18, slotCenterRatio: 0.50,
-      satelliteScale: 0.85, heroBelow: true, heroBelowZoneBias: 0.68,
+    "phone-portrait": {
+      floorRatio: 0.12, vminRatio: 0.048, minPx: 24, maxPx: 36,
+      haloRatio: 0.5, avatarRatio: 0.07, avatarWidthRatio: 0.22,
+      headBadge: true, headBadgeYRatio: 0.12, headBadgeInnerXRatio: 0.64,
     },
-    "tablet-portrait": { floorRatio: 0.30, vminRatio: 0.13, minPx: 84, maxPx: 136, haloRatio: 0.26, avatarRatio: 0.32, slotCenterRatio: 0.38 },
-    "desktop-portrait": { floorRatio: 0.66, vminRatio: 0.175, minPx: 100, maxPx: 168, haloRatio: 0.36, avatarRatio: 0.36 },
-    "desktop-landscape": { floorRatio: 0.68, vminRatio: 0.18, minPx: 104, maxPx: 176, haloRatio: 0.36, avatarRatio: 0.34 },
+    "phone-landscape": {
+      floorRatio: 0.14, vminRatio: 0.05, minPx: 26, maxPx: 38,
+      haloRatio: 0.48, avatarRatio: 0.075, avatarWidthRatio: 0.23,
+      headBadge: true, headBadgeYRatio: 0.12, headBadgeInnerXRatio: 0.63,
+    },
+    "tablet-landscape-side": {
+      floorRatio: 0.10, vminRatio: 0.042, minPx: 28, maxPx: 40,
+      haloRatio: 0.48, avatarRatio: 0.072, avatarWidthRatio: 0.24,
+      headBadge: true, headBadgeYRatio: 0.13, headBadgeInnerXRatio: 0.62,
+      satelliteScale: 0.72, heroBelow: false,
+    },
+    "tablet-portrait": {
+      floorRatio: 0.11, vminRatio: 0.045, minPx: 26, maxPx: 38,
+      haloRatio: 0.5, avatarRatio: 0.07, avatarWidthRatio: 0.22,
+      headBadge: true, headBadgeYRatio: 0.12, headBadgeInnerXRatio: 0.64,
+    },
+    "desktop-portrait": {
+      floorRatio: 0.12, vminRatio: 0.048, minPx: 28, maxPx: 42,
+      haloRatio: 0.48, avatarRatio: 0.075, avatarWidthRatio: 0.24,
+      headBadge: true, headBadgeYRatio: 0.13, headBadgeInnerXRatio: 0.62,
+    },
+    "desktop-landscape": {
+      floorRatio: 0.10, vminRatio: 0.044, minPx: 28, maxPx: 42,
+      haloRatio: 0.48, avatarRatio: 0.072, avatarWidthRatio: 0.24,
+      headBadge: true, headBadgeYRatio: 0.13, headBadgeInnerXRatio: 0.62,
+      satelliteScale: 0.72,
+    },
   };
 
   function currentBattleProfile() {
@@ -148,22 +170,31 @@ const BattleHeroAnchor = (() => {
     const emojiMod = battleEmojiScale();
     const uiScale = readCssPx("--ui-scale", 1);
 
-    const fromFloorH = floor ? Math.round(floor.height * prof.floorRatio) : 0;
-    const fromFloorW = floor ? Math.round(floor.width * 0.11) : 0;
+    let fromFloorH = 0;
+    let fromFloorW = 0;
+    if (floor && !prof.headBadge) {
+      fromFloorH = Math.round(floor.height * prof.floorRatio);
+      fromFloorW = Math.round(floor.width * 0.11);
+    }
     const fromVmin = Math.round(vmin * prof.vminRatio * Math.max(0.92, uiScale));
     let fromAvatar = 0;
     const avatarRatio = prof.avatarRatio ?? 0;
-    if (avatarRatio > 0) {
+    const avatarWidthRatio = prof.avatarWidthRatio ?? 0;
+    if (avatarRatio > 0 || avatarWidthRatio > 0) {
       for (const side of ["player", "enemy"]) {
         const ar = getAvatarAnchorRect(side);
-        if (ar && ar.height > 40) {
+        if (!ar) continue;
+        if (avatarRatio > 0 && ar.height > 40) {
           fromAvatar = Math.max(fromAvatar, Math.round(ar.height * avatarRatio));
+        }
+        if (avatarWidthRatio > 0 && ar.width > 40) {
+          fromAvatar = Math.max(fromAvatar, Math.round(ar.width * avatarWidthRatio));
         }
       }
     }
     const raw = Math.max(fromFloorH, fromFloorW, fromVmin, fromAvatar) * emojiMod * BATTLE_THOUGHT_EMOJI_SCALE;
-    const minPx = Math.round(prof.minPx * BATTLE_THOUGHT_EMOJI_SCALE);
-    const maxPx = Math.round(prof.maxPx * BATTLE_THOUGHT_EMOJI_SCALE);
+    const minPx = Math.round(prof.minPx);
+    const maxPx = Math.round(prof.maxPx);
     return Math.round(Math.min(maxPx, Math.max(minPx, raw)));
   }
 
@@ -231,9 +262,44 @@ const BattleHeroAnchor = (() => {
     return emojiProfile().satelliteScale ?? 0.85;
   }
 
+  function usesHeadBadgeAnchors() {
+    if (!isFlankArenaBattle()) return false;
+    return emojiProfile().headBadge === true;
+  }
+
   function usesHeroBelowThoughtAnchors() {
+    if (usesHeadBadgeAnchors()) return false;
     const prof = emojiProfile();
     return prof.heroBelow === true || currentBattleProfile() === "tablet-landscape-side";
+  }
+
+  /** Компактный бейдж на голове — верх-внутрь к центру экрана. */
+  function getHeadBadgeThoughtAnchor(side) {
+    const ar = getAvatarAnchorRect(side);
+    if (!ar) return null;
+
+    const emojiSize = thoughtSlotEmojiSize();
+    const halo = thoughtSlotHaloPx(emojiSize);
+    const containerSize = emojiSize + halo * 2;
+    const prof = emojiProfile();
+    const headYRatio = prof.headBadgeYRatio ?? 0.13;
+    const innerXRatio = prof.headBadgeInnerXRatio ?? 0.62;
+
+    const cy = ar.top + ar.height * headYRatio;
+    const cx = side === "player"
+      ? ar.left + ar.width * innerXRatio
+      : ar.left + ar.width * (1 - innerXRatio);
+
+    return {
+      cx,
+      cy,
+      emojiSize,
+      halo,
+      containerSize,
+      top: cy - containerSize / 2,
+      left: cx - containerSize / 2,
+      size: containerSize,
+    };
   }
 
   function visibleViewportBottomPx() {
@@ -304,6 +370,11 @@ const BattleHeroAnchor = (() => {
 
   /** Позиция thought-slot в viewport (px). */
   function getThoughtSlotAnchor(side) {
+    if (usesHeadBadgeAnchors()) {
+      const badge = getHeadBadgeThoughtAnchor(side);
+      if (badge) return badge;
+    }
+
     if (usesHeroBelowThoughtAnchors()) {
       const underHero = getHeroBelowThoughtAnchor(side);
       if (underHero) return underHero;
@@ -420,6 +491,8 @@ const BattleHeroAnchor = (() => {
     getFoeThoughtCenter,
     emojiProfile,
     satelliteScaleFactor,
+    usesHeadBadgeAnchors,
+    getHeadBadgeThoughtAnchor,
     usesHeroBelowThoughtAnchors,
     invalidateMeasureCache,
   };

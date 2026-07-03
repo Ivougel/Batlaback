@@ -506,9 +506,33 @@ function resolvePrepBuildEmojiDisplay(opts = {}) {
 
 let prepBuildEmojiBtnBound = false;
 
+function isPrepBuildEmojiHeroHudMount() {
+  const root = document.documentElement;
+  return root.dataset.prepLayout === "side" || root.dataset.uiSurface === "tablet-side";
+}
+
+function syncPrepBuildEmojiBtnMount() {
+  const btn = document.getElementById("prep-build-emoji-btn");
+  const heroSlot = document.getElementById("prep-hero-card-build-slot");
+  const shopHeader = document.querySelector(".shop-panel-header");
+  if (!btn) return;
+
+  const heroHud = isPrepBuildEmojiHeroHudMount();
+  const target = heroHud ? heroSlot : shopHeader;
+  if (target && !target.contains(btn)) {
+    target.appendChild(btn);
+  }
+  if (heroSlot) {
+    if (heroHud && !btn.classList.contains("hidden")) heroSlot.removeAttribute("aria-hidden");
+    else heroSlot.setAttribute("aria-hidden", "true");
+  }
+}
+
 function syncPrepBuildEmojiBtn(opts = {}) {
   const btn = document.getElementById("prep-build-emoji-btn");
   if (!btn) return;
+
+  syncPrepBuildEmojiBtnMount();
 
   const display = resolvePrepBuildEmojiDisplay(opts);
   const glyph = btn.querySelector(".prep-build-emoji-btn-glyph");
@@ -524,6 +548,9 @@ function syncPrepBuildEmojiBtn(opts = {}) {
   btn.classList.toggle("prep-build-emoji-btn--has-path", !!display.pathId);
   btn.classList.toggle("prep-build-emoji-btn--lore", display.loreEnabled);
   btn.classList.remove("hidden");
+
+  const heroSlot = document.getElementById("prep-hero-card-build-slot");
+  if (heroSlot && isPrepBuildEmojiHeroHudMount()) heroSlot.removeAttribute("aria-hidden");
 }
 
 /** Будущая кастомизация: window.setPrepBuildEmojiOverride("🌸") */
@@ -586,6 +613,7 @@ function bindPrepBuildEmojiBtnInteractions() {
 
 function initPrepBuildEmojiBtn() {
   bindPrepBuildEmojiBtnInteractions();
+  syncPrepBuildEmojiBtnMount();
 }
 
 function renderPrepCharacterHtml(side, profile, runRound = 1) {

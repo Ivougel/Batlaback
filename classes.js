@@ -109,6 +109,12 @@ function getClassHeroPortraitSrc(classId) {
   return cls?.heroPortraitSrc || cls?.iconSrc || null;
 }
 
+/** Бust/стикер для HUD-карточки — не дублирует full-body на поле prep. */
+function getClassHudPortraitSrc(classId) {
+  const cls = getClassById(classId);
+  return cls?.hudPortraitSrc || cls?.iconSrc || null;
+}
+
 /** Волшебная рамка героя (prep / HUD) — свой стиль на каждый класс. */
 function renderHeroPortraitFrameHTML(classId, options = {}) {
   const cls = getClassById(classId);

@@ -509,6 +509,35 @@
     0 6px 18px rgba(80, 40, 120, 0.22);
 }
 
+@keyframes build-preview-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(calc(-3px * var(--ui-scale, 1))); }
+}
+
+html[data-prep-layout="side"] #app[data-phase="prep"] .prep-hero-card__build-slot .build-preview-toggle,
+html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-hero-card__build-slot .build-preview-toggle {
+  animation: build-preview-float 2.4s ease-in-out infinite;
+}
+
+html[data-prep-layout="side"] #app[data-phase="prep"] .prep-hero-card__build-slot .build-preview-toggle:hover,
+html[data-prep-layout="side"] #app[data-phase="prep"] .prep-hero-card__build-slot .build-preview-toggle:active,
+html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-hero-card__build-slot .build-preview-toggle:hover,
+html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-hero-card__build-slot .build-preview-toggle:active {
+  animation-play-state: paused;
+}
+
+html[data-prep-layout="side"] #app[data-phase="prep"] .prep-hero-card__build-slot .build-preview-toggle:hover:not(:disabled),
+html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-hero-card__build-slot .build-preview-toggle:hover:not(:disabled) {
+  transform: translateY(calc(-1px * var(--ui-scale, 1))) scale(1.03);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-prep-layout="side"] #app[data-phase="prep"] .prep-hero-card__build-slot .build-preview-toggle,
+  html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-hero-card__build-slot .build-preview-toggle {
+    animation: none;
+  }
+}
+
 .prep-build-emoji-btn--lore-active {
   transform: scale(1.05);
   border-color: rgba(245, 200, 66, 0.75);
@@ -521,12 +550,14 @@
   animation: mutation-lore-icon-pulse 1.15s ease-in-out infinite;
 }
 
-#app[data-phase="prep"] .shop-panel-header {
-  align-items: center;
+html[data-prep-layout="side"] #app[data-phase="prep"] .prep-hero-card__build-slot .build-preview-toggle.prep-build-emoji-btn--lore-active,
+html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-hero-card__build-slot .build-preview-toggle.prep-build-emoji-btn--lore-active {
+  animation-play-state: paused;
+  transform: scale(1.05);
 }
 
-#app[data-phase="prep"][data-prep-side="enemy"] .prep-build-emoji-btn {
-  order: 3;
+#app[data-phase="prep"] .shop-panel-header {
+  align-items: center;
 }
 
 #app:not([data-phase="prep"]) .prep-build-emoji-btn {

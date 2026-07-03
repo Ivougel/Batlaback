@@ -190,7 +190,6 @@ let lobbyPrepOvertimeUsed = false;
 let lobbyRoundSettling = false;
 let lastLobbyPlayerBattleWinner = null;
 let lastLobbyRosterStripSig = "";
-let lobbyRosterHidden = false;
 let lastEndedBattleState = null;
 let prepViewSide = "player";
 let prepDollOpen = false;
@@ -558,17 +557,111 @@ function syncLobbyReturnTableButton() {
   btn.classList.toggle("hidden", !watching);
 }
 
+function closeStandingsDropdown() {
+  const btn = document.getElementById("btn-standings-toggle");
+  const dropdown = document.getElementById("standings-dropdown");
+  if (!dropdown || dropdown.classList.contains("hidden")) return;
+  dropdown.classList.add("hidden");
+  dropdown.setAttribute("aria-hidden", "true");
+  dropdown.style.removeProperty("left");
+  dropdown.style.removeProperty("bottom");
+  dropdown.style.removeProperty("position");
+  btn?.setAttribute("aria-expanded", "false");
+  btn?.classList.remove("active");
+}
+
+function positionStandingsDropdown() {
+  const btn = document.getElementById("btn-standings-toggle");
+  const dropdown = document.getElementById("standings-dropdown");
+  if (!btn || !dropdown || dropdown.classList.contains("hidden")) return;
+  const rect = btn.getBoundingClientRect();
+  const width = dropdown.offsetWidth || 220;
+  const left = Math.max(8, Math.min(rect.right - width, window.innerWidth - width - 8));
+  dropdown.style.position = "fixed";
+  dropdown.style.left = `${Math.round(left)}px`;
+  dropdown.style.bottom = `${Math.round(window.innerHeight - rect.top + 8)}px`;
+  dropdown.style.right = "auto";
+}
+
+function syncPrepBottomStats({ gold, hpLabel, roundLabel, lobbyHp = false } = {}) {
+  const bar = document.getElementById("prep-bottom-stats");
+  if (!bar) return;
+  const show = phase === "prep" && isPrepHeroCardHud();
+  bar.toggleAttribute("hidden", !show);
+  if (!show) return;
+  const goldEl = document.getElementById("prep-bottom-stat-gold");
+  const hpEl = document.getElementById("prep-bottom-stat-hp");
+  const roundEl = document.getElementById("prep-bottom-stat-round");
+  if (goldEl && gold != null) goldEl.textContent = String(gold);
+  if (hpEl && hpLabel != null) hpEl.textContent = hpLabel;
+  if (roundEl && roundLabel != null) roundEl.textContent = roundLabel;
+  bar.classList.toggle("prep-bottom-stats--lobby-hp", !!lobbyHp);
+}
+
+function syncPrepBottomBarChrome() {
+  const standingsAnchor = document.getElementById("standings-anchor");
+  const isPrep = phase === "prep";
+  const showStandings = isPrep && isLobbyMode() && !!lobbyState;
+  standingsAnchor?.toggleAttribute("hidden", !showStandings);
+
+  if (showStandings && lobbyState) {
+    const countEl = document.getElementById("standings-alive-count");
+    if (countEl && typeof getAliveLobbyFighters === "function") {
+      countEl.textContent = String(getAliveLobbyFighters(lobbyState).length);
+    }
+  } else {
+    closeStandingsDropdown();
+  }
+
+  if (!isPrep || !isPrepHeroCardHud()) {
+    document.getElementById("prep-bottom-stats")?.setAttribute("hidden", "");
+  }
+}
+
+function bindStandingsToggle() {
+  const btn = document.getElementById("btn-standings-toggle");
+  const dropdown = document.getElementById("standings-dropdown");
+  if (!btn || !dropdown || btn.dataset.standingsBound === "true") return;
+  btn.dataset.standingsBound = "true";
+
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const willOpen = dropdown.classList.contains("hidden");
+    dropdown.classList.toggle("hidden", !willOpen);
+    dropdown.setAttribute("aria-hidden", willOpen ? "false" : "true");
+    btn.setAttribute("aria-expanded", willOpen ? "true" : "false");
+    btn.classList.toggle("active", willOpen);
+    if (willOpen) {
+      requestAnimationFrame(() => positionStandingsDropdown());
+    } else {
+      dropdown.style.removeProperty("left");
+      dropdown.style.removeProperty("bottom");
+      dropdown.style.removeProperty("position");
+    }
+  });
+
+  window.addEventListener("resize", () => positionStandingsDropdown(), { passive: true });
+
+  document.addEventListener("click", (e) => {
+    if (dropdown.classList.contains("hidden")) return;
+    if (e.target.closest(".standings-anchor")) return;
+    closeStandingsDropdown();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeStandingsDropdown();
+  });
+}
+
 function renderLobbyChrome(force = false) {
-  const prepRosterPanel = document.getElementById("lobby-prep-roster-panel");
   const battleRosterBar = document.getElementById("lobby-battle-roster-bar");
-  const timerSlot = document.getElementById("lobby-prep-timer-slot");
   const stripPrep = document.getElementById("lobby-roster-strip-prep");
   const stripBattle = document.getElementById("lobby-roster-strip-battle");
   const show = isLobbyMode() && !!lobbyState;
-  prepRosterPanel?.classList.toggle("hidden", !show || phase !== "prep");
   battleRosterBar?.classList.toggle("hidden", !show || !isBattleUiPhase());
+  syncPrepBottomBarChrome();
   if (!show) {
-    if (timerSlot) timerSlot.innerHTML = "";
     const bottomTimer = document.getElementById("lobby-prep-timer-bottom");
     if (bottomTimer) {
       bottomTimer.innerHTML = "";
@@ -594,7 +687,6 @@ function renderLobbyChrome(force = false) {
   if (show && typeof syncLobbyFighterAvatars === "function") {
     syncLobbyFighterAvatars(lobbyState, rosterOpts);
   }
-  if (timerSlot) timerSlot.innerHTML = "";
   const bottomTimer = document.getElementById("lobby-prep-timer-bottom");
   const heroTimer = document.getElementById("prep-hero-card-timer");
   if (heroTimer) heroTimer.innerHTML = "";
@@ -607,31 +699,11 @@ function renderLobbyChrome(force = false) {
     bottomTimer.innerHTML = timerHtml;
     bottomTimer.classList.toggle("hidden", !timerHtml);
   }
-  syncLobbyRosterCollapse();
-  if (show && phase === "prep" && typeof layoutLobbyRosterPanel === "function") {
-    requestAnimationFrame(() => layoutLobbyRosterPanel());
-  } else if (show && phase === "prep" && typeof restoreLobbyRosterFloatPosition === "function") {
-    restoreLobbyRosterFloatPosition();
-  }
   if (isBattleUiPhase() && typeof queuePrewarmBattleInventoryPopover === "function") {
     const popoverOpen = typeof isBattleInventoryPopoverOpen === "function" && isBattleInventoryPopoverOpen();
     if (!isLobbyMode() || popoverOpen) {
       queuePrewarmBattleInventoryPopover();
     }
-  }
-}
-
-function syncLobbyRosterCollapse() {
-  const panel = document.getElementById("lobby-prep-roster-panel");
-  const btn = document.getElementById("btn-lobby-roster-hide");
-  if (!panel) return;
-  const collapsed = lobbyRosterHidden && phase === "prep";
-  panel.classList.toggle("lobby-prep-roster-panel--collapsed", collapsed);
-  if (btn) {
-    btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
-    btn.setAttribute("aria-label", collapsed ? "Показать список участников" : "Скрыть список участников");
-    btn.title = collapsed ? "Показать" : "Скрыть";
-    btn.textContent = collapsed ? "👀" : "🙈";
   }
 }
 
@@ -644,8 +716,6 @@ function clearLobbyRosterTouchHighlights(root) {
 function bindLobbyRosterClicks() {
   const onRosterPointerDown = (e) => {
     if (e.button !== 0) return;
-    const hideBtn = e.target.closest("#btn-lobby-roster-hide");
-    if (hideBtn) return;
     const enemyCard = e.target.closest(".lobby-fighter-card:not(.lobby-fighter-card--yours)");
     if (enemyCard && phase === "prep") {
       enemyCard.classList.add("lobby-fighter-card--touch");
@@ -654,6 +724,7 @@ function bindLobbyRosterClicks() {
     if (fighterBtn && isLobbyMode() && phase === "prep" && !fighterBtn.disabled) {
       e.preventDefault();
       setLobbyViewFighter(Number(fighterBtn.dataset.lobbyFighter));
+      closeStandingsDropdown();
       return;
     }
     const spectateBtn = e.target.closest("[data-lobby-spectate]");
@@ -673,23 +744,13 @@ function bindLobbyRosterClicks() {
   const onRosterPointerEnd = (e) => {
     clearLobbyRosterTouchHighlights(e.currentTarget);
   };
-  const prepPanel = document.getElementById("lobby-prep-roster-panel");
-  prepPanel?.addEventListener("pointerdown", onRosterPointerDown);
-  prepPanel?.addEventListener("pointerup", onRosterPointerEnd);
-  prepPanel?.addEventListener("pointercancel", onRosterPointerEnd);
-  prepPanel?.addEventListener("pointerleave", onRosterPointerEnd);
+  const standingsDropdown = document.getElementById("standings-dropdown");
+  standingsDropdown?.addEventListener("pointerdown", onRosterPointerDown);
+  standingsDropdown?.addEventListener("pointerup", onRosterPointerEnd);
+  standingsDropdown?.addEventListener("pointercancel", onRosterPointerEnd);
+  standingsDropdown?.addEventListener("pointerleave", onRosterPointerEnd);
   document.getElementById("lobby-battle-roster-bar")?.addEventListener("pointerdown", onRosterPointerDown);
-  if (typeof initLobbyRosterFloat === "function") {
-    initLobbyRosterFloat({
-      toggleCollapse() {
-        lobbyRosterHidden = !lobbyRosterHidden;
-        syncLobbyRosterCollapse();
-        if (typeof layoutLobbyRosterPanel === "function") {
-          requestAnimationFrame(() => layoutLobbyRosterPanel());
-        }
-      },
-    });
-  }
+  bindStandingsToggle();
   document.getElementById("btn-lobby-return-table")?.addEventListener("click", (e) => {
     e.preventDefault();
     returnToLobbyPlayerMatch();
@@ -765,7 +826,6 @@ function updatePrepSideUI() {
   const editable = canEditPrepSide();
   const shopPanel = document.getElementById("shop-panel");
   shopPanel?.classList.toggle("shop-readonly", !editable);
-  const title = document.getElementById("shop-panel-title");
   const hint = document.getElementById("shop-panel-hint");
   const refreshBtn = document.getElementById("btn-refresh");
   const playerBtn = document.getElementById("btn-prep-player");
@@ -775,10 +835,8 @@ function updatePrepSideUI() {
     setPrepSideBtnContent(playerBtn, "🧑", "Игрок 1");
     setPrepSideBtnContent(enemyBtn, "🧑", "Игрок 2");
     if (prepViewSide === "enemy") {
-      if (title) title.textContent = "🛒 Магазин · Игрок 2";
       if (hint) hint.textContent = "Покупки и расстановка второго игрока · Tab — вернуться к игроку 1";
     } else {
-      if (title) title.textContent = "🛒 Магазин · Игрок 1";
       if (hint) hint.textContent = "Покупки и расстановка первого игрока · Tab — перейти к игроку 2";
     }
   } else if (prepViewSide === "enemy") {
@@ -786,11 +844,9 @@ function updatePrepSideUI() {
     if (isLobbyMode()) {
       const oppName = getLobbyOpponent(lobbyState)?.name || "Соперник";
       setPrepSideBtnContent(enemyBtn, "👤", oppName);
-      if (title) title.textContent = `🛒 ${oppName} (ghost)`;
       if (hint) hint.textContent = "Снимок билда соперника — только просмотр · Tab — вернуться";
     } else {
       setPrepSideBtnContent(enemyBtn, isHardBotMode() ? "💀" : "🤖", isHardBotMode() ? "Сложный бот" : "Противник");
-      if (title) title.textContent = isHardBotMode() ? "🛒 Сложный бот (просмотр)" : "🛒 Магазин ИИ (просмотр)";
       if (hint) {
         hint.textContent = isHardBotMode()
           ? "Билд бота обновляется каждый раунд — только просмотр"
@@ -805,12 +861,11 @@ function updatePrepSideUI() {
     } else {
       setPrepSideBtnContent(enemyBtn, "🤖", "Противник");
     }
-    if (title) title.textContent = "🛒 Магазин";
-    if (hint) hint.textContent = "Перетащите предмет в инвентарь или на скамейку · 📍 слева — закрепить в магазине";
+    if (hint) hint.textContent = "Перетащите предмет в инвентарь или на скамейку · 📍 на карточке — закрепить в магазине";
   }
   if (refreshBtn) refreshBtn.disabled = !editable;
+  syncPrepBottomBarChrome();
   syncShopHintsVisibility();
-  updateShopGoldStat();
 }
 
 function getActiveCompanionIdForLoadout() {
@@ -1276,12 +1331,16 @@ function selectCompanion(companionId) {
 }
 
 function syncRunHudPhase() {
-  const badge = document.getElementById("run-hud-phase");
-  if (!badge) return;
-  if (phase !== "prep" || gameOver) {
-    badge.classList.add("hidden");
-    badge.setAttribute("aria-hidden", "true");
+  const portraitFrame = document.getElementById("prep-hero-card-portrait-frame");
+  const legacyBadge = document.getElementById("run-hud-phase");
+  const hidden = phase !== "prep" || gameOver;
+  if (portraitFrame) {
+    if (hidden) portraitFrame.setAttribute("aria-hidden", "true");
+    else portraitFrame.removeAttribute("aria-hidden");
   }
+  if (!legacyBadge) return;
+  legacyBadge.classList.add("hidden");
+  legacyBadge.setAttribute("aria-hidden", "true");
 }
 
 function syncClassOverlayUi() {
@@ -2959,7 +3018,7 @@ function restartGame() {
   log(isVersusMode()
     ? "Режим противостояния: Tab или кнопки — переключить магазин между игроками."
     : isLobbyMode()
-      ? `Лобби: ${LOBBY_FIGHTER_COUNT} бойцов, ${LOBBY_START_HP} HP. Ростер сверху — смотреть билды. Таймер ${LOBBY_PREP_SECONDS}с.`
+      ? `Лобби: ${LOBBY_FIGHTER_COUNT} бойцов, ${LOBBY_START_HP} HP. 🏆 внизу — список участников. Таймер ${LOBBY_PREP_SECONDS}с.`
       : isHardBotMode()
         ? "Сложный бот: каждый раунд подбирает лучшую экипировку. Расставьте предметы и в бой!"
         : "Расставьте предметы и в бой! Tab — посмотреть билд бота.");
@@ -4925,6 +4984,7 @@ function tickLobbyRoundBattles(dt, ts) {
         phase: "battle",
         spectateMatchId: lobbySpectateMatchId,
         matches: lobbyMatches,
+        round,
       });
     }
   }
@@ -8115,15 +8175,26 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
     const hpRowClass = lobbyPlayer ? " prep-stats-row--lobby-hp" : "";
     const companionLabel = companion ? `${companion.emoji} ${companion.name}` : "—";
     const heroCardName = getPrepHeroCardName(profile);
+    const metricsInBottomBar = heroCardHud;
+    const metricsHtml = metricsInBottomBar
+      ? `<div class="prep-stats-row prep-stats-row--companion"><span>${companionLabel}</span></div>`
+      : `
+        <div class="prep-stats-row prep-stats-row--companion"><span>${companionLabel}</span></div>
+        <div class="prep-stats-row"><span>💰</span><b>${st.gold}</b></div>
+        <div class="prep-stats-row${hpRowClass}"><span>❤️</span><b>${hpLabel}</b></div>
+        <div class="prep-stats-row prep-stats-row--round"><span>Раунд</span><b>${roundLabel}</b></div>`;
+    syncPrepBottomStats({
+      gold: st.gold,
+      hpLabel,
+      roundLabel,
+      lobbyHp: !!lobbyPlayer,
+    });
     const statsHeaderHtml = heroCardHud
       ? `
       <div class="prep-hero-card__stats-row">
         <div class="prep-stats-class">${heroCardName}</div>
         <div class="prep-stats-metrics">
-          <div class="prep-stats-row prep-stats-row--companion"><span>${companionLabel}</span></div>
-          <div class="prep-stats-row"><span>💰</span><b>${st.gold}</b></div>
-          <div class="prep-stats-row${hpRowClass}"><span>❤️</span><b>${hpLabel}</b></div>
-          <div class="prep-stats-row prep-stats-row--round"><span>Раунд</span><b>${roundLabel}</b></div>
+          ${metricsHtml}
         </div>
       </div>`
       : `
@@ -8161,14 +8232,6 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
   }
 
   syncPrepHeroCardChrome(side);
-
-  requestAnimationFrame(() => {
-    window.syncPrepHeroSlotHeight?.();
-    window.applyUiLayout?.();
-    requestAnimationFrame(() => {
-      window.syncPrepHeroCardPortraitSize?.();
-    });
-  });
 }
 
 function renderPlayerProfiles(opts = {}) {

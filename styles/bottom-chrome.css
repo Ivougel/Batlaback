@@ -223,6 +223,11 @@ html[data-game-mode="lobby"] body:has(#app[data-phase="replay"]) .btn-lobby-retu
   z-index: 2;
   pointer-events: none;
   min-width: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: calc(6px * var(--ui-scale, 1));
+  flex-wrap: nowrap;
 }
 
 .bottom-chrome-center > * {
@@ -280,12 +285,6 @@ body:has(#app[data-phase="prep"]) .bottom-chrome {
   font-size: var(--font-sm);
   min-height: var(--touch-target-min);
   line-height: 1.1;
-}
-
-.bottom-chrome .prep-side-btn.active {
-  border-color: #58a6ff;
-  color: #79c0ff;
-  background: rgba(88, 166, 255, 0.12);
 }
 
 .bottom-chrome .btn-fight-header {
@@ -420,45 +419,134 @@ html[data-gamepad-hud="hidden"] .bottom-chrome-gamepad {
 
 html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .bottom-chrome,
 html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .bottom-chrome {
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: 6px;
-  min-height: 48px;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: calc(4px * var(--ui-scale, 1));
+  min-height: 44px;
   padding:
-    4px
+    3px
     max(8px, env(safe-area-inset-right))
-    calc(4px + env(safe-area-inset-bottom, 0px))
+    calc(3px + env(safe-area-inset-bottom, 0px))
     max(8px, env(safe-area-inset-left));
+}
+
+html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .bottom-chrome-start,
+html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .bottom-chrome-start,
+html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .bottom-chrome-end,
+html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .bottom-chrome-end {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .bottom-chrome-start,
+html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .bottom-chrome-start {
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .bottom-chrome-center,
+html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .bottom-chrome-center {
+  flex: 0 0 auto;
+  justify-self: auto;
 }
 
 html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .bottom-chrome-prep-left,
 html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .bottom-chrome-prep-left {
   flex: 1 1 0;
   min-width: 0;
+  gap: calc(4px * var(--ui-scale, 1));
+}
+
+html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .bottom-chrome .prep-side-label,
+html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .bottom-chrome .prep-side-label {
+  display: none;
 }
 
 html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .bottom-chrome .prep-side-btn,
 html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .bottom-chrome .prep-side-btn {
-  flex: 1 1 0;
-  min-width: 0;
-  max-width: 120px;
-  min-height: var(--touch-target-min);
-  padding: 6px 8px;
-  font-size: var(--font-sm);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  flex: 0 0 auto;
+  min-width: var(--bottombar-btn-h, 36px);
+  width: var(--bottombar-btn-h, 36px);
+  max-width: none;
+  padding: 0;
+  font-size: 1.05rem;
+}
+
+html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .bottom-chrome .prep-side-ico,
+html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .bottom-chrome .prep-side-ico {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .bottom-chrome .btn-combat-feed-label,
+html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .bottom-chrome .btn-combat-feed-label {
+  display: none;
+}
+
+html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .bottom-chrome .btn-combat-feed.bottombar-btn,
+html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .bottom-chrome .btn-combat-feed.bottombar-btn {
+  min-width: var(--bottombar-btn-h, 36px);
+  padding: 0 calc(8px * var(--ui-scale, 1));
+  gap: 0.15rem;
+}
+
+html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .bottom-chrome .btn-combat-feed.bottombar-btn::before,
+html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .bottom-chrome .btn-combat-feed.bottombar-btn::before {
+  content: "📜";
+  font-size: 0.95em;
+  line-height: 1;
+}
+
+html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .bottom-chrome .prep-bottom-stat-label,
+html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .bottom-chrome .prep-bottom-stat-label {
+  display: none;
+}
+
+html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .bottom-chrome .prep-bottom-stat--round::before,
+html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .bottom-chrome .prep-bottom-stat--round::before {
+  content: "R";
+  font-size: 0.68em;
+  font-weight: 800;
+  opacity: 0.65;
+  margin-right: 0.15em;
+}
+
+html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .bottom-chrome .hud-stats-pill,
+html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .bottom-chrome .hud-stats-pill {
+  gap: calc(6px * var(--ui-scale, 1));
+  padding: calc(3px * var(--ui-scale, 1)) calc(10px * var(--ui-scale, 1));
+  min-height: var(--bottombar-btn-h, 36px);
+  border-radius: calc(14px * var(--ui-scale, 1));
+  font-size: var(--font-xs);
+}
+
+html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .bottom-chrome .prep-bottom-stat:not(:last-child),
+html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .bottom-chrome .prep-bottom-stat:not(:last-child) {
+  padding-right: calc(6px * var(--ui-scale, 1));
+  border-right: 1px solid rgba(30, 60, 28, 0.12);
 }
 
 html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .bottom-chrome .prep-settings-btn,
-html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .bottom-chrome .prep-settings-btn {
+html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .bottom-chrome .prep-settings-btn,
+html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .bottom-chrome .btn-prep-hero-info,
+html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .bottom-chrome .btn-prep-hero-info {
   flex: 0 0 auto;
-  min-width: var(--touch-target-min);
-  min-height: var(--touch-target-min);
+  min-width: var(--bottombar-btn-h, 36px);
+  min-height: var(--bottombar-btn-h, 36px);
 }
 
 html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .btn-fight-header,
 html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .btn-fight-header {
-  min-height: var(--touch-target-min);
+  min-height: var(--bottombar-btn-h, 36px);
+  padding: calc(4px * var(--ui-scale, 1)) calc(12px * var(--ui-scale, 1));
+  font-size: var(--font-sm);
+  border-radius: calc(10px * var(--ui-scale, 1));
+}
+
+html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .bottom-chrome-prep-right,
+html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .bottom-chrome-prep-right {
+  gap: calc(4px * var(--ui-scale, 1));
 }
 
 /* ─── Mobile prep ─── */
@@ -559,6 +647,142 @@ html[data-prep-layout="mobile"] body:has(#app[data-phase="prep"]) .btn-combat-fe
 
 html[data-prep-layout="mobile"] body:has(#app[data-phase="prep"]) .btn-combat-feed-chevron {
   display: none;
+}
+
+body:not(:has(#app[data-phase="prep"])) .bottom-chrome .standings-anchor {
+  display: none !important;
+}
+
+html:not([data-game-mode="lobby"]) body:has(#app[data-phase="prep"]) .bottom-chrome .standings-anchor {
+  display: none !important;
+}
+
+body:has(#app[data-phase="prep"]) .bottom-chrome-start,
+body:has(#app[data-phase="prep"]) .bottom-chrome-prep-left {
+  overflow: visible;
+}
+
+#lobby-prep-roster-panel,
+.lobby-prep-roster-panel {
+  display: none !important;
+}
+
+.prep-bottom-stats,
+.hud-stats-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(10px * var(--ui-scale, 1));
+  flex-shrink: 0;
+  padding: calc(6px * var(--ui-scale, 1)) calc(14px * var(--ui-scale, 1));
+  min-height: max(40px, var(--touch-target-min));
+  border-radius: calc(20px * var(--ui-scale, 1));
+  font-size: var(--font-sm);
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--juice-ink, #1a2e1a);
+}
+
+.prep-bottom-stats[hidden],
+.hud-stats-pill[hidden] {
+  display: none !important;
+}
+
+.prep-bottom-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  white-space: nowrap;
+}
+
+.prep-bottom-stat-ico {
+  font-size: 1em;
+  line-height: 1;
+}
+
+.prep-bottom-stat-label {
+  font-size: 0.72em;
+  font-weight: 800;
+  opacity: 0.78;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.prep-bottom-stat b {
+  font-variant-numeric: tabular-nums;
+  text-shadow: var(--juice-text-outline, 0 1px 0 rgba(255, 255, 255, 0.75));
+}
+
+.prep-bottom-stat--gold b {
+  color: #8a5a00;
+}
+
+.prep-bottom-stat--hp b {
+  color: #c44;
+}
+
+.prep-bottom-stats--lobby-hp .prep-bottom-stat--hp b {
+  color: #c44;
+}
+
+body:has(#app[data-phase="prep"]) .bottom-chrome .standings-toggle {
+  min-width: 36px;
+  padding: 6px 8px;
+  gap: 0.2rem;
+  white-space: nowrap;
+}
+
+body:has(#app[data-phase="prep"]) .bottom-chrome .standings-toggle .standings-alive-count {
+  font-size: 0.72em;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.92;
+}
+
+.standings-anchor {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.standings-dropdown {
+  position: fixed;
+  z-index: calc(var(--z-layer-chrome, 40) + 8);
+  min-width: min(42vw, calc(var(--lobby-roster-emoji-size, 1.35rem) * 11));
+  max-width: min(52vw, 320px);
+  max-height: min(52vh, calc(var(--lobby-roster-emoji-size, 1.35rem) * 14));
+  padding: calc(6px * var(--ui-scale));
+  border-radius: calc(12px * var(--ui-scale));
+  background: rgba(12, 10, 8, 0.88);
+  border: 1px solid rgba(245, 200, 66, 0.22);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.42);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  pointer-events: auto;
+}
+
+.standings-dropdown.hidden {
+  display: none;
+}
+
+.standings-dropdown .lobby-roster-strip--prep-body {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  max-height: none;
+  overflow: visible;
+  padding-bottom: 0;
+}
+
+.standings-dropdown .lobby-fighter-card-list {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  max-height: none;
+  overflow: visible;
+}
+
+.standings-dropdown .lobby-fighter-card {
+  width: 100%;
 }
 
 /* ─── Tablet side: compact gamepad row in battle ─── */

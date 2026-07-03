@@ -11,8 +11,9 @@
 .combat-feed-dock {
   position: relative;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
+  flex-shrink: 0;
   justify-content: flex-end;
   justify-self: center;
   z-index: 2;

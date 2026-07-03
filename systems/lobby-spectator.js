@@ -402,6 +402,7 @@ function renderLobbyBattleBottomChip(fighter, lobby, opts = {}) {
   const {
     spectateMatchId = 0,
     matches = [],
+    round = 1,
     active = false,
     disabled = false,
     matchIndex = -1,
@@ -412,8 +413,8 @@ function renderLobbyBattleBottomChip(fighter, lobby, opts = {}) {
     ? getLobbyFighterLiveHp(fighter.id, lobby, matches)
     : { current: fighter.hp, max: LOBBY_START_HP, inBattle: false };
   const visual = typeof resolveLobbyFighterAvatarVisual === "function"
-    ? resolveLobbyFighterAvatarVisual(fighter, lobby, { phase: "battle", matches, spectateMatchId })
-    : { emoji: "❓", animClass: "" };
+    ? resolveLobbyFighterAvatarVisual(fighter, lobby, { phase: "battle", matches, spectateMatchId, round })
+    : { emoji: "❓", animClass: "", isMutation: false, isForm: false };
 
   const cls = [
     "lobby-battle-bottom-chip",
@@ -424,40 +425,38 @@ function renderLobbyBattleBottomChip(fighter, lobby, opts = {}) {
     match?.isPlayerMatch && fighter.isHuman ? "lobby-battle-bottom-chip--yours-match" : "",
   ].filter(Boolean).join(" ");
 
-  const emojiClasses = [
-    "lobby-fighter-emoji",
-    visual.animClass || "",
+  const avatarCls = [
+    "lobby-battle-bottom-chip-avatar",
+    visual.isMutation ? "lobby-fighter-card-avatar--mutation" : "",
+    visual.isForm ? "lobby-fighter-card-avatar--form" : "",
   ].filter(Boolean).join(" ");
 
   const dataAttrs = matchIndex >= 0 && match && !match.byeFighterId
     ? `data-lobby-fighter-card="${fighter.id}" data-lobby-spectate="${matchIndex}"`
     : `data-lobby-fighter-card="${fighter.id}"`;
   const cardTitle = `${fighter.name} · ${fighter.alive ? `${Math.ceil(hp.current)} HP` : "выбыл"}`;
-  const battleCtx = typeof getLobbyFighterBattleContext === "function"
-    ? getLobbyFighterBattleContext(fighter.id, lobby, matches)
-    : null;
-  const statusHtml = typeof renderLobbyBattleStatusHTML === "function"
-    ? renderLobbyBattleStatusHTML(battleCtx)
-    : "";
-  const hasStatus = !!statusHtml;
 
-  return `<button type="button" class="${cls}${hasStatus ? " lobby-battle-bottom-chip--has-status" : ""}" ${dataAttrs} ${disabled ? "disabled" : ""} title="${cardTitle}" aria-label="${cardTitle}">
-    <span class="lobby-battle-bottom-chip-avatar" data-lobby-fighter-avatar="${fighter.id}" aria-hidden="true">
-      <span class="${emojiClasses}">${visual.emoji}</span>
+  const emoji = visual.emoji || (typeof getLobbyFighterDisplayEmoji === "function"
+    ? getLobbyFighterDisplayEmoji(fighter, round)
+    : "❓");
+
+  return `<button type="button" class="${cls}" ${dataAttrs} data-lobby-fighter-id="${fighter.id}" ${disabled ? "disabled" : ""} title="${cardTitle}" aria-label="${cardTitle}">
+    <span class="${avatarCls}" data-lobby-fighter-avatar="${fighter.id}" aria-hidden="true">
+      <span class="lobby-fighter-emoji">${emoji}</span>
     </span>
-    <span class="lobby-battle-bottom-chip-status" data-lobby-fighter-status="${fighter.id}" aria-hidden="true"${hasStatus ? "" : " hidden"}>${statusHtml}</span>
     <span class="lobby-battle-bottom-chip-hp" aria-hidden="true">♥ ${Math.ceil(hp.current)}</span>
   </button>`;
 }
 
 function renderLobbyBattleBottomStrip(lobby, opts = {}) {
-  const { spectateMatchId = 0, matches = [] } = opts;
+  const { spectateMatchId = 0, matches = [], round = 1 } = opts;
   const spectateMatch = matches[spectateMatchId];
   const chips = lobby.fighters.map((fighter) => {
     if (!fighter.alive && fighter.id !== lobby.playerId) {
       return renderLobbyBattleBottomChip(fighter, lobby, {
         spectateMatchId,
         matches,
+        round,
         disabled: true,
         matchIndex: -1,
       });
@@ -470,6 +469,7 @@ function renderLobbyBattleBottomStrip(lobby, opts = {}) {
     return renderLobbyBattleBottomChip(fighter, lobby, {
       spectateMatchId,
       matches,
+      round,
       active: inSpectated,
       match,
       matchIndex,
@@ -492,7 +492,7 @@ function renderLobbyRosterStrip(lobby, opts = {}) {
   } = opts;
 
   if (phase === "battle" && matches.length && layout === "bottom") {
-    return renderLobbyBattleBottomStrip(lobby, { spectateMatchId, matches });
+    return renderLobbyBattleBottomStrip(lobby, { spectateMatchId, matches, round });
   }
 
   if (phase === "battle" && matches.length) {

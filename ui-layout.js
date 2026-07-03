@@ -277,7 +277,7 @@
       fitAvailH: PREP_SIDE_CONTENT_H, fitMinScale: SCALE_MIN, fitWidthRatio: 1,
       canvasAvailShare: 0.36, canvasMaxCap: 260,
       shopRowBase: 72, shopRowMin: 56, shopRowMax: 76,
-      heroSlotHeight: "min(320px, 36vh)", heroSlotMax: 380,
+      heroSlotHeight: "min(54vh, 520px)", heroSlotMax: 560,
       sceneAvatarH: 148, sceneAvatarW: 118, dollSlot: 38, characterGap: 8,
       shopPanelW: 310,
     },
@@ -285,7 +285,7 @@
       fitAvailH: PREP_STACKED_CONTENT_H, fitMinScale: SCALE_MIN, fitWidthRatio: 1,
       canvasAvailShare: 0.32, canvasMaxCap: 260,
       shopRowBase: 72, shopRowMin: 56, shopRowMax: 76,
-      heroSlotHeight: "min(320px, 36vh)", heroSlotMax: 380,
+      heroSlotHeight: "min(54vh, 520px)", heroSlotMax: 560,
       sceneAvatarH: 152, sceneAvatarW: 120, dollSlot: 38, characterGap: 8,
       shopPanelW: 320,
     },
@@ -293,7 +293,7 @@
       fitAvailH: PREP_SIDE_CONTENT_H, fitMinScale: SCALE_MIN, fitWidthRatio: 1,
       canvasAvailShare: 0.30, canvasMaxCap: 280,
       shopRowBase: 74, shopRowMin: 58, shopRowMax: 78,
-      heroSlotHeight: "min(320px, 36vh)", heroSlotMax: 380,
+      heroSlotHeight: "min(54vh, 520px)", heroSlotMax: 560,
       sceneAvatarH: 152, sceneAvatarW: 120, dollSlot: 38, characterGap: 8,
       shopPanelW: 320,
     },
@@ -672,30 +672,7 @@
   }
 
   function syncPrepHeroSlotHeight() {
-    const app = document.getElementById("app");
-    const root = document.documentElement;
-    if (app?.dataset.phase !== "prep" || root.dataset.prepLayout === "mobile") {
-      root.style.removeProperty("--prep-hero-slot-height");
-      return;
-    }
-
-    const fieldCol = document.getElementById("prep-field-column");
-    const island = document.getElementById("prep-field-island");
-    if (!fieldCol || !island) return;
-
-    const colRect = fieldCol.getBoundingClientRect();
-    const islandRect = island.getBoundingClientRect();
-    if (colRect.width <= 0) return;
-
-    const toolbar = getBottomChrome();
-    const toolbarTop = toolbar?.getBoundingClientRect().top ?? colRect.bottom;
-    const gap = readCssPx("--prep-character-gap", 8);
-    const bottomPad = readCssPx("--prep-hero-slot-bottom", 6);
-    const rowTop = islandRect.bottom + gap - colRect.top;
-    const rowBottom = toolbarTop - colRect.top - 8;
-    const maxH = readCssPx("--prep-hero-slot-height-max", 380);
-    const rowH = Math.max(108, Math.min(maxH, rowBottom - rowTop - bottomPad));
-    root.style.setProperty("--prep-hero-slot-height", `${Math.round(rowH)}px`);
+    syncPrepHeroSlotHeight._cache = null;
   }
 
   function syncPrepHeroCardPortraitSize() {
@@ -703,34 +680,7 @@
     if (!isPrepHeroCardHud(root)) {
       root.style.removeProperty("--prep-hero-card-portrait-w");
       root.style.removeProperty("--prep-hero-card-portrait-h");
-      return;
     }
-
-    const card = document.getElementById("prep-hero-card");
-    const statsRow = card?.querySelector(".prep-hero-card__stats-row");
-    if (!statsRow) return;
-
-    const statsH = statsRow.getBoundingClientRect().height;
-    const mutation = card.querySelector(".mutation-progress--hero-card");
-    const mutH = mutation ? mutation.getBoundingClientRect().height : 0;
-    if (statsH < 8 && !syncPrepHeroCardPortraitSize._retry) {
-      syncPrepHeroCardPortraitSize._retry = true;
-      requestAnimationFrame(() => {
-        syncPrepHeroCardPortraitSize._retry = false;
-        syncPrepHeroCardPortraitSize();
-      });
-      return;
-    }
-
-    const gap = readCssPx("--prep-hero-card-body-gap", 6);
-    const uiScale = readCssPx("--ui-scale", 1);
-    const minSide = Math.round(72 * uiScale);
-    const portraitH = Math.max(minSide, Math.round(statsH + mutH + (mutH > 0 ? gap : 0)));
-    const ratio = readCssPx("--prep-hero-card-portrait-ratio", 1);
-    const portraitW = Math.max(minSide, Math.round(portraitH * ratio));
-
-    root.style.setProperty("--prep-hero-card-portrait-h", `${portraitH}px`);
-    root.style.setProperty("--prep-hero-card-portrait-w", `${portraitW}px`);
   }
 
   function syncClassOverlayAnchors() {
@@ -1428,7 +1378,11 @@
       && BattleHeroAnchor.usesCombatFloorAnchors();
     root.dataset.battleCombatFloor = combatFloor ? "true" : "false";
     root.dataset.tabletThoughtCorners = combatFloor ? "true" : "false";
-    root.dataset.thoughtSlotBelowHero = combatFloor ? "true" : "false";
+    const headBadge = combatFloor
+      && typeof BattleHeroAnchor !== "undefined"
+      && BattleHeroAnchor.usesHeadBadgeAnchors?.();
+    root.dataset.thoughtHeadBadge = headBadge ? "true" : "false";
+    root.dataset.thoughtSlotBelowHero = combatFloor && !headBadge ? "true" : "false";
 
     const vmin = Math.min(
       window.visualViewport?.width ?? window.innerWidth,
@@ -1470,8 +1424,19 @@
           ? BattleHeroAnchor.getAvatarAnchorRect(side)
           : null;
         if (!ar || ar.width <= 4) return;
-        cx = ar.left + ar.width / 2;
-        top = ar.top - slotSize * 0.42;
+        if (typeof BattleHeroAnchor !== "undefined" && BattleHeroAnchor.usesHeadBadgeAnchors?.()) {
+          const badge = BattleHeroAnchor.getHeadBadgeThoughtAnchor(side);
+          if (badge) {
+            cx = badge.cx;
+            top = badge.top;
+            slotSize = badge.size;
+            emojiSize = badge.emojiSize || null;
+          }
+        }
+        if (cx == null || top == null) {
+          cx = ar.left + ar.width / 2;
+          top = ar.top - slotSize * 0.42;
+        }
       }
 
       const layoutKey = `${Math.round(cx)}|${Math.round(top)}|${slotSize}|${emojiSize || ""}`;
@@ -2479,7 +2444,6 @@
     syncMobileShopFabPosition();
     syncPrepHeroSlotHeight();
     window.syncPrepHeroCardChrome?.();
-    syncPrepHeroCardPortraitSize();
 
     if (typeof window.applyGridMetricsFromCss === "function") {
       window.applyGridMetricsFromCss();

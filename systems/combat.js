@@ -116,13 +116,16 @@ function buildBattleSummary(state, meta) {
     ? (getClassById(state.enemy.classId)?.name || state.enemy.classId || "Противник")
     : "Противник";
 
+  const playerDisplayName = typeof getPlayerProfileName === "function" ? getPlayerProfileName() : "Игрок";
+  const enemyDisplayName = typeof getEnemyDisplayName === "function" ? getEnemyDisplayName() : "Противник";
+
   let classWinnerLine = "";
   if (state.winner === "player") {
-    classWinnerLine = `Победил класс «${playerClassName}»`;
+    classWinnerLine = `${playerDisplayName} побеждает!`;
   } else if (state.winner === "enemy") {
-    classWinnerLine = `Победил класс «${enemyClassName}»`;
+    classWinnerLine = `${enemyDisplayName} побеждает!`;
   } else {
-    classWinnerLine = `Ничья: «${playerClassName}» vs «${enemyClassName}»`;
+    classWinnerLine = `Ничья: ${playerDisplayName} vs ${enemyDisplayName}`;
   }
 
   return {

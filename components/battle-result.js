@@ -120,19 +120,65 @@ function renderBattleLogSection(logLines, summary) {
   return `${header}<div class="battle-log-scroll">${rows}</div>`;
 }
 
+function easeOutCubic(t) {
+  return 1 - (1 - t) ** 3;
+}
+
+function formatBrCountText(el, value) {
+  const kind = el.dataset.brKind;
+  const prefix = el.dataset.brPrefix || "";
+  const suffix = el.dataset.brSuffix || "";
+  if (kind === "hp") {
+    const max = Number(el.dataset.brMax) || 0;
+    const icon = el.dataset.brIcon || "❤️";
+    return `${icon} ${formatStatNumber(value)}/${max}`;
+  }
+  if (kind === "time") {
+    return `${prefix}${formatBattleTime(value)}`;
+  }
+  return `${prefix}${formatStatNumber(value)}${suffix}`;
+}
+
+function animateBattleResultStatCounts(root) {
+  const scope = root || document.getElementById("battle-result-accordions");
+  if (!scope) return;
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const counters = scope.querySelectorAll("[data-br-count]");
+  counters.forEach((el) => {
+    const final = Number(el.dataset.brValue) || 0;
+    if (reduced) {
+      el.textContent = formatBrCountText(el, final);
+      return;
+    }
+    const duration = 500;
+    const start = performance.now();
+    el.textContent = formatBrCountText(el, 0);
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / duration);
+      el.textContent = formatBrCountText(el, final * easeOutCubic(t));
+      if (t < 1) requestAnimationFrame(tick);
+      else el.textContent = formatBrCountText(el, final);
+    };
+    requestAnimationFrame(tick);
+  });
+}
+
 function showBattleResultPopup(summary, battleLog = []) {
   const overlay = document.getElementById("battle-result-overlay");
   if (!overlay) return;
 
   overlay.dataset.outcome = summary.winner || "draw";
-  document.getElementById("battle-result-title").textContent = summary.title;
 
-  let subtitle = `Раунд ${summary.roundNum}`;
-  if (summary.winner === "player") subtitle += " · Победа в бою";
-  else if (summary.winner === "enemy") subtitle += " · Поражение в бою";
-  else subtitle += " · Ничья";
-  if (summary.classWinnerLine) subtitle += ` · ${summary.classWinnerLine}`;
-  document.getElementById("battle-result-subtitle").textContent = subtitle;
+  const titleEl = document.getElementById("battle-result-title");
+  if (titleEl) {
+    titleEl.textContent = summary.classWinnerLine || summary.title || "Бой завершён";
+    titleEl.classList.add("battle-result-headline");
+  }
+
+  const subtitleEl = document.getElementById("battle-result-subtitle");
+  if (subtitleEl) {
+    subtitleEl.textContent = summary.roundNum != null ? `Раунд ${summary.roundNum}` : "";
+  }
 
   const accordionsEl = document.getElementById("battle-result-accordions");
   renderBattleResultPanel(accordionsEl, [
@@ -160,6 +206,7 @@ function showBattleResultPopup(summary, battleLog = []) {
   ]);
 
   const reveal = () => {
+    animateBattleResultStatCounts(accordionsEl);
     if (typeof startBattleResultTheater === "function") {
       startBattleResultTheater(summary);
     }
@@ -199,6 +246,37 @@ function hideBattleResultPopupAsync() {
 function hideBattleResultPopup() {
   void hideBattleResultPopupAsync();
 }
+
+(function bindBattleResultHelpOnce() {
+  const help = document.getElementById("battle-result-help");
+  const btn = help?.querySelector(".battle-result-help-btn");
+  const tip = document.getElementById("battle-result-help-tooltip");
+  if (!btn || !tip) return;
+
+  const closeTip = () => {
+    tip.classList.add("hidden");
+    btn.setAttribute("aria-expanded", "false");
+  };
+
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const willOpen = tip.classList.contains("hidden");
+    if (willOpen) {
+      tip.classList.remove("hidden");
+      btn.setAttribute("aria-expanded", "true");
+    } else {
+      closeTip();
+    }
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!help.contains(e.target)) closeTip();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeTip();
+  });
+})();
 
 function showRunCompleteOverlay(runResults, runItemStats, roundNum, phase, boardSnapshot = null, goldStats = null) {
   const overlay = document.getElementById("overlay");

@@ -21,8 +21,8 @@ const ThoughtArena = (() => {
   };
 
   /** Компактнее, когда эмодзи сидит на портрете */
-  const HERO_CARD_SIZE_RATIO = 0.11;
-  const HERO_CARD_CLUSTER_SIZE_RATIO = 0.095;
+  const HERO_CARD_SIZE_RATIO = 0.055;
+  const HERO_CARD_CLUSTER_SIZE_RATIO = 0.048;
 
   /** @type {Map<string, { eventKey: string, members: object[] }>} */
   const clusters = new Map();

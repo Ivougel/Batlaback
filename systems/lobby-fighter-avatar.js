@@ -3,8 +3,25 @@
  */
 
 function getLobbyFighterClassEmoji(classId) {
-  const cls = typeof CLASS_CATALOG !== "undefined" ? CLASS_CATALOG[classId] : null;
+  const cls = typeof getClassById === "function"
+    ? getClassById(classId)
+    : (typeof CLASS_CATALOG !== "undefined" ? CLASS_CATALOG[classId] : null);
   return cls?.icon || "❓";
+}
+
+function getLobbyFighterDisplayEmoji(fighter, round = 1) {
+  if (typeof getLobbyFighterMutationEmoji === "function") {
+    const mutationEmoji = getLobbyFighterMutationEmoji(fighter, round);
+    if (mutationEmoji) return mutationEmoji;
+  } else if (fighter?.mutationId && typeof getMutationUiEmoji === "function") {
+    return getMutationUiEmoji(fighter.mutationId);
+  } else {
+    const formRound = typeof MUTATION_ROUND_FORM !== "undefined" ? MUTATION_ROUND_FORM : 8;
+    if (fighter?.mutationFormId && round >= formRound && typeof getMutationUiEmoji === "function") {
+      return getMutationUiEmoji(fighter.mutationFormId);
+    }
+  }
+  return getLobbyFighterClassEmoji(fighter?.classId);
 }
 
 function splitPrimaryEmoji(text) {
@@ -18,14 +35,146 @@ function splitPrimaryEmoji(text) {
   return [...raw][0] || raw;
 }
 
+const lobbyFighterEmotionById = new Map();
+const lobbyMatchEmotionSnaps = new Map();
+
+function lobbyEmotionAnimationClass(animation) {
+  const map = {
+    shake: "lobby-fighter-emoji--shake",
+    bounce: "lobby-fighter-emoji--bounce",
+    nod: "lobby-fighter-emoji--nod",
+    wobble: "lobby-fighter-emoji--wobble",
+    grow: "lobby-fighter-emoji--pulse",
+    pulse: "lobby-fighter-emoji--pulse",
+    fly: "lobby-fighter-emoji--live",
+    particles: "lobby-fighter-emoji--shake",
+  };
+  return map[String(animation || "").toLowerCase()] || "lobby-fighter-emoji--live";
+}
+
+function lobbyEmotionModeFromAnimation(animation) {
+  return lobbyEmotionAnimationClass(animation).replace("lobby-fighter-emoji--", "") || "live";
+}
+
+function clearLobbyFighterEmotions() {
+  lobbyFighterEmotionById.clear();
+  lobbyMatchEmotionSnaps.clear();
+}
+
+function setLobbyFighterEmotion(fighterId, { emoji, animation, priority = 1 }) {
+  const prev = lobbyFighterEmotionById.get(fighterId);
+  const pri = priority ?? 1;
+  const nextEmoji = splitPrimaryEmoji(emoji);
+  if (prev && pri < (prev.priority ?? 0)) return;
+  if (prev && pri === (prev.priority ?? 0) && prev.emoji === nextEmoji) return;
+
+  lobbyFighterEmotionById.set(fighterId, {
+    emoji: nextEmoji,
+    animation: animation || "nod",
+    animClass: lobbyEmotionAnimationClass(animation),
+    mode: lobbyEmotionModeFromAnimation(animation),
+    priority: pri,
+    at: Date.now(),
+  });
+}
+
+function decayLobbyFighterEmotions() {
+  const now = Date.now();
+  lobbyFighterEmotionById.forEach((em, fighterId) => {
+    const age = now - (em.at || 0);
+    const pri = em.priority ?? 0;
+    if (pri >= 4 && age > 2800) lobbyFighterEmotionById.delete(fighterId);
+    else if (pri >= 2 && age > 2200) lobbyFighterEmotionById.delete(fighterId);
+    else if (age > 1600) lobbyFighterEmotionById.delete(fighterId);
+  });
+}
+
 function getSpectatedMainEmotion(side) {
   if (typeof getMainEmotion !== "function") return null;
   const em = getMainEmotion(side);
   if (!em?.emoji) return null;
   return {
     emoji: splitPrimaryEmoji(em.emoji),
-    animation: em.animation || "",
+    animation: em.animation || "nod",
+    priority: em.priority ?? 3,
   };
+}
+
+function takeLobbyEmotionSnapshot(state) {
+  return {
+    playerHp: Math.max(0, state.player?.hp ?? 0),
+    enemyHp: Math.max(0, state.enemy?.hp ?? 0),
+    playerMax: Math.max(1, state.player?.maxHp ?? 100),
+    enemyMax: Math.max(1, state.enemy?.maxHp ?? 100),
+    playerPoison: state.player?.poisonStacks ?? 0,
+    enemyPoison: state.enemy?.poisonStacks ?? 0,
+  };
+}
+
+function inferBackgroundFighterEmotion(team, snap, prev) {
+  const hp = snap[`${team}Hp`];
+  const max = snap[`${team}Max`];
+  const hpPct = hp / max;
+  const poison = snap[`${team}Poison`];
+  const prevHp = prev ? prev[`${team}Hp`] : hp;
+  const loss = Math.max(0, prevHp - hp);
+  const poisonGain = prev ? Math.max(0, poison - (prev[`${team}Poison`] ?? 0)) : 0;
+
+  if (hpPct <= 0) return { emoji: "💀", animation: "shake", priority: 5 };
+  if (poisonGain > 0 || poison >= 3) return { emoji: "🤢", animation: "shake", priority: 4 };
+  if (loss > 15) return { emoji: hpPct < 0.25 ? "💀" : "😵‍💫", animation: "grow", priority: 5 };
+  if (loss > 8) return { emoji: hpPct < 0.3 ? "😭" : "😤", animation: "shake", priority: 3 };
+  if (loss > 2) return { emoji: "😮", animation: "shake", priority: 2 };
+  if (hpPct < 0.2) return { emoji: "😱", animation: "shake", priority: 4 };
+  if (hpPct < 0.35) return { emoji: "😰", animation: "wobble", priority: 2 };
+  if (poison > 0) return { emoji: "😣", animation: "nod", priority: 2 };
+  return null;
+}
+
+function syncSpectatedMatchEmotions(match) {
+  if (!match?.state || match.state.finished || match.byeFighterId) return;
+  const displayState = typeof getDisplayBattleState === "function" ? getDisplayBattleState() : null;
+  if (!displayState || match.state !== displayState) return;
+
+  [
+    ["player", match.fighterAId],
+    ["enemy", match.fighterBId],
+  ].forEach(([team, fighterId]) => {
+    const em = getSpectatedMainEmotion(team);
+    if (!em?.emoji) return;
+    setLobbyFighterEmotion(fighterId, em);
+  });
+}
+
+function analyzeBackgroundMatchEmotions(match) {
+  const state = match?.state;
+  if (!state || state.finished || match.byeFighterId) return;
+
+  const snap = takeLobbyEmotionSnapshot(state);
+  const prev = lobbyMatchEmotionSnaps.get(match.id);
+
+  [
+    ["player", match.fighterAId],
+    ["enemy", match.fighterBId],
+  ].forEach(([team, fighterId]) => {
+    const inferred = inferBackgroundFighterEmotion(team, snap, prev);
+    if (inferred) setLobbyFighterEmotion(fighterId, inferred);
+  });
+
+  lobbyMatchEmotionSnaps.set(match.id, snap);
+}
+
+function refreshLobbyBattleEmotions(lobby, matches) {
+  if (!matches?.length) return;
+  const displayState = typeof getDisplayBattleState === "function" ? getDisplayBattleState() : null;
+
+  matches.forEach((match) => {
+    if (match.byeFighterId || !match.state || match.state.finished) return;
+    if (displayState && match.state === displayState) syncSpectatedMatchEmotions(match);
+    else analyzeBackgroundMatchEmotions(match);
+  });
+
+  decayLobbyFighterEmotions();
 }
 
 function findLobbyMatchForFighter(matches, fighterId) {
@@ -57,20 +206,6 @@ function getLobbyFighterLiveHp(fighterId, lobby, matches) {
   return { current: fighter.hp, max: maxHp, inBattle: false };
 }
 
-function getLobbyFighterDisplayEmoji(fighter, round = 1) {
-  if (typeof getLobbyFighterMutationEmoji === "function") {
-    return getLobbyFighterMutationEmoji(fighter, round);
-  }
-  if (fighter?.mutationId && typeof getMutationUiEmoji === "function") {
-    return getMutationUiEmoji(fighter.mutationId);
-  }
-  const formRound = typeof MUTATION_ROUND_FORM !== "undefined" ? MUTATION_ROUND_FORM : 8;
-  if (fighter?.mutationFormId && round >= formRound && typeof getMutationUiEmoji === "function") {
-    return getMutationUiEmoji(fighter.mutationFormId);
-  }
-  return getLobbyFighterClassEmoji(fighter?.classId);
-}
-
 function resolveLobbyFighterAvatarVisual(fighter, lobby, opts = {}) {
   const { phase = "prep", matches = [], spectateMatchId = 0, round = 1 } = opts;
   const baseEmoji = getLobbyFighterDisplayEmoji(fighter, round);
@@ -86,41 +221,34 @@ function resolveLobbyFighterAvatarVisual(fighter, lobby, opts = {}) {
     };
   }
 
-  const match = findLobbyMatchForFighter(matches, fighter.id);
-  if (!match || match.byeFighterId || !match.state || match.state.finished) {
+  const hp = getLobbyFighterLiveHp(fighter.id, lobby, matches);
+  const stored = lobbyFighterEmotionById.get(fighter.id);
+
+  if (stored && hp.inBattle) {
     return {
-      emoji: baseEmoji,
-      mode: "idle",
-      animClass: isMutation ? "lobby-fighter-emoji--mutation" : "",
+      emoji: stored.emoji,
+      mode: stored.mode,
+      animClass: stored.animClass,
       isMutation,
       isForm,
     };
   }
 
-  const spectateMatch = matches[spectateMatchId];
-  const isSpectated = spectateMatch
-    && !spectateMatch.byeFighterId
-    && (spectateMatch.fighterAId === fighter.id || spectateMatch.fighterBId === fighter.id);
-
-  if (isSpectated) {
-    const side = match.fighterAId === fighter.id ? "player" : "enemy";
-    const em = getSpectatedMainEmotion(side);
-    if (em?.emoji) {
-      const animClass = em.animation ? `lobby-fighter-emoji--${em.animation}` : "lobby-fighter-emoji--live";
-      return {
-        emoji: em.emoji,
-        mode: "battle-emotion",
-        animClass,
-        isMutation,
-        isForm,
-      };
-    }
+  if (hp.inBattle) {
+    const hpPct = hp.max > 0 ? hp.current / hp.max : 1;
+    return {
+      emoji: baseEmoji,
+      mode: "live",
+      animClass: hpPct < 0.35 ? "lobby-fighter-emoji--wobble" : "lobby-fighter-emoji--live",
+      isMutation,
+      isForm,
+    };
   }
 
   return {
-    emoji: isMutation ? baseEmoji : "⚔️",
-    mode: "battle-bg",
-    animClass: isMutation ? "lobby-fighter-emoji--mutation" : "lobby-fighter-emoji--pulse",
+    emoji: baseEmoji,
+    mode: "battle-idle",
+    animClass: "",
     isMutation,
     isForm,
   };
@@ -147,8 +275,9 @@ function syncLobbyFighterAvatarEl(el, visual) {
   emojiEl.classList.remove(...modeClass);
   if (visual.mode === "prep-orbit") {
     emojiEl.classList.add("lobby-fighter-emoji--prep-orbit");
-  } else if (visual.animClass) {
-    emojiEl.classList.add(visual.animClass);
+  } else if (visual.mode !== "battle-idle") {
+    if (visual.animClass) emojiEl.classList.add(visual.animClass);
+    else if (visual.mode) emojiEl.classList.add(`lobby-fighter-emoji--${visual.mode}`);
   }
 
   el.dataset.avatarMode = visual.mode || "";
@@ -235,20 +364,6 @@ function syncLobbyBattleBottomChipMetrics(lobby, opts = {}) {
     const hpEl = chip.querySelector(".lobby-battle-bottom-chip-hp");
     if (hpEl) hpEl.textContent = `♥ ${Math.ceil(hp.current)}`;
     chip.classList.toggle("lobby-battle-bottom-chip--live", !!hp.inBattle);
-
-    const statusEl = chip.querySelector("[data-lobby-fighter-status]");
-    if (!statusEl) return;
-    const ctx = getLobbyFighterBattleContext(fighterId, lobby, matches);
-    const chips = collectLobbyFighterStatusChips(ctx);
-    const sig = buildLobbyFighterStatusSignature(chips);
-    if (statusEl.dataset.statusSig === sig) {
-      statusEl.hidden = chips.length === 0;
-      return;
-    }
-    statusEl.dataset.statusSig = sig;
-    statusEl.hidden = chips.length === 0;
-    statusEl.innerHTML = renderLobbyBattleStatusHTML(ctx);
-    chip.classList.toggle("lobby-battle-bottom-chip--has-status", chips.length > 0);
   });
 }
 
@@ -256,6 +371,12 @@ function syncLobbyFighterAvatars(lobby, opts = {}) {
   if (!lobby) return;
   const phase = opts.phase || document.getElementById("app")?.dataset.phase || "prep";
   const rosterOpts = { ...opts, phase };
+
+  if (phase === "battle" || phase === "replay") {
+    refreshLobbyBattleEmotions(lobby, rosterOpts.matches || []);
+  } else {
+    clearLobbyFighterEmotions();
+  }
 
   document.querySelectorAll("[data-lobby-fighter-avatar]").forEach((mount) => {
     const fighterId = Number(mount.dataset.lobbyFighterAvatar);
@@ -272,6 +393,8 @@ window.getLobbyFighterBattleContext = getLobbyFighterBattleContext;
 window.renderLobbyBattleStatusHTML = renderLobbyBattleStatusHTML;
 
 window.syncLobbyFighterAvatars = syncLobbyFighterAvatars;
+window.clearLobbyFighterEmotions = clearLobbyFighterEmotions;
 window.getLobbyFighterLiveHp = getLobbyFighterLiveHp;
+window.getLobbyFighterDisplayEmoji = getLobbyFighterDisplayEmoji;
 window.findLobbyMatchForFighter = findLobbyMatchForFighter;
 window.resolveLobbyFighterAvatarVisual = resolveLobbyFighterAvatarVisual;

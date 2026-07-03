@@ -158,16 +158,22 @@
   --character-scale: 1;
   --prep-character-slot-h: var(--character-slot-h);
   --prep-hero-slot-left: 2%;
-  --prep-hero-slot-width: 24%;
+  --prep-hero-slot-width: 28%;
   --prep-hero-slot-gap: 1%;
   --prep-hero-slot-bottom: var(--gap-sm);
-  --prep-hero-slot-height: min(360px, 40vh);
-  --prep-hero-slot-height-max: 380px;
+  --prep-hero-slot-height: min(52vh, 500px);
+  --prep-hero-slot-height-max: 560px;
+  --prep-hero-float-h: min(58vh, 560px);
+  --prep-hero-float-min-h: min(44vh, 400px);
+  --prep-hero-float-max-w: min(46vw, 360px);
   /* Hero card HUD: портрет = кроп головы/плеч, высота = stats + mutation */
-  --prep-hero-card-portrait-ratio: 1;
+  --prep-hero-card-portrait-ratio: 0.85;
   --prep-hero-card-body-gap: calc(6px * var(--ui-scale));
-  --prep-hero-card-portrait-w: calc(84px * var(--ui-scale));
-  --prep-hero-card-portrait-h: calc(84px * var(--ui-scale));
+  --prep-hero-card-portrait-w: calc(156px * var(--ui-scale));
+  --prep-hero-card-portrait-h: calc(168px * var(--ui-scale));
+  --prep-hud-portrait-bust-scale: 2.05;
+  --prep-hud-portrait-bust-y: 10%;
+  --prep-hud-portrait-bust-x: 50%;
   --zone-topbar-h: 0px;
   --zone-toolbar-h: 0px;
   --zone-canvas-h: 0px;
@@ -203,6 +209,7 @@
   --doll-layer-h: var(--prep-hero-slot-height);
   --shop-panel-w: 320px;
   --prep-build-emoji-btn-scale: 1;
+  --prep-build-emoji-btn-hud-size: calc(40px * var(--ui-scale, 1));
   --prep-build-emoji-btn-size: clamp(
     calc(2.6rem * var(--ui-scale, 1)),
     calc(var(--shop-panel-w) * 0.18 * var(--prep-build-emoji-btn-scale, 1)),
@@ -211,7 +218,8 @@
   --shop-card-row-h: calc(96px * var(--ui-scale, 1));
   --shop-item-icon-size: calc(72px * var(--game-scale, 1));
   --shop-item-icon-font: calc(56px * var(--game-scale, 1));
-  --shop-item-icon-duo-width: calc(var(--shop-item-icon-size) * 2.05);
+  --shop-item-icon-duo-width: calc(var(--shop-item-icon-size) * 1.72);
+  --shop-item-icon-duo-gap: 0px;
   --fx-float-scale: 1;
   --fx-projectile-scale: 1;
   --fx-projectile-scale: 1;

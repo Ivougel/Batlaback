@@ -12,15 +12,6 @@ function registerPrepShopRuntime(deps) {
   rt = deps;
 }
 
-function getShopSideLabel(side) {
-  if (side === "enemy") {
-    return rt.isVersusMode()
-      ? "Игрок 2"
-      : (rt.isEnemyPrepEditable() ? "Противник" : "ИИ");
-  }
-  return rt.isVersusMode() ? "Игрок 1" : "Вы";
-}
-
 function getShopContextForSide(side = rt.getPrepViewSide(), opts = {}) {
   const st = rt.getSideState(side);
   const otherItems = side === "player" ? rt.getEnemyItems() : rt.getPlayerItems();
@@ -138,16 +129,6 @@ function syncShopHintsVisibility() {
   document.getElementById("shop-panel-hint")?.toggleAttribute("hidden", hide);
   document.querySelector("#shop-panel .shop-hint-touch")?.toggleAttribute("hidden", hide);
   document.querySelector("#shop-panel .shop-sell-hint")?.toggleAttribute("hidden", hide);
-}
-
-function updateShopSideStat() {
-  const el = document.getElementById("shop-side-stat");
-  if (!el || rt.getPhase() !== "prep") return;
-  el.textContent = getShopSideLabel(rt.getPrepViewSide());
-}
-
-function updateShopGoldStat() {
-  updateShopSideStat();
 }
 
 function refillShopSlots() {
@@ -334,16 +315,14 @@ function renderShop(side = rt.getPrepViewSide()) {
     else ensureShopHasStock(side);
   }
   const editable = rt.canEditPrepSide(side);
-  const emptySlotsHtml = Array.from({ length: MAX_SHOP }, () => `<div class="shop-card empty">—</div>`).join("");
-  let html = emptySlotsHtml;
+  let html = "";
   try {
-    const entries = getShopDisplayEntries(side);
+    const entries = getShopDisplayEntries(side).filter(({ itemId }) => itemId);
     if (entries.length) {
       html = entries.map(({ itemId, index }) => {
         try {
-          if (!itemId) return `<div class="shop-card empty">—</div>`;
           const def = ITEM_CATALOG[itemId];
-          if (!def) return `<div class="shop-card empty" title="Предмет не найден: ${itemId}">—</div>`;
+          if (!def) return "";
           if (def.isBuildKey) {
             const frozen = st.shopFrozen[index];
             const affordable = st.gold >= (def.cost ?? 0);
@@ -392,13 +371,13 @@ function renderShop(side = rt.getPrepViewSide()) {
           });
         } catch (itemErr) {
           console.error("renderShop item failed:", itemId, itemErr);
-          return `<div class="shop-card empty" title="Ошибка карточки">—</div>`;
+          return "";
         }
-      }).join("");
+      }).filter(Boolean).join("");
     }
   } catch (err) {
     console.error("renderShop failed:", err);
-    html = emptySlotsHtml;
+    html = "";
   }
   el.innerHTML = html;
   el.querySelectorAll(".shop-card:not(.empty)").forEach((card) => {

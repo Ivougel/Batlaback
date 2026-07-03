@@ -18,12 +18,12 @@ html[data-battle-profile="phone-portrait"] #app[data-phase="replay"] .avatar-her
 
 html[data-battle-profile="phone-landscape"] #app[data-phase="battle"] .battle-thought-body,
 html[data-battle-profile="phone-landscape"] #app[data-phase="replay"] .battle-thought-body {
-  font-size: max(1em, calc(var(--battle-thought-emoji-size, 80px) * 0.90));
+  font-size: max(1em, calc(var(--battle-thought-emoji-size, 32px) * 0.88));
 }
 
 html[data-battle-profile="phone-portrait"] #app[data-phase="battle"] .battle-thought-body,
 html[data-battle-profile="phone-portrait"] #app[data-phase="replay"] .battle-thought-body {
-  font-size: max(1em, calc(var(--battle-thought-emoji-size, 88px) * 0.90));
+  font-size: max(1em, calc(var(--battle-thought-emoji-size, 34px) * 0.88));
 }
 
 html[data-battle-profile="tablet-portrait"] #app[data-phase="battle"] .battle-hud-side,

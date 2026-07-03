@@ -14,31 +14,33 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles/tokens.css?v=15">
+  <link rel="stylesheet" href="styles/tokens.css?v=18">
   <link rel="stylesheet" href="styles/layers.css?v=7">
-  <link rel="stylesheet" href="styles/bottom-chrome.css?v=14">
+  <link rel="stylesheet" href="styles/bottom-chrome.css?v=19">
   <link rel="stylesheet" href="styles.css?v=36">
-  <link rel="stylesheet" href="styles/shop.css?v=2">
+  <link rel="stylesheet" href="styles/shop.css?v=6">
   <link rel="stylesheet" href="styles/item-card-chrome.css?v=3">
-  <link rel="stylesheet" href="styles/shop-pin-chrome.css?v=2">
+  <link rel="stylesheet" href="styles/shop-pin-chrome.css?v=3">
   <link rel="stylesheet" href="styles/prep-top-bar.css?v=2">
   <link rel="stylesheet" href="styles/mutations.css?v=1">
   <link rel="stylesheet" href="styles/battle-archetype-banner.css?v=1">
   <link rel="stylesheet" href="styles/enhancements.css?v=3">
   <link rel="stylesheet" href="styles/doll.css?v=25">
-  <link rel="stylesheet" href="styles/combat-feed.css?v=3">
+  <link rel="stylesheet" href="styles/combat-feed.css?v=4">
   <link rel="stylesheet" href="styles/surface-profiles.css?v=3">
   <link rel="stylesheet" href="styles/container-queries.css?v=2">
   <link rel="stylesheet" href="styles/modal-scale.css?v=5">
   <link rel="stylesheet" href="styles/replay-chrome.css?v=2">
-  <link rel="stylesheet" href="styles/emotion-thoughts.css?v=9">
+  <link rel="stylesheet" href="styles/emotion-thoughts.css?v=10">
   <link rel="stylesheet" href="styles/arena-equipment.css?v=20">
   <link rel="stylesheet" href="styles/prep-drag-arc.css?v=10">
   <link rel="stylesheet" href="styles/battle-arena-layout.css?v=34">
   <link rel="stylesheet" href="styles/phone-landscape.css?v=9">
-  <link rel="stylesheet" href="styles/battle-scale.css?v=3">
+  <link rel="stylesheet" href="styles/battle-scale.css?v=4">
   <link rel="stylesheet" href="styles/battle-hud-compact.css?v=3">
-  <link rel="stylesheet" href="styles/hero-card.css?v=2">
+  <link rel="stylesheet" href="styles/hero-card.css?v=4">
+  <link rel="stylesheet" href="styles/hero-portrait-frame.css?v=5">
+  <link rel="stylesheet" href="styles/prep-hero-card.css?v=13">
   <link rel="stylesheet" href="styles/class-picker.css?v=3">
   <link rel="stylesheet" href="styles/class-hero-showcase.css?v=8">
   <link rel="stylesheet" href="styles/class-hero-portrait-frame.css?v=1">
@@ -51,7 +53,7 @@
   <link rel="stylesheet" href="styles/desktop-prep.css?v=2">
   <link rel="stylesheet" href="styles/desktop-battle.css?v=2">
   <link rel="stylesheet" href="styles/tablet-stacked.css?v=7">
-  <link rel="stylesheet" href="styles/tablet-side.css?v=30">
+  <link rel="stylesheet" href="styles/tablet-side.css?v=31">
   <link rel="stylesheet" href="styles/battle-inventory-popover.css?v=8">
   <link rel="stylesheet" href="styles/lobby.css?v=8">
   <link rel="stylesheet" href="styles/lobby-roster-float.css?v=2">
@@ -60,10 +62,9 @@
   <link rel="stylesheet" href="styles/prep-borderless.css?v=3">
   <link rel="stylesheet" href="styles/battle-borderless.css?v=1">
   <link rel="stylesheet" href="styles/item-stats-report.css?v=3">
-  <link rel="stylesheet" href="styles/prep-juice.css?v=3">
-  <link rel="stylesheet" href="styles/prep-forest-hud.css?v=1">
-  <link rel="stylesheet" href="styles/prep-hero-card.css?v=4">
-  <link rel="stylesheet" href="styles/prep-timer-hero.css?v=1">
+  <link rel="stylesheet" href="styles/prep-juice.css?v=5">
+  <link rel="stylesheet" href="styles/prep-forest-hud.css?v=2">
+  <link rel="stylesheet" href="styles/prep-timer-hero.css?v=2">
   <link rel="stylesheet" href="styles/battle-result-glass.css?v=1">
   <link rel="stylesheet" href="styles/battle-aura-frame.css?v=2">
   <link rel="stylesheet" href="styles/battle-result-theater.css?v=3">
@@ -85,8 +86,8 @@
   </script>
   <script src="systems/layout-scales.js?v=2"></script>
   <script src="systems/battle-fx-tier.js?v=1"></script>
-  <script src="systems/battle-hero-anchor.js?v=23"></script>
-  <script src="ui-layout.js?v=102"></script>
+  <script src="systems/battle-hero-anchor.js?v=24"></script>
+  <script src="ui-layout.js?v=103"></script>
 </head>
 <body>
   <div id="ui-ornament-frame" class="ui-ornament-frame" aria-hidden="true">
@@ -106,20 +107,28 @@
           <div class="prep-left-column" id="prep-left-column">
             <header class="prep-top-bar" id="prep-top-bar" aria-label="Статус забега">
               <div class="prep-hero-card" id="prep-hero-card">
-                <div class="prep-hero-card__portrait">
-                  <div class="prep-hud-hero-badge hidden" id="run-hud-phase" role="img" aria-label="Подготовка">
-                    <div class="prep-hud-hero-portrait" id="prep-hud-hero-portrait" data-mood="breathe">
-                      <span class="prep-hud-hero-portrait__aura" aria-hidden="true"></span>
-                      <span class="prep-hud-hero-portrait__ring" aria-hidden="true"></span>
-                      <span class="prep-hud-hero-portrait__vine prep-hud-hero-portrait__vine--l" aria-hidden="true">🌿</span>
-                      <span class="prep-hud-hero-portrait__vine prep-hud-hero-portrait__vine--r" aria-hidden="true">🍃</span>
-                      <img class="prep-hud-hero-portrait__img" id="prep-hud-hero-img" alt="" draggable="false">
-                    </div>
+                <div class="prep-hero-card__portrait" id="prep-hero-card-portrait">
+                  <div class="hero-portrait-frame" id="prep-hero-card-portrait-frame" role="img" aria-label="Подготовка">
+                    <span class="hero-portrait-frame__shine prep-hero-card__portrait-shine" aria-hidden="true"></span>
+                    <img class="hero-portrait-media" id="prep-hud-hero-img" alt="" draggable="false">
                     <span class="prep-hud-hero-round" id="prep-hud-hero-round" aria-hidden="true"></span>
                   </div>
+                  <span class="prep-hud-hero-badge hidden" id="run-hud-phase" aria-hidden="true"></span>
                 </div>
                 <div class="prep-hero-card__body">
                   <div class="prep-stats-hud" id="prep-stats-hud" aria-live="polite"></div>
+                </div>
+                <div class="prep-hero-card__build-slot" id="prep-hero-card-build-slot" aria-hidden="true">
+                  <button type="button"
+                          class="prep-build-emoji-btn build-preview-toggle hidden"
+                          id="prep-build-emoji-btn"
+                          data-mutation-id=""
+                          data-emoji-slot="build"
+                          aria-label="Путь сборки"
+                          title="Путь сборки">
+                    <span class="prep-build-emoji-btn-glow" aria-hidden="true"></span>
+                    <span class="prep-build-emoji-btn-glyph" aria-hidden="true"></span>
+                  </button>
                 </div>
                 <div class="prep-hero-card__actions" id="prep-hero-card-actions" aria-label="Действия">
                   <div class="prep-hero-card__timer" id="prep-hero-card-timer" aria-hidden="true"></div>
@@ -141,21 +150,6 @@
               </div>
             </header>
             <div class="prep-field-column scene-viewport" id="prep-field-column">
-              <aside class="lobby-prep-roster-panel hidden" id="lobby-prep-roster-panel" aria-label="Список противников">
-                <button type="button"
-                        class="lobby-roster-float-handle lobby-roster-hide-btn"
-                        id="btn-lobby-roster-hide"
-                        aria-expanded="true"
-                        aria-controls="lobby-prep-roster-body"
-                        title="Скрыть"
-                        aria-label="Скрыть список участников">🙈</button>
-                <div class="lobby-prep-roster-body" id="lobby-prep-roster-body">
-                  <div class="lobby-prep-timer-slot" id="lobby-prep-timer-slot"></div>
-                  <div class="lobby-roster-strip lobby-roster-strip--prep-body" id="lobby-roster-strip-prep" role="tablist" aria-label="Участники лобби"></div>
-                </div>
-              </aside>
-
-              <!-- Layer 1 — Мир / сетка -->
               <div class="layer layer-world" id="layer-world">
                 <div class="scene-bg" aria-hidden="true"></div>
                 <div class="prep-doll-layer" id="prep-doll-layer" aria-hidden="true">
@@ -258,20 +252,6 @@
           <div class="shop-panel" id="shop-panel">
             <div class="shop-chrome">
               <div class="shop-panel-header">
-                <button type="button"
-                        class="prep-build-emoji-btn hidden"
-                        id="prep-build-emoji-btn"
-                        data-mutation-id=""
-                        data-emoji-slot="build"
-                        aria-label="Путь сборки"
-                        title="Путь сборки">
-                  <span class="prep-build-emoji-btn-glow" aria-hidden="true"></span>
-                  <span class="prep-build-emoji-btn-glyph" aria-hidden="true"></span>
-                </button>
-                <div class="shop-panel-heading">
-                  <h3 id="shop-panel-title">🛒 Магазин</h3>
-                  <span class="shop-side-stat" id="shop-side-stat">Игрок 1</span>
-                </div>
                 <button type="button" class="btn-secondary btn-refresh-shop" id="btn-refresh">🔄 Обновить (1💰)</button>
                 <button type="button" class="prep-shop-drawer-close" id="btn-prep-shop-close" aria-label="Закрыть магазин">✕</button>
               </div>
@@ -522,14 +502,25 @@
         </div>
       </div>
       <div class="modal battle-result-modal">
-        <h2 id="battle-result-title">Бой завершён</h2>
+        <div class="battle-result-help" id="battle-result-help">
+          <button type="button" class="battle-result-help-btn" aria-label="Подсказки управления" aria-expanded="false" aria-controls="battle-result-help-tooltip">?</button>
+          <div class="battle-result-help-tooltip hidden" id="battle-result-help-tooltip" role="tooltip">
+            <div class="battle-result-key-pills">
+              <span class="key-pill" title="Навигация по кнопкам">✚</span>
+              <span class="key-pill" title="Вклад / лог">A</span>
+              <span class="key-pill" title="Продолжить">+</span>
+              <span class="key-pill" title="Повтор боя">X</span>
+              <span class="key-pill" title="Закрыть">B</span>
+            </div>
+          </div>
+        </div>
+        <h2 id="battle-result-title" class="battle-result-headline">Бой завершён</h2>
         <p id="battle-result-subtitle" class="battle-result-subtitle"></p>
         <div id="battle-result-accordions"></div>
         <div class="battle-result-actions">
           <button type="button" class="btn-secondary hidden" id="btn-battle-replay">↻ Посмотреть бой</button>
           <button class="btn-primary" id="btn-battle-continue">Продолжить</button>
         </div>
-        <p class="battle-result-controls-hint">✚ — кнопки · A — вклад/лог · + — продолжить · X — повтор · B — закрыть</p>
       </div>
     </div>
 
@@ -661,7 +652,7 @@
   <div id="bottom-chrome" class="bottom-chrome scene-chrome" aria-live="polite">
     <div class="bottom-chrome-intro" id="bottom-chrome-intro" aria-label="Навигация забега">
       <div class="bottom-chrome-intro-start">
-        <button type="button" class="btn-secondary prep-settings-btn" id="btn-settings-intro" aria-label="Настройки" aria-expanded="false" aria-controls="settings-overlay" title="Настройки">⚙️</button>
+        <button type="button" class="btn-secondary prep-settings-btn bottombar-btn bottombar-btn--icon" id="btn-settings-intro" aria-label="Настройки" aria-expanded="false" aria-controls="settings-overlay" title="Настройки">⚙️</button>
       </div>
       <div class="bottom-chrome-intro-center">
         <span class="bottom-chrome-intro-step" id="bottom-chrome-intro-step">Шаг 1 · Режим</span>
@@ -669,17 +660,23 @@
         <span class="bottom-chrome-intro-controls" aria-hidden="true">✚ — выбор · A — подтвердить · B — назад</span>
       </div>
       <div class="bottom-chrome-intro-end">
-        <button type="button" class="btn-secondary btn-glass-back hidden" id="btn-class-back">← Назад</button>
+        <button type="button" class="btn-secondary btn-glass-back bottombar-btn hidden" id="btn-class-back">← Назад</button>
         <button type="button" class="btn-primary btn-glass-start hidden" id="btn-start-run" disabled>Начать забег</button>
       </div>
     </div>
     <div class="bottom-chrome-start">
-      <button type="button" class="btn-secondary btn-chrome-back hidden" id="btn-chrome-back" aria-label="Назад в меню">← Назад</button>
+      <button type="button" class="btn-secondary btn-chrome-back bottombar-btn hidden" id="btn-chrome-back" aria-label="Назад в меню">← Назад</button>
       <div class="bottom-chrome-prep-left prep-toolbar-side-switch" id="bottom-chrome-prep-left">
-        <button type="button" class="btn-secondary prep-side-btn active" id="btn-prep-player" data-prep-side="player" title="Мой стол" aria-label="Мой стол"><span class="prep-side-ico" aria-hidden="true">🧑</span><span class="prep-side-label">Мой стол</span></button>
-        <button type="button" class="btn-secondary prep-side-btn" id="btn-prep-enemy" data-prep-side="enemy" title="Противник" aria-label="Противник"><span class="prep-side-ico" aria-hidden="true">🤖</span><span class="prep-side-label">Противник</span></button>
-        <button type="button" class="btn-secondary btn-prep-hero-info" id="btn-prep-hero-info" aria-expanded="false" aria-controls="prep-hero-tooltip" title="Инфо о герое">ℹ️</button>
-        <button type="button" class="btn-secondary prep-settings-btn" id="btn-settings" aria-label="Настройки" aria-expanded="false" aria-controls="settings-overlay">⚙️</button>
+        <button type="button" class="btn-secondary prep-side-btn bottombar-btn active" id="btn-prep-player" data-prep-side="player" title="Мой стол" aria-label="Мой стол"><span class="prep-side-ico" aria-hidden="true">🧑</span><span class="prep-side-label">Мой стол</span></button>
+        <button type="button" class="btn-secondary prep-side-btn bottombar-btn" id="btn-prep-enemy" data-prep-side="enemy" title="Противник" aria-label="Противник"><span class="prep-side-ico" aria-hidden="true">🤖</span><span class="prep-side-label">Противник</span></button>
+        <button type="button" class="btn-secondary btn-prep-hero-info bottombar-btn bottombar-btn--icon" id="btn-prep-hero-info" aria-expanded="false" aria-controls="prep-hero-tooltip" title="Инфо о герое">ℹ️</button>
+        <button type="button" class="btn-secondary prep-settings-btn bottombar-btn bottombar-btn--icon" id="btn-settings" aria-label="Настройки" aria-expanded="false" aria-controls="settings-overlay">⚙️</button>
+        <div class="standings-anchor" id="standings-anchor">
+          <button type="button" class="btn-secondary bottombar-btn standings-toggle" id="btn-standings-toggle" aria-expanded="false" aria-controls="standings-dropdown" aria-label="Турнирная таблица" title="Участники лобби">🏆 <span class="standings-alive-count" id="standings-alive-count">0</span></button>
+          <div class="standings-dropdown hidden" id="standings-dropdown" role="region" aria-label="Список участников лобби">
+            <div class="lobby-roster-strip lobby-roster-strip--prep-body" id="lobby-roster-strip-prep" role="tablist" aria-label="Участники лобби"></div>
+          </div>
+        </div>
       </div>
       <div class="battle-controls hidden" id="battle-controls">
         <button type="button" class="bc-btn" id="btn-battle-pause" title="Пауза (Start)">⏸</button>
@@ -691,6 +688,11 @@
       </div>
     </div>
     <div class="bottom-chrome-center prep-toolbar-feed-home" id="prep-toolbar-feed-home">
+      <div class="prep-bottom-stats hud-stats-pill" id="prep-bottom-stats" hidden aria-live="polite" aria-label="Ресурсы забега">
+        <span class="prep-bottom-stat prep-bottom-stat--gold" title="Золото"><span class="prep-bottom-stat-ico" aria-hidden="true">💰</span><b id="prep-bottom-stat-gold">0</b></span>
+        <span class="prep-bottom-stat prep-bottom-stat--hp" title="Здоровье"><span class="prep-bottom-stat-ico" aria-hidden="true">❤️</span><b id="prep-bottom-stat-hp">100</b></span>
+        <span class="prep-bottom-stat prep-bottom-stat--round" title="Раунд"><span class="prep-bottom-stat-label">Раунд</span><b id="prep-bottom-stat-round">1</b></span>
+      </div>
       <div class="replay-timeline hidden" id="replay-timeline" aria-hidden="true">
         <span class="replay-timeline-label" aria-hidden="true">↻</span>
         <div class="replay-timeline-track" id="replay-timeline-track" role="slider" tabindex="0" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Прогресс повтора">
@@ -711,14 +713,14 @@
             </div>
           </div>
         </div>
-        <button type="button" class="btn-secondary btn-combat-feed" id="btn-combat-feed" aria-expanded="false" aria-controls="combat-feed-panel">
+        <button type="button" class="btn-secondary btn-combat-feed bottombar-btn" id="btn-combat-feed" aria-expanded="false" aria-controls="combat-feed-panel">
           <span class="btn-combat-feed-label">📜 События</span>
           <span class="btn-combat-feed-chevron" aria-hidden="true">▾</span>
         </button>
       </div>
     </div>
     <div class="bottom-chrome-end">
-      <button type="button" class="btn-secondary btn-lobby-return-table hidden" id="btn-lobby-return-table" title="Вернуться на свой стол">🧑 Вернуться на свой стол</button>
+      <button type="button" class="btn-secondary btn-lobby-return-table bottombar-btn hidden" id="btn-lobby-return-table" title="Вернуться на свой стол">🧑 Вернуться на свой стол</button>
       <div class="lobby-battle-roster-bar hidden" id="lobby-battle-roster-bar" aria-label="Параллельные бои">
         <div class="lobby-roster-strip lobby-roster-strip--bottom" id="lobby-roster-strip-battle" role="tablist"></div>
       </div>
@@ -750,7 +752,7 @@
   <script src="classes.js?v=4"></script>
   <script src="systems/mutations.js?v=3"></script>
   <script src="systems/mutation-lore-quips.js?v=1"></script>
-  <script src="systems/mutation-ui.js?v=8"></script>
+  <script src="systems/mutation-ui.js?v=9"></script>
   <script src="systems/mutation-capstones.js?v=1"></script>
   <script src="systems/item-pool-120.js?v=1"></script>
   <script src="items.js"></script>
@@ -817,21 +819,21 @@
   <script src="ai-engine.js"></script>
   <script src="hard-bot-engine.js"></script>
   <script src="systems/lobby-opponents.js?v=6"></script>
-  <script src="systems/lobby-fighter-avatar.js?v=2"></script>
+  <script src="systems/lobby-fighter-avatar.js?v=4"></script>
   <script src="systems/lobby-spectator.js?v=8"></script>
   <script src="systems/lobby-roster-float.js?v=2"></script>
   <script src="battle-engine.js?v=2"></script>
   <script src="battle-float-layer.js?v=18"></script>
-  <script src="components/thought-arena.js?v=14"></script>
+  <script src="components/thought-arena.js?v=15"></script>
   <script src="components/arena-equipment.js?v=25"></script>
   <script src="components/emotion-presenter.js?v=5"></script>
   <script src="emotion-engine.js?v=21"></script>
   <script src="battle-hud.js?v=6"></script>
-  <script src="systems/prep-shop.js?v=1"></script>
+  <script src="systems/prep-shop.js?v=2"></script>
   <script src="systems/doll-engine.js"></script>
   <script src="systems/screen-transitions.js?v=1"></script>
-  <script src="components/prep-hud-hero.js?v=2"></script>
-  <script src="game.js?v=69"></script>
+  <script src="components/prep-hud-hero.js?v=3"></script>
+  <script src="game.js?v=72"></script>
   <script src="pwa-register.js"></script>
 </body>
 </html>

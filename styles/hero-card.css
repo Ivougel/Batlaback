@@ -29,9 +29,9 @@ html[data-hero-card-mode="full-bleed"] #app[data-phase="prep"] .prep-character-i
 html[data-hero-card-mode="full-bleed"] #app[data-phase="prep"] .prep-character-img--float {
   display: block;
   width: auto;
-  height: min(48vh, 440px);
-  min-height: min(32vh, 260px);
-  max-width: min(44vw, 320px);
+  height: var(--prep-hero-float-h, min(58vh, 560px));
+  min-height: var(--prep-hero-float-min-h, min(44vh, 400px));
+  max-width: var(--prep-hero-float-max-w, min(46vw, 360px));
   max-height: none;
   object-fit: contain;
   object-position: center bottom;

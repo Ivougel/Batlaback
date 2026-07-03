@@ -186,16 +186,9 @@ body:has(#app[data-phase="replay"]) .bottom-chrome .gamepad-hints-status.is-conn
   color: var(--meadow-grass-dark);
 }
 
-.lobby-battle-bottom-chip-status {
-  gap: 0.12rem;
-}
-
+.lobby-battle-bottom-chip-status,
 .lobby-battle-bottom-status-emoji {
-  filter: drop-shadow(0 1px 1px rgba(46, 100, 50, 0.18));
-}
-
-.lobby-battle-bottom-status-emoji--more {
-  color: var(--meadow-ink-muted);
+  display: none !important;
 }
 
 .lobby-battle-bottom-chip--out .lobby-battle-bottom-chip-hp {

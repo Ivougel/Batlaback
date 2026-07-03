@@ -21,30 +21,21 @@
 
 .shop-panel-header {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: flex-end;
   gap: 10px;
   margin-bottom: var(--gap-xs);
   flex-shrink: 0;
 }
 
-.shop-panel-heading {
-  display: flex;
-  flex-direction: column;
-  gap: calc(2px * var(--ui-scale));
-  min-width: 0;
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .shop-panel-header .prep-build-emoji-btn {
+  margin-right: auto;
 }
 
-.shop-side-stat {
-  font-size: var(--font-sm);
-  font-weight: 600;
-  color: var(--muted);
-  line-height: 1.2;
-}
-
-#app[data-phase="prep"][data-prep-side="enemy"] .shop-panel-heading {
-  align-items: flex-end;
-  text-align: right;
+#app[data-phase="prep"] .shop-panel-heading,
+#app[data-phase="prep"] #shop-panel-title,
+#app[data-phase="prep"] .shop-side-stat {
+  display: none !important;
 }
 
 .shop-panel h3 {
@@ -213,10 +204,14 @@
   -webkit-overflow-scrolling: touch;
 }
 
-#app[data-phase="prep"] #shop-panel .shop-card:last-child:nth-child(odd) {
+#app[data-phase="prep"] #shop-panel .shop-card:not(.empty):last-child:nth-child(odd) {
   grid-column: 1 / -1;
   width: calc(50% - calc(3px * var(--ui-scale)));
   justify-self: center;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-card.empty {
+  display: none;
 }
 
 #app[data-phase="prep"] #shop-panel .shop-card {
@@ -308,8 +303,9 @@
   flex-wrap: nowrap;
   align-items: center;
   justify-content: center;
-  gap: calc(2px * var(--ui-scale));
-  width: 100%;
+  gap: var(--shop-item-icon-duo-gap, 0px);
+  width: auto;
+  max-width: 100%;
   height: 100%;
   line-height: 1;
   direction: ltr;
@@ -333,13 +329,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 1 1 0;
+  flex: 0 0 auto;
   min-width: 0;
   width: auto;
   height: 100%;
   line-height: 1;
   font-size: inherit;
   transform: translateY(calc(-0.04em * var(--ui-scale, 1)));
+}
+
+#app[data-phase="prep"] #shop-panel .shop-card .shop-item-visual .icon.icon--duo .icon-duo .icon-glyph + .icon-glyph,
+#app[data-phase="prep"] #shop-panel .bench-panel .bench-card .icon.icon--duo .icon-duo .icon-glyph + .icon-glyph {
+  margin-left: calc(-3px * var(--ui-scale, 1));
 }
 
 #app[data-phase="prep"] #shop-panel .shop-card:not(.empty),
@@ -360,7 +361,7 @@ html[data-touch="true"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-
   z-index: 0;
 }
 
-html[data-touch="true"] #app[data-phase="prep"] #shop-panel .shop-card:not(.empty) > *,
+html[data-touch="true"] #app[data-phase="prep"] #shop-panel .shop-card:not(.empty) > *:not(.shop-pin),
 html[data-touch="true"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-card:not(.empty) > * {
   position: relative;
   z-index: 1;
@@ -783,7 +784,7 @@ html[data-touch="true"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-
 
 .shop-card .icon.icon--duo,
 .bench-card .icon.icon--duo {
-  width: var(--shop-item-icon-duo-width, calc(var(--shop-item-icon-size, 56px) * 2.05));
+  width: var(--shop-item-icon-duo-width, calc(var(--shop-item-icon-size, 56px) * 1.72));
   height: var(--shop-item-icon-size, 56px);
   font-size: calc(var(--game-item-icon-font) * 0.66);
   border-radius: calc(14px * var(--ui-scale, 1));
@@ -797,8 +798,9 @@ html[data-touch="true"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-
   flex-wrap: nowrap;
   align-items: center;
   justify-content: center;
-  gap: calc(1px * var(--ui-scale, 1));
-  width: 100%;
+  gap: var(--shop-item-icon-duo-gap, 0px);
+  width: auto;
+  max-width: 100%;
   height: 100%;
   line-height: 1;
   direction: ltr;
@@ -821,12 +823,17 @@ html[data-touch="true"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 1 1 0;
+  flex: 0 0 auto;
   min-width: 0;
   width: auto;
   height: 100%;
   line-height: 1;
   transform: translateY(calc(-0.04em * var(--ui-scale, 1)));
+}
+
+.shop-card .icon.icon--duo .icon-duo .icon-glyph + .icon-glyph,
+.bench-card .icon.icon--duo .icon-duo .icon-glyph + .icon-glyph {
+  margin-left: calc(-3px * var(--ui-scale, 1));
 }
 
 .shop-card .info,
@@ -1056,7 +1063,7 @@ html[data-prep-side-fit="true"] #app[data-phase="prep"] .shop-panel .shop-card.e
 html[data-prep-side-fit="true"] #app[data-phase="prep"] {
   --shop-item-icon-size: calc(58px * var(--ui-scale, 1));
   --shop-item-icon-font: calc(46px * var(--ui-scale, 1));
-  --shop-item-icon-duo-width: calc(var(--shop-item-icon-size) * 2.05);
+  --shop-item-icon-duo-width: calc(var(--shop-item-icon-size) * 1.72);
 }
 
 html[data-prep-side-fit="true"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-card {
@@ -1104,7 +1111,7 @@ html[data-prep-layout="side"] #app[data-phase="prep"] #shop-panel .shop-action-r
 html[data-prep-viewport-fit="true"] #app[data-phase="prep"] {
   --shop-item-icon-size: calc(58px * var(--ui-scale, 1));
   --shop-item-icon-font: calc(46px * var(--ui-scale, 1));
-  --shop-item-icon-duo-width: calc(var(--shop-item-icon-size) * 2.05);
+  --shop-item-icon-duo-width: calc(var(--shop-item-icon-size) * 1.72);
 }
 
 html[data-prep-viewport-fit="true"] #app[data-phase="prep"] #shop-panel {

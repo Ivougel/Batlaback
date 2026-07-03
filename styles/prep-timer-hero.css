@@ -173,6 +173,35 @@ html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .lobby-prep-roster-p
   50% { transform: scale(1.06); }
 }
 
+html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .bottom-chrome,
+html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .bottom-chrome {
+  --bottombar-btn-h: max(36px, calc(2.25rem * var(--ui-scale, 1)));
+  --bottombar-btn-radius: calc(8px * var(--ui-scale, 1));
+}
+
+html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .lobby-prep-timer-bottom .prep-timer-hero,
+html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .lobby-prep-timer-bottom .prep-timer-hero {
+  width: calc(58px * var(--ui-scale, 1));
+  height: calc(58px * var(--ui-scale, 1));
+  margin: calc(-6px * var(--ui-scale, 1)) 0;
+}
+
+html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .lobby-prep-timer-bottom .prep-timer-hero__eyebrow,
+html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .lobby-prep-timer-bottom .prep-timer-hero__eyebrow {
+  font-size: max(6px, calc(0.42rem * var(--type-scale, 1)));
+  letter-spacing: 0.08em;
+}
+
+html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .lobby-prep-timer-bottom .prep-timer-hero__value,
+html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .lobby-prep-timer-bottom .prep-timer-hero__value {
+  font-size: max(1rem, calc(1.1rem * var(--type-scale, 1) * var(--ui-scale, 1)));
+}
+
+html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .lobby-prep-timer-bottom .prep-timer-hero__unit,
+html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .lobby-prep-timer-bottom .prep-timer-hero__unit {
+  font-size: max(6px, calc(0.42rem * var(--type-scale, 1)));
+}
+
 html[data-prep-layout="side"] body:has(#app[data-phase="prep"]) .prep-timer-hero,
 html[data-ui-surface="tablet-side"] body:has(#app[data-phase="prep"]) .prep-timer-hero {
   width: calc(96px * var(--ui-scale, 1));

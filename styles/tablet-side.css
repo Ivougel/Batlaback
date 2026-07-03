@@ -216,10 +216,10 @@ html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="fl
 
 html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="battle"] .avatar-thought-slot .battle-thought-body,
 html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="replay"] .avatar-thought-slot .battle-thought-body {
-  width: var(--battle-thought-emoji-size, 120px);
-  height: var(--battle-thought-emoji-size, 120px);
-  font-size: max(1em, calc(var(--battle-thought-emoji-size, 120px) * 0.92));
-  filter: drop-shadow(0 10px 26px rgba(0, 0, 0, 0.62));
+  width: var(--battle-thought-emoji-size, 36px);
+  height: var(--battle-thought-emoji-size, 36px);
+  font-size: max(1em, calc(var(--battle-thought-emoji-size, 36px) * 0.88));
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
 }
 
 html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="battle"] .avatar-thought-slot .arena-equip-body--thought-orbit,
