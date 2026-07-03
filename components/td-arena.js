@@ -16,6 +16,8 @@ const TdArena = (() => {
 
   const MIN_ZOOM = 0.72;
   const MAX_ZOOM = 3;
+  /** Как в раннем TdArena: вписать карту и слегка увеличить (до ×1.55), чтобы поле было крупным по центру. */
+  const MAP_FIT_BOOST_MAX = 1.55;
   const TAP_MOVE_PX = 10;
   const TAP_TIME_MS = 300;
   const DOUBLE_TAP_MS = 320;
@@ -79,7 +81,8 @@ const TdArena = (() => {
 
   function getBaseScale(viewRect, w, h) {
     if (!viewRect?.width || !viewRect?.height) return 1;
-    return Math.max(viewRect.width / w, viewRect.height / h);
+    const fit = Math.min(viewRect.width / w, viewRect.height / h);
+    return Math.min(fit * MAP_FIT_BOOST_MAX, MAP_FIT_BOOST_MAX);
   }
 
   function getViewScale(viewRect, w, h) {
@@ -119,12 +122,13 @@ const TdArena = (() => {
     resetBtnEl.classList.toggle("hidden", !isCameraMoved());
   }
 
-  function applyCameraTransform(ctx2, viewRect, w, h) {
-    const scale = getViewScale(viewRect, w, h);
+  function applyCameraTransform(ctx2, viewRect, w, h, dpr = 1) {
+    const viewScale = getViewScale(viewRect, w, h);
+    const scale = viewScale * dpr;
     ctx2.setTransform(
       scale, 0, 0, scale,
-      viewRect.width / 2 - camera.cx * scale,
-      viewRect.height / 2 - camera.cy * scale,
+      (viewRect.width / 2 - camera.cx * viewScale) * dpr,
+      (viewRect.height / 2 - camera.cy * viewScale) * dpr,
     );
   }
 
@@ -388,7 +392,7 @@ const TdArena = (() => {
     if (canvasEl.width !== backingW) canvasEl.width = backingW;
     if (canvasEl.height !== backingH) canvasEl.height = backingH;
 
-    if (camera.cx <= 0 || camera.cy <= 0) resetCamera();
+    if (camera.cx <= 0 || camera.cy <= 0 || !isCameraMoved()) resetCamera();
     else clampCamera();
     syncResetButtonVisibility();
   }
@@ -461,7 +465,7 @@ const TdArena = (() => {
 
   function drawPathSpawns(ctx2, tdState, w, h) {
     const paths = tdState.map?.paths || [];
-    const r = Math.min(w, h) * 0.028;
+    const r = Math.min(w, h) * (typeof TD_SPAWN_RING_FRAC === "number" ? TD_SPAWN_RING_FRAC : 0.028);
     paths.forEach((path, pathId) => {
       const start = path?.[0];
       if (!start) return;
@@ -496,7 +500,7 @@ const TdArena = (() => {
         else ctx2.lineTo(x, y);
       });
       ctx2.strokeStyle = "rgba(40, 25, 10, 0.4)";
-      ctx2.lineWidth = Math.max(18, w * 0.028);
+      ctx2.lineWidth = Math.max(16, w * (typeof TD_PATH_RIM_FRAC === "number" ? TD_PATH_RIM_FRAC : 0.058));
       ctx2.lineCap = "round";
       ctx2.lineJoin = "round";
       ctx2.stroke();
@@ -509,7 +513,7 @@ const TdArena = (() => {
         else ctx2.lineTo(x, y);
       });
       ctx2.strokeStyle = pathFill;
-      ctx2.lineWidth = Math.max(13, w * 0.022);
+      ctx2.lineWidth = Math.max(12, w * (typeof TD_PATH_WIDTH_FRAC === "number" ? TD_PATH_WIDTH_FRAC : 0.058));
       ctx2.stroke();
     });
     drawPathSpawns(ctx2, tdState, w, h);
@@ -520,7 +524,7 @@ const TdArena = (() => {
     slots.forEach((slot) => {
       const cx = slot.x * w;
       const cy = slot.y * h;
-      const r = Math.min(w, h) * 0.055;
+      const r = Math.min(w, h) * (typeof TD_SLOT_RADIUS_FRAC === "number" ? TD_SLOT_RADIUS_FRAC : 0.055);
       const tower = (tdState.towers || []).find((t) => t.slotId === slot.id && t.alive);
       const selected = slot.id === selectedSlotId;
 
@@ -587,7 +591,7 @@ const TdArena = (() => {
 
       const cx = slot.x * w;
       const cy = slot.y * h;
-      const baseR = Math.min(w, h) * 0.062;
+      const baseR = Math.min(w, h) * (typeof TD_HERO_RADIUS_FRAC === "number" ? TD_HERO_RADIUS_FRAC : 0.062);
       const pulse = 1 + Math.sin(animTime * 2.5 + tower.slotId) * 0.025;
 
       const portrait = loadPortrait(tower.classId);
@@ -628,7 +632,7 @@ const TdArena = (() => {
       const pos = tdLerpPath(tdState, pig.pathId, pig.t);
       const cx = pos.x * w;
       const cy = pos.y * h;
-      const size = Math.min(w, h) * 0.045 * pig.sizeScale;
+      const size = Math.min(w, h) * (typeof TD_UNIT_SIZE_FRAC === "number" ? TD_UNIT_SIZE_FRAC : 0.045) * pig.sizeScale;
       const hpRatio = Math.max(0, pig.hp / pig.maxHp);
 
       ctx2.save();
@@ -839,15 +843,15 @@ const TdArena = (() => {
     const viewRect = getViewRect();
     if (!viewRect?.width || !viewRect?.height) return;
     const sel = selectedSlotId ?? tdState.selectedSlotId ?? null;
-    const dpr = canvasEl.width / viewRect.width;
+    const dpr = Math.max(1, canvasEl.width / viewRect.width);
+    const grassDark = tdState?.map?.grassDark || "#2d5228";
 
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const grassDark = tdState?.map?.grassDark || "#2d5228";
     ctx.fillStyle = grassDark;
     ctx.fillRect(0, 0, viewRect.width, viewRect.height);
 
     ctx.save();
-    applyCameraTransform(ctx, viewRect, w, h);
+    applyCameraTransform(ctx, viewRect, w, h, dpr);
     drawGrass(ctx, tdState, w, h);
     drawDecor(ctx, tdState, w, h);
     drawPaths(ctx, tdState, w, h);

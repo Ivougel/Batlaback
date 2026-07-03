@@ -4848,7 +4848,7 @@ function openTdLoadoutSheet() {
   if (!isTdLoadoutEditPhase()) return;
   tdLoadoutSheetOpen = true;
   syncTdLoadoutSheetDom();
-  syncTdLoadoutLayout();
+  requestAnimationFrame(() => syncTdLoadoutLayout());
 }
 
 function closeTdLoadoutSheet() {

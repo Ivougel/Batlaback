@@ -7,6 +7,16 @@ const TD_MAX_WAVES = 99;
 const TD_PIG_EMOJI = "🐷";
 const TD_CANVAS_W = 960;
 const TD_CANVAS_H = 640;
+/**
+ * Доли карты (референс Kingdom Rush: путь 70px при 1200px ширины ≈ 5.8%).
+ * TowerWard / Defender's Quest: читаемость важнее точных пикселей — держим пропорции стабильными.
+ */
+const TD_PATH_WIDTH_FRAC = 0.058;
+const TD_PATH_RIM_FRAC = 0.072;
+const TD_UNIT_SIZE_FRAC = 0.045;
+const TD_HERO_RADIUS_FRAC = 0.062;
+const TD_SLOT_RADIUS_FRAC = 0.055;
+const TD_SPAWN_RING_FRAC = 0.028;
 const TD_SPAWN_INTERVAL = 0.55;
 const TD_WAVE_BREAK = 1.4;
 const TD_MAX_ACTIVATIONS_PER_TICK = 8;
