@@ -2068,16 +2068,38 @@
           "--battle-field-display-w",
           "--battle-grid-gap-display",
         ].forEach((name) => root.style.removeProperty(name));
+        const loadoutOpen = app?.dataset.tdLoadoutOpen === "true";
         const fieldCol = canvas.closest(".prep-field-column");
         const island = document.getElementById("prep-field-island");
-        const useIsland = app?.dataset.tdLoadoutOpen === "true" && island;
-        const islandRect = useIsland ? island.getBoundingClientRect() : null;
+        const sheetBody = document.getElementById("td-loadout-sheet-body");
         const stageW = fieldCol?.clientWidth ?? 0;
         const stageH = fieldCol?.clientHeight ?? 0;
+
+        if (loadoutOpen && sheetBody) {
+          const bodyRect = sheetBody.getBoundingClientRect();
+          const fitW = bodyRect.width > 40 ? bodyRect.width : stageW;
+          const fitH = bodyRect.height > 40 ? bodyRect.height : stageH;
+          const scale = fitW > 0 && fitH > 0
+            ? Math.min(fitW / canvas.width, fitH / canvas.height)
+            : 1;
+          const finalScale = Math.min(Math.max(1, scale), 2.5);
+          const w = Math.max(1, Math.floor(canvas.width * finalScale));
+          const h = Math.max(1, Math.floor(canvas.height * finalScale));
+          root.style.setProperty("--battle-canvas-display-w", `${w}px`);
+          root.style.setProperty("--battle-canvas-display-h", `${h}px`);
+          setCanvasDisplaySize(canvas, w, h);
+          syncFxCanvasGeometry();
+          if (typeof TdArena !== "undefined" && typeof TdArena.resize === "function") {
+            TdArena.resize();
+          }
+          return;
+        }
+
+        const islandRect = island?.getBoundingClientRect();
         const fitW = islandRect && islandRect.width > 40 ? islandRect.width : stageW;
         const fitH = islandRect && islandRect.height > 40 ? islandRect.height : stageH;
         if (fitW > 0 && fitH > 0 && canvas.width > 0 && canvas.height > 0) {
-          const scale = Math.min(fitW / canvas.width, fitH / canvas.height, useIsland ? 2 : 1.5);
+          const scale = Math.min(fitW / canvas.width, fitH / canvas.height, 1.5);
           const w = Math.max(1, Math.floor(canvas.width * scale));
           const h = Math.max(1, Math.floor(canvas.height * scale));
           root.style.setProperty("--battle-canvas-display-w", `${w}px`);

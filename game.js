@@ -5093,7 +5093,7 @@ function getTdLoadoutLayoutRect() {
     })();
 }
 
-/** Подогнать 6×6 рюкзак башни под док снизу (клетки 44–56px desktop, до ~92px tablet). */
+/** Подогнать 6×6 рюкзак башни под док (клетки крупно заполняют sheet / карту). */
 function syncTdLoadoutLayout() {
   syncTdTowerEditDom();
   const root = document.documentElement;
@@ -5104,6 +5104,7 @@ function syncTdLoadoutLayout() {
   }
 
   const island = document.getElementById("prep-field-island");
+  const sheetOpen = document.getElementById("app")?.dataset.tdLoadoutOpen === "true";
   const uiScale = readCssPx("--ui-scale", 1);
   const cols = TD_TOWER_COLS;
   const rows = TD_TOWER_ROWS;
@@ -5111,11 +5112,13 @@ function syncTdLoadoutLayout() {
   const touchLike = document.documentElement.dataset.touch === "true"
     || document.documentElement.dataset.uiTier === "tablet"
     || (typeof isTouchUi === "function" && isTouchUi());
-  const minCell = Math.round(readCssPx("--td-loadout-cell-min", touchLike ? 50 : 44) * Math.max(1, uiScale * (touchLike ? 1 : 0.92)));
-  const maxCell = Math.round(readCssPx("--td-loadout-cell-max", touchLike ? 88 : 56) * uiScale);
+  const minCell = Math.round(readCssPx("--td-loadout-cell-min", touchLike ? 50 : 52) * Math.max(1, uiScale * (touchLike ? 1 : 0.96)));
+  const maxCellCss = Math.round(readCssPx("--td-loadout-cell-max", touchLike ? 88 : 80) * uiScale);
+  const maxCellSheet = Math.round((touchLike ? 108 : 96) * uiScale);
+  const maxCell = sheetOpen ? maxCellSheet : maxCellCss;
   const framePad = Math.round(18 * uiScale);
 
-  let rect = island?.getBoundingClientRect();
+  let rect = sheetOpen ? getTdLoadoutLayoutRect() : island?.getBoundingClientRect();
   if (!rect || rect.width < 120 || rect.height < 120) {
     rect = getTdLoadoutLayoutRect();
   }
@@ -5141,12 +5144,15 @@ function syncTdLoadoutLayout() {
     }
   }
 
-  const islandPad = Math.round((touchLike ? 16 : 12) * uiScale);
+  const islandPad = Math.round((touchLike ? 16 : 10) * uiScale);
   const availW = Math.max(200, rect.width - islandPad * 2);
   const availH = Math.max(200, rect.height - islandPad * 2);
   const byW = Math.floor((availW - (cols - 1) * gap) / cols);
   const byH = Math.floor((availH - (rows - 1) * gap) / rows);
-  const cell = Math.min(maxCell, Math.max(minCell, Math.min(byW, byH)));
+  const fillCell = Math.min(byW, byH);
+  const cell = sheetOpen
+    ? Math.min(maxCell, Math.max(minCell, fillCell))
+    : Math.min(maxCell, Math.max(minCell, fillCell));
 
   root.style.setProperty("--cell-size", `${cell}px`);
   root.style.setProperty("--cell-gap", `${gap}px`);

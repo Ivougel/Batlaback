@@ -29,23 +29,27 @@ html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-left-column {
 html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-field-column {
   position: relative !important;
   inset: auto !important;
-  display: block !important;
-  flex: 1 1 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 0% !important;
+  align-self: stretch !important;
   min-height: 0 !important;
   width: 100% !important;
-  height: auto !important;
+  height: 100% !important;
   overflow: hidden;
   align-items: stretch !important;
   justify-content: stretch !important;
 }
 
-html[data-ui-surface="tablet-side"] html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-field-column {
+html[data-ui-surface="tablet-side"][data-game-mode="td"] #app[data-td-run-live="true"] .prep-field-column {
   position: relative !important;
   inset: auto !important;
-  display: block !important;
-  flex: 1 1 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 0% !important;
+  align-self: stretch !important;
   min-height: 0 !important;
-  height: auto !important;
+  height: 100% !important;
   margin: 0 !important;
 }
 
@@ -349,13 +353,20 @@ html[data-game-mode="td"] #app[data-td-loadout-open="true"] .td-arena-mount {
   padding: calc(6px * var(--ui-scale, 1));
 }
 
+html[data-game-mode="td"] #td-loadout-sheet .td-run-sheet__body {
+  align-items: center;
+  justify-content: center;
+  padding: calc(8px * var(--ui-scale, 1)) calc(10px * var(--ui-scale, 1));
+  min-height: min(52dvh, calc(100dvh - var(--td-overlay-portrait-h, 148px) - var(--bottom-chrome-h, 44px) - 120px));
+}
+
 html[data-game-mode="td"] #td-loadout-sheet .prep-field-island {
   visibility: visible !important;
   position: relative !important;
   inset: auto !important;
-  width: 100% !important;
+  width: fit-content !important;
+  max-width: 100% !important;
   height: auto !important;
-  max-width: none !important;
   max-height: none !important;
   overflow: visible !important;
   pointer-events: auto !important;
@@ -363,6 +374,7 @@ html[data-game-mode="td"] #td-loadout-sheet .prep-field-island {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  flex: 0 0 auto;
   padding: 0;
   border: none;
   background: transparent;
@@ -372,11 +384,13 @@ html[data-game-mode="td"] #td-loadout-sheet .prep-field-island {
 
 html[data-game-mode="td"] #td-loadout-sheet .prep-field-island .battle-canvas-stage,
 html[data-game-mode="td"] #td-loadout-sheet .prep-field-island .canvas-scale-wrap {
-  width: 100% !important;
-  height: 100% !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: 100%;
   display: flex !important;
   align-items: center;
   justify-content: center;
+  flex: 0 0 auto;
 }
 
 html[data-game-mode="td"] #td-loadout-sheet #game-canvas {
@@ -384,7 +398,7 @@ html[data-game-mode="td"] #td-loadout-sheet #game-canvas {
   width: var(--battle-canvas-display-w, auto) !important;
   height: var(--battle-canvas-display-h, auto) !important;
   max-width: 100%;
-  max-height: 100%;
+  max-height: min(52dvh, calc(100dvh - var(--td-overlay-portrait-h, 148px) - var(--bottom-chrome-h, 44px) - 140px));
   pointer-events: auto;
   cursor: grab;
 }

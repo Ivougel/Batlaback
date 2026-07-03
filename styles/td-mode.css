@@ -113,10 +113,67 @@ html[data-game-mode="td"] #app[data-phase="replay"] .scene-bg {
   inset: 0;
   z-index: 12;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
+  justify-content: stretch;
   overflow: hidden;
   pointer-events: none;
+}
+
+.td-map-viewport {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.td-map-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 13;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 88% 78% at 50% 48%,
+    transparent 52%,
+    rgba(8, 14, 10, 0.22) 74%,
+    rgba(4, 8, 6, 0.52) 100%
+  );
+}
+
+.td-map-zoom-controls {
+  position: absolute;
+  right: calc(10px * var(--ui-scale, 1));
+  bottom: calc(52px * var(--ui-scale, 1));
+  z-index: 14;
+  display: flex;
+  flex-direction: column;
+  gap: calc(4px * var(--ui-scale, 1));
+  pointer-events: auto;
+}
+
+.td-map-zoom-btn {
+  width: calc(36px * var(--ui-scale, 1));
+  height: calc(36px * var(--ui-scale, 1));
+  min-width: var(--touch-target-min, 44px);
+  min-height: var(--touch-target-min, 44px);
+  padding: 0;
+  border-radius: calc(10px * var(--ui-scale, 1));
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(12, 18, 14, 0.82);
+  color: #ecfdf5;
+  font-size: calc(1.25rem * var(--ui-scale, 1));
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.td-map-zoom-btn:hover {
+  background: rgba(22, 32, 26, 0.92);
+  border-color: rgba(74, 222, 128, 0.45);
 }
 
 .td-arena-mount.hidden {
@@ -125,8 +182,10 @@ html[data-game-mode="td"] #app[data-phase="replay"] .scene-bg {
 
 #td-arena-canvas {
   display: block;
-  max-width: 100%;
-  max-height: 100%;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none;
+  max-height: none;
   border-radius: calc(10px * var(--ui-scale, 1));
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.45),
@@ -194,8 +253,13 @@ html[data-game-mode="td"] {
   --td-col-map-share: 50%;
   --td-col-loadout-share: 50%;
   --td-map-min-h-share: 50%;
-  --td-loadout-cell-min: 44px;
-  --td-loadout-cell-max: 56px;
+  --td-loadout-cell-min: 52px;
+  --td-loadout-cell-max: 80px;
+}
+
+html[data-game-mode="td"] #app[data-td-loadout-open="true"] {
+  --td-loadout-cell-min: 56px;
+  --td-loadout-cell-max: 96px;
 }
 
 html[data-battle-profile="tablet-landscape-side"][data-game-mode="td"] {
@@ -282,8 +346,20 @@ html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-field-column > .la
 }
 
 html[data-game-mode="td"] #app[data-td-run-live="true"] .layer-objects > .td-arena-mount,
-html[data-game-mode="td"] #app[data-td-run-live="true"] .layer-objects > .td-tower-panel {
+html[data-game-mode="td"] #app[data-td-run-live="true"] .layer-objects > .td-tower-panel,
+html[data-game-mode="td"] #app[data-td-run-live="true"] .td-map-viewport,
+html[data-game-mode="td"] #app[data-td-run-live="true"] #td-arena-canvas {
   pointer-events: auto;
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .td-map-vignette,
+html[data-game-mode="td"] #app[data-td-run-live="true"] .td-map-zoom-controls,
+html[data-game-mode="td"] #app[data-td-run-live="true"] .td-arena-reset-view {
+  pointer-events: auto;
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .td-map-vignette {
+  pointer-events: none;
 }
 
 html[data-prep-layout="mobile"] html[data-game-mode="td"] #app[data-td-run-live="true"] .battle-arena {
