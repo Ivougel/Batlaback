@@ -4906,7 +4906,10 @@ function getTdEditGridBounds() {
   const gap = GRID_CELL_GAP;
   const innerW = cols * cell + (cols - 1) * gap;
   const innerH = rows * cell + (rows - 1) * gap;
-  const pad = Math.round(18 * readCssPx("--ui-scale", 1));
+  let pad = Math.round(18 * readCssPx("--ui-scale", 1));
+  if (canvas && isTdLoadoutEditPhase() && canvas.width > innerW && canvas.height > innerH) {
+    pad = Math.round((canvas.width - innerW) / 2);
+  }
   return { innerW, innerH, ox: pad, oy: pad };
 }
 
@@ -4934,6 +4937,7 @@ let tdLoadoutSheetOpen = false;
 let tdHeroSheetOpen = false;
 let tdRunCompactBound = false;
 let tdLoadoutIslandHome = null;
+let tdFxAnchorHome = null;
 
 function mountTdLoadoutIsland() {
   const island = document.getElementById("prep-field-island");
@@ -4944,6 +4948,19 @@ function mountTdLoadoutIsland() {
     next: island.nextSibling,
   };
   body.appendChild(island);
+
+  const stack = island.querySelector(".canvas-stack");
+  const anchor = document.getElementById("canvas-fx-anchor");
+  if (stack && anchor && !stack.contains(anchor)) {
+    tdFxAnchorHome = {
+      parent: anchor.parentElement,
+      next: anchor.nextSibling,
+    };
+    stack.appendChild(anchor);
+  }
+  if (typeof window.syncFxCanvasGeometry === "function") {
+    requestAnimationFrame(() => window.syncFxCanvasGeometry());
+  }
 }
 
 function unmountTdLoadoutIsland() {
@@ -4953,6 +4970,17 @@ function unmountTdLoadoutIsland() {
   if (home.next) home.parent.insertBefore(island, home.next);
   else home.parent.appendChild(island);
   tdLoadoutIslandHome = null;
+
+  const anchor = document.getElementById("canvas-fx-anchor");
+  const fxHome = tdFxAnchorHome;
+  if (anchor && fxHome?.parent) {
+    if (fxHome.next) fxHome.parent.insertBefore(anchor, fxHome.next);
+    else fxHome.parent.appendChild(anchor);
+    tdFxAnchorHome = null;
+  }
+  if (typeof window.syncFxCanvasGeometry === "function") {
+    requestAnimationFrame(() => window.syncFxCanvasGeometry());
+  }
 }
 
 function syncTdLoadoutSheetChrome() {
@@ -7320,8 +7348,13 @@ function drawContainers(containers, team, dimmed) {
     const bounds = getContainerBounds(container);
     const boardW = bounds.maxCol - bounds.minCol + 1;
     const boardH = bounds.maxRow - bounds.minRow + 1;
-    const ox = gridOrigin(team) + bounds.minCol * GRID_STRIDE;
-    const oy = layoutBackpackY() + bounds.minRow * GRID_STRIDE;
+    const stride = gridStrideFor(team);
+    const cell = teamLayoutCell(team);
+    const gap = Math.max(0, stride - cell);
+    const ox = gridOrigin(team) + bounds.minCol * stride;
+    const oy = layoutBackpackY() + bounds.minRow * stride;
+    const boardPixW = boardW * cell + Math.max(0, boardW - 1) * gap;
+    const boardPixH = boardH * cell + Math.max(0, boardH - 1) * gap;
     const alpha = dimmed ? 0.55 : 1;
 
     getItemCells(container).forEach(([c, r]) => {
@@ -7339,12 +7372,12 @@ function drawContainers(containers, team, dimmed) {
 
     ctx.globalAlpha = alpha * 0.25;
     ctx.fillStyle = def.color;
-    roundRect(ox + 2, oy + 2, boardW * cell - 4, boardH * cell - 4, 8);
+    roundRect(ox + 2, oy + 2, boardPixW - 4, boardPixH - 4, 8);
     ctx.fill();
     ctx.globalAlpha = alpha;
     ctx.strokeStyle = RARITY_COLORS[def.rarity] || "#8b949e";
     ctx.lineWidth = 2;
-    roundRect(ox + 2, oy + 2, boardW * cell - 4, boardH * cell - 4, 8);
+    roundRect(ox + 2, oy + 2, boardPixW - 4, boardPixH - 4, 8);
     ctx.stroke();
 
     for (let r = bounds.minRow; r <= bounds.maxRow; r++) {

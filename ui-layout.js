@@ -683,6 +683,19 @@
     const anchor = document.getElementById("canvas-fx-anchor");
     if (!viewport || !canvasEl || !anchor) return;
 
+    if (anchor.closest("#td-loadout-sheet .canvas-stack")) {
+      anchor.style.left = "0";
+      anchor.style.top = "0";
+      anchor.style.width = "100%";
+      anchor.style.height = "100%";
+      const fx = document.getElementById("canvas-fx");
+      if (fx && canvasEl.width > 0 && canvasEl.height > 0) {
+        fx.width = canvasEl.width;
+        fx.height = canvasEl.height;
+      }
+      return;
+    }
+
     const vpRect = viewport.getBoundingClientRect();
     const canvasRect = canvasEl.getBoundingClientRect();
     if (canvasRect.width <= 0 || canvasRect.height <= 0) return;

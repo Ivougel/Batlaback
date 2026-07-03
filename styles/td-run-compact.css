@@ -501,6 +501,10 @@ html[data-game-mode="td"] #td-loadout-sheet .prep-field-island {
   visibility: visible !important;
   position: relative !important;
   inset: auto !important;
+  left: auto !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
   width: fit-content !important;
   max-width: 100% !important;
   height: auto !important;
@@ -516,7 +520,21 @@ html[data-game-mode="td"] #td-loadout-sheet .prep-field-island {
   border: none;
   background: transparent;
   box-shadow: none;
-  transform: none;
+  transform: none !important;
+}
+
+html[data-game-mode="td"] #td-loadout-sheet .canvas-stack {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+}
+
+html[data-game-mode="td"] #td-loadout-sheet .canvas-stack .canvas-fx-anchor {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
 html[data-game-mode="td"] #td-loadout-sheet .prep-field-island .battle-canvas-stage,
