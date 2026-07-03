@@ -204,6 +204,14 @@ html[data-battle-profile="tablet-landscape-side"][data-game-mode="td"] {
   --td-panel-max-w: 11rem;
   --td-panel-min-w: 9.5rem;
   --td-loadout-anchor-x: 33%;
+  --td-loadout-cell-min: 54px;
+  --td-loadout-cell-max: 92px;
+}
+
+html[data-ui-tier="tablet"][data-game-mode="td"],
+html[data-touch="true"][data-game-mode="td"] {
+  --td-loadout-cell-min: 50px;
+  --td-loadout-cell-max: 88px;
 }
 
 html[data-prep-layout="mobile"][data-game-mode="td"] {

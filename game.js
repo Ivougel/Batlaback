@@ -4868,6 +4868,29 @@ function unmountTdLoadoutIsland() {
   tdLoadoutIslandHome = null;
 }
 
+function syncTdLoadoutSheetChrome() {
+  const title = document.getElementById("td-loadout-sheet-title");
+  const hint = document.getElementById("td-loadout-sheet-hint");
+  if (!title && !hint) return;
+  if (!isTdLoadoutEditPhase()) {
+    if (title) title.textContent = "Рюкзак башни";
+    if (hint) hint.textContent = "Поле 6×6 · предметы кладутся только в клетки сумки";
+    return;
+  }
+  const tower = getTdEditTower();
+  if (!tower) return;
+  const slotCount = buildSlotSet(tower.containers).size;
+  const cols = typeof TD_TOWER_COLS === "number" ? TD_TOWER_COLS : 6;
+  const rows = typeof TD_TOWER_ROWS === "number" ? TD_TOWER_ROWS : 6;
+  const boardCells = cols * rows;
+  if (title) title.textContent = `Рюкзак башни · ${slotCount} слотов`;
+  if (hint) {
+    hint.textContent = slotCount < boardCells
+      ? `Поле ${cols}×${rows} · кладите предметы в зелёные клетки · купите 🎒 в магазине, чтобы расширить`
+      : `Поле ${cols}×${rows} · перетащите предмет из магазина дугой на зелёные клетки`;
+  }
+}
+
 function syncTdLoadoutSheetDom() {
   const app = document.getElementById("app");
   const sheet = document.getElementById("td-loadout-sheet");
@@ -4892,13 +4915,18 @@ function syncTdLoadoutSheetDom() {
     fab.hidden = !showFab;
     fab.classList.toggle("hidden", !showFab);
   }
+  syncTdLoadoutSheetChrome();
 }
 
 function openTdLoadoutSheet() {
   if (!isTdLoadoutEditPhase()) return;
   tdLoadoutSheetOpen = true;
   syncTdLoadoutSheetDom();
-  requestAnimationFrame(() => syncTdLoadoutLayout());
+  syncTdLoadoutLayout();
+  requestAnimationFrame(() => {
+    syncTdLoadoutLayout();
+    requestAnimationFrame(() => syncTdLoadoutLayout());
+  });
 }
 
 function closeTdLoadoutSheet() {
@@ -4970,7 +4998,35 @@ function bindTdRunCompactUi() {
   document.getElementById("td-hero-sheet-close")?.addEventListener("click", closeTdHeroSheet);
 }
 
-/** Подогнать 6×6 рюкзак башни под док снизу (клетки 44–56px). */
+/** Доступная зона под сетку 6×6 (sheet / карта слева от магазина). */
+function getTdLoadoutLayoutRect() {
+  const body = document.getElementById("td-loadout-sheet-body");
+  const panel = document.querySelector("#td-loadout-sheet .td-loadout-sheet__panel");
+  const backdrop = document.querySelector("#td-loadout-sheet .td-loadout-sheet__backdrop");
+  const arena = document.getElementById("td-arena-mount");
+  const fieldCol = document.getElementById("prep-field-column");
+
+  const pick = (el) => {
+    const r = el?.getBoundingClientRect();
+    if (!r || r.width < 120 || r.height < 120) return null;
+    return { width: r.width, height: r.height };
+  };
+
+  return pick(body)
+    || pick(panel)
+    || pick(arena)
+    || pick(fieldCol)
+    || (() => {
+      const r = backdrop?.getBoundingClientRect();
+      if (!r || r.width < 120 || r.height < 120) return null;
+      const headH = panel?.querySelector(".td-run-sheet__head")?.getBoundingClientRect().height || 0;
+      const hintH = document.getElementById("td-loadout-sheet-hint")?.getBoundingClientRect().height || 0;
+      const chrome = headH + hintH + 24;
+      return { width: r.width, height: Math.max(200, r.height - chrome) };
+    })();
+}
+
+/** Подогнать 6×6 рюкзак башни под док снизу (клетки 44–56px desktop, до ~92px tablet). */
 function syncTdLoadoutLayout() {
   syncTdTowerEditDom();
   const root = document.documentElement;
@@ -4985,12 +5041,18 @@ function syncTdLoadoutLayout() {
   const cols = TD_TOWER_COLS;
   const rows = TD_TOWER_ROWS;
   const gap = Math.max(2, Math.round(2 * uiScale));
-  const minCell = Math.round(readCssPx("--td-loadout-cell-min", 44) * Math.max(1, uiScale * 0.92));
-  const maxCell = Math.round(readCssPx("--td-loadout-cell-max", 56) * uiScale);
+  const touchLike = document.documentElement.dataset.touch === "true"
+    || document.documentElement.dataset.uiTier === "tablet"
+    || (typeof isTouchUi === "function" && isTouchUi());
+  const minCell = Math.round(readCssPx("--td-loadout-cell-min", touchLike ? 50 : 44) * Math.max(1, uiScale * (touchLike ? 1 : 0.92)));
+  const maxCell = Math.round(readCssPx("--td-loadout-cell-max", touchLike ? 88 : 56) * uiScale);
   const framePad = Math.round(18 * uiScale);
 
   let rect = island?.getBoundingClientRect();
-  if (!rect || rect.width < 48 || rect.height < 48) {
+  if (!rect || rect.width < 120 || rect.height < 120) {
+    rect = getTdLoadoutLayoutRect();
+  }
+  if (!rect) {
     const panel = document.querySelector("#td-loadout-sheet .td-loadout-sheet__panel");
     const panelRect = panel?.getBoundingClientRect();
     if (panelRect && panelRect.width >= 48 && panelRect.height >= 48) {
@@ -5001,18 +5063,18 @@ function syncTdLoadoutLayout() {
       if (dockRect && dockRect.width >= 48 && dockRect.height >= 48) {
         rect = dockRect;
       } else {
-      const fieldCol = document.getElementById("prep-field-column");
-      const colRect = fieldCol?.getBoundingClientRect();
-      const loadoutShare = readCssPx("--td-col-loadout-share", 50) / 100;
-      rect = {
-        width: colRect?.width ?? window.innerWidth * 0.5,
-        height: (colRect?.height ?? window.innerHeight * 0.5) * loadoutShare,
-      };
+        const fieldCol = document.getElementById("prep-field-column");
+        const colRect = fieldCol?.getBoundingClientRect();
+        const loadoutShare = readCssPx("--td-col-loadout-share", 50) / 100;
+        rect = {
+          width: colRect?.width ?? window.innerWidth * 0.5,
+          height: (colRect?.height ?? window.innerHeight * 0.5) * loadoutShare,
+        };
       }
     }
   }
 
-  const islandPad = Math.round(12 * uiScale);
+  const islandPad = Math.round((touchLike ? 16 : 12) * uiScale);
   const availW = Math.max(200, rect.width - islandPad * 2);
   const availH = Math.max(200, rect.height - islandPad * 2);
   const byW = Math.floor((availW - (cols - 1) * gap) / cols);
@@ -5074,6 +5136,7 @@ function finalizeTdTowerLoadoutEdit() {
   if (typeof tdSyncTowerCombat === "function") {
     tdSyncTowerCombat(tower, tdState?.prepMeta || {});
   }
+  syncTdLoadoutSheetChrome();
   renderTdBuildPanel();
 }
 
@@ -7124,6 +7187,7 @@ function drawBackpackFrame(team, options = {}) {
   const activeCells = revealAllBoardCells ? null : buildActiveVisualCellSet(containers, items);
   const gridCols = isTdLoadoutEditPhase() ? getActiveGridCols() : GRID_COLS;
   const gridRows = isTdLoadoutEditPhase() ? getActiveGridRows() : GRID_ROWS;
+  const showTdBoardGhost = isTdLoadoutEditPhase() && !revealAllBoardCells;
 
   for (let row = 0; row < gridRows; row++) {
     for (let col = 0; col < gridCols; col++) {
@@ -7131,11 +7195,20 @@ function drawBackpackFrame(team, options = {}) {
       if (!available) continue;
 
       const key = `${col},${row}`;
-      if (!revealAllBoardCells && activeCells && !activeCells.has(key)) continue;
+      const isSlot = revealAllBoardCells || !activeCells || activeCells.has(key);
+      if (!isSlot && !showTdBoardGhost) continue;
 
       const { x: cx, y: cy, w: cw, h: ch } = cellRect(team, col, row);
-      ctx.fillStyle = gridCellFill(true, row, col);
-      ctx.fillRect(cx, cy, cw, ch);
+      if (isSlot) {
+        ctx.fillStyle = gridCellFill(true, row, col);
+        ctx.fillRect(cx, cy, cw, ch);
+      } else {
+        ctx.fillStyle = "rgba(12, 22, 16, 0.55)";
+        ctx.fillRect(cx, cy, cw, ch);
+        ctx.strokeStyle = "rgba(74, 222, 128, 0.14)";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(cx + 0.5, cy + 0.5, cw - 1, ch - 1);
+      }
     }
   }
 }

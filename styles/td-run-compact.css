@@ -7,6 +7,9 @@ html[data-game-mode="td"] #app[data-td-run-live="true"] {
   --td-overlay-portrait-w: calc(108px * var(--ui-scale, 1));
   --td-overlay-portrait-h: calc(148px * var(--ui-scale, 1));
   --td-chrome-panel-w: min(var(--td-panel-share, 34%), var(--td-panel-max-w, 20rem));
+  --td-loadout-dock-left: clamp(8px, 1.2vw, 16px);
+  --td-loadout-dock-bottom: calc(var(--bottom-chrome-h, 44px) + clamp(8px, 1vh, 12px));
+  --td-loadout-dock-width-share: 0.54;
 }
 
 /* ─── Левая колонка = только карта (герой — оверлей) ─── */
@@ -264,15 +267,23 @@ html[data-game-mode="td"] #app[data-td-loadout-open="true"] .td-arena-mount {
 
 .td-loadout-sheet__panel {
   position: absolute;
-  left: calc((100% - var(--td-chrome-panel-w, 34%)) * 0.5);
-  top: 50%;
-  transform: translate(-50%, -50%);
+  left: var(--td-loadout-dock-left, clamp(8px, 1.2vw, 16px));
+  bottom: var(--td-loadout-dock-bottom, calc(var(--bottom-chrome-h, 44px) + clamp(8px, 1vh, 12px)));
+  top: auto;
+  right: auto;
+  transform: none;
   z-index: 1;
   display: flex;
   flex-direction: column;
-  width: min(48vw, calc(22rem * var(--ui-scale, 1)));
-  max-width: calc(100vw - var(--td-chrome-panel-w, 34%) - 24px);
-  max-height: min(68dvh, calc(100dvh - var(--bottom-chrome-h, 44px) - 24px));
+  width: min(
+    calc((100% - var(--td-chrome-panel-w, 34%)) * var(--td-loadout-dock-width-share, 0.54)),
+    calc(28rem * var(--ui-scale, 1))
+  );
+  max-width: calc(100% - var(--td-chrome-panel-w, 34%) - 20px);
+  max-height: min(
+    56dvh,
+    calc(100dvh - var(--td-overlay-portrait-h, 148px) - var(--bottom-chrome-h, 44px) - 16px)
+  );
   box-sizing: border-box;
   border-radius: calc(14px * var(--ui-scale, 1));
   border: 2px solid rgba(74, 222, 128, 0.4);
@@ -296,6 +307,16 @@ html[data-game-mode="td"] #app[data-td-loadout-open="true"] .td-arena-mount {
   font-size: calc(13px * var(--ui-scale, 1));
   font-weight: 700;
   color: #d1fae5;
+}
+
+.td-loadout-sheet__hint {
+  margin: 0;
+  padding: 0 calc(10px * var(--ui-scale, 1)) calc(6px * var(--ui-scale, 1));
+  font-size: calc(10px * var(--ui-scale, 1));
+  line-height: 1.35;
+  color: rgba(167, 243, 208, 0.72);
+  text-align: center;
+  border-bottom: 1px solid rgba(74, 222, 128, 0.12);
 }
 
 .td-run-sheet__close {
@@ -356,7 +377,7 @@ html[data-game-mode="td"] #td-loadout-sheet #game-canvas {
   width: var(--battle-canvas-display-w, auto) !important;
   height: var(--battle-canvas-display-h, auto) !important;
   max-width: 100%;
-  max-height: min(56dvh, 100%);
+  max-height: 100%;
   pointer-events: auto;
   cursor: grab;
 }
@@ -609,6 +630,62 @@ html[data-game-mode="td"] #app[data-td-run-live="true"]:not([data-prep-layout="m
 }
 
 html[data-prep-layout="mobile"] html[data-game-mode="td"] #td-loadout-sheet .td-loadout-sheet__panel {
-  max-width: calc(100vw - 24px);
-  left: 50%;
+  --td-loadout-dock-width-share: 0.92;
+  max-width: calc(100vw - var(--td-chrome-panel-w, 34%) - 16px);
+}
+
+/* iPad / touch: крупный док снизу слева (зона 🎒 на карте) */
+html[data-ui-tier="tablet"][data-game-mode="td"] #app[data-td-run-live="true"],
+html[data-touch="true"][data-game-mode="td"] #app[data-td-run-live="true"] {
+  --td-loadout-dock-left: clamp(10px, 1.5vw, 20px);
+  --td-loadout-dock-bottom: calc(var(--bottom-chrome-h, 44px) + clamp(10px, 1.2vh, 16px));
+  --td-loadout-dock-width-share: 0.58;
+}
+
+html[data-ui-tier="tablet"][data-game-mode="td"] #td-loadout-sheet .td-loadout-sheet__panel,
+html[data-touch="true"][data-game-mode="td"] #td-loadout-sheet .td-loadout-sheet__panel {
+  width: min(
+    calc((100% - var(--td-chrome-panel-w, 34%)) * var(--td-loadout-dock-width-share, 0.58)),
+    calc(42rem * var(--ui-scale, 1))
+  );
+  max-height: min(
+    64dvh,
+    calc(100dvh - var(--td-overlay-portrait-h, 148px) - var(--bottom-chrome-h, 44px) - 12px)
+  );
+}
+
+html[data-ui-tier="tablet"][data-game-mode="td"] #td-loadout-sheet .td-run-sheet__body,
+html[data-touch="true"][data-game-mode="td"] #td-loadout-sheet .td-run-sheet__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: calc(10px * var(--ui-scale, 1));
+  align-items: stretch;
+  justify-content: center;
+}
+
+html[data-ui-tier="tablet"][data-game-mode="td"] #td-loadout-sheet .td-loadout-sheet__hint,
+html[data-touch="true"][data-game-mode="td"] #td-loadout-sheet .td-loadout-sheet__hint {
+  font-size: calc(12px * var(--ui-scale, 1));
+  padding-bottom: calc(8px * var(--ui-scale, 1));
+}
+
+html[data-ui-tier="tablet"][data-game-mode="td"] #td-loadout-sheet .td-run-sheet__title,
+html[data-touch="true"][data-game-mode="td"] #td-loadout-sheet .td-run-sheet__title {
+  font-size: calc(15px * var(--ui-scale, 1));
+}
+
+html[data-ui-tier="tablet"][data-game-mode="td"] #td-loadout-sheet #game-canvas,
+html[data-touch="true"][data-game-mode="td"] #td-loadout-sheet #game-canvas {
+  max-width: 100% !important;
+  max-height: 100% !important;
+  width: var(--battle-canvas-display-w, auto) !important;
+  height: var(--battle-canvas-display-h, auto) !important;
+}
+
+html[data-ui-tier="tablet"][data-game-mode="td"] #td-loadout-sheet .prep-field-island,
+html[data-touch="true"][data-game-mode="td"] #td-loadout-sheet .prep-field-island {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
 }
