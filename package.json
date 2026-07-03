@@ -10,12 +10,15 @@
     "export:pool120": "node tools/export-pool120-items.mjs",
     "generate:pool120-presets": "node tools/generate-class-pool120-presets.js",
     "sim:balance-pool120": "node tools/generate-class-pool120-presets.js && node tools/class-balance-pool120-sim.js --json",
+    "test:layout": "node tools/layout-profiles.test.mjs",
+    "test:structure": "node tools/ui-structure.test.mjs",
     "test:phases": "node tools/layout-phases.test.mjs",
     "test:geometry": "node tools/layout-geometry.test.mjs",
     "test:qa": "node tools/layout-qa-audit.mjs",
     "test:snapshots": "playwright test",
+    "test:snapshots:prep": "playwright test tools/prep-snapshots.spec.mjs tools/layout-snapshots.spec.mjs",
     "test:snapshots:update": "playwright test --update-snapshots",
-    "test:ui": "npm run test:layout && npm run test:phases && npm run test:geometry && npm run test:qa && npm run test:snapshots",
+    "test:ui": "npm run test:layout && npm run test:structure && npm run test:phases && npm run test:geometry && npm run test:qa && npm run test:snapshots",
     "profile:battle": "node tools/battle-perf-profile.mjs"
   },
   "dependencies": {

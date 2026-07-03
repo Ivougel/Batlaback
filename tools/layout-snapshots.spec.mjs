@@ -13,6 +13,7 @@ const SNAPSHOT_PROFILES = [
   { name: "iphone-portrait", device: devices["iPhone 14 Pro Max"] },
   { name: "iphone-landscape", device: { ...devices["iPhone 14 Pro Max"], viewport: { width: 932, height: 430 } } },
   { name: "ipad-portrait", device: devices["iPad Mini"] },
+  { name: "ipad-landscape", device: { ...devices["iPad Mini"], viewport: { width: 1024, height: 768 } } },
   { name: "desktop", device: { viewport: { width: 1440, height: 1080 } } },
 ];
 

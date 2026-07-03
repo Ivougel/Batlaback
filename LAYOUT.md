@@ -1,6 +1,7 @@
 # Layout — адаптивная раскладка Backpack Battles
 
-> Принципы UI/UX и карточка героя: [UI_UX.md](./UI_UX.md)
+> Принципы UI/UX и карточка героя: [UI_UX.md](./UI_UX.md)  
+> **Экраны, режимы, окна (зафиксировано):** [docs/ui-screens-modes.md](./docs/ui-screens-modes.md)
 
 ## Источник правды
 
@@ -155,6 +156,7 @@ html[data-ui-surface="phone-drawer"][data-prep-layout="mobile"] .foo { }
 ## Тесты
 
 ```bash
+npm run test:structure # контракт режимов / overlay DOM / layout matrix
 npm run test:layout   # boot + class overlay, 5 профилей
 npm run test:phases   # prep + battle после quick start, 3 профиля
 npm run test:geometry # геометрия зон hero/canvas/shop

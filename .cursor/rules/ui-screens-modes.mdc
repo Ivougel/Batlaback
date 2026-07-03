@@ -1,0 +1,27 @@
+---
+description: Контракт экранов, режимов и overlay — не ломать без обновления manifest и тестов
+globs: index.html,game.js,ui-layout.js,styles/**/*.css,docs/ui-screens-modes.md,tools/ui-structure-manifest.json
+alwaysApply: false
+---
+
+# UI: экраны и режимы
+
+Перед изменением структуры окон прочитай [docs/ui-screens-modes.md](docs/ui-screens-modes.md).
+
+## Обязательно
+
+- Режимы игры: только `solo | versus | hardbot | lobby | td` (`data-game-mode`).
+- Фазы `#app`: `prep | battle | replay`. Intro — через `#class-overlay`, не через `data-phase`.
+- TD-only UI (`#td-hint-bar`, `#td-build-panel`, TD sheets) — только при `data-game-mode=td` и `data-td-run-live=true`. В lobby/solo prep не показывать TD-тексты.
+- Новый overlay / шаг intro → обновить `tools/ui-structure-manifest.json` + `docs/ui-screens-modes.md`.
+- После UI-изменений: `npm run test:structure` и при визуале `npm run test:snapshots`.
+
+## Layout
+
+- Профили viewport и `data-ui-surface` — см. [LAYOUT.md](LAYOUT.md). iPad landscape PWA = `tablet-side`, крупная prep-сетка через `syncTabletSidePrepGridMetrics`.
+- Размеры через токены / `ui-layout.js`, не magic px в JS без причины.
+
+## Запрещено
+
+- Показывать `#td-hint-bar` вне живого TD-забега.
+- Селектор `html[data-ui-surface="…"], html[data-prep-layout="…"]` без пробела после запятой (скрывает весь `<html>`).
