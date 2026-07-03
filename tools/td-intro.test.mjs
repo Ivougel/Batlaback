@@ -68,11 +68,42 @@ async function runProfile(browser, profile) {
   console.log(`✓ ${profile.id}`);
 }
 
+async function runTdRunStart(browser) {
+  const page = await browser.newPage({ ...devices["iPad Mini"], viewport: { width: 1024, height: 768 } });
+  await page.goto(baseUrl, { waitUntil: "domcontentloaded", timeout: 20000 });
+  await page.waitForFunction(() => typeof startRunFromOverlay === "function", { timeout: 10000 });
+  await page.evaluate(() => {
+    selectGameMode("td");
+    selectTdDifficulty("normal");
+    selectPlayerClass("priest");
+    const c = document.querySelector("[data-companion]");
+    if (c) { c.click(); c.click(); }
+    startRunFromOverlay();
+  });
+  await page.waitForFunction(
+    () => document.getElementById("app")?.dataset.phase === "battle",
+    { timeout: 8000 },
+  );
+  const state = await page.evaluate(() => ({
+    phase: document.getElementById("app")?.dataset.phase,
+    tdRunLive: document.getElementById("app")?.dataset.tdRunLive,
+    tdArenaHidden: document.getElementById("td-arena-mount")?.classList.contains("hidden"),
+    fightHidden: document.getElementById("btn-fight")?.classList.contains("hidden"),
+  }));
+  assert(state.phase === "battle", "td run should enter battle phase");
+  assert(state.tdRunLive === "true", "td run live flag");
+  assert(!state.tdArenaHidden, "td arena visible");
+  assert(state.fightHidden, "fight hidden during td run");
+  await page.close();
+  console.log("✓ td-run-start");
+}
+
 const browser = await chromium.launch();
 try {
   for (const profile of PROFILES) {
     await runProfile(browser, profile);
   }
+  await runTdRunStart(browser);
   console.log("td-intro: all ok");
 } finally {
   await browser.close();

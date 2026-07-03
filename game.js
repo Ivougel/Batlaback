@@ -2624,6 +2624,10 @@ function renderPhase() {
   setBattleControlsVisible(isBattleUiPhase());
   syncBattleArenaLayout();
   syncTdBattleChrome();
+  if (isTdMode() && tdRunLive && phase === "prep" && tdState && !gameOver
+    && !(typeof ScreenTransitions !== "undefined" && ScreenTransitions.isScreenTransitioning())) {
+    requestAnimationFrame(() => startTdRun());
+  }
   const battleSceneUi = document.getElementById("battle-scene-ui");
   if (battleSceneUi) battleSceneUi.setAttribute("aria-hidden", isBattleUiPhase() ? "false" : "true");
   renderPlayerProfiles();
@@ -4432,7 +4436,9 @@ function canStartBattle() {
     if (isLobbyRunOver(lobbyState)) return false;
     if (!getLobbyOpponent(lobbyState)) return false;
   } else if (isTdMode()) {
+    if (tdRunLive) return false;
     if (round > getTdMaxWaves()) return false;
+    return true;
   } else if (round > RUN_BATTLES) {
     return false;
   }
@@ -4444,16 +4450,18 @@ function canStartBattle() {
 function renderFightButton() {
   const btn = document.getElementById("btn-fight");
   if (!btn) return;
-  const visible = phase === "prep" && !gameOver && !isTdRunLive() && !isTdMode();
+  const visible = phase === "prep" && !gameOver && !isTdRunLive();
   btn.classList.toggle("hidden", !visible);
   if (visible) btn.disabled = !canStartBattle();
   if (visible && isTdMode()) {
-    btn.textContent = `🐷 Волна ${Math.min(round, getTdMaxWaves())}`;
+    btn.textContent = "🐷 В оборону!";
   } else if (visible) {
     btn.textContent = "⚔️ Бой";
   }
   if (visible && isVersusMode() && enemyItems.length === 0) {
     btn.title = "Игрок 2: положите предметы на стол";
+  } else if (visible && isTdMode()) {
+    btn.title = "Старт обороны · закупка продолжится во время волн";
   } else if (visible && playerItems.length === 0) {
     btn.title = "Положите предметы в сумку";
   } else {
@@ -4702,10 +4710,58 @@ function onTdWaveClearedInRun() {
   renderRunStats();
 }
 
-function startTdRun() {
-  if (!isTdMode() || gameOver || tdRunLive) return;
+function transferPrepLoadoutToTdCommander(state) {
+  if (!state || typeof tdGetTowerAtSlot !== "function" || typeof tdAutoPlaceItemOnTower !== "function") return;
+  const commander = tdGetTowerAtSlot(state, 0);
+  if (!commander) return;
+  const prepItems = flattenContainersForBattle(playerContainers, playerItems).map(clonePrepBattleItem);
+  for (const item of prepItems) {
+    const placed = tdAutoPlaceItemOnTower(commander, item.itemId, item.uid);
+    if (placed) {
+      const idx = playerItems.findIndex((p) => p.uid === item.uid);
+      if (idx >= 0) playerItems.splice(idx, 1);
+    } else {
+      bench.push(item);
+    }
+  }
+  if (typeof tdSyncTowerCombat === "function") {
+    tdSyncTowerCombat(commander, state.prepMeta || {});
+  }
+  renderBench();
+}
 
-  tdRunLive = true;
+function finishTdRunStart() {
+  transitionToPhase("battle", () => {
+    tooltipItem = null;
+    resetBattlePause();
+    playerPendingShopBuffs = 0;
+    setBattleSpeed(savedBattleSpeed);
+    updateBattleControlsUI();
+    ensureShopReadyForSide("player");
+    renderShop();
+    renderBench();
+    renderTdTowerPanel();
+    syncTdBattleChrome();
+    setPhaseLabel(`🐷 Волна 1/${getTdMaxWaves()}`, true);
+    log("🐷 Оборона! Клик по слоту на карте — нанять героя. Магазин открыт во время волн.");
+    playPrepSfx("battle_start");
+    renderFightButton();
+    updateUI();
+  });
+}
+
+function startTdRun() {
+  if (!isTdMode() || gameOver) return;
+  if (typeof ScreenTransitions !== "undefined" && ScreenTransitions.isScreenTransitioning()) {
+    requestAnimationFrame(startTdRun);
+    return;
+  }
+  if (tdRunLive && phase === "prep" && tdState) {
+    finishTdRunStart();
+    return;
+  }
+  if (tdRunLive) return;
+
   selectedTdSlotId = 0;
   battleEndHandled = false;
   tdState = createTdRunState(playerClass, {
@@ -4721,7 +4777,9 @@ function startTdRun() {
     },
   });
   tdState.selectedSlotId = selectedTdSlotId;
+  transferPrepLoadoutToTdCommander(tdState);
   battleState = null;
+  tdRunLive = true;
 
   if (typeof TdArena !== "undefined") {
     TdArena.init();
@@ -4736,26 +4794,14 @@ function startTdRun() {
   }
 
   syncTdRunLiveDom();
-  transitionToPhase("battle", () => {
-    tooltipItem = null;
-    resetBattlePause();
-    playerPendingShopBuffs = 0;
-    setBattleSpeed(savedBattleSpeed);
-    updateBattleControlsUI();
-    ensureShopReadyForSide("player");
-    renderShop();
-    renderBench();
-    renderTdTowerPanel();
-    syncTdBattleChrome();
-    setPhaseLabel(`🐷 Волна 1/${getTdMaxWaves()}`, true);
-    log(`🐷 Оборона! Клик по слоту на карте — нанять героя. Магазин открыт во время волн.`);
-    playPrepSfx("battle_start");
-    renderFightButton();
-    updateUI();
-  });
+  finishTdRunStart();
 }
 
 function startBattle() {
+  if (isTdMode() && phase === "prep" && !tdRunLive) {
+    startTdRun();
+    return;
+  }
   if (!canStartBattle()) {
     playPrepSfx("ui_error");
     if (phase === "prep" && playerItems.length === 0) {
