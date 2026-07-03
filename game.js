@@ -323,9 +323,11 @@ function syncTdRunLiveDom() {
   if (!app) return;
   if (tdRunLive && isTdMode()) app.dataset.tdRunLive = "true";
   else app.removeAttribute("data-td-run-live");
+  document.getElementById("battle-arena")?.classList.toggle("td-screen-root", !!(tdRunLive && isTdMode()));
   syncPrepHeroHudDom();
   syncTdRunCompactChrome();
   bindTdRunCompactUi();
+  syncTdHintBar();
 }
 
 function isPrepHeroHudVisible() {
@@ -2672,6 +2674,7 @@ function syncTdBattleChrome() {
     TdBuildPanel.setVisible(isTdRunLive());
   }
   syncTdLoadoutLayout();
+  syncTdHintBar();
 }
 
 function renderPhase() {
@@ -4874,6 +4877,7 @@ function selectTdSlot(slotId) {
   syncTdTowerEditDom();
   renderTdBuildPanel();
   syncTdHeroHudFromSelection();
+  syncTdHintBar();
   if (isTdLoadoutEditPhase()) recalcSynergies();
   playPrepSfx("ui_click");
 }
@@ -5042,12 +5046,14 @@ function openTdLoadoutSheet() {
     syncTdLoadoutLayout();
     requestAnimationFrame(() => syncTdLoadoutLayout());
   });
+  syncTdHintBar();
 }
 
 function closeTdLoadoutSheet() {
   tdLoadoutSheetOpen = false;
   syncTdLoadoutSheetDom();
   syncTdLoadoutLayout();
+  syncTdHintBar();
 }
 
 function openTdHeroSheet() {
@@ -5099,9 +5105,159 @@ function syncTdRunCompactChrome() {
   syncTdLoadoutSheetDom();
 }
 
+const TD_HINTS_DISABLED_KEY = "bb-td-hints-disabled";
+const TD_HINT_DISMISSED_KEY = "bb-td-hints-dismissed";
+const TD_PATH_HINT_LABELS = ["Север", "Восток", "Юг", "Запад"];
+let tdHintsPrefsLoaded = false;
+let tdHintsDisabled = false;
+let tdHintsDismissed = new Set();
+let tdHintBarBound = false;
+
+function loadTdHintPrefs() {
+  if (tdHintsPrefsLoaded) return;
+  tdHintsPrefsLoaded = true;
+  try {
+    tdHintsDisabled = localStorage.getItem(TD_HINTS_DISABLED_KEY) === "1";
+    const raw = localStorage.getItem(TD_HINT_DISMISSED_KEY);
+    tdHintsDismissed = new Set(raw ? JSON.parse(raw) : []);
+  } catch {
+    tdHintsDisabled = false;
+    tdHintsDismissed = new Set();
+  }
+}
+
+function persistTdHintDismissed() {
+  try {
+    localStorage.setItem(TD_HINT_DISMISSED_KEY, JSON.stringify([...tdHintsDismissed]));
+  } catch { /* ignore quota */ }
+}
+
+function disableTdHintsGlobally() {
+  tdHintsDisabled = true;
+  try {
+    localStorage.setItem(TD_HINTS_DISABLED_KEY, "1");
+  } catch { /* ignore quota */ }
+}
+
+function getTdWaveDirectionLabel() {
+  if (!tdState) return "";
+  const queue = tdState.spawnQueue;
+  if (Array.isArray(queue) && queue.length) {
+    const pathId = queue.find((entry) => entry && !entry.spawned)?.pathId ?? queue[0]?.pathId;
+    if (pathId != null) return TD_PATH_HINT_LABELS[pathId] || "";
+  }
+  const slots = typeof TD_MAP_SLOTS !== "undefined" ? TD_MAP_SLOTS : [];
+  const slot = slots.find((s) => s.id === tdState.selectedSlotId);
+  if (slot?.label) return slot.label;
+  return "";
+}
+
+function resolveTdContextHint() {
+  if (!isTdRunLive() || !tdState || tdHintsDisabled) return null;
+
+  if (tdLoadoutSheetOpen) {
+    return { id: "loadout-drag", text: "Перетащите предмет из магазина в зелёные клетки рюкзака" };
+  }
+  if (typeof pendingShopDrag !== "undefined" && pendingShopDrag) {
+    return { id: "loadout-drag", text: "Отпустите предмет на зелёной клетке рюкзака башни" };
+  }
+
+  const towers = (tdState.towers || []).filter((t) => t.alive);
+  const wavePhase = tdState.wavePhase;
+  const wave = tdState.wave;
+
+  if (wavePhase === "spawning" || wavePhase === "fighting") {
+    const dir = getTdWaveDirectionLabel();
+    const dirText = dir ? ` с ${dir.toLowerCase()}` : "";
+    return {
+      id: `wave-active-${wave}-${dir || "any"}`,
+      text: dir
+        ? `Волна ${wave} приближается${dirText} — держите оборону`
+        : `Волна ${wave} — свиньи идут по дорожкам, защищайте базу`,
+    };
+  }
+
+  if (wavePhase === "break") {
+    const emptySlot = (typeof TD_MAP_SLOTS !== "undefined" ? TD_MAP_SLOTS : [])
+      .find((slot) => slot.pathId != null && !towers.some((t) => t.slotId === slot.id && t.alive));
+    if (towers.length === 0 || emptySlot) {
+      return {
+        id: "build-tower",
+        text: "Нажмите на путь (Север, Юг, Запад или Восток), чтобы построить башню",
+      };
+    }
+    if (isTdLoadoutEditPhase()) {
+      return {
+        id: "shop-loadout",
+        text: "Купите предмет в магазине справа и перетащите в рюкзак башни",
+      };
+    }
+    if (selectedTdSlotId != null && !isTdLoadoutEditPhase()) {
+      return {
+        id: "recruit-tower",
+        text: "Выберите героя в панели справа, чтобы нанять башню на слот",
+      };
+    }
+    return {
+      id: "between-waves",
+      text: "Пауза между волнами — улучшайте башни через магазин и рюкзак 🎒",
+    };
+  }
+
+  if (wave === 1 && towers.length === 0) {
+    return {
+      id: "build-tower",
+      text: "Нажмите на путь (Север, Юг, Запад или Восток), чтобы построить башню",
+    };
+  }
+
+  return null;
+}
+
+function syncTdHintBar() {
+  loadTdHintPrefs();
+  const bar = document.getElementById("td-hint-bar");
+  const textEl = document.getElementById("td-hint-text");
+  if (!bar || !textEl) return;
+
+  if (!isTdRunLive() || tdHintsDisabled) {
+    bar.classList.add("hidden");
+    bar.removeAttribute("data-hint-id");
+    return;
+  }
+
+  const hint = resolveTdContextHint();
+  if (!hint || tdHintsDismissed.has(hint.id)) {
+    bar.classList.add("hidden");
+    bar.removeAttribute("data-hint-id");
+    return;
+  }
+
+  textEl.textContent = hint.text;
+  bar.dataset.hintId = hint.id;
+  bar.classList.remove("hidden");
+}
+
+function bindTdHintBar() {
+  if (tdHintBarBound) return;
+  tdHintBarBound = true;
+  document.getElementById("td-hint-dismiss")?.addEventListener("click", (e) => {
+    const bar = document.getElementById("td-hint-bar");
+    const hintId = bar?.dataset.hintId;
+    if (e.shiftKey) {
+      disableTdHintsGlobally();
+    } else if (hintId) {
+      tdHintsDismissed.add(hintId);
+      persistTdHintDismissed();
+    }
+    syncTdHintBar();
+  });
+}
+
 function bindTdRunCompactUi() {
   if (tdRunCompactBound) return;
   tdRunCompactBound = true;
+  bindTdHintBar();
   document.getElementById("btn-td-loadout")?.addEventListener("click", openTdLoadoutSheet);
   document.getElementById("td-loadout-backdrop")?.addEventListener("click", closeTdLoadoutSheet);
   document.getElementById("td-loadout-sheet-close")?.addEventListener("click", closeTdLoadoutSheet);
@@ -9851,6 +10007,7 @@ function renderPlayerProfiles(opts = {}) {
     if (!lightSpectate && typeof updateBattleAnalyzer === "function") updateBattleAnalyzer(viewState, 0);
   }
   if (!lightSpectate) syncBattleArenaLayout();
+  if (isTdRunLive()) syncTdHintBar();
 }
 
 function renderRunStats() {

@@ -296,7 +296,8 @@ html[data-ui-tier="tablet"] {
 
 html[data-ui-tier="tablet"] #app[data-phase="prep"],
 html[data-ui-tier="tablet"] #app[data-phase="battle"],
-html[data-ui-tier="tablet"] #app[data-phase="replay"] {
+html[data-ui-tier="tablet"] #app[data-phase="replay"],
+html[data-ui-tier="tablet"] #app[data-td-run-live="true"] {
   height: var(--app-h);
   max-height: var(--app-h);
 }
@@ -314,7 +315,8 @@ html[data-ui-tier="tablet"] #app[data-phase="replay"] {
 
   html[data-ui-tier="tablet"] #app[data-phase="prep"],
   html[data-ui-tier="tablet"] #app[data-phase="battle"],
-  html[data-ui-tier="tablet"] #app[data-phase="replay"] {
+  html[data-ui-tier="tablet"] #app[data-phase="replay"],
+  html[data-ui-tier="tablet"] #app[data-td-run-live="true"] {
     box-sizing: border-box;
     padding-top: var(--pwa-safe-top);
     padding-bottom: max(8px, env(safe-area-inset-bottom, 0px), constant(safe-area-inset-bottom, 0px));

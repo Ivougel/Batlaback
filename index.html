@@ -49,7 +49,7 @@
   <link rel="stylesheet" href="styles/class-intro-summary.css?v=1">
   <link rel="stylesheet" href="styles/tablet-intro-typography.css?v=1">
   <link rel="stylesheet" href="styles/desktop-intro-layout.css?v=1">
-  <link rel="stylesheet" href="styles/tablet-pwa-layout.css?v=4">
+  <link rel="stylesheet" href="styles/tablet-pwa-layout.css?v=5">
   <link rel="stylesheet" href="styles/mobile-prep.css?v=22">
   <link rel="stylesheet" href="styles/desktop-prep.css?v=2">
   <link rel="stylesheet" href="styles/desktop-battle.css?v=2">
@@ -58,7 +58,7 @@
   <link rel="stylesheet" href="styles/battle-inventory-popover.css?v=8">
   <link rel="stylesheet" href="styles/lobby.css?v=8">
   <link rel="stylesheet" href="styles/td-mode.css?v=22">
-  <link rel="stylesheet" href="styles/td-run-compact.css?v=13">
+  <link rel="stylesheet" href="styles/td-run-compact.css?v=14">
   <link rel="stylesheet" href="styles/lobby-roster-float.css?v=2">
   <link rel="stylesheet" href="styles/meadow-theme.css?v=2">
   <link rel="stylesheet" href="styles/battle-theme-ui.css?v=2">
@@ -161,6 +161,10 @@
                 </div>
               </div>
             </header>
+            <div class="td-hint-bar class-action-hint hidden" id="td-hint-bar" role="status" aria-live="polite">
+              <span class="td-hint-text" id="td-hint-text"></span>
+              <button type="button" class="td-hint-dismiss" id="td-hint-dismiss" aria-label="Скрыть подсказку. Shift+клик — отключить все подсказки" title="Скрыть подсказку">✕</button>
+            </div>
             <div class="prep-field-column scene-viewport" id="prep-field-column">
               <button type="button" class="td-loadout-fab hidden" id="btn-td-loadout" aria-label="Рюкзак башни 6×6" title="Рюкзак 6×6" hidden>🎒</button>
               <div class="layer layer-world" id="layer-world">
@@ -985,7 +989,7 @@
   <script src="systems/screen-transitions.js?v=1"></script>
   <script src="components/prep-hud-collapse.js?v=1"></script>
   <script src="components/prep-hud-hero.js?v=3"></script>
-  <script src="game.js?v=84"></script>
+  <script src="game.js?v=85"></script>
   <script src="pwa-register.js"></script>
 </body>
 </html>

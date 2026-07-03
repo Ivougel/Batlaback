@@ -5,6 +5,10 @@
 
 html[data-game-mode="td"] #app[data-td-run-live="true"] {
   --td-hud-bar-h: calc(48px * var(--ui-scale, 1));
+  --td-hint-bar-h: calc(34px * var(--ui-scale, 1));
+  --td-safe-top: env(safe-area-inset-top, 0px);
+  padding-top: 0 !important;
+  border-top: none !important;
   --td-overlay-portrait-w: calc(44px * var(--ui-scale, 1));
   --td-overlay-portrait-h: calc(44px * var(--ui-scale, 1));
   --td-chrome-panel-w: min(var(--td-panel-share, 34%), var(--td-panel-max-w, 20rem));
@@ -54,6 +58,24 @@ html[data-ui-surface="tablet-side"][data-game-mode="td"] #app[data-td-run-live="
   margin: 0 !important;
 }
 
+html[data-game-mode="td"] #app[data-td-run-live="true"] .battle-arena.td-screen-root {
+  position: relative;
+  box-sizing: border-box;
+  padding-top: var(--td-safe-top);
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .battle-arena.td-screen-root::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--td-safe-top);
+  background: #0d0d12;
+  z-index: 1000;
+  pointer-events: none;
+}
+
 html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-top-bar {
   position: absolute;
   top: calc(6px * var(--ui-scale, 1));
@@ -70,6 +92,62 @@ html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-top-bar {
 
 html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-top-bar::before {
   display: none;
+}
+
+/* ─── Подсказки (паттерн class-action-hint из лобби) ─── */
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .td-hint-bar {
+  position: absolute;
+  top: calc(var(--td-hud-bar-h) + calc(8px * var(--ui-scale, 1)));
+  left: calc(6px * var(--ui-scale, 1));
+  right: calc(6px * var(--ui-scale, 1));
+  z-index: 23;
+  display: flex;
+  align-items: center;
+  gap: calc(8px * var(--ui-scale, 1));
+  margin: 0;
+  padding: calc(6px * var(--ui-scale, 1)) calc(10px * var(--ui-scale, 1));
+  border-radius: calc(10px * var(--ui-scale, 1));
+  background: rgba(14, 18, 14, 0.82);
+  border: 1px solid rgba(92, 184, 92, 0.38);
+  color: rgba(230, 240, 228, 0.94);
+  font-size: max(var(--font-xs), calc(0.82rem * var(--type-scale, 1)));
+  font-weight: 600;
+  line-height: 1.3;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  pointer-events: auto;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .td-hint-bar.hidden {
+  display: none !important;
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .td-hint-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .td-hint-dismiss {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(28px * var(--ui-scale, 1));
+  height: calc(28px * var(--ui-scale, 1));
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: calc(8px * var(--ui-scale, 1));
+  background: rgba(0, 0, 0, 0.28);
+  color: rgba(230, 240, 228, 0.88);
+  font-size: calc(13px * var(--ui-scale, 1));
+  line-height: 1;
+  cursor: pointer;
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .td-hint-dismiss:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card {
@@ -599,42 +677,65 @@ html[data-game-mode="td"] #td-hero-sheet {
   display: none !important;
 }
 
-/* ─── Bottom chrome: контролы на карте, статы в колонке магазина ─── */
+/* ─── Bottom chrome: одна плотная строка (скорость + статы) ─── */
 
 body:has(#app[data-td-run-live="true"]) .bottom-chrome {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) var(--td-chrome-panel-w);
+  display: flex;
   align-items: center;
-  gap: 0;
-  padding-left: max(8px, env(safe-area-inset-left));
-  padding-right: 0;
-  background: rgba(13, 17, 23, 0.94);
+  justify-content: space-between;
+  gap: calc(8px * var(--ui-scale, 1));
+  min-height: 0;
+  --bottom-chrome-h: 36px;
+  padding:
+    calc(6px * var(--ui-scale, 1))
+    calc(10px * var(--ui-scale, 1))
+    max(calc(6px * var(--ui-scale, 1)), env(safe-area-inset-bottom, 0px))
+    max(calc(10px * var(--ui-scale, 1)), env(safe-area-inset-left, 0px));
+  padding-right: max(calc(10px * var(--ui-scale, 1)), env(safe-area-inset-right, 0px));
+  background: rgba(13, 17, 23, 0.96);
+  border-top: 1px solid rgba(74, 222, 128, 0.18);
 }
 
 body:has(#app[data-td-run-live="true"]) .bottom-chrome-start {
-  grid-column: 1;
   display: flex;
+  flex: 1 1 auto;
   align-items: center;
-  gap: 8px;
+  gap: calc(8px * var(--ui-scale, 1));
   min-width: 0;
-  padding-right: 8px;
+  padding: 0;
 }
 
 body:has(#app[data-td-run-live="true"]) .bottom-chrome-center {
-  grid-column: 2;
   display: flex !important;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
+  gap: calc(8px * var(--ui-scale, 1));
   min-width: 0;
-  padding:
-    4px
-    max(8px, env(safe-area-inset-right))
-    calc(4px + env(safe-area-inset-bottom, 0px))
-    8px;
-  background: rgba(12, 17, 14, 0.98);
-  border-left: 1px solid rgba(74, 222, 128, 0.22);
-  border-top: 1px solid rgba(74, 222, 128, 0.15);
+  margin-left: auto;
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
+body:has(#app[data-td-run-live="true"]) .bottom-chrome .battle-controls:not(.hidden) {
+  display: flex !important;
+  align-items: center;
+  gap: calc(6px * var(--ui-scale, 1));
+  flex-wrap: nowrap;
+}
+
+body:has(#app[data-td-run-live="true"]) .bottom-chrome .bc-btn {
+  padding: calc(6px * var(--ui-scale, 1)) calc(12px * var(--ui-scale, 1));
+  min-height: calc(36px * var(--ui-scale, 1));
+  height: calc(36px * var(--ui-scale, 1));
+  font-size: max(var(--font-xs), calc(0.85rem * var(--type-scale, 1)));
+  border-radius: calc(8px * var(--ui-scale, 1));
+}
+
+body:has(#app[data-td-run-live="true"]) .bottom-chrome .bc-skip {
+  padding-inline: calc(10px * var(--ui-scale, 1));
+  white-space: nowrap;
 }
 
 body:has(#app[data-td-run-live="true"]) .bottom-chrome-end {
@@ -648,10 +749,53 @@ body:has(#app[data-td-run-live="true"]) .battle-controls-hint {
 }
 
 body:has(#app[data-td-run-live="true"]) .prep-bottom-stats {
-  display: flex !important;
+  display: inline-flex !important;
   align-items: center;
-  gap: 8px;
-  margin-left: auto;
+  gap: calc(8px * var(--ui-scale, 1));
+  margin-left: 0;
+}
+
+body:has(#app[data-td-run-live="true"]) .prep-bottom-stats .hud-orb {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  min-width: 0;
+  height: calc(36px * var(--ui-scale, 1));
+  min-height: calc(36px * var(--ui-scale, 1));
+  padding: calc(4px * var(--ui-scale, 1)) calc(10px * var(--ui-scale, 1));
+  border-radius: calc(18px * var(--ui-scale, 1));
+  background: rgba(12, 17, 14, 0.92);
+  border: 1px solid rgba(255, 196, 72, 0.28);
+}
+
+body:has(#app[data-td-run-live="true"]) .prep-bottom-stats .hud-orb__glow,
+body:has(#app[data-td-run-live="true"]) .prep-bottom-stats .hud-orb__ring {
+  display: none !important;
+}
+
+body:has(#app[data-td-run-live="true"]) .prep-bottom-stats .hud-orb__core {
+  position: static;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  transform: none;
+}
+
+body:has(#app[data-td-run-live="true"]) .prep-bottom-stats .hud-orb__value {
+  font-size: max(var(--font-xs), calc(0.85rem * var(--type-scale, 1)));
+  font-weight: 800;
+  color: rgba(255, 220, 120, 0.95);
+}
+
+body:has(#app[data-td-run-live="true"]) .prep-bottom-stats .hud-stats-pill {
+  min-height: calc(36px * var(--ui-scale, 1));
+  padding: calc(4px * var(--ui-scale, 1)) calc(12px * var(--ui-scale, 1));
+  border-radius: calc(18px * var(--ui-scale, 1));
+  font-size: max(var(--font-xs), calc(0.85rem * var(--type-scale, 1)));
+  gap: calc(8px * var(--ui-scale, 1));
+  background: rgba(12, 17, 14, 0.92);
+  border: 1px solid rgba(74, 222, 128, 0.22);
+  color: rgba(230, 240, 228, 0.94);
 }
 
 body:has(#app[data-td-run-live="true"]) .prep-bottom-stats[hidden] {
