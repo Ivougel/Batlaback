@@ -149,11 +149,23 @@ function syncAvatarWeaponBadge(shell, profile) {
   badge.className = `avatar-hero-weapon-badge avatar-hero-weapon-badge--${kind}`;
 }
 
+const PORTRAIT_HEAD_BADGE_ANCHOR_HTML = '<span class="hero-portrait-head-badge-anchor" aria-hidden="true"></span>';
+
+function renderProfileAvatarContentHTML(profile, className) {
+  if (profile.classIconSrc) {
+    return `<div class="portrait-zoom-clip"><img class="profile-avatar-img" src="${escapeProfileHtml(profile.classIconSrc)}" alt="${className}" draggable="false"></div>${PORTRAIT_HEAD_BADGE_ANCHOR_HTML}`;
+  }
+  return `${escapeProfileHtml(profile.classIcon || "❓")}${PORTRAIT_HEAD_BADGE_ANCHOR_HTML}`;
+}
+
+function ensurePortraitHeadBadgeAnchor(avatarEl) {
+  if (!avatarEl || avatarEl.querySelector(".hero-portrait-head-badge-anchor")) return;
+  avatarEl.insertAdjacentHTML("beforeend", PORTRAIT_HEAD_BADGE_ANCHOR_HTML);
+}
+
 function renderAvatarHeroHTML(profile, team) {
   const className = escapeProfileHtml(profile.className || "—");
-  const icon = profile.classIconSrc
-    ? `<div class="portrait-zoom-clip"><img class="profile-avatar-img" src="${escapeProfileHtml(profile.classIconSrc)}" alt="${className}" draggable="false"></div>`
-    : escapeProfileHtml(profile.classIcon || "❓");
+  const icon = renderProfileAvatarContentHTML(profile, className);
   const gold = profile.gold ?? 0;
   const tooltipDesc = escapeProfileHtml(`💰 ${gold} золота`);
   const displayName = escapeProfileHtml(profile.name || (team === "player" ? "Игрок" : "ИИ"));
@@ -423,14 +435,17 @@ function syncAvatarHeroPortraitContent(team, profile, opts = {}) {
   if (profile.classIconSrc) {
     let img = avatar.querySelector(".profile-avatar-img");
     if (!img) {
-      avatar.innerHTML = `<div class="portrait-zoom-clip"><img class="profile-avatar-img" src="${escapeProfileHtml(profile.classIconSrc)}" alt="${escapeProfileHtml(className)}" draggable="false"></div>`;
+      avatar.innerHTML = renderProfileAvatarContentHTML(profile, className);
     } else if (img.getAttribute("src") !== profile.classIconSrc) {
       img.src = profile.classIconSrc;
       img.alt = className;
+      ensurePortraitHeadBadgeAnchor(avatar);
     }
   } else {
-    avatar.innerHTML = escapeProfileHtml(profile.classIcon || "❓");
+    avatar.innerHTML = renderProfileAvatarContentHTML(profile, className);
   }
+
+  ensurePortraitHeadBadgeAnchor(avatar);
 
   syncAvatarWeaponBadge(shell, profile);
   syncAvatarArchetypeBanner(shell, profile);

@@ -643,8 +643,8 @@ function computeBackpackPower(containers, items, classId) {
 function renderProfileAvatarHTML(profile, team) {
   const className = escapeProfileHtml(profile.className || "—");
   const icon = profile.classIconSrc
-    ? `<img class="profile-avatar-img" src="${escapeProfileHtml(profile.classIconSrc)}" alt="${className}" draggable="false">`
-    : escapeProfileHtml(profile.classIcon || "❓");
+    ? `<div class="portrait-zoom-clip"><img class="profile-avatar-img" src="${escapeProfileHtml(profile.classIconSrc)}" alt="${className}" draggable="false"></div><span class="hero-portrait-head-badge-anchor" aria-hidden="true"></span>`
+    : `${escapeProfileHtml(profile.classIcon || "❓")}<span class="hero-portrait-head-badge-anchor" aria-hidden="true"></span>`;
   const gold = profile.gold ?? 0;
   const tooltipDesc = escapeProfileHtml(`💰 ${gold} золота`);
 

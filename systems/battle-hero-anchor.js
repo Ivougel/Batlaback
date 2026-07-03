@@ -88,33 +88,33 @@ const BattleHeroAnchor = (() => {
     "phone-portrait": {
       floorRatio: 0.12, vminRatio: 0.048, minPx: 24, maxPx: 36,
       haloRatio: 0.5, avatarRatio: 0.07, avatarWidthRatio: 0.22,
-      headBadge: true, headBadgeYRatio: 0.12, headBadgeInnerXRatio: 0.64,
+      headBadge: true, headBadgeYRatio: 0.08, headBadgeInnerXRatio: 0.88,
     },
     "phone-landscape": {
       floorRatio: 0.14, vminRatio: 0.05, minPx: 26, maxPx: 38,
       haloRatio: 0.48, avatarRatio: 0.075, avatarWidthRatio: 0.23,
-      headBadge: true, headBadgeYRatio: 0.12, headBadgeInnerXRatio: 0.63,
+      headBadge: true, headBadgeYRatio: 0.08, headBadgeInnerXRatio: 0.88,
     },
     "tablet-landscape-side": {
       floorRatio: 0.10, vminRatio: 0.042, minPx: 28, maxPx: 40,
       haloRatio: 0.48, avatarRatio: 0.072, avatarWidthRatio: 0.24,
-      headBadge: true, headBadgeYRatio: 0.13, headBadgeInnerXRatio: 0.62,
+      headBadge: true, headBadgeYRatio: 0.08, headBadgeInnerXRatio: 0.88,
       satelliteScale: 0.72, heroBelow: false,
     },
     "tablet-portrait": {
       floorRatio: 0.11, vminRatio: 0.045, minPx: 26, maxPx: 38,
       haloRatio: 0.5, avatarRatio: 0.07, avatarWidthRatio: 0.22,
-      headBadge: true, headBadgeYRatio: 0.12, headBadgeInnerXRatio: 0.64,
+      headBadge: true, headBadgeYRatio: 0.08, headBadgeInnerXRatio: 0.88,
     },
     "desktop-portrait": {
       floorRatio: 0.12, vminRatio: 0.048, minPx: 28, maxPx: 42,
       haloRatio: 0.48, avatarRatio: 0.075, avatarWidthRatio: 0.24,
-      headBadge: true, headBadgeYRatio: 0.13, headBadgeInnerXRatio: 0.62,
+      headBadge: true, headBadgeYRatio: 0.08, headBadgeInnerXRatio: 0.88,
     },
     "desktop-landscape": {
       floorRatio: 0.10, vminRatio: 0.044, minPx: 28, maxPx: 42,
       haloRatio: 0.48, avatarRatio: 0.072, avatarWidthRatio: 0.24,
-      headBadge: true, headBadgeYRatio: 0.13, headBadgeInnerXRatio: 0.62,
+      headBadge: true, headBadgeYRatio: 0.08, headBadgeInnerXRatio: 0.88,
       satelliteScale: 0.72,
     },
   };
@@ -212,10 +212,39 @@ const BattleHeroAnchor = (() => {
     return document.getElementById(side === "enemy" ? "enemy-thought-slot" : "player-thought-slot");
   }
 
+  function getPortraitHeadBadgeAnchorEl(side) {
+    const avatarSlotId = side === "enemy" ? "enemy-avatar-slot" : "player-avatar-slot";
+    return document.getElementById(avatarSlotId)?.querySelector(".hero-portrait-head-badge-anchor");
+  }
+
+  function getProfileAvatarFrameRect(side) {
+    refreshMeasureCache();
+    const cacheKey = `frame_${side}`;
+    if (measureCache.avatarRect[cacheKey] !== undefined) {
+      return measureCache.avatarRect[cacheKey];
+    }
+
+    const avatarSlotId = side === "enemy" ? "enemy-avatar-slot" : "player-avatar-slot";
+    const avatar = document.getElementById(avatarSlotId)?.querySelector(".profile-avatar");
+    if (!avatar) {
+      measureCache.avatarRect[cacheKey] = null;
+      return null;
+    }
+    const ar = avatar.getBoundingClientRect();
+    measureCache.avatarRect[cacheKey] = (ar.width <= 4 || ar.height <= 4) ? null : ar;
+    return measureCache.avatarRect[cacheKey];
+  }
+
   function getAvatarAnchorRect(side) {
     refreshMeasureCache();
     if (measureCache.avatarRect[side] !== undefined) {
       return measureCache.avatarRect[side];
+    }
+
+    const frameRect = getProfileAvatarFrameRect(side);
+    if (frameRect) {
+      measureCache.avatarRect[side] = frameRect;
+      return frameRect;
     }
 
     const avatarSlotId = side === "enemy" ? "enemy-avatar-slot" : "player-avatar-slot";
@@ -275,15 +304,33 @@ const BattleHeroAnchor = (() => {
 
   /** Компактный бейдж на голове — верх-внутрь к центру экрана. */
   function getHeadBadgeThoughtAnchor(side) {
-    const ar = getAvatarAnchorRect(side);
-    if (!ar) return null;
-
     const emojiSize = thoughtSlotEmojiSize();
     const halo = thoughtSlotHaloPx(emojiSize);
     const containerSize = emojiSize + halo * 2;
+
+    const anchorEl = getPortraitHeadBadgeAnchorEl(side);
+    if (anchorEl) {
+      const point = anchorEl.getBoundingClientRect();
+      const cx = point.left + point.width / 2;
+      const cy = point.top + point.height / 2;
+      return {
+        cx,
+        cy,
+        emojiSize,
+        halo,
+        containerSize,
+        top: cy - containerSize / 2,
+        left: cx - containerSize / 2,
+        size: containerSize,
+      };
+    }
+
+    const ar = getProfileAvatarFrameRect(side) || getAvatarAnchorRect(side);
+    if (!ar) return null;
+
     const prof = emojiProfile();
-    const headYRatio = prof.headBadgeYRatio ?? 0.13;
-    const innerXRatio = prof.headBadgeInnerXRatio ?? 0.62;
+    const headYRatio = prof.headBadgeYRatio ?? 0.08;
+    const innerXRatio = prof.headBadgeInnerXRatio ?? 0.88;
 
     const cy = ar.top + ar.height * headYRatio;
     const cx = side === "player"

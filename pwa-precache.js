@@ -1,5 +1,5 @@
 // Auto-generated — node tools/generate-pwa-precache.js
-self.PWA_CACHE_VERSION = "bb-pwa-v7";
+self.PWA_CACHE_VERSION = "bb-pwa-v8";
 self.PWA_PRECACHE_URLS = [
   "ai-engine.js",
   "backpack-engine.js",
@@ -18,7 +18,7 @@ self.PWA_PRECACHE_URLS = [
   "components/attack-animation-manager.js?v=2",
   "components/attack-animation.js",
   "components/avatar-hero-effects.js",
-  "components/avatar-hero-effects.js?v=12",
+  "components/avatar-hero-effects.js?v=13",
   "components/battle-aura-frame.js",
   "components/battle-controls.js",
   "components/battle-damage-summary.js",
@@ -182,7 +182,7 @@ self.PWA_PRECACHE_URLS = [
   "styles/battle-archetype-banner.css",
   "styles/battle-archetype-banner.css?v=1",
   "styles/battle-arena-layout.css",
-  "styles/battle-arena-layout.css?v=34",
+  "styles/battle-arena-layout.css?v=35",
   "styles/battle-aura-frame.css",
   "styles/battle-aura-frame.css?v=2",
   "styles/battle-borderless.css",
@@ -305,7 +305,7 @@ self.PWA_PRECACHE_URLS = [
   "systems/battle-fx-tier.js",
   "systems/battle-fx-tier.js?v=1",
   "systems/battle-hero-anchor.js",
-  "systems/battle-hero-anchor.js?v=24",
+  "systems/battle-hero-anchor.js?v=25",
   "systems/battle-speed.js",
   "systems/battle-stacks.js",
   "systems/combat-profile.js",

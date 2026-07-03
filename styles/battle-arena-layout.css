@@ -269,6 +269,40 @@ html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle
   transform-origin: center var(--battle-portrait-object-y, 18%);
 }
 
+/* Якорь эмодзи-бейджа на голове — sibling к .portrait-zoom-clip, вне transform img */
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-scene-ui .profile-avatar,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-scene-ui .profile-avatar {
+  position: relative;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .profile-avatar .portrait-zoom-clip,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .profile-avatar .portrait-zoom-clip {
+  position: relative;
+  z-index: 1;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .hero-portrait-head-badge-anchor,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .hero-portrait-head-badge-anchor {
+  position: absolute;
+  top: var(--portrait-head-badge-top, 10%);
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+  z-index: 12;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .profile-avatar-player .hero-portrait-head-badge-anchor,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .profile-avatar-player .hero-portrait-head-badge-anchor {
+  right: var(--portrait-head-badge-inset, 6%);
+  left: auto;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .profile-avatar-enemy .hero-portrait-head-badge-anchor,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .profile-avatar-enemy .hero-portrait-head-badge-anchor {
+  left: var(--portrait-head-badge-inset, 6%);
+  right: auto;
+}
+
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .avatar-hero-shell .avatar-hero-bars,
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar-hero-shell .avatar-hero-bars {
   position: static;
