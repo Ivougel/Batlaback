@@ -681,6 +681,106 @@ html[data-visual-theme="diablo"] #battle-result-overlay .br-theater-bubble {
   color: var(--meadow-ink);
 }
 
+/* ─── Вклад предметов (battle-detail) ─── */
+
+html[data-visual-theme="diablo"] #battle-detail-overlay .battle-detail-modal--item-stats {
+  background: linear-gradient(165deg, #2a2218 0%, #1a1410 100%);
+  border: 2px solid var(--meadow-border);
+  box-shadow:
+    0 20px 56px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(201, 162, 39, 0.12);
+  color: var(--meadow-ink);
+}
+
+html[data-visual-theme="diablo"] .battle-detail-modal--item-stats .battle-detail-header {
+  background: rgba(0, 0, 0, 0.28);
+  border-bottom: 1px solid var(--meadow-border-soft);
+}
+
+html[data-visual-theme="diablo"] .battle-detail-modal--item-stats .battle-detail-header h3 {
+  color: var(--meadow-gold-bright);
+  font-family: "Cinzel", "Palatino Linotype", serif;
+}
+
+html[data-visual-theme="diablo"] .battle-detail-modal--item-stats .battle-detail-close {
+  background: linear-gradient(180deg, #3a3028 0%, #2a2218 100%);
+  border: 2px solid var(--meadow-border-soft);
+  color: var(--meadow-gold-bright);
+}
+
+html[data-visual-theme="diablo"] .battle-detail-modal--item-stats {
+  --is-table-bg: rgba(0, 0, 0, 0.32);
+  --is-tfoot-bg: rgba(201, 162, 39, 0.14);
+}
+
+html[data-visual-theme="diablo"] .battle-detail-modal--item-stats .is-team-label {
+  color: var(--meadow-gold-bright);
+}
+
+html[data-visual-theme="diablo"] .battle-detail-modal--item-stats .is-summary-chip {
+  background: rgba(0, 0, 0, 0.35);
+  border-color: var(--meadow-border-soft);
+  color: var(--meadow-ink);
+}
+
+html[data-visual-theme="diablo"] .battle-detail-modal--item-stats .is-chip-label {
+  color: var(--meadow-ink-muted);
+}
+
+html[data-visual-theme="diablo"] .battle-detail-modal--item-stats .is-meter-table thead {
+  background: rgba(201, 162, 39, 0.12);
+}
+
+html[data-visual-theme="diablo"] .battle-detail-modal--item-stats .is-meter-table th {
+  color: var(--meadow-ink-muted);
+  border-bottom-color: var(--meadow-border-soft);
+}
+
+html[data-visual-theme="diablo"] .battle-detail-modal--item-stats .is-meter-table td {
+  border-top-color: rgba(201, 162, 39, 0.14);
+  color: var(--meadow-ink);
+}
+
+html[data-visual-theme="diablo"] .battle-detail-modal--item-stats .is-meter-table tbody tr:nth-child(even):not(.is-spacer-row) {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+html[data-visual-theme="diablo"] .battle-detail-modal--item-stats .is-meter-table tbody tr:hover:not(.is-spacer-row) {
+  background: rgba(201, 162, 39, 0.1);
+}
+
+html[data-visual-theme="diablo"] .battle-detail-modal--item-stats .is-meter-table .is-total-row td {
+  border-top-color: rgba(201, 162, 39, 0.45);
+  color: var(--meadow-ink);
+}
+
+html[data-visual-theme="diablo"] .battle-detail-modal--item-stats .is-meter-table .is-total-row .is-name {
+  color: var(--meadow-gold-bright);
+}
+
+html[data-visual-theme="diablo"] .battle-detail-modal--item-stats .is-item-cell .is-name,
+html[data-visual-theme="diablo"] .battle-detail-modal--item-stats .is-meter-val {
+  color: var(--meadow-ink);
+}
+
+html[data-visual-theme="diablo"] .battle-detail-modal--item-stats .is-share-pct,
+html[data-visual-theme="diablo"] .battle-detail-modal--item-stats .is-meter-empty .is-meter-val,
+html[data-visual-theme="diablo"] .battle-detail-modal--item-stats .is-atk.is-muted {
+  color: var(--meadow-ink-muted);
+}
+
+html[data-visual-theme="diablo"] .battle-detail-modal--item-stats .is-atk {
+  color: var(--meadow-gold-bright);
+}
+
+html[data-visual-theme="diablo"] .battle-detail-modal--item-stats .is-meter-track {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+html[data-visual-theme="diablo"] .battle-detail-modal--item-stats .is-empty {
+  color: var(--meadow-ink-muted);
+}
+
 /* ─── Боевая аура арены ─── */
 
 html[data-visual-theme="diablo"] .battle-aura-frame-glow::before {

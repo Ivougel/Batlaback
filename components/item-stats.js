@@ -166,7 +166,19 @@ function renderItemStatsTotalRow(totals, columns) {
   </tr>`;
 }
 
-function renderItemMeterTable(items, teamLabel, { showBoardButton = false, boardTeam = null } = {}) {
+function mergeTeamTotals(a, b) {
+  return {
+    damageDealt: Math.max(a.damageDealt, b.damageDealt),
+    physicalDamageDealt: Math.max(a.physicalDamageDealt, b.physicalDamageDealt),
+    magicDamageDealt: Math.max(a.magicDamageDealt, b.magicDamageDealt),
+    healingDone: Math.max(a.healingDone, b.healingDone),
+    block: Math.max(a.block, b.block),
+    poisonApplied: Math.max(a.poisonApplied, b.poisonApplied),
+    activations: Math.max(a.activations, b.activations),
+  };
+}
+
+function renderItemMeterTable(items, teamLabel, { showBoardButton = false, boardTeam = null, columns: externalColumns = null } = {}) {
   const boardBtn = showBoardButton && boardTeam
     ? `<button type="button" class="btn-secondary btn-show-board" data-board-team="${boardTeam}">Показать стол</button>`
     : "";
@@ -183,15 +195,20 @@ function renderItemMeterTable(items, teamLabel, { showBoardButton = false, board
 
   const sorted = sortItemStatsForDisplay(items);
   const totals = sumItemStats(sorted);
-  const columns = buildVisibleMetricColumns(totals);
+  const columns = externalColumns || buildVisibleMetricColumns(totals);
   const maxByCol = Object.fromEntries(
     columns.filter((c) => !c.isAtk).map((c) => [c.id, getMetricMax(sorted, c.id)]),
   );
 
   const headerCells = columns.map((col) => {
     const cls = col.isAtk ? "is-col-atk" : (col.hero ? "is-col-hero" : "is-col-meter");
-    return `<th class="${cls}">${col.label}</th>`;
+    const label = col.isAtk
+      ? `<span class="is-th-atk" title="Активации">🔄</span>`
+      : col.label;
+    return `<th class="${cls}">${label}</th>`;
   }).join("");
+
+  const colSpan = columns.length + 1;
 
   return `<div class="is-team">
     <div class="is-team-head">
@@ -209,6 +226,7 @@ function renderItemMeterTable(items, teamLabel, { showBoardButton = false, board
         </thead>
         <tbody>
           ${sorted.map((s) => renderItemMeterRow(s, columns, maxByCol, totals.damageDealt)).join("")}
+          <tr class="is-spacer-row" aria-hidden="true"><td colspan="${colSpan}"></td></tr>
         </tbody>
         <tfoot>
           ${renderItemStatsTotalRow(totals, columns)}
@@ -291,13 +309,18 @@ function renderItemStatsSection(playerItems, enemyItems, options = {}) {
     : "🧑 Вы";
   const enemyName = typeof getEnemyDisplayName === "function" ? getEnemyDisplayName() : "ИИ";
   const enemyTeamLabel = enemyName === "Игрок 2" ? "🧑 Игрок 2" : `🤖 ${enemyName}`;
+  const pTotals = sumItemStats(sortItemStatsForDisplay(playerItems || []));
+  const eTotals = sumItemStats(sortItemStatsForDisplay(enemyItems || []));
+  const unifiedColumns = buildVisibleMetricColumns(mergeTeamTotals(pTotals, eTotals));
   return renderItemMeterTable(playerItems, playerLabel, {
     showBoardButton: showBoardButtons,
     boardTeam: "player",
+    columns: unifiedColumns,
   })
     + renderItemMeterTable(enemyItems, enemyTeamLabel, {
       showBoardButton: showBoardButtons,
       boardTeam: "enemy",
+      columns: unifiedColumns,
     });
 }
 
