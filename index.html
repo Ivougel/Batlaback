@@ -41,6 +41,7 @@
   <link rel="stylesheet" href="styles/hero-card.css?v=4">
   <link rel="stylesheet" href="styles/hero-portrait-frame.css?v=5">
   <link rel="stylesheet" href="styles/prep-hero-card.css?v=15">
+  <link rel="stylesheet" href="styles/prep-hud-collapse.css?v=1">
   <link rel="stylesheet" href="styles/class-picker.css?v=5">
   <link rel="stylesheet" href="styles/class-hero-showcase.css?v=8">
   <link rel="stylesheet" href="styles/class-hero-portrait-frame.css?v=1">
@@ -64,7 +65,7 @@
   <link rel="stylesheet" href="styles/prep-borderless.css?v=3">
   <link rel="stylesheet" href="styles/battle-borderless.css?v=1">
   <link rel="stylesheet" href="styles/item-stats-report.css?v=3">
-  <link rel="stylesheet" href="styles/prep-juice.css?v=7">
+  <link rel="stylesheet" href="styles/prep-juice.css?v=8">
   <link rel="stylesheet" href="styles/prep-forest-hud.css?v=3">
   <link rel="stylesheet" href="styles/prep-timer-hero.css?v=3">
   <link rel="stylesheet" href="styles/battle-result-glass.css?v=1">
@@ -108,8 +109,16 @@
         <div class="battle-arena" id="battle-arena">
           <div class="prep-left-column" id="prep-left-column">
             <header class="prep-top-bar" id="prep-top-bar" aria-label="Статус забега">
-              <div class="prep-hero-card" id="prep-hero-card">
-                <div class="prep-hero-card__portrait" id="prep-hero-card-portrait">
+              <div class="prep-hero-card hud-character-panel" id="prep-hero-card">
+                <button type="button"
+                        class="bottombar-btn bottombar-btn--icon hud-collapse-toggle hidden"
+                        id="btn-hud-collapse-toggle"
+                        aria-label="Свернуть профиль персонажа"
+                        aria-expanded="true"
+                        aria-controls="prep-hero-card">
+                  <span class="hud-collapse-icon" aria-hidden="true">▲</span>
+                </button>
+                <div class="prep-hero-card__portrait hud-character-panel__collapsible" id="prep-hero-card-portrait">
                   <div class="hero-portrait-frame" id="prep-hero-card-portrait-frame" role="img" aria-label="Подготовка">
                     <span class="hero-portrait-frame__shine prep-hero-card__portrait-shine" aria-hidden="true"></span>
                     <img class="hero-portrait-media" id="prep-hud-hero-img" alt="" draggable="false">
@@ -961,7 +970,7 @@
   <script src="systems/lobby-fighter-avatar.js?v=4"></script>
   <script src="systems/lobby-spectator.js?v=8"></script>
   <script src="systems/lobby-roster-float.js?v=2"></script>
-  <script src="systems/td-engine.js?v=10"></script>
+  <script src="systems/td-engine.js?v=11"></script>
   <script src="battle-engine.js?v=2"></script>
   <script src="battle-float-layer.js?v=18"></script>
   <script src="components/td-arena.js?v=9"></script>
@@ -974,8 +983,9 @@
   <script src="systems/prep-shop.js?v=3"></script>
   <script src="systems/doll-engine.js"></script>
   <script src="systems/screen-transitions.js?v=1"></script>
+  <script src="components/prep-hud-collapse.js?v=1"></script>
   <script src="components/prep-hud-hero.js?v=3"></script>
-  <script src="game.js?v=82"></script>
+  <script src="game.js?v=83"></script>
   <script src="pwa-register.js"></script>
 </body>
 </html>

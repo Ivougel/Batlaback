@@ -328,7 +328,8 @@ body:has(#class-overlay:not(.hidden)) .bottom-chrome {
 }
 
 body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .bottombar-btn,
-body:has(#class-overlay:not(.hidden)) .bottom-chrome .bottombar-btn {
+body:has(#class-overlay:not(.hidden)) .bottom-chrome .bottombar-btn,
+body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .hud-character-panel .bottombar-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -357,7 +358,8 @@ body:has(#class-overlay:not(.hidden)) .bottom-chrome .bottombar-btn {
 }
 
 body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .bottombar-btn:hover,
-body:has(#class-overlay:not(.hidden)) .bottom-chrome .bottombar-btn:hover {
+body:has(#class-overlay:not(.hidden)) .bottom-chrome .bottombar-btn:hover,
+body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .hud-character-panel .bottombar-btn:hover {
   transform: translateY(-1px);
   background: linear-gradient(180deg, #ffffff 0%, #f5faf2 100%);
   border-color: var(--meadow-border);
@@ -368,7 +370,8 @@ body:has(#class-overlay:not(.hidden)) .bottom-chrome .bottombar-btn:hover {
 }
 
 body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .bottombar-btn:active,
-body:has(#class-overlay:not(.hidden)) .bottom-chrome .bottombar-btn:active {
+body:has(#class-overlay:not(.hidden)) .bottom-chrome .bottombar-btn:active,
+body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .hud-character-panel .bottombar-btn:active {
   transform: translateY(1px);
   box-shadow:
     0 1px 0 rgba(30, 60, 28, 0.1),
@@ -377,7 +380,8 @@ body:has(#class-overlay:not(.hidden)) .bottom-chrome .bottombar-btn:active {
 
 body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .bottombar-btn.active,
 body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .prep-side-btn.active,
-body:has(#class-overlay:not(.hidden)) .bottom-chrome .bottombar-btn.active {
+body:has(#class-overlay:not(.hidden)) .bottom-chrome .bottombar-btn.active,
+body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .hud-character-panel .bottombar-btn.active {
   background: linear-gradient(180deg, #ecfae8 0%, #d8f0d4 100%);
   border-color: var(--meadow-grass-dark);
   color: var(--juice-ink);
@@ -389,7 +393,8 @@ body:has(#class-overlay:not(.hidden)) .bottom-chrome .bottombar-btn.active {
     inset 0 0 0 1px rgba(92, 184, 92, 0.2);
 }
 
-body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .bottombar-btn--icon {
+body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .bottom-chrome .bottombar-btn--icon,
+body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) .hud-character-panel .bottombar-btn--icon {
   min-width: var(--bottombar-btn-h);
   padding: calc(6px * var(--ui-scale, 1)) calc(8px * var(--ui-scale, 1));
   font-size: max(var(--font-md), calc(1rem * var(--type-scale, 1)));

@@ -337,6 +337,7 @@ function syncPrepHeroHudDom() {
   if (!app) return;
   if (isTdRunLive() && isPrepHeroCardHud()) app.dataset.prepHeroHud = "true";
   else app.removeAttribute("data-prep-hero-hud");
+  if (typeof syncPrepHudCollapseChrome === "function") syncPrepHudCollapseChrome();
 }
 
 function getTdMaxWaves() {
@@ -9553,6 +9554,15 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
       : "";
     const heroCardName = getPrepHeroCardName(profile);
     const metricsInBottomBar = heroCardHud && !isTdRunLive();
+    const roundCaption = isTdRunLive() || isTdMode() ? "Волна" : "Раунд";
+    const collapsedMetricsHtml = heroCardHud
+      ? `
+        <div class="hud-character-panel__collapsed-metrics" aria-hidden="true">
+          <div class="prep-stats-row"><span>💰</span><b>${st.gold}</b></div>
+          <div class="prep-stats-row${hpRowClass}"><span>❤️</span><b>${hpLabel}</b></div>
+          <div class="prep-stats-row prep-stats-row--round"><span>${roundCaption}</span><b>${roundLabel}</b></div>
+        </div>`
+      : "";
     const metricsHtml = metricsInBottomBar
       ? `<div class="prep-stats-row prep-stats-row--companion"><span>${companionLabel}</span></div>`
       : `
@@ -9574,6 +9584,7 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
         <div class="prep-stats-metrics">
           ${metricsHtml}
         </div>
+        ${collapsedMetricsHtml}
       </div>`
       : `
       <div class="prep-stats-class">${displayTitle}</div>
@@ -9591,6 +9602,7 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
       ${modifierStripHtml}
     `;
     bindPrepEnhancementStrip(side);
+    if (typeof syncPrepHudCollapseChrome === "function") syncPrepHudCollapseChrome();
     if (isTdRunLive() && tdHeroSheetOpen) syncTdHeroSheetBody();
     if (typeof syncPrepBuildEmojiBtn === "function") {
       syncPrepBuildEmojiBtn({

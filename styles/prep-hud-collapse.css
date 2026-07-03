@@ -1,0 +1,109 @@
+/**
+ * Сворачивание HUD-карточки героя (prep side / TD overworld).
+ */
+
+.hud-character-panel {
+  position: relative;
+  overflow: hidden;
+  transition: max-height 0.35s ease, opacity 0.3s ease;
+}
+
+.hud-character-panel.is-collapsed {
+  opacity: 0.97;
+}
+
+.hud-collapse-toggle {
+  position: absolute;
+  top: calc(6px * var(--ui-scale, 1));
+  right: calc(6px * var(--ui-scale, 1));
+  z-index: 5;
+  flex: 0 0 auto;
+  pointer-events: auto;
+}
+
+.hud-collapse-icon {
+  display: inline-block;
+  line-height: 1;
+  transition: transform 0.3s ease;
+}
+
+.hud-collapse-toggle.is-collapsed .hud-collapse-icon {
+  transform: rotate(180deg);
+}
+
+.hud-character-panel__collapsed-metrics {
+  display: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(4px * var(--ui-scale, 1)) calc(10px * var(--ui-scale, 1));
+  min-width: 0;
+}
+
+.hud-character-panel.is-collapsed .hud-character-panel__collapsible,
+.hud-character-panel.is-collapsed .prep-stats-hud .mutation-progress,
+.hud-character-panel.is-collapsed .prep-stats-hud .mutation-progress--hero-card,
+.hud-character-panel.is-collapsed .prep-stats-hud .prep-enhancement-strip,
+.hud-character-panel.is-collapsed .prep-stats-hud .prep-enhancement-strip--hero-card,
+.hud-character-panel.is-collapsed .prep-stats-hud .prep-modifier-strip,
+.hud-character-panel.is-collapsed .prep-hero-card__build-slot {
+  display: none !important;
+}
+
+.hud-character-panel.is-collapsed .hud-character-panel__collapsed-metrics {
+  display: inline-flex !important;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.hud-character-panel.is-collapsed .prep-hero-card__stats-row {
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: calc(6px * var(--ui-scale, 1)) calc(10px * var(--ui-scale, 1));
+  padding-right: calc(44px * var(--ui-scale, 1)) !important;
+}
+
+.hud-character-panel.is-collapsed .prep-hero-card__stats-row .prep-stats-metrics {
+  display: none !important;
+}
+
+.hud-character-panel.is-collapsed .prep-hero-card__stats-row .prep-stats-class {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: min(42vw, 14rem);
+}
+
+/* ─── Side / tablet-side layout ─── */
+
+html[data-prep-layout="side"] #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .hud-character-panel.is-collapsed,
+html[data-ui-surface="tablet-side"] #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .hud-character-panel.is-collapsed {
+  min-height: 0 !important;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto;
+}
+
+html[data-prep-layout="side"] #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .hud-character-panel.is-collapsed .prep-hero-card__stats-row,
+html[data-ui-surface="tablet-side"] #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .hud-character-panel.is-collapsed .prep-hero-card__stats-row {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+/* ─── TD overworld overlay ─── */
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .hud-character-panel.is-collapsed {
+  min-height: 0 !important;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto;
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .hud-character-panel.is-collapsed .prep-hero-card__stats-row {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hud-character-panel,
+  .hud-collapse-icon {
+    transition: none !important;
+  }
+}

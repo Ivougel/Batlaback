@@ -153,16 +153,15 @@ function tdQuadBezierPoint(p0, p1, p2, t) {
   };
 }
 
-function tdSampleQuadraticChain(segments, stepsPerSeg = 14) {
-  const points = [];
-  segments.forEach((seg) => {
-    for (let i = 0; i <= stepsPerSeg; i += 1) {
-      if (i === 0 && points.length) continue;
-      points.push(tdQuadBezierPoint(seg.from, seg.ctrl, seg.to, i / stepsPerSeg));
-    }
-  });
-  return points;
+function tdDist(a, b) {
+  return Math.hypot(b.x - a.x, b.y - a.y);
 }
+
+/** Эталонная длина дорожки (норм. координаты) — px/сек как у прежних извилистых путей. */
+const TD_PATH_SPEED_REF_LENGTH = 0.75;
+
+/** Точки спавна дальше от хаба — длиннее хорда без сдвига слотов. */
+const TD_SPAWN_OFFSET = 0.52;
 
 function tdPathBasis(start, end) {
   const dx = end.x - start.x;
@@ -199,64 +198,101 @@ function tdPathStraightLength(path) {
   return tdDist(path[0], path[path.length - 1]);
 }
 
-/** Запад: пологая дуга вниз-вверх (капля). */
-function tdBuildWestWindingPath(start, end, rng) {
-  const b = tdPathBasis(start, end);
-  const j = 1 + (rng() - 0.5) * 0.06;
-  const p = (v) => v * j;
-  const a = (along, perp) => tdPathPt(start, b, along, p(perp));
-  return tdSampleQuadraticChain([
-    { from: start, ctrl: a(0.1, 0.26), to: a(0.24, 0.18) },
-    { from: a(0.24, 0.18), ctrl: a(0.38, -0.24), to: a(0.5, -0.17) },
-    { from: a(0.5, -0.17), ctrl: a(0.62, 0.22), to: a(0.72, 0.14) },
-    { from: a(0.72, 0.14), ctrl: a(0.82, -0.12), to: a(0.9, -0.06) },
-    { from: a(0.9, -0.06), ctrl: a(0.96, 0.02), to: end },
-  ]);
+/** Uniform Catmull-Rom → гладкая кривая без изломов на стыках. */
+function tdCatmullRomPoint(p0, p1, p2, p3, t) {
+  const t2 = t * t;
+  const t3 = t2 * t;
+  return {
+    x: 0.5 * (
+      (2 * p1.x)
+      + (-p0.x + p2.x) * t
+      + (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * t2
+      + (-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * t3
+    ),
+    y: 0.5 * (
+      (2 * p1.y)
+      + (-p0.y + p2.y) * t
+      + (2 * p0.y - 5 * p1.y + 4 * p2.y - p3.y) * t2
+      + (-p0.y + 3 * p1.y - 3 * p2.y + p3.y) * t3
+    ),
+  };
 }
 
-/** Север: резкий зигзаг с выраженным изломом. */
+function tdSampleCatmullRomPath(waypoints, stepsPerSegment = 28) {
+  if (!waypoints?.length) return [];
+  if (waypoints.length === 1) return [{ ...waypoints[0] }];
+  if (waypoints.length === 2) {
+    const out = [];
+    for (let i = 0; i <= stepsPerSegment; i += 1) {
+      const t = i / stepsPerSegment;
+      out.push({
+        x: waypoints[0].x + (waypoints[1].x - waypoints[0].x) * t,
+        y: waypoints[0].y + (waypoints[1].y - waypoints[0].y) * t,
+      });
+    }
+    return out;
+  }
+
+  const pts = [
+    waypoints[0],
+    ...waypoints,
+    waypoints[waypoints.length - 1],
+  ];
+  const out = [];
+  for (let i = 1; i < pts.length - 2; i += 1) {
+    for (let s = 0; s <= stepsPerSegment; s += 1) {
+      if (s === 0 && out.length) continue;
+      out.push(tdCatmullRomPoint(pts[i - 1], pts[i], pts[i + 1], pts[i + 2], s / stepsPerSegment));
+    }
+  }
+  return out;
+}
+
+function tdLaneWaypoints(start, end, bends, rng) {
+  const basis = tdPathBasis(start, end);
+  const jitter = () => 1 + (rng() - 0.5) * 0.05;
+  const points = [{ ...start }];
+  bends.forEach(({ along, perp }) => {
+    points.push(tdPathPt(start, basis, along, perp * jitter()));
+  });
+  points.push({ ...end });
+  return points;
+}
+
+/** Север: широкая S — восток, запад, мягкий выход к слоту. */
 function tdBuildNorthWindingPath(start, end, rng) {
-  const b = tdPathBasis(start, end);
-  const j = 1 + (rng() - 0.5) * 0.08;
-  const p = (v) => v * j;
-  const a = (along, perp) => tdPathPt(start, b, along, p(perp));
-  return tdSampleQuadraticChain([
-    { from: start, ctrl: a(0.1, 0.26), to: a(0.22, 0.2) },
-    { from: a(0.22, 0.2), ctrl: a(0.34, -0.24), to: a(0.46, -0.18) },
-    { from: a(0.46, -0.18), ctrl: a(0.56, 0.22), to: a(0.66, 0.16) },
-    { from: a(0.66, 0.16), ctrl: a(0.78, -0.12), to: a(0.88, -0.06) },
-    { from: a(0.88, -0.06), ctrl: a(0.94, 0.02), to: end },
-  ]);
+  return tdSampleCatmullRomPath(tdLaneWaypoints(start, end, [
+    { along: 0.26, perp: 0.165 },
+    { along: 0.5, perp: -0.14 },
+    { along: 0.74, perp: 0.075 },
+  ], rng));
 }
 
-/** Восток: плавная S-образная змейка. */
+/** Восток: глубокий южный карман, плавный подъём к восточному слоту. */
 function tdBuildEastWindingPath(start, end, rng) {
-  const b = tdPathBasis(start, end);
-  const j = 1 + (rng() - 0.5) * 0.07;
-  const p = (v) => v * j;
-  const a = (along, perp) => tdPathPt(start, b, along, p(perp));
-  return tdSampleQuadraticChain([
-    { from: start, ctrl: a(0.1, 0.2), to: a(0.22, 0.14) },
-    { from: a(0.22, 0.14), ctrl: a(0.36, -0.22), to: a(0.48, -0.16) },
-    { from: a(0.48, -0.16), ctrl: a(0.58, 0.2), to: a(0.68, 0.14) },
-    { from: a(0.68, 0.14), ctrl: a(0.78, -0.16), to: a(0.86, -0.1) },
-    { from: a(0.86, -0.1), ctrl: a(0.94, 0.04), to: end },
-  ]);
+  return tdSampleCatmullRomPath(tdLaneWaypoints(start, end, [
+    { along: 0.28, perp: -0.17 },
+    { along: 0.52, perp: 0.12 },
+    { along: 0.76, perp: -0.065 },
+  ], rng));
 }
 
-/** Юг: два изгиба перед слотом игрока — не прямая в лоб. */
+/** Юг: три широкие дуги — восток, запад, мягкий подъём к южному слоту. */
 function tdBuildSouthWindingPath(start, end, rng) {
-  const b = tdPathBasis(start, end);
-  const j = 1 + (rng() - 0.5) * 0.08;
-  const p = (v) => v * j;
-  const a = (along, perp) => tdPathPt(start, b, along, p(perp));
-  return tdSampleQuadraticChain([
-    { from: start, ctrl: a(0.11, -0.2), to: a(0.24, -0.14) },
-    { from: a(0.24, -0.14), ctrl: a(0.38, 0.22), to: a(0.5, 0.18) },
-    { from: a(0.5, 0.18), ctrl: a(0.62, -0.16), to: a(0.74, -0.1) },
-    { from: a(0.74, -0.1), ctrl: a(0.86, 0.1), to: a(0.93, 0.05) },
-    { from: a(0.93, 0.05), ctrl: a(0.97, 0.01), to: end },
-  ]);
+  return tdSampleCatmullRomPath(tdLaneWaypoints(start, end, [
+    { along: 0.28, perp: 0.16 },
+    { along: 0.52, perp: -0.13 },
+    { along: 0.76, perp: 0.065 },
+  ], rng));
+}
+
+/** Запад: ленивая C-петля — север, юг, подвод к слоту. */
+function tdBuildWestWindingPath(start, end, rng) {
+  return tdSampleCatmullRomPath(tdLaneWaypoints(start, end, [
+    { along: 0.27, perp: -0.16 },
+    { along: 0.51, perp: 0.13 },
+    { along: 0.75, perp: -0.07 },
+  ], rng));
 }
 
 const TD_LANE_PATH_BUILDERS = [
@@ -275,9 +311,8 @@ function tdBuildWindingLanePath(start, end, pathId, rng) {
 function tdPathSpeedScale(path) {
   if (!path?.length) return 1;
   const curved = tdPathPolylineLength(path);
-  const straight = tdPathStraightLength(path);
-  if (curved <= 1e-6 || straight <= 1e-6) return 1;
-  return straight / curved;
+  if (curved <= 1e-6) return 1;
+  return TD_PATH_SPEED_REF_LENGTH / curved;
 }
 
 /** Фиксированная карта забега: 4 дорожки к слотам + декор. */
@@ -286,10 +321,10 @@ function generateTdRunMap(runSeed = 1) {
   const slots = TD_MAP_SLOTS.map((s) => ({ ...s }));
 
   const pathStarts = [
-    { x: 0.5, y: -0.09 },
-    { x: 1.09, y: 0.5 },
-    { x: 0.5, y: 1.09 },
-    { x: -0.09, y: 0.5 },
+    { x: 0.5, y: -TD_SPAWN_OFFSET },
+    { x: 1 + TD_SPAWN_OFFSET, y: 0.5 },
+    { x: 0.5, y: 1 + TD_SPAWN_OFFSET },
+    { x: -TD_SPAWN_OFFSET, y: 0.5 },
   ];
 
   const paths = pathStarts.map((start, pathId) => {
@@ -371,12 +406,9 @@ function tdLerpPath(stateOrPaths, pathId, t) {
 function tdGetPathSpeedScale(state, pathId) {
   const map = state?.map;
   if (!map?.paths?.[pathId]) return 1;
-  if (map.pathLengths?.[pathId] && map.pathStraightLengths?.[pathId]) {
-    const curved = map.pathLengths[pathId];
-    const straight = map.pathStraightLengths[pathId];
-    if (curved > 1e-6 && straight > 1e-6) return straight / curved;
-  }
-  return tdPathSpeedScale(map.paths[pathId]);
+  const curved = map.pathLengths?.[pathId] ?? tdPathPolylineLength(map.paths[pathId]);
+  if (curved <= 1e-6) return 1;
+  return TD_PATH_SPEED_REF_LENGTH / curved;
 }
 
 function tdPigSizeScale(strength) {
@@ -687,12 +719,6 @@ function tdRecordItemDamage(state, itemId, slotId, amount) {
   }
   state.itemDamageStats[key].damageDealt += amount;
   state.itemDamageStats[key].activations += 1;
-}
-
-function tdDist(a, b) {
-  const dx = a.x - b.x;
-  const dy = a.y - b.y;
-  return Math.sqrt(dx * dx + dy * dy);
 }
 
 function tdPickTargetPigForTower(pigs, tower, map) {
