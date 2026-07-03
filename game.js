@@ -4828,17 +4828,14 @@ function selectTdSlot(slotId) {
   if (slotId == null || !tdState) return;
   selectedTdSlotId = slotId;
   tdState.selectedSlotId = slotId;
-  if (isTdLoadoutEditPhase()) {
-    tdLoadoutSheetOpen = true;
-  } else {
-    tdLoadoutSheetOpen = false;
-  }
+  // Тап по башне на карте — только HUD героя сверху; рюкзак открывается отдельно (🎒 или drag из магазина).
+  tdLoadoutSheetOpen = false;
   syncTdLoadoutSheetDom();
   syncTdLoadoutLayout();
   syncTdTowerEditDom();
   renderTdBuildPanel();
+  syncTdHeroHudFromSelection();
   if (isTdLoadoutEditPhase()) recalcSynergies();
-  else syncTdHeroHudFromSelection();
   playPrepSfx("ui_click");
 }
 
