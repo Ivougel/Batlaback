@@ -223,6 +223,18 @@ function canPlaceEnhancementItemInLoadout(itemId, items = [], excludeUid = null,
   return !getEnhancementPlacementBlockReason(itemId, items, excludeUid, roundNum);
 }
 
+/** Предмет усиления в рюкзаке для слота head/chest/boots. */
+function findLoadoutItemForEnhancementSlot(items = [], slotId) {
+  if (!slotId || !items?.length) return null;
+  for (const item of items) {
+    const enhId = getEnhancementIdFromItem(item.itemId);
+    if (!enhId) continue;
+    const enhDef = getEnhancementDef(enhId);
+    if (enhDef?.slot === slotId) return item;
+  }
+  return null;
+}
+
 /** Активные усиления = предметы 1×1 в рюкзаке (нет клетки — нет усиления). */
 function syncEnhancementsFromBackpack(items = [], enhancements = {}, roundNum = 1) {
   ENHANCEMENT_SLOT_ORDER.forEach((slotId) => {
@@ -513,9 +525,14 @@ function buildEnhancementTooltipLines(def, context = "shop") {
     });
   } else if (context === "enhancement") {
     lines.push({
-      text: `Продажа: ${getEnhancementSellRefund(def)}💰`,
+      text: "Продажа: " + getEnhancementSellRefund(def) + "💰",
       style: "normal",
       color: "#f0c14b",
+    });
+    lines.push({
+      text: "Клик или перетащите на скамейку, чтобы снять",
+      style: "sub",
+      color: "#8b949e",
     });
   }
   return lines;

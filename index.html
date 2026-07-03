@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="styles/tokens.css?v=18">
   <link rel="stylesheet" href="styles/layers.css?v=7">
   <link rel="stylesheet" href="styles/bottom-chrome.css?v=24">
-  <link rel="stylesheet" href="styles.css?v=37">
+  <link rel="stylesheet" href="styles.css?v=39">
   <link rel="stylesheet" href="styles/shop.css?v=6">
   <link rel="stylesheet" href="styles/item-card-chrome.css?v=3">
   <link rel="stylesheet" href="styles/shop-pin-chrome.css?v=3">
@@ -25,12 +25,12 @@
   <link rel="stylesheet" href="styles/campaign.css?v=1">
   <link rel="stylesheet" href="styles/mutations.css?v=1">
   <link rel="stylesheet" href="styles/battle-archetype-banner.css?v=1">
-  <link rel="stylesheet" href="styles/enhancements.css?v=4">
+  <link rel="stylesheet" href="styles/enhancements.css?v=5">
   <link rel="stylesheet" href="styles/doll.css?v=25">
   <link rel="stylesheet" href="styles/combat-feed.css?v=5">
   <link rel="stylesheet" href="styles/surface-profiles.css?v=3">
   <link rel="stylesheet" href="styles/container-queries.css?v=2">
-  <link rel="stylesheet" href="styles/modal-scale.css?v=5">
+  <link rel="stylesheet" href="styles/modal-scale.css?v=6">
   <link rel="stylesheet" href="styles/replay-chrome.css?v=2">
   <link rel="stylesheet" href="styles/emotion-thoughts.css?v=10">
   <link rel="stylesheet" href="styles/arena-equipment.css?v=20">
@@ -41,12 +41,12 @@
   <link rel="stylesheet" href="styles/battle-hud-compact.css?v=3">
   <link rel="stylesheet" href="styles/hero-card.css?v=4">
   <link rel="stylesheet" href="styles/hero-portrait-frame.css?v=5">
-  <link rel="stylesheet" href="styles/prep-hero-card.css?v=17">
+  <link rel="stylesheet" href="styles/prep-hero-card.css?v=19">
   <link rel="stylesheet" href="styles/prep-hud-collapse.css?v=2">
-  <link rel="stylesheet" href="styles/class-picker.css?v=6">
+  <link rel="stylesheet" href="styles/class-picker.css?v=7">
   <link rel="stylesheet" href="styles/class-hero-showcase.css?v=8">
   <link rel="stylesheet" href="styles/class-hero-portrait-frame.css?v=1">
-  <link rel="stylesheet" href="styles/class-intro-theme.css?v=7">
+  <link rel="stylesheet" href="styles/class-intro-theme.css?v=8">
   <link rel="stylesheet" href="styles/class-intro-summary.css?v=1">
   <link rel="stylesheet" href="styles/tablet-intro-typography.css?v=1">
   <link rel="stylesheet" href="styles/desktop-intro-layout.css?v=1">
@@ -55,7 +55,8 @@
   <link rel="stylesheet" href="styles/desktop-prep.css?v=2">
   <link rel="stylesheet" href="styles/desktop-battle.css?v=2">
   <link rel="stylesheet" href="styles/tablet-stacked.css?v=7">
-  <link rel="stylesheet" href="styles/tablet-side.css?v=31">
+  <link rel="stylesheet" href="styles/prep-bench-popover.css?v=1">
+  <link rel="stylesheet" href="styles/tablet-side.css?v=34">
   <link rel="stylesheet" href="styles/battle-inventory-popover.css?v=8">
   <link rel="stylesheet" href="styles/lobby.css?v=8">
   <link rel="stylesheet" href="styles/td-mode.css?v=22">
@@ -70,7 +71,7 @@
   <link rel="stylesheet" href="styles/prep-forest-hud.css?v=3">
   <link rel="stylesheet" href="styles/prep-timer-hero.css?v=3">
   <link rel="stylesheet" href="styles/battle-result-glass.css?v=1">
-  <link rel="stylesheet" href="styles/battle-aura-frame.css?v=4">
+  <link rel="stylesheet" href="styles/battle-aura-frame.css?v=5">
   <link rel="stylesheet" href="styles/battle-result-theater.css?v=3">
   <link rel="stylesheet" href="styles/screen-transitions.css?v=1">
   <link rel="stylesheet" href="styles/ui-ornament-frame.css?v=1">
@@ -91,7 +92,7 @@
   <script src="systems/layout-scales.js?v=2"></script>
   <script src="systems/battle-fx-tier.js?v=1"></script>
   <script src="systems/battle-hero-anchor.js?v=27"></script>
-  <script src="ui-layout.js?v=109"></script>
+  <script src="ui-layout.js?v=111"></script>
 </head>
 <body>
   <div id="ui-ornament-frame" class="ui-ornament-frame" aria-hidden="true">
@@ -317,10 +318,6 @@
                   <button type="button" class="btn-secondary btn-recipe-book" id="btn-recipe-book">⚗️ Рецепты</button>
                 </div>
                 <span class="shop-sell-hint">Перетащите предмет · полная стоимость</span>
-              </div>
-              <div class="bench-panel" id="bench-panel">
-                <h3>📦 Скамейка</h3>
-                <div class="bench-slots" id="bench-slots"></div>
               </div>
             </div>
           </div>
@@ -946,7 +943,23 @@
   </div>
 
   <div id="prep-shop-backdrop" class="prep-shop-backdrop hidden" aria-hidden="true"></div>
-  <button type="button" class="btn-secondary prep-mobile-shop-btn" id="btn-mobile-shop" aria-expanded="false" aria-controls="shop-panel" aria-label="Магазин и скамейка">🛒</button>
+  <div class="prep-bench-popover hidden" id="prep-bench-popover" role="dialog" aria-labelledby="prep-bench-popover-title" aria-hidden="true">
+    <div class="prep-bench-popover__panel">
+      <header class="prep-bench-popover__head">
+        <h3 class="prep-bench-popover__title" id="prep-bench-popover-title">📦 Скамейка</h3>
+        <button type="button" class="prep-bench-popover__close" id="btn-prep-bench-close" aria-label="Закрыть скамейку">✕</button>
+      </header>
+      <div class="bench-panel" id="bench-panel">
+        <h3 class="bench-panel__title">📦 Скамейка</h3>
+        <div class="bench-slots" id="bench-slots"></div>
+      </div>
+    </div>
+  </div>
+  <button type="button" class="btn-secondary prep-bench-fab hidden" id="btn-prep-bench-fab" aria-expanded="false" aria-controls="prep-bench-popover" aria-label="Скамейка" title="Скамейка" hidden>
+    <span class="prep-bench-fab__glyph" aria-hidden="true">📦</span>
+    <span class="prep-bench-fab__badge" hidden aria-hidden="true"></span>
+  </button>
+  <button type="button" class="btn-secondary prep-mobile-shop-btn" id="btn-mobile-shop" aria-expanded="false" aria-controls="shop-panel" aria-label="Магазин">🛒</button>
   <div id="mobile-rotate-prompt" class="mobile-rotate-prompt hidden" aria-live="polite" aria-hidden="true">
     <span class="mobile-rotate-prompt-icon" aria-hidden="true">📱</span>
     <p class="mobile-rotate-prompt-title">Поверните устройство вертикально</p>
@@ -966,7 +979,7 @@
   <script src="systems/item-pool-120.js?v=1"></script>
   <script src="items.js"></script>
   <script src="items-catalog.js"></script>
-  <script src="systems/enhancements.js?v=5"></script>
+  <script src="systems/enhancements.js?v=6"></script>
   <script src="systems/enhancement-catalog-ext.js?v=1"></script>
   <script src="systems/enhancement-crafting.js?v=3"></script>
   <script src="systems/backpack-amplifiers.js?v=2"></script>
@@ -1001,6 +1014,7 @@
   <script src="components/escape-menu.js"></script>
   <script src="components/combat-feed.js?v=2"></script>
   <script src="components/mobile-prep-ui.js"></script>
+  <script src="components/prep-bench-popover.js"></script>
   <script src="components/battle-aura-frame.js"></script>
   <script src="components/battle-result-theater.js"></script>
   <script src="components/battle-result.js"></script>
@@ -1021,7 +1035,7 @@
   <script src="components/item-flight-controller.js?v=3"></script>
   <script src="components/displace-animation.js"></script>
   <script src="components/inventory-animation-controller.js?v=11"></script>
-  <script src="components/prep-drag-arc.js?v=14"></script>
+  <script src="components/prep-drag-arc.js?v=16"></script>
   <script src="components/item-effects-controller.js"></script>
   <script src="components/synergy-visual-controller.js"></script>
   <script src="components/battle-controls.js"></script>
@@ -1042,13 +1056,13 @@
   <script src="components/emotion-presenter.js?v=5"></script>
   <script src="emotion-engine.js?v=21"></script>
   <script src="battle-hud.js?v=6"></script>
-  <script src="systems/prep-shop.js?v=3"></script>
+  <script src="systems/prep-shop.js?v=4"></script>
   <script src="systems/campaign.js?v=1"></script>
   <script src="systems/doll-engine.js"></script>
   <script src="systems/screen-transitions.js?v=1"></script>
   <script src="components/prep-hud-collapse.js?v=1"></script>
   <script src="components/prep-hud-hero.js?v=3"></script>
-  <script src="game.js?v=86"></script>
+  <script src="game.js?v=92"></script>
   <script src="pwa-register.js"></script>
 </body>
 </html>

@@ -464,3 +464,272 @@ html[data-ui-surface="tablet-stacked"] #class-overlay:not(.hidden) .class-mobile
     overflow: hidden;
   }
 }
+
+/* ─── Шаг «Выберите героя»: один экран без скролла (PWA / iPad mini) ─── */
+
+body:has(#class-overlay:not(.hidden)) #class-overlay .class-action-hint,
+body:has(#class-overlay:not(.hidden)) #class-overlay .class-modal > .class-controls-hint {
+  display: none;
+}
+
+#class-overlay .class-modal #class-step-player:not(.hidden) {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(3px, 0.7vh, 8px);
+  touch-action: manipulation;
+}
+
+#class-overlay[data-class-intro-step="player"] .class-modal-header {
+  flex-shrink: 2;
+  margin-bottom: clamp(2px, 0.6vh, 8px);
+}
+
+#class-overlay[data-class-intro-step="player"] .class-modal-eyebrow {
+  margin-bottom: 0;
+  font-size: clamp(0.62rem, 1.3vh, 0.72rem);
+}
+
+#class-overlay[data-class-intro-step="player"] .class-step-badge {
+  margin-bottom: 2px;
+  font-size: clamp(0.65rem, 1.4vh, 0.75rem);
+}
+
+#class-overlay[data-class-intro-step="player"] .class-modal-title {
+  margin-bottom: 2px;
+  font-size: clamp(0.95rem, 2.5vh, 1.3rem);
+}
+
+#class-overlay[data-class-intro-step="player"] .class-modal-header .class-subtitle {
+  font-size: clamp(0.7rem, 1.55vh, 0.88rem);
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+#class-overlay[data-class-intro-step="player"] .class-modal-footer {
+  flex-shrink: 0;
+  padding-top: clamp(2px, 0.4vh, 6px);
+  font-size: clamp(0.58rem, 1.1vh, 0.68rem);
+  line-height: 1.1;
+}
+
+#class-overlay #class-step-player:not(.hidden) .class-step-actions-top {
+  flex-shrink: 0;
+  margin-bottom: 0;
+}
+
+#class-overlay #class-step-player:not(.hidden) .class-step-actions-top .btn-glass-back {
+  min-height: clamp(36px, 5vh, 44px);
+  padding: clamp(6px, 1vh, 10px) clamp(10px, 1.5vw, 14px);
+  font-size: clamp(0.72rem, 1.5vh, 0.84rem);
+}
+
+#class-overlay #class-step-player:not(.hidden) .class-grid {
+  flex: 1 1 0;
+  min-height: 0;
+  max-height: none !important;
+  gap: clamp(6px, 1.2vh, 12px);
+}
+
+#class-overlay #class-step-player:not(.hidden):has(.mutation-gallery-wrap:not(.hidden)) .class-grid {
+  flex: 1.15 1 0;
+}
+
+#class-overlay #class-step-player:not(.hidden) .mutation-gallery-wrap:not(.hidden) {
+  flex: 0.9 1 0;
+  min-height: 0;
+  max-height: none;
+  margin-top: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+#class-overlay #class-step-player:not(.hidden) .class-card.glass-card[data-class] .class-card-foot {
+  min-height: 0;
+  max-height: 58%;
+  overflow: hidden;
+  padding:
+    clamp(6px, 1vh, 10px)
+    clamp(8px, 1.2vw, 11px)
+    clamp(6px, 1vh, 10px);
+  gap: clamp(2px, 0.4vh, 4px);
+}
+
+#class-overlay #class-step-player:not(.hidden) .class-card.glass-card[data-class] .class-name {
+  font-size: clamp(0.78rem, 1.7vh, 0.95rem);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+#class-overlay #class-step-player:not(.hidden) .class-card.glass-card[data-class] .class-desc {
+  font-size: clamp(0.62rem, 1.35vh, 0.74rem);
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-width: 0;
+}
+
+#class-overlay #class-step-player:not(.hidden) .class-card.glass-card[data-class] .class-bonus {
+  margin-top: 0;
+  padding:
+    clamp(3px, 0.6vh, 5px)
+    clamp(6px, 1vw, 8px);
+  font-size: clamp(0.6rem, 1.3vh, 0.72rem);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+#class-overlay #class-step-player:not(.hidden) .class-pick-portrait-media {
+  --prep-hud-portrait-bust-scale: 1.95;
+}
+
+#class-overlay #class-step-player:not(.hidden) .mutation-gallery {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: clamp(5px, 1vh, 9px) clamp(7px, 1.2vw, 11px);
+  overflow: hidden;
+}
+
+#class-overlay #class-step-player:not(.hidden) .mutation-gallery-eyebrow {
+  flex-shrink: 0;
+  margin: 0 0 clamp(2px, 0.4vh, 4px);
+  font-size: clamp(0.68rem, 1.45vh, 0.84rem);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#class-overlay #class-step-player:not(.hidden) .mutation-gallery-hint {
+  flex-shrink: 0;
+  margin: 0 0 clamp(4px, 0.7vh, 7px);
+  font-size: clamp(0.58rem, 1.25vh, 0.7rem);
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+#class-overlay #class-step-player:not(.hidden) .mutation-gallery-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: clamp(3px, 0.55vh, 6px);
+  padding: clamp(2px, 0.4vh, 4px);
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  align-content: stretch;
+}
+
+#class-overlay #class-step-player:not(.hidden) .mutation-silhouette {
+  min-height: 0;
+  padding: clamp(3px, 0.65vh, 7px) clamp(2px, 0.5vw, 5px);
+  gap: 0;
+}
+
+#class-overlay #class-step-player:not(.hidden) .mutation-silhouette-icon {
+  font-size: clamp(15px, 2.5vh, 21px);
+  line-height: 1;
+}
+
+#class-overlay #class-step-player:not(.hidden) .mutation-silhouette-name {
+  font-size: clamp(0.55rem, 1.15vh, 0.66rem);
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+#class-overlay #class-step-player:not(.hidden) .mutation-silhouette-form {
+  font-size: clamp(0.5rem, 1vh, 0.6rem);
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+@container class-overlay-modal (max-height: 820px) {
+  #class-overlay[data-class-intro-step="player"] .class-modal-footer {
+    display: none;
+  }
+
+  #class-overlay #class-step-player:not(.hidden) .class-pick-portrait-media {
+    --prep-hud-portrait-bust-scale: 1.78;
+  }
+}
+
+/* iPad mini 7 PWA — portrait ~744×1133, landscape ~1133×744 */
+@container class-overlay-modal (max-height: 760px) {
+  #class-overlay[data-class-intro-step="player"] .class-modal-header .class-subtitle {
+    -webkit-line-clamp: 1;
+  }
+
+  #class-overlay #class-step-player:not(.hidden) .class-card.glass-card[data-class] .class-desc {
+    -webkit-line-clamp: 1;
+  }
+}
+
+@container class-overlay-modal (max-height: 680px) {
+  #class-overlay #class-step-player:not(.hidden) .class-pick-portrait-media {
+    --prep-hud-portrait-bust-scale: 1.68;
+  }
+}
+
+html[data-ui-tier="tablet"] #class-overlay .class-modal #class-step-player:not(.hidden) {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+html:not([data-prep-layout="mobile"]) #class-overlay #class-step-player:not(.hidden) .class-grid {
+  min-height: 0 !important;
+}
+
+/* Компактная нижняя панель на шаге героя — хоткеи не вылезают за экран */
+body:has(#class-overlay[data-class-intro-step="player"]:not(.hidden)) .bottom-chrome {
+  min-height: 0;
+  padding-top: 1px;
+  padding-bottom: max(1px, env(safe-area-inset-bottom));
+}
+
+body:has(#class-overlay[data-class-intro-step="player"]:not(.hidden)) .bottom-chrome-intro {
+  gap: 0;
+  align-items: center;
+}
+
+body:has(#class-overlay[data-class-intro-step="player"]:not(.hidden)) .bottom-chrome-intro-center {
+  gap: 0;
+  padding: 0 2px;
+}
+
+body:has(#class-overlay[data-class-intro-step="player"]:not(.hidden)) .bottom-chrome-intro-step {
+  font-size: clamp(0.68rem, 1.35vh, 0.82rem);
+  line-height: 1.1;
+}
+
+body:has(#class-overlay[data-class-intro-step="player"]:not(.hidden)) .bottom-chrome-intro-hint {
+  font-size: clamp(0.58rem, 1.15vh, 0.7rem);
+  line-height: 1.15;
+  -webkit-line-clamp: 1;
+  max-width: min(64vw, 32rem);
+}
+
+body:has(#class-overlay[data-class-intro-step="player"]:not(.hidden)) .bottom-chrome-intro-controls {
+  font-size: clamp(0.54rem, 1.05vh, 0.64rem);
+  line-height: 1.1;
+  opacity: 0.72;
+}

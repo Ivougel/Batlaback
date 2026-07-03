@@ -377,6 +377,13 @@ body:has(#app[data-phase="replay"]) .bottom-chrome {
   box-shadow: 0 4px 16px var(--meadow-shadow);
 }
 
+html[data-prep-bench-popover="true"] .prep-bench-fab {
+  background: var(--meadow-chrome);
+  border: 2px solid var(--meadow-border);
+  color: var(--meadow-ink);
+  box-shadow: 0 4px 16px var(--meadow-shadow);
+}
+
 .prep-shop-backdrop {
   background: var(--meadow-overlay);
 }

@@ -57,6 +57,11 @@ html[data-ui-tier="tablet"] #class-overlay .class-modal .class-step:not(.hidden)
   -webkit-overflow-scrolling: touch;
 }
 
+html[data-ui-tier="tablet"] #class-overlay .class-modal #class-step-player:not(.hidden) {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
 html[data-ui-tier="tablet"] #class-overlay .class-modal #class-step-mode:not(.hidden) {
   overflow: visible;
 }

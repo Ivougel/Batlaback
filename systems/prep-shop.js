@@ -499,6 +499,7 @@ function renderBench(side = rt.getPrepViewSide()) {
     });
   });
   if (typeof refreshGamepadPrepFocus === "function") refreshGamepadPrepFocus();
+  if (typeof window.syncPrepBenchFabBadge === "function") window.syncPrepBenchFabBadge();
 }
 
 window.registerPrepShopRuntime = registerPrepShopRuntime;

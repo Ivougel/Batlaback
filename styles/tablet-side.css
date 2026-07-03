@@ -246,3 +246,25 @@ html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="fl
   inset: 0;
   overflow: hidden;
 }
+
+/* ─── iPad mini 7 PWA landscape (1133×744): сетка вправо от героя, ближе к магазину ─── */
+
+@media (width: 1133px) and (height: 744px) {
+  html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-field-column > .layer-world {
+    justify-content: flex-end;
+    align-items: flex-start;
+    padding-top: var(--prep-scene-top, 14px);
+    padding-right: calc(8px * var(--ui-scale, 1));
+    box-sizing: border-box;
+  }
+
+  html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-field-island {
+    margin-left: auto;
+    margin-right: 0;
+    align-self: flex-end;
+  }
+
+  html[data-hero-card-mode="full-bleed"][data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-character-img {
+    max-width: 92%;
+  }
+}

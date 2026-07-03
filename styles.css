@@ -3558,6 +3558,20 @@ html[data-visual-theme="diablo"] body:has(#class-overlay:not(.hidden)) {
   display: none !important;
 }
 
+/* Плавающие подсказки на десктопе: tooltip внутри dock, но без обёртки-панели */
+html[data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--passthrough {
+  display: contents !important;
+  position: static;
+  padding: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  overflow: visible;
+  pointer-events: none;
+}
+
 html[data-game-phase="battle"] #prep-tooltip-dock,
 html[data-game-phase="replay"] #prep-tooltip-dock {
   display: contents;
@@ -4567,6 +4581,12 @@ html[data-touch="true"] .sidebar-tooltip.synergy-tooltip .synergy-tt-source {
 }
 
 .settings-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding-right: 4px;
   display: flex;
   flex-direction: column;
   gap: calc(10px * var(--ui-scale));

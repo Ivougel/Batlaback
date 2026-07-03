@@ -1,0 +1,212 @@
+/**
+ * Prep bench popover + FAB — tablet-side / desktop side layout.
+ * html[data-prep-bench-popover="true"]
+ */
+
+/* ─── Компактный магазин (без скамейки в колонке) ─── */
+
+html[data-prep-bench-popover="true"] #app[data-phase="prep"] #shop-panel .shop-objects {
+  gap: calc(2px * var(--ui-scale, 1));
+}
+
+html[data-prep-bench-popover="true"] #app[data-phase="prep"] #shop-panel .shop-slots {
+  min-height: calc(var(--shop-card-row-h, 88px) * 2);
+}
+
+html[data-prep-bench-popover="true"] #app[data-phase="prep"] #shop-panel .shop-sell-zone {
+  margin-top: calc(2px * var(--ui-scale, 1));
+  padding-top: calc(6px * var(--ui-scale, 1));
+  padding-bottom: calc(6px * var(--ui-scale, 1));
+}
+
+html[data-prep-bench-popover="true"] #app[data-phase="prep"] #shop-panel .shop-action-row {
+  max-width: 100%;
+}
+
+html[data-ui-surface="tablet-side"][data-prep-bench-popover="true"] #app[data-phase="prep"] #shop-panel,
+html[data-ui-surface="desktop"][data-prep-bench-popover="true"] #app[data-phase="prep"] #shop-panel {
+  flex: 0 0 min(var(--shop-panel-w, 248px), 24vw) !important;
+  width: min(var(--shop-panel-w, 248px), 24vw) !important;
+  max-width: min(var(--shop-panel-w, 248px), 26vw) !important;
+}
+
+/* ─── FAB ─── */
+
+.prep-bench-fab {
+  display: none;
+  position: fixed;
+  right: var(--prep-bench-fab-right, calc(var(--shop-panel-w, 248px) + 8px));
+  bottom: calc(var(--prep-bench-fab-bottom, 88px) + env(safe-area-inset-bottom, 0px));
+  z-index: calc(var(--z-chrome, 50) + 3);
+  width: var(--prep-bench-fab-size, calc(44px * var(--ui-scale, 1)));
+  height: var(--prep-bench-fab-size, calc(44px * var(--ui-scale, 1)));
+  min-width: var(--prep-bench-fab-size, calc(44px * var(--ui-scale, 1)));
+  min-height: var(--prep-bench-fab-size, calc(44px * var(--ui-scale, 1)));
+  padding: 0;
+  border-radius: 50%;
+  align-items: center;
+  justify-content: center;
+  font-size: 0;
+  line-height: 1;
+  box-shadow: 0 4px 16px rgba(30, 60, 28, 0.22);
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.12s;
+}
+
+html[data-prep-bench-popover="true"] .prep-bench-fab:not(.hidden) {
+  display: inline-flex;
+}
+
+.prep-bench-fab__glyph {
+  font-size: calc(1.35rem * var(--ui-scale, 1));
+  line-height: 1;
+}
+
+.prep-bench-fab__badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: calc(16px * var(--ui-scale, 1));
+  height: calc(16px * var(--ui-scale, 1));
+  padding: 0 calc(4px * var(--ui-scale, 1));
+  border-radius: 999px;
+  background: #3fb950;
+  color: #fff;
+  font-size: calc(10px * var(--ui-scale, 1));
+  font-weight: 800;
+  line-height: calc(16px * var(--ui-scale, 1));
+  text-align: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
+.prep-bench-fab--has-items {
+  border-color: rgba(92, 184, 92, 0.65);
+}
+
+html[data-prep-bench-open="true"] .prep-bench-fab {
+  border-color: rgba(92, 184, 92, 0.75);
+  box-shadow: 0 0 0 2px rgba(92, 184, 92, 0.22), 0 4px 16px rgba(30, 60, 28, 0.22);
+}
+
+.prep-bench-fab.bench-drop-target {
+  border-color: rgba(92, 184, 92, 0.9);
+  box-shadow: 0 0 0 3px rgba(92, 184, 92, 0.35);
+  transform: scale(1.06);
+}
+
+/* ─── Popover ─── */
+
+.prep-bench-popover {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-chrome, 50) + 4);
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding:
+    0
+    max(calc(6px * var(--ui-scale, 1)), env(safe-area-inset-right, 0px))
+    calc(var(--prep-bench-popover-bottom, 140px) + env(safe-area-inset-bottom, 0px))
+    calc(6px * var(--ui-scale, 1));
+  pointer-events: none;
+  background: transparent;
+}
+
+.prep-bench-popover:not(.hidden) {
+  pointer-events: auto;
+}
+
+.prep-bench-popover__panel {
+  pointer-events: auto;
+  width: min(calc(var(--shop-panel-w, 248px) - 4px), 92vw);
+  max-width: 320px;
+  max-height: min(52dvh, 360px);
+  display: flex;
+  flex-direction: column;
+  border-radius: calc(12px * var(--ui-scale, 1));
+  background: rgba(255, 252, 240, 0.97);
+  border: 2px solid rgba(92, 184, 92, 0.35);
+  box-shadow: 0 12px 36px rgba(30, 60, 28, 0.28);
+  overflow: hidden;
+  animation: prep-bench-popover-in 0.2s ease-out;
+}
+
+@keyframes prep-bench-popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.prep-bench-popover__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(8px * var(--ui-scale, 1));
+  padding: calc(8px * var(--ui-scale, 1)) calc(10px * var(--ui-scale, 1));
+  border-bottom: 1px solid rgba(92, 184, 92, 0.2);
+  flex-shrink: 0;
+}
+
+.prep-bench-popover__title {
+  margin: 0;
+  font-size: var(--font-md);
+  font-weight: 800;
+  color: var(--meadow-ink, var(--text));
+}
+
+.prep-bench-popover__close {
+  flex: 0 0 auto;
+  width: calc(32px * var(--ui-scale, 1));
+  height: calc(32px * var(--ui-scale, 1));
+  padding: 0;
+  border: none;
+  border-radius: calc(8px * var(--ui-scale, 1));
+  background: rgba(92, 184, 92, 0.12);
+  color: var(--meadow-ink-muted, var(--muted));
+  font-size: var(--font-md);
+  cursor: pointer;
+}
+
+.prep-bench-popover__close:hover {
+  background: rgba(92, 184, 92, 0.22);
+  color: var(--meadow-ink, var(--text));
+}
+
+html[data-prep-bench-popover="true"] #prep-bench-popover .bench-panel__title {
+  display: none;
+}
+
+html[data-prep-bench-popover="true"] #prep-bench-popover .bench-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  margin: 0;
+  padding: calc(8px * var(--ui-scale, 1));
+  background: transparent;
+  border: none;
+}
+
+html[data-prep-bench-popover="true"] #prep-bench-popover .bench-panel .bench-slots {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: calc(6px * var(--ui-scale, 1));
+}
+
+html[data-prep-bench-popover="true"] #prep-bench-popover .bench-panel .bench-card {
+  min-height: calc(64px * var(--ui-scale, 1));
+}
+
+html[data-prep-bench-popover="true"] #prep-bench-popover .bench-panel.bench-drop-target {
+  outline: 2px dashed rgba(92, 184, 92, 0.55);
+  outline-offset: -2px;
+  background: rgba(92, 184, 92, 0.08);
+}
+
+html[data-visual-theme="diablo"][data-prep-bench-popover="true"] .prep-bench-popover__panel {
+  background: rgba(14, 12, 10, 0.96);
+  border-color: rgba(192, 57, 43, 0.45);
+}

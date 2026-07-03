@@ -177,6 +177,13 @@
   const PREP_GRID_COLS = 9;
   const PREP_GRID_ROWS = 7;
 
+  /** iPad mini 7 PWA landscape — точечный брейкпоинт (1133×744). */
+  function isIpadMiniPwaLandscape() {
+    const w = Math.round(window.visualViewport?.width ?? window.innerWidth);
+    const h = Math.round(window.visualViewport?.height ?? window.innerHeight);
+    return w === 1133 && h === 744;
+  }
+
   /** iPad / tablet-side prep: крупные ячейки, сетка заполняет колонку поля. */
   function syncTabletSidePrepGridMetrics() {
     const root = document.documentElement;
@@ -195,7 +202,8 @@
 
     const colW = layerWorld?.clientWidth > 0 ? layerWorld.clientWidth : fieldCol.clientWidth;
     const colH = layerWorld?.clientHeight > 0 ? layerWorld.clientHeight : fieldCol.clientHeight;
-    const availW = Math.max(200, colW - pad * 2);
+    const heroReserveW = isIpadMiniPwaLandscape() ? Math.round(colW * 0.2) : 0;
+    const availW = Math.max(200, colW - pad * 2 - heroReserveW);
     const heroOverlapH = Math.round(readCssPx("--tablet-prep-hero-h", 0) * 0.28);
     const availH = Math.max(200, colH - sceneTop - pad - heroOverlapH);
 
@@ -338,10 +346,10 @@
     "tablet-landscape": {
       fitAvailH: PREP_SIDE_CONTENT_H, fitMinScale: SCALE_MIN, fitWidthRatio: 1,
       canvasAvailShare: 0.36, canvasMaxCap: 260,
-      shopRowBase: 72, shopRowMin: 56, shopRowMax: 76,
+      shopRowBase: 64, shopRowMin: 52, shopRowMax: 72,
       heroSlotHeight: "min(54vh, 520px)", heroSlotMax: 560,
       sceneAvatarH: 148, sceneAvatarW: 118, dollSlot: 38, characterGap: 8,
-      shopPanelW: 310,
+      shopPanelW: 248,
     },
     "desktop-portrait": {
       fitAvailH: PREP_STACKED_CONTENT_H, fitMinScale: SCALE_MIN, fitWidthRatio: 1,
@@ -354,10 +362,10 @@
     "desktop-landscape": {
       fitAvailH: PREP_SIDE_CONTENT_H, fitMinScale: SCALE_MIN, fitWidthRatio: 1,
       canvasAvailShare: 0.30, canvasMaxCap: 280,
-      shopRowBase: 74, shopRowMin: 58, shopRowMax: 78,
+      shopRowBase: 66, shopRowMin: 54, shopRowMax: 74,
       heroSlotHeight: "min(54vh, 520px)", heroSlotMax: 560,
       sceneAvatarH: 152, sceneAvatarW: 120, dollSlot: 38, characterGap: 8,
-      shopPanelW: 320,
+      shopPanelW: 272,
     },
   };
 
@@ -822,6 +830,50 @@
     }
     root.style.setProperty("--class-mobile-dock-h", `${dockH}px`);
     root.style.removeProperty("--class-modal-scroll-max-h");
+    warnClassIntroViewportOverflow();
+  }
+
+  let classIntroOverflowWarned = false;
+
+  /** localStorage bb-intro-overflow-debug=1 — предупреждение в консоли при переполнении intro. */
+  function warnClassIntroViewportOverflow() {
+    if (!isClassOverlayOpen()) {
+      classIntroOverflowWarned = false;
+      return;
+    }
+    let debug = false;
+    try {
+      debug = localStorage.getItem("bb-intro-overflow-debug") === "1"
+        || new URLSearchParams(window.location.search).has("bbIntroOverflow");
+    } catch {
+      debug = false;
+    }
+    if (!debug) return;
+
+    const modal = document.querySelector("#class-overlay:not(.hidden) .class-modal");
+    const playerStep = document.getElementById("class-step-player");
+    if (!modal) return;
+
+    const modalOverflow = modal.scrollHeight - modal.clientHeight;
+    const stepOverflow = playerStep && !playerStep.classList.contains("hidden")
+      ? playerStep.scrollHeight - playerStep.clientHeight
+      : 0;
+    const worst = Math.max(modalOverflow, stepOverflow);
+    if (worst <= 2) {
+      classIntroOverflowWarned = false;
+      return;
+    }
+    if (classIntroOverflowWarned) return;
+    classIntroOverflowWarned = true;
+    console.warn("[class-intro] viewport overflow", {
+      modalPx: Math.round(modalOverflow),
+      playerStepPx: Math.round(stepOverflow),
+      modal: { scrollHeight: modal.scrollHeight, clientHeight: modal.clientHeight },
+      playerStep: playerStep
+        ? { scrollHeight: playerStep.scrollHeight, clientHeight: playerStep.clientHeight }
+        : null,
+      step: document.getElementById("class-overlay")?.dataset?.classIntroStep,
+    });
   }
 
   function isTabletLandscapeSideBattle(root = document.documentElement) {
@@ -1173,6 +1225,63 @@
   /** @deprecated alias — используйте syncMobileOverlayAnchors */
   function syncPrepMobileZoneAnchors(zones) {
     syncMobileOverlayAnchors(zones);
+  }
+
+  function syncPrepBenchPopoverMode(prepLayout) {
+    const root = document.documentElement;
+    const surface = root.dataset.uiSurface;
+    const drawer = root.dataset.prepShopDrawer === "true";
+    const use = prepLayout === "side"
+      && !drawer
+      && (surface === "tablet-side" || surface === "desktop");
+    if (use) {
+      root.dataset.prepBenchPopover = "true";
+    } else {
+      root.removeAttribute("data-prep-bench-popover");
+    }
+    if (typeof window.syncPrepBenchFabBadge === "function") {
+      window.syncPrepBenchFabBadge();
+    }
+    if (typeof window.syncBenchMount === "function") {
+      window.syncBenchMount();
+    }
+  }
+
+  function syncPrepBenchFabPosition() {
+    const root = document.documentElement;
+    if (root.dataset.prepBenchPopover !== "true") return;
+    if (document.getElementById("app")?.dataset.phase !== "prep") return;
+
+    const shop = document.getElementById("shop-panel");
+    const chrome = getBottomChrome();
+    const shopRect = shop?.getBoundingClientRect();
+    const uiScale = readCssPx("--ui-scale", 1);
+    const fabSize = Math.round(readCssPx("--prep-bench-fab-size", 44 * uiScale));
+    const gap = Math.round(6 * uiScale);
+
+    if (shopRect && shopRect.width > 8) {
+      root.style.setProperty(
+        "--prep-bench-fab-right",
+        `${Math.round(window.innerWidth - shopRect.left + gap)}px`,
+      );
+    } else {
+      root.style.setProperty(
+        "--prep-bench-fab-right",
+        `calc(var(--shop-panel-w, 248px) + ${gap}px)`,
+      );
+    }
+
+    const vh = window.visualViewport?.height ?? window.innerHeight;
+    if (chrome && getComputedStyle(chrome).display !== "none") {
+      const chromeTop = chrome.getBoundingClientRect().top;
+      root.style.setProperty("--prep-bench-fab-bottom", `${Math.max(gap, Math.round(vh - chromeTop + gap))}px`);
+    } else {
+      root.style.setProperty("--prep-bench-fab-bottom", `${Math.round(72 * uiScale)}px`);
+    }
+
+    const fabBottom = readCssPx("--prep-bench-fab-bottom", 80);
+    root.style.setProperty("--prep-bench-popover-bottom", `${Math.round(fabBottom + fabSize + gap)}px`);
+    root.style.setProperty("--prep-bench-fab-size", `${fabSize}px`);
   }
 
   function syncMobileShopFabPosition() {
@@ -2284,7 +2393,11 @@
           const heroOverlapH = Math.round(heroH * 0.28);
           const maxH = Math.max(160, fitH - sceneTop - pad - heroOverlapH);
           const scale = Math.min(fitW / canvas.width, maxH / canvas.height);
-          const finalScale = Math.min(Math.max(scale, 0.9), 1.06);
+          const ipadMini = isIpadMiniPwaLandscape();
+          const finalScale = Math.min(
+            Math.max(scale, ipadMini ? 0.88 : 0.9),
+            ipadMini ? 0.96 : 1.06,
+          );
           const w = Math.max(1, Math.floor(canvas.width * finalScale));
           const ch = Math.max(1, Math.floor(canvas.height * finalScale));
           root.style.setProperty("--prep-canvas-display-w", `${w}px`);
@@ -2577,6 +2690,7 @@
     clamped = applyPrepLayoutFit(w, h, prepLayout, preFitScale, touchDev, layoutProfile);
     clamped = applyIntroUiScaleFloor(clamped, layoutProfile);
     applyPrepProfileVars(layoutProfile, clamped);
+    syncPrepBenchPopoverMode(prepLayout);
 
     const typeScale = computeTypeScale(clamped, layoutProfile);
     document.documentElement.style.setProperty("--type-scale", String(typeScale));
@@ -2650,6 +2764,7 @@
 
     scheduleCanvasFit();
     syncMobileShopFabPosition();
+    syncPrepBenchFabPosition();
     syncPrepHeroSlotHeight();
     ensurePrepHeroCardPortraitObserver();
     syncPrepHeroCardPortraitSize();
@@ -2765,6 +2880,7 @@
   window.fitPrepCanvasToStage = fitCanvasDisplaySize;
   window.scheduleCanvasFit = scheduleCanvasFit;
   window.syncMobileShopFabPosition = syncMobileShopFabPosition;
+  window.syncPrepBenchFabPosition = syncPrepBenchFabPosition;
   window.syncTabletPortraitShopRows = syncTabletPortraitShopRows;
   window.syncMobileOverlayAnchors = syncMobileOverlayAnchors;
   window.syncPrepMobileZoneAnchors = syncPrepMobileZoneAnchors;

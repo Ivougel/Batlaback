@@ -171,6 +171,11 @@
 
   /* ─── Шаг выбора героя ─── */
 
+  html:not([data-prep-layout="mobile"]) #class-overlay #class-step-player:not(.hidden) .class-grid {
+    min-height: 0;
+    flex: 1 1 0;
+  }
+
   html:not([data-prep-layout="mobile"]) #class-overlay .class-modal .class-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: clamp(14px, 1.8vh, 22px);

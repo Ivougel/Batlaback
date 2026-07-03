@@ -78,6 +78,24 @@ const PrepDragArc = (() => {
     return Math.min(vv?.width ?? window.innerWidth, vv?.height ?? window.innerHeight);
   }
 
+  /** clientX/Y (layout viewport) → координаты SVG-слоя с учётом visualViewport offset. */
+  function clientToLayer(clientX, clientY) {
+    const vv = window.visualViewport;
+    const ox = vv?.offsetLeft ?? 0;
+    const oy = vv?.offsetTop ?? 0;
+    return {
+      x: (Number(clientX) || 0) - ox,
+      y: (Number(clientY) || 0) - oy,
+    };
+  }
+
+  function layerToClient(layerX, layerY) {
+    const vv = window.visualViewport;
+    const ox = vv?.offsetLeft ?? 0;
+    const oy = vv?.offsetTop ?? 0;
+    return { x: layerX + ox, y: layerY + oy };
+  }
+
   function easeInOutSine(t) {
     return -(Math.cos(Math.PI * t) - 1) / 2;
   }
@@ -597,6 +615,7 @@ const PrepDragArc = (() => {
     if (typeof dragFrom === "undefined" || !dragFrom) return false;
     return dragFrom.type === "shop"
       || dragFrom.type === "bench"
+      || dragFrom.type === "enhancement"
       || dragFrom.type === "item"
       || dragFrom.type === "container";
   }
@@ -609,12 +628,15 @@ const PrepDragArc = (() => {
     if (!isPrepArcPhase()) return;
     active = true;
     celebrating = false;
-    fromX = fx;
-    fromY = fy;
+    const fromPt = clientToLayer(fx, fy);
+    fromX = fromPt.x;
+    fromY = fromPt.y;
     itemId = id || (typeof dragPayload !== "undefined" ? dragPayload?.itemId : null);
     dropState = "neutral";
-    lastTargetX = fx;
-    lastTargetY = fy;
+    lastTargetX = fromPt.x;
+    lastTargetY = fromPt.y;
+    lastPointerX = fromPt.x;
+    lastPointerY = fromPt.y;
     lastProgress = 0;
     lastRotation = 0;
     smoothTo = null;
@@ -632,16 +654,22 @@ const PrepDragArc = (() => {
   }
 
   function resolveGhostPosition(clientX, clientY, targetX, targetY) {
-    if (!active) return { x: targetX, y: targetY, rotation: 0, progress: 1 };
+    if (!active) {
+      const target = clientToLayer(targetX, targetY);
+      const clientTarget = layerToClient(target.x, target.y);
+      return { x: clientTarget.x, y: clientTarget.y, rotation: 0, progress: 1 };
+    }
 
-    const geom = getSmoothedGeometry(targetX, targetY, 0.14);
+    const pointer = clientToLayer(clientX, clientY);
+    const targetPt = clientToLayer(targetX, targetY);
+    const geom = getSmoothedGeometry(targetPt.x, targetPt.y, 0.14);
     const from = geom.from;
     const to = geom.to;
-    const pointer = { x: clientX, y: clientY };
     const span = Math.hypot(to.x - from.x, to.y - from.y);
 
     if (span < MIN_SPAN_PX) {
-      return { x: targetX, y: targetY, rotation: 0, progress: 1 };
+      const clientTarget = layerToClient(targetPt.x, targetPt.y);
+      return { x: clientTarget.x, y: clientTarget.y, rotation: 0, progress: 1 };
     }
 
     const progress = easeInOutSine(arcProgress(from, to, pointer));
@@ -649,33 +677,36 @@ const PrepDragArc = (() => {
     const ptNext = sampleArc(geom, Math.min(1, progress + 0.025));
     const rotation = Math.atan2(ptNext.y - pt.y, ptNext.x - pt.x) * (180 / Math.PI);
 
-    lastTargetX = targetX;
-    lastTargetY = targetY;
+    lastTargetX = targetPt.x;
+    lastTargetY = targetPt.y;
     lastProgress = progress;
     lastRotation = rotation;
 
-    return { x: pt.x, y: pt.y, rotation, progress };
+    const clientPt = layerToClient(pt.x, pt.y);
+    return { x: clientPt.x, y: clientPt.y, rotation, progress };
   }
 
   function sync(clientX, clientY, targetX, targetY, opts = {}) {
     if (!active) return;
-    lastPointerX = clientX;
-    lastPointerY = clientY;
+    const pointer = clientToLayer(clientX, clientY);
+    const target = clientToLayer(targetX, targetY);
+    lastPointerX = pointer.x;
+    lastPointerY = pointer.y;
     lastGrabAtPointer = !!opts.grabAtPointer;
     lastRemoteHold = !!opts.remoteHold;
     if (opts.linkPoint) {
-      lastLinkPoint = { x: opts.linkPoint.x, y: opts.linkPoint.y };
+      const linkPt = clientToLayer(opts.linkPoint.x, opts.linkPoint.y);
+      lastLinkPoint = { x: linkPt.x, y: linkPt.y };
     } else {
       lastLinkPoint = null;
     }
     if (opts.dropState) dropState = opts.dropState;
     if (opts.itemId) itemId = opts.itemId;
 
-    const geom = getSmoothedGeometry(targetX, targetY, 0.14);
+    const geom = getSmoothedGeometry(target.x, target.y, 0.14);
     if (lastRemoteHold) {
-      const pointer = { x: clientX, y: clientY };
-      lastTargetX = targetX;
-      lastTargetY = targetY;
+      lastTargetX = target.x;
+      lastTargetY = target.y;
       lastProgress = easeInOutSine(arcProgress(geom.from, geom.to, pointer));
       if (lastLinkPoint) pushTrailPoint(lastLinkPoint.x, lastLinkPoint.y);
     } else {
@@ -690,11 +721,12 @@ const PrepDragArc = (() => {
     celebrating = true;
     active = false;
     if (x != null && y != null) {
-      lastTargetX = x;
-      lastTargetY = y;
+      const pt = clientToLayer(x, y);
+      lastTargetX = pt.x;
+      lastTargetY = pt.y;
       if (burstEl) {
-        burstEl.setAttribute("cx", String(x));
-        burstEl.setAttribute("cy", String(y));
+        burstEl.setAttribute("cx", String(pt.x));
+        burstEl.setAttribute("cy", String(pt.y));
       }
     }
     burstT = 0.28;

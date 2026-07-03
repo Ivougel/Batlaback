@@ -3,6 +3,30 @@
  * Layout — общий; цвета: meadow (default) vs diablo.
  */
 
+.prep-companion-tip {
+  display: inline;
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  line-height: inherit;
+  color: inherit;
+  cursor: help;
+  vertical-align: baseline;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+  text-align: inherit;
+}
+
+.prep-companion-tip:focus-visible {
+  outline: 2px solid rgba(88, 166, 255, 0.55);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 html:is([data-prep-layout="side"], [data-ui-surface="tablet-side"], [data-ui-surface="desktop"]) #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-top-bar {
   --prep-top-bar-h: auto;
   align-items: stretch;
@@ -90,6 +114,12 @@ html[data-ui-surface="tablet-side"] #app:is([data-phase="prep"], [data-prep-hero
     calc(4px * var(--ui-scale, 1))
     calc(10px * var(--ui-scale, 1));
   pointer-events: none;
+}
+
+html:is([data-prep-layout="side"], [data-ui-surface="tablet-side"], [data-ui-surface="desktop"]) #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-hero-card__stats-row .prep-stats-row--companion,
+html[data-prep-layout="side"] #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-hero-card__stats-row .prep-stats-row--companion,
+html[data-ui-surface="tablet-side"] #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-hero-card__stats-row .prep-stats-row--companion {
+  pointer-events: auto;
 }
 
 html:is([data-prep-layout="side"], [data-ui-surface="tablet-side"], [data-ui-surface="desktop"]) #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-hero-card__stats-row .prep-hero-card__build-slot--hud-inline,

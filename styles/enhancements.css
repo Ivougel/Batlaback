@@ -27,6 +27,14 @@
   flex: 1 1 auto;
 }
 
+.prep-enhancement-slots .enh-slot--filled {
+  cursor: grab;
+}
+
+.prep-enhancement-slots .enh-slot--filled:active {
+  cursor: grabbing;
+}
+
 .enh-slot {
   flex: 1 1 72px;
   min-width: calc(68px * var(--ui-scale));

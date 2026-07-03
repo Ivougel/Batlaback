@@ -99,6 +99,7 @@ html[data-ui-compact="true"] .modal h2 {
   }
 
   .recipe-book-body,
+  .settings-body,
   #battle-result-accordions,
   #run-complete-accordions,
   .battle-detail-modal .battle-detail-body,

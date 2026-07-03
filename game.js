@@ -170,6 +170,8 @@ let runItemStats = createEmptyRunItemStats();
 let battleEndHandled = false;
 let pendingShopDrag = null;
 let pendingBenchDrag = null;
+let pendingEnhancementDrag = null;
+let enhancementSlotDidDrag = false;
 let pendingCanvasPick = null;
 let shopDidDrag = false;
 let lastTouchEventAt = 0;
@@ -1050,9 +1052,134 @@ function bindPrepEnhancementStrip(side = prepViewSide) {
   if (!strip) return;
   strip.querySelectorAll(".enh-slot--filled").forEach((slotEl) => {
     const enhId = slotEl.dataset.enhId;
-    if (!enhId) return;
+    const slotId = slotEl.dataset.enhSlot;
+    if (!enhId || !slotId) return;
     bindEnhancementTooltipEvents(slotEl, enhId, "enhancement");
+    if (!canEditPrepSide(side)) return;
+    if (slotEl.dataset.enhInteractBound === "1") return;
+    slotEl.dataset.enhInteractBound = "1";
+
+    slotEl.addEventListener("click", () => {
+      if (!canEditPrepSide(side) || dragPayload) return;
+      if (enhancementSlotDidDrag) {
+        enhancementSlotDidDrag = false;
+        return;
+      }
+      if (unequipEnhancementSlotToBench(slotId, side)) {
+        renderBench(side);
+        recalcSynergies();
+        updateUI();
+      }
+    });
+
+    slotEl.addEventListener("pointerdown", (e) => {
+      if (e.pointerType !== "mouse") return;
+      if (!canEditPrepSide(side) || e.button !== 0) return;
+      if (isSyntheticMouseFromTouch()) return;
+      e.stopPropagation();
+      try { slotEl.setPointerCapture(e.pointerId); } catch (_) {}
+      startEnhancementSlotDrag(slotId, e, side);
+    });
+
+    slotEl.addEventListener("pointerup", (e) => {
+      if (e.pointerType !== "mouse" || e.button !== 0) return;
+      try { slotEl.releasePointerCapture(e.pointerId); } catch (_) {}
+    });
   });
+}
+
+function findEnhancementLoadoutItem(slotId, side = prepViewSide) {
+  if (typeof findLoadoutItemForEnhancementSlot !== "function") return null;
+  const st = getSideState(side);
+  return findLoadoutItemForEnhancementSlot(st.items, slotId);
+}
+
+function unequipEnhancementSlotToBench(slotId, side = prepViewSide) {
+  if (!canEditPrepSide(side)) return false;
+  const item = findEnhancementLoadoutItem(slotId, side);
+  if (!item || typeof removeLoadoutItemToBench !== "function") return false;
+  const ok = removeLoadoutItemToBench(item.uid, side);
+  if (!ok) return false;
+  syncEnhancementsForSide(side);
+  syncTdTowerFromLoadoutState(getSideState(side), side);
+  const enhDef = typeof getEnhancementDef === "function"
+    ? getEnhancementDef(getEnhancementIdFromItem(item.itemId))
+    : null;
+  log(`📦 ${enhDef?.name || item.itemId} → скамейка`);
+  playPrepSfx("prep_pickup");
+  return true;
+}
+
+function startEnhancementSlotDrag(slotId, e, side = prepViewSide) {
+  if (!isLoadoutInteractionPhase() || gameOver || !canEditPrepSide(side)) return;
+  const st = getLoadoutEditState(side);
+  const item = findEnhancementLoadoutItem(slotId, side);
+  if (!item) return;
+  if (e?.preventDefault) e.preventDefault();
+  clearTouchTapGesture();
+  hideSidebarTooltip();
+  selectedBench = -1;
+  enhancementSlotDidDrag = true;
+  dragPayload = { itemId: item.itemId, rotation: item.rotation || 0 };
+  dragFrom = { type: "enhancement", item, side, slotId };
+  st.items = st.items.filter((i) => i.uid !== item.uid);
+  syncTdTowerFromLoadoutState(st, side);
+  prepSidebarDragUnlocked = false;
+  prepSidebarStickyHover = null;
+  const slotEl = e?.currentTarget || document.querySelector(`.enh-slot--filled[data-enh-slot="${slotId}"]`);
+  if (slotEl && e?.pointerId != null) {
+    try { slotEl.setPointerCapture(e.pointerId); } catch (_) {}
+  }
+  if (typeof beginPrepDragArcFromCard === "function" && slotEl) {
+    beginPrepDragArcFromCard(slotEl, item.itemId);
+  } else if (typeof beginPrepDragArcFromBackpack === "function") {
+    beginPrepDragArcFromBackpack(item.col, item.row, side);
+  }
+  startSynergyPreview();
+  recalcSynergies();
+  syncUiDragState();
+  if (typeof onPrepDragStart === "function") onPrepDragStart();
+  if (e?.clientX != null && e?.clientY != null) {
+    lastPointerClient.x = e.clientX;
+    lastPointerClient.y = e.clientY;
+    syncPrepDragBoardHover(e.clientX, e.clientY, e.clientX, e.clientY);
+  }
+  syncDragGhostOverlay(lastPointerClient.x, lastPointerClient.y);
+}
+
+function beginPendingEnhancementDrag(slotId, e, side = prepViewSide) {
+  if (phase !== "prep" || gameOver || !canEditPrepSide(side)) return;
+  if (!findEnhancementLoadoutItem(slotId, side)) return;
+  pendingEnhancementDrag = { slotId, startX: e.clientX, startY: e.clientY, side };
+  syncUiDragState();
+}
+
+function updatePendingEnhancementDrag(e) {
+  if (!pendingEnhancementDrag || dragPayload) return;
+  const dx = e.clientX - pendingEnhancementDrag.startX;
+  const dy = e.clientY - pendingEnhancementDrag.startY;
+  if (Math.hypot(dx, dy) < getPrepDragCommitThresholdPx()) return;
+  const { slotId, side } = pendingEnhancementDrag;
+  pendingEnhancementDrag = null;
+  clearTouchTapGesture();
+  hideSidebarTooltip();
+  const slotEl = document.querySelector(`.enh-slot--filled[data-enh-slot="${slotId}"]`);
+  startEnhancementSlotDrag(slotId, { ...e, currentTarget: slotEl }, side);
+}
+
+function tryUnequipEnhancementFromPendingDrag(clientX, clientY) {
+  if (!pendingEnhancementDrag || dragPayload) return false;
+  const dx = clientX - pendingEnhancementDrag.startX;
+  const dy = clientY - pendingEnhancementDrag.startY;
+  if (Math.hypot(dx, dy) >= getPrepDragCommitThresholdPx()) return false;
+  const { slotId, side } = pendingEnhancementDrag;
+  pendingEnhancementDrag = null;
+  syncUiDragState();
+  if (!unequipEnhancementSlotToBench(slotId, side)) return false;
+  renderBench(side);
+  recalcSynergies();
+  updateUI();
+  return true;
 }
 
 function getSideMutationRuntime(side = "player") {
@@ -1168,8 +1295,48 @@ function showCompanionTooltipAt(clientX, clientY, companionId, sourceEl = null, 
   el.innerHTML = renderTooltipLinesHtml(buildCompanionTooltipLines(companionId));
   el.style.borderColor = sourceEl?.classList.contains("selected") ? "#f5c842" : "#30363d";
   el.classList.remove("hidden");
-  document.getElementById("prep-tooltip-dock")?.classList.add("hidden");
+  syncPrepTooltipDockVisibility();
   positionSidebarTooltip(clientX, clientY, "viewport", "companion");
+}
+
+function renderPrepCompanionLabelHtml(companion) {
+  if (!companion) return "—";
+  const safeName = typeof escapeClassHtml === "function"
+    ? escapeClassHtml(companion.name)
+    : companion.name;
+  return `<button type="button" class="prep-companion-tip" data-companion-id="${companion.id}" aria-label="Спутник: ${safeName}">${companion.emoji} ${safeName}</button>`;
+}
+
+function bindPrepCompanionTooltip(root = document) {
+  root.querySelectorAll(".prep-companion-tip[data-companion-id]").forEach((btn) => {
+    if (btn.dataset.companionTipBound === "1") return;
+    btn.dataset.companionTipBound = "1";
+    const companionId = btn.dataset.companionId;
+    const showAt = (clientX, clientY, pinned = false) => {
+      if (!prepTooltipsEnabled) return;
+      showCompanionTooltipAt(clientX, clientY, companionId, btn, { pinned });
+    };
+
+    if (typeof bindPointerTapTooltip === "function") {
+      bindPointerTapTooltip(btn, (clientX, clientY) => showAt(clientX, clientY, true));
+    }
+    btn.addEventListener("mouseenter", (e) => {
+      if (isSyntheticMouseFromTouch()) return;
+      if (!prepTooltipsEnabled) return;
+      cancelScheduledTooltipHide();
+      showAt(e.clientX, e.clientY, false);
+    });
+    btn.addEventListener("mousemove", (e) => {
+      if (isSyntheticMouseFromTouch()) return;
+      if (sidebarTooltipSource !== "companion") return;
+      positionSidebarTooltip(e.clientX, e.clientY, "viewport", "companion");
+    });
+    btn.addEventListener("mouseleave", () => {
+      if (sidebarTooltipPinned || sidebarTooltipSource !== "companion") return;
+      requestHideSidebarTooltip();
+    });
+    btn.style.cursor = "help";
+  });
 }
 
 function bindCompanionCardTooltips() {
@@ -1838,6 +2005,9 @@ function selectPlayerClass(classId) {
     return;
   }
   syncClassOverlayUi();
+  if (typeof window.syncClassOverlayAnchors === "function") {
+    requestAnimationFrame(() => window.syncClassOverlayAnchors());
+  }
   syncClassMobileDock();
   updateStartRunButton();
 }
@@ -1968,6 +2138,7 @@ function hideSidebarTooltip() {
     el.classList.add("hidden");
     el.classList.remove("combat-feed-hint-tooltip", "sidebar-tooltip--floating");
   }
+  setPrepTooltipDockPassthrough(false);
   syncPrepTooltipDockVisibility();
   fieldTooltipVisible = false;
   if (wasCombatFeed) {
@@ -1982,27 +2153,43 @@ function isMobilePrepPortrait() {
   return document.documentElement.dataset.prepLayout === "mobile" && phase === "prep";
 }
 
+function setPrepTooltipDockPassthrough(active) {
+  const dock = document.getElementById("prep-tooltip-dock");
+  if (!dock) return;
+  dock.classList.toggle("prep-tooltip-dock--passthrough", !!active);
+  if (active) dock.classList.remove("hidden");
+}
+
 function syncPrepTooltipDockVisibility() {
   const el = document.getElementById("sidebar-tooltip");
   const dock = document.getElementById("prep-tooltip-dock");
   if (!dock) return;
 
   if (phase !== "prep") {
-    dock.classList.remove("hidden");
+    dock.classList.remove("hidden", "prep-tooltip-dock--passthrough");
     return;
   }
 
   if (isMobilePrepPortrait()) {
     const hasItemTip = el && !el.classList.contains("hidden");
+    dock.classList.remove("prep-tooltip-dock--passthrough");
     dock.classList.toggle("hidden", !hasItemTip);
     dock.classList.toggle("prep-tooltip-dock--item", hasItemTip);
     if (hasItemTip) positionPrepTooltipDock();
     return;
   }
 
-  dock?.classList.remove("prep-tooltip-dock--item");
+  dock.classList.remove("prep-tooltip-dock--item");
 
   if (!el) return;
+
+  if (el.classList.contains("sidebar-tooltip--floating")) {
+    dock.classList.remove("hidden");
+    dock.classList.add("prep-tooltip-dock--passthrough");
+    return;
+  }
+
+  dock.classList.remove("prep-tooltip-dock--passthrough");
   dock.classList.toggle("hidden", el.classList.contains("hidden"));
 }
 
@@ -2177,7 +2364,7 @@ function dismissSidebarTooltipFromPointer(e) {
   if (!isSidebarTooltipVisible()) return false;
   tooltipDismissGesture = {
     pointerId: e?.pointerId ?? null,
-    sourceEl: e?.target?.closest?.(".shop-card, .bench-card, .doll-slot, .profile-avatar, .combat-feed-msg-text--hinted, .profile-status-chip, .profile-stack-chip") || null,
+    sourceEl: e?.target?.closest?.(".shop-card, .bench-card, .doll-slot, .profile-avatar, .combat-feed-msg-text--hinted, .profile-status-chip, .profile-stack-chip, .prep-companion-tip, .enh-slot") || null,
   };
   hideSidebarTooltip();
   tooltipItem = null;
@@ -2283,6 +2470,7 @@ function bindTouchInput() {
     if (tapHandled && !dragPayload) {
       pendingShopDrag = null;
       pendingBenchDrag = null;
+      pendingEnhancementDrag = null;
       pendingCanvasPick = null;
       syncUiDragState();
       activeGesture = null;
@@ -2379,7 +2567,7 @@ function bindPrepLoadoutDragPointer() {
   if (bindPrepLoadoutDragPointer._done) return;
   bindPrepLoadoutDragPointer._done = true;
 
-  const isActiveDrag = () => !!(dragPayload || pendingShopDrag);
+  const isActiveDrag = () => !!(dragPayload || pendingShopDrag || pendingBenchDrag || pendingEnhancementDrag);
 
   const onMove = (e) => {
     if (!isLoadoutInteractionPhase() || !isActiveDrag()) return;
@@ -3471,8 +3659,13 @@ function closeNestedPopups() {
     closed = true;
   }
 
-  if (typeof isBattleInventoryPopoverOpen === "function" && isBattleInventoryPopoverOpen()) {
+  if (isBattleInventoryPopoverOpen()) {
     closeBattleInventoryPopover();
+    closed = true;
+  }
+
+  if (typeof window.isPrepBenchPopoverOpen === "function" && window.isPrepBenchPopoverOpen()) {
+    window.closePrepBenchPopover?.();
     closed = true;
   }
 
@@ -3689,7 +3882,7 @@ function sellDraggedItem(side = prepViewSide) {
   if (dragFrom.type === "bench") {
     return sellBenchEntry(dragFrom.index, side);
   }
-  if (dragFrom.type === "item") {
+  if (dragFrom.type === "item" || dragFrom.type === "enhancement") {
     creditItemSale(dragFrom.item.itemId, side);
     return true;
   }
@@ -3800,7 +3993,7 @@ function handleGlobalKeydown(e) {
 function restoreDraggedItem(side = prepViewSide) {
   if (!dragFrom) return;
   const st = getLoadoutEditState(side);
-  if (dragFrom.type === "item") {
+  if (dragFrom.type === "item" || dragFrom.type === "enhancement") {
     st.items = [...st.items, dragFrom.item];
   } else if (dragFrom.type === "container") {
     st.containers = [...st.containers, dragFrom.container];
@@ -3816,8 +4009,11 @@ function restoreDraggedItem(side = prepViewSide) {
 }
 
 function syncUiDragState() {
-  document.body.classList.toggle("is-ui-dragging", !!(dragPayload || pendingShopDrag || pendingBenchDrag));
-  if (dragPayload || pendingShopDrag || pendingBenchDrag) {
+  document.body.classList.toggle(
+    "is-ui-dragging",
+    !!(dragPayload || pendingShopDrag || pendingBenchDrag || pendingEnhancementDrag),
+  );
+  if (dragPayload || pendingShopDrag || pendingBenchDrag || pendingEnhancementDrag) {
     tooltipItem = null;
     hideSidebarTooltip();
   }
@@ -3845,14 +4041,16 @@ function applyCraftingForSide(side = prepViewSide) {
 }
 
 function notifyPrepDragRejectedFromDragFrom() {
-  if (dragFrom?.type === "item" && dragFrom.item) {
+  if ((dragFrom?.type === "item" || dragFrom?.type === "enhancement") && dragFrom.item) {
     notifyPrepPlacementRejected(dragFrom.item);
     return;
   }
   if (dragPayload?.itemId && typeof getEnhancementPlacementBlockReason === "function") {
     const side = dragFrom?.side || prepViewSide;
     const st = getSideState(side);
-    const excludeUid = dragFrom?.type === "item" ? dragFrom.item?.uid : null;
+    const excludeUid = (dragFrom?.type === "item" || dragFrom?.type === "enhancement")
+      ? dragFrom.item?.uid
+      : null;
     const reason = getEnhancementPlacementBlockReason(dragPayload.itemId, st.items, excludeUid);
     if (reason) log(reason);
   }
@@ -3862,10 +4060,19 @@ function isPrepBackpackArcDrag() {
   return dragFrom?.type === "item" || dragFrom?.type === "container";
 }
 
+function isPrepEnhancementStripDrag() {
+  return dragFrom?.type === "enhancement";
+}
+
+function isPrepLoadoutItemDrag() {
+  return dragFrom?.type === "item" || dragFrom?.type === "enhancement";
+}
+
 function isPrepArcDragSource() {
   if (!dragFrom) return false;
   return dragFrom.type === "shop"
     || dragFrom.type === "bench"
+    || dragFrom.type === "enhancement"
     || dragFrom.type === "item"
     || dragFrom.type === "container";
 }
@@ -3925,7 +4132,7 @@ function isPrepArcPlaceableCell(col, row) {
   }
 
   if (!isSlotCell(st.containers, col, row)) return false;
-  const excludeUid = dragFrom?.type === "item" ? dragFrom.item?.uid : null;
+  const excludeUid = isPrepLoadoutItemDrag() ? dragFrom.item?.uid : null;
   const placement = resolveLoadoutPlacementDisplacing(
     st.containers,
     dragPayload.itemId,
@@ -4087,7 +4294,9 @@ function applyPrepBoardHoverFromNearestPlaceable(mx, my, side, st) {
 }
 
 function isPrepSidebarArcDrag() {
-  return dragFrom?.type === "shop" || dragFrom?.type === "bench";
+  return dragFrom?.type === "shop"
+    || dragFrom?.type === "bench"
+    || dragFrom?.type === "enhancement";
 }
 
 /** TD build panel: дуга магазин→рюкзак без ✊ и «луча» remote-hold (ломается на iPad). */
@@ -4207,7 +4416,9 @@ function getPrepSidebarDragMapRect() {
     : document.getElementById("shop-panel"))?.getBoundingClientRect();
   const bench = isTdLoadoutEditPhase()
     ? null
-    : document.getElementById("bench-panel")?.getBoundingClientRect();
+    : (typeof usesPrepBenchPopover === "function" && usesPrepBenchPopover()
+      ? document.getElementById("btn-prep-bench-fab")?.getBoundingClientRect()
+      : document.getElementById("bench-panel")?.getBoundingClientRect());
 
   if (isTdLoadoutEditPhase()) {
     const tdMap = getTdPrepDragMapRect(backpack, shop);
@@ -4332,6 +4543,15 @@ function getPrepSidebarLinkTargetClient() {
 }
 
 function syncPrepSidebarBoardHover(clientX, clientY, side, st) {
+  if (isPrepEnhancementStripDrag()) {
+    const pointer = createSyntheticPointerEvent(clientX, clientY);
+    if (isDropOnBench(pointer) || isDropOnSell(pointer)) {
+      prepDropPreviewHover = null;
+      hoverCell = null;
+      hoverSlot = null;
+      return false;
+    }
+  }
   const inShopBounds = isPointerInsideShopDrawerBounds(clientX, clientY);
   if (!prepSidebarDragUnlocked && inShopBounds) {
     prepDropPreviewHover = null;
@@ -4568,7 +4788,7 @@ function getPrepDropPlacement(st, side = prepViewSide) {
     && findItemAtSlot(st.items, col, row)) {
     if (typeof isGemItem === "function" && isGemItem(dragPayload.itemId)
       && typeof findSocketHostAt === "function") {
-      const excludeUid = dragFrom?.type === "item" ? dragFrom.item?.uid : null;
+      const excludeUid = isPrepLoadoutItemDrag() ? dragFrom.item?.uid : null;
       const host = findSocketHostAt(st.items, col, row, dragPayload.itemId, excludeUid);
       if (host) {
         return {
@@ -4674,6 +4894,15 @@ function getPrepArcDropState() {
   const st = getLoadoutEditState(side);
 
   if (isPrepSidebarArcDrag()) {
+    if (isPrepEnhancementStripDrag()) {
+      const pointer = createSyntheticPointerEvent(lastPointerClient.x, lastPointerClient.y);
+      if (isDropOnBench(pointer)) {
+        return st.bench.length < MAX_BENCH ? "valid" : "invalid";
+      }
+      if (isDropOnSell(pointer)) {
+        return "valid";
+      }
+    }
     const placement = getPrepDropPlacement(st, side);
     if (!placement) return "neutral";
     return placement.valid ? "valid" : "invalid";
@@ -4720,7 +4949,7 @@ function getPrepArcDropState() {
   }
 
   if (!isContainerItem(dragPayload.itemId) && hoverSlot) {
-    const excludeUid = dragFrom?.type === "item" ? dragFrom.item?.uid : null;
+    const excludeUid = isPrepLoadoutItemDrag() ? dragFrom.item?.uid : null;
     const placement = resolveLoadoutPlacementDisplacing(
       st.containers,
       dragPayload.itemId,
@@ -4759,12 +4988,14 @@ function clearDragUiState() {
   document.querySelectorAll(".shop-card.shop-dragging, .td-build-shop-card.shop-dragging").forEach((el) => el.classList.remove("shop-dragging"));
   pendingShopDrag = null;
   pendingBenchDrag = null;
+  pendingEnhancementDrag = null;
   pendingCanvasPick = null;
   shopDidDrag = false;
   endSynergyPreview();
   synergyPreviewBuilt = null;
   canvas?.classList.remove("synergy-preview-mode");
   document.getElementById("bench-panel")?.classList.remove("bench-drop-target");
+  document.getElementById("btn-prep-bench-fab")?.classList.remove("bench-drop-target");
   document.getElementById("shop-sell-zone")?.classList.remove("sell-drop-target");
   dragPayload = null;
   dragFrom = null;
@@ -6982,8 +7213,34 @@ function isDropOnSell(e) {
 }
 
 function isDropOnBench(e) {
+  if (!e) return false;
+  const pad = isTouchUi() ? 14 : 0;
+
+  if (typeof usesPrepBenchPopover === "function" && usesPrepBenchPopover()) {
+    const fab = document.getElementById("btn-prep-bench-fab");
+    if (fab && !fab.hidden) {
+      if (e.target?.closest?.("#btn-prep-bench-fab, #prep-bench-popover")) {
+        if (typeof openPrepBenchPopover === "function") openPrepBenchPopover();
+        return true;
+      }
+      const fr = fab.getBoundingClientRect();
+      if (fr.width > 0
+        && e.clientX >= fr.left - pad && e.clientX <= fr.right + pad
+        && e.clientY >= fr.top - pad && e.clientY <= fr.bottom + pad) {
+        if (typeof openPrepBenchPopover === "function") openPrepBenchPopover();
+        return true;
+      }
+    }
+  }
+
   const panel = document.getElementById("bench-panel");
-  if (!panel || !e) return false;
+  if (!panel) return false;
+  const r = panel.getBoundingClientRect();
+  const inBenchRect = r.width > 0 && r.height > 0
+    && e.clientX >= r.left - pad && e.clientX <= r.right + pad
+    && e.clientY >= r.top - pad && e.clientY <= r.bottom + pad;
+  if (inBenchRect) return true;
+  if (e.target?.closest?.("#bench-panel")) return true;
   if (canvas && isLoadoutInteractionPhase()) {
     const side = dragFrom?.side || prepViewSide;
     const { x: mx, y: my } = canvasCoordsFromClient(e.clientX, e.clientY);
@@ -6993,11 +7250,7 @@ function isDropOnBench(e) {
       if (isSlotCell(getLoadoutEditState(side).containers, col, row)) return false;
     }
   }
-  if (e.target?.closest?.("#bench-panel")) return true;
-  const r = panel.getBoundingClientRect();
-  const pad = isTouchUi() ? 14 : 0;
-  return e.clientX >= r.left - pad && e.clientX <= r.right + pad
-    && e.clientY >= r.top - pad && e.clientY <= r.bottom + pad;
+  return false;
 }
 
 function canvasCoordsFromClient(clientX, clientY) {
@@ -7177,7 +7430,7 @@ function getDragGhostAnchorClient(clientX, clientY) {
   const side = dragFrom?.side || prepViewSide;
   if (!canEditPrepSide(side)) return { x: clientX, y: clientY };
 
-  if (isPrepBackpackArcDrag()) {
+  if (isPrepBackpackArcDrag() || isPrepEnhancementStripDrag()) {
     const sidebarAnchor = getPrepArcSidebarAnchorClient(clientX, clientY);
     if (sidebarAnchor) return sidebarAnchor;
     return { x: clientX, y: clientY };
@@ -7231,7 +7484,12 @@ function syncDragGhostOverlay(clientX, clientY) {
       ghostY = clientY;
       arcRotation = null;
       const outsideShopArea = !isPointerInsideShopDrawerBounds(clientX, clientY);
-      const linkTarget = outsideShopArea ? getPrepSidebarLinkTargetClient() : null;
+      let linkTarget = null;
+      if (isPrepEnhancementStripDrag()) {
+        linkTarget = getPrepArcSidebarAnchorClient(clientX, clientY);
+      } else if (outsideShopArea) {
+        linkTarget = getPrepSidebarLinkTargetClient();
+      }
       PrepDragArc.sync(clientX, clientY, clientX, clientY, {
         linkPoint: linkTarget,
         grabAtPointer: true,
@@ -7326,7 +7584,10 @@ function updatePointerFromClient(clientX, clientY) {
     hoverSlot = null;
     const synthetic = createSyntheticPointerEvent(clientX, clientY);
     updatePendingShopDrag(synthetic);
-    if (phase === "prep") updatePendingBenchDrag(synthetic);
+    if (phase === "prep") {
+      updatePendingBenchDrag(synthetic);
+      updatePendingEnhancementDrag(synthetic);
+    }
     if (phase === "prep") updatePendingCanvasPick(clientX, clientY);
     const side = dragPayload && dragFrom?.side ? dragFrom.side : prepViewSide;
     if (dragPayload && canEditPrepSide(side)) {
@@ -7353,8 +7614,13 @@ function updatePointerFromClient(clientX, clientY) {
     }
 
     const benchPanel = document.getElementById("bench-panel");
+    const benchFab = document.getElementById("btn-prep-bench-fab");
+    const onBench = !!(dragPayload && isDropOnBench(synthetic));
     if (benchPanel) {
-      benchPanel.classList.toggle("bench-drop-target", !!(dragPayload && isDropOnBench(synthetic)));
+      benchPanel.classList.toggle("bench-drop-target", onBench);
+    }
+    if (benchFab) {
+      benchFab.classList.toggle("bench-drop-target", onBench);
     }
     const sellZone = document.getElementById("shop-sell-zone");
     if (sellZone) {
@@ -7431,6 +7697,19 @@ function gamepadPointerDownAt(clientX, clientY) {
     }
   }
 
+  const enhSlot = target?.closest?.(".enh-slot--filled[data-enh-slot]");
+  if (enhSlot && canEditPrepSide(prepViewSide)) {
+    const slotId = enhSlot.dataset.enhSlot;
+    if (slotId) {
+      if (isTouchUi()) {
+        beginPendingEnhancementDrag(slotId, synthetic, prepViewSide);
+      } else {
+        startEnhancementSlotDrag(slotId, { ...synthetic, currentTarget: enhSlot }, prepViewSide);
+      }
+      return;
+    }
+  }
+
   const dollSlot = target?.closest?.(".doll-slot[data-slot]");
   if (dollSlot && typeof isDollOpen === "function" && isDollOpen() && canEditPrepSide(prepViewSide)) {
     if (isTouchUi()) {
@@ -7471,7 +7750,9 @@ function gamepadPointerUpAt(clientX, clientY) {
   updatePointerFromClient(clientX, clientY);
   if (tryShowPrepPointerTapTooltip(clientX, clientY)) return;
   if (tryBuyFromPendingShopDrag(clientX, clientY)) return;
+  if (tryUnequipEnhancementFromPendingDrag(clientX, clientY)) return;
   pendingBenchDrag = null;
+  pendingEnhancementDrag = null;
   pendingCanvasPick = null;
   finishDragDrop(createSyntheticPointerEvent(clientX, clientY));
 }
@@ -7526,7 +7807,7 @@ function drawWorldLayer() {
       && isAmplifierBackpackItem(dragPayload.itemId))
       ? {
         extraItemId: dragPayload.itemId,
-        excludeUid: dragFrom?.type === "item" ? dragFrom.item?.uid : null,
+        excludeUid: isPrepLoadoutItemDrag() ? dragFrom.item?.uid : null,
       }
       : null;
     const hasAmplifyHighlights = typeof drawPrepAmplifyHighlights === "function"
@@ -7913,7 +8194,7 @@ function drawDropPreview(targetCtx = fxCtx) {
     return;
   }
   if (!hoverSlot) return;
-  const excludeUid = dragFrom?.type === "item" ? dragFrom.item.uid : null;
+  const excludeUid = isPrepLoadoutItemDrag() ? dragFrom.item.uid : null;
   const placement = resolveLoadoutPlacementDisplacing(
     st.containers,
     dragPayload.itemId,
@@ -8706,6 +8987,7 @@ function positionSidebarTooltip(clientX, clientY, boundsKind = "viewport", place
 
   if (shouldUsePrepTooltipDock(placement)) {
     el.classList.remove("sidebar-tooltip--floating");
+    setPrepTooltipDockPassthrough(false);
     positionPrepTooltipDock();
     el.style.left = "";
     el.style.top = "";
@@ -8719,7 +9001,7 @@ function positionSidebarTooltip(clientX, clientY, boundsKind = "viewport", place
   }
 
   el.classList.add("sidebar-tooltip--floating");
-  dock?.classList.add("hidden");
+  setPrepTooltipDockPassthrough(true);
 
   const bounds = getTooltipBounds(boundsKind);
   const margin = 10;
@@ -9287,7 +9569,7 @@ function onMouseDown(e) {
 
 function tryGemSocketDrop(st, dragFrom, dragPayload, col, row, side) {
   if (!isGemItem(dragPayload.itemId)) return false;
-  const excludeUid = dragFrom.type === "item" ? dragFrom.item.uid : null;
+  const excludeUid = isPrepLoadoutItemDrag() ? dragFrom.item.uid : null;
   const host = findSocketHostAt(st.items, col, row, dragPayload.itemId, excludeUid);
   if (!host) return false;
 
@@ -9300,7 +9582,7 @@ function tryGemSocketDrop(st, dragFrom, dragPayload, col, row, side) {
   } else if (dragFrom.type === "bench") {
     st.bench.splice(dragFrom.index, 1);
     if (selectedBench === dragFrom.index) selectedBench = -1;
-  } else if (dragFrom.type === "item") {
+  } else if (dragFrom.type === "item" || dragFrom.type === "enhancement") {
     st.items = st.items.filter((i) => i.uid !== dragFrom.item.uid);
   }
 
@@ -9448,9 +9730,10 @@ function finishDragDrop(e) {
           });
         }
       }
-    } else if (dragFrom.type === "item") {
+    } else if (dragFrom.type === "item" || dragFrom.type === "enhancement") {
       st.bench.push({ itemId: dragFrom.item.itemId, uid: dragFrom.item.uid, rotation: dragPayload.rotation || 0 });
       prepArcCelebrate = true;
+      if (dragFrom.type === "enhancement") syncEnhancementsForSide(side);
     } else if (dragFrom.type === "container") {
       st.bench.push({
         itemId: dragFrom.container.itemId,
@@ -9549,7 +9832,7 @@ function finishDragDrop(e) {
     if (isSlotCell(st.containers, col, row) && tryGemSocketDrop(st, dragFrom, dragPayload, col, row, side)) {
       // камень вставлен в сокет
     } else if (isSlotCell(st.containers, col, row)) {
-      const excludeUid = dragFrom.type === "item" ? dragFrom.item.uid : null;
+      const excludeUid = isPrepLoadoutItemDrag() ? dragFrom.item.uid : null;
       const placement = resolveLoadoutPlacementDisplacing(
         st.containers,
         dragPayload.itemId,
@@ -9571,7 +9854,7 @@ function finishDragDrop(e) {
           || canAddSlotItemToLoadout(st.items, dragPayload.itemId, excludeUid, displacedUids);
         if (st.bench.length + displaced.length > MAX_BENCH) {
           log("Скамейка полна!");
-          if (dragFrom.type === "item") {
+          if (isPrepLoadoutItemDrag()) {
             st.items = [...st.items, dragFrom.item];
             if (typeof notifyPrepPlacementRejected === "function") notifyPrepPlacementRejected(dragFrom.item);
           }
@@ -9582,7 +9865,7 @@ function finishDragDrop(e) {
           return;
         }
         if (!slotOk) {
-          if (dragFrom.type === "item") {
+          if (isPrepLoadoutItemDrag()) {
             st.items = [...st.items, dragFrom.item];
             if (typeof notifyPrepPlacementRejected === "function") notifyPrepPlacementRejected(dragFrom.item);
           }
@@ -9625,7 +9908,7 @@ function finishDragDrop(e) {
           });
         }
         const placed = createPlacedItem(dragPayload.itemId, placement.col, placement.row, placement.rotation);
-        if (dragFrom.type === "item") {
+        if (isPrepLoadoutItemDrag()) {
           placed.uid = dragFrom.item.uid;
           if (dragFrom.item.socketedGems) placed.socketedGems = [...dragFrom.item.socketedGems];
         }
@@ -9634,18 +9917,19 @@ function finishDragDrop(e) {
         if (typeof notifyPrepItemPlaced === "function") {
           notifyPrepItemPlaced(placed, ITEM_CATALOG[placed.itemId]);
         }
-        if (dragFrom.type === "shop" || dragFrom.type === "bench") {
+        if (dragFrom.type === "enhancement") syncEnhancementsForSide(side);
+        if (dragFrom.type === "shop" || dragFrom.type === "bench" || dragFrom.type === "enhancement") {
           prepArcCelebrate = true;
         }
-      } else if (dragFrom.type === "item") {
+      } else if (isPrepLoadoutItemDrag()) {
         st.items = [...st.items, dragFrom.item];
         if (typeof notifyPrepPlacementRejected === "function") notifyPrepPlacementRejected(dragFrom.item);
       }
-    } else if (dragFrom.type === "item") {
+    } else if (isPrepLoadoutItemDrag()) {
       st.items = [...st.items, dragFrom.item];
       if (typeof notifyPrepPlacementRejected === "function") notifyPrepPlacementRejected(dragFrom.item);
     }
-  } else if (dragFrom.type === "item") {
+  } else if (isPrepLoadoutItemDrag()) {
     st.items = [...st.items, dragFrom.item];
     if (typeof notifyPrepPlacementRejected === "function") notifyPrepPlacementRejected(dragFrom.item);
   } else if (dragFrom.type === "container") {
@@ -10005,7 +10289,7 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
           ? `${Math.ceil(tdHeroHp)}/${profile.hpDisplay?.split("/")?.[1] || profile.hpDisplay || "—"}`
           : profile.hpDisplay;
     const hpRowClass = lobbyPlayer ? " prep-stats-row--lobby-hp" : "";
-    const companionLabel = companion ? `${companion.emoji} ${companion.name}` : "—";
+    const companionLabel = renderPrepCompanionLabelHtml(companion);
     const tdDiffRow = isTdMode() && typeof tdFormatDifficultyLabel === "function"
       ? `<div class="prep-stats-row prep-stats-row--td-diff"><span>Сложность</span><b>${tdFormatDifficultyLabel(tdRunDifficultyId)}</b></div>`
       : "";
@@ -10059,6 +10343,7 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
       ${modifierStripHtml}
     `;
     bindPrepEnhancementStrip(side);
+    bindPrepCompanionTooltip(statsHud);
     if (typeof syncPrepHudCollapseChrome === "function") syncPrepHudCollapseChrome();
     if (isTdRunLive() && tdHeroSheetOpen) syncTdHeroSheetBody();
     if (typeof syncPrepBuildEmojiBtn === "function") {
