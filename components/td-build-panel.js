@@ -160,10 +160,13 @@ const TdBuildPanel = (() => {
       const onDragStart = (e) => {
         if (e.button != null && e.button !== 0) return;
         e.preventDefault();
+        e.stopPropagation();
+        try {
+          card.setPointerCapture(e.pointerId);
+        } catch (_) {}
         const idx = Number(card.getAttribute("data-shop-index"));
         if (typeof onShopDragStart === "function") onShopDragStart(idx, e);
       };
-      card.addEventListener("mousedown", onDragStart);
       card.addEventListener("pointerdown", onDragStart);
     });
   }

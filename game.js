@@ -2092,7 +2092,8 @@ function bindTouchTooltipDismiss() {
 function bindTouchInput() {
   const boardSection = document.querySelector(".board-section");
   const shopPanel = document.getElementById("shop-panel");
-  const touchTargets = [boardSection, canvas, shopPanel].filter(Boolean);
+  const tdBuildPanel = document.getElementById("td-build-panel");
+  const touchTargets = [boardSection, canvas, shopPanel, tdBuildPanel].filter(Boolean);
   const captureOpts = { passive: false, capture: true };
   const bubbleOpts = { passive: false };
   let activeGesture = null;
@@ -2251,6 +2252,31 @@ function bindTouchInput() {
   bindTouchTooltipDismiss();
 }
 
+/** Глобальный pointer bridge: drag из TD-магазина / рюкзака на touch и pen. */
+function bindPrepLoadoutDragPointer() {
+  if (bindPrepLoadoutDragPointer._done) return;
+  bindPrepLoadoutDragPointer._done = true;
+
+  const isActiveDrag = () => !!(dragPayload || pendingShopDrag);
+
+  const onMove = (e) => {
+    if (!isLoadoutInteractionPhase() || !isActiveDrag()) return;
+    if (e.cancelable) e.preventDefault();
+    updatePointerFromClient(e.clientX, e.clientY);
+  };
+
+  const onUp = (e) => {
+    if (!isLoadoutInteractionPhase() || !isActiveDrag()) return;
+    if (e.button != null && e.button !== 0) return;
+    if (tryBuyFromPendingShopDrag(e.clientX, e.clientY)) return;
+    finishDragDrop(e);
+  };
+
+  window.addEventListener("pointermove", onMove, { passive: false });
+  window.addEventListener("pointerup", onUp, { passive: false });
+  window.addEventListener("pointercancel", onUp, { passive: false });
+}
+
 function setPhaseLabel(text, isBattle = false) {
   const el = document.getElementById("phase-label");
   if (!el) return;
@@ -2320,6 +2346,7 @@ function init() {
     if (dragPayload || pendingShopDrag) e.preventDefault();
   });
   bindTouchInput();
+  bindPrepLoadoutDragPointer();
   document.getElementById("btn-fight").addEventListener("click", startBattle);
   document.getElementById("btn-refresh")?.addEventListener("click", () => refreshShop(true));
   document.getElementById("btn-td-refresh")?.addEventListener("click", () => refreshShop(true));
@@ -3985,6 +4012,24 @@ function quantizePrepSidebarAxis(norm, count, stickyIndex) {
 }
 
 /** Зона управления дугой: коридор между рюкзаком и магазином (как на UX-макете). */
+function getTdPrepDragMapRect(backpack, shopRect) {
+  const backdrop = document.querySelector("#td-loadout-sheet .td-loadout-sheet__backdrop");
+  const fieldCol = document.getElementById("prep-field-column");
+  const arena = document.getElementById("td-arena-mount");
+  const mapRect = backdrop?.getBoundingClientRect()
+    || fieldCol?.getBoundingClientRect()
+    || arena?.getBoundingClientRect();
+  if (!mapRect || mapRect.width < 80 || mapRect.height < 80) return null;
+  const shopLeft = shopRect?.left ?? mapRect.right;
+  return {
+    left: mapRect.left + 4,
+    top: mapRect.top + 4,
+    right: Math.max(mapRect.left + 12, shopLeft - 4),
+    bottom: Math.max(mapRect.top + 48, (backpack?.bottom ?? mapRect.bottom) - 4),
+  };
+}
+
+/** Зона управления дугой: коридор между рюкзаком и магазином (как на UX-макете). */
 function getPrepSidebarDragMapRect() {
   const backpack = getPrepBackpackClientRect();
   if (!backpack) return null;
@@ -3994,6 +4039,12 @@ function getPrepSidebarDragMapRect() {
   const bench = isTdLoadoutEditPhase()
     ? null
     : document.getElementById("bench-panel")?.getBoundingClientRect();
+
+  if (isTdLoadoutEditPhase()) {
+    const tdMap = getTdPrepDragMapRect(backpack, shop);
+    if (tdMap) return tdMap;
+  }
+
   const sidebarLeft = Math.min(
     shop?.left ?? Infinity,
     bench?.left ?? Infinity,

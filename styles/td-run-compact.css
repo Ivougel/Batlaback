@@ -625,6 +625,15 @@ html[data-game-mode="td"] #app[data-td-run-live="true"]:not([data-prep-layout="m
   min-height: calc(42px * var(--ui-scale, 1));
 }
 
+html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-shop-card:not(.td-build-shop-card--locked):not(.td-build-shop-card--empty) {
+  touch-action: none;
+  cursor: grab;
+}
+
+html[data-game-mode="td"] #app[data-td-run-live="true"] .td-build-shop-card.shop-dragging {
+  cursor: grabbing;
+}
+
 html[data-game-mode="td"] #app[data-td-run-live="true"]:not([data-prep-layout="mobile"]) .td-build-shop-card__icon {
   font-size: calc(1.25rem * var(--ui-scale, 1));
 }
