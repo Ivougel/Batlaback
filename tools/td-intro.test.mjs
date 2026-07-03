@@ -123,7 +123,7 @@ async function runTdRunStart(browser) {
   assert(!state.shopVisible, "old shop hidden during td run");
   assert(state.slotButtons === 5, `expected 5 slot buttons, got ${state.slotButtons}`);
   assert(state.towerCols === 6, `tower grid cols should be 6, got ${state.towerCols}`);
-  assert(state.mapShare >= 0.58 && state.mapShare <= 0.72, `map share out of range: ${state.mapShare}`);
+  assert(state.mapShare >= 0.47 && state.mapShare <= 0.53, `map share out of range: ${state.mapShare}`);
   assert(state.fieldH >= 180, `prep-field-column too short (${state.fieldH}px)`);
   assert(state.mountH >= 160, `td arena mount too short (${state.mountH}px)`);
   assert(state.canvasH >= 120, `td canvas too short (${state.canvasH}px)`);

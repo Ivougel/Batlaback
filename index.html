@@ -56,7 +56,8 @@
   <link rel="stylesheet" href="styles/tablet-side.css?v=31">
   <link rel="stylesheet" href="styles/battle-inventory-popover.css?v=8">
   <link rel="stylesheet" href="styles/lobby.css?v=8">
-  <link rel="stylesheet" href="styles/td-mode.css?v=11">
+  <link rel="stylesheet" href="styles/td-mode.css?v=13">
+  <link rel="stylesheet" href="styles/td-run-compact.css?v=1">
   <link rel="stylesheet" href="styles/lobby-roster-float.css?v=2">
   <link rel="stylesheet" href="styles/meadow-theme.css?v=2">
   <link rel="stylesheet" href="styles/battle-theme-ui.css?v=2">
@@ -132,6 +133,7 @@
                   </button>
                 </div>
                 <div class="prep-hero-card__actions" id="prep-hero-card-actions" aria-label="Действия">
+                  <button type="button" class="btn-secondary btn-td-hero-sheet hidden" id="btn-td-hero-sheet" title="Мутации и усиления" aria-label="Мутации и усиления" aria-controls="td-hero-sheet" aria-expanded="false">⋯</button>
                   <div class="prep-hero-card__timer" id="prep-hero-card-timer" aria-hidden="true"></div>
                   <div class="prep-hero-card__view-tag hidden" id="prep-hero-card-view-tag" aria-live="polite"></div>
                   <div class="prep-hero-card__doll-mount" id="prep-hero-card-doll-mount"></div>
@@ -151,6 +153,7 @@
               </div>
             </header>
             <div class="prep-field-column scene-viewport" id="prep-field-column">
+              <button type="button" class="td-loadout-fab hidden" id="btn-td-loadout" aria-label="Рюкзак башни 6×6" title="Рюкзак 6×6" hidden>🎒</button>
               <div class="layer layer-world" id="layer-world">
                 <div class="scene-bg" aria-hidden="true"></div>
                 <div class="prep-doll-layer" id="prep-doll-layer" aria-hidden="true">
@@ -288,9 +291,9 @@
               <div class="td-build-panel__title">🏰 Постройка</div>
               <div class="td-build-panel__wave" id="td-build-wave">🌊 1/99</div>
               <div class="td-build-panel__gold" id="td-build-gold">0 💰</div>
+              <button type="button" class="td-build-panel__help btn-secondary" id="btn-td-build-help" title="Клик по башне — рюкзак 🎒. Из магазина — drag дугой на рюкзак." aria-label="Подсказка">?</button>
               <button type="button" class="btn-secondary btn-refresh-shop" id="btn-td-refresh" title="Обновить магазин (1💰)">🔄</button>
             </header>
-            <p class="td-build-panel__guide">Клик по башне — рюкзак 6×6 слева · из магазина drag дугой</p>
             <div class="td-build-panel__slots" id="td-build-slots"></div>
             <div class="td-build-panel__main" id="td-build-main"></div>
             <section class="td-build-panel__shop-section" aria-label="Улучшения">
@@ -308,6 +311,17 @@
 
       </section>
     </main>
+    <button type="button" class="td-loadout-backdrop hidden" id="td-loadout-backdrop" aria-label="Закрыть рюкзак" tabindex="-1"></button>
+    <div class="td-run-sheet hidden" id="td-hero-sheet" aria-hidden="true">
+      <button type="button" class="td-run-sheet__backdrop" id="td-hero-sheet-backdrop" aria-label="Закрыть"></button>
+      <div class="td-run-sheet__panel td-hero-sheet__panel" role="dialog" aria-labelledby="td-hero-sheet-title">
+        <header class="td-run-sheet__head">
+          <h3 class="td-run-sheet__title" id="td-hero-sheet-title">Герой забега</h3>
+          <button type="button" class="td-run-sheet__close" id="td-hero-sheet-close" aria-label="Закрыть">×</button>
+        </header>
+        <div class="td-run-sheet__body" id="td-hero-sheet-body"></div>
+      </div>
+    </div>
   </div>
 
   <div class="layer-system" id="layer-system">

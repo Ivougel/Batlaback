@@ -2070,7 +2070,7 @@
         ].forEach((name) => root.style.removeProperty(name));
         const fieldCol = canvas.closest(".prep-field-column");
         const island = document.getElementById("prep-field-island");
-        const useIsland = app?.dataset.tdTowerEdit === "true" && island;
+        const useIsland = app?.dataset.tdLoadoutOpen === "true" && island;
         const islandRect = useIsland ? island.getBoundingClientRect() : null;
         const stageW = fieldCol?.clientWidth ?? 0;
         const stageH = fieldCol?.clientHeight ?? 0;

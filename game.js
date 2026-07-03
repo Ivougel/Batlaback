@@ -324,6 +324,8 @@ function syncTdRunLiveDom() {
   if (tdRunLive && isTdMode()) app.dataset.tdRunLive = "true";
   else app.removeAttribute("data-td-run-live");
   syncPrepHeroHudDom();
+  syncTdRunCompactChrome();
+  bindTdRunCompactUi();
 }
 
 function isPrepHeroHudVisible() {
@@ -4712,6 +4714,8 @@ function selectTdSlot(slotId) {
   if (slotId == null || !tdState) return;
   selectedTdSlotId = slotId;
   tdState.selectedSlotId = slotId;
+  if (!isTdLoadoutEditPhase()) tdLoadoutSheetOpen = false;
+  syncTdLoadoutSheetDom();
   syncTdLoadoutLayout();
   renderTdBuildPanel();
   if (isTdLoadoutEditPhase()) recalcSynergies();
@@ -4770,7 +4774,106 @@ function syncTdTowerEditDom() {
   else app.removeAttribute("data-td-tower-edit");
 }
 
-/** Подогнать 6×6 рюкзак башни под оверлей (клетки 44–56px). */
+let tdLoadoutSheetOpen = false;
+let tdHeroSheetOpen = false;
+let tdRunCompactBound = false;
+
+function syncTdLoadoutSheetDom() {
+  const app = document.getElementById("app");
+  const backdrop = document.getElementById("td-loadout-backdrop");
+  const fab = document.getElementById("btn-td-loadout");
+  const canEdit = isTdLoadoutEditPhase();
+  const open = canEdit && tdLoadoutSheetOpen;
+  if (app) {
+    if (open) app.dataset.tdLoadoutOpen = "true";
+    else app.removeAttribute("data-td-loadout-open");
+  }
+  backdrop?.classList.toggle("hidden", !open);
+  if (fab) {
+    const showFab = canEdit && !open;
+    fab.hidden = !showFab;
+    fab.classList.toggle("hidden", !showFab);
+  }
+}
+
+function openTdLoadoutSheet() {
+  if (!isTdLoadoutEditPhase()) return;
+  tdLoadoutSheetOpen = true;
+  syncTdLoadoutSheetDom();
+  syncTdLoadoutLayout();
+}
+
+function closeTdLoadoutSheet() {
+  tdLoadoutSheetOpen = false;
+  syncTdLoadoutSheetDom();
+}
+
+function openTdHeroSheet() {
+  if (!isTdRunLive()) return;
+  tdHeroSheetOpen = true;
+  const sheet = document.getElementById("td-hero-sheet");
+  const btn = document.getElementById("btn-td-hero-sheet");
+  sheet?.classList.remove("hidden");
+  sheet?.setAttribute("aria-hidden", "false");
+  btn?.setAttribute("aria-expanded", "true");
+  syncTdHeroSheetBody();
+}
+
+function closeTdHeroSheet() {
+  tdHeroSheetOpen = false;
+  const sheet = document.getElementById("td-hero-sheet");
+  const btn = document.getElementById("btn-td-hero-sheet");
+  sheet?.classList.add("hidden");
+  sheet?.setAttribute("aria-hidden", "true");
+  btn?.setAttribute("aria-expanded", "false");
+}
+
+function toggleTdHeroSheet() {
+  if (tdHeroSheetOpen) closeTdHeroSheet();
+  else openTdHeroSheet();
+}
+
+function syncTdHeroSheetBody() {
+  const body = document.getElementById("td-hero-sheet-body");
+  const hud = document.getElementById("prep-stats-hud");
+  if (!body || !hud || !isTdRunLive()) return;
+  const mutation = hud.querySelector(".mutation-progress");
+  const enh = hud.querySelector(".prep-enhancement-strip");
+  const mods = hud.querySelector(".prep-modifier-strip");
+  body.innerHTML = "";
+  [mutation, enh, mods].forEach((el) => {
+    if (el) body.appendChild(el.cloneNode(true));
+  });
+  bindPrepEnhancementStrip("player");
+}
+
+function syncTdRunCompactChrome() {
+  const heroBtn = document.getElementById("btn-td-hero-sheet");
+  heroBtn?.classList.toggle("hidden", !isTdRunLive());
+  if (!isTdRunLive()) {
+    tdLoadoutSheetOpen = false;
+    closeTdHeroSheet();
+  }
+  syncTdLoadoutSheetDom();
+}
+
+function bindTdRunCompactUi() {
+  if (tdRunCompactBound) return;
+  tdRunCompactBound = true;
+  document.getElementById("btn-td-loadout")?.addEventListener("click", openTdLoadoutSheet);
+  document.getElementById("td-loadout-backdrop")?.addEventListener("click", closeTdLoadoutSheet);
+  document.getElementById("btn-td-hero-sheet")?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    toggleTdHeroSheet();
+  });
+  document.getElementById("td-hero-sheet-backdrop")?.addEventListener("click", closeTdHeroSheet);
+  document.getElementById("td-hero-sheet-close")?.addEventListener("click", closeTdHeroSheet);
+  document.getElementById("prep-hero-card-portrait")?.addEventListener("click", () => {
+    if (isTdRunLive()) toggleTdHeroSheet();
+  });
+}
+
+/** Подогнать 6×6 рюкзак башни под док снизу (клетки 44–56px). */
 function syncTdLoadoutLayout() {
   syncTdTowerEditDom();
   const root = document.documentElement;
@@ -4790,10 +4893,20 @@ function syncTdLoadoutLayout() {
   const framePad = Math.round(18 * uiScale);
 
   let rect = island?.getBoundingClientRect();
-  if (!rect || rect.width < 48) {
-    const vw = window.visualViewport?.width ?? window.innerWidth;
-    const vh = window.visualViewport?.height ?? window.innerHeight;
-    rect = { width: vw * 0.52, height: Math.min(vh * 0.48, 420) };
+  if (!rect || rect.width < 48 || rect.height < 48) {
+    const dock = island?.closest(".layer-world");
+    const dockRect = dock?.getBoundingClientRect();
+    if (dockRect && dockRect.width >= 48 && dockRect.height >= 48) {
+      rect = dockRect;
+    } else {
+      const fieldCol = document.getElementById("prep-field-column");
+      const colRect = fieldCol?.getBoundingClientRect();
+      const loadoutShare = readCssPx("--td-col-loadout-share", 50) / 100;
+      rect = {
+        width: colRect?.width ?? window.innerWidth * 0.5,
+        height: (colRect?.height ?? window.innerHeight * 0.5) * loadoutShare,
+      };
+    }
   }
 
   const islandPad = Math.round(12 * uiScale);
@@ -4866,6 +4979,7 @@ function beginTdBuildShopDrag(index, e) {
     playPrepSfx("ui_error");
     return;
   }
+  if (!tdLoadoutSheetOpen) openTdLoadoutSheet();
   beginPendingShopDrag(index, e, "player");
 }
 
@@ -4909,6 +5023,8 @@ function handleTdRecruit(classId) {
   gold -= result.cost;
   goldSpentTotal += result.cost;
   playPrepSfx("buy");
+  tdLoadoutSheetOpen = true;
+  syncTdLoadoutSheetDom();
   renderTdBuildPanel();
   syncTdLoadoutLayout();
   updateUI();
@@ -5023,7 +5139,7 @@ function finishTdRunStart() {
     renderTdBuildPanel();
     syncTdBattleChrome();
     setPhaseLabel(`🐷 Волна 1/${getTdMaxWaves()}`, true);
-    log(`🐷 Оборона! Клик по башне — рюкзак слева. Из магазина — перетащите дугой на рюкзак.`);
+    log(`🐷 Оборона! Клик по башне — рюкзак 6×6 под картой. Из магазина — перетащите дугой на рюкзак.`);
     if (tdState?.waveBannerText) {
       log(`${tdState.waveBannerText} Свиней: ${tdState.totalPigs || "?"}`);
     }
@@ -9193,6 +9309,7 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
       ${modifierStripHtml}
     `;
     bindPrepEnhancementStrip(side);
+    if (isTdRunLive() && tdHeroSheetOpen) syncTdHeroSheetBody();
     if (typeof syncPrepBuildEmojiBtn === "function") {
       syncPrepBuildEmojiBtn({
         formId: mutRt.formId,

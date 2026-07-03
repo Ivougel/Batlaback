@@ -140,27 +140,27 @@ html[data-visual-theme="diablo"] #td-arena-canvas {
 
 /* ─── TD Run: карта + компактный магазин ─── */
 /*
- * Доли экрана (tablet landscape, по mobile UX / strategy HUD):
- * — карта (основное действие): 64%
- * — панель постройки: 36%
- * — рюкзак башни: клетки 44–56px (touch min 44pt)
+ * Доли экрана (tablet landscape):
+ * — левая колонка (карта + рюкзак): 50%
+ * — панель постройки: 50%
+ * — внутри левой колонки при выборе башни: карта / рюкзак 50/50
  */
 html[data-game-mode="td"] {
-  --td-map-share: 64%;
-  --td-panel-share: 36%;
-  --td-map-min-h-share: 62%;
-  --td-loadout-overlay-w: min(52vw, 28rem);
-  --td-loadout-overlay-max-h: min(52vh, 28rem);
+  --td-map-share: 50%;
+  --td-panel-share: 50%;
+  --td-col-map-share: 50%;
+  --td-col-loadout-share: 50%;
+  --td-map-min-h-share: 50%;
   --td-loadout-cell-min: 44px;
   --td-loadout-cell-max: 56px;
 }
 
 html[data-prep-layout="mobile"][data-game-mode="td"] {
-  --td-map-share: 58%;
-  --td-panel-share: 42%;
-  --td-map-min-h-share: 56%;
-  --td-loadout-overlay-w: min(92vw, 24rem);
-  --td-loadout-overlay-max-h: min(46dvh, 22rem);
+  --td-map-share: 50%;
+  --td-panel-share: 50%;
+  --td-col-map-share: 48%;
+  --td-col-loadout-share: 52%;
+  --td-map-min-h-share: 48%;
 }
 
 html[data-game-mode="td"] #app[data-td-run-live="true"] .board-section {
@@ -186,8 +186,8 @@ html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-left-column {
   flex-direction: column;
   flex: 1 1 var(--td-map-share);
   min-width: 0;
-  max-width: calc(100% - min(var(--td-panel-share), 26rem));
-  min-height: min(var(--td-map-min-h-share), calc(var(--app-h, 100dvh) * 0.62), 520px);
+  max-width: none;
+  min-height: min(var(--td-map-min-h-share), calc(var(--app-h, 100dvh) * 0.5), 520px);
   height: auto !important;
   overflow: hidden;
 }
@@ -250,7 +250,7 @@ html[data-game-mode="td"] #app[data-td-run-live="true"] #td-build-panel {
   flex: 0 0 var(--td-panel-share);
   width: var(--td-panel-share);
   min-width: min(var(--td-panel-share), 15rem);
-  max-width: 26rem;
+  max-width: none;
   min-height: 0;
   overflow: hidden;
   background: rgba(12, 17, 14, 0.96);
@@ -322,47 +322,7 @@ html[data-game-mode="td"] #app[data-td-run-live="true"] .td-arena-mount {
   font-variant-numeric: tabular-nums;
 }
 
-html[data-game-mode="td"] #app[data-td-run-live="true"][data-td-tower-edit="true"] #prep-field-island {
-  visibility: visible !important;
-  pointer-events: auto !important;
-  position: absolute !important;
-  left: calc(10px * var(--ui-scale, 1)) !important;
-  bottom: calc(10px * var(--ui-scale, 1)) !important;
-  top: auto !important;
-  width: var(--td-loadout-overlay-w) !important;
-  height: auto !important;
-  max-height: var(--td-loadout-overlay-max-h) !important;
-  z-index: 26 !important;
-  overflow: visible !important;
-  border-radius: calc(14px * var(--ui-scale, 1));
-  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.5);
-  background: rgba(8, 14, 10, 0.62);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(74, 222, 128, 0.22);
-}
-
-html[data-game-mode="td"] #app[data-td-run-live="true"][data-td-tower-edit="true"] #prep-field-island .battle-canvas-stage,
-html[data-game-mode="td"] #app[data-td-run-live="true"][data-td-tower-edit="true"] #prep-field-island .canvas-scale-wrap {
-  width: 100% !important;
-  height: auto !important;
-}
-
-html[data-game-mode="td"] #app[data-td-run-live="true"][data-td-tower-edit="true"] #game-canvas {
-  display: block !important;
-  width: 100% !important;
-  height: auto !important;
-  max-height: var(--td-loadout-overlay-max-h);
-  pointer-events: auto;
-  cursor: grab;
-}
-
-html[data-prep-layout="mobile"] html[data-game-mode="td"] #app[data-td-run-live="true"][data-td-tower-edit="true"] #prep-field-island {
-  width: var(--td-loadout-overlay-w) !important;
-  left: 50% !important;
-  transform: translateX(-50%);
-  bottom: calc(42dvh + 8px) !important;
-}
-
+/* Рюкзак башни — см. td-run-compact.css (sheet поверх карты) */
 .td-build-panel__guide {
   margin: 0;
   padding: calc(6px * var(--ui-scale, 1)) calc(10px * var(--ui-scale, 1));
