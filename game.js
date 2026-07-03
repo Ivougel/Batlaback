@@ -2294,6 +2294,7 @@ function init() {
   bindTouchInput();
   document.getElementById("btn-fight").addEventListener("click", startBattle);
   document.getElementById("btn-refresh")?.addEventListener("click", () => refreshShop(true));
+  document.getElementById("btn-td-refresh")?.addEventListener("click", () => refreshShop(true));
   document.getElementById("btn-sell").addEventListener("click", sellSelected);
   document.getElementById("btn-restart").addEventListener("click", returnToMainMenu);
   document.querySelectorAll(".game-mode-card").forEach((btn) => {
@@ -2605,7 +2606,10 @@ function syncTdBattleChrome() {
     document.documentElement.removeAttribute("data-battle-hero-placement");
     document.documentElement.dataset.battleArenaLayout = "false";
   }
-  if (live && typeof renderTdTowerPanel === "function") renderTdTowerPanel();
+  if (live && typeof renderTdBuildPanel === "function") renderTdBuildPanel();
+  if (typeof TdBuildPanel !== "undefined") {
+    TdBuildPanel.setVisible(isTdRunLive());
+  }
 }
 
 function renderPhase() {
@@ -2638,6 +2642,7 @@ function renderPhase() {
     if (phase === "prep") updatePrepSideUI();
     renderShop();
     renderBench();
+    if (isTdRunLive()) renderTdBuildPanel();
     if (phase === "prep") syncPrepTooltipDockVisibility();
   }
   renderFightButton();
@@ -4608,14 +4613,23 @@ function tickReplay(rawDt) {
   }
 }
 
-function renderTdTowerPanel() {
-  if (typeof TdTowerPanel === "undefined" || !isTdRunLive()) return;
-  TdTowerPanel.render({
+function renderTdBuildPanel() {
+  if (typeof TdBuildPanel === "undefined" || !isTdRunLive()) return;
+  const st = getSideState("player");
+  TdBuildPanel.render({
     tdState,
     gold,
-    bench,
+    shop: st.shop || [],
     selectedSlotId: selectedTdSlotId,
   });
+}
+
+function selectTdSlot(slotId) {
+  if (slotId == null || !tdState) return;
+  selectedTdSlotId = slotId;
+  tdState.selectedSlotId = slotId;
+  renderTdBuildPanel();
+  playPrepSfx("ui_click");
 }
 
 function bindTdCanvasEvents() {
@@ -4623,14 +4637,21 @@ function bindTdCanvasEvents() {
   const canvas = document.getElementById("td-arena-canvas");
   if (!canvas) return;
   tdCanvasBound = true;
-  canvas.addEventListener("click", (e) => {
+
+  const pickSlot = (clientX, clientY) => {
     if (!isTdRunLive() || typeof TdArena?.hitTestSlot !== "function") return;
-    const slotId = TdArena.hitTestSlot(e.clientX, e.clientY);
+    const slotId = TdArena.hitTestSlot(clientX, clientY, tdState);
     if (slotId == null) return;
-    selectedTdSlotId = slotId;
-    if (tdState) tdState.selectedSlotId = slotId;
-    renderTdTowerPanel();
-    playPrepSfx("ui_click");
+    selectTdSlot(slotId);
+  };
+
+  canvas.addEventListener("pointerdown", (e) => {
+    if (!isTdRunLive()) return;
+    e.preventDefault();
+    pickSlot(e.clientX, e.clientY);
+  });
+  canvas.addEventListener("click", (e) => {
+    pickSlot(e.clientX, e.clientY);
   });
 }
 
@@ -4651,11 +4672,36 @@ function handleTdRecruit(classId) {
   gold -= result.cost;
   goldSpentTotal += result.cost;
   playPrepSfx("buy");
-  renderTdTowerPanel();
+  renderTdBuildPanel();
   updateUI();
   const slotLabel = TD_MAP_SLOTS.find((s) => s.id === selectedTdSlotId)?.label || "слот";
   const clsName = typeof getClassById === "function" ? getClassById(classId)?.name : classId;
   log(`🏰 ${clsName} на ${slotLabel} (−${result.cost}💰)`);
+}
+
+function handleTdBuyUpgrade(shopIndex) {
+  if (!tdState || selectedTdSlotId == null) {
+    log("👆 Сначала выберите башню на карте");
+    playPrepSfx("ui_error");
+    return;
+  }
+  const tower = typeof tdGetTowerAtSlot === "function"
+    ? tdGetTowerAtSlot(tdState, selectedTdSlotId)
+    : null;
+  if (!tower) {
+    log("Постройте башню в этом слоте");
+    playPrepSfx("ui_error");
+    return;
+  }
+  if (typeof buyFromShopForTdTower !== "function") return;
+  buyFromShopForTdTower(shopIndex, "player", (entry) => {
+    const result = tdEquipItemOnTower(tdState, selectedTdSlotId, entry, tdState.prepMeta || {});
+    if (!result.ok) return false;
+    const def = ITEM_CATALOG[entry.itemId];
+    log(`⚡ ${def?.name || entry.itemId} → ${TD_MAP_SLOTS.find((s) => s.id === selectedTdSlotId)?.label || "башня"}`);
+    renderTdBuildPanel();
+    return true;
+  });
 }
 
 function handleTdEquipFromBench(benchIdx) {
@@ -4672,7 +4718,7 @@ function handleTdEquipFromBench(benchIdx) {
   bench.splice(benchIdx, 1);
   playPrepSfx("prep_place");
   renderBench();
-  renderTdTowerPanel();
+  renderTdBuildPanel();
   const def = ITEM_CATALOG[item.itemId];
   log(`📦 ${def?.name || item.itemId} → башня`);
 }
@@ -4705,6 +4751,7 @@ function onTdWaveClearedInRun() {
   ensureShopReadyForSide("player");
   renderShop();
   renderBench();
+  renderTdBuildPanel();
   setPhaseLabel(`🐷 Волна ${tdState.wave}/${getTdMaxWaves()}`, false);
   updateUI();
   renderRunStats();
@@ -4740,13 +4787,19 @@ function finishTdRunStart() {
     ensureShopReadyForSide("player");
     renderShop();
     renderBench();
-    renderTdTowerPanel();
+    renderTdBuildPanel();
     syncTdBattleChrome();
     setPhaseLabel(`🐷 Волна 1/${getTdMaxWaves()}`, true);
-    log("🐷 Оборона! Клик по слоту на карте — нанять героя. Магазин открыт во время волн.");
+    log("🐷 Оборона! Клик по башне или + на карте. Справа — постройка и улучшения.");
     playPrepSfx("battle_start");
     renderFightButton();
     updateUI();
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        syncTdBattleChrome();
+        if (typeof TdArena !== "undefined" && typeof TdArena.resize === "function") TdArena.resize();
+      });
+    });
   });
 }
 
@@ -4786,10 +4839,11 @@ function startTdRun() {
     if (playerClass) TdArena.loadPortrait(playerClass);
     bindTdCanvasEvents();
   }
-  if (typeof TdTowerPanel !== "undefined") {
-    TdTowerPanel.init({
+  if (typeof TdBuildPanel !== "undefined") {
+    TdBuildPanel.init({
       onRecruit: handleTdRecruit,
-      onEquipBench: handleTdEquipFromBench,
+      onSelectSlot: selectTdSlot,
+      onBuyUpgrade: handleTdBuyUpgrade,
     });
   }
 
@@ -5012,7 +5066,7 @@ function endTdWave() {
   tdState = null;
   tdRunLive = false;
   syncTdRunLiveDom();
-  if (typeof TdTowerPanel !== "undefined") TdTowerPanel.setVisible(false);
+  if (typeof TdBuildPanel !== "undefined") TdBuildPanel.setVisible(false);
   clearBattleFloatLayer();
   if (typeof resetStackOrbitVfx === "function") resetStackOrbitVfx();
   if (typeof closeBattleHudPopups === "function") closeBattleHudPopups();
@@ -5665,7 +5719,7 @@ function gameLoop(ts) {
     if (Math.floor(ts / 500) !== Math.floor((ts - dt * 1000) / 500)) {
       renderBattleStats();
       renderPlayerProfiles();
-      renderTdTowerPanel();
+      renderTdBuildPanel();
     }
   } else if (phase === "battle" && isTdMode() && tdState?.finished) {
     if (typeof resetStackOrbitVfx === "function") resetStackOrbitVfx();
@@ -9135,6 +9189,9 @@ registerPrepShopRuntime({
   getSideMutationFormId: (side) => (side === "enemy" ? enemyMutationFormId : playerMutationFormId),
   beginPendingShopDrag,
   startBenchDrag,
+  renderTdBuildPanel: () => {
+    if (typeof renderTdBuildPanel === "function") renderTdBuildPanel();
+  },
 });
 
 init();

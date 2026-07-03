@@ -61,10 +61,10 @@ const TdArena = (() => {
     };
   }
 
-  function hitTestSlot(clientX, clientY) {
+  function hitTestSlot(clientX, clientY, tdState = null) {
     const norm = clientToNorm(clientX, clientY);
     if (!norm || typeof tdHitTestSlot !== "function") return null;
-    return tdHitTestSlot(norm.x, norm.y);
+    return tdHitTestSlot(norm.x, norm.y, tdState);
   }
 
   function loadPortrait(classId) {
@@ -161,6 +161,12 @@ const TdArena = (() => {
         ctx2.textBaseline = "middle";
         ctx2.fillText("+", cx, cy);
       }
+
+      ctx2.font = `600 ${Math.max(9, r * 0.32)}px system-ui,sans-serif`;
+      ctx2.fillStyle = selected ? "#bfdbfe" : "rgba(255,255,255,0.55)";
+      ctx2.textAlign = "center";
+      ctx2.textBaseline = "top";
+      ctx2.fillText(slot.label || "", cx, cy + r * 1.35);
       ctx2.restore();
     });
   }

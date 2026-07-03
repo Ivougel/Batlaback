@@ -621,16 +621,23 @@ function tdAdvanceWave(state) {
   state.log.push(`🌊 Волна ${state.wave}…`);
 }
 
-function tdHitTestSlot(normX, normY, radius = 0.07) {
+function tdHitTestSlot(normX, normY, state = null) {
   let best = null;
-  let bestD = radius;
-  TD_MAP_SLOTS.forEach((slot) => {
+  let bestD = Infinity;
+
+  const trySlot = (slot, maxR) => {
     const d = tdDist({ x: normX, y: normY }, slot);
-    if (d < bestD) {
+    if (d < maxR && d < bestD) {
       bestD = d;
       best = slot.id;
     }
+  };
+
+  TD_MAP_SLOTS.forEach((slot) => {
+    const occupied = state?.towers?.some((t) => t.slotId === slot.id && t.alive);
+    trySlot(slot, occupied ? 0.13 : 0.09);
   });
+
   return best;
 }
 

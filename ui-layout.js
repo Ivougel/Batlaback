@@ -2080,6 +2080,9 @@
           setCanvasDisplaySize(canvas, w, h);
         }
         syncFxCanvasGeometry();
+        if (typeof TdArena !== "undefined" && typeof TdArena.resize === "function") {
+          TdArena.resize();
+        }
         return;
       }
       const stage = canvas.closest(".battle-canvas-stage");

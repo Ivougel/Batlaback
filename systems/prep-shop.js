@@ -164,6 +164,7 @@ function refreshShop(pay = false, side = rt.getPrepViewSide()) {
   if (pay) rt.playPrepSfx("prep_refresh");
   if (rt.getPhase() === "prep") {
     renderShop();
+    if (typeof rt.renderTdBuildPanel === "function") rt.renderTdBuildPanel();
     rt.updateUI();
   }
 }
@@ -212,6 +213,45 @@ function buyFromShop(index, side = rt.getPrepViewSide()) {
   renderShop();
   renderBench();
   rt.updateUI();
+}
+
+/** TD: купить и сразу положить в башню (без скамейки). applyEntry(entry) → true если успех. */
+function buyFromShopForTdTower(index, side, applyEntry) {
+  if (rt.getPhase() !== "prep" || rt.getGameOver() || !rt.canEditPrepSide(side)) return false;
+  const st = rt.getSideState(side);
+  const entryId = st.shop[index];
+  if (!entryId) return false;
+  const def = ITEM_CATALOG[entryId];
+  if (!def || st.gold < (def.cost ?? 0)) {
+    rt.log("Не хватает золота");
+    rt.playPrepSfx("ui_error");
+    return false;
+  }
+  const entry = {
+    itemId: entryId,
+    uid: `td-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+  };
+  if (typeof applyEntry !== "function" || !applyEntry(entry)) {
+    rt.log("Нет места в башне — выберите другую или освободите слоты");
+    rt.playPrepSfx("ui_error");
+    return false;
+  }
+  st.gold -= def.cost;
+  if (side === "player") rt.addGoldSpent(def.cost);
+  st.shop[index] = null;
+  st.shopFrozen[index] = false;
+  if (typeof applyShopBuyMeta === "function" && !def.isEnhancementItem) {
+    const ctx = getShopContextForSide(side);
+    applyShopBuyMeta(side, st.items, entryId, st, ctx, (msg) => rt.log(msg));
+  }
+  rt.playPrepSfx("prep_buy");
+  if (side === rt.getPrepViewSide() && typeof CombatLog !== "undefined") {
+    CombatLog.notifyPurchase(ITEM_CATALOG[entryId]);
+  }
+  renderShop();
+  if (typeof rt.renderTdBuildPanel === "function") rt.renderTdBuildPanel();
+  rt.updateUI();
+  return true;
 }
 
 function getSellRefund(itemId, side = rt.getPrepViewSide()) {
@@ -449,4 +489,5 @@ function renderBench(side = rt.getPrepViewSide()) {
 }
 
 window.registerPrepShopRuntime = registerPrepShopRuntime;
+window.buyFromShopForTdTower = buyFromShopForTdTower;
 window.syncShopHintsVisibility = syncShopHintsVisibility;

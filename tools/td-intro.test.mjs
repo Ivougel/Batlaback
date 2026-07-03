@@ -84,16 +84,42 @@ async function runTdRunStart(browser) {
     () => document.getElementById("app")?.dataset.phase === "battle",
     { timeout: 8000 },
   );
-  const state = await page.evaluate(() => ({
-    phase: document.getElementById("app")?.dataset.phase,
-    tdRunLive: document.getElementById("app")?.dataset.tdRunLive,
-    tdArenaHidden: document.getElementById("td-arena-mount")?.classList.contains("hidden"),
-    fightHidden: document.getElementById("btn-fight")?.classList.contains("hidden"),
-  }));
+  await page.waitForTimeout(400);
+  const state = await page.evaluate(() => {
+    const mount = document.getElementById("td-arena-mount");
+    const canvas = document.getElementById("td-arena-canvas");
+    const fieldCol = document.getElementById("prep-field-column");
+    const buildPanel = document.getElementById("td-build-panel");
+    const shopPanel = document.getElementById("shop-panel");
+    const mountRect = mount?.getBoundingClientRect();
+    const canvasRect = canvas?.getBoundingClientRect();
+    const fieldRect = fieldCol?.getBoundingClientRect();
+    const buildRect = buildPanel?.getBoundingClientRect();
+    return {
+      phase: document.getElementById("app")?.dataset.phase,
+      tdRunLive: document.getElementById("app")?.dataset.tdRunLive,
+      tdArenaHidden: mount?.classList.contains("hidden"),
+      fightHidden: document.getElementById("btn-fight")?.classList.contains("hidden"),
+      buildPanelHidden: buildPanel?.classList.contains("hidden"),
+      shopVisible: shopPanel && getComputedStyle(shopPanel).display !== "none",
+      mountH: mountRect?.height ?? 0,
+      canvasH: canvasRect?.height ?? 0,
+      fieldH: fieldRect?.height ?? 0,
+      buildH: buildRect?.height ?? 0,
+      slotButtons: buildPanel?.querySelectorAll(".td-build-slot")?.length ?? 0,
+    };
+  });
   assert(state.phase === "battle", "td run should enter battle phase");
   assert(state.tdRunLive === "true", "td run live flag");
   assert(!state.tdArenaHidden, "td arena visible");
   assert(state.fightHidden, "fight hidden during td run");
+  assert(!state.buildPanelHidden, "td build panel visible");
+  assert(!state.shopVisible, "old shop hidden during td run");
+  assert(state.slotButtons === 5, `expected 5 slot buttons, got ${state.slotButtons}`);
+  assert(state.fieldH >= 180, `prep-field-column too short (${state.fieldH}px)`);
+  assert(state.mountH >= 160, `td arena mount too short (${state.mountH}px)`);
+  assert(state.canvasH >= 120, `td canvas too short (${state.canvasH}px)`);
+  assert(state.buildH >= 120, `td build panel too short (${state.buildH}px)`);
   await page.close();
   console.log("✓ td-run-start");
 }
