@@ -402,8 +402,9 @@ html[data-game-mode="td"] #app[data-td-run-live="true"] .prep-hero-card__build-s
 
 html[data-game-mode="td"] #app[data-td-run-live="true"] .hud-collapse-toggle {
   position: absolute;
-  top: calc(2px * var(--ui-scale, 1));
-  right: calc(2px * var(--ui-scale, 1));
+  top: auto;
+  bottom: calc(6px * var(--ui-scale, 1));
+  right: calc(6px * var(--ui-scale, 1));
   z-index: 3;
   width: calc(22px * var(--ui-scale, 1));
   height: calc(22px * var(--ui-scale, 1));

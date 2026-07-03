@@ -1,7 +1,7 @@
 {
   "version": 1,
   "fixedAt": "2026-07-03",
-  "gameModes": ["solo", "versus", "hardbot", "lobby", "td"],
+  "gameModes": ["solo", "versus", "hardbot", "lobby", "td", "campaign"],
   "phases": {
     "js": ["classSelect", "prep", "battle", "replay"],
     "appDataset": ["prep", "battle", "replay"]
@@ -9,6 +9,7 @@
   "classIntroSteps": [
     { "key": "mode", "elementId": "class-step-mode", "overlayAttr": "mode" },
     { "key": "tdDifficulty", "elementId": "class-step-td-difficulty", "overlayAttr": "tdDifficulty" },
+    { "key": "campaignTrial", "elementId": "class-step-campaign", "overlayAttr": "campaignTrial" },
     { "key": "player", "elementId": "class-step-player", "overlayAttr": "player" },
     { "key": "companion", "elementId": "class-step-companion", "overlayAttr": "companion" },
     { "key": "summary", "elementId": "class-step-summary", "overlayAttr": "summary" },
@@ -29,14 +30,15 @@
     { "id": "td-hero-sheet", "modes": ["td"] }
   ],
   "gamePanels": [
-    { "id": "shop-panel", "phases": ["prep"], "modes": ["solo", "versus", "hardbot", "lobby", "td"] },
-    { "id": "bench-panel", "phases": ["prep"], "modes": ["solo", "versus", "hardbot", "lobby", "td"] },
-    { "id": "prep-top-bar", "phases": ["prep"], "modes": ["solo", "versus", "hardbot", "lobby", "td"] },
+    { "id": "shop-panel", "phases": ["prep"], "modes": ["solo", "versus", "hardbot", "lobby", "td", "campaign"] },
+    { "id": "bench-panel", "phases": ["prep"], "modes": ["solo", "versus", "hardbot", "lobby", "td", "campaign"] },
+    { "id": "prep-top-bar", "phases": ["prep"], "modes": ["solo", "versus", "hardbot", "lobby", "td", "campaign"] },
     { "id": "prep-field-column", "phases": ["prep", "battle", "replay"], "modes": ["*"] },
     { "id": "lobby-prep-roster-panel", "phases": ["prep"], "modes": ["lobby"] },
     { "id": "td-build-panel", "phases": ["prep", "battle"], "modes": ["td"], "requires": "tdRunLive" },
     { "id": "td-tower-panel", "phases": ["battle"], "modes": ["td"], "requires": "tdRunLive" },
-    { "id": "td-hint-bar", "phases": ["prep", "battle"], "modes": ["td"], "requires": "tdRunLive" }
+    { "id": "td-hint-bar", "phases": ["prep", "battle"], "modes": ["td"], "requires": "tdRunLive" },
+    { "id": "campaign-hint-bar", "phases": ["prep"], "modes": ["campaign"] }
   ],
   "layoutProfiles": [
     {

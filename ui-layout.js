@@ -164,7 +164,9 @@
   }
 
   function isPrepHeroCardHud(root = document.documentElement) {
-    return root.dataset.prepLayout === "side" || root.dataset.uiSurface === "tablet-side";
+    return root.dataset.prepLayout === "side"
+      || root.dataset.uiSurface === "tablet-side"
+      || root.dataset.uiSurface === "desktop";
   }
 
   function computeTabletPrepHeroHeight(columnH, sceneTop = 14) {
@@ -750,10 +752,50 @@
 
   function syncPrepHeroCardPortraitSize() {
     const root = document.documentElement;
-    if (!isPrepHeroCardHud(root)) {
+    const app = document.getElementById("app");
+    const showHud = isPrepHeroCardHud(root)
+      && app
+      && (app.dataset.phase === "prep" || app.dataset.prepHeroHud === "true");
+
+    if (!showHud) {
       root.style.removeProperty("--prep-hero-card-portrait-w");
       root.style.removeProperty("--prep-hero-card-portrait-h");
+      return;
     }
+
+    const topBar = document.getElementById("prep-top-bar");
+    const heroCard = document.getElementById("prep-hero-card");
+    if (!topBar || !heroCard) return;
+
+    const hudW = topBar.clientWidth;
+    if (hudW < 96) return;
+
+    const uiScale = readCssPx("--ui-scale", 1);
+    const share = readCssPx("--prep-hero-card-portrait-w-share", 0.38);
+    const minW = readCssPx("--prep-hero-card-portrait-w-min", 148 * uiScale);
+    const maxW = readCssPx("--prep-hero-card-portrait-w-max", 320 * uiScale);
+    const portraitW = Math.round(Math.max(minW, Math.min(maxW, hudW * share)));
+
+    const measuredH = Math.max(heroCard.offsetHeight, topBar.offsetHeight);
+    const minH = Math.round(168 * uiScale);
+    const portraitH = Math.max(minH, measuredH);
+
+    root.style.setProperty("--prep-hero-card-portrait-w", `${portraitW}px`);
+    root.style.setProperty("--prep-hero-card-portrait-h", `${portraitH}px`);
+  }
+
+  let prepHeroCardPortraitObserver = null;
+
+  function ensurePrepHeroCardPortraitObserver() {
+    if (prepHeroCardPortraitObserver || typeof ResizeObserver === "undefined") return;
+    const topBar = document.getElementById("prep-top-bar");
+    const heroCard = document.getElementById("prep-hero-card");
+    if (!topBar) return;
+    prepHeroCardPortraitObserver = new ResizeObserver(() => {
+      syncPrepHeroCardPortraitSize();
+    });
+    prepHeroCardPortraitObserver.observe(topBar);
+    if (heroCard) prepHeroCardPortraitObserver.observe(heroCard);
   }
 
   function syncClassOverlayAnchors() {
@@ -2605,6 +2647,8 @@
     scheduleCanvasFit();
     syncMobileShopFabPosition();
     syncPrepHeroSlotHeight();
+    ensurePrepHeroCardPortraitObserver();
+    syncPrepHeroCardPortraitSize();
     window.syncPrepHeroCardChrome?.();
 
     if (usesTabletPrepHeroLayout() && appPhase === "prep") {

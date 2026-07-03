@@ -22,6 +22,7 @@
   <link rel="stylesheet" href="styles/item-card-chrome.css?v=3">
   <link rel="stylesheet" href="styles/shop-pin-chrome.css?v=3">
   <link rel="stylesheet" href="styles/prep-top-bar.css?v=2">
+  <link rel="stylesheet" href="styles/campaign.css?v=1">
   <link rel="stylesheet" href="styles/mutations.css?v=1">
   <link rel="stylesheet" href="styles/battle-archetype-banner.css?v=1">
   <link rel="stylesheet" href="styles/enhancements.css?v=4">
@@ -40,8 +41,8 @@
   <link rel="stylesheet" href="styles/battle-hud-compact.css?v=3">
   <link rel="stylesheet" href="styles/hero-card.css?v=4">
   <link rel="stylesheet" href="styles/hero-portrait-frame.css?v=5">
-  <link rel="stylesheet" href="styles/prep-hero-card.css?v=15">
-  <link rel="stylesheet" href="styles/prep-hud-collapse.css?v=1">
+  <link rel="stylesheet" href="styles/prep-hero-card.css?v=16">
+  <link rel="stylesheet" href="styles/prep-hud-collapse.css?v=2">
   <link rel="stylesheet" href="styles/class-picker.css?v=5">
   <link rel="stylesheet" href="styles/class-hero-showcase.css?v=8">
   <link rel="stylesheet" href="styles/class-hero-portrait-frame.css?v=1">
@@ -164,6 +165,10 @@
             <div class="td-hint-bar class-action-hint hidden" id="td-hint-bar" role="status" aria-live="polite">
               <span class="td-hint-text" id="td-hint-text"></span>
               <button type="button" class="td-hint-dismiss" id="td-hint-dismiss" aria-label="Скрыть подсказку. Shift+клик — отключить все подсказки" title="Скрыть подсказку">✕</button>
+            </div>
+            <div class="campaign-hint-bar class-action-hint hidden" id="campaign-hint-bar" role="status" aria-live="polite">
+              <span class="campaign-hint-bar__progress" id="campaign-hint-progress"></span>
+              <span class="campaign-hint-bar__text" id="campaign-hint-text"></span>
             </div>
             <div class="prep-field-column scene-viewport" id="prep-field-column">
               <aside class="lobby-prep-roster-panel hidden" id="lobby-prep-roster-panel" aria-label="Список противников">
@@ -460,6 +465,25 @@
               <span class="class-name">Tower Defense</span>
               <span class="class-desc">Башни-герои на карте · магазин во время волн</span>
               <span class="class-badge class-badge--td">Оборона</span>
+            </button>
+            <button type="button" class="class-card game-mode-card glass-card" data-game-mode="campaign">
+              <span class="glass-card-icon glass-card-icon--campaign class-icon" aria-hidden="true">🎓</span>
+              <span class="class-name">Кампания</span>
+              <span class="class-desc">Обучение сборке билда · манекены и подсказки</span>
+              <span class="class-badge class-badge--campaign">Испытание</span>
+            </button>
+          </div>
+        </div>
+        <div class="class-step hidden" id="class-step-campaign">
+          <div class="class-step-actions class-step-actions-top">
+            <button type="button" class="btn-secondary btn-glass-back" id="btn-class-back-mode-campaign">← Режим игры</button>
+          </div>
+          <div class="campaign-trial-grid" id="campaign-trial-grid">
+            <button type="button" class="class-card game-mode-card campaign-trial-card glass-card selected" data-campaign-trial="build-trial">
+              <span class="glass-card-icon class-icon" aria-hidden="true">🎓</span>
+              <span class="class-name">Испытание сборки</span>
+              <span class="class-desc">Рюкзак → манекен → тренировочный бой</span>
+              <span class="class-badge class-badge--campaign">4 урока</span>
             </button>
           </div>
         </div>
@@ -995,6 +1019,7 @@
   <script src="emotion-engine.js?v=21"></script>
   <script src="battle-hud.js?v=6"></script>
   <script src="systems/prep-shop.js?v=3"></script>
+  <script src="systems/campaign.js?v=1"></script>
   <script src="systems/doll-engine.js"></script>
   <script src="systems/screen-transitions.js?v=1"></script>
   <script src="components/prep-hud-collapse.js?v=1"></script>

@@ -4,7 +4,7 @@
  * частые переходы ≤280ms, наградные моменты до 360ms, выход быстрее входа.
  */
 (function () {
-  const INTRO_ORDER = ["mode", "tdDifficulty", "player", "companion", "opponent", "summary"];
+  const INTRO_ORDER = ["mode", "tdDifficulty", "campaignTrial", "player", "companion", "opponent", "summary"];
 
   const TIMING = {
     introEnter: 240,

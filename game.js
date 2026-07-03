@@ -239,6 +239,9 @@ let selectedGameMode = "solo";
 let selectedOpponentMode = "ai";
 /** Выбранная сложность TD в интро (easy … ultra). */
 let selectedTdDifficulty = "normal";
+/** Выбранное испытание кампании в интро. */
+let selectedCampaignTrial = "build-trial";
+let campaignShopOptions = { allowRefresh: true, allowSell: true };
 /** Активная сложность текущего TD-забега. */
 let tdRunDifficultyId = "normal";
 let selectedEnemyClass = null;
@@ -311,6 +314,10 @@ function isTdMode() {
   return gameMode === "td";
 }
 
+function isCampaignMode() {
+  return gameMode === "campaign";
+}
+
 function isTdRunLive() {
   return isTdMode() && tdRunLive && phase === "battle" && !!tdState && !tdState.finished;
 }
@@ -360,6 +367,7 @@ function getEnemyDisplayName() {
   if (isLobbyMode()) return getLobbyOpponent(lobbyState)?.name || "Соперник";
   if (isVersusMode()) return "Игрок 2";
   if (isHardBotMode()) return "Сложный бот";
+  if (isCampaignMode()) return "Манекен";
   return "ИИ";
 }
 
@@ -1199,14 +1207,19 @@ function renderCompanionSelection() {
 const CLASS_INTRO_STEP_IDS = {
   mode: "class-step-mode",
   tdDifficulty: "class-step-td-difficulty",
+  campaignTrial: "class-step-campaign",
   player: "class-step-player",
   companion: "class-step-companion",
   summary: "class-step-summary",
   opponent: "class-step-opponent",
 };
 
+function classIntroUsesTrialStep() {
+  return selectedGameMode === "td" || selectedGameMode === "campaign";
+}
+
 function getClassIntroTotalSteps() {
-  return selectedGameMode === "td" ? 5 : 4;
+  return classIntroUsesTrialStep() ? 5 : 4;
 }
 
 let classSummaryTooltipPinned = false;
@@ -1357,7 +1370,9 @@ function renderClassSummaryStep() {
   if (lead) {
     const diffLine = selectedGameMode === "td" && typeof tdFormatDifficultyLabel === "function"
       ? ` · ${tdFormatDifficultyLabel(selectedTdDifficulty)}`
-      : "";
+      : selectedGameMode === "campaign"
+        ? ` · ${Campaign.getTrial(selectedCampaignTrial)?.title || "Кампания"}`
+        : "";
     lead.textContent = `Ваш выбор: ${heroLabel} и ${companion?.name || "—"}${diffLine}`;
   }
   if (heroImg && pendingPlayerClass) {
@@ -1396,6 +1411,7 @@ function showSummaryStep() {
     hardbot: "Сложный бот",
     solo: "Одиночная",
     td: "Tower Defense",
+    campaign: "Кампания",
   };
   document.getElementById("class-modal-title").textContent = modeTitles[selectedGameMode] || "Готовы?";
   document.getElementById("class-modal-subtitle").textContent = "Наведите на героя или спутника — подробности о выборе";
@@ -1473,20 +1489,23 @@ function syncClassOverlayUi() {
   } else if (document.getElementById("class-step-td-difficulty") && !document.getElementById("class-step-td-difficulty").classList.contains("hidden")) {
     badge.textContent = `Шаг 2 из ${totalSteps} · Сложность`;
     hint.textContent = "5 ступеней · ×1.55 между уровнями · выберите сложность";
+  } else if (document.getElementById("class-step-campaign") && !document.getElementById("class-step-campaign").classList.contains("hidden")) {
+    badge.textContent = `Шаг 2 из ${totalSteps} · Испытание`;
+    hint.textContent = "4 урока: рюкзак, заполнение, манекен и финальный манекен";
   } else if (playerStep && !playerStep.classList.contains("hidden")) {
-    badge.textContent = selectedGameMode === "td"
+    badge.textContent = classIntroUsesTrialStep()
       ? `Шаг 3 из ${totalSteps} · Герой`
       : `Шаг 2 из ${totalSteps} · Герой`;
     hint.textContent = pendingPlayerClass
       ? "Нажмите героя ещё раз — к выбору спутника"
       : "Читайте описание на плитке · после выбора слева — полная история";
   } else if (companionStep && !companionStep.classList.contains("hidden")) {
-    badge.textContent = selectedGameMode === "td"
+    badge.textContent = classIntroUsesTrialStep()
       ? `Шаг 4 из ${totalSteps} · Спутник`
       : `Шаг 3 из ${totalSteps} · Спутник`;
     hint.textContent = "Выберите спутника · нажмите ещё раз — к саммари";
   } else if (summaryStep && !summaryStep.classList.contains("hidden")) {
-    badge.textContent = selectedGameMode === "td"
+    badge.textContent = classIntroUsesTrialStep()
       ? `Шаг ${totalSteps} из ${totalSteps} · Старт`
       : `Шаг 4 из ${totalSteps} · Старт`;
     hint.textContent = "Наведите на героя или спутника · «Старт» по центру";
@@ -1568,6 +1587,11 @@ function syncClassHeroShowcase() {
     if (typeof hideClassHeroShowcase === "function") hideClassHeroShowcase();
     return;
   }
+  const campaignTrialStep = document.getElementById("class-step-campaign");
+  if (campaignTrialStep && !campaignTrialStep.classList.contains("hidden")) {
+    if (typeof hideClassHeroShowcase === "function") hideClassHeroShowcase();
+    return;
+  }
   const summaryStep = document.getElementById("class-step-summary");
   if (summaryStep && !summaryStep.classList.contains("hidden")) {
     if (typeof hideClassHeroShowcase === "function") hideClassHeroShowcase();
@@ -1605,6 +1629,31 @@ function selectTdDifficulty(difficultyId) {
   showPlayerClassStep();
 }
 
+function renderCampaignTrialSelection() {
+  document.querySelectorAll(".campaign-trial-card").forEach((card) => {
+    card.classList.toggle("selected", card.dataset.campaignTrial === selectedCampaignTrial);
+  });
+}
+
+function showCampaignTrialStep() {
+  dismissClassOverlayTooltip();
+  hideClassSummaryTooltip();
+  setClassIntroStep("campaignTrial");
+  document.getElementById("class-modal-title").textContent = "Испытание кампании";
+  document.getElementById("class-modal-subtitle").textContent =
+    "Пошаговое обучение сборке билда — от рюкзака до боя с манекеном";
+  renderCampaignTrialSelection();
+  syncClassOverlayUi();
+  syncClassMobileDock();
+}
+
+function selectCampaignTrial(trialId) {
+  if (!Campaign?.TRIALS?.[trialId]) return;
+  selectedCampaignTrial = trialId;
+  renderCampaignTrialSelection();
+  showPlayerClassStep();
+}
+
 function showGameModeStep() {
   hideClassSummaryTooltip();
   setClassIntroStep("mode");
@@ -1627,7 +1676,9 @@ function showPlayerClassStep() {
       ? "Лобби из восьми бойцов — кого из подружек отправим в рейтинг?"
       : selectedGameMode === "td"
         ? "Командир на стартовом слоте — набирайте башни и экипировку. 50 волн без пауз."
-        : "Кого из девочек-зверушек отправим в забег? У каждой свой характер и бонус.";
+        : selectedGameMode === "campaign"
+          ? "Герой для обучения — мягкие уроки и тренировочные манекены."
+          : "Кого из девочек-зверушек отправим в забег? У каждой свой характер и бонус.";
   syncClassOverlayUi();
   syncClassMobileDock();
   if (typeof renderClassMutationGallery === "function") {
@@ -1636,7 +1687,7 @@ function showPlayerClassStep() {
 }
 
 function selectGameMode(mode) {
-  if (mode !== "solo" && mode !== "versus" && mode !== "hardbot" && mode !== "lobby" && mode !== "td") return;
+  if (mode !== "solo" && mode !== "versus" && mode !== "hardbot" && mode !== "lobby" && mode !== "td" && mode !== "campaign") return;
   selectedGameMode = mode;
   selectedOpponentMode = mode === "versus"
     ? "manual"
@@ -1646,7 +1697,9 @@ function selectGameMode(mode) {
         ? "ghost"
         : mode === "td"
           ? "td"
-          : "ai";
+          : mode === "campaign"
+            ? "campaign"
+            : "ai";
   pendingPlayerClass = null;
   pendingPlayerCompanionId = null;
   selectedEnemyClass = null;
@@ -1656,6 +1709,8 @@ function selectGameMode(mode) {
   if (typeof renderClassMutationGallery === "function") renderClassMutationGallery(null);
   if (mode === "td") {
     showTdDifficultyStep();
+  } else if (mode === "campaign") {
+    showCampaignTrialStep();
   } else {
     showPlayerClassStep();
   }
@@ -1669,6 +1724,8 @@ function resetClassSelectOverlay() {
   selectedGameMode = "solo";
   selectedOpponentMode = "ai";
   selectedTdDifficulty = "normal";
+  selectedCampaignTrial = "build-trial";
+  if (typeof Campaign !== "undefined") Campaign.reset();
   document.querySelectorAll(".game-mode-card").forEach((card) => {
     card.classList.toggle("selected", card.dataset.gameMode === "solo");
   });
@@ -2405,6 +2462,9 @@ function init() {
   document.querySelectorAll(".td-difficulty-card").forEach((btn) => {
     btn.addEventListener("click", () => selectTdDifficulty(btn.dataset.tdDifficulty));
   });
+  document.querySelectorAll(".campaign-trial-card").forEach((btn) => {
+    btn.addEventListener("click", () => selectCampaignTrial(btn.dataset.campaignTrial));
+  });
   if (typeof syncClassPickerCardsFromCatalog === "function") syncClassPickerCardsFromCatalog();
   if (typeof syncClassHeroRosterCaption === "function") syncClassHeroRosterCaption();
   document.querySelectorAll(".class-card[data-class]:not([disabled])").forEach((btn) => {
@@ -2415,23 +2475,28 @@ function init() {
   });
   document.getElementById("btn-class-back-mode")?.addEventListener("click", () => {
     if (selectedGameMode === "td") showTdDifficultyStep();
+    else if (selectedGameMode === "campaign") showCampaignTrialStep();
     else showGameModeStep();
   });
   document.getElementById("btn-class-back-mode-td")?.addEventListener("click", () => showGameModeStep());
+  document.getElementById("btn-class-back-mode-campaign")?.addEventListener("click", () => showGameModeStep());
   document.getElementById("btn-class-back")?.addEventListener("click", () => {
     const summaryStep = document.getElementById("class-step-summary");
     const opponentStep = document.getElementById("class-step-opponent");
     const companionStep = document.getElementById("class-step-companion");
     const playerStep = document.getElementById("class-step-player");
     const tdDifficultyStep = document.getElementById("class-step-td-difficulty");
+    const campaignTrialStep = document.getElementById("class-step-campaign");
     if (summaryStep && !summaryStep.classList.contains("hidden")) showCompanionStep({ keepSelection: true });
     else if (opponentStep && !opponentStep.classList.contains("hidden")) showCompanionStep();
     else if (companionStep && !companionStep.classList.contains("hidden")) showPlayerClassStep();
     else if (playerStep && !playerStep.classList.contains("hidden")) {
       if (selectedGameMode === "td") showTdDifficultyStep();
+      else if (selectedGameMode === "campaign") showCampaignTrialStep();
       else showGameModeStep();
     }
     else if (tdDifficultyStep && !tdDifficultyStep.classList.contains("hidden")) showGameModeStep();
+    else if (campaignTrialStep && !campaignTrialStep.classList.contains("hidden")) showGameModeStep();
     else showGameModeStep();
   });
   document.getElementById("btn-class-back-player")?.addEventListener("click", () => showPlayerClassStep());
@@ -2465,10 +2530,11 @@ function init() {
         setLobbyViewFighter(lobbyState.playerId);
         renderLobbyChrome();
       }
-      setPhaseLabel(isTdMode() ? "Закуп перед волной" : "Подготовка", false);
+      setPhaseLabel(isTdMode() ? "Закуп перед волной" : isCampaignMode() ? "Обучение" : "Подготовка", false);
       updatePrepSideUI();
       renderFightButton();
-      ensureShopReady();
+      if (isCampaignMode()) syncCampaignChrome();
+      else ensureShopReady();
       renderShop();
       renderBench();
       updateUI();
@@ -3120,12 +3186,17 @@ function startRunFromOverlay() {
         ? "ghost"
         : selectedGameMode === "td"
           ? "td"
-          : "ai";
+          : selectedGameMode === "campaign"
+            ? "campaign"
+            : "ai";
   enemyClass = selectedEnemyClass || pendingPlayerClass;
   enemyArchetype = AI_ARCHETYPES[enemyClass] || AI_ARCHETYPES.warrior;
   prepViewSide = "player";
   if (selectedGameMode === "td") {
     tdRunDifficultyId = selectedTdDifficulty;
+  }
+  if (selectedGameMode === "campaign" && typeof Campaign !== "undefined") {
+    Campaign.startTrial(selectedCampaignTrial);
   }
   dismissClassOverlayTooltip();
   hideClassSummaryTooltip();
@@ -3250,6 +3321,17 @@ function restartGame() {
     enemyShop = Array(MAX_SHOP).fill(null);
     enemyShopFrozen = Array(MAX_SHOP).fill(false);
     enemyShopReadyForRound = 0;
+  } else if (opponentMode === "campaign") {
+    const enemyState = typeof Campaign !== "undefined" ? Campaign.createEnemyPrep() : null;
+    enemyArchetype = enemyState?.archetype || AI_ARCHETYPES.warrior;
+    enemyClass = enemyState?.classId || "warrior";
+    enemyGold = enemyState?.gold ?? 0;
+    enemyContainers = enemyState?.containers || createStartingContainers();
+    enemyItems = enemyState?.items || [];
+    enemyBench = enemyState?.bench || [];
+    enemyShop = Array(MAX_SHOP).fill(null);
+    enemyShopFrozen = Array(MAX_SHOP).fill(false);
+    enemyShopReadyForRound = 0;
   } else {
     initManualEnemyState();
   }
@@ -3278,17 +3360,27 @@ function restartGame() {
   hideBoardPreviewPopup();
   renderPhase();
   updatePrepSideUI();
-  resetShopForNewRound();
+  if (isCampaignMode() && typeof Campaign !== "undefined") {
+    Campaign.startTrial(selectedCampaignTrial);
+    Campaign.applyPrepStep();
+    syncCampaignChrome();
+  } else {
+    resetShopForNewRound();
+  }
   renderShop();
   renderBench();
   recalcSynergies();
   updateUI();
   renderRunStats();
   renderFightButton();
-  setPhaseLabel("Подготовка", false);
+  setPhaseLabel(isCampaignMode() ? "Обучение" : "Подготовка", false);
   requestAnimationFrame(() => {
-    ensureShopReadyForSide("player");
-    if (isEnemyPrepEditable()) ensureShopReadyForSide("enemy");
+    if (isCampaignMode()) {
+      syncCampaignChrome();
+    } else {
+      ensureShopReadyForSide("player");
+      if (isEnemyPrepEditable()) ensureShopReadyForSide("enemy");
+    }
     renderShop();
     renderBench();
     updatePrepSideUI();
@@ -3301,7 +3393,9 @@ function restartGame() {
       ? `Лобби: ${LOBBY_FIGHTER_COUNT} бойцов, ${LOBBY_START_HP} HP. 🏆 внизу — список участников. Таймер ${LOBBY_PREP_SECONDS}с.`
       : isTdMode()
         ? `Tower Defense (${typeof tdFormatDifficultyLabel === "function" ? tdFormatDifficultyLabel(tdRunDifficultyId) : tdRunDifficultyId}): ${getTdMaxWaves()} волн · башни на карте, магазин в бою.`
-        : isHardBotMode()
+        : isCampaignMode()
+          ? `Кампания: ${Campaign.getTrial()?.title || "испытание"} · ${Campaign.getProgressLabel()}`
+          : isHardBotMode()
           ? "Сложный бот: каждый раунд подбирает лучшую экипировку. Расставьте предметы и в бой!"
           : "Расставьте предметы и в бой! Tab — посмотреть билд бота.");
 }
@@ -4669,6 +4763,10 @@ function clearDragUiState() {
 
 function canStartBattle() {
   if (phase !== "prep" || gameOver) return false;
+  if (isCampaignMode()) {
+    if (typeof Campaign === "undefined" || !Campaign.isActive()) return false;
+    return Campaign.meetsFightRequirement(playerItems, playerContainers);
+  }
   if (isLobbyMode()) {
     if (!lobbyState || !getLobbyPlayer(lobbyState)?.alive) return false;
     if (isLobbyRunOver(lobbyState)) return false;
@@ -4680,7 +4778,7 @@ function canStartBattle() {
   } else if (round > RUN_BATTLES) {
     return false;
   }
-  if (playerItems.length === 0) return false;
+  if (!isCampaignMode() && playerItems.length === 0) return false;
   if (opponentMode === "manual" && enemyItems.length === 0) return false;
   return true;
 }
@@ -4693,6 +4791,8 @@ function renderFightButton() {
   if (visible) btn.disabled = !canStartBattle();
   if (visible && isTdMode()) {
     btn.textContent = "🐷 В оборону!";
+  } else if (visible && isCampaignMode()) {
+    btn.textContent = `⚔️ ${typeof Campaign !== "undefined" ? Campaign.getFightLabel() : "К манекену"}`;
   } else if (visible) {
     btn.textContent = "⚔️ Бой";
   }
@@ -4700,6 +4800,11 @@ function renderFightButton() {
     btn.title = "Игрок 2: положите предметы на стол";
   } else if (visible && isTdMode()) {
     btn.title = "Старт обороны · закупка продолжится во время волн";
+  } else if (visible && isCampaignMode()) {
+    const reason = typeof Campaign !== "undefined"
+      ? Campaign.fightBlockReason(playerItems, playerContainers)
+      : "";
+    btn.title = reason || "Проверка билда на тренировочном манекене";
   } else if (visible && playerItems.length === 0) {
     btn.title = "Положите предметы в сумку";
   } else {
@@ -5256,6 +5361,27 @@ function resolveTdContextHint() {
   return null;
 }
 
+function syncCampaignChrome() {
+  const bar = document.getElementById("campaign-hint-bar");
+  const progressEl = document.getElementById("campaign-hint-progress");
+  const textEl = document.getElementById("campaign-hint-text");
+  const refreshBtn = document.getElementById("btn-refresh");
+  const sellBtn = document.getElementById("btn-sell");
+  if (!isCampaignMode() || phase !== "prep" || gameOver || typeof Campaign === "undefined" || !Campaign.isActive()) {
+    bar?.classList.add("hidden");
+    refreshBtn?.classList.remove("hidden-by-campaign");
+    sellBtn?.classList.remove("hidden-by-campaign");
+    return;
+  }
+  const step = Campaign.getStep();
+  const prep = step?.prep || {};
+  bar?.classList.remove("hidden");
+  if (progressEl) progressEl.textContent = Campaign.getProgressLabel();
+  if (textEl) textEl.textContent = Campaign.getHintText();
+  refreshBtn?.classList.toggle("hidden-by-campaign", prep.allowRefresh === false);
+  sellBtn?.classList.toggle("hidden-by-campaign", prep.allowSell === false);
+}
+
 function syncTdHintBar() {
   loadTdHintPrefs();
   const bar = document.getElementById("td-hint-bar");
@@ -5692,7 +5818,10 @@ function startBattle() {
   }
   if (!canStartBattle()) {
     playPrepSfx("ui_error");
-    if (phase === "prep" && playerItems.length === 0) {
+    if (phase === "prep" && isCampaignMode() && typeof Campaign !== "undefined") {
+      const reason = Campaign.fightBlockReason(playerItems, playerContainers);
+      if (reason) log(reason);
+    } else if (phase === "prep" && playerItems.length === 0) {
       log("Положите хотя бы один предмет в сумку! (не только на скамейку)");
     } else if (phase === "prep" && isVersusMode() && enemyItems.length === 0) {
       log("Игрок 2: положите предметы на стол (Tab — переключить магазин)");
@@ -5838,6 +5967,9 @@ function startBattle() {
             },
           },
         );
+        if (isCampaignMode() && typeof Campaign !== "undefined") {
+          Campaign.applyMannequinBattleModifiers(battleState);
+        }
       }
       if (typeof resetStackOrbitVfx === "function") resetStackOrbitVfx();
       battleStartTime = Date.now();
@@ -6082,7 +6214,7 @@ function endBattle() {
     round++;
     syncAllMutationMilestones();
     if (isLobbyMode() && lobbyState) syncLobbyPlayerFromGlobals();
-    resetShopForNewRound();
+    if (!isCampaignMode()) resetShopForNewRound();
 
     setBattleControlsVisible(false);
     resetBattlePause();
@@ -6131,6 +6263,55 @@ function endBattle() {
 
 function applyPostBattlePrep(battleWinner) {
   if (gameOver) return;
+
+  if (isCampaignMode() && typeof Campaign !== "undefined" && Campaign.isActive()) {
+    battleState = null;
+    if (typeof clearBattleInventoryPopoverCache === "function") clearBattleInventoryPopoverCache();
+    if (battleWinner !== "player") {
+      log("Манекен выстоял — пересоберите билд и попробуйте снова");
+      if (typeof CombatLog !== "undefined") {
+        CombatLog.addEvent({
+          type: "loss",
+          text: "Урок не сдан — попробуйте ещё раз",
+          mergeKey: "campaign:retry",
+        });
+      }
+      Campaign.applyPrepStep();
+      prepViewSide = "player";
+      recalcSynergies();
+      renderBattleStats();
+      renderPlayerProfiles();
+      pendingGameOver = false;
+      updateUI();
+      syncCampaignChrome();
+      return;
+    }
+    const advance = Campaign.advanceAfterWin();
+    if (advance.done) {
+      pendingGameOver = true;
+      log(Campaign.getCompletionMessage());
+      if (typeof CombatLog !== "undefined") {
+        CombatLog.addEvent({
+          type: "win",
+          text: Campaign.getCompletionMessage(),
+          mergeKey: "campaign:complete",
+        });
+      }
+      updateUI();
+      renderRunStats();
+      return;
+    }
+    log(`✅ Урок пройден! ${Campaign.getProgressLabel()}`);
+    Campaign.applyPrepStep();
+    prepViewSide = "player";
+    recalcSynergies();
+    renderBattleStats();
+    renderPlayerProfiles();
+    pendingGameOver = false;
+    updateUI();
+    syncCampaignChrome();
+    return;
+  }
 
   if (isLobbyMode() && lobbyState) {
     fastForwardRemainingLobbyMatches(lobbyMatches);
@@ -9622,7 +9803,8 @@ function updateUI() {
   renderLobbyChrome();
   if (typeof refreshGamepadHints === "function") refreshGamepadHints();
   if (phase === "prep" && !gameOver) {
-    ensureShopReadyForSide(prepViewSide);
+    if (isCampaignMode()) syncCampaignChrome();
+    else ensureShopReadyForSide(prepViewSide);
     updatePrepSideUI();
     renderShop();
     renderBench();
@@ -9633,10 +9815,12 @@ function updateUI() {
   }
 }
 
-function isPrepHeroCardHud() {
-  const root = document.documentElement;
-  return root.dataset.prepLayout === "side" || root.dataset.uiSurface === "tablet-side";
-}
+  function isPrepHeroCardHud() {
+    const root = document.documentElement;
+    return root.dataset.prepLayout === "side"
+      || root.dataset.uiSurface === "tablet-side"
+      || root.dataset.uiSurface === "desktop";
+  }
 
 function getPrepHeroCardName(profile) {
   return typeof getNoviceClassLabel === "function"
@@ -10110,6 +10294,35 @@ window.syncPrepTooltipDockVisibility = syncPrepTooltipDockVisibility;
 window.bindPointerTapTooltip = bindPointerTapTooltip;
 window.syncPrepHeroCardChrome = syncPrepHeroCardChrome;
 
+if (typeof Campaign !== "undefined") {
+  Campaign.registerCampaignRuntime({
+    getGold: () => gold,
+    setGold: (v) => { gold = v; },
+    setFixedShop: (ids) => {
+      for (let i = 0; i < MAX_SHOP; i++) shop[i] = ids[i] ?? null;
+      shopFrozen = Array(MAX_SHOP).fill(false);
+      shopReadyForRound = round;
+    },
+    setShopOptions: (opts) => { campaignShopOptions = { ...campaignShopOptions, ...opts }; },
+    resetPlayerLoadout: () => {
+      bench = [];
+      selectedBench = -1;
+      playerContainers = createStartingContainers();
+      playerItems = applyClassStarters(playerContainers, [], playerClass);
+      playerPendingShopBuffs = 0;
+      setPrepDollOpen(false);
+    },
+    openDoll: () => setPrepDollOpen(true),
+    syncChrome: () => {
+      syncCampaignChrome();
+      renderShop();
+      renderBench();
+      recalcSynergies();
+      updateUI();
+    },
+  });
+}
+
 registerPrepShopRuntime({
   getPrepViewSide: () => prepViewSide,
   getPhase: () => getShopPhase(),
@@ -10145,6 +10358,18 @@ registerPrepShopRuntime({
   startBenchDrag,
   renderTdBuildPanel: () => {
     if (typeof renderTdBuildPanel === "function") renderTdBuildPanel();
+  },
+  shouldUseFixedShop: (side) => isCampaignMode() && side === "player" && typeof Campaign !== "undefined" && Campaign.isActive(),
+  applyFixedShop: (side) => {
+    if (side === "player" && typeof Campaign !== "undefined") Campaign.applyPrepStep();
+  },
+  canRefreshShop: (side) => {
+    if (!isCampaignMode() || side !== "player") return true;
+    return campaignShopOptions.allowRefresh !== false;
+  },
+  canSellShop: (side) => {
+    if (!isCampaignMode() || side !== "player") return true;
+    return campaignShopOptions.allowSell !== false;
   },
 });
 

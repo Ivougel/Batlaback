@@ -45,6 +45,7 @@ body
 | `hardbot` | Сложный бот | Hard AI | Как solo, усиленный бот |
 | `lobby` | Лобби | 8 ghost-бойцов | `#lobby-prep-roster-panel`, таймер prep, без TD-подсказок |
 | `td` | Tower Defense | Волны свиней | Карта, башни, `#td-build-panel`, `data-td-run-live` в бою |
+| `campaign` | Кампания | Тренировочный манекен | Фиксированный магазин по урокам, `#campaign-hint-bar`, бои с ослабленным манекеном |
 
 **Intro-поток по режимам:**
 
@@ -53,6 +54,7 @@ body
 | solo, hardbot, lobby | mode → player → companion → summary → старт |
 | versus | mode → player → companion → summary → **opponent** → старт |
 | td | mode → **td-difficulty** → player → companion → summary → старт |
+| campaign | mode → **campaign-trial** → player → companion → summary → старт |
 
 ---
 
@@ -77,6 +79,7 @@ body
 |----------|--------|------------|
 | `mode` | `#class-step-mode` | 5 карточек режима |
 | `tdDifficulty` | `#class-step-td-difficulty` | 5 сложностей TD |
+| `campaignTrial` | `#class-step-campaign` | Испытания кампании |
 | `player` | `#class-step-player` | 4 класса + галерея мутаций |
 | `companion` | `#class-step-companion` | Сетка спутников |
 | `summary` | `#class-step-summary` | Итог + кнопка «Старт» |

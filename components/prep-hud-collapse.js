@@ -107,6 +107,9 @@ function animateHudPanelCollapse(panel, collapse, heights) {
       panel.style.maxHeight = "none";
     }
     panel.style.overflow = "";
+    if (typeof window.syncPrepHeroCardPortraitSize === "function") {
+      window.syncPrepHeroCardPortraitSize();
+    }
   };
   panel.addEventListener("transitionend", onEnd);
 }

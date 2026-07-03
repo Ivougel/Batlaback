@@ -10,7 +10,7 @@ alwaysApply: false
 
 ## Обязательно
 
-- Режимы игры: только `solo | versus | hardbot | lobby | td` (`data-game-mode`).
+- Режимы игры: только `solo | versus | hardbot | lobby | td | campaign` (`data-game-mode`).
 - Фазы `#app`: `prep | battle | replay`. Intro — через `#class-overlay`, не через `data-phase`.
 - TD-only UI (`#td-hint-bar`, `#td-build-panel`, TD sheets) — только при `data-game-mode=td` и `data-td-run-live=true`. В lobby/solo prep не показывать TD-тексты.
 - Новый overlay / шаг intro → обновить `tools/ui-structure-manifest.json` + `docs/ui-screens-modes.md`.

@@ -28,6 +28,9 @@ async function startPrep(page, mode) {
     if (gameMode === "td" && typeof selectTdDifficulty === "function") {
       selectTdDifficulty("normal");
     }
+    if (gameMode === "campaign" && typeof selectCampaignTrial === "function") {
+      selectCampaignTrial("build-trial");
+    }
     selectPlayerClass("priest");
     if (typeof selectCompanion === "function") {
       selectCompanion(
@@ -37,7 +40,7 @@ async function startPrep(page, mode) {
       );
     }
     if (gameMode === "versus") selectOpponentClass("warrior");
-    else if (gameMode !== "lobby" && gameMode !== "td") selectOpponentClass("mage");
+    else if (gameMode !== "lobby" && gameMode !== "td" && gameMode !== "campaign") selectOpponentClass("mage");
     startRunFromOverlay();
   }, mode);
   await page.waitForFunction(
@@ -134,6 +137,10 @@ try {
       tdHintDisplay: document.getElementById("td-hint-bar")
         ? getComputedStyle(document.getElementById("td-hint-bar")).display
         : null,
+      campaignHintHidden: document.getElementById("campaign-hint-bar")?.classList.contains("hidden"),
+      campaignHintDisplay: document.getElementById("campaign-hint-bar")
+        ? getComputedStyle(document.getElementById("campaign-hint-bar")).display
+        : null,
       lobbyRoster: document.getElementById("lobby-prep-roster-panel")?.classList.contains("hidden"),
     }));
 
@@ -151,6 +158,13 @@ try {
     if (mode !== "td") {
       assert(state.tdHintHidden, `${mode}: td-hint should have hidden class`);
       assert(state.tdHintDisplay === "none", `${mode}: td-hint display none, got ${state.tdHintDisplay}`);
+    }
+    if (mode === "campaign") {
+      assert(!state.campaignHintHidden, `${mode}: campaign-hint should be visible in prep`);
+      assert(state.campaignHintDisplay !== "none", `${mode}: campaign-hint display, got ${state.campaignHintDisplay}`);
+    } else {
+      assert(state.campaignHintHidden, `${mode}: campaign-hint should have hidden class`);
+      assert(state.campaignHintDisplay === "none", `${mode}: campaign-hint display none, got ${state.campaignHintDisplay}`);
     }
     console.log(`✓ prep mode ${mode}`, JSON.stringify(state));
   }

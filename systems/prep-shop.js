@@ -87,6 +87,11 @@ function refreshShopSlotsForSide(side = rt.getPrepViewSide(), opts = {}) {
 function resetShopForNewRoundForSide(side = rt.getPrepViewSide()) {
   if (rt.getGameOver()) return;
   const st = rt.getSideState(side);
+  if (typeof rt.shouldUseFixedShop === "function" && rt.shouldUseFixedShop(side)) {
+    rt.applyFixedShop?.(side);
+    st.shopReadyForRound = rt.getRound();
+    return;
+  }
   const wasNewRound = st.shopReadyForRound !== rt.getRound();
   refreshShopSlotsForSide(side);
   if (wasNewRound && typeof applyShopEnterMeta === "function") {
@@ -153,6 +158,7 @@ function ensureShopReady() {
 
 function refreshShop(pay = false, side = rt.getPrepViewSide()) {
   if (rt.getGameOver() || !rt.canEditPrepSide(side)) return;
+  if (typeof rt.canRefreshShop === "function" && !rt.canRefreshShop(side)) return;
   const st = rt.getSideState(side);
   if (pay) {
     if (rt.getPhase() !== "prep") return;
@@ -294,6 +300,7 @@ function sellBenchEntry(index, side = rt.getPrepViewSide()) {
 }
 
 function sellSelected(side = rt.getPrepViewSide()) {
+  if (typeof rt.canSellShop === "function" && !rt.canSellShop(side)) return;
   const st = rt.getSideState(side);
   const selected = rt.getSelectedBench();
   if (selected < 0 || !st.bench[selected]) return;
