@@ -22,7 +22,7 @@ function maybeTriggerHeroTakingHit(team, shell, hpCurrent) {
   if (prev != null && hpCurrent < prev - 0.01) {
     if (document.documentElement.dataset.battlePrepHeroLayer === "true") {
       if (typeof triggerProfileAvatarHitShake === "function") triggerProfileAvatarHitShake(team);
-    } else if (shell) {
+    } else if (shell && document.documentElement.dataset.battleFxLight !== "true") {
       shell.classList.remove("hero-taking-hit");
       void shell.offsetWidth;
       shell.classList.add("hero-taking-hit");
@@ -293,6 +293,17 @@ function syncAvatarHeroResourceBars(team, state) {
   const hpLabel = barsRoot.querySelector(".avatar-hero-hp-label");
   const staminaFill = barsRoot.querySelector(".avatar-hero-stamina-fill");
   const staminaLabel = barsRoot.querySelector(".avatar-hero-stamina-label");
+
+  const sig = [
+    Math.round(hpPct * 10),
+    Math.round(staminaPct * 10),
+    Math.round(hpCurrent),
+    Math.round(staminaCurrent),
+    Math.round(metrics?.projectedHeal2s ?? 0),
+  ].join("|");
+  if (syncAvatarHeroResourceBars._sig?.[team] === sig) return;
+  if (!syncAvatarHeroResourceBars._sig) syncAvatarHeroResourceBars._sig = {};
+  syncAvatarHeroResourceBars._sig[team] = sig;
 
   if (hpFill) hpFill.style.width = `${hpPct}%`;
   if (hpLabel) hpLabel.textContent = formatHeroHpLabel(hpCurrent, hpMax);
@@ -593,7 +604,13 @@ function syncLiveAvatarHeroFrame(state) {
   if (!state) return;
   syncAvatarHeroResourceBars("player", state);
   syncAvatarHeroResourceBars("enemy", state);
-  if (typeof syncAllDamageSummaryDisplays === "function") syncAllDamageSummaryDisplays(state);
+  if (typeof syncAllDamageSummaryDisplays !== "function") return;
+  const light = document.documentElement.dataset.battleFxLight === "true";
+  const now = performance.now();
+  const gap = light ? 900 : 250;
+  if (now - (syncLiveAvatarHeroFrame._stacksAt || 0) < gap) return;
+  syncLiveAvatarHeroFrame._stacksAt = now;
+  syncAllDamageSummaryDisplays(state);
 }
 
 function allocateHeroFloatLane(state, team) {

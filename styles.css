@@ -1610,6 +1610,14 @@ html[data-battle-fx-light="true"] .avatar-dot-stack-pulse .avatar-dot-stack-icon
   display: flex;
 }
 
+.battle-countdown-overlay.battle-countdown-overlay--prep {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-system, 9000) - 2);
+  pointer-events: auto;
+  background: rgba(0, 0, 0, 0.28);
+}
+
 .battle-countdown-digit {
   font-size: min(28vw, 120px);
   font-weight: 900;

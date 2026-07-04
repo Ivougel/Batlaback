@@ -1118,9 +1118,65 @@
     forest: buildForestSfx,
   };
 
+  function applySharedPrepClockSfx(sfx, api) {
+    const { tone, arpeggio } = api;
+    sfx.prep_phase_start = () => {
+      arpeggio([392, 494, 587], 0.06, { volume: 0.08, type: "sine" });
+    };
+    sfx.prep_timer_10 = () => {
+      tone(660, 0.09, { volume: 0.075, type: "triangle" });
+      window.setTimeout(() => tone(784, 0.08, { volume: 0.065, type: "sine" }), 55);
+    };
+    sfx.prep_timer_5 = () => {
+      tone(740, 0.1, { volume: 0.085, type: "triangle" });
+      window.setTimeout(() => tone(880, 0.11, { volume: 0.08, type: "square" }), 60);
+    };
+    return sfx;
+  }
+
+  /** Звуки «мыслей» героев — мягкие, стерео по стороне боя. */
+  function applySharedThoughtSfx(sfx, api) {
+    const { tone, arpeggio } = api;
+    const pan = (opts = {}) => (opts.pan ?? 0);
+
+    sfx.thought_nod = (opts = {}) => {
+      tone(392, 0.14, { volume: 0.042, type: "sine", pan: pan(opts) });
+      window.setTimeout(() => tone(494, 0.1, { volume: 0.034, type: "triangle", pan: pan(opts) }), 70);
+    };
+    sfx.thought_bounce = (opts = {}) => {
+      tone(523, 0.08, { volume: 0.05, type: "triangle", pan: pan(opts) });
+      window.setTimeout(() => tone(698, 0.11, { volume: 0.048, type: "sine", pan: pan(opts) * 0.6 }), 55);
+      window.setTimeout(() => tone(440, 0.09, { volume: 0.036, type: "sine", pan: pan(opts) }), 130);
+    };
+    sfx.thought_wobble = (opts = {}) => {
+      tone(330, 0.1, { volume: 0.038, type: "triangle", pan: pan(opts), detune: -18 });
+      window.setTimeout(() => tone(370, 0.1, { volume: 0.034, type: "sine", pan: -pan(opts), detune: 14 }), 90);
+      window.setTimeout(() => tone(350, 0.09, { volume: 0.03, type: "triangle", pan: pan(opts) }), 175);
+    };
+    sfx.thought_pop = (opts = {}) => {
+      arpeggio([440, 554, 659], 0.042, { volume: 0.045, type: "sine", duration: 0.09, pan: pan(opts) });
+    };
+    sfx.thought_whoosh = (opts = {}) => {
+      tone(880, 0.06, { volume: 0.028, type: "sine", pan: pan(opts) });
+      window.setTimeout(() => tone(620, 0.12, { volume: 0.034, type: "triangle", pan: -pan(opts) * 0.5 }), 40);
+    };
+    sfx.thought_dance = (opts = {}) => {
+      arpeggio([392, 494, 587, 659], 0.055, { volume: 0.04, type: "triangle", duration: 0.08, pan: pan(opts) });
+    };
+    sfx.thought_sparkle = (opts = {}) => {
+      tone(988, 0.07, { volume: 0.032, type: "sine", pan: pan(opts) });
+      window.setTimeout(() => tone(1319, 0.08, { volume: 0.028, type: "triangle", pan: pan(opts) * 0.7 }), 65);
+    };
+    sfx.thought_reply = (opts = {}) => {
+      tone(587, 0.11, { volume: 0.038, type: "sine", pan: pan(opts) });
+      window.setTimeout(() => tone(740, 0.09, { volume: 0.032, type: "triangle", pan: pan(opts) * 0.5 }), 80);
+    };
+    return sfx;
+  }
+
   function buildSfxTheme(themeId, api) {
     const build = builders[themeId] || builders.classic;
-    return build(api);
+    return applySharedThoughtSfx(applySharedPrepClockSfx(build(api), api), api);
   }
 
   global.SfxThemes = {

@@ -978,7 +978,15 @@ const ArenaEquipment = (() => {
     return w >= 8 && h >= 8;
   }
 
+  function equipAutoAttackEnabled() {
+    if (typeof BattleFxTier !== "undefined" && BattleFxTier.equipAutoAttackEnabled) {
+      return BattleFxTier.equipAutoAttackEnabled();
+    }
+    return true;
+  }
+
   function maybeScheduleWeaponBursts(all, sizeBySide, elapsed) {
+    if (!equipAutoAttackEnabled()) return;
     all.forEach((body) => {
       if (!canAutoWeaponAttack(body, sizeBySide)) return;
       if (elapsed < (body.nextAttackAt || 0)) return;
@@ -1447,6 +1455,7 @@ const ArenaEquipment = (() => {
   }
 
   function triggerDamageStrike(sourceTeam, itemUid, amount = 0) {
+    if (!equipAutoAttackEnabled()) return;
     if (!isArenaActive() || !sourceTeam || !itemUid) return;
     const body = resolveStrikeWeaponBody(sourceTeam, itemUid);
     if (!body || body.attack) return;

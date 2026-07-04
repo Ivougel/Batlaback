@@ -277,6 +277,18 @@
   --hint-title-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);
   --hint-line-color: var(--meadow-ink);
   --hint-line-sub-color: var(--meadow-ink-muted);
+  --hint-tone-body: var(--meadow-ink);
+  --hint-tone-muted: var(--meadow-ink-muted);
+  --hint-tone-label: #4a3d68;
+  --hint-tone-gold: #9a7010;
+  --hint-tone-amber: #8a5c14;
+  --hint-tone-info: #2a6b8a;
+  --hint-tone-magic: #6b4fa0;
+  --hint-tone-epic: #6b4fa0;
+  --hint-tone-buff: #2d8a45;
+  --hint-tone-danger: #a33030;
+  --hint-tone-unique: #9a5a18;
+  --hint-tone-mechanic: var(--tooltip-mechanic);
   --hint-stat-base-color: var(--meadow-ink-muted);
   --hint-stat-arrow-color: rgba(90, 115, 84, 0.85);
   --hint-stat-buff-color: #2d8a45;

@@ -12,7 +12,8 @@ const ThoughtArena = (() => {
   /** Доля диаметра тела, занимаемая глифом (без legacy-усадки 0.72). */
   const THOUGHT_GLYPH_FONT_RATIO = 0.90;
   /** Глобальный множитель амплитуды тряски/дрожи эмодзи-мыслей (1 = эталон). */
-  const THOUGHT_SHAKE_DYNAMICS = 0.5;
+  const THOUGHT_SHAKE_DYNAMICS = 0.82;
+  const GLYPH_DANCE_STAGGER_S = 0.58;
 
   /** Параметры «мысленного пузыря» — мягкая пружина, критическое демпфирование, левитация. */
   const PHYS = {
@@ -21,8 +22,8 @@ const ThoughtArena = (() => {
       dampC: 7.4,
       buoyancy: 12,
       gravity: 11,
-      turbAmp: 1.1,
-      turbFreqScale: 0.48,
+      turbAmp: 0.32,
+      turbFreqScale: 0.38,
       wallRest: 0.26,
       wallFric: 0.9,
       angSpring: 4.25,
@@ -83,12 +84,11 @@ const ThoughtArena = (() => {
     const anchored = { ...PHYS.anchored };
     const arena = { ...PHYS.arena };
     if (light || flank) {
-      anchored.turbAmp = 0;
-      anchored.subSteps = 1;
+      anchored.subSteps = Math.min(anchored.subSteps, 2);
       anchored.renderSmooth = 10;
       anchored.rotRenderSmooth = 8;
-      anchored.springK *= 1.35;
-      anchored.dampC *= 1.45;
+      anchored.springK *= 1.2;
+      anchored.dampC *= 1.25;
       arena.subSteps = 2;
     }
     if (prefersReducedThoughtMotion()) {
@@ -98,6 +98,77 @@ const ThoughtArena = (() => {
       arena.turbAmp = 0;
     }
     return { anchored, arena };
+  }
+
+  function resolveDanceStyle(animation) {
+    const key = String(animation || "wobble").toLowerCase();
+    if (key === "shake") return "wobble";
+    return key;
+  }
+
+  /** Плавные «танцы» мыслей — каждый глиф со своим phase offset. */
+  const THOUGHT_DANCE = {
+    nod: (t, phase) => ({
+      ox: 0,
+      oy: Math.sin(t * 2.4 + phase) * 3.2,
+      rot: Math.sin(t * 1.2 + phase) * 2.8,
+      scale: 1,
+    }),
+    wobble: (t, phase) => ({
+      ox: Math.sin(t * 2.1 + phase * 1.2) * 2.8,
+      oy: Math.cos(t * 1.65 + phase * 0.9) * 2.2,
+      rot: Math.sin(t * 1.85 + phase) * 5.5,
+      scale: 1,
+    }),
+    bounce: (t, phase) => {
+      const s = Math.sin(t * 2.8 + phase * 0.75);
+      return {
+        ox: Math.sin(t * 1.1 + phase) * 1.2,
+        oy: -Math.abs(s) * 4.8,
+        rot: s * 2.5,
+        scale: 1 + Math.max(0, s) * 0.065,
+      };
+    },
+    grow: (t, phase) => ({
+      ox: 0,
+      oy: Math.sin(t * 1.4 + phase) * 1.5,
+      rot: 0,
+      scale: 1 + Math.max(0, Math.sin(t * 2 + phase * 0.55)) * 0.12,
+    }),
+    fly: (t, phase) => ({
+      ox: Math.sin(t * 1.35 + phase * 1.1) * 4.2,
+      oy: -Math.abs(Math.sin(t * 1.75 + phase)) * 3.6,
+      rot: Math.sin(t * 1.5 + phase) * 7,
+      scale: 1 + Math.sin(t * 2.2 + phase) * 0.04,
+    }),
+    dance: (t, phase) => ({
+      ox: Math.sin(t * 1.25 + phase * 1.45) * 4.8,
+      oy: Math.cos(t * 1.05 + phase * 0.85) * 3.6,
+      rot: Math.sin(t * 0.95 + phase * 1.15) * 9,
+      scale: 1 + Math.sin(t * 1.6 + phase) * 0.045,
+    }),
+    particles: (t, phase) => ({
+      ox: (Math.sin(t * 3.2 + phase) + Math.sin(t * 5.1 + phase * 1.6)) * 1.4,
+      oy: Math.cos(t * 2.8 + phase) * 1.8,
+      rot: Math.sin(t * 3.6 + phase) * 4.5,
+      scale: 1 + Math.sin(t * 3.2 + phase) * 0.035,
+    }),
+  };
+
+  function sampleThoughtDance(body) {
+    const style = resolveDanceStyle(body.danceStyle);
+    const fn = THOUGHT_DANCE[style] || THOUGHT_DANCE.wobble;
+    const t = body.danceTime ?? 0;
+    const phase = body.dancePhaseOffset ?? 0;
+    const raw = fn(t, phase);
+    const vmin = viewportMin();
+    const amp = vmin * 0.00112 * THOUGHT_SHAKE_DYNAMICS;
+    return {
+      ox: (raw.ox ?? 0) * amp,
+      oy: (raw.oy ?? 0) * amp,
+      rot: raw.rot ?? 0,
+      scaleMult: raw.scale ?? 1,
+    };
   }
 
   function turbulenceForce(t, seed, amp, freqScale = 1) {
@@ -249,7 +320,18 @@ const ThoughtArena = (() => {
   }
 
   function usesGlyphMountContainers(glyphCount) {
-    return glyphCount > 1;
+    if (glyphCount <= 1) return false;
+    if (isStaticThoughts()) return false;
+    return true;
+  }
+
+  /** Статичный flank: один глиф-узел, без split-mount (иначе ResizeObserver ↔ layout петля). */
+  function normalizeGlyphsForDisplay(glyphs, rawEmoji) {
+    if (!glyphs.length) return glyphs;
+    if (isStaticThoughts() && isAnchoredFlankArena() && glyphs.length > 1) {
+      return [String(rawEmoji || glyphs.join("")).trim()];
+    }
+    return glyphs;
   }
 
   function getClusterRootEl(side) {
@@ -291,8 +373,12 @@ const ThoughtArena = (() => {
       clusterRoot.appendChild(mount);
     }
     const size = thoughtDiameterPx(1);
-    mount.style.width = `${size}px`;
-    mount.style.height = `${size}px`;
+    const sizeKey = `${size}`;
+    if (mount.dataset.sizeKey !== sizeKey) {
+      mount.dataset.sizeKey = sizeKey;
+      mount.style.width = `${size}px`;
+      mount.style.height = `${size}px`;
+    }
     return mount;
   }
 
@@ -303,6 +389,17 @@ const ThoughtArena = (() => {
     const totalW = glyphCount <= 1
       ? emojiSize
       : Math.ceil(emojiSize + (glyphCount - 1) * spacing);
+
+    const sig = [
+      glyphCount,
+      emojiSize,
+      spacing,
+      totalW,
+      anchored ? 1 : 0,
+      ...offsets.map((o) => `${Math.round(o.ox)}|${Math.round(o.oy)}`),
+    ].join(":");
+    if (clusterRoot.dataset.layoutSig === sig) return;
+    clusterRoot.dataset.layoutSig = sig;
 
     clusterRoot.style.width = `${totalW}px`;
     clusterRoot.style.height = `${emojiSize}px`;
@@ -510,13 +607,14 @@ const ThoughtArena = (() => {
 
   function applyVisual(body) {
     const speed = Math.hypot(body.vx ?? 0, body.vy ?? 0);
-    const stretch = Math.min(0.025, speed * 0.0009);
-    const squash = 1 + stretch * Math.sin((body.turbPhase ?? 0) * 4.2);
-    const scale = body.displayScale * squash * (body.reactScale ?? 1);
+    const stretch = Math.min(0.018, speed * 0.0007);
+    const squash = 1 + stretch * Math.sin((body.turbPhase ?? 0) * 3.4);
+    const dance = isAnchoredFlankArena() ? sampleThoughtDance(body) : { ox: 0, oy: 0, rot: 0, scaleMult: 1 };
+    const scale = body.displayScale * squash * (body.reactScale ?? 1) * dance.scaleMult;
     const mirrorX = body.mirrorX ? -1 : 1;
-    const x = (body.renderX ?? body.x) + (body.reactOx ?? 0);
-    const y = (body.renderY ?? body.y) + (body.reactOy ?? 0);
-    const rot = (body.renderRot ?? body.rotation ?? 0) + (body.reactRot ?? 0);
+    const x = (body.renderX ?? body.x) + (body.reactOx ?? 0) + dance.ox;
+    const y = (body.renderY ?? body.y) + (body.reactOy ?? 0) + dance.oy;
+    const rot = (body.renderRot ?? body.rotation ?? 0) + (body.reactRot ?? 0) + dance.rot;
     const transform = [
       `translate3d(${x}px, ${y}px, 0)`,
       `translate(-50%, -50%)`,
@@ -865,12 +963,6 @@ const ThoughtArena = (() => {
 
   function thoughtsNeedMotionStep(list) {
     if (equipReactions.player.length || equipReactions.enemy.length) return true;
-    const anchoredLight = isAnchoredFlankArena()
-      && typeof BattleFxTier !== "undefined"
-      && BattleFxTier.isLightBattleFx();
-    if (anchoredLight) {
-      return list.some((body) => body.fadeOut || (body.opacity ?? 1) < 0.97);
-    }
     for (const body of list) {
       if (body.fadeOut) return true;
       if (Math.abs((body.displayScale ?? 1) - (body.targetScale ?? 1)) > 0.025) return true;
@@ -919,6 +1011,7 @@ const ThoughtArena = (() => {
     const { anchored: anchoredProf, arena: arenaPhys } = thoughtPhysicsProfile();
 
     list.forEach((body) => {
+      body.danceTime = (body.danceTime ?? 0) + dt;
       const targetR = thoughtRadiusPx(body.glyphCount);
       body.radius += (targetR - body.radius) * Math.min(1, dt * 5);
       body.displayScale += (body.targetScale - body.displayScale) * Math.min(1, dt * (anchoredProf.scaleSmooth ?? 3.2));
@@ -1012,6 +1105,8 @@ const ThoughtArena = (() => {
     const r = thoughtRadiusPx(usesGlyphMountContainers(glyphCount) ? 1 : glyphCount);
     const anchored = isAnchoredFlankArena();
     const splitMounts = usesGlyphMountContainers(glyphCount);
+    const w = slot.clientWidth || slot.offsetWidth || Math.round(viewportMin() * 0.14);
+    const h = slot.clientHeight || slot.offsetHeight || Math.round(viewportMin() * 0.14);
     const clusterRoot = splitMounts ? ensureClusterRoot(side, glyphCount) : null;
     if (splitMounts && clusterRoot) {
       layoutGlyphMounts(clusterRoot, glyphCount, anchored);
@@ -1026,8 +1121,6 @@ const ThoughtArena = (() => {
       }
     }
 
-    const w = slot.clientWidth || slot.offsetWidth || Math.round(viewportMin() * 0.14);
-    const h = slot.clientHeight || slot.offsetHeight || Math.round(viewportMin() * 0.14);
     const { arena: arenaPhys } = thoughtPhysicsProfile();
     const spacing = clusterGlyphSpacingPx(glyphCount, anchored);
     const offsets = clusterOffsets(glyphCount, spacing, { horizontalOnly: anchored });
@@ -1089,7 +1182,10 @@ const ThoughtArena = (() => {
         targetScale: 1,
         opacity: 1,
         fadeOut: false,
-        wobbleAmp: 0.28,
+        wobbleAmp: 0.16,
+        danceStyle: resolveDanceStyle(event.animation),
+        dancePhaseOffset: index * GLYPH_DANCE_STAGGER_S + (side === "player" ? 0 : 0.28) + Math.random() * 0.12,
+        danceTime: index * 0.14,
         mirrorX: usesThoughtDuelMirror() && side === "player",
       };
       if (isStaticThoughts()) {
@@ -1107,37 +1203,36 @@ const ThoughtArena = (() => {
     clusters.set(side, { eventKey, members });
   }
 
-  function pulseCluster(cluster) {
+  function pulseClusterMember(body) {
     if (isStaticThoughts()) return;
     const vmin = viewportMin();
-    const impulse = vmin * 0.013;
+    const impulse = vmin * 0.009;
 
     if (isAnchoredFlankArena()) {
-      cluster.members.forEach((body) => {
-        body.vy -= impulse * (0.14 + Math.random() * 0.06);
-        body.vx += (Math.random() - 0.5) * impulse * 0.09;
-        body.wobbleAmp = Math.min(0.62, (body.wobbleAmp ?? 1) + 0.14);
-        body.targetScale = 1 + 0.025 * THOUGHT_SHAKE_DYNAMICS;
-      });
+      body.vy -= impulse * (0.1 + Math.random() * 0.04);
+      body.vx += (Math.random() - 0.5) * impulse * 0.06;
+      body.wobbleAmp = Math.min(0.38, (body.wobbleAmp ?? 1) + 0.08);
+      body.targetScale = 1 + 0.018 * THOUGHT_SHAKE_DYNAMICS;
       window.setTimeout(() => {
-        cluster.members.forEach((body) => {
-          body.targetScale = 1;
-        });
-      }, 380);
+        body.targetScale = 1;
+      }, 420);
       return;
     }
 
-    cluster.members.forEach((body) => {
-      body.targetScale = 1.1;
-      body.wobbleAmp = 1.1;
-      body.vy -= impulse * 0.6;
-      body.vx += (Math.random() - 0.5) * impulse;
-    });
+    body.targetScale = 1.06;
+    body.wobbleAmp = 0.65;
+    body.vy -= impulse * 0.45;
+    body.vx += (Math.random() - 0.5) * impulse * 0.7;
     window.setTimeout(() => {
-      cluster.members.forEach((body) => {
-        body.targetScale = 1;
-      });
-    }, 220);
+      body.targetScale = 1;
+    }, 260);
+  }
+
+  function pulseCluster(cluster) {
+    if (isStaticThoughts()) return;
+    cluster.members.forEach((body, index) => {
+      window.setTimeout(() => pulseClusterMember(body), index * 130);
+    });
   }
 
   function updateClusterGlyphs(cluster, glyphs, event) {
@@ -1145,7 +1240,10 @@ const ThoughtArena = (() => {
     glyphs.forEach((glyph, index) => {
       const body = cluster.members[index];
       if (!body) return;
-      if (event.animation) body.el.dataset.animation = event.animation;
+      if (event.animation) {
+        body.el.dataset.animation = event.animation;
+        body.danceStyle = resolveDanceStyle(event.animation);
+      }
       if (body.glyph !== glyph) {
         body.glyph = glyph;
         styleBodyEl(body, glyph);
@@ -1156,7 +1254,7 @@ const ThoughtArena = (() => {
   function upsert(side, event) {
     if (!getHeroMountEl(side) || !event?.emoji) return;
 
-    const glyphs = splitEmojiGlyphs(event.emoji);
+    const glyphs = normalizeGlyphsForDisplay(splitEmojiGlyphs(event.emoji), event.emoji);
     if (!glyphs.length) return;
 
     const key = `${event.emoji}|${event.animation || ""}`;
@@ -1201,34 +1299,60 @@ const ThoughtArena = (() => {
     lastTs = 0;
   }
 
+  let thoughtResizeInProgress = false;
+  let thoughtResizeLastAt = 0;
+  let thoughtResizeDeferTimer = 0;
+  const THOUGHT_RESIZE_MIN_MS = 180;
+
   function onResize() {
-    clusters.forEach((cluster) => refreshClusterMemberOffsets(cluster));
-    getAllBodies().forEach((body) => {
-      body.radius = thoughtRadiusPx(body.glyphCount);
-      styleBodyEl(body, body.glyph);
-      if (isAnchoredFlankArena()) {
-        const mount = getBodyMountEl(body);
-        if (!mount) return;
-        const w = mount.clientWidth;
-        const h = mount.clientHeight;
-        const anchor = getLocalAnchorPx(w, h);
-        body.homeX = anchor.x + (body.offsetOx || 0);
-        body.homeY = anchor.y + (body.offsetOy || 0);
-        body.x = body.homeX;
-        body.y = body.homeY;
-        body.mirrorX = usesThoughtDuelMirror() && body.side === "player";
-      } else {
-        const arena = getArenaEl();
-        if (!arena) return;
-        clampBodyToArena(body, arena.clientWidth, arena.clientHeight);
+    if (thoughtResizeInProgress) return;
+    const now = performance.now();
+    if (now - thoughtResizeLastAt < THOUGHT_RESIZE_MIN_MS) {
+      if (!thoughtResizeDeferTimer) {
+        thoughtResizeDeferTimer = window.setTimeout(() => {
+          thoughtResizeDeferTimer = 0;
+          onResize();
+        }, THOUGHT_RESIZE_MIN_MS);
       }
-      applyVisual(body);
-    });
+      return;
+    }
+    thoughtResizeInProgress = true;
+    thoughtResizeLastAt = now;
+    try {
+      clusters.forEach((cluster) => refreshClusterMemberOffsets(cluster));
+      getAllBodies().forEach((body) => {
+        body.radius = thoughtRadiusPx(body.glyphCount);
+        styleBodyEl(body, body.glyph);
+        if (isAnchoredFlankArena()) {
+          const mount = getBodyMountEl(body);
+          if (!mount) return;
+          const mw = mount.clientWidth;
+          const mh = mount.clientHeight;
+          const anchor = getLocalAnchorPx(mw, mh);
+          body.homeX = anchor.x + (body.offsetOx || 0);
+          body.homeY = anchor.y + (body.offsetOy || 0);
+          body.x = body.homeX;
+          body.y = body.homeY;
+          body.mirrorX = usesThoughtDuelMirror() && body.side === "player";
+        } else {
+          const arena = getArenaEl();
+          if (!arena) return;
+          clampBodyToArena(body, arena.clientWidth, arena.clientHeight);
+        }
+        applyVisual(body);
+      });
+    } finally {
+      thoughtResizeInProgress = false;
+    }
   }
 
   if (typeof ResizeObserver !== "undefined") {
     document.addEventListener("DOMContentLoaded", () => {
-      const ro = new ResizeObserver(onResize);
+      const onThoughtSlotResize = () => {
+        if (thoughtResizeInProgress) return;
+        onResize();
+      };
+      const ro = new ResizeObserver(onThoughtSlotResize);
       const arena = getArenaEl();
       if (arena) ro.observe(arena);
       ["player-thought-slot", "enemy-thought-slot"].forEach((id) => {
@@ -1238,7 +1362,6 @@ const ThoughtArena = (() => {
     });
   }
   window.addEventListener("resize", onResize);
-  window.visualViewport?.addEventListener("resize", onResize);
 
   return {
     upsert,

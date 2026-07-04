@@ -342,7 +342,7 @@ function tickFloatingNumbers(state, dt) {
       const liveTo = getProfileAvatarViewportCenter(fn.team);
 
       if (age < delay) {
-        return { ...fn, age, x: liveTo.x, y: liveTo.y };
+        return { ...fn, age, x: fn.toX ?? liveTo.x, y: fn.toY ?? liveTo.y };
       }
 
       const animAge = age - delay;
@@ -364,17 +364,17 @@ function tickFloatingNumbers(state, dt) {
       }
 
       if (fn.spawnAtTarget || fn.anchorMode === "hero-above") {
-        const anchor = typeof getProfileAvatarFloatAnchor === "function"
-          ? getProfileAvatarFloatAnchor(fn.team, fn.lane || 0)
-          : liveTo;
+        const baseX = fn.toX ?? fn.fromX ?? liveTo.x;
+        const baseY = fn.toY ?? fn.fromY ?? liveTo.y;
         const lift = fn.anchorMode === "hero-above" ? 52 : 42;
+        const eased = easeOutCubic(t);
         return {
           ...fn,
           age,
-          x: anchor.x,
-          y: anchor.y - t * lift,
-          toX: anchor.x,
-          toY: anchor.y,
+          x: baseX,
+          y: baseY - eased * lift,
+          toX: baseX,
+          toY: baseY,
         };
       }
 

@@ -189,7 +189,6 @@ let lobbyBackgroundSimAcc = new Map();
 let lobbyPrepTimerRemaining = 0;
 let lobbyPrepTimerActive = false;
 let lobbyPrepOvertimeUsed = false;
-let lobbyTimerBattleQueued = false;
 let lobbyRoundSettling = false;
 let lastLobbyPlayerBattleWinner = null;
 let lastLobbyRosterStripSig = "";
@@ -441,22 +440,17 @@ function resetLobbyPrepTimer() {
   lobbyPrepTimerRemaining = LOBBY_PREP_SECONDS;
   lobbyPrepTimerActive = true;
   lobbyPrepOvertimeUsed = false;
+  if (typeof PrepCountdown !== "undefined") {
+    PrepCountdown.resetLobbyArming();
+    PrepCountdown.onPrepPhaseStarted(`lobby:${round}`);
+  }
 }
 
 function stopLobbyPrepTimer() {
   lobbyPrepTimerActive = false;
 }
 
-/** Автостарт по таймеру — вне gameLoop prep-тика, чтобы не блокировать кадр. */
-function queueLobbyTimerBattleStart() {
-  if (lobbyTimerBattleQueued) return;
-  lobbyTimerBattleQueued = true;
-  requestAnimationFrame(() => {
-    lobbyTimerBattleQueued = false;
-    if (phase !== "prep" || !canStartBattle()) return;
-    startBattle();
-  });
-}
+/** Автостарт по таймеру — через PrepCountdown в gameLoop. */
 
 function rollbackPreparedBattleStart() {
   battleState = null;
@@ -522,7 +516,6 @@ function beginLobbyRoundBattles(battleRound) {
   syncLobbySpectateBoards(playerMatch);
   const app = document.getElementById("app");
   if (app) app.dataset.lobbySpectate = "yours";
-  if (typeof initBattleCountdown === "function") initBattleCountdown(playerMatch.state);
 }
 
 /** Создаёт battleState до смены фазы — renderPhase() сразу видит бой. */
@@ -580,7 +573,7 @@ function prepareBattleStartState() {
 
   if (typeof resetStackOrbitVfx === "function") resetStackOrbitVfx();
   battleStartTime = Date.now();
-  tickBattlePresentation._at = { emotion: 0, arena: 0, orbit: 0, aura: 0 };
+  tickBattlePresentation._at = { emotion: 0, arena: 0, orbit: 0, aura: 0, float: 0 };
   if (typeof BattleHeroAnchor !== "undefined" && BattleHeroAnchor.invalidateMeasureCache) {
     BattleHeroAnchor.invalidateMeasureCache();
   }
@@ -601,9 +594,6 @@ function finalizeBattleStartUi() {
   if (typeof resetBattleAuraFrame === "function") resetBattleAuraFrame();
   if (typeof initBattleHud === "function") initBattleHud();
   if (typeof hideBattleCountdownOverlay === "function") hideBattleCountdownOverlay();
-  if (!isAnyLobbyMode() && typeof initBattleCountdown === "function" && battleState) {
-    initBattleCountdown(battleState);
-  }
   if (typeof initBattleDamageTracker === "function" && battleState) {
     initBattleDamageTracker(battleState);
   }
@@ -611,7 +601,6 @@ function finalizeBattleStartUi() {
   updateBattleControlsUI();
   setPhaseLabel("Бой!", true);
   log(`Раунд ${round}: бой!`);
-  playPrepSfx("battle_start");
   renderBattleStats();
   renderFightButton();
   renderLobbyChrome();
@@ -1245,7 +1234,6 @@ function startLobby2pFarm(humanId) {
   const state = createLobby2pSideBattleState(humanId, bot, "farm");
   if (!state) return;
   state.recording = humanId === 0;
-  if (typeof initBattleCountdown === "function") initBattleCountdown(state);
   lobbyState.sideBattles[humanId] = { type: "farm", opponentId: bot.id, state, shared: false };
   lobbyState.ready[humanId] = false;
   log(`🌾 ${getLobbyHumanFighter(lobbyState, humanId)?.name}: фарм vs ${bot.name}`);
@@ -1265,7 +1253,6 @@ function startLobby2pDuel(challengerId) {
   const state = createLobby2pSideBattleState(challengerId, target, "duel");
   if (!state) return;
   state.recording = true;
-  if (typeof initBattleCountdown === "function") initBattleCountdown(state);
   const duelEntry = { type: "duel", opponentId: targetId, state, shared: true };
   lobbyState.sideBattles[0] = duelEntry;
   lobbyState.sideBattles[1] = duelEntry;
@@ -3464,6 +3451,7 @@ function init() {
   document.getElementById("btn-toggle-doll")?.addEventListener("click", togglePrepDollOpen);
   document.getElementById("btn-battle-continue")?.addEventListener("click", () => {
     if (isPhaseTransitioning()) return;
+    if (typeof PrepCountdown !== "undefined") PrepCountdown.clearBattleResultWindow();
     if (isLobbyMode() && lobbyRoundSettling) {
       finishLobbyRoundFromContinue();
     }
@@ -3663,22 +3651,30 @@ function shouldDrawCanvasLoadoutInBattle() {
 
 function shouldThrottleBattleCanvasDraw() {
   if (!isBattleUiPhase()) return false;
+  const perfLimited = typeof BattleFxTier !== "undefined" && BattleFxTier.isPerfConstrainedDevice?.();
+  if (!perfLimited && !(typeof BattleFxTier !== "undefined" && BattleFxTier.isLightBattleFx())) {
+    return false;
+  }
   if (document.documentElement.dataset.battleHeroPlacement === "flank-arena") return true;
   return typeof BattleFxTier !== "undefined" && BattleFxTier.isLightBattleFx();
 }
 
 function battleCanvasDrawFps() {
+  const perfLimited = typeof BattleFxTier !== "undefined" && BattleFxTier.isPerfConstrainedDevice?.();
+  if (!perfLimited) return 30;
   if (document.documentElement.dataset.uiTier === "tablet") return 12;
-  return 20;
+  return 18;
 }
 
 function tickBattleHudLite() {
-  const state = getDisplayBattleState();
-  if (!isBattleUiPhase() || !state) return;
-  const now = performance.now();
-  if (now - (tickBattleHudLite._at || 0) < 120) return;
-  tickBattleHudLite._at = now;
-  if (typeof syncLiveAvatarHeroFrame === "function") syncLiveAvatarHeroFrame(state);
+  syncLiveBattleHud(getDisplayBattleState());
+}
+
+function battleProfileTickMs() {
+  if (typeof BattleFxTier !== "undefined" && BattleFxTier.battleProfileTickMs) {
+    return BattleFxTier.battleProfileTickMs();
+  }
+  return 500;
 }
 
 function getAppDataPhase() {
@@ -4322,6 +4318,9 @@ function restartGame() {
   renderRunStats();
   renderFightButton();
   setPhaseLabel(isCampaignMode() ? "Обучение" : "Подготовка", false);
+  if (typeof PrepCountdown !== "undefined") {
+    PrepCountdown.onPrepPhaseStarted(`run:${round}`);
+  }
   requestAnimationFrame(() => {
     if (isCampaignMode()) {
       syncCampaignChrome();
@@ -4355,6 +4354,85 @@ function isBattleResultIdle() {
   return phase === "battle"
     && !battleState
     && isPopupOpen("battle-result-overlay");
+}
+
+/** Меню / выбор класса — не гонять 60 FPS gameLoop и canvas. */
+function isGameLoopSuspended() {
+  if (!document.body.classList.contains("screen-app-visible")) return true;
+  if (phase === "classSelect") return true;
+  return isPopupOpen("class-overlay");
+}
+
+/** Touch phone/tablet: prep без drag — 30 Hz вместо 60. */
+function shouldThrottlePrepGameLoop() {
+  if (phase !== "prep" || dragPayload || synergyState?.isDragging) return false;
+  return typeof BattleFxTier !== "undefined" && BattleFxTier.shouldThrottleGameLoop?.();
+}
+
+/** Touch phone/tablet: бой — 20–30 Hz (dt сохраняет точность симуляции). */
+function shouldThrottleBattleGameLoop() {
+  if (!isBattleUiPhase()) return false;
+  return typeof BattleFxTier !== "undefined" && BattleFxTier.shouldThrottleGameLoop?.();
+}
+
+/** Flank-бой: рюкзак на canvas не рисуется — только DOM float overlay. */
+function shouldSkipFlankBattleCanvasDraw() {
+  if (!isBattleUiPhase()) return false;
+  if (document.documentElement.dataset.battleHeroPlacement !== "flank-arena") return false;
+  return !shouldDrawCanvasLoadoutInBattle();
+}
+
+function tickFlankBattleDomOverlay(state) {
+  if (!state || typeof renderBattleEffectsOverlay !== "function") return;
+  const now = performance.now();
+  const gap = typeof BattleFxTier !== "undefined" && BattleFxTier.battleFloatPresentGapMs
+    ? BattleFxTier.battleFloatPresentGapMs()
+    : 33;
+  if (now - (tickFlankBattleDomOverlay._at || 0) < gap) return;
+  tickFlankBattleDomOverlay._at = now;
+  renderBattleEffectsOverlay(state);
+}
+
+/** Лёгкий HUD в бою: HP/stamina без полного renderPlayerProfiles. */
+function syncLiveBattleHud(viewState) {
+  if (!isBattleUiPhase() || !viewState) return;
+  const now = performance.now();
+  const gap = typeof BattleFxTier !== "undefined" && BattleFxTier.battleHudLiteGapMs
+    ? BattleFxTier.battleHudLiteGapMs()
+    : 120;
+  if (now - (syncLiveBattleHud._at || 0) < gap) return;
+  syncLiveBattleHud._at = now;
+  if (typeof syncLiveAvatarHeroFrame === "function") syncLiveAvatarHeroFrame(viewState);
+}
+
+function syncLiveBattleProfiles(viewState) {
+  if (!isBattleUiPhase() || !viewState) return;
+  const now = performance.now();
+  const gap = battleProfileTickMs();
+  if (now - (syncLiveBattleProfiles._at || 0) < gap) return;
+  syncLiveBattleProfiles._at = now;
+  renderBattleStats();
+  renderPlayerProfiles({ battleHudOnly: true });
+  if (typeof refreshBattleInventoryPopover === "function") refreshBattleInventoryPopover();
+}
+
+function battleGameLoopGapMs() {
+  if (typeof BattleFxTier !== "undefined" && BattleFxTier.battleGameLoopGapMs) {
+    return BattleFxTier.battleGameLoopGapMs();
+  }
+  return 33;
+}
+
+function scheduleGameLoop() {
+  if (isGameLoopSuspended() || isBattleResultIdle()) {
+    setTimeout(() => gameLoop(performance.now()), 250);
+  } else if (shouldThrottleBattleGameLoop()) {
+    setTimeout(() => gameLoop(performance.now()), battleGameLoopGapMs());
+  } else if (shouldThrottlePrepGameLoop()) {
+    setTimeout(() => gameLoop(performance.now()), 33);
+  } else {
+    requestAnimationFrame(gameLoop);
+  }
 }
 
 /** Intro не должен оставаться поверх живого забега (PWA / resize). */
@@ -4506,7 +4584,8 @@ function handleEnterHotkey(e) {
 }
 
 function prepKeyboardBlocked() {
-  return isBoardPreviewOpen()
+  return (typeof PrepCountdown !== "undefined" && PrepCountdown.isActive())
+    || isBoardPreviewOpen()
     || isRecipeBookOpen()
     || isPopupOpen("class-overlay")
     || isPopupOpen("overlay")
@@ -6050,6 +6129,7 @@ function getLoadoutEditState(side = prepViewSide) {
 }
 
 function startBattle() {
+  if (typeof PrepCountdown !== "undefined" && PrepCountdown.isActive()) return;
   if (typeof ScreenTransitions !== "undefined" && ScreenTransitions.isScreenTransitioning()) return;
   if (!canStartBattle()) {
     playPrepSfx("ui_error");
@@ -6063,6 +6143,14 @@ function startBattle() {
     }
     return;
   }
+  if (phase === "prep" && typeof PrepCountdown !== "undefined") {
+    PrepCountdown.start(() => executeBattleStart());
+    return;
+  }
+  executeBattleStart();
+}
+
+function executeBattleStart() {
   if (isLobbyMode()) {
     stopLobbyPrepTimer();
     applyCraftingForSide("player");
@@ -6287,6 +6375,9 @@ function applyPostBattlePrep(battleWinner) {
       }
       Campaign.applyPrepStep();
       prepViewSide = "player";
+      if (typeof PrepCountdown !== "undefined") {
+        PrepCountdown.onPrepPhaseStarted(`campaign:${round}`);
+      }
       recalcSynergies();
       renderBattleStats();
       renderPlayerProfiles();
@@ -6313,6 +6404,9 @@ function applyPostBattlePrep(battleWinner) {
     log(`✅ Урок пройден! ${Campaign.getProgressLabel()}`);
     Campaign.applyPrepStep();
     prepViewSide = "player";
+    if (typeof PrepCountdown !== "undefined") {
+      PrepCountdown.onPrepPhaseStarted(`campaign:${round}`);
+    }
     recalcSynergies();
     renderBattleStats();
     renderPlayerProfiles();
@@ -6531,6 +6625,9 @@ function applyPostBattlePrep(battleWinner) {
   renderPlayerProfiles();
   pendingGameOver = false;
   updateUI();
+  if (typeof PrepCountdown !== "undefined") {
+    PrepCountdown.onPrepPhaseStarted(`solo:${round}`);
+  }
 }
 
 function showRunComplete() {
@@ -6560,7 +6657,7 @@ function tickBattlePresentation() {
   const elapsed = battleStartTime ? (Date.now() - battleStartTime) / 1000 : 0;
   const now = performance.now();
   if (!tickBattlePresentation._at) {
-    tickBattlePresentation._at = { emotion: 0, arena: 0, orbit: 0, aura: 0 };
+    tickBattlePresentation._at = { emotion: 0, arena: 0, orbit: 0, aura: 0, float: 0 };
   }
   const emotionGap = typeof BattleFxTier !== "undefined"
     ? BattleFxTier.emotionPresentGapMs()
@@ -6601,6 +6698,17 @@ function tickBattlePresentation() {
       || (BattleFxTier.battleAuraFrameEnabled?.() ?? !BattleFxTier.isLightBattleFx());
     if (auraOk && typeof syncBattleAuraFrame === "function") {
       syncBattleAuraFrame(presentState, elapsed);
+    }
+  }
+  const floatGap = typeof BattleFxTier !== "undefined" && BattleFxTier.battleFloatPresentGapMs
+    ? BattleFxTier.battleFloatPresentGapMs()
+    : 33;
+  if (now - tickBattlePresentation._at.float >= floatGap) {
+    tickBattlePresentation._at.float = now;
+    if (shouldSkipFlankBattleCanvasDraw()) {
+      tickFlankBattleDomOverlay(presentState);
+    } else if (typeof renderBattleEffectsOverlay === "function") {
+      renderBattleEffectsOverlay(presentState);
     }
   }
 }
@@ -6712,7 +6820,7 @@ function tickLobbyRoundBattles(dt, ts) {
     }
   }
   if (typeof syncBattleInventoryPopoverFlash === "function") syncBattleInventoryPopoverFlash();
-  tickBattleHudLite();
+  syncLiveBattleHud(getDisplayBattleState());
   tickBattlePresentation();
 
   if (playerJustFinished && !battleEndHandled) {
@@ -6746,6 +6854,12 @@ function gameLoop(ts) {
   const dt = Math.min(0.05, (ts - gameLoop.last) / 1000);
   gameLoop.last = ts;
   lastGameLoopDt = dt;
+
+  if (isGameLoopSuspended()) {
+    scheduleGameLoop();
+    return;
+  }
+
   synergyAnimTime += dt;
 
   if (phase === "prep") {
@@ -6759,26 +6873,37 @@ function gameLoop(ts) {
     }
     if (isLobby2pMode()) tickLobby2pSideBattles(dt);
     if (isLobbyMode() && lobbyState && typeof tickLobbyFighterThoughts === "function") {
-      const thoughtDirty = tickLobbyFighterThoughts(lobbyState, {
-        phase: "prep",
-        round,
-        viewFighterId: lobbyViewFighterId,
-        matches: lobbyMatches,
-        timerRemaining: lobbyPrepTimerRemaining,
-        timerActive: lobbyPrepTimerActive,
-      });
-      if (thoughtDirty && typeof syncLobbyFighterAvatars === "function") {
-        syncLobbyFighterAvatars(lobbyState, {
+      const thoughtsOk = typeof BattleFxTier === "undefined"
+        || !BattleFxTier.prepLobbyFxReduced
+        || !BattleFxTier.prepLobbyFxReduced();
+      if (thoughtsOk) {
+        const thoughtDirty = tickLobbyFighterThoughts(lobbyState, {
           phase: "prep",
           round,
           viewFighterId: lobbyViewFighterId,
           matches: lobbyMatches,
+          timerRemaining: lobbyPrepTimerRemaining,
+          timerActive: lobbyPrepTimerActive,
         });
+        if (thoughtDirty && typeof syncLobbyFighterAvatars === "function") {
+          syncLobbyFighterAvatars(lobbyState, {
+            phase: "prep",
+            round,
+            viewFighterId: lobbyViewFighterId,
+            matches: lobbyMatches,
+          });
+        }
       }
     } else if (!isLobbyMode() && !isLobby2pMode() && typeof tickSoloPrepThoughts === "function") {
-      tickSoloPrepThoughts();
+      const thoughtsOk = typeof BattleFxTier === "undefined"
+        || !BattleFxTier.prepLobbyFxReduced
+        || !BattleFxTier.prepLobbyFxReduced();
+      if (thoughtsOk) tickSoloPrepThoughts();
     }
-    if (isLobbyMode() && lobbyState && typeof DialogueEngine !== "undefined") {
+    const dialogueOk = typeof BattleFxTier === "undefined"
+      || !BattleFxTier.prepLobbyFxReduced
+      || !BattleFxTier.prepLobbyFxReduced();
+    if (dialogueOk && isLobbyMode() && lobbyState && typeof DialogueEngine !== "undefined") {
       const prepDurationSec = typeof LOBBY_PREP_SECONDS !== "undefined" ? LOBBY_PREP_SECONDS : 55;
       const dialogueCtx = {
         lobby: lobbyState,
@@ -6792,7 +6917,7 @@ function gameLoop(ts) {
       if (DialogueEngine.shouldProcessTick(dialogueCtx)) {
         DialogueEngine.tick(dialogueCtx);
       }
-    } else if (!isLobbyMode() && !isLobby2pMode() && phase === "prep" && typeof DialogueEngine !== "undefined") {
+    } else if (dialogueOk && !isLobbyMode() && !isLobby2pMode() && phase === "prep" && typeof DialogueEngine !== "undefined") {
       const soloCtx = { round, prepDurationSec: 60 };
       if (DialogueEngine.shouldProcessTick(soloCtx)) {
         DialogueEngine.tickSolo(soloCtx);
@@ -6800,21 +6925,33 @@ function gameLoop(ts) {
     }
     if (isLobbyMode() && lobbyPrepTimerActive) {
       lobbyPrepTimerRemaining = Math.max(0, lobbyPrepTimerRemaining - dt);
+      if (typeof PrepCountdown !== "undefined") {
+        PrepCountdown.tickPrepTimerAudio(
+          lobbyPrepTimerRemaining,
+          true,
+          `lobby:${round}`,
+        );
+        PrepCountdown.tryArmLobbyAutoCountdown(lobbyPrepTimerRemaining);
+      }
       if (Math.floor(ts / 250) !== Math.floor((ts - dt * 1000) / 250)) {
         renderLobbyChrome();
       }
-      if (lobbyPrepTimerRemaining <= 0) {
+      if (lobbyPrepTimerRemaining <= 0 && !(typeof PrepCountdown !== "undefined" && PrepCountdown.isActive())) {
         lobbyPrepTimerActive = false;
         if (canStartBattle()) {
-          queueLobbyTimerBattleStart();
+          executeBattleStart();
         } else if (!lobbyPrepOvertimeUsed) {
           lobbyPrepOvertimeUsed = true;
           lobbyPrepTimerRemaining = LOBBY_PREP_OVERTIME_SEC;
           lobbyPrepTimerActive = true;
+          if (typeof PrepCountdown !== "undefined") PrepCountdown.resetLobbyArming();
           playPrepSfx("ui_error");
           renderLobbyChrome();
         }
       }
+    }
+    if (phase === "prep" && typeof PrepCountdown !== "undefined" && PrepCountdown.isActive()) {
+      PrepCountdown.tick(dt);
     }
   }
 
@@ -6858,13 +6995,12 @@ function gameLoop(ts) {
       flushBattleEvents();
       recordBattleFrame(battleState);
     }
-    if (Math.floor(ts / 500) !== Math.floor((ts - dt * 1000) / 500)) {
-      renderBattleStats();
-      renderPlayerProfiles();
-      if (typeof refreshBattleInventoryPopover === "function") refreshBattleInventoryPopover();
+    const profileTickMs = battleProfileTickMs();
+    if (Math.floor(ts / profileTickMs) !== Math.floor((ts - dt * 1000) / profileTickMs)) {
+      syncLiveBattleProfiles(battleState);
     }
     if (typeof syncBattleInventoryPopoverFlash === "function") syncBattleInventoryPopoverFlash();
-    tickBattleHudLite();
+    syncLiveBattleHud(battleState);
     tickBattlePresentation();
   } else if (phase === "battle" && battleState?.finished && !isLobbyMode()) {
     if (typeof resetStackOrbitVfx === "function") resetStackOrbitVfx();
@@ -6872,12 +7008,11 @@ function gameLoop(ts) {
     endBattle();
   } else if (phase === "replay") {
     tickReplay(dt);
-    if (Math.floor(ts / 500) !== Math.floor((ts - dt * 1000) / 500)) {
-      renderPlayerProfiles();
-      if (typeof refreshBattleInventoryPopover === "function") refreshBattleInventoryPopover();
+    if (Math.floor(ts / battleProfileTickMs()) !== Math.floor((ts - dt * 1000) / battleProfileTickMs())) {
+      syncLiveBattleProfiles(getDisplayBattleState());
     }
     if (typeof syncBattleInventoryPopoverFlash === "function") syncBattleInventoryPopoverFlash();
-    tickBattleHudLite();
+    syncLiveBattleHud(getDisplayBattleState());
     tickBattlePresentation();
   }
   if (phase === "prep") {
@@ -6891,9 +7026,7 @@ function gameLoop(ts) {
       try { updateTooltip(mousePos.x, mousePos.y); } catch (err) { console.error("updateTooltip failed:", err); }
     }
   } else if ((phase === "battle" || phase === "replay") && battleState && !dragPayload && !isTouchUi()) {
-    if (prepTooltipsEnabled) {
-      try { updateTooltip(mousePos.x, mousePos.y); } catch (err) { console.error("updateTooltip failed:", err); }
-    }
+    // tooltips off during live battle — меньше hit-test / layout
   }
   try {
     const needsSmoothDraw = !!dragPayload || synergyState.isDragging;
@@ -6914,11 +7047,7 @@ function gameLoop(ts) {
   } catch (err) {
     console.error("draw failed:", err);
   }
-  if (isBattleResultIdle()) {
-    setTimeout(() => gameLoop(performance.now()), 250);
-  } else {
-    requestAnimationFrame(gameLoop);
-  }
+  scheduleGameLoop();
 }
 
 function layoutGridOrigin(team) {
@@ -6959,7 +7088,9 @@ function handleBattleEvent(ev) {
       if (ev.sourceTeam && ev.amount > 0
         && document.documentElement.dataset.battleArenaLayout === "true"
         && typeof ArenaEquipment !== "undefined"
-        && ArenaEquipment.triggerDamageStrike) {
+        && ArenaEquipment.triggerDamageStrike
+        && !(typeof BattleFxTier !== "undefined" && BattleFxTier.equipAutoAttackEnabled
+          && !BattleFxTier.equipAutoAttackEnabled())) {
         const atkSide = battleState[ev.sourceTeam];
         const srcItem = ev.sourceUid
           ? atkSide?.items?.find((i) => i.uid === ev.sourceUid)
@@ -7729,6 +7860,7 @@ function rotateDragItem() {
 
 function draw() {
   if (isBattleResultIdle()) return;
+  if (shouldSkipFlankBattleCanvasDraw()) return;
   drawWorldLayer();
   drawFxLayer();
 }
@@ -7850,7 +7982,6 @@ function drawFxLayer() {
     if (typeof drawBoardTooltipItemSparkles === "function") {
       drawBoardTooltipItemSparkles(fxCtx, synergyAnimTime);
     }
-    if (typeof renderBattleCountdown === "function") renderBattleCountdown(battleState);
   }
 }
 
@@ -10473,10 +10604,15 @@ function renderPlayerProfiles(opts = {}) {
   const playerAvatarEl = document.getElementById("player-avatar-slot");
   const enemyAvatarEl = document.getElementById("enemy-avatar-slot");
   const lightSpectate = !!opts.lightSpectate;
+  const viewState = getDisplayBattleState();
+
+  if (opts.battleHudOnly && viewState && (phase === "battle" || phase === "replay")) {
+    if (typeof syncLiveAvatarHeroFrame === "function") syncLiveAvatarHeroFrame(viewState);
+    return;
+  }
 
   let playerProfile;
   let enemyProfile;
-  const viewState = getDisplayBattleState();
   const spectateNames = getLobbySpectateProfileNames();
   const profilePlayerClass = spectateNames?.playerClassId || playerClass;
   const profileEnemyClass = spectateNames?.enemyClassId || enemyClass;
@@ -10673,7 +10809,9 @@ function renderPlayerProfiles(opts = {}) {
   if (liveBattle && viewState) {
     viewState._heroProfiles = { player: playerProfile, enemy: enemyProfile };
     const avatarNow = performance.now();
-    const avatarGap = 200;
+    const avatarGap = (typeof BattleFxTier !== "undefined" && BattleFxTier.isLightBattleFx?.())
+      ? 400
+      : 200;
     if (avatarNow - (renderPlayerProfiles._avatarAt || 0) >= avatarGap) {
       renderPlayerProfiles._avatarAt = avatarNow;
       syncAllAvatarHeroEffects(playerProfile, enemyProfile, viewState);

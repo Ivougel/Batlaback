@@ -83,6 +83,18 @@ html[data-visual-theme="diablo"] {
   --hint-title-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
   --hint-line-color: #e6edf3;
   --hint-line-sub-color: #8b949e;
+  --hint-tone-body: #e6edf3;
+  --hint-tone-muted: #8b949e;
+  --hint-tone-label: #d2a8ff;
+  --hint-tone-gold: #f0c14b;
+  --hint-tone-amber: #d29922;
+  --hint-tone-info: #79c0ff;
+  --hint-tone-magic: #d2a8ff;
+  --hint-tone-epic: #a371f7;
+  --hint-tone-buff: #3fb950;
+  --hint-tone-danger: #ff7b72;
+  --hint-tone-unique: #ffa657;
+  --hint-tone-mechanic: #79c0ff;
   --hint-stat-base-color: #8b949e;
   --hint-stat-arrow-color: #6e7681;
   --hint-stat-buff-color: #3fb950;

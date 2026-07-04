@@ -14,7 +14,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles/tokens.css?v=20">
+  <link rel="stylesheet" href="styles/tokens.css?v=21">
   <link rel="stylesheet" href="styles/layers.css?v=7">
   <link rel="stylesheet" href="styles/bottom-chrome.css?v=24">
   <link rel="stylesheet" href="styles.css?v=41">
@@ -73,21 +73,21 @@
   <link rel="stylesheet" href="styles/prep-juice.css?v=10">
   <link rel="stylesheet" href="styles/prep-forest-hud.css?v=3">
   <link rel="stylesheet" href="styles/prep-timer-hero.css?v=3">
-  <link rel="stylesheet" href="styles/battle-result-glass.css?v=3">
+  <link rel="stylesheet" href="styles/battle-result-glass.css?v=5">
   <link rel="stylesheet" href="styles/battle-aura-frame.css?v=6">
-  <link rel="stylesheet" href="styles/battle-result-theater.css?v=3">
+  <link rel="stylesheet" href="styles/battle-result-theater.css?v=4">
   <link rel="stylesheet" href="styles/screen-transitions.css?v=2">
   <link rel="stylesheet" href="styles/ui-ornament-frame.css?v=1">
   <link rel="stylesheet" href="styles/escape-menu.css?v=1">
   <link rel="stylesheet" href="styles/pass-laugh-balls.css?v=1">
-  <link rel="stylesheet" href="styles/theme-diablo.css?v=4">
+  <link rel="stylesheet" href="styles/theme-diablo.css?v=5">
   <link rel="stylesheet" href="styles/battle-borderless.css?v=1">
   <link rel="stylesheet" href="styles/item-stats-report.css?v=4">
   <link rel="stylesheet" href="styles/prep-borderless.css?v=6">
   <link rel="stylesheet" href="styles/prep-shop-popover-chrome.css?v=6">
   <link rel="stylesheet" href="styles/sell-drop-highlight.css?v=1">
   <link rel="stylesheet" href="styles/item-emoji-sparkle.css?v=1">
-  <link rel="stylesheet" href="styles/item-hint-card.css?v=5">
+  <link rel="stylesheet" href="styles/item-hint-card.css?v=6">
   <script>
     (function () {
       try {
@@ -100,9 +100,9 @@
     })();
   </script>
   <script src="systems/layout-scales.js?v=2"></script>
-  <script src="systems/battle-fx-tier.js?v=10"></script>
+  <script src="systems/battle-fx-tier.js?v=15"></script>
   <script src="systems/battle-hero-anchor.js?v=38"></script>
-  <script src="ui-layout.js?v=128"></script>
+  <script src="ui-layout.js?v=130"></script>
 </head>
 <body>
   <div id="ui-ornament-frame" class="ui-ornament-frame" aria-hidden="true">
@@ -678,6 +678,9 @@
           </div>
         </div>
       </div>
+      <div class="battle-result-countdown hidden" id="battle-result-countdown" aria-hidden="true">
+        <span class="battle-result-countdown-digit" id="battle-result-countdown-digit" role="timer" aria-live="assertive"></span>
+      </div>
       <div class="modal battle-result-modal">
         <div class="battle-result-help" id="battle-result-help">
           <button type="button" class="battle-result-help-btn" aria-label="Подсказки управления" aria-expanded="false" aria-controls="battle-result-help-tooltip">?</button>
@@ -693,6 +696,7 @@
         </div>
         <h2 id="battle-result-title" class="battle-result-headline">Бой завершён</h2>
         <p id="battle-result-subtitle" class="battle-result-subtitle"></p>
+        <p id="battle-result-view-hint" class="battle-result-view-hint hidden" aria-live="polite"></p>
         <div id="battle-result-accordions"></div>
         <div class="battle-result-actions">
           <button type="button" class="btn-secondary hidden" id="btn-battle-replay">↻ Посмотреть бой</button>
@@ -1025,11 +1029,12 @@
   <script src="systems/combat-profile.js?v=5"></script>
   <script src="components/run-stats.js"></script>
   <script src="components/player-characteristics.js"></script>
-  <script src="components/avatar-hero-effects.js?v=13"></script>
+  <script src="components/avatar-hero-effects.js?v=15"></script>
   <script src="systems/attack-events.js"></script>
   <script src="systems/arena-attack-styles.js?v=5"></script>
   <script src="systems/battle-analyzer.js"></script>
   <script src="components/battle-damage-summary.js?v=5"></script>
+  <script src="systems/prep-countdown.js?v=2"></script>
   <script src="components/attack-animation-manager.js?v=2"></script>
   <script src="systems/animation.js"></script>
   <script src="components/accordion.js"></script>
@@ -1056,15 +1061,15 @@
   <script src="systems/emoji-orbit-speed.js?v=1"></script>
   <script src="systems/stack-orbit-vfx.js?v=12"></script>
   <script src="systems/battle-debuffs.js"></script>
-  <script src="systems/sfx-themes.js?v=7"></script>
-  <script src="systems/sfx.js?v=5"></script>
+  <script src="systems/sfx-themes.js?v=8"></script>
+  <script src="systems/sfx.js?v=6"></script>
   <script src="systems/sound-theme.js?v=4"></script>
   <script src="systems/music.js?v=2"></script>
   <script src="systems/input-mode.js"></script>
   <script src="systems/gamepad.js"></script>
   <script src="components/item-flight-controller.js?v=3"></script>
   <script src="components/displace-animation.js?v=2"></script>
-  <script src="components/item-hint-card.js?v=3"></script>
+  <script src="components/item-hint-card.js?v=4"></script>
   <script src="components/inventory-animation-controller.js?v=16"></script>
   <script src="components/prep-drag-arc.js?v=16"></script>
   <script src="components/item-effects-controller.js"></script>
@@ -1080,11 +1085,11 @@
   <script src="systems/lobby-fighter-avatar.js?v=9"></script>
   <script src="systems/lobby-spectator.js?v=9"></script>
   <script src="battle-engine.js?v=2"></script>
-  <script src="battle-float-layer.js?v=19"></script>
-  <script src="components/thought-arena.js?v=28"></script>
-  <script src="components/arena-equipment.js?v=32"></script>
+  <script src="battle-float-layer.js?v=21"></script>
+  <script src="components/thought-arena.js?v=30"></script>
+  <script src="components/arena-equipment.js?v=33"></script>
   <script src="components/emotion-presenter.js?v=5"></script>
-  <script src="emotion-engine.js?v=23"></script>
+  <script src="emotion-engine.js?v=25"></script>
   <script src="battle-hud.js?v=6"></script>
   <script src="components/lobby-2p-hud.js?v=1"></script>
   <script src="systems/prep-shop.js?v=7"></script>
@@ -1093,7 +1098,7 @@
   <script src="systems/screen-transitions.js?v=1"></script>
   <script src="components/prep-hud-collapse.js?v=1"></script>
   <script src="components/prep-hud-hero.js?v=3"></script>
-  <script src="game.js?v=111"></script>
+  <script src="game.js?v=117"></script>
   <script src="pwa-register.js"></script>
 </body>
 </html>

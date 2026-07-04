@@ -701,3 +701,21 @@ html[data-ui-surface="desktop"] #battle-result-overlay:not(.hidden) .br-theater-
     filter: saturate(0.85) brightness(0.9);
   }
 }
+
+/* Light battle FX: портреты остаются, тяжёлые idle-анимации и спарклы выключены */
+html[data-battle-fx-light="true"] .br-theater-sparkles,
+html[data-battle-fx-light="true"] .br-theater-vignette,
+html[data-battle-fx-light="true"] .br-theater-glow-ring,
+html[data-battle-fx-light="true"] .br-theater-portrait,
+html[data-battle-fx-light="true"] .br-theater-aura,
+html[data-battle-fx-light="true"] .br-theater-fighter--entering {
+  animation: none !important;
+}
+
+html[data-battle-fx-light="true"] .br-theater-fighter--loser .br-theater-portrait {
+  filter:
+    drop-shadow(0 0 14px rgba(255, 255, 255, 0.18))
+    drop-shadow(0 16px 36px rgba(0, 0, 0, 0.5))
+    saturate(0.85)
+    brightness(0.9);
+}

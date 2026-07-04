@@ -85,7 +85,7 @@
   line-height: 1.22;
   letter-spacing: 0.01em;
   margin-bottom: calc(5px * var(--ui-scale, 1));
-  color: var(--hint-title-color);
+  color: color-mix(in srgb, var(--hint-rarity, var(--hint-title-color)) 58%, var(--hint-title-color));
   text-shadow: var(--hint-title-shadow);
 }
 
@@ -109,6 +109,25 @@
 .item-hint-card__line--label {
   font-weight: 700;
   margin-top: calc(6px * var(--ui-scale, 1));
+}
+
+.item-hint-card__line--tone-body { color: var(--hint-tone-body); }
+.item-hint-card__line--tone-muted,
+.item-hint-card__line--sub.item-hint-card__line--tone-muted { color: var(--hint-tone-muted); }
+.item-hint-card__line--tone-label,
+.item-hint-card__line--label.item-hint-card__line--tone-label { color: var(--hint-tone-label); }
+.item-hint-card__line--tone-gold { color: var(--hint-tone-gold); }
+.item-hint-card__line--tone-amber { color: var(--hint-tone-amber); }
+.item-hint-card__line--tone-info { color: var(--hint-tone-info); }
+.item-hint-card__line--tone-magic { color: var(--hint-tone-magic); }
+.item-hint-card__line--tone-epic { color: var(--hint-tone-epic); }
+.item-hint-card__line--tone-buff { color: var(--hint-tone-buff); }
+.item-hint-card__line--tone-danger { color: var(--hint-tone-danger); }
+.item-hint-card__line--tone-unique { color: var(--hint-tone-unique); }
+
+.item-hint-card .mechanic-tag {
+  color: var(--hint-tone-mechanic);
+  font-weight: 600;
 }
 
 .item-hint-card__line-stat {

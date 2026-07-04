@@ -17,11 +17,26 @@
     return tier === "phone" || tier === "tablet";
   }
 
+  function isTouchUiDevice() {
+    return document.documentElement?.dataset?.touch === "true";
+  }
+
+  /** Touch phone/tablet — нужны throttle и авто-light FX. Десктоп с мышью — нет. */
+  function isPerfConstrainedDevice() {
+    if (prefersReducedMotion()) return true;
+    if (!isTouchUiDevice()) return false;
+    return isAutoLightTier();
+  }
+
   function isLightBattleFx() {
     if (prefersReducedMotion()) return true;
     const stored = readStoredLightFx();
     if (stored !== null) return stored;
-    return true;
+    return isAutoLightTier();
+  }
+
+  function shouldThrottleGameLoop() {
+    return isPerfConstrainedDevice();
   }
 
   function isPhoneTier() {
@@ -44,11 +59,39 @@
     applyBattleFxTierFlags();
   }
 
+  function prepLobbyFxReduced() {
+    return isLightBattleFx();
+  }
+
+  function equipAutoAttackEnabled() {
+    return !prefersReducedMotion();
+  }
+
+  function battleGameLoopGapMs() {
+    if (!shouldThrottleGameLoop()) return 0;
+    return isPhoneTier() ? 33 : 50;
+  }
+
+  function battleHudLiteGapMs() {
+    if (!isLightBattleFx()) return 120;
+    return isPhoneTier() ? 200 : 280;
+  }
+
+  function battleFloatPresentGapMs() {
+    if (!isLightBattleFx()) return 16;
+    return isPhoneTier() ? 33 : 24;
+  }
+
+  function battleProfileTickMs() {
+    if (!isLightBattleFx()) return 500;
+    return isPhoneTier() ? 800 : 1000;
+  }
+
   function applyBattleFxTierFlags() {
     const light = isLightBattleFx();
     const root = document.documentElement;
     root.dataset.battleFxLight = light ? "true" : "false";
-    if (light) root.dataset.battleThoughtsStatic = "true";
+    if (isStaticBattleThoughts()) root.dataset.battleThoughtsStatic = "true";
     else root.removeAttribute("data-battle-thoughts-static");
     if (isPhoneTier()) {
       root.dataset.battleFxPhone = "true";
@@ -57,13 +100,13 @@
     }
   }
 
-  /** Статичные мысли: emoji меняется редко, без spring/реакций на каждый удар. */
+  /** Статичные мысли только при prefers-reduced-motion. */
   function isStaticBattleThoughts() {
-    return isLightBattleFx();
+    return prefersReducedMotion();
   }
 
   function equipThoughtReactionsEnabled() {
-    return !isLightBattleFx();
+    return !prefersReducedMotion();
   }
 
   function battleEmotionReactive() {
@@ -95,8 +138,7 @@
   }
 
   function equipIdleWobbleEnabled() {
-    if (isFlankBattleThoughtFxActive()) return false;
-    return !isLightBattleFx();
+    return !prefersReducedMotion();
   }
 
   function equipSyncGapMs() {
@@ -106,14 +148,14 @@
   }
 
   function emotionPresentGapMs() {
-    if (isFlankBattleThoughtFxActive()) return isPhoneTier() ? 400 : 350;
+    if (isFlankBattleThoughtFxActive()) return isPhoneTier() ? 500 : 450;
     if (!isLightBattleFx()) return 66;
-    return isPhoneTier() ? 120 : 100;
+    return isPhoneTier() ? 160 : 140;
   }
 
   function arenaPresentGapMs() {
-    if (isFlankBattleThoughtFxActive()) return isLightBattleFx() ? 900 : 720;
-    return isLightBattleFx() ? 500 : 450;
+    if (isFlankBattleThoughtFxActive()) return isLightBattleFx() ? 1200 : 720;
+    return isLightBattleFx() ? 650 : 450;
   }
 
   function stackOrbitGapMs() {
@@ -157,6 +199,9 @@
 
   window.BattleFxTier = {
     isLightBattleFx,
+    isPerfConstrainedDevice,
+    shouldThrottleGameLoop,
+    isTouchUiDevice,
     isStaticBattleThoughts,
     equipThoughtReactionsEnabled,
     battleEmotionReactive,
@@ -172,6 +217,12 @@
     battleAuraFrameEnabled,
     equipIdleWobbleEnabled,
     equipSyncGapMs,
+    prepLobbyFxReduced,
+    equipAutoAttackEnabled,
+    battleGameLoopGapMs,
+    battleHudLiteGapMs,
+    battleProfileTickMs,
+    battleFloatPresentGapMs,
     applyBattleFxTierFlags,
     syncLightBattleFxSettingsUi,
   };

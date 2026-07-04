@@ -144,24 +144,47 @@ function animateBattleResultStatCounts(root) {
   if (!scope) return;
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const lightFx = typeof BattleFxTier !== "undefined" && BattleFxTier.isLightBattleFx();
-  const counters = scope.querySelectorAll("[data-br-count]");
-  counters.forEach((el) => {
+  const counters = [...scope.querySelectorAll("[data-br-count]")];
+  if (!counters.length) return;
+
+  const items = counters.map((el) => {
     const final = Number(el.dataset.brValue) || 0;
-    if (reduced || lightFx) {
-      el.textContent = formatBrCountText(el, final);
-      return;
-    }
-    const duration = 500;
-    const start = performance.now();
-    el.textContent = formatBrCountText(el, 0);
-    const tick = (now) => {
-      const t = Math.min(1, (now - start) / duration);
-      el.textContent = formatBrCountText(el, final * easeOutCubic(t));
-      if (t < 1) requestAnimationFrame(tick);
-      else el.textContent = formatBrCountText(el, final);
+    return {
+      el,
+      final,
+      useDecimal: !Number.isInteger(final),
     };
-    requestAnimationFrame(tick);
   });
+
+  if (reduced || lightFx) {
+    items.forEach(({ el, final }) => {
+      el.textContent = formatBrCountText(el, final);
+    });
+    return;
+  }
+
+  const duration = 720;
+  const start = performance.now();
+  items.forEach(({ el }) => {
+    el.textContent = formatBrCountText(el, 0);
+  });
+
+  const tick = (now) => {
+    const t = Math.min(1, (now - start) / duration);
+    const eased = easeOutCubic(t);
+    items.forEach(({ el, final, useDecimal }) => {
+      const raw = final * eased;
+      const value = useDecimal ? Math.round(raw * 10) / 10 : Math.round(raw);
+      el.textContent = formatBrCountText(el, value);
+    });
+    if (t < 1) requestAnimationFrame(tick);
+    else {
+      items.forEach(({ el, final }) => {
+        el.textContent = formatBrCountText(el, final);
+      });
+    }
+  };
+  requestAnimationFrame(tick);
 }
 
 function showBattleResultPopup(summary, battleLog = []) {
@@ -179,6 +202,12 @@ function showBattleResultPopup(summary, battleLog = []) {
   const subtitleEl = document.getElementById("battle-result-subtitle");
   if (subtitleEl) {
     subtitleEl.textContent = summary.roundNum != null ? `Раунд ${summary.roundNum}` : "";
+  }
+
+  const viewHintEl = document.getElementById("battle-result-view-hint");
+  if (viewHintEl) {
+    viewHintEl.classList.add("hidden");
+    viewHintEl.textContent = "";
   }
 
   const continueBtn = document.getElementById("btn-battle-continue");
@@ -213,9 +242,11 @@ function showBattleResultPopup(summary, battleLog = []) {
 
   const reveal = () => {
     animateBattleResultStatCounts(accordionsEl);
-    const lightFx = typeof BattleFxTier !== "undefined" && BattleFxTier.isLightBattleFx();
-    if (typeof startBattleResultTheater === "function" && !lightFx) {
+    if (typeof startBattleResultTheater === "function") {
       startBattleResultTheater(summary);
+    }
+    if (typeof PrepCountdown !== "undefined") {
+      PrepCountdown.scheduleBattleResultWindow();
     }
     if (typeof refreshGamepadHints === "function") refreshGamepadHints();
     const replayBtn = document.getElementById("btn-battle-replay");
@@ -238,6 +269,7 @@ function showBattleResultPopup(summary, battleLog = []) {
 function hideBattleResultPopupAsync(variant = "result") {
   hideDetailPopup();
   if (typeof stopBattleResultTheater === "function") stopBattleResultTheater();
+  if (typeof PrepCountdown !== "undefined") PrepCountdown.clearBattleResultWindow();
   const overlay = document.getElementById("battle-result-overlay");
   if (!overlay || overlay.classList.contains("hidden")) return Promise.resolve();
   if (typeof ScreenTransitions !== "undefined") {

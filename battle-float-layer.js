@@ -53,21 +53,22 @@ const floatLayer = (() => {
     layer.appendChild(el);
 
     const hasFlyTarget = opts.toVx != null && opts.toVy != null;
-    const flyUp = battleFxPx(56);
+    const flyUp = battleFxPx(52);
     const keyframes = hasFlyTarget
       ? [
-        { transform: "translateX(-50%) scale(1)", opacity: 1, left: `${vx}px`, top: `${vy}px` },
-        { transform: "translateX(-50%) scale(0.7)", opacity: 0.2, left: `${opts.toVx}px`, top: `${opts.toVy}px` },
+        { transform: "translateX(-50%) translateY(0) scale(1)", opacity: 1, left: `${vx}px`, top: `${vy}px` },
+        { transform: "translateX(-50%) translateY(0) scale(0.82)", opacity: 0.15, left: `${opts.toVx}px`, top: `${opts.toVy}px` },
       ]
       : [
-        { transform: "translateX(-50%) translateY(0) scale(1.2)", opacity: 1 },
-        { transform: `translateX(-50%) translateY(-${flyUp}px) scale(0.9)`, opacity: 0 },
+        { transform: "translateX(-50%) translateY(0) scale(0.92)", opacity: 0 },
+        { transform: "translateX(-50%) translateY(0) scale(1)", opacity: 1, offset: 0.14 },
+        { transform: `translateX(-50%) translateY(-${flyUp}px) scale(0.96)`, opacity: 0 },
       ];
 
-    const duration = hasFlyTarget ? 550 : 900;
+    const duration = hasFlyTarget ? 620 : 980;
     el.animate(keyframes, {
       duration,
-      easing: "ease-out",
+      easing: "cubic-bezier(0.22, 1, 0.36, 1)",
       fill: "forwards",
     }).finished.then(() => el.remove()).catch(() => el.remove());
     return el;
@@ -151,6 +152,9 @@ function clearBattleFloatLayer() {
   battleFloatDomPool.clear();
   const layer = ensureBattleFloatLayer();
   if (layer) layer.innerHTML = "";
+  if (typeof renderBattleEffectsOverlay === "function") {
+    renderBattleEffectsOverlay._cleared = false;
+  }
 }
 
 function getBattleCanvasEl() {
@@ -439,10 +443,10 @@ function getFloatAlpha(fn) {
 }
 
 function applyBattleFloatTransform(el, x, y, scale, alpha) {
-  const rx = Math.round(x);
-  const ry = Math.round(y);
+  const rx = x.toFixed(1);
+  const ry = y.toFixed(1);
   const rs = scale.toFixed(3);
-  const ra = alpha.toFixed(2);
+  const ra = alpha.toFixed(3);
   const key = `${rx}|${ry}|${rs}|${ra}`;
   if (el.dataset.bfPos === key) return;
   el.dataset.bfPos = key;
@@ -477,9 +481,18 @@ function renderBattleEffectsOverlay(state) {
     return;
   }
 
+  const floats = state.floatingNumbers || [];
+  if (!floats.length) {
+    if (battleFloatDomPool.size > 0) {
+      battleFloatDomPool.forEach((el) => el.remove());
+      battleFloatDomPool.clear();
+    }
+    return;
+  }
+
   const activeIds = new Set();
 
-  (state.floatingNumbers || []).forEach((fn) => {
+  floats.forEach((fn) => {
     const uid = fn.uid || fn.text;
     activeIds.add(uid);
     const alpha = getFloatAlpha(fn);

@@ -756,6 +756,10 @@
   }
 
   function setCanvasDisplaySize(canvas, w, h) {
+    const curW = Math.round(parseFloat(canvas.style.width) || 0);
+    const curH = Math.round(parseFloat(canvas.style.height) || 0);
+    if (Math.abs(curW - w) <= 1 && Math.abs(curH - h) <= 1) return false;
+
     canvas.style.width = `${w}px`;
     canvas.style.height = `${h}px`;
     canvas.style.maxWidth = `${w}px`;
@@ -763,16 +767,21 @@
     if (canvas.id === "game-canvas") {
       const fx = document.getElementById("canvas-fx");
       if (fx) {
-        fx.style.width = `${w}px`;
-        fx.style.height = `${h}px`;
-        fx.style.maxWidth = `${w}px`;
-        fx.style.maxHeight = `${h}px`;
+        const fxW = Math.round(parseFloat(fx.style.width) || 0);
+        const fxH = Math.round(parseFloat(fx.style.height) || 0);
+        if (Math.abs(fxW - w) > 1 || Math.abs(fxH - h) > 1) {
+          fx.style.width = `${w}px`;
+          fx.style.height = `${h}px`;
+          fx.style.maxWidth = `${w}px`;
+          fx.style.maxHeight = `${h}px`;
+        }
         if (canvas.width > 0 && canvas.height > 0) {
           fx.width = canvas.width;
           fx.height = canvas.height;
         }
       }
     }
+    return true;
   }
 
   function syncFxCanvasGeometry() {
@@ -1529,9 +1538,44 @@
     return Math.round(window.innerWidth - panelW - gap);
   }
 
+  /** FAB скамейки — вплотную к левому краю колонки магазина (или справа от неё на enemy prep). */
+  function getPrepBenchFabAnchorLeft(gap, fabSize) {
+    const enemySide = document.getElementById("app")?.dataset.prepSide === "enemy";
+    const panelW = readCssPx("--shop-panel-w", 300);
+    const shop = document.getElementById("shop-panel");
+    const shopRect = shop?.getBoundingClientRect();
+    const shopVisible = !!(shopRect && shopRect.width > 8
+      && shop && getComputedStyle(shop).display !== "none");
+
+    let fabLeft;
+    if (enemySide) {
+      if (shopVisible) {
+        fabLeft = Math.round(shopRect.right + gap);
+      } else {
+        fabLeft = Math.round(gap);
+      }
+    } else if (shopVisible) {
+      fabLeft = Math.round(shopRect.left - fabSize);
+    } else {
+      fabLeft = Math.round(window.innerWidth - panelW - fabSize);
+    }
+
+    const corridor = measurePrepHeroGridCorridor(gap);
+    if (corridor) {
+      if (enemySide) {
+        fabLeft = Math.min(fabLeft, Math.round(corridor.right - fabSize));
+        fabLeft = Math.max(corridor.left, fabLeft);
+      } else {
+        fabLeft = Math.max(corridor.left, fabLeft);
+        fabLeft = Math.min(fabLeft, Math.round(corridor.right - fabSize));
+      }
+    }
+
+    return fabLeft;
+  }
+
   function syncPrepSideFabAnchorRight(root, gap) {
     const right = `${Math.round(gap)}px`;
-    root.style.setProperty("--prep-bench-fab-right", right);
     root.style.setProperty("--prep-sell-fab-right", right);
   }
 
@@ -1628,7 +1672,7 @@
     };
   }
 
-  /** Popover скамейки — отдельная геометрия, якорь по FAB-колонке справа. */
+  /** Popover скамейки — якорь у FAB в коридоре hero↔grid, раскрытие в сторону героя. */
   function syncPrepBenchPopoverRect(gap, panelW, uiScale) {
     const fab = document.getElementById("btn-prep-bench-fab");
     const fabRect = fab?.getBoundingClientRect();
@@ -1637,17 +1681,56 @@
       Math.round(panelW * 1.08 + 8 * uiScale),
     );
     const benchMinW = Math.round(168 * uiScale);
+    const enemySide = document.getElementById("app")?.dataset.prepSide === "enemy";
+    const heroLayer = document.getElementById("prep-character-layer");
+    const heroRect = heroLayer?.getBoundingClientRect();
+    const heroBound = heroRect && heroRect.width > 24
+      ? (enemySide ? Math.round(heroRect.right - gap) : Math.round(heroRect.right + gap))
+      : (enemySide ? window.innerWidth - gap : gap);
 
-    let benchRight = Math.round(window.innerWidth - gap);
     if (fabRect && fabRect.width > 8) {
-      benchRight = Math.round(fabRect.right);
+      let benchLeft;
+      let benchRight;
+      if (enemySide) {
+        benchLeft = Math.round(fabRect.left);
+        benchRight = Math.min(heroBound, benchLeft + benchTargetW);
+        benchLeft = Math.max(gap, benchRight - benchTargetW);
+      } else {
+        benchRight = Math.round(fabRect.right);
+        benchLeft = Math.max(gap, heroBound, benchRight - benchTargetW);
+        benchRight = benchLeft + Math.max(benchMinW, Math.min(benchTargetW, benchRight - benchLeft));
+      }
+      const benchW = Math.max(benchMinW, benchRight - benchLeft);
+      return {
+        corridorLeft: benchLeft,
+        corridorW: benchW,
+        opensTowardHero: enemySide ? "right" : "left",
+      };
     }
 
+    const corridor = measurePrepHeroGridCorridor(gap);
+    if (corridor) {
+      const benchW = Math.max(benchMinW, Math.min(benchTargetW, corridor.right - corridor.left));
+      if (enemySide) {
+        return {
+          corridorLeft: Math.max(gap, corridor.left),
+          corridorW: benchW,
+          opensTowardHero: "right",
+        };
+      }
+      return {
+        corridorLeft: Math.max(gap, heroBound, corridor.right - benchW),
+        corridorW: benchW,
+        opensTowardHero: "left",
+      };
+    }
+
+    let benchRight = Math.round(window.innerWidth - gap);
     let benchLeft = benchRight - benchTargetW;
     benchLeft = Math.max(gap, benchLeft);
     const benchW = Math.max(benchMinW, benchRight - benchLeft);
 
-    return { corridorLeft: benchLeft, corridorW: benchW };
+    return { corridorLeft: benchLeft, corridorW: benchW, opensTowardHero: "left" };
   }
 
   function syncPrepCommerceCorridorRect(gap, panelW, uiScale) {
@@ -1757,9 +1840,7 @@
     const chrome = getBottomChrome();
     const vh = window.visualViewport?.height ?? window.innerHeight;
 
-    if (root.dataset.prepBenchPopover === "true" && benchBottom > 0 && benchSize > 0) {
-      root.style.setProperty("--prep-sell-fab-bottom", `${Math.round(benchBottom + benchSize + gap)}px`);
-    } else if (chrome && getComputedStyle(chrome).display !== "none") {
+    if (chrome && getComputedStyle(chrome).display !== "none") {
       const chromeTop = chrome.getBoundingClientRect().top;
       root.style.setProperty("--prep-sell-fab-bottom", `${Math.max(gap, Math.round(vh - chromeTop + gap))}px`);
     } else {
@@ -1780,15 +1861,21 @@
     const baseFabPx = (surface === "tablet-side" || surface === "desktop") ? 75 : 44;
     const fabSize = Math.round(readCssPx("--prep-bench-fab-size", baseFabPx * uiScale));
     const gap = Math.round(6 * uiScale);
+    const gap8 = Math.round(8 * uiScale);
 
     if (root.dataset.prepShopPopover === "true") {
       syncPrepSideFabAnchorRight(root, gap);
+      const fabLeft = getPrepBenchFabAnchorLeft(gap8, fabSize);
+      root.style.setProperty("--prep-bench-fab-left", `${fabLeft}px`);
+      root.style.removeProperty("--prep-bench-fab-right");
     } else if (shopRect && shopRect.width > 8) {
+      root.style.removeProperty("--prep-bench-fab-left");
       root.style.setProperty(
         "--prep-bench-fab-right",
         `${Math.round(window.innerWidth - shopRect.left + gap)}px`,
       );
     } else {
+      root.style.removeProperty("--prep-bench-fab-left");
       root.style.setProperty(
         "--prep-bench-fab-right",
         `calc(var(--shop-panel-w, 248px) + ${gap}px)`,
@@ -1807,16 +1894,22 @@
     root.style.setProperty("--prep-bench-popover-bottom", `${Math.round(fabBottom + fabSize + gap)}px`);
     root.style.setProperty("--prep-bench-fab-size", `${fabSize}px`);
     const panelW = readCssPx("--shop-panel-w", 300);
-    const gap8 = Math.round(8 * uiScale);
     if (root.dataset.prepShopPopover === "true") {
       syncPrepShopPopoverPosition();
     }
     if (root.dataset.prepBenchPopover === "true") {
-      const { corridorLeft, corridorW } = root.dataset.prepShopPopover === "true"
+      const { corridorLeft, corridorW, opensTowardHero } = root.dataset.prepShopPopover === "true"
         ? syncPrepBenchPopoverRect(gap8, panelW, uiScale)
         : syncPrepCommerceCorridorRect(gap8, panelW, uiScale);
       root.style.setProperty("--prep-bench-popover-x", `${corridorLeft}px`);
       root.style.setProperty("--prep-bench-popover-w", `${corridorW}px`);
+      if (opensTowardHero === "right") {
+        root.dataset.prepBenchPopoverDir = "hero-right";
+      } else if (opensTowardHero === "left") {
+        root.dataset.prepBenchPopoverDir = "hero-left";
+      } else {
+        root.removeAttribute("data-prep-bench-popover-dir");
+      }
     }
     syncPrepSellFabPosition();
   }
@@ -2690,6 +2783,13 @@
     const root = document.documentElement;
     if (!isBattleUiPhase()) return;
 
+    const now = performance.now();
+    const minGap = (typeof BattleFxTier !== "undefined" && BattleFxTier.isLightBattleFx?.())
+      ? 320
+      : 120;
+    if (syncBattleSceneGridMetrics._lastAt && now - syncBattleSceneGridMetrics._lastAt < minGap) return;
+    syncBattleSceneGridMetrics._lastAt = now;
+
     if (root.dataset.battleHeroPlacement !== "flank-arena" || root.dataset.battleArenaLayout !== "true") {
       const canvas = document.getElementById("game-canvas");
       const fieldCol = document.getElementById("prep-field-column");
@@ -2707,7 +2807,8 @@
   }
 
   function scheduleBattleHeroRowSync(attempts = 6) {
-    let left = attempts;
+    const light = typeof BattleFxTier !== "undefined" && BattleFxTier.isLightBattleFx?.();
+    let left = light ? Math.min(attempts, 2) : attempts;
     const tick = () => {
       if (!isBattleUiPhase() || left <= 0) return;
       left -= 1;
@@ -2998,9 +3099,9 @@
             ? fieldCol.clientHeight
             : Math.max(320, (window.visualViewport?.height ?? window.innerHeight) - measurePrepChromeHeight());
           const heroH = computeTabletPrepHeroHeight(columnH, sceneTop);
-          root.style.setProperty("--tablet-prep-hero-h", `${heroH}px`);
-          if (syncTabletSidePrepGridMetrics() && typeof window.applyGridMetricsFromCss === "function") {
-            window.applyGridMetricsFromCss();
+          const prevHeroH = readCssPx("--tablet-prep-hero-h", 0);
+          if (Math.abs(prevHeroH - heroH) >= 1) {
+            root.style.setProperty("--tablet-prep-hero-h", `${heroH}px`);
           }
           const uiScale = readCssPx("--ui-scale", 1);
           const pad = Math.round(8 * uiScale);
@@ -3145,6 +3246,10 @@
 
   let canvasFitRafId = 0;
   let deferredCanvasFit = false;
+  let canvasFitInProgress = false;
+  let canvasFitLastAt = 0;
+  let canvasFitDeferRaf = 0;
+  const CANVAS_FIT_MIN_MS = 160;
 
   function isLayoutInteractionLocked() {
     const body = document.body;
@@ -3164,30 +3269,61 @@
       deferredCanvasFit = true;
       return;
     }
+    if (canvasFitInProgress) return;
+
+    const now = performance.now();
+    if (now - canvasFitLastAt < CANVAS_FIT_MIN_MS) {
+      if (!canvasFitDeferRaf) {
+        canvasFitDeferRaf = requestAnimationFrame(() => {
+          canvasFitDeferRaf = 0;
+          scheduleCanvasFit();
+        });
+      }
+      return;
+    }
+
+    canvasFitInProgress = true;
     deferredCanvasFit = false;
-    fitCanvasDisplaySize();
-    syncPrepHeroSlotHeight();
-    syncTabletPortraitShopRows();
-    const zones = measureLayoutZones();
-    applyMeasuredZoneFit(zones);
-    syncMobileShopFabPosition();
-    if (document.documentElement.style.getPropertyValue("--zone-fit-shrink")) {
-      requestAnimationFrame(() => {
-        fitCanvasDisplaySize();
-        syncTabletPortraitShopRows();
-        const refitZones = measureLayoutZones();
-        applyMeasuredZoneFit(refitZones);
-        syncMobileShopFabPosition();
-      });
+    canvasFitLastAt = now;
+    try {
+      fitCanvasDisplaySize();
+      syncPrepHeroSlotHeight();
+      syncTabletPortraitShopRows();
+      const zones = measureLayoutZones();
+      applyMeasuredZoneFit(zones);
+      syncMobileShopFabPosition();
+      if (document.documentElement.style.getPropertyValue("--zone-fit-shrink")) {
+        requestAnimationFrame(() => {
+          if (canvasFitInProgress) return;
+          canvasFitInProgress = true;
+          try {
+            fitCanvasDisplaySize();
+            syncTabletPortraitShopRows();
+            const refitZones = measureLayoutZones();
+            applyMeasuredZoneFit(refitZones);
+            syncMobileShopFabPosition();
+          } finally {
+            canvasFitInProgress = false;
+          }
+        });
+      }
+    } finally {
+      canvasFitInProgress = false;
     }
   }
 
   function scheduleCanvasFit() {
+    if (canvasFitInProgress) return;
     if (canvasFitRafId) return;
     canvasFitRafId = requestAnimationFrame(() => {
       canvasFitRafId = 0;
       requestAnimationFrame(runCanvasFitPass);
     });
+  }
+
+  function onCanvasFitResize() {
+    if (canvasFitInProgress) return;
+    scheduleCanvasFit();
   }
 
   function applyPrepLayoutFit(w, h, prepLayout, baseScale, touchDev, layoutProfile) {
@@ -3480,16 +3616,15 @@
   window.addEventListener("resize", scheduleLayout, { passive: true });
   window.addEventListener("orientationchange", scheduleLayout, { passive: true });
   window.visualViewport?.addEventListener("resize", scheduleLayoutOnViewportChange, { passive: true });
-  window.visualViewport?.addEventListener("scroll", scheduleLayoutOnViewportChange, { passive: true });
   document.addEventListener("DOMContentLoaded", () => {
     scheduleLayout();
     const stage = document.querySelector(".battle-canvas-stage");
     if (stage && typeof ResizeObserver !== "undefined") {
-      new ResizeObserver(scheduleCanvasFit).observe(stage);
+      new ResizeObserver(onCanvasFitResize).observe(stage);
     }
     const prepFieldCol = document.getElementById("prep-field-column");
     if (prepFieldCol && typeof ResizeObserver !== "undefined") {
-      new ResizeObserver(scheduleCanvasFit).observe(prepFieldCol);
+      new ResizeObserver(onCanvasFitResize).observe(prepFieldCol);
     }
     const battleSceneUi = document.getElementById("battle-scene-ui");
     const gameCanvas = document.getElementById("game-canvas");

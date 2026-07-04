@@ -6,6 +6,9 @@
 const EMOTION_ANALYZE_INTERVAL_MS = 500;
 const EMOTION_MIN_GAP_MS = 600;
 const EMOTION_SIMULTANEOUS_DAMAGE_MS = 300;
+/** Пауза между репликами в «диалоге» мыслей (мс). */
+const DIALOG_REPLY_DELAY_MS = 620;
+const DIALOG_CHAIN_DELAY_MS = 480;
 
 function isStaticBattleEmotions() {
   return typeof BattleFxTier !== "undefined" && BattleFxTier.isStaticBattleThoughts?.();
@@ -171,7 +174,7 @@ function createDialogEvent({
   side,
   emoji,
   replyTo = null,
-  animation = "shake",
+  animation = "wobble",
   duration = 1200,
   priority = null,
   flyFrom = null,
@@ -212,6 +215,45 @@ function tryQueueEvent(side, event) {
   return true;
 }
 
+function playThoughtReactionSfx(event, role = "speak") {
+  if (typeof playGameSfx !== "function" || !event) return;
+  const pan = event.side === "player" ? -0.42 : 0.42;
+  const anim = event.animation || "wobble";
+  const speakMap = {
+    nod: "thought_nod",
+    shake: "thought_wobble",
+    wobble: "thought_wobble",
+    bounce: "thought_bounce",
+    grow: "thought_pop",
+    fly: "thought_whoosh",
+    dance: "thought_dance",
+    particles: "thought_sparkle",
+  };
+  const id = role === "reply" ? "thought_reply" : (speakMap[anim] || "thought_nod");
+  playGameSfx(id, { pan });
+}
+
+function queueDialogLine(event, options = {}) {
+  const delay = options.delay ?? 0;
+  const sfxRole = options.sfxRole ?? "speak";
+  const run = () => {
+    if (tryQueueEvent(event.side, event)) {
+      playThoughtReactionSfx(event, sfxRole);
+    }
+  };
+  if (delay > 0) window.setTimeout(run, delay);
+  else run();
+}
+
+/** Реплика говорящего → пауза → ответ (не одновременная тряска). */
+function queueDialogExchange(speakerEvent, replyEvent, options = {}) {
+  const replyDelay = options.replyDelay ?? DIALOG_REPLY_DELAY_MS;
+  queueDialogLine(speakerEvent, { sfxRole: "speak" });
+  if (replyEvent) {
+    queueDialogLine(replyEvent, { delay: replyDelay, sfxRole: "reply" });
+  }
+}
+
 function pickMemeEmoji(options) {
   const list = Array.isArray(options) ? options : [options];
   return list[Math.floor(Math.random() * list.length)];
@@ -250,26 +292,26 @@ function checkSimultaneousDamage() {
   );
   if (!playerHit || !enemyHit) return false;
 
-  tryQueueEvent("player", createDialogEvent({
+  queueDialogLine(createDialogEvent({
     side: "player",
     emoji: "🫨",
     replyTo: "enemy",
-    animation: "fly",
+    animation: "dance",
     duration: 1100,
     flyFrom: "player",
     flyTo: "enemy",
     priority: EMOTION_PRIORITY.normal + 1,
-  }));
-  tryQueueEvent("enemy", createDialogEvent({
+  }), { sfxRole: "speak" });
+  queueDialogLine(createDialogEvent({
     side: "enemy",
     emoji: "🫨",
     replyTo: "player",
-    animation: "fly",
+    animation: "wobble",
     duration: 1100,
     flyFrom: "enemy",
     flyTo: "player",
-    priority: EMOTION_PRIORITY.normal + 1,
-  }));
+    priority: EMOTION_PRIORITY.normal,
+  }), { delay: DIALOG_REPLY_DELAY_MS + 180, sfxRole: "reply" });
   emotionEngine.recentDamage = [];
   return true;
 }
@@ -313,20 +355,22 @@ function queueDamageDialog(victim, attacker, amount, victimHpPct = 1) {
   lastHitBy[victim] = attacker;
 
   if (combo[attacker] === 3) {
-    tryQueueEvent(attacker, createDialogEvent({
-      side: attacker,
-      emoji: pickMemeEmoji(["🔥😤", "🔥", "⚡😈", "💪🔥"]),
-      animation: "grow",
-      duration: 1400,
-      priority: EMOTION_PRIORITY.crit,
-    }));
-    tryQueueEvent(victim, createDialogEvent({
-      side: victim,
-      emoji: pickMemeEmoji(["😵‍💫", "🤯", "😱", "💫"]),
-      animation: "shake",
-      duration: 1300,
-      priority: EMOTION_PRIORITY.crit - 1,
-    }));
+    queueDialogExchange(
+      createDialogEvent({
+        side: attacker,
+        emoji: pickMemeEmoji(["🔥😤", "🔥", "⚡😈", "💪🔥"]),
+        animation: "dance",
+        duration: 1400,
+        priority: EMOTION_PRIORITY.crit,
+      }),
+      createDialogEvent({
+        side: victim,
+        emoji: pickMemeEmoji(["😵‍💫", "🤯", "😱", "💫"]),
+        animation: "wobble",
+        duration: 1300,
+        priority: EMOTION_PRIORITY.crit - 1,
+      }),
+    );
     combo[attacker] = 0;
   }
 
@@ -335,20 +379,22 @@ function queueDamageDialog(victim, attacker, amount, victimHpPct = 1) {
 
   if (!emotionEngine.firstBlood) {
     emotionEngine.firstBlood = true;
-    tryQueueEvent(victim, createDialogEvent({
-      side: victim,
-      emoji: "🩸",
-      replyTo: attacker,
-      animation: "shake",
-      duration: 1100,
-    }));
-    tryQueueEvent(attacker, createDialogEvent({
-      side: attacker,
-      emoji: "👀",
-      replyTo: victim,
-      animation: "bounce",
-      duration: 1000,
-    }));
+    queueDialogExchange(
+      createDialogEvent({
+        side: victim,
+        emoji: "🩸",
+        replyTo: attacker,
+        animation: "wobble",
+        duration: 1100,
+      }),
+      createDialogEvent({
+        side: attacker,
+        emoji: "👀",
+        replyTo: victim,
+        animation: "bounce",
+        duration: 1000,
+      }),
+    );
     return;
   }
 
@@ -356,159 +402,180 @@ function queueDamageDialog(victim, attacker, amount, victimHpPct = 1) {
     const victimEmoji = victimHpPct < 0.25
       ? pickMemeEmoji(["💀😱", "💀🫠", "☠️"])
       : pickMemeEmoji(["💀🔥", "💀", "🪦"]);
-    tryQueueEvent(victim, createDialogEvent({
-      side: victim,
-      emoji: victimEmoji,
-      replyTo: attacker,
-      animation: "grow",
-      duration: 1400,
-      priorityHint: "skull",
-    }));
-    tryQueueEvent(attacker, createDialogEvent({
-      side: attacker,
-      emoji: pickMemeEmoji(["🗿", "😈", "🤣"]),
-      replyTo: victim,
-      animation: "fly",
-      duration: 1300,
-      flyFrom: attacker,
-      flyTo: victim,
-      priority: EMOTION_PRIORITY.poison,
-    }));
+    queueDialogExchange(
+      createDialogEvent({
+        side: victim,
+        emoji: victimEmoji,
+        replyTo: attacker,
+        animation: "grow",
+        duration: 1400,
+        priorityHint: "skull",
+      }),
+      createDialogEvent({
+        side: attacker,
+        emoji: pickMemeEmoji(["🗿", "😈", "🤣"]),
+        replyTo: victim,
+        animation: "dance",
+        duration: 1300,
+        flyFrom: attacker,
+        flyTo: victim,
+        priority: EMOTION_PRIORITY.poison,
+      }),
+    );
     return;
   }
 
   maybeTaunt(attacker, victimHpPct);
 
   if (amount > 8) {
-    tryQueueEvent(victim, createDialogEvent({
-      side: victim,
-      emoji: victimHpPct < 0.3 ? "😭" : "😤",
-      replyTo: attacker,
-      animation: "shake",
-      duration: 1200,
-    }));
-    tryQueueEvent(attacker, createDialogEvent({
-      side: attacker,
-      emoji: pickMemeEmoji(["🤣", "😏", "😎"]),
-      replyTo: victim,
-      animation: "bounce",
-      duration: 1100,
-    }));
+    queueDialogExchange(
+      createDialogEvent({
+        side: victim,
+        emoji: victimHpPct < 0.3 ? "😭" : "😤",
+        replyTo: attacker,
+        animation: "wobble",
+        duration: 1200,
+      }),
+      createDialogEvent({
+        side: attacker,
+        emoji: pickMemeEmoji(["🤣", "😏", "😎"]),
+        replyTo: victim,
+        animation: "bounce",
+        duration: 1100,
+      }),
+    );
     return;
   }
 
   if (amount > 2) {
-    tryQueueEvent(victim, createDialogEvent({
-      side: victim,
-      emoji: pickMemeEmoji(["🫠", "😮", "😵‍💫"]),
-      replyTo: attacker,
-      animation: "shake",
-      duration: 1000,
-    }));
-    tryQueueEvent(attacker, createDialogEvent({
-      side: attacker,
-      emoji: pickMemeEmoji(["🥱", "🗿", "🙂"]),
-      replyTo: victim,
-      animation: "nod",
-      duration: 900,
-    }));
+    queueDialogExchange(
+      createDialogEvent({
+        side: victim,
+        emoji: pickMemeEmoji(["🫠", "😮", "😵‍💫"]),
+        replyTo: attacker,
+        animation: "nod",
+        duration: 1000,
+      }),
+      createDialogEvent({
+        side: attacker,
+        emoji: pickMemeEmoji(["🥱", "🗿", "🙂"]),
+        replyTo: victim,
+        animation: "nod",
+        duration: 900,
+      }),
+    );
   }
 }
 
 function queueBlockDialog(victim, attacker) {
-  tryQueueEvent(victim, createDialogEvent({
-    side: victim,
-    emoji: "🛡️😏",
-    replyTo: attacker,
-    animation: "shake",
-    duration: 1300,
-    priorityHint: "block",
-  }));
-  tryQueueEvent(attacker, createDialogEvent({
-    side: attacker,
-    emoji: pickMemeEmoji(["🤡", "😒", "🙄"]),
-    replyTo: victim,
-    animation: "shake",
-    duration: 1100,
-  }));
+  queueDialogExchange(
+    createDialogEvent({
+      side: victim,
+      emoji: "🛡️😏",
+      replyTo: attacker,
+      animation: "bounce",
+      duration: 1300,
+      priorityHint: "block",
+    }),
+    createDialogEvent({
+      side: attacker,
+      emoji: pickMemeEmoji(["🤡", "😒", "🙄"]),
+      replyTo: victim,
+      animation: "wobble",
+      duration: 1100,
+    }),
+  );
 
-  setTimeout(() => {
-    tryQueueEvent(victim, createDialogEvent({
+  window.setTimeout(() => {
+    queueDialogLine(createDialogEvent({
       side: victim,
       emoji: pickMemeEmoji(["😏🛡️", "🤙", "💅"]),
-      animation: "bounce",
+      animation: "dance",
       duration: 1000,
       priority: EMOTION_PRIORITY.normal + 1,
-    }));
-  }, 500);
+    }), { sfxRole: "speak" });
+  }, DIALOG_REPLY_DELAY_MS + DIALOG_CHAIN_DELAY_MS);
 }
 
 function queuePoisonDialog(victim, attacker) {
-  tryQueueEvent(victim, createDialogEvent({
-    side: victim,
-    emoji: pickMemeEmoji(["🤮", "🤢", "☣️"]),
-    replyTo: attacker,
-    animation: "particles",
-    duration: 1400,
-    priorityHint: "poison",
-  }));
-  tryQueueEvent(attacker, createDialogEvent({
-    side: attacker,
-    emoji: pickMemeEmoji(["🧪😈", "😈", "🤢"]),
-    replyTo: victim,
-    animation: "nod",
-    duration: 1000,
-    priority: EMOTION_PRIORITY.poison - 1,
-  }));
+  queueDialogExchange(
+    createDialogEvent({
+      side: victim,
+      emoji: pickMemeEmoji(["🤮", "🤢", "☣️"]),
+      replyTo: attacker,
+      animation: "wobble",
+      duration: 1400,
+      priorityHint: "poison",
+    }),
+    createDialogEvent({
+      side: attacker,
+      emoji: pickMemeEmoji(["🧪😈", "😈", "🤢"]),
+      replyTo: victim,
+      animation: "nod",
+      duration: 1000,
+      priority: EMOTION_PRIORITY.poison - 1,
+    }),
+  );
 }
 
 function queueHealDialog(healer) {
   const foe = foeOf(healer);
-  tryQueueEvent(healer, createDialogEvent({
-    side: healer,
-    emoji: pickMemeEmoji(["💚✨", "💚", "🩹"]),
-    replyTo: foe,
-    animation: "bounce",
-    duration: 1200,
-  }));
-  tryQueueEvent(foe, createDialogEvent({
-    side: foe,
-    emoji: pickMemeEmoji(["🙄", "😑", "🤨"]),
-    replyTo: healer,
-    animation: "shake",
-    duration: 1000,
-  }));
+  queueDialogExchange(
+    createDialogEvent({
+      side: healer,
+      emoji: pickMemeEmoji(["💚✨", "💚", "🩹"]),
+      replyTo: foe,
+      animation: "bounce",
+      duration: 1200,
+    }),
+    createDialogEvent({
+      side: foe,
+      emoji: pickMemeEmoji(["🙄", "😑", "🤨"]),
+      replyTo: healer,
+      animation: "nod",
+      duration: 1000,
+    }),
+  );
 }
 
 function queueCritDialog(victim, attacker) {
-  tryQueueEvent(victim, createDialogEvent({
-    side: victim,
-    emoji: pickMemeEmoji(["💥😵", "💥", "🤯"]),
-    replyTo: attacker,
-    animation: "grow",
-    duration: 1100,
-    priorityHint: "crit",
-  }));
-  tryQueueEvent(attacker, createDialogEvent({
-    side: attacker,
-    emoji: "👀",
-    replyTo: victim,
-    animation: "bounce",
-    duration: 900,
-    priority: EMOTION_PRIORITY.crit - 1,
-  }));
+  queueDialogExchange(
+    createDialogEvent({
+      side: victim,
+      emoji: pickMemeEmoji(["💥😵", "💥", "🤯"]),
+      replyTo: attacker,
+      animation: "grow",
+      duration: 1100,
+      priorityHint: "crit",
+    }),
+    createDialogEvent({
+      side: attacker,
+      emoji: "👀",
+      replyTo: victim,
+      animation: "bounce",
+      duration: 900,
+      priority: EMOTION_PRIORITY.crit - 1,
+    }),
+  );
 }
 
 function queueDurationDialog(emoji, animation, duration = 1500) {
-  ["player", "enemy"].forEach((side) => {
-    tryQueueEvent(side, createDialogEvent({
-      side,
-      emoji,
-      animation,
-      duration,
-      priority: EMOTION_PRIORITY.normal,
-    }));
-  });
+  const first = Math.random() > 0.5 ? "player" : "enemy";
+  const second = foeOf(first);
+  queueDialogLine(createDialogEvent({
+    side: first,
+    emoji,
+    animation,
+    duration,
+    priority: EMOTION_PRIORITY.normal,
+  }), { sfxRole: "speak" });
+  queueDialogLine(createDialogEvent({
+    side: second,
+    emoji,
+    animation: animation === "shake" ? "wobble" : animation,
+    duration,
+    priority: EMOTION_PRIORITY.normal,
+  }), { delay: DIALOG_REPLY_DELAY_MS, sfxRole: "reply" });
 }
 
 function scanAttackVisuals(state) {
@@ -572,7 +639,7 @@ function detectSnapshotEvents(prev, cur, elapsedReal) {
 
   if (cur.playerHpPct < 0.12 && cur.enemyHpPct < 0.12 && !emotionEngine.durationFlags.dogfight) {
     emotionEngine.durationFlags.dogfight = true;
-    queueDurationDialog("😰", "shake", 1400);
+    queueDurationDialog("😰", "wobble", 1400);
   }
 
   const realSec = Math.max(0, elapsedReal || 0);
@@ -586,7 +653,7 @@ function detectSnapshotEvents(prev, cur, elapsedReal) {
   }
   if (realSec > 120 && !emotionEngine.durationFlags.t120) {
     emotionEngine.durationFlags.t120 = true;
-    queueDurationDialog("⏳💀", "shake", 2200);
+    queueDurationDialog("⏳💀", "wobble", 2200);
   }
 
   const elapsedSec = Math.floor(realSec);
@@ -596,27 +663,27 @@ function detectSnapshotEvents(prev, cur, elapsedReal) {
     const aggressor = Math.random() > 0.5 ? "player" : "enemy";
     const target = foeOf(aggressor);
 
-    tryQueueEvent(aggressor, createDialogEvent({
+    queueDialogLine(createDialogEvent({
       side: aggressor,
       emoji: pickMemeEmoji(["😤", "👊", "💢", "😈", "🫵"]),
       animation: "bounce",
       duration: 1100,
       priority: EMOTION_PRIORITY.normal + 1,
-    }));
+    }), { sfxRole: "speak" });
 
-    setTimeout(() => {
+    window.setTimeout(() => {
       const snap = emotionEngine.snapshot;
       const targetHpPct = target === "player" ? snap?.playerHpPct : snap?.enemyHpPct;
-      tryQueueEvent(target, createDialogEvent({
+      queueDialogLine(createDialogEvent({
         side: target,
         emoji: targetHpPct < 0.3
           ? pickMemeEmoji(["😰", "😨", "🥵"])
           : pickMemeEmoji(["😏", "🗿", "💪", "😤"]),
-        animation: targetHpPct < 0.3 ? "shake" : "nod",
+        animation: targetHpPct < 0.3 ? "wobble" : "nod",
         duration: 1000,
         priority: EMOTION_PRIORITY.normal,
-      }));
-    }, 800);
+      }), { sfxRole: "reply" });
+    }, DIALOG_REPLY_DELAY_MS);
   }
 }
 
@@ -711,23 +778,23 @@ function tickBattleArenaPresentation(battleState, elapsedReal) {
 function queueBattleEndDialog(winner) {
   const loser = foeOf(winner);
 
-  tryQueueEvent(winner, createDialogEvent({
+  queueDialogLine(createDialogEvent({
     side: winner,
     emoji: pickMemeEmoji(["🏆😎", "🎉", "💪😤", "🥇"]),
-    animation: "bounce",
+    animation: "dance",
     duration: Number.POSITIVE_INFINITY,
     priority: EMOTION_PRIORITY.skull + 1,
     persistent: true,
-  }));
+  }), { sfxRole: "speak" });
 
-  tryQueueEvent(loser, createDialogEvent({
+  queueDialogLine(createDialogEvent({
     side: loser,
     emoji: pickMemeEmoji(["💀", "😵", "🪦😭", "😭"]),
-    animation: "shake",
+    animation: "wobble",
     duration: Number.POSITIVE_INFINITY,
     priority: EMOTION_PRIORITY.skull + 1,
     persistent: true,
-  }));
+  }), { delay: DIALOG_REPLY_DELAY_MS, sfxRole: "reply" });
 }
 
 // ─── Провокации и ответные реакции ───
@@ -744,42 +811,43 @@ function maybeTaunt(attacker, victimHpPct) {
   const victim = foeOf(attacker);
 
   if (victimHpPct < 0.25) {
-    tryQueueEvent(attacker, createDialogEvent({
-      side: attacker,
-      emoji: pickMemeEmoji(["🕺", "💪", "😤👊", "🎉"]),
-      animation: "bounce",
-      duration: 1500,
-      priority: EMOTION_PRIORITY.normal + 1,
-    }));
-    setTimeout(() => {
-      tryQueueEvent(victim, createDialogEvent({
+    queueDialogExchange(
+      createDialogEvent({
+        side: attacker,
+        emoji: pickMemeEmoji(["🕺", "💪", "😤👊", "🎉"]),
+        animation: "dance",
+        duration: 1500,
+        priority: EMOTION_PRIORITY.normal + 1,
+      }),
+      createDialogEvent({
         side: victim,
         emoji: victimHpPct < 0.12
           ? pickMemeEmoji(["😡💢", "🤬", "😤💢"])
           : pickMemeEmoji(["😒", "🙄", "😐"]),
-        animation: "shake",
+        animation: "wobble",
         duration: 1200,
         priority: EMOTION_PRIORITY.normal,
-      }));
-    }, 600);
+      }),
+      { replyDelay: 680 },
+    );
     return;
   }
 
   if (Math.random() > 0.4) return;
-  tryQueueEvent(attacker, createDialogEvent({
-    side: attacker,
-    emoji: pickMemeEmoji(["😏", "😎", "🗿", "🤙"]),
-    animation: "nod",
-    duration: 1000,
-    priority: EMOTION_PRIORITY.normal,
-  }));
-  setTimeout(() => {
-    tryQueueEvent(victim, createDialogEvent({
-      side: victim,
-      emoji: pickMemeEmoji(["😠", "🤨", "😤", "💢"]),
-      animation: "shake",
+  queueDialogExchange(
+    createDialogEvent({
+      side: attacker,
+      emoji: pickMemeEmoji(["😏", "😎", "🗿", "🤙"]),
+      animation: "nod",
       duration: 1000,
       priority: EMOTION_PRIORITY.normal,
-    }));
-  }, 700);
+    }),
+    createDialogEvent({
+      side: victim,
+      emoji: pickMemeEmoji(["😠", "🤨", "😤", "💢"]),
+      animation: "nod",
+      duration: 1000,
+      priority: EMOTION_PRIORITY.normal,
+    }),
+  );
 }

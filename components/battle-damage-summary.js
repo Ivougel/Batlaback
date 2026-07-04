@@ -453,16 +453,6 @@ function renderDamageFlights(state) {
 
   state.damageFlights.forEach((fx) => {
     active.add(fx.id);
-    const store = state.damageStacks?.[fx.targetTeam];
-    const slotIndex = store?.order?.indexOf(fx.itemUid) ?? 0;
-    const to = getDamageStackSlotViewport(
-      fx.targetTeam,
-      Math.max(0, slotIndex),
-      store?.order?.length || 1,
-    );
-    fx.toX = to.x;
-    fx.toY = to.y;
-
     const t = fx.age / fx.duration;
     const pt = sampleDamageFlight(fx, t);
     const spin = fx.spin * (fx.arcStyle === "repeat"
@@ -782,6 +772,7 @@ function hideBattleCountdownOverlay() {
   overlay.hidden = true;
   overlay.style.display = "none";
   overlay.classList.remove("battle-countdown-overlay-visible");
+  overlay.classList.remove("battle-countdown-overlay--prep");
   const digit = overlay.querySelector(".battle-countdown-digit");
   if (digit) {
     digit.textContent = "";

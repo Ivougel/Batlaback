@@ -13,19 +13,46 @@ function extractLeadingEmoji(text) {
   return match?.[1] || null;
 }
 
+/** GitHub-dark hex из buildItemTooltipLines → семантический тон для светлой/тёмной HUD-карточки. */
+const HINT_LINE_TONE_BY_COLOR = {
+  "#8b949e": "muted",
+  "#6e7681": "muted",
+  "#c9d1d9": "body",
+  "#e6edf3": "body",
+  "#f0c14b": "gold",
+  "#d29922": "amber",
+  "#79c0ff": "info",
+  "#58a6ff": "info",
+  "#d2a8ff": "magic",
+  "#bc8cff": "magic",
+  "#a371f7": "epic",
+  "#3fb950": "buff",
+  "#ff7b72": "danger",
+  "#ffa657": "unique",
+};
+
+function resolveHintLineTone(line) {
+  if (!line) return "body";
+  if (line.style === "sub") return "muted";
+  if (line.style === "label") return "label";
+  const tone = HINT_LINE_TONE_BY_COLOR[String(line.color || "").trim().toLowerCase()];
+  return tone || "body";
+}
+
 function renderTooltipHudLineHtml(line) {
   if (!line || line.sep) return "";
   const fmt = typeof formatTooltipMechanicText === "function"
     ? formatTooltipMechanicText
     : (text) => (typeof escapeTooltipHtml === "function" ? escapeTooltipHtml(text) : String(text ?? ""));
   const esc = typeof escapeTooltipHtml === "function" ? escapeTooltipHtml : (s) => String(s ?? "");
-  const color = line.color ? ` style="color:${line.color}"` : "";
+  const tone = resolveHintLineTone(line);
+  const toneClass = ` item-hint-card__line--tone-${tone}`;
   if (line.statDelta) {
     const buffClass = line.statDelta.buffColor === "purple" ? " item-hint-card__stat-buff--purple" : "";
     const suffix = line.statDelta.suffix ? esc(line.statDelta.suffix) : "";
-    return `<div class="item-hint-card__line item-hint-card__line-stat item-hint-card__line--${line.style || "normal"}"${color}>${fmt(line.text)} <span class="item-hint-card__stat-base">${esc(line.statDelta.from)}</span><span class="item-hint-card__stat-arrow">→</span><span class="item-hint-card__stat-buff${buffClass}">${esc(line.statDelta.to)}</span>${suffix}</div>`;
+    return `<div class="item-hint-card__line item-hint-card__line-stat item-hint-card__line--${line.style || "normal"}${toneClass}">${fmt(line.text)} <span class="item-hint-card__stat-base">${esc(line.statDelta.from)}</span><span class="item-hint-card__stat-arrow">→</span><span class="item-hint-card__stat-buff${buffClass}">${esc(line.statDelta.to)}</span>${suffix}</div>`;
   }
-  return `<div class="item-hint-card__line item-hint-card__line--${line.style || "normal"}"${color}>${fmt(line.text)}</div>`;
+  return `<div class="item-hint-card__line item-hint-card__line--${line.style || "normal"}${toneClass}">${fmt(line.text)}</div>`;
 }
 
 function renderTooltipCardHtml(lines, options = {}) {
@@ -41,11 +68,10 @@ function renderTooltipCardHtml(lines, options = {}) {
 
   const bodyHtml = hudLines.map((line) => {
     if (line === titleLine) {
-      const color = titleLine.color ? ` style="color:${titleLine.color}"` : "";
       const fmt = typeof formatTooltipMechanicText === "function"
         ? formatTooltipMechanicText
         : (text) => (typeof escapeTooltipHtml === "function" ? escapeTooltipHtml(text) : String(text ?? ""));
-      return `<div class="item-hint-card__title"${color}>${fmt(titleText)}</div>`;
+      return `<div class="item-hint-card__title">${fmt(titleText)}</div>`;
     }
     return renderTooltipHudLineHtml(line);
   }).join("");

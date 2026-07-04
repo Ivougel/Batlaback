@@ -42,6 +42,7 @@ html[data-ui-surface="desktop"][data-prep-bench-popover="true"] #app[data-phase=
 .prep-bench-fab {
   display: none;
   position: fixed;
+  left: var(--prep-bench-fab-left, auto);
   right: var(--prep-bench-fab-right, calc(var(--shop-panel-w, 248px) + 8px));
   bottom: calc(var(--prep-bench-fab-bottom, 88px) + env(safe-area-inset-bottom, 0px));
   z-index: calc(var(--z-system, 100) + 2);
@@ -56,6 +57,11 @@ html[data-ui-surface="desktop"][data-prep-bench-popover="true"] #app[data-phase=
   line-height: 1;
   box-shadow: 0 4px 16px rgba(30, 60, 28, 0.22);
   transition: border-color 0.15s, box-shadow 0.15s, transform 0.12s;
+}
+
+html[data-prep-shop-popover="true"] .prep-bench-fab {
+  right: auto;
+  left: var(--prep-bench-fab-left, 50%);
 }
 
 html[data-ui-surface="tablet-side"][data-prep-bench-popover="true"] .prep-bench-fab,
@@ -186,13 +192,30 @@ html[data-prep-bench-open="true"] .prep-bench-popover__backdrop {
     0 12px 36px rgba(30, 60, 28, 0.28),
     0 0 0 1px rgba(255, 255, 255, 0.35) inset;
   overflow: hidden;
-  animation: prep-bench-popover-in 0.2s ease-out;
+  animation: prep-bench-popover-in-hero-left 0.2s ease-out;
+  transform-origin: bottom right;
 }
 
-@keyframes prep-bench-popover-in {
+html[data-prep-bench-popover-dir="hero-right"] .prep-bench-popover__panel {
+  animation-name: prep-bench-popover-in-hero-right;
+  transform-origin: bottom left;
+}
+
+@keyframes prep-bench-popover-in-hero-left {
   from {
     opacity: 0;
-    transform: translateX(12px) scale(0.97);
+    transform: translateX(14px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes prep-bench-popover-in-hero-right {
+  from {
+    opacity: 0;
+    transform: translateX(-14px) scale(0.97);
   }
   to {
     opacity: 1;
