@@ -580,7 +580,7 @@ function prepareBattleStartState() {
 
   if (typeof resetStackOrbitVfx === "function") resetStackOrbitVfx();
   battleStartTime = Date.now();
-  tickBattlePresentation._at = { emotion: 0, arena: 0, orbit: 0 };
+  tickBattlePresentation._at = { emotion: 0, arena: 0, orbit: 0, aura: 0 };
   if (typeof BattleHeroAnchor !== "undefined" && BattleHeroAnchor.invalidateMeasureCache) {
     BattleHeroAnchor.invalidateMeasureCache();
   }
@@ -6535,7 +6535,7 @@ function tickBattlePresentation() {
   const elapsed = battleStartTime ? (Date.now() - battleStartTime) / 1000 : 0;
   const now = performance.now();
   if (!tickBattlePresentation._at) {
-    tickBattlePresentation._at = { emotion: 0, arena: 0, orbit: 0 };
+    tickBattlePresentation._at = { emotion: 0, arena: 0, orbit: 0, aura: 0 };
   }
   const emotionGap = typeof BattleFxTier !== "undefined"
     ? BattleFxTier.emotionPresentGapMs()
@@ -6546,6 +6546,9 @@ function tickBattlePresentation() {
   const orbitGap = typeof BattleFxTier !== "undefined"
     ? BattleFxTier.stackOrbitGapMs()
     : 170;
+  const auraGap = typeof BattleFxTier !== "undefined"
+    ? BattleFxTier.auraPresentGapMs()
+    : 180;
 
   if (now - tickBattlePresentation._at.emotion >= emotionGap) {
     tickBattlePresentation._at.emotion = now;
@@ -6565,8 +6568,11 @@ function tickBattlePresentation() {
       syncStackOrbitFromBattle(presentState);
     }
   }
-  if (typeof syncBattleAuraFrame === "function") {
-    syncBattleAuraFrame(presentState, elapsed);
+  if (now - tickBattlePresentation._at.aura >= auraGap) {
+    tickBattlePresentation._at.aura = now;
+    if (typeof syncBattleAuraFrame === "function") {
+      syncBattleAuraFrame(presentState, elapsed);
+    }
   }
 }
 
@@ -6636,7 +6642,7 @@ function tickLobbyRoundBattles(dt, ts) {
     flushBattleEvents();
   }
 
-  const uiTickMs = typeof getLobbyBackgroundSimHz === "function" && getLobbyBackgroundSimHz() <= 3 ? 650 : 500;
+  const uiTickMs = typeof getLobbyBackgroundSimHz === "function" && getLobbyBackgroundSimHz() <= 3 ? 800 : 650;
   if (Math.floor(ts / uiTickMs) !== Math.floor((ts - dt * 1000) / uiTickMs)) {
     renderBattleStats();
     renderPlayerProfiles();
@@ -6693,8 +6699,14 @@ function gameLoop(ts) {
   synergyAnimTime += dt;
 
   if (phase === "prep") {
-    if (typeof tickInventoryAnimationController === "function") tickInventoryAnimationController(dt);
-    if (typeof tickSynergyVisualController === "function") tickSynergyVisualController(dt);
+    gameLoop._prepFxAcc = (gameLoop._prepFxAcc || 0) + dt;
+    const prepFxStep = 1 / 30;
+    if (gameLoop._prepFxAcc >= prepFxStep) {
+      const fxDt = gameLoop._prepFxAcc;
+      gameLoop._prepFxAcc = 0;
+      if (typeof tickInventoryAnimationController === "function") tickInventoryAnimationController(fxDt);
+      if (typeof tickSynergyVisualController === "function") tickSynergyVisualController(fxDt);
+    }
     if (isLobby2pMode()) tickLobby2pSideBattles(dt);
     if (isLobbyMode() && lobbyState && typeof tickLobbyFighterThoughts === "function") {
       const thoughtDirty = tickLobbyFighterThoughts(lobbyState, {
@@ -6718,7 +6730,7 @@ function gameLoop(ts) {
     }
     if (isLobbyMode() && lobbyState && typeof DialogueEngine !== "undefined") {
       const prepDurationSec = typeof LOBBY_PREP_SECONDS !== "undefined" ? LOBBY_PREP_SECONDS : 55;
-      DialogueEngine.tick({
+      const dialogueCtx = {
         lobby: lobbyState,
         phase: "prep",
         round,
@@ -6726,9 +6738,15 @@ function gameLoop(ts) {
         timerRemaining: lobbyPrepTimerRemaining,
         timerActive: lobbyPrepTimerActive,
         prepDurationSec,
-      });
+      };
+      if (DialogueEngine.shouldProcessTick(dialogueCtx)) {
+        DialogueEngine.tick(dialogueCtx);
+      }
     } else if (!isLobbyMode() && !isLobby2pMode() && phase === "prep" && typeof DialogueEngine !== "undefined") {
-      DialogueEngine.tickSolo({ round, prepDurationSec: 60 });
+      const soloCtx = { round, prepDurationSec: 60 };
+      if (DialogueEngine.shouldProcessTick(soloCtx)) {
+        DialogueEngine.tickSolo(soloCtx);
+      }
     }
     if (isLobbyMode() && lobbyPrepTimerActive) {
       lobbyPrepTimerRemaining = Math.max(0, lobbyPrepTimerRemaining - dt);

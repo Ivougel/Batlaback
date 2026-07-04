@@ -151,19 +151,20 @@ function seedLobbyFighterThoughts(lobby) {
 function setLobbyFighterMainThought(fighterId, emoji, animation = "nod") {
   const nextEmoji = splitPrimaryEmoji(emoji);
   const prev = lobbyFighterMainThoughtById.get(fighterId);
-  if (prev?.emoji === nextEmoji) return;
-  if (!canChangeFighterEmoji(fighterId, 0)) return;
+  if (prev?.emoji === nextEmoji) return false;
+  if (!canChangeFighterEmoji(fighterId, 0)) return false;
   lobbyFighterMainThoughtById.set(fighterId, makeThoughtVisual(nextEmoji, animation, 0));
   markFighterEmojiChanged(fighterId);
+  return true;
 }
 
 function setLobbyFighterEmotion(fighterId, { emoji, animation, priority = 1 }) {
   const prev = lobbyFighterEmotionById.get(fighterId);
   const pri = priority ?? 1;
   const nextEmoji = splitPrimaryEmoji(emoji);
-  if (prev && pri < (prev.priority ?? 0)) return;
-  if (prev && pri === (prev.priority ?? 0) && prev.emoji === nextEmoji) return;
-  if (!canChangeFighterEmoji(fighterId, pri)) return;
+  if (prev && pri < (prev.priority ?? 0)) return false;
+  if (prev && pri === (prev.priority ?? 0) && prev.emoji === nextEmoji) return false;
+  if (!canChangeFighterEmoji(fighterId, pri)) return false;
 
   lobbyFighterEmotionById.set(fighterId, {
     emoji: nextEmoji,
@@ -174,17 +175,27 @@ function setLobbyFighterEmotion(fighterId, { emoji, animation, priority = 1 }) {
     at: Date.now(),
   });
   markFighterEmojiChanged(fighterId);
+  return true;
 }
 
 function decayLobbyFighterEmotions() {
   const now = Date.now();
+  let changed = false;
   lobbyFighterEmotionById.forEach((em, fighterId) => {
     const age = now - (em.at || 0);
     const pri = em.priority ?? 0;
-    if (pri >= 4 && age > 7200) lobbyFighterEmotionById.delete(fighterId);
-    else if (pri >= 2 && age > 5800) lobbyFighterEmotionById.delete(fighterId);
-    else if (age > 4500) lobbyFighterEmotionById.delete(fighterId);
+    if (pri >= 4 && age > 7200) {
+      lobbyFighterEmotionById.delete(fighterId);
+      changed = true;
+    } else if (pri >= 2 && age > 5800) {
+      lobbyFighterEmotionById.delete(fighterId);
+      changed = true;
+    } else if (age > 4500) {
+      lobbyFighterEmotionById.delete(fighterId);
+      changed = true;
+    }
   });
+  return changed;
 }
 
 function getSpectatedMainEmotion(side) {
@@ -295,9 +306,8 @@ function tickLobbyPrepContextThoughts(lobby, opts = {}) {
   lobby.fighters.forEach((fighter) => {
     ensureLobbyFighterMainThought(fighter.id, fighter);
     if (!fighter.alive) {
-      setLobbyFighterMainThought(fighter.id, "💀", "shake");
-      setLobbyFighterEmotion(fighter.id, { emoji: "💀", animation: "shake", priority: 5 });
-      dirty = true;
+      if (setLobbyFighterMainThought(fighter.id, "💀", "shake")) dirty = true;
+      if (setLobbyFighterEmotion(fighter.id, { emoji: "💀", animation: "shake", priority: 5 })) dirty = true;
       return;
     }
 
@@ -305,13 +315,11 @@ function tickLobbyPrepContextThoughts(lobby, opts = {}) {
     const hpPct = hp.max > 0 ? hp.current / hp.max : 1;
 
     if (hpPct < 0.2) {
-      setLobbyFighterEmotion(fighter.id, { emoji: "😱", animation: "shake", priority: 4 });
-      dirty = true;
+      if (setLobbyFighterEmotion(fighter.id, { emoji: "😱", animation: "shake", priority: 4 })) dirty = true;
       return;
     }
     if (hpPct < 0.35) {
-      setLobbyFighterEmotion(fighter.id, { emoji: "😰", animation: "wobble", priority: 3 });
-      dirty = true;
+      if (setLobbyFighterEmotion(fighter.id, { emoji: "😰", animation: "wobble", priority: 3 })) dirty = true;
       return;
     }
 
@@ -321,12 +329,11 @@ function tickLobbyPrepContextThoughts(lobby, opts = {}) {
         if (lobbyPrepTimerThoughtSec !== timerSec) {
           lobbyPrepTimerThoughtSec = timerSec;
           const emoji = timerSec <= 3 ? "😱" : (timerSec <= 8 ? "⏰" : "😤");
-          setLobbyFighterEmotion(fighter.id, {
+          if (setLobbyFighterEmotion(fighter.id, {
             emoji,
             animation: timerSec <= 5 ? "wobble" : "nod",
             priority: 3,
-          });
-          dirty = true;
+          })) dirty = true;
         }
       }
       return;
@@ -335,8 +342,7 @@ function tickLobbyPrepContextThoughts(lobby, opts = {}) {
     if (fighter.id === lobby.currentOpponentId && !hp.inBattle) {
       if (lobbyPrepOpponentThoughtId !== fighter.id) {
         lobbyPrepOpponentThoughtId = fighter.id;
-        setLobbyFighterEmotion(fighter.id, { emoji: "😏", animation: "nod", priority: 1 });
-        dirty = true;
+        if (setLobbyFighterEmotion(fighter.id, { emoji: "😏", animation: "nod", priority: 1 })) dirty = true;
       }
     }
   });
@@ -348,13 +354,13 @@ function tickLobbyPrepContextThoughts(lobby, opts = {}) {
     if (alive.length) {
       const fighter = alive[Math.floor(Math.random() * alive.length)];
       const emoji = pickPrepAmbientThought(fighter);
-      setLobbyFighterEmotion(fighter.id, { emoji, animation: "nod", priority: 1 });
-      setLobbyFighterMainThought(fighter.id, emoji, "nod");
-      dirty = true;
+      const emoChanged = setLobbyFighterEmotion(fighter.id, { emoji, animation: "nod", priority: 1 });
+      const mainChanged = setLobbyFighterMainThought(fighter.id, emoji, "nod");
+      if (emoChanged || mainChanged) dirty = true;
     }
   }
 
-  decayLobbyFighterEmotions();
+  if (decayLobbyFighterEmotions()) dirty = true;
   return dirty;
 }
 
@@ -545,9 +551,7 @@ function syncLobbyFighterAvatarEl(el, visual) {
 
   if (emojiEl.dataset.thoughtEmoji !== nextEmoji) {
     emojiEl.dataset.thoughtEmoji = nextEmoji;
-    emojiEl.classList.add("lobby-fighter-emoji--swap");
     emojiEl.textContent = nextEmoji;
-    window.setTimeout(() => emojiEl.classList.remove("lobby-fighter-emoji--swap"), 480);
   }
 
   if (emojiEl.dataset.thoughtAnim !== nextAnimKey) {

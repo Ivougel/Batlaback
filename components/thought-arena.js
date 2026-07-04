@@ -69,9 +69,8 @@ const ThoughtArena = (() => {
   let lastThoughtStepAt = 0;
 
   function thoughtStepGapMs() {
-    if (isAnchoredFlankArena()) return 0;
     if (typeof BattleFxTier !== "undefined") return BattleFxTier.thoughtStepGapMs();
-    return 0;
+    return isAnchoredFlankArena() ? 40 : 0;
   }
 
   function prefersReducedThoughtMotion() {

@@ -109,6 +109,7 @@ const ArenaEquipment = (() => {
   let rafId = null;
   let physicsWaitTimer = null;
   let lastPhysicsStepAt = 0;
+  let viewportHomeCache = null;
 
   function arenaPhysicsGapMs() {
     if (typeof BattleFxTier !== "undefined") return BattleFxTier.arenaPhysicsGapMs();
@@ -484,6 +485,37 @@ const ArenaEquipment = (() => {
     body.el.style.zIndex = "";
     delete body._arenaVisKey;
     delete body._arenaOpacity;
+  }
+
+  function getEquipViewportHomeCached(side, slotId) {
+    if (!viewportHomeCache) viewportHomeCache = new Map();
+    const key = `${side}:${slotId}`;
+    if (!viewportHomeCache.has(key)) {
+      viewportHomeCache.set(key, getEquipViewportHome(side, slotId));
+    }
+    return viewportHomeCache.get(key);
+  }
+
+  function bodyNeedsPhysicsStep(body) {
+    if (body.attack) return true;
+    if (equipIdleWobbleEnabled()) return true;
+    if (!body.orbitSlotMounted && !body.homeViewport) {
+      if (Math.hypot(body.vx || 0, body.vy || 0) > 1.2) return true;
+      if (Math.abs(body.rotVel || 0) > 2) return true;
+    }
+    return false;
+  }
+
+  function nextWeaponBurstWakeSec(all, elapsed) {
+    let wakeSec = Infinity;
+    all.forEach((body) => {
+      if (!body.isWeapon || body.attack) return;
+      const cap = body.burstsTotal || 0;
+      if (cap > 0 && (body.burstsDone || 0) >= cap) return;
+      const wait = (body.nextAttackAt || 0) - elapsed;
+      if (wait > 0 && wait < wakeSec) wakeSec = wait;
+    });
+    return wakeSec;
   }
 
   function mountToFxForAttack(body) {
@@ -1088,7 +1120,7 @@ const ArenaEquipment = (() => {
 
     if (typeof ArenaAttackStyles !== "undefined" && ArenaAttackStyles.stepAttack && atk.styleId) {
       if (atk.useEmojiAvatarArc && atk.phase !== "strike") {
-        const vpHome = getEquipViewportHome(body.side, body.slotId);
+        const vpHome = getEquipViewportHomeCached(body.side, body.slotId);
         if (vpHome?.x) {
           atk.homeVpX = vpHome.x;
           atk.homeVpY = vpHome.y;
@@ -1194,7 +1226,7 @@ const ArenaEquipment = (() => {
     }
 
     if (body.homeViewport) {
-      const vp = getEquipViewportHome(body.side, body.slotId);
+      const vp = getEquipViewportHomeCached(body.side, body.slotId);
       if (vp?.x) {
         body.homeX = vp.x;
         body.homeY = vp.y;
@@ -1227,8 +1259,8 @@ const ArenaEquipment = (() => {
     const all = getAllBodies();
     if (!all.length) return;
 
-    const anyAttacking = all.some((b) => b.attack);
-    const physicsGap = anyAttacking ? 0 : arenaPhysicsGapMs();
+    viewportHomeCache = new Map();
+    const physicsGap = arenaPhysicsGapMs();
     if (physicsGap > 0) {
       const now = performance.now();
       if (now - lastPhysicsStepAt < physicsGap) {
@@ -1269,7 +1301,8 @@ const ArenaEquipment = (() => {
       }
     });
 
-    resolveMeleeFlightRepulsion(all, dt);
+    const hasMeleeFlyers = all.some(isMeleeWeaponInFlight);
+    if (hasMeleeFlyers) resolveMeleeFlightRepulsion(all, dt);
 
     all.forEach((body) => {
       const { w, h } = sizeBySide[body.side] || { w: 0, h: 0 };
@@ -1289,11 +1322,16 @@ const ArenaEquipment = (() => {
       const idleBodies = (bodiesBySide.get(side) || []).filter(
         (b) => !b.attack && !b.homeViewport && !b.orbitSlotMounted,
       );
-      resolveCollisions(idleBodies, w, h);
-      idleBodies.forEach(applyVisual);
+      if (idleBodies.length > 1) resolveCollisions(idleBodies, w, h);
     });
 
-    if (anyActive) scheduleFrame();
+    const needsMotion = all.some((body) => bodyNeedsPhysicsStep(body));
+    if (anyActive && needsMotion) {
+      scheduleFrame();
+    } else if (anyActive && !paused) {
+      const wakeSec = nextWeaponBurstWakeSec(all, elapsed);
+      if (wakeSec < 90) schedulePhysicsWait(wakeSec * 1000);
+    }
   }
 
   function cancelPhysicsScheduler() {

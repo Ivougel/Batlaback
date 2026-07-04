@@ -54,20 +54,26 @@
     }
   }
 
+  /** ~25–30 FPS cap для орбиты/мыслей во flank-бою (0 = лаги на планшете). */
+  function flankFxStepGapMs() {
+    if (prefersReducedMotion()) return 80;
+    return isPhoneTier() ? 48 : 40;
+  }
+
   function arenaPhysicsGapMs() {
-    if (isFlankBattleThoughtFxActive()) return 0;
-    if (!isLightBattleFx()) return 0;
+    if (isFlankBattleThoughtFxActive()) return flankFxStepGapMs();
+    if (!isLightBattleFx()) return isPhoneTier() ? 40 : 32;
     return isPhoneTier() ? 50 : 50;
   }
 
   function thoughtStepGapMs() {
-    if (isFlankBattleThoughtFxActive()) return 0;
-    if (!isLightBattleFx()) return 0;
+    if (isFlankBattleThoughtFxActive()) return flankFxStepGapMs();
+    if (!isLightBattleFx()) return isPhoneTier() ? 40 : 32;
     return isPhoneTier() ? 50 : 50;
   }
 
   function equipIdleWobbleEnabled() {
-    if (isFlankBattleThoughtFxActive()) return true;
+    if (isFlankBattleThoughtFxActive()) return false;
     return !isLightBattleFx();
   }
 
@@ -78,18 +84,18 @@
   }
 
   function emotionPresentGapMs() {
-    if (isFlankBattleThoughtFxActive()) return 66;
+    if (isFlankBattleThoughtFxActive()) return isPhoneTier() ? 110 : 90;
     if (!isLightBattleFx()) return 66;
     return isPhoneTier() ? 120 : 100;
   }
 
   function arenaPresentGapMs() {
-    if (isFlankBattleThoughtFxActive()) return 450;
+    if (isFlankBattleThoughtFxActive()) return 550;
     return isLightBattleFx() ? 500 : 450;
   }
 
   function stackOrbitGapMs() {
-    if (isFlankBattleThoughtFxActive()) return 70;
+    if (isFlankBattleThoughtFxActive()) return isPhoneTier() ? 140 : 110;
     if (!isLightBattleFx()) return 70;
     return isPhoneTier() ? 220 : 280;
   }

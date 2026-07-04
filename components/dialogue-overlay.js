@@ -6,6 +6,7 @@ const DialogueOverlay = (() => {
   const MAX_VISIBLE = 3;
   const DEFAULT_TTL_MS = 6000;
   const TRAVEL_MS = 680;
+  const TICK_MIN_MS = 48;
 
   /** @type {Array<object>} */
   let bubbles = [];
@@ -127,6 +128,7 @@ const DialogueOverlay = (() => {
     startLoop();
     positionBubble(bubble, 0);
     requestAnimationFrame(() => el.classList.add("hero-dialogue-bubble--visible"));
+    window.setTimeout(() => startLoop(), bubble.ttlMs);
     return bubble;
   }
 
@@ -144,18 +146,26 @@ const DialogueOverlay = (() => {
       x = bubble.to.x;
       y = bubble.to.y;
     }
-    el.style.left = `${x}px`;
-    el.style.top = `${y}px`;
+    const key = `${Math.round(x)}|${Math.round(y)}`;
+    if (bubble._posKey === key) return;
+    bubble._posKey = key;
+    el.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -100%)`;
   }
 
   function tick(ts) {
     const now = ts || performance.now();
-    const dt = lastTs ? now - lastTs : 16;
+    if (lastTs && now - lastTs < TICK_MIN_MS) {
+      rafId = requestAnimationFrame(tick);
+      return;
+    }
     lastTs = now;
 
     bubbles = bubbles.filter((bubble) => {
       const age = now - bubble.bornAt;
-      if (age > bubble.travelMs && bubble.phase === "travel") bubble.phase = "hold";
+      if (age > bubble.travelMs && bubble.phase === "travel") {
+        bubble.phase = "hold";
+        bubble._posKey = "";
+      }
       if (age > bubble.ttlMs) {
         bubble.el?.classList.add("hero-dialogue-bubble--out");
         if (age > bubble.ttlMs + 320) {
@@ -163,12 +173,23 @@ const DialogueOverlay = (() => {
           return false;
         }
       }
-      positionBubble(bubble, age);
+      if (bubble.phase === "travel" || age < bubble.ttlMs) {
+        positionBubble(bubble, age);
+      }
       return true;
     });
 
     if (bubbles.length) {
-      rafId = requestAnimationFrame(tick);
+      const animating = bubbles.some((b) => {
+        const age = now - b.bornAt;
+        return b.phase === "travel" || age > b.ttlMs;
+      });
+      if (animating) {
+        rafId = requestAnimationFrame(tick);
+      } else {
+        rafId = null;
+        lastTs = 0;
+      }
     } else {
       rafId = null;
       lastTs = 0;

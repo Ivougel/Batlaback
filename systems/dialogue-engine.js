@@ -430,8 +430,19 @@ const DialogueEngine = (() => {
     nextBeatAt = Date.now() + PREP_WARMUP_MS + getPrepBeatIntervalMs().min;
   }
 
+  function shouldProcessTick(ctx = {}) {
+    if (!state.enabled) return false;
+    if (pendingReply && Date.now() >= pendingReply.at) return true;
+    if (Date.now() >= nextBeatAt) return true;
+    if (ctx.timerActive && ctx.timerRemaining != null && ctx.timerRemaining <= 12 && ctx.timerRemaining > 0) {
+      if (!state._timerLineAt || Date.now() - state._timerLineAt > 14000) return true;
+    }
+    return false;
+  }
+
   function tick(ctx = {}) {
     if (!state.enabled) return false;
+    if (!shouldProcessTick(ctx)) return false;
     state.prepDurationSec = resolvePrepDurationSec(ctx);
     processPendingReply();
 
@@ -512,6 +523,7 @@ const DialogueEngine = (() => {
 
   function tickSolo(ctx = {}) {
     if (!state.enabled || typeof DialogueOverlay === "undefined") return false;
+    if (!shouldProcessTick(ctx)) return false;
     state.prepDurationSec = resolvePrepDurationSec(ctx);
     if (Date.now() < nextBeatAt) return false;
     if (!canEmitNow()) {
@@ -574,6 +586,7 @@ const DialogueEngine = (() => {
     onPostBattle,
     tick,
     tickSolo,
+    shouldProcessTick,
     getState: () => state,
     setEnabled(v) { state.enabled = !!v; },
   };
