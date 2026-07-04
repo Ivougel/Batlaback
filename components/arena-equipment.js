@@ -1479,7 +1479,9 @@ const ArenaEquipment = (() => {
     const syncGap = equipSyncIntervalMs();
     const needsFullSync = bodiesBySide.size === 0 || now - lastSyncAt >= syncGap;
     if (!needsFullSync) {
-      if (!paused) scheduleFrame();
+      if (!paused && getAllBodies().some((body) => bodyNeedsPhysicsStep(body))) {
+        scheduleFrame();
+      }
       return;
     }
     lastSyncAt = now;

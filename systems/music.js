@@ -1,5 +1,5 @@
 /**
- * Фоновая музыка: плейлист по очереди, громкость в localStorage, autoplay после первого жеста.
+ * Фоновая музыка: плейлист или один трек, громкость в localStorage, autoplay после первого жеста.
  */
 (function initMusicSystem() {
   const NEGROV_TRACK = "music/negrov.mp3";
@@ -11,8 +11,55 @@
     "music/Whispering Grove.mp3",
   ];
   const MUSIC_VOLUME_KEY = "bb-music-volume";
+  const MUSIC_TRACK_KEY = "bb-music-track";
   const NEGROV_ENABLED_KEY = "bb-negrov-enabled";
   const DEFAULT_VOLUME = 0.6;
+  const PLAYLIST_TRACK_ID = "playlist";
+
+  const MUSIC_TRACKS = [
+    {
+      id: PLAYLIST_TRACK_ID,
+      label: "🔀 Плейлист",
+      src: null,
+      hint: "Все треки по очереди. Чекбокс «Негры» добавляет особый трек в начало.",
+    },
+    {
+      id: "backpack-bazaar",
+      label: "Backpack Bazaar",
+      src: "music/Backpack Bazaar.mp3",
+      hint: "Основная тема базара.",
+    },
+    {
+      id: "backpack-bazaar2",
+      label: "Backpack Bazaar 2",
+      src: "music/Backpack Bazaar2.mp3",
+      hint: "Вторая версия темы базара.",
+    },
+    {
+      id: "whisper-deep-woods",
+      label: "Whisper of the Deep Woods",
+      src: "music/Whisper of the Deep Woods.mp3",
+      hint: "Тихий лесной ambient.",
+    },
+    {
+      id: "whisper-mossy-path",
+      label: "Whisper of the Mossy Path",
+      src: "music/Whisper of the Mossy Path.mp3",
+      hint: "Мшистая тропа — спокойный фон.",
+    },
+    {
+      id: "whispering-grove",
+      label: "Whispering Grove",
+      src: "music/Whispering Grove.mp3",
+      hint: "Шёпот рощи.",
+    },
+    {
+      id: "negrov",
+      label: "Негры",
+      src: NEGROV_TRACK,
+      hint: "Отдельный трек (тот же, что в плейлисте с чекбоксом).",
+    },
+  ];
 
   let musicAudio = null;
   let currentTrackIndex = 0;
@@ -20,11 +67,34 @@
   let unlockBound = false;
   let pausedByBackground = false;
 
+  function getMusicTrackMeta(trackId = getMusicTrackId()) {
+    return MUSIC_TRACKS.find((t) => t.id === trackId) || MUSIC_TRACKS[0];
+  }
+
+  function getMusicTrackId() {
+    try {
+      const stored = localStorage.getItem(MUSIC_TRACK_KEY);
+      if (!stored || stored === PLAYLIST_TRACK_ID) return PLAYLIST_TRACK_ID;
+      return MUSIC_TRACKS.some((t) => t.id === stored) ? stored : PLAYLIST_TRACK_ID;
+    } catch (_) {
+      return PLAYLIST_TRACK_ID;
+    }
+  }
+
+  function isPlaylistMode() {
+    return getMusicTrackId() === PLAYLIST_TRACK_ID;
+  }
+
   function isNegrovEnabled() {
     return localStorage.getItem(NEGROV_ENABLED_KEY) === "1";
   }
 
   function getMusicPlaylist() {
+    const selected = getMusicTrackId();
+    if (selected !== PLAYLIST_TRACK_ID) {
+      const track = MUSIC_TRACKS.find((t) => t.id === selected);
+      return track?.src ? [track.src] : [...BASE_PLAYLIST];
+    }
     if (isNegrovEnabled()) return [NEGROV_TRACK, ...BASE_PLAYLIST];
     return [...BASE_PLAYLIST];
   }
@@ -40,6 +110,11 @@
     if (!musicAudio) return false;
     const src = musicAudio.getAttribute("src") || musicAudio.src || "";
     return src.includes("negrov");
+  }
+
+  function updateMusicLoopMode() {
+    if (!musicAudio) return;
+    musicAudio.loop = !isPlaylistMode();
   }
 
   function getMusicVolume() {
@@ -58,7 +133,39 @@
 
   function syncNegrovEnabledUi(enabled) {
     const checkbox = document.getElementById("settings-negrov-enabled");
-    if (checkbox) checkbox.checked = !!enabled;
+    if (!checkbox) return;
+    const playlist = isPlaylistMode();
+    checkbox.checked = !!enabled;
+    checkbox.disabled = !playlist;
+    checkbox.closest(".settings-row")?.classList.toggle("settings-row--disabled", !playlist);
+  }
+
+  function populateMusicTrackSelect() {
+    const select = document.getElementById("settings-music-track");
+    if (!select) return;
+    const current = getMusicTrackId();
+    select.replaceChildren();
+    MUSIC_TRACKS.forEach((track) => {
+      const opt = document.createElement("option");
+      opt.value = track.id;
+      opt.textContent = track.label;
+      select.appendChild(opt);
+    });
+    select.value = current;
+  }
+
+  function syncMusicTrackSettingsUi() {
+    const current = getMusicTrackId();
+    const select = document.getElementById("settings-music-track");
+    if (select) {
+      if (!select.options.length) populateMusicTrackSelect();
+      select.value = current;
+    }
+    const hint = document.getElementById("settings-music-track-hint");
+    if (hint) {
+      hint.textContent = getMusicTrackMeta(current).hint || "";
+    }
+    syncNegrovEnabledUi(isNegrovEnabled());
   }
 
   function applyMusicVolume(volume) {
@@ -73,7 +180,30 @@
     return clamped;
   }
 
+  function setMusicTrack(trackId, options = {}) {
+    const meta = getMusicTrackMeta(trackId);
+    const id = meta?.id || PLAYLIST_TRACK_ID;
+    try {
+      localStorage.setItem(MUSIC_TRACK_KEY, id);
+    } catch (_) { /* ignore */ }
+
+    syncMusicTrackSettingsUi();
+    updateMusicLoopMode();
+
+    if (!musicAudio) return id;
+
+    const wasPlaying = musicStarted && !musicAudio.paused;
+    currentTrackIndex = 0;
+    playTrack(0, options.autoplay !== false && (wasPlaying || musicStarted));
+    return id;
+  }
+
   function setNegrovEnabled(enabled) {
+    if (!isPlaylistMode()) {
+      syncNegrovEnabledUi(isNegrovEnabled());
+      return isNegrovEnabled();
+    }
+
     const next = !!enabled;
     localStorage.setItem(NEGROV_ENABLED_KEY, next ? "1" : "0");
     syncNegrovEnabledUi(next);
@@ -107,6 +237,7 @@
     if (!musicAudio || !playlist.length) return;
     currentTrackIndex = ((index % playlist.length) + playlist.length) % playlist.length;
     musicAudio.src = playlist[currentTrackIndex];
+    updateMusicLoopMode();
     musicAudio.load();
     if (!autoplay) return;
     const playPromise = musicAudio.play();
@@ -115,6 +246,7 @@
   }
 
   function playNextTrack() {
+    if (!isPlaylistMode()) return;
     playTrack(currentTrackIndex + 1, true);
   }
 
@@ -124,7 +256,7 @@
 
   function onTrackError() {
     const playlist = getMusicPlaylist();
-    if (playlist.length <= 1) return;
+    if (!isPlaylistMode() || playlist.length <= 1) return;
     playNextTrack();
   }
 
@@ -177,18 +309,29 @@
     window.addEventListener("focus", onShow);
   }
 
+  function initMusicTrackControls() {
+    populateMusicTrackSelect();
+    syncMusicTrackSettingsUi();
+
+    const select = document.getElementById("settings-music-track");
+    select?.addEventListener("change", (e) => {
+      setMusicTrack(e.target.value);
+      tryStartMusic();
+    });
+  }
+
   function initMusic() {
     if (musicAudio) return;
     const playlist = getMusicPlaylist();
     if (!playlist.length) return;
     musicAudio = new Audio(playlist[0]);
-    musicAudio.loop = false;
+    musicAudio.loop = !isPlaylistMode();
     musicAudio.preload = "auto";
     musicAudio.addEventListener("ended", onTrackEnded);
     musicAudio.addEventListener("error", onTrackError);
     currentTrackIndex = 0;
     applyMusicVolume(getMusicVolume());
-    syncNegrovEnabledUi(isNegrovEnabled());
+    syncMusicTrackSettingsUi();
     bindMusicUnlock();
     bindMusicVisibility();
     tryStartMusic();
@@ -197,6 +340,10 @@
   window.getMusicVolume = getMusicVolume;
   window.setMusicVolume = setMusicVolume;
   window.syncMusicVolumeUi = syncMusicVolumeUi;
+  window.getMusicTrackId = getMusicTrackId;
+  window.setMusicTrack = setMusicTrack;
+  window.syncMusicTrackSettingsUi = syncMusicTrackSettingsUi;
+  window.initMusicTrackControls = initMusicTrackControls;
   window.isNegrovEnabled = isNegrovEnabled;
   window.setNegrovEnabled = setNegrovEnabled;
   window.syncNegrovEnabledUi = syncNegrovEnabledUi;

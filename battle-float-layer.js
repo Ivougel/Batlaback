@@ -439,8 +439,15 @@ function getFloatAlpha(fn) {
 }
 
 function applyBattleFloatTransform(el, x, y, scale, alpha) {
-  el.style.opacity = String(Math.max(0, Math.min(1, alpha)));
-  el.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%) scale(${scale})`;
+  const rx = Math.round(x);
+  const ry = Math.round(y);
+  const rs = scale.toFixed(3);
+  const ra = alpha.toFixed(2);
+  const key = `${rx}|${ry}|${rs}|${ra}`;
+  if (el.dataset.bfPos === key) return;
+  el.dataset.bfPos = key;
+  el.style.opacity = ra;
+  el.style.transform = `translate3d(${rx}px, ${ry}px, 0) translate(-50%, -50%) scale(${rs})`;
 }
 
 function upsertBattleFloatEl(layer, uid, className, content, asHtml = false) {

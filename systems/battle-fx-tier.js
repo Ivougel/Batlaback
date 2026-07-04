@@ -84,7 +84,7 @@
   }
 
   function emotionPresentGapMs() {
-    if (isFlankBattleThoughtFxActive()) return isPhoneTier() ? 200 : 160;
+    if (isFlankBattleThoughtFxActive()) return isPhoneTier() ? 280 : 240;
     if (!isLightBattleFx()) return 66;
     return isPhoneTier() ? 120 : 100;
   }

@@ -1363,12 +1363,12 @@ body:has(#app[data-phase="replay"]) #battle-controls:not(.hidden) {
 
 /* iPad / phone light FX: статичное кольцо без вращения (keyframes не применяются при animation:none) */
 html[data-battle-fx-light="true"] .avatar-stack-orbit-particle {
-  animation: none;
+  animation: none !important;
   opacity: 0.92;
   transform: rotate(var(--orbit-a)) translateX(var(--orbit-r)) rotate(calc(-1 * var(--orbit-a)));
 }
 
-html[data-battle-arena-layout="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .avatar-stack-orbit-particle {
+html:not([data-battle-fx-light="true"])[data-battle-arena-layout="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .avatar-stack-orbit-particle {
   animation: avatar-stack-orbit linear infinite;
   opacity: 1;
 }
@@ -1502,6 +1502,10 @@ html[data-battle-arena-layout="true"] #app:is([data-phase="battle"], [data-phase
 
 .avatar-dot-stack-pulse .avatar-dot-stack-icon {
   animation: avatar-dot-stack-pulse 1.15s ease-in-out infinite;
+}
+
+html[data-battle-fx-light="true"] .avatar-dot-stack-pulse .avatar-dot-stack-icon {
+  animation: none;
 }
 
 .avatar-dot-stack-bounce .avatar-dot-stack-icon {
@@ -4781,6 +4785,11 @@ html[data-touch="true"] .sidebar-tooltip.synergy-tooltip .synergy-tt-source {
   margin-top: calc(4px * var(--ui-scale));
   padding-top: calc(10px * var(--ui-scale));
   border-top: 1px solid var(--border);
+}
+
+.settings-row--disabled {
+  opacity: 0.45;
+  pointer-events: none;
 }
 
 .settings-checkbox-label {

@@ -931,11 +931,13 @@ function renderLobbyChrome(force = false) {
     if (stripBattle && isBattleUiPhase()) stripBattle.innerHTML = stripHtml;
   }
   syncLobbyReturnTableButton();
-  if (show && typeof syncLobbyFighterAvatars === "function") {
-    syncLobbyFighterAvatars(lobbyState, rosterOpts);
-  }
-  if (show && typeof syncLobbyFighterCardHp === "function") {
-    syncLobbyFighterCardHp(lobbyState, rosterOpts);
+  if (show && phase === "prep") {
+    if (typeof syncLobbyFighterAvatars === "function") {
+      syncLobbyFighterAvatars(lobbyState, rosterOpts);
+    }
+    if (typeof syncLobbyFighterCardHp === "function") {
+      syncLobbyFighterCardHp(lobbyState, rosterOpts);
+    }
   }
   const bottomTimer = document.getElementById("lobby-prep-timer-bottom");
   const heroTimer = document.getElementById("prep-hero-card-timer");
@@ -3663,6 +3665,20 @@ function shouldThrottleBattleCanvasDraw() {
   if (!isBattleUiPhase()) return false;
   if (document.documentElement.dataset.battleHeroPlacement === "flank-arena") return true;
   return typeof BattleFxTier !== "undefined" && BattleFxTier.isLightBattleFx();
+}
+
+function battleCanvasDrawFps() {
+  if (document.documentElement.dataset.uiTier === "tablet") return 15;
+  return 20;
+}
+
+function tickBattleHudLite() {
+  const state = getDisplayBattleState();
+  if (!isBattleUiPhase() || !state) return;
+  const now = performance.now();
+  if (now - (tickBattleHudLite._at || 0) < 120) return;
+  tickBattleHudLite._at = now;
+  if (typeof syncLiveAvatarHeroFrame === "function") syncLiveAvatarHeroFrame(state);
 }
 
 function getAppDataPhase() {
@@ -6573,7 +6589,9 @@ function tickBattlePresentation() {
   }
   if (now - tickBattlePresentation._at.orbit >= orbitGap) {
     tickBattlePresentation._at.orbit = now;
-    if (!presentState.finished && typeof syncStackOrbitFromBattle === "function") {
+    const orbitEnabled = typeof BattleFxTier === "undefined"
+      || (BattleFxTier.stackOrbitParticlesEnabled?.() ?? true);
+    if (orbitEnabled && !presentState.finished && typeof syncStackOrbitFromBattle === "function") {
       syncStackOrbitFromBattle(presentState);
     }
   }
@@ -6639,7 +6657,7 @@ function tickLobbyRoundBattles(dt, ts) {
     }
 
     let acc = (lobbyBackgroundSimAcc.get(match.id) || 0) + dt;
-    while (acc >= bgInterval && match.state && !match.state.finished) {
+    if (acc >= bgInterval && match.state && !match.state.finished) {
       tickMatchStep(match, bgInterval);
       acc -= bgInterval;
     }
@@ -6653,11 +6671,31 @@ function tickLobbyRoundBattles(dt, ts) {
     flushBattleEvents();
   }
 
-  const uiTickMs = typeof getLobbyBackgroundSimHz === "function" && getLobbyBackgroundSimHz() <= 3 ? 1000 : 900;
-  if (Math.floor(ts / uiTickMs) !== Math.floor((ts - dt * 1000) / uiTickMs)) {
+  const lobbyHpTickMs = 500;
+  const lobbyProfileTickMs = 1400;
+  const lobbyAvatarTickMs = 1800;
+  const lobbyChromeTickMs = 1200;
+
+  if (Math.floor(ts / lobbyHpTickMs) !== Math.floor((ts - dt * 1000) / lobbyHpTickMs)) {
+    if (lobbyState) {
+      const rosterOpts = {
+        phase: "battle",
+        spectateMatchId: lobbySpectateMatchId,
+        matches: lobbyMatches,
+        round,
+      };
+      if (typeof syncLobbyFighterCardHp === "function") syncLobbyFighterCardHp(lobbyState, rosterOpts);
+      if (typeof syncLobbyBattleBottomChipMetrics === "function") {
+        syncLobbyBattleBottomChipMetrics(lobbyState, rosterOpts);
+      }
+    }
+  }
+  if (Math.floor(ts / lobbyProfileTickMs) !== Math.floor((ts - dt * 1000) / lobbyProfileTickMs)) {
     renderBattleStats();
     renderPlayerProfiles();
     if (typeof refreshBattleInventoryPopover === "function") refreshBattleInventoryPopover();
+  }
+  if (Math.floor(ts / lobbyAvatarTickMs) !== Math.floor((ts - dt * 1000) / lobbyAvatarTickMs)) {
     if (typeof syncLobbyFighterAvatars === "function" && lobbyState) {
       syncLobbyFighterAvatars(lobbyState, {
         phase: "battle",
@@ -6667,13 +6705,14 @@ function tickLobbyRoundBattles(dt, ts) {
       });
     }
   }
-  if (Math.floor(ts / 400) !== Math.floor((ts - dt * 1000) / 400)) {
-    if (!tickLobbyRoundBattles._lastChromeAt || ts - tickLobbyRoundBattles._lastChromeAt >= 400) {
+  if (Math.floor(ts / lobbyChromeTickMs) !== Math.floor((ts - dt * 1000) / lobbyChromeTickMs)) {
+    if (!tickLobbyRoundBattles._lastChromeAt || ts - tickLobbyRoundBattles._lastChromeAt >= lobbyChromeTickMs) {
       tickLobbyRoundBattles._lastChromeAt = ts;
       renderLobbyChrome();
     }
   }
   if (typeof syncBattleInventoryPopoverFlash === "function") syncBattleInventoryPopoverFlash();
+  tickBattleHudLite();
   tickBattlePresentation();
 
   if (playerJustFinished && !battleEndHandled) {
@@ -6825,6 +6864,7 @@ function gameLoop(ts) {
       if (typeof refreshBattleInventoryPopover === "function") refreshBattleInventoryPopover();
     }
     if (typeof syncBattleInventoryPopoverFlash === "function") syncBattleInventoryPopoverFlash();
+    tickBattleHudLite();
     tickBattlePresentation();
   } else if (phase === "battle" && battleState?.finished && !isLobbyMode()) {
     if (typeof resetStackOrbitVfx === "function") resetStackOrbitVfx();
@@ -6837,6 +6877,7 @@ function gameLoop(ts) {
       if (typeof refreshBattleInventoryPopover === "function") refreshBattleInventoryPopover();
     }
     if (typeof syncBattleInventoryPopoverFlash === "function") syncBattleInventoryPopoverFlash();
+    tickBattleHudLite();
     tickBattlePresentation();
   }
   if (phase === "prep") {
@@ -6859,7 +6900,7 @@ function gameLoop(ts) {
     const throttleBattleDraw = shouldThrottleBattleCanvasDraw() && !needsSmoothDraw;
     if ((phase === "prep" && !needsSmoothDraw) || throttleBattleDraw) {
       const accKey = throttleBattleDraw ? "_battleDrawAcc" : "_drawAcc";
-      const fps = throttleBattleDraw ? 20 : 30;
+      const fps = throttleBattleDraw ? battleCanvasDrawFps() : 30;
       gameLoop[accKey] = (gameLoop[accKey] || 0) + dt;
       if (gameLoop[accKey] < 1 / fps) {
         // skip canvas redraw this frame
@@ -10567,13 +10608,13 @@ function renderPlayerProfiles(opts = {}) {
   };
 
   if (liveBattle) {
-    statsEl.innerHTML = "";
     if (buildStatsEl) {
-      buildStatsEl.innerHTML = renderBattleStatsCompareHTML(playerProfile, enemyProfile, {
+      const buildHtml = renderBattleStatsCompareHTML(playerProfile, enemyProfile, {
         ...statsOptions,
         liveBattle: true,
         buildOnly: true,
       });
+      if (buildStatsEl.innerHTML !== buildHtml) buildStatsEl.innerHTML = buildHtml;
     }
   } else {
     if (buildStatsEl) buildStatsEl.innerHTML = "";

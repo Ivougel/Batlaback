@@ -785,6 +785,17 @@
     const canvasRect = canvasEl.getBoundingClientRect();
     if (canvasRect.width <= 0 || canvasRect.height <= 0) return;
 
+    const sig = [
+      Math.round(vpRect.left),
+      Math.round(vpRect.top),
+      Math.round(canvasRect.left),
+      Math.round(canvasRect.top),
+      Math.round(canvasRect.width),
+      Math.round(canvasRect.height),
+    ].join("|");
+    if (syncFxCanvasGeometry._sig === sig) return;
+    syncFxCanvasGeometry._sig = sig;
+
     anchor.style.left = `${canvasRect.left - vpRect.left}px`;
     anchor.style.top = `${canvasRect.top - vpRect.top}px`;
     anchor.style.width = `${canvasRect.width}px`;
@@ -1052,6 +1063,11 @@
     const phase = app.dataset.phase;
     if (phase !== "battle" && phase !== "replay") return;
 
+    const now = performance.now();
+    const minGap = 180;
+    if (syncBattleHudAnchorsNow._lastAt && now - syncBattleHudAnchorsNow._lastAt < minGap) return;
+    syncBattleHudAnchorsNow._lastAt = now;
+
     const vpRect = viewport.getBoundingClientRect();
     const root = document.documentElement;
     const useFlankZones = root.dataset.battleHeroPlacement === "flank-arena";
@@ -1089,6 +1105,9 @@
       const hudOverlapEarly = readCssPx("--hero-hud-overlap", Math.round(16 * readCssPx("--ui-scale", 1)));
       sharedHudTopPx = Math.max(0, Math.round(sharedStageBottom - vpRect.top + barsGapEarly - hudOverlapEarly));
     }
+
+    if (!syncBattleHudAnchorsNow._hudSig) syncBattleHudAnchorsNow._hudSig = { player: "", enemy: "" };
+    let thoughtSlotsDirty = false;
 
     [
       {
@@ -1203,28 +1222,43 @@
 
       const heroRowTop = readCssPx("--battle-hero-row-top", 0);
       const heroZoneH = readCssPx("--battle-hero-zone-h-active", readCssPx("--battle-hero-zone-h", 0));
+      let statusMaxSig = "";
       if (heroZoneH > 40) {
         const heroRowBottomVp = heroRowTop + heroZoneH - vpRect.top;
         const maxHudH = Math.max(40, Math.round(heroRowBottomVp - hudTopPx - barsGap));
-        hud.style.setProperty("--battle-hud-max-h", `${maxHudH}px`);
+        statusMaxSig = String(maxHudH);
       }
 
-      hud.style.left = `${Math.round(hudLeft)}px`;
-      hud.style.top = `${hudTopPx}px`;
-      hud.style.width = `${Math.round(hudWidth)}px`;
-      hud.style.maxWidth = `${Math.round(hudWidth)}px`;
-      root.style.setProperty(`--battle-hud-anchor-top-${team}`, `${hudTopPx}px`);
+      const hudSig = [
+        Math.round(hudLeft),
+        hudTopPx,
+        Math.round(hudWidth),
+        statusMaxSig,
+      ].join("|");
+      if (syncBattleHudAnchorsNow._hudSig[team] !== hudSig) {
+        syncBattleHudAnchorsNow._hudSig[team] = hudSig;
+        thoughtSlotsDirty = true;
+        hud.style.left = `${Math.round(hudLeft)}px`;
+        hud.style.top = `${hudTopPx}px`;
+        hud.style.width = `${Math.round(hudWidth)}px`;
+        hud.style.maxWidth = `${Math.round(hudWidth)}px`;
+        root.style.setProperty(`--battle-hud-anchor-top-${team}`, `${hudTopPx}px`);
 
-      if (useFlankZones && tabletLandscapeSide) {
-        const thoughtBand = readCssPx(
-          "--battle-thought-band-h",
-          typeof BattleHeroAnchor !== "undefined" ? BattleHeroAnchor.thoughtSlotSize() : 150,
-        );
-        const barsMin = Math.round(54 * uiScale);
-        const maxHudH = readCssPx("--battle-hud-max-h", 0);
-        if (maxHudH > barsMin + 8) {
-          const statusMax = Math.max(48, maxHudH - barsMin - Math.round(8 * uiScale));
-          hud.style.setProperty("--battle-hud-status-max-h", `${statusMax}px`);
+        if (heroZoneH > 40) {
+          hud.style.setProperty("--battle-hud-max-h", `${statusMaxSig}px`);
+        }
+
+        if (useFlankZones && tabletLandscapeSide) {
+          const thoughtBand = readCssPx(
+            "--battle-thought-band-h",
+            typeof BattleHeroAnchor !== "undefined" ? BattleHeroAnchor.thoughtSlotSize() : 150,
+          );
+          const barsMin = Math.round(54 * uiScale);
+          const maxHudH = readCssPx("--battle-hud-max-h", 0);
+          if (maxHudH > barsMin + 8) {
+            const statusMax = Math.max(48, maxHudH - barsMin - Math.round(8 * uiScale));
+            hud.style.setProperty("--battle-hud-status-max-h", `${statusMax}px`);
+          }
         }
       }
     });
@@ -1234,8 +1268,8 @@
     }
 
     if (typeof syncBattleHudSurfaceFlags === "function") syncBattleHudSurfaceFlags();
-    if (useFlankZones) syncHeroEmotionSlotAnchors();
-    syncHeroAttackSlotAnchors();
+    if (useFlankZones && thoughtSlotsDirty) syncHeroEmotionSlotAnchors();
+    if (thoughtSlotsDirty) syncHeroAttackSlotAnchors();
   }
 
   /** Зона атакующей экипировки — в combat floor по колонкам героев. */
@@ -2126,10 +2160,6 @@
       && BattleHeroAnchor.usesCenterDuelThoughtAnchors?.();
     if (duelCenter) root.dataset.thoughtDuelCenter = "true";
     else root.removeAttribute("data-thought-duel-center");
-
-    if (typeof BattleHeroAnchor !== "undefined" && BattleHeroAnchor.invalidateMeasureCache) {
-      BattleHeroAnchor.invalidateMeasureCache();
-    }
 
     const vmin = Math.min(
       window.visualViewport?.width ?? window.innerWidth,

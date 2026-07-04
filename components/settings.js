@@ -19,6 +19,7 @@ function showSettingsPopup() {
   if (typeof syncEmojiOrbitSpeedSettingsUi === "function") syncEmojiOrbitSpeedSettingsUi();
   if (typeof syncVisualThemeSettingsUi === "function") syncVisualThemeSettingsUi();
   if (typeof syncSoundThemeSettingsUi === "function") syncSoundThemeSettingsUi();
+  if (typeof syncMusicTrackSettingsUi === "function") syncMusicTrackSettingsUi();
   overlay.classList.remove("hidden");
   overlay.setAttribute("aria-hidden", "false");
   document.querySelectorAll("#btn-settings, #btn-settings-intro").forEach((btn) => {
@@ -81,6 +82,7 @@ function initSettingsControls() {
 
   if (typeof initVisualThemeControls === "function") initVisualThemeControls();
   if (typeof initSoundThemeControls === "function") initSoundThemeControls();
+  if (typeof initMusicTrackControls === "function") initMusicTrackControls();
 
   document.getElementById("btn-settings-buy-pass")?.addEventListener("click", (e) => {
     e.preventDefault();

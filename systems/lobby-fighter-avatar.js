@@ -279,6 +279,10 @@ function analyzeBackgroundMatchEmotions(match) {
 
 function refreshLobbyBattleEmotions(lobby, matches) {
   if (!matches?.length) return;
+  const now = Date.now();
+  if (refreshLobbyBattleEmotions._lastAt && now - refreshLobbyBattleEmotions._lastAt < 2800) return;
+  refreshLobbyBattleEmotions._lastAt = now;
+
   const displayState = typeof getDisplayBattleState === "function" ? getDisplayBattleState() : null;
 
   matches.forEach((match) => {
@@ -682,19 +686,23 @@ function syncLobbyFighterAvatars(lobby, opts = {}) {
   if (!lobby) return;
   const phase = opts.phase || document.getElementById("app")?.dataset.phase || "prep";
   const rosterOpts = { ...opts, phase };
+  const liteOnly = !!opts.lite;
 
-  seedLobbyFighterThoughts(lobby);
-  if (phase === "battle" || phase === "replay") {
-    refreshLobbyBattleEmotions(lobby, rosterOpts.matches || []);
+  if (!liteOnly) {
+    seedLobbyFighterThoughts(lobby);
+    if (phase === "battle" || phase === "replay") {
+      refreshLobbyBattleEmotions(lobby, rosterOpts.matches || []);
+    }
+
+    document.querySelectorAll("[data-lobby-fighter-avatar]").forEach((mount) => {
+      const fighterId = Number(mount.dataset.lobbyFighterAvatar);
+      const fighter = lobby.fighters?.[fighterId];
+      if (!fighter) return;
+      const visual = resolveLobbyFighterAvatarVisual(fighter, lobby, rosterOpts);
+      syncLobbyFighterAvatarEl(mount, visual);
+    });
   }
 
-  document.querySelectorAll("[data-lobby-fighter-avatar]").forEach((mount) => {
-    const fighterId = Number(mount.dataset.lobbyFighterAvatar);
-    const fighter = lobby.fighters?.[fighterId];
-    if (!fighter) return;
-    const visual = resolveLobbyFighterAvatarVisual(fighter, lobby, rosterOpts);
-    syncLobbyFighterAvatarEl(mount, visual);
-  });
   syncLobbyFighterCardHp(lobby, rosterOpts);
   syncLobbyBattleBottomChipMetrics(lobby, rosterOpts);
 }

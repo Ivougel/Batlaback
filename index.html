@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="styles/tokens.css?v=20">
   <link rel="stylesheet" href="styles/layers.css?v=7">
   <link rel="stylesheet" href="styles/bottom-chrome.css?v=24">
-  <link rel="stylesheet" href="styles.css?v=39">
+  <link rel="stylesheet" href="styles.css?v=40">
   <link rel="stylesheet" href="styles/shop.css?v=11">
   <link rel="stylesheet" href="styles/item-card-chrome.css?v=14">
   <link rel="stylesheet" href="styles/shop-pin-chrome.css?v=11">
@@ -65,7 +65,7 @@
   <link rel="stylesheet" href="styles/tablet-side.css?v=35">
   <link rel="stylesheet" href="styles/prep-tablet-zone-layout.css?v=7">
   <link rel="stylesheet" href="styles/battle-inventory-popover.css?v=9">
-  <link rel="stylesheet" href="styles/lobby.css?v=14">
+  <link rel="stylesheet" href="styles/lobby.css?v=15">
   <link rel="stylesheet" href="styles/lobby-2p-hud.css?v=3">
   <link rel="stylesheet" href="styles/lobby-prep-field-roster.css?v=1">
   <link rel="stylesheet" href="styles/meadow-theme.css?v=2">
@@ -100,9 +100,9 @@
     })();
   </script>
   <script src="systems/layout-scales.js?v=2"></script>
-  <script src="systems/battle-fx-tier.js?v=8"></script>
+  <script src="systems/battle-fx-tier.js?v=9"></script>
   <script src="systems/battle-hero-anchor.js?v=38"></script>
-  <script src="ui-layout.js?v=127"></script>
+  <script src="ui-layout.js?v=128"></script>
 </head>
 <body>
   <div id="ui-ornament-frame" class="ui-ornament-frame" aria-hidden="true">
@@ -796,6 +796,11 @@
         </div>
         <select id="settings-sound-theme" class="settings-select" aria-labelledby="settings-sound-theme-label" aria-describedby="settings-sound-theme-hint"></select>
         <p class="settings-select-hint" id="settings-sound-theme-hint"></p>
+        <div class="settings-row settings-row--select">
+          <label class="settings-label" for="settings-music-track" id="settings-music-track-label">🎵 Музыка</label>
+        </div>
+        <select id="settings-music-track" class="settings-select" aria-labelledby="settings-music-track-label" aria-describedby="settings-music-track-hint"></select>
+        <p class="settings-select-hint" id="settings-music-track-hint"></p>
         <div class="settings-row">
           <label class="settings-label" for="settings-music-volume">🎵 Громкость музыки</label>
           <span class="settings-value" id="settings-music-volume-value">60%</span>
@@ -1054,7 +1059,7 @@
   <script src="systems/sfx-themes.js?v=7"></script>
   <script src="systems/sfx.js?v=5"></script>
   <script src="systems/sound-theme.js?v=4"></script>
-  <script src="systems/music.js"></script>
+  <script src="systems/music.js?v=2"></script>
   <script src="systems/input-mode.js"></script>
   <script src="systems/gamepad.js"></script>
   <script src="components/item-flight-controller.js?v=3"></script>
@@ -1072,12 +1077,12 @@
   <script src="systems/dialogue-catalog.js?v=2"></script>
   <script src="components/dialogue-overlay.js?v=5"></script>
   <script src="systems/dialogue-engine.js?v=5"></script>
-  <script src="systems/lobby-fighter-avatar.js?v=7"></script>
-  <script src="systems/lobby-spectator.js?v=8"></script>
+  <script src="systems/lobby-fighter-avatar.js?v=8"></script>
+  <script src="systems/lobby-spectator.js?v=9"></script>
   <script src="battle-engine.js?v=2"></script>
-  <script src="battle-float-layer.js?v=18"></script>
+  <script src="battle-float-layer.js?v=19"></script>
   <script src="components/thought-arena.js?v=27"></script>
-  <script src="components/arena-equipment.js?v=30"></script>
+  <script src="components/arena-equipment.js?v=31"></script>
   <script src="components/emotion-presenter.js?v=5"></script>
   <script src="emotion-engine.js?v=22"></script>
   <script src="battle-hud.js?v=6"></script>
@@ -1088,7 +1093,7 @@
   <script src="systems/screen-transitions.js?v=1"></script>
   <script src="components/prep-hud-collapse.js?v=1"></script>
   <script src="components/prep-hud-hero.js?v=3"></script>
-  <script src="game.js?v=108"></script>
+  <script src="game.js?v=110"></script>
   <script src="pwa-register.js"></script>
 </body>
 </html>

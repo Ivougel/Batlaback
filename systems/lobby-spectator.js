@@ -120,9 +120,10 @@ function isLobbyMatchFullySimulated(match, matchIndex, opts = {}) {
 
 function getLobbyBackgroundSimHz() {
   if (typeof window.BattleFxTier?.isLightBattleFx === "function" && window.BattleFxTier.isLightBattleFx()) {
-    return 3;
+    return 2;
   }
-  return 5;
+  if (document.documentElement?.dataset?.uiTier === "tablet") return 2;
+  return 4;
 }
 
 function getLobbyMatchFighter(lobby, fighterId, side) {

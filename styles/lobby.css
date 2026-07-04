@@ -481,6 +481,19 @@
   animation: lobby-fighter-emoji-live 2.8s ease-in-out infinite;
 }
 
+/* Во время боя не крутим бесконечные emoji-анимации на всём ростере (iPad perf). */
+#app:is([data-phase="battle"], [data-phase="replay"]) .lobby-fighter-emoji--live,
+#app:is([data-phase="battle"], [data-phase="replay"]) .lobby-fighter-emoji--nod,
+#app:is([data-phase="battle"], [data-phase="replay"]) .lobby-fighter-emoji--wobble,
+#app:is([data-phase="battle"], [data-phase="replay"]) .lobby-fighter-emoji--pulse {
+  animation: none;
+}
+
+html[data-battle-fx-light="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .lobby-fighter-emoji--shake,
+html[data-battle-fx-light="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .lobby-fighter-emoji--bounce {
+  animation: none;
+}
+
 @keyframes lobby-fighter-emoji-orbit {
   from { transform: rotate(0deg) translateX(5px) rotate(0deg); }
   to { transform: rotate(360deg) translateX(5px) rotate(-360deg); }
