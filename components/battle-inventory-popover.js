@@ -335,9 +335,44 @@ const BattleInventoryPopover = (() => {
   }
 
   function shouldUseDockLayout() {
+    if (shouldUseFlankColumnDock()) return true;
     const tier = document.documentElement.dataset.uiTier || "";
     if (tier === "phone" || tier === "tablet") return true;
     return window.innerWidth < 980;
+  }
+
+  function shouldUseFlankColumnDock() {
+    const root = document.documentElement;
+    return root.dataset.battleHeroPlacement === "flank-arena"
+      && root.dataset.battleArenaLayout === "true";
+  }
+
+  function readRootCssPx(name, fallback = 0) {
+    const raw = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    const n = Number.parseFloat(raw);
+    return Number.isFinite(n) ? n : fallback;
+  }
+
+  function getHeroColumnViewportRect(team, bounds, chromeInset) {
+    const objectsLayer = document.getElementById("layer-objects");
+    const layoutRect = objectsLayer?.getBoundingClientRect();
+    if (!layoutRect || layoutRect.width <= 0) return null;
+
+    const zoneLeftVar = team === "enemy" ? "--battle-enemy-zone-left" : "--battle-player-zone-left";
+    const zoneWidthVar = team === "enemy" ? "--battle-enemy-zone-width" : "--battle-player-zone-width";
+    const zoneLeft = readRootCssPx(zoneLeftVar, 0);
+    const zoneW = readRootCssPx(zoneWidthVar, 180);
+    const left = layoutRect.left + zoneLeft;
+    const right = left + zoneW;
+    const heroRowTop = readRootCssPx("--battle-hero-row-top", 0);
+    const sceneUi = document.getElementById("battle-scene-ui");
+    const sceneTop = sceneUi?.getBoundingClientRect().top ?? bounds.top;
+    const top = Math.max(bounds.top + 8, sceneTop + heroRowTop);
+    const bottom = bounds.bottom - chromeInset - 8;
+
+    if (right - left < 80 || bottom - top < 96) return null;
+
+    return { left, right, top, bottom, width: right - left, height: bottom - top };
   }
 
   function shouldSinglePopoverMode() {
@@ -369,27 +404,47 @@ const BattleInventoryPopover = (() => {
     el.style.top = "0";
     const tipW = el.offsetWidth;
 
-    let left = team === "enemy"
-      ? bounds.right - tipW - margin
-      : bounds.left + margin;
-    left = Math.max(bounds.left + margin, Math.min(left, bounds.right - tipW - margin));
+    const colRect = shouldUseFlankColumnDock()
+      ? getHeroColumnViewportRect(team, bounds, chromeInset)
+      : null;
+
+    let left;
+    if (colRect) {
+      left = team === "enemy"
+        ? colRect.right - tipW - margin
+        : colRect.left + margin;
+      left = Math.max(colRect.left + margin, Math.min(left, colRect.right - tipW - margin));
+    } else {
+      left = team === "enemy"
+        ? bounds.right - tipW - margin
+        : bounds.left + margin;
+      left = Math.max(bounds.left + margin, Math.min(left, bounds.right - tipW - margin));
+    }
 
     const openCount = getOpenTeams().length;
+    const colHeight = colRect?.height ?? (bounds.bottom - bounds.top - chromeInset - margin * 2);
     if (openCount >= 2) {
-      const sharedMax = Math.floor((bounds.bottom - bounds.top - chromeInset - margin * 2) * 0.44);
-      el.style.maxHeight = `${Math.max(120, sharedMax)}px`;
+      const sharedMax = Math.floor(colHeight * 0.42);
+      el.style.maxHeight = `${Math.max(108, sharedMax)}px`;
     } else {
       el.style.removeProperty("max-height");
     }
 
     let tipH = el.offsetHeight;
-    let top = bounds.bottom - tipH - chromeInset;
-    top = Math.max(bounds.top + margin, Math.min(top, bounds.bottom - tipH - margin));
+    let top;
+    if (colRect) {
+      top = colRect.bottom - tipH - margin;
+      top = Math.max(colRect.top + margin, Math.min(top, colRect.bottom - tipH - margin));
+    } else {
+      top = bounds.bottom - tipH - chromeInset;
+      top = Math.max(bounds.top + margin, Math.min(top, bounds.bottom - tipH - margin));
+    }
 
     el.style.left = `${Math.round(left)}px`;
     el.style.top = `${Math.round(top)}px`;
     el.style.visibility = "";
     el.classList.add("battle-inventory-popover--dock");
+    el.classList.toggle("battle-inventory-popover--flank-col", !!colRect);
   }
 
   function positionPopoverAnchor(team, el, rect, bounds) {

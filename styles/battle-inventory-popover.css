@@ -323,6 +323,25 @@ body:has(.battle-inventory-popover:not(.hidden)) #app[data-phase="battle"] .batt
   transition: opacity 0.2s ease;
 }
 
+.battle-inventory-popover--flank-col.battle-inventory-popover--compact {
+  width: min(calc(100% - 16px), calc(220px * var(--ui-scale, 1))) !important;
+  max-width: min(calc(100% - 16px), calc(220px * var(--ui-scale, 1))) !important;
+}
+
+.battle-inventory-popover--flank-col.battle-inventory-popover--compact .battle-inventory-popover__head {
+  padding-bottom: calc(2px * var(--ui-scale, 1));
+}
+
+.battle-inventory-popover--flank-col.battle-inventory-popover--compact .battle-inventory-popover__title {
+  font-size: calc(11px * var(--ui-scale, 1));
+}
+
+body:has(.battle-inventory-popover--flank-col:not(.hidden)) #app[data-phase="battle"] .battle-thought-arena,
+body:has(.battle-inventory-popover--flank-col:not(.hidden)) #app[data-phase="replay"] .battle-thought-arena {
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
 @media (min-width: 980px) {
   .battle-inventory-popover:not(.battle-inventory-popover--compact) {
     width: min(calc(240px * var(--ui-scale, 1)), calc(100vw - 16px)) !important;

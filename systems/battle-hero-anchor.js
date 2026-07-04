@@ -124,6 +124,8 @@ const BattleHeroAnchor = (() => {
       haloRatio: 0.28,
       satelliteScale: 0.62,
       heroBelowZoneBias: 0.38,
+      heroSpecYRatio: 0.20,
+      heroSpecXBias: 0.34,
     },
     "tablet-portrait": {
       ...FLOOR_EMOJI_PROFILE,
@@ -149,6 +151,8 @@ const BattleHeroAnchor = (() => {
       minPx: 80,
       maxPx: 152,
       satelliteScale: 0.62,
+      heroSpecYRatio: 0.18,
+      heroSpecXBias: 0.32,
     },
   };
 
@@ -270,10 +274,26 @@ const BattleHeroAnchor = (() => {
     return measureCache.avatarRect[cacheKey];
   }
 
+  function getPrepCharacterAnchorRect(side) {
+    const root = document.documentElement;
+    if (root.dataset.battlePrepHeroLayer !== "true") return null;
+    const charEl = document.getElementById(side === "enemy" ? "prep-character-enemy" : "prep-character-player");
+    if (!charEl || charEl.hasAttribute("hidden")) return null;
+    const visual = charEl.querySelector(".prep-character-img, .prep-character-emoji") || charEl;
+    const ar = visual.getBoundingClientRect();
+    return ar.width >= 48 && ar.height >= 48 ? ar : null;
+  }
+
   function getAvatarAnchorRect(side) {
     refreshMeasureCache();
     if (measureCache.avatarRect[side] !== undefined) {
       return measureCache.avatarRect[side];
+    }
+
+    const prepRect = getPrepCharacterAnchorRect(side);
+    if (prepRect) {
+      measureCache.avatarRect[side] = prepRect;
+      return prepRect;
     }
 
     const frameRect = getProfileAvatarFrameRect(side);
@@ -430,6 +450,43 @@ const BattleHeroAnchor = (() => {
     return visibleViewportBottomPx();
   }
 
+  /** Эмодзи спека — верх колонки героя (как на макете flank-arena). */
+  function getHeroNearSpecAnchor(side) {
+    const panelId = side === "enemy" ? "enemy-avatar-panel" : "player-avatar-panel";
+    const panelRect = document.getElementById(panelId)?.getBoundingClientRect();
+    const ar = getAvatarAnchorRect(side);
+    if ((!panelRect || panelRect.width < 40) && (!ar || ar.height < 40)) return null;
+
+    const emojiSize = thoughtSlotEmojiSize();
+    const halo = thoughtSlotHaloPx(emojiSize);
+    const containerSize = emojiSize + halo * 2;
+    const prof = emojiProfile();
+    const xBias = prof.heroSpecXBias ?? 0.34;
+
+    let cx;
+    let cy;
+    if (panelRect && panelRect.width > 40) {
+      cx = panelRect.left + panelRect.width * (side === "enemy" ? 0.52 : 0.48);
+      cy = panelRect.top + Math.min(Math.max(emojiSize * 0.55, 28), panelRect.height * 0.14);
+    } else {
+      cx = side === "enemy"
+        ? ar.left + ar.width * (0.5 - xBias)
+        : ar.left + ar.width * (0.5 + xBias);
+      cy = ar.top + ar.height * (prof.heroSpecYRatio ?? 0.12);
+    }
+
+    return {
+      cx,
+      cy,
+      emojiSize,
+      halo,
+      containerSize,
+      top: cy - containerSize / 2,
+      left: cx - containerSize / 2,
+      size: containerSize,
+    };
+  }
+
   /** Планшет landscape: эмодзи-аватар под героем (под HUD), спутники — орбита вокруг. */
   function getHeroBelowThoughtAnchor(side) {
     const emojiSize = thoughtSlotEmojiSize();
@@ -479,6 +536,11 @@ const BattleHeroAnchor = (() => {
 
   /** Позиция thought-slot в viewport (px). */
   function getThoughtSlotAnchor(side) {
+    if (isFlankArenaBattle()) {
+      const nearHero = getHeroNearSpecAnchor(side);
+      if (nearHero) return nearHero;
+    }
+
     // iPad mini / tablet-side landscape: крупный эмодзи под HUD в колонке героя.
     if (currentBattleProfile() === "tablet-landscape-side" && usesCombatFloorAnchors() && !usesHeadBadgeAnchors()) {
       const underHero = getHeroBelowThoughtAnchor(side);
@@ -615,6 +677,7 @@ const BattleHeroAnchor = (() => {
     getHeadBadgeThoughtAnchor,
     getCombatFloorThoughtAnchor,
     getHeroBelowThoughtAnchor,
+    getHeroNearSpecAnchor,
     usesHeroBelowThoughtAnchors,
     invalidateMeasureCache,
   };

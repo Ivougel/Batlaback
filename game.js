@@ -353,6 +353,25 @@ function isPrepHeroHudVisible() {
   return (phase === "prep" || isTdRunLive()) && isPrepHeroCardHud();
 }
 
+function shouldEnableBattlePrepHeroLayer() {
+  const app = document.getElementById("app");
+  const root = document.documentElement;
+  if (!app || (app.dataset.phase !== "battle" && app.dataset.phase !== "replay")) return false;
+  if (app.dataset.gameMode === "td") return false;
+  if (root.dataset.prepLayout === "mobile") return false;
+  if (root.dataset.uiSurface !== "tablet-side" && root.dataset.uiSurface !== "desktop") return false;
+  if (root.dataset.battleHeroPlacement && root.dataset.battleHeroPlacement !== "flank-arena") return false;
+  return true;
+}
+
+function syncBattlePrepHeroLayerDom() {
+  const root = document.documentElement;
+  const enabled = shouldEnableBattlePrepHeroLayer();
+  if (enabled) root.dataset.battlePrepHeroLayer = "true";
+  else root.removeAttribute("data-battle-prep-hero-layer");
+  return enabled;
+}
+
 function syncPrepHeroHudDom() {
   const app = document.getElementById("app");
   if (!app) return;
@@ -7009,9 +7028,7 @@ function startBattle() {
       renderFightButton();
       renderLobbyChrome();
       if (typeof queuePrewarmBattleInventoryPopover === "function") {
-        if (!isAnyLobbyMode()) {
-          queuePrewarmBattleInventoryPopover();
-        }
+        queuePrewarmBattleInventoryPopover();
       }
       if (typeof updateBattleAnalyzer === "function" && battleState) {
         updateBattleAnalyzer(battleState, 0);
@@ -11185,29 +11202,7 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
   const prepEnemy = document.getElementById("prep-character-enemy");
   const statsHud = document.getElementById("prep-stats-hud");
   const showHeroHud = isPrepHeroHudVisible();
-  if (phase !== "prep" && !isTdRunLive()) {
-    layer?.setAttribute("aria-hidden", "true");
-    prepPlayer?.setAttribute("hidden", "");
-    prepEnemy?.setAttribute("hidden", "");
-    return;
-  }
-
-  if (phase === "prep") {
-    if (isLobby2pMode() && lobbyState?.isSplitLobby) {
-      layer?.setAttribute("aria-hidden", "true");
-      prepPlayer?.setAttribute("hidden", "");
-      prepEnemy?.setAttribute("hidden", "");
-      if (statsHud) statsHud.innerHTML = "";
-      return;
-    }
-    layer?.setAttribute("aria-hidden", "false");
-  } else {
-    layer?.setAttribute("aria-hidden", "true");
-    prepPlayer?.setAttribute("hidden", "");
-    prepEnemy?.setAttribute("hidden", "");
-  }
-
-  if (!showHeroHud && phase !== "prep") return;
+  const battlePrepHero = syncBattlePrepHeroLayerDom();
 
   const fillChar = (el, profile, chrSide) => {
     if (!el) return;
@@ -11225,6 +11220,14 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
   };
 
   if (phase === "prep") {
+    if (isLobby2pMode() && lobbyState?.isSplitLobby) {
+      layer?.setAttribute("aria-hidden", "true");
+      prepPlayer?.setAttribute("hidden", "");
+      prepEnemy?.setAttribute("hidden", "");
+      if (statsHud) statsHud.innerHTML = "";
+      return;
+    }
+    layer?.setAttribute("aria-hidden", "false");
     fillChar(prepPlayer, playerProfile, "player");
     fillChar(prepEnemy, enemyProfile, "enemy");
     if (prepViewSide === "player") {
@@ -11234,7 +11237,26 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
       prepEnemy?.removeAttribute("hidden");
       prepPlayer?.setAttribute("hidden", "");
     }
+  } else if (battlePrepHero) {
+    layer?.setAttribute("aria-hidden", "false");
+    fillChar(prepPlayer, playerProfile, "player");
+    fillChar(prepEnemy, enemyProfile, "enemy");
+    prepPlayer?.removeAttribute("hidden");
+    prepEnemy?.removeAttribute("hidden");
+    if (typeof scheduleBattleHeroRowSync === "function") scheduleBattleHeroRowSync();
+    return;
+  } else if (!isTdRunLive()) {
+    layer?.setAttribute("aria-hidden", "true");
+    prepPlayer?.setAttribute("hidden", "");
+    prepEnemy?.setAttribute("hidden", "");
+    return;
+  } else {
+    layer?.setAttribute("aria-hidden", "true");
+    prepPlayer?.setAttribute("hidden", "");
+    prepEnemy?.setAttribute("hidden", "");
   }
+
+  if (!showHeroHud && phase !== "prep") return;
 
   const side = prepViewSide;
   let profile = side === "player" ? playerProfile : enemyProfile;

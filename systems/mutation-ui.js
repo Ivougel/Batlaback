@@ -523,14 +523,28 @@ function restorePrepBuildEmojiHeroSlot(heroCard, heroSlot) {
 function syncPrepBuildEmojiBtnMount() {
   const btn = document.getElementById("prep-build-emoji-btn");
   const heroSlot = document.getElementById("prep-hero-card-build-slot");
+  const specSlot = document.getElementById("prep-character-spec-slot");
   const heroCard = document.getElementById("prep-hero-card");
   const statsRow = document.querySelector(".prep-hero-card__stats-row");
   const shopHeader = document.querySelector(".shop-panel-header");
   if (!btn) return;
 
   const heroHud = isPrepBuildEmojiHeroHudMount();
+  const heroFieldFloat = heroHud && specSlot;
 
-  if (heroHud && heroSlot) {
+  if (heroFieldFloat) {
+    specSlot.removeAttribute("aria-hidden");
+    btn.classList.add("prep-build-emoji-btn--hero-field-float");
+    btn.classList.remove("prep-build-emoji-btn--hud-float");
+    if (!specSlot.contains(btn)) specSlot.appendChild(btn);
+    if (heroSlot?.contains(btn)) heroSlot.removeChild(btn);
+    if (heroSlot) {
+      heroSlot.classList.remove("prep-hero-card__build-slot--hud-inline");
+      heroSlot.setAttribute("aria-hidden", "true");
+    }
+  } else if (heroHud && heroSlot) {
+    specSlot?.setAttribute("aria-hidden", "true");
+    btn.classList.remove("prep-build-emoji-btn--hero-field-float");
     heroSlot.classList.add("prep-hero-card__build-slot--hud-inline");
     btn.classList.add("prep-build-emoji-btn--hud-float");
     if (statsRow && !statsRow.contains(heroSlot)) {
@@ -538,15 +552,16 @@ function syncPrepBuildEmojiBtnMount() {
     }
     if (!heroSlot.contains(btn)) heroSlot.appendChild(btn);
   } else {
+    specSlot?.setAttribute("aria-hidden", "true");
     if (heroSlot) {
       heroSlot.classList.remove("prep-hero-card__build-slot--hud-inline");
       restorePrepBuildEmojiHeroSlot(heroCard, heroSlot);
     }
-    btn.classList.remove("prep-build-emoji-btn--hud-float");
+    btn.classList.remove("prep-build-emoji-btn--hud-float", "prep-build-emoji-btn--hero-field-float");
     if (shopHeader && !shopHeader.contains(btn)) shopHeader.appendChild(btn);
   }
 
-  if (heroSlot) {
+  if (heroSlot && !heroFieldFloat) {
     if (heroHud && !btn.classList.contains("hidden")) heroSlot.removeAttribute("aria-hidden");
     else heroSlot.setAttribute("aria-hidden", "true");
   }
@@ -573,8 +588,13 @@ function syncPrepBuildEmojiBtn(opts = {}) {
   btn.classList.toggle("prep-build-emoji-btn--lore", display.loreEnabled);
   btn.classList.remove("hidden");
 
+  const specSlot = document.getElementById("prep-character-spec-slot");
   const heroSlot = document.getElementById("prep-hero-card-build-slot");
-  if (heroSlot && isPrepBuildEmojiHeroHudMount()) heroSlot.removeAttribute("aria-hidden");
+  if (specSlot?.contains(btn) && !btn.classList.contains("hidden")) {
+    specSlot.removeAttribute("aria-hidden");
+  } else if (heroSlot && isPrepBuildEmojiHeroHudMount() && !btn.classList.contains("hidden")) {
+    heroSlot.removeAttribute("aria-hidden");
+  }
 }
 
 /** Будущая кастомизация: window.setPrepBuildEmojiOverride("🌸") */

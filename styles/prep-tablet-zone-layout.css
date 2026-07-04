@@ -303,7 +303,7 @@ html[data-ui-surface="tablet-side"][data-game-phase="prep"] #prep-tooltip-dock.p
 
 html[data-ui-surface="tablet-side"][data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--hero-grid .sidebar-tooltip.sidebar-tooltip--card:not(.hidden) {
   width: auto;
-  max-width: calc(220px * var(--ui-scale, 1));
+  max-width: calc(240px * var(--ui-scale, 1));
   max-height: none;
   margin: 0;
   padding: 0;

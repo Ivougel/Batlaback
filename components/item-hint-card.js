@@ -57,11 +57,11 @@ function renderTooltipCardHtml(lines, options = {}) {
   return `<div class="item-hint-card${costBadge != null && costBadge !== "" ? " item-hint-card--has-cost" : ""}" style="--hint-rarity:${rarityColor}">
     <div class="item-hint-card__frame">
       ${costHtml}
+      <div class="item-hint-card__hud">${bodyHtml}</div>
       <div class="item-hint-card__art" aria-hidden="true">
         <div class="item-hint-card__art-glow"></div>
         <span class="item-hint-card__emoji">${emoji}</span>
       </div>
-      <div class="item-hint-card__hud">${bodyHtml}</div>
       <div class="item-hint-card__gem" aria-hidden="true"></div>
     </div>
   </div>`;
