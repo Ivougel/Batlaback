@@ -8,6 +8,8 @@
   z-index: 9600;
   pointer-events: none;
   overflow: visible;
+  contain: strict;
+  isolation: isolate;
 }
 
 .hero-dialogue-layer--hidden {
@@ -25,30 +27,26 @@
   border-radius: calc(14px * var(--ui-scale, 1));
   background: rgba(12, 14, 20, 0.92);
   border: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow:
-    0 8px 28px rgba(0, 0, 0, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
   color: #f4f7fb;
   opacity: 0;
-  scale: 0.88;
+  scale: 0.92;
+  contain: layout style paint;
+  backface-visibility: hidden;
   transition:
-    opacity 0.22s ease,
-    scale 0.22s ease,
-    filter 0.22s ease;
-  filter: blur(2px);
-  will-change: transform, opacity;
+    opacity 0.2s ease,
+    scale 0.2s ease;
 }
 
 .hero-dialogue-bubble--visible {
   opacity: 1;
   scale: 1;
-  filter: none;
 }
 
 .hero-dialogue-bubble--out {
   opacity: 0;
-  scale: 0.94;
-  filter: blur(1px);
+  scale: 0.96;
+  transition-duration: 0.18s;
 }
 
 .hero-dialogue-bubble--reply {
@@ -58,9 +56,6 @@
 
 .hero-dialogue-bubble--human {
   border-color: rgba(88, 166, 255, 0.45);
-  box-shadow:
-    0 8px 28px rgba(0, 0, 0, 0.45),
-    0 0 0 1px rgba(88, 166, 255, 0.12);
 }
 
 .hero-dialogue-bubble--emoji-only {
@@ -82,9 +77,6 @@
 
 .hero-dialogue-bubble--emoji-only.hero-dialogue-bubble--reply {
   border-color: rgba(255, 140, 200, 0.42);
-  box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.4),
-    0 0 18px rgba(255, 120, 180, 0.12);
 }
 
 .hero-dialogue-bubble--emoji-only.hero-dialogue-bubble--reply .hero-dialogue-bubble__text {
@@ -112,7 +104,6 @@
   font-weight: 600;
   text-wrap: pretty;
   color: #f8fbff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
 .hero-dialogue-bubble[data-class-id="warrior"] .hero-dialogue-bubble__name {
@@ -140,7 +131,6 @@ html[data-visual-theme="meadow"] .hero-dialogue-bubble {
 
 html[data-visual-theme="meadow"] .hero-dialogue-bubble__text {
   color: var(--juice-ink, #1a3318);
-  text-shadow: none;
 }
 
 html[data-visual-theme="meadow"] .hero-dialogue-bubble__name {
@@ -152,9 +142,19 @@ html[data-prep-layout="mobile"] .hero-dialogue-bubble {
   font-size: calc(11px * var(--ui-scale, 1));
 }
 
+/* Light FX / tablet-phone: упрощённые тени и быстрее fade */
+html[data-battle-fx-light="true"] .hero-dialogue-bubble {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.32);
+  transition-duration: 0.14s;
+}
+
+html[data-battle-fx-light="true"] .hero-dialogue-bubble--out {
+  transition-duration: 0.12s;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hero-dialogue-bubble {
     transition: opacity 0.12s linear;
-    filter: none !important;
+    scale: 1 !important;
   }
 }

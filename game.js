@@ -687,6 +687,7 @@ function setLobbySpectateMatch(matchIndex) {
   const app = document.getElementById("app");
   if (app) app.dataset.lobbySpectate = match.isPlayerMatch ? "yours" : "watch";
   syncLobby2pBattleTabs();
+  if (typeof Lobby2pHud !== "undefined") Lobby2pHud.syncBattle();
   queueLobbySpectatePresentation();
 }
 
@@ -838,6 +839,10 @@ function returnToLobbyPlayerMatch() {
 function syncLobbyReturnTableButton() {
   const btn = document.getElementById("btn-lobby-return-table");
   if (!btn) return;
+  if (isLobby2pMode()) {
+    btn.classList.add("hidden");
+    return;
+  }
   const match = lobbyMatches[lobbySpectateMatchId];
   const watching = isAnyLobbyMode()
     && isBattleUiPhase()
@@ -897,6 +902,19 @@ function syncPrepBottomBarChrome() {
   if (isLobby2pMode() && isPrep) {
     document.getElementById("prep-bottom-stats")?.setAttribute("hidden", "");
     standingsAnchor?.toggleAttribute("hidden", true);
+    return;
+  }
+  if (isLobby2pMode() && isBattleUiPhase() && lobbyState) {
+    standingsAnchor?.toggleAttribute("hidden", false);
+    const countEl = document.getElementById("standings-alive-count");
+    if (countEl && typeof getAliveLobbyFighters === "function") {
+      countEl.textContent = String(getAliveLobbyFighters(lobbyState).length);
+    }
+    const dropdown = document.getElementById("standings-dropdown");
+    const strip = document.getElementById("lobby-roster-strip-battle");
+    if (dropdown && strip && isBattleUiPhase()) {
+      dropdown.innerHTML = strip.innerHTML;
+    }
     return;
   }
   // В лобби список соперников — кружки с эмоциями поверх поля prep.
@@ -991,6 +1009,7 @@ function renderLobbyChrome(force = false) {
   }
   syncLobbyReturnTableButton();
   syncLobby2pBattleTabs();
+  if (typeof Lobby2pHud !== "undefined") Lobby2pHud.syncBattle();
   if (show && phase === "prep") {
     if (typeof syncLobbyFighterAvatars === "function") {
       syncLobbyFighterAvatars(lobbyState, rosterOpts);
@@ -1234,6 +1253,34 @@ function lobby2pResolvePointerSide(clientX, canvasRect) {
   const mid = canvasRect.left + canvasRect.width / 2;
   return clientX < mid ? "player" : "enemy";
 }
+
+function isLobby2pColumnPrepLayout() {
+  return isLobby2pMode() && phase === "prep" && lobbyState?.isSplitLobby
+    && !lobby2pHasActiveDuel() && !lobby2pHasAnySideBattle();
+}
+
+function getLobby2pColumnWidth() {
+  const cw = canvas?.width || BATTLE_CANVAS_W;
+  return cw / 2;
+}
+
+function getLobby2pColumnGridOrigin(team) {
+  const colW = getLobby2pColumnWidth();
+  const inset = Math.max(0, (colW - GRID_INNER_W) / 2);
+  return team === "player" ? inset : colW + inset;
+}
+
+function getLobby2pColumnClip(half) {
+  const colW = getLobby2pColumnWidth();
+  return { x: half === "left" ? 0 : colW, w: colW };
+}
+
+function lobby2pSideFromCanvasX(mx) {
+  return mx < getLobby2pColumnWidth() ? "player" : "enemy";
+}
+
+/** 'column' — сетка P1/P2 по центру своей половины canvas. */
+let lobby2pDrawLayout = null;
 
 function setLobby2pActiveHuman(humanId) {
   if (!isLobby2pMode()) return;
@@ -1480,6 +1527,33 @@ function initLobby2pHudBridge() {
       if (typeof window.fitCanvasDisplaySize === "function") window.fitCanvasDisplaySize();
       draw();
     },
+    isBattleActive: () => isLobby2pMode() && isBattleUiPhase() && !!lobbyState?.isSplitLobby,
+    getHumanMatchIndex: (id) => findLobby2pHumanMatchIndex(id),
+    getSpectatedHuman: () => {
+      const match = lobbyMatches?.[lobbySpectateMatchId];
+      return match?.isPlayerMatch ? match.humanId : null;
+    },
+    isHumanMatchLive: (humanId) => {
+      const idx = findLobby2pHumanMatchIndex(humanId);
+      const match = idx >= 0 ? lobbyMatches[idx] : null;
+      return !!(match?.state && !match.state.finished);
+    },
+    isHumanMatchDone: (humanId) => {
+      const idx = findLobby2pHumanMatchIndex(humanId);
+      const match = idx >= 0 ? lobbyMatches[idx] : null;
+      return !!(match?.state?.finished);
+    },
+    getHumanOpponentName: (humanId) => {
+      const idx = findLobby2pHumanMatchIndex(humanId);
+      const match = idx >= 0 ? lobbyMatches[idx] : null;
+      if (!match || !lobbyState) return "";
+      const oppId = match.fighterAId === humanId ? match.fighterBId : match.fighterAId;
+      return lobbyState.fighters[oppId]?.name || "";
+    },
+    spectateHuman: (humanId) => {
+      const idx = findLobby2pHumanMatchIndex(humanId);
+      if (idx >= 0) setLobbySpectateMatch(idx);
+    },
   });
   Lobby2pHud.bind();
 }
@@ -1517,8 +1591,7 @@ function drawLobby2pPrepHalf(side) {
 function drawLobby2pSideBattleHalf(sideBattle, half, humanId) {
   const state = sideBattle.state;
   if (!state) return;
-  const clipX = half === "left" ? 0 : ENEMY_X;
-  const clipW = GRID_INNER_W;
+  const { x: clipX, w: clipW } = getLobby2pColumnClip(half);
   const mirror = humanId === 1;
   const humanTeam = mirror ? "enemy" : "player";
   const oppTeam = mirror ? "player" : "enemy";
@@ -1539,8 +1612,7 @@ function drawLobby2pSideBattleHalf(sideBattle, half, humanId) {
 
 function drawLobby2pSideBattleFx(fxLayerCtx, state, half, humanId) {
   if (!state || !fxLayerCtx) return;
-  const clipX = half === "left" ? 0 : ENEMY_X;
-  const clipW = GRID_INNER_W;
+  const { x: clipX, w: clipW } = getLobby2pColumnClip(half);
   const mirror = humanId === 1;
   fxLayerCtx.save();
   fxLayerCtx.beginPath();
@@ -7256,6 +7328,9 @@ function gameLoop(ts) {
 }
 
 function layoutGridOrigin(team) {
+  if (lobby2pDrawLayout === "column") {
+    return getLobby2pColumnGridOrigin(team);
+  }
   if (phase === "prep" && isLobby2pMode()) {
     return team === "player" ? 0 : ENEMY_X;
   }
@@ -8080,7 +8155,9 @@ function drawWorldLayer() {
         : { x: 0, y: 0 };
       ctx.save();
       ctx.translate(shake.x, shake.y);
+      if (isLobby2pColumnPrepLayout()) lobby2pDrawLayout = "column";
       drawLobby2pSplitPrep();
+      lobby2pDrawLayout = null;
       ctx.restore();
     } else {
     const side = prepViewSide;
@@ -8173,10 +8250,12 @@ function drawFxLayer() {
     fxCtx.save();
     fxCtx.translate(shake.x, shake.y);
     if (!lobby2pSideFx) {
+      if (isLobby2pColumnPrepLayout()) lobby2pDrawLayout = "column";
       drawDisplaceAnimations(fxCtx, side);
       if (canEditPrepSide() && hoverSlot && !dragPayload && !gamepadBoardFocus) drawHoverCell();
       if (canEditPrepSide() && gamepadBoardFocus && isGamepadInteraction()) drawGamepadBoardFocus();
       if (typeof drawPrepCellReactions === "function") drawPrepCellReactions(fxCtx, side);
+      lobby2pDrawLayout = null;
     }
     if (typeof drawBoardTooltipItemSparkles === "function") {
       drawBoardTooltipItemSparkles(fxCtx, synergyAnimTime);
@@ -8611,31 +8690,42 @@ function drawDropPreview(targetCtx = fxCtx) {
   });
 }
 
-function describeEffect(e) {
+function describeEffect(e, def) {
   switch (e.type) {
     case "damage":
       return `⚔ Урон: ${formatDamageRangeText(e)}${e.damageType ? ` (${formatDamageType(e.damageType)})` : ""}`;
     case "heal": return `❤ Лечение: ${e.value}`;
     case "block": return `🛡 Блок: ${e.value}`;
-    case "poison": return `☠ Яд: ${e.value}`;
+    case "poison": {
+      const val = e.value ?? 0;
+      if (e.trigger === "on_hit") {
+        const ch = e.chance != null ? `${Math.round(e.chance * 100)}% ` : "";
+        return `☠ При попадании: ${ch}+${val} яда`.trim();
+      }
+      if (e.trigger === "on_miss") {
+        const ch = e.chance != null ? `${Math.round(e.chance * 100)}% ` : "";
+        return `☠ При промахе: ${ch}+${val} яда`.trim();
+      }
+      return `☠ Яд: ${val}`;
+    }
     case "slow": return `🐌 Замедление: ${Math.round((e.value || 0) * 100)}%`;
     case "passiveDefense": return `🦺 Защита: +${e.value}`;
     case "passiveMaxHp": return `❤ Макс. HP: +${e.value}`;
     case "passiveLuck": return `🍀 Удача: +${e.value}`;
     case "statMult": {
       const pct = Math.round(Math.abs(e.value) * 100);
-      if (e.stat === "cooldown") return `⚡ Кулдаун: −${pct}%`;
+      if (e.stat === "cooldown") return `⚡ Перезарядка: −${pct}%`;
       if (e.stat === "magicDamage") return `✨ Маг. урон: +${pct}%`;
       if (e.stat === "heal") return `💚 Лечение: +${pct}%`;
       return `💪 Урон: +${pct}%`;
     }
-    case "lifesteal": return `🩸 Вампиризм: ${Math.round(e.value * 100)}%`;
+    case "lifesteal": return `🩸 Лечит на ${Math.round(e.value * 100)}% от урона`;
     case "buffTimed":
-      if (e.stat === "heart") return `💖 Сердце: +${e.value} (каждые ${e.duration}с)`;
-      return `🔥 +${Math.round(e.value * 100)}% ${e.stat || "урон"} на ${e.duration}с`;
+      if (e.stat === "heart") return `💖 Сердце: +${e.value} (каждые ${e.duration || 3} сек)`;
+      return `🔥 +${Math.round(e.value * 100)}% ${e.stat || "урона"} на ${e.duration || 3} сек`;
     case "crit": return `🎯 Крит: ${Math.round((e.chance || 0) * 100)}%`;
-    case "dodgePeriodic": return `💨 Уклонение каждые ${e.interval || 5}с`;
-    case "groundFire": return `🔥 Огонь на поле: ${e.value} урона/с`;
+    case "dodgePeriodic": return `💨 Уклонение каждые ${e.interval || 5} сек`;
+    case "groundFire": return `🔥 Огонь на поле: ${e.value} урона в секунду`;
     case "repeatCast": return `🔮 Повтор магических заклинаний`;
     case "shieldBreakBonus": return `🛡 Пробивание блока: +${Math.round((e.value || 0) * 100)}%`;
     case "shieldBlockMult": return `🛡 Усиление блока: +${Math.round((e.value || 0) * 100)}%`;
@@ -8657,47 +8747,64 @@ function describeEffect(e) {
     case "damagePerStack": {
       const stack = e.stack || "spikes";
       const label = typeof getStackLabel === "function" ? getStackLabel(stack, 2) : stack;
-      return `📌 +${e.value || 1} урона за каждый ${label.slice(0, -1) || "стак"}`;
+      return `📌 +${e.value || 1} урона за каждый ${label}`;
     }
     case "weaponDamageStart": return `⚔ В начале боя: оружие +${e.value || 0} урона`;
     case "stackThreshold": {
+      if (typeof describeThresholdTooltip === "function") {
+        const t = describeThresholdTooltip(e, getStackLabel);
+        if (t) return t;
+      }
       const stack = e.stack || "heat";
       const label = typeof getStackLabel === "function" ? getStackLabel(stack, e.threshold || 0) : stack;
-      const parts = [`При ${e.threshold} ${label}`];
+      const parts = [`При ${e.threshold}+ ${label}`];
       if (e.weaponDamage) parts.push(`оружие +${e.weaponDamage} урона`);
       if (e.heal) parts.push(`+${e.heal} HP`);
       if (e.damage) parts.push(`${e.damage} урона`);
       if (e.critChance) parts.push(`+${Math.round(e.critChance * 100)}% крит`);
       return `📊 ${parts.join(", ")}`;
     }
-    case "periodic": return `⏱ Каждые ${e.interval || 3}с: особый эффект`;
+    case "periodic":
+      return typeof describePeriodicTooltip === "function"
+        ? describePeriodicTooltip(e, def)
+        : `⏱ Каждые ${e.interval || 3} сек: периодический эффект`;
     case "tagScaledStack": return `📌 +${e.perTag || e.value || 1} ${e.stack || "блок"} за каждый предмет с ${typeof formatItemTagMechanic === "function" ? formatItemTagMechanic(e.tag || "armor") : `[${formatTagLabel(e.tag || "armor")}]`}`;
     case "convertHp": return `❤️ −${e.hpCost || e.from} HP → +${e.stackGain || e.toStacks} ${e.stack || "regen"}`;
-    case "timedDamageReduction": return `🛡 −${Math.round((e.value || 0.25) * 100)}% урона на ${e.duration || 3}с`;
+    case "timedDamageReduction": return `🛡 −${Math.round((e.value || 0.25) * 100)}% урона на ${e.duration || 3} сек`;
     case "cooldownStartMult": return `⚡ Предметы на ${Math.round((e.value || 0) * 100)}% быстрее`;
     case "hpLossRatio": return `❤️ В начале боя: −${Math.round((e.value || 0) * 100)}% HP`;
-    case "revive": return `🔄 Перерождение с ${Math.round((e.hpRatio || 0.5) * 100)}% HP, неуязвимость ${e.invuln || 2}с`;
+    case "revive": return `🔄 Перерождение с ${Math.round((e.hpRatio || 0.5) * 100)}% HP, неуязвимость ${e.invuln || 2} сек`;
     case "applyStun": {
       const chance = e.chance != null ? ` (${Math.round(e.chance * 100)}%)` : "";
-      return `💫 Оглушение ${e.duration || 0.5}с${chance}`;
+      return `💫 Оглушение ${e.duration || 0.5} сек${chance}`;
     }
     case "bonusDamageOnStun": return `⚔ +${e.value || 1} урона по оглушённому`;
-    case "cleanseDebuffs": return `✨ Снять ${e.value || 1} дебафф(ов)`;
+    case "cleanseDebuffs": return `✨ Снимает ${e.value || 1} негатива`;
     case "stealWeaponDamage": return `🗡 Украсть ${e.value || 1} урона с оружия противника`;
-    case "damagePerFoeDebuff": return `☠ +${e.value || 0.5} урона за дебафф противника`;
+    case "damagePerFoeDebuff": return `☠ +${e.value || 0.5} урона за негатив на враге`;
     case "damagePerTag": {
       const tagLabel = typeof formatTagLabel === "function" ? formatTagLabel(e.tag || "food") : (e.tag || "еда");
       const val = e.value || 1;
       return `🏷 +${val} к урону за каждую «${tagLabel}» на вашем поле`;
     }
     case "hpThreshold": {
+      if (typeof describeThresholdTooltip === "function") {
+        const t = describeThresholdTooltip(e, getStackLabel);
+        if (t) return t;
+      }
       const pct = Math.round((e.threshold || 0.7) * 100);
       const dir = e.direction === "above" ? "выше" : "ниже";
-      return `❤️ При HP ${dir} ${pct}%: особый эффект`;
+      return `❤️ Если здоровье ${dir} ${pct}%`;
     }
-    case "activationThreshold": return `🔁 После ${e.count || 6} активаций: особый эффект`;
+    case "activationThreshold": {
+      if (typeof describeThresholdTooltip === "function") {
+        const t = describeThresholdTooltip(e, getStackLabel);
+        if (t) return t;
+      }
+      return `🔁 После ${e.count || e.threshold || 6} активаций`;
+    }
     case "zeroStamina": return `⚡ При нулевой выносливости: +${e.restoreStamina || 2} выносливости`;
-    case "invulnOnStaminaSpend": return `✨ Потратить ${e.staminaCost || 10} выносливости → неуязвимость ${e.duration || 2}с`;
+    case "invulnOnStaminaSpend": return `✨ Потратить ${e.staminaCost || 10} выносливости → неуязвимость ${e.duration || 2} сек`;
     case "extraAttackOnStun": return `⚔ Доп. атака по оглушённому противнику`;
     case "critPerStack": {
       const stack = e.stack || "luck";
@@ -8715,48 +8822,112 @@ function describeEffect(e) {
     case "cooldownMultPerSocket":
       return `⚡ Атаки на ${Math.round((e.perSocket || 0.03) * 100)}% быстрее за сокет (до ${Math.round((e.maxBonus || 0.60) * 100)}%)`;
     case "cooldownMultPerTotalStacks":
-      return `⚡ На ${Math.round((e.perStack || 0.05) * 100)}% быстрее за каждый стак${e.maxStacks ? ` (макс. ${e.maxStacks})` : ""}`;
-    case "heartThreshold": return `💖 При ${e.count || 7} сердцах: особый эффект`;
+      return `⚡ На ${Math.round((e.perStack || 0.05) * 100)}% быстрее за каждый бонус на панели${e.maxStacks ? ` (макс. ${e.maxStacks})` : ""}`;
+    case "heartThreshold": {
+      if (typeof describeThresholdTooltip === "function") {
+        const t = describeThresholdTooltip(e, getStackLabel);
+        if (t) return t;
+      }
+      return `💖 При ${e.count || 7} сердцах — особый бонус`;
+    }
     case "tagScaledMaxHp": return `❤️ +${e.perTag || 40} макс. HP за «${e.tag || "pet"}»`;
     case "passiveMaxStamina": return `⚡ +${e.value || 1} макс. выносливости`;
     case "onRevive": return `🔄 При перерождении: урон/яд по тегам`;
     case "onFoeHeal": return `☠ При лечении противника: яд`;
-    case "critPerFoeDebuff": return `🎯 +${Math.round((e.value || 0.01) * 100)}% крит за дебафф противника`;
-    case "lifestealPerTag": return `🩸 +${Math.round((e.value || 0.15) * 100)}% вампиризм за ${typeof formatItemTagMechanic === "function" ? formatItemTagMechanic(e.tag || "cold") : `[${formatTagLabel(e.tag || "cold")}]`}`;
+    case "critPerFoeDebuff": return `🎯 +${Math.round((e.value || 0.01) * 100)}% крит за негатив на враге`;
+    case "lifestealPerTag": return `🩸 +${Math.round((e.value || 0.15) * 100)}% лечения от урона за ${typeof formatItemTagMechanic === "function" ? formatItemTagMechanic(e.tag || "cold") : `[${formatTagLabel(e.tag || "cold")}]`}`;
     case "healPerTag": {
       const scope = e.adjacent ? "соседний " : "";
       return `❤ +${e.value || 1} лечения за ${scope}предмет с ${typeof formatItemTagMechanic === "function" ? formatItemTagMechanic(e.tag || "vampiric") : `[${formatTagLabel(e.tag || "vampiric")}]`}`;
     }
-    case "gainWeakestStack": return `📊 +${e.value || 1} к самому слабому стаку`;
+    case "attackBuff": {
+      const val = e.value ?? e.attackBuff ?? 0;
+      const when = e.trigger === "on_miss"
+        ? "При промахе"
+        : e.trigger === "on_hit"
+          ? "При попадании"
+          : "После атаки";
+      const chance = e.chance != null ? ` (${Math.round(e.chance * 100)}%)` : "";
+      return `🎯 ${when}${chance}: следующая атака +${val} урона`;
+    }
+    case "gainWeakestStack": return `📊 +${e.value || 1} к самому слабому бонусу`;
     case "onHitCapBonus": return `⚔ При попадании: +${e.value || 1} урона (до ${e.cap || 7})`;
     case "breakBlockOnHit": return `🛡 Снять ${e.value || 4} блока при попадании`;
     case "breakBlockOnCrit": return `🛡 При крите: снять ${e.value || 15} блока`;
     case "critDamageMult": return `🎯 +${Math.round((e.value || 0.5) * 100)}% крит. урона`;
-    case "mutualHpThreshold": return `❤️ Оба ниже ${Math.round((e.threshold || 0.8) * 100)}% HP: особый эффект`;
-    case "hitCounter": return `🎯 Каждые ${e.threshold || 4} попадания: особый эффект`;
-    case "battleRageLowHp": return `🔥 Боевая ярость (<50% HP): особый эффект`;
+    case "mutualHpThreshold": {
+      if (typeof describeThresholdTooltip === "function") {
+        const t = describeThresholdTooltip(e, getStackLabel);
+        if (t) return t;
+      }
+      return `❤️ Если у обоих <${Math.round((e.threshold || 0.8) * 100)}% здоровья`;
+    }
+    case "hitCounter": {
+      const parts = [];
+      if (e.gainStack) {
+        const gs = e.gainStack;
+        const label = typeof getStackLabel === "function" ? getStackLabel(gs.stack, gs.value || 1) : gs.stack;
+        parts.push(`+${gs.value || 1} ${label}`);
+      }
+      if (e.heal) parts.push(`+${e.heal} HP`);
+      const body = parts.length ? `: ${parts.join(", ")}` : "";
+      return `🎯 Каждые ${e.threshold || 4} попадания${body}`;
+    }
+    case "battleRageLowHp": return `🔥 Боевая ярость (<50% HP): меньше урона, быстрее предметы`;
     case "selfPoison": return `☠ +${e.value || 1} яда себе при попадании`;
-    case "onDefend": return `🛡 При блоке/уклонении (${Math.round((e.chance ?? 1) * 100)}%): особый эффект`;
-    case "activationLimit": return `⏳ До ${e.base || 3} активаций за бой`;
+    case "onDefend": {
+      if (typeof describeOnDefendTooltip === "function") return describeOnDefendTooltip(e);
+      const ch = Math.round((e.chance ?? 1) * 100);
+      return `🛡 При блоке или уклонении (${ch}% шанс)`;
+    }
+    case "activationLimit": return `⏳ До ${e.base || e.limit || 3} активаций за бой`;
     case "preventMiss": return `🎯 Потратить ресурс → отменить промах`;
-    case "onActivate": return `⚡ При активации: особый эффект`;
-    case "foeHpThreshold": return `❤️ Противник ниже ${Math.round((e.threshold || 0.5) * 100)}% HP: особый эффект`;
-    case "debuffThreshold": return `☠ При ${e.threshold || 10}+ дебаффах: особый эффект`;
+    case "onActivate": {
+      const parts = [];
+      if (e.gainStack) {
+        const gs = e.gainStack;
+        const label = typeof getStackLabel === "function" ? getStackLabel(gs.stack, gs.value || 1) : gs.stack;
+        parts.push(`+${gs.value || 1} ${label}`);
+      }
+      if (e.heal) parts.push(`+${e.heal} HP`);
+      const ch = e.chance != null && e.chance < 1 ? ` (${Math.round(e.chance * 100)}% шанс)` : "";
+      const body = parts.length ? `: ${parts.join(", ")}` : "";
+      return `⚡ При активации${ch}${body}`;
+    }
+    case "foeHpThreshold": {
+      if (typeof describeThresholdTooltip === "function") {
+        const t = describeThresholdTooltip(e, getStackLabel);
+        if (t) return t;
+      }
+      return `❤️ Если у противника <${Math.round((e.threshold || 0.5) * 100)}% здоровья`;
+    }
+    case "debuffThreshold": {
+      if (typeof describeThresholdTooltip === "function") {
+        const t = describeThresholdTooltip(e, getStackLabel);
+        if (t) return t;
+      }
+      return `☠ При ${e.threshold || 10}+ негативах`;
+    }
     case "procChanceBonus": return `🍀 +${Math.round((e.value || 0.12) * 100)}% к шансу эффектов`;
-    case "damagePerTotalStacks": return `⚔ +${e.value || 1} урона за каждый стак`;
+    case "damagePerTotalStacks": return `⚔ +${e.value || 1} урона за каждый бонус на панели`;
     case "staminaSpendOnHit": return `⚡ −${e.staminaCost || 1} выносливости → +${e.itemDamage || 1} урона`;
-    case "stealRandomStack": return `📊 ${Math.round((e.chance ?? 1) * 100)}% украсть случайный стак`;
-    case "destroyFoeStacks": return `💥 Уничтожить ${e.value || 4} стака противника`;
+    case "stealRandomStack": return `📊 ${Math.round((e.chance ?? 1) * 100)}% украсть случайный бонус`;
+    case "destroyFoeStacks": return `💥 Уничтожить ${e.value || 4} бонусов противника`;
     case "bonusDamageOnHit": return `⚔ ${Math.round((e.chance ?? 1) * 100)}% +${e.value || 1} урона`;
     case "healAsDamageMult": return `✨ ${Math.round((e.value || 0.3) * 100)}% лечения как маг. урон`;
-    case "stackGainMult": return `📊 +${Math.round((e.value || 1) * 100)}% к получению стаков`;
-    case "cooldownMultPerTotalStacks": return `⚡ На ${Math.round((e.perStack || 0.05) * 100)}% быстрее за каждый стак`;
+    case "stackGainMult": return `📊 Бонусы на панели на ${Math.round((e.value || 1) * 100)}% эффективнее`;
     case "maxHpPercentStart": return `❤ +${Math.round((e.value || 0.12) * 100)}% макс. HP в начале боя`;
+    case "max_hp_per_start_item": return `❤ +${e.value || 2} макс. HP за стартовый предмет`;
+    case "staminaRegenPerStack": return `⚡ +${Math.round((e.value || 0.007) * 1000) / 10} выносливости в сек за каждый бонус на панели`;
+    case "synergyHint": {
+      const tags = (e.neighborTags || e.tags || []).map((t) => formatTagLabel(t)).join(", ");
+      return tags ? `💡 Сильнее рядом с «${tags}»` : "";
+    }
     case "stonesMultiThrow": return `🪨 Камни можно метать многократно`;
-    case "onFatigueStart": return `⏳ При усталости: особый эффект`;
+    case "onFatigueStart": return `⏳ При усталости: урон и замедление предметов`;
     case "fatigueDamageOnHit": return `💀 Урон от усталости при попадании`;
     case "critPerFoeFatigue": return `🎯 +${Math.round((e.value || 0.07) * 100)}% крит за усталость противника`;
-    case "cardScaledBonus": return `🃏 +${e.perCard || 5} ${e.stack || "стака"} за каждую карту`;
+    case "cardScaledBonus": return `🃏 +${e.perCard || 5} ${e.stack || "бонуса"} за каждую карту`;
     case "cardScaledDamage": return `🃏 ${e.base || 12} (+${e.perCard || 4}/карта) маг. урона`;
     case "neutralScaledStack": return `📦 +${e.perItem || 8} ${e.stack || "жара"} за нейтральный предмет`;
     case "selfPoisonStart": return `☠ В начале боя: +${e.value || 3} яда себе`;
@@ -8774,7 +8945,7 @@ function escapeTooltipHtml(text) {
 function formatTooltipCooldownSec(sec) {
   const n = Math.max(0, Number(sec) || 0);
   const rounded = Math.round(n * 10) / 10;
-  return Number.isInteger(rounded) ? `${rounded}с` : `${rounded.toFixed(1)}с`;
+  return Number.isInteger(rounded) ? `${rounded} сек` : `${rounded.toFixed(1)} сек`;
 }
 
 function getItemTooltipAdjustments(contentItem) {
@@ -8845,7 +9016,9 @@ function makeStatDeltaLine(prefix, baseFormatted, effectiveFormatted, options = 
 
 function describeTooltipEffectLine(e, def, adj) {
   if (!adj) {
-    return { text: describeEffect(e), style: "normal", color: "#e6edf3" };
+    const text = describeEffect(e, def);
+    if (!text) return null;
+    return { text, style: "normal", color: "#e6edf3" };
   }
 
   switch (e.type) {
@@ -8896,7 +9069,9 @@ function describeTooltipEffectLine(e, def, adj) {
       break;
   }
 
-  return { text: describeEffect(e), style: "normal", color: "#e6edf3" };
+  const text = describeEffect(e, def);
+  if (!text) return null;
+  return { text, style: "normal", color: "#e6edf3" };
 }
 
 function renderTooltipLinesHtml(lines) {
@@ -8918,8 +9093,9 @@ function renderTooltipLinesHtml(lines) {
     .join("");
 }
 
-function isDescribeEffectFallback(e) {
-  const described = describeEffect(e);
+function isDescribeEffectFallback(e, def) {
+  const described = describeEffect(e, def);
+  if (!described) return true;
   const typeLabel = typeof localizeBbDescription === "function" ? localizeBbDescription(e.type) : e.type;
   const fallback = `${typeLabel}${e.value != null ? `: ${e.value}` : ""}`;
   return described === fallback;
@@ -8927,8 +9103,9 @@ function isDescribeEffectFallback(e) {
 
 function getStrongCanonicalEffectTexts(def) {
   return (def.effects || [])
-    .filter((e) => !isDescribeEffectFallback(e))
-    .map((e) => describeEffect(e));
+    .filter((e) => !isDescribeEffectFallback(e, def))
+    .map((e) => describeEffect(e, def))
+    .filter(Boolean);
 }
 
 function normalizeTooltipCompareText(text) {
@@ -8989,7 +9166,7 @@ function filterRedundantTooltipText(text, canonicalTexts) {
   if (!segments.length) return text;
 
   const kept = segments.filter((segment) => !isTooltipTextCoveredBy(segment, canonicalTexts));
-  if (!kept.length) return null;
+  if (!kept.length) return text;
   if (kept.length === segments.length) return text;
 
   const joined = kept.join(". ");
@@ -9049,11 +9226,13 @@ function buildItemTooltipLines(def, contentItem, rotation, context = "field") {
   const tooltipDescription = typeof getItemTooltipDescription === "function"
     ? getItemTooltipDescription(def)
     : def.description;
+  const hasTooltipDescription = Boolean(tooltipDescription?.trim());
   const filteredTooltipDescription = tooltipDescription
     ? filterRedundantTooltipText(tooltipDescription, canonicalEffectTexts)
     : null;
-  if (filteredTooltipDescription) {
-    lines.push({ text: filteredTooltipDescription, style: "normal", color: "#c9d1d9" });
+  const displayDescription = filteredTooltipDescription || tooltipDescription;
+  if (displayDescription) {
+    lines.push({ text: displayDescription, style: "normal", color: "#c9d1d9" });
   }
 
   const buildHints = typeof getItemBuildHints === "function" ? getItemBuildHints(def) : def.buildHints;
@@ -9086,7 +9265,10 @@ function buildItemTooltipLines(def, contentItem, rotation, context = "field") {
 
   if (def.effects?.length) {
     def.effects.forEach((e) => {
-      lines.push(describeTooltipEffectLine(e, def, adj));
+      const line = describeTooltipEffectLine(e, def, adj);
+      if (!line) return;
+      if (hasTooltipDescription && !line.statDelta) return;
+      lines.push(line);
     });
     if (def.cooldown > 0) {
       if (adj && adj.cooldownMult < 0.999) {
@@ -9590,7 +9772,7 @@ function findContainerAtCanvasPoint(mx, my, containers, team = "player") {
 function hitTest(mx, my) {
   let side = prepViewSide;
   if (isLobby2pMode() && phase === "prep" && lobbyState?.isSplitLobby && !lobby2pHasActiveDuel()) {
-    side = mx < GRID_INNER_W + GRID_GAP / 2 ? "player" : "enemy";
+    side = lobby2pSideFromCanvasX(mx);
   }
   if (!canEditPrepSide(side)) return null;
   if (isOnBoard(mx, my, side) && isLoadoutInteractionPhase()) {
@@ -9940,7 +10122,7 @@ function onMouseDown(e) {
   if (!isLoadoutInteractionPhase() || gameOver) return;
   if (isLobby2pMode() && phase === "prep" && lobbyState?.isSplitLobby && !lobby2pHasActiveDuel()) {
     const { x: mx } = canvasCoordsFromEvent(e);
-    const targetSide = mx < GRID_INNER_W + GRID_GAP / 2 ? "player" : "enemy";
+    const targetSide = lobby2pSideFromCanvasX(mx);
     if (targetSide !== prepViewSide && canEditPrepSide(targetSide)) {
       setLobby2pActiveHuman(targetSide === "player" ? 0 : 1);
     }

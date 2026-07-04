@@ -248,16 +248,26 @@ function pickLobbyScoutTarget(lobby, fighter) {
   if (fighter.lastOpponentId != null) {
     const lastOpp = lobby.fighters[fighter.lastOpponentId];
     if (lastOpp?.alive && lastOpp.items?.length) {
-      return { items: lastOpp.items, classId: lastOpp.classId };
+      return {
+        items: lastOpp.items,
+        classId: lastOpp.classId,
+        containers: lastOpp.containers,
+        isHuman: !!lastOpp.isHuman,
+      };
     }
   }
 
   const others = getAliveLobbyFighters(lobby).filter((f) => f.id !== fighter.id);
-  if (!others.length) return { items: [], classId: null };
+  if (!others.length) return { items: [], classId: null, containers: null, isHuman: false };
 
   const human = others.find((f) => f.isHuman && f.items?.length);
   if (human) {
-    return { items: human.items, classId: human.classId };
+    return {
+      items: human.items,
+      classId: human.classId,
+      containers: human.containers,
+      isHuman: true,
+    };
   }
 
   const ranked = others
@@ -266,13 +276,17 @@ function pickLobbyScoutTarget(lobby, fighter) {
       fighter: f,
       score: (f.items?.length || 0) * 5
         + (f.gold || 0) * 0.15
-        + (f.hp || 0) * 0.08
-        + (f.isHuman ? 6 : 0),
+        + (f.hp || 0) * 0.08,
     }))
     .sort((a, b) => b.score - a.score);
 
   const target = ranked[0]?.fighter || others[Math.floor(Math.random() * others.length)];
-  return { items: target.items || [], classId: target.classId || null };
+  return {
+    items: target.items || [],
+    classId: target.classId || null,
+    containers: target.containers || null,
+    isHuman: !!target.isHuman,
+  };
 }
 
 function grantLobbyFighterBag(fighter, round, gridW, gridH) {
@@ -319,6 +333,11 @@ function runLobbyBotsShopPhase(lobby, round) {
   if (typeof shuffleLobbyArray === "function") shuffleLobbyArray(bots);
   bots.forEach((fighter) => {
     const scout = pickLobbyScoutTarget(lobby, fighter);
+    const scoutPower = (typeof computeBackpackPower === "function"
+      && scout.containers
+      && scout.items?.length)
+      ? computeBackpackPower(scout.containers, scout.items, scout.classId).score
+      : 0;
     advanceLobbyFighterPrep(
       fighter,
       round,
@@ -327,7 +346,12 @@ function runLobbyBotsShopPhase(lobby, round) {
       fighter.lastBattleWon,
       scout.items,
       scout.classId,
-      { recentResults: (fighter.recentResults || []).slice(-3), lobbyMode: true },
+      {
+        recentResults: (fighter.recentResults || []).slice(-3),
+        lobbyMode: true,
+        scoutPower,
+        scoutIsHuman: scout.isHuman,
+      },
     );
     syncLobbyFighterMutationMilestones(fighter, round);
   });

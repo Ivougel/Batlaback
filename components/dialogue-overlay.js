@@ -1,18 +1,21 @@
 /**
  * DialogueOverlay — текстовые пузыри-«сообщения» между героями поверх всего UI.
+ * Анимация полёта — WAAPI (без rAF-цикла); fade — CSS transition.
  */
 
 const DialogueOverlay = (() => {
   const MAX_VISIBLE = 3;
   const DEFAULT_TTL_MS = 6000;
   const TRAVEL_MS = 680;
-  const TICK_MIN_MS = 48;
+  const EXIT_MS = 280;
 
   /** @type {Array<object>} */
   let bubbles = [];
   let layerEl = null;
-  let rafId = null;
-  let lastTs = 0;
+
+  function isLiteFx() {
+    return typeof BattleFxTier !== "undefined" && BattleFxTier.prepLobbyFxReduced?.();
+  }
 
   function ensureLayer() {
     if (layerEl?.isConnected) return layerEl;
@@ -58,6 +61,10 @@ const DialogueOverlay = (() => {
     return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
   }
 
+  function transformAt(x, y) {
+    return `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0) translate(-50%, -100%)`;
+  }
+
   function buildBubbleEl(payload) {
     const el = document.createElement("div");
     const emojiOnly = !!payload.emojiOnly
@@ -91,11 +98,52 @@ const DialogueOverlay = (() => {
       .replace(/"/g, "&quot;");
   }
 
+  function disposeBubble(bubble) {
+    if (!bubble) return;
+    if (bubble.removeTimer != null) window.clearTimeout(bubble.removeTimer);
+    if (bubble.exitTimer != null) window.clearTimeout(bubble.exitTimer);
+    bubble.travelAnim?.cancel?.();
+    bubble.el?.remove();
+  }
+
   function trimOverflow() {
     while (bubbles.length > MAX_VISIBLE) {
-      const old = bubbles.shift();
-      old?.el?.remove();
+      disposeBubble(bubbles.shift());
     }
+  }
+
+  function resolveTravelMs(payload) {
+    if (isLiteFx()) return 0;
+    return payload.travelMs ?? TRAVEL_MS;
+  }
+
+  function scheduleRemoval(bubble) {
+    bubble.removeTimer = window.setTimeout(() => {
+      bubble.el?.classList.add("hero-dialogue-bubble--out");
+      bubble.exitTimer = window.setTimeout(() => {
+        disposeBubble(bubble);
+        bubbles = bubbles.filter((b) => b !== bubble);
+      }, EXIT_MS);
+    }, bubble.ttlMs);
+  }
+
+  function runTravelAnim(el, from, settle, travelMs) {
+    el.style.transform = transformAt(from.x, from.y);
+    const midX = from.x + (settle.x - from.x) * 0.5;
+    const midY = from.y + (settle.y - from.y) * 0.5 - 22;
+    const anim = el.animate([
+      { transform: transformAt(from.x, from.y), offset: 0 },
+      { transform: transformAt(midX, midY), offset: 0.5 },
+      { transform: transformAt(settle.x, settle.y), offset: 1 },
+    ], {
+      duration: travelMs,
+      easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+      fill: "forwards",
+    });
+    anim.onfinish = () => {
+      el.style.transform = transformAt(settle.x, settle.y);
+    };
+    return anim;
   }
 
   function spawnBubble(payload) {
@@ -114,91 +162,26 @@ const DialogueOverlay = (() => {
     const el = buildBubbleEl(payload);
     layerEl.appendChild(el);
 
+    const travelMs = resolveTravelMs(payload);
     const bubble = {
       el,
-      bornAt: performance.now(),
-      travelMs: payload.travelMs ?? TRAVEL_MS,
       ttlMs: payload.ttlMs ?? DEFAULT_TTL_MS,
-      from,
-      to: settle,
-      phase: "travel",
+      travelAnim: null,
+      removeTimer: null,
+      exitTimer: null,
     };
     bubbles.push(bubble);
     trimOverflow();
-    startLoop();
-    positionBubble(bubble, 0);
+
+    if (travelMs <= 0) {
+      el.style.transform = transformAt(settle.x, settle.y);
+    } else {
+      bubble.travelAnim = runTravelAnim(el, from, settle, travelMs);
+    }
+
     requestAnimationFrame(() => el.classList.add("hero-dialogue-bubble--visible"));
-    window.setTimeout(() => startLoop(), bubble.ttlMs);
+    scheduleRemoval(bubble);
     return bubble;
-  }
-
-  function positionBubble(bubble, t) {
-    const el = bubble.el;
-    if (!el) return;
-    let x = bubble.from.x;
-    let y = bubble.from.y;
-    if (bubble.phase === "travel") {
-      const p = Math.min(1, t / bubble.travelMs);
-      const ease = 1 - (1 - p) ** 3;
-      x = bubble.from.x + (bubble.to.x - bubble.from.x) * ease;
-      y = bubble.from.y + (bubble.to.y - bubble.from.y) * ease - Math.sin(p * Math.PI) * 22;
-    } else {
-      x = bubble.to.x;
-      y = bubble.to.y;
-    }
-    const key = `${Math.round(x)}|${Math.round(y)}`;
-    if (bubble._posKey === key) return;
-    bubble._posKey = key;
-    el.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -100%)`;
-  }
-
-  function tick(ts) {
-    const now = ts || performance.now();
-    if (lastTs && now - lastTs < TICK_MIN_MS) {
-      rafId = requestAnimationFrame(tick);
-      return;
-    }
-    lastTs = now;
-
-    bubbles = bubbles.filter((bubble) => {
-      const age = now - bubble.bornAt;
-      if (age > bubble.travelMs && bubble.phase === "travel") {
-        bubble.phase = "hold";
-        bubble._posKey = "";
-      }
-      if (age > bubble.ttlMs) {
-        bubble.el?.classList.add("hero-dialogue-bubble--out");
-        if (age > bubble.ttlMs + 320) {
-          bubble.el?.remove();
-          return false;
-        }
-      }
-      if (bubble.phase === "travel" || age < bubble.ttlMs) {
-        positionBubble(bubble, age);
-      }
-      return true;
-    });
-
-    if (bubbles.length) {
-      const animating = bubbles.some((b) => {
-        const age = now - b.bornAt;
-        return b.phase === "travel" || age > b.ttlMs;
-      });
-      if (animating) {
-        rafId = requestAnimationFrame(tick);
-      } else {
-        rafId = null;
-        lastTs = 0;
-      }
-    } else {
-      rafId = null;
-      lastTs = 0;
-    }
-  }
-
-  function startLoop() {
-    if (rafId != null) return;
-    rafId = requestAnimationFrame(tick);
   }
 
   function showMessage(payload) {
@@ -238,11 +221,8 @@ const DialogueOverlay = (() => {
   }
 
   function clearAll() {
-    bubbles.forEach((b) => b.el?.remove());
+    bubbles.forEach(disposeBubble);
     bubbles = [];
-    if (rafId != null) cancelAnimationFrame(rafId);
-    rafId = null;
-    lastTs = 0;
   }
 
   function setVisible(show) {

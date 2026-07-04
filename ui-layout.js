@@ -3094,6 +3094,44 @@
       return;
     }
 
+    if (document.documentElement.hasAttribute("data-lobby2p-hud")) {
+      const host = document.getElementById("lobby2p-canvas-host");
+      const hostW = host?.clientWidth ?? 0;
+      const hostH = host?.clientHeight ?? 0;
+      if (hostW > 8 && hostH > 8) {
+        const scale = Math.min(hostW / canvas.width, hostH / canvas.height);
+        const finalScale = Math.min(Math.max(scale, 0.62), 1.08);
+        const w = Math.max(1, Math.floor(canvas.width * finalScale));
+        const h = Math.max(1, Math.floor(canvas.height * finalScale));
+        root.style.setProperty("--prep-canvas-display-w", `${w}px`);
+        root.style.setProperty("--prep-canvas-display-h", `${h}px`);
+        setCanvasDisplaySize(canvas, w, h);
+        const stage = canvas.closest(".battle-canvas-stage");
+        const wrap = canvas.closest(".canvas-scale-wrap");
+        if (stage) {
+          stage.style.width = "100%";
+          stage.style.height = "100%";
+          stage.style.alignItems = "stretch";
+          stage.style.justifyContent = "stretch";
+        }
+        if (wrap) {
+          wrap.style.width = "100%";
+          wrap.style.height = "100%";
+          wrap.style.display = "flex";
+          wrap.style.alignItems = "stretch";
+          wrap.style.justifyContent = "stretch";
+        }
+        canvas.style.width = "100%";
+        canvas.style.height = "100%";
+        canvas.style.maxWidth = "100%";
+        canvas.style.maxHeight = "100%";
+        canvas.style.objectFit = "contain";
+        syncMobileShopFabPosition();
+        syncFxCanvasGeometry();
+        return;
+      }
+    }
+
     root.dataset.battleMobileFit = "false";
     [
       "--battle-canvas-display-w",

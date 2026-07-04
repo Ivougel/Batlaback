@@ -1,0 +1,15 @@
+{
+  "generatedAt": "2026-07-04T17:59:20.067Z",
+  "total": 198,
+  "missingHandler": [],
+  "vagueDescription": [],
+  "badWording": [],
+  "emptyDescription": [],
+  "summary": {
+    "missingHandler": 0,
+    "vagueDescription": 0,
+    "badWording": 0,
+    "emptyDescription": 0,
+    "descriptionDrift": 0
+  }
+}

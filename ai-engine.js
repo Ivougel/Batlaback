@@ -9,7 +9,7 @@ const AI_ARCHETYPES = {
     id: "mage",
     name: "Маг",
     priorityTags: ["magic", "gem", "fire"],
-    secondaryTags: [],
+    secondaryTags: ["poison", "nature"],
   },
   warrior: {
     id: "warrior",
@@ -45,12 +45,135 @@ const AI_KILL_COMMIT_ITEMS = 4;
 const AI_LOBBY_TARGET_ITEMS = {
   1: 3, 2: 4, 3: 5, 4: 6, 6: 7, 8: 8, 10: 9, 12: 10, 14: 11, 16: 12,
 };
-const AI_LOBBY_SHOP_REFRESH = 0.72;
-const AI_LOBBY_LOSS_REFRESH = 0.92;
-const AI_LOBBY_MAX_REROLLS = 3;
-const AI_LOBBY_COUNTER_PICK_BONUS = 1.4;
-const AI_LOBBY_SYNERGY_BONUS = 1.25;
+const AI_LOBBY_SHOP_REFRESH = 0.78;
+const AI_LOBBY_LOSS_REFRESH = 0.95;
+const AI_LOBBY_MAX_REROLLS = 4;
+const AI_LOBBY_COUNTER_PICK_BONUS = 1.55;
+const AI_LOBBY_SYNERGY_BONUS = 1.35;
+const AI_LOBBY_CHASE_LEADER_RATIO = 0.88;
+/** Целевая сила рюкзака (computeBackpackPower) — ориентир для лобби-ботов. */
+const AI_LOBBY_TARGET_POWER = {
+  1: 22, 2: 34, 3: 50, 4: 58, 5: 65, 6: 72, 7: 78, 8: 84, 10: 90, 12: 96, 16: 105,
+};
+/** Ядро билда по классу — приоритет в магазине (как «коммит на archetype» в BB). */
+const AI_CLASS_ANCHOR_IDS = {
+  mage: ["magic_staff", "apprentice_staff", "fire_staff", "mana_crystal", "poison_vial", "fly_agaric"],
+  warrior: ["rusty_sword", "axe", "great_shield", "iron_helmet", "whetstone"],
+  rogue: ["dagger", "poison_dagger", "poison_vial", "garlic", "pestilence_flask"],
+  priest: ["healing_herbs", "apple", "banana", "bandage", "cheese"],
+};
 
+function getAiTargetLoadoutPower(round, prepOpts = {}) {
+  const table = prepOpts.lobbyMode ? AI_LOBBY_TARGET_POWER : null;
+  if (!table) return 0;
+  const keys = Object.keys(table).map(Number).sort((a, b) => a - b);
+  let target = table[keys[0]];
+  keys.forEach((k) => {
+    if (round >= k) target = table[k];
+  });
+  return target;
+}
+
+function measureAiLoadoutPower(containers, items, classId) {
+  if (typeof computeBackpackPower === "function") {
+    try {
+      return computeBackpackPower(containers, items, classId).score;
+    } catch {
+      return scoreFullLoadout(containers, items);
+    }
+  }
+  return scoreFullLoadout(containers, items);
+}
+
+/** Прирост computeBackpackPower при добавлении предмета в лучшую позицию (BB-style greedy eval). */
+function aiMeasureAddItemPowerGain(containers, items, itemId, classId, excludeUid = null) {
+  if (typeof computeBackpackPower !== "function" || !classId) return 0;
+  const def = ITEM_CATALOG[itemId];
+  if (!def || def.isContainer || def.isEnhancementItem) return -999;
+
+  const baseItems = excludeUid ? items.filter((i) => i.uid !== excludeUid) : items;
+  const before = measureAiLoadoutPower(containers, baseItems, classId);
+  const spot = findBestLoadoutPlacementByPower(containers, baseItems, itemId, classId);
+  if (!spot?.valid) return -999;
+
+  const trial = [
+    ...baseItems,
+    createPlacedItem(itemId, spot.col, spot.row, spot.rotation),
+  ];
+  trial[trial.length - 1].uid = "__trial__";
+  if (!validateLoadoutItems(containers, trial)) return -999;
+  return measureAiLoadoutPower(containers, trial, classId) - before;
+}
+
+function aiScoreClassAnchorBonus(itemId, classId) {
+  const anchors = AI_CLASS_ANCHOR_IDS[classId];
+  if (!anchors?.length) return 0;
+  const idx = anchors.indexOf(itemId);
+  if (idx < 0) return 0;
+  return 14 - idx * 1.5;
+}
+
+function aiScoreRecipePathBonus(itemId, items, bench = []) {
+  if (typeof getRecipesUsingIngredient !== "function") return 0;
+  const recipes = getRecipesUsingIngredient(itemId);
+  if (!recipes.length) return 0;
+
+  const loadout = [...items, ...bench];
+  const counts = new Map();
+  loadout.forEach((item) => {
+    counts.set(item.itemId, (counts.get(item.itemId) || 0) + 1);
+  });
+
+  let bonus = 0;
+  recipes.forEach((recipe) => {
+    if (typeof isCraftRecipeAvailable === "function") {
+      const ctx = typeof getCraftContextFromGame === "function" ? getCraftContextFromGame() : {};
+      if (!isCraftRecipeAvailable(recipe, ctx)) return;
+    }
+    let have = 0;
+    let need = 0;
+    recipe.inputs.forEach((input) => {
+      need += input.count;
+      if (input.itemId === itemId) return;
+      have += Math.min(input.count, counts.get(input.itemId) || 0);
+    });
+    if (have > 0) bonus += 10 + have * 5;
+    const outDef = ITEM_CATALOG[recipe.output];
+    if (outDef && typeof getItemPowerScore === "function") {
+      bonus += getItemPowerScore(outDef) * 0.08;
+    }
+  });
+  return bonus;
+}
+
+/** Комбинированная оценка лота: эвристика + реальный прирост силы (как у hard-bot / BB solver). */
+function aiScoreShopOffer(itemId, ctx, prepOpts = {}) {
+  const heuristic = aiItemScore(itemId, ctx);
+  const profile = getAiPrepProfile(prepOpts, ctx.round, null, {
+    items: ctx.items,
+    bench: ctx.bench,
+    containers: ctx.containers,
+    classId: ctx.classId,
+  });
+  const classId = ctx.classId;
+  let score = heuristic;
+
+  score += aiScoreClassAnchorBonus(itemId, classId);
+  score += aiScoreRecipePathBonus(itemId, ctx.items, ctx.bench);
+
+  if (typeof computeBackpackPower === "function" && classId) {
+    const gain = aiMeasureAddItemPowerGain(ctx.containers, ctx.items, itemId, classId);
+    if (gain <= -500) return heuristic * 0.2 - 20;
+    const cost = ITEM_CATALOG[itemId]?.cost || 1;
+    const efficiency = gain / Math.max(1, cost);
+    score = heuristic * 0.25 + gain * 2.8 + efficiency * 6;
+    if (profile.powerDeficit >= 12) score += gain * 0.6;
+    if (profile.lobbyMode && gain >= 8) score += 12;
+    if (classId === "priest") score = heuristic * 0.65 + gain * 1.6 + efficiency * 4;
+  }
+
+  return score;
+}
 function getAiTargetLoadoutSize(round, prepOpts = {}) {
   const table = prepOpts.lobbyMode ? AI_LOBBY_TARGET_ITEMS : null;
   if (!table) return 0;
@@ -80,6 +203,18 @@ function getAiPrepProfile(prepOpts = {}, round = 1, battleWon = null, state = nu
   const itemDeficit = targetItems > 0 && state
     ? Math.max(0, targetItems - (state.items?.length || 0) - (state.bench?.length || 0))
     : 0;
+  const targetPower = getAiTargetLoadoutPower(round, prepOpts);
+  const currentPower = state?.containers && state?.items && targetPower > 0
+    ? measureAiLoadoutPower(state.containers, state.items, state.classId)
+    : 0;
+  let effectiveTargetPower = targetPower;
+  const scoutPower = prepOpts.scoutPower || 0;
+  if (lobbyMode && scoutPower > 0) {
+    const chase = Math.floor(scoutPower * AI_LOBBY_CHASE_LEADER_RATIO) + Math.max(0, round - 1);
+    effectiveTargetPower = Math.max(effectiveTargetPower, chase);
+    if (prepOpts.scoutIsHuman) effectiveTargetPower += 2;
+  }
+  const powerDeficit = effectiveTargetPower > 0 ? Math.max(0, effectiveTargetPower - currentPower) : 0;
 
   return {
     lobbyMode,
@@ -87,6 +222,9 @@ function getAiPrepProfile(prepOpts = {}, round = 1, battleWon = null, state = nu
     winStreak,
     targetItems,
     itemDeficit,
+    targetPower: effectiveTargetPower,
+    powerDeficit,
+    scoutPower,
     counterPickMult: lobbyMode ? AI_LOBBY_COUNTER_PICK_BONUS + lossStreak * 0.12 : 1,
     synergyMult: lobbyMode ? AI_LOBBY_SYNERGY_BONUS : 1,
     refreshChance: lobbyMode
@@ -94,8 +232,10 @@ function getAiPrepProfile(prepOpts = {}, round = 1, battleWon = null, state = nu
         ? Math.min(0.96, AI_LOBBY_LOSS_REFRESH + lossStreak * 0.03)
         : AI_LOBBY_SHOP_REFRESH + Math.min(0.12, winStreak * 0.04))
       : (battleWon === false ? Math.min(0.85, AI_SHOP_REFRESH_CHANCE + 0.25) : AI_SHOP_REFRESH_CHANCE),
-    maxRerolls: lobbyMode ? AI_LOBBY_MAX_REROLLS + (itemDeficit >= 2 ? 1 : 0) : 1,
-    buyLoopCap: lobbyMode ? 40 + itemDeficit * 4 : 30,
+    maxRerolls: lobbyMode
+      ? AI_LOBBY_MAX_REROLLS + (itemDeficit >= 2 ? 1 : 0) + (powerDeficit >= 16 ? 1 : 0)
+      : 1,
+    buyLoopCap: lobbyMode ? 48 + itemDeficit * 4 + Math.floor(powerDeficit / 6) : 30,
     goldReserveCap: lobbyMode ? 3 : 6,
   };
 }
@@ -175,10 +315,14 @@ function itemMatchesKillArchetype(def, archetype) {
   if (!def || !archetype) return false;
 
   if (archetype.id === "mage") {
-    return itemHasMagicDamage(def)
+    if (itemHasMagicDamage(def)
       || def.tags.includes("gem")
       || def.tags.includes("magic")
-      || def.tags.includes("fire");
+      || def.tags.includes("fire")) return true;
+    if (def.tags.includes("poison") || def.tags.includes("nature")) return true;
+    if (def.tags.includes("food") && (def.tags.includes("nature") || def.tags.includes("poison"))) return true;
+    if (def.tags?.includes("amplifier")) return true;
+    return false;
   }
 
   if (archetype.id === "rogue") {
@@ -380,6 +524,8 @@ function shouldSellForKillBuild(item, archetype, items, scout, round, battleWon)
   if (def.tags.includes("poison") && archetype.id !== "rogue") return true;
   if (archetype.id === "mage" && def.tags.includes("weapon") && !itemHasMagicDamage(def)) return true;
   if (archetype.id === "rogue" && hasBlockOnlyItem(def)) return true;
+  if (archetype.id === "warrior" && itemHasMagicDamage(def)) return true;
+  if (archetype.id === "warrior" && def.tags.includes("food")) return true;
 
   const onThemeOthers = others.filter((other) =>
     itemMatchesKillArchetype(ITEM_CATALOG[other.itemId], archetype),
@@ -587,6 +733,18 @@ function scoreItemForAI(
   if (profile.itemDeficit > 0 && itemMatchesKillArchetype(def, archetype)) {
     score += 8 + profile.itemDeficit * 3;
   }
+  if (profile.powerDeficit > 0) {
+    score += Math.min(24, profile.powerDeficit * 0.35);
+  }
+  if (profile.lobbyMode && def.isEnhancementItem) score -= 28;
+  if (profile.lobbyMode && typeof isGemItem === "function" && isGemItem(itemId)) {
+    const emptySockets = items.filter((i) => {
+      if (typeof getItemSocketCount !== "function" || getItemSocketCount(i.itemId) <= 0) return false;
+      const normalized = typeof ensureSocketArray === "function" ? ensureSocketArray(i) : i;
+      return (normalized.socketedGems || []).some((g) => !g);
+    }).length;
+    if (emptySockets <= 0) score -= 32;
+  }
   if (profile.lobbyMode && def.rarity === "rare") score += 4;
   if (profile.lobbyMode && def.rarity === "legendary") score += 8;
 
@@ -772,6 +930,33 @@ function findBestLoadoutPlacement(containers, items, itemId, excludeUid = null) 
   return findLoadoutItemPlacement(containers, items, itemId, 0);
 }
 
+function findBestLoadoutPlacementByPower(containers, items, itemId, classId, excludeUid = null) {
+  const slots = [...buildSlotSet(containers)].map((k) => k.split(",").map(Number));
+  let best = null;
+  let bestPower = -Infinity;
+
+  for (let rot = 0; rot < 4; rot++) {
+    for (const [col, row] of slots) {
+      const placement = resolveLoadoutPlacement(containers, items, itemId, col, row, rot, excludeUid);
+      if (!placement.valid) continue;
+      const trial = [
+        ...items.filter((i) => i.uid !== excludeUid),
+        createPlacedItem(itemId, placement.col, placement.row, placement.rotation),
+      ];
+      if (excludeUid) trial[trial.length - 1].uid = excludeUid;
+      else trial[trial.length - 1].uid = "__trial__";
+      if (!validateLoadoutItems(containers, trial)) continue;
+      const power = measureAiLoadoutPower(containers, trial, classId);
+      if (power > bestPower) {
+        bestPower = power;
+        best = placement;
+      }
+    }
+  }
+
+  return best;
+}
+
 function generateAIShopSlots(count = 4, ctx = {}) {
   return rollShopBatch(count, ctx);
 }
@@ -905,11 +1090,15 @@ function aiPlaceBenchContainers(state, gridW, gridH) {
   }
 }
 
-function aiPlaceBenchItems(state, gridW, gridH, archetype = null, scout = null, round = 1) {
+function aiPlaceBenchItems(state, gridW, gridH, archetype = null, scout = null, round = 1, prepOpts = {}) {
+  const profile = getAiPrepProfile(prepOpts, round, null, state);
+  const classId = state.classId || archetype?.id;
+  const usePowerPlacement = typeof computeBackpackPower === "function" && !!classId;
   aiPlaceBenchContainers(state, gridW, gridH);
   let progress = true;
   let guard = 0;
-  while (progress && guard < 30) {
+  const loopCap = profile.lobbyMode ? 48 : 30;
+  while (progress && guard < loopCap) {
     guard++;
     progress = false;
     const order = state.bench
@@ -925,6 +1114,7 @@ function aiPlaceBenchItems(state, gridW, gridH, archetype = null, scout = null, 
           state.containers,
           scout,
           round,
+          prepOpts,
         )
         : 0,
       onTheme: archetype
@@ -934,7 +1124,8 @@ function aiPlaceBenchItems(state, gridW, gridH, archetype = null, scout = null, 
       .sort((a, b) => b.score - a.score);
 
     const hasOnThemeBench = order.some((entry) => entry.onTheme);
-    const placementQueue = (archetype && isLoadoutCommitted(round, state.items.length) && hasOnThemeBench)
+    const relaxTheme = profile.lobbyMode && (profile.itemDeficit > 0 || profile.powerDeficit > 10);
+    const placementQueue = (archetype && isLoadoutCommitted(round, state.items.length) && hasOnThemeBench && !relaxTheme)
       ? order.filter((entry) => entry.onTheme)
       : order;
 
@@ -948,8 +1139,11 @@ function aiPlaceBenchItems(state, gridW, gridH, archetype = null, scout = null, 
         archetype
         && isLoadoutCommitted(round, state.items.length)
         && !entry.onTheme
+        && !relaxTheme
       ) continue;
-      const spot = findBestLoadoutPlacement(state.containers, state.items, benchItem.itemId);
+      const spot = usePowerPlacement
+        ? findBestLoadoutPlacementByPower(state.containers, state.items, benchItem.itemId, classId)
+        : findBestLoadoutPlacement(state.containers, state.items, benchItem.itemId);
       if (!spot?.valid) continue;
       state.items.push(createPlacedItem(benchItem.itemId, spot.col, spot.row, spot.rotation));
       state.bench.splice(benchIndex, 1);
@@ -959,19 +1153,78 @@ function aiPlaceBenchItems(state, gridW, gridH, archetype = null, scout = null, 
   }
 }
 
-/** Перекладывает предметы на поле ради сильных соседств. */
-function aiOptimizeLoadout(state) {
+function aiFlushIdleBench(state, classId) {
+  if (!state.bench?.length) return;
+  let guard = 0;
+  while (guard < state.bench.length + 4) {
+    guard += 1;
+    let changed = false;
+
+    for (let i = state.bench.length - 1; i >= 0; i -= 1) {
+      const benchItem = state.bench[i];
+      const def = ITEM_CATALOG[benchItem.itemId];
+      if (!def) continue;
+
+      if (def.isEnhancementItem) {
+        state.gold += def.cost ?? 0;
+        state.bench.splice(i, 1);
+        changed = true;
+        continue;
+      }
+
+      if (typeof isGemItem === "function" && isGemItem(benchItem.itemId)) {
+        let canSocket = false;
+        state.items.forEach((host) => {
+          if (canSocket || typeof canSocketGem !== "function") return;
+          if (canSocketGem(host, benchItem.itemId)) canSocket = true;
+        });
+        if (!canSocket) {
+          state.gold += def.cost ?? 0;
+          state.bench.splice(i, 1);
+          changed = true;
+        }
+        continue;
+      }
+
+      const spot = typeof computeBackpackPower === "function" && classId
+        ? findBestLoadoutPlacementByPower(state.containers, state.items, benchItem.itemId, classId)
+        : findBestLoadoutPlacement(state.containers, state.items, benchItem.itemId);
+      if (!spot?.valid) {
+        state.gold += def.cost ?? 0;
+        state.bench.splice(i, 1);
+        changed = true;
+      }
+    }
+
+    if (!changed) break;
+  }
+}
+
+/** Перекладывает предметы на поле ради сильных соседств и силы рюкзака. */
+function aiOptimizeLoadout(state, prepOpts = {}) {
   if (state.items.length < 2) return;
+  const classId = state.classId;
+  const usePower = typeof computeBackpackPower === "function" && !!classId;
+  const scoreLoadout = (containers, items) => (
+    usePower ? measureAiLoadoutPower(containers, items, classId) : scoreFullLoadout(containers, items)
+  );
+  const pickPlacement = (containers, items, itemId, excludeUid) => (
+    usePower
+      ? findBestLoadoutPlacementByPower(containers, items, itemId, classId, excludeUid)
+      : findBestLoadoutPlacement(containers, items, itemId, excludeUid)
+  );
+  const improveThreshold = usePower ? 1.5 : 0.15;
+  const swapThreshold = usePower ? 2 : 0.5;
 
   let improved = true;
   let guard = 0;
   while (improved && guard < 80) {
     guard++;
     improved = false;
-    const before = scoreFullLoadout(state.containers, state.items);
+    const before = scoreLoadout(state.containers, state.items);
 
     for (const item of [...state.items]) {
-      const best = findBestLoadoutPlacement(state.containers, state.items, item.itemId, item.uid);
+      const best = pickPlacement(state.containers, state.items, item.itemId, item.uid);
       if (!best?.valid) continue;
 
       const samePlace = item.col === best.col && item.row === best.row
@@ -985,8 +1238,8 @@ function aiOptimizeLoadout(state) {
       );
       if (!validateLoadoutItems(state.containers, moved)) continue;
 
-      const after = scoreFullLoadout(state.containers, moved);
-      if (after > before + 0.15) {
+      const after = scoreLoadout(state.containers, moved);
+      if (after > before + improveThreshold) {
         state.items = moved;
         improved = true;
         break;
@@ -998,7 +1251,7 @@ function aiOptimizeLoadout(state) {
   let swapGuard = 0;
   while (swapGuard < 24) {
     swapGuard++;
-    const before = scoreFullLoadout(state.containers, state.items);
+    const before = scoreLoadout(state.containers, state.items);
     let swapped = false;
 
     for (let i = 0; i < state.items.length; i++) {
@@ -1011,8 +1264,8 @@ function aiOptimizeLoadout(state) {
           return item;
         });
         if (!validateLoadoutItems(state.containers, candidate)) continue;
-        const after = scoreFullLoadout(state.containers, candidate);
-        if (after > before + 0.5) {
+        const after = scoreLoadout(state.containers, candidate);
+        if (after > before + swapThreshold) {
           state.items = candidate;
           swapped = true;
           break;
@@ -1021,6 +1274,129 @@ function aiOptimizeLoadout(state) {
       if (swapped) break;
     }
     if (!swapped) break;
+  }
+}
+
+/** Local search: перебор соседних позиций + swap-пairs (greedy, как bb_solver). */
+function aiDeepOptimizeLoadout(state, prepOpts = {}) {
+  if (!prepOpts.lobbyMode || state.items.length < 2) return;
+  const classId = state.classId;
+  if (typeof computeBackpackPower !== "function" || !classId) return;
+
+  aiOptimizeLoadout(state, prepOpts);
+
+  let bestScore = measureAiLoadoutPower(state.containers, state.items, classId);
+  let improved = true;
+  let guard = 0;
+
+  while (improved && guard < 36) {
+    guard += 1;
+    improved = false;
+
+    for (const item of [...state.items]) {
+      const slots = [...buildSlotSet(state.containers)].map((k) => k.split(",").map(Number));
+      for (let rot = 0; rot < 4; rot += 1) {
+        for (const [col, row] of slots) {
+          const placement = resolveLoadoutPlacement(
+            state.containers,
+            state.items,
+            item.itemId,
+            col,
+            row,
+            rot,
+            item.uid,
+          );
+          if (!placement.valid) continue;
+          const same = item.col === placement.col && item.row === placement.row
+            && (item.rotation || 0) === (placement.rotation || 0);
+          if (same) continue;
+
+          const moved = state.items.map((i) =>
+            (i.uid === item.uid
+              ? { ...i, col: placement.col, row: placement.row, rotation: placement.rotation }
+              : i),
+          );
+          if (!validateLoadoutItems(state.containers, moved)) continue;
+          const after = measureAiLoadoutPower(state.containers, moved, classId);
+          if (after > bestScore + 0.8) {
+            state.items = moved;
+            bestScore = after;
+            improved = true;
+            break;
+          }
+        }
+        if (improved) break;
+      }
+      if (improved) break;
+    }
+
+    if (improved) continue;
+
+    for (let i = 0; i < state.items.length; i += 1) {
+      for (let j = i + 1; j < state.items.length; j += 1) {
+        const a = state.items[i];
+        const b = state.items[j];
+        const candidate = state.items.map((item) => {
+          if (item.uid === a.uid) return { ...item, col: b.col, row: b.row, rotation: b.rotation || 0 };
+          if (item.uid === b.uid) return { ...item, col: a.col, row: a.row, rotation: a.rotation || 0 };
+          return item;
+        });
+        if (!validateLoadoutItems(state.containers, candidate)) continue;
+        const after = measureAiLoadoutPower(state.containers, candidate, classId);
+        if (after > bestScore + 1.2) {
+          state.items = candidate;
+          bestScore = after;
+          improved = true;
+          break;
+        }
+      }
+      if (improved) break;
+    }
+  }
+}
+
+/** Замена слабого предмета на скамейке, если прирост силы положительный (hard-bot swap). */
+function aiTryBenchBoardUpgrade(state, classId) {
+  if (!state.bench?.length || typeof computeBackpackPower !== "function" || !classId) return;
+  let progress = true;
+  let guard = 0;
+  while (progress && guard < 12) {
+    guard += 1;
+    progress = false;
+    const before = measureAiLoadoutPower(state.containers, state.items, classId);
+
+    for (const benchItem of [...state.bench]) {
+      if (typeof isGemItem === "function" && isGemItem(benchItem.itemId)) continue;
+      const benchIdx = state.bench.indexOf(benchItem);
+      if (benchIdx < 0) continue;
+
+      let best = null;
+      for (const victim of state.items) {
+        const def = ITEM_CATALOG[victim.itemId];
+        if (def?.protected) continue;
+        const without = state.items.filter((i) => i.uid !== victim.uid);
+        const spot = findBestLoadoutPlacementByPower(state.containers, without, benchItem.itemId, classId);
+        if (!spot?.valid) continue;
+        const trial = [
+          ...without,
+          createPlacedItem(benchItem.itemId, spot.col, spot.row, spot.rotation),
+        ];
+        if (!validateLoadoutItems(state.containers, trial)) continue;
+        const after = measureAiLoadoutPower(state.containers, trial, classId);
+        const gain = after - before;
+        if (gain > 1.5 && (!best || gain > best.gain)) {
+          best = { trial, gain, benchIdx, refund: def?.cost || 0 };
+        }
+      }
+
+      if (best) {
+        state.items = best.trial;
+        state.bench.splice(best.benchIdx, 1);
+        state.gold += best.refund;
+        progress = true;
+        break;
+      }
+    }
   }
 }
 
@@ -1267,6 +1643,8 @@ function getAiBuyMinScore(state, round, battleWon, prepOpts = {}) {
   if (battleWon === false || profile.lossStreak >= 1) min -= 3;
   if (profile.lobbyMode) min -= 2;
   if (profile.itemDeficit >= 2) min -= 4 + profile.itemDeficit;
+  if (profile.powerDeficit >= 12) min -= 5;
+  if (profile.powerDeficit >= 24) min -= 6;
   if (state.gold >= 20) min = Math.min(min, -4);
   if (state.gold >= 35) min = Math.min(min, -10);
   if (profile.lobbyMode && state.gold >= 15) min = Math.min(min, -8);
@@ -1343,7 +1721,7 @@ function aiBuyFromShop(
       .map((itemId, index) => ({
         index,
         itemId,
-        score: aiItemScore(itemId, ctx()),
+        score: aiScoreShopOffer(itemId, ctx(), prepOpts),
       }))
       .filter((c) => c.itemId && ITEM_CATALOG[c.itemId])
       .sort((a, b) => b.score - a.score);
@@ -1383,7 +1761,9 @@ function aiBuyFromShop(
 
   const sinkFloor = profile.lobbyMode ? -14 : -12;
   let sinkGuard = 0;
-  const sinkCap = profile.lobbyMode ? 18 + profile.itemDeficit * 2 : 12;
+  const sinkCap = profile.lobbyMode
+    ? 18 + profile.itemDeficit * 2 + Math.floor(profile.powerDeficit / 8)
+    : 12;
   while (state.gold > goldReserve + (profile.lobbyMode ? 4 : 6) && sinkGuard < sinkCap) {
     sinkGuard += 1;
     if (!tryBuyPass(sinkFloor, true)) break;
@@ -1443,9 +1823,9 @@ function aiEnemyPrepPhase(
     next.gold += AI_ECON.ROUND_GOLD;
   }
 
-  aiOptimizeLoadout(next);
+  aiOptimizeLoadout(next, prepOpts);
   aiTrySellWeakest(next, killArchetype, gridW, gridH, scout, round, battleWon);
-  if (!(prepProfile.lobbyMode && prepProfile.itemDeficit > 0)) {
+  if (!(prepProfile.lobbyMode && (prepProfile.itemDeficit > 0 || prepProfile.powerDeficit > 8))) {
     aiPurgeOffBuildBoard(next, killArchetype, scout, round, battleWon);
   }
 
@@ -1474,7 +1854,8 @@ function aiEnemyPrepPhase(
 
   let rerolls = 0;
   let refreshChance = prepProfile.refreshChance;
-  const needsForcedReroll = prepProfile.lobbyMode && prepProfile.itemDeficit >= 2 && next.gold >= 1;
+  const needsForcedReroll = prepProfile.lobbyMode && next.gold >= 1
+    && (prepProfile.itemDeficit >= 2 || prepProfile.powerDeficit >= 12);
   while (next.gold >= 1 && rerolls < prepProfile.maxRerolls) {
     const shouldReroll = (rerolls === 0 && needsForcedReroll) || Math.random() < refreshChance;
     if (!shouldReroll) break;
@@ -1501,28 +1882,39 @@ function aiEnemyPrepPhase(
   next.archetype = shopArchetype;
   next.classId = lockClassId || shopArchetype.id;
   aiTrySellWeakest(next, next.archetype, gridW, gridH, scout, round, battleWon);
-  aiPlaceBenchItems(next, gridW, gridH, next.archetype, scout, round);
-  aiOptimizeLoadout(next);
+  aiPlaceBenchItems(next, gridW, gridH, next.archetype, scout, round, prepOpts);
+  aiOptimizeLoadout(next, prepOpts);
   aiTrySellWeakest(next, next.archetype, gridW, gridH, scout, round, battleWon);
-  aiPlaceBenchItems(next, gridW, gridH, next.archetype, scout, round);
-  aiOptimizeLoadout(next);
+  aiPlaceBenchItems(next, gridW, gridH, next.archetype, scout, round, prepOpts);
+  aiOptimizeLoadout(next, prepOpts);
   aiSocketGems(next);
   aiNudgeForCrafting(next);
   aiApplyCrafting(next);
-  aiOptimizeLoadout(next);
+  aiOptimizeLoadout(next, prepOpts);
   aiSocketGems(next);
   aiNudgeForCrafting(next);
   aiApplyCrafting(next);
-  aiPurgeOffBuildBoard(next, next.archetype, scout, round, battleWon);
+  if (!prepProfile.lobbyMode) {
+    aiPurgeOffBuildBoard(next, next.archetype, scout, round, battleWon);
+  }
   aiTrySellWeakest(next, next.archetype, gridW, gridH, scout, round, battleWon);
   aiSocketGems(next);
   aiNudgeForCrafting(next);
   aiApplyCrafting(next);
-  if (prepProfile.lobbyMode && prepProfile.itemDeficit > 0) {
-    aiPlaceBenchItems(next, gridW, gridH, next.archetype, scout, round);
-    aiOptimizeLoadout(next);
+  aiFlushIdleBench(next, next.classId);
+  const lateProfile = getAiPrepProfile(prepOpts, round, battleWon, next);
+  if (lateProfile.lobbyMode && (lateProfile.itemDeficit > 0 || lateProfile.powerDeficit > 8)) {
+    aiPlaceBenchItems(next, gridW, gridH, next.archetype, scout, round, prepOpts);
+    aiTryBenchBoardUpgrade(next, next.classId);
+    aiOptimizeLoadout(next, prepOpts);
     aiApplyCrafting(next);
     aiSocketGems(next);
+    aiFlushIdleBench(next, next.classId);
+  }
+  if (lateProfile.lobbyMode) {
+    aiDeepOptimizeLoadout(next, prepOpts);
+    aiApplyCrafting(next);
+    aiOptimizeLoadout(next, prepOpts);
   }
   applySynergyModifiersToContainers(next.containers, next.items);
 

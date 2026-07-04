@@ -32,6 +32,7 @@
     { "id": "prep-field-column", "phases": ["prep", "battle", "replay"], "modes": ["*"] },
     { "id": "lobby-prep-field-roster", "phases": ["prep"], "modes": ["lobby"] },
     { "id": "lobby2p-prep-layout", "phases": ["prep"], "modes": ["lobby2p"] },
+    { "id": "lobby2p-battle-hud", "phases": ["battle", "replay"], "modes": ["lobby2p"] },
     { "id": "campaign-hint-bar", "phases": ["prep"], "modes": ["campaign"] }
   ],
   "prepSnapshots": [

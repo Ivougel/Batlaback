@@ -33,7 +33,7 @@
   <link rel="stylesheet" href="styles/modal-scale.css?v=6">
   <link rel="stylesheet" href="styles/replay-chrome.css?v=2">
   <link rel="stylesheet" href="styles/emotion-thoughts.css?v=11">
-  <link rel="stylesheet" href="styles/hero-dialogue.css?v=3">
+  <link rel="stylesheet" href="styles/hero-dialogue.css?v=4">
   <link rel="stylesheet" href="styles/player-spec-emoji.css?v=7">
   <link rel="stylesheet" href="styles/archetype-magic-glow.css?v=2">
   <link rel="stylesheet" href="styles/arena-equipment.css?v=21">
@@ -67,7 +67,7 @@
   <link rel="stylesheet" href="styles/prep-tablet-zone-layout.css?v=7">
   <link rel="stylesheet" href="styles/battle-inventory-popover.css?v=9">
   <link rel="stylesheet" href="styles/lobby.css?v=15">
-  <link rel="stylesheet" href="styles/lobby-2p-hud.css?v=3">
+  <link rel="stylesheet" href="styles/lobby-2p-hud.css?v=6">
   <link rel="stylesheet" href="styles/lobby-prep-field-roster.css?v=1">
   <link rel="stylesheet" href="styles/meadow-theme.css?v=2">
   <link rel="stylesheet" href="styles/battle-theme-ui.css?v=2">
@@ -429,6 +429,30 @@
       <aside class="lobby2p-roster-drawer hidden" id="lobby2p-roster-drawer" aria-label="Участники лобби">
         <div class="lobby2p-roster-drawer-body" id="lobby2p-roster-drawer-body"></div>
       </aside>
+    </section>
+
+    <section id="lobby2p-battle-hud" class="lobby2p-battle-hud hidden" aria-label="Лобби 2P — бой">
+      <button type="button" class="lobby2p-battle-chip" id="lobby2p-battle-chip-0" data-human="0" aria-label="Игрок 1">
+        <span class="lobby2p-battle-chip-portrait"><img id="lobby2p-battle-avatar-0" alt="" draggable="false"></span>
+        <span class="lobby2p-battle-chip-info">
+          <span class="lobby2p-battle-chip-name" id="lobby2p-battle-name-0">Игрок 1</span>
+          <span class="lobby2p-battle-chip-vs" id="lobby2p-battle-vs-0">—</span>
+        </span>
+        <span class="lobby2p-battle-chip-hp" id="lobby2p-battle-hp-0">♥ 100</span>
+      </button>
+      <div class="lobby2p-battle-center">
+        <span class="lobby2p-battle-center-alive" title="Живых в лобби">🏟 <b id="lobby2p-battle-alive-count">16</b></span>
+        <span class="lobby2p-battle-center-round">раунд <b id="lobby2p-battle-round">1</b></span>
+        <button type="button" class="lobby2p-battle-roster-btn" id="lobby2p-battle-roster-btn" title="Участники лобби" aria-label="Участники лобби">⋯</button>
+      </div>
+      <button type="button" class="lobby2p-battle-chip" id="lobby2p-battle-chip-1" data-human="1" aria-label="Игрок 2">
+        <span class="lobby2p-battle-chip-portrait"><img id="lobby2p-battle-avatar-1" alt="" draggable="false"></span>
+        <span class="lobby2p-battle-chip-info">
+          <span class="lobby2p-battle-chip-name" id="lobby2p-battle-name-1">Игрок 2</span>
+          <span class="lobby2p-battle-chip-vs" id="lobby2p-battle-vs-1">—</span>
+        </span>
+        <span class="lobby2p-battle-chip-hp" id="lobby2p-battle-hp-1">♥ 100</span>
+      </button>
     </section>
 
   </div>
@@ -1056,6 +1080,7 @@
   <script src="backpack-engine.js"></script>
   <script src="systems/mechanic-tags.js"></script>
   <script src="systems/item-locale.js"></script>
+  <script src="systems/tooltip-effect-text.js"></script>
   <script src="systems/gem-sockets.js"></script>
   <script src="systems/crafting.js"></script>
   <script src="systems/synergy.js"></script>
@@ -1118,7 +1143,7 @@
   <script src="hard-bot-engine.js"></script>
   <script src="systems/lobby-opponents.js?v=6"></script>
   <script src="systems/dialogue-catalog.js?v=2"></script>
-  <script src="components/dialogue-overlay.js?v=5"></script>
+  <script src="components/dialogue-overlay.js?v=6"></script>
   <script src="systems/dialogue-engine.js?v=5"></script>
   <script src="systems/lobby-fighter-avatar.js?v=9"></script>
   <script src="systems/lobby-spectator.js?v=9"></script>
@@ -1129,7 +1154,7 @@
   <script src="components/emotion-presenter.js?v=5"></script>
   <script src="emotion-engine.js?v=25"></script>
   <script src="battle-hud.js?v=6"></script>
-  <script src="components/lobby-2p-hud.js?v=1"></script>
+  <script src="components/lobby-2p-hud.js?v=2"></script>
   <script src="systems/prep-shop.js?v=8"></script>
   <script src="systems/campaign.js?v=1"></script>
   <script src="systems/doll-engine.js"></script>

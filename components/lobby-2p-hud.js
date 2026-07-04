@@ -22,6 +22,74 @@ const Lobby2pHud = (() => {
     }, 0);
   }
 
+  function isBattleActive() {
+    return typeof callbacks.isBattleActive === "function" && callbacks.isBattleActive();
+  }
+
+  function renderBattleChip(humanId) {
+    const fighter = callbacks.getFighter?.(humanId);
+    const classId = callbacks.getClassId?.(humanId);
+    const chip = document.getElementById(`lobby2p-battle-chip-${humanId}`);
+    const nameEl = document.getElementById(`lobby2p-battle-name-${humanId}`);
+    const vsEl = document.getElementById(`lobby2p-battle-vs-${humanId}`);
+    const hpEl = document.getElementById(`lobby2p-battle-hp-${humanId}`);
+    const avatarEl = document.getElementById(`lobby2p-battle-avatar-${humanId}`);
+    if (!chip) return;
+
+    const alive = fighter?.alive !== false;
+    const matchIdx = callbacks.getHumanMatchIndex?.(humanId) ?? -1;
+    const spectating = callbacks.getSpectatedHuman?.() === humanId;
+    const inBattle = !!callbacks.isHumanMatchLive?.(humanId);
+    const finished = !!callbacks.isHumanMatchDone?.(humanId);
+    const oppName = callbacks.getHumanOpponentName?.(humanId) || "—";
+
+    if (nameEl) nameEl.textContent = fighter?.name || `Игрок ${humanId + 1}`;
+    if (hpEl) hpEl.textContent = alive ? `♥ ${fighter?.hp ?? 0}` : "выбыл";
+    if (vsEl) {
+      let status = "—";
+      if (!alive) status = "выбыл";
+      else if (matchIdx < 0) status = "нет боя";
+      else if (inBattle) status = `vs ${oppName} · LIVE`;
+      else if (finished) status = `vs ${oppName} · ✓`;
+      else status = `vs ${oppName}`;
+      vsEl.textContent = status;
+    }
+    if (avatarEl && typeof getClassHeroPortraitSrc === "function") {
+      const src = getClassHeroPortraitSrc(classId);
+      if (src) {
+        avatarEl.src = src;
+        avatarEl.alt = fighter?.name || "";
+      }
+    }
+
+    chip.disabled = !alive || matchIdx < 0;
+    chip.classList.toggle("lobby2p-battle-chip--active", spectating);
+    chip.classList.toggle("lobby2p-battle-chip--live", inBattle);
+    chip.classList.toggle("lobby2p-battle-chip--done", finished && !inBattle);
+    chip.classList.toggle("lobby2p-battle-chip--out", !alive);
+    chip.setAttribute("aria-pressed", spectating ? "true" : "false");
+  }
+
+  function syncBattle() {
+    const hud = document.getElementById("lobby2p-battle-hud");
+    const active = isBattleActive();
+    document.documentElement.toggleAttribute("data-lobby2p-battle", active);
+    hud?.classList.toggle("hidden", !active);
+    if (!active) return;
+
+    const roundEl = document.getElementById("lobby2p-battle-round");
+    if (roundEl && typeof callbacks.getRound === "function") {
+      roundEl.textContent = String(callbacks.getRound());
+    }
+    const aliveEl = document.getElementById("lobby2p-battle-alive-count");
+    if (aliveEl && typeof callbacks.getAliveCount === "function") {
+      aliveEl.textContent = String(callbacks.getAliveCount());
+    }
+
+    renderBattleChip(0);
+    renderBattleChip(1);
+  }
+
   function renderEnhancements(enhancements) {
     if (!enhancements) return '<span class="lobby2p-equip-slot empty">—</span>'.repeat(3);
     const slots = ["head", "chest", "boots"];
@@ -186,11 +254,30 @@ const Lobby2pHud = (() => {
     renderPowerBar();
     renderCommerce();
     renderRosterDrawer();
+    syncBattle();
+  }
+
+  function bindBattle() {
+    const hud = document.getElementById("lobby2p-battle-hud");
+    hud?.addEventListener("click", (e) => {
+      const chip = e.target.closest(".lobby2p-battle-chip");
+      if (chip && !chip.disabled) {
+        callbacks.spectateHuman?.(Number(chip.dataset.human));
+        return;
+      }
+      if (e.target.closest("#lobby2p-battle-roster-btn")) {
+        const dropdown = document.getElementById("standings-dropdown");
+        const strip = document.getElementById("lobby-roster-strip-battle");
+        if (dropdown && strip) dropdown.innerHTML = strip.innerHTML;
+        document.getElementById("btn-standings-toggle")?.click();
+      }
+    });
   }
 
   function bind() {
     if (bound) return;
     bound = true;
+    bindBattle();
     const split = document.getElementById("lobby2p-split");
     split?.addEventListener("click", (e) => {
       const shopCol = e.target.closest(".lobby2p-col-shop, .lobby2p-col-bench");
@@ -221,7 +308,7 @@ const Lobby2pHud = (() => {
     });
   }
 
-  return { register, sync, bind, mountCanvas, unmountCanvas, isActive };
+  return { register, sync, syncBattle, bind, mountCanvas, unmountCanvas, isActive, isBattleActive };
 })();
 
 window.Lobby2pHud = Lobby2pHud;

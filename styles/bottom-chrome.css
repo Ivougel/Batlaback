@@ -692,6 +692,10 @@ body:not(:has(#app[data-phase="prep"])) .bottom-chrome .standings-anchor {
   display: none !important;
 }
 
+html[data-lobby2p-battle] .bottom-chrome .standings-anchor {
+  display: none !important;
+}
+
 html:not([data-game-mode="lobby"]) body:has(#app[data-phase="prep"]) .bottom-chrome .standings-anchor {
   display: none !important;
 }

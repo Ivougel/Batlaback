@@ -157,7 +157,7 @@ const ITEM_CATALOG_RAW = {
       { type: "attackBuff", value: 2, trigger: "on_miss" },
       { type: "poison", value: 1, chance: 0.33, trigger: "on_hit" }
     ],
-    description: "При промахе: следующая атака сильнее на 2. При попадании: 33% +1 яда. Удар 2–4 урона.",
+    description: "При промахе: следующая атака сильнее на 2. При попадании: 33% шанс: +1 яда. Удар 2–4 урона.",
     buildHints: "Пары: Whetstone, Gloves of Haste",
     sockets: 1,
   },
@@ -899,7 +899,7 @@ const ITEM_CATALOG_RAW = {
       { type: "poison", value: 3 },
       { type: "onFoeHeal", trigger: "passive", foePoison: 3, selfPoison: 1 }
     ],
-    description: "Когда враг лечится: +1 яда ему. Яд 3.",
+    description: "Когда враг лечится: +1 яда ему. Накладывает 3 яда.",
     buildHints: "Билд: яд · Крафт: Poison Dagger / Spear · Пары: Death Scythe, яд-питомцы",
   },
   piggybank: {
@@ -990,7 +990,7 @@ const ITEM_CATALOG_RAW = {
     effects: [
       { type: "poison", value: 1 }
     ],
-    description: "Яд 1.",
+    description: "Накладывает 1 яда.",
   },
   protective_purse: {
     id: "protective_purse",
@@ -1142,7 +1142,7 @@ const ITEM_CATALOG_RAW = {
       { type: "dodgePeriodic", interval: 3, trigger: "passive" },
       { type: "poison", value: 2 }
     ],
-    description: "Уклонение каждые 3 сек. Яд 2.",
+    description: "Уклонение каждые 3 сек. Накладывает 2 яда.",
   },
   snow_stick: {
     id: "snow_stick",
@@ -1273,7 +1273,7 @@ const ITEM_CATALOG_RAW = {
       { type: "activationLimit", base: 1, trigger: "passive" },
       { type: "destroyFoeStacks", value: 4, trigger: "on_hit" }
     ],
-    description: "Уничтожить 4 стака у врага. До 1 активаций за бой. Удар 2–4 урона.",
+    description: "Уничтожить 4 бонусов у врага. До 1 активаций за бой. Удар 2–4 урона.",
     buildHints: "Универсальный / автономный",
   },
   stone_skin_potion: {
@@ -2198,7 +2198,7 @@ const ITEM_CATALOG_RAW = {
       { type: "hpThreshold", threshold: 0.7, direction: "below", once: true, trigger: "passive", gainStack: {"stack":"spikes","value":2}, heal: 25 },
       { type: "cooldownMultPerTag", tags: ["pet","food"], perTag: 0.15, trigger: "passive" }
     ],
-    description: "+0.5 урона за каждый шип. На 15% быстрее за «питомцы/еда». Каждые 5 сек: наносит 10 магического урона. Если здоровье ниже 70%: лечит на 25 HP, +2 шип, один раз за бой. Яд 1.",
+    description: "+0.5 урона за каждый шип. На 15% быстрее за «питомцы/еда». Каждые 5 сек: наносит 10 магического урона. Если здоровье ниже 70%: лечит на 25 HP, +2 шип, один раз за бой. Накладывает 1 яда.",
     buildHints: "Билд: шипы / отражение, питомцы",
   },
   hero_long_sword: {
@@ -2658,7 +2658,7 @@ const ITEM_CATALOG_RAW = {
       { type: "periodic", interval: 4.7, trigger: "passive", stripFoeStacksOnceEach: true },
       { type: "cooldownMultPerTag", tags: ["dark"], perTag: 0.1, trigger: "passive" }
     ],
-    description: "На 10% быстрее за «тёмный». Каждые 4.7 сек: снять по 1 стаку каждого типа у врага.",
+    description: "На 10% быстрее за «тёмный». Каждые 4.7 сек: снять по 1 бонусу каждого типа у врага.",
     buildHints: "Билд: питомцы",
   },
   offering_bowl: {
@@ -2759,7 +2759,7 @@ const ITEM_CATALOG_RAW = {
       { type: "statMult", stat: "heal", value: 0.04, trigger: "passive", tag: "cold" },
       { type: "periodic", interval: 8, trigger: "passive", gainAllStacks: 1 }
     ],
-    description: "+2 мана за «магия». +1 мана за «огонь». +12% к магическому урону. +4% к лечению. Каждые 8 сек: +1 ко всем стакам. Лечение 2 HP.",
+    description: "+2 мана за «магия». +1 мана за «огонь». +12% к магическому урону. +4% к лечению. Каждые 8 сек: +1 ко всем бонусам. Лечение 2 HP.",
     buildHints: "Билд: мана / магия · Пары: Mana Orb, Mana Potion, магические посохи",
   },
   prismatic_sword: {
@@ -3165,7 +3165,7 @@ const ITEM_CATALOG_RAW = {
     metaEffects: [
       { phase: "shop_pool", type: "offer_tag", tag: "reaper" }
     ],
-    description: "Каждые 1.5 сек: отравляет врага (1). Яд 1. В магазине чаще встречаются предметы: жнец.",
+    description: "Каждые 1.5 сек: отравляет врага (1). Накладывает 1 яда. В магазине чаще встречаются предметы: жнец.",
     buildHints: "Билд: яд / DoT · Пары: Pestilence Flask, Death Scythe, ядовитые питомцы",
   },
   snowmaster: {

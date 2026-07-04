@@ -85,6 +85,8 @@ async function main() {
       p0Idx,
       p1Idx,
       tabsVisible: !document.getElementById("lobby2p-battle-tabs")?.classList.contains("hidden"),
+      battleHudVisible: !document.getElementById("lobby2p-battle-hud")?.classList.contains("hidden"),
+      battleHudAttr: document.documentElement.hasAttribute("data-lobby2p-battle"),
       spectateId: lobbySpectateMatchId,
     };
   });
@@ -92,6 +94,7 @@ async function main() {
   assert(battle.phase === "battle", `battle phase expected, got ${battle.phase}`);
   assert(battle.p0Idx >= 0 && battle.p1Idx >= 0, "missing human matches");
   assert(battle.tabsVisible, "lobby2p battle tabs hidden");
+  assert(battle.battleHudVisible && battle.battleHudAttr, "lobby2p battle HUD not visible");
 
   await page.evaluate((p1Idx) => {
     setLobbySpectateMatch(p1Idx);
@@ -104,6 +107,15 @@ async function main() {
   }));
   assert(afterSwitch.spectateId === battle.p1Idx, "P2 spectate switch failed");
   assert(afterSwitch.tab1Active, "P2 tab not active");
+
+  await page.click("#lobby2p-battle-chip-1");
+  await page.waitForTimeout(300);
+  const topChip = await page.evaluate(() => ({
+    chipActive: document.getElementById("lobby2p-battle-chip-1")?.classList.contains("lobby2p-battle-chip--active"),
+    spectateId: lobbySpectateMatchId,
+  }));
+  assert(topChip.chipActive, "top battle chip P2 not active");
+  assert(topChip.spectateId === battle.p1Idx, "top chip spectate failed");
 
   if (errors.length) {
     console.warn("page errors:", errors);
