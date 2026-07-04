@@ -368,8 +368,19 @@ const BattleHeroAnchor = (() => {
     const halo = thoughtSlotHaloPx(emojiSize);
     const containerSize = emojiSize + halo * 2;
 
-    const floorBottom = visibleCombatFloorBottom(floor) ?? floor.bottom;
-    const usableH = Math.max(0, floorBottom - floor.top);
+    const chromeTop = visibleBattleCorridorTopPx();
+    const onScreenBottom = Math.min(
+      floor.bottom,
+      visibleViewportBottomPx(),
+      chromeTop > floor.top + 8 ? chromeTop : floor.bottom,
+    );
+    let usableH = Math.max(0, onScreenBottom - floor.top);
+    if (usableH < emojiSize * 0.2) {
+      const underHero = getHeroBelowThoughtAnchor(side);
+      if (underHero) return underHero;
+      usableH = Math.max(usableH, floor.height * (anchorNorm.y || 0.58));
+    }
+
     const heroCx = getHeroColumnCenterX(side);
     const cx = heroCx != null ? heroCx : floor.left + floor.width * anchorNorm.x;
     const cy = floor.top + usableH * anchorNorm.y;
@@ -536,17 +547,15 @@ const BattleHeroAnchor = (() => {
 
   /** Позиция thought-slot в viewport (px). */
   function getThoughtSlotAnchor(side) {
-    if (isFlankArenaBattle()) {
-      const nearHero = getHeroNearSpecAnchor(side);
-      if (nearHero) return nearHero;
-    }
-
-    // iPad mini / tablet-side landscape: крупный эмодзи под HUD в колонке героя.
-    if (currentBattleProfile() === "tablet-landscape-side" && usesCombatFloorAnchors() && !usesHeadBadgeAnchors()) {
+    // iPad / tablet-side landscape: крупный эмодзи в коридоре под HUD (пол арены там перекрыт chrome).
+    if (currentBattleProfile() === "tablet-landscape-side"
+      && isFlankArenaBattle()
+      && !usesHeadBadgeAnchors()) {
       const underHero = getHeroBelowThoughtAnchor(side);
       if (underHero) return underHero;
     }
 
+    // Flank-arena: эмодзи на боевом полу (20%/80% × 58%).
     if (usesCombatFloorAnchors() && !usesHeadBadgeAnchors()) {
       const floorAnchor = getCombatFloorThoughtAnchor(side);
       if (floorAnchor) return floorAnchor;
@@ -560,6 +569,12 @@ const BattleHeroAnchor = (() => {
     if (usesHeroBelowThoughtAnchors()) {
       const underHero = getHeroBelowThoughtAnchor(side);
       if (underHero) return underHero;
+    }
+
+    // Fallback: спек-эмодзи у верхней части колонки (prep-аналог).
+    if (isFlankArenaBattle()) {
+      const nearHero = getHeroNearSpecAnchor(side);
+      if (nearHero) return nearHero;
     }
 
     const floor = getCombatFloorRect();
