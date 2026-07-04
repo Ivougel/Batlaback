@@ -336,6 +336,7 @@ self.PWA_PRECACHE_URLS = [
   "styles/theme-diablo.css?v=5",
   "styles/theme-diablo.css?v=6",
   "styles/theme-diablo.css?v=7",
+  "styles/theme-diablo.css?v=8",
   "styles/tokens.css",
   "styles/tokens.css?v=18",
   "styles/tokens.css?v=21",
