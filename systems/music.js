@@ -6,6 +6,9 @@
   const BASE_PLAYLIST = [
     "music/Backpack Bazaar.mp3",
     "music/Backpack Bazaar2.mp3",
+    "music/Whisper of the Deep Woods.mp3",
+    "music/Whisper of the Mossy Path.mp3",
+    "music/Whispering Grove.mp3",
   ];
   const MUSIC_VOLUME_KEY = "bb-music-volume";
   const NEGROV_ENABLED_KEY = "bb-negrov-enabled";
