@@ -21,6 +21,7 @@
       default: 200,
       menu: 220,
       result: 200,
+      resultToPrep: 80,
       runComplete: 260,
     },
   };
@@ -164,6 +165,44 @@
     });
   }
 
+  /**
+   * Итоги → prep: prep собирается под overlay, #app скрыт до конца exit-анимации.
+   * Без phase-out pulse и без кадра battle между overlay и prep.
+   */
+  function transitionFromResultToPrep(applyPhase, afterTransition, hideOverlayFn) {
+    if (transitioning) return Promise.resolve();
+
+    transitioning = true;
+    document.body.classList.add("screen-transitioning", "result-to-prep-transition");
+
+    const overlayDone = typeof hideOverlayFn === "function"
+      ? Promise.resolve(hideOverlayFn())
+      : Promise.resolve();
+
+    const applyPrepWork = () => new Promise((resolve) => {
+      requestAnimationFrame(() => {
+        applyPhase("prep");
+        afterTransition?.();
+        resolve();
+      });
+    });
+
+    const revealPrep = () => new Promise((resolve) => {
+      window.flushDeferredLayoutPasses?.();
+      window.scheduleCanvasFit?.();
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          transitioning = false;
+          document.body.classList.remove("screen-transitioning", "result-to-prep-transition");
+          resolve();
+        });
+      });
+    });
+
+    return Promise.all([overlayDone, applyPrepWork()])
+      .then(revealPrep);
+  }
+
   function crossfadeMenuToGame(onMidpoint) {
     const overlay = document.getElementById("class-overlay");
     const app = document.getElementById("app");
@@ -210,6 +249,7 @@
     getIntroDirection,
     pulseIntroStep,
     transitionPhase,
+    transitionFromResultToPrep,
     crossfadeMenuToGame,
     crossfadeGameToMenu,
   };

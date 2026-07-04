@@ -3380,24 +3380,28 @@ function init() {
         renderLobbyChrome(true);
       }
       setPhaseLabel(isTdMode() ? "Закуп перед волной" : isCampaignMode() ? "Обучение" : "Подготовка", false);
-      updatePrepSideUI();
-      renderFightButton();
       if (isCampaignMode()) syncCampaignChrome();
-      else ensureShopReady();
-      renderShop();
-      renderBench();
-      updateUI();
+      requestAnimationFrame(() => updateUI());
       if (isTdMode()) syncTdBattleChrome();
     };
-    const runPrepTransition = () => {
-      transitionToPhase("prep", continueAfterResult);
+    const applyPrepPhase = () => {
+      phase = "prep";
+      renderPhase();
     };
+    if (typeof ScreenTransitions !== "undefined" && ScreenTransitions.transitionFromResultToPrep) {
+      void ScreenTransitions.transitionFromResultToPrep(
+        applyPrepPhase,
+        continueAfterResult,
+        () => hideBattleResultPopupAsync("resultToPrep"),
+      );
+      return;
+    }
     if (typeof hideBattleResultPopupAsync === "function") {
-      void hideBattleResultPopupAsync().then(runPrepTransition);
+      void hideBattleResultPopupAsync().then(() => transitionToPhase("prep", continueAfterResult));
       return;
     }
     hideBattleResultPopup();
-    runPrepTransition();
+    transitionToPhase("prep", continueAfterResult);
   });
   document.getElementById("btn-battle-replay")?.addEventListener("click", () => {
     startBattleReplay();

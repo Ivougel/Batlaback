@@ -234,13 +234,13 @@ function showBattleResultPopup(summary, battleLog = []) {
   reveal();
 }
 
-function hideBattleResultPopupAsync() {
+function hideBattleResultPopupAsync(variant = "result") {
   hideDetailPopup();
   if (typeof stopBattleResultTheater === "function") stopBattleResultTheater();
   const overlay = document.getElementById("battle-result-overlay");
   if (!overlay || overlay.classList.contains("hidden")) return Promise.resolve();
   if (typeof ScreenTransitions !== "undefined") {
-    return ScreenTransitions.hideScreenOverlay(overlay, "result").then(() => {
+    return ScreenTransitions.hideScreenOverlay(overlay, variant).then(() => {
       overlay.removeAttribute("data-outcome");
     });
   }

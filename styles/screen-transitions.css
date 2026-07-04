@@ -51,6 +51,23 @@ body:has(#battle-result-overlay:not(.hidden)) #app {
   transition: none !important;
 }
 
+/* Итоги → prep: prep собирается скрыто, fade-in через #app transition после снятия класса */
+body.result-to-prep-transition #app {
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+  transform: none !important;
+  filter: none !important;
+  transition: none !important;
+}
+
+body:not(.result-to-prep-transition).screen-app-visible #app {
+  transition:
+    opacity var(--st-phase-in) var(--st-ease-out),
+    transform var(--st-phase-in) var(--st-ease-out),
+    filter var(--st-phase-in) var(--st-ease-out);
+}
+
 /* Prep ↔ Battle — anticipation pulse перед сменой фазы */
 .game-layout.phase-transitioning {
   opacity: 0.28;
@@ -98,6 +115,10 @@ body:has(#battle-result-overlay:not(.hidden)) #app {
 
 .overlay.overlay-exiting[data-overlay-variant="result"] {
   animation-duration: var(--st-result-exit);
+}
+
+.overlay.overlay-exiting[data-overlay-variant="resultToPrep"] {
+  animation-duration: 80ms;
 }
 
 .overlay.overlay-exiting[data-overlay-variant="runComplete"] {
@@ -244,6 +265,7 @@ body.screen-transitioning #app {
 
   body:not(.screen-app-visible):has(#class-overlay:not(.hidden)) #app,
   body:has(#battle-result-overlay:not(.hidden)) #app,
+  body.result-to-prep-transition #app,
   body:has(#overlay:not(.hidden)) #app {
     opacity: 1;
     transform: none;
