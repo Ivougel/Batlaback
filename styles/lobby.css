@@ -814,7 +814,6 @@ html[data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel .shop-slots {
   gap: calc(6px * var(--ui-scale, 1));
   min-height: 0;
   justify-items: center;
-  padding-top: calc(6px * var(--ui-scale, 1));
 }
 
 html[data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel .shop-card:not(.empty):last-child:nth-child(odd),

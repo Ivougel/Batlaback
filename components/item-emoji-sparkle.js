@@ -12,6 +12,7 @@
     + `</span>`;
 
   let domSparkleOwner = null;
+  let sparkleSourceRef = null;
 
   function renderItemEmojiSparklesHTML() {
     return SPARKLE_MARKUP;
@@ -31,25 +32,88 @@
       || (el?.classList?.contains("item-emoji-sparkle-host") ? el : null);
   }
 
+  function findSparkleCard(el) {
+    return el?.closest?.(".shop-card, .bench-card, .td-build-shop-card") || null;
+  }
+
+  function captureSparkleSourceRef(sourceEl) {
+    const card = findSparkleCard(sourceEl);
+    if (!card) return null;
+    if (card.classList.contains("bench-card") && card.dataset.bench != null) {
+      return { kind: "bench", bench: card.dataset.bench };
+    }
+    if (card.classList.contains("shop-card") && card.dataset.index != null) {
+      return { kind: "shop", index: card.dataset.index, itemId: card.dataset.itemId || "" };
+    }
+    return null;
+  }
+
+  function resolveSparkleSourceEl(ref) {
+    if (!ref) return null;
+    if (ref.kind === "bench") {
+      return document.querySelector(`#bench-slots .bench-card[data-bench="${ref.bench}"]:not(.empty)`)
+        || document.querySelector(`.bench-card[data-bench="${ref.bench}"]:not(.empty)`);
+    }
+    if (ref.kind === "shop") {
+      const itemPart = ref.itemId ? `[data-item-id="${CSS.escape(ref.itemId)}"]` : "";
+      return document.querySelector(`.shop-card[data-index="${ref.index}"]${itemPart}:not(.empty)`)
+        || document.querySelector(`.shop-card[data-index="${ref.index}"]:not(.empty)`);
+    }
+    return null;
+  }
+
+  function markSparkleSourceCard(sourceEl, active) {
+    findSparkleCard(sourceEl)?.classList.toggle("is-sparkle-source", !!active);
+  }
+
+  function isSidebarTooltipStillVisible() {
+    const tip = document.getElementById("sidebar-tooltip");
+    return !!tip && !tip.classList.contains("hidden");
+  }
+
   function setDomSparkleActive(el, active) {
     const host = findSparkleHost(el);
     if (!host) return;
     host.classList.toggle("is-sparkle-active", !!active);
-    if (active) domSparkleOwner = el;
-    else if (domSparkleOwner === el) domSparkleOwner = null;
+    markSparkleSourceCard(el, active);
+    if (active) {
+      domSparkleOwner = el;
+      sparkleSourceRef = captureSparkleSourceRef(el);
+    } else if (domSparkleOwner === el) {
+      domSparkleOwner = null;
+      sparkleSourceRef = null;
+    }
   }
 
   function clearDomSparkleHighlights() {
     document.querySelectorAll(".item-emoji-sparkle-host.is-sparkle-active").forEach((host) => {
       host.classList.remove("is-sparkle-active");
     });
+    document.querySelectorAll(".shop-card.is-sparkle-source, .bench-card.is-sparkle-source, .td-build-shop-card.is-sparkle-source").forEach((card) => {
+      card.classList.remove("is-sparkle-source");
+    });
     domSparkleOwner = null;
+    sparkleSourceRef = null;
   }
 
   function syncDomSparkleFromTooltipSource(sourceEl) {
     clearDomSparkleHighlights();
     if (!sourceEl) return;
+    sparkleSourceRef = captureSparkleSourceRef(sourceEl);
     setDomSparkleActive(sourceEl, true);
+  }
+
+  function restoreDomSparkleFromTooltipSource() {
+    if (!sparkleSourceRef || !isSidebarTooltipStillVisible()) return;
+    const el = resolveSparkleSourceEl(sparkleSourceRef);
+    if (!el) return;
+    document.querySelectorAll(".item-emoji-sparkle-host.is-sparkle-active").forEach((host) => {
+      host.classList.remove("is-sparkle-active");
+    });
+    document.querySelectorAll(".shop-card.is-sparkle-source, .bench-card.is-sparkle-source, .td-build-shop-card.is-sparkle-source").forEach((card) => {
+      card.classList.remove("is-sparkle-source");
+    });
+    setDomSparkleActive(el, true);
   }
 
   function forEachPlacedItemEmojiCenter(item, def, team, fn) {
@@ -221,6 +285,7 @@
     el.addEventListener("pointercancel", onUp);
     el.addEventListener("mouseleave", () => {
       if (typeof sidebarTooltipPinned !== "undefined" && sidebarTooltipPinned) return;
+      if (isSidebarTooltipStillVisible() && resolveSparkleSourceEl(sparkleSourceRef) === el) return;
       setDomSparkleActive(el, false);
     });
   }
@@ -228,6 +293,7 @@
   window.renderItemEmojiSparklesHTML = renderItemEmojiSparklesHTML;
   window.drawBoardTooltipItemSparkles = drawBoardTooltipItemSparkles;
   window.syncDomSparkleFromTooltipSource = syncDomSparkleFromTooltipSource;
+  window.restoreDomSparkleFromTooltipSource = restoreDomSparkleFromTooltipSource;
   window.clearDomSparkleHighlights = clearDomSparkleHighlights;
   window.bindItemEmojiSparklePointer = bindItemEmojiSparklePointer;
 })();

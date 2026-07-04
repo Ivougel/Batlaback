@@ -71,7 +71,7 @@ html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #
   width: fit-content;
   max-width: 100%;
   min-width: 0;
-  padding-top: calc(var(--shop-pin-size, 28px) * 0.42);
+  padding-top: var(--shop-pin-size, calc(28px * var(--ui-scale, 1)));
 }
 
 html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-item-visual {
@@ -138,9 +138,9 @@ html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #
 
 html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-item-stack .shop-pin {
   position: absolute;
-  top: var(--shop-pin-offset-y, calc(-12px * var(--ui-scale, 1)));
-  left: var(--shop-pin-offset-x, calc(-10px * var(--ui-scale, 1)));
-  z-index: 30;
+  top: var(--shop-pin-offset-y, 0);
+  left: var(--shop-pin-offset-x, 0);
+  z-index: calc(var(--z-layer-objects, 20) + 5);
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;

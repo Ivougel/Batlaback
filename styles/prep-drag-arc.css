@@ -7,7 +7,7 @@
   left: 0;
   top: 0;
   pointer-events: none;
-  z-index: 9250;
+  z-index: 9525;
   overflow: visible;
   --prep-arc-pulse: 0.5;
 }
@@ -156,7 +156,7 @@
 }
 
 .ui-drag-ghost--arc-flight {
-  z-index: 9251 !important;
+  z-index: 9526 !important;
   filter:
     drop-shadow(0 0 calc(6px + var(--prep-arc-pulse, 0.5) * 8px) rgba(139, 61, 255, 0.45))
     drop-shadow(0 0 calc(12px + var(--prep-arc-pulse, 0.5) * 10px) rgba(199, 125, 255, 0.35))
@@ -164,14 +164,14 @@
 }
 
 .ui-drag-ghost--remote-hold {
-  z-index: 9249 !important;
+  z-index: 9524 !important;
   opacity: 1 !important;
 }
 
 .prep-drag-ghost-trail {
   position: fixed;
   pointer-events: none;
-  z-index: 9250;
+  z-index: 9525;
   left: 0;
   top: 0;
   width: 0;

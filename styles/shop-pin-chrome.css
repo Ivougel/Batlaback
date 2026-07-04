@@ -1,37 +1,45 @@
 /**
  * Shop pin — оверлей в левом верхнем углу кластера предмета.
+ * Пин живёт внутри .shop-item-stack (offset ≥ 0) — не клипится overflow/scroll.
  */
 
 :root {
   --shop-pin-size: calc(28px * var(--ui-scale, 1));
   --shop-pin-glyph: calc(18px * var(--ui-scale, 1));
-  --shop-pin-offset-x: calc(-10px * var(--ui-scale, 1));
-  --shop-pin-offset-y: calc(-12px * var(--ui-scale, 1));
+  --shop-pin-offset-x: 0;
+  --shop-pin-offset-y: 0;
 }
 
 html[data-touch="true"],
 html[data-prep-layout="stacked"] {
   --shop-pin-size: calc(32px * var(--ui-scale, 1));
   --shop-pin-glyph: calc(20px * var(--ui-scale, 1));
-  --shop-pin-offset-x: calc(-14px * var(--ui-scale, 1));
-  --shop-pin-offset-y: calc(-16px * var(--ui-scale, 1));
+}
+
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-chrome {
+  position: relative;
+  z-index: 1;
+}
+
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-card:not(.empty),
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-stack {
+  overflow: visible;
 }
 
 :is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-card:not(.empty) {
   position: relative;
-  isolation: isolate;
 }
 
 :is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-stack .shop-pin {
   position: absolute;
-  top: var(--shop-pin-offset-y, calc(-12px * var(--ui-scale, 1)));
-  left: var(--shop-pin-offset-x, calc(-10px * var(--ui-scale, 1)));
-  z-index: 30;
+  top: var(--shop-pin-offset-y, 0);
+  left: var(--shop-pin-offset-x, 0);
+  z-index: calc(var(--z-layer-objects, 20) + 5);
 }
 
 #app[data-phase="prep"][data-prep-side="enemy"] #shop-panel .shop-item-stack .shop-pin {
   left: auto;
-  right: var(--shop-pin-offset-x, calc(-10px * var(--ui-scale, 1)));
+  right: var(--shop-pin-offset-x, 0);
 }
 
 .shop-pin {
@@ -76,7 +84,7 @@ html[data-touch="true"] .shop-pin::before {
   transform: scale(1.08);
   background: rgba(255, 255, 255, 0.2);
   outline: none;
-  z-index: 31;
+  z-index: calc(var(--z-layer-objects, 20) + 6);
 }
 
 .shop-pin.active {

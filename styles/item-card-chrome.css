@@ -37,7 +37,7 @@
   width: fit-content;
   max-width: 100%;
   min-width: 0;
-  padding-top: calc(var(--shop-pin-size, 28px) * 0.42);
+  padding-top: var(--shop-pin-size, calc(28px * var(--ui-scale, 1)));
 }
 
 :is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-stack > .shop-item-visual {

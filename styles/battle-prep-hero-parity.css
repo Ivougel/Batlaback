@@ -111,13 +111,12 @@ html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-ph
   display: none !important;
 }
 
-/* HP/stamina + чипы — над full-body героем: чипы → HP → стamina → герой */
+/* HP/stamina + чипы — на бёдрах full-body героя, к центру арены */
 html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-side {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  justify-content: flex-end;
-  gap: calc(3px * var(--ui-scale, 1));
+  gap: 0;
   pointer-events: none;
 }
 
@@ -126,23 +125,15 @@ html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-ph
 }
 
 html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-vitals-column {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: calc(3px * var(--ui-scale, 1));
   width: 100%;
 }
 
 html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-phase="replay"]) #battle-hud-enemy .battle-hud-vitals-column {
   align-items: flex-end;
-}
-
-html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-status-stack {
-  order: 1;
-}
-
-html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .avatar-hero-bars {
-  order: 2;
 }
 
 html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-side .avatar-hero-bars-col {

@@ -1487,6 +1487,9 @@ function bindEnhancementTooltipEvents(el, enhancementId, context = "shop") {
     if (isTouchUi() || sidebarTooltipPinned) return;
     if (sidebarTooltipSource === context || sidebarTooltipSource === "enhancement") hideSidebarTooltip();
   });
+  if (typeof bindItemEmojiSparklePointer === "function") {
+    bindItemEmojiSparklePointer(el);
+  }
 }
 
 function showEnhancementTooltipAt(clientX, clientY, def, context = "shop", sourceEl = null, options = {}) {
@@ -3019,10 +3022,11 @@ function bindTouchTooltipDismiss() {
 function bindTouchInput() {
   const boardSection = document.querySelector(".board-section");
   const shopPanel = document.getElementById("shop-panel");
+  const prepShopPopover = document.getElementById("prep-shop-popover");
   const tdBuildPanel = document.getElementById("td-build-panel");
   const benchPopover = document.getElementById("prep-bench-popover");
   const benchFab = document.getElementById("btn-prep-bench-fab");
-  const touchTargets = [boardSection, canvas, shopPanel, tdBuildPanel, benchPopover, benchFab].filter(Boolean);
+  const touchTargets = [boardSection, canvas, shopPanel, prepShopPopover, tdBuildPanel, benchPopover, benchFab].filter(Boolean);
   const captureOpts = { passive: false, capture: true };
   const bubbleOpts = { passive: false };
   let activeGesture = null;
@@ -3070,7 +3074,10 @@ function bindTouchInput() {
     activeGesture = gestureKey(kind, id);
     lastTouchEventAt = Date.now();
     if (e.cancelable) e.preventDefault();
-    if (kind === "pointer") {
+    const shopPointerSurface = e.target?.closest?.(
+      "#prep-shop-popover, #shop-panel, .shop-card, .shop-pin, .btn-refresh-shop",
+    );
+    if (kind === "pointer" && !shopPointerSurface) {
       try {
         boardSection?.setPointerCapture(id);
       } catch (_) {}
@@ -5346,14 +5353,15 @@ function getPrepSidebarLinkTargetClient() {
 }
 
 function syncPrepSidebarBoardHover(clientX, clientY, side, st) {
-  if (isPrepEnhancementStripDrag()) {
-    const pointer = createSyntheticPointerEvent(clientX, clientY);
-    if (isDropOnBench(pointer) || isDropOnSell(pointer)) {
-      prepDropPreviewHover = null;
-      hoverCell = null;
-      hoverSlot = null;
-      return false;
+  const pointer = createSyntheticPointerEvent(clientX, clientY);
+  if (isDropOnBench(pointer) || isDropOnSell(pointer)) {
+    prepDropPreviewHover = null;
+    hoverCell = null;
+    hoverSlot = null;
+    if (typeof PrepDragArc !== "undefined" && PrepDragArc.isActive()) {
+      PrepDragArc.syncHoverCell(null, null);
     }
+    return false;
   }
   const inShopBounds = isPointerInsideShopDrawerBounds(clientX, clientY);
   if (!prepSidebarDragUnlocked && inShopBounds) {
@@ -5675,14 +5683,12 @@ function getPrepArcDropState() {
   const st = getLoadoutEditState(side);
 
   if (isPrepSidebarArcDrag()) {
-    if (isPrepEnhancementStripDrag()) {
-      const pointer = createSyntheticPointerEvent(lastPointerClient.x, lastPointerClient.y);
-      if (isDropOnBench(pointer)) {
-        return st.bench.length < MAX_BENCH ? "valid" : "invalid";
-      }
-      if (isDropOnSell(pointer)) {
-        return "valid";
-      }
+    const pointer = createSyntheticPointerEvent(lastPointerClient.x, lastPointerClient.y);
+    if (isDropOnBench(pointer)) {
+      return st.bench.length < MAX_BENCH ? "valid" : "invalid";
+    }
+    if (isDropOnSell(pointer)) {
+      return "valid";
     }
     const placement = getPrepDropPlacement(st, side);
     if (!placement) return "neutral";
@@ -10760,6 +10766,9 @@ function finishDragDrop(e) {
     return;
   }
 
+  const shopPurchasedDuringDrop = dragFrom.type === "shop";
+  const commerceSide = dragFrom.side || prepViewSide;
+
   let prepArcCelebrate = false;
   const dropE = createDropPointerEvent(e);
   const { x: dropClientX, y: dropClientY } = getDropPointerClient(e);
@@ -10782,7 +10791,10 @@ function finishDragDrop(e) {
   }
 
   const dropOnSell = isDropOnSell(dropE);
-  const sidebarPlacement = isPrepSidebarArcDrag() ? getPrepDropPlacement(st, side) : null;
+  const pointerOnBench = isDropOnBench(dropE);
+  const sidebarPlacement = isPrepSidebarArcDrag() && !pointerOnBench
+    ? getPrepDropPlacement(st, side)
+    : null;
   const dropBackToShop = isPrepSidebarArcDrag()
     && isPointerInsideShopDrawerBounds(dropClientX, dropClientY)
     && !hasPrepBoardDropTarget()
@@ -10791,11 +10803,11 @@ function finishDragDrop(e) {
   const onBoard = isOnBoard(mx, my, side);
   const boardCol = onBoard ? xToCol(mx, side) : null;
   const boardRow = onBoard ? yToRow(my, side) : null;
-  const dropCol = sidebarPlacement?.col ?? boardCol;
-  const dropRow = sidebarPlacement?.row ?? boardRow;
+  const dropCol = pointerOnBench ? null : (sidebarPlacement?.col ?? boardCol);
+  const dropRow = pointerOnBench ? null : (sidebarPlacement?.row ?? boardRow);
   const hasDropCell = dropCol != null && dropRow != null;
   const onBackpackSlot = hasDropCell && isSlotCell(st.containers, dropCol, dropRow);
-  const dropOnBench = !hasDropCell && !onBackpackSlot && isDropOnBench(dropE);
+  const dropOnBench = pointerOnBench;
 
   if (typeof tryFinishDragOnDoll === "function" && tryFinishDragOnDoll(dropE)) {
     clearDragUiState();
@@ -10845,7 +10857,10 @@ function finishDragDrop(e) {
             uid: `bench-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
             rotation: dragPayload.rotation || 0,
           });
+          prepArcCelebrate = true;
         }
+      } else {
+        log("Скамейка полна!");
       }
     } else if (dragFrom.type === "item" || dragFrom.type === "enhancement") {
       st.bench.push({ itemId: dragFrom.item.itemId, uid: dragFrom.item.uid, rotation: dragPayload.rotation || 0 });
@@ -11064,6 +11079,7 @@ function finishDragDrop(e) {
 
   maybeCelebratePrepArcDrop(prepArcCelebrate);
   clearDragUiState();
+  if (shopPurchasedDuringDrop) suppressShopClickUntil = 0;
   if (isTdLoadoutEditPhase() && side === "player") {
     const tower = getTdEditTower();
     if (tower) {
@@ -11074,9 +11090,11 @@ function finishDragDrop(e) {
     draw();
   } else if (canEditPrepSide(side)) applyCraftingForSide(side);
   if (typeof hasActiveDisplaceAnimations === "function" && hasActiveDisplaceAnimations(side)) {
+    if (shopPurchasedDuringDrop) renderShop(commerceSide);
     recalcSynergies();
     updateUI();
   } else {
+    if (shopPurchasedDuringDrop) renderShop(commerceSide);
     renderBench();
     recalcSynergies();
     updateUI();
@@ -11839,6 +11857,7 @@ registerPrepShopRuntime({
   beginPendingShopDrag,
   beginPendingBenchDrag,
   startBenchDrag,
+  isPrepCommerceDragActive: () => !!(dragPayload || pendingShopDrag || pendingBenchDrag || pendingEnhancementDrag),
   renderTdBuildPanel: () => {
     if (typeof renderTdBuildPanel === "function") renderTdBuildPanel();
   },

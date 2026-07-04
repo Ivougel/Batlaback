@@ -242,7 +242,8 @@ function commitShopPurchase(index, side = rt.getPrepViewSide()) {
     applyShopBuyMeta(side, st.items, purchasedId, st, ctx, (msg) => rt.log(msg));
   }
   if (rt.getPhase() === "prep" && !rt.getGameOver()) {
-    renderShop(side);
+    const dragActive = typeof rt.isPrepCommerceDragActive === "function" && rt.isPrepCommerceDragActive();
+    if (!dragActive) renderShop(side);
   }
   return purchasedId;
 }
@@ -494,15 +495,19 @@ function renderShop(side = rt.getPrepViewSide(), containerEl = null) {
         rt.beginPendingShopDrag(+card.dataset.index, e, side);
       });
       card.addEventListener("click", (e) => {
-        if (rt.isTouchUi()) return;
+        const popoverTapBuy = document.documentElement.dataset.prepShopPopover === "true";
+        if (rt.isTouchUi() && !popoverTapBuy) return;
         if (Date.now() < rt.getSuppressShopClickUntil()) return;
         if (e.target.closest(".shop-pin") || rt.getShopDidDrag()) {
           rt.setShopDidDrag(false);
+          return;
         }
+        buyFromShop(+card.dataset.index, side);
       });
     }
   });
   if (typeof refreshGamepadPrepFocus === "function") refreshGamepadPrepFocus();
+  if (typeof restoreDomSparkleFromTooltipSource === "function") restoreDomSparkleFromTooltipSource();
 }
 
 function renderBench(side = rt.getPrepViewSide(), containerEl = null) {
@@ -536,6 +541,7 @@ function renderBench(side = rt.getPrepViewSide(), containerEl = null) {
   });
   if (typeof refreshGamepadPrepFocus === "function") refreshGamepadPrepFocus();
   if (typeof window.syncPrepBenchFabBadge === "function") window.syncPrepBenchFabBadge();
+  if (typeof restoreDomSparkleFromTooltipSource === "function") restoreDomSparkleFromTooltipSource();
 }
 
 window.registerPrepShopRuntime = registerPrepShopRuntime;

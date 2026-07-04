@@ -19,8 +19,11 @@
 .item-emoji-sparkle-host:hover .item-emoji-sparkles,
 .item-emoji-sparkle-host.is-sparkle-active .item-emoji-sparkles,
 .shop-card:hover .item-emoji-sparkle-host .item-emoji-sparkles,
+.shop-card.is-sparkle-source .item-emoji-sparkle-host .item-emoji-sparkles,
 .bench-card:hover .item-emoji-sparkle-host .item-emoji-sparkles,
-.td-build-shop-card:hover .item-emoji-sparkle-host .item-emoji-sparkles {
+.bench-card.is-sparkle-source .item-emoji-sparkle-host .item-emoji-sparkles,
+.td-build-shop-card:hover .item-emoji-sparkle-host .item-emoji-sparkles,
+.td-build-shop-card.is-sparkle-source .item-emoji-sparkle-host .item-emoji-sparkles {
   opacity: 1;
 }
 
@@ -40,8 +43,14 @@
 .item-emoji-sparkle-host.is-sparkle-active .enh-shop-icon,
 .shop-card:hover .item-emoji-sparkle-host .icon-glyph,
 .shop-card:hover .item-emoji-sparkle-host .icon-duo,
+.shop-card:hover .item-emoji-sparkle-host .enh-shop-icon,
+.shop-card.is-sparkle-source .item-emoji-sparkle-host .icon-glyph,
+.shop-card.is-sparkle-source .item-emoji-sparkle-host .icon-duo,
+.shop-card.is-sparkle-source .item-emoji-sparkle-host .enh-shop-icon,
 .bench-card:hover .item-emoji-sparkle-host .icon-glyph,
-.bench-card:hover .item-emoji-sparkle-host .icon-duo {
+.bench-card:hover .item-emoji-sparkle-host .icon-duo,
+.bench-card.is-sparkle-source .item-emoji-sparkle-host .icon-glyph,
+.bench-card.is-sparkle-source .item-emoji-sparkle-host .icon-duo {
   filter:
     drop-shadow(0 0 6px rgba(255, 230, 120, 0.85))
     drop-shadow(0 0 14px rgba(255, 196, 77, 0.55))
@@ -84,7 +93,9 @@
 .item-emoji-sparkle-host:hover::after,
 .item-emoji-sparkle-host.is-sparkle-active::after,
 .shop-card:hover .item-emoji-sparkle-host::after,
-.bench-card:hover .item-emoji-sparkle-host::after {
+.shop-card.is-sparkle-source .item-emoji-sparkle-host::after,
+.bench-card:hover .item-emoji-sparkle-host::after,
+.bench-card.is-sparkle-source .item-emoji-sparkle-host::after {
   opacity: 1;
   animation: item-emoji-glow-pulse 1.1s ease-in-out infinite;
 }
