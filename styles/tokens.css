@@ -222,9 +222,9 @@
     calc(var(--shop-panel-w) * 0.18 * var(--prep-build-emoji-btn-scale, 1)),
     calc(4.5rem * var(--ui-scale, 1))
   );
-  --shop-card-row-h: calc(96px * var(--ui-scale, 1));
-  --shop-item-icon-size: calc(72px * var(--game-scale, 1));
-  --shop-item-icon-font: calc(56px * var(--game-scale, 1));
+  --shop-card-row-h: calc(100px * var(--ui-scale, 1));
+  --shop-item-icon-size: calc(63px * var(--ui-scale, 1));
+  --shop-item-icon-font: calc(50px * var(--ui-scale, 1));
   --shop-item-icon-duo-width: calc(var(--shop-item-icon-size) * 1.38);
   --shop-item-icon-duo-gap: 0px;
   --shop-card-icon-box: calc(var(--shop-item-icon-size) * 1.1);

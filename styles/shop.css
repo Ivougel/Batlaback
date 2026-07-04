@@ -263,13 +263,14 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] .shop-panel-header .prep
 }
 
 #app[data-phase="prep"] #shop-panel .shop-item-stack {
-  gap: calc(6px * var(--ui-scale));
+  gap: calc(4px * var(--ui-scale));
 }
 
 #app[data-phase="prep"] #shop-panel .shop-item-visual {
   position: relative;
   flex-shrink: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 0;
@@ -408,37 +409,7 @@ html[data-touch="true"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-
 
 #app[data-phase="prep"] #shop-panel .shop-item-stack > .cost,
 #app[data-phase="prep"] #shop-panel .shop-item-side-meta > .cost {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: calc(3px * var(--ui-scale, 1));
-  padding: 0;
-  min-height: 0;
-  border-radius: 0;
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  font-size: var(--font-sm);
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: 0;
-  white-space: nowrap;
   pointer-events: none;
-}
-
-#app[data-phase="prep"] #shop-panel .shop-item-stack > .cost .cost-value,
-#app[data-phase="prep"] #shop-panel .shop-item-side-meta > .cost .cost-value {
-  font-variant-numeric: tabular-nums;
-  color: rgba(240, 193, 75, 0.95);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 0 1px rgba(0, 0, 0, 0.65);
-}
-
-#app[data-phase="prep"] #shop-panel .shop-item-stack > .cost .cost-coin,
-#app[data-phase="prep"] #shop-panel .shop-item-side-meta > .cost .cost-coin {
-  font-size: calc(var(--font-sm) * 0.95);
-  line-height: 1;
-  opacity: 0.9;
-  flex-shrink: 0;
 }
 
 /* Редкость: свечение иконки */

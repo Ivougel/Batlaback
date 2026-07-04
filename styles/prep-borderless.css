@@ -309,13 +309,13 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] .btn-toggle-doll {
   box-shadow: none;
 }
 
-/* ─── Магазин: пин, цена, refresh, слот — без подложек (все темы / режимы) ─── */
+/* ─── Магазин: пин с подложкой, цена — pill (см. item-card-chrome.css) ─── */
 
 #app[data-phase="prep"] #shop-panel .shop-pin,
 #app[data-phase="prep"] .lobby2p-shop-slots .shop-pin {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
+  background: rgba(14, 12, 10, 0.82) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35) !important;
 }
 
 #app[data-phase="prep"] #shop-panel .shop-pin:hover,
@@ -329,26 +329,15 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] .btn-toggle-doll {
 
 #app[data-phase="prep"] #shop-panel .shop-pin.active,
 #app[data-phase="prep"] .lobby2p-shop-slots .shop-pin.active {
-  background: rgba(88, 166, 255, 0.22) !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-#app[data-phase="prep"] #shop-panel .shop-item-stack > .cost,
-#app[data-phase="prep"] #shop-panel .shop-item-side-meta > .cost,
-#app[data-phase="prep"] .lobby2p-shop-slots .shop-item-stack > .cost,
-#app[data-phase="prep"] .lobby2p-shop-slots .shop-item-side-meta > .cost {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-  min-height: 0 !important;
+  background: rgba(88, 166, 255, 0.28) !important;
+  border: 1px solid rgba(88, 166, 255, 0.45) !important;
+  box-shadow: 0 2px 8px rgba(88, 166, 255, 0.25) !important;
 }
 
 #app[data-phase="prep"] #shop-panel .shop-item-stack > .cost .cost-value,
 #app[data-phase="prep"] #shop-panel .shop-item-side-meta > .cost .cost-value,
 #app[data-phase="prep"] .lobby2p-shop-slots .shop-item-stack > .cost .cost-value {
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55), 0 0 1px rgba(0, 0, 0, 0.75);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65), 0 0 1px rgba(0, 0, 0, 0.75);
 }
 
 html[data-visual-theme="diablo"] #app[data-phase="prep"] #shop-panel .shop-item-stack > .cost .cost-value,
