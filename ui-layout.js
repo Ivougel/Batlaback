@@ -1081,6 +1081,11 @@
     const vpRect = viewport.getBoundingClientRect();
     const root = document.documentElement;
     const useFlankZones = root.dataset.battleHeroPlacement === "flank-arena";
+    if (useFlankZones && root.dataset.prepHudPreset === "unit-frame") {
+      root.setAttribute("data-battle-unit-frame-hud", "true");
+      return;
+    }
+    root.removeAttribute("data-battle-unit-frame-hud");
     const tabletLandscapeSide = isTabletLandscapeSideBattle(root);
     const prepHeroLayer = typeof usesBattlePrepHeroLayer === "function"
       && usesBattlePrepHeroLayer(root);

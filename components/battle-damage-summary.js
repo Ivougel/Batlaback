@@ -521,7 +521,9 @@ function isFlankArenaStatusHud() {
 
 function getFlankHudStatusEl(team, selector) {
   if (!isFlankArenaStatusHud()) return null;
-  const hud = document.getElementById(team === "player" ? "battle-hud-player" : "battle-hud-enemy");
+  const hud = typeof getBattleHudBarsEl === "function"
+    ? getBattleHudBarsEl(team)
+    : document.getElementById(team === "player" ? "battle-hud-player" : "battle-hud-enemy");
   return hud?.querySelector(selector) || null;
 }
 
@@ -538,7 +540,9 @@ function hasActiveBenefitStacks(team, state) {
 }
 
 function clearFlankHudStatusDisplays(team) {
-  const hud = document.getElementById(team === "player" ? "battle-hud-player" : "battle-hud-enemy");
+  const hud = typeof getBattleHudBarsEl === "function"
+    ? getBattleHudBarsEl(team)
+    : document.getElementById(team === "player" ? "battle-hud-player" : "battle-hud-enemy");
   if (!hud) return;
   [
     ".battle-hud-runtime-chips",

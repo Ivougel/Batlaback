@@ -783,13 +783,16 @@ const ArenaEquipment = (() => {
     if (body.attack || body.fxMounted) {
       const x = (body.renderX ?? body.x) + (body.flightRepelX || 0);
       const y = (body.renderY ?? body.y) + (body.flightRepelY || 0);
-      const rx = Math.round(x);
-      const ry = Math.round(y);
+      const smoothPos = !!body.attack;
+      const px = smoothPos ? x : Math.round(x);
+      const py = smoothPos ? y : Math.round(y);
       const rr = Math.round(rot * 10) / 10;
       const transform = body.fxTransformOnly
-        ? `translate3d(${rx}px, ${ry}px, 0) translate(-50%, -50%) scale(${scale}) rotate(${rr}deg)`
+        ? `translate3d(${px}px, ${py}px, 0) translate(-50%, -50%) scale(${scale}) rotate(${rr}deg)`
         : `translate(-50%, -50%) scale(${scale}) rotate(${rr}deg)`;
-      const posKey = `${rx}|${ry}|${scale}|${rr}|${body.fxTransformOnly ? 1 : 0}`;
+      const posKey = smoothPos
+        ? `${x.toFixed(2)}|${y.toFixed(2)}|${scale}|${rr}|${body.fxTransformOnly ? 1 : 0}`
+        : `${px}|${py}|${scale}|${rr}|${body.fxTransformOnly ? 1 : 0}`;
       if (body._arenaVisKey !== posKey) {
         body._arenaVisKey = posKey;
         if (!body.fxTransformOnly) {
@@ -1104,11 +1107,11 @@ const ArenaEquipment = (() => {
       el.style.opacity = "0";
       return;
     }
-    const x = Math.round(pv.x);
-    const y = Math.round(pv.y);
+    const x = pv.x;
+    const y = pv.y;
     const scale = pv.scale ?? 1;
     const rot = Math.round((pv.rotation ?? 0) * 10) / 10;
-    const key = `${x}|${y}|${scale}|${rot}`;
+    const key = `${x.toFixed(2)}|${y.toFixed(2)}|${scale}|${rot}`;
     if (el._projKey !== key) {
       el._projKey = key;
       el.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%) scale(${scale}) rotate(${rot}deg)`;
@@ -1274,7 +1277,8 @@ const ArenaEquipment = (() => {
     if (!all.length) return;
 
     viewportHomeCache = new Map();
-    const physicsGap = arenaPhysicsGapMs();
+    const anyAttacking = all.some((b) => b.attack);
+    const physicsGap = anyAttacking ? 0 : arenaPhysicsGapMs();
     if (physicsGap > 0) {
       const now = performance.now();
       if (now - lastPhysicsStepAt < physicsGap) {

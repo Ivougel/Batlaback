@@ -1,35 +1,63 @@
 /**
- * MMORPG unit-frame HUD на экране подготовки (игрок слева, противник справа).
+ * MMORPG unit-frame HUD — prep и battle (игрок слева, противник справа).
  */
 
-function isPrepUnitFrameHudActive() {
-  if (typeof isPrepHudPresetUnitFrame !== "function" || !isPrepHudPresetUnitFrame()) return false;
+function isUnitFrameHudSurface() {
   const root = document.documentElement;
   return root.dataset.prepLayout === "side"
     || root.dataset.uiSurface === "tablet-side"
     || root.dataset.uiSurface === "desktop";
 }
 
-function syncPrepUnitFrameHudChrome() {
+function isPrepUnitFrameHudActive() {
+  if (typeof isPrepHudPresetUnitFrame !== "function" || !isPrepHudPresetUnitFrame()) return false;
+  if (phase !== "prep") return false;
+  return isUnitFrameHudSurface();
+}
+
+function isBattleUnitFrameHudActive() {
+  if (typeof isPrepHudPresetUnitFrame !== "function" || !isPrepHudPresetUnitFrame()) return false;
+  if (phase !== "battle" && phase !== "replay") return false;
+  return document.documentElement.dataset.battleHeroPlacement === "flank-arena";
+}
+
+function syncUnitFrameHudChrome() {
+  const root = document.documentElement;
   const heroCard = document.getElementById("prep-hero-card");
   const strip = document.getElementById("prep-unit-frame-hud");
-  const active = isPrepUnitFrameHudActive()
-    && phase === "prep"
+  const prepActive = isPrepUnitFrameHudActive()
     && !gameOver
     && !(typeof isLobby2pMode === "function" && isLobby2pMode() && lobbyState?.isSplitLobby);
+  const battleActive = isBattleUnitFrameHudActive() && !gameOver;
+  const active = prepActive || battleActive;
 
-  heroCard?.classList.toggle("hidden", active);
-  heroCard?.toggleAttribute("hidden", active);
-  heroCard?.toggleAttribute("aria-hidden", active);
+  root.toggleAttribute("data-battle-unit-frame-hud", battleActive);
+
+  if (phase === "prep") {
+    heroCard?.classList.toggle("hidden", prepActive);
+    heroCard?.toggleAttribute("hidden", prepActive);
+    heroCard?.toggleAttribute("aria-hidden", prepActive);
+  } else {
+    heroCard?.classList.add("hidden");
+    heroCard?.setAttribute("hidden", "");
+    heroCard?.setAttribute("aria-hidden", "true");
+  }
 
   if (strip) {
     strip.classList.toggle("hidden", !active);
     strip.toggleAttribute("aria-hidden", !active);
+    strip.classList.toggle("prep-unit-frame-hud--battle", battleActive);
   }
 
   if (!active && strip) {
     strip.innerHTML = "";
+    strip.removeAttribute("data-battle-sig");
   }
+}
+
+/** @deprecated alias */
+function syncPrepUnitFrameHudChrome() {
+  syncUnitFrameHudChrome();
 }
 
 function renderPrepUnitFramePortraitHtml(profile, side) {
@@ -40,12 +68,12 @@ function renderPrepUnitFramePortraitHtml(profile, side) {
   const classId = profile?.classId || "";
   if (src) {
     return `
-      <div class="prep-unit-frame__portrait-ring" data-class="${classId}">
+      <div class="prep-unit-frame__portrait-ring" data-class="${classId}" data-team="${side}" role="button" tabindex="0" aria-label="${name}">
         <img class="prep-unit-frame__portrait-img" src="${src}" alt="${name}" draggable="false">
       </div>`;
   }
   return `
-    <div class="prep-unit-frame__portrait-ring" data-class="${classId}" data-fallback="${profile?.classIcon || "🧙"}">
+    <div class="prep-unit-frame__portrait-ring" data-class="${classId}" data-team="${side}" data-fallback="${profile?.classIcon || "🧙"}" role="button" tabindex="0" aria-label="${name}">
       <span class="prep-unit-frame__portrait-fallback" aria-hidden="true">${profile?.classIcon || "🧙"}</span>
     </div>`;
 }
@@ -106,20 +134,24 @@ function renderPrepUnitFrameSideHtml({
   companion,
   badge,
   isActive,
+  battle = false,
 }) {
   const name = typeof getPrepHeroCardName === "function"
     ? getPrepHeroCardName(profile)
     : profile?.className || profile?.name || "Герой";
   const portrait = renderPrepUnitFramePortraitHtml(profile, team);
-  const bars = renderPrepUnitFrameBarsHtml(profile, team, extras);
-  const pet = team === "player" ? renderPrepUnitFrameCompanionHtml(companion) : "";
-  const extrasHtml = renderPrepUnitFrameExtrasHtml(mutationHtml, enhancementHtml, modifierStripHtml);
+  const bars = battle && typeof renderAvatarBarsHTML === "function"
+    ? `<div class="unit-frame-battle-hud-mount">${renderAvatarBarsHTML(profile, team)}</div>`
+    : renderPrepUnitFrameBarsHtml(profile, team, extras);
+  const pet = !battle && team === "player" ? renderPrepUnitFrameCompanionHtml(companion) : "";
+  const extrasHtml = battle ? "" : renderPrepUnitFrameExtrasHtml(mutationHtml, enhancementHtml, modifierStripHtml);
   const badgeHtml = badge
     ? `<span class="prep-unit-frame__level-badge" aria-label="Раунд">${badge}</span>`
     : "";
+  const battleClass = battle ? " prep-unit-frame--battle" : "";
 
   return `
-    <div class="prep-unit-frame prep-unit-frame--${team}${isActive ? " is-active" : ""}" data-team="${team}">
+    <div class="prep-unit-frame prep-unit-frame--${team}${battleClass}${isActive ? " is-active" : ""}" data-team="${team}">
       <div class="prep-unit-frame__shell">
         <div class="prep-unit-frame__main">
           ${team === "player" ? portrait : ""}
@@ -147,20 +179,48 @@ function parseHpLabel(hpLabel, profile) {
   return { hpCurrent: max, hpMax: max };
 }
 
+function bindUnitFramePortraitClicks(root) {
+  if (!root || root.dataset.portraitClicksBound === "1") return;
+  root.dataset.portraitClicksBound = "1";
+  root.addEventListener("click", (e) => {
+    const ring = e.target.closest(".prep-unit-frame__portrait-ring");
+    if (!ring) return;
+    const team = ring.dataset.team || ring.closest(".prep-unit-frame")?.dataset.team;
+    if (!team) return;
+    if (phase === "battle" || phase === "replay") {
+      if (typeof toggleBattleInventoryPopover === "function") toggleBattleInventoryPopover(team);
+      return;
+    }
+    if (team === "player" && typeof setPrepViewSide === "function") setPrepViewSide("player");
+    else if (team === "enemy" && typeof setPrepViewSide === "function") setPrepViewSide("enemy");
+  });
+  root.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const ring = e.target.closest(".prep-unit-frame__portrait-ring");
+    if (!ring) return;
+    e.preventDefault();
+    ring.click();
+  });
+}
+
+function getUnitFrameBattleHudMount(team) {
+  return document.querySelector(`.prep-unit-frame--${team} .unit-frame-battle-hud-mount`);
+}
+
 function syncPrepUnitFrameHud(context = {}) {
-  syncPrepUnitFrameHudChrome();
-  if (!isPrepUnitFrameHudActive() || phase !== "prep") return;
+  syncUnitFrameHudChrome();
+  if (!isPrepUnitFrameHudActive()) return;
 
   const strip = document.getElementById("prep-unit-frame-hud");
   if (!strip) return;
+
+  strip.removeAttribute("data-portrait-clicks-bound");
 
   const {
     playerProfile,
     enemyProfile,
     playerState = {},
     enemyState = {},
-    playerMutRt = {},
-    enemyMutRt = {},
     playerMutationHtml = "",
     enemyMutationHtml = "",
     playerEnhancementHtml = "",
@@ -168,7 +228,6 @@ function syncPrepUnitFrameHud(context = {}) {
     playerModifierHtml = "",
     enemyModifierHtml = "",
     playerCompanion = null,
-    enemyCompanion = null,
     playerHpLabel,
     enemyHpLabel,
     roundLabel = "",
@@ -211,7 +270,6 @@ function syncPrepUnitFrameHud(context = {}) {
       mutationHtml: enemyMutationHtml,
       enhancementHtml: enemyEnhancementHtml,
       modifierStripHtml: enemyModifierHtml,
-      companion: enemyCompanion,
       badge: roundLabel || String(round || 1),
       isActive: activeSide === "enemy",
     })}
@@ -227,5 +285,41 @@ function syncPrepUnitFrameHud(context = {}) {
   }
   if (typeof bindPrepCompanionTooltip === "function") {
     bindPrepCompanionTooltip(strip);
+  }
+  bindUnitFramePortraitClicks(strip);
+}
+
+function syncBattleUnitFrameHud(state, playerProfile, enemyProfile) {
+  syncUnitFrameHudChrome();
+  if (!isBattleUnitFrameHudActive()) return;
+
+  const strip = document.getElementById("prep-unit-frame-hud");
+  if (!strip || !playerProfile || !enemyProfile) return;
+
+  const sig = [
+    typeof profileHeroShellSignature === "function" ? profileHeroShellSignature(playerProfile) : "",
+    typeof profileHeroShellSignature === "function" ? profileHeroShellSignature(enemyProfile) : "",
+    typeof profileBarsSignature === "function" ? profileBarsSignature(playerProfile) : "",
+    typeof profileBarsSignature === "function" ? profileBarsSignature(enemyProfile) : "",
+  ].join("|");
+
+  if (strip.dataset.battleSig !== sig) {
+    strip.dataset.battleSig = sig;
+    strip.removeAttribute("data-portrait-clicks-bound");
+    strip.innerHTML = `
+      ${renderPrepUnitFrameSideHtml({ team: "player", profile: playerProfile, battle: true })}
+      ${renderPrepUnitFrameSideHtml({ team: "enemy", profile: enemyProfile, battle: true })}
+    `;
+    bindUnitFramePortraitClicks(strip);
+  }
+
+  if (state) {
+    if (typeof syncAvatarHeroResourceBars === "function") {
+      syncAvatarHeroResourceBars("player", state);
+      syncAvatarHeroResourceBars("enemy", state);
+    }
+    if (typeof syncAllDamageSummaryDisplays === "function") {
+      syncAllDamageSummaryDisplays(state);
+    }
   }
 }

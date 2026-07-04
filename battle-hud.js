@@ -631,7 +631,9 @@ function renderRuntimeChipHTML(chip) {
 
 function syncBattleHudRuntimeChips(team, sideState, battleState = null) {
   if (document.documentElement.dataset.battleHeroPlacement !== "flank-arena" || !sideState) return;
-  const hud = document.getElementById(team === "player" ? "battle-hud-player" : "battle-hud-enemy");
+  const hud = typeof getBattleHudBarsEl === "function"
+    ? getBattleHudBarsEl(team)
+    : document.getElementById(team === "player" ? "battle-hud-player" : "battle-hud-enemy");
   if (!hud) return;
 
   let row = hud.querySelector(".battle-hud-runtime-chips");

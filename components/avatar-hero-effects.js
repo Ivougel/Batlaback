@@ -37,7 +37,18 @@ function maybeTriggerHeroTakingHit(team, shell, hpCurrent) {
 }
 
 function getBattleHudBarsEl(team) {
+  if (typeof getUnitFrameBattleHudMount === "function") {
+    const mount = getUnitFrameBattleHudMount(team);
+    if (mount) return mount;
+  }
   return document.getElementById(team === "player" ? "battle-hud-player" : "battle-hud-enemy");
+}
+
+function getUnitFrameHitShell(team) {
+  const slot = getAvatarSlotEl(team);
+  const shell = slot?.querySelector(".avatar-hero-shell");
+  if (shell) return shell;
+  return document.querySelector(`.prep-unit-frame--${team} .prep-unit-frame__shell`);
 }
 
 function renderAvatarBarsHTML(profile, team) {
@@ -273,10 +284,12 @@ function syncAvatarHeroHealPreview(barsRoot, hpCurrent, hpMax, projectedHeal2s) 
 }
 
 function syncAvatarHeroResourceBars(team, state) {
-  const slot = getAvatarSlotEl(team);
-  const shell = slot?.querySelector(".avatar-hero-shell");
   const barsRoot = getBattleHudBarsEl(team);
-  if (!shell || !barsRoot || !state) return;
+  if (!barsRoot || !state) return;
+  const shell = typeof getUnitFrameHitShell === "function"
+    ? getUnitFrameHitShell(team)
+    : getAvatarSlotEl(team)?.querySelector(".avatar-hero-shell");
+  if (!shell) return;
 
   const side = team === "player" ? state.player : state.enemy;
   const hpCurrent = side?.hp ?? 0;
@@ -313,10 +326,12 @@ function syncAvatarHeroResourceBars(team, state) {
 }
 
 function syncAvatarHeroHpOnly(team, hpCurrent, hpMax, state = null) {
-  const slot = getAvatarSlotEl(team);
-  const shell = slot?.querySelector(".avatar-hero-shell");
   const barsRoot = getBattleHudBarsEl(team);
-  if (!shell || !barsRoot) return;
+  if (!barsRoot) return;
+  const shell = typeof getUnitFrameHitShell === "function"
+    ? getUnitFrameHitShell(team)
+    : getAvatarSlotEl(team)?.querySelector(".avatar-hero-shell");
+  if (!shell) return;
   maybeTriggerHeroTakingHit(team, shell, hpCurrent);
   const hpPct = Math.max(0, Math.min(100, (hpCurrent / Math.max(1, hpMax)) * 100));
   const hpFill = barsRoot.querySelector(".avatar-hero-hp-fill");
@@ -332,11 +347,12 @@ function isFlankArenaBattleHud() {
 }
 
 function syncAvatarHeroEffects(team, profile, state) {
-  const slot = getAvatarSlotEl(team);
-  if (!slot) return;
-  const shell = slot.querySelector(".avatar-hero-shell");
   const barsRoot = getBattleHudBarsEl(team);
-  if (!shell || !barsRoot) return;
+  if (!barsRoot) return;
+  const shell = typeof getUnitFrameHitShell === "function"
+    ? getUnitFrameHitShell(team)
+    : getAvatarSlotEl(team)?.querySelector(".avatar-hero-shell");
+  if (!shell) return;
 
   const hpCurrent = profile.hpCurrent ?? profile.hp ?? 0;
   const hpMax = profile.hpMax ?? profile.hp ?? 100;
@@ -521,6 +537,17 @@ function ensureBattleHeroShells(state, playerProfile, enemyProfile, opts = {}) {
     battleHud.hidden = false;
     battleHud.removeAttribute("aria-hidden");
   }
+
+  if (typeof isBattleUnitFrameHudActive === "function" && isBattleUnitFrameHudActive()) {
+    if (typeof syncBattleUnitFrameHud === "function") {
+      syncBattleUnitFrameHud(state, playerProfile, enemyProfile);
+    }
+    document.getElementById("battle-hud-player")?.replaceChildren();
+    document.getElementById("battle-hud-enemy")?.replaceChildren();
+    if (typeof syncUnitFrameHudChrome === "function") syncUnitFrameHudChrome();
+    return;
+  }
+
   let shellChanged = false;
   ["player", "enemy"].forEach((team) => {
     const profile = team === "player" ? playerProfile : enemyProfile;

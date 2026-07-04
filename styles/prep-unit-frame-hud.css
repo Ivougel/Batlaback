@@ -317,3 +317,82 @@ html[data-prep-hud-preset="unit-frame"][data-visual-theme="diablo"] .prep-unit-f
     0 0 0 1px rgba(220, 100, 40, 0.4),
     0 0 20px rgba(180, 40, 10, 0.5);
 }
+
+/* ─── Battle / replay: unit frames вместо flank-портретов ─── */
+
+html[data-prep-hud-preset="unit-frame"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-top-bar {
+  display: flex !important;
+  position: relative;
+  z-index: calc(var(--z-layer-hud) + 8);
+  flex: 0 0 auto;
+  align-items: stretch;
+  gap: calc(8px * var(--ui-scale, 1));
+  padding:
+    calc(6px * var(--ui-scale, 1))
+    calc(10px * var(--ui-scale, 1))
+    calc(8px * var(--ui-scale, 1));
+  background: transparent !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+
+html[data-prep-hud-preset="unit-frame"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-unit-frame-hud--battle {
+  pointer-events: auto;
+}
+
+html[data-prep-hud-preset="unit-frame"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-scene-ui .battle-scene-avatar,
+html[data-prep-hud-preset="unit-frame"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-character-layer {
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+}
+
+html[data-prep-hud-preset="unit-frame"] #app:is([data-phase="battle"], [data-phase="replay"]) #battle-run-hud .battle-hud-side {
+  display: none !important;
+}
+
+html[data-prep-hud-preset="unit-frame"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-unit-frame--battle .unit-frame-battle-hud-mount {
+  width: 100%;
+  min-width: 0;
+}
+
+html[data-prep-hud-preset="unit-frame"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-unit-frame--battle .battle-hud-vitals-column {
+  gap: calc(2px * var(--ui-scale, 1));
+}
+
+html[data-prep-hud-preset="unit-frame"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-unit-frame--battle .battle-hud-status-stack {
+  margin-top: calc(2px * var(--ui-scale, 1));
+}
+
+html[data-prep-hud-preset="unit-frame"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-unit-frame--battle .avatar-hero-hp-bar,
+html[data-prep-hud-preset="unit-frame"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-unit-frame--battle .avatar-hero-stamina-bar {
+  height: calc(16px * var(--ui-scale, 1));
+}
+
+html[data-prep-hud-preset="unit-frame"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-unit-frame--battle .avatar-hero-hp-label,
+html[data-prep-hud-preset="unit-frame"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-unit-frame--battle .avatar-hero-stamina-label {
+  font-size: calc(10px * var(--ui-scale, 1));
+}
+
+html[data-prep-hud-preset="unit-frame"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-unit-frame--battle .battle-hud-debuff-row {
+  min-height: calc(20px * var(--ui-scale, 1));
+}
+
+html[data-prep-hud-preset="unit-frame"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-unit-frame__portrait-ring {
+  cursor: pointer;
+}
+
+html[data-prep-hud-preset="unit-frame"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-unit-frame__portrait-ring:focus-visible {
+  outline: 2px solid rgba(245, 200, 66, 0.65);
+  outline-offset: 2px;
+}
+
+html[data-prep-hud-preset="unit-frame"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-unit-frame__shell.hero-taking-hit {
+  animation: prep-unit-frame-hit-shake 0.28s ease-out;
+}
+
+@keyframes prep-unit-frame-hit-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}

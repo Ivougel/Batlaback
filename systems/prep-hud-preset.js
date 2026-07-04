@@ -1,6 +1,6 @@
 /**
- * Пресеты HUD экрана подготовки (localStorage: bb-prep-hud-preset).
- * hero-card — текущая карточка героя; unit-frame — MMORPG unit frames.
+ * Пресеты HUD prep/battle (localStorage: bb-prep-hud-preset).
+ * hero-card — текущие фреймы; unit-frame — MMORPG unit frames.
  */
 
 const PREP_HUD_PRESET_STORAGE_KEY = "bb-prep-hud-preset";
@@ -15,7 +15,7 @@ const PREP_HUD_PRESETS = {
   "unit-frame": {
     id: "unit-frame",
     label: "Unit Frame",
-    hint: "Круглые портреты, полосы HP и золота — как в MMORPG",
+    hint: "MMORPG — круглые портреты и полосы HP на подготовке и в бою",
     emoji: "⚔️",
   },
 };
@@ -45,7 +45,9 @@ function applyPrepHudPreset(presetId) {
     localStorage.setItem(PREP_HUD_PRESET_STORAGE_KEY, preset.id);
   } catch (_) { /* ignore */ }
 
-  if (typeof syncPrepUnitFrameHudChrome === "function") {
+  if (typeof syncUnitFrameHudChrome === "function") {
+    syncUnitFrameHudChrome();
+  } else if (typeof syncPrepUnitFrameHudChrome === "function") {
     syncPrepUnitFrameHudChrome();
   }
   if (typeof renderPlayerProfiles === "function") {

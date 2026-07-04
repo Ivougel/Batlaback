@@ -10929,6 +10929,7 @@ function renderPlayerProfiles(opts = {}) {
     }
     document.getElementById("battle-hud-player")?.replaceChildren();
     document.getElementById("battle-hud-enemy")?.replaceChildren();
+    if (typeof syncUnitFrameHudChrome === "function") syncUnitFrameHudChrome();
     if (!playerAvatarEl.querySelector(".profile-avatar") || playerAvatarEl.querySelector(".avatar-hero-shell")) {
       playerAvatarEl.innerHTML = renderProfileAvatarHTML(playerProfile, "player");
     }
