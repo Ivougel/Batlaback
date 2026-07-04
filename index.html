@@ -18,9 +18,9 @@
   <link rel="stylesheet" href="styles/layers.css?v=7">
   <link rel="stylesheet" href="styles/bottom-chrome.css?v=24">
   <link rel="stylesheet" href="styles.css?v=39">
-  <link rel="stylesheet" href="styles/shop.css?v=8">
-  <link rel="stylesheet" href="styles/item-card-chrome.css?v=3">
-  <link rel="stylesheet" href="styles/shop-pin-chrome.css?v=3">
+  <link rel="stylesheet" href="styles/shop.css?v=10">
+  <link rel="stylesheet" href="styles/item-card-chrome.css?v=6">
+  <link rel="stylesheet" href="styles/shop-pin-chrome.css?v=7">
   <link rel="stylesheet" href="styles/prep-top-bar.css?v=2">
   <link rel="stylesheet" href="styles/campaign.css?v=1">
   <link rel="stylesheet" href="styles/mutations.css?v=1">
@@ -57,18 +57,16 @@
   <link rel="stylesheet" href="styles/tablet-stacked.css?v=7">
   <link rel="stylesheet" href="styles/prep-bench-popover.css?v=8">
   <link rel="stylesheet" href="styles/tablet-side.css?v=35">
-  <link rel="stylesheet" href="styles/prep-tablet-zone-layout.css?v=5">
+  <link rel="stylesheet" href="styles/prep-tablet-zone-layout.css?v=6">
   <link rel="stylesheet" href="styles/battle-inventory-popover.css?v=8">
-  <link rel="stylesheet" href="styles/lobby.css?v=8">
+  <link rel="stylesheet" href="styles/lobby.css?v=12">
+  <link rel="stylesheet" href="styles/lobby-2p-hud.css?v=3">
   <link rel="stylesheet" href="styles/td-mode.css?v=22">
   <link rel="stylesheet" href="styles/td-run-compact.css?v=14">
   <link rel="stylesheet" href="styles/lobby-roster-float.css?v=2">
   <link rel="stylesheet" href="styles/meadow-theme.css?v=2">
   <link rel="stylesheet" href="styles/battle-theme-ui.css?v=2">
-  <link rel="stylesheet" href="styles/prep-borderless.css?v=3">
-  <link rel="stylesheet" href="styles/battle-borderless.css?v=1">
-  <link rel="stylesheet" href="styles/item-stats-report.css?v=4">
-  <link rel="stylesheet" href="styles/prep-juice.css?v=9">
+  <link rel="stylesheet" href="styles/prep-juice.css?v=10">
   <link rel="stylesheet" href="styles/prep-forest-hud.css?v=3">
   <link rel="stylesheet" href="styles/prep-timer-hero.css?v=3">
   <link rel="stylesheet" href="styles/battle-result-glass.css?v=1">
@@ -79,6 +77,11 @@
   <link rel="stylesheet" href="styles/escape-menu.css?v=1">
   <link rel="stylesheet" href="styles/pass-laugh-balls.css?v=1">
   <link rel="stylesheet" href="styles/theme-diablo.css?v=3">
+  <link rel="stylesheet" href="styles/battle-borderless.css?v=1">
+  <link rel="stylesheet" href="styles/item-stats-report.css?v=4">
+  <link rel="stylesheet" href="styles/prep-borderless.css?v=5">
+  <link rel="stylesheet" href="styles/sell-drop-highlight.css?v=1">
+  <link rel="stylesheet" href="styles/item-emoji-sparkle.css?v=1">
   <script>
     (function () {
       try {
@@ -93,7 +96,7 @@
   <script src="systems/layout-scales.js?v=2"></script>
   <script src="systems/battle-fx-tier.js?v=1"></script>
   <script src="systems/battle-hero-anchor.js?v=27"></script>
-  <script src="ui-layout.js?v=116"></script>
+  <script src="ui-layout.js?v=117"></script>
 </head>
 <body>
   <div id="ui-ornament-frame" class="ui-ornament-frame" aria-hidden="true">
@@ -342,6 +345,107 @@
 
       </section>
     </main>
+
+    <section id="lobby2p-prep-layout" class="lobby2p-prep-layout hidden" aria-label="Лобби 2P — подготовка">
+      <header class="lobby2p-topbar">
+        <span class="lobby2p-topbar-label">сила рюкзаков лобби</span>
+        <div class="lobby2p-power-track" id="lobby2p-power-track" aria-hidden="true">
+          <div class="lobby2p-power-seg lobby2p-power-seg--p0" id="lobby2p-power-p0"></div>
+          <div class="lobby2p-power-seg lobby2p-power-seg--p1" id="lobby2p-power-p1"></div>
+        </div>
+        <div class="lobby2p-topbar-meta">
+          <span class="lobby2p-topbar-round">раунд <b id="lobby2p-top-round">1</b></span>
+          <button type="button" class="lobby2p-topbar-roster" id="lobby2p-roster-toggle" title="Участники лобби">⋯</button>
+        </div>
+      </header>
+
+      <div class="lobby2p-split" id="lobby2p-split">
+        <header class="lobby2p-col-head" data-human="0">
+          <span class="lobby2p-col-avatar"><img id="lobby2p-avatar-0" alt="" draggable="false"></span>
+          <span class="lobby2p-col-title">
+            <span class="lobby2p-col-name" id="lobby2p-name-0">Игрок 1</span>
+            <span class="lobby2p-col-badges" id="lobby2p-badges-0"></span>
+          </span>
+          <span class="lobby2p-col-resources">
+            <span class="lobby2p-col-gold">💰 <b id="lobby2p-gold-0">0</b></span>
+            <span class="lobby2p-col-hp">❤️ <b id="lobby2p-hp-0">100</b></span>
+          </span>
+          <span class="lobby2p-col-equip" id="lobby2p-equip-0" aria-label="Усиления"></span>
+        </header>
+
+        <div class="lobby2p-split-gap" aria-hidden="true"></div>
+
+        <header class="lobby2p-col-head" data-human="1">
+          <span class="lobby2p-col-avatar"><img id="lobby2p-avatar-1" alt="" draggable="false"></span>
+          <span class="lobby2p-col-title">
+            <span class="lobby2p-col-name" id="lobby2p-name-1">Игрок 2</span>
+            <span class="lobby2p-col-badges" id="lobby2p-badges-1"></span>
+          </span>
+          <span class="lobby2p-col-resources">
+            <span class="lobby2p-col-gold">💰 <b id="lobby2p-gold-1">0</b></span>
+            <span class="lobby2p-col-hp">❤️ <b id="lobby2p-hp-1">100</b></span>
+          </span>
+          <span class="lobby2p-col-equip" id="lobby2p-equip-1" aria-label="Усиления"></span>
+        </header>
+
+        <div class="lobby2p-canvas-host" id="lobby2p-canvas-host"></div>
+
+        <div class="lobby2p-col-shop" data-human="0">
+          <div class="lobby2p-shop-head">
+            <span class="lobby2p-shop-label">магазин · тап на предмет — инфо</span>
+            <button type="button" class="lobby2p-refresh btn-secondary" data-human="0" title="Обновить магазин">↻ <b>1</b></button>
+          </div>
+          <div class="lobby2p-shop-body">
+            <div class="shop-slots lobby2p-shop-slots" id="lobby2p-shop-slots-0"></div>
+            <button type="button" class="lobby2p-sell-zone sell-drop-zone" data-human="0" aria-label="Продать">💰</button>
+          </div>
+        </div>
+
+        <div class="lobby2p-split-gap" aria-hidden="true"></div>
+
+        <div class="lobby2p-col-shop" data-human="1">
+          <div class="lobby2p-shop-head">
+            <span class="lobby2p-shop-label">магазин · тап на предмет — инфо</span>
+            <button type="button" class="lobby2p-refresh btn-secondary" data-human="1" title="Обновить магазин">↻ <b>1</b></button>
+          </div>
+          <div class="lobby2p-shop-body">
+            <div class="shop-slots lobby2p-shop-slots" id="lobby2p-shop-slots-1"></div>
+            <button type="button" class="lobby2p-sell-zone sell-drop-zone" data-human="1" aria-label="Продать">💰</button>
+          </div>
+        </div>
+
+        <div class="lobby2p-col-bench" data-human="0">
+          <div class="lobby2p-bench-head">скамейка <b class="lobby2p-bench-count" id="lobby2p-bench-count-0">0</b> / 6</div>
+          <div class="bench-slots lobby2p-bench-slots" id="lobby2p-bench-slots-0"></div>
+        </div>
+
+        <div class="lobby2p-split-gap" aria-hidden="true"></div>
+
+        <div class="lobby2p-col-bench" data-human="1">
+          <div class="lobby2p-bench-head">скамейка <b class="lobby2p-bench-count" id="lobby2p-bench-count-1">0</b> / 6</div>
+          <div class="bench-slots lobby2p-bench-slots" id="lobby2p-bench-slots-1"></div>
+        </div>
+
+        <footer class="lobby2p-col-actions" data-human="0">
+          <button type="button" class="lobby2p-farm btn-secondary">🌾 Фарм</button>
+          <button type="button" class="lobby2p-ready btn-primary">Готов</button>
+          <button type="button" class="lobby2p-duel btn-secondary">⚔️ Дуэль</button>
+        </footer>
+
+        <div class="lobby2p-split-gap" aria-hidden="true"></div>
+
+        <footer class="lobby2p-col-actions" data-human="1">
+          <button type="button" class="lobby2p-farm btn-secondary">🌾 Фарм</button>
+          <button type="button" class="lobby2p-ready btn-primary">Готов</button>
+          <button type="button" class="lobby2p-duel btn-secondary">⚔️ Дуэль</button>
+        </footer>
+      </div>
+
+      <aside class="lobby2p-roster-drawer hidden" id="lobby2p-roster-drawer" aria-label="Участники лобби">
+        <div class="lobby2p-roster-drawer-body" id="lobby2p-roster-drawer-body"></div>
+      </aside>
+    </section>
+
     <div class="td-run-sheet hidden" id="td-loadout-sheet" aria-hidden="true">
       <button type="button" class="td-run-sheet__backdrop td-loadout-sheet__backdrop" id="td-loadout-backdrop" aria-label="Закрыть рюкзак" tabindex="-1"></button>
       <div class="td-run-sheet__panel td-loadout-sheet__panel" role="dialog" aria-labelledby="td-loadout-sheet-title">
@@ -453,6 +557,12 @@
               <span class="class-name">Лобби</span>
               <span class="class-desc">8 бойцов, ghost-снимки и HP — как в auto-battler</span>
               <span class="class-badge class-badge--lobby">Рейтинг</span>
+            </button>
+            <button type="button" class="class-card game-mode-card glass-card" data-game-mode="lobby2p">
+              <span class="glass-card-icon glass-card-icon--lobby class-icon" aria-hidden="true">👥</span>
+              <span class="class-name">Лобби 2P</span>
+              <span class="class-desc">Split-screen: 2 игрока + 14 ботов · фарм, дуэль, готовность</span>
+              <span class="class-badge class-badge--lobby">Тест</span>
             </button>
             <button type="button" class="class-card game-mode-card glass-card" data-game-mode="td">
               <span class="glass-card-icon glass-card-icon--td class-icon" aria-hidden="true">🐷</span>
@@ -991,6 +1101,7 @@
   <script src="systems/gem-sockets.js"></script>
   <script src="systems/crafting.js"></script>
   <script src="systems/synergy.js"></script>
+  <script src="components/item-emoji-sparkle.js?v=1"></script>
   <script src="systems/combat.js"></script>
   <script src="systems/combat-profile.js?v=4"></script>
   <script src="components/run-stats.js"></script>
@@ -1055,7 +1166,8 @@
   <script src="components/emotion-presenter.js?v=5"></script>
   <script src="emotion-engine.js?v=21"></script>
   <script src="battle-hud.js?v=6"></script>
-  <script src="systems/prep-shop.js?v=4"></script>
+  <script src="components/lobby-2p-hud.js?v=1"></script>
+  <script src="systems/prep-shop.js?v=5"></script>
   <script src="systems/campaign.js?v=1"></script>
   <script src="systems/doll-engine.js"></script>
   <script src="systems/screen-transitions.js?v=1"></script>

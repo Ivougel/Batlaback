@@ -186,6 +186,7 @@
 
   /** iPad / tablet-side prep: крупные ячейки, сетка заполняет колонку поля. */
   function syncTabletSidePrepGridMetrics() {
+    if (document.body?.classList.contains("is-ui-dragging")) return false;
     const root = document.documentElement;
     const app = document.getElementById("app");
     if (!usesTabletPrepHeroLayout(root) || app?.dataset.phase !== "prep") return false;
@@ -381,22 +382,45 @@
     },
   };
 
+  /** Solo lobby: уже solo prep — больше места под поле и плавающий roster. */
+  const LOBBY_SHOP_PANEL_W = {
+    "phone-portrait": 252,
+    "phone-landscape": 224,
+    "tablet-portrait": 252,
+    "tablet-landscape": 216,
+    "desktop-portrait": 248,
+    "desktop-landscape": 228,
+  };
+
+  function isSoloLobbyPrepPhase() {
+    const app = document.getElementById("app");
+    const mode = app?.dataset?.gameMode || document.documentElement.dataset?.gameMode;
+    return mode === "lobby" && app?.dataset?.phase === "prep";
+  }
+
   function applyPrepProfileVars(layoutProfile, fitScale = 1) {
     const cfg = PREP_PROFILES[layoutProfile.id] || PREP_PROFILES["desktop-landscape"];
     const root = document.documentElement;
+    const lobbyPrep = isSoloLobbyPrepPhase();
     root.style.setProperty("--prep-hero-slot-height", cfg.heroSlotHeight);
     root.style.setProperty("--prep-hero-slot-height-max", `${cfg.heroSlotMax}px`);
     root.style.setProperty("--prep-scene-avatar-h", `calc(${cfg.sceneAvatarH}px * var(--game-scale))`);
     root.style.setProperty("--prep-scene-avatar-w", `calc(${cfg.sceneAvatarW}px * var(--game-scale))`);
     root.style.setProperty("--doll-slot-size", `calc(${cfg.dollSlot}px * var(--game-scale))`);
     root.style.setProperty("--prep-character-gap", `${cfg.characterGap}px`);
-    root.style.setProperty("--shop-panel-w", `${cfg.shopPanelW}px`);
+    const shopPanelW = lobbyPrep
+      ? (LOBBY_SHOP_PANEL_W[layoutProfile.id] ?? Math.round(cfg.shopPanelW * 0.68))
+      : cfg.shopPanelW;
+    root.style.setProperty("--shop-panel-w", `${shopPanelW}px`);
     const shopRowH = Math.round(Math.max(
       cfg.shopRowMin,
       Math.min(cfg.shopRowMax, cfg.shopRowBase * fitScale),
     ));
-    const ipadMiniBoost = layoutProfile.id === "tablet-landscape" && isIpadMiniPwaLandscape();
-    const rowH = ipadMiniBoost ? Math.max(shopRowH, 92) : shopRowH;
+    const ipadMiniBoost = !lobbyPrep && layoutProfile.id === "tablet-landscape" && isIpadMiniPwaLandscape();
+    const lobbyRowCap = layoutProfile.id === "tablet-landscape" ? 76 : 72;
+    const rowH = lobbyPrep
+      ? Math.max(cfg.shopRowMin, Math.min(lobbyRowCap, Math.round(shopRowH * 0.82)))
+      : (ipadMiniBoost ? Math.max(shopRowH, 92) : shopRowH);
     root.style.setProperty("--prep-shop-row-h", `${rowH}px`);
     const shopIconSize = Math.round(rowH * (ipadMiniBoost ? 0.72 : 0.68));
     const shopIconFont = Math.round(rowH * (ipadMiniBoost ? 0.56 : 0.52));
@@ -825,6 +849,7 @@
     if (!topBar) return;
     prepHeroCardPortraitObserver = new ResizeObserver(() => {
       syncPrepHeroCardPortraitSize();
+      syncOpenPrepTooltipDock();
     });
     prepHeroCardPortraitObserver.observe(topBar);
   }
@@ -2273,6 +2298,10 @@
 
   /** Единственный источник display-size #game-canvas (bitmap — game.js applyPhaseCanvasLayout). */
   function fitCanvasDisplaySize() {
+    if (isLayoutInteractionLocked()) {
+      deferredCanvasFit = true;
+      return;
+    }
     const app = document.getElementById("app");
     const canvas = document.getElementById("game-canvas");
     if (!canvas || canvas.width <= 0 || canvas.height <= 0) {
@@ -2555,8 +2584,27 @@
   }
 
   let canvasFitRafId = 0;
+  let deferredCanvasFit = false;
+
+  function isLayoutInteractionLocked() {
+    const body = document.body;
+    if (body?.classList.contains("is-ui-dragging")) return true;
+    if (body?.classList.contains("screen-transitioning")) return true;
+    return !!document.querySelector(".game-layout")?.classList.contains("phase-transitioning");
+  }
+
+  function flushDeferredLayoutPasses() {
+    if (!deferredCanvasFit || isLayoutInteractionLocked()) return;
+    deferredCanvasFit = false;
+    scheduleLayout();
+  }
 
   function runCanvasFitPass() {
+    if (isLayoutInteractionLocked()) {
+      deferredCanvasFit = true;
+      return;
+    }
+    deferredCanvasFit = false;
     fitCanvasDisplaySize();
     syncPrepHeroSlotHeight();
     syncTabletPortraitShopRows();
@@ -2788,20 +2836,24 @@
       }
     }
 
-    scheduleCanvasFit();
-    syncMobileShopFabPosition();
-    syncPrepBenchFabPosition();
-    syncPrepHeroSlotHeight();
-    ensurePrepHeroCardPortraitObserver();
-    syncPrepHeroCardPortraitSize();
-    window.syncPrepHeroCardChrome?.();
-    if (typeof syncPrepBuildEmojiBtnMount === "function") syncPrepBuildEmojiBtnMount();
+    if (!isLayoutInteractionLocked()) {
+      scheduleCanvasFit();
+      syncMobileShopFabPosition();
+      syncPrepBenchFabPosition();
+      syncPrepHeroSlotHeight();
+      ensurePrepHeroCardPortraitObserver();
+      syncPrepHeroCardPortraitSize();
+      window.syncPrepHeroCardChrome?.();
+      if (typeof syncPrepBuildEmojiBtnMount === "function") syncPrepBuildEmojiBtnMount();
 
-    if (usesTabletPrepHeroLayout() && appPhase === "prep") {
-      syncTabletSidePrepGridMetrics();
-    }
-    if (typeof window.applyGridMetricsFromCss === "function") {
-      window.applyGridMetricsFromCss();
+      if (usesTabletPrepHeroLayout() && appPhase === "prep") {
+        syncTabletSidePrepGridMetrics();
+      }
+      if (typeof window.applyGridMetricsFromCss === "function") {
+        window.applyGridMetricsFromCss();
+      }
+    } else {
+      deferredCanvasFit = true;
     }
     syncBattleHudAnchors();
     syncFxCanvasGeometry();
@@ -2831,6 +2883,10 @@
   }
 
   function scheduleLayout() {
+    if (isLayoutInteractionLocked()) {
+      deferredCanvasFit = true;
+      return;
+    }
     if (layoutRafId) return;
     layoutRafId = requestAnimationFrame(() => {
       layoutRafId = 0;
@@ -2838,7 +2894,11 @@
       lastViewportW = w;
       lastViewportH = h;
       applyUiLayout();
-      requestAnimationFrame(runLayoutFollowUp);
+      if (!isLayoutInteractionLocked()) {
+        requestAnimationFrame(runLayoutFollowUp);
+      } else {
+        deferredCanvasFit = true;
+      }
     });
   }
 
@@ -2905,6 +2965,7 @@
   window.fitCanvasDisplaySize = fitCanvasDisplaySize;
   window.fitPrepCanvasToStage = fitCanvasDisplaySize;
   window.scheduleCanvasFit = scheduleCanvasFit;
+  window.flushDeferredLayoutPasses = flushDeferredLayoutPasses;
   window.syncMobileShopFabPosition = syncMobileShopFabPosition;
   window.syncPrepBenchFabPosition = syncPrepBenchFabPosition;
   window.syncTabletPortraitShopRows = syncTabletPortraitShopRows;

@@ -547,11 +547,12 @@ function renderEnhancementShopCardHTML(def, { extraClasses = "", innerBefore = "
     ? getRarityCardClasses(def.rarity, ["shop-card", "shop-card--enhancement", extraClasses].filter(Boolean).join(" "))
     : `shop-card shop-card--enhancement ${extraClasses}`.trim();
   return `<div class="${classes}"${dataAttrs ? ` ${dataAttrs}` : ""} style="--shop-rarity-color:${rarityColor}">
-    ${innerBefore}
     <div class="shop-item-main">
       <div class="shop-item-stack shop-item-stack--enhancement">
+        ${innerBefore}
         <div class="shop-item-visual">
-          <div class="item-icon-shell item-icon-shell--enhancement" style="background:rgba(120,90,200,0.25)">
+          <div class="item-icon-shell item-icon-shell--enhancement item-emoji-sparkle-host">
+            ${typeof renderItemEmojiSparklesHTML === "function" ? renderItemEmojiSparklesHTML() : ""}
             <span class="enh-shop-icon" aria-hidden="true">${def.icon}</span>
           </div>
         </div>

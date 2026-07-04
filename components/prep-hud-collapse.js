@@ -54,6 +54,16 @@ function measureHudPanelHeights(panel) {
   };
 }
 
+function syncOpenPrepTooltipAfterHudLayout() {
+  if (typeof window.positionPrepTooltipDock !== "function") return;
+  requestAnimationFrame(() => {
+    const tip = document.getElementById("sidebar-tooltip");
+    if (tip && !tip.classList.contains("hidden")) {
+      window.positionPrepTooltipDock();
+    }
+  });
+}
+
 function syncHudCollapseToggleState(collapsed) {
   const toggle = getHudCollapseToggle();
   const panel = getHudCharacterPanel();
@@ -76,6 +86,7 @@ function animateHudPanelCollapse(panel, collapse, heights) {
     panel.classList.toggle("is-collapsed", collapse);
     panel.style.maxHeight = collapse ? `${collapsed}px` : "none";
     syncHudCollapseToggleState(collapse);
+    syncOpenPrepTooltipAfterHudLayout();
     return;
   }
 
@@ -110,6 +121,7 @@ function animateHudPanelCollapse(panel, collapse, heights) {
     if (typeof window.syncPrepHeroCardPortraitSize === "function") {
       window.syncPrepHeroCardPortraitSize();
     }
+    syncOpenPrepTooltipAfterHudLayout();
   };
   panel.addEventListener("transitionend", onEnd);
 }
@@ -134,6 +146,7 @@ function setPrepHudCollapsed(collapsed, { animate = true } = {}) {
     panel.style.maxHeight = "none";
   }
   syncHudCollapseToggleState(collapsed);
+  syncOpenPrepTooltipAfterHudLayout();
 }
 
 function togglePrepHudCollapsed() {

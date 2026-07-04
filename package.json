@@ -15,10 +15,13 @@
     "test:phases": "node tools/layout-phases.test.mjs",
     "test:geometry": "node tools/layout-geometry.test.mjs",
     "test:qa": "node tools/layout-qa-audit.mjs",
+    "test:drag-stability": "node tools/layout-drag-stability.test.mjs",
+    "test:phase-smoothness": "node tools/layout-phase-smoothness.test.mjs",
+    "test:transitions": "npm run test:phases && npm run test:phase-smoothness && npm run test:drag-stability",
     "test:snapshots": "playwright test",
     "test:snapshots:prep": "playwright test tools/prep-snapshots.spec.mjs tools/layout-snapshots.spec.mjs",
     "test:snapshots:update": "playwright test --update-snapshots",
-    "test:ui": "npm run test:layout && npm run test:structure && npm run test:phases && npm run test:geometry && npm run test:qa && npm run test:snapshots",
+    "test:ui": "npm run test:layout && npm run test:structure && npm run test:transitions && npm run test:geometry && npm run test:qa && npm run test:snapshots",
     "profile:battle": "node tools/battle-perf-profile.mjs"
   },
   "dependencies": {

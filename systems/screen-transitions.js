@@ -158,6 +158,8 @@
       layout?.classList.remove("phase-transitioning");
       transitioning = false;
       document.body.classList.remove("screen-transitioning");
+      window.flushDeferredLayoutPasses?.();
+      window.scheduleCanvasFit?.();
       return wait(inMs);
     });
   }
@@ -183,6 +185,8 @@
       }
       onMidpoint?.();
       await hideScreenOverlay(overlay, "menu");
+      window.flushDeferredLayoutPasses?.();
+      window.scheduleCanvasFit?.();
     });
   }
 

@@ -61,6 +61,41 @@ function ensureSideShopArrays(st) {
   }
 }
 
+function isLobby2pSplitPrep() {
+  return typeof rt.isLobby2pSplitPrep === "function" && rt.isLobby2pSplitPrep();
+}
+
+function resolveShopContainer(side, containerEl) {
+  if (containerEl) return containerEl;
+  if (isLobby2pSplitPrep()) {
+    return document.getElementById(side === "player" ? "lobby2p-shop-slots-0" : "lobby2p-shop-slots-1");
+  }
+  return document.getElementById("shop-slots");
+}
+
+function resolveBenchContainer(side, containerEl) {
+  if (containerEl) return containerEl;
+  if (isLobby2pSplitPrep()) {
+    return document.getElementById(side === "player" ? "lobby2p-bench-slots-0" : "lobby2p-bench-slots-1");
+  }
+  return document.getElementById("bench-slots");
+}
+
+function renderCommerceForMode(affectedSide) {
+  if (isLobby2pSplitPrep()) {
+    renderShop("player", resolveShopContainer("player"));
+    renderShop("enemy", resolveShopContainer("enemy"));
+    renderBench("player", resolveBenchContainer("player"));
+    renderBench("enemy", resolveBenchContainer("enemy"));
+  } else if (affectedSide) {
+    renderShop(affectedSide);
+    renderBench(affectedSide);
+  } else {
+    renderShop();
+    renderBench();
+  }
+}
+
 function refreshShopSlotsForSide(side = rt.getPrepViewSide(), opts = {}) {
   const st = rt.getSideState(side);
   ensureSideShopArrays(st);
@@ -99,8 +134,7 @@ function resetShopForNewRoundForSide(side = rt.getPrepViewSide()) {
     if (loadoutChanged && side === rt.getPrepViewSide()) {
       rt.recalcSynergies();
       rt.draw();
-      renderBench();
-      renderShop();
+      renderCommerceForMode(side);
     }
   }
   rt.getSideState(side).shopReadyForRound = rt.getRound();
@@ -169,7 +203,7 @@ function refreshShop(pay = false, side = rt.getPrepViewSide()) {
   refreshShopSlotsForSide(side, { isReroll: pay });
   if (pay) rt.playPrepSfx("prep_refresh");
   if (rt.getPhase() === "prep") {
-    renderShop();
+    renderCommerceForMode(side);
     if (typeof rt.renderTdBuildPanel === "function") rt.renderTdBuildPanel();
     rt.updateUI();
   }
@@ -184,7 +218,7 @@ function toggleShopFreeze(index, side = rt.getPrepViewSide()) {
     : (ITEM_CATALOG[st.shop[index]]?.name || st.shop[index]);
   rt.log(st.shopFrozen[index] ? `📌 Закреплено: ${name}` : `📌 Снято закрепление: ${name}`);
   rt.playPrepSfx("prep_freeze");
-  renderShop();
+  renderCommerceForMode(side);
 }
 
 function commitShopPurchase(index, side = rt.getPrepViewSide()) {
@@ -222,8 +256,7 @@ function buyFromShop(index, side = rt.getPrepViewSide()) {
   if (side === rt.getPrepViewSide() && typeof CombatLog !== "undefined") {
     CombatLog.notifyPurchase(ITEM_CATALOG[itemId]);
   }
-  renderShop();
-  renderBench();
+  renderCommerceForMode(side);
   rt.updateUI();
 }
 
@@ -305,7 +338,7 @@ function sellSelected(side = rt.getPrepViewSide()) {
   const selected = rt.getSelectedBench();
   if (selected < 0 || !st.bench[selected]) return;
   sellBenchEntry(selected, side);
-  renderBench();
+  renderCommerceForMode(side);
   rt.updateUI();
 }
 
@@ -331,11 +364,11 @@ function renderShopCardHTML(def, { extraClasses = "", innerBefore = "", dataAttr
     : "";
   const rarityColor = getRarityNameColor(def.rarity);
   return `<div class="${classes}"${dataAttrs ? ` ${dataAttrs}` : ""} style="--shop-rarity-color:${rarityColor}">
-    ${innerBefore}
     <div class="shop-item-main">
       <div class="shop-item-stack">
+        ${innerBefore}
         <div class="shop-item-visual">
-          <div class="${getItemIconShellClass(def)}" style="background:${def.color}33">${renderItemIconsHTML(def)}</div>
+          <div class="${getItemIconShellClass(def)}">${renderItemIconsHTML(def)}</div>
           ${shapeHtml}
         </div>
         ${renderShopCostHTML(def.cost)}
@@ -358,8 +391,8 @@ function getShopDisplayEntries(side = rt.getPrepViewSide()) {
     });
 }
 
-function renderShop(side = rt.getPrepViewSide()) {
-  const el = document.getElementById("shop-slots");
+function renderShop(side = rt.getPrepViewSide(), containerEl = null) {
+  const el = resolveShopContainer(side, containerEl);
   if (!el) return;
   const st = rt.getSideState(side);
   ensureSideShopArrays(st);
@@ -471,8 +504,9 @@ function renderShop(side = rt.getPrepViewSide()) {
   if (typeof refreshGamepadPrepFocus === "function") refreshGamepadPrepFocus();
 }
 
-function renderBench(side = rt.getPrepViewSide()) {
-  const el = document.getElementById("bench-slots");
+function renderBench(side = rt.getPrepViewSide(), containerEl = null) {
+  const el = resolveBenchContainer(side, containerEl);
+  if (!el) return;
   const st = rt.getSideState(side);
   el.innerHTML = Array.from({ length: MAX_BENCH }, (_, i) => {
     const b = st.bench[i];

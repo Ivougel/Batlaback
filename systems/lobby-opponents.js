@@ -3,11 +3,19 @@
  */
 
 const LOBBY_FIGHTER_COUNT = 8;
+const LOBBY2P_FIGHTER_COUNT = 16;
+const LOBBY2P_HUMAN_COUNT = 2;
+const LOBBY2P_BOT_COUNT = LOBBY2P_FIGHTER_COUNT - LOBBY2P_HUMAN_COUNT;
 const LOBBY_START_HP = 100;
 const LOBBY_BOT_COUNT = LOBBY_FIGHTER_COUNT - 1;
 
 const LOBBY_BOT_NAMES = [
   "Грок", "Сильвана", "Морана", "Тайрик", "Лира", "Борн", "Каз",
+];
+
+const LOBBY2P_BOT_NAMES = [
+  "Грок", "Сильвана", "Морана", "Тайрик", "Лира", "Борн", "Каз",
+  "Рагнар", "Элла", "Брут", "Никс", "Орлин", "Веста", "Кай",
 ];
 
 function cloneLobbyItems(items) {
@@ -76,6 +84,130 @@ function initLobby(playerClassId, gridW, gridH) {
     gridH,
     lastDamage: null,
   };
+}
+
+function initLobby2p(player1ClassId, player2ClassId, gridW, gridH) {
+  const fighters = [
+    createLobbyFighter(0, "Игрок 1", player1ClassId, true),
+    createLobbyFighter(1, "Игрок 2", player2ClassId, true),
+  ];
+  for (let i = 0; i < LOBBY2P_BOT_COUNT; i++) {
+    const classId = pickRandomClassId();
+    const name = LOBBY2P_BOT_NAMES[i] || `Боец ${i + 3}`;
+    fighters.push(createLobbyFighter(i + 2, name, classId, false));
+  }
+  return {
+    fighters,
+    playerId: 0,
+    secondHumanId: 1,
+    humanIds: [0, 1],
+    currentOpponentId: null,
+    gridW,
+    gridH,
+    lastDamage: null,
+    isSplitLobby: true,
+    ready: { 0: false, 1: false },
+    sideBattles: { 0: null, 1: null },
+  };
+}
+
+function getLobbyHumanFighter(lobby, humanId) {
+  return lobby?.fighters?.[humanId] || null;
+}
+
+function getLobby2pHumans(lobby) {
+  if (!lobby?.humanIds) return [];
+  return lobby.humanIds.map((id) => lobby.fighters[id]).filter(Boolean);
+}
+
+function pickStrongestLobbyBot(lobby, excludeIds = []) {
+  const exclude = new Set(excludeIds);
+  const bots = getAliveLobbyFighters(lobby).filter((f) => !f.isHuman && !exclude.has(f.id));
+  if (!bots.length) return null;
+  return bots.reduce((best, f) => {
+    const score = (f.hp || 0) + (f.items?.length || 0) * 3 + (f.gold || 0);
+    const bestScore = (best.hp || 0) + (best.items?.length || 0) * 3 + (best.gold || 0);
+    return score > bestScore ? f : best;
+  }, bots[0]);
+}
+
+function buildLobby2pRoundMatches(lobby) {
+  const matches = [];
+  const used = new Set();
+  const humans = getLobby2pHumans(lobby).filter((f) => f.alive);
+
+  humans.forEach((human) => {
+    const botPool = getAliveLobbyFighters(lobby).filter((f) => !f.isHuman && !used.has(f.id));
+    if (!botPool.length) return;
+    const opponent = botPool[Math.floor(Math.random() * botPool.length)];
+    matches.push({
+      id: matches.length,
+      fighterAId: human.id,
+      fighterBId: opponent.id,
+      isPlayerMatch: true,
+      humanId: human.id,
+      state: null,
+      finished: false,
+    });
+    used.add(human.id);
+    used.add(opponent.id);
+  });
+
+  const pool = getAliveLobbyFighters(lobby).filter((f) => !used.has(f.id));
+  shuffleLobbyArray(pool);
+  if (pool.length % 2 === 1) {
+    const byeFighter = pool.pop();
+    matches.push({
+      id: matches.length,
+      byeFighterId: byeFighter.id,
+      isPlayerMatch: false,
+      state: null,
+      finished: true,
+      winnerSide: "bye",
+    });
+  }
+  for (let i = 0; i < pool.length; i += 2) {
+    matches.push({
+      id: matches.length,
+      fighterAId: pool[i].id,
+      fighterBId: pool[i + 1].id,
+      isPlayerMatch: false,
+      state: null,
+      finished: false,
+    });
+  }
+  return matches;
+}
+
+function isLobby2pRunOver(lobby) {
+  if (!lobby?.isSplitLobby) return isLobbyRunOver(lobby);
+  const aliveHumans = getLobby2pHumans(lobby).filter((f) => f.alive);
+  if (!aliveHumans.length) return true;
+  return getAliveLobbyFighters(lobby).length <= 1;
+}
+
+function importLobbyFighterGlobals(lobby, fighterId, globals) {
+  const fighter = lobby?.fighters?.[fighterId];
+  if (!fighter || !globals) return;
+  fighter.classId = globals.classId;
+  fighter.gold = globals.gold;
+  fighter.containers = cloneLobbyContainers(globals.containers);
+  fighter.items = cloneLobbyItems(globals.items);
+  fighter.bench = Array.isArray(globals.bench)
+    ? globals.bench.map((e) => (e ? { ...e } : null))
+    : [];
+  if (globals.pendingShopBuffs != null) fighter.pendingShopBuffs = globals.pendingShopBuffs;
+  if (globals.companionId != null) fighter.companionId = globals.companionId;
+  if (globals.enhancements) {
+    fighter.enhancements = {
+      head: globals.enhancements.head ?? null,
+      chest: globals.enhancements.chest ?? null,
+      boots: globals.enhancements.boots ?? null,
+    };
+  }
+  if (globals.mutationFormId != null) fighter.mutationFormId = globals.mutationFormId;
+  if (globals.mutationId != null) fighter.mutationId = globals.mutationId;
+  syncLobbyFighterMutationMilestones(fighter, globals.round ?? 1);
 }
 
 function getAliveLobbyFighters(lobby) {
@@ -379,6 +511,14 @@ function applyAllLobbyMatchResults(lobby, matches) {
   });
   const player = getLobbyPlayer(lobby);
   const alive = getAliveLobbyFighters(lobby);
+  if (lobby.isSplitLobby) {
+    const aliveHumans = getLobby2pHumans(lobby).filter((f) => f.alive);
+    return {
+      summaries,
+      playerEliminated: !aliveHumans.length,
+      lobbyWon: aliveHumans.length === 1 && alive.length === 1,
+    };
+  }
   return {
     summaries,
     playerEliminated: !player?.alive,

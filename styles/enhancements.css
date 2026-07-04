@@ -127,7 +127,7 @@
 }
 
 .shop-card--amplifier .item-icon-shell {
-  background: rgba(60, 140, 120, 0.22);
+  background: transparent;
 }
 
 #game-canvas.amplify-preview-mode {

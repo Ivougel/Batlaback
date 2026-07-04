@@ -263,14 +263,20 @@
   box-shadow: none;
 }
 
-/* ─── Магазин / скамейка: без цветных квадратов за иконками ─── */
+/* ─── Магазин / скамейка: без подложек за иконками (solo, lobby, 2P, mobile drawer) ─── */
 
-#app[data-phase="prep"] #shop-panel .shop-item-visual .icon,
-#app[data-phase="prep"] #shop-panel .bench-panel .bench-card .icon,
+#app[data-phase="prep"] .shop-item-visual .icon,
+#app[data-phase="prep"] .shop-item-visual .item-icon-shell,
+#app[data-phase="prep"] .bench-panel .bench-card .icon,
+#app[data-phase="prep"] .bench-panel .bench-card .item-icon-shell,
+#app[data-phase="prep"] .lobby2p-shop-slots .shop-item-visual .icon,
+#app[data-phase="prep"] .lobby2p-shop-slots .shop-item-visual .item-icon-shell,
+#app[data-phase="prep"] .lobby2p-bench-slots .bench-card .icon,
+#app[data-phase="prep"] .lobby2p-bench-slots .bench-card .item-icon-shell,
 #app[data-phase="prep"] .shop-card--amplifier .item-icon-shell,
 #app[data-phase="prep"] .shop-card--enhancement .item-icon-shell--enhancement {
   background: transparent !important;
-  border: none;
+  border: none !important;
   box-shadow: none !important;
 }
 
@@ -314,4 +320,96 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] .btn-toggle-doll {
   background: transparent;
   border: none;
   box-shadow: none;
+}
+
+/* ─── Магазин: пин, цена, refresh, слот — без подложек (все темы / режимы) ─── */
+
+#app[data-phase="prep"] #shop-panel .shop-pin,
+#app[data-phase="prep"] .lobby2p-shop-slots .shop-pin {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-pin:hover,
+#app[data-phase="prep"] #shop-panel .shop-pin:focus-visible,
+#app[data-phase="prep"] .lobby2p-shop-slots .shop-pin:hover,
+#app[data-phase="prep"] .lobby2p-shop-slots .shop-pin:focus-visible {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-pin.active,
+#app[data-phase="prep"] .lobby2p-shop-slots .shop-pin.active {
+  background: rgba(88, 166, 255, 0.22) !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-item-stack > .cost,
+#app[data-phase="prep"] #shop-panel .shop-item-side-meta > .cost,
+#app[data-phase="prep"] .lobby2p-shop-slots .shop-item-stack > .cost,
+#app[data-phase="prep"] .lobby2p-shop-slots .shop-item-side-meta > .cost {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  min-height: 0 !important;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-item-stack > .cost .cost-value,
+#app[data-phase="prep"] #shop-panel .shop-item-side-meta > .cost .cost-value,
+#app[data-phase="prep"] .lobby2p-shop-slots .shop-item-stack > .cost .cost-value {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55), 0 0 1px rgba(0, 0, 0, 0.75);
+}
+
+html[data-visual-theme="diablo"] #app[data-phase="prep"] #shop-panel .shop-item-stack > .cost .cost-value,
+html[data-visual-theme="diablo"] #app[data-phase="prep"] #shop-panel .shop-item-side-meta > .cost .cost-value {
+  color: var(--meadow-gold-bright, #f0c14b);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+}
+
+#app[data-phase="prep"] .btn-refresh-shop,
+html[data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel .btn-refresh-shop,
+html[data-visual-theme="diablo"] #app[data-phase="prep"] .btn-refresh-shop {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+#app[data-phase="prep"] .btn-refresh-shop:hover:not(:disabled),
+html[data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel .btn-refresh-shop:hover:not(:disabled),
+html[data-visual-theme="diablo"] #app[data-phase="prep"] .btn-refresh-shop:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.18) !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+#app[data-phase="prep"] #shop-panel .enh-shop-slot-tag,
+#app[data-phase="prep"] .lobby2p-shop-slots .enh-shop-slot-tag {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+#app[data-phase="prep"] #shop-panel .item-shape-mini,
+#app[data-phase="prep"] #shop-panel .item-shape-mini--shop-overlay,
+#app[data-phase="prep"] .lobby2p-shop-slots .item-shape-mini {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+#app[data-phase="prep"] #shop-panel .sell-drop-zone,
+#app[data-phase="prep"] .lobby2p-shop-slots ~ .shop-sell-zone .sell-drop-zone {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+#app[data-phase="prep"] #shop-panel .sell-drop-zone:hover,
+#app[data-phase="prep"] #shop-panel .sell-drop-zone.sell-drop-active {
+  background: rgba(255, 255, 255, 0.14) !important;
 }

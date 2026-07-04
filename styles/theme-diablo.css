@@ -450,9 +450,16 @@ html[data-visual-theme="diablo"] #app[data-phase="prep"] .bench-card:hover:not(.
 }
 
 html[data-visual-theme="diablo"] #app[data-phase="prep"] #shop-panel .shop-item-visual .icon,
-html[data-visual-theme="diablo"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-card .icon {
-  background: rgba(18, 12, 8, 0.92) !important;
-  border-color: var(--meadow-border-soft) !important;
+html[data-visual-theme="diablo"] #app[data-phase="prep"] #shop-panel .shop-item-visual .item-icon-shell,
+html[data-visual-theme="diablo"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-card .icon,
+html[data-visual-theme="diablo"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-card .item-icon-shell,
+html[data-visual-theme="diablo"] #app[data-phase="prep"] .shop-card--enhancement .item-icon-shell--enhancement,
+html[data-visual-theme="diablo"] #app[data-phase="prep"] .shop-card--amplifier .item-icon-shell,
+html[data-visual-theme="diablo"] #app[data-phase="prep"] .lobby2p-shop-slots .shop-item-visual .icon,
+html[data-visual-theme="diablo"] #app[data-phase="prep"] .lobby2p-shop-slots .shop-item-visual .item-icon-shell {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 html[data-visual-theme="diablo"] #app[data-phase="prep"] .shop-card.rarity-legendary .shop-item-visual .icon {

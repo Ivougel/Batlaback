@@ -5,6 +5,7 @@
 import { chromium, devices } from "playwright";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { quickStartPrep } from "./lib/quick-start.mjs";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const baseUrl = `file://${root}/index.html`;
@@ -39,22 +40,7 @@ function assert(cond, msg) {
 async function quickStart(page) {
   await page.goto(baseUrl, { waitUntil: "domcontentloaded", timeout: 20000 });
   await page.waitForFunction(() => typeof selectGameMode === "function", { timeout: 10000 });
-  await page.evaluate(() => {
-    selectGameMode("solo");
-    selectPlayerClass("warrior");
-    selectOpponentClass("mage");
-    startRunFromOverlay();
-  });
-  await page.waitForFunction(
-    () => document.getElementById("app")?.dataset.phase === "prep",
-    { timeout: 8000 },
-  );
-  await page.waitForTimeout(1200);
-  await page.evaluate(() => {
-    window.applyUiLayout?.();
-    window.scheduleCanvasFit?.();
-  });
-  await page.waitForTimeout(800);
+  await quickStartPrep(page, { settleMs: 1200 });
 }
 
 async function readPrepState(page) {

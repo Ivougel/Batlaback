@@ -740,3 +740,124 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] .lobby-prep-roster-panel
   box-shadow: none;
   outline: none;
 }
+
+/* ─── Solo lobby prep: узкий магазин, плотные ряды ─── */
+
+html[data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel {
+  padding: calc(6px * var(--ui-scale, 1)) calc(5px * var(--ui-scale, 1)) calc(4px * var(--ui-scale, 1));
+}
+
+html[data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel .shop-hint,
+html[data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel .shop-hint-touch {
+  display: none !important;
+}
+
+html[data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel .shop-chrome {
+  flex-shrink: 0;
+  padding-bottom: 0;
+}
+
+html[data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel .shop-panel-header {
+  justify-content: flex-end;
+  margin-bottom: calc(10px * var(--ui-scale, 1));
+  min-height: calc(56px * var(--ui-scale, 1));
+}
+
+html[data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel .btn-refresh-shop {
+  font-size: 0;
+  line-height: 0;
+  color: transparent;
+  width: calc(54px * var(--ui-scale, 1));
+  height: calc(54px * var(--ui-scale, 1));
+  min-width: calc(54px * var(--ui-scale, 1));
+  min-height: calc(54px * var(--ui-scale, 1));
+  padding: 0;
+  border-radius: calc(14px * var(--ui-scale, 1));
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+html[data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel .btn-refresh-shop::before {
+  content: "🔄";
+  font-size: calc(30px * var(--ui-scale, 1));
+  line-height: 1;
+  color: inherit;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.35));
+}
+
+html[data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel .btn-refresh-shop:hover:not(:disabled) {
+  transform: scale(1.06);
+  filter: brightness(1.08);
+  background: rgba(255, 255, 255, 0.18);
+  border: none;
+}
+
+html[data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel .shop-objects {
+  align-items: center;
+  padding-top: calc(14px * var(--ui-scale, 1));
+  margin-top: calc(2px * var(--ui-scale, 1));
+}
+
+html[data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel .shop-slots {
+  grid-template-columns: 1fr;
+  gap: calc(6px * var(--ui-scale, 1));
+  min-height: 0;
+  justify-items: center;
+  padding-top: calc(6px * var(--ui-scale, 1));
+}
+
+html[data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel .shop-card:not(.empty):last-child:nth-child(odd),
+html[data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel .shop-card:has(.icon--duo) {
+  grid-column: auto;
+  width: auto;
+  max-width: 100%;
+  justify-self: center;
+}
+
+html[data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel .shop-card:not(.empty),
+html[data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel .shop-card.empty {
+  justify-content: center;
+  padding: calc(4px * var(--ui-scale, 1));
+  gap: calc(4px * var(--ui-scale, 1));
+  width: auto;
+  max-width: 100%;
+}
+
+html[data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel .shop-item-main,
+html[data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel .shop-item-stack {
+  justify-content: center;
+}
+
+html[data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel .shop-item-stack {
+  gap: calc(5px * var(--ui-scale, 1));
+  width: auto;
+}
+
+html[data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel .shop-sell-zone {
+  align-items: center;
+}
+
+@media (min-width: 600px) and (max-width: 1200px) {
+  html[data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel .shop-card:not(.empty),
+  html[data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel .shop-card.empty {
+    padding: calc(4px * var(--ui-scale, 1)) !important;
+  }
+}
+
+html[data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-slots {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+html[data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel .shop-panel-heading h3 {
+  font-size: var(--font-sm);
+}
+
+html[data-ui-surface="tablet-side"][data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel .btn-refresh-shop {
+  min-height: calc(54px * var(--ui-scale, 1));
+  font-size: 0;
+}

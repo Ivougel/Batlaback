@@ -185,25 +185,7 @@ body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) {
   opacity: 0.55;
 }
 
-/* Иконки предметов — белая «подушка» + rarity fanfare */
-#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-item-visual .icon,
-#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .bench-panel .bench-card .icon,
-#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .shop-card--amplifier .item-icon-shell,
-#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .shop-card--enhancement .item-icon-shell--enhancement {
-  background: rgba(255, 255, 255, 0.94) !important;
-  border: 2px solid rgba(255, 255, 255, 0.95);
-  box-shadow: 0 2px 8px rgba(30, 60, 28, 0.12) !important;
-}
-
-/* Двойные эмодзи — без подложки, только глифы */
-#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-item-visual .icon.icon--duo,
-#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .bench-panel .bench-card .icon.icon--duo {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  padding: 0;
-}
-
+/* Иконки предметов — rarity fanfare без белой подложки (прозрачность — prep-borderless.css) */
 #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-card.rarity-common .shop-item-visual .icon {
   box-shadow: 0 0 0 2px rgba(120, 130, 140, 0.45), 0 2px 8px rgba(30, 60, 28, 0.1) !important;
 }

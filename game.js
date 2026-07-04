@@ -313,6 +313,14 @@ function isLobbyMode() {
   return gameMode === "lobby";
 }
 
+function isLobby2pMode() {
+  return gameMode === "lobby2p";
+}
+
+function isAnyLobbyMode() {
+  return isLobbyMode() || isLobby2pMode();
+}
+
 function isTdMode() {
   return gameMode === "td";
 }
@@ -396,6 +404,12 @@ function isLobbyViewingPlayer() {
 }
 
 function canEditPrepSide(side = prepViewSide) {
+  if (isLobby2pMode() && lobbyState?.isSplitLobby) {
+    if (lobby2pHasActiveDuel()) return false;
+    if (side === "player") return !lobby2pHasSideBattle(0);
+    if (side === "enemy") return !lobby2pHasSideBattle(1);
+    return false;
+  }
   if (isLobbyMode()) return isLobbyViewingPlayer() && side === "player";
   if (side === "player") return true;
   return isEnemyPrepEditable();
@@ -578,7 +592,7 @@ function syncLobbySpectateBoards(match) {
 }
 
 function getDisplayBattleState() {
-  if (!isLobbyMode() || !isBattleUiPhase() || !lobbyMatches.length) return battleState;
+  if (!isAnyLobbyMode() || !isBattleUiPhase() || !lobbyMatches.length) return battleState;
   const match = lobbyMatches[lobbySpectateMatchId];
   return match?.state || battleState;
 }
@@ -667,6 +681,11 @@ function syncPrepBottomStats({ gold, hpLabel, roundLabel, lobbyHp = false } = {}
 function syncPrepBottomBarChrome() {
   const standingsAnchor = document.getElementById("standings-anchor");
   const isPrep = phase === "prep";
+  if (isLobby2pMode() && isPrep) {
+    document.getElementById("prep-bottom-stats")?.setAttribute("hidden", "");
+    standingsAnchor?.toggleAttribute("hidden", true);
+    return;
+  }
   // В лобби список соперников — плавающая кнопка 👀 на поле, не нижняя панель.
   const showStandings = false;
   standingsAnchor?.toggleAttribute("hidden", !showStandings);
@@ -726,8 +745,8 @@ function renderLobbyChrome(force = false) {
   const battleRosterBar = document.getElementById("lobby-battle-roster-bar");
   const stripPrep = document.getElementById("lobby-roster-strip-prep");
   const stripBattle = document.getElementById("lobby-roster-strip-battle");
-  const show = isLobbyMode() && !!lobbyState;
-  prepRosterPanel?.classList.toggle("hidden", !show || phase !== "prep");
+  const show = isAnyLobbyMode() && !!lobbyState;
+  prepRosterPanel?.classList.toggle("hidden", !show || phase !== "prep" || (isLobby2pMode() && lobbyState?.isSplitLobby));
   battleRosterBar?.classList.toggle("hidden", !show || !isBattleUiPhase());
   syncPrepBottomBarChrome();
   if (!show) {
@@ -889,9 +908,460 @@ function initLobbyRun() {
   pickLobbyOpponent(lobbyState);
   resetLobbyPrepTimer();
   setLobbyViewFighter(lobbyState.playerId);
+  delete document.documentElement.dataset.lobbySplit;
+  syncLobby2pHudDom();
+}
+
+function initLobby2pRun() {
+  lobbyState = initLobby2p(playerClass, enemyClass, GRID_COLS, GRID_ROWS);
+  lobbyViewFighterId = 0;
+  lobbyMatches = [];
+  lobbySpectateMatchId = 0;
+  const h0 = getLobbyHumanFighter(lobbyState, 0);
+  const h1 = getLobbyHumanFighter(lobbyState, 1);
+  if (h0) {
+    h0.companionId = playerCompanionId;
+    h0.enhancements = playerEnhancements;
+  }
+  if (h1) {
+    h1.companionId = enemyCompanionId;
+    h1.enhancements = enemyEnhancements;
+  }
+  importLobby2pHumanToGlobals(0);
+  importLobby2pHumanToGlobals(1);
+  runLobbyBotsShopPhase(lobbyState, round);
+  if (typeof syncAllLobbyFighterMutations === "function") {
+    syncAllLobbyFighterMutations(lobbyState, round);
+  }
+  resetShopForNewRoundForSide("player");
+  resetShopForNewRoundForSide("enemy");
+  prepViewSide = "player";
+  document.getElementById("app")?.setAttribute("data-prep-side", "player");
+  document.documentElement.dataset.lobbySplit = "true";
+  syncLobby2pHudDom();
+}
+
+function getLobby2pHumanGlobals(humanId) {
+  if (humanId === 0) {
+    return {
+      classId: playerClass,
+      gold,
+      containers: playerContainers,
+      items: playerItems,
+      bench,
+      pendingShopBuffs: playerPendingShopBuffs,
+      companionId: playerCompanionId,
+      mutationFormId: playerMutationFormId,
+      mutationId: playerMutationId,
+      enhancements: playerEnhancements,
+      round,
+    };
+  }
+  return {
+    classId: enemyClass,
+    gold: enemyGold,
+    containers: enemyContainers,
+    items: enemyItems,
+    bench: enemyBench,
+    pendingShopBuffs: enemyPendingShopBuffs,
+    companionId: enemyCompanionId,
+    mutationFormId: enemyMutationFormId,
+    mutationId: enemyMutationId,
+    enhancements: enemyEnhancements,
+    round,
+  };
+}
+
+function syncLobby2pHumanFromGlobals(humanId) {
+  if (!lobbyState?.isSplitLobby) return;
+  importLobbyFighterGlobals(lobbyState, humanId, getLobby2pHumanGlobals(humanId));
+}
+
+function syncLobby2pBothFromGlobals() {
+  syncLobby2pHumanFromGlobals(0);
+  syncLobby2pHumanFromGlobals(1);
+}
+
+function importLobby2pHumanToGlobals(humanId) {
+  const fighter = getLobbyHumanFighter(lobbyState, humanId);
+  if (!fighter) return;
+  const ghost = exportGhostFighterState(fighter);
+  if (!ghost) return;
+  if (humanId === 0) {
+    playerClass = ghost.classId;
+    gold = ghost.gold;
+    playerContainers = ghost.containers;
+    playerItems = ghost.items;
+    bench = fighter.bench ? fighter.bench.map((e) => (e ? { ...e } : null)) : [];
+    playerCompanionId = ghost.companionId || playerCompanionId;
+    playerMutationFormId = ghost.mutationFormId ?? null;
+    playerMutationId = ghost.mutationId ?? null;
+    if (ghost.enhancements) playerEnhancements = { ...ghost.enhancements };
+  } else {
+    enemyClass = ghost.classId;
+    enemyGold = ghost.gold;
+    enemyContainers = ghost.containers;
+    enemyItems = ghost.items;
+    enemyBench = fighter.bench ? fighter.bench.map((e) => (e ? { ...e } : null)) : [];
+    enemyCompanionId = ghost.companionId || enemyCompanionId;
+    enemyMutationFormId = ghost.mutationFormId ?? null;
+    enemyMutationId = ghost.mutationId ?? null;
+    if (ghost.enhancements) enemyEnhancements = { ...ghost.enhancements };
+  }
+}
+
+function lobby2pHasSideBattle(humanId) {
+  const sb = lobbyState?.sideBattles?.[humanId];
+  return !!(sb?.state && !sb.state.finished);
+}
+
+function lobby2pHasAnySideBattle() {
+  return lobby2pHasSideBattle(0) || lobby2pHasSideBattle(1);
+}
+
+function lobby2pHasActiveDuel() {
+  const sb0 = lobbyState?.sideBattles?.[0];
+  const sb1 = lobbyState?.sideBattles?.[1];
+  return !!(sb0?.type === "duel" && sb0?.state && !sb0.state.finished)
+    || !!(sb1?.type === "duel" && sb1?.state && !sb1.state.finished);
+}
+
+function lobby2pResolvePointerSide(clientX, canvasRect) {
+  if (!canvasRect?.width) return prepViewSide;
+  const mid = canvasRect.left + canvasRect.width / 2;
+  return clientX < mid ? "player" : "enemy";
+}
+
+function setLobby2pActiveHuman(humanId) {
+  if (!isLobby2pMode()) return;
+  syncLobby2pHumanFromGlobals(prepViewSide === "player" ? 0 : 1);
+  prepViewSide = humanId === 0 ? "player" : "enemy";
+  lobbyViewFighterId = humanId;
+  const app = document.getElementById("app");
+  if (app) app.dataset.prepSide = prepViewSide;
+  clearDragUiState();
+  closePrepHeroTooltip();
+  ensureShopReadyForSide(prepViewSide);
+  updatePrepSideUI();
+  if (isLobby2pMode() && lobbyState?.isSplitLobby) {
+    renderLobby2pCommerce();
+  } else {
+    renderShop();
+    renderBench();
+  }
+  recalcSynergies();
+  syncLobby2pHudDom();
+  draw();
+}
+
+function toggleLobby2pReady(humanId) {
+  if (!lobbyState?.isSplitLobby || phase !== "prep") return;
+  if (lobby2pHasSideBattle(humanId)) return;
+  lobbyState.ready[humanId] = !lobbyState.ready[humanId];
+  playPrepSfx(lobbyState.ready[humanId] ? "ui_confirm" : "ui_click");
+  log(lobbyState.ready[humanId]
+    ? `${getLobbyHumanFighter(lobbyState, humanId)?.name || "Игрок"} готов к раунду`
+    : `${getLobbyHumanFighter(lobbyState, humanId)?.name || "Игрок"} снял готовность`);
+  syncLobby2pHudDom();
+  tryStartLobby2pScheduledRound();
+}
+
+function tryStartLobby2pScheduledRound() {
+  if (!lobbyState?.isSplitLobby || phase !== "prep") return;
+  if (!lobbyState.ready[0] || !lobbyState.ready[1]) return;
+  if (lobby2pHasAnySideBattle()) return;
+  lobbyState.ready[0] = false;
+  lobbyState.ready[1] = false;
+  syncLobby2pBothFromGlobals();
+  syncLobby2pHudDom();
+  startBattle();
+}
+
+function createLobby2pSideBattleState(humanId, opponentFighter, type) {
+  const human = getLobbyHumanFighter(lobbyState, humanId);
+  if (!human?.alive || !opponentFighter?.alive) return null;
+  syncLobby2pBothFromGlobals();
+  const humanItems = fighterBattleItems(human);
+  const oppItems = fighterBattleItems(opponentFighter);
+  return createBattleState(
+    humanItems,
+    oppItems,
+    human.classId,
+    opponentFighter.classId,
+    round,
+    {
+      player: lobbyFighterPrepMeta(human),
+      enemy: lobbyFighterPrepMeta(opponentFighter),
+    },
+  );
+}
+
+function startLobby2pFarm(humanId) {
+  if (!lobbyState?.isSplitLobby || phase !== "prep") return;
+  if (lobby2pHasAnySideBattle()) return;
+  syncLobby2pBothFromGlobals();
+  const bot = pickStrongestLobbyBot(lobbyState, [humanId]);
+  if (!bot) {
+    log("Нет доступных ботов для фарма");
+    playPrepSfx("ui_error");
+    return;
+  }
+  const state = createLobby2pSideBattleState(humanId, bot, "farm");
+  if (!state) return;
+  state.recording = humanId === 0;
+  if (typeof initBattleCountdown === "function") initBattleCountdown(state);
+  lobbyState.sideBattles[humanId] = { type: "farm", opponentId: bot.id, state, shared: false };
+  lobbyState.ready[humanId] = false;
+  log(`🌾 ${getLobbyHumanFighter(lobbyState, humanId)?.name}: фарм vs ${bot.name}`);
+  playPrepSfx("battle_start");
+  syncLobby2pHudDom();
+  renderFightButton();
+}
+
+function startLobby2pDuel(challengerId) {
+  if (!lobbyState?.isSplitLobby || phase !== "prep") return;
+  if (lobby2pHasAnySideBattle()) return;
+  const targetId = challengerId === 0 ? 1 : 0;
+  const challenger = getLobbyHumanFighter(lobbyState, challengerId);
+  const target = getLobbyHumanFighter(lobbyState, targetId);
+  if (!challenger?.alive || !target?.alive) return;
+  syncLobby2pBothFromGlobals();
+  const state = createLobby2pSideBattleState(challengerId, target, "duel");
+  if (!state) return;
+  state.recording = true;
+  if (typeof initBattleCountdown === "function") initBattleCountdown(state);
+  const duelEntry = { type: "duel", opponentId: targetId, state, shared: true };
+  lobbyState.sideBattles[0] = duelEntry;
+  lobbyState.sideBattles[1] = duelEntry;
+  lobbyState.ready[0] = false;
+  lobbyState.ready[1] = false;
+  log(`⚔️ Дуэль: ${challenger.name} vs ${target.name}`);
+  playPrepSfx("battle_start");
+  syncLobby2pHudDom();
+  renderFightButton();
+}
+
+function finishLobby2pSideBattle(humanId, state, type) {
+  if (!lobbyState?.isSplitLobby || !state?.finished) return;
+  const human = getLobbyHumanFighter(lobbyState, humanId);
+  const opponent = lobbyState.fighters[lobbyState.sideBattles[humanId]?.opponentId];
+  if (!human || !opponent) return;
+
+  const pseudoMatch = {
+    id: -1,
+    fighterAId: human.id,
+    fighterBId: opponent.id,
+    isPlayerMatch: true,
+    state,
+    finished: true,
+  };
+  const summary = applyLobbyMatchHpResult(lobbyState, pseudoMatch);
+  importLobby2pHumanToGlobals(humanId);
+  if (type === "duel" && opponent.isHuman) {
+    importLobby2pHumanToGlobals(opponent.id);
+  }
+
+  if (state.winner === "player") {
+    const reward = ROUND_GOLD + WIN_GOLD;
+    if (humanId === 0) gold += reward;
+    else enemyGold += reward;
+    syncLobby2pHumanFromGlobals(humanId);
+  } else if (state.winner === "enemy") {
+    const reward = ROUND_GOLD;
+    if (humanId === 0) gold += reward;
+    else enemyGold += reward;
+    syncLobby2pHumanFromGlobals(humanId);
+  }
+
+  const labels = getLobbyMatchLabels(lobbyState, pseudoMatch);
+  const winnerName = state.winner === "player" ? labels.a : state.winner === "enemy" ? labels.b : null;
+  if (winnerName) {
+    log(`${type === "duel" ? "⚔️ Дуэль" : "🌾 Фарм"}: победа ${winnerName}${summary?.damage ? ` (−${summary.damage} HP)` : ""}`);
+  } else {
+    log(`${type === "duel" ? "⚔️ Дуэль" : "🌾 Фарм"}: ничья`);
+  }
+
+  if (type === "duel") {
+    lobbyState.sideBattles[0] = null;
+    lobbyState.sideBattles[1] = null;
+  } else {
+    lobbyState.sideBattles[humanId] = null;
+  }
+  syncLobby2pHudDom();
+  renderFightButton();
+  updateUI();
+  if (isLobby2pRunOver(lobbyState)) {
+    pendingGameOver = true;
+    updateUI();
+  }
+}
+
+function tickLobby2pSideBattles(dt) {
+  if (!isLobby2pMode() || phase !== "prep" || !lobbyState?.isSplitLobby) return;
+  const seen = new Set();
+  [0, 1].forEach((humanId) => {
+    const sb = lobbyState.sideBattles[humanId];
+    if (!sb?.state || sb.state.finished) return;
+    if (seen.has(sb.state)) return;
+    seen.add(sb.state);
+    const state = sb.state;
+    const countdownDt = typeof getBattleCountdownDt === "function" ? getBattleCountdownDt(dt) : dt;
+    if (countdownDt > 0 && typeof tickBattleCountdown === "function") {
+      tickBattleCountdown(state, countdownDt);
+    }
+    const simDt = typeof getBattleSimDt === "function" ? getBattleSimDt(dt) : dt;
+    const countdownActive = typeof isBattleCountdownActive === "function" && isBattleCountdownActive(state);
+    if (simDt > 0 && !countdownActive) {
+      battleTick(state, simDt);
+      if (state.recording) recordBattleFrame(state);
+    }
+    if (state.finished) {
+      finishLobby2pSideBattle(humanId, state, sb.type);
+    }
+  });
+}
+
+function renderLobby2pCommerce() {
+  ensureShopReadyForSide("player");
+  ensureShopReadyForSide("enemy");
+  renderShop("player", document.getElementById("lobby2p-shop-slots-0"));
+  renderShop("enemy", document.getElementById("lobby2p-shop-slots-1"));
+  renderBench("player", document.getElementById("lobby2p-bench-slots-0"));
+  renderBench("enemy", document.getElementById("lobby2p-bench-slots-1"));
+}
+
+function syncLobby2pHudDom() {
+  if (typeof Lobby2pHud !== "undefined") Lobby2pHud.sync();
+}
+
+function initLobby2pHudBridge() {
+  if (typeof Lobby2pHud === "undefined") return;
+  Lobby2pHud.register({
+    isActive: () => isLobby2pMode() && phase === "prep" && !!lobbyState?.isSplitLobby,
+    getRound: () => round,
+    getFighter: (id) => getLobbyHumanFighter(lobbyState, id),
+    getClassId: (id) => (id === 0 ? playerClass : enemyClass),
+    getEnhancements: (id) => (id === 0 ? playerEnhancements : enemyEnhancements),
+    getItems: (id) => (id === 0 ? playerItems : enemyItems),
+    getActiveHuman: () => (prepViewSide === "player" ? 0 : 1),
+    getReady: (id) => !!lobbyState?.ready?.[id],
+    hasSideBattle: (id) => lobby2pHasSideBattle(id),
+    hasAnySideBattle: () => lobby2pHasAnySideBattle(),
+    hasActiveDuel: () => lobby2pHasActiveDuel(),
+    getBenchCount: (id) => {
+      const arr = id === 0 ? bench : enemyBench;
+      return arr.filter(Boolean).length;
+    },
+    setActiveHuman: (id) => setLobby2pActiveHuman(id),
+    toggleReady: (id) => toggleLobby2pReady(id),
+    startFarm: (id) => startLobby2pFarm(id),
+    startDuel: (id) => startLobby2pDuel(id),
+    refreshShop: (id) => {
+      const side = id === 0 ? "player" : "enemy";
+      refreshShop(true, side);
+      syncLobby2pHumanFromGlobals(id);
+      renderLobby2pCommerce();
+      syncLobby2pHudDom();
+    },
+    renderCommerce: () => renderLobby2pCommerce(),
+    renderRosterHtml: () => {
+      if (!lobbyState || typeof renderLobbyRosterStrip !== "function") return "";
+      return renderLobbyRosterStrip(lobbyState, {
+        phase: "prep",
+        viewFighterId: lobbyViewFighterId,
+        round,
+      });
+    },
+    scheduleLayout: () => {
+      if (typeof window.scheduleLayout === "function") window.scheduleLayout();
+      else if (typeof applyUiLayout === "function") applyUiLayout();
+      if (typeof window.fitCanvasDisplaySize === "function") window.fitCanvasDisplaySize();
+      draw();
+    },
+  });
+  Lobby2pHud.bind();
+}
+
+function drawLobby2pPrepHalf(side) {
+  const st = getSideState(side);
+  const shake = typeof getPrepBackpackShakeOffset === "function"
+    ? getPrepBackpackShakeOffset()
+    : { x: 0, y: 0 };
+  ctx.save();
+  ctx.translate(shake.x, shake.y);
+  const frameOptions = {
+    showFullPlacementGrid: shouldShowFullContainerPlacementGrid(),
+    containers: st.containers,
+    items: st.items,
+  };
+  drawBackpackFrame(side, frameOptions);
+  drawContainers(st.containers, side, false);
+  drawSynergyVisuals(ctx, synergyAnimTime, synergyPreviewBuilt, "under", side);
+  drawLoadoutItems(st.items, side, false);
+  if (typeof drawAllPrepItemIdleEffects === "function") {
+    drawAllPrepItemIdleEffects(ctx, st.items, side, synergyAnimTime);
+  }
+  drawSynergyVisuals(ctx, synergyAnimTime, synergyPreviewBuilt, "over", side);
+  if (typeof drawPrepSynergyEnhancements === "function") {
+    drawPrepSynergyEnhancements(ctx, synergyAnimTime, side, st.items);
+  }
+  if (canEditPrepSide(side) && dragPayload && getPrepDropPlacement(st, side)) {
+    if (typeof drawPrepDropPreview === "function") drawPrepDropPreview(ctx, side, st);
+    else drawDropPreview(ctx);
+  }
+  ctx.restore();
+}
+
+function drawLobby2pSideBattleHalf(sideBattle, half) {
+  const state = sideBattle.state;
+  if (!state) return;
+  const clipX = half === "left" ? 0 : ENEMY_X;
+  const clipW = GRID_INNER_W;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(clipX, 0, clipW, canvas.height);
+  ctx.clip();
+  drawBackpackFrame("player", { containers: playerContainers, items: state.player.items });
+  drawBackpackFrame("enemy", { containers: enemyContainers, items: state.enemy.items });
+  drawContainers(playerContainers, "player", false);
+  drawContainers(enemyContainers, "enemy", false);
+  drawPlacedItems(state.player.items, "player", false, true);
+  drawPlacedItems(state.enemy.items, "enemy", true, true);
+  ctx.restore();
+}
+
+function drawLobby2pSplitPrep() {
+  if (lobby2pHasActiveDuel()) {
+    const duelState = lobbyState.sideBattles[0]?.state;
+    if (duelState) {
+      drawBackpackFrame("player", { containers: playerContainers, items: duelState.player.items });
+      drawBackpackFrame("enemy", { containers: enemyContainers, items: duelState.enemy.items });
+      drawContainers(playerContainers, "player", false);
+      drawContainers(enemyContainers, "enemy", false);
+      drawPlacedItems(duelState.player.items, "player", false, true);
+      drawPlacedItems(duelState.enemy.items, "enemy", true, true);
+    }
+    return;
+  }
+  const sb0 = lobbyState.sideBattles[0];
+  const sb1 = lobbyState.sideBattles[1];
+  if (sb0?.state && !sb0.state.finished && !sb0.shared) {
+    drawLobby2pSideBattleHalf(sb0, "left");
+  } else {
+    drawLobby2pPrepHalf("player");
+  }
+  if (sb1?.state && !sb1.state.finished && !sb1.shared) {
+    drawLobby2pSideBattleHalf(sb1, "right");
+  } else if (!sb0?.shared) {
+    drawLobby2pPrepHalf("enemy");
+  }
 }
 
 function setPrepViewSide(side) {
+  if (isLobby2pMode() && lobbyState) {
+    setLobby2pActiveHuman(side === "player" ? 0 : 1);
+    return;
+  }
   if (isLobbyMode() && lobbyState) {
     if (side === "player") setLobbyViewFighter(lobbyState.playerId);
     else {
@@ -946,13 +1416,17 @@ function updatePrepSideUI() {
   const playerBtn = document.getElementById("btn-prep-player");
   const enemyBtn = document.getElementById("btn-prep-enemy");
 
-  if (isVersusMode()) {
+  if (isVersusMode() || isLobby2pMode()) {
     setPrepSideBtnContent(playerBtn, "🧑", "Игрок 1");
     setPrepSideBtnContent(enemyBtn, "🧑", "Игрок 2");
     if (prepViewSide === "enemy") {
-      if (hint) hint.textContent = "Покупки и расстановка второго игрока · Tab — вернуться к игроку 1";
+      if (hint) hint.textContent = isLobby2pMode()
+        ? "Игрок 2 · split-screen · Tab — игрок 1"
+        : "Покупки и расстановка второго игрока · Tab — вернуться к игроку 1";
     } else {
-      if (hint) hint.textContent = "Покупки и расстановка первого игрока · Tab — перейти к игроку 2";
+      if (hint) hint.textContent = isLobby2pMode()
+        ? "Игрок 1 · split-screen · Tab — игрок 2"
+        : "Покупки и расстановка первого игрока · Tab — перейти к игроку 2";
     }
   } else if (prepViewSide === "enemy") {
     setPrepSideBtnContent(playerBtn, "🧑", "Мой стол");
@@ -981,6 +1455,7 @@ function updatePrepSideUI() {
   if (refreshBtn) refreshBtn.disabled = !editable;
   syncPrepBottomBarChrome();
   syncShopHintsVisibility();
+  if (isLobby2pMode()) syncLobby2pHudDom();
 }
 
 function getActiveCompanionIdForLoadout() {
@@ -1030,6 +1505,9 @@ function showEnhancementTooltipAt(clientX, clientY, def, context = "shop", sourc
   cancelScheduledTooltipHide();
   sidebarTooltipPinned = !!options.pinned;
   sidebarTooltipSource = context === "shop" ? "shop" : "enhancement";
+  if (typeof syncDomSparkleFromTooltipSource === "function") {
+    syncDomSparkleFromTooltipSource(sourceEl);
+  }
   tooltipItem = null;
   fieldTooltipVisible = false;
   el.classList.remove("synergy-tooltip");
@@ -1585,6 +2063,7 @@ function showSummaryStep() {
   }
   const modeTitles = {
     lobby: "Лобби",
+    lobby2p: "Лобби 2P",
     versus: "Противостояние",
     hardbot: "Сложный бот",
     solo: "Одиночная",
@@ -1628,7 +2107,12 @@ function selectCompanion(companionId) {
   pendingPlayerCompanionId = companionId;
   renderCompanionSelection();
   if (reclick) {
-    showSummaryStep();
+    if (selectedGameMode === "lobby2p") showSecondClassStep();
+    else showSummaryStep();
+    return;
+  }
+  if (selectedGameMode === "lobby2p") {
+    showSecondClassStep();
     return;
   }
   syncClassOverlayUi();
@@ -1688,9 +2172,15 @@ function syncClassOverlayUi() {
       : `Шаг 4 из ${totalSteps} · Старт`;
     hint.textContent = "Наведите на героя или спутника · «Старт» по центру";
   } else if (opponentStep && !opponentStep.classList.contains("hidden")) {
-    badge.textContent = "Шаг 4 из 4 · Соперник";
-    const startLabel = selectedGameMode === "versus" ? "Начать игру" : "Начать забег";
-    hint.textContent = `Выберите героиню соперника, затем «${startLabel}» внизу экрана`;
+    badge.textContent = selectedGameMode === "lobby2p" ? "Шаг 5 из 5 · Игрок 2" : "Шаг 4 из 4 · Соперник";
+    const startLabel = selectedGameMode === "versus"
+      ? "Начать игру"
+      : selectedGameMode === "lobby2p"
+        ? "Начать лобби 2P"
+        : "Начать забег";
+    hint.textContent = selectedGameMode === "lobby2p"
+      ? `Класс второго игрока · «${startLabel}» внизу`
+      : `Выберите героиню соперника, затем «${startLabel}» внизу экрана`;
   } else {
     badge.textContent = "";
     hint.textContent = "";
@@ -1847,10 +2337,14 @@ function showPlayerClassStep() {
   setClassIntroStep("player");
   document.getElementById("class-modal-title").textContent = selectedGameMode === "versus"
     ? "Игрок 1 — герой"
-    : "Выберите героя";
+    : selectedGameMode === "lobby2p"
+      ? "Игрок 1 — герой"
+      : "Выберите героя";
   document.getElementById("class-modal-subtitle").textContent = selectedGameMode === "versus"
     ? "Первый игрок выбирает героиню — все четверо девочки с кличками на имя."
-    : selectedGameMode === "lobby"
+    : selectedGameMode === "lobby2p"
+      ? "Split-screen лобби: 16 бойцов (2 игрока + 14 ботов)."
+      : selectedGameMode === "lobby"
       ? "Лобби из восьми бойцов — кого из подружек отправим в рейтинг?"
       : selectedGameMode === "td"
         ? "Командир на стартовом слоте — набирайте башни и экипировку. 50 волн без пауз."
@@ -1865,7 +2359,7 @@ function showPlayerClassStep() {
 }
 
 function selectGameMode(mode) {
-  if (mode !== "solo" && mode !== "versus" && mode !== "hardbot" && mode !== "lobby" && mode !== "td" && mode !== "campaign") return;
+  if (mode !== "solo" && mode !== "versus" && mode !== "hardbot" && mode !== "lobby" && mode !== "lobby2p" && mode !== "td" && mode !== "campaign") return;
   selectedGameMode = mode;
   selectedOpponentMode = mode === "versus"
     ? "manual"
@@ -1873,11 +2367,13 @@ function selectGameMode(mode) {
       ? "hardbot"
       : mode === "lobby"
         ? "ghost"
-        : mode === "td"
-          ? "td"
-          : mode === "campaign"
-            ? "campaign"
-            : "ai";
+        : mode === "lobby2p"
+          ? "ghost2p"
+          : mode === "td"
+            ? "td"
+            : mode === "campaign"
+              ? "campaign"
+              : "ai";
   pendingPlayerClass = null;
   pendingPlayerCompanionId = null;
   selectedEnemyClass = null;
@@ -1928,6 +2424,10 @@ function showSecondClassStep() {
     document.getElementById("class-modal-title").textContent = "Игрок 2 — класс";
     document.getElementById("class-modal-subtitle").textContent = `Игрок 1: ${getClassById(pendingPlayerClass)?.name || pendingPlayerClass}`;
     if (hint) hint.textContent = "Перед боем оба игрока по очереди покупают в магазине (Tab или кнопки внизу).";
+  } else if (selectedGameMode === "lobby2p") {
+    document.getElementById("class-modal-title").textContent = "Игрок 2 — класс";
+    document.getElementById("class-modal-subtitle").textContent = `Игрок 1: ${getClassById(pendingPlayerClass)?.name || pendingPlayerClass}`;
+    if (hint) hint.textContent = "Split-screen лобби: 2 игрока + 14 ботов. Фарм, дуэль и готовность к раунду.";
   } else if (selectedGameMode === "hardbot") {
     document.getElementById("class-modal-title").textContent = "Класс сложного бота";
     document.getElementById("class-modal-subtitle").textContent = `Ваш класс: ${getClassById(pendingPlayerClass)?.name || pendingPlayerClass}`;
@@ -1969,6 +2469,7 @@ function updateStartRunButton() {
   btn.disabled = !ready;
   if (selectedGameMode === "versus") btn.textContent = "Начать игру";
   else if (selectedGameMode === "lobby") btn.textContent = "Начать лобби";
+  else if (selectedGameMode === "lobby2p") btn.textContent = "Начать лобби 2P";
   else if (selectedGameMode === "td") btn.textContent = "В оборону!";
   else btn.textContent = "Старт";
   const summaryBtn = document.getElementById("btn-class-summary-start");
@@ -2132,6 +2633,7 @@ function cancelScheduledTooltipHide() {
 function hideSidebarTooltip() {
   cancelScheduledTooltipHide();
   sidebarTooltipPinned = false;
+  if (typeof clearDomSparkleHighlights === "function") clearDomSparkleHighlights();
   const el = document.getElementById("sidebar-tooltip");
   const wasCombatFeed = sidebarTooltipSource === "combat-feed";
   if (el) {
@@ -2173,7 +2675,13 @@ function getPrepHeroGridTooltipZone(margin = 10) {
   const bottomChrome = document.getElementById("bottom-chrome");
   const enemySide = document.getElementById("app")?.dataset.prepSide === "enemy";
 
-  const gridRect = fieldIsland?.getBoundingClientRect() ?? canvas?.getBoundingClientRect();
+  const islandRect = fieldIsland?.getBoundingClientRect();
+  const canvasRect = canvas?.getBoundingClientRect();
+  // Сетка внутри island выровнена вправо — при росте island (свёрнутая HUD-карточка)
+  // левый край контейнера уезжает под героя; для коридора берём canvas, не island.
+  const gridRect = (canvasRect && canvasRect.width >= 40)
+    ? canvasRect
+    : islandRect;
   const heroRect = heroLayer?.getBoundingClientRect();
   const topBarRect = topBar?.getBoundingClientRect();
   const bottomRect = bottomChrome?.getBoundingClientRect();
@@ -2334,10 +2842,28 @@ function positionTabletSidePrepTooltipDock(dock) {
   const zone = getPrepHeroGridTooltipZone(margin);
 
   if (!zone) {
-    dock.style.left = `${margin}px`;
-    dock.style.top = `${margin}px`;
-    dock.style.width = `${Math.round(200 * uiScale)}px`;
-    dock.style.maxHeight = `${Math.round(220 * uiScale)}px`;
+    const heroRect = document.getElementById("prep-character-layer")?.getBoundingClientRect();
+    const topBarRect = document.getElementById("prep-top-bar")?.getBoundingClientRect();
+    const bottomRect = document.getElementById("bottom-chrome")?.getBoundingClientRect();
+    const dockW = Math.round(248 * uiScale);
+    const dockH = Math.round(220 * uiScale);
+    const vv = window.visualViewport;
+    const viewTop = (vv?.offsetTop ?? 0) + margin;
+    const viewBottom = (vv?.offsetTop ?? 0) + (vv?.height ?? window.innerHeight) - margin;
+
+    let left = margin;
+    let top = (topBarRect?.bottom ?? viewTop) + margin;
+    if (heroRect && heroRect.width > 24) {
+      left = heroRect.right + margin;
+      top = Math.max(top, heroRect.top + margin);
+    }
+    left = Math.min(left, Math.max(margin, (vv?.offsetLeft ?? 0) + (vv?.width ?? window.innerWidth) - dockW - margin));
+    top = Math.max(viewTop, Math.min(top, (bottomRect?.top ?? viewBottom) - dockH - margin));
+
+    dock.style.left = `${left}px`;
+    dock.style.top = `${top}px`;
+    dock.style.width = `${dockW}px`;
+    dock.style.maxHeight = `${dockH}px`;
     dock.style.height = "auto";
     return;
   }
@@ -2797,6 +3323,8 @@ function init() {
   bindClassSummaryInteractions();
   document.getElementById("btn-start-run")?.addEventListener("click", startRunFromOverlay);
   bindLobbyRosterClicks();
+  initLobby2pHudBridge();
+  bindLobby2pSellZones();
   window.addEventListener("resize", syncClassMobileDock, { passive: true });
   window.addEventListener("orientationchange", syncClassMobileDock, { passive: true });
   document.getElementById("btn-prep-player")?.addEventListener("click", () => setPrepViewSide("player"));
@@ -2817,7 +3345,7 @@ function init() {
         pendingGameOver = false;
         return;
       }
-      if (isLobbyMode() && lobbyState) {
+      if (isAnyLobbyMode() && lobbyState) {
         resetLobbyPrepTimer();
         setLobbyViewFighter(lobbyState.playerId);
         renderLobbyChrome(true);
@@ -2923,6 +3451,10 @@ function init() {
     },
     togglePrepSide: () => {
       if (phase !== "prep" || gameOver || isPhaseTransitioning()) return;
+      if (isLobby2pMode() && lobbyState?.isSplitLobby) {
+        setLobby2pActiveHuman(prepViewSide === "player" ? 1 : 0);
+        return;
+      }
       if (isLobbyMode() && lobbyState) {
         setLobbyViewFighter(cycleLobbyViewFighterId(lobbyState, lobbyViewFighterId, 1));
         return;
@@ -3004,8 +3536,13 @@ function applyPhaseCanvasLayout() {
   layoutCell = GRID_CELL;
   layoutPlayerX = GRID_PLAYER_X;
   if (phase === "prep") {
-    canvas.width = PREP_CANVAS_W;
-    canvas.height = PREP_CANVAS_H;
+    if (isLobby2pMode() && lobbyState?.isSplitLobby) {
+      canvas.width = BATTLE_CANVAS_W;
+      canvas.height = BATTLE_CANVAS_H;
+    } else {
+      canvas.width = PREP_CANVAS_W;
+      canvas.height = PREP_CANVAS_H;
+    }
   } else if (isTdMode() && isBattleUiPhase()) {
     if (!isTdLoadoutEditPhase()) {
       canvas.width = typeof TD_CANVAS_W === "number" ? TD_CANVAS_W : 960;
@@ -3113,8 +3650,12 @@ function renderPhase() {
     ensureShopReadyForSide("player");
     if (isEnemyPrepEditable()) ensureShopReadyForSide("enemy");
     if (phase === "prep") updatePrepSideUI();
-    renderShop();
-    renderBench();
+    if (isLobby2pMode() && lobbyState?.isSplitLobby) {
+      renderLobby2pCommerce();
+    } else {
+      renderShop();
+      renderBench();
+    }
     if (isTdRunLive()) renderTdBuildPanel();
   }
   syncPrepTooltipDockVisibility();
@@ -3124,6 +3665,7 @@ function renderPhase() {
   if (phase !== "prep" && !isTdRunLive()) setPrepDollOpen(false);
   if (phase !== "prep" && !isTdRunLive() && typeof closeMobilePrepShop === "function") closeMobilePrepShop();
   if (typeof applyUiLayout === "function") scheduleLayoutAfterPhase();
+  syncLobby2pHudDom();
   if (isTdMode() && isBattleUiPhase()) {
     requestAnimationFrame(() => {
       if (typeof TdArena !== "undefined" && typeof TdArena.resize === "function") TdArena.resize();
@@ -3194,6 +3736,7 @@ function transitionToPhase(newPhase, afterTransition) {
     afterTransition?.();
     requestAnimationFrame(() => {
       layout?.classList.remove("phase-transitioning");
+      window.flushDeferredLayoutPasses?.();
     });
   }, 200);
 }
@@ -3422,6 +3965,9 @@ function returnToMainMenu() {
   lobbyRoundSettling = false;
   lastLobbyPlayerBattleWinner = null;
   stopLobbyPrepTimer();
+  delete document.documentElement.dataset.lobbySplit;
+  delete document.documentElement.dataset.lobby2pHud;
+  delete document.documentElement.dataset.lobby2pActiveHuman;
   lastEndedBattleState = null;
   prepViewSide = "player";
   phase = "classSelect";
@@ -3483,11 +4029,13 @@ function startRunFromOverlay() {
       ? "hardbot"
       : selectedGameMode === "lobby"
         ? "ghost"
-        : selectedGameMode === "td"
-          ? "td"
-          : selectedGameMode === "campaign"
-            ? "campaign"
-            : "ai";
+        : selectedGameMode === "lobby2p"
+          ? "ghost2p"
+          : selectedGameMode === "td"
+            ? "td"
+            : selectedGameMode === "campaign"
+              ? "campaign"
+              : "ai";
   enemyClass = selectedEnemyClass || pendingPlayerClass;
   enemyArchetype = AI_ARCHETYPES[enemyClass] || AI_ARCHETYPES.warrior;
   prepViewSide = "player";
@@ -3610,6 +4158,9 @@ function restartGame() {
   } else if (opponentMode === "ghost") {
     lobbyState = null;
     initLobbyRun();
+  } else if (opponentMode === "ghost2p") {
+    lobbyState = null;
+    initLobby2pRun();
   } else if (opponentMode === "td") {
     enemyArchetype = AI_ARCHETYPES.warrior;
     enemyClass = playerClass;
@@ -3708,7 +4259,6 @@ function isPopupOpen(id) {
 function syncClassOverlayHiddenDuringGame() {
   const overlay = document.getElementById("class-overlay");
   if (!overlay || !document.body.classList.contains("screen-app-visible")) return;
-  if (typeof ScreenTransitions !== "undefined" && ScreenTransitions.isScreenTransitioning()) return;
   if (overlay.classList.contains("overlay-exiting")) return;
   if (overlay.classList.contains("hidden")) return;
   overlay.classList.add("hidden");
@@ -4071,7 +4621,7 @@ function handleGlobalKeydown(e) {
       return;
     }
     e.preventDefault();
-    if (isLobbyMode() && lobbyState) {
+    if (isAnyLobbyMode() && lobbyState) {
       setLobbyViewFighter(cycleLobbyViewFighterId(
         lobbyState,
         lobbyViewFighterId,
@@ -4112,16 +4662,58 @@ function restoreDraggedItem(side = prepViewSide) {
   }
 }
 
+function canPrepSellDragHighlight() {
+  return !!(phase === "prep" && dragPayload && dragFrom?.type !== "shop");
+}
+
+function syncSellDropHighlight(clientX, clientY) {
+  const sellable = canPrepSellDragHighlight();
+  document.documentElement.toggleAttribute("data-prep-sell-drag", sellable);
+
+  const synthetic = sellable && clientX != null && clientY != null
+    ? createSyntheticPointerEvent(clientX, clientY)
+    : null;
+  const onSell = !!(sellable && synthetic && isDropOnSell(synthetic));
+  const dragSide = dragFrom?.side || prepViewSide;
+
+  const sellZone = document.getElementById("shop-sell-zone");
+  if (sellZone) {
+    sellZone.classList.toggle("sell-drop-target", onSell);
+    sellZone.classList.toggle("is-drag-active", sellable);
+  }
+
+  document.querySelectorAll(".sell-drop-zone").forEach((el) => {
+    let zoneActive = onSell;
+    let zoneSellable = sellable;
+    if (el.classList.contains("lobby2p-sell-zone")) {
+      const side = Number(el.dataset.human) === 0 ? "player" : "enemy";
+      zoneSellable = sellable && side === dragSide;
+      zoneActive = onSell && side === dragSide;
+    }
+    el.classList.toggle("is-drag-active", zoneSellable);
+    el.classList.toggle("is-drag-target", zoneActive);
+  });
+}
+
+function clearSellDropHighlight() {
+  document.documentElement.removeAttribute("data-prep-sell-drag");
+  document.getElementById("shop-sell-zone")?.classList.remove("sell-drop-target", "is-drag-active");
+  document.querySelectorAll(".sell-drop-zone").forEach((el) => {
+    el.classList.remove("is-drag-target", "is-drag-active");
+  });
+}
+
 function syncUiDragState() {
-  document.body.classList.toggle(
-    "is-ui-dragging",
-    !!(dragPayload || pendingShopDrag || pendingBenchDrag || pendingEnhancementDrag),
-  );
-  if (dragPayload || pendingShopDrag || pendingBenchDrag || pendingEnhancementDrag) {
+  const dragging = !!(dragPayload || pendingShopDrag || pendingBenchDrag || pendingEnhancementDrag);
+  document.body.classList.toggle("is-ui-dragging", dragging);
+  if (dragging) {
     tooltipItem = null;
     hideSidebarTooltip();
+  } else {
+    window.flushDeferredLayoutPasses?.();
   }
   syncPrepShopDragBackdrop(lastPointerClient.x, lastPointerClient.y);
+  syncSellDropHighlight(lastPointerClient.x, lastPointerClient.y);
   if (typeof refreshGamepadHints === "function") refreshGamepadHints();
 }
 
@@ -5124,9 +5716,7 @@ function clearDragUiState() {
   canvas?.classList.remove("synergy-preview-mode");
   document.getElementById("bench-panel")?.classList.remove("bench-drop-target");
   document.getElementById("btn-prep-bench-fab")?.classList.remove("bench-drop-target");
-  document.getElementById("shop-sell-zone")?.classList.remove("sell-drop-target");
-  document.getElementById("sell-drop-zone")?.classList.remove("is-drag-target");
-  document.getElementById("sell-drop-zone")?.classList.remove("is-drag-active");
+  clearSellDropHighlight();
   dragPayload = null;
   dragFrom = null;
   prepSidebarDragUnlocked = false;
@@ -5151,7 +5741,8 @@ function canStartBattle() {
     if (!lobbyState || !getLobbyPlayer(lobbyState)?.alive) return false;
     if (isLobbyRunOver(lobbyState)) return false;
     if (!getLobbyOpponent(lobbyState)) return false;
-  } else if (isTdMode()) {
+  }
+  if (isLobby2pMode()) return false; else if (isTdMode()) {
     if (tdRunLive) return false;
     if (round > getTdMaxWaves()) return false;
     return true;
@@ -5166,7 +5757,7 @@ function canStartBattle() {
 function renderFightButton() {
   const btn = document.getElementById("btn-fight");
   if (!btn) return;
-  const visible = phase === "prep" && !gameOver && !isTdRunLive();
+  const visible = phase === "prep" && !gameOver && !isTdRunLive() && !isLobby2pMode();
   btn.classList.toggle("hidden", !visible);
   if (visible) btn.disabled = !canStartBattle();
   if (visible && isTdMode()) {
@@ -6214,6 +6805,12 @@ function startBattle() {
     applyLobbyGhostToEnemy();
     syncLobbyPlayerFromGlobals();
   }
+  if (isLobby2pMode() && lobbyState) {
+    stopLobbyPrepTimer();
+    applyCraftingForSide("player");
+    applyCraftingForSide("enemy");
+    syncLobby2pBothFromGlobals();
+  }
   if (dragPayload) {
     dragPayload = null;
     dragFrom = null;
@@ -6304,15 +6901,24 @@ function startBattle() {
       if (typeof setBattleEnemyTeamLabel === "function") {
         setBattleEnemyTeamLabel(getEnemyDisplayName());
       }
-      if (isLobbyMode() && lobbyState) {
+      if (isAnyLobbyMode() && lobbyState) {
         if (typeof syncAllLobbyFighterMutations === "function") {
           syncAllLobbyFighterMutations(lobbyState, round);
         }
         if (typeof disposeLobbyMatches === "function") disposeLobbyMatches(lobbyMatches);
         lobbyMatches = [];
         lobbyBackgroundSimAcc.clear();
-        lobbyMatches = initLobbyRoundBattles(lobbyState, round);
-        const playerIdx = lobbyMatches.findIndex((m) => m.isPlayerMatch);
+        if (isLobby2pMode()) {
+          lobbyMatches = buildLobby2pRoundMatches(lobbyState);
+          lobbyMatches.forEach((match) => {
+            if (!match.byeFighterId) createLobbyMatchState(match, lobbyState, round);
+          });
+        } else {
+          lobbyMatches = initLobbyRoundBattles(lobbyState, round);
+        }
+        const playerIdx = isLobby2pMode()
+          ? lobbyMatches.findIndex((m) => m.isPlayerMatch && m.humanId === 0)
+          : lobbyMatches.findIndex((m) => m.isPlayerMatch);
         lobbySpectateMatchId = playerIdx >= 0 ? playerIdx : 0;
         const playerMatch = lobbyMatches[lobbySpectateMatchId];
         if (!playerMatch?.state) throw new Error("lobby player match missing");
@@ -6360,11 +6966,11 @@ function startBattle() {
       if (typeof resetBattleAuraFrame === "function") resetBattleAuraFrame();
       if (typeof initBattleHud === "function") initBattleHud();
       if (typeof hideBattleCountdownOverlay === "function") hideBattleCountdownOverlay();
-      if (!isLobbyMode() && typeof initBattleCountdown === "function") initBattleCountdown(battleState);
+      if (!isAnyLobbyMode() && typeof initBattleCountdown === "function") initBattleCountdown(battleState);
       if (typeof initBattleDamageTracker === "function") initBattleDamageTracker(battleState);
       playerPendingShopBuffs = 0;
       enemyPendingShopBuffs = 0;
-      if (!isLobbyMode()) {
+      if (!isAnyLobbyMode()) {
         battleState.recording = true;
         battleState.replayFrames = [captureBattleFrame(battleState)];
         battleState.lastRecordAt = 0;
@@ -6379,7 +6985,7 @@ function startBattle() {
       renderFightButton();
       renderLobbyChrome();
       if (typeof queuePrewarmBattleInventoryPopover === "function") {
-        if (!isLobbyMode()) {
+        if (!isAnyLobbyMode()) {
           queuePrewarmBattleInventoryPopover();
         }
       }
@@ -6595,7 +7201,10 @@ function endBattle() {
     runResults[round - 1] = battleResult;
     round++;
     syncAllMutationMilestones();
-    if (isLobbyMode() && lobbyState) syncLobbyPlayerFromGlobals();
+    if (isAnyLobbyMode() && lobbyState) {
+      if (isLobby2pMode()) syncLobby2pBothFromGlobals();
+      else syncLobbyPlayerFromGlobals();
+    }
     if (!isCampaignMode()) resetShopForNewRound();
 
     setBattleControlsVisible(false);
@@ -6618,7 +7227,7 @@ function endBattle() {
     showBattleResultPopup(resultSummary, resultLog);
   });
 
-  if (isLobbyMode() && lobbyState) {
+  if (isAnyLobbyMode() && lobbyState) {
     lastLobbyPlayerBattleWinner = battleWinner;
     lobbyRoundSettling = true;
     battleState = null;
@@ -6695,9 +7304,31 @@ function applyPostBattlePrep(battleWinner) {
     return;
   }
 
-  if (isLobbyMode() && lobbyState) {
+  if (isAnyLobbyMode() && lobbyState) {
     fastForwardRemainingLobbyMatches(lobbyMatches);
     const lobbyResult = applyAllLobbyMatchResults(lobbyState, lobbyMatches);
+
+    if (isLobby2pMode()) {
+      lobbyResult.summaries.filter((s) => s.isPlayerMatch).forEach((playerSummary) => {
+        const humanId = [playerSummary.winnerId, playerSummary.loserId]
+          .find((id) => lobbyState.humanIds?.includes(id));
+        if (humanId == null) return;
+        const fighter = getLobbyHumanFighter(lobbyState, humanId);
+        if (playerSummary.loserId === humanId && typeof CombatLog !== "undefined") {
+          const msg = playerSummary.eliminated
+            ? `💔 ${fighter?.name} выбыл! −${playerSummary.damage} HP`
+            : `💔 ${fighter?.name}: −${playerSummary.damage} HP (осталось ${fighter?.hp ?? 0})`;
+          CombatLog.addEvent({ type: "loss", text: msg, mergeKey: `lobby2p:dmg:${humanId}:${round}` });
+        } else if (playerSummary.winnerId === humanId && typeof CombatLog !== "undefined") {
+          const oppId = playerSummary.winnerId === humanId ? playerSummary.loserId : playerSummary.winnerId;
+          const opp = lobbyState.fighters[oppId];
+          const msg = playerSummary.eliminated
+            ? `🏆 ${fighter?.name} победил ${opp?.name}! −${playerSummary.damage} HP`
+            : `🏆 ${fighter?.name} vs ${opp?.name}: −${playerSummary.damage} HP`;
+          CombatLog.addEvent({ type: "win", text: msg, mergeKey: `lobby2p:win:${humanId}:${round}` });
+        }
+      });
+    } else {
     const playerSummary = lobbyResult.summaries.find((s) => s.isPlayerMatch);
     const opponent = getLobbyOpponent(lobbyState);
 
@@ -6715,6 +7346,7 @@ function applyPostBattlePrep(battleWinner) {
       if (typeof CombatLog !== "undefined") {
         CombatLog.addEvent({ type: "win", text: msg, mergeKey: `lobby:dmg:enemy:${round}` });
       }
+    }
     }
 
     lobbyResult.summaries.filter((s) => !s.isPlayerMatch).forEach((s) => {
@@ -6737,6 +7369,13 @@ function applyPostBattlePrep(battleWinner) {
         CombatLog.notifyBackpack(ITEM_CATALOG[playerBag.bagId]);
       }
     }
+    if (isLobby2pMode()) {
+      const enemyBag = grantBagReward(enemyContainers, round, GRID_COLS, GRID_ROWS, enemyItems);
+      if (enemyBag.granted) {
+        enemyContainers = enemyBag.containers;
+        log(`🎒 Игрок 2: новая сумка ${ITEM_CATALOG[enemyBag.bagId]?.name || "Сумка"}!`);
+      }
+    }
 
     if (typeof disposeLobbyMatches === "function") disposeLobbyMatches(lobbyMatches);
     lobbyMatches = [];
@@ -6744,20 +7383,36 @@ function applyPostBattlePrep(battleWinner) {
     battleState = null;
     if (typeof clearBattleInventoryPopoverCache === "function") clearBattleInventoryPopoverCache();
 
-    if (lobbyResult.playerEliminated || lobbyResult.lobbyWon || isLobbyRunOver(lobbyState)) {
+    const runOver = isLobby2pMode()
+      ? isLobby2pRunOver(lobbyState)
+      : isLobbyRunOver(lobbyState);
+    if (lobbyResult.playerEliminated || lobbyResult.lobbyWon || runOver) {
       pendingGameOver = true;
       updateUI();
       renderRunStats();
       renderLobbyChrome(true);
+      if (isLobby2pMode()) syncLobby2pHudDom();
       return;
     }
 
     startLobbyPrepRound(lobbyState, round);
+    if (isLobby2pMode()) {
+      importLobby2pHumanToGlobals(0);
+      importLobby2pHumanToGlobals(1);
+      lobbyState.ready[0] = false;
+      lobbyState.ready[1] = false;
+      lobbyViewFighterId = 0;
+      prepViewSide = "player";
+      resetShopForNewRoundForSide("player");
+      resetShopForNewRoundForSide("enemy");
+      syncLobby2pHudDom();
+    } else {
     lobbyViewFighterId = lobbyState.playerId;
     setLobbyViewFighter(lobbyState.playerId);
     resetLobbyPrepTimer();
     resetShopForNewRoundForSide("player");
     prepViewSide = "player";
+    }
     recalcSynergies();
     renderBattleStats();
     renderPlayerProfiles();
@@ -6880,7 +7535,7 @@ function applyPostBattlePrep(battleWinner) {
 
 function showRunComplete() {
   gameOver = true;
-  if (isLobbyMode() && lobbyState) {
+  if (isAnyLobbyMode() && lobbyState) {
     showLobbyRunCompleteOverlay(
       lobbyState,
       runResults,
@@ -6944,7 +7599,7 @@ function tickSingleBattleState(state, dt) {
 }
 
 function tickLobbyRoundBattles(dt, ts) {
-  if (!isLobbyMode() || phase !== "battle" || !lobbyMatches.length) return false;
+  if (!isAnyLobbyMode() || phase !== "battle" || !lobbyMatches.length) return false;
 
   let playerJustFinished = false;
   const bgInterval = 1 / (typeof getLobbyBackgroundSimHz === "function" ? getLobbyBackgroundSimHz() : 5);
@@ -7059,6 +7714,7 @@ function gameLoop(ts) {
   if (phase === "prep") {
     if (typeof tickInventoryAnimationController === "function") tickInventoryAnimationController(dt);
     if (typeof tickSynergyVisualController === "function") tickSynergyVisualController(dt);
+    if (isLobby2pMode()) tickLobby2pSideBattles(dt);
     if (isLobbyMode() && lobbyPrepTimerActive) {
       lobbyPrepTimerRemaining = Math.max(0, lobbyPrepTimerRemaining - dt);
       if (Math.floor(ts / 250) !== Math.floor((ts - dt * 1000) / 250)) {
@@ -7188,6 +7844,9 @@ function gameLoop(ts) {
 
 function layoutGridOrigin(team) {
   if (isTdLoadoutEditPhase()) return getTdEditGridBounds().ox;
+  if (phase === "prep" && isLobby2pMode()) {
+    return team === "player" ? 0 : ENEMY_X;
+  }
   if (phase === "prep") return 0;
   return team === "player" ? 0 : ENEMY_X;
 }
@@ -7334,13 +7993,49 @@ function isOnBoard(mx, my, team = "player") {
   return mx >= ox && mx < ox + GRID_INNER_W && my >= oy && my < oy + GRID_INNER_H;
 }
 
+function bindLobby2pSellZones() {
+  document.querySelectorAll(".lobby2p-sell-zone").forEach((btn) => {
+    if (btn.dataset.bound === "y") return;
+    btn.dataset.bound = "y";
+    btn.addEventListener("click", () => {
+      const human = Number(btn.dataset.human);
+      const side = human === 0 ? "player" : "enemy";
+      if (phase !== "prep" || !canEditPrepSide(side)) return;
+      setLobby2pActiveHuman(human);
+      sellSelected(side);
+    });
+  });
+}
+
 function isDropOnSell(e) {
+  if (!e) return false;
+  const pad = isTouchUi() ? 18 : 8;
+  const dragSide = dragFrom?.side || prepViewSide;
+
+  if (isLobby2pMode() && lobbyState?.isSplitLobby && phase === "prep") {
+    if (e.target?.closest?.(".lobby2p-sell-zone")) {
+      const zone = e.target.closest(".lobby2p-sell-zone");
+      const human = Number(zone.dataset.human);
+      const side = human === 0 ? "player" : "enemy";
+      return side === dragSide;
+    }
+    for (const human of [0, 1]) {
+      const side = human === 0 ? "player" : "enemy";
+      if (side !== dragSide) continue;
+      const zone = document.querySelector(`.lobby2p-sell-zone[data-human="${human}"]`);
+      if (!zone) continue;
+      const r = zone.getBoundingClientRect();
+      if (e.clientX >= r.left - pad && e.clientX <= r.right + pad
+        && e.clientY >= r.top - pad && e.clientY <= r.bottom + pad) return true;
+    }
+    return false;
+  }
+
   const icon = document.getElementById("sell-drop-zone");
   const zone = icon || document.getElementById("shop-sell-zone");
-  if (!zone || !e) return false;
+  if (!zone) return false;
   if (e.target?.closest?.("#sell-drop-zone, #shop-sell-zone")) return true;
   const r = zone.getBoundingClientRect();
-  const pad = isTouchUi() ? 18 : 8;
   return e.clientX >= r.left - pad && e.clientX <= r.right + pad
     && e.clientY >= r.top - pad && e.clientY <= r.bottom + pad;
 }
@@ -7349,6 +8044,32 @@ function isDropOnBench(e) {
   if (!e || phase !== "prep") return false;
   if (dragFrom?.type === "bench" && hasPrepBoardDropTarget()) return false;
   const pad = isTouchUi() ? 14 : 0;
+
+  if (isLobby2pMode() && lobbyState?.isSplitLobby) {
+    if (e.target?.closest?.(".lobby2p-bench-slots, .lobby2p-bench-slots .bench-card")) {
+      const col = e.target.closest(".lobby2p-col-bench");
+      if (col) {
+        const human = Number(col.dataset.human);
+        const side = human === 0 ? "player" : "enemy";
+        const dragSide = dragFrom?.side || prepViewSide;
+        return !dragFrom?.side || dragSide === side;
+      }
+    }
+    for (const human of [0, 1]) {
+      const benchEl = document.getElementById(`lobby2p-bench-slots-${human}`);
+      if (!benchEl) continue;
+      const r = benchEl.getBoundingClientRect();
+      const onBench = r.width > 0
+        && e.clientX >= r.left - pad && e.clientX <= r.right + pad
+        && e.clientY >= r.top - pad && e.clientY <= r.bottom + pad;
+      if (onBench) {
+        const side = human === 0 ? "player" : "enemy";
+        const dragSide = dragFrom?.side || prepViewSide;
+        return !dragFrom?.side || dragSide === side;
+      }
+    }
+    return false;
+  }
 
   if (e.target?.closest?.("#btn-prep-bench-close")) return false;
 
@@ -7763,16 +8484,7 @@ function updatePointerFromClient(clientX, clientY) {
     if (benchFab) {
       benchFab.classList.toggle("bench-drop-target", onBench);
     }
-    const sellZone = document.getElementById("shop-sell-zone");
-    const sellIcon = document.getElementById("sell-drop-zone");
-    const onSell = !!(dragPayload && dragFrom?.type !== "shop" && isDropOnSell(synthetic));
-    if (sellZone) {
-      sellZone.classList.toggle("sell-drop-target", onSell);
-    }
-    if (sellIcon) {
-      sellIcon.classList.toggle("is-drag-target", onSell);
-      sellIcon.classList.toggle("is-drag-active", !!(dragPayload && dragFrom?.type !== "shop"));
-    }
+    syncSellDropHighlight(clientX, clientY);
     syncPrepShopDragBackdrop(clientX, clientY);
   } else if ((phase === "battle" || phase === "replay") && battleState && !isTouchUi()) {
     updateTooltip(mousePos.x, mousePos.y);
@@ -7923,6 +8635,15 @@ function drawWorldLayer() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawBackground();
   if (phase === "prep") {
+    if (isLobby2pMode() && lobbyState?.isSplitLobby) {
+      const shake = typeof getPrepBackpackShakeOffset === "function"
+        ? getPrepBackpackShakeOffset()
+        : { x: 0, y: 0 };
+      ctx.save();
+      ctx.translate(shake.x, shake.y);
+      drawLobby2pSplitPrep();
+      ctx.restore();
+    } else {
     const side = prepViewSide;
     const st = getSideState(side);
     const shake = typeof getPrepBackpackShakeOffset === "function"
@@ -7962,6 +8683,7 @@ function drawWorldLayer() {
       else drawDropPreview(ctx);
     }
     ctx.restore();
+    }
   } else if (isTdLoadoutEditPhase()) {
     const tower = getTdEditTower();
     if (tower) {
@@ -8038,12 +8760,18 @@ function drawFxLayer() {
     if (canEditPrepSide() && hoverSlot && !dragPayload && !gamepadBoardFocus) drawHoverCell();
     if (canEditPrepSide() && gamepadBoardFocus && isGamepadInteraction()) drawGamepadBoardFocus();
     if (typeof drawPrepCellReactions === "function") drawPrepCellReactions(fxCtx, side);
+    if (typeof drawBoardTooltipItemSparkles === "function") {
+      drawBoardTooltipItemSparkles(fxCtx, synergyAnimTime);
+    }
     fxCtx.restore();
     return;
   }
   if (isBattleUiPhase() && battleState) {
     drawAttackAnimations(fxCtx, battleState);
     renderBattleEffectsOverlay(battleState);
+    if (typeof drawBoardTooltipItemSparkles === "function") {
+      drawBoardTooltipItemSparkles(fxCtx, synergyAnimTime);
+    }
     if (typeof renderBattleCountdown === "function") renderBattleCountdown(battleState);
   }
 }
@@ -8218,6 +8946,7 @@ function drawContainers(containers, team, dimmed) {
 }
 
 function drawLoadoutItems(items, team, dimmed) {
+  const glowUid = !dragPayload && tooltipItem?.contentItem?.uid ? tooltipItem.contentItem.uid : null;
   items.forEach((item) => {
     const def = ITEM_CATALOG[item.itemId];
     const alpha = dimmed ? 0.55 : 1;
@@ -8263,7 +8992,7 @@ function drawLoadoutItems(items, team, dimmed) {
       ctx.stroke();
     });
     ctx.globalAlpha = alpha;
-    drawPlacedItemIcons(ctx, def, item, (c, r) => cellRect(team, c, r));
+    drawPlacedItemIcons(ctx, def, item, (c, r) => cellRect(team, c, r), { glow: glowUid === item.uid });
     drawItemSocketVisuals(ctx, item, def, (c, r) => cellRect(team, c, r));
     ctx.globalAlpha = 1;
     ctx.restore();
@@ -9328,7 +10057,10 @@ function findContainerAtCanvasPoint(mx, my, containers, team = "player") {
 }
 
 function hitTest(mx, my) {
-  const side = prepViewSide;
+  let side = prepViewSide;
+  if (isLobby2pMode() && phase === "prep" && lobbyState?.isSplitLobby && !lobby2pHasActiveDuel()) {
+    side = mx < GRID_INNER_W + GRID_GAP / 2 ? "player" : "enemy";
+  }
   if (!canEditPrepSide(side)) return null;
   if (isOnBoard(mx, my, side) && isLoadoutInteractionPhase()) {
     const st = getLoadoutEditState(side);
@@ -9501,6 +10233,9 @@ function showSidebarTooltipAt(clientX, clientY, itemId, contentItem, context = "
   cancelScheduledTooltipHide();
   sidebarTooltipPinned = !!options.pinned;
   sidebarTooltipSource = context;
+  if (typeof syncDomSparkleFromTooltipSource === "function") {
+    syncDomSparkleFromTooltipSource(sourceEl);
+  }
   tooltipItem = null;
   fieldTooltipVisible = false;
   el.classList.remove("synergy-tooltip");
@@ -9663,6 +10398,9 @@ function bindItemTooltipEvents(el, itemId, contentItem, context = "shop") {
   if (context === "shop" || context === "bench" || context === "field" || context === "inventory") {
     el.style.cursor = "help";
   }
+  if (typeof bindItemEmojiSparklePointer === "function") {
+    bindItemEmojiSparklePointer(el);
+  }
 }
 
 function syncTdTowerFromLoadoutState(st, side = prepViewSide) {
@@ -9674,7 +10412,15 @@ function syncTdTowerFromLoadoutState(st, side = prepViewSide) {
 }
 
 function onMouseDown(e) {
-  if (!isLoadoutInteractionPhase() || gameOver || !canEditPrepSide()) return;
+  if (!isLoadoutInteractionPhase() || gameOver) return;
+  if (isLobby2pMode() && phase === "prep" && lobbyState?.isSplitLobby && !lobby2pHasActiveDuel()) {
+    const { x: mx } = canvasCoordsFromEvent(e);
+    const targetSide = mx < GRID_INNER_W + GRID_GAP / 2 ? "player" : "enemy";
+    if (targetSide !== prepViewSide && canEditPrepSide(targetSide)) {
+      setLobby2pActiveHuman(targetSide === "player" ? 0 : 1);
+    }
+  }
+  if (!canEditPrepSide()) return;
   const side = prepViewSide;
   const st = getLoadoutEditState(side);
   const { x: mx, y: my } = canvasCoordsFromEvent(e);
@@ -10277,8 +11023,13 @@ function updateUI() {
     if (isCampaignMode()) syncCampaignChrome();
     else ensureShopReadyForSide(prepViewSide);
     updatePrepSideUI();
-    renderShop();
-    renderBench();
+    if (isLobby2pMode() && lobbyState?.isSplitLobby) {
+      renderLobby2pCommerce();
+      syncLobby2pHudDom();
+    } else {
+      renderShop();
+      renderBench();
+    }
     renderFightButton();
     if (typeof syncDollUI === "function") syncDollUI(prepViewSide);
     refreshPlayerCharacteristicsPopup(getPlayerCharacteristicsState());
@@ -10335,6 +11086,13 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
   }
 
   if (phase === "prep") {
+    if (isLobby2pMode() && lobbyState?.isSplitLobby) {
+      layer?.setAttribute("aria-hidden", "true");
+      prepPlayer?.setAttribute("hidden", "");
+      prepEnemy?.setAttribute("hidden", "");
+      if (statsHud) statsHud.innerHTML = "";
+      return;
+    }
     layer?.setAttribute("aria-hidden", "false");
   } else {
     layer?.setAttribute("aria-hidden", "true");
@@ -10713,7 +11471,7 @@ function renderPlayerProfiles(opts = {}) {
 function renderRunStats() {
   const el = document.getElementById("run-stats-panel");
   if (!el) return;
-  if (isLobbyMode() && lobbyState) {
+  if (isAnyLobbyMode() && lobbyState) {
     el.innerHTML = renderLobbyStandingsPanel(lobbyState, round, runResults, {
       spent: goldSpentTotal,
       earned: goldEarnedTotal,
@@ -10745,7 +11503,7 @@ function log(msg) {
 function buildItemCardHTML(def, { cardType = "item-card", extraClasses = "", tagsHtml = "", innerBefore = "", innerAfter = "", dataAttrs = "", showShape = true, shapeSize = "md" } = {}) {
   const classes = getRarityCardClasses(def.rarity, [cardType, extraClasses].filter(Boolean).join(" "));
   const shapeHtml = showShape ? renderItemShapeMiniHTML(def, { size: shapeSize }) : "";
-  const iconHtml = `<div class="${getItemIconShellClass(def)}" style="background:${def.color}33">${renderItemIconsHTML(def)}</div>`;
+  const iconHtml = `<div class="${getItemIconShellClass(def)}">${renderItemIconsHTML(def)}</div>`;
   const visualHtml = showShape
     ? `<div class="item-card-cluster">${iconHtml}${shapeHtml}</div>`
     : iconHtml;
@@ -10844,6 +11602,7 @@ registerPrepShopRuntime({
     if (!isCampaignMode() || side !== "player") return true;
     return campaignShopOptions.allowSell !== false;
   },
+  isLobby2pSplitPrep: () => isLobby2pMode() && phase === "prep" && !!lobbyState?.isSplitLobby,
 });
 
 init();

@@ -117,15 +117,19 @@ function getSocketGemDisplayIcon(def) {
 
 /** HTML для магазина / скамейки: до 2 эмодзи в одной подложке, слева направо. */
 function renderItemIconsHTML(def) {
+  const sparkles = typeof renderItemEmojiSparklesHTML === "function"
+    ? renderItemEmojiSparklesHTML()
+    : "";
   const icons = getItemIcons(def);
-  if (!icons.length) return `<span class="icon-glyph" aria-hidden="true">📦</span>`;
-  if (icons.length === 1) return `<span class="icon-glyph" aria-hidden="true">${icons[0]}</span>`;
-  return `<span class="icon-duo" aria-hidden="true">${icons.map((glyph) => `<span class="icon-glyph">${glyph}</span>`).join("")}</span>`;
+  if (!icons.length) return `${sparkles}<span class="icon-glyph" aria-hidden="true">📦</span>`;
+  if (icons.length === 1) return `${sparkles}<span class="icon-glyph" aria-hidden="true">${icons[0]}</span>`;
+  return `${sparkles}<span class="icon-duo" aria-hidden="true">${icons.map((glyph) => `<span class="icon-glyph">${glyph}</span>`).join("")}</span>`;
 }
 
 /** Класс оболочки иконки: два эмодзи — та же подложка, уже глифы внутри. */
 function getItemIconShellClass(def) {
-  return getItemIcons(def).length > 1 ? "icon icon--duo" : "icon";
+  const duo = getItemIcons(def).length > 1;
+  return duo ? "icon icon--duo item-emoji-sparkle-host" : "icon item-emoji-sparkle-host";
 }
 
 /** Компактно: оба эмодзи в одной клетке (магазин, скамейка, 1×1 на поле). */
@@ -150,34 +154,48 @@ function drawItemIcons(ctx, icons, x, y, w, h, pad = CELL_TILE_PAD) {
  * Иконки размещённого предмета: при форме >1 клетки — по эмодзи на ячейку,
  * иначе оба эмодзи компактно в якорной клетке.
  */
-function drawPlacedItemIcons(ctx, def, item, cellRectFn) {
-  const layout = typeof getPlacedItemVisualLayout === "function"
-    ? getPlacedItemVisualLayout(item, def)
-    : null;
+function drawPlacedItemIcons(ctx, def, item, cellRectFn, options = {}) {
+  const glow = !!options.glow;
+  const drawIcons = () => {
+    const layout = typeof getPlacedItemVisualLayout === "function"
+      ? getPlacedItemVisualLayout(item, def)
+      : null;
 
-  if (layout?.iconSlots?.length) {
-    layout.iconSlots.forEach((slot) => {
-      const [c, r] = slot.cell;
-      const rect = cellRectFn(c, r);
-      drawItemIcons(ctx, slot.icons, rect.x, rect.y, rect.w, rect.h);
-    });
+    if (layout?.iconSlots?.length) {
+      layout.iconSlots.forEach((slot) => {
+        const [c, r] = slot.cell;
+        const rect = cellRectFn(c, r);
+        drawItemIcons(ctx, slot.icons, rect.x, rect.y, rect.w, rect.h);
+      });
+      return;
+    }
+
+    const icons = getItemIcons(def);
+    const cells = typeof getItemCells === "function" ? getItemCells(item) : [];
+    if (cells.length > 1 && icons.length > 1) {
+      cells.slice(0, icons.length).forEach(([c, r], i) => {
+        const rect = cellRectFn(c, r);
+        drawCellEmoji(ctx, icons[i], rect.x, rect.y, rect.w, rect.h);
+      });
+      return;
+    }
+    const [iconCol, iconRow] = typeof getItemIconCell === "function"
+      ? getItemIconCell(item)
+      : [item.col, item.row];
+    const rect = cellRectFn(iconCol, iconRow);
+    drawItemIcons(ctx, icons, rect.x, rect.y, rect.w, rect.h);
+  };
+
+  if (!glow) {
+    drawIcons();
     return;
   }
 
-  const icons = getItemIcons(def);
-  const cells = typeof getItemCells === "function" ? getItemCells(item) : [];
-  if (cells.length > 1 && icons.length > 1) {
-    cells.slice(0, icons.length).forEach(([c, r], i) => {
-      const rect = cellRectFn(c, r);
-      drawCellEmoji(ctx, icons[i], rect.x, rect.y, rect.w, rect.h);
-    });
-    return;
-  }
-  const [iconCol, iconRow] = typeof getItemIconCell === "function"
-    ? getItemIconCell(item)
-    : [item.col, item.row];
-  const rect = cellRectFn(iconCol, iconRow);
-  drawItemIcons(ctx, icons, rect.x, rect.y, rect.w, rect.h);
+  ctx.save();
+  ctx.shadowColor = "rgba(255, 230, 120, 0.95)";
+  ctx.shadowBlur = 16;
+  drawIcons();
+  ctx.restore();
 }
 
 /** Камни в свободных клетках формы; пустые сокеты — индикатор в клетке или оверлей. */
