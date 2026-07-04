@@ -283,7 +283,7 @@ html[data-ui-surface="tablet-side"][data-game-phase="prep"] #prep-tooltip-dock.p
   overflow: visible;
 }
 
-html[data-ui-surface="tablet-side"][data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--hero-grid .sidebar-tooltip:not(.hidden) {
+html[data-ui-surface="tablet-side"][data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--hero-grid .sidebar-tooltip:not(.hidden):not(.sidebar-tooltip--card) {
   width: min(100%, calc(248px * var(--ui-scale, 1)));
   max-width: min(100%, calc(248px * var(--ui-scale, 1)));
   max-height: min(38vh, calc(260px * var(--ui-scale, 1)));
@@ -299,6 +299,19 @@ html[data-ui-surface="tablet-side"][data-game-phase="prep"] #prep-tooltip-dock.p
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+html[data-ui-surface="tablet-side"][data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--hero-grid .sidebar-tooltip.sidebar-tooltip--card:not(.hidden) {
+  width: auto;
+  max-width: calc(220px * var(--ui-scale, 1));
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
 }
 
 html[data-ui-surface="tablet-side"][data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--hero-grid .sidebar-tooltip .tt-title {

@@ -404,8 +404,11 @@ function showDollEmptySlotTooltipAt(clientX, clientY, slotId) {
   if (typeof tooltipItem !== "undefined") tooltipItem = null;
   if (typeof fieldTooltipVisible !== "undefined") fieldTooltipVisible = false;
   el.classList.remove("synergy-tooltip");
-  el.innerHTML = renderTooltipLinesHtml(buildDollEmptySlotTooltipLines(slotId));
-  el.style.borderColor = "#58a6ff";
+  applySidebarTooltipCard(
+    el,
+    buildDollEmptySlotTooltipLines(slotId),
+    { emoji: "🧸", rarityColor: "#58a6ff" },
+  );
   el.classList.remove("hidden");
   if (typeof syncPrepTooltipDockVisibility === "function") syncPrepTooltipDockVisibility();
   if (typeof positionSidebarTooltip === "function") {
@@ -419,11 +422,10 @@ function showDollFilledSlotTooltipAt(clientX, clientY, item, slotEl, options = {
   if (!def) return;
   showSidebarTooltipAt(clientX, clientY, item.itemId, item, "doll", slotEl, { pinned: !!options.pinned });
   const el = document.getElementById("sidebar-tooltip");
-  if (el && typeof renderTooltipLinesHtml === "function" && typeof buildItemTooltipLines === "function") {
+  if (el && typeof buildItemTooltipLines === "function" && typeof applySidebarTooltipCard === "function") {
     const lines = buildItemTooltipLines(def, item, item.rotation || 0, "field");
     lines.push({ text: "Клик — снять на скамейку", style: "sub", color: "#8b949e" });
-    el.innerHTML = renderTooltipLinesHtml(lines);
-    el.style.borderColor = (typeof RARITY_COLORS !== "undefined" && RARITY_COLORS[def.rarity]) || "#30363d";
+    applySidebarTooltipCard(el, lines, getItemTooltipCardOptions(def, "field"));
   }
 }
 

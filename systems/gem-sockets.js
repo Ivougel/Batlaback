@@ -258,6 +258,7 @@ function getPlacedItemVisualLayout(item, def) {
     : [{
       cell: typeof getItemIconCell === "function" ? getItemIconCell(item) : [item.col, item.row],
       icons,
+      useShapeBounds: cells.length > 1,
     }];
 
   const iconCellKeys = new Set(iconSlots.map((s) => `${s.cell[0]},${s.cell[1]}`));

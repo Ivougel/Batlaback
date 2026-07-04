@@ -341,7 +341,8 @@ const BattleInventoryPopover = (() => {
   }
 
   function shouldSinglePopoverMode() {
-    return shouldUseDockLayout() || phase === "replay";
+    // В live-бою оба рюкзака можно держать открытыми; в replay — один (компактнее).
+    return phase === "replay";
   }
 
   function getBottomChromeInset() {
@@ -367,13 +368,21 @@ const BattleInventoryPopover = (() => {
     el.style.left = "-9999px";
     el.style.top = "0";
     const tipW = el.offsetWidth;
-    const tipH = el.offsetHeight;
 
     let left = team === "enemy"
       ? bounds.right - tipW - margin
       : bounds.left + margin;
     left = Math.max(bounds.left + margin, Math.min(left, bounds.right - tipW - margin));
 
+    const openCount = getOpenTeams().length;
+    if (openCount >= 2) {
+      const sharedMax = Math.floor((bounds.bottom - bounds.top - chromeInset - margin * 2) * 0.44);
+      el.style.maxHeight = `${Math.max(120, sharedMax)}px`;
+    } else {
+      el.style.removeProperty("max-height");
+    }
+
+    let tipH = el.offsetHeight;
     let top = bounds.bottom - tipH - chromeInset;
     top = Math.max(bounds.top + margin, Math.min(top, bounds.bottom - tipH - margin));
 
@@ -447,11 +456,17 @@ const BattleInventoryPopover = (() => {
       el.classList.remove("battle-inventory-popover--loading", "battle-inventory-popover--dock", "battle-inventory-popover--compact", "battle-inventory-popover--replay");
       el.style.removeProperty("width");
       el.style.removeProperty("max-width");
+      el.style.removeProperty("max-height");
       el.setAttribute("aria-hidden", "true");
       lastRenderSig.delete(side);
       lastFlashSig.delete(side);
       clearPopoverBody(side);
     });
+
+    const stillOpen = getOpenTeams();
+    if (stillOpen.length) {
+      requestAnimationFrame(() => stillOpen.forEach((side) => positionPopover(side)));
+    }
 
     if (typeof refreshGamepadHints === "function") refreshGamepadHints();
   }
@@ -480,8 +495,10 @@ const BattleInventoryPopover = (() => {
     el.classList.remove("hidden");
     el.setAttribute("aria-hidden", "false");
     showPopoverLoading(team);
-    positionPopover(team);
     schedulePopoverRender(team);
+    requestAnimationFrame(() => {
+      getOpenTeams().forEach((side) => positionPopover(side));
+    });
     if (typeof refreshGamepadHints === "function") refreshGamepadHints();
   }
 

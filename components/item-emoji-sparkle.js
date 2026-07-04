@@ -58,9 +58,12 @@
       ? getPlacedItemVisualLayout(item, def)
       : null;
     if (layout?.iconSlots?.length && typeof cellRect === "function") {
+      const cells = typeof getItemCells === "function" ? getItemCells(item) : [];
       layout.iconSlots.forEach((slot) => {
-        const [c, r] = slot.cell;
-        const rect = cellRect(team, c, r);
+        const rect = slot.useShapeBounds && cells.length > 1 && typeof getShapeIconDrawRect === "function"
+          ? getShapeIconDrawRect(cells, (c, r) => cellRect(team, c, r))
+          : cellRect(team, slot.cell[0], slot.cell[1]);
+        if (!rect) return;
         const pad = typeof CELL_TILE_PAD !== "undefined" ? CELL_TILE_PAD : 3;
         const innerW = Math.max(1, rect.w - pad * 2);
         const innerH = Math.max(1, rect.h - pad * 2);

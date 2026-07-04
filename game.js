@@ -1514,11 +1514,17 @@ function showEnhancementTooltipAt(clientX, clientY, def, context = "shop", sourc
   if (sourceEl?.dataset?.unaffordable) {
     const sideGold = getSideState(prepViewSide).gold;
     const cost = getEnhancementShopCost(def);
-    el.innerHTML = `<div class="tt-line tt-title">Недостаточно золота</div><div class="tt-line tt-sub">${cost}💰 · у вас ${sideGold}💰</div>`;
+    applySidebarTooltipCard(el, [
+      { text: "Недостаточно золота", style: "title", color: "#f85149" },
+      { text: `${cost}💰 · у вас ${sideGold}💰`, style: "sub", color: "#8b949e" },
+    ], { emoji: "💰", rarityColor: (typeof RARITY_COLORS !== "undefined" ? RARITY_COLORS[def.rarity] : null) || "#30363d", costBadge: cost });
   } else {
-    el.innerHTML = renderTooltipLinesHtml(buildEnhancementTooltipLines(def, context));
+    applySidebarTooltipCard(
+      el,
+      buildEnhancementTooltipLines(def, context),
+      getEnhancementTooltipCardOptions(def, context),
+    );
   }
-  el.style.borderColor = (typeof RARITY_COLORS !== "undefined" ? RARITY_COLORS[def.rarity] : null) || "#30363d";
   el.classList.remove("hidden");
   syncPrepTooltipDockVisibility();
   const boundsKind = context === "shop" ? "shop" : "viewport";
@@ -1770,8 +1776,12 @@ function showCompanionTooltipAt(clientX, clientY, companionId, sourceEl = null, 
   tooltipItem = null;
   fieldTooltipVisible = false;
   el.classList.remove("synergy-tooltip");
-  el.innerHTML = renderTooltipLinesHtml(buildCompanionTooltipLines(companionId));
-  el.style.borderColor = sourceEl?.classList.contains("selected") ? "#f5c842" : "#30363d";
+  const companion = typeof getCompanionById === "function" ? getCompanionById(companionId) : null;
+  applySidebarTooltipCard(
+    el,
+    buildCompanionTooltipLines(companionId),
+    { emoji: companion?.emoji || "🐾", rarityColor: sourceEl?.classList.contains("selected") ? "#f5c842" : "#30363d" },
+  );
   el.classList.remove("hidden");
   syncPrepTooltipDockVisibility();
   positionSidebarTooltip(clientX, clientY, "viewport", "companion");
@@ -2638,7 +2648,7 @@ function hideSidebarTooltip() {
   const wasCombatFeed = sidebarTooltipSource === "combat-feed";
   if (el) {
     el.classList.add("hidden");
-    el.classList.remove("combat-feed-hint-tooltip", "sidebar-tooltip--floating");
+    el.classList.remove("combat-feed-hint-tooltip", "sidebar-tooltip--floating", "sidebar-tooltip--card");
   }
   setPrepTooltipDockPassthrough(false);
   syncPrepTooltipDockVisibility();
@@ -4773,16 +4783,23 @@ function isPrepArcDragSource() {
     || dragFrom.type === "container";
 }
 
-function resolveContainerPlacementAtCursor(st, cursorCol, cursorRow) {
+function resolveContainerPlacementAtCursor(st, cursorCol, cursorRow, preferredRot = null, exactOnly = false) {
   if (!dragPayload || !isContainerItem(dragPayload.itemId)) return null;
   const excludeUid = dragFrom?.type === "container" ? dragFrom.container?.uid : null;
   const other = findContainerAtCell(st.containers, cursorCol, cursorRow);
   if (other && other.uid !== excludeUid) return null;
 
   const itemId = dragPayload.itemId;
-  const startRot = ((dragPayload.rotation || 0) % 4 + 4) % 4;
-  const rotations = [startRot];
-  for (let r = 0; r < 4; r++) if (r !== startRot) rotations.push(r);
+  const startRot = preferredRot != null
+    ? ((preferredRot % 4) + 4) % 4
+    : ((dragPayload.rotation || 0) % 4 + 4) % 4;
+  const rotations = exactOnly
+    ? [startRot]
+    : (() => {
+      const order = [startRot];
+      for (let r = 0; r < 4; r++) if (r !== startRot) order.push(r);
+      return order;
+    })();
 
   for (const rot of rotations) {
     const shape = rotateShape(ITEM_CATALOG[itemId].shape, rot);
@@ -5339,9 +5356,14 @@ function drawPrepRemoteHoldGhost(targetCtx, def, itemId, rotation, layout) {
   const icon = getItemIcons(def)?.[0] || "📦";
   const cx = layout.logicalW / 2;
   const cy = layout.logicalH / 2;
+  const rotDeg = (((rotation || 0) % 4) + 4) % 4 * 90;
 
-  // В зоне хвата показываем только ключевой эмодзи предмета.
   targetCtx.save();
+  if (rotDeg) {
+    targetCtx.translate(cx, cy);
+    targetCtx.rotate(rotDeg * Math.PI / 180);
+    targetCtx.translate(-cx, -cy);
+  }
   targetCtx.font = `${Math.round(layout.emojiBox)}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
   targetCtx.textAlign = "center";
   targetCtx.textBaseline = "middle";
@@ -5446,8 +5468,9 @@ function syncPrepDropPreviewHover(clientX, clientY, ghostClientX, ghostClientY) 
   syncPrepDragBoardHover(clientX, clientY, ghostClientX, ghostClientY);
 }
 
-function getPrepDropPlacement(st, side = prepViewSide) {
+function getPrepDropPlacement(st, side = prepViewSide, rotationOverride = null) {
   if (!dragPayload || !isLoadoutInteractionPhase()) return null;
+  const activeRot = rotationOverride != null ? rotationOverride : (dragPayload.rotation || 0);
   const gridW = getActiveGridCols();
   const gridH = getActiveGridRows();
   const col = hoverSlot?.col ?? hoverCell?.col ?? prepDropPreviewHover?.col;
@@ -5459,7 +5482,8 @@ function getPrepDropPlacement(st, side = prepViewSide) {
     : (dragFrom?.type === "item" ? dragFrom.item?.uid : null);
 
   if (isContainerItem(dragPayload.itemId)) {
-    const resolved = resolveContainerPlacementAtCursor(st, col, row);
+    const exactOnly = rotationOverride != null;
+    const resolved = resolveContainerPlacementAtCursor(st, col, row, activeRot, exactOnly);
     if (!resolved) return null;
     const valid = dragFrom?.type === "container"
       ? canMoveContainerWithItems(
@@ -5506,7 +5530,7 @@ function getPrepDropPlacement(st, side = prepViewSide) {
           kind: "item",
           col,
           row,
-          rotation: dragPayload.rotation || 0,
+          rotation: activeRot,
           valid: true,
           displaced: [],
         };
@@ -5516,7 +5540,7 @@ function getPrepDropPlacement(st, side = prepViewSide) {
       kind: "item",
       col,
       row,
-      rotation: dragPayload.rotation || 0,
+      rotation: activeRot,
       valid: false,
       displaced: [],
     };
@@ -5527,10 +5551,10 @@ function getPrepDropPlacement(st, side = prepViewSide) {
     dragPayload.itemId,
     col,
     row,
-    dragPayload.rotation || 0,
+    activeRot,
   );
   if (!placement.valid) {
-    return buildInvalidItemDropPreview(dragPayload.itemId, col, row, dragPayload.rotation || 0);
+    return buildInvalidItemDropPreview(dragPayload.itemId, col, row, activeRot);
   }
   const displaced = getOverlappingLoadoutItems(
     st.items,
@@ -8387,13 +8411,17 @@ function syncDragGhostOverlay(clientX, clientY) {
   const def = ITEM_CATALOG[dragPayload.itemId];
   if (!def) return;
 
+  const ghostDrawRotation = typeof getPrepGhostDrawRotation === "function"
+    ? getPrepGhostDrawRotation()
+    : (dragPayload.rotation || 0);
+
   const remoteHoldGhost = sidebarDrag
     && !useTdBuildSidebarArcDrag()
     && isLoadoutInteractionPhase()
     && typeof PrepDragArc !== "undefined"
     && PrepDragArc.isActive();
   const ghostLayout = remoteHoldGhost
-    ? getPrepRemoteHoldGhostLayout(def, dragPayload.rotation || 0)
+    ? getPrepRemoteHoldGhostLayout(def, ghostDrawRotation)
     : null;
   const dpr = window.devicePixelRatio || 1;
   let sizeW;
@@ -8421,12 +8449,12 @@ function syncDragGhostOverlay(clientX, clientY) {
       dragGhostCtx,
       def,
       dragPayload.itemId,
-      dragPayload.rotation || 0,
+      ghostDrawRotation,
       ghostLayout,
     );
   } else {
     const offset = uiPx(10);
-    drawItemPreview(offset, offset, def, dragPayload.itemId, true, dragPayload.rotation || 0, dragGhostCtx);
+    drawItemPreview(offset, offset, def, dragPayload.itemId, true, ghostDrawRotation, dragGhostCtx);
   }
   if (typeof applyPrepDragGhostStyles === "function") {
     applyPrepDragGhostStyles(el, arcRotation, { fullSize: !!ghostLayout });
@@ -8618,7 +8646,12 @@ function canvasCoordsFromEvent(e) {
 }
 function rotateDragItem() {
   if (!dragPayload) return;
-  dragPayload.rotation = ((dragPayload.rotation || 0) + 1) % 4;
+  const oldRot = ((dragPayload.rotation || 0) % 4 + 4) % 4;
+  const newRot = (oldRot + 1) % 4;
+  dragPayload.rotation = newRot;
+  if (typeof beginPrepGhostRotationSpin === "function") {
+    beginPrepGhostRotationSpin(oldRot, newRot);
+  }
   playPrepSfx("prep_rotate");
   syncDragGhostOverlay(lastPointerClient.x, lastPointerClient.y);
 }
@@ -9028,8 +9061,33 @@ function drawItemPreview(x, y, def, itemId, selected, rotation, targetCtx = ctx)
     roundRect(x + 8 + dx * 16, y + 8 + dy * 16, 14, 14, 3, targetCtx);
     targetCtx.fill();
   });
-  const [adx, ady] = getShapeAnchorOffset(shape);
-  drawItemIcons(targetCtx, getItemIcons(def), x + 8 + adx * 16, y + 8 + ady * 16, 14, 14, 2);
+  const rotDeg = (((rotation || 0) % 4) + 4) % 4 * 90;
+  const icons = getItemIcons(def);
+  const iconCells = shape.map(([dx, dy]) => [dx, dy]);
+  const previewCellRectFn = (c, r) => ({
+    x: x + 8 + c * 16,
+    y: y + 8 + r * 16,
+    w: 14,
+    h: 14,
+  });
+  const useShapeBounds = iconCells.length > 1 && icons.length <= 1;
+  const iconRect = useShapeBounds && typeof getShapeIconDrawRect === "function"
+    ? getShapeIconDrawRect(iconCells, previewCellRectFn)
+    : (() => {
+      const [adx, ady] = getShapeAnchorOffset(shape);
+      return previewCellRectFn(adx, ady);
+    })();
+  const center = typeof getCellsBoundsCenter === "function"
+    ? getCellsBoundsCenter(iconCells, previewCellRectFn)
+    : null;
+  const drawIcons = () => {
+    drawItemIcons(targetCtx, icons, iconRect.x, iconRect.y, iconRect.w, iconRect.h, 2);
+  };
+  if (typeof withCanvasRotation === "function") {
+    withCanvasRotation(targetCtx, center, rotDeg, drawIcons);
+  } else {
+    drawIcons();
+  }
 }
 
 function drawHoverCell() {
@@ -9045,24 +9103,66 @@ function drawDropPreview(targetCtx = fxCtx) {
   if (!dragPayload || !targetCtx) return;
   const team = prepViewSide;
   const st = getSideState(team);
+  const visual = typeof getPrepDragVisualRotation === "function"
+    ? getPrepDragVisualRotation()
+    : { drawRot: dragPayload.rotation || 0, spinDeg: 0, spinning: false };
+  const drawRot = visual.drawRot ?? (dragPayload.rotation || 0);
+  const spinDeg = visual.spinDeg || 0;
+  const wrapSpin = typeof InventoryAnimationController !== "undefined"
+    && typeof InventoryAnimationController.withDragSpinTransform === "function"
+    ? (col, row, shape, drawFn) => InventoryAnimationController.withDragSpinTransform(
+      targetCtx, team, col, row, shape, spinDeg, drawFn,
+    )
+    : (_col, _row, _shape, drawFn) => drawFn();
+
   if (isContainerItem(dragPayload.itemId) && hoverCell) {
     const excludeUid = dragFrom?.type === "container" ? dragFrom.container.uid : null;
-    const valid = canPlaceContainer(
-      dragPayload.itemId,
-      hoverCell.col,
-      hoverCell.row,
-      dragPayload.rotation || 0,
-      GRID_COLS,
-      GRID_ROWS,
-      st.containers,
-      excludeUid,
-      st.items,
-    );
-    rotateShape(ITEM_CATALOG[dragPayload.itemId].shape, dragPayload.rotation || 0).forEach(([dx, dy]) => {
-      const { x, y, w, h } = cellRect(team, hoverCell.col + dx, hoverCell.row + dy);
-      targetCtx.fillStyle = valid ? "rgba(63,185,80,0.4)" : "rgba(248,81,73,0.4)";
-      roundRect(x + 2, y + 2, w - 4, h - 4, 4);
-      targetCtx.fill();
+    const exactOnly = visual.spinning;
+    const resolved = resolveContainerPlacementAtCursor(st, hoverCell.col, hoverCell.row, drawRot, exactOnly);
+    const col = resolved?.col ?? hoverCell.col;
+    const row = resolved?.row ?? hoverCell.row;
+    const valid = resolved
+      ? (dragFrom?.type === "container"
+        ? canMoveContainerWithItems(
+          dragFrom.container,
+          resolved.col,
+          resolved.row,
+          st.containers,
+          st.items,
+          excludeUid,
+          getActiveGridCols(),
+          getActiveGridRows(),
+        )
+        : canPlaceContainer(
+          dragPayload.itemId,
+          resolved.col,
+          resolved.row,
+          resolved.rotation,
+          getActiveGridCols(),
+          getActiveGridRows(),
+          st.containers,
+          excludeUid,
+          st.items,
+        ))
+      : canPlaceContainer(
+        dragPayload.itemId,
+        hoverCell.col,
+        hoverCell.row,
+        drawRot,
+        GRID_COLS,
+        GRID_ROWS,
+        st.containers,
+        excludeUid,
+        st.items,
+      );
+    const shape = rotateShape(ITEM_CATALOG[dragPayload.itemId].shape, drawRot);
+    wrapSpin(col, row, shape, () => {
+      shape.forEach(([dx, dy]) => {
+        const { x, y, w, h } = cellRect(team, col + dx, row + dy);
+        targetCtx.fillStyle = valid ? "rgba(63,185,80,0.4)" : "rgba(248,81,73,0.4)";
+        roundRect(x + 2, y + 2, w - 4, h - 4, 4);
+        targetCtx.fill();
+      });
     });
     return;
   }
@@ -9073,9 +9173,9 @@ function drawDropPreview(targetCtx = fxCtx) {
     dragPayload.itemId,
     hoverSlot.col,
     hoverSlot.row,
-    dragPayload.rotation || 0,
+    visual.spinning ? drawRot : (dragPayload.rotation || 0),
   );
-  if (placement.valid) dragPayload.rotation = placement.rotation;
+  if (placement.valid && !visual.spinning) dragPayload.rotation = placement.rotation;
   const displaced = placement.valid
     ? getOverlappingLoadoutItems(
       st.items,
@@ -9091,11 +9191,17 @@ function drawDropPreview(targetCtx = fxCtx) {
     || canAddSlotItemToLoadout(st.items, dragPayload.itemId, excludeUid, displacedUids);
   const benchOk = st.bench.length + displaced.length <= MAX_BENCH;
   const valid = placement.valid && benchOk && slotOk;
-  rotateShape(ITEM_CATALOG[dragPayload.itemId].shape, placement.rotation).forEach(([dx, dy]) => {
-    const { x, y, w, h } = cellRect(team, placement.col + dx, placement.row + dy);
-    targetCtx.fillStyle = valid ? "rgba(63,185,80,0.45)" : "rgba(248,81,73,0.45)";
-    roundRect(x + 2, y + 2, w - 4, h - 4, 4);
-    targetCtx.fill();
+  const previewRot = visual.spinning ? drawRot : placement.rotation;
+  const previewCol = placement.valid ? placement.col : hoverSlot.col;
+  const previewRow = placement.valid ? placement.row : hoverSlot.row;
+  const shape = rotateShape(ITEM_CATALOG[dragPayload.itemId].shape, previewRot);
+  wrapSpin(previewCol, previewRow, shape, () => {
+    shape.forEach(([dx, dy]) => {
+      const { x, y, w, h } = cellRect(team, previewCol + dx, previewRow + dy);
+      targetCtx.fillStyle = valid ? "rgba(63,185,80,0.45)" : "rgba(248,81,73,0.45)";
+      roundRect(x + 2, y + 2, w - 4, h - 4, 4);
+      targetCtx.fill();
+    });
   });
   displaced.forEach((item) => {
     getItemCells(item).forEach(([c, r]) => {
@@ -9963,9 +10069,8 @@ function syncFieldTooltip() {
     if (!el || !def) return;
 
     el.classList.remove("synergy-tooltip");
-    el.style.borderColor = RARITY_COLORS[def.rarity] || "#30363d";
     const lines = buildItemTooltipLines(def, contentItem, rotation || 0, "field");
-    el.innerHTML = renderTooltipLinesHtml(lines);
+    applySidebarTooltipCard(el, lines, getItemTooltipCardOptions(def, "field"));
     el.classList.remove("hidden");
     fieldTooltipVisible = true;
 
@@ -10241,12 +10346,14 @@ function showSidebarTooltipAt(clientX, clientY, itemId, contentItem, context = "
   el.classList.remove("synergy-tooltip");
   if (sourceEl?.dataset?.unaffordable) {
     const sideGold = getSideState(prepViewSide).gold;
-    el.innerHTML = `<div class="tt-line tt-title">Недостаточно золота</div><div class="tt-line tt-sub">${def.cost}💰 · у вас ${sideGold}💰</div>`;
+    applySidebarTooltipCard(el, [
+      { text: "Недостаточно золота", style: "title", color: "#f85149" },
+      { text: `${def.cost}💰 · у вас ${sideGold}💰`, style: "sub", color: "#8b949e" },
+    ], getItemTooltipCardOptions(def, context));
   } else {
     const lines = buildItemTooltipLines(def, contentItem, 0, context);
-    el.innerHTML = renderTooltipLinesHtml(lines);
+    applySidebarTooltipCard(el, lines, getItemTooltipCardOptions(def, context));
   }
-  el.style.borderColor = RARITY_COLORS[def.rarity] || "#30363d";
   el.classList.remove("hidden");
   syncPrepTooltipDockVisibility();
   const boundsKind = context === "shop" ? "shop"

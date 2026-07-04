@@ -1,0 +1,266 @@
+/* Карточка-подсказка (реф. Hearthstone): крупный emoji + HUD сверху */
+
+.sidebar-tooltip.sidebar-tooltip--card {
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  max-width: calc(220px * var(--ui-scale, 1));
+  overflow: visible;
+}
+
+.sidebar-tooltip.sidebar-tooltip--card .item-hint-card {
+  filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.55));
+}
+
+.item-hint-card {
+  --hint-w: calc(200px * var(--ui-scale, 1));
+  --hint-rarity: #30363d;
+  width: var(--hint-w);
+  position: relative;
+  user-select: none;
+}
+
+.item-hint-card__frame {
+  position: relative;
+  border-radius: calc(16px * var(--ui-scale, 1));
+  overflow: hidden;
+  aspect-ratio: 3 / 4.1;
+  background:
+    linear-gradient(165deg, rgba(255, 255, 255, 0.08), transparent 38%),
+    linear-gradient(180deg, #1a1410 0%, #0d1117 42%, #071009 100%);
+  border: calc(3px * var(--ui-scale, 1)) solid color-mix(in srgb, var(--hint-rarity) 55%, #3d2914);
+  box-shadow:
+    0 0 0 calc(1px * var(--ui-scale, 1)) rgba(255, 255, 255, 0.08) inset,
+    0 0 calc(18px * var(--ui-scale, 1)) color-mix(in srgb, var(--hint-rarity) 35%, transparent);
+}
+
+.item-hint-card__art {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 72%, color-mix(in srgb, var(--hint-rarity) 22%, transparent), transparent 68%),
+    radial-gradient(circle at 50% 88%, rgba(20, 60, 35, 0.55), rgba(8, 12, 10, 0.95) 72%);
+}
+
+.item-hint-card__art-glow {
+  position: absolute;
+  inset: 18% 10% 8%;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--hint-rarity) 28%, transparent), transparent 68%);
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.item-hint-card__emoji {
+  position: relative;
+  z-index: 1;
+  font-size: calc(72px * var(--ui-scale, 1));
+  line-height: 1;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.45));
+  transform: translateY(8%);
+}
+
+.item-hint-card__hud {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  right: 0;
+  top: 0;
+  max-height: 62%;
+  padding:
+    calc(10px * var(--ui-scale, 1))
+    calc(11px * var(--ui-scale, 1))
+    calc(12px * var(--ui-scale, 1));
+  background:
+    linear-gradient(180deg, rgba(8, 10, 14, 0.94) 0%, rgba(8, 10, 14, 0.88) 72%, rgba(8, 10, 14, 0) 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.item-hint-card__title {
+  font-size: calc(13px * var(--ui-scale, 1));
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+  margin-bottom: calc(4px * var(--ui-scale, 1));
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.item-hint-card__line {
+  font-size: calc(11px * var(--ui-scale, 1));
+  line-height: 1.38;
+  color: #e6edf3;
+  white-space: pre-wrap;
+}
+
+.item-hint-card__line + .item-hint-card__line,
+.item-hint-card__title + .item-hint-card__line {
+  margin-top: calc(3px * var(--ui-scale, 1));
+}
+
+.item-hint-card__line--sub {
+  font-size: calc(10px * var(--ui-scale, 1));
+  color: #8b949e;
+}
+
+.item-hint-card__line--label {
+  font-weight: 700;
+  margin-top: calc(5px * var(--ui-scale, 1));
+}
+
+.item-hint-card__line-stat {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15em 0.3em;
+}
+
+.item-hint-card__stat-base {
+  color: #8b949e;
+  text-decoration: line-through;
+  text-decoration-color: rgba(139, 148, 158, 0.55);
+}
+
+.item-hint-card__stat-arrow {
+  color: #6e7681;
+  font-size: 0.92em;
+}
+
+.item-hint-card__stat-buff {
+  color: #3fb950;
+  font-weight: 700;
+}
+
+.item-hint-card__stat-buff--purple {
+  color: #a371f7;
+}
+
+.item-hint-card__cost {
+  position: absolute;
+  z-index: 4;
+  top: calc(-10px * var(--ui-scale, 1));
+  left: calc(-10px * var(--ui-scale, 1));
+  width: calc(38px * var(--ui-scale, 1));
+  height: calc(42px * var(--ui-scale, 1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 32% 28%, #a8dcff 0%, #3b82f6 42%, #1d4ed8 78%, #1e3a8a 100%);
+  border: calc(2px * var(--ui-scale, 1)) solid #dbeafe;
+  border-radius: 50% 50% 46% 46%;
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.45),
+    0 0 12px rgba(59, 130, 246, 0.45);
+}
+
+.item-hint-card__cost-value {
+  font-size: calc(15px * var(--ui-scale, 1));
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
+  line-height: 1;
+}
+
+.item-hint-card__gem {
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  bottom: calc(8px * var(--ui-scale, 1));
+  transform: translateX(-50%);
+  width: calc(14px * var(--ui-scale, 1));
+  height: calc(18px * var(--ui-scale, 1));
+  border-radius: 50% / 40%;
+  background: linear-gradient(180deg, #e2e8f0, #94a3b8 45%, #64748b);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+  opacity: 0.75;
+}
+
+html[data-prep-theme="diablo"] .item-hint-card__frame {
+  background:
+    linear-gradient(165deg, rgba(255, 210, 120, 0.06), transparent 38%),
+    linear-gradient(180deg, #1a1008 0%, #120a06 42%, #080504 100%);
+}
+
+html[data-prep-theme="diablo"] .item-hint-card__art {
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 72%, rgba(180, 80, 20, 0.18), transparent 68%),
+    radial-gradient(circle at 50% 88%, rgba(60, 20, 8, 0.55), rgba(10, 6, 4, 0.95) 72%);
+}
+
+html[data-game-phase="prep"] #prep-tooltip-dock:not(.hidden):has(.sidebar-tooltip--card:not(.hidden)),
+html[data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--hero-grid:not(.hidden):has(.sidebar-tooltip--card:not(.hidden)),
+html[data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--item:not(.hidden):has(.sidebar-tooltip--card:not(.hidden)) {
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  overflow: visible !important;
+}
+
+html[data-game-phase="prep"] #prep-tooltip-dock .sidebar-tooltip.sidebar-tooltip--card:not(.hidden) {
+  width: auto !important;
+  max-width: calc(220px * var(--ui-scale, 1)) !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+.item-hint-card--has-cost .item-hint-card__hud {
+  padding-top: calc(12px * var(--ui-scale, 1));
+  padding-left: calc(24px * var(--ui-scale, 1));
+}
+
+.item-hint-card--has-cost .item-hint-card__title {
+  padding-right: calc(4px * var(--ui-scale, 1));
+}
+
+html[data-game-phase="prep"] #prep-tooltip-dock .sidebar-tooltip--card {
+  max-height: none;
+  overflow: visible;
+}
+
+html[data-game-phase="prep"] #sidebar-tooltip.sidebar-tooltip--card.sidebar-tooltip--floating {
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  max-width: calc(220px * var(--ui-scale, 1));
+  max-height: none;
+  overflow: visible;
+}
+
+html[data-game-phase="battle"] #prep-tooltip-dock .sidebar-tooltip.sidebar-tooltip--card,
+html[data-game-phase="replay"] #prep-tooltip-dock .sidebar-tooltip.sidebar-tooltip--card,
+html[data-game-phase="battle"] #sidebar-tooltip.sidebar-tooltip--card,
+html[data-game-phase="replay"] #sidebar-tooltip.sidebar-tooltip--card {
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  max-width: calc(220px * var(--ui-scale, 1)) !important;
+  overflow: visible !important;
+}
+
+html[data-touch="true"] .item-hint-card {
+  --hint-w: calc(210px * var(--ui-scale, 1));
+}
+
+html[data-touch="true"] .item-hint-card__emoji {
+  font-size: calc(78px * var(--ui-scale, 1));
+}

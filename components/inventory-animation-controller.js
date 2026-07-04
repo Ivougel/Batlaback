@@ -4,6 +4,7 @@
 
 const PREP_PLACE_DURATION = 0.28;
 const PREP_REJECT_DURATION = 0.28;
+const PREP_ROTATE_DURATION = 0.24;
 
 const InventoryAnimationController = (() => {
   const itemAnims = new Map();
@@ -21,6 +22,98 @@ const InventoryAnimationController = (() => {
   let ghostSwingVy = 0;
   let ghostFloatPhase = 0;
   let ghostOrbitPhase = 0;
+  let ghostRotateAnim = null;
+
+  function easeOutCubic(t) {
+    return 1 - (1 - t) ** 3;
+  }
+
+  function normalizeRotationIndex(rotation) {
+    return ((rotation || 0) % 4 + 4) % 4;
+  }
+
+  function getGhostDrawRotation() {
+    if (ghostRotateAnim) return ghostRotateAnim.fromRot;
+    if (typeof dragPayload !== "undefined" && dragPayload) {
+      return normalizeRotationIndex(dragPayload.rotation);
+    }
+    return 0;
+  }
+
+  function getGhostSpinCssDeg() {
+    if (!ghostRotateAnim) return 0;
+    const p = easeOutCubic(Math.min(1, ghostRotateAnim.t / ghostRotateAnim.duration));
+    return p * 90;
+  }
+
+  function beginGhostRotationSpin(fromRot, toRot) {
+    const from = normalizeRotationIndex(fromRot);
+    const to = normalizeRotationIndex(toRot);
+    if (from === to) return false;
+    if (ghostRotateAnim) {
+      ghostRotateAnim = { fromRot: ghostRotateAnim.toRot, toRot: to, t: 0, duration: PREP_ROTATE_DURATION };
+      return true;
+    }
+    ghostRotateAnim = { fromRot: from, toRot: to, t: 0, duration: PREP_ROTATE_DURATION };
+    return true;
+  }
+
+  function clearGhostRotationSpin() {
+    ghostRotateAnim = null;
+  }
+
+  function getDragVisualRotation() {
+    return {
+      drawRot: getGhostDrawRotation(),
+      spinDeg: getGhostSpinCssDeg(),
+      spinning: !!ghostRotateAnim,
+    };
+  }
+
+  function getShapeBoundsCenter(team, col, row, shape) {
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    shape.forEach(([dx, dy]) => {
+      const { x, y, w, h } = cellRect(team, col + dx, row + dy);
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x + w);
+      maxY = Math.max(maxY, y + h);
+    });
+    if (!Number.isFinite(minX)) return null;
+    return { x: (minX + maxX) * 0.5, y: (minY + maxY) * 0.5 };
+  }
+
+  function withDragSpinTransform(ctx, team, col, row, shape, spinDeg, drawFn) {
+    if (!spinDeg) {
+      drawFn();
+      return;
+    }
+    const center = getShapeBoundsCenter(team, col, row, shape);
+    if (!center) {
+      drawFn();
+      return;
+    }
+    ctx.save();
+    ctx.translate(center.x, center.y);
+    ctx.rotate(spinDeg * Math.PI / 180);
+    ctx.translate(-center.x, -center.y);
+    drawFn();
+    ctx.restore();
+  }
+
+  function resolveVisualDropPlacement(st, team, logicalPlacement) {
+    const visual = getDragVisualRotation();
+    if (!visual.spinning || !logicalPlacement) return logicalPlacement;
+    if (typeof getPrepDropPlacement !== "function") {
+      return { ...logicalPlacement, rotation: visual.drawRot };
+    }
+    const atDrawRot = getPrepDropPlacement(st, team, visual.drawRot);
+    if (atDrawRot) return atDrawRot;
+    return { ...logicalPlacement, rotation: visual.drawRot };
+  }
 
   function easeOutBack(t) {
     const c1 = 1.70158;
@@ -39,6 +132,7 @@ const InventoryAnimationController = (() => {
     ghostSwingVy = 0;
     ghostFloatPhase = Math.random() * Math.PI * 2;
     ghostOrbitPhase = Math.random() * Math.PI * 2;
+    ghostRotateAnim = null;
   }
 
   function onDragMove(clientX, clientY) {
@@ -80,7 +174,9 @@ const InventoryAnimationController = (() => {
       : arcRotation != null
         ? arcRotation * 0.35
         : Math.max(-10, Math.min(10, dragVelX * 0.12));
-    el.style.transform = `translate(-50%, -50%) translate(${(swingX + orbitX).toFixed(2)}px, ${(swingY + floatY + orbitY).toFixed(2)}px) scale(${scale}) rotate(${tilt}deg)`;
+    const spinDeg = getGhostSpinCssDeg();
+    const spinScale = spinDeg > 0 ? 1 + Math.sin((spinDeg / 90) * Math.PI) * 0.045 : 1;
+    el.style.transform = `translate(-50%, -50%) translate(${(swingX + orbitX).toFixed(2)}px, ${(swingY + floatY + orbitY).toFixed(2)}px) scale(${(scale * spinScale).toFixed(4)}) rotate(${(tilt + spinDeg).toFixed(2)}deg)`;
     el.style.filter = fullSize
       ? "drop-shadow(0 8px 20px rgba(0,0,0,0.5)) drop-shadow(0 2px 6px rgba(0,0,0,0.35))"
       : "drop-shadow(0 10px 22px rgba(0,0,0,0.55)) drop-shadow(0 3px 8px rgba(0,0,0,0.35))";
@@ -98,6 +194,7 @@ const InventoryAnimationController = (() => {
     ghostSwingVx = 0;
     ghostSwingVy = 0;
     ghostOrbitPhase = 0;
+    ghostRotateAnim = null;
   }
 
   function itemVisualWeight(def) {
@@ -179,8 +276,9 @@ const InventoryAnimationController = (() => {
 
     const targetCells = [];
     const side = typeof prepViewSide !== "undefined" ? prepViewSide : team;
+    const dragRot = getGhostDrawRotation();
     if (typeof isContainerItem === "function" && isContainerItem(dragPayload.itemId) && hoverCell) {
-      const shape = rotateShape(ITEM_CATALOG[dragPayload.itemId].shape, dragPayload.rotation || 0);
+      const shape = rotateShape(ITEM_CATALOG[dragPayload.itemId].shape, dragRot);
       shape.forEach(([dx, dy]) => targetCells.push([hoverCell.col + dx, hoverCell.row + dy]));
     } else if (hoverSlot && typeof resolveLoadoutPlacementDisplacing === "function") {
       const st = typeof getSideState === "function" ? getSideState(side) : null;
@@ -191,7 +289,7 @@ const InventoryAnimationController = (() => {
         dragPayload.itemId,
         hoverSlot.col,
         hoverSlot.row,
-        dragPayload.rotation || 0,
+        dragRot,
       );
       if (placement.valid) {
         rotateShape(ITEM_CATALOG[dragPayload.itemId].shape, placement.rotation).forEach(([dx, dy]) => {
@@ -299,7 +397,8 @@ const InventoryAnimationController = (() => {
     ctx.restore();
   }
 
-  function drawPlacementFigureShadow(ctx, team, placementInfo) {
+  function drawPlacementFigureShadow(ctx, team, placementInfo, options = {}) {
+    const { includeDisplaced = true } = options;
     const { col, row, rotation, valid, displaced, kind } = placementInfo;
     const itemId = dragPayload.itemId;
     const def = ITEM_CATALOG[itemId];
@@ -328,21 +427,29 @@ const InventoryAnimationController = (() => {
       drawPlacedItemIcons(ctx, def, ghostItem, (c, r) => cellRect(team, c, r));
     } else if (kind === "container") {
       const icons = getItemIcons(def);
-      const [adx, ady] = getShapeAnchorOffset(shape);
-      const anchorRect = cellRect(team, col + adx, row + ady);
-      drawItemIcons(
-        ctx,
-        icons,
-        anchorRect.x + anchorRect.w * 0.5,
-        anchorRect.y + anchorRect.h * 0.5,
-        anchorRect.w * 0.72,
-        anchorRect.h * 0.72,
-        CELL_TILE_PAD,
-      );
+      const containerCells = shape.map(([dx, dy]) => [col + dx, row + dy]);
+      const iconRect = typeof getShapeIconDrawRect === "function"
+        ? getShapeIconDrawRect(containerCells, (c, r) => cellRect(team, c, r))
+        : cellRect(team, col + getShapeAnchorOffset(shape)[0], row + getShapeAnchorOffset(shape)[1]);
+      const iconRotDeg = (((rotation || 0) % 4) + 4) % 4 * 90;
+      const iconCenter = typeof getCellsBoundsCenter === "function"
+        ? getCellsBoundsCenter(containerCells, (c, r) => cellRect(team, c, r))
+        : null;
+      const drawContainerIcons = () => {
+        if (!iconRect) return;
+        drawItemIcons(ctx, icons, iconRect.x, iconRect.y, iconRect.w, iconRect.h);
+      };
+      if (typeof withCanvasRotation === "function") {
+        withCanvasRotation(ctx, iconCenter, iconRotDeg, drawContainerIcons);
+      } else {
+        drawContainerIcons();
+      }
     }
     ctx.restore();
 
     drawPlacementFacingMarker(ctx, team, col, row, rotation);
+
+    if (!includeDisplaced) return;
 
     displaced.forEach((item) => {
       const itemDef = ITEM_CATALOG[item.itemId];
@@ -364,59 +471,74 @@ const InventoryAnimationController = (() => {
 
   function drawEnhancedDropPreview(ctx, team, st) {
     if (typeof dragPayload === "undefined" || !dragPayload) return;
-    const placementInfo = typeof getPrepDropPlacement === "function"
+    const logicalPlacement = typeof getPrepDropPlacement === "function"
       ? getPrepDropPlacement(st, team)
       : null;
-    if (!placementInfo) return;
+    if (!logicalPlacement) return;
 
-    if (placementInfo.kind === "item" && placementInfo.valid) {
-      const nextRot = placementInfo.rotation || 0;
+    const visual = getDragVisualRotation();
+
+    if (logicalPlacement.kind === "item" && logicalPlacement.valid && !visual.spinning) {
+      const nextRot = logicalPlacement.rotation || 0;
       if ((dragPayload.rotation || 0) !== nextRot) {
         dragPayload.rotation = nextRot;
       }
     }
 
+    const visualPlacement = resolveVisualDropPlacement(st, team, logicalPlacement);
     const pulse = 0.5 + Math.sin(spreadPhase * 5) * 0.12;
-    const { col, row, rotation, valid, displaced } = placementInfo;
+    const { col, row, rotation, valid } = visualPlacement;
     const shape = rotateShape(ITEM_CATALOG[dragPayload.itemId].shape, rotation || 0);
 
-    shape.forEach(([dx, dy]) => {
-      const { x, y, w, h } = cellRect(team, col + dx, row + dy);
-      ctx.save();
-      ctx.fillStyle = valid
-        ? `rgba(63,185,80,${0.32 + pulse * 0.18})`
-        : `rgba(248,81,73,${0.28 + pulse * 0.12})`;
-      roundRect(x + 3, y + 3, w - 6, h - 6, 5);
-      ctx.fill();
-      ctx.strokeStyle = valid
-        ? `rgba(120,220,140,${0.4 + pulse * 0.12})`
-        : `rgba(255,120,110,${0.3 + pulse * 0.1})`;
-      ctx.lineWidth = valid ? 2 : 1.5;
-      roundRect(x + 3, y + 3, w - 6, h - 6, 5);
-      ctx.stroke();
-      ctx.restore();
+    withDragSpinTransform(ctx, team, col, row, shape, visual.spinDeg, () => {
+      shape.forEach(([dx, dy]) => {
+        const { x, y, w, h } = cellRect(team, col + dx, row + dy);
+        ctx.save();
+        ctx.fillStyle = valid
+          ? `rgba(63,185,80,${0.32 + pulse * 0.18})`
+          : `rgba(248,81,73,${0.28 + pulse * 0.12})`;
+        roundRect(x + 3, y + 3, w - 6, h - 6, 5);
+        ctx.fill();
+        ctx.strokeStyle = valid
+          ? `rgba(120,220,140,${0.4 + pulse * 0.12})`
+          : `rgba(255,120,110,${0.3 + pulse * 0.1})`;
+        ctx.lineWidth = valid ? 2 : 1.5;
+        roundRect(x + 3, y + 3, w - 6, h - 6, 5);
+        ctx.stroke();
+        ctx.restore();
+      });
+
+      const showFigure = typeof shouldDrawPrepGridFigurePreview !== "function"
+        || shouldDrawPrepGridFigurePreview();
+      if (showFigure) {
+        drawPlacementFigureShadow(ctx, team, visualPlacement, { includeDisplaced: false });
+      }
     });
 
-    displaced.forEach((item) => {
+    (logicalPlacement.displaced || []).forEach((item) => {
       getItemCells(item).forEach(([c, r]) => {
         const { x, y, w, h } = cellRect(team, c, r);
         ctx.save();
-        ctx.fillStyle = valid ? `rgba(210,153,34,${0.22 + pulse * 0.08})` : `rgba(248,81,73,${0.16})`;
+        ctx.fillStyle = logicalPlacement.valid
+          ? `rgba(210,153,34,${0.22 + pulse * 0.08})`
+          : `rgba(248,81,73,${0.16})`;
         roundRect(x + 3, y + 3, w - 6, h - 6, 5);
         ctx.fill();
         ctx.restore();
       });
     });
-
-    const showFigure = typeof shouldDrawPrepGridFigurePreview !== "function"
-      || shouldDrawPrepGridFigurePreview();
-    if (showFigure) {
-      drawPlacementFigureShadow(ctx, team, placementInfo);
-    }
   }
 
   function tick(dt) {
     spreadPhase += dt;
+    let rotateSpinFinished = false;
+    if (ghostRotateAnim) {
+      ghostRotateAnim.t += dt;
+      if (ghostRotateAnim.t >= ghostRotateAnim.duration) {
+        ghostRotateAnim = null;
+        rotateSpinFinished = true;
+      }
+    }
     if (dragActive) {
       ghostFloatPhase += dt * 6.5;
       ghostOrbitPhase += dt * 4.2;
@@ -448,6 +570,8 @@ const InventoryAnimationController = (() => {
       pulse.t += dt;
       if (pulse.t >= pulse.duration) cellPulses.delete(key);
     });
+
+    return rotateSpinFinished;
   }
 
   function notifyHeavyDrop(def) {
@@ -461,6 +585,12 @@ const InventoryAnimationController = (() => {
     onDragEnd,
     applyDragGhostStyles,
     resetDragGhostStyles,
+    beginGhostRotationSpin,
+    getGhostDrawRotation,
+    getGhostSpinCssDeg,
+    getDragVisualRotation,
+    withDragSpinTransform,
+    clearGhostRotationSpin,
     notifyItemPlaced,
     notifyPlacementRejected,
     notifyHeavyDrop,
@@ -474,12 +604,15 @@ const InventoryAnimationController = (() => {
 })();
 
 function tickInventoryAnimationController(dt) {
-  InventoryAnimationController.tick(dt);
+  const rotateSpinFinished = InventoryAnimationController.tick(dt);
   if (typeof dragPayload !== "undefined" && dragPayload && typeof getDragGhostCanvas === "function") {
     const el = getDragGhostCanvas();
     if (el && !el.classList.contains("hidden")) {
       const fullSize = typeof isPrepSidebarArcDrag === "function" && isPrepSidebarArcDrag();
       InventoryAnimationController.applyDragGhostStyles(el, null, { fullSize });
+      if (rotateSpinFinished && typeof syncDragGhostOverlay === "function") {
+        syncDragGhostOverlay(lastPointerClient.x, lastPointerClient.y);
+      }
     }
   }
 }
@@ -500,6 +633,18 @@ function onPrepDragEnd() {
 
 function applyPrepDragGhostStyles(el, arcRotation = null, opts = {}) {
   InventoryAnimationController.applyDragGhostStyles(el, arcRotation, opts);
+}
+
+function beginPrepGhostRotationSpin(fromRot, toRot) {
+  return InventoryAnimationController.beginGhostRotationSpin(fromRot, toRot);
+}
+
+function getPrepGhostDrawRotation() {
+  return InventoryAnimationController.getGhostDrawRotation();
+}
+
+function getPrepDragVisualRotation() {
+  return InventoryAnimationController.getDragVisualRotation();
 }
 
 function notifyPrepItemPlaced(item, def) {

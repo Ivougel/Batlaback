@@ -44,11 +44,79 @@ function ensureCellEmojiMetrics(ctx) {
   warmupCellEmojiMetrics(ctx);
 }
 
+/** Центр bbox набора клеток (для поворота иконок вокруг фигуры). */
+function getCellsBoundsCenter(cells, cellRectFn) {
+  if (!cells?.length) return null;
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  cells.forEach(([c, r]) => {
+    const { x, y, w, h } = cellRectFn(c, r);
+    minX = Math.min(minX, x);
+    minY = Math.min(minY, y);
+    maxX = Math.max(maxX, x + w);
+    maxY = Math.max(maxY, y + h);
+  });
+  if (!Number.isFinite(minX)) return null;
+  return { x: (minX + maxX) * 0.5, y: (minY + maxY) * 0.5 };
+}
+
+/** Прямоугольник для отрисовки иконки: для multi-cell с одним эмодзi — весь bbox фигуры. */
+function getShapeIconDrawRect(cells, cellRectFn) {
+  if (!cells?.length) return null;
+  if (cells.length === 1) {
+    const [c, r] = cells[0];
+    return cellRectFn(c, r);
+  }
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  cells.forEach(([c, r]) => {
+    const { x, y, w, h } = cellRectFn(c, r);
+    minX = Math.min(minX, x);
+    minY = Math.min(minY, y);
+    maxX = Math.max(maxX, x + w);
+    maxY = Math.max(maxY, y + h);
+  });
+  if (!Number.isFinite(minX)) return null;
+  return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+}
+
+function getRectCenter(rect) {
+  if (!rect) return null;
+  return { x: rect.x + rect.w * 0.5, y: rect.y + rect.h * 0.5 };
+}
+
+function getItemIconRotationDeg(item, options = {}) {
+  const base = (((item?.rotation || 0) % 4) + 4) % 4 * 90;
+  return base + (options.extraRotationDeg || 0);
+}
+
+function withCanvasRotation(ctx, center, rotationDeg, drawFn) {
+  if (!rotationDeg || !center) {
+    drawFn();
+    return;
+  }
+  ctx.save();
+  ctx.translate(center.x, center.y);
+  ctx.rotate(rotationDeg * Math.PI / 180);
+  ctx.translate(-center.x, -center.y);
+  drawFn();
+  ctx.restore();
+}
+
 /** Рисует emoji в точке (cx, cy) внутри квадрата innerSize×innerSize. */
-function drawCellEmojiAt(ctx, icon, cx, cy, innerSize) {
+function drawCellEmojiAt(ctx, icon, cx, cy, innerSize, rotationDeg = 0) {
   ensureCellEmojiMetrics(ctx);
   const size = Math.max(14, Math.round(Math.max(1, innerSize) * 0.62));
   ctx.save();
+  if (rotationDeg) {
+    ctx.translate(cx, cy);
+    ctx.rotate(rotationDeg * Math.PI / 180);
+    ctx.translate(-cx, -cy);
+  }
   ctx.font = `${size}px ${CELL_EMOJI_FONT}`;
   ctx.fillStyle = "#ffffff";
   ctx.textAlign = "left";
@@ -156,6 +224,12 @@ function drawItemIcons(ctx, icons, x, y, w, h, pad = CELL_TILE_PAD) {
  */
 function drawPlacedItemIcons(ctx, def, item, cellRectFn, options = {}) {
   const glow = !!options.glow;
+  const rotationDeg = getItemIconRotationDeg(item, options);
+  const cells = typeof getItemCells === "function" ? getItemCells(item) : [[item.col, item.row]];
+  const icons = getItemIcons(def);
+  const multiIconPerCell = cells.length > 1 && icons.length > 1;
+  const useShapeBounds = cells.length > 1 && !multiIconPerCell;
+
   const drawIcons = () => {
     const layout = typeof getPlacedItemVisualLayout === "function"
       ? getPlacedItemVisualLayout(item, def)
@@ -163,27 +237,38 @@ function drawPlacedItemIcons(ctx, def, item, cellRectFn, options = {}) {
 
     if (layout?.iconSlots?.length) {
       layout.iconSlots.forEach((slot) => {
-        const [c, r] = slot.cell;
-        const rect = cellRectFn(c, r);
-        drawItemIcons(ctx, slot.icons, rect.x, rect.y, rect.w, rect.h);
+        const slotCells = slot.useShapeBounds ? cells : null;
+        const rect = slot.useShapeBounds && slotCells?.length
+          ? getShapeIconDrawRect(slotCells, cellRectFn)
+          : cellRectFn(slot.cell[0], slot.cell[1]);
+        const pivot = slot.useShapeBounds
+          ? getCellsBoundsCenter(cells, cellRectFn)
+          : getRectCenter(rect);
+        withCanvasRotation(ctx, pivot, rotationDeg, () => {
+          drawItemIcons(ctx, slot.icons, rect.x, rect.y, rect.w, rect.h);
+        });
       });
       return;
     }
 
-    const icons = getItemIcons(def);
-    const cells = typeof getItemCells === "function" ? getItemCells(item) : [];
-    if (cells.length > 1 && icons.length > 1) {
+    if (multiIconPerCell) {
       cells.slice(0, icons.length).forEach(([c, r], i) => {
         const rect = cellRectFn(c, r);
-        drawCellEmoji(ctx, icons[i], rect.x, rect.y, rect.w, rect.h);
+        withCanvasRotation(ctx, getRectCenter(rect), rotationDeg, () => {
+          drawCellEmoji(ctx, icons[i], rect.x, rect.y, rect.w, rect.h);
+        });
       });
       return;
     }
-    const [iconCol, iconRow] = typeof getItemIconCell === "function"
-      ? getItemIconCell(item)
-      : [item.col, item.row];
-    const rect = cellRectFn(iconCol, iconRow);
-    drawItemIcons(ctx, icons, rect.x, rect.y, rect.w, rect.h);
+
+    const rect = useShapeBounds
+      ? getShapeIconDrawRect(cells, cellRectFn)
+      : cellRectFn(
+        ...(typeof getItemIconCell === "function" ? getItemIconCell(item) : [item.col, item.row]),
+      );
+    withCanvasRotation(ctx, getCellsBoundsCenter(cells, cellRectFn), rotationDeg, () => {
+      drawItemIcons(ctx, icons, rect.x, rect.y, rect.w, rect.h);
+    });
   };
 
   if (!glow) {

@@ -32,7 +32,7 @@ function showSynergyTooltip(e, synergy) {
   const el = document.getElementById("sidebar-tooltip");
   if (!el || !synergy) return;
   el.innerHTML = buildSynergyTooltipHtml(synergy);
-  el.classList.remove("hidden");
+  el.classList.remove("hidden", "sidebar-tooltip--card");
   el.classList.add("synergy-tooltip");
   if (typeof syncPrepTooltipDockVisibility === "function") syncPrepTooltipDockVisibility();
   moveSidebarTooltip(e);
