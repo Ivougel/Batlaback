@@ -1,14 +1,13 @@
 {
-  "version": 1,
-  "fixedAt": "2026-07-03",
-  "gameModes": ["solo", "versus", "hardbot", "lobby", "td", "campaign"],
+  "version": 2,
+  "fixedAt": "2026-07-04",
+  "gameModes": ["solo", "versus", "hardbot", "lobby", "campaign"],
   "phases": {
     "js": ["classSelect", "prep", "battle", "replay"],
     "appDataset": ["prep", "battle", "replay"]
   },
   "classIntroSteps": [
     { "key": "mode", "elementId": "class-step-mode", "overlayAttr": "mode" },
-    { "key": "tdDifficulty", "elementId": "class-step-td-difficulty", "overlayAttr": "tdDifficulty" },
     { "key": "campaignTrial", "elementId": "class-step-campaign", "overlayAttr": "campaignTrial" },
     { "key": "player", "elementId": "class-step-player", "overlayAttr": "player" },
     { "key": "companion", "elementId": "class-step-companion", "overlayAttr": "companion" },
@@ -25,19 +24,13 @@
     { "id": "board-preview-overlay", "layer": "system", "hiddenByDefault": true },
     { "id": "recipe-book-overlay", "layer": "system", "hiddenByDefault": true }
   ],
-  "appSheets": [
-    { "id": "td-loadout-sheet", "modes": ["td"] },
-    { "id": "td-hero-sheet", "modes": ["td"] }
-  ],
+  "appSheets": [],
   "gamePanels": [
-    { "id": "shop-panel", "phases": ["prep"], "modes": ["solo", "versus", "hardbot", "lobby", "td", "campaign"] },
-    { "id": "bench-panel", "phases": ["prep"], "modes": ["solo", "versus", "hardbot", "lobby", "td", "campaign"] },
-    { "id": "prep-top-bar", "phases": ["prep"], "modes": ["solo", "versus", "hardbot", "lobby", "td", "campaign"] },
+    { "id": "shop-panel", "phases": ["prep"], "modes": ["solo", "versus", "hardbot", "lobby", "campaign"] },
+    { "id": "bench-panel", "phases": ["prep"], "modes": ["solo", "versus", "hardbot", "lobby", "campaign"] },
+    { "id": "prep-top-bar", "phases": ["prep"], "modes": ["solo", "versus", "hardbot", "lobby", "campaign"] },
     { "id": "prep-field-column", "phases": ["prep", "battle", "replay"], "modes": ["*"] },
     { "id": "lobby-prep-field-roster", "phases": ["prep"], "modes": ["lobby"] },
-    { "id": "td-build-panel", "phases": ["prep", "battle"], "modes": ["td"], "requires": "tdRunLive" },
-    { "id": "td-tower-panel", "phases": ["battle"], "modes": ["td"], "requires": "tdRunLive" },
-    { "id": "td-hint-bar", "phases": ["prep", "battle"], "modes": ["td"], "requires": "tdRunLive" },
     { "id": "campaign-hint-bar", "phases": ["prep"], "modes": ["campaign"] }
   ],
   "layoutProfiles": [
@@ -49,26 +42,17 @@
     {
       "id": "iphone-landscape",
       "viewport": { "width": 932, "height": 430 },
-      "expect": { "prepLayout": "side", "uiSurface": "tablet-side", "layoutProfile": "phone-landscape", "battleProfile": "phone-landscape" }
-    },
-    {
-      "id": "ipad-portrait",
-      "viewport": { "width": 768, "height": 1024 },
-      "expect": { "prepLayout": "stacked", "uiSurface": "tablet-stacked", "battleProfile": "tablet-portrait", "tier": "tablet" }
+      "expect": { "prepLayout": "mobile", "uiSurface": "phone-landscape", "battleProfile": "phone-landscape" }
     },
     {
       "id": "ipad-landscape",
-      "viewport": { "width": 1024, "height": 768 },
-      "expect": { "prepLayout": "side", "uiSurface": "tablet-side", "layoutProfile": "tablet-landscape", "battleProfile": "tablet-landscape-side", "tier": "tablet" }
+      "viewport": { "width": 1133, "height": 744 },
+      "expect": { "prepLayout": "side", "uiSurface": "tablet-side", "battleProfile": "tablet-landscape-side" }
     },
     {
       "id": "desktop",
-      "viewport": { "width": 1440, "height": 1080 },
-      "expect": { "prepLayout": "side", "uiSurface": "desktop", "layoutProfile": "desktop-landscape", "battleProfile": "desktop-landscape", "tier": "desktop" }
+      "viewport": { "width": 1440, "height": 900 },
+      "expect": { "prepLayout": "side", "uiSurface": "desktop", "battleProfile": "desktop-landscape" }
     }
-  ],
-  "prepSnapshots": [
-    { "name": "ipad-landscape-solo-prep", "mode": "solo", "profile": "ipad-landscape", "target": "#app[data-phase=prep] .prep-left-column" },
-    { "name": "ipad-landscape-lobby-prep", "mode": "lobby", "profile": "ipad-landscape", "target": "#app[data-phase=prep] .prep-left-column" }
   ]
 }

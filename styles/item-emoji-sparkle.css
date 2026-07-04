@@ -21,9 +21,7 @@
 .shop-card:hover .item-emoji-sparkle-host .item-emoji-sparkles,
 .shop-card.is-sparkle-source .item-emoji-sparkle-host .item-emoji-sparkles,
 .bench-card:hover .item-emoji-sparkle-host .item-emoji-sparkles,
-.bench-card.is-sparkle-source .item-emoji-sparkle-host .item-emoji-sparkles,
-.td-build-shop-card:hover .item-emoji-sparkle-host .item-emoji-sparkles,
-.td-build-shop-card.is-sparkle-source .item-emoji-sparkle-host .item-emoji-sparkles {
+.bench-card.is-sparkle-source .item-emoji-sparkle-host .item-emoji-sparkles {
   opacity: 1;
 }
 

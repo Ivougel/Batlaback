@@ -197,7 +197,6 @@
     const root = document.documentElement;
     const app = document.getElementById("app");
     if (!usesTabletPrepHeroLayout(root) || app?.dataset.phase !== "prep") return false;
-    if (app?.dataset.gameMode === "td") return false;
 
     const fieldCol = document.getElementById("prep-field-column");
     const layerWorld = fieldCol?.querySelector(".layer-world");
@@ -782,19 +781,6 @@
     const anchor = document.getElementById("canvas-fx-anchor");
     if (!viewport || !canvasEl || !anchor) return;
 
-    if (anchor.closest("#td-loadout-sheet .canvas-stack")) {
-      anchor.style.left = "0";
-      anchor.style.top = "0";
-      anchor.style.width = "100%";
-      anchor.style.height = "100%";
-      const fx = document.getElementById("canvas-fx");
-      if (fx && canvasEl.width > 0 && canvasEl.height > 0) {
-        fx.width = canvasEl.width;
-        fx.height = canvasEl.height;
-      }
-      return;
-    }
-
     const vpRect = viewport.getBoundingClientRect();
     const canvasRect = canvasEl.getBoundingClientRect();
     if (canvasRect.width <= 0 || canvasRect.height <= 0) return;
@@ -947,7 +933,7 @@
 
   function measureBattleHudBarsBlockPx(uiScale = readCssPx("--ui-scale", 1)) {
     const barH = Math.round(16 * uiScale);
-    const gap = Math.round(5 * uiScale);
+    const gap = Math.round(3 * uiScale);
     return barH * 2 + gap;
   }
 
@@ -1015,11 +1001,11 @@
   }
 
   function measureBattleHudPrepLeftVp(team, prepRect, vpRect, zoneLeft, zoneW, hudWidth, uiScale) {
-    const edgeInset = Math.round(6 * uiScale);
+    const gap = Math.round(6 * uiScale);
     let hudLeft = team === "player"
-      ? Math.round(prepRect.right - vpRect.left - hudWidth + edgeInset)
-      : Math.round(prepRect.left - vpRect.left - edgeInset);
-    hudLeft = Math.max(zoneLeft, Math.min(hudLeft, zoneLeft + zoneW - hudWidth));
+      ? Math.round(prepRect.right - vpRect.left + gap)
+      : Math.round(prepRect.left - vpRect.left - hudWidth - gap);
+    hudLeft = Math.max(0, Math.min(hudLeft, Math.round(vpRect.width - hudWidth)));
     return hudLeft;
   }
 
@@ -1155,8 +1141,9 @@
             hudLeft = measureBattleHudPrepLeftVp(team, liveRect, vpRect, zoneLeft, zoneW, hudWidth, uiScale);
           } else {
             hudLeft = team === "player"
-              ? zoneLeft + zoneW - hudWidth - edgeInset
-              : zoneLeft + edgeInset;
+              ? zoneLeft + zoneW + edgeInset
+              : zoneLeft - hudWidth - edgeInset;
+            hudLeft = Math.max(0, Math.min(hudLeft, Math.round(vpRect.width - hudWidth)));
           }
         } else if (tabletLandscapeSide && stageRect && stageRect.width > 40) {
           hudLeft = stageRect.left - vpRect.left;
@@ -1476,8 +1463,9 @@
   }
 
   function syncPrepSideFabAnchorRight(root, gap) {
-    const panelW = readCssPx("--shop-panel-w", 248);
-    root.style.setProperty("--prep-bench-fab-right", `${Math.round(panelW + gap)}px`);
+    const right = `${Math.round(gap)}px`;
+    root.style.setProperty("--prep-bench-fab-right", right);
+    root.style.setProperty("--prep-sell-fab-right", right);
   }
 
   /** Prep grid/island rect — якорь для popover магазина (не перекрывать поле). */
@@ -2277,7 +2265,6 @@
   function usesBattlePrepHeroLayer(root = document.documentElement) {
     const app = document.getElementById("app");
     if (!app || (app.dataset.phase !== "battle" && app.dataset.phase !== "replay")) return false;
-    if (app.dataset.gameMode === "td") return false;
     if (root.dataset.battleHeroPlacement !== "flank-arena") return false;
     if (root.dataset.prepLayout === "mobile") return false;
     if (root.dataset.battlePrepHeroLayer !== "true") return false;
@@ -2631,7 +2618,6 @@
   function syncBattleSceneGridMetrics() {
     const root = document.documentElement;
     if (!isBattleUiPhase()) return;
-    if (document.getElementById("app")?.dataset.gameMode === "td") return;
 
     if (root.dataset.battleHeroPlacement !== "flank-arena" || root.dataset.battleArenaLayout !== "true") {
       const canvas = document.getElementById("game-canvas");
@@ -2772,7 +2758,6 @@
 
   /** Единая раскладка боя: player | arena | enemy на всех tier. */
   function fitFlankArenaBattleLayout(root, canvas, fieldCol, stageW) {
-    if (document.getElementById("app")?.dataset.gameMode === "td") return;
     const vh = window.visualViewport?.height ?? window.innerHeight;
     const hudReserve = measureBattleHudReserve();
     const cssW = readCssPx("--battle-canvas-w", canvas.width);
@@ -2874,61 +2859,6 @@
     }
 
     if (phase === "battle" || phase === "replay") {
-      const app = document.getElementById("app");
-      if (app?.dataset.gameMode === "td") {
-        setBattleArenaLayout(false);
-        setBattleHeroPlacement(null);
-        root.dataset.battleMobileFit = "false";
-        [
-          "--battle-canvas-display-w",
-          "--battle-canvas-display-h",
-          "--battle-field-display-w",
-          "--battle-grid-gap-display",
-        ].forEach((name) => root.style.removeProperty(name));
-        const loadoutOpen = app?.dataset.tdLoadoutOpen === "true";
-        const fieldCol = canvas.closest(".prep-field-column");
-        const island = document.getElementById("prep-field-island");
-        const sheetBody = document.getElementById("td-loadout-sheet-body");
-        const stageW = fieldCol?.clientWidth ?? 0;
-        const stageH = fieldCol?.clientHeight ?? 0;
-
-        if (loadoutOpen && sheetBody) {
-          const bodyRect = sheetBody.getBoundingClientRect();
-          const fitW = bodyRect.width > 40 ? bodyRect.width : stageW;
-          const fitH = bodyRect.height > 40 ? bodyRect.height : stageH;
-          const scale = fitW > 0 && fitH > 0
-            ? Math.min(fitW / canvas.width, fitH / canvas.height)
-            : 1;
-          const finalScale = Math.min(Math.max(1, scale), 2.5);
-          const w = Math.max(1, Math.floor(canvas.width * finalScale));
-          const h = Math.max(1, Math.floor(canvas.height * finalScale));
-          root.style.setProperty("--battle-canvas-display-w", `${w}px`);
-          root.style.setProperty("--battle-canvas-display-h", `${h}px`);
-          setCanvasDisplaySize(canvas, w, h);
-          syncFxCanvasGeometry();
-          if (typeof TdArena !== "undefined" && typeof TdArena.resize === "function") {
-            TdArena.resize();
-          }
-          return;
-        }
-
-        const islandRect = island?.getBoundingClientRect();
-        const fitW = islandRect && islandRect.width > 40 ? islandRect.width : stageW;
-        const fitH = islandRect && islandRect.height > 40 ? islandRect.height : stageH;
-        if (fitW > 0 && fitH > 0 && canvas.width > 0 && canvas.height > 0) {
-          const scale = Math.min(fitW / canvas.width, fitH / canvas.height, 1.5);
-          const w = Math.max(1, Math.floor(canvas.width * scale));
-          const h = Math.max(1, Math.floor(canvas.height * scale));
-          root.style.setProperty("--battle-canvas-display-w", `${w}px`);
-          root.style.setProperty("--battle-canvas-display-h", `${h}px`);
-          setCanvasDisplaySize(canvas, w, h);
-        }
-        syncFxCanvasGeometry();
-        if (typeof TdArena !== "undefined" && typeof TdArena.resize === "function") {
-          TdArena.resize();
-        }
-        return;
-      }
       const stage = canvas.closest(".battle-canvas-stage");
       const fieldCol = canvas.closest(".prep-field-column");
       const stageW = fieldCol?.clientWidth ?? stage?.clientWidth ?? 0;

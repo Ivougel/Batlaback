@@ -430,7 +430,7 @@ html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: calc(4px * var(--ui-scale));
+  gap: calc(2px * var(--ui-scale));
   overflow: visible;
   pointer-events: none;
 }
@@ -453,6 +453,11 @@ html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle
   z-index: 2;
   width: 100%;
   flex-shrink: 0;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-hud-side .avatar-hero-bars-col,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-hud-side .avatar-hero-bars-col {
+  gap: calc(3px * var(--ui-scale));
 }
 
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-hud-side .battle-hud-debuff-row,
@@ -495,11 +500,11 @@ html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle
   bottom: 100%;
   left: 0;
   right: 0;
-  margin-bottom: calc(3px * var(--ui-scale));
+  margin-bottom: calc(1px * var(--ui-scale));
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: calc(3px * var(--ui-scale));
+  gap: calc(2px * var(--ui-scale));
   width: 100%;
   flex-shrink: 0;
   pointer-events: none;

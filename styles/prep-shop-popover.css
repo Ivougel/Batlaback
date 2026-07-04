@@ -5,8 +5,8 @@
  */
 
 html[data-prep-shop-popover="true"] #app[data-phase="prep"] .game-layout {
-  /* Колонка магазина остаётся — сетка не расширяется под popover */
-  grid-template-columns: minmax(0, 1fr) var(--shop-panel-w) !important;
+  /* Магазин в fixed popover — не резервируем колонку под скрытый #shop-panel */
+  grid-template-columns: minmax(0, 1fr) !important;
 }
 
 html[data-prep-shop-popover="true"] #app[data-phase="prep"] #shop-panel {

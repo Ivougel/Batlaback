@@ -2475,8 +2475,7 @@ html[data-battle-hud-pin="true"] body {
 }
 
 .class-modal .class-step:not(.hidden) .class-grid,
-.class-modal .class-step:not(.hidden) .game-mode-grid,
-.class-modal .class-step:not(.hidden) .td-difficulty-grid {
+.class-modal .class-step:not(.hidden) .game-mode-grid {
   flex: 0 0 auto;
   min-height: 0;
   overflow: visible;
@@ -3152,8 +3151,7 @@ html[data-visual-theme="diablo"] body:has(#class-overlay:not(.hidden)) {
 }
 
 #class-overlay .class-modal .class-step:not(.hidden) .class-grid,
-#class-overlay .class-modal .class-step:not(.hidden) .game-mode-grid,
-#class-overlay .class-modal .class-step:not(.hidden) .td-difficulty-grid {
+#class-overlay .class-modal .class-step:not(.hidden) .game-mode-grid {
   padding-bottom: calc(8px * var(--ui-scale));
 }
 

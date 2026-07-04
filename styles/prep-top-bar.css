@@ -123,12 +123,3 @@
 #app[data-phase="replay"]:not([data-prep-hero-hud="true"]) .prep-top-bar {
   display: none !important;
 }
-
-/* TD-подсказки — только в живом TD-забеге, не в лобби / solo prep */
-#td-hint-bar {
-  display: none !important;
-}
-
-html[data-game-mode="td"] #app[data-td-run-live="true"] #td-hint-bar:not(.hidden) {
-  display: flex !important;
-}

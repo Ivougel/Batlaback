@@ -65,8 +65,6 @@
   <link rel="stylesheet" href="styles/battle-inventory-popover.css?v=9">
   <link rel="stylesheet" href="styles/lobby.css?v=13">
   <link rel="stylesheet" href="styles/lobby-2p-hud.css?v=3">
-  <link rel="stylesheet" href="styles/td-mode.css?v=22">
-  <link rel="stylesheet" href="styles/td-run-compact.css?v=14">
   <link rel="stylesheet" href="styles/lobby-prep-field-roster.css?v=1">
   <link rel="stylesheet" href="styles/meadow-theme.css?v=2">
   <link rel="stylesheet" href="styles/battle-theme-ui.css?v=2">
@@ -102,7 +100,7 @@
   <script src="systems/layout-scales.js?v=2"></script>
   <script src="systems/battle-fx-tier.js?v=4"></script>
   <script src="systems/battle-hero-anchor.js?v=29"></script>
-  <script src="ui-layout.js?v=124"></script>
+  <script src="ui-layout.js?v=125"></script>
 </head>
 <body>
   <div id="ui-ornament-frame" class="ui-ornament-frame" aria-hidden="true">
@@ -154,7 +152,6 @@
                   </button>
                 </div>
                 <div class="prep-hero-card__actions" id="prep-hero-card-actions" aria-label="Действия">
-                  <button type="button" class="btn-secondary btn-td-hero-sheet hidden" id="btn-td-hero-sheet" title="Мутации и усиления" aria-label="Мутации и усиления" aria-controls="td-hero-sheet" aria-expanded="false">⋯</button>
                   <div class="prep-hero-card__timer" id="prep-hero-card-timer" aria-hidden="true"></div>
                   <div class="prep-hero-card__view-tag hidden" id="prep-hero-card-view-tag" aria-live="polite"></div>
                   <div class="prep-hero-card__doll-mount" id="prep-hero-card-doll-mount"></div>
@@ -173,16 +170,11 @@
                 </div>
               </div>
             </header>
-            <div class="td-hint-bar class-action-hint hidden" id="td-hint-bar" role="status" aria-live="polite">
-              <span class="td-hint-text" id="td-hint-text"></span>
-              <button type="button" class="td-hint-dismiss" id="td-hint-dismiss" aria-label="Скрыть подсказку. Shift+клик — отключить все подсказки" title="Скрыть подсказку">✕</button>
-            </div>
             <div class="campaign-hint-bar class-action-hint hidden" id="campaign-hint-bar" role="status" aria-live="polite">
               <span class="campaign-hint-bar__progress" id="campaign-hint-progress"></span>
               <span class="campaign-hint-bar__text" id="campaign-hint-text"></span>
             </div>
             <div class="prep-field-column scene-viewport" id="prep-field-column">
-              <button type="button" class="td-loadout-fab hidden" id="btn-td-loadout" aria-label="Рюкзак башни 6×6" title="Рюкзак 6×6" hidden>🎒</button>
               <div class="layer layer-world" id="layer-world">
                 <div class="scene-bg" aria-hidden="true"></div>
                 <div class="prep-doll-layer" id="prep-doll-layer" aria-hidden="true">
@@ -257,23 +249,6 @@
                 <div class="battle-thought-arena" id="battle-thought-arena" aria-live="polite" aria-label="Боевые эмоджи героев">
                   <div class="arena-equipment-layer" id="arena-equipment-layer" aria-hidden="true"></div>
                 </div>
-                <div class="td-arena-mount hidden" id="td-arena-mount" aria-hidden="true">
-                  <div class="td-map-viewport" id="td-map-viewport">
-                    <canvas id="td-arena-canvas" aria-label="Tower Defense"></canvas>
-                  </div>
-                  <div class="td-map-vignette" aria-hidden="true"></div>
-                  <div class="td-map-zoom-controls" id="td-map-zoom-controls">
-                    <button type="button" class="td-map-zoom-btn" id="td-arena-zoom-in" title="Приблизить" aria-label="Приблизить карту">+</button>
-                    <button type="button" class="td-map-zoom-btn" id="td-arena-zoom-out" title="Отдалить" aria-label="Отдалить карту">−</button>
-                  </div>
-                  <button type="button" class="td-arena-reset-view hidden" id="td-arena-reset-view" title="К центру карты" aria-label="К центру карты">⌖</button>
-                </div>
-                <aside class="td-tower-panel hidden" id="td-tower-panel" aria-label="Слот башни">
-                  <header class="td-tower-panel-header">
-                    <h3 id="td-tower-panel-title">Слот</h3>
-                  </header>
-                  <div class="td-tower-panel-body" id="td-tower-panel-body"></div>
-                </aside>
               </div>
 
               <!-- Layer 3 — FX -->
@@ -322,20 +297,6 @@
               </div>
             </div>
           </div>
-          <aside class="td-build-panel hidden" id="td-build-panel" aria-label="Постройка и улучшения">
-            <header class="td-build-panel__head">
-              <div class="td-build-panel__title" title="Постройка">🏰</div>
-              <div class="td-build-panel__wave" id="td-build-wave">1/99</div>
-              <div class="td-build-panel__gold" id="td-build-gold">0</div>
-              <button type="button" class="td-build-panel__help btn-secondary" id="btn-td-build-help" title="Тап по башне — рюкзак. Из магазина — дуга на зелёные клетки сумки. Купите 🎒, чтобы расширить поле." aria-label="Подсказка">?</button>
-              <button type="button" class="btn-secondary btn-refresh-shop btn-td-refresh-shop" id="btn-td-refresh" title="Обновить магазин (1💰)" aria-label="Обновить магазин">↻</button>
-            </header>
-            <div class="td-build-panel__main" id="td-build-main"></div>
-            <section class="td-build-panel__shop-section" aria-label="В башню">
-              <h4 class="td-build-panel__shop-title" title="В башню">⚡</h4>
-              <div class="td-build-panel__shop-grid" id="td-build-shop"></div>
-            </section>
-          </aside>
         </div>
         <div class="board-hint" id="board-hint">
           <span class="hint-you">■ Синее поле — ваш билд (9×7)</span>
@@ -447,27 +408,6 @@
       </aside>
     </section>
 
-    <div class="td-run-sheet hidden" id="td-loadout-sheet" aria-hidden="true">
-      <button type="button" class="td-run-sheet__backdrop td-loadout-sheet__backdrop" id="td-loadout-backdrop" aria-label="Закрыть рюкзак" tabindex="-1"></button>
-      <div class="td-run-sheet__panel td-loadout-sheet__panel" role="dialog" aria-labelledby="td-loadout-sheet-title">
-        <header class="td-run-sheet__head">
-          <h3 class="td-run-sheet__title" id="td-loadout-sheet-title">Рюкзак башни</h3>
-          <button type="button" class="td-run-sheet__close" id="td-loadout-sheet-close" aria-label="Закрыть">×</button>
-        </header>
-        <p class="td-loadout-sheet__hint" id="td-loadout-sheet-hint">Поле 6×6 · предметы кладутся только в клетки сумки</p>
-        <div class="td-run-sheet__body" id="td-loadout-sheet-body"></div>
-      </div>
-    </div>
-    <div class="td-run-sheet hidden" id="td-hero-sheet" aria-hidden="true">
-      <button type="button" class="td-run-sheet__backdrop" id="td-hero-sheet-backdrop" aria-label="Закрыть"></button>
-      <div class="td-run-sheet__panel td-hero-sheet__panel" role="dialog" aria-labelledby="td-hero-sheet-title">
-        <header class="td-run-sheet__head">
-          <h3 class="td-run-sheet__title" id="td-hero-sheet-title">Герой забега</h3>
-          <button type="button" class="td-run-sheet__close" id="td-hero-sheet-close" aria-label="Закрыть">×</button>
-        </header>
-        <div class="td-run-sheet__body" id="td-hero-sheet-body"></div>
-      </div>
-    </div>
   </div>
 
   <div class="layer-system" id="layer-system">
@@ -565,12 +505,6 @@
               <span class="class-desc">Split-screen: 2 игрока + 14 ботов · фарм, дуэль, готовность</span>
               <span class="class-badge class-badge--lobby">Тест</span>
             </button>
-            <button type="button" class="class-card game-mode-card glass-card" data-game-mode="td">
-              <span class="glass-card-icon glass-card-icon--td class-icon" aria-hidden="true">🐷</span>
-              <span class="class-name">Tower Defense</span>
-              <span class="class-desc">Башни-герои на карте · магазин во время волн</span>
-              <span class="class-badge class-badge--td">Оборона</span>
-            </button>
             <button type="button" class="class-card game-mode-card glass-card" data-game-mode="campaign">
               <span class="glass-card-icon glass-card-icon--campaign class-icon" aria-hidden="true">🎓</span>
               <span class="class-name">Кампания</span>
@@ -589,43 +523,6 @@
               <span class="class-name">Испытание сборки</span>
               <span class="class-desc">Рюкзак → манекен → тренировочный бой</span>
               <span class="class-badge class-badge--campaign">4 урока</span>
-            </button>
-          </div>
-        </div>
-        <div class="class-step hidden" id="class-step-td-difficulty">
-          <div class="class-step-actions class-step-actions-top">
-            <button type="button" class="btn-secondary btn-glass-back" id="btn-class-back-mode-td">← Режим игры</button>
-          </div>
-          <div class="td-difficulty-grid" id="td-difficulty-grid">
-            <button type="button" class="class-card game-mode-card td-difficulty-card glass-card" data-td-difficulty="easy">
-              <span class="glass-card-icon class-icon" aria-hidden="true">🌱</span>
-              <span class="class-name">Лёгкий</span>
-              <span class="class-desc">Мало свиней, слабый урон · для знакомства</span>
-              <span class="class-badge class-badge--td-easy">×0.65</span>
-            </button>
-            <button type="button" class="class-card game-mode-card td-difficulty-card glass-card selected" data-td-difficulty="normal">
-              <span class="glass-card-icon class-icon" aria-hidden="true">⚔️</span>
-              <span class="class-name">Нормальный</span>
-              <span class="class-desc">Базовый баланс · эталон 99 волн</span>
-              <span class="class-badge class-badge--td-normal">×1.0</span>
-            </button>
-            <button type="button" class="class-card game-mode-card td-difficulty-card glass-card" data-td-difficulty="hard">
-              <span class="glass-card-icon class-icon" aria-hidden="true">🔥</span>
-              <span class="class-name">Сложный</span>
-              <span class="class-desc">Больше стай и HP · нужен крепкий билд</span>
-              <span class="class-badge class-badge--td-hard">×1.55</span>
-            </button>
-            <button type="button" class="class-card game-mode-card td-difficulty-card glass-card" data-td-difficulty="nightmare">
-              <span class="glass-card-icon class-icon" aria-hidden="true">💀</span>
-              <span class="class-name">Кошмар</span>
-              <span class="class-desc">Быстрые толстые свиньи · мало ошибок</span>
-              <span class="class-badge class-badge--td-nightmare">×2.4</span>
-            </button>
-            <button type="button" class="class-card game-mode-card td-difficulty-card glass-card" data-td-difficulty="ultra">
-              <span class="glass-card-icon class-icon" aria-hidden="true">☠️</span>
-              <span class="class-name">Ультра</span>
-              <span class="class-desc">Экспоненциальный ад · только для ветеранов</span>
-              <span class="class-badge class-badge--td-ultra">×3.7</span>
             </button>
           </div>
         </div>
@@ -1163,11 +1060,8 @@
   <script src="systems/lobby-opponents.js?v=6"></script>
   <script src="systems/lobby-fighter-avatar.js?v=4"></script>
   <script src="systems/lobby-spectator.js?v=8"></script>
-  <script src="systems/td-engine.js?v=11"></script>
   <script src="battle-engine.js?v=2"></script>
   <script src="battle-float-layer.js?v=18"></script>
-  <script src="components/td-arena.js?v=9"></script>
-  <script src="components/td-build-panel.js?v=8"></script>
   <script src="components/thought-arena.js?v=16"></script>
   <script src="components/arena-equipment.js?v=26"></script>
   <script src="components/emotion-presenter.js?v=5"></script>
@@ -1180,7 +1074,7 @@
   <script src="systems/screen-transitions.js?v=1"></script>
   <script src="components/prep-hud-collapse.js?v=1"></script>
   <script src="components/prep-hud-hero.js?v=3"></script>
-  <script src="game.js?v=102"></script>
+  <script src="game.js?v=103"></script>
   <script src="pwa-register.js"></script>
 </body>
 </html>

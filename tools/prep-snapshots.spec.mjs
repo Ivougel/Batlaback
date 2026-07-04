@@ -22,8 +22,8 @@ async function startPrep(page, mode) {
   await page.waitForFunction(() => typeof startRunFromOverlay === "function", { timeout: 10000 });
   await page.evaluate((gameMode) => {
     selectGameMode(gameMode);
-    if (gameMode === "td" && typeof selectTdDifficulty === "function") {
-      selectTdDifficulty("normal");
+    if (gameMode === "campaign" && typeof selectCampaignTrial === "function") {
+      selectCampaignTrial("build-trial");
     }
     selectPlayerClass("priest");
     if (typeof selectCompanion === "function") {
@@ -34,7 +34,7 @@ async function startPrep(page, mode) {
       );
     }
     if (gameMode === "versus") selectOpponentClass("warrior");
-    else if (gameMode !== "lobby" && gameMode !== "td") selectOpponentClass("mage");
+    else if (gameMode !== "lobby" && gameMode !== "campaign") selectOpponentClass("mage");
     startRunFromOverlay();
   }, mode);
   await page.waitForFunction(

@@ -33,7 +33,7 @@
   }
 
   function findSparkleCard(el) {
-    return el?.closest?.(".shop-card, .bench-card, .td-build-shop-card") || null;
+    return el?.closest?.(".shop-card, .bench-card") || null;
   }
 
   function captureSparkleSourceRef(sourceEl) {
@@ -89,7 +89,7 @@
     document.querySelectorAll(".item-emoji-sparkle-host.is-sparkle-active").forEach((host) => {
       host.classList.remove("is-sparkle-active");
     });
-    document.querySelectorAll(".shop-card.is-sparkle-source, .bench-card.is-sparkle-source, .td-build-shop-card.is-sparkle-source").forEach((card) => {
+    document.querySelectorAll(".shop-card.is-sparkle-source, .bench-card.is-sparkle-source").forEach((card) => {
       card.classList.remove("is-sparkle-source");
     });
     domSparkleOwner = null;
@@ -110,7 +110,7 @@
     document.querySelectorAll(".item-emoji-sparkle-host.is-sparkle-active").forEach((host) => {
       host.classList.remove("is-sparkle-active");
     });
-    document.querySelectorAll(".shop-card.is-sparkle-source, .bench-card.is-sparkle-source, .td-build-shop-card.is-sparkle-source").forEach((card) => {
+    document.querySelectorAll(".shop-card.is-sparkle-source, .bench-card.is-sparkle-source").forEach((card) => {
       card.classList.remove("is-sparkle-source");
     });
     setDomSparkleActive(el, true);

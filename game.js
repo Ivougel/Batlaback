@@ -121,13 +121,6 @@ let goldEarnedTotal = 0;
 let recentBattleResults = [];
 let battleStartTime = 0;
 let battleState = null;
-let tdState = null;
-/** HP героя между волнами TD (legacy). */
-let tdHeroHp = null;
-/** Непрерывный TD-забег: магазин и слоты во время боя. */
-let tdRunLive = false;
-let selectedTdSlotId = 0;
-let tdCanvasBound = false;
 let dragPayload = null;
 let dragFrom = null;
 let prepSidebarDragUnlocked = false;
@@ -239,13 +232,9 @@ function togglePrepDollOpen(e) {
 }
 let selectedGameMode = "solo";
 let selectedOpponentMode = "ai";
-/** Выбранная сложность TD в интро (easy … ultra). */
-let selectedTdDifficulty = "normal";
 /** Выбранное испытание кампании в интро. */
 let selectedCampaignTrial = "build-trial";
 let campaignShopOptions = { allowRefresh: true, allowSell: true };
-/** Активная сложность текущего TD-забега. */
-let tdRunDifficultyId = "normal";
 let selectedEnemyClass = null;
 let pendingPlayerClass = null;
 let pendingMutationIntentId = null;
@@ -320,43 +309,18 @@ function isAnyLobbyMode() {
   return isLobbyMode() || isLobby2pMode();
 }
 
-function isTdMode() {
-  return gameMode === "td";
-}
-
 function isCampaignMode() {
   return gameMode === "campaign";
 }
 
-function isTdRunLive() {
-  return isTdMode() && tdRunLive && phase === "battle" && !!tdState && !tdState.finished;
-}
-
-function getShopPhase() {
-  return isTdRunLive() ? "prep" : phase;
-}
-
-function syncTdRunLiveDom() {
-  const app = document.getElementById("app");
-  if (!app) return;
-  if (tdRunLive && isTdMode()) app.dataset.tdRunLive = "true";
-  else app.removeAttribute("data-td-run-live");
-  document.getElementById("battle-arena")?.classList.toggle("td-screen-root", !!(tdRunLive && isTdMode()));
-  syncPrepHeroHudDom();
-  syncTdRunCompactChrome();
-  bindTdRunCompactUi();
-  syncTdHintBar();
-}
-
 function isPrepHeroHudVisible() {
-  return (phase === "prep" || isTdRunLive()) && isPrepHeroCardHud();
+  return phase === "prep" && isPrepHeroCardHud();
 }
 
 function shouldEnableBattlePrepHeroLayer() {
   const app = document.getElementById("app");
   const root = document.documentElement;
   if (!app || (app.dataset.phase !== "battle" && app.dataset.phase !== "replay")) return false;
-  if (app.dataset.gameMode === "td") return false;
   if (root.dataset.prepLayout === "mobile") return false;
   if (root.dataset.uiSurface !== "tablet-side" && root.dataset.uiSurface !== "desktop") return false;
   if (root.dataset.battleHeroPlacement && root.dataset.battleHeroPlacement !== "flank-arena") return false;
@@ -374,13 +338,8 @@ function syncBattlePrepHeroLayerDom() {
 function syncPrepHeroHudDom() {
   const app = document.getElementById("app");
   if (!app) return;
-  if (isTdRunLive() && isPrepHeroCardHud()) app.dataset.prepHeroHud = "true";
-  else app.removeAttribute("data-prep-hero-hud");
+  app.removeAttribute("data-prep-hero-hud");
   if (typeof syncPrepHudCollapseChrome === "function") syncPrepHudCollapseChrome();
-}
-
-function getTdMaxWaves() {
-  return typeof TD_MAX_WAVES === "number" ? TD_MAX_WAVES : 99;
 }
 
 function getEnemyDisplayName() {
@@ -693,7 +652,7 @@ function syncPrepBottomStats({ gold, hpLabel, roundLabel, lobbyHp = false } = {}
   if (roundEl && roundLabel != null) roundEl.textContent = roundLabel;
   bar.classList.toggle("prep-bottom-stats--lobby-hp", !!lobbyHp);
   const roundCaption = bar.querySelector(".prep-bottom-stat--round .prep-bottom-stat-label");
-  if (roundCaption) roundCaption.textContent = isTdRunLive() ? "Волна" : isTdMode() ? "Волна" : "Раунд";
+  if (roundCaption) roundCaption.textContent = "Раунд";
 }
 
 function syncPrepBottomBarChrome() {
@@ -717,7 +676,7 @@ function syncPrepBottomBarChrome() {
     closeStandingsDropdown();
   }
 
-  if ((!isPrep && !isTdRunLive()) || !isPrepHeroCardHud()) {
+  if (!isPrep || !isPrepHeroCardHud()) {
     document.getElementById("prep-bottom-stats")?.setAttribute("hidden", "");
   }
 }
@@ -1579,7 +1538,6 @@ function unequipEnhancementSlotToBench(slotId, side = prepViewSide) {
   const ok = removeLoadoutItemToBench(item.uid, side);
   if (!ok) return false;
   syncEnhancementsForSide(side);
-  syncTdTowerFromLoadoutState(getSideState(side), side);
   const enhDef = typeof getEnhancementDef === "function"
     ? getEnhancementDef(getEnhancementIdFromItem(item.itemId))
     : null;
@@ -1601,7 +1559,6 @@ function startEnhancementSlotDrag(slotId, e, side = prepViewSide) {
   dragPayload = { itemId: item.itemId, rotation: item.rotation || 0 };
   dragFrom = { type: "enhancement", item, side, slotId };
   st.items = st.items.filter((i) => i.uid !== item.uid);
-  syncTdTowerFromLoadoutState(st, side);
   prepSidebarDragUnlocked = false;
   prepSidebarStickyHover = null;
   const slotEl = e?.currentTarget || document.querySelector(`.enh-slot--filled[data-enh-slot="${slotId}"]`);
@@ -1866,7 +1823,6 @@ function renderCompanionSelection() {
 
 const CLASS_INTRO_STEP_IDS = {
   mode: "class-step-mode",
-  tdDifficulty: "class-step-td-difficulty",
   campaignTrial: "class-step-campaign",
   player: "class-step-player",
   companion: "class-step-companion",
@@ -1875,7 +1831,7 @@ const CLASS_INTRO_STEP_IDS = {
 };
 
 function classIntroUsesTrialStep() {
-  return selectedGameMode === "td" || selectedGameMode === "campaign";
+  return selectedGameMode === "campaign";
 }
 
 function getClassIntroTotalSteps() {
@@ -2028,9 +1984,7 @@ function renderClassSummaryStep() {
 
   const heroLabel = cls?.heroLabel || cls?.noviceLabel || cls?.name || "—";
   if (lead) {
-    const diffLine = selectedGameMode === "td" && typeof tdFormatDifficultyLabel === "function"
-      ? ` · ${tdFormatDifficultyLabel(selectedTdDifficulty)}`
-      : selectedGameMode === "campaign"
+    const diffLine = selectedGameMode === "campaign"
         ? ` · ${Campaign.getTrial(selectedCampaignTrial)?.title || "Кампания"}`
         : "";
     lead.textContent = `Ваш выбор: ${heroLabel} и ${companion?.name || "—"}${diffLine}`;
@@ -2071,7 +2025,6 @@ function showSummaryStep() {
     versus: "Противостояние",
     hardbot: "Сложный бот",
     solo: "Одиночная",
-    td: "Tower Defense",
     campaign: "Кампания",
   };
   document.getElementById("class-modal-title").textContent = modeTitles[selectedGameMode] || "Готовы?";
@@ -2152,9 +2105,6 @@ function syncClassOverlayUi() {
   if (modeStep && !modeStep.classList.contains("hidden")) {
     badge.textContent = `Шаг 1 из ${totalSteps} · Режим`;
     hint.textContent = "Четыре девочки-звери скрестили клички с именами — выберите режим";
-  } else if (document.getElementById("class-step-td-difficulty") && !document.getElementById("class-step-td-difficulty").classList.contains("hidden")) {
-    badge.textContent = `Шаг 2 из ${totalSteps} · Сложность`;
-    hint.textContent = "5 ступеней · ×1.55 между уровнями · выберите сложность";
   } else if (document.getElementById("class-step-campaign") && !document.getElementById("class-step-campaign").classList.contains("hidden")) {
     badge.textContent = `Шаг 2 из ${totalSteps} · Испытание`;
     hint.textContent = "4 урока: рюкзак, заполнение, манекен и финальный манекен";
@@ -2254,11 +2204,6 @@ function syncClassHeroShowcase() {
     if (typeof updateClassHeroRosterShowcase === "function") updateClassHeroRosterShowcase();
     return;
   }
-  const tdDifficultyStep = document.getElementById("class-step-td-difficulty");
-  if (tdDifficultyStep && !tdDifficultyStep.classList.contains("hidden")) {
-    if (typeof hideClassHeroShowcase === "function") hideClassHeroShowcase();
-    return;
-  }
   const campaignTrialStep = document.getElementById("class-step-campaign");
   if (campaignTrialStep && !campaignTrialStep.classList.contains("hidden")) {
     if (typeof hideClassHeroShowcase === "function") hideClassHeroShowcase();
@@ -2274,31 +2219,6 @@ function syncClassHeroShowcase() {
   const onOpponent = opponentStep && !opponentStep.classList.contains("hidden");
   const classId = onOpponent ? selectedEnemyClass : pendingPlayerClass;
   updateClassHeroShowcase(classId || null);
-}
-
-function renderTdDifficultySelection() {
-  document.querySelectorAll(".td-difficulty-card").forEach((card) => {
-    card.classList.toggle("selected", card.dataset.tdDifficulty === selectedTdDifficulty);
-  });
-}
-
-function showTdDifficultyStep() {
-  dismissClassOverlayTooltip();
-  hideClassSummaryTooltip();
-  setClassIntroStep("tdDifficulty");
-  document.getElementById("class-modal-title").textContent = "Сложность обороны";
-  document.getElementById("class-modal-subtitle").textContent =
-    "Ступени растут по экспоненте ×1.55 — от знакомства до ультра";
-  renderTdDifficultySelection();
-  syncClassOverlayUi();
-  syncClassMobileDock();
-}
-
-function selectTdDifficulty(difficultyId) {
-  if (typeof getTdDifficulty === "function" && !getTdDifficulty(difficultyId)) return;
-  selectedTdDifficulty = difficultyId;
-  renderTdDifficultySelection();
-  showPlayerClassStep();
 }
 
 function renderCampaignTrialSelection() {
@@ -2350,9 +2270,7 @@ function showPlayerClassStep() {
       ? "Split-screen лобби: 16 бойцов (2 игрока + 14 ботов)."
       : selectedGameMode === "lobby"
       ? "Лобби из восьми бойцов — кого из подружек отправим в рейтинг?"
-      : selectedGameMode === "td"
-        ? "Командир на стартовом слоте — набирайте башни и экипировку. 50 волн без пауз."
-        : selectedGameMode === "campaign"
+      : selectedGameMode === "campaign"
           ? "Герой для обучения — мягкие уроки и тренировочные манекены."
           : "Кого из девочек-зверушек отправим в забег? У каждой свой характер и бонус.";
   syncClassOverlayUi();
@@ -2363,7 +2281,7 @@ function showPlayerClassStep() {
 }
 
 function selectGameMode(mode) {
-  if (mode !== "solo" && mode !== "versus" && mode !== "hardbot" && mode !== "lobby" && mode !== "lobby2p" && mode !== "td" && mode !== "campaign") return;
+  if (mode !== "solo" && mode !== "versus" && mode !== "hardbot" && mode !== "lobby" && mode !== "lobby2p" && mode !== "campaign") return;
   selectedGameMode = mode;
   selectedOpponentMode = mode === "versus"
     ? "manual"
@@ -2373,9 +2291,7 @@ function selectGameMode(mode) {
         ? "ghost"
         : mode === "lobby2p"
           ? "ghost2p"
-          : mode === "td"
-            ? "td"
-            : mode === "campaign"
+          : mode === "campaign"
               ? "campaign"
               : "ai";
   pendingPlayerClass = null;
@@ -2385,9 +2301,7 @@ function selectGameMode(mode) {
     card.classList.toggle("selected", card.dataset.gameMode === mode);
   });
   if (typeof renderClassMutationGallery === "function") renderClassMutationGallery(null);
-  if (mode === "td") {
-    showTdDifficultyStep();
-  } else if (mode === "campaign") {
+  if (mode === "campaign") {
     showCampaignTrialStep();
   } else {
     showPlayerClassStep();
@@ -2401,7 +2315,6 @@ function resetClassSelectOverlay() {
   selectedEnemyClass = null;
   selectedGameMode = "solo";
   selectedOpponentMode = "ai";
-  selectedTdDifficulty = "normal";
   selectedCampaignTrial = "build-trial";
   if (typeof Campaign !== "undefined") Campaign.reset();
   document.querySelectorAll(".game-mode-card").forEach((card) => {
@@ -2474,7 +2387,6 @@ function updateStartRunButton() {
   if (selectedGameMode === "versus") btn.textContent = "Начать игру";
   else if (selectedGameMode === "lobby") btn.textContent = "Начать лобби";
   else if (selectedGameMode === "lobby2p") btn.textContent = "Начать лобби 2P";
-  else if (selectedGameMode === "td") btn.textContent = "В оборону!";
   else btn.textContent = "Старт";
   const summaryBtn = document.getElementById("btn-class-summary-start");
   if (summaryBtn) summaryBtn.disabled = !ready;
@@ -3062,10 +2974,9 @@ function bindTouchInput() {
   const boardSection = document.querySelector(".board-section");
   const shopPanel = document.getElementById("shop-panel");
   const prepShopPopover = document.getElementById("prep-shop-popover");
-  const tdBuildPanel = document.getElementById("td-build-panel");
   const benchPopover = document.getElementById("prep-bench-popover");
   const benchFab = document.getElementById("btn-prep-bench-fab");
-  const touchTargets = [boardSection, canvas, shopPanel, prepShopPopover, tdBuildPanel, benchPopover, benchFab].filter(Boolean);
+  const touchTargets = [boardSection, canvas, shopPanel, prepShopPopover, benchPopover, benchFab].filter(Boolean);
   const captureOpts = { passive: false, capture: true };
   const bubbleOpts = { passive: false };
   let activeGesture = null;
@@ -3077,24 +2988,10 @@ function bindTouchInput() {
   const onDown = (kind, id, x, y, e) => {
     if (activeGesture) return;
     if (ignoreTarget(e.target)) return;
-    // TD-магазин сам стартует drag через pointerdown; не перехватывать pointer на board-section.
-    if (e.target?.closest?.(".td-build-shop-card")) return;
 
     markTouchInteraction();
 
     if ((phase === "battle" || phase === "replay") && e.target?.closest?.("#game-canvas") && !dragPayload) {
-      if (isTdLoadoutEditPhase() && tdLoadoutSheetOpen) {
-        activeGesture = gestureKey(kind, id);
-        lastTouchEventAt = Date.now();
-        if (e.cancelable) e.preventDefault();
-        if (kind === "pointer") {
-          try {
-            boardSection?.setPointerCapture(id);
-          } catch (_) {}
-        }
-        gamepadPointerDownAt(x, y);
-        return;
-      }
       activeGesture = gestureKey(kind, id);
       lastTouchEventAt = Date.now();
       if (e.cancelable) e.preventDefault();
@@ -3233,7 +3130,7 @@ function bindTouchInput() {
   };
 }
 
-/** Глобальный pointer bridge: drag из TD-магазина / рюкзака на touch и pen. */
+/** Глобальный pointer bridge: drag из магазина / рюкзака на touch и pen. */
 function bindPrepLoadoutDragPointer() {
   if (bindPrepLoadoutDragPointer._done) return;
   bindPrepLoadoutDragPointer._done = true;
@@ -3286,7 +3183,6 @@ function init() {
 
   canvas = document.getElementById("game-canvas");
   ctx = canvas.getContext("2d");
-  if (typeof TdArena !== "undefined" && typeof TdArena.init === "function") TdArena.init();
   fxCanvas = document.getElementById("canvas-fx");
   fxCtx = fxCanvas?.getContext("2d") || null;
   applyPhaseCanvasLayout();
@@ -3330,14 +3226,10 @@ function init() {
   bindPrepLoadoutDragPointer();
   document.getElementById("btn-fight").addEventListener("click", startBattle);
   document.getElementById("btn-refresh")?.addEventListener("click", () => refreshShop(true));
-  document.getElementById("btn-td-refresh")?.addEventListener("click", () => refreshShop(true));
   document.getElementById("sell-drop-zone")?.addEventListener("click", sellSelected);
   document.getElementById("btn-restart").addEventListener("click", returnToMainMenu);
   document.querySelectorAll(".game-mode-card").forEach((btn) => {
     btn.addEventListener("click", () => selectGameMode(btn.dataset.gameMode));
-  });
-  document.querySelectorAll(".td-difficulty-card").forEach((btn) => {
-    btn.addEventListener("click", () => selectTdDifficulty(btn.dataset.tdDifficulty));
   });
   document.querySelectorAll(".campaign-trial-card").forEach((btn) => {
     btn.addEventListener("click", () => selectCampaignTrial(btn.dataset.campaignTrial));
@@ -3351,28 +3243,23 @@ function init() {
     btn.addEventListener("click", () => selectOpponentClass(btn.dataset.opponentClass));
   });
   document.getElementById("btn-class-back-mode")?.addEventListener("click", () => {
-    if (selectedGameMode === "td") showTdDifficultyStep();
-    else if (selectedGameMode === "campaign") showCampaignTrialStep();
+    if (selectedGameMode === "campaign") showCampaignTrialStep();
     else showGameModeStep();
   });
-  document.getElementById("btn-class-back-mode-td")?.addEventListener("click", () => showGameModeStep());
   document.getElementById("btn-class-back-mode-campaign")?.addEventListener("click", () => showGameModeStep());
   document.getElementById("btn-class-back")?.addEventListener("click", () => {
     const summaryStep = document.getElementById("class-step-summary");
     const opponentStep = document.getElementById("class-step-opponent");
     const companionStep = document.getElementById("class-step-companion");
     const playerStep = document.getElementById("class-step-player");
-    const tdDifficultyStep = document.getElementById("class-step-td-difficulty");
     const campaignTrialStep = document.getElementById("class-step-campaign");
     if (summaryStep && !summaryStep.classList.contains("hidden")) showCompanionStep({ keepSelection: true });
     else if (opponentStep && !opponentStep.classList.contains("hidden")) showCompanionStep();
     else if (companionStep && !companionStep.classList.contains("hidden")) showPlayerClassStep();
     else if (playerStep && !playerStep.classList.contains("hidden")) {
-      if (selectedGameMode === "td") showTdDifficultyStep();
-      else if (selectedGameMode === "campaign") showCampaignTrialStep();
+      if (selectedGameMode === "campaign") showCampaignTrialStep();
       else showGameModeStep();
     }
-    else if (tdDifficultyStep && !tdDifficultyStep.classList.contains("hidden")) showGameModeStep();
     else if (campaignTrialStep && !campaignTrialStep.classList.contains("hidden")) showGameModeStep();
     else showGameModeStep();
   });
@@ -3409,10 +3296,9 @@ function init() {
         setLobbyViewFighter(lobbyState.playerId);
         renderLobbyChrome(true);
       }
-      setPhaseLabel(isTdMode() ? "Закуп перед волной" : isCampaignMode() ? "Обучение" : "Подготовка", false);
+      setPhaseLabel(isCampaignMode() ? "Обучение" : "Подготовка", false);
       if (isCampaignMode()) syncCampaignChrome();
       requestAnimationFrame(() => updateUI());
-      if (isTdMode()) syncTdBattleChrome();
     };
     const applyPrepPhase = () => {
       phase = "prep";
@@ -3606,11 +3492,6 @@ function applyPhaseCanvasLayout() {
       canvas.width = PREP_CANVAS_W;
       canvas.height = PREP_CANVAS_H;
     }
-  } else if (isTdMode() && isBattleUiPhase()) {
-    if (!isTdLoadoutEditPhase()) {
-      canvas.width = typeof TD_CANVAS_W === "number" ? TD_CANVAS_W : 960;
-      canvas.height = typeof TD_CANVAS_H === "number" ? TD_CANVAS_H : 640;
-    }
   } else {
     canvas.width = BATTLE_CANVAS_W;
     canvas.height = BATTLE_CANVAS_H;
@@ -3624,7 +3505,6 @@ function applyPhaseCanvasLayout() {
   if (typeof window.fitCanvasDisplaySize === "function") {
     window.fitCanvasDisplaySize();
   }
-  if (isTdLoadoutEditPhase()) syncTdLoadoutLayout();
   if (typeof window.syncFxCanvasGeometry === "function") {
     requestAnimationFrame(() => window.syncFxCanvasGeometry());
   }
@@ -3658,26 +3538,6 @@ function getEnemyCharacteristicsState() {
   };
 }
 
-function syncTdBattleChrome() {
-  const live = isTdMode() && (isTdRunLive() || (isBattleUiPhase() && !!tdState));
-  syncTdRunLiveDom();
-  if (typeof TdArena !== "undefined") {
-    if (typeof TdArena.init === "function") TdArena.init();
-    if (typeof TdArena.setVisible === "function") TdArena.setVisible(live);
-    if (live && typeof TdArena.resize === "function") TdArena.resize();
-  }
-  if (live) {
-    document.documentElement.removeAttribute("data-battle-hero-placement");
-    document.documentElement.dataset.battleArenaLayout = "false";
-  }
-  if (live && typeof renderTdBuildPanel === "function") renderTdBuildPanel();
-  if (typeof TdBuildPanel !== "undefined") {
-    TdBuildPanel.setVisible(isTdRunLive());
-  }
-  syncTdLoadoutLayout();
-  syncTdHintBar();
-}
-
 function renderPhase() {
   const app = document.getElementById("app");
   const root = document.documentElement;
@@ -3694,22 +3554,17 @@ function renderPhase() {
   applyPhaseCanvasLayout();
   setBattleControlsVisible(isBattleUiPhase());
   syncBattleArenaLayout();
-  syncTdBattleChrome();
   syncPrepHeroHudDom();
   if (phase !== "prep") {
     window.forceHidePrepBenchChrome?.();
     window.closePrepBenchPopover?.();
   }
   window.syncPrepBenchFabVisibility?.();
-  if (isTdMode() && tdRunLive && phase === "prep" && tdState && !gameOver
-    && !(typeof ScreenTransitions !== "undefined" && ScreenTransitions.isScreenTransitioning())) {
-    requestAnimationFrame(() => startTdRun());
-  }
   const battleSceneUi = document.getElementById("battle-scene-ui");
   if (battleSceneUi) battleSceneUi.setAttribute("aria-hidden", isBattleUiPhase() ? "false" : "true");
   renderPlayerProfiles();
   if (typeof refreshGamepadHints === "function") refreshGamepadHints();
-  if ((phase === "prep" || isTdRunLive()) && !gameOver) {
+  if (phase === "prep" && !gameOver) {
     ensureShopReadyForSide("player");
     if (isEnemyPrepEditable()) ensureShopReadyForSide("enemy");
     if (phase === "prep") updatePrepSideUI();
@@ -3719,21 +3574,15 @@ function renderPhase() {
       renderShop();
       renderBench();
     }
-    if (isTdRunLive()) renderTdBuildPanel();
   }
   syncPrepTooltipDockVisibility();
   renderFightButton();
   if (phase !== "prep") closeAllFighterCharacteristicsPopups();
   if (!isBattleUiPhase() && typeof closeBattleInventoryPopover === "function") closeBattleInventoryPopover();
-  if (phase !== "prep" && !isTdRunLive()) setPrepDollOpen(false);
-  if (phase !== "prep" && !isTdRunLive() && typeof closeMobilePrepShop === "function") closeMobilePrepShop();
+  if (phase !== "prep") setPrepDollOpen(false);
+  if (phase !== "prep" && typeof closeMobilePrepShop === "function") closeMobilePrepShop();
   if (typeof applyUiLayout === "function") scheduleLayoutAfterPhase();
   syncLobby2pHudDom();
-  if (isTdMode() && isBattleUiPhase()) {
-    requestAnimationFrame(() => {
-      if (typeof TdArena !== "undefined" && typeof TdArena.resize === "function") TdArena.resize();
-    });
-  }
   syncRunHudPhase();
   syncBattleHudVisibility();
   renderLobbyChrome();
@@ -3754,7 +3603,7 @@ function renderPhase() {
 function syncBattleHudVisibility() {
   const battleHud = document.getElementById("battle-run-hud");
   const runHud = document.getElementById("run-hud");
-  const live = isBattleUiPhase() && !isTdMode();
+  const live = isBattleUiPhase();
   if (battleHud) {
     battleHud.hidden = !live;
     if (live) battleHud.removeAttribute("aria-hidden");
@@ -4094,17 +3943,12 @@ function startRunFromOverlay() {
         ? "ghost"
         : selectedGameMode === "lobby2p"
           ? "ghost2p"
-          : selectedGameMode === "td"
-            ? "td"
-            : selectedGameMode === "campaign"
+          : selectedGameMode === "campaign"
               ? "campaign"
               : "ai";
   enemyClass = selectedEnemyClass || pendingPlayerClass;
   enemyArchetype = AI_ARCHETYPES[enemyClass] || AI_ARCHETYPES.warrior;
   prepViewSide = "player";
-  if (selectedGameMode === "td") {
-    tdRunDifficultyId = selectedTdDifficulty;
-  }
   if (selectedGameMode === "campaign" && typeof Campaign !== "undefined") {
     Campaign.startTrial(selectedCampaignTrial);
   }
@@ -4224,16 +4068,6 @@ function restartGame() {
   } else if (opponentMode === "ghost2p") {
     lobbyState = null;
     initLobby2pRun();
-  } else if (opponentMode === "td") {
-    enemyArchetype = AI_ARCHETYPES.warrior;
-    enemyClass = playerClass;
-    enemyGold = 0;
-    enemyContainers = [];
-    enemyItems = [];
-    enemyBench = [];
-    enemyShop = Array(MAX_SHOP).fill(null);
-    enemyShopFrozen = Array(MAX_SHOP).fill(false);
-    enemyShopReadyForRound = 0;
   } else if (opponentMode === "campaign") {
     const enemyState = typeof Campaign !== "undefined" ? Campaign.createEnemyPrep() : null;
     enemyArchetype = enemyState?.archetype || AI_ARCHETYPES.warrior;
@@ -4250,11 +4084,6 @@ function restartGame() {
   }
   prepViewSide = "player";
   battleState = null;
-  tdState = null;
-  tdHeroHp = null;
-  tdRunLive = false;
-  selectedTdSlotId = 0;
-  syncTdRunLiveDom();
   clearBattleFloatLayer();
   replayPlayback = null;
   lastBattleReplay = null;
@@ -4298,15 +4127,12 @@ function restartGame() {
     renderBench();
     updatePrepSideUI();
     if (typeof applyUiLayout === "function") applyUiLayout();
-    if (isTdMode() && !gameOver) startTdRun();
   });
   log(isVersusMode()
     ? "Режим противостояния: Tab или кнопки — переключить магазин между игроками."
     : isLobbyMode()
       ? `Лобби: ${LOBBY_FIGHTER_COUNT} бойцов, ${LOBBY_START_HP} HP. 🏆 внизу — список участников. Таймер ${LOBBY_PREP_SECONDS}с.`
-      : isTdMode()
-        ? `Tower Defense (${typeof tdFormatDifficultyLabel === "function" ? tdFormatDifficultyLabel(tdRunDifficultyId) : tdRunDifficultyId}): ${getTdMaxWaves()} волн · башни на карте, магазин в бою.`
-        : isCampaignMode()
+      : isCampaignMode()
           ? `Кампания: ${Campaign.getTrial()?.title || "испытание"} · ${Campaign.getProgressLabel()}`
           : isHardBotMode()
           ? "Сложный бот: каждый раунд подбирает лучшую экипировку. Расставьте предметы и в бой!"
@@ -4757,13 +4583,6 @@ function restoreDraggedItem(side = prepViewSide) {
   } else if (dragFrom.type === "bench") {
     restoreBenchDragEntry(st, dragFrom);
   }
-  if (isTdLoadoutEditPhase() && side === "player") {
-    const tower = getTdEditTower();
-    if (tower) {
-      tower.containers = st.containers;
-      tower.items = st.items;
-    }
-  }
 }
 
 function canPrepSellDragHighlight() {
@@ -5119,11 +4938,6 @@ function isPrepSidebarArcDrag() {
     || dragFrom?.type === "enhancement";
 }
 
-/** TD build panel: дуга магазин→рюкзак без ✊ и «луча» remote-hold (ломается на iPad). */
-function useTdBuildSidebarArcDrag() {
-  return isPrepSidebarArcDrag() && isTdLoadoutEditPhase();
-}
-
 function shouldDrawPrepGridFigurePreview() {
   if (!isPrepSidebarArcDrag()) return true;
   if (hoverSlot || hoverCell || prepDropPreviewHover) return true;
@@ -5137,18 +4951,10 @@ function getPrepBackpackClientRect() {
   let oy;
   let innerW;
   let innerH;
-  if (isTdLoadoutEditPhase()) {
-    const g = getTdEditGridBounds();
-    ox = g.ox;
-    oy = g.oy;
-    innerW = g.innerW;
-    innerH = g.innerH;
-  } else {
-    ox = gridOrigin(team);
-    oy = layoutBackpackY();
-    innerW = GRID_INNER_W;
-    innerH = GRID_INNER_H;
-  }
+  ox = gridOrigin(team);
+  oy = layoutBackpackY();
+  innerW = GRID_INNER_W;
+  innerH = GRID_INNER_H;
   const tl = canvasPointToClient(ox, oy);
   const br = canvasPointToClient(ox + innerW, oy + innerH);
   if (!tl || !br) return null;
@@ -5180,22 +4986,6 @@ function usesPrepCommercePopoverMode() {
 
 function isPointerInsideShopDrawerBounds(clientX, clientY) {
   if (clientX == null || clientY == null) return false;
-  if (isTdLoadoutEditPhase()) {
-    const tdShop = document.getElementById("td-build-shop");
-    if (tdShop) {
-      const tr = tdShop.getBoundingClientRect();
-      if (clientX >= tr.left && clientX <= tr.right && clientY >= tr.top && clientY <= tr.bottom) {
-        return true;
-      }
-    }
-    const panel = document.getElementById("td-build-panel");
-    if (panel) {
-      const pr = panel.getBoundingClientRect();
-      if (clientX >= pr.left && clientX <= pr.right && clientY >= pr.top && clientY <= pr.bottom) {
-        return true;
-      }
-    }
-  }
   const r = getShopDrawerRect();
   if (!r) return false;
   return clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom;
@@ -5224,23 +5014,6 @@ function quantizePrepSidebarAxis(norm, count, stickyIndex) {
 }
 
 /** Зона управления дугой: коридор между рюкзаком и магазином (как на UX-макете). */
-function getTdPrepDragMapRect(backpack, shopRect) {
-  const backdrop = document.querySelector("#td-loadout-sheet .td-loadout-sheet__backdrop");
-  const fieldCol = document.getElementById("prep-field-column");
-  const arena = document.getElementById("td-arena-mount");
-  const mapRect = backdrop?.getBoundingClientRect()
-    || fieldCol?.getBoundingClientRect()
-    || arena?.getBoundingClientRect();
-  if (!mapRect || mapRect.width < 80 || mapRect.height < 80) return null;
-  const shopLeft = shopRect?.left ?? mapRect.right;
-  return {
-    left: mapRect.left + 4,
-    top: mapRect.top + 4,
-    right: Math.max(mapRect.left + 12, shopLeft - 4),
-    bottom: Math.max(mapRect.top + 48, (backpack?.bottom ?? mapRect.bottom) - 4),
-  };
-}
-
 /** Зона управления дугой: коридор между рюкзаком и магазином (как на UX-макете). */
 function getPrepBenchCommerceRect() {
   if (typeof usesPrepBenchPopover === "function" && usesPrepBenchPopover()) {
@@ -5264,15 +5037,8 @@ function getPrepBenchCommerceRect() {
 function getPrepSidebarDragMapRect() {
   const backpack = getPrepBackpackClientRect();
   if (!backpack) return null;
-  const shop = (isTdLoadoutEditPhase()
-    ? document.getElementById("td-build-panel")
-    : document.getElementById("shop-panel"))?.getBoundingClientRect();
-  const bench = isTdLoadoutEditPhase() ? null : getPrepBenchCommerceRect();
-
-  if (isTdLoadoutEditPhase()) {
-    const tdMap = getTdPrepDragMapRect(backpack, shop);
-    if (tdMap) return tdMap;
-  }
+  const shop = document.getElementById("shop-panel")?.getBoundingClientRect();
+  const bench = getPrepBenchCommerceRect();
 
   const sidebarLeft = Math.min(
     shop?.left ?? Infinity,
@@ -5299,18 +5065,10 @@ function projectClientPointToPrepBackpack(clientX, clientY) {
   let oy;
   let gw;
   let gh;
-  if (isTdLoadoutEditPhase()) {
-    const g = getTdEditGridBounds();
-    ox = g.ox;
-    oy = g.oy;
-    gw = g.innerW;
-    gh = g.innerH;
-  } else {
-    ox = gridOrigin(team);
-    oy = layoutBackpackY();
-    gw = GRID_INNER_W;
-    gh = GRID_INNER_H;
-  }
+  ox = gridOrigin(team);
+  oy = layoutBackpackY();
+  gw = GRID_INNER_W;
+  gh = GRID_INNER_H;
   const inset = 0.5;
 
   if (coords.x >= ox + inset && coords.x <= ox + gw - inset
@@ -5340,18 +5098,10 @@ function applyPrepSidebarCorridorHover(projected, side, st) {
   let oy;
   let innerW;
   let innerH;
-  if (isTdLoadoutEditPhase()) {
-    const g = getTdEditGridBounds();
-    ox = g.ox;
-    oy = g.oy;
-    innerW = g.innerW;
-    innerH = g.innerH;
-  } else {
-    ox = gridOrigin(team);
-    oy = layoutBackpackY();
-    innerW = GRID_INNER_W;
-    innerH = GRID_INNER_H;
-  }
+  ox = gridOrigin(team);
+  oy = layoutBackpackY();
+  innerW = GRID_INNER_W;
+  innerH = GRID_INNER_H;
   const normX = (projected.x - ox) / innerW;
   const normY = (projected.y - oy) / innerH;
   const col = quantizePrepSidebarAxis(normX, gridW, prepSidebarStickyHover?.col);
@@ -5378,16 +5128,6 @@ function getPrepSidebarLinkTargetClient() {
   const row = hoverSlot?.row ?? hoverCell?.row ?? prepDropPreviewHover?.row;
   if (col == null || row == null) return null;
   const target = boardCellClientCenter(col, row);
-  if (useTdBuildSidebarArcDrag()) {
-    const backpack = getPrepBackpackClientRect();
-    if (!backpack) return null;
-    const pad = 28;
-    const inBackpack = target.x >= backpack.left - pad
-      && target.x <= backpack.right + pad
-      && target.y >= backpack.top - pad
-      && target.y <= backpack.bottom + pad;
-    if (!inBackpack) return null;
-  }
   return target;
 }
 
@@ -5815,7 +5555,7 @@ function hasPrepBoardDropTarget() {
 }
 
 function clearDragUiState() {
-  document.querySelectorAll(".shop-card.shop-dragging, .td-build-shop-card.shop-dragging").forEach((el) => el.classList.remove("shop-dragging"));
+  document.querySelectorAll(".shop-card.shop-dragging").forEach((el) => el.classList.remove("shop-dragging"));
   pendingShopDrag = null;
   pendingBenchDrag = null;
   pendingEnhancementDrag = null;
@@ -5854,11 +5594,8 @@ function canStartBattle() {
     if (isLobbyRunOver(lobbyState)) return false;
     if (!getLobbyOpponent(lobbyState)) return false;
   }
-  if (isLobby2pMode()) return false; else if (isTdMode()) {
-    if (tdRunLive) return false;
-    if (round > getTdMaxWaves()) return false;
-    return true;
-  } else if (round > RUN_BATTLES) {
+  if (isLobby2pMode()) return false;
+  if (round > RUN_BATTLES) {
     return false;
   }
   if (!isCampaignMode() && playerItems.length === 0) return false;
@@ -5869,20 +5606,16 @@ function canStartBattle() {
 function renderFightButton() {
   const btn = document.getElementById("btn-fight");
   if (!btn) return;
-  const visible = phase === "prep" && !gameOver && !isTdRunLive() && !isLobby2pMode();
+  const visible = phase === "prep" && !gameOver && !isLobby2pMode();
   btn.classList.toggle("hidden", !visible);
   if (visible) btn.disabled = !canStartBattle();
-  if (visible && isTdMode()) {
-    btn.textContent = "🐷 В оборону!";
-  } else if (visible && isCampaignMode()) {
+  if (visible && isCampaignMode()) {
     btn.textContent = `⚔️ ${typeof Campaign !== "undefined" ? Campaign.getFightLabel() : "К манекену"}`;
   } else if (visible) {
     btn.textContent = "⚔️ Бой";
   }
   if (visible && isVersusMode() && enemyItems.length === 0) {
     btn.title = "Игрок 2: положите предметы на стол";
-  } else if (visible && isTdMode()) {
-    btn.title = "Старт обороны · закупка продолжится во время волн";
   } else if (visible && isCampaignMode()) {
     const reason = typeof Campaign !== "undefined"
       ? Campaign.fightBlockReason(playerItems, playerContainers)
@@ -5912,22 +5645,6 @@ function recalcSynergies() {
 
 function skipBattle() {
   if (phase !== "battle") return;
-  if (isTdMode() && tdState) {
-    if (tdState.finished) {
-      endTdRun();
-      return;
-    }
-    try {
-      fastForwardTd(tdState);
-    } catch (err) {
-      console.error("skipBattle TD fastForward failed:", err);
-      tdState.finished = true;
-      tdState.winner = (tdState.towers || []).some((t) => t.alive && t.hero?.hp > 0) ? "player" : "enemy";
-    }
-    renderBattleStats();
-    if (tdState?.finished) endTdRun();
-    return;
-  }
   if (!battleState) {
     transitionToPhase("prep", () => {
       battleEndHandled = false;
@@ -6034,416 +5751,6 @@ function tickReplay(rawDt) {
   }
 }
 
-function getTdHudTower() {
-  if (!isTdRunLive() || !tdState || selectedTdSlotId == null) return null;
-  if (typeof tdGetTowerAtSlot !== "function") return null;
-  return tdGetTowerAtSlot(tdState, selectedTdSlotId);
-}
-
-function buildTdTowerHudProfile(baseProfile, tower) {
-  if (!tower) return baseProfile;
-  const cls = typeof getClassById === "function" ? getClassById(tower.classId) : null;
-  const hero = tower.hero;
-  const profile = { ...baseProfile };
-  profile.classId = tower.classId;
-  profile.className = cls?.name || tower.classId;
-  profile.classIcon = cls?.icon || "🛡️";
-  if (typeof getClassHeroPortraitSrc === "function") {
-    profile.classIconSrc = getClassHeroPortraitSrc(tower.classId);
-  }
-  if (hero?.maxHp) {
-    profile.hpCurrent = Math.ceil(hero.hp);
-    profile.hpMax = hero.maxHp;
-    profile.hpDisplay = `${Math.ceil(hero.hp)}/${hero.maxHp}`;
-    profile.liveBattle = true;
-  }
-  return profile;
-}
-
-function getTdHudMutationRuntime(tower) {
-  if (!tower) return null;
-  const isCommander = tower.slotId === 0 || tower.isCommander;
-  const prep = tdState?.prepMeta || {};
-  return {
-    classId: tower.classId,
-    companionId: isCommander ? prep.companionId : null,
-    formId: isCommander ? prep.mutationFormId : null,
-    mutationId: isCommander ? prep.mutationId : null,
-    items: tower.items || [],
-    enhancements: isCommander ? (prep.enhancements || []) : [],
-  };
-}
-
-function syncTdHeroHudFromSelection() {
-  if (!isTdRunLive()) return;
-  const tower = getTdHudTower();
-  if (tower?.classId && typeof TdArena !== "undefined" && typeof TdArena.loadPortrait === "function") {
-    TdArena.loadPortrait(tower.classId);
-  }
-  renderPlayerProfiles();
-}
-
-function renderTdBuildPanel(opts = {}) {
-  if (typeof TdBuildPanel === "undefined" || !isTdRunLive()) return;
-  const dragActive = !!(dragPayload || pendingShopDrag || pendingBenchDrag);
-  const st = getSideState("player");
-  TdBuildPanel.render({
-    tdState,
-    gold,
-    shop: st.shop || [],
-    selectedSlotId: selectedTdSlotId,
-    preserveShopDom: dragActive && !opts.force,
-  });
-}
-
-function selectTdSlot(slotId) {
-  if (slotId == null || !tdState) return;
-  selectedTdSlotId = slotId;
-  tdState.selectedSlotId = slotId;
-  // Тап по башне на карте — только HUD героя сверху; рюкзак открывается отдельно (🎒 или drag из магазина).
-  tdLoadoutSheetOpen = false;
-  syncTdLoadoutSheetDom();
-  syncTdLoadoutLayout();
-  syncTdTowerEditDom();
-  renderTdBuildPanel();
-  syncTdHeroHudFromSelection();
-  syncTdHintBar();
-  if (isTdLoadoutEditPhase()) recalcSynergies();
-  playPrepSfx("ui_click");
-}
-
-function isTdLoadoutEditPhase() {
-  return isTdRunLive() && selectedTdSlotId != null && typeof tdGetTowerAtSlot === "function"
-    && !!tdGetTowerAtSlot(tdState, selectedTdSlotId);
-}
-
-function getTdEditTower() {
-  return isTdLoadoutEditPhase() ? tdGetTowerAtSlot(tdState, selectedTdSlotId) : null;
-}
-
-function isLoadoutInteractionPhase() {
-  return phase === "prep" || isTdLoadoutEditPhase();
-}
-
-function getActiveGridCols() {
-  return isTdLoadoutEditPhase() ? TD_TOWER_COLS : GRID_COLS;
-}
-
-function getActiveGridRows() {
-  return isTdLoadoutEditPhase() ? TD_TOWER_ROWS : GRID_ROWS;
-}
-
-function getTdEditGridBounds() {
-  const cols = TD_TOWER_COLS;
-  const rows = TD_TOWER_ROWS;
-  const cell = GRID_CELL;
-  const gap = GRID_CELL_GAP;
-  const innerW = cols * cell + (cols - 1) * gap;
-  const innerH = rows * cell + (rows - 1) * gap;
-  let pad = Math.round(18 * readCssPx("--ui-scale", 1));
-  if (canvas && isTdLoadoutEditPhase() && canvas.width > innerW && canvas.height > innerH) {
-    pad = Math.round((canvas.width - innerW) / 2);
-  }
-  return { innerW, innerH, ox: pad, oy: pad };
-}
-
-function getLoadoutEditState(side = prepViewSide) {
-  if (isTdLoadoutEditPhase() && side === "player") {
-    const tower = getTdEditTower();
-    const base = getSideState("player");
-    return {
-      ...base,
-      containers: tower.containers,
-      items: tower.items,
-    };
-  }
-  return getSideState(side);
-}
-
-function syncTdTowerEditDom() {
-  const app = document.getElementById("app");
-  if (!app) return;
-  if (isTdLoadoutEditPhase()) app.dataset.tdTowerEdit = "true";
-  else app.removeAttribute("data-td-tower-edit");
-}
-
-let tdLoadoutSheetOpen = false;
-let tdHeroSheetOpen = false;
-let tdRunCompactBound = false;
-let tdLoadoutIslandHome = null;
-let tdFxAnchorHome = null;
-
-function mountTdLoadoutIsland() {
-  const island = document.getElementById("prep-field-island");
-  const body = document.getElementById("td-loadout-sheet-body");
-  if (!island || !body || body.contains(island)) return;
-  tdLoadoutIslandHome = {
-    parent: island.parentElement,
-    next: island.nextSibling,
-  };
-  body.appendChild(island);
-
-  const stack = island.querySelector(".canvas-stack");
-  const anchor = document.getElementById("canvas-fx-anchor");
-  if (stack && anchor && !stack.contains(anchor)) {
-    tdFxAnchorHome = {
-      parent: anchor.parentElement,
-      next: anchor.nextSibling,
-    };
-    stack.appendChild(anchor);
-  }
-  if (typeof window.syncFxCanvasGeometry === "function") {
-    requestAnimationFrame(() => window.syncFxCanvasGeometry());
-  }
-}
-
-function unmountTdLoadoutIsland() {
-  const island = document.getElementById("prep-field-island");
-  const home = tdLoadoutIslandHome;
-  if (!island || !home?.parent) return;
-  if (home.next) home.parent.insertBefore(island, home.next);
-  else home.parent.appendChild(island);
-  tdLoadoutIslandHome = null;
-
-  const anchor = document.getElementById("canvas-fx-anchor");
-  const fxHome = tdFxAnchorHome;
-  if (anchor && fxHome?.parent) {
-    if (fxHome.next) fxHome.parent.insertBefore(anchor, fxHome.next);
-    else fxHome.parent.appendChild(anchor);
-    tdFxAnchorHome = null;
-  }
-  if (typeof window.syncFxCanvasGeometry === "function") {
-    requestAnimationFrame(() => window.syncFxCanvasGeometry());
-  }
-}
-
-function syncTdLoadoutSheetChrome() {
-  const title = document.getElementById("td-loadout-sheet-title");
-  const hint = document.getElementById("td-loadout-sheet-hint");
-  if (!title && !hint) return;
-  if (!isTdLoadoutEditPhase()) {
-    if (title) title.textContent = "Рюкзак башни";
-    if (hint) hint.textContent = "Поле 6×6 · предметы кладутся только в клетки сумки";
-    return;
-  }
-  const tower = getTdEditTower();
-  if (!tower) return;
-  const slotCount = buildSlotSet(tower.containers).size;
-  const cols = typeof TD_TOWER_COLS === "number" ? TD_TOWER_COLS : 6;
-  const rows = typeof TD_TOWER_ROWS === "number" ? TD_TOWER_ROWS : 6;
-  const boardCells = cols * rows;
-  if (title) title.textContent = `Рюкзак башни · ${slotCount} слотов`;
-  if (hint) {
-    hint.textContent = slotCount < boardCells
-      ? `Поле ${cols}×${rows} · кладите предметы в зелёные клетки · купите 🎒 в магазине, чтобы расширить`
-      : `Поле ${cols}×${rows} · перетащите предмет из магазина дугой на зелёные клетки`;
-  }
-}
-
-function syncTdLoadoutSheetDom() {
-  const app = document.getElementById("app");
-  const sheet = document.getElementById("td-loadout-sheet");
-  const fab = document.getElementById("btn-td-loadout");
-  const canEdit = isTdLoadoutEditPhase();
-  const open = canEdit && tdLoadoutSheetOpen;
-  if (app) {
-    if (open) app.dataset.tdLoadoutOpen = "true";
-    else app.removeAttribute("data-td-loadout-open");
-  }
-  if (open) {
-    sheet?.classList.remove("hidden");
-    sheet?.setAttribute("aria-hidden", "false");
-    mountTdLoadoutIsland();
-  } else {
-    sheet?.classList.add("hidden");
-    sheet?.setAttribute("aria-hidden", "true");
-    unmountTdLoadoutIsland();
-  }
-  if (fab) {
-    const showFab = canEdit && !open;
-    fab.hidden = !showFab;
-    fab.classList.toggle("hidden", !showFab);
-  }
-  syncTdLoadoutSheetChrome();
-}
-
-function openTdLoadoutSheet() {
-  if (!isTdLoadoutEditPhase()) return;
-  tdLoadoutSheetOpen = true;
-  syncTdLoadoutSheetDom();
-  syncTdLoadoutLayout();
-  requestAnimationFrame(() => {
-    syncTdLoadoutLayout();
-    requestAnimationFrame(() => syncTdLoadoutLayout());
-  });
-  syncTdHintBar();
-}
-
-function closeTdLoadoutSheet() {
-  tdLoadoutSheetOpen = false;
-  syncTdLoadoutSheetDom();
-  syncTdLoadoutLayout();
-  syncTdHintBar();
-}
-
-function openTdHeroSheet() {
-  if (!isTdRunLive()) return;
-  tdHeroSheetOpen = true;
-  const sheet = document.getElementById("td-hero-sheet");
-  const btn = document.getElementById("btn-td-hero-sheet");
-  sheet?.classList.remove("hidden");
-  sheet?.setAttribute("aria-hidden", "false");
-  btn?.setAttribute("aria-expanded", "true");
-  syncTdHeroSheetBody();
-}
-
-function closeTdHeroSheet() {
-  tdHeroSheetOpen = false;
-  const sheet = document.getElementById("td-hero-sheet");
-  const btn = document.getElementById("btn-td-hero-sheet");
-  sheet?.classList.add("hidden");
-  sheet?.setAttribute("aria-hidden", "true");
-  btn?.setAttribute("aria-expanded", "false");
-}
-
-function toggleTdHeroSheet() {
-  if (tdHeroSheetOpen) closeTdHeroSheet();
-  else openTdHeroSheet();
-}
-
-function syncTdHeroSheetBody() {
-  const body = document.getElementById("td-hero-sheet-body");
-  const hud = document.getElementById("prep-stats-hud");
-  if (!body || !hud || !isTdRunLive()) return;
-  const mutation = hud.querySelector(".mutation-progress");
-  const enh = hud.querySelector(".prep-enhancement-strip");
-  const mods = hud.querySelector(".prep-modifier-strip");
-  body.innerHTML = "";
-  [mutation, enh, mods].forEach((el) => {
-    if (el) body.appendChild(el.cloneNode(true));
-  });
-  bindPrepEnhancementStrip("player");
-}
-
-function syncTdRunCompactChrome() {
-  const heroBtn = document.getElementById("btn-td-hero-sheet");
-  heroBtn?.classList.toggle("hidden", !isTdRunLive());
-  if (!isTdRunLive()) {
-    tdLoadoutSheetOpen = false;
-    closeTdHeroSheet();
-  }
-  syncTdLoadoutSheetDom();
-}
-
-const TD_HINTS_DISABLED_KEY = "bb-td-hints-disabled";
-const TD_HINT_DISMISSED_KEY = "bb-td-hints-dismissed";
-const TD_PATH_HINT_LABELS = ["Север", "Восток", "Юг", "Запад"];
-let tdHintsPrefsLoaded = false;
-let tdHintsDisabled = false;
-let tdHintsDismissed = new Set();
-let tdHintBarBound = false;
-
-function loadTdHintPrefs() {
-  if (tdHintsPrefsLoaded) return;
-  tdHintsPrefsLoaded = true;
-  try {
-    tdHintsDisabled = localStorage.getItem(TD_HINTS_DISABLED_KEY) === "1";
-    const raw = localStorage.getItem(TD_HINT_DISMISSED_KEY);
-    tdHintsDismissed = new Set(raw ? JSON.parse(raw) : []);
-  } catch {
-    tdHintsDisabled = false;
-    tdHintsDismissed = new Set();
-  }
-}
-
-function persistTdHintDismissed() {
-  try {
-    localStorage.setItem(TD_HINT_DISMISSED_KEY, JSON.stringify([...tdHintsDismissed]));
-  } catch { /* ignore quota */ }
-}
-
-function disableTdHintsGlobally() {
-  tdHintsDisabled = true;
-  try {
-    localStorage.setItem(TD_HINTS_DISABLED_KEY, "1");
-  } catch { /* ignore quota */ }
-}
-
-function getTdWaveDirectionLabel() {
-  if (!tdState) return "";
-  const queue = tdState.spawnQueue;
-  if (Array.isArray(queue) && queue.length) {
-    const pathId = queue.find((entry) => entry && !entry.spawned)?.pathId ?? queue[0]?.pathId;
-    if (pathId != null) return TD_PATH_HINT_LABELS[pathId] || "";
-  }
-  const slots = typeof TD_MAP_SLOTS !== "undefined" ? TD_MAP_SLOTS : [];
-  const slot = slots.find((s) => s.id === tdState.selectedSlotId);
-  if (slot?.label) return slot.label;
-  return "";
-}
-
-function resolveTdContextHint() {
-  if (!isTdRunLive() || !tdState || tdHintsDisabled) return null;
-
-  if (tdLoadoutSheetOpen) {
-    return { id: "loadout-drag", text: "Перетащите предмет из магазина в зелёные клетки рюкзака" };
-  }
-  if (typeof pendingShopDrag !== "undefined" && pendingShopDrag) {
-    return { id: "loadout-drag", text: "Отпустите предмет на зелёной клетке рюкзака башни" };
-  }
-
-  const towers = (tdState.towers || []).filter((t) => t.alive);
-  const wavePhase = tdState.wavePhase;
-  const wave = tdState.wave;
-
-  if (wavePhase === "spawning" || wavePhase === "fighting") {
-    const dir = getTdWaveDirectionLabel();
-    const dirText = dir ? ` с ${dir.toLowerCase()}` : "";
-    return {
-      id: `wave-active-${wave}-${dir || "any"}`,
-      text: dir
-        ? `Волна ${wave} приближается${dirText} — держите оборону`
-        : `Волна ${wave} — свиньи идут по дорожкам, защищайте базу`,
-    };
-  }
-
-  if (wavePhase === "break") {
-    const emptySlot = (typeof TD_MAP_SLOTS !== "undefined" ? TD_MAP_SLOTS : [])
-      .find((slot) => slot.pathId != null && !towers.some((t) => t.slotId === slot.id && t.alive));
-    if (towers.length === 0 || emptySlot) {
-      return {
-        id: "build-tower",
-        text: "Нажмите на путь (Север, Юг, Запад или Восток), чтобы построить башню",
-      };
-    }
-    if (isTdLoadoutEditPhase()) {
-      return {
-        id: "shop-loadout",
-        text: "Купите предмет в магазине справа и перетащите в рюкзак башни",
-      };
-    }
-    if (selectedTdSlotId != null && !isTdLoadoutEditPhase()) {
-      return {
-        id: "recruit-tower",
-        text: "Выберите героя в панели справа, чтобы нанять башню на слот",
-      };
-    }
-    return {
-      id: "between-waves",
-      text: "Пауза между волнами — улучшайте башни через магазин и рюкзак 🎒",
-    };
-  }
-
-  if (wave === 1 && towers.length === 0) {
-    return {
-      id: "build-tower",
-      text: "Нажмите на путь (Север, Юг, Запад или Восток), чтобы построить башню",
-    };
-  }
-
-  return null;
-}
-
 function syncCampaignChrome() {
   const bar = document.getElementById("campaign-hint-bar");
   const progressEl = document.getElementById("campaign-hint-progress");
@@ -6470,440 +5777,23 @@ function syncCampaignChrome() {
   if (typeof window.syncPrepSellFabVisibility === "function") window.syncPrepSellFabVisibility();
 }
 
-function syncTdHintBar() {
-  loadTdHintPrefs();
-  const bar = document.getElementById("td-hint-bar");
-  const textEl = document.getElementById("td-hint-text");
-  if (!bar || !textEl) return;
-
-  if (!isTdMode() || !isTdRunLive() || tdHintsDisabled) {
-    bar.classList.add("hidden");
-    bar.removeAttribute("data-hint-id");
-    textEl.textContent = "";
-    return;
-  }
-
-  const hint = resolveTdContextHint();
-  if (!hint || tdHintsDismissed.has(hint.id)) {
-    bar.classList.add("hidden");
-    bar.removeAttribute("data-hint-id");
-    textEl.textContent = "";
-    return;
-  }
-
-  textEl.textContent = hint.text;
-  bar.dataset.hintId = hint.id;
-  bar.classList.remove("hidden");
+function isLoadoutInteractionPhase() {
+  return phase === "prep";
 }
 
-function bindTdHintBar() {
-  if (tdHintBarBound) return;
-  tdHintBarBound = true;
-  document.getElementById("td-hint-dismiss")?.addEventListener("click", (e) => {
-    const bar = document.getElementById("td-hint-bar");
-    const hintId = bar?.dataset.hintId;
-    if (e.shiftKey) {
-      disableTdHintsGlobally();
-    } else if (hintId) {
-      tdHintsDismissed.add(hintId);
-      persistTdHintDismissed();
-    }
-    syncTdHintBar();
-  });
+function getActiveGridCols() {
+  return GRID_COLS;
 }
 
-function bindTdRunCompactUi() {
-  if (tdRunCompactBound) return;
-  tdRunCompactBound = true;
-  bindTdHintBar();
-  document.getElementById("btn-td-loadout")?.addEventListener("click", openTdLoadoutSheet);
-  document.getElementById("td-loadout-backdrop")?.addEventListener("click", closeTdLoadoutSheet);
-  document.getElementById("td-loadout-sheet-close")?.addEventListener("click", closeTdLoadoutSheet);
-  document.getElementById("btn-td-hero-sheet")?.addEventListener("click", (e) => {
-    e.stopPropagation();
-    toggleTdHeroSheet();
-  });
-  document.getElementById("td-hero-sheet-backdrop")?.addEventListener("click", closeTdHeroSheet);
-  document.getElementById("td-hero-sheet-close")?.addEventListener("click", closeTdHeroSheet);
+function getActiveGridRows() {
+  return GRID_ROWS;
 }
 
-/** Доступная зона под сетку 6×6 (sheet / карта слева от магазина). */
-function getTdLoadoutLayoutRect() {
-  const body = document.getElementById("td-loadout-sheet-body");
-  const panel = document.querySelector("#td-loadout-sheet .td-loadout-sheet__panel");
-  const backdrop = document.querySelector("#td-loadout-sheet .td-loadout-sheet__backdrop");
-  const arena = document.getElementById("td-arena-mount");
-  const fieldCol = document.getElementById("prep-field-column");
-
-  const pick = (el) => {
-    const r = el?.getBoundingClientRect();
-    if (!r || r.width < 120 || r.height < 120) return null;
-    return { width: r.width, height: r.height };
-  };
-
-  return pick(body)
-    || pick(panel)
-    || pick(arena)
-    || pick(fieldCol)
-    || (() => {
-      const r = backdrop?.getBoundingClientRect();
-      if (!r || r.width < 120 || r.height < 120) return null;
-      const headH = panel?.querySelector(".td-run-sheet__head")?.getBoundingClientRect().height || 0;
-      const hintH = document.getElementById("td-loadout-sheet-hint")?.getBoundingClientRect().height || 0;
-      const chrome = headH + hintH + 24;
-      return { width: r.width, height: Math.max(200, r.height - chrome) };
-    })();
-}
-
-/** Подогнать 6×6 рюкзак башни под док (клетки крупно заполняют sheet / карту). */
-function syncTdLoadoutLayout() {
-  syncTdTowerEditDom();
-  const root = document.documentElement;
-  if (!isTdLoadoutEditPhase()) {
-    root.style.removeProperty("--td-tower-cell-size");
-    if (isTdMode() && isBattleUiPhase() && canvas) applyPhaseCanvasLayout();
-    return;
-  }
-
-  const island = document.getElementById("prep-field-island");
-  const sheetOpen = document.getElementById("app")?.dataset.tdLoadoutOpen === "true";
-  const uiScale = readCssPx("--ui-scale", 1);
-  const cols = TD_TOWER_COLS;
-  const rows = TD_TOWER_ROWS;
-  const gap = Math.max(2, Math.round(2 * uiScale));
-  const touchLike = document.documentElement.dataset.touch === "true"
-    || document.documentElement.dataset.uiTier === "tablet"
-    || (typeof isTouchUi === "function" && isTouchUi());
-  const minCell = Math.round(readCssPx("--td-loadout-cell-min", touchLike ? 50 : 52) * Math.max(1, uiScale * (touchLike ? 1 : 0.96)));
-  const maxCellCss = Math.round(readCssPx("--td-loadout-cell-max", touchLike ? 88 : 80) * uiScale);
-  const maxCellSheet = Math.round((touchLike ? 108 : 96) * uiScale);
-  const maxCell = sheetOpen ? maxCellSheet : maxCellCss;
-  const framePad = Math.round(18 * uiScale);
-
-  let rect = sheetOpen ? getTdLoadoutLayoutRect() : island?.getBoundingClientRect();
-  if (!rect || rect.width < 120 || rect.height < 120) {
-    rect = getTdLoadoutLayoutRect();
-  }
-  if (!rect) {
-    const panel = document.querySelector("#td-loadout-sheet .td-loadout-sheet__panel");
-    const panelRect = panel?.getBoundingClientRect();
-    if (panelRect && panelRect.width >= 48 && panelRect.height >= 48) {
-      rect = panelRect;
-    } else {
-      const dock = island?.closest(".layer-world");
-      const dockRect = dock?.getBoundingClientRect();
-      if (dockRect && dockRect.width >= 48 && dockRect.height >= 48) {
-        rect = dockRect;
-      } else {
-        const fieldCol = document.getElementById("prep-field-column");
-        const colRect = fieldCol?.getBoundingClientRect();
-        const loadoutShare = readCssPx("--td-col-loadout-share", 50) / 100;
-        rect = {
-          width: colRect?.width ?? window.innerWidth * 0.5,
-          height: (colRect?.height ?? window.innerHeight * 0.5) * loadoutShare,
-        };
-      }
-    }
-  }
-
-  const islandPad = Math.round((touchLike ? 16 : 10) * uiScale);
-  const availW = Math.max(200, rect.width - islandPad * 2);
-  const availH = Math.max(200, rect.height - islandPad * 2);
-  const byW = Math.floor((availW - (cols - 1) * gap) / cols);
-  const byH = Math.floor((availH - (rows - 1) * gap) / rows);
-  const fillCell = Math.min(byW, byH);
-  const cell = sheetOpen
-    ? Math.min(maxCell, Math.max(minCell, fillCell))
-    : Math.min(maxCell, Math.max(minCell, fillCell));
-
-  root.style.setProperty("--cell-size", `${cell}px`);
-  root.style.setProperty("--cell-gap", `${gap}px`);
-  root.style.setProperty("--td-tower-cell-size", `${cell}px`);
-
-  GRID_CELL = cell;
-  GRID_CELL_GAP = gap;
-  GRID_STRIDE = cell + gap;
-  CELL = cell;
-  layoutCell = cell;
-
-  const innerW = cols * cell + (cols - 1) * gap;
-  const innerH = rows * cell + (rows - 1) * gap;
-  if (canvas) {
-    canvas.width = innerW + framePad * 2;
-    canvas.height = innerH + framePad * 2;
-    layoutCanvasH = canvas.height;
-    if (fxCanvas) {
-      fxCanvas.width = canvas.width;
-      fxCanvas.height = canvas.height;
-    }
-  }
-
-  requestAnimationFrame(() => {
-    window.fitCanvasDisplaySize?.();
-    draw();
-  });
-}
-
-window.syncTdLoadoutLayout = syncTdLoadoutLayout;
-window.isLoadoutInteractionPhase = isLoadoutInteractionPhase;
-
-function applyCraftingForTower(tower) {
-  if (!tower) return false;
-  const craftCtx = typeof getCraftContextFromGame === "function" ? getCraftContextFromGame("player") : {};
-  const result = tryResolveCrafting(tower.containers, tower.items, craftCtx);
-  if (!result.crafted.length) return false;
-  tower.items = result.items;
-  playPrepSfx("prep_craft");
-  result.crafted.forEach((recipe) => {
-    const out = ITEM_CATALOG[recipe.output];
-    if (out) {
-      log(`⚗️ Крафт: ${out.icon} ${out.name}`);
-      if (typeof CombatLog !== "undefined") CombatLog.notifyCraft(out);
-    }
-  });
-  return true;
-}
-
-function finalizeTdTowerLoadoutEdit() {
-  const tower = getTdEditTower();
-  if (!tower) return;
-  applyCraftingForTower(tower);
-  if (typeof tdSyncTowerCombat === "function") {
-    tdSyncTowerCombat(tower, tdState?.prepMeta || {});
-  }
-  syncTdLoadoutSheetChrome();
-  renderTdBuildPanel({ force: true });
-}
-
-function beginTdBuildShopDrag(index, e) {
-  if (!isTdLoadoutEditPhase()) {
-    log("👆 Сначала выберите башню на карте");
-    playPrepSfx("ui_error");
-    return;
-  }
-  if (!tdLoadoutSheetOpen) openTdLoadoutSheet();
-  beginPendingShopDrag(index, e, "player");
-}
-
-function bindTdCanvasEvents() {
-  if (tdCanvasBound) return;
-  if (typeof TdArena?.bindGestures !== "function") return;
-  tdCanvasBound = true;
-
-  TdArena.bindGestures({
-    onTap: (clientX, clientY) => {
-      if (!isTdRunLive() || typeof TdArena?.hitTestSlot !== "function") return;
-      const slotId = TdArena.hitTestSlot(clientX, clientY, tdState);
-      if (slotId == null) return;
-      selectTdSlot(slotId);
-    },
-  });
-}
-
-function handleTdRecruit(classId) {
-  if (!tdState || selectedTdSlotId == null) return;
-  const check = tdCanRecruitAtSlot(tdState, selectedTdSlotId, classId, gold);
-  if (!check.ok) {
-    log(check.reason || "Не удалось нанять");
-    playPrepSfx("ui_error");
-    return;
-  }
-  const result = tdRecruitTower(tdState, selectedTdSlotId, classId, tdState.prepMeta || {});
-  if (!result.ok) {
-    log(result.reason || "Не удалось нанять");
-    playPrepSfx("ui_error");
-    return;
-  }
-  gold -= result.cost;
-  goldSpentTotal += result.cost;
-  playPrepSfx("buy");
-  tdLoadoutSheetOpen = true;
-  syncTdLoadoutSheetDom();
-  renderTdBuildPanel();
-  syncTdLoadoutLayout();
-  updateUI();
-  const slotLabel = TD_MAP_SLOTS.find((s) => s.id === selectedTdSlotId)?.label || "слот";
-  const clsName = typeof getClassById === "function" ? getClassById(classId)?.name : classId;
-  log(`🏰 ${clsName} на ${slotLabel} (−${result.cost}💰)`);
-}
-
-function handleTdBuyUpgrade(shopIndex) {
-  beginTdBuildShopDrag(shopIndex, { clientX: 0, clientY: 0, preventDefault() {} });
-}
-
-function handleTdEquipFromBench(benchIdx) {
-  if (!tdState || selectedTdSlotId == null) return;
-  const item = bench[benchIdx];
-  if (!item) return;
-  const benchItem = { ...item };
-  const result = tdEquipItemOnTower(tdState, selectedTdSlotId, benchItem, tdState.prepMeta || {});
-  if (!result.ok) {
-    log(result.reason || "Не удалось экипировать");
-    playPrepSfx("ui_error");
-    return;
-  }
-  bench.splice(benchIdx, 1);
-  playPrepSfx("prep_place");
-  renderBench();
-  renderTdBuildPanel();
-  const def = ITEM_CATALOG[item.itemId];
-  log(`📦 ${def?.name || item.itemId} → башня`);
-}
-
-function awardTdWaveGold(won) {
-  let goldReward = won ? ROUND_GOLD + WIN_GOLD : ROUND_GOLD;
-  if (typeof applyRoundGoldWithShopMeta === "function") {
-    goldReward = applyRoundGoldWithShopMeta("player", goldReward, [], (msg) => log(msg));
-  }
-  if (typeof getTdDifficultyGoldMult === "function") {
-    goldReward = Math.round(goldReward * getTdDifficultyGoldMult(tdRunDifficultyId));
-  }
-  gold += goldReward;
-  goldEarnedTotal += goldReward;
-  if (goldReward > 0) playPrepSfx("gold");
-  return goldReward;
-}
-
-function flushTdPendingKillGold() {
-  if (!tdState?.pendingGold) return 0;
-  let amount = tdState.pendingGold;
-  tdState.pendingGold = 0;
-  if (typeof getTdDifficultyGoldMult === "function") {
-    amount = Math.round(amount * getTdDifficultyGoldMult(tdRunDifficultyId));
-  }
-  if (amount <= 0) return 0;
-  gold += amount;
-  goldEarnedTotal += amount;
-  renderTdBuildPanel();
-  return amount;
-}
-
-function onTdWaveClearedInRun() {
-  if (!tdState || !tdState.waveJustCleared) return;
-  tdState.waveJustCleared = false;
-  const clearedWave = tdState.wave - 1;
-  const killGold = flushTdPendingKillGold();
-  const goldReward = awardTdWaveGold(true);
-  round = tdState.wave;
-  runResults[clearedWave - 1] = "win";
-  recentBattleResults.push("win");
-  if (recentBattleResults.length > 5) recentBattleResults.shift();
-  log(`✅ Волна ${clearedWave} отбита! +${goldReward}💰${killGold > 0 ? ` (+${killGold} за свиней)` : ""}`);
-  if (tdState.waveBannerText) log(`${tdState.waveBannerText} Свиней: ${tdState.totalPigs || "?"}`);
-  resetShopForNewRound();
-  ensureShopReadyForSide("player");
-  renderShop();
-  renderBench();
-  renderTdBuildPanel();
-  setPhaseLabel(`🐷 Волна ${tdState.wave}/${getTdMaxWaves()}`, false);
-  updateUI();
-  renderRunStats();
-}
-
-function transferPrepLoadoutToTdCommander(state) {
-  if (!state || typeof tdGetTowerAtSlot !== "function" || typeof tdAutoPlaceItemOnTower !== "function") return;
-  const commander = tdGetTowerAtSlot(state, 0);
-  if (!commander) return;
-  const prepItems = flattenContainersForBattle(playerContainers, playerItems).map(clonePrepBattleItem);
-  for (const item of prepItems) {
-    const placed = tdAutoPlaceItemOnTower(commander, item.itemId, item.uid);
-    if (placed) {
-      const idx = playerItems.findIndex((p) => p.uid === item.uid);
-      if (idx >= 0) playerItems.splice(idx, 1);
-    } else {
-      bench.push(item);
-    }
-  }
-  if (typeof tdSyncTowerCombat === "function") {
-    tdSyncTowerCombat(commander, state.prepMeta || {});
-  }
-  renderBench();
-}
-
-function finishTdRunStart() {
-  transitionToPhase("battle", () => {
-    tooltipItem = null;
-    resetBattlePause();
-    playerPendingShopBuffs = 0;
-    setBattleSpeed(savedBattleSpeed);
-    updateBattleControlsUI();
-    ensureShopReadyForSide("player");
-    renderShop();
-    renderBench();
-    renderTdBuildPanel();
-    syncTdBattleChrome();
-    setPhaseLabel(`🐷 Волна 1/${getTdMaxWaves()}`, true);
-    log(`🐷 Оборона! Тап по слоту — постройка. Карту водите пальцем, щипок — зум, двойной тап — весь обзор.`);
-    if (tdState?.waveBannerText) {
-      log(`${tdState.waveBannerText} Свиней: ${tdState.totalPigs || "?"}`);
-    }
-    playPrepSfx("battle_start");
-    renderFightButton();
-    updateUI();
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        syncTdBattleChrome();
-        if (typeof TdArena !== "undefined" && typeof TdArena.resize === "function") TdArena.resize();
-        draw();
-        fitCanvasDisplaySize?.();
-      });
-    });
-  });
-}
-
-function startTdRun() {
-  if (!isTdMode() || gameOver) return;
-  if (typeof ScreenTransitions !== "undefined" && ScreenTransitions.isScreenTransitioning()) {
-    requestAnimationFrame(startTdRun);
-    return;
-  }
-  if (tdRunLive && phase === "prep" && tdState) {
-    finishTdRunStart();
-    return;
-  }
-  if (tdRunLive) return;
-
-  selectedTdSlotId = 0;
-  battleEndHandled = false;
-  tdState = createTdRunState(playerClass, {
-    difficultyId: tdRunDifficultyId,
-    runSeed: (Date.now() % 99999) + 1,
-    player: {
-      pendingShopBuffs: playerPendingShopBuffs,
-      companionId: playerCompanionId,
-      mutationFormId: playerMutationFormId,
-      mutationId: playerMutationId,
-      enhancements: playerEnhancements,
-      difficultyId: tdRunDifficultyId,
-    },
-  });
-  tdState.selectedSlotId = selectedTdSlotId;
-  transferPrepLoadoutToTdCommander(tdState);
-  battleState = null;
-  tdRunLive = true;
-
-  if (typeof TdArena !== "undefined") {
-    TdArena.init();
-    if (playerClass) TdArena.loadPortrait(playerClass);
-    bindTdCanvasEvents();
-  }
-  if (typeof TdBuildPanel !== "undefined") {
-    TdBuildPanel.init({
-      onRecruit: handleTdRecruit,
-      onSelectSlot: selectTdSlot,
-      onShopDragStart: beginTdBuildShopDrag,
-    });
-  }
-
-  syncTdRunLiveDom();
-  finishTdRunStart();
+function getLoadoutEditState(side = prepViewSide) {
+  return getSideState(side);
 }
 
 function startBattle() {
-  if (isTdMode() && phase === "prep" && !tdRunLive) {
-    startTdRun();
-    return;
-  }
   if (!canStartBattle()) {
     playPrepSfx("ui_error");
     if (phase === "prep" && isCampaignMode() && typeof Campaign !== "undefined") {
@@ -6939,39 +5829,6 @@ function startBattle() {
   applyCraftingForSide("player");
   if (isVersusMode()) applyCraftingForSide("enemy");
 
-  if (isTdMode()) {
-    applySynergyModifiersToContainers(playerContainers, playerItems);
-    lastBattlePrepSnapshot = {
-      playerItems: flattenContainersForBattle(playerContainers, playerItems).map(clonePrepBattleItem),
-      enemyItems: [],
-      playerClass,
-      enemyClass: playerClass,
-    };
-    if (typeof TdArena !== "undefined") {
-      if (typeof TdArena.init === "function") TdArena.init();
-      if (typeof TdArena.loadPortrait === "function") TdArena.loadPortrait(playerClass);
-    }
-    tdState = createTdState(
-      lastBattlePrepSnapshot.playerItems,
-      playerClass,
-      round,
-      {
-        difficultyId: tdRunDifficultyId,
-        player: {
-          pendingShopBuffs: playerPendingShopBuffs,
-          companionId: playerCompanionId,
-          mutationFormId: playerMutationFormId,
-          mutationId: playerMutationId,
-          enhancements: playerEnhancements,
-        },
-      },
-    );
-    if (tdHeroHp !== null && tdState.hero) {
-      tdState.hero.hp = Math.min(tdHeroHp, tdState.hero.maxHp);
-    }
-    battleState = null;
-  }
-
   transitionToPhase("battle", () => {
     try {
       releasePreviousBattleReplayFrames();
@@ -6980,34 +5837,6 @@ function startBattle() {
       lastRoundStats = null;
       resetBattlePause();
       applySynergyModifiersToContainers(playerContainers, playerItems);
-
-      if (isTdMode()) {
-        if (!tdState) throw new Error("tdState missing");
-        if (typeof setBattleEnemyTeamLabel === "function") {
-          setBattleEnemyTeamLabel("🐷 Свиньи");
-        }
-        if (typeof resetStackOrbitVfx === "function") resetStackOrbitVfx();
-        battleStartTime = Date.now();
-        tickBattlePresentation._at = { emotion: 0, arena: 0, orbit: 0 };
-        if (typeof resetEmotionEngine === "function") resetEmotionEngine();
-        if (typeof resetBattleAuraFrame === "function") resetBattleAuraFrame();
-        if (typeof hideBattleCountdownOverlay === "function") hideBattleCountdownOverlay();
-        playerPendingShopBuffs = 0;
-        setBattleSpeed(savedBattleSpeed);
-        updateBattleControlsUI();
-        setPhaseLabel(`Волна ${round}!`, true);
-        const diffTag = typeof tdFormatDifficultyLabel === "function"
-          ? tdFormatDifficultyLabel(tdRunDifficultyId)
-          : "";
-        log(`🐷 ${diffTag ? `${diffTag} · ` : ""}Волна ${round}/${getTdMaxWaves()}: свиньи идут!`);
-        playPrepSfx("battle_start");
-        renderBattleStats();
-        renderFightButton();
-        renderLobbyChrome();
-        syncTdBattleChrome();
-        return;
-      }
-
       applySynergyModifiersToContainers(enemyContainers, enemyItems);
       lastBattlePrepSnapshot = {
         playerItems: flattenContainersForBattle(playerContainers, playerItems).map(clonePrepBattleItem),
@@ -7120,110 +5949,6 @@ function startBattle() {
       });
     }
   });
-}
-
-function endTdRun() {
-  endTdWave();
-}
-
-function endTdWave() {
-  if (!tdState || battleEndHandled) return;
-  battleEndHandled = true;
-
-  const finishedState = tdState;
-  const battleWinner = finishedState.winner;
-  tdState = null;
-  tdRunLive = false;
-  syncTdRunLiveDom();
-  if (typeof TdBuildPanel !== "undefined") TdBuildPanel.setVisible(false);
-  clearBattleFloatLayer();
-  if (typeof resetStackOrbitVfx === "function") resetStackOrbitVfx();
-  if (typeof closeBattleHudPopups === "function") closeBattleHudPopups();
-  if (typeof closeBattleInventoryPopover === "function") closeBattleInventoryPopover();
-  if (typeof hideBattleCountdownOverlay === "function") hideBattleCountdownOverlay();
-  if (typeof resetBattleAuraFrame === "function") resetBattleAuraFrame();
-  if (typeof ArenaEquipment !== "undefined" && typeof ArenaEquipment.clearAll === "function") {
-    ArenaEquipment.clearAll();
-  }
-  if (typeof ThoughtArena !== "undefined" && typeof ThoughtArena.clearAll === "function") {
-    ThoughtArena.clearAll();
-  }
-
-  let battleSummary;
-  try {
-    lastRoundStats = finishedState.itemDamageStats;
-    accumulateRunItemStats(runItemStats, finishedState.itemDamageStats);
-    let goldReward = 0;
-
-    let piggyGold = 0;
-    (finishedState.towers || []).forEach((tower) => {
-      piggyGold += getLoadoutGoldPerRoundBonus(tower.items || []);
-    });
-    if (piggyGold <= 0) piggyGold = getLoadoutGoldPerRoundBonus(playerItems);
-    if (piggyGold > 0) {
-      gold += piggyGold;
-      goldEarnedTotal += piggyGold;
-      log(`Копилки и сокровища: +${piggyGold}💰`);
-    }
-
-    if (battleWinner === "player") {
-      goldReward = ROUND_GOLD + WIN_GOLD;
-    } else {
-      goldReward = ROUND_GOLD;
-    }
-    if (typeof applyRoundGoldWithShopMeta === "function") {
-      goldReward = applyRoundGoldWithShopMeta("player", goldReward, [], (msg) => log(msg));
-    }
-    if (typeof getTdDifficultyGoldMult === "function") {
-      goldReward = Math.round(goldReward * getTdDifficultyGoldMult(tdRunDifficultyId));
-    }
-    gold += goldReward;
-    goldEarnedTotal += goldReward;
-
-    const allWavesCleared = finishedState.runVictory || (battleWinner === "player" && finishedState.wave >= getTdMaxWaves());
-    if (battleWinner === "player") {
-      recentBattleResults.push("win");
-      log(allWavesCleared
-        ? `🏆 Карта пройдена! ${getTdMaxWaves()} волн! +${goldReward}💰`
-        : `Волна ${finishedState.wave} отбита! +${goldReward}💰`);
-      playPrepSfx("battle_victory");
-    } else {
-      recentBattleResults.push("loss");
-      log(`Оборона палала на волне ${finishedState.wave}. +${goldReward}💰`);
-      playPrepSfx("battle_defeat");
-    }
-    if (goldReward > 0) playPrepSfx("gold");
-
-    battleSummary = buildTdWaveSummary(finishedState, {
-      roundNum: finishedState.wave,
-      goldReward,
-      difficultyId: tdRunDifficultyId,
-    });
-    if (recentBattleResults.length > 5) recentBattleResults.shift();
-
-    runResults[finishedState.wave - 1] = battleWinner === "player" ? "win" : "loss";
-    round = finishedState.wave;
-    syncAllMutationMilestones();
-    setBattleControlsVisible(false);
-    resetBattlePause();
-  } catch (err) {
-    console.error("endTdWave failed:", err);
-    battleSummary = buildTdWaveSummary(finishedState, {
-      roundNum: finishedState.wave,
-      goldReward: 0,
-      difficultyId: tdRunDifficultyId,
-    });
-  }
-
-  requestAnimationFrame(() => {
-    syncTdBattleChrome();
-    showBattleResultPopup(battleSummary, finishedState.log || []);
-  });
-
-  pendingGameOver = true;
-  gameOver = true;
-  updateUI();
-  renderRunStats();
 }
 
 function endBattle() {
@@ -7550,37 +6275,9 @@ function applyPostBattlePrep(battleWinner) {
     return;
   }
 
-  if (round > RUN_BATTLES && !isTdMode()) {
+  if (round > RUN_BATTLES) {
     pendingGameOver = true;
     updateUI();
-    return;
-  }
-
-  if (isTdMode()) {
-    if (round > getTdMaxWaves()) {
-      pendingGameOver = true;
-      updateUI();
-      return;
-    }
-    const playerBag = grantBagReward(playerContainers, round, GRID_COLS, GRID_ROWS, playerItems);
-    if (playerBag.granted) {
-      playerContainers = playerBag.containers;
-      const bagName = ITEM_CATALOG[playerBag.bagId]?.name || "Сумка";
-      log(`🎒 Новая сумка: ${bagName}! Инвентарь расширен.`);
-      if (typeof CombatLog !== "undefined") {
-        CombatLog.notifyBackpack(ITEM_CATALOG[playerBag.bagId]);
-      }
-    }
-    resetShopForNewRoundForSide("player");
-    prepViewSide = "player";
-    recalcSynergies();
-    renderBattleStats();
-    renderPlayerProfiles();
-    pendingGameOver = false;
-    updateUI();
-    renderRunStats();
-    renderFightButton();
-    ensureShopReadyForSide("player");
     return;
   }
 
@@ -7890,27 +6587,6 @@ function gameLoop(ts) {
 
   if (phase === "battle" && tickLobbyRoundBattles(dt, ts)) {
     // все пары лобби тикают параллельно
-  } else if (phase === "battle" && isTdMode() && tdState && !tdState.finished) {
-    tdState.paused = !!(dragPayload || pendingShopDrag);
-    const simDt = tdState.paused ? 0 : getBattleSimDt(dt);
-    if (simDt > 0) {
-      try {
-        tdTick(tdState, simDt);
-      } catch (err) {
-        console.error("tdTick failed:", err);
-      }
-    }
-    if (tdState.waveJustCleared) onTdWaveClearedInRun();
-    else flushTdPendingKillGold();
-    if (Math.floor(ts / 500) !== Math.floor((ts - dt * 1000) / 500)) {
-      renderBattleStats();
-      renderPlayerProfiles();
-      renderTdBuildPanel();
-    }
-  } else if (phase === "battle" && isTdMode() && tdState?.finished) {
-    if (typeof resetStackOrbitVfx === "function") resetStackOrbitVfx();
-    clearBattleFloatLayer();
-    endTdRun();
   } else if (phase === "battle" && battleState && !battleState.finished) {
     const countdownDt = typeof getBattleCountdownDt === "function" ? getBattleCountdownDt(dt) : dt;
     if (countdownDt > 0 && typeof tickBattleCountdown === "function") {
@@ -7976,7 +6652,6 @@ function gameLoop(ts) {
 }
 
 function layoutGridOrigin(team) {
-  if (isTdLoadoutEditPhase()) return getTdEditGridBounds().ox;
   if (phase === "prep" && isLobby2pMode()) {
     return team === "player" ? 0 : ENEMY_X;
   }
@@ -7985,7 +6660,6 @@ function layoutGridOrigin(team) {
 }
 
 function layoutBackpackY() {
-  if (isTdLoadoutEditPhase()) return getTdEditGridBounds().oy;
   return 0;
 }
 
@@ -8117,10 +6791,6 @@ function yToRow(y, team = "player") {
   return Math.floor((y - layoutBackpackY()) / stride);
 }
 function isOnBoard(mx, my, team = "player") {
-  if (isTdLoadoutEditPhase()) {
-    const g = getTdEditGridBounds();
-    return mx >= g.ox && mx < g.ox + g.innerW && my >= g.oy && my < g.oy + g.innerH;
-  }
   const ox = layoutGridOrigin(team);
   const oy = layoutBackpackY();
   return mx >= ox && mx < ox + GRID_INNER_W && my >= oy && my < oy + GRID_INNER_H;
@@ -8501,7 +7171,7 @@ function syncDragGhostOverlay(clientX, clientY) {
     && typeof PrepDragArc !== "undefined"
     && PrepDragArc.isActive()) {
     PrepDragArc.mountGhostToBody();
-    if (sidebarDrag && !useTdBuildSidebarArcDrag()) {
+    if (sidebarDrag) {
       ghostX = clientX;
       ghostY = clientY;
       arcRotation = null;
@@ -8552,7 +7222,6 @@ function syncDragGhostOverlay(clientX, clientY) {
     : (dragPayload.rotation || 0);
 
   const remoteHoldGhost = sidebarDrag
-    && !useTdBuildSidebarArcDrag()
     && isLoadoutInteractionPhase()
     && typeof PrepDragArc !== "undefined"
     && PrepDragArc.isActive();
@@ -8664,7 +7333,7 @@ function gamepadPointerDownAt(clientX, clientY) {
   const synthetic = createSyntheticPointerEvent(clientX, clientY);
   const target = document.elementFromPoint(clientX, clientY);
 
-  const shopCard = target?.closest?.(".shop-card:not(.empty), .td-build-shop-card:not(.td-build-shop-card--locked):not(.td-build-shop-card--empty)");
+  const shopCard = target?.closest?.(".shop-card:not(.empty)");
   if (shopCard && canEditPrepSide(prepViewSide)) {
     const index = shopCard.dataset.shopIndex != null
       ? +shopCard.dataset.shopIndex
@@ -8750,10 +7419,6 @@ function gamepadPointerDownAt(clientX, clientY) {
   }
 
   if (isTouchUi() && target?.closest?.("#game-canvas")) {
-    if (isTdLoadoutEditPhase() && tdLoadoutSheetOpen) {
-      onMouseDown(synthetic);
-      return;
-    }
     armPointerTapTooltip(clientX, clientY, () => {
       pendingCanvasPick = null;
       updatePointerFromClient(clientX, clientY);
@@ -8796,9 +7461,6 @@ function draw() {
   if (isBattleResultIdle()) return;
   drawWorldLayer();
   drawFxLayer();
-  if (isTdMode() && isBattleUiPhase() && tdState && typeof TdArena !== "undefined" && typeof TdArena.drawFrame === "function") {
-    TdArena.drawFrame(tdState, synergyAnimTime, selectedTdSlotId);
-  }
 }
 
 function drawWorldLayer() {
@@ -8854,30 +7516,6 @@ function drawWorldLayer() {
     }
     ctx.restore();
     }
-  } else if (isTdLoadoutEditPhase()) {
-    const tower = getTdEditTower();
-    if (tower) {
-      ctx.save();
-      const frameOptions = {
-        showFullPlacementGrid: shouldShowFullContainerPlacementGrid(),
-        containers: tower.containers,
-        items: tower.items,
-      };
-      drawBackpackFrame("player", frameOptions);
-      drawContainers(tower.containers, "player", false);
-      drawSynergyVisuals(ctx, synergyAnimTime, synergyPreviewBuilt, "under", "player");
-      drawLoadoutItems(tower.items, "player", false);
-      if (typeof drawAllPrepItemIdleEffects === "function") {
-        drawAllPrepItemIdleEffects(ctx, tower.items, "player", synergyAnimTime);
-      }
-      drawSynergyVisuals(ctx, synergyAnimTime, synergyPreviewBuilt, "over", "player");
-      const st = getLoadoutEditState("player");
-      if (canEditPrepSide("player") && dragPayload && getPrepDropPlacement(st, "player")) {
-        if (typeof drawPrepDropPreview === "function") drawPrepDropPreview(ctx, "player", st);
-        else drawDropPreview(ctx);
-      }
-      ctx.restore();
-    }
   } else if (isBattleUiPhase()) {
     const viewState = getDisplayBattleState();
     if (shouldDrawCanvasLoadoutInBattle()) {
@@ -8898,7 +7536,7 @@ function drawWorldLayer() {
       }
     }
   }
-  if (isBattleUiPhase() && getDisplayBattleState() && !(isTdMode() && tdState)) {
+  if (isBattleUiPhase() && getDisplayBattleState()) {
     const viewState = getDisplayBattleState();
     if (shouldDrawCanvasLoadoutInBattle()) {
       drawPlacedItems(viewState.player.items, "player", false, true);
@@ -8918,7 +7556,7 @@ function drawWorldLayer() {
 function drawFxLayer() {
   if (!fxCtx || !fxCanvas) return;
   fxCtx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
-  if (phase === "prep" || isTdLoadoutEditPhase()) {
+  if (phase === "prep") {
     const side = prepViewSide;
     const st = getLoadoutEditState(side);
     const shake = typeof getPrepBackpackShakeOffset === "function"
@@ -8953,10 +7591,7 @@ function meadowCssColor(varName, fallback) {
 }
 
 function drawBackground() {
-  if (isTdMode() && isBattleUiPhase() && tdState && !isTdLoadoutEditPhase()) {
-    return;
-  }
-  if (phase === "prep" || isTdLoadoutEditPhase()) {
+  if (phase === "prep") {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const w = canvas.width;
     const h = canvas.height;
@@ -9032,9 +7667,8 @@ function drawBackpackFrame(team, options = {}) {
   } = options;
   const revealAllBoardCells = showFullPlacementGrid;
   const activeCells = revealAllBoardCells ? null : buildActiveVisualCellSet(containers, items);
-  const gridCols = isTdLoadoutEditPhase() ? getActiveGridCols() : GRID_COLS;
-  const gridRows = isTdLoadoutEditPhase() ? getActiveGridRows() : GRID_ROWS;
-  const showTdBoardGhost = isTdLoadoutEditPhase() && !revealAllBoardCells;
+  const gridCols = GRID_COLS;
+  const gridRows = GRID_ROWS;
 
   for (let row = 0; row < gridRows; row++) {
     for (let col = 0; col < gridCols; col++) {
@@ -9043,7 +7677,7 @@ function drawBackpackFrame(team, options = {}) {
 
       const key = `${col},${row}`;
       const isSlot = revealAllBoardCells || !activeCells || activeCells.has(key);
-      if (!isSlot && !showTdBoardGhost) continue;
+      if (!isSlot) continue;
 
       const { x: cx, y: cy, w: cw, h: ch } = cellRect(team, col, row);
       if (isSlot) {
@@ -9937,7 +8571,7 @@ function isPointerOverPrepSidebar(clientX, clientY) {
   const hit = document.elementFromPoint(clientX, clientY);
   if (!hit) return false;
   return !!hit.closest(
-    "#shop-panel, #td-build-panel, .td-build-shop-card, #prep-bench-popover, #bench-panel, #bench-slots, .bench-card, #btn-prep-bench-fab, #prep-shop-popover, .run-stats-anchor, #prep-run-stats-anchor, #run-stats-popover, #sidebar-tooltip, #prep-tooltip-dock, #recipe-book-overlay, #combat-feed-dock, #combat-feed-panel, #combat-feed-scroll, #prep-doll-layer",
+    "#shop-panel, #prep-bench-popover, #bench-panel, #bench-slots, .bench-card, #btn-prep-bench-fab, #prep-shop-popover, .run-stats-anchor, #prep-run-stats-anchor, #run-stats-popover, #sidebar-tooltip, #prep-tooltip-dock, #recipe-book-overlay, #combat-feed-dock, #combat-feed-panel, #combat-feed-scroll, #prep-doll-layer",
   );
 }
 
@@ -9945,7 +8579,7 @@ function isPointerOverShopDrawer(clientX, clientY) {
   if (clientX == null || clientY == null) return false;
   const hit = document.elementFromPoint(clientX, clientY);
   if (!hit) return false;
-  return !!hit.closest("#shop-panel, #td-build-panel, .td-build-shop-card");
+  return !!hit.closest("#shop-panel");
 }
 
 function isPointerOverBenchPopoverPanel(clientX, clientY) {
@@ -10666,14 +9300,6 @@ function bindItemTooltipEvents(el, itemId, contentItem, context = "shop") {
   }
 }
 
-function syncTdTowerFromLoadoutState(st, side = prepViewSide) {
-  if (!isTdLoadoutEditPhase() || side !== "player") return;
-  const tower = getTdEditTower();
-  if (!tower) return;
-  tower.containers = st.containers;
-  tower.items = st.items;
-}
-
 function onMouseDown(e) {
   if (!isLoadoutInteractionPhase() || gameOver) return;
   if (isLobby2pMode() && phase === "prep" && lobbyState?.isSplitLobby && !lobby2pHasActiveDuel()) {
@@ -10695,7 +9321,6 @@ function onMouseDown(e) {
     dragPayload = { itemId: hit.item.itemId, rotation: hit.item.rotation || 0 };
     dragFrom = { type: "item", item: hit.item, side };
     st.items = st.items.filter((i) => i.uid !== hit.item.uid);
-    syncTdTowerFromLoadoutState(st, side);
     beginPrepDragArcFromBackpack(hit.item.col, hit.item.row, side);
     startSynergyPreview();
     recalcSynergies();
@@ -10710,7 +9335,6 @@ function onMouseDown(e) {
     dragFrom = { type: "container", container: hit.container, carriedItems, side };
     st.containers = st.containers.filter((c) => c.uid !== hit.container.uid);
     st.items = st.items.filter((i) => !carriedItems.some((c) => c.uid === i.uid));
-    syncTdTowerFromLoadoutState(st, side);
     beginPrepDragArcFromBackpack(hit.container.col, hit.container.row, side);
     startSynergyPreview();
     recalcSynergies();
@@ -11119,15 +9743,7 @@ function finishDragDrop(e) {
   maybeCelebratePrepArcDrop(prepArcCelebrate);
   clearDragUiState();
   if (shopPurchasedDuringDrop) suppressShopClickUntil = 0;
-  if (isTdLoadoutEditPhase() && side === "player") {
-    const tower = getTdEditTower();
-    if (tower) {
-      tower.containers = st.containers;
-      tower.items = st.items;
-    }
-    finalizeTdTowerLoadoutEdit();
-    draw();
-  } else if (canEditPrepSide(side)) applyCraftingForSide(side);
+  if (canEditPrepSide(side)) applyCraftingForSide(side);
   if (typeof hasActiveDisplaceAnimations === "function" && hasActiveDisplaceAnimations(side)) {
     if (shopPurchasedDuringDrop) renderShop(commerceSide);
     recalcSynergies();
@@ -11263,9 +9879,7 @@ function startShopDrag(index, e, side = prepViewSide) {
   dragFrom = { type: "shop", index, side };
   prepSidebarDragUnlocked = usesPrepCommercePopoverMode();
   prepSidebarStickyHover = null;
-  const cardSel = isTdLoadoutEditPhase()
-    ? `.td-build-shop-card[data-shop-index="${index}"]`
-    : `.shop-card[data-index="${index}"]`;
+  const cardSel = `.shop-card[data-index="${index}"]`;
   const arcCard = document.querySelector(cardSel);
   const arcOrigin = getElementClientCenter(arcCard)
     || (e?.clientX != null && e?.clientY != null ? { x: e.clientX, y: e.clientY } : null);
@@ -11423,15 +10037,11 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
     prepEnemy?.removeAttribute("hidden");
     if (typeof scheduleBattleHeroRowSync === "function") scheduleBattleHeroRowSync();
     return;
-  } else if (!isTdRunLive()) {
-    layer?.setAttribute("aria-hidden", "true");
-    prepPlayer?.setAttribute("hidden", "");
-    prepEnemy?.setAttribute("hidden", "");
-    return;
   } else {
     layer?.setAttribute("aria-hidden", "true");
     prepPlayer?.setAttribute("hidden", "");
     prepEnemy?.setAttribute("hidden", "");
+    return;
   }
 
   if (!showHeroHud && phase !== "prep") return;
@@ -11439,13 +10049,6 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
   const side = prepViewSide;
   let profile = side === "player" ? playerProfile : enemyProfile;
   let mutRt = getSideMutationRuntime(side);
-  if (isTdRunLive() && side === "player") {
-    const hudTower = getTdHudTower();
-    if (hudTower) {
-      profile = buildTdTowerHudProfile(profile, hudTower);
-      mutRt = getTdHudMutationRuntime(hudTower) || mutRt;
-    }
-  }
   const st = getSideState(side);
   const mutationProgress = typeof resolveMutationProgress === "function"
     ? resolveMutationProgress({
@@ -11480,34 +10083,17 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
     const viewedFighter = isLobbyMode() ? getLobbyFighterById(lobbyState, lobbyViewFighterId) : null;
     const roundLabel = isLobbyMode()
       ? `${round}`
-      : isTdRunLive() && tdState
-        ? `${tdState.wave}/${getTdMaxWaves()}`
-      : isTdMode()
-        ? `${Math.min(round, getTdMaxWaves())}/${getTdMaxWaves()}`
-        : `${Math.min(round, RUN_BATTLES)}/${RUN_BATTLES}`;
+      : `${Math.min(round, RUN_BATTLES)}/${RUN_BATTLES}`;
     const hpLabel = viewedFighter
       ? `${viewedFighter.hp}/${LOBBY_START_HP}`
       : lobbyPlayer
         ? `${lobbyPlayer.hp}/${LOBBY_START_HP}`
-        : isTdRunLive() && tdState && side === "player"
-          ? (() => {
-            const tower = getTdHudTower();
-            if (tower?.hero?.maxHp) {
-              return `${Math.ceil(tower.hero.hp)}/${tower.hero.maxHp}`;
-            }
-            return profile.hpDisplay;
-          })()
-        : isTdMode() && side === "player" && tdHeroHp !== null
-          ? `${Math.ceil(tdHeroHp)}/${profile.hpDisplay?.split("/")?.[1] || profile.hpDisplay || "—"}`
           : profile.hpDisplay;
     const hpRowClass = lobbyPlayer ? " prep-stats-row--lobby-hp" : "";
     const companionLabel = renderPrepCompanionLabelHtml(companion);
-    const tdDiffRow = isTdMode() && typeof tdFormatDifficultyLabel === "function"
-      ? `<div class="prep-stats-row prep-stats-row--td-diff"><span>Сложность</span><b>${tdFormatDifficultyLabel(tdRunDifficultyId)}</b></div>`
-      : "";
     const heroCardName = getPrepHeroCardName(profile);
-    const metricsInBottomBar = heroCardHud && !isTdRunLive();
-    const roundCaption = isTdRunLive() || isTdMode() ? "Волна" : "Раунд";
+    const metricsInBottomBar = heroCardHud;
+    const roundCaption = "Раунд";
     const collapsedMetricsHtml = heroCardHud
       ? `
         <div class="hud-character-panel__collapsed-metrics" aria-hidden="true">
@@ -11520,10 +10106,9 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
       ? `<div class="prep-stats-row prep-stats-row--companion"><span>${companionLabel}</span></div>`
       : `
         <div class="prep-stats-row prep-stats-row--companion"><span>${companionLabel}</span></div>
-        ${tdDiffRow}
         <div class="prep-stats-row"><span>💰</span><b>${st.gold}</b></div>
         <div class="prep-stats-row${hpRowClass}"><span>❤️</span><b>${hpLabel}</b></div>
-        <div class="prep-stats-row prep-stats-row--round"><span>Волна</span><b>${roundLabel}</b></div>`;
+        <div class="prep-stats-row prep-stats-row--round"><span>Раунд</span><b>${roundLabel}</b></div>`;
     syncPrepBottomStats({
       gold: st.gold,
       hpLabel,
@@ -11543,10 +10128,9 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
       <div class="prep-stats-class">${displayTitle}</div>
       <div class="prep-stats-metrics">
         <div class="prep-stats-row"><span>${companionLabel}</span></div>
-        ${tdDiffRow}
         <div class="prep-stats-row"><span>💰</span><b>${st.gold}</b></div>
         <div class="prep-stats-row${hpRowClass}"><span>❤️</span><b>${hpLabel}</b></div>
-        <div class="prep-stats-row"><span>${isTdMode() ? "Волна" : "Раунд"}</span><b>${roundLabel}</b></div>
+        <div class="prep-stats-row"><span>Раунд</span><b>${roundLabel}</b></div>
       </div>`;
     statsHud.innerHTML = `
       ${statsHeaderHtml}
@@ -11557,7 +10141,6 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
     bindPrepEnhancementStrip(side);
     bindPrepCompanionTooltip(statsHud);
     if (typeof syncPrepHudCollapseChrome === "function") syncPrepHudCollapseChrome();
-    if (isTdRunLive() && tdHeroSheetOpen) syncTdHeroSheetBody();
     if (typeof syncPrepBuildEmojiBtn === "function") {
       syncPrepBuildEmojiBtn({
         formId: mutRt.formId,
@@ -11700,7 +10283,7 @@ function renderPlayerProfiles(opts = {}) {
   const buildStatsEl = document.getElementById("battle-build-stats-content");
   const statsOptions = {
     round,
-    maxRound: isLobbyMode() ? round : isTdMode() ? getTdMaxWaves() : RUN_BATTLES,
+    maxRound: isLobbyMode() ? round : RUN_BATTLES,
     itemCount: Math.max(playerItems.length, enemyItems.length, 1),
   };
 
@@ -11772,7 +10355,6 @@ function renderPlayerProfiles(opts = {}) {
     if (!lightSpectate && typeof updateBattleAnalyzer === "function") updateBattleAnalyzer(viewState, 0);
   }
   if (!lightSpectate) syncBattleArenaLayout();
-  if (isTdRunLive()) syncTdHintBar();
 }
 
 function renderRunStats() {
@@ -11865,7 +10447,7 @@ if (typeof Campaign !== "undefined") {
 
 registerPrepShopRuntime({
   getPrepViewSide: () => prepViewSide,
-  getPhase: () => getShopPhase(),
+  getPhase: () => phase,
   getRound: () => round,
   getGameOver: () => gameOver,
   getSelectedBench: () => selectedBench,
@@ -11898,9 +10480,6 @@ registerPrepShopRuntime({
   beginPendingBenchDrag,
   startBenchDrag,
   isPrepCommerceDragActive: () => !!(dragPayload || pendingShopDrag || pendingBenchDrag || pendingEnhancementDrag),
-  renderTdBuildPanel: () => {
-    if (typeof renderTdBuildPanel === "function") renderTdBuildPanel();
-  },
   shouldUseFixedShop: (side) => isCampaignMode() && side === "player" && typeof Campaign !== "undefined" && Campaign.isActive(),
   applyFixedShop: (side) => {
     if (side === "player" && typeof Campaign !== "undefined") Campaign.applyPrepStep();

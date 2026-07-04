@@ -1253,11 +1253,6 @@ const ArenaEquipment = (() => {
   }
 
   function syncBattle(battleState, elapsed) {
-    if (typeof isTdMode === "function" && isTdMode()) {
-      clearAll();
-      return;
-    }
-
     paused = isBattlePaused();
 
     if (!isArenaActive() || !battleState || battleState.finished) {

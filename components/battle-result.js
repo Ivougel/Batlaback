@@ -178,13 +178,12 @@ function showBattleResultPopup(summary, battleLog = []) {
 
   const subtitleEl = document.getElementById("battle-result-subtitle");
   if (subtitleEl) {
-    subtitleEl.textContent = summary.tdSubtitle
-      || (summary.roundNum != null ? `Раунд ${summary.roundNum}` : "");
+    subtitleEl.textContent = summary.roundNum != null ? `Раунд ${summary.roundNum}` : "";
   }
 
   const continueBtn = document.getElementById("btn-battle-continue");
   if (continueBtn) {
-    continueBtn.textContent = summary.isTd ? "🛒 В магазин" : "Продолжить";
+    continueBtn.textContent = "Продолжить";
   }
 
   const accordionsEl = document.getElementById("battle-result-accordions");
@@ -215,7 +214,7 @@ function showBattleResultPopup(summary, battleLog = []) {
   const reveal = () => {
     animateBattleResultStatCounts(accordionsEl);
     const lightFx = typeof BattleFxTier !== "undefined" && BattleFxTier.isLightBattleFx();
-    if (typeof startBattleResultTheater === "function" && !summary.isTd && !lightFx) {
+    if (typeof startBattleResultTheater === "function" && !lightFx) {
       startBattleResultTheater(summary);
     }
     if (typeof refreshGamepadHints === "function") refreshGamepadHints();

@@ -88,18 +88,6 @@ html[data-ui-tier="tablet"][data-touch="true"] #class-overlay[data-class-intro-s
   display: none;
 }
 
-html[data-ui-tier="tablet"][data-touch="true"] #class-overlay #class-step-td-difficulty:not(.hidden) .class-step-actions-top {
-  display: none;
-}
-
-html[data-ui-tier="tablet"] #class-overlay .class-modal #class-step-td-difficulty:not(.hidden) {
-  overflow-y: auto;
-}
-
-html[data-ui-tier="tablet"] #class-overlay .class-modal .td-difficulty-card.glass-card {
-  min-height: calc(64px * var(--ui-scale));
-}
-
 /* ─── Tablet landscape: side-by-side, компактный ростер ─── */
 
 html[data-ui-tier="tablet"][data-layout-profile="tablet-landscape"]:not([data-prep-layout="mobile"]) #class-overlay .class-overlay-shell {
@@ -295,8 +283,7 @@ html[data-ui-tier="tablet"] {
 
 html[data-ui-tier="tablet"] #app[data-phase="prep"],
 html[data-ui-tier="tablet"] #app[data-phase="battle"],
-html[data-ui-tier="tablet"] #app[data-phase="replay"],
-html[data-ui-tier="tablet"] #app[data-td-run-live="true"] {
+html[data-ui-tier="tablet"] #app[data-phase="replay"] {
   height: var(--app-h);
   max-height: var(--app-h);
 }
@@ -314,8 +301,7 @@ html[data-ui-tier="tablet"] #app[data-td-run-live="true"] {
 
   html[data-ui-tier="tablet"] #app[data-phase="prep"],
   html[data-ui-tier="tablet"] #app[data-phase="battle"],
-  html[data-ui-tier="tablet"] #app[data-phase="replay"],
-  html[data-ui-tier="tablet"] #app[data-td-run-live="true"] {
+  html[data-ui-tier="tablet"] #app[data-phase="replay"] {
     box-sizing: border-box;
     padding-top: var(--pwa-safe-top);
     padding-bottom: max(8px, env(safe-area-inset-bottom, 0px), constant(safe-area-inset-bottom, 0px));
@@ -363,8 +349,7 @@ html[data-ui-tier="tablet"] #app[data-td-run-live="true"] {
 @media (min-width: 700px) and (max-width: 1200px), (pointer: coarse) and (min-width: 700px) {
   html[data-ui-tier="tablet"] body:has(#app[data-phase="prep"]) .bottom-chrome,
   html[data-ui-tier="tablet"] body:has(#app[data-phase="battle"]) .bottom-chrome,
-  html[data-ui-tier="tablet"] body:has(#app[data-phase="replay"]) .bottom-chrome,
-  html[data-ui-tier="tablet"] body:has(#app[data-td-run-live="true"]) .bottom-chrome {
+  html[data-ui-tier="tablet"] body:has(#app[data-phase="replay"]) .bottom-chrome {
     --bottom-chrome-h: 40px;
     --bottombar-btn-h: 40px;
     min-height: 40px;

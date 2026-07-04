@@ -32,12 +32,11 @@ function syncPrepHudHero(profile, options = {}) {
   if (!portraitFrame || !img) return;
 
   const side = options.side || prepViewSide || "player";
-  const tdHeroHud = typeof isTdRunLive === "function" && isTdRunLive();
-  const phaseLabels = { prep: "Подготовка", battle: tdHeroHud ? "Оборона" : "Бой", replay: "Повтор" };
+  const phaseLabels = { prep: "Подготовка", battle: "Бой", replay: "Повтор" };
   const phaseLabel = phaseLabels[phase] || "Подготовка";
   const heroName = profile?.className || profile?.name || "Герой";
 
-  if ((phase !== "prep" && !tdHeroHud) || gameOver) {
+  if (phase !== "prep" || gameOver) {
     portraitFrame.setAttribute("aria-hidden", "true");
     legacyBadge?.classList.add("hidden");
     legacyBadge?.setAttribute("aria-hidden", "true");
@@ -106,8 +105,7 @@ function syncPrepHudHero(profile, options = {}) {
 
 function rerollPrepHudMood() {
   const portraitFrame = document.getElementById("prep-hero-card-portrait-frame");
-  const tdHeroHud = typeof isTdRunLive === "function" && isTdRunLive();
-  if (!portraitFrame || (phase !== "prep" && !tdHeroHud)) return;
+  if (!portraitFrame || phase !== "prep") return;
   portraitFrame.dataset.mood = pickPrepHudMood();
 }
 

@@ -90,19 +90,6 @@ html[data-ui-surface="tablet-side"] #app:is([data-phase="prep"], [data-prep-hero
   grid-row: 1;
 }
 
-/* ─── TD overworld overlay ─── */
-
-html[data-game-mode="td"] #app[data-td-run-live="true"] .hud-character-panel.is-collapsed {
-  min-height: 0 !important;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto;
-}
-
-html[data-game-mode="td"] #app[data-td-run-live="true"] .hud-character-panel.is-collapsed .prep-hero-card__stats-row {
-  grid-column: 1;
-  grid-row: 1;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .hud-character-panel,
   .hud-collapse-icon {

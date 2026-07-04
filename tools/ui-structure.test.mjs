@@ -25,9 +25,6 @@ async function boot(page) {
 async function startPrep(page, mode) {
   await page.evaluate((gameMode) => {
     selectGameMode(gameMode);
-    if (gameMode === "td" && typeof selectTdDifficulty === "function") {
-      selectTdDifficulty("normal");
-    }
     if (gameMode === "campaign" && typeof selectCampaignTrial === "function") {
       selectCampaignTrial("build-trial");
     }
@@ -40,17 +37,11 @@ async function startPrep(page, mode) {
       );
     }
     if (gameMode === "versus") selectOpponentClass("warrior");
-    else if (gameMode !== "lobby" && gameMode !== "td" && gameMode !== "campaign") selectOpponentClass("mage");
+    else if (gameMode !== "lobby" && gameMode !== "campaign") selectOpponentClass("mage");
     startRunFromOverlay();
   }, mode);
   await page.waitForFunction(
-    (gameMode) => {
-      const app = document.getElementById("app");
-      if (!app) return false;
-      if (gameMode === "td") return app.dataset.gameMode === "td";
-      return app.dataset.phase === "prep";
-    },
-    mode,
+    () => document.getElementById("app")?.dataset.phase === "prep",
     { timeout: 12000 },
   );
   await page.waitForTimeout(800);
@@ -133,10 +124,6 @@ try {
     const state = await modePage.evaluate(() => ({
       phase: document.getElementById("app")?.dataset.phase,
       gameMode: document.getElementById("app")?.dataset.gameMode,
-      tdHintHidden: document.getElementById("td-hint-bar")?.classList.contains("hidden"),
-      tdHintDisplay: document.getElementById("td-hint-bar")
-        ? getComputedStyle(document.getElementById("td-hint-bar")).display
-        : null,
       campaignHintHidden: document.getElementById("campaign-hint-bar")?.classList.contains("hidden"),
       campaignHintDisplay: document.getElementById("campaign-hint-bar")
         ? getComputedStyle(document.getElementById("campaign-hint-bar")).display
@@ -145,19 +132,10 @@ try {
     }));
 
     assert(state.gameMode === mode, `${mode}: gameMode`);
-
-    if (mode === "td") {
-      assert(state.phase === "prep" || state.phase === "battle", `${mode}: phase ${state.phase}`);
-    } else {
-      assert(state.phase === "prep", `${mode}: phase`);
-    }
+    assert(state.phase === "prep", `${mode}: phase`);
 
     if (mode === "lobby") {
       assert(!state.lobbyRoster, `${mode}: lobby roster should be visible`);
-    }
-    if (mode !== "td") {
-      assert(state.tdHintHidden, `${mode}: td-hint should have hidden class`);
-      assert(state.tdHintDisplay === "none", `${mode}: td-hint display none, got ${state.tdHintDisplay}`);
     }
     if (mode === "campaign") {
       assert(!state.campaignHintHidden, `${mode}: campaign-hint should be visible in prep`);
