@@ -434,24 +434,20 @@ const BattleHeroAnchor = (() => {
     return profile === "tablet-landscape-side" || profile.startsWith("desktop-");
   }
 
-  function readHudAnchorTopPx(side) {
-    const specific = readCssPx(`--battle-hud-anchor-top-${side}`, 0);
-    if (specific > 0) return specific;
-    return readCssPx("--battle-hud-anchor-top", 0);
-  }
-
-  /** Стабильный потолок колонки для эмодзи (layout var, не live HUD rect). */
+  /** Верх колонки героя (портрет) — потолок для эмодзи-аватара. Не привязываем к HUD HP/стамины. */
   function getHeroEmojiColumnCeilingY(side) {
-    const viewport = document.getElementById("prep-field-column");
-    const hudAnchorVp = readHudAnchorTopPx(side);
-    if (viewport && hudAnchorVp > 0) {
-      return viewport.getBoundingClientRect().top + hudAnchorVp;
-    }
+    const heroTop = getHeroColumnTop(side);
+    if (heroTop != null) return heroTop;
 
     const objectsLayer = document.getElementById("layer-objects");
     const heroRowTop = readCssPx("--battle-hero-row-top", 0);
     if (objectsLayer && heroRowTop > 0) {
       return objectsLayer.getBoundingClientRect().top + heroRowTop;
+    }
+
+    const viewport = document.getElementById("prep-field-column");
+    if (viewport && heroRowTop > 0) {
+      return viewport.getBoundingClientRect().top + heroRowTop;
     }
 
     return null;
@@ -474,19 +470,7 @@ const BattleHeroAnchor = (() => {
       const panelRect = document.getElementById(panelId)?.getBoundingClientRect();
       const stageRect = getAvatarAnchorRect(side);
       const heroTop = getHeroColumnTop(side);
-      const hudRect = getBattleHudEl(side)?.getBoundingClientRect();
-
-      if (hudRect && hudRect.height > 8) {
-        const portraitTop = stageRect?.top ?? panelRect?.top ?? heroTop;
-        if (portraitTop == null || hudRect.top <= portraitTop - 2) {
-          ceilingY = hudRect.top;
-        }
-      }
-      if (ceilingY == null && panelRect && panelRect.height > 16) {
-        ceilingY = panelRect.top;
-      } else if (ceilingY == null && heroTop != null) {
-        ceilingY = heroTop;
-      }
+      ceilingY = stageRect?.top ?? panelRect?.top ?? heroTop ?? null;
     }
 
     if (ceilingY == null) return null;

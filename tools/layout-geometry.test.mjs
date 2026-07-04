@@ -688,10 +688,14 @@ const CASES = [
           playerColCx: playerPanel ? playerPanel.left + playerPanel.width / 2 : 0,
           anchorCx: aboveAnchor?.cx ?? 0,
           anchorCy: aboveAnchor?.cy ?? 0,
+          thoughtAboveHero: document.documentElement.dataset.thoughtAboveHero === "true",
+          thoughtHeadBadge: document.documentElement.dataset.thoughtHeadBadge === "true",
         };
       });
       assert(m.profile === "tablet-landscape-side", `profile: ${m.profile}`);
-      assert(m.headBadge === false, "tablet landscape should not use head-badge emoji");
+      assert(m.headBadge === false, "tablet landscape should not anchor emoji on portrait head");
+      assert(m.thoughtAboveHero, "emoji layer should be above-hero mode");
+      assert(m.thoughtHeadBadge, "above-hero emoji should use floating badge chrome");
       assert(m.heroBelow === false, "above-hero anchor replaces below-hero");
       assert(m.emojiPx >= 88 && m.emojiPx <= 175, `emoji size out of range: ${m.emojiPx}px`);
       assert(Math.abs(m.satScale - 0.62) < 0.06, `satellite scale: ${m.satScale}`);

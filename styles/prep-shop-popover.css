@@ -1,7 +1,7 @@
 /**
  * Prep shop popover — tablet-side / desktop side layout.
  * html[data-prep-shop-popover="true"]
- * Панель справа (зелёная колонка), не перекрывает tooltip-коридор.
+ * Панель в коридоре hero ↔ grid, не перекрывает поле и не уезжает в FAB-колонку.
  */
 
 html[data-prep-shop-popover="true"] #app[data-phase="prep"] .game-layout {
@@ -67,12 +67,12 @@ html[data-prep-shop-popover="true"][data-prep-shop-open] .prep-shop-popover__bac
 .prep-shop-popover__panel {
   position: fixed;
   z-index: 1;
-  right: var(--prep-shop-popover-right, calc(var(--prep-bench-fab-right, 328px) + var(--prep-bench-fab-size, 75px) + calc(8px * var(--ui-scale, 1))));
-  left: auto;
+  left: var(--prep-shop-popover-x, calc(100vw - 280px));
+  right: auto;
   top: var(--prep-shop-popover-y, 14px);
   width: var(--prep-shop-popover-w, min(240px, 28vw));
   height: var(--prep-shop-popover-h, auto);
-  max-width: min(var(--shop-panel-w, 280px), var(--prep-shop-popover-w, 280px));
+  max-width: var(--prep-shop-popover-w, 280px);
   max-height: var(--prep-shop-popover-h, 52dvh);
   display: flex;
   flex-direction: column;

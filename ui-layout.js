@@ -1494,56 +1494,80 @@
     return null;
   }
 
-  /** Popover магазина: правый якорь у FAB, раскрытие влево (зелёная колонка). */
+  /** Коридор hero ↔ grid (canvas), без учёта открытого магазина. */
+  function measurePrepHeroGridCorridor(gap) {
+    const heroLayer = document.getElementById("prep-character-layer");
+    const fieldIsland = document.getElementById("prep-field-island");
+    const canvas = document.getElementById("game-canvas");
+    const topBar = document.getElementById("prep-top-bar");
+    const bottomChrome = getBottomChrome();
+    const enemySide = document.getElementById("app")?.dataset.prepSide === "enemy";
+
+    const islandRect = fieldIsland?.getBoundingClientRect();
+    const canvasRect = canvas?.getBoundingClientRect();
+    const gridRect = (canvasRect && canvasRect.width >= 40) ? canvasRect : islandRect;
+    const heroRect = heroLayer?.getBoundingClientRect();
+    const topBarRect = topBar?.getBoundingClientRect();
+    const bottomRect = bottomChrome?.getBoundingClientRect();
+    const vv = window.visualViewport;
+    const viewTop = vv?.offsetTop ?? 0;
+    const viewBottom = (vv?.offsetTop ?? 0) + (vv?.height ?? window.innerHeight);
+
+    if (!gridRect || gridRect.width < 40) return null;
+
+    let left;
+    let right;
+    if (enemySide) {
+      if (!heroRect || heroRect.width < 24) return null;
+      left = gridRect.right + gap;
+      right = heroRect.left - gap;
+    } else {
+      left = heroRect && heroRect.width > 24 ? heroRect.right + gap : gap;
+      right = gridRect.left - gap;
+    }
+    if (right - left < 48) return null;
+
+    const top = (topBarRect?.bottom ?? viewTop) + gap;
+    const bottom = (bottomRect?.top ?? viewBottom) - gap;
+    if (bottom <= top + 48) return null;
+
+    return {
+      left: Math.round(left),
+      right: Math.round(right),
+      top: Math.round(top),
+      bottom: Math.round(bottom),
+    };
+  }
+
+  /** Popover магазина — только в коридоре между героем и сеткой. */
   function syncPrepShopPopoverRect(gap, panelW, uiScale) {
     const island = document.getElementById("prep-field-island");
     const canvas = document.getElementById("game-canvas");
-    const prepCol = document.getElementById("prep-left-column");
-    const fab = document.getElementById("btn-prep-bench-fab");
-    const sellFab = document.getElementById("btn-prep-sell-fab");
     const islandRect = island?.getBoundingClientRect();
     const canvasRect = canvas?.getBoundingClientRect();
-    const prepColRect = prepCol?.getBoundingClientRect();
-    const fabRect = fab?.getBoundingClientRect();
-    const sellFabRect = sellFab?.getBoundingClientRect();
 
-    const fabSize = readCssPx("--prep-bench-fab-size", 75 * uiScale);
-    const fabRight = readCssPx("--prep-bench-fab-right", panelW + gap);
-
-    const shopRight = (sellFabRect && sellFabRect.width > 8)
-      ? Math.round(sellFabRect.left - gap)
-      : (fabRect && fabRect.width > 8)
-        ? Math.round(fabRect.left - gap)
-        : Math.round(window.innerWidth - fabRight - fabSize - gap);
-
-    const commerceLeft = prepColRect
-      ? Math.round(prepColRect.right + gap)
-      : Math.round(window.innerWidth - panelW - fabSize - gap * 3);
-
-    const shopTargetW = Math.min(
-      Math.round(panelW + 4 * uiScale),
-      Math.round(236 * uiScale),
-    );
-    const shopMinW = Math.round(120 * uiScale);
-
-    let shopW = Math.min(shopTargetW, Math.max(0, shopRight - commerceLeft));
-    shopW = Math.max(shopMinW, shopW);
-    let shopLeft = shopRight - shopW;
-
-    const fieldRect = measurePrepFieldRect();
-    if (fieldRect) {
-      const gridGuard = Math.round(fieldRect.right + gap);
-      if (shopLeft < gridGuard && shopRight > gridGuard + shopMinW) {
-        shopLeft = gridGuard;
-        shopW = Math.max(shopMinW, shopRight - shopLeft);
-      }
+    const corridor = measurePrepHeroGridCorridor(gap);
+    if (corridor) {
+      const shopW = corridor.right - corridor.left;
+      return {
+        corridorLeft: corridor.left,
+        corridorW: shopW,
+        corridorRight: corridor.right,
+        corridorTop: corridor.top,
+        corridorHeight: corridor.bottom - corridor.top,
+        topSourceRect: islandRect ?? canvasRect,
+      };
     }
 
-    shopW = Math.max(shopMinW, Math.min(shopW, shopRight - shopLeft));
+    const shopTargetW = Math.min(Math.round(panelW + 4 * uiScale), Math.round(236 * uiScale));
+    const shopMinW = Math.round(120 * uiScale);
+    const vw = window.visualViewport?.width ?? window.innerWidth;
+    const shopRight = Math.round(vw - gap * 4);
+    const shopLeft = shopRight - shopTargetW;
 
     return {
       corridorLeft: shopLeft,
-      corridorW: shopW,
+      corridorW: Math.max(shopMinW, shopTargetW),
       corridorRight: shopRight,
       topSourceRect: islandRect ?? canvasRect,
     };
@@ -1623,13 +1647,16 @@
       ? chrome.getBoundingClientRect().top
       : (window.visualViewport?.height ?? window.innerHeight);
 
-    const { corridorLeft, corridorW, corridorRight, topSourceRect } = syncPrepShopPopoverRect(gap, panelW, uiScale);
-    const top = Math.round(Math.max(gap, topSourceRect?.top ?? gap));
-    const height = Math.max(180, Math.round(chromeTop - gap - top));
-    const vw = window.visualViewport?.width ?? window.innerWidth;
+    const { corridorLeft, corridorW, corridorTop, corridorHeight, topSourceRect } = syncPrepShopPopoverRect(gap, panelW, uiScale);
+    const top = corridorTop != null
+      ? corridorTop
+      : Math.round(Math.max(gap, topSourceRect?.top ?? gap));
+    const height = corridorHeight != null
+      ? corridorHeight
+      : Math.max(180, Math.round(chromeTop - gap - top));
 
     root.style.setProperty("--prep-shop-popover-x", `${corridorLeft}px`);
-    root.style.setProperty("--prep-shop-popover-right", `${Math.max(gap, Math.round(vw - corridorRight))}px`);
+    root.style.removeProperty("--prep-shop-popover-right");
     root.style.setProperty("--prep-shop-popover-y", `${top}px`);
     root.style.setProperty("--prep-shop-popover-w", `${corridorW}px`);
     root.style.setProperty("--prep-shop-popover-h", `${height}px`);
@@ -2064,12 +2091,13 @@
       && BattleHeroAnchor.usesCombatFloorAnchors();
     root.dataset.battleCombatFloor = combatFloor ? "true" : "false";
     root.dataset.tabletThoughtCorners = combatFloor ? "true" : "false";
-    const headBadge = combatFloor
-      && typeof BattleHeroAnchor !== "undefined"
-      && BattleHeroAnchor.usesHeadBadgeAnchors?.();
-    root.dataset.thoughtHeadBadge = headBadge ? "true" : "false";
     const aboveHero = typeof BattleHeroAnchor !== "undefined"
       && BattleHeroAnchor.usesHeroAboveThoughtAnchors?.();
+    const headBadge = aboveHero
+      || (combatFloor
+        && typeof BattleHeroAnchor !== "undefined"
+        && BattleHeroAnchor.usesHeadBadgeAnchors?.());
+    root.dataset.thoughtHeadBadge = headBadge ? "true" : "false";
     root.dataset.thoughtAboveHero = aboveHero ? "true" : "false";
     root.dataset.thoughtSlotBelowHero = "false";
 
@@ -2158,6 +2186,7 @@
 
       if (emojiSize) {
         thoughtSlot.style.setProperty("--battle-thought-emoji-size", `${emojiSize}px`);
+        thoughtSlot.style.setProperty("--thought-size", `${emojiSize}px`);
       }
 
       thoughtSlot.style.position = "fixed";

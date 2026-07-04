@@ -2707,15 +2707,6 @@ function getPrepHeroGridTooltipZone(margin = 10) {
   }
   if (right - left < 72) return null;
 
-  const root = document.documentElement;
-  if (root.dataset.prepShopPopover === "true" && root.hasAttribute("data-prep-shop-open")) {
-    const shopX = parseFloat(getComputedStyle(root).getPropertyValue("--prep-shop-popover-x"));
-    if (Number.isFinite(shopX) && shopX > left + 48) {
-      right = Math.min(right, Math.round(shopX - margin));
-    }
-  }
-  if (right - left < 72) return null;
-
   const top = (topBarRect?.bottom ?? viewTop) + margin;
   const bottom = (bottomRect?.top ?? viewBottom) - margin;
   if (bottom <= top + 48) return null;
@@ -2742,10 +2733,11 @@ function syncPrepTooltipDockVisibility() {
   }
 
   if (isMobilePrepPortrait() || isTabletSidePrepTooltipDock()) {
+    const shopOpen = document.documentElement.hasAttribute("data-prep-shop-open");
     const hasItemTip = el && !el.classList.contains("hidden")
       && !el.classList.contains("sidebar-tooltip--floating");
     dock.classList.remove("prep-tooltip-dock--passthrough");
-    dock.classList.toggle("hidden", !hasItemTip);
+    dock.classList.toggle("hidden", !hasItemTip || shopOpen);
     dock.classList.toggle("prep-tooltip-dock--item", hasItemTip);
     dock.classList.toggle("prep-tooltip-dock--hero-grid", isTabletSidePrepTooltipDock());
     if (hasItemTip) positionPrepTooltipDock();

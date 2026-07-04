@@ -9,7 +9,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .prep-build-emoji-btn--hero-field-float,
-  html[data-battle-hero-placement="flank-arena"] .avatar-thought-slot .battle-thought-body {
+  html[data-battle-hero-placement="flank-arena"]:not([data-thought-head-badge="true"]) .avatar-thought-slot .battle-thought-body {
     animation: none !important;
   }
 }
@@ -81,9 +81,9 @@ html[data-prep-layout="mobile"] .prep-build-emoji-btn--hero-field-float .prep-bu
   font-size: calc(32px * var(--ui-scale, 1));
 }
 
-/* ─── Battle: эмодзи-аватар без диска, левитация ─── */
+/* ─── Battle: эмодзи на combat floor — без диска, левитация ─── */
 
-html[data-battle-hero-placement="flank-arena"] .avatar-thought-slot .battle-thought-body {
+html[data-battle-hero-placement="flank-arena"]:not([data-thought-head-badge="true"]) .avatar-thought-slot .battle-thought-body {
   width: auto !important;
   height: auto !important;
   min-width: 0;
@@ -98,8 +98,15 @@ html[data-battle-hero-placement="flank-arena"] .avatar-thought-slot .battle-thou
   animation: player-spec-emoji-levitate 2.6s ease-in-out infinite;
 }
 
-html[data-battle-hero-placement="flank-arena"] .avatar-thought-slot .battle-thought-body::before {
+html[data-battle-hero-placement="flank-arena"]:not([data-thought-head-badge="true"]) .avatar-thought-slot .battle-thought-body::before {
   display: none !important;
+}
+
+/* Над героем: парящий бейдж (отдельно от HUD HP/стамины) */
+html[data-thought-above-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .avatar-thought-slot .battle-thought-body {
+  width: var(--thought-size, var(--battle-thought-emoji-size, 56px)) !important;
+  height: var(--thought-size, var(--battle-thought-emoji-size, 56px)) !important;
+  animation: player-spec-emoji-levitate 2.8s ease-in-out infinite;
 }
 
 /* Центральная арена без визуального шума — эмодзи только у колонок героев */

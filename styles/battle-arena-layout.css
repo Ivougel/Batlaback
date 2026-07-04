@@ -553,7 +553,7 @@ html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar
   position: fixed;
   overflow: visible;
   pointer-events: none;
-  z-index: 1;
+  z-index: 26;
 }
 
 html[data-thought-above-hero="true"] #app[data-phase="battle"] .battle-hud-status-stack,
