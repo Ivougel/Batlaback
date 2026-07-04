@@ -90,7 +90,7 @@ html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-ph
   z-index: 28;
 }
 
-/* JS: syncBattleHeroSpecAnchors — точная позиция над головой (перебивает % fallback). */
+/* JS: syncBattleHeroSpecAnchors — % fallback только пока слоты внутри prep-character-layer. */
 html[data-battle-spec-anchored="true"][data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-character-layer .prep-character-spec-slot {
   bottom: auto !important;
 }
@@ -100,7 +100,6 @@ html[data-battle-spec-anchored="true"][data-battle-prep-hero-layer="true"] #app:
 }
 
 html[data-battle-spec-anchored="true"][data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-character-layer #prep-character-spec-slot-enemy {
-  left: auto !important;
   right: auto !important;
 }
 

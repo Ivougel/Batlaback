@@ -901,10 +901,10 @@ const BattleHeroAnchor = (() => {
     }
 
     if (usesBattlePrepHeroThoughtAnchors()) {
-      const prepHead = getPrepSpecSlotThoughtAnchor(side);
-      if (prepHead) return prepHead;
       const nearHero = getHeroNearSpecAnchor(side);
       if (nearHero) return normalizeThoughtSlotAnchor(nearHero);
+      const prepHead = getPrepSpecSlotThoughtAnchor(side);
+      if (prepHead) return prepHead;
     }
 
     if (usesHeroAboveThoughtAnchors()) {

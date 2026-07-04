@@ -55,6 +55,30 @@ html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #battle
   z-index: calc(var(--z-layer-hud) + 6);
 }
 
+html[data-battle-hero-placement="flank-arena"] #battle-hero-spec-layer {
+  display: none;
+}
+
+html[data-battle-spec-layer="true"] #app[data-phase="prep"] #battle-hero-spec-layer,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #battle-hero-spec-layer,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #battle-hero-spec-layer {
+  display: block;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+  z-index: calc(var(--z-layer-hud) + 5);
+}
+
+html[data-battle-spec-layer="true"] #battle-hero-spec-layer .prep-character-spec-slot {
+  position: absolute;
+  pointer-events: auto;
+  z-index: 28;
+  margin: 0;
+  inset: auto;
+  transform: translate(-50%, -50%);
+}
+
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #battle-run-hud,
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #battle-run-hud {
   position: absolute;

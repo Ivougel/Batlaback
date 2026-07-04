@@ -656,6 +656,39 @@ function isBattlePrepHeroSpecFloat() {
     && (phase === "battle" || phase === "replay");
 }
 
+/** Бой/replay или prep tablet-side: спек-слоты на #battle-hero-spec-layer + fixed. */
+function isHeroSpecFloatLayerActive() {
+  if (isBattlePrepHeroSpecFloat()) return true;
+  const app = document.getElementById("app");
+  return app?.dataset?.phase === "prep"
+    && isPrepBuildEmojiHeroHudMount()
+    && isPrepFullBodyHeroLayerVisible();
+}
+
+function syncBattleSpecLayerMount() {
+  const root = document.documentElement;
+  const specLayer = document.getElementById("battle-hero-spec-layer");
+  const charLayer = document.getElementById("prep-character-layer");
+  const specLayerActive = isHeroSpecFloatLayerActive();
+  const slotIds = ["prep-character-spec-slot", "prep-character-spec-slot-enemy"];
+
+  root.toggleAttribute("data-battle-spec-layer", specLayerActive);
+
+  if (specLayer) {
+    specLayer.classList.toggle("hidden", !specLayerActive);
+    specLayer.toggleAttribute("aria-hidden", !specLayerActive);
+  }
+
+  if (!charLayer) return;
+
+  const home = specLayerActive && specLayer ? specLayer : charLayer;
+  slotIds.forEach((id) => {
+    const slot = document.getElementById(id);
+    if (!slot || slot.parentElement === home) return;
+    home.appendChild(slot);
+  });
+}
+
 function isPrepFullBodyHeroLayerVisible() {
   const app = document.getElementById("app");
   if (app?.dataset?.phase !== "prep") return false;
@@ -667,13 +700,7 @@ function shouldUseHeroFieldFloatMount() {
   const specSlot = document.getElementById("prep-character-spec-slot");
   if (!specSlot) return false;
   if (isBattlePrepHeroSpecFloat()) return true;
-  const app = document.getElementById("app");
-  // Tablet/desktop prep: спек в hero-card HUD (stats row), не float у full-body на поле.
-  if (app?.dataset?.phase === "prep" && isPrepBuildEmojiHeroHudMount()) {
-    const heroSlot = document.getElementById("prep-hero-card-build-slot");
-    if (heroSlot) return false;
-  }
-  return isPrepFullBodyHeroLayerVisible();
+  return isPrepFullBodyHeroLayerVisible() && isPrepBuildEmojiHeroHudMount();
 }
 
 function restorePrepBuildEmojiHeroSlot(heroCard, heroSlot) {
@@ -685,6 +712,7 @@ function restorePrepBuildEmojiHeroSlot(heroCard, heroSlot) {
 
 function syncPrepBuildEmojiBtnMount() {
   ensurePrepBuildEmojiDom();
+  syncBattleSpecLayerMount();
   const btn = document.getElementById("prep-build-emoji-btn");
   const heroSlot = document.getElementById("prep-hero-card-build-slot");
   const specSlot = document.getElementById("prep-character-spec-slot");
@@ -899,6 +927,7 @@ function syncBattleArchetypeFloatsFromRuntime() {
 window.syncBattleEnemyArchetypeFloat = syncBattleEnemyArchetypeFloat;
 window.syncBattlePlayerArchetypeFloat = syncBattlePlayerArchetypeFloat;
 window.syncBattleArchetypeFloatsFromRuntime = syncBattleArchetypeFloatsFromRuntime;
+window.syncBattleSpecLayerMount = syncBattleSpecLayerMount;
 window.hideBattleArchetypeFloat = hideBattleArchetypeFloat;
 
 function syncPrepBuildEmojiBtn(opts = {}) {

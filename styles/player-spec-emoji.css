@@ -43,7 +43,7 @@
   display: inline-flex !important;
 }
 
-/* Боевые float — только battle/replay; на prep не показываем «призрак» */
+/* Prep: battle-float скрыты; спек-кнопка — в #battle-hero-spec-layer */
 #app[data-phase="prep"] #prep-character-spec-slot-enemy,
 #app[data-phase="prep"] #battle-enemy-archetype-float,
 #app[data-phase="prep"] #battle-player-archetype-float {
@@ -52,8 +52,14 @@
   pointer-events: none !important;
 }
 
-/* Prep: кнопка спека игрока всегда видна поверх скрытого float-сibling */
-#app[data-phase="prep"] #prep-character-spec-slot .prep-build-emoji-btn--hero-field-float:not(.hidden) {
+#app[data-phase="prep"][data-battle-spec-layer="true"] #battle-hero-spec-layer #prep-character-spec-slot {
+  display: block !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+#app[data-phase="prep"] #prep-character-spec-slot .prep-build-emoji-btn--hero-field-float:not(.hidden),
+#app[data-phase="prep"][data-battle-spec-layer="true"] #battle-hero-spec-layer .prep-build-emoji-btn--hero-field-float:not(.hidden) {
   display: inline-flex !important;
   visibility: visible !important;
   pointer-events: auto !important;

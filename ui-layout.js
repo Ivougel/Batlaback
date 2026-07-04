@@ -2500,32 +2500,52 @@
     return r;
   }
 
-  function positionHeroSpecSlot(side, layerRect) {
+  function positionHeroSpecSlot(side, layerRect, useSpecLayer = false) {
     const slotId = side === "enemy" ? "prep-character-spec-slot-enemy" : "prep-character-spec-slot";
     const slot = document.getElementById(slotId);
     if (!slot || slot.getAttribute("aria-hidden") === "true") return false;
 
     let cx;
     let cy;
-    const heroRect = measureBattlePrepHeroRect(side);
-    if (heroRect) {
-      const xBias = 0.34;
-      cx = side === "enemy"
-        ? heroRect.left + heroRect.width * (0.5 - xBias)
-        : heroRect.left + heroRect.width * (0.5 + xBias);
-      cy = heroRect.top + heroRect.height * 0.12;
-    } else if (typeof BattleHeroAnchor !== "undefined") {
+
+    if (useSpecLayer && typeof BattleHeroAnchor !== "undefined") {
       const anchor = BattleHeroAnchor.getHeroNearSpecAnchor(side);
       if (anchor) {
         cx = anchor.cx;
         cy = anchor.cy;
       }
     }
+
+    if (cx == null || cy == null) {
+      const heroRect = measureBattlePrepHeroRect(side);
+      if (heroRect) {
+        const xBias = 0.34;
+        cx = side === "enemy"
+          ? heroRect.left + heroRect.width * (0.5 - xBias)
+          : heroRect.left + heroRect.width * (0.5 + xBias);
+        cy = heroRect.top + heroRect.height * 0.12;
+      } else if (typeof BattleHeroAnchor !== "undefined") {
+        const anchor = BattleHeroAnchor.getHeroNearSpecAnchor(side);
+        if (anchor) {
+          cx = anchor.cx;
+          cy = anchor.cy;
+        }
+      }
+    }
     if (cx == null || cy == null) return false;
 
-    slot.style.position = "absolute";
-    slot.style.left = `${cx - layerRect.left}px`;
-    slot.style.top = `${cy - layerRect.top}px`;
+    if (useSpecLayer) {
+      const specLayer = document.getElementById("battle-hero-spec-layer");
+      const hostRect = specLayer?.getBoundingClientRect();
+      if (!specLayer || !hostRect || hostRect.width < 1) return false;
+      slot.style.position = "absolute";
+      slot.style.left = `${cx - hostRect.left}px`;
+      slot.style.top = `${cy - hostRect.top}px`;
+    } else {
+      slot.style.position = "absolute";
+      slot.style.left = `${cx - layerRect.left}px`;
+      slot.style.top = `${cy - layerRect.top}px`;
+    }
     slot.style.right = "auto";
     slot.style.bottom = "auto";
     slot.style.transform = "translate(-50%, -50%)";
@@ -2541,14 +2561,11 @@
     const isBattle = app?.dataset?.phase === "battle" || app?.dataset?.phase === "replay";
     const battleLayer = root.dataset.battlePrepHeroLayer === "true" && isBattle;
     const prepLayer = app?.dataset?.phase === "prep";
-    const prepHeroCardHud = prepLayer && (
-      root.dataset.prepLayout === "side"
-      || root.dataset.uiSurface === "tablet-side"
-      || root.dataset.uiSurface === "desktop"
-    ) && document.getElementById("prep-hero-card-build-slot");
 
     if (!battleLayer && !prepLayer) {
       root.removeAttribute("data-battle-spec-anchored");
+      root.removeAttribute("data-battle-spec-anchored-player");
+      root.removeAttribute("data-battle-spec-anchored-enemy");
       root.removeAttribute("data-prep-spec-anchored");
       specIds.forEach((id) => {
         const el = document.getElementById(id);
@@ -2563,38 +2580,51 @@
       return;
     }
 
-    if (prepHeroCardHud) {
-      root.removeAttribute("data-prep-spec-anchored");
-      specIds.forEach((id) => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.style.removeProperty("left");
-        el.style.removeProperty("top");
-        el.style.removeProperty("right");
-        el.style.removeProperty("bottom");
-        el.style.removeProperty("transform");
-        el.style.removeProperty("z-index");
-      });
-      return;
+    if (typeof window.syncBattleSpecLayerMount === "function") {
+      window.syncBattleSpecLayerMount();
     }
+
+    const fixedSpecLayer = battleLayer || root.hasAttribute("data-battle-spec-layer");
 
     const layer = document.getElementById("prep-character-layer");
-    if (!layer || layer.getAttribute("aria-hidden") === "true") return;
-    const layerRect = layer.getBoundingClientRect();
-    if (layerRect.width < 40 || layerRect.height < 40) return;
+    const specLayer = document.getElementById("battle-hero-spec-layer");
+    if (fixedSpecLayer) {
+      if (!specLayer) return;
+    } else if (!layer || layer.getAttribute("aria-hidden") === "true") {
+      return;
+    }
+    const layerRect = fixedSpecLayer
+      ? { left: 0, top: 0, width: 1, height: 1 }
+      : layer.getBoundingClientRect();
+    if (!fixedSpecLayer && (layerRect.width < 40 || layerRect.height < 40)) return;
 
     let anchored = false;
     const sides = prepLayer && !battleLayer
       ? [app?.dataset?.prepSide === "enemy" ? "enemy" : "player"]
       : ["player", "enemy"];
     sides.forEach((side) => {
-      if (positionHeroSpecSlot(side, layerRect)) anchored = true;
+      if (positionHeroSpecSlot(side, layerRect, fixedSpecLayer)) {
+        anchored = true;
+        if (battleLayer) {
+          root.dataset[`battleSpecAnchored${side === "enemy" ? "Enemy" : "Player"}`] = "true";
+        } else {
+          root.dataset.prepSpecAnchored = "true";
+        }
+      } else if (battleLayer) {
+        root.removeAttribute(`battleSpecAnchored${side === "enemy" ? "Enemy" : "Player"}`);
+      }
     });
 
     if (anchored) {
-      root.dataset[battleLayer ? "battleSpecAnchored" : "prepSpecAnchored"] = "true";
-      if (battleLayer) root.removeAttribute("data-prep-spec-anchored");
-      else root.removeAttribute("data-battle-spec-anchored");
+      if (battleLayer) {
+        root.dataset.battleSpecAnchored = "true";
+        root.removeAttribute("data-prep-spec-anchored");
+      } else {
+        root.dataset.prepSpecAnchored = "true";
+        root.removeAttribute("data-battle-spec-anchored");
+        root.removeAttribute("data-battle-spec-anchored-player");
+        root.removeAttribute("data-battle-spec-anchored-enemy");
+      }
       if (prepLayer && typeof window.syncPrepBuildEmojiBtnMount === "function") {
         window.syncPrepBuildEmojiBtnMount();
       }
