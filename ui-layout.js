@@ -1051,10 +1051,11 @@
     return { hudLeft, hudWidth };
   }
 
-  /** Full-body prep hero: HP/stamina под ногами спрайта (не hip-ratio). */
-  function measureBattleHudBelowHeroTopVp(heroRect, vpRect, uiScale = readCssPx("--ui-scale", 1)) {
-    const barsGap = Math.round(6 * uiScale);
-    return Math.max(0, Math.round(heroRect.bottom - vpRect.top + barsGap));
+  /** Full-body prep hero: HUD (чипы + HP/stamina) над головой спрайта. */
+  function measureBattleHudAboveHeroTopVp(heroRect, vpRect, hudHeight, uiScale = readCssPx("--ui-scale", 1)) {
+    const gap = Math.round(6 * uiScale);
+    const bandH = Math.max(40, Math.round(hudHeight));
+    return Math.max(0, Math.round(heroRect.top - vpRect.top - bandH - gap));
   }
 
   function syncBattleHudAnchors() {
@@ -1085,13 +1086,13 @@
       && usesBattlePrepHeroLayer(root);
 
     if (prepHeroLayer) {
-      root.dataset.battleHudBelowHero = "true";
+      root.dataset.battleHudAboveHero = "true";
       root.style.setProperty(
         "--battle-vitals-band-h",
         `${measureBattleHudVitalsBandPx(readCssPx("--ui-scale", 1))}px`,
       );
     } else {
-      root.removeAttribute("data-battle-hud-below-hero");
+      root.removeAttribute("data-battle-hud-above-hero");
       root.style.removeProperty("--battle-vitals-band-h");
     }
 
@@ -1149,9 +1150,10 @@
         if (prepRect && prepRect.height >= 48) {
           const zoneW = readCssPx(zoneWidthVar, 180);
           const column = measureBattleHudPrepColumnVp(team, prepRect, vpRect, zoneW, uiScale);
-          const hudTopPx = measureBattleHudBelowHeroTopVp(prepRect, vpRect, uiScale);
           const barsBlock = measureBattleHudBarsBlockPx(uiScale);
           const chipBand = measureBattleHudChipBandPx(uiScale);
+          const hudHeight = chipBand + barsGap + barsBlock;
+          const hudTopPx = measureBattleHudAboveHeroTopVp(prepRect, vpRect, hudHeight, uiScale);
 
           hud.style.left = `${column.hudLeft}px`;
           hud.style.width = `${column.hudWidth}px`;
@@ -2232,7 +2234,7 @@
       root.removeAttribute("data-tablet-thought-corners");
       root.removeAttribute("data-thought-slot-below-hero");
       root.removeAttribute("data-battle-combat-floor");
-      root.removeAttribute("data-battle-hud-below-hero");
+      root.removeAttribute("data-battle-hud-above-hero");
       root.removeAttribute("data-thought-duel-center");
       syncHeroEmotionSlotAnchors._layout = null;
       return;
@@ -2492,7 +2494,7 @@
         const heroBottomScene = Math.round(
           Math.max(playerRect.bottom, enemyRect.bottom) - sceneRect.top,
         );
-        const combatFloorTop = Math.round(heroBottomScene + vitalsBandH + arenaGap);
+        const combatFloorTop = Math.round(heroBottomScene + arenaGap);
         const combatFloorH = Math.max(
           readCssPx("--battle-thought-arena-min-h", 110),
           layoutHeight - combatFloorTop - toolbarReserve - arenaGap,

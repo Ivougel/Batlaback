@@ -1,0 +1,319 @@
+/**
+ * MMORPG unit-frame HUD на prep — включается через html[data-prep-hud-preset="unit-frame"].
+ */
+
+html[data-prep-hud-preset="unit-frame"] #app[data-phase="prep"] .prep-top-bar {
+  --prep-top-bar-h: auto;
+  align-items: stretch;
+  gap: calc(8px * var(--ui-scale, 1));
+  padding:
+    calc(6px * var(--ui-scale, 1))
+    calc(10px * var(--ui-scale, 1))
+    calc(8px * var(--ui-scale, 1));
+  background: transparent !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+
+html[data-prep-hud-preset="unit-frame"] #app[data-phase="prep"] .prep-top-bar::before {
+  display: none;
+}
+
+.prep-unit-frame-hud.hidden,
+#prep-hero-card[hidden] {
+  display: none !important;
+}
+
+.prep-unit-frame-hud {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: calc(12px * var(--ui-scale, 1));
+  width: 100%;
+  min-width: 0;
+  pointer-events: none;
+}
+
+.prep-unit-frame {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: min(48%, calc(280px * var(--ui-scale, 1)));
+  pointer-events: auto;
+}
+
+.prep-unit-frame--player {
+  margin-right: auto;
+}
+
+.prep-unit-frame--enemy {
+  margin-left: auto;
+}
+
+.prep-unit-frame__shell {
+  position: relative;
+  padding: calc(3px * var(--ui-scale, 1));
+  border-radius: calc(10px * var(--ui-scale, 1));
+  background:
+    linear-gradient(180deg, rgba(42, 34, 28, 0.95) 0%, rgba(18, 14, 12, 0.98) 100%);
+  border: 2px solid rgba(72, 58, 46, 0.9);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.35),
+    0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.prep-unit-frame.is-active .prep-unit-frame__shell {
+  border-color: rgba(220, 60, 50, 0.85);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(255, 80, 60, 0.45),
+    0 0 18px rgba(220, 40, 30, 0.55),
+    0 0 36px rgba(180, 20, 10, 0.25);
+}
+
+.prep-unit-frame__main {
+  display: flex;
+  align-items: center;
+  gap: calc(8px * var(--ui-scale, 1));
+  min-width: 0;
+}
+
+.prep-unit-frame--enemy .prep-unit-frame__main {
+  flex-direction: row-reverse;
+}
+
+.prep-unit-frame__portrait-ring {
+  position: relative;
+  flex: 0 0 auto;
+  width: calc(58px * var(--ui-scale, 1));
+  height: calc(58px * var(--ui-scale, 1));
+  border-radius: 50%;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 35% 28%, rgba(255, 255, 255, 0.14), rgba(8, 8, 12, 0.92) 68%);
+  border: 3px solid rgba(58, 48, 38, 0.95);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 220, 160, 0.18),
+    0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+.prep-unit-frame__portrait-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 18%;
+  transform: scale(1.35);
+  transform-origin: center 22%;
+}
+
+.prep-unit-frame__portrait-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: calc(26px * var(--ui-scale, 1));
+}
+
+.prep-unit-frame__level-badge {
+  position: absolute;
+  bottom: calc(2px * var(--ui-scale, 1));
+  left: calc(2px * var(--ui-scale, 1));
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: calc(22px * var(--ui-scale, 1));
+  height: calc(22px * var(--ui-scale, 1));
+  padding: 0 calc(4px * var(--ui-scale, 1));
+  border-radius: 50%;
+  background: linear-gradient(180deg, #2a2218, #120e0a);
+  border: 2px solid rgba(200, 160, 56, 0.75);
+  color: #f5d76e;
+  font-size: calc(11px * var(--ui-scale, 1));
+  font-weight: 800;
+  line-height: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+.prep-unit-frame--enemy .prep-unit-frame__level-badge {
+  left: auto;
+  right: calc(2px * var(--ui-scale, 1));
+}
+
+.prep-unit-frame__vitals {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(3px * var(--ui-scale, 1));
+}
+
+.prep-unit-frame__name {
+  font-size: calc(13px * var(--ui-scale, 1));
+  font-weight: 800;
+  color: #f5d76e;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  line-height: 1.15;
+}
+
+.prep-unit-frame--enemy .prep-unit-frame__name {
+  text-align: center;
+}
+
+.prep-unit-frame__bars {
+  display: flex;
+  flex-direction: column;
+  gap: calc(2px * var(--ui-scale, 1));
+  width: 100%;
+}
+
+.prep-unit-frame__hp-bar.avatar-hero-hp-bar,
+.prep-unit-frame__resource-bar {
+  position: relative;
+  height: calc(16px * var(--ui-scale, 1));
+  border-radius: calc(4px * var(--ui-scale, 1));
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.55);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+.prep-unit-frame__resource-track {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  background: rgba(20, 28, 48, 0.85);
+}
+
+.prep-unit-frame__resource-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: inherit;
+  transition: width 0.25s ease-out;
+}
+
+.prep-unit-frame__resource-bar--gold .prep-unit-frame__resource-fill {
+  background: linear-gradient(90deg, #1a4a8a, #3b82f6);
+}
+
+.prep-unit-frame__resource-bar--round .prep-unit-frame__resource-fill {
+  background: linear-gradient(90deg, #1f6b32, #3fb950);
+}
+
+.prep-unit-frame__resource-label {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0 calc(6px * var(--ui-scale, 1));
+  font-size: calc(10px * var(--ui-scale, 1));
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+  white-space: nowrap;
+}
+
+.prep-unit-frame__hp-bar .avatar-hero-hp-label {
+  font-size: calc(10px * var(--ui-scale, 1));
+}
+
+.prep-unit-frame__pet {
+  display: flex;
+  align-items: center;
+  gap: calc(6px * var(--ui-scale, 1));
+  margin-top: calc(4px * var(--ui-scale, 1));
+  padding:
+    calc(3px * var(--ui-scale, 1))
+    calc(6px * var(--ui-scale, 1));
+  border-radius: calc(6px * var(--ui-scale, 1));
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(72, 58, 46, 0.65);
+}
+
+.prep-unit-frame__pet-portrait {
+  flex: 0 0 auto;
+  width: calc(24px * var(--ui-scale, 1));
+  height: calc(24px * var(--ui-scale, 1));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(14px * var(--ui-scale, 1));
+  background: rgba(12, 10, 8, 0.85);
+  border: 1px solid rgba(90, 72, 54, 0.7);
+}
+
+.prep-unit-frame__pet-vitals {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.prep-unit-frame__pet-name {
+  font-size: calc(10px * var(--ui-scale, 1));
+  font-weight: 700;
+  color: rgba(245, 237, 212, 0.92);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.prep-unit-frame__extras {
+  margin-top: calc(4px * var(--ui-scale, 1));
+  display: flex;
+  flex-direction: column;
+  gap: calc(4px * var(--ui-scale, 1));
+  min-width: 0;
+}
+
+.prep-unit-frame__extras .mutation-progress--hero-card,
+.prep-unit-frame__extras .prep-enhancement-strip--hero-card {
+  margin: 0;
+  padding: calc(4px * var(--ui-scale, 1)) calc(6px * var(--ui-scale, 1));
+  border-radius: calc(6px * var(--ui-scale, 1));
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(72, 58, 46, 0.5);
+}
+
+.prep-unit-frame__extras .mutation-progress-eyebrow,
+.prep-unit-frame__extras .prep-enhancement-eyebrow {
+  font-size: calc(9px * var(--ui-scale, 1));
+}
+
+.prep-unit-frame__extras .mutation-progress-target,
+.prep-unit-frame__extras .mutation-progress-meta {
+  font-size: calc(10px * var(--ui-scale, 1));
+}
+
+.prep-unit-frame__extras .prep-modifier-strip {
+  padding: calc(2px * var(--ui-scale, 1)) 0 0;
+}
+
+html[data-prep-hud-preset="unit-frame"] #app[data-phase="prep"] .prep-hud-chrome {
+  position: absolute;
+  left: calc(10px * var(--ui-scale, 1));
+  top: 100%;
+}
+
+html[data-prep-hud-preset="unit-frame"][data-visual-theme="diablo"] .prep-unit-frame__shell {
+  background:
+    linear-gradient(180deg, rgba(28, 20, 16, 0.97) 0%, rgba(10, 8, 6, 0.99) 100%);
+  border-color: rgba(120, 80, 40, 0.75);
+}
+
+html[data-prep-hud-preset="unit-frame"][data-visual-theme="diablo"] .prep-unit-frame.is-active .prep-unit-frame__shell {
+  border-color: rgba(200, 60, 30, 0.9);
+  box-shadow:
+    0 0 0 1px rgba(220, 100, 40, 0.4),
+    0 0 20px rgba(180, 40, 10, 0.5);
+}

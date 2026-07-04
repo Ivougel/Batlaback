@@ -30,7 +30,7 @@ const EXPANSION_SHOP = [
   "shadow_blade", "shield_of_valor", "snowmaster", "speed_amulet", "spider_web",
   "stable_recombobulator", "stamina_sack", "stone_golem", "storage_chest", "tim",
   "time_dilator", "unsettling_presence", "unstable_recombobulator", "utility_pouch",
-  "walrus_tusk", "war_hammer", "whetstone", "wolpertinger", "wonky_snowman",
+  "walrus_tusk", "war_hammer", "whetstone",   "wolpertinger", "shovel",
   "crossblades", "eggscalibur", "enchanted_staff", "falcon_blade", "hero_long_sword",
   "hero_sword", "manathirst", "spectral_dagger", "the_fool", "burning_coal",
   "flawed_amethyst", "flawed_emerald", "flawed_ruby", "flawed_sapphire", "flawed_topaz",
@@ -46,7 +46,7 @@ const EXPANSION_SHOP = [
 
 const EXPANSION_CRAFT_IDS = new Set([
   "crossblades", "eggscalibur", "enchanted_staff", "falcon_blade", "hero_long_sword",
-  "hero_sword", "manathirst", "spectral_dagger", "the_fool", "burning_coal",
+  "hero_sword", "manathirst", "shovel", "spectral_dagger", "the_fool", "burning_coal",
   "flawed_amethyst", "flawed_emerald", "flawed_ruby", "flawed_sapphire", "flawed_topaz",
   "lucky_clover", "ace_of_spades", "carrot", "forging_hammer", "reverse", "the_lovers",
   "dragon_claws", "jimbo", "rat", "regular_amethyst", "regular_emerald", "regular_ruby",

@@ -9212,50 +9212,54 @@
       "protected": false
     },
     {
-      "id": "wonky_snowman",
-      "name": "Кривой снеговик",
-      "icon": "⛄",
-      "color": "#a371f7",
+      "id": "shovel",
+      "name": "Лопата",
+      "icon": "⛏️",
+      "color": "#58a6ff",
       "shape": [
         [
           0,
           0
+        ],
+        [
+          0,
+          1
         ]
       ],
-      "classRestriction": null,
-      "rarity": "epic",
+      "rarity": "rare",
       "cost": 8,
       "tags": [
-        "accessory",
-        "cold"
+        "weapon",
+        "debuff",
+        "melee",
+        "craft"
       ],
-      "cooldown": 3,
-      "craftOnly": false,
+      "cooldown": 2.2,
       "effects": [
         {
-          "type": "slow",
-          "value": 0.12,
-          "duration": 4
-        },
-        {
-          "type": "buffTimed",
-          "stat": "damage",
-          "value": 0.1,
-          "duration": 6
+          "type": "damage",
+          "value": 6,
+          "valueMin": 5,
+          "valueMax": 8
         },
         {
           "type": "slow",
           "value": 0.12,
-          "duration": 4,
-          "trigger": "on_hit",
-          "chance": 0.5
+          "duration": 3,
+          "chance": 0.4
         }
       ],
-      "synergies": [],
-      "description": "50% замедление при попадании.",
-      "goldPerRound": 0,
-      "buildHints": "Билд: лёд",
-      "protected": false
+      "craftOnly": false,
+      "description": "[при входе в магазин]: Выкопать случайный предмет. [при попадании]: 40% шанс наложить 1 стак(ов)",
+      "staminaCost": 1.5,
+      "damage": 6,
+      "metaEffects": [
+        {
+          "phase": "shop_enter",
+          "type": "dig_item",
+          "value": 1
+        }
+      ]
     },
     {
       "id": "starter_bag",

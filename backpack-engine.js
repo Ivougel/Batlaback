@@ -443,7 +443,11 @@ function applySynergyModifiers(items) {
         const targetItem = rule.target === "neighbor" ? entry.item : item;
         if (!targetItem.runtime) targetItem.runtime = createRuntimeState(targetItem);
         applySynergyEffect(rule, item, targetItem, entry);
-        targetItem.runtime.activeSynergies.push({ from: def.name, desc: rule.desc });
+        targetItem.runtime.activeSynergies.push({
+          from: def.name,
+          desc: typeof formatSynergyHumanDesc === "function" ? formatSynergyHumanDesc(rule) : rule.desc,
+          ruleId: rule.id,
+        });
       });
     });
   });

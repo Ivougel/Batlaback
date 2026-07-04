@@ -60,7 +60,7 @@ body:has(#overlay:not(.hidden)) .bottom-chrome {
 }
 
 body:has(#class-overlay:not(.hidden)) .bottom-chrome {
-  z-index: 105;
+  z-index: calc(var(--z-system) + 5);
 }
 
 body:has(#class-overlay:not(.hidden)) .bottom-chrome-start,

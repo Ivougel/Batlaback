@@ -1663,9 +1663,11 @@ function showEnhancementTooltipAt(clientX, clientY, def, context = "shop", sourc
   positionSidebarTooltip(clientX, clientY, boundsKind, context);
 }
 
-function bindPrepEnhancementStrip(side = prepViewSide) {
-  const strip = document.getElementById("prep-enhancement-strip");
-  if (!strip) return;
+function bindPrepEnhancementStrip(side = prepViewSide, root = null) {
+  const strips = root
+    ? root.querySelectorAll(".prep-enhancement-strip")
+    : [document.getElementById("prep-enhancement-strip")].filter(Boolean);
+  strips.forEach((strip) => {
   strip.querySelectorAll(".enh-slot--filled").forEach((slotEl) => {
     const enhId = slotEl.dataset.enhId;
     const slotId = slotEl.dataset.enhSlot;
@@ -1701,6 +1703,7 @@ function bindPrepEnhancementStrip(side = prepViewSide) {
       if (e.pointerType !== "mouse" || e.button !== 0) return;
       try { slotEl.releasePointerCapture(e.pointerId); } catch (_) {}
     });
+  });
   });
 }
 
@@ -3543,6 +3546,7 @@ function init() {
     });
   }
   if (typeof initVisualTheme === "function") initVisualTheme();
+  if (typeof initPrepHudPreset === "function") initPrepHudPreset();
   if (typeof initSoundTheme === "function") initSoundTheme();
   if (typeof initPrepBuildEmojiBtn === "function") initPrepBuildEmojiBtn();
   if (typeof initLightBattleFxControls === "function") initLightBattleFxControls();
@@ -8484,7 +8488,11 @@ function describeEffect(e) {
     case "cleanseDebuffs": return `✨ Снять ${e.value || 1} дебафф(ов)`;
     case "stealWeaponDamage": return `🗡 Украсть ${e.value || 1} урона с оружия противника`;
     case "damagePerFoeDebuff": return `☠ +${e.value || 0.5} урона за дебафф противника`;
-    case "damagePerTag": return `🏷 +${e.value || 1} урона за предмет с ${typeof formatItemTagMechanic === "function" ? formatItemTagMechanic(e.tag || "food") : `[${formatTagLabel(e.tag || "food")}]`}`;
+    case "damagePerTag": {
+      const tagLabel = typeof formatTagLabel === "function" ? formatTagLabel(e.tag || "food") : (e.tag || "еда");
+      const val = e.value || 1;
+      return `🏷 +${val} к урону за каждую «${tagLabel}» на вашем поле`;
+    }
     case "hpThreshold": {
       const pct = Math.round((e.threshold || 0.7) * 100);
       const dir = e.direction === "above" ? "выше" : "ниже";
@@ -8924,7 +8932,9 @@ function buildItemTooltipLines(def, contentItem, rotation, context = "field") {
   }
 
   getUniqueItemSynergies(def).forEach((s) => {
-    const desc = typeof localizeSynergyDesc === "function" ? localizeSynergyDesc(s.desc) : s.desc;
+    const desc = typeof formatSynergyHumanDesc === "function"
+      ? formatSynergyHumanDesc(s)
+      : (typeof localizeSynergyDesc === "function" ? localizeSynergyDesc(s.desc) : s.desc);
     if (isTooltipTextCoveredBy(desc, canonicalEffectTexts)) return;
     lines.push({ text: desc, style: "normal", color: "#79c0ff" });
   });
@@ -8956,7 +8966,10 @@ function buildItemTooltipLines(def, contentItem, rotation, context = "field") {
     if (rt.activeSynergies?.length) {
       lines.push({ sep: true });
       lines.push({ text: "Активно:", style: "label", color: "#58a6ff" });
-      rt.activeSynergies.forEach((s) => lines.push({ text: s.desc, style: "normal", color: "#58a6ff" }));
+      const activeLines = typeof formatActiveSynergyTooltipLines === "function"
+        ? formatActiveSynergyTooltipLines(rt.activeSynergies)
+        : rt.activeSynergies.map((s) => s.desc);
+      activeLines.forEach((text) => lines.push({ text, style: "normal", color: "#58a6ff" }));
     }
   }
 
@@ -10400,6 +10413,56 @@ function getPrepHeroCardName(profile) {
     : profile?.className || "Герой";
 }
 
+function collectPrepSideHudBundle(side, profile) {
+  const mutRt = getSideMutationRuntime(side);
+  const st = getSideState(side);
+  const mutationProgress = typeof resolveMutationProgress === "function"
+    ? resolveMutationProgress({
+      classId: mutRt.classId,
+      companionId: mutRt.companionId,
+      items: mutRt.items,
+      enhancements: mutRt.enhancements,
+      round,
+    })
+    : null;
+  const companion = typeof getCompanionById === "function" ? getCompanionById(mutRt.companionId) : null;
+  const heroCardHud = isPrepHeroCardHud();
+  const mutationHtml = typeof renderMutationProgressHtml === "function"
+    ? renderMutationProgressHtml(mutationProgress, mutRt.formId, mutRt.mutationId, round, { heroCard: heroCardHud })
+    : "";
+  const enhancementHtml = typeof renderPrepEnhancementStripHtml === "function"
+    ? renderPrepEnhancementStripHtml(round, mutRt.enhancements, { heroCard: heroCardHud })
+    : "";
+  const keyStatusHtml = typeof renderPrepBuildKeyStatusHtml === "function"
+    ? renderPrepBuildKeyStatusHtml(mutRt.items)
+    : "";
+  const ampStatusHtml = typeof renderPrepAmplifierStatusHtml === "function"
+    ? renderPrepAmplifierStatusHtml(mutRt.items)
+    : "";
+  const modifierStripHtml = typeof renderPrepModifierStripHtml === "function"
+    ? renderPrepModifierStripHtml(mutRt.items)
+    : `${keyStatusHtml}${ampStatusHtml}`;
+
+  const lobbyPlayer = isLobbyMode() ? getLobbyPlayer(lobbyState) : null;
+  const viewedFighter = isLobbyMode() ? getLobbyFighterById(lobbyState, lobbyViewFighterId) : null;
+  const hpLabel = viewedFighter && side === (prepViewSide || "player")
+    ? `${viewedFighter.hp}/${LOBBY_START_HP}`
+    : lobbyPlayer && side === "player"
+      ? `${lobbyPlayer.hp}/${LOBBY_START_HP}`
+      : profile.hpDisplay;
+
+  return {
+    profile,
+    mutRt,
+    st,
+    companion,
+    mutationHtml,
+    enhancementHtml,
+    modifierStripHtml,
+    hpLabel,
+  };
+}
+
 let prepDollBtnHome = null;
 
 function syncPrepHeroCardChrome(side = prepViewSide || "player") {
@@ -10451,6 +10514,7 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
       prepPlayer?.setAttribute("hidden", "");
       prepEnemy?.setAttribute("hidden", "");
       if (statsHud) statsHud.innerHTML = "";
+      if (typeof syncPrepUnitFrameHudChrome === "function") syncPrepUnitFrameHudChrome();
       return;
     }
     layer?.setAttribute("aria-hidden", "false");
@@ -10626,6 +10690,39 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
   }
 
   syncPrepHeroCardChrome(side);
+
+  if (typeof syncPrepUnitFrameHud === "function") {
+    const unitFrameActive = typeof isPrepUnitFrameHudActive === "function" && isPrepUnitFrameHudActive();
+    if (unitFrameActive) {
+      const playerBundle = collectPrepSideHudBundle("player", playerProfile);
+      const enemyBundle = collectPrepSideHudBundle("enemy", enemyProfile);
+      const roundLabel = isLobbyMode()
+        ? `${round}`
+        : `${Math.min(round, RUN_BATTLES)}/${RUN_BATTLES}`;
+      syncPrepUnitFrameHud({
+        playerProfile,
+        enemyProfile,
+        playerState: playerBundle.st,
+        enemyState: enemyBundle.st,
+        playerMutRt: playerBundle.mutRt,
+        enemyMutRt: enemyBundle.mutRt,
+        playerMutationHtml: playerBundle.mutationHtml,
+        enemyMutationHtml: enemyBundle.mutationHtml,
+        playerEnhancementHtml: playerBundle.enhancementHtml,
+        enemyEnhancementHtml: enemyBundle.enhancementHtml,
+        playerModifierHtml: playerBundle.modifierStripHtml,
+        enemyModifierHtml: enemyBundle.modifierStripHtml,
+        playerCompanion: playerBundle.companion,
+        enemyCompanion: enemyBundle.companion,
+        playerHpLabel: playerBundle.hpLabel,
+        enemyHpLabel: enemyBundle.hpLabel,
+        roundLabel,
+        activeSide: side,
+      });
+    } else if (typeof syncPrepUnitFrameHudChrome === "function") {
+      syncPrepUnitFrameHudChrome();
+    }
+  }
 
   if (phase === "prep" && !isAnyLobbyMode() && typeof tickSoloPrepThoughts === "function") {
     tickSoloPrepThoughts();

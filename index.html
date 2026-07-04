@@ -74,10 +74,11 @@
   <link rel="stylesheet" href="styles/prep-juice.css?v=10">
   <link rel="stylesheet" href="styles/item-rarity-glow.css?v=2">
   <link rel="stylesheet" href="styles/prep-forest-hud.css?v=3">
+  <link rel="stylesheet" href="styles/prep-unit-frame-hud.css?v=1">
   <link rel="stylesheet" href="styles/prep-timer-hero.css?v=3">
-  <link rel="stylesheet" href="styles/battle-result-glass.css?v=5">
+  <link rel="stylesheet" href="styles/battle-result-glass.css?v=6">
   <link rel="stylesheet" href="styles/battle-aura-frame.css?v=6">
-  <link rel="stylesheet" href="styles/battle-result-theater.css?v=4">
+  <link rel="stylesheet" href="styles/battle-result-theater.css?v=5">
   <link rel="stylesheet" href="styles/screen-transitions.css?v=2">
   <link rel="stylesheet" href="styles/ui-ornament-frame.css?v=1">
   <link rel="stylesheet" href="styles/escape-menu.css?v=1">
@@ -98,6 +99,13 @@
         document.documentElement.setAttribute("data-visual-theme", t);
       } catch (e) {
         document.documentElement.setAttribute("data-visual-theme", "meadow");
+      }
+      try {
+        var h = localStorage.getItem("bb-prep-hud-preset") || "hero-card";
+        if (h !== "hero-card" && h !== "unit-frame") h = "hero-card";
+        document.documentElement.setAttribute("data-prep-hud-preset", h);
+      } catch (e2) {
+        document.documentElement.setAttribute("data-prep-hud-preset", "hero-card");
       }
     })();
   </script>
@@ -161,6 +169,7 @@
                   <div class="prep-hero-card__doll-mount" id="prep-hero-card-doll-mount"></div>
                 </div>
               </div>
+              <div class="prep-unit-frame-hud hidden" id="prep-unit-frame-hud" aria-hidden="true" aria-label="Статус бойцов"></div>
               <div class="prep-hud-chrome" id="prep-hud-chrome">
                 <div class="prep-hero-tooltip hidden" id="prep-hero-tooltip" role="dialog" aria-labelledby="prep-hero-tooltip-title">
                   <div class="prep-hero-tooltip-title" id="prep-hero-tooltip-title"></div>
@@ -680,9 +689,6 @@
           </div>
         </div>
       </div>
-      <div class="battle-result-countdown hidden" id="battle-result-countdown" aria-hidden="true">
-        <span class="battle-result-countdown-digit" id="battle-result-countdown-digit" role="timer" aria-live="assertive"></span>
-      </div>
       <div class="modal battle-result-modal">
         <div class="battle-result-help" id="battle-result-help">
           <button type="button" class="battle-result-help-btn" aria-label="Подсказки управления" aria-expanded="false" aria-controls="battle-result-help-tooltip">?</button>
@@ -701,6 +707,9 @@
         <p id="battle-result-view-hint" class="battle-result-view-hint hidden" aria-live="polite"></p>
         <div id="battle-result-accordions"></div>
         <div class="battle-result-actions">
+          <div class="battle-result-countdown hidden" id="battle-result-countdown" aria-hidden="true">
+            <span class="battle-result-countdown-digit" id="battle-result-countdown-digit" role="timer" aria-live="assertive"></span>
+          </div>
           <button type="button" class="btn-secondary hidden" id="btn-battle-replay">↻ Посмотреть бой</button>
           <button class="btn-primary" id="btn-battle-continue">Продолжить</button>
         </div>
@@ -794,6 +803,25 @@
             <span class="settings-theme-copy">
               <span class="settings-theme-name">🔥 Sanctuary</span>
               <span class="settings-theme-hint">Diablo — камень, золото и кровь на том же заднике</span>
+            </span>
+          </label>
+        </div>
+        <div class="settings-row settings-row--theme">
+          <span class="settings-label" id="settings-prep-hud-label">🎯 HUD подготовки</span>
+        </div>
+        <div class="settings-theme-picker" role="radiogroup" aria-labelledby="settings-prep-hud-label">
+          <label class="settings-theme-option settings-prep-hud-option">
+            <input type="radio" name="prep-hud-preset" value="hero-card" checked>
+            <span class="settings-theme-copy">
+              <span class="settings-theme-name">🃏 Карточка героя</span>
+              <span class="settings-theme-hint">Текущий вид — bust-портрет, мутации и усиления</span>
+            </span>
+          </label>
+          <label class="settings-theme-option settings-prep-hud-option">
+            <input type="radio" name="prep-hud-preset" value="unit-frame">
+            <span class="settings-theme-copy">
+              <span class="settings-theme-name">⚔️ Unit Frame</span>
+              <span class="settings-theme-hint">MMORPG — круглые портреты, полосы HP, игрок и цель</span>
             </span>
           </label>
         </div>
@@ -1045,6 +1073,8 @@
   <script src="components/battle-inventory-popover.js?v=13"></script>
   <script src="components/recipe-book.js?v=2"></script>
   <script src="systems/visual-theme.js?v=1"></script>
+  <script src="systems/prep-hud-preset.js?v=1"></script>
+  <script src="components/prep-unit-frame-hud.js?v=1"></script>
   <script src="components/settings.js"></script>
   <script src="components/pass-laugh-balls.js?v=1"></script>
   <script src="components/escape-menu.js"></script>

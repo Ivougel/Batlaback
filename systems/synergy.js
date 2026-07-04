@@ -20,27 +20,98 @@ const SYNERGY_VISUAL = {
 };
 
 function formatSynergyBonus(rule) {
-  const { apply } = rule;
-  if (!apply) return rule.desc || "";
+  return formatSynergyHumanDesc(rule);
+}
+
+/** Простые подписи тегов для подсказок (без [скобок]). */
+function formatSynergyTagLabels(tags) {
+  const labels = (tags || []).map((tag) => (
+    typeof formatTagLabel === "function" ? formatTagLabel(tag) : tag
+  ));
+  if (!labels.length) return "нужный предмет";
+  if (labels.length === 1) return labels[0];
+  if (labels.length === 2) return `${labels[0]} или ${labels[1]}`;
+  return `${labels.slice(0, -1).join(", ")} или ${labels[labels.length - 1]}`;
+}
+
+/** Как должны стоять предметы: сбоку / по диагонали. */
+function formatSynergyPlacementPhrase(rule) {
+  if (rule.adjacency === "weak") return "Если по диагонали стоит";
+  if (rule.adjacency === "both") return "Если рядом или по диагонали стоит";
+  return "Если рядом стоит";
+}
+
+/** Что именно даёт синергия — коротко и по-русски. */
+function formatSynergyApplyPhrase(apply) {
+  if (!apply) return "";
+  const v = apply.value;
   switch (apply.type) {
-    case "cooldownReduction":
-      return `−${Math.round(apply.value * 100)}% кулдаун`;
     case "damageBonus":
-      return `+${apply.value} урона`;
+      return `+${v} к урону`;
     case "healBonus":
-      return `+${apply.value} лечения`;
+      return `+${v} к лечению`;
     case "blockBonus":
-      return `+${apply.value} блока`;
+      return `+${v} к блоку`;
     case "poisonBonus":
-      return `+${apply.value} яда`;
-    case "grantBlockBuff":
-      return `+${apply.value} атаки соседнему оружию`;
+      return `+${v} к яду`;
+    case "cooldownReduction":
+      return `срабатывает на ${Math.round(v * 100)}% быстрее`;
+    case "grantBlockBuff": {
+      const cap = apply.cap ? ` (не больше +${apply.cap} за бой)` : "";
+      return `+${v} к урону соседнего оружия, когда вы блокируете${cap}`;
+    }
     default:
-      return rule.desc || apply.type;
+      return "";
   }
 }
 
+/**
+ * Человеческое описание синергии — совпадает с тем, что реально делает код.
+ * target "self" — бонус получает этот предмет; "neighbor" — соседний.
+ */
+function formatSynergyHumanDesc(rule) {
+  if (!rule?.apply) return rule?.desc || "";
+
+  const bonus = formatSynergyApplyPhrase(rule.apply);
+  if (!bonus) return rule.desc || "";
+
+  const placement = formatSynergyPlacementPhrase(rule);
+  const neighbor = formatSynergyTagLabels(rule.neighborTags);
+
+  if (rule.apply.type === "grantBlockBuff") {
+    return `${placement} ${neighbor}: ${bonus}`;
+  }
+
+  if (rule.target === "neighbor") {
+    if (rule.apply.type === "cooldownReduction") {
+      return `${placement} ${neighbor} — сосед ${bonus}`;
+    }
+    return `${placement} ${neighbor} — сосед получает ${bonus}`;
+  }
+
+  if (rule.apply.type === "cooldownReduction") {
+    return `${placement} ${neighbor} — этот предмет ${bonus}`;
+  }
+
+  return `${placement} ${neighbor} — ${bonus} у этого предмета`;
+}
+
+/** «Активно:» — без повторов; ×N если сработало несколько раз. */
+function formatActiveSynergyTooltipLines(activeSynergies) {
+  const counts = new Map();
+  (activeSynergies || []).forEach((entry) => {
+    const desc = entry?.desc || "";
+    if (!desc) return;
+    counts.set(desc, (counts.get(desc) || 0) + 1);
+  });
+  return [...counts.entries()].map(([desc, count]) => (
+    count > 1 ? `${desc} (×${count})` : desc
+  ));
+}
+
 function formatSynergyConditionFromRule(rule) {
+  const human = formatSynergyHumanDesc(rule);
+  if (human) return human;
   const adj = rule.adjacency === "weak" ? "диагонально" : "рядом";
   const tags = formatTagsList(rule.neighborTags || [], " / ");
   if (tags) return `${adj} с ${tags}`;
@@ -87,7 +158,7 @@ function buildSynergyEntry(item, partner, rule) {
     condition: texts.condition,
     effect: texts.effect,
     bonus: texts.effect,
-    desc: rule.desc,
+    desc: formatSynergyHumanDesc(rule),
     ruleId: rule.id,
     applyType: rule.apply?.type,
     type: inferSynergyType(item, partner, rule),
@@ -360,3 +431,6 @@ function synergyColorForType(type, strength, mode) {
   const set = palette[type] || palette.default;
   return set[strength] || set.strong;
 }
+
+window.formatSynergyHumanDesc = formatSynergyHumanDesc;
+window.formatActiveSynergyTooltipLines = formatActiveSynergyTooltipLines;

@@ -587,19 +587,28 @@
 #battle-result-overlay:not(.hidden) .battle-result-modal > h2,
 #battle-result-overlay:not(.hidden) .battle-result-headline {
   animation: br-title-glow 2.4s ease-in-out infinite;
+  background: none !important;
+  -webkit-background-clip: border-box !important;
+  background-clip: border-box !important;
+  color: var(--juice-ink) !important;
+  filter: none;
 }
 
 #battle-result-overlay[data-outcome="player"]:not(.hidden) .battle-result-modal > h2,
 #battle-result-overlay[data-outcome="player"]:not(.hidden) .battle-result-headline {
-  background: linear-gradient(95deg, #c8860a, #f5c842, #4a9e4a);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: #5a4010 !important;
 }
 
 #battle-result-overlay[data-outcome="enemy"]:not(.hidden) .battle-result-modal > h2,
 #battle-result-overlay[data-outcome="enemy"]:not(.hidden) .battle-result-headline {
-  color: #4a2868;
+  color: #4a2868 !important;
+  filter: none !important;
+}
+
+#battle-result-overlay[data-outcome="draw"]:not(.hidden) .battle-result-modal > h2,
+#battle-result-overlay[data-outcome="draw"]:not(.hidden) .battle-result-headline {
+  color: #2d4a68 !important;
+  filter: none !important;
 }
 
 @keyframes br-title-glow {

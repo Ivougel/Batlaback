@@ -574,9 +574,9 @@ html[data-thought-above-hero="true"] #app[data-phase="replay"] .battle-hud-side 
   overflow: visible;
 }
 
-/* Full-body: vitals band под героем — чипы в потоке, не absolute над телом */
-html[data-battle-hud-below-hero="true"] #app[data-phase="battle"] .battle-hud-status-stack,
-html[data-battle-hud-below-hero="true"] #app[data-phase="replay"] .battle-hud-status-stack {
+/* Full-body: vitals band над героем — чипы в потоке, HP/stamina под чипами */
+html[data-battle-hud-above-hero="true"] #app[data-phase="battle"] .battle-hud-status-stack,
+html[data-battle-hud-above-hero="true"] #app[data-phase="replay"] .battle-hud-status-stack {
   position: static;
   bottom: auto;
   max-height: var(--battle-hud-status-max-h, var(--battle-hud-chip-band-h, 56px));
@@ -584,8 +584,8 @@ html[data-battle-hud-below-hero="true"] #app[data-phase="replay"] .battle-hud-st
   transform: none;
 }
 
-html[data-battle-hud-below-hero="true"] #app[data-phase="battle"] .battle-hud-side,
-html[data-battle-hud-below-hero="true"] #app[data-phase="replay"] .battle-hud-side {
+html[data-battle-hud-above-hero="true"] #app[data-phase="battle"] .battle-hud-side,
+html[data-battle-hud-above-hero="true"] #app[data-phase="replay"] .battle-hud-side {
   overflow: visible;
   max-height: var(--battle-hud-max-h, none);
 }

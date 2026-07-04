@@ -18,6 +18,7 @@ function showSettingsPopup() {
   if (typeof syncLightBattleFxSettingsUi === "function") syncLightBattleFxSettingsUi();
   if (typeof syncEmojiOrbitSpeedSettingsUi === "function") syncEmojiOrbitSpeedSettingsUi();
   if (typeof syncVisualThemeSettingsUi === "function") syncVisualThemeSettingsUi();
+  if (typeof syncPrepHudPresetSettingsUi === "function") syncPrepHudPresetSettingsUi();
   if (typeof syncSoundThemeSettingsUi === "function") syncSoundThemeSettingsUi();
   if (typeof syncMusicTrackSettingsUi === "function") syncMusicTrackSettingsUi();
   overlay.classList.remove("hidden");
@@ -81,6 +82,7 @@ function initSettingsControls() {
   });
 
   if (typeof initVisualThemeControls === "function") initVisualThemeControls();
+  if (typeof initPrepHudPresetControls === "function") initPrepHudPresetControls();
   if (typeof initSoundThemeControls === "function") initSoundThemeControls();
   if (typeof initMusicTrackControls === "function") initMusicTrackControls();
 

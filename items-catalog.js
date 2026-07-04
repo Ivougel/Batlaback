@@ -881,7 +881,7 @@ const ITEM_CATALOG_RAW = {
     synergies: [
       { id: "migrated_damage_1_per_tag", adjacency: "strong", neighborTags: ["food"], target: "self", apply: { type: "damageBonus", value: 1 }, desc: "+1 урона соседям" }
     ],
-    description: "+1 урона за каждый предмет с тегом «еда».",
+    description: "+1 к урону за каждую еду на вашем поле.",
     buildHints: "Билд: еда / Pan · Ветка: Eggscalibur, Pandamonium, Shovel · Пары: любая еда (⭐)",
     sockets: 1,
   },
@@ -3719,23 +3719,26 @@ const ITEM_CATALOG_RAW = {
     description: "Каждые 5с: +3 к слабейшим стакам. +0.7% реген выносливости за стак.",
     buildHints: "Билд: крит / Luck, питомцы",
   },
-  wonky_snowman: {
-    id: "wonky_snowman",
-    name: "Кривой снеговик",
-    icon: "⛄",
-    color: "#a371f7",
-    shape: [[0,0]],
-    rarity: "epic",
+  shovel: {
+    id: "shovel",
+    name: "Лопата",
+    icon: "⛏️",
+    color: "#58a6ff",
+    shape: [[0,0],[0,1]],
+    rarity: "rare",
     cost: 8,
-    tags: ["accessory","cold"],
-    cooldown: 3,
+    tags: ["weapon","debuff","melee","craft"],
+    damage: 6,
+    cooldown: 2.2,
+    staminaCost: 1.5,
     effects: [
-      { type: "slow", value: 0.12, duration: 4 },
-      { type: "buffTimed", stat: "damage", value: 0.1, duration: 6 },
-      { type: "slow", value: 0.12, duration: 4, trigger: "on_hit", chance: 0.5 }
+      { type: "damage", value: 6, valueMin: 5, valueMax: 8 },
+      { type: "slow", value: 0.12, duration: 3, chance: 0.4 }
     ],
-    description: "50% замедление при попадании.",
-    buildHints: "Билд: лёд",
+    metaEffects: [
+      { phase: "shop_enter", type: "dig_item", value: 1 }
+    ],
+    description: "[при входе в магазин]: Выкопать случайный предмет. [при попадании]: 40% шанс наложить 1 стак(ов)",
   },
   starter_bag: {
     id: "starter_bag",
@@ -3758,9 +3761,8 @@ const ITEM_CATALOG_RAW = {
   }
 };
 
+/** Заполняется syncCraftOutputIdSet() в systems/crafting.js из ITEM_RECIPES. */
 const CRAFT_OUTPUT_IDS = new Set([]);
-
-/** Синхронизируется syncCraftOutputIdSet() в systems/crafting.js. */
 
 function buildItemCatalog() {
   const out = {};

@@ -34,7 +34,7 @@
     {
       "name": "battle_cooldown_activation",
       "ok": true,
-      "detail": "cd=2.0222875781543475"
+      "detail": "cd=1.2840087147740267"
     },
     {
       "name": "attackBuff_on_miss_broom",
@@ -842,10 +842,10 @@
       "issues": ""
     },
     {
-      "id": "wonky_snowman",
+      "id": "shovel",
       "status": "OK",
       "activity": "battle",
-      "paths": "battle_cooldown|battle_on_hit",
+      "paths": "battle_cooldown|meta_shop_enter|synergy_adjacency",
       "issues": ""
     },
     {

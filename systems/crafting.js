@@ -23,7 +23,7 @@ const ITEM_RECIPES = [
     id: "falcon_blade",
     inputs: [
       { itemId: "hero_sword", count: 1 },
-      { itemId: "gloves_of_haste", count: 2 },
+      { itemId: "speed_amulet", count: 2 },
     ],
     output: "falcon_blade",
   },

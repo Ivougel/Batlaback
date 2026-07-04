@@ -3110,9 +3110,9 @@ html[data-visual-theme="diablo"] body:has(#class-overlay:not(.hidden)) {
   z-index: 1;
   width: min(640px, 96vw);
   max-width: 640px;
-  max-height: var(
-    --overlay-max-h,
-    calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 10px)
+  max-height: min(
+    var(--overlay-max-h, calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 10px)),
+    calc(100% - var(--class-intro-chrome-h, 52px))
   );
   min-height: 0;
   padding:

@@ -141,7 +141,7 @@ html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-ph
   display: none !important;
 }
 
-/* HP/stamina + чипы — под full-body героем, в колонке героя */
+/* HP/stamina + чипы — над full-body героем, в колонке героя */
 html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-side {
   display: flex;
   flex-direction: column;
@@ -171,11 +171,11 @@ html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-ph
 }
 
 /* Vitals band: чипы в потоке (не absolute вверх), HP/stamina под чипами */
-html[data-battle-hud-below-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-vitals-column {
+html[data-battle-hud-above-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-vitals-column {
   gap: calc(4px * var(--ui-scale));
 }
 
-html[data-battle-hud-below-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-status-stack {
+html[data-battle-hud-above-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-status-stack {
   position: static;
   bottom: auto;
   left: auto;
@@ -199,7 +199,7 @@ html[data-battle-hud-below-hero="true"] #app:is([data-phase="battle"], [data-pha
   -webkit-backdrop-filter: blur(8px);
 }
 
-html[data-battle-hud-below-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-effects-grid {
+html[data-battle-hud-above-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-effects-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(calc(36px * var(--ui-scale)), 1fr));
   gap: calc(4px * var(--ui-scale));
@@ -209,19 +209,19 @@ html[data-battle-hud-below-hero="true"] #app:is([data-phase="battle"], [data-pha
   align-content: start;
 }
 
-html[data-battle-hud-below-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) #battle-hud-enemy .battle-hud-effects-grid {
+html[data-battle-hud-above-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) #battle-hud-enemy .battle-hud-effects-grid {
   justify-items: end;
 }
 
-html[data-battle-hud-below-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-benefit-stacks,
-html[data-battle-hud-below-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-dot-stacks,
-html[data-battle-hud-below-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-debuff-row {
+html[data-battle-hud-above-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-benefit-stacks,
+html[data-battle-hud-above-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-dot-stacks,
+html[data-battle-hud-above-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-debuff-row {
   display: contents;
 }
 
-html[data-battle-hud-below-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-effects-grid .avatar-benefit-stack,
-html[data-battle-hud-below-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-effects-grid .avatar-dot-stack,
-html[data-battle-hud-below-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-debuff-row .battle-status-tile {
+html[data-battle-hud-above-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-effects-grid .avatar-benefit-stack,
+html[data-battle-hud-above-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-effects-grid .avatar-dot-stack,
+html[data-battle-hud-above-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-debuff-row .battle-status-tile {
   position: relative;
   left: auto;
   top: auto;
@@ -229,7 +229,7 @@ html[data-battle-hud-below-hero="true"] #app:is([data-phase="battle"], [data-pha
   animation: none;
 }
 
-html[data-battle-hud-below-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-runtime-chips {
+html[data-battle-hud-above-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-runtime-chips {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -239,15 +239,15 @@ html[data-battle-hud-below-hero="true"] #app:is([data-phase="battle"], [data-pha
   margin-bottom: calc(2px * var(--ui-scale));
 }
 
-html[data-battle-hud-below-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) #battle-hud-enemy .battle-hud-runtime-chips {
+html[data-battle-hud-above-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) #battle-hud-enemy .battle-hud-runtime-chips {
   justify-content: flex-end;
 }
 
-html[data-battle-hud-below-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .avatar-stack-orbit-ring {
+html[data-battle-hud-above-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .avatar-stack-orbit-ring {
   display: none !important;
 }
 
-html[data-battle-hud-below-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-side .avatar-hero-bars {
+html[data-battle-hud-above-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-side .avatar-hero-bars {
   flex-shrink: 0;
   width: 100%;
 }

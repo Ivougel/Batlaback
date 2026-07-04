@@ -5,6 +5,14 @@
 #battle-result-overlay,
 #overlay {
   font-family: "Nunito", "SF Pro Rounded", "Segoe UI", system-ui, sans-serif;
+  /* На белой панели белый ореол juice-text-legible делает текст бледным */
+  --juice-text-legible: 0 1px 2px rgba(45, 74, 40, 0.14);
+  --gold: #8a5a00;
+  --muted: var(--meadow-ink-muted);
+}
+
+#battle-result-overlay .battle-result-modal {
+  color: var(--juice-ink);
 }
 
 #battle-result-overlay .battle-result-modal,
@@ -58,9 +66,10 @@ html[data-battle-fx-light="true"] #battle-result-overlay[data-outcome="player"]:
 
 #battle-result-overlay .battle-result-subtitle,
 #overlay #overlay-text {
-  color: var(--juice-ink);
+  color: var(--juice-ink-soft) !important;
   font-weight: 700;
   text-shadow: var(--juice-text-legible);
+  opacity: 1;
 }
 
 .battle-result-view-hint {
@@ -71,26 +80,35 @@ html[data-battle-fx-light="true"] #battle-result-overlay[data-outcome="player"]:
   color: var(--juice-ink-soft);
 }
 
-/* Крупный отсчёт до авто-продолжения */
+/* Крупный отсчёт — над кнопкой «Продолжить» */
+#battle-result-overlay:not(.hidden) .battle-result-actions {
+  position: relative;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: calc(8px * var(--ui-scale, 1));
+}
+
 #battle-result-overlay:not(.hidden) .battle-result-countdown {
-  position: fixed;
-  top: max(12px, env(safe-area-inset-top));
+  position: absolute;
   left: 50%;
+  right: auto;
+  top: auto;
+  bottom: calc(100% + calc(8px * var(--ui-scale, 1)));
   transform: translateX(-50%);
-  z-index: 6;
+  z-index: 4;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   pointer-events: none;
-  min-width: min(42vw, 200px);
-  padding: calc(10px * var(--ui-scale, 1)) calc(18px * var(--ui-scale, 1));
+  min-width: 0;
+  padding: calc(6px * var(--ui-scale, 1)) calc(14px * var(--ui-scale, 1));
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.42);
+  background: rgba(0, 0, 0, 0.52);
   border: 2px solid rgba(245, 200, 66, 0.55);
   box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.35),
-    0 0 40px rgba(245, 200, 66, 0.22);
+    0 6px 24px rgba(0, 0, 0, 0.32),
+    0 0 24px rgba(245, 200, 66, 0.18);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
@@ -100,7 +118,7 @@ html[data-battle-fx-light="true"] #battle-result-overlay[data-outcome="player"]:
 }
 
 .battle-result-countdown-digit {
-  font-size: min(18vw, 88px);
+  font-size: min(11vw, 52px);
   font-weight: 900;
   line-height: 1;
   letter-spacing: -0.04em;
@@ -188,17 +206,39 @@ html[data-battle-fx-light="true"] .battle-result-countdown-digit--pop {
   text-shadow: var(--juice-text-legible);
 }
 
+#battle-result-overlay .result-stats-class {
+  color: var(--juice-ink-soft) !important;
+  font-weight: 700;
+  opacity: 1;
+}
+
 #battle-result-overlay .result-stats-name--winner,
 #overlay .result-stats-name--winner,
 #battle-result-overlay .result-stat-value--winner,
 #overlay .result-stat-value--winner {
-  color: #8a5a00 !important;
+  color: #6b4a08 !important;
+}
+
+#battle-result-overlay[data-outcome="player"] .result-stats-name--winner,
+#battle-result-overlay[data-outcome="player"] .result-stat-value--winner {
+  color: var(--meadow-grass-dark) !important;
+}
+
+#battle-result-overlay[data-outcome="enemy"] .result-stats-name--winner,
+#battle-result-overlay[data-outcome="enemy"] .result-stat-value--winner {
+  color: #8b2218 !important;
+}
+
+#battle-result-overlay .result-stats-name--loser,
+#overlay .result-stats-name--loser {
+  color: var(--meadow-ink-muted) !important;
+  opacity: 0.88 !important;
 }
 
 #battle-result-overlay .result-stat-value--loser,
 #overlay .result-stat-value--loser {
   color: var(--juice-ink-soft) !important;
-  opacity: 0.72;
+  opacity: 0.78 !important;
 }
 
 #battle-result-overlay .result-stat-row--sub .result-stat-sub,
@@ -209,8 +249,9 @@ html[data-battle-fx-light="true"] .battle-result-countdown-digit--pop {
 
 #battle-result-overlay .result-stat-label,
 #overlay .result-stat-label {
-  color: var(--juice-ink-soft);
+  color: var(--juice-ink-soft) !important;
   font-weight: 800;
+  opacity: 1;
 }
 
 #battle-result-overlay .battle-result-headline,
@@ -272,10 +313,35 @@ html[data-battle-fx-light="true"] .battle-result-countdown-digit--pop {
 
 #battle-result-overlay .br-gold,
 #overlay .br-gold {
-  color: #8a5a00;
+  color: #8a5a00 !important;
   font-weight: 800;
   border-top: 1px dashed rgba(200, 134, 10, 0.45);
   background: transparent;
+  text-shadow: var(--juice-text-legible);
+}
+
+#battle-result-overlay .result-static-block-trophy-label,
+#overlay .result-static-block-trophy-label {
+  color: var(--juice-ink) !important;
+  font-weight: 800;
+}
+
+#battle-result-overlay .popup-trigger-chevron,
+#battle-result-overlay .accordion-chevron,
+#overlay .popup-trigger-chevron,
+#overlay .accordion-chevron {
+  color: var(--juice-ink-soft) !important;
+  opacity: 1;
+}
+
+#battle-result-overlay[data-outcome="enemy"]:not(.hidden) .battle-result-headline,
+#battle-result-overlay[data-outcome="draw"]:not(.hidden) .battle-result-headline {
+  color: #4a2868 !important;
+  text-shadow: var(--juice-text-legible);
+}
+
+#battle-result-overlay[data-outcome="player"]:not(.hidden) .battle-result-headline {
+  color: var(--meadow-grass-dark) !important;
   text-shadow: var(--juice-text-legible);
 }
 

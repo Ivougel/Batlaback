@@ -63,6 +63,8 @@ self.PWA_PRECACHE_URLS = [
   "components/prep-drag-arc.js?v=12",
   "components/prep-hud-hero.js",
   "components/prep-hud-hero.js?v=3",
+  "components/prep-unit-frame-hud.js",
+  "components/prep-unit-frame-hud.js?v=1",
   "components/recipe-book.js",
   "components/replay-timeline.js",
   "components/replay-timeline.js?v=1",
@@ -301,6 +303,8 @@ self.PWA_PRECACHE_URLS = [
   "styles/prep-drag-arc.css?v=10",
   "styles/prep-forest-hud.css",
   "styles/prep-forest-hud.css?v=2",
+  "styles/prep-unit-frame-hud.css",
+  "styles/prep-unit-frame-hud.css?v=1",
   "styles/prep-hero-card.css",
   "styles/prep-hero-card.css?v=14",
   "styles/prep-juice.css",
@@ -413,6 +417,8 @@ self.PWA_PRECACHE_URLS = [
   "systems/triple-support-items.js?v=1",
   "systems/visual-theme.js",
   "systems/visual-theme.js?v=1",
+  "systems/prep-hud-preset.js",
+  "systems/prep-hud-preset.js?v=1",
   "ui-layout.js",
   "ui-layout.js?v=128"
 ];
