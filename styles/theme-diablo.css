@@ -410,9 +410,61 @@ html[data-visual-theme="diablo"] .modal h2 {
 
 html[data-visual-theme="diablo"] #battle-result-overlay .battle-result-modal,
 html[data-visual-theme="diablo"] #overlay .run-complete-modal {
-  background: rgba(22, 16, 12, 0.88);
-  border: 2px solid var(--meadow-border);
+  background: linear-gradient(165deg, #2a2218 0%, #1a1410 100%) !important;
+  border: 2px solid var(--meadow-border) !important;
+  box-shadow:
+    0 0 0 1px rgba(201, 162, 39, 0.12) inset,
+    0 20px 56px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(201, 162, 39, 0.1) !important;
   backdrop-filter: blur(16px);
+  color: var(--meadow-ink);
+}
+
+html[data-visual-theme="diablo"] #battle-result-overlay[data-outcome="player"]:not(.hidden) .battle-result-modal {
+  background: linear-gradient(165deg, #2a2218 0%, #1a1410 100%) !important;
+  border-color: var(--meadow-gold) !important;
+  box-shadow:
+    0 0 0 1px rgba(201, 162, 39, 0.18) inset,
+    0 20px 56px rgba(0, 0, 0, 0.65),
+    0 0 32px rgba(201, 162, 39, 0.14) !important;
+}
+
+html[data-visual-theme="diablo"] #battle-result-overlay[data-outcome="enemy"]:not(.hidden) .battle-result-modal {
+  background: linear-gradient(165deg, #2a1820 0%, #1a1018 100%) !important;
+  border-color: rgba(180, 40, 20, 0.55) !important;
+  box-shadow:
+    0 0 0 1px rgba(180, 40, 20, 0.14) inset,
+    0 20px 56px rgba(0, 0, 0, 0.68),
+    0 0 28px rgba(140, 20, 10, 0.18) !important;
+}
+
+html[data-visual-theme="diablo"] #battle-result-overlay[data-outcome="draw"]:not(.hidden) .battle-result-modal {
+  background: linear-gradient(165deg, #1e2428 0%, #141a1e 100%) !important;
+  border-color: rgba(120, 140, 160, 0.45) !important;
+}
+
+html[data-visual-theme="diablo"] #battle-result-overlay:not(.hidden) .battle-result-modal > h2,
+html[data-visual-theme="diablo"] #battle-result-overlay:not(.hidden) .battle-result-headline {
+  color: var(--meadow-gold-bright) !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85);
+  animation: none !important;
+  filter: none !important;
+}
+
+html[data-visual-theme="diablo"] #battle-result-overlay[data-outcome="enemy"]:not(.hidden) .battle-result-headline,
+html[data-visual-theme="diablo"] #battle-result-overlay[data-outcome="enemy"]:not(.hidden) .battle-result-modal > h2 {
+  color: #f0a8a0 !important;
+}
+
+html[data-visual-theme="diablo"] #battle-result-overlay[data-outcome="draw"]:not(.hidden) .battle-result-headline,
+html[data-visual-theme="diablo"] #battle-result-overlay[data-outcome="draw"]:not(.hidden) .battle-result-modal > h2 {
+  color: #a8c8e8 !important;
+}
+
+html[data-visual-theme="diablo"] #battle-result-overlay .battle-result-subtitle,
+html[data-visual-theme="diablo"] #overlay #overlay-text {
+  color: var(--meadow-ink-muted) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
 }
 
 html[data-visual-theme="diablo"] #battle-result-overlay .br-stat,
@@ -420,6 +472,7 @@ html[data-visual-theme="diablo"] #overlay .br-stat,
 html[data-visual-theme="diablo"] #battle-result-overlay .result-stat-value,
 html[data-visual-theme="diablo"] #overlay .result-stat-value {
   color: var(--meadow-ink) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
 }
 
 html[data-visual-theme="diablo"] #battle-result-overlay .result-stats-name--you,
@@ -428,16 +481,71 @@ html[data-visual-theme="diablo"] #battle-result-overlay .result-stats-name--winn
   color: var(--meadow-gold-bright) !important;
 }
 
+html[data-visual-theme="diablo"] #battle-result-overlay[data-outcome="player"] .result-stats-name--winner,
+html[data-visual-theme="diablo"] #battle-result-overlay[data-outcome="player"] .result-stat-value--winner {
+  color: #8fd48f !important;
+}
+
+html[data-visual-theme="diablo"] #battle-result-overlay[data-outcome="enemy"] .result-stats-name--winner,
+html[data-visual-theme="diablo"] #battle-result-overlay[data-outcome="enemy"] .result-stat-value--winner {
+  color: #f0a8a0 !important;
+}
+
 html[data-visual-theme="diablo"] #battle-result-overlay .result-stats-name--enemy {
-  color: #e85a50;
+  color: #e85a50 !important;
+}
+
+html[data-visual-theme="diablo"] #battle-result-overlay .result-stats-name--you {
+  color: #8fd48f !important;
 }
 
 html[data-visual-theme="diablo"] #battle-result-overlay .br-side-title {
-  color: var(--meadow-gold-bright);
+  color: var(--meadow-gold-bright) !important;
 }
 
 html[data-visual-theme="diablo"] #battle-result-overlay .br-side-enemy .br-side-title {
-  color: #e85a50;
+  color: #e85a50 !important;
+}
+
+html[data-visual-theme="diablo"] #battle-result-overlay .result-static-block-title,
+html[data-visual-theme="diablo"] #battle-result-overlay .accordion-header,
+html[data-visual-theme="diablo"] #battle-result-overlay .accordion-header-row,
+html[data-visual-theme="diablo"] #battle-result-overlay .popup-trigger-btn,
+html[data-visual-theme="diablo"] #battle-result-overlay .result-static-block-trophy-label,
+html[data-visual-theme="diablo"] #battle-result-overlay .result-stats-class,
+html[data-visual-theme="diablo"] #battle-result-overlay .result-stat-label,
+html[data-visual-theme="diablo"] #battle-result-overlay .br-stat-sub,
+html[data-visual-theme="diablo"] #overlay .result-static-block-title,
+html[data-visual-theme="diablo"] #overlay .accordion-header {
+  color: var(--meadow-ink) !important;
+}
+
+html[data-visual-theme="diablo"] #battle-result-overlay .result-static-block-title,
+html[data-visual-theme="diablo"] #battle-result-overlay .accordion-header-row,
+html[data-visual-theme="diablo"] #battle-result-overlay .popup-trigger-row {
+  border-bottom-color: rgba(201, 162, 39, 0.28) !important;
+}
+
+html[data-visual-theme="diablo"] #battle-result-overlay .result-stat-value--loser,
+html[data-visual-theme="diablo"] #battle-result-overlay .result-stats-name--loser,
+html[data-visual-theme="diablo"] #battle-result-overlay .result-stat-row--sub .result-stat-sub,
+html[data-visual-theme="diablo"] #battle-result-overlay .popup-trigger-chevron,
+html[data-visual-theme="diablo"] #battle-result-overlay .accordion-chevron {
+  color: var(--meadow-ink-muted) !important;
+  opacity: 1 !important;
+}
+
+html[data-visual-theme="diablo"] #battle-result-overlay .br-gold,
+html[data-visual-theme="diablo"] #overlay .br-gold {
+  color: var(--meadow-gold-bright) !important;
+  border-top-color: rgba(201, 162, 39, 0.35) !important;
+}
+
+html[data-visual-theme="diablo"][data-battle-fx-light="true"] #battle-result-overlay:not(.hidden) .battle-result-modal,
+html[data-visual-theme="diablo"][data-battle-fx-light="true"] #battle-result-overlay[data-outcome="player"]:not(.hidden) .battle-result-modal,
+html[data-visual-theme="diablo"][data-battle-fx-light="true"] #battle-result-overlay[data-outcome="enemy"]:not(.hidden) .battle-result-modal,
+html[data-visual-theme="diablo"][data-battle-fx-light="true"] #battle-result-overlay[data-outcome="draw"]:not(.hidden) .battle-result-modal {
+  backdrop-filter: none !important;
 }
 
 /* ─── Prep: каменные панели вместо прозрачного луга ─── */
@@ -721,17 +829,7 @@ html[data-visual-theme="diablo"] #overlay .btn-secondary {
   font-weight: 700;
 }
 
-/* ─── Театр результата боя ─── */
-
-html[data-visual-theme="diablo"] #battle-result-overlay[data-outcome="player"]:not(.hidden) .battle-result-modal {
-  background: linear-gradient(165deg, #2a2218 0%, #1a1410 100%);
-  border-color: var(--meadow-gold);
-}
-
-html[data-visual-theme="diablo"] #battle-result-overlay[data-outcome="enemy"]:not(.hidden) .battle-result-modal {
-  background: linear-gradient(165deg, #2a1820 0%, #1a1018 100%);
-  border-color: rgba(180, 40, 20, 0.55);
-}
+/* ─── Театр результата боя — тёмная панель в Sanctuary (см. блок выше) ─── */
 
 html[data-visual-theme="diablo"] #battle-result-overlay .br-theater-bubble {
   background: rgba(42, 34, 24, 0.95);

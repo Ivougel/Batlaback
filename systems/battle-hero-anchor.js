@@ -28,7 +28,7 @@ const BattleHeroAnchor = (() => {
   }
 
   /** Множитель эмодзи-мысли в бою (flank / thought-slot). */
-  const BATTLE_THOUGHT_EMOJI_SCALE = 2.5 / 1.5;
+  const BATTLE_THOUGHT_EMOJI_SCALE = (2.5 / 1.5) * 0.5;
 
   function battleThoughtEmojiScale() {
     return BATTLE_THOUGHT_EMOJI_SCALE;
@@ -182,6 +182,12 @@ const BattleHeroAnchor = (() => {
       heroHeadInward: 0.10,
       heroHeadThoughtYRatio: 0.08,
       heroHeadLiftRatio: 0.30,
+      flankThoughtInward: 0.22,
+      flankThoughtHeadRatio: 0.04,
+      flankThoughtLiftRatio: 0.48,
+      unitFrameThoughtInward: 0.26,
+      unitFrameThoughtHeadRatio: 0.03,
+      unitFrameThoughtLiftRatio: 0.52,
       thoughtDuelGapRatio: 0.70,
       thoughtDuelGlyphBleed: 0.12,
       thoughtDuelYRatio: 0.24,
@@ -215,6 +221,12 @@ const BattleHeroAnchor = (() => {
       heroHeadInward: 0.10,
       heroHeadThoughtYRatio: 0.08,
       heroHeadLiftRatio: 0.30,
+      flankThoughtInward: 0.20,
+      flankThoughtHeadRatio: 0.05,
+      flankThoughtLiftRatio: 0.45,
+      unitFrameThoughtInward: 0.24,
+      unitFrameThoughtHeadRatio: 0.03,
+      unitFrameThoughtLiftRatio: 0.50,
       thoughtDuelGapRatio: 0.70,
       thoughtDuelGlyphBleed: 0.12,
       thoughtDuelYRatio: 0.24,
@@ -349,9 +361,13 @@ const BattleHeroAnchor = (() => {
     return measureCache.avatarRect[cacheKey];
   }
 
+  function usesBattleUnitFrameHud() {
+    return document.documentElement.hasAttribute("data-battle-unit-frame-hud");
+  }
+
   function getPrepCharacterAnchorRect(side) {
     const root = document.documentElement;
-    if (root.dataset.battlePrepHeroLayer !== "true") return null;
+    if (root.dataset.battlePrepHeroLayer !== "true" && !usesBattleUnitFrameHud()) return null;
     const charEl = document.getElementById(side === "enemy" ? "prep-character-enemy" : "prep-character-player");
     if (!charEl || charEl.hasAttribute("hidden")) return null;
     const visual = charEl.querySelector(".prep-character-img, .prep-character-emoji") || charEl;
@@ -487,50 +503,72 @@ const BattleHeroAnchor = (() => {
     };
   }
 
-  /** Пара эмодзи-аватаров: рядом по центру экрана, зеркально друг к другу. */
+  /** Flank-duel: мысль над головой героя, смещена к центру арены (красные маркеры на макете). */
   function getCenterDuelThoughtAnchor(side) {
-    const vv = window.visualViewport;
-    const vw = vv?.width ?? window.innerWidth;
-    const vh = vv?.height ?? window.innerHeight;
-    const offsetTop = vv?.offsetTop ?? 0;
-    const offsetLeft = vv?.offsetLeft ?? 0;
-    const screenCx = offsetLeft + vw / 2;
-
+    const ar = getPrepCharacterAnchorRect(side) || getAvatarAnchorRect(side);
     const emojiSize = thoughtSlotEmojiSize();
     const halo = thoughtSlotHaloPx(emojiSize);
-    const slotSize = thoughtSlotMountSize(emojiSize);
     const prof = emojiProfile();
     const uiScale = readCssPx("--ui-scale", 1);
-    // Зазор между внешними краями слотов + запас под тень/ширину глифа.
-    const edgeGap = Math.max(
-      Math.round(70 * uiScale),
-      Math.round(emojiSize * (prof.thoughtDuelGapRatio ?? 0.70)),
-    );
-    const glyphBleed = Math.round(emojiSize * (prof.thoughtDuelGlyphBleed ?? 0.12));
-    const halfSpan = (slotSize + edgeGap) / 2 + glyphBleed;
-    const cx = side === "enemy" ? screenCx + halfSpan : screenCx - halfSpan;
+    const gap = Math.max(thoughtSlotGapPx(), Math.round(6 * uiScale));
+    const unitFrame = usesBattleUnitFrameHud();
 
-    const playerAr = getAvatarAnchorRect("player");
-    const enemyAr = getAvatarAnchorRect("enemy");
-    let cy;
-    if (playerAr?.height >= 40 && enemyAr?.height >= 40) {
-      const headRatio = prof.heroSpecYRatio ?? 0.18;
-      const playerHead = playerAr.top + playerAr.height * headRatio;
-      const enemyHead = enemyAr.top + enemyAr.height * headRatio;
-      cy = (playerHead + enemyHead) / 2;
-    } else {
+    if (!ar || ar.height < 32) {
+      const vv = window.visualViewport;
+      const vw = vv?.width ?? window.innerWidth;
+      const vh = vv?.height ?? window.innerHeight;
+      const offsetTop = vv?.offsetTop ?? 0;
+      const offsetLeft = vv?.offsetLeft ?? 0;
+      const screenCx = offsetLeft + vw / 2;
+      const slotSize = thoughtSlotMountSize(emojiSize);
+      const edgeGap = Math.max(
+        Math.round(70 * uiScale),
+        Math.round(emojiSize * (prof.thoughtDuelGapRatio ?? 0.70)),
+      );
+      const glyphBleed = Math.round(emojiSize * (prof.thoughtDuelGlyphBleed ?? 0.12));
+      const halfSpan = (slotSize + edgeGap) / 2 + glyphBleed;
+      const cx = side === "enemy" ? screenCx + halfSpan : screenCx - halfSpan;
+      const yRatio = prof.thoughtDuelYRatio ?? 0.24;
       const sceneUi = document.getElementById("battle-scene-ui");
       const sceneRect = sceneUi?.getBoundingClientRect();
-      const yRatio = prof.thoughtDuelYRatio ?? 0.24;
-      cy = sceneRect
+      let cy = sceneRect
         ? sceneRect.top + sceneRect.height * yRatio
         : offsetTop + vh * yRatio;
+      const mountSize = thoughtSlotMountSize(emojiSize);
+      const minCy = offsetTop + Math.round(8 * uiScale) + mountSize / 2;
+      if (cy < minCy) cy = minCy;
+      return normalizeThoughtSlotAnchor({ cx, cy, emojiSize, halo });
     }
 
+    const inward = unitFrame
+      ? (prof.unitFrameThoughtInward ?? 0.26)
+      : (prof.flankThoughtInward ?? 0.20);
+    const cx = side === "enemy"
+      ? ar.left + ar.width * (0.5 - inward)
+      : ar.left + ar.width * (0.5 + inward);
+
+    const headRatio = unitFrame
+      ? (prof.unitFrameThoughtHeadRatio ?? 0.03)
+      : (prof.flankThoughtHeadRatio ?? 0.05);
+    const liftMul = unitFrame
+      ? (prof.unitFrameThoughtLiftRatio ?? 0.52)
+      : (prof.flankThoughtLiftRatio ?? 0.45);
+    let cy = ar.top + ar.height * headRatio - gap - emojiSize * liftMul;
+
+    if (unitFrame) {
+      const frameShell = document.querySelector(`.prep-unit-frame--${side} .prep-unit-frame__shell`);
+      const frameRect = frameShell?.getBoundingClientRect();
+      if (frameRect && frameRect.height > 8) {
+        const minCy = frameRect.bottom + gap + emojiSize * 0.28;
+        if (cy < minCy) cy = minCy;
+      }
+    }
+
+    const vv = window.visualViewport;
+    const safeTop = (vv?.offsetTop ?? 0) + Math.round(8 * uiScale);
     const mountSize = thoughtSlotMountSize(emojiSize);
-    const safeTop = offsetTop + Math.round(8 * uiScale);
-    const minCy = safeTop + mountSize / 2;
-    if (cy < minCy) cy = minCy;
+    const minCySafe = safeTop + mountSize / 2;
+    if (cy < minCySafe) cy = minCySafe;
 
     return normalizeThoughtSlotAnchor({ cx, cy, emojiSize, halo });
   }

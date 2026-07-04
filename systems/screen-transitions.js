@@ -135,9 +135,12 @@
     });
   }
 
+  function releasePhaseOutLock() {
+    document.querySelector(".game-layout")?.classList.remove("phase-transitioning");
+  }
+
   function clearPhaseTransitionLock() {
-    const layout = document.querySelector(".game-layout");
-    layout?.classList.remove("phase-transitioning");
+    releasePhaseOutLock();
     transitioning = false;
     document.body.classList.remove("screen-transitioning");
     window.flushDeferredLayoutPasses?.();
@@ -171,11 +174,13 @@
         afterTransition?.();
       } catch (err) {
         console.error("transitionPhase failed:", err);
-        throw err;
-      } finally {
         clearPhaseTransitionLock();
+        throw err;
       }
-      return wait(inMs);
+      releasePhaseOutLock();
+      return wait(inMs).then(() => {
+        clearPhaseTransitionLock();
+      });
     });
   }
 
@@ -209,11 +214,12 @@
       window.scheduleCanvasFit?.();
       requestAnimationFrame(() => {
         window.applyUiLayout?.();
-        window.scheduleCanvasFit?.();
-        window.flushDeferredLayoutPasses?.();
+        window.settlePrepLayoutForReveal?.();
         requestAnimationFrame(() => {
           transitioning = false;
           document.body.classList.remove("screen-transitioning", "result-to-prep-transition");
+          window.flushDeferredLayoutPasses?.();
+          window.scheduleCanvasFit?.();
           resolve();
         });
       });

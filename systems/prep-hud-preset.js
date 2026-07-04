@@ -1,6 +1,6 @@
 /**
- * Пресеты HUD prep/battle (localStorage: bb-prep-hud-preset).
- * hero-card — текущие фреймы; unit-frame — MMORPG unit frames.
+ * Пресет HUD боя (localStorage: bb-prep-hud-preset).
+ * hero-card — flank-портреты; unit-frame — MMORPG unit frames (только бой).
  */
 
 const PREP_HUD_PRESET_STORAGE_KEY = "bb-prep-hud-preset";
@@ -15,7 +15,7 @@ const PREP_HUD_PRESETS = {
   "unit-frame": {
     id: "unit-frame",
     label: "Unit Frame",
-    hint: "MMORPG — круглые портреты и полосы HP на подготовке и в бою",
+    hint: "Круглые портреты и полосы HP — только в фазе боя",
     emoji: "⚔️",
   },
 };

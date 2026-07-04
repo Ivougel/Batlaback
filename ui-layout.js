@@ -1083,6 +1083,7 @@
     const useFlankZones = root.dataset.battleHeroPlacement === "flank-arena";
     if (useFlankZones && root.dataset.prepHudPreset === "unit-frame") {
       root.setAttribute("data-battle-unit-frame-hud", "true");
+      syncHeroEmotionSlotAnchors();
       return;
     }
     root.removeAttribute("data-battle-unit-frame-hud");
@@ -3020,8 +3021,9 @@
   }
 
   /** Единственный источник display-size #game-canvas (bitmap — game.js applyPhaseCanvasLayout). */
-  function fitCanvasDisplaySize() {
-    if (isLayoutInteractionLocked()) {
+  function fitCanvasDisplaySize(options = {}) {
+    const force = options.force === true;
+    if (!force && isLayoutInteractionLocked()) {
       deferredCanvasFit = true;
       return;
     }
@@ -3271,15 +3273,37 @@
     scheduleLayout();
   }
 
-  function runCanvasFitPass() {
-    if (isLayoutInteractionLocked()) {
+  /** Синхронный prep-layout перед reveal после result→prep (обходит transition-lock). */
+  function settlePrepLayoutForReveal() {
+    deferredCanvasFit = false;
+    canvasFitLastAt = 0;
+    canvasFitInProgress = false;
+    runCanvasFitPass(true);
+    syncPrepHeroSlotHeight();
+    syncPrepHeroCardPortraitSize();
+    if (usesTabletPrepHeroLayout()) {
+      syncTabletSidePrepGridMetrics();
+    }
+    if (typeof window.applyGridMetricsFromCss === "function") {
+      window.applyGridMetricsFromCss();
+    }
+    syncMobileShopFabPosition();
+    syncPrepBenchFabPosition();
+    window.syncPrepShopPopoverPosition?.();
+    window.syncPrepSellFabPosition?.();
+    window.syncPrepSellFabVisibility?.();
+    syncFxCanvasGeometry();
+  }
+
+  function runCanvasFitPass(force = false) {
+    if (!force && isLayoutInteractionLocked()) {
       deferredCanvasFit = true;
       return;
     }
-    if (canvasFitInProgress) return;
+    if (!force && canvasFitInProgress) return;
 
     const now = performance.now();
-    if (now - canvasFitLastAt < CANVAS_FIT_MIN_MS) {
+    if (!force && now - canvasFitLastAt < CANVAS_FIT_MIN_MS) {
       if (!canvasFitDeferRaf) {
         canvasFitDeferRaf = requestAnimationFrame(() => {
           canvasFitDeferRaf = 0;
@@ -3292,8 +3316,9 @@
     canvasFitInProgress = true;
     deferredCanvasFit = false;
     canvasFitLastAt = now;
+    const fitOpts = force ? { force: true } : undefined;
     try {
-      fitCanvasDisplaySize();
+      fitCanvasDisplaySize(fitOpts);
       syncPrepHeroSlotHeight();
       syncTabletPortraitShopRows();
       const zones = measureLayoutZones();
@@ -3304,7 +3329,7 @@
           if (canvasFitInProgress) return;
           canvasFitInProgress = true;
           try {
-            fitCanvasDisplaySize();
+            fitCanvasDisplaySize(fitOpts);
             syncTabletPortraitShopRows();
             const refitZones = measureLayoutZones();
             applyMeasuredZoneFit(refitZones);
@@ -3676,6 +3701,7 @@
   window.fitPrepCanvasToStage = fitCanvasDisplaySize;
   window.scheduleCanvasFit = scheduleCanvasFit;
   window.flushDeferredLayoutPasses = flushDeferredLayoutPasses;
+  window.settlePrepLayoutForReveal = settlePrepLayoutForReveal;
   window.syncMobileShopFabPosition = syncMobileShopFabPosition;
   window.syncPrepBenchFabPosition = syncPrepBenchFabPosition;
   window.syncPrepShopPopoverPosition = syncPrepShopPopoverPosition;

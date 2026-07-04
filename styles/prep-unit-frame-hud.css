@@ -1,23 +1,6 @@
 /**
- * MMORPG unit-frame HUD на prep — включается через html[data-prep-hud-preset="unit-frame"].
+ * MMORPG unit-frame HUD — только фаза боя (html[data-prep-hud-preset="unit-frame"]).
  */
-
-html[data-prep-hud-preset="unit-frame"] #app[data-phase="prep"] .prep-top-bar {
-  --prep-top-bar-h: auto;
-  align-items: stretch;
-  gap: calc(8px * var(--ui-scale, 1));
-  padding:
-    calc(6px * var(--ui-scale, 1))
-    calc(10px * var(--ui-scale, 1))
-    calc(8px * var(--ui-scale, 1));
-  background: transparent !important;
-  border-bottom: none !important;
-  box-shadow: none !important;
-}
-
-html[data-prep-hud-preset="unit-frame"] #app[data-phase="prep"] .prep-top-bar::before {
-  display: none;
-}
 
 .prep-unit-frame-hud.hidden,
 #prep-hero-card[hidden] {
@@ -297,12 +280,6 @@ html[data-prep-hud-preset="unit-frame"] #app[data-phase="prep"] .prep-top-bar::b
 
 .prep-unit-frame__extras .prep-modifier-strip {
   padding: calc(2px * var(--ui-scale, 1)) 0 0;
-}
-
-html[data-prep-hud-preset="unit-frame"] #app[data-phase="prep"] .prep-hud-chrome {
-  position: absolute;
-  left: calc(10px * var(--ui-scale, 1));
-  top: 100%;
 }
 
 html[data-prep-hud-preset="unit-frame"][data-visual-theme="diablo"] .prep-unit-frame__shell {

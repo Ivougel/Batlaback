@@ -1,18 +1,9 @@
 /**
- * MMORPG unit-frame HUD — prep и battle (игрок слева, противник справа).
+ * MMORPG unit-frame HUD — только фаза боя (prep всегда с карточкой героя).
  */
 
-function isUnitFrameHudSurface() {
-  const root = document.documentElement;
-  return root.dataset.prepLayout === "side"
-    || root.dataset.uiSurface === "tablet-side"
-    || root.dataset.uiSurface === "desktop";
-}
-
 function isPrepUnitFrameHudActive() {
-  if (typeof isPrepHudPresetUnitFrame !== "function" || !isPrepHudPresetUnitFrame()) return false;
-  if (phase !== "prep") return false;
-  return isUnitFrameHudSurface();
+  return false;
 }
 
 function isBattleUnitFrameHudActive() {
@@ -25,18 +16,15 @@ function syncUnitFrameHudChrome() {
   const root = document.documentElement;
   const heroCard = document.getElementById("prep-hero-card");
   const strip = document.getElementById("prep-unit-frame-hud");
-  const prepActive = isPrepUnitFrameHudActive()
-    && !gameOver
-    && !(typeof isLobby2pMode === "function" && isLobby2pMode() && lobbyState?.isSplitLobby);
   const battleActive = isBattleUnitFrameHudActive() && !gameOver;
-  const active = prepActive || battleActive;
+  const active = battleActive;
 
   root.toggleAttribute("data-battle-unit-frame-hud", battleActive);
 
   if (phase === "prep") {
-    heroCard?.classList.toggle("hidden", prepActive);
-    heroCard?.toggleAttribute("hidden", prepActive);
-    heroCard?.toggleAttribute("aria-hidden", prepActive);
+    heroCard?.classList.remove("hidden");
+    heroCard?.removeAttribute("hidden");
+    heroCard?.removeAttribute("aria-hidden");
   } else {
     heroCard?.classList.add("hidden");
     heroCard?.setAttribute("hidden", "");

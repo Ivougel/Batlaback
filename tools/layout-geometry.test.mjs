@@ -220,8 +220,8 @@ const CASES = [
       assert(m.floorH > 48, "combat floor too small");
       assert(m.hudToSlotGap <= 80, `emoji too far below HUD: ${m.hudToSlotGap}px`);
       assert(m.hudToSlotGap >= -8, `emoji overlaps HUD: ${m.hudToSlotGap}px`);
-      assert(m.emojiPx >= 76, `emoji too small: ${m.emojiPx}px`);
-      assert(m.emojiPx <= 120, `emoji too large on portrait: ${m.emojiPx}px`);
+      assert(m.emojiPx >= 38, `emoji too small: ${m.emojiPx}px`);
+      assert(m.emojiPx <= 64, `emoji too large on portrait: ${m.emojiPx}px`);
       assert(m.floorTop >= m.hudBottom - 8, `combat floor above HUD: top=${m.floorTop} hud=${m.hudBottom}`);
       const corridorH = m.chromeTop - m.hudBottom;
       const slotRel = corridorH > 0 ? (m.slotCenterY - m.hudBottom) / corridorH : 0;
@@ -704,7 +704,7 @@ const CASES = [
       assert(!m.thoughtAboveHero, "center duel replaces above-hero mode");
       assert(!m.thoughtHeadBadge, "center duel uses bare glyph, not head badge");
       assert(m.heroBelow === false, "center duel replaces below-hero");
-      assert(m.emojiPx >= 88 && m.emojiPx <= 175, `emoji size out of range: ${m.emojiPx}px`);
+      assert(m.emojiPx >= 44 && m.emojiPx <= 95, `emoji size out of range: ${m.emojiPx}px`);
       assert(Math.abs(m.satScale - 0.62) < 0.06, `satellite scale: ${m.satScale}`);
       assert(m.floorH >= 100, `combat floor too small: ${m.floorH}px`);
       assert(Math.abs(m.hudTop - m.enemyHudTop) <= 16, `HUD misaligned: player=${m.hudTop} enemy=${m.enemyHudTop}`);
@@ -713,11 +713,17 @@ const CASES = [
       assert(m.playerEmojiCy < m.chromeTop - 24, `emoji should stay above toolbar: cy=${m.playerEmojiCy}`);
       assert(m.playerSlotCx > 0 && m.enemySlotCx > 0, "thought slots missing");
       const pairGap = m.enemySlotCx - m.playerSlotCx;
-      assert(pairGap > m.emojiPx * 0.5 && pairGap < m.emojiPx * 2.5, `duel pair gap: ${pairGap}px`);
-      assert(Math.abs((m.playerSlotCx + m.enemySlotCx) / 2 - m.screenCx) <= 24,
-        `duel pair should straddle screen center: player=${m.playerSlotCx} enemy=${m.enemySlotCx} cx=${m.screenCx}`);
+      assert(pairGap > m.emojiPx * 0.35 && pairGap < m.vw * 0.55, `duel pair gap: ${pairGap}px`);
       assert(m.playerSlotCx < m.screenCx, `player emoji should be left of center: ${m.playerSlotCx}`);
       assert(m.enemySlotCx > m.screenCx, `enemy emoji should be right of center: ${m.enemySlotCx}`);
+      if (m.playerColCx > 0) {
+        assert(m.playerSlotCx > m.playerColCx - 8,
+          `player emoji should sit inward from hero column: slot=${m.playerSlotCx} col=${m.playerColCx}`);
+        assert(m.playerSlotCx < m.screenCx - m.emojiPx * 0.15,
+          `player emoji should stay left of center corridor: slot=${m.playerSlotCx}`);
+      }
+      assert(m.playerEmojiCy <= m.stageTop + m.stageH * 0.22 + 8,
+        `emoji should sit above hero head: cy=${m.playerEmojiCy} stageTop=${m.stageTop}`);
       if (m.duelCx > 0) {
         assert(Math.abs(m.playerSlotCx - m.duelCx) <= 20, `player slot should match duel anchor: slot=${m.playerSlotCx} anchor=${m.duelCx}`);
       }

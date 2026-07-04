@@ -713,11 +713,19 @@ html[data-ui-surface="desktop"] #battle-result-overlay:not(.hidden) .br-theater-
 
 /* Light battle FX: портреты остаются, тяжёлые idle-анимации и спарклы выключены */
 html[data-battle-fx-light="true"] .br-theater-sparkles,
-html[data-battle-fx-light="true"] .br-theater-vignette,
+html[data-battle-fx-light="true"] .br-theater-vignette {
+  display: none !important;
+  animation: none !important;
+}
+
 html[data-battle-fx-light="true"] .br-theater-glow-ring,
 html[data-battle-fx-light="true"] .br-theater-portrait,
 html[data-battle-fx-light="true"] .br-theater-aura,
-html[data-battle-fx-light="true"] .br-theater-fighter--entering {
+html[data-battle-fx-light="true"] .br-theater-fighter--entering,
+html[data-battle-fx-light="true"] .br-theater-bubble--pop,
+html[data-battle-fx-light="true"] #battle-result-overlay:not(.hidden) .battle-result-modal > h2,
+html[data-battle-fx-light="true"] #battle-result-overlay:not(.hidden) .battle-result-headline,
+html[data-battle-fx-light="true"] #battle-result-overlay .battle-result-actions .btn-primary {
   animation: none !important;
 }
 
