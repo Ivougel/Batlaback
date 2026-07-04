@@ -29,6 +29,7 @@ const ThoughtArena = (() => {
   /** @type {Record<string, object[]>} */
   const equipReactions = { player: [], enemy: [] };
   let rafId = null;
+  let thoughtWaitTimer = null;
   let lastTs = 0;
   let lastThoughtStepAt = 0;
 
@@ -36,7 +37,7 @@ const ThoughtArena = (() => {
     if (typeof BattleFxTier !== "undefined") return BattleFxTier.thoughtStepGapMs();
     const tier = document.documentElement?.dataset?.uiTier;
     if (tier === "phone") return 50;
-    if (tier === "tablet") return 33;
+    if (tier === "tablet") return 50;
     return 0;
   }
 
@@ -547,7 +548,7 @@ const ThoughtArena = (() => {
 
     if (isBattlePausedNow()) {
       lastTs = 0;
-      scheduleFrame();
+      scheduleThoughtWait(120);
       return;
     }
 
@@ -556,7 +557,7 @@ const ThoughtArena = (() => {
       if (gap > 0) {
         const now = performance.now();
         if (now - lastThoughtStepAt < gap) {
-          scheduleFrame();
+          scheduleThoughtWait(gap - (now - lastThoughtStepAt));
           return;
         }
         lastThoughtStepAt = now;
@@ -639,8 +640,27 @@ const ThoughtArena = (() => {
     else lastTs = 0;
   }
 
+  function cancelThoughtScheduler() {
+    if (rafId != null) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    if (thoughtWaitTimer != null) {
+      clearTimeout(thoughtWaitTimer);
+      thoughtWaitTimer = null;
+    }
+  }
+
+  function scheduleThoughtWait(ms) {
+    if (rafId != null || thoughtWaitTimer != null) return;
+    thoughtWaitTimer = setTimeout(() => {
+      thoughtWaitTimer = null;
+      scheduleFrame();
+    }, Math.max(1, Math.round(ms)));
+  }
+
   function scheduleFrame() {
-    if (rafId != null) return;
+    if (rafId != null || thoughtWaitTimer != null) return;
     rafId = requestAnimationFrame(step);
   }
 
@@ -807,10 +827,7 @@ const ThoughtArena = (() => {
     clusters.clear();
     equipReactions.player = [];
     equipReactions.enemy = [];
-    if (rafId != null) {
-      cancelAnimationFrame(rafId);
-      rafId = null;
-    }
+    cancelThoughtScheduler();
     lastTs = 0;
   }
 

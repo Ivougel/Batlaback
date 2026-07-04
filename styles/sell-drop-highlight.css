@@ -41,6 +41,18 @@ html[data-prep-sell-drag] #app[data-phase="prep"] .sell-drop-zone.is-drag-target
   animation: prep-sell-drop-target-pulse 0.7s ease-in-out infinite;
 }
 
+html[data-prep-sell-drag] #app[data-phase="prep"] .prep-mobile-sell-btn.is-drag-active,
+html[data-prep-sell-drag] .prep-mobile-sell-btn.is-drag-active {
+  border-color: rgba(255, 210, 80, 0.85);
+  box-shadow: 0 0 0 2px rgba(255, 210, 80, 0.28), 0 6px 22px rgba(200, 134, 10, 0.35);
+  animation: prep-sell-drop-pulse 1.05s ease-in-out infinite;
+}
+
+html[data-prep-sell-drag] #app[data-phase="prep"] .prep-mobile-sell-btn.is-drag-target,
+html[data-prep-sell-drag] .prep-mobile-sell-btn.is-drag-target {
+  animation: prep-sell-drop-target-pulse 0.7s ease-in-out infinite;
+}
+
 html[data-prep-sell-drag] #app[data-phase="prep"] #shop-panel .shop-sell-zone.is-drag-active {
   border: 2px dashed rgba(245, 200, 66, 0.7) !important;
   background: rgba(245, 200, 66, 0.14) !important;

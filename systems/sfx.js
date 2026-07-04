@@ -196,6 +196,7 @@
     ".shop-pin",
     "#btn-refresh",
     "#sell-drop-zone",
+    "#btn-prep-sell-fab",
     "#btn-fight",
   ].join(", ");
 

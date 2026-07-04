@@ -46,14 +46,18 @@
     }
   }
 
-  function thoughtStepGapMs() {
-    if (!isLightBattleFx()) return 0;
-    return isPhoneTier() ? 50 : 33;
-  }
-
   function arenaPhysicsGapMs() {
     if (!isLightBattleFx()) return 0;
-    return isPhoneTier() ? 50 : 33;
+    return isPhoneTier() ? 50 : 50;
+  }
+
+  function thoughtStepGapMs() {
+    if (!isLightBattleFx()) return 0;
+    return isPhoneTier() ? 50 : 50;
+  }
+
+  function equipIdleWobbleEnabled() {
+    return !isLightBattleFx();
   }
 
   function emotionPresentGapMs() {
@@ -102,6 +106,7 @@
     stackOrbitGapMs,
     auraPresentGapMs,
     auraRunnersEnabled,
+    equipIdleWobbleEnabled,
     applyBattleFxTierFlags,
     syncLightBattleFxSettingsUi,
   };

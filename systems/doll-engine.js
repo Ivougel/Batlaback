@@ -291,8 +291,7 @@ function tryFinishDragOnDoll(e) {
   if (!placement) return rejectDrop();
 
   if (dragFrom.type === "bench") {
-    st.bench.splice(dragFrom.index, 1);
-    if (typeof selectedBench !== "undefined" && selectedBench === dragFrom.index) selectedBench = -1;
+    commitBenchDragEntry(dragFrom);
   } else if (dragFrom.type === "shop") {
     if (typeof commitShopPurchase !== "function") return rejectDrop();
     const boughtId = commitShopPurchase(dragFrom.index, side);

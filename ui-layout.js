@@ -1206,6 +1206,7 @@
       "--prep-canvas-display-h",
       "--prep-shop-fab-top",
       "--prep-shop-fab-right",
+      "--prep-sell-fab-top",
       "--prep-canvas-zone-bottom",
       "--prep-hero-zone-top",
       "--prep-hero-zone-bottom",
@@ -1230,6 +1231,7 @@
     if (!usesPrepShopDrawer()) {
       [
         "--prep-shop-fab-top",
+        "--prep-sell-fab-top",
         "--prep-canvas-zone-bottom",
         "--prep-hero-zone-top",
         "--prep-hero-zone-bottom",
@@ -1296,6 +1298,7 @@
       const centeredTop = Math.round((zoneTop + zoneBottom) / 2 - fabSize / 2);
       const top = Math.max(zoneTop, Math.min(centeredTop, zoneBottom - fabSize));
       root.style.setProperty("--prep-shop-fab-top", `${top}px`);
+      root.style.setProperty("--prep-sell-fab-top", `${Math.max(zoneTop, top - fabSize - gap)}px`);
     }
 
     if (toolbarTop > 0) {
@@ -1319,6 +1322,10 @@
         );
       }
       root.style.setProperty("--prep-shop-sheet-bottom", `${Math.max(0, Math.round(vh - toolbarTop))}px`);
+    }
+
+    if (typeof window.syncPrepSellFabVisibility === "function") {
+      window.syncPrepSellFabVisibility();
     }
   }
 
@@ -1344,6 +1351,52 @@
     }
     if (typeof window.syncBenchMount === "function") {
       window.syncBenchMount();
+    }
+  }
+
+  function syncPrepSellFabPosition() {
+    const root = document.documentElement;
+    if (typeof window.usesPrepSellFab !== "function" || !window.usesPrepSellFab()) return;
+    if (document.getElementById("app")?.dataset.phase !== "prep") return;
+
+    const uiScale = readCssPx("--ui-scale", 1);
+    const gap = Math.round(8 * uiScale);
+    const surface = root.dataset.uiSurface;
+    const drawer = typeof window.usesPrepShopDrawerOnly === "function"
+      && window.usesPrepShopDrawerOnly();
+
+    if (drawer) return;
+
+    const shop = document.getElementById("shop-panel");
+    const shopRect = shop?.getBoundingClientRect();
+    const baseFabPx = (surface === "tablet-side" || surface === "desktop") ? 75 : 56;
+    const fabSize = Math.round(readCssPx("--prep-sell-fab-size", baseFabPx * uiScale));
+    root.style.setProperty("--prep-sell-fab-size", `${fabSize}px`);
+
+    if (shopRect && shopRect.width > 8) {
+      root.style.setProperty(
+        "--prep-sell-fab-right",
+        `${Math.round(window.innerWidth - shopRect.left + gap)}px`,
+      );
+    } else {
+      root.style.setProperty(
+        "--prep-sell-fab-right",
+        `calc(var(--shop-panel-w, 248px) + ${gap}px)`,
+      );
+    }
+
+    const benchBottom = readCssPx("--prep-bench-fab-bottom", 0);
+    const benchSize = readCssPx("--prep-bench-fab-size", 0);
+    const chrome = getBottomChrome();
+    const vh = window.visualViewport?.height ?? window.innerHeight;
+
+    if (root.dataset.prepBenchPopover === "true" && benchBottom > 0 && benchSize > 0) {
+      root.style.setProperty("--prep-sell-fab-bottom", `${Math.round(benchBottom + benchSize + gap)}px`);
+    } else if (chrome && getComputedStyle(chrome).display !== "none") {
+      const chromeTop = chrome.getBoundingClientRect().top;
+      root.style.setProperty("--prep-sell-fab-bottom", `${Math.max(gap, Math.round(vh - chromeTop + gap))}px`);
+    } else {
+      root.style.setProperty("--prep-sell-fab-bottom", `${Math.round(88 * uiScale)}px`);
     }
   }
 
@@ -1384,6 +1437,7 @@
     const fabBottom = readCssPx("--prep-bench-fab-bottom", 80);
     root.style.setProperty("--prep-bench-popover-bottom", `${Math.round(fabBottom + fabSize + gap)}px`);
     root.style.setProperty("--prep-bench-fab-size", `${fabSize}px`);
+    syncPrepSellFabPosition();
   }
 
   function syncOpenPrepTooltipDock() {
@@ -3006,6 +3060,8 @@
       scheduleCanvasFit();
       syncMobileShopFabPosition();
       syncPrepBenchFabPosition();
+      if (typeof window.syncPrepSellFabPosition === "function") window.syncPrepSellFabPosition();
+      if (typeof window.syncPrepSellFabVisibility === "function") window.syncPrepSellFabVisibility();
       syncPrepHeroSlotHeight();
       ensurePrepHeroCardPortraitObserver();
       syncPrepHeroCardPortraitSize();
@@ -3134,6 +3190,7 @@
   window.flushDeferredLayoutPasses = flushDeferredLayoutPasses;
   window.syncMobileShopFabPosition = syncMobileShopFabPosition;
   window.syncPrepBenchFabPosition = syncPrepBenchFabPosition;
+  window.syncPrepSellFabPosition = syncPrepSellFabPosition;
   window.syncTabletPortraitShopRows = syncTabletPortraitShopRows;
   window.syncMobileOverlayAnchors = syncMobileOverlayAnchors;
   window.syncPrepMobileZoneAnchors = syncPrepMobileZoneAnchors;

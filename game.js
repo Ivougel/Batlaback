@@ -4574,6 +4574,12 @@ function sellDraggedItem(side = prepViewSide) {
   if (dragFrom.type === "shop") return false;
 
   if (dragFrom.type === "bench") {
+    if (dragFrom.benchEntry) {
+      creditItemSale(dragFrom.benchEntry.itemId, side);
+      (dragFrom.benchEntry.carriedItems || []).forEach((ci) => creditItemSale(ci.itemId, side));
+      commitBenchDragEntry(dragFrom);
+      return true;
+    }
     return sellBenchEntry(dragFrom.index, side);
   }
   if (dragFrom.type === "item" || dragFrom.type === "enhancement") {
@@ -4684,6 +4690,27 @@ function handleGlobalKeydown(e) {
   }
 }
 
+function takeBenchEntryOnDragStart(st, index) {
+  const entry = st.bench[index];
+  if (!entry) return null;
+  st.bench.splice(index, 1);
+  if (selectedBench === index) selectedBench = -1;
+  else if (selectedBench > index) selectedBench -= 1;
+  return { ...entry };
+}
+
+function restoreBenchDragEntry(st, dragFrom) {
+  if (dragFrom?.type !== "bench" || !dragFrom.benchEntry) return;
+  if (st.bench.length >= MAX_BENCH) return;
+  const idx = Math.min(Math.max(0, dragFrom.index ?? st.bench.length), st.bench.length);
+  st.bench.splice(idx, 0, dragFrom.benchEntry);
+  dragFrom.benchEntry = null;
+}
+
+function commitBenchDragEntry(dragFrom) {
+  if (dragFrom?.type === "bench") dragFrom.benchEntry = null;
+}
+
 function restoreDraggedItem(side = prepViewSide) {
   if (!dragFrom) return;
   const st = getLoadoutEditState(side);
@@ -4692,6 +4719,8 @@ function restoreDraggedItem(side = prepViewSide) {
   } else if (dragFrom.type === "container") {
     st.containers = [...st.containers, dragFrom.container];
     st.items = [...st.items, ...dragFrom.carriedItems];
+  } else if (dragFrom.type === "bench") {
+    restoreBenchDragEntry(st, dragFrom);
   }
   if (isTdLoadoutEditPhase() && side === "player") {
     const tower = getTdEditTower();
@@ -4717,9 +4746,11 @@ function syncSellDropHighlight(clientX, clientY) {
   const dragSide = dragFrom?.side || prepViewSide;
 
   const sellZone = document.getElementById("shop-sell-zone");
-  if (sellZone) {
+  if (sellZone && !isPrepSellFabActive()) {
     sellZone.classList.toggle("sell-drop-target", onSell);
     sellZone.classList.toggle("is-drag-active", sellable);
+  } else if (sellZone) {
+    sellZone.classList.remove("sell-drop-target", "is-drag-active");
   }
 
   document.querySelectorAll(".sell-drop-zone").forEach((el) => {
@@ -5547,35 +5578,6 @@ function getPrepDropPlacement(st, side = prepViewSide, rotationOverride = null) 
     };
   }
 
-  // Для drag из магазина/скамьи: занятая клетка — невалидно, кроме вставки камня в сокет.
-  if (isPrepSidebarArcDrag()
-    && isSlotCell(st.containers, col, row)
-    && findItemAtSlot(st.items, col, row)) {
-    if (typeof isGemItem === "function" && isGemItem(dragPayload.itemId)
-      && typeof findSocketHostAt === "function") {
-      const excludeUid = isPrepLoadoutItemDrag() ? dragFrom.item?.uid : null;
-      const host = findSocketHostAt(st.items, col, row, dragPayload.itemId, excludeUid);
-      if (host) {
-        return {
-          kind: "item",
-          col,
-          row,
-          rotation: activeRot,
-          valid: true,
-          displaced: [],
-        };
-      }
-    }
-    return {
-      kind: "item",
-      col,
-      row,
-      rotation: activeRot,
-      valid: false,
-      displaced: [],
-    };
-  }
-
   const placement = resolveLoadoutPlacementDisplacing(
     st.containers,
     dragPayload.itemId,
@@ -5647,7 +5649,7 @@ function getPrepArcSidebarAnchorClient(clientX, clientY) {
     if (benchCenter) return benchCenter;
   }
   if (isDropOnSell(pointer)) {
-    const sellCenter = getElementClientCenter(document.getElementById("sell-drop-zone") || document.getElementById("shop-sell-zone"));
+    const sellCenter = getElementClientCenter(getPrepSellDropElement());
     if (sellCenter) return sellCenter;
   }
   return null;
@@ -6392,10 +6394,13 @@ function syncCampaignChrome() {
   const textEl = document.getElementById("campaign-hint-text");
   const refreshBtn = document.getElementById("btn-refresh");
   const sellBtn = document.getElementById("sell-drop-zone");
+  const sellFab = document.getElementById("btn-prep-sell-fab");
   if (!isCampaignMode() || phase !== "prep" || gameOver || typeof Campaign === "undefined" || !Campaign.isActive()) {
     bar?.classList.add("hidden");
     refreshBtn?.classList.remove("hidden-by-campaign");
     sellBtn?.classList.remove("hidden-by-campaign");
+    sellFab?.classList.remove("hidden-by-campaign");
+    if (typeof window.syncPrepSellFabVisibility === "function") window.syncPrepSellFabVisibility();
     return;
   }
   const step = Campaign.getStep();
@@ -6405,6 +6410,8 @@ function syncCampaignChrome() {
   if (textEl) textEl.textContent = Campaign.getHintText();
   refreshBtn?.classList.toggle("hidden-by-campaign", prep.allowRefresh === false);
   sellBtn?.classList.toggle("hidden-by-campaign", prep.allowSell === false);
+  sellFab?.classList.toggle("hidden-by-campaign", prep.allowSell === false);
+  if (typeof window.syncPrepSellFabVisibility === "function") window.syncPrepSellFabVisibility();
 }
 
 function syncTdHintBar() {
@@ -8073,6 +8080,21 @@ function bindLobby2pSellZones() {
   });
 }
 
+function isPrepSellFabActive() {
+  if (typeof window.usesPrepSellFab === "function" && window.usesPrepSellFab()) {
+    const fab = document.getElementById("btn-prep-sell-fab");
+    if (!fab || fab.hidden || fab.classList.contains("hidden-by-campaign")) return false;
+    const cs = getComputedStyle(fab);
+    return cs.display !== "none" && cs.visibility !== "hidden";
+  }
+  return false;
+}
+
+function getPrepSellDropElement() {
+  if (isPrepSellFabActive()) return document.getElementById("btn-prep-sell-fab");
+  return document.getElementById("sell-drop-zone") || document.getElementById("shop-sell-zone");
+}
+
 function isDropOnSell(e) {
   if (!e) return false;
   const pad = isTouchUi() ? 18 : 8;
@@ -8092,6 +8114,17 @@ function isDropOnSell(e) {
       if (!zone) continue;
       const r = zone.getBoundingClientRect();
       if (e.clientX >= r.left - pad && e.clientX <= r.right + pad
+        && e.clientY >= r.top - pad && e.clientY <= r.bottom + pad) return true;
+    }
+    return false;
+  }
+
+  const sellFab = document.getElementById("btn-prep-sell-fab");
+  if (isPrepSellFabActive()) {
+    if (e.target?.closest?.("#btn-prep-sell-fab")) return true;
+    if (sellFab) {
+      const r = sellFab.getBoundingClientRect();
+      if (r.width > 0 && e.clientX >= r.left - pad && e.clientX <= r.right + pad
         && e.clientY >= r.top - pad && e.clientY <= r.bottom + pad) return true;
     }
     return false;
@@ -10619,9 +10652,6 @@ function tryGemSocketDrop(st, dragFrom, dragPayload, col, row, side) {
   if (dragFrom.type === "shop") {
     // Покупку откладываем до успешной вставки в сокет.
     purchasedGemId = dragFrom.index;
-  } else if (dragFrom.type === "bench") {
-    st.bench.splice(dragFrom.index, 1);
-    if (selectedBench === dragFrom.index) selectedBench = -1;
   } else if (dragFrom.type === "item" || dragFrom.type === "enhancement") {
     st.items = st.items.filter((i) => i.uid !== dragFrom.item.uid);
   }
@@ -10700,6 +10730,14 @@ function finishDragDrop(e) {
 
   const side = dragFrom.side || prepViewSide;
   const st = getLoadoutEditState(side);
+
+  if (dragPayload) {
+    syncPrepDragBoardHover(dropClientX, dropClientY, dropClientX, dropClientY);
+    if (isPrepSidebarArcDrag()) {
+      const projected = projectClientPointToPrepBackpack(dropClientX, dropClientY);
+      if (projected) applyPrepSidebarCorridorHover(projected, side, st);
+    }
+  }
   if (!canEditPrepSide(side)) {
     restoreDraggedItem(side);
     notifyPrepDragRejectedFromDragFrom();
@@ -10814,9 +10852,8 @@ function finishDragDrop(e) {
 
     if (canMove) {
       if (dragFrom.type === "bench") {
-        const benchEntry = st.bench[dragFrom.index];
-        st.bench.splice(dragFrom.index, 1);
-        if (selectedBench === dragFrom.index) selectedBench = -1;
+        const benchEntry = dragFrom.benchEntry;
+        commitBenchDragEntry(dragFrom);
         const placed = createContainer(dragPayload.itemId, col, row, dragPayload.rotation || 0);
         st.containers = [...st.containers, placed];
         (benchEntry?.carriedItems || []).forEach((item) => {
@@ -10870,6 +10907,7 @@ function finishDragDrop(e) {
     const col = dropCol;
     const row = dropRow;
     if (isSlotCell(st.containers, col, row) && tryGemSocketDrop(st, dragFrom, dragPayload, col, row, side)) {
+      commitBenchDragEntry(dragFrom);
       // камень вставлен в сокет
     } else if (isSlotCell(st.containers, col, row)) {
       const excludeUid = isPrepLoadoutItemDrag() ? dragFrom.item.uid : null;
@@ -10898,6 +10936,7 @@ function finishDragDrop(e) {
             st.items = [...st.items, dragFrom.item];
             if (typeof notifyPrepPlacementRejected === "function") notifyPrepPlacementRejected(dragFrom.item);
           }
+          restoreDraggedItem(side);
           clearDragUiState();
           renderBench();
           recalcSynergies();
@@ -10909,6 +10948,7 @@ function finishDragDrop(e) {
             st.items = [...st.items, dragFrom.item];
             if (typeof notifyPrepPlacementRejected === "function") notifyPrepPlacementRejected(dragFrom.item);
           }
+          restoreDraggedItem(side);
           clearDragUiState();
           renderBench();
           recalcSynergies();
@@ -10923,8 +10963,7 @@ function finishDragDrop(e) {
           displacedItems = displaced;
         }
         if (dragFrom.type === "bench") {
-          st.bench.splice(dragFrom.index, 1);
-          if (selectedBench === dragFrom.index) selectedBench = -1;
+          commitBenchDragEntry(dragFrom);
         } else if (dragFrom.type === "shop") {
           const itemId = commitShopPurchase(dragFrom.index, side);
           if (!itemId) {
@@ -10978,6 +11017,10 @@ function finishDragDrop(e) {
     dragFrom.carriedItems?.forEach((item) => {
       if (typeof notifyPrepPlacementRejected === "function") notifyPrepPlacementRejected(item);
     });
+  }
+
+  if (dragFrom?.type === "bench" && dragFrom.benchEntry) {
+    restoreBenchDragEntry(st, dragFrom);
   }
 
   maybeCelebratePrepArcDrop(prepArcCelebrate);
@@ -11143,16 +11186,20 @@ function startBenchDrag(index, e, side = prepViewSide) {
   e.preventDefault();
   clearTouchTapGesture();
   hideSidebarTooltip();
-  selectedBench = index;
+  const arcCard = document.querySelector(`.bench-card[data-bench="${index}"]`);
+  const benchEntry = takeBenchEntryOnDragStart(st, index);
+  if (!benchEntry) return;
+  selectedBench = -1;
   document.querySelectorAll("#bench-slots .bench-card").forEach((card) => {
     card.classList.toggle("selected", +card.dataset.bench === index);
   });
-  dragPayload = { itemId: st.bench[index].itemId, rotation: st.bench[index].rotation || 0 };
-  dragFrom = { type: "bench", index, side };
+  dragPayload = { itemId: benchEntry.itemId, rotation: benchEntry.rotation || 0 };
+  dragFrom = { type: "bench", index, side, benchEntry };
   prepSidebarDragUnlocked = typeof usesPrepBenchPopover === "function" && usesPrepBenchPopover();
   prepSidebarStickyHover = null;
   setPrepBenchDragPassthrough(true);
-  beginPrepDragArcFromCard(document.querySelector(`.bench-card[data-bench="${index}"]`));
+  renderBench(side);
+  beginPrepDragArcFromCard(arcCard);
   startSynergyPreview();
   syncUiDragState();
   if (typeof onPrepDragStart === "function") onPrepDragStart();

@@ -100,14 +100,22 @@ const ArenaEquipment = (() => {
   /** @type {Map<string, object[]>} */
   const bodiesBySide = new Map();
   let rafId = null;
+  let physicsWaitTimer = null;
   let lastPhysicsStepAt = 0;
 
   function arenaPhysicsGapMs() {
     if (typeof BattleFxTier !== "undefined") return BattleFxTier.arenaPhysicsGapMs();
     const tier = document.documentElement?.dataset?.uiTier;
     if (tier === "phone") return 50;
-    if (tier === "tablet") return 33;
+    if (tier === "tablet") return 50;
     return 0;
+  }
+
+  function equipIdleWobbleEnabled() {
+    if (typeof BattleFxTier !== "undefined" && BattleFxTier.equipIdleWobbleEnabled) {
+      return BattleFxTier.equipIdleWobbleEnabled();
+    }
+    return true;
   }
   let lastTs = 0;
   /** @type {object|null} */
@@ -1016,10 +1024,15 @@ const ArenaEquipment = (() => {
       const off = orbitOffsetPx(body.side, body.slotId);
       body.homeOx = off.ox;
       body.homeOy = off.oy;
-      body.renderOx = body.homeOx + wobbleX;
-      body.renderOy = body.homeOy + wobbleY;
-      body.rotation += body.rotVel * dt;
-      body.rotVel *= Math.pow(0.92, dt * 60);
+      if (equipIdleWobbleEnabled()) {
+        body.renderOx = body.homeOx + wobbleX;
+        body.renderOy = body.homeOy + wobbleY;
+        body.rotation += body.rotVel * dt;
+        body.rotVel *= Math.pow(0.92, dt * 60);
+      } else {
+        body.renderOx = body.homeOx;
+        body.renderOy = body.homeOy;
+      }
       return;
     }
 
@@ -1062,7 +1075,7 @@ const ArenaEquipment = (() => {
     if (physicsGap > 0) {
       const now = performance.now();
       if (now - lastPhysicsStepAt < physicsGap) {
-        scheduleFrame();
+        schedulePhysicsWait(physicsGap - (now - lastPhysicsStepAt));
         return;
       }
       lastPhysicsStepAt = now;
@@ -1115,8 +1128,27 @@ const ArenaEquipment = (() => {
     if (anyActive) scheduleFrame();
   }
 
+  function cancelPhysicsScheduler() {
+    if (rafId != null) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    if (physicsWaitTimer != null) {
+      clearTimeout(physicsWaitTimer);
+      physicsWaitTimer = null;
+    }
+  }
+
+  function schedulePhysicsWait(ms) {
+    if (rafId != null || physicsWaitTimer != null) return;
+    physicsWaitTimer = setTimeout(() => {
+      physicsWaitTimer = null;
+      scheduleFrame();
+    }, Math.max(1, Math.round(ms)));
+  }
+
   function scheduleFrame() {
-    if (rafId != null) return;
+    if (rafId != null || physicsWaitTimer != null) return;
     rafId = requestAnimationFrame((ts) => {
       rafId = null;
       stepPhysics(ts);
@@ -1274,10 +1306,7 @@ const ArenaEquipment = (() => {
     lastTs = 0;
     const fxLayer = document.getElementById("arena-equip-fx-layer");
     if (fxLayer) fxLayer.innerHTML = "";
-    if (rafId != null) {
-      cancelAnimationFrame(rafId);
-      rafId = null;
-    }
+    cancelPhysicsScheduler();
   }
 
   function onResize() {

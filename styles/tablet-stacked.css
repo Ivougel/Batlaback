@@ -185,6 +185,41 @@ html[data-prep-shop-drawer="true"] body:not(:has(#app[data-phase="prep"])) .prep
   display: none !important;
 }
 
+html[data-prep-shop-drawer="true"] #app[data-phase="prep"] ~ .prep-mobile-sell-btn,
+html[data-prep-shop-drawer="true"] body:has(#app[data-phase="prep"]) .prep-mobile-sell-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  z-index: 9051;
+  top: var(--prep-sell-fab-top, calc(var(--prep-shop-fab-top, 50%) - var(--prep-shop-fab-size, 56px) - 10px));
+  bottom: auto;
+  right: var(--prep-mobile-fab-right, calc(var(--gap-md) * var(--ui-scale)));
+  left: auto;
+  width: calc(var(--prep-shop-fab-size, 56px) * 1.12);
+  height: calc(var(--prep-shop-fab-size, 56px) * 1.12);
+  min-width: calc(var(--prep-shop-fab-size, 56px) * 1.12);
+  min-height: calc(var(--prep-shop-fab-size, 56px) * 1.12);
+  padding: 0;
+  border-radius: 50%;
+  font-size: 1.65rem;
+  line-height: 1;
+  border: 2px solid rgba(200, 134, 10, 0.55);
+  background: rgba(22, 27, 34, 0.94);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+  touch-action: manipulation;
+}
+
+html[data-prep-shop-drawer="true"] #app[data-phase="battle"] ~ .prep-mobile-sell-btn,
+html[data-prep-shop-drawer="true"] #app[data-phase="replay"] ~ .prep-mobile-sell-btn,
+html[data-prep-shop-drawer="true"] body:not(:has(#app[data-phase="prep"])) .prep-mobile-sell-btn {
+  display: none !important;
+}
+
+html[data-prep-shop-drawer="true"] #app[data-phase="prep"] #shop-panel .shop-sell-zone {
+  display: none !important;
+}
+
 /* ─── Магазин: скрыт, открывается sheet ─── */
 
 html[data-prep-shop-drawer="true"] .prep-shop-backdrop {

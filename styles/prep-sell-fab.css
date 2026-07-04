@@ -1,0 +1,63 @@
+/**
+ * FAB продажи (💰): mobile drawer + tablet-side / desktop side.
+ * html[data-prep-sell-fab]
+ */
+
+html[data-prep-sell-fab] #app[data-phase="prep"] #shop-panel .shop-sell-zone {
+  display: none !important;
+}
+
+html[data-prep-sell-fab] #btn-prep-sell-fab:not(.hidden):not(.hidden-by-campaign) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  z-index: 9051;
+  padding: 0;
+  border-radius: 50%;
+  font-size: calc(var(--prep-sell-fab-size, 56px) * 0.52);
+  line-height: 1;
+  border: 2px solid rgba(200, 134, 10, 0.55);
+  background: rgba(22, 27, 34, 0.94);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+  touch-action: manipulation;
+}
+
+html[data-prep-sell-fab][data-prep-layout="mobile"] #btn-prep-sell-fab:not(.hidden):not(.hidden-by-campaign),
+html[data-prep-sell-fab][data-prep-shop-drawer="true"] #btn-prep-sell-fab:not(.hidden):not(.hidden-by-campaign) {
+  top: var(--prep-sell-fab-top, calc(var(--prep-shop-fab-top, 50%) - var(--prep-shop-fab-size, 56px) - 10px));
+  bottom: auto;
+  right: var(--prep-mobile-fab-right, var(--prep-shop-fab-right, calc(var(--gap-md) * var(--ui-scale))));
+  width: var(--prep-shop-fab-size, var(--touch-target-min));
+  height: var(--prep-shop-fab-size, var(--touch-target-min));
+  min-width: var(--prep-shop-fab-size, var(--touch-target-min));
+  min-height: var(--prep-shop-fab-size, var(--touch-target-min));
+  font-size: 1.45rem;
+}
+
+html[data-prep-sell-fab][data-ui-surface="tablet-side"] #btn-prep-sell-fab:not(.hidden):not(.hidden-by-campaign),
+html[data-prep-sell-fab][data-ui-surface="desktop"] #btn-prep-sell-fab:not(.hidden):not(.hidden-by-campaign) {
+  right: var(--prep-sell-fab-right, calc(var(--shop-panel-w, 248px) + 8px));
+  bottom: calc(var(--prep-sell-fab-bottom, 96px) + env(safe-area-inset-bottom, 0px));
+  top: auto;
+  width: var(--prep-sell-fab-size, calc(75px * var(--ui-scale, 1)));
+  height: var(--prep-sell-fab-size, calc(75px * var(--ui-scale, 1)));
+  min-width: var(--prep-sell-fab-size, calc(75px * var(--ui-scale, 1)));
+  min-height: var(--prep-sell-fab-size, calc(75px * var(--ui-scale, 1)));
+}
+
+html[data-prep-sell-fab] #btn-prep-sell-fab.is-drag-target {
+  border-color: rgba(255, 210, 80, 0.95);
+  background: rgba(255, 210, 80, 0.22);
+  box-shadow: 0 0 0 3px rgba(255, 210, 80, 0.35), 0 8px 28px rgba(200, 134, 10, 0.45);
+  transform: scale(1.06);
+}
+
+html[data-prep-sell-fab] #app[data-phase="prep"] #shop-panel.prep-shop-focus-pulse {
+  animation: prep-shop-focus-pulse 0.65s ease;
+}
+
+@keyframes prep-shop-focus-pulse {
+  0%, 100% { box-shadow: none; }
+  40% { box-shadow: 0 0 0 3px rgba(255, 210, 80, 0.45), 0 0 24px rgba(200, 134, 10, 0.25); }
+}
