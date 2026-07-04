@@ -3668,7 +3668,7 @@ function shouldThrottleBattleCanvasDraw() {
 }
 
 function battleCanvasDrawFps() {
-  if (document.documentElement.dataset.uiTier === "tablet") return 15;
+  if (document.documentElement.dataset.uiTier === "tablet") return 12;
   return 20;
 }
 

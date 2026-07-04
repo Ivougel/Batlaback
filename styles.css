@@ -428,6 +428,10 @@ body:has(#app[data-phase="replay"]) #battle-controls:not(.hidden) {
   animation: hero-hit 0.3s ease;
 }
 
+html[data-battle-fx-light="true"] .avatar-hero-shell.hero-taking-hit {
+  animation: none;
+}
+
 .player-characteristics-popup {
   position: absolute;
   left: 50%;

@@ -934,6 +934,8 @@ const ArenaAttackStyles = (() => {
 
   function fireThoughtReaction(body, style) {
     if (!style?.thoughtReaction) return;
+    if (typeof BattleFxTier !== "undefined" && BattleFxTier.equipThoughtReactionsEnabled
+      && !BattleFxTier.equipThoughtReactionsEnabled()) return;
     if (typeof ThoughtArena === "undefined" || !ThoughtArena.triggerEquipHitReaction) return;
     const victimSide = body.side === "player" ? "enemy" : "player";
     ThoughtArena.triggerEquipHitReaction(victimSide, {

@@ -46,12 +46,34 @@
 
   function applyBattleFxTierFlags() {
     const light = isLightBattleFx();
-    document.documentElement.dataset.battleFxLight = light ? "true" : "false";
+    const root = document.documentElement;
+    root.dataset.battleFxLight = light ? "true" : "false";
+    if (light) root.dataset.battleThoughtsStatic = "true";
+    else root.removeAttribute("data-battle-thoughts-static");
     if (isPhoneTier()) {
-      document.documentElement.dataset.battleFxPhone = "true";
+      root.dataset.battleFxPhone = "true";
     } else {
-      document.documentElement.removeAttribute("data-battle-fx-phone");
+      root.removeAttribute("data-battle-fx-phone");
     }
+  }
+
+  /** Статичные мысли: emoji меняется редко, без spring/реакций на каждый удар. */
+  function isStaticBattleThoughts() {
+    return isLightBattleFx();
+  }
+
+  function equipThoughtReactionsEnabled() {
+    return !isLightBattleFx();
+  }
+
+  function battleEmotionReactive() {
+    return !isLightBattleFx();
+  }
+
+  function emotionAnalyzeGapMs() {
+    if (isFlankBattleThoughtFxActive() && isLightBattleFx()) return 1800;
+    if (isLightBattleFx()) return 1200;
+    return 500;
   }
 
   /** ~12–14 FPS cap для орбиты/мыслей во flank-бою (0 = лаги на планшете). */
@@ -84,13 +106,13 @@
   }
 
   function emotionPresentGapMs() {
-    if (isFlankBattleThoughtFxActive()) return isPhoneTier() ? 280 : 240;
+    if (isFlankBattleThoughtFxActive()) return isPhoneTier() ? 400 : 350;
     if (!isLightBattleFx()) return 66;
     return isPhoneTier() ? 120 : 100;
   }
 
   function arenaPresentGapMs() {
-    if (isFlankBattleThoughtFxActive()) return 720;
+    if (isFlankBattleThoughtFxActive()) return isLightBattleFx() ? 900 : 720;
     return isLightBattleFx() ? 500 : 450;
   }
 
@@ -135,6 +157,10 @@
 
   window.BattleFxTier = {
     isLightBattleFx,
+    isStaticBattleThoughts,
+    equipThoughtReactionsEnabled,
+    battleEmotionReactive,
+    emotionAnalyzeGapMs,
     thoughtStepGapMs,
     arenaPhysicsGapMs,
     emotionPresentGapMs,

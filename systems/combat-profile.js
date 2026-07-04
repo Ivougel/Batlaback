@@ -1084,6 +1084,8 @@ function triggerThoughtSlotHitShake(team) {
   const durationMs = 80 + Math.floor(Math.random() * 71);
   applyProfileAvatarHitShake(thoughtSlot, shakeX, shakeY, durationMs);
 
+  if (typeof BattleFxTier !== "undefined" && BattleFxTier.equipThoughtReactionsEnabled
+    && !BattleFxTier.equipThoughtReactionsEnabled()) return;
   if (typeof ThoughtArena !== "undefined" && ThoughtArena.triggerEquipHitReaction) {
     ThoughtArena.triggerEquipHitReaction(team, {
       kind: "shake",

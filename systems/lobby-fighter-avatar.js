@@ -284,11 +284,12 @@ function refreshLobbyBattleEmotions(lobby, matches) {
   refreshLobbyBattleEmotions._lastAt = now;
 
   const displayState = typeof getDisplayBattleState === "function" ? getDisplayBattleState() : null;
+  const lightLobby = typeof BattleFxTier !== "undefined" && BattleFxTier.isLightBattleFx?.();
 
   matches.forEach((match) => {
     if (match.byeFighterId || !match.state || match.state.finished) return;
     if (displayState && match.state === displayState) syncSpectatedMatchEmotions(match);
-    else analyzeBackgroundMatchEmotions(match);
+    else if (!lightLobby) analyzeBackgroundMatchEmotions(match);
   });
 
   decayLobbyFighterEmotions();

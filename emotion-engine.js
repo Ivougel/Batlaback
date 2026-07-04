@@ -7,6 +7,17 @@ const EMOTION_ANALYZE_INTERVAL_MS = 500;
 const EMOTION_MIN_GAP_MS = 600;
 const EMOTION_SIMULTANEOUS_DAMAGE_MS = 300;
 
+function isStaticBattleEmotions() {
+  return typeof BattleFxTier !== "undefined" && BattleFxTier.isStaticBattleThoughts?.();
+}
+
+function getEmotionAnalyzeGapMs() {
+  if (typeof BattleFxTier !== "undefined" && BattleFxTier.emotionAnalyzeGapMs) {
+    return BattleFxTier.emotionAnalyzeGapMs();
+  }
+  return EMOTION_ANALYZE_INTERVAL_MS;
+}
+
 /** Стартовая «основная» эмоция — всегда на экране, не гаснет по таймеру */
 const DEFAULT_MAIN_EMOJI = {
   player: "😤",
@@ -264,6 +275,33 @@ function checkSimultaneousDamage() {
 }
 
 function queueDamageDialog(victim, attacker, amount, victimHpPct = 1) {
+  if (isStaticBattleEmotions()) {
+    recordDamageHit(victim, amount);
+    if (checkSimultaneousDamage()) return;
+    if (!emotionEngine.firstBlood && amount > 4) {
+      emotionEngine.firstBlood = true;
+      tryQueueEvent(victim, createDialogEvent({
+        side: victim,
+        emoji: "🩸",
+        replyTo: attacker,
+        animation: "nod",
+        duration: 1100,
+      }));
+      return;
+    }
+    if (amount > 14 || victimHpPct < 0.2) {
+      tryQueueEvent(victim, createDialogEvent({
+        side: victim,
+        emoji: victimHpPct < 0.2 ? pickMemeEmoji(["💀", "😱"]) : pickMemeEmoji(["😵‍💫", "😤"]),
+        replyTo: attacker,
+        animation: "nod",
+        duration: 1200,
+        priorityHint: amount > 14 ? "crit" : "normal",
+      }));
+    }
+    return;
+  }
+
   const combo = emotionEngine.comboCount || (emotionEngine.comboCount = { player: 0, enemy: 0 });
   const lastHitBy = emotionEngine.lastHitBy || (emotionEngine.lastHitBy = { player: null, enemy: null });
 
@@ -493,6 +531,7 @@ function scanAttackVisuals(state) {
 }
 
 function scanFloatingNumbers(state) {
+  if (isStaticBattleEmotions()) return;
   (state.floatingNumbers || []).forEach((fn) => {
     if (!fn?.uid || emotionEngine.seenFloatIds.has(fn.uid)) return;
     emotionEngine.seenFloatIds.add(fn.uid);
@@ -514,6 +553,12 @@ function detectSnapshotEvents(prev, cur, elapsedReal) {
 
   if (playerLoss > 0.5) queueDamageDialog("player", "enemy", playerLoss, cur.playerHpPct);
   if (enemyLoss > 0.5) queueDamageDialog("enemy", "player", enemyLoss, cur.enemyHpPct);
+
+  if (isStaticBattleEmotions()) {
+    if (cur.playerPoison > prev.playerPoison) queuePoisonDialog("player", "enemy");
+    if (cur.enemyPoison > prev.enemyPoison) queuePoisonDialog("enemy", "player");
+    return;
+  }
 
   if (playerGain > 0.5) queueHealDialog("player");
   if (enemyGain > 0.5) queueHealDialog("enemy");
@@ -577,7 +622,8 @@ function detectSnapshotEvents(prev, cur, elapsedReal) {
 
 function analyzeBattleState(battleState, elapsedReal) {
   const now = Date.now();
-  if (now - emotionEngine.lastAnalyzeAt < EMOTION_ANALYZE_INTERVAL_MS) return;
+  const analyzeGap = getEmotionAnalyzeGapMs();
+  if (now - emotionEngine.lastAnalyzeAt < analyzeGap) return;
   emotionEngine.lastAnalyzeAt = now;
 
   scanAttackVisuals(battleState);
@@ -690,6 +736,7 @@ const TAUNT_COOLDOWNS = { player: 0, enemy: 0 };
 const TAUNT_MIN_INTERVAL = 4000;
 
 function maybeTaunt(attacker, victimHpPct) {
+  if (isStaticBattleEmotions()) return;
   const now = Date.now();
   if (now - TAUNT_COOLDOWNS[attacker] < TAUNT_MIN_INTERVAL) return;
   TAUNT_COOLDOWNS[attacker] = now;

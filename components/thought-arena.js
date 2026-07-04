@@ -539,7 +539,14 @@ const ThoughtArena = (() => {
     }
   }
 
+  function isStaticThoughts() {
+    return typeof BattleFxTier !== "undefined" && BattleFxTier.isStaticBattleThoughts?.();
+  }
+
   function triggerEquipHitReaction(side, spec) {
+    if (isStaticThoughts()) return;
+    if (typeof BattleFxTier !== "undefined" && BattleFxTier.equipThoughtReactionsEnabled
+      && !BattleFxTier.equipThoughtReactionsEnabled()) return;
     if (!clusters.has(side) || !spec) return;
     equipReactions[side].push({
       kind: spec.kind || "shake",
@@ -1085,6 +1092,14 @@ const ThoughtArena = (() => {
         wobbleAmp: 0.28,
         mirrorX: usesThoughtDuelMirror() && side === "player",
       };
+      if (isStaticThoughts()) {
+        body.vx = 0;
+        body.vy = 0;
+        body.rotVel = 0;
+        body.displayScale = 1;
+        body.renderRot = 0;
+        body.rotation = 0;
+      }
       styleBodyEl(body, glyph);
       return body;
     });
@@ -1093,6 +1108,7 @@ const ThoughtArena = (() => {
   }
 
   function pulseCluster(cluster) {
+    if (isStaticThoughts()) return;
     const vmin = viewportMin();
     const impulse = vmin * 0.013;
 
@@ -1151,15 +1167,16 @@ const ThoughtArena = (() => {
       createCluster(side, glyphs, key, event);
     } else if (cluster.members.length === glyphs.length) {
       const sameKey = cluster.eventKey === key;
+      if (sameKey) return;
       updateClusterGlyphs(cluster, glyphs, event);
-      if (!sameKey) pulseCluster(cluster);
+      if (!isStaticThoughts()) pulseCluster(cluster);
     } else {
       removeCluster(side, true);
       createCluster(side, glyphs, key, event);
     }
 
     clusters.get(side)?.members.forEach(applyVisual);
-    scheduleFrame();
+    if (!isStaticThoughts()) scheduleFrame();
   }
 
   function remove(side) {
