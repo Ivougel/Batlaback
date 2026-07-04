@@ -312,9 +312,14 @@ html[data-ui-tier="tablet"] #app[data-phase="replay"] {
 }
 
 @media (display-mode: standalone) {
+  html[data-ui-tier="tablet"],
   html[data-ui-tier="tablet"] body {
+    height: var(--viewport-h, 100dvh);
     min-height: var(--viewport-h, 100dvh);
-    max-height: none;
+    max-height: var(--viewport-h, 100dvh);
+  }
+
+  html[data-ui-tier="tablet"] body {
     background: var(--bg);
   }
 
@@ -331,6 +336,14 @@ html[data-ui-tier="tablet"] #app[data-phase="replay"] {
       8px,
       env(safe-area-inset-bottom, 0px),
       constant(safe-area-inset-bottom, 0px)
+    );
+  }
+
+  /* iPad landscape: env(safe-area-inset-bottom) часто 0, но зона home indicator есть */
+  html[data-ui-tier="tablet"] .bottom-chrome::after {
+    min-height: max(
+      12px,
+      calc(env(safe-area-inset-bottom, 0px) + var(--bottom-chrome-pin-y, 0px))
     );
   }
 

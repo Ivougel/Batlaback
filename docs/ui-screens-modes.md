@@ -47,7 +47,8 @@ body
 
 | Режим | Шаги class-overlay |
 |-------|-------------------|
-| solo, hardbot, lobby, lobby2p | mode → player → companion → summary → старт |
+| solo, hardbot, lobby | mode → player → companion → summary → старт |
+| lobby2p | mode → player → companion → класс P2 → спутник P2 → старт |
 | versus | mode → player → companion → summary → **opponent** → старт |
 | campaign | mode → **campaign-trial** → player → companion → summary → старт |
 

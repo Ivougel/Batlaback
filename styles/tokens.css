@@ -129,6 +129,7 @@
   --game-item-icon-duo-width: calc(var(--game-item-icon-size) * 1.85);
 
   /* Toolbar / bottom chrome */
+  --bottom-chrome-bleed: #0d1117;
   --prep-toolbar-h: var(--bottom-chrome-h);
   --toolbar-h: var(--bottom-chrome-h);
   --toolbar-btn-h: var(--gap-md);

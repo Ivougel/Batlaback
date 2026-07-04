@@ -165,6 +165,7 @@ body {
 /* ─── Bottom chrome ─── */
 
 .bottom-chrome {
+  --bottom-chrome-bleed: #f5f0e4;
   background: var(--meadow-chrome);
   border-top: 2px solid var(--meadow-border);
   backdrop-filter: blur(8px);

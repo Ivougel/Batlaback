@@ -11,9 +11,17 @@
 
   function viewportSize() {
     const vv = window.visualViewport;
+    const innerW = window.innerWidth;
+    const innerH = window.innerHeight;
+    if (isPwaStandalone()) {
+      return {
+        w: Math.round(Math.max(vv?.width ?? innerW, innerW)),
+        h: Math.round(Math.max(vv?.height ?? innerH, innerH)),
+      };
+    }
     return {
-      w: vv?.width ?? window.innerWidth,
-      h: vv?.height ?? window.innerHeight,
+      w: vv?.width ?? innerW,
+      h: vv?.height ?? innerH,
     };
   }
 
@@ -34,6 +42,11 @@
   function visualViewportBottom() {
     const vv = window.visualViewport;
     return vv ? vv.offsetTop + vv.height : window.innerHeight;
+  }
+
+  /** Нижняя граница экрана: layout viewport + visual (iOS PWA home indicator). */
+  function screenBottom() {
+    return Math.max(window.innerHeight, visualViewportBottom());
   }
 
   function isPwaStandalone() {
@@ -70,7 +83,7 @@
       return;
     }
 
-    const viewBottom = visualViewportBottom();
+    const viewBottom = screenBottom();
     const rect = bar.getBoundingClientRect();
     const gap = Math.max(0, viewBottom - rect.bottom);
     const pinY = gap > 0.5 ? Math.round(gap) : 0;
@@ -3648,8 +3661,13 @@
   window.addEventListener("resize", scheduleLayout, { passive: true });
   window.addEventListener("orientationchange", scheduleLayout, { passive: true });
   window.visualViewport?.addEventListener("resize", scheduleLayoutOnViewportChange, { passive: true });
+  window.visualViewport?.addEventListener("scroll", syncBottomChromeDock, { passive: true });
   document.addEventListener("DOMContentLoaded", () => {
     scheduleLayout();
+    requestAnimationFrame(() => {
+      syncBottomChromeDock();
+      requestAnimationFrame(syncBottomChromeDock);
+    });
     const stage = document.querySelector(".battle-canvas-stage");
     if (stage && typeof ResizeObserver !== "undefined") {
       new ResizeObserver(onCanvasFitResize).observe(stage);

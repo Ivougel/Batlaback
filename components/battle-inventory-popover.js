@@ -31,7 +31,7 @@ const BattleInventoryPopover = (() => {
   }
 
   function isLobbySpectateLive() {
-    return typeof isLobbyMode === "function" && isLobbyMode()
+    return typeof isAnyLobbyMode === "function" && isAnyLobbyMode()
       && typeof lobbyMatches !== "undefined" && lobbyMatches?.length > 0
       && typeof lobbyState !== "undefined" && !!lobbyState;
   }

@@ -26,7 +26,7 @@
   -webkit-backdrop-filter: blur(6px);
 }
 
-/* iPad PWA: залить зазор под home indicator тем же фоном, что и панель */
+/* iPad PWA: залить зазор под home indicator непрозрачным фоном панели */
 .bottom-chrome::after {
   content: "";
   position: absolute;
@@ -34,7 +34,7 @@
   right: 0;
   top: 100%;
   height: calc(env(safe-area-inset-bottom, 0px) + var(--bottom-chrome-pin-y, 0px));
-  background: inherit;
+  background: var(--bottom-chrome-bleed, #0d1117);
   pointer-events: none;
 }
 

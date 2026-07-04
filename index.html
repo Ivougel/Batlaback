@@ -16,7 +16,7 @@
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="stylesheet" href="styles/tokens.css?v=21">
   <link rel="stylesheet" href="styles/layers.css?v=7">
-  <link rel="stylesheet" href="styles/bottom-chrome.css?v=24">
+  <link rel="stylesheet" href="styles/bottom-chrome.css?v=25">
   <link rel="stylesheet" href="styles.css?v=41">
   <link rel="stylesheet" href="styles/shop.css?v=11">
   <link rel="stylesheet" href="styles/item-card-chrome.css?v=14">
@@ -55,7 +55,7 @@
   <link rel="stylesheet" href="styles/class-intro-summary.css?v=1">
   <link rel="stylesheet" href="styles/tablet-intro-typography.css?v=2">
   <link rel="stylesheet" href="styles/desktop-intro-layout.css?v=1">
-  <link rel="stylesheet" href="styles/tablet-pwa-layout.css?v=6">
+  <link rel="stylesheet" href="styles/tablet-pwa-layout.css?v=7">
   <link rel="stylesheet" href="styles/mobile-prep.css?v=23">
   <link rel="stylesheet" href="styles/desktop-prep.css?v=2">
   <link rel="stylesheet" href="styles/desktop-battle.css?v=2">
@@ -338,6 +338,7 @@
           <div class="lobby2p-power-seg lobby2p-power-seg--p1" id="lobby2p-power-p1"></div>
         </div>
         <div class="lobby2p-topbar-meta">
+          <span class="lobby2p-topbar-alive" id="lobby2p-top-alive" title="Живых в лобби">🏟 <b id="lobby2p-top-alive-count">16</b></span>
           <span class="lobby2p-topbar-round">раунд <b id="lobby2p-top-round">1</b></span>
           <button type="button" class="lobby2p-topbar-roster" id="lobby2p-roster-toggle" title="Участники лобби">⋯</button>
         </div>
@@ -984,6 +985,10 @@
     <div class="bottom-chrome-end">
       <button type="button" class="btn-secondary btn-lobby-return-table bottombar-btn hidden" id="btn-lobby-return-table" title="Вернуться на свой стол">🧑 Вернуться на свой стол</button>
       <div class="lobby-battle-roster-bar hidden" id="lobby-battle-roster-bar" aria-label="Параллельные бои">
+        <div class="lobby2p-battle-tabs hidden" id="lobby2p-battle-tabs" role="tablist" aria-label="Бои игроков">
+          <button type="button" class="lobby2p-battle-tab" id="lobby2p-battle-tab-0" data-human="0" role="tab">Игрок 1</button>
+          <button type="button" class="lobby2p-battle-tab" id="lobby2p-battle-tab-1" data-human="1" role="tab">Игрок 2</button>
+        </div>
         <div class="lobby-roster-strip lobby-roster-strip--bottom" id="lobby-roster-strip-battle" role="tablist"></div>
       </div>
       <div class="prep-toolbar-hints bottom-chrome-hints" id="prep-toolbar-hints" aria-label="Управление"></div>

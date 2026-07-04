@@ -4,6 +4,7 @@
  */
 
 html[data-visual-theme="diablo"] {
+  --bottom-chrome-bleed: #120c08;
   --meadow-sky-top: #2a1820;
   --meadow-sky-mid: #1f1418;
   --meadow-grass-mid: #1a2214;

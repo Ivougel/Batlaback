@@ -104,6 +104,9 @@ let enemyArchetype = null;
 let enemyClass = null;
 let playerClass = null;
 let pendingPlayerCompanionId = null;
+let pendingEnemyCompanionId = null;
+/** intro: player1 | player2 — какой спутник выбираем на шаге companion */
+let introCompanionTarget = "player1";
 let playerCompanionId = "s_stranger";
 let enemyCompanionId = "s_stranger";
 let playerMutationFormId = null;
@@ -764,7 +767,12 @@ function getLobbySpectateProfileNames() {
 }
 
 function returnToLobbyPlayerMatch() {
-  if (!isLobbyMode() || !lobbyMatches.length) return;
+  if (!isAnyLobbyMode() || !lobbyMatches.length) return;
+  if (isLobby2pMode()) {
+    const idx = lobbyMatches.findIndex((m) => m.isPlayerMatch && m.humanId === 0 && !m.byeFighterId);
+    if (idx >= 0) setLobbySpectateMatch(idx);
+    return;
+  }
   const idx = typeof findLobbyPlayerMatchIndex === "function"
     ? findLobbyPlayerMatchIndex(lobbyMatches)
     : lobbyMatches.findIndex((m) => m.isPlayerMatch);
@@ -775,12 +783,12 @@ function syncLobbyReturnTableButton() {
   const btn = document.getElementById("btn-lobby-return-table");
   if (!btn) return;
   const match = lobbyMatches[lobbySpectateMatchId];
-  const watching = isLobbyMode()
+  const watching = isAnyLobbyMode()
     && isBattleUiPhase()
     && !!lobbyState
     && match
     && !match.byeFighterId
-    && !match.isPlayerMatch;
+    && (!match.isPlayerMatch || (isLobby2pMode() && match.humanId !== 0));
   btn.classList.toggle("hidden", !watching);
 }
 
@@ -948,7 +956,7 @@ function renderLobbyChrome(force = false) {
   }
   if (isBattleUiPhase() && typeof queuePrewarmBattleInventoryPopover === "function") {
     const popoverOpen = typeof isBattleInventoryPopoverOpen === "function" && isBattleInventoryPopoverOpen();
-    if (!isLobbyMode() || popoverOpen) {
+    if (!isLobbyMode() || popoverOpen || isLobby2pMode()) {
       queuePrewarmBattleInventoryPopover();
     }
   }
@@ -981,14 +989,14 @@ function bindLobbyRosterClicks() {
       return;
     }
     const spectateBtn = e.target.closest("[data-lobby-spectate]");
-    if (spectateBtn && isLobbyMode() && isBattleUiPhase()) {
+    if (spectateBtn && isAnyLobbyMode() && isBattleUiPhase()) {
       e.preventDefault();
       const idx = Number(spectateBtn.dataset.lobbySpectate);
       if (Number.isFinite(idx)) setLobbySpectateMatch(idx);
       return;
     }
     const fighterCard = e.target.closest("[data-lobby-fighter-card]");
-    if (fighterCard && isLobbyMode() && isBattleUiPhase() && !fighterCard.disabled) {
+    if (fighterCard && isAnyLobbyMode() && isBattleUiPhase() && !fighterCard.disabled) {
       e.preventDefault();
       const idx = Number(fighterCard.dataset.lobbySpectate);
       if (Number.isFinite(idx)) setLobbySpectateMatch(idx);
@@ -1069,6 +1077,13 @@ function initLobby2pRun() {
   prepViewSide = "player";
   document.getElementById("app")?.setAttribute("data-prep-side", "player");
   document.documentElement.dataset.lobbySplit = "true";
+  if (typeof resetLobbyFighterThoughts === "function") resetLobbyFighterThoughts();
+  if (typeof seedLobbyFighterThoughts === "function") seedLobbyFighterThoughts(lobbyState);
+  if (typeof DialogueEngine !== "undefined") {
+    const prepDurationSec = typeof LOBBY_PREP_SECONDS !== "undefined" ? LOBBY_PREP_SECONDS : 55;
+    DialogueEngine.reset(`lobby2p:${lobbyState?.seed || Date.now()}`);
+    DialogueEngine.onRunStart(lobbyState, round, { prepDurationSec });
+  }
   syncLobby2pHudDom();
 }
 
@@ -1997,13 +2012,16 @@ function renderCompanionSelection() {
   ensureCompanionGrid();
   const grid = document.getElementById("companion-grid");
   if (!grid) return;
-  const suggested = pendingPlayerClass && typeof defaultCompanionForClass === "function"
-    ? defaultCompanionForClass(pendingPlayerClass)
+  const forPlayer2 = introCompanionTarget === "player2";
+  const classId = forPlayer2 ? selectedEnemyClass : pendingPlayerClass;
+  const selectedId = forPlayer2 ? pendingEnemyCompanionId : pendingPlayerCompanionId;
+  const suggested = classId && typeof defaultCompanionForClass === "function"
+    ? defaultCompanionForClass(classId)
     : null;
   grid.querySelectorAll("[data-companion]").forEach((btn) => {
-    const picked = btn.dataset.companion === pendingPlayerCompanionId;
+    const picked = btn.dataset.companion === selectedId;
     btn.classList.toggle("selected", picked);
-    btn.classList.toggle("suggested", !pendingPlayerCompanionId && btn.dataset.companion === suggested);
+    btn.classList.toggle("suggested", !selectedId && btn.dataset.companion === suggested);
   });
 }
 
@@ -2021,7 +2039,9 @@ function classIntroUsesTrialStep() {
 }
 
 function getClassIntroTotalSteps() {
-  return classIntroUsesTrialStep() ? 5 : 4;
+  if (classIntroUsesTrialStep()) return 5;
+  if (selectedGameMode === "versus" || selectedGameMode === "lobby2p") return 5;
+  return 4;
 }
 
 let classSummaryTooltipPinned = false;
@@ -2230,15 +2250,29 @@ function buildCompanionStepSubtitle() {
   return `Окей, теперь вы ${heroName}, с каким спутником пойдёте сейчас? Они все разные, будьте внимательны`;
 }
 
-function showCompanionStep({ keepSelection = false } = {}) {
+function showCompanionStep({ keepSelection = false, forPlayer2 = false } = {}) {
   hideClassSummaryTooltip();
-  if (!keepSelection) pendingPlayerCompanionId = null;
+  introCompanionTarget = forPlayer2 ? "player2" : "player1";
+  if (forPlayer2) {
+    if (!keepSelection) pendingEnemyCompanionId = null;
+  } else if (!keepSelection) {
+    pendingPlayerCompanionId = null;
+  }
   setClassIntroStep("companion");
-  document.getElementById("class-modal-title").textContent = "Спутник";
-  const companionSubtitle = buildCompanionStepSubtitle();
-  document.getElementById("class-modal-subtitle").textContent = companionSubtitle;
-  const stepSub = document.getElementById("class-companion-step-sub");
-  if (stepSub) stepSub.textContent = companionSubtitle;
+  if (forPlayer2) {
+    const p2Label = getClassById(selectedEnemyClass)?.name || "Игрок 2";
+    document.getElementById("class-modal-title").textContent = "Игрок 2 — спутник";
+    const sub = `Спутник для ${p2Label}. Нажмите ещё раз — «Начать лобби 2P»`;
+    document.getElementById("class-modal-subtitle").textContent = sub;
+    const stepSub = document.getElementById("class-companion-step-sub");
+    if (stepSub) stepSub.textContent = sub;
+  } else {
+    document.getElementById("class-modal-title").textContent = "Спутник";
+    const companionSubtitle = buildCompanionStepSubtitle();
+    document.getElementById("class-modal-subtitle").textContent = companionSubtitle;
+    const stepSub = document.getElementById("class-companion-step-sub");
+    if (stepSub) stepSub.textContent = companionSubtitle;
+  }
   renderCompanionSelection();
   syncClassOverlayUi();
   syncClassMobileDock();
@@ -2246,6 +2280,15 @@ function showCompanionStep({ keepSelection = false } = {}) {
 
 function selectCompanion(companionId) {
   if (!COMPANION_CATALOG?.[companionId]) return;
+  if (introCompanionTarget === "player2") {
+    const reclick = pendingEnemyCompanionId === companionId;
+    pendingEnemyCompanionId = companionId;
+    renderCompanionSelection();
+    updateStartRunButton();
+    syncClassOverlayUi();
+    syncClassMobileDock();
+    return;
+  }
   const reclick = pendingPlayerCompanionId === companionId;
   pendingPlayerCompanionId = companionId;
   renderCompanionSelection();
@@ -2302,25 +2345,32 @@ function syncClassOverlayUi() {
       ? "Нажмите героя ещё раз — к выбору спутника"
       : "Читайте описание на плитке · после выбора слева — полная история";
   } else if (companionStep && !companionStep.classList.contains("hidden")) {
-    badge.textContent = classIntroUsesTrialStep()
-      ? `Шаг 4 из ${totalSteps} · Спутник`
-      : `Шаг 3 из ${totalSteps} · Спутник`;
-    hint.textContent = "Выберите спутника · нажмите ещё раз — к саммари";
+    const forP2 = introCompanionTarget === "player2";
+    badge.textContent = selectedGameMode === "lobby2p" && forP2
+      ? `Шаг 5 из ${totalSteps} · Спутник P2`
+      : classIntroUsesTrialStep()
+        ? `Шаг 4 из ${totalSteps} · Спутник`
+        : `Шаг 3 из ${totalSteps} · Спутник`;
+    hint.textContent = forP2
+      ? "Спутник игрока 2 · «Начать лобби 2P» внизу"
+      : selectedGameMode === "lobby2p"
+        ? "Спутник игрока 1 · нажмите ещё раз — класс игрока 2"
+        : "Выберите спутника · нажмите ещё раз — к саммари";
   } else if (summaryStep && !summaryStep.classList.contains("hidden")) {
     badge.textContent = classIntroUsesTrialStep()
       ? `Шаг ${totalSteps} из ${totalSteps} · Старт`
       : `Шаг 4 из ${totalSteps} · Старт`;
     hint.textContent = "Наведите на героя или спутника · «Старт» по центру";
   } else if (opponentStep && !opponentStep.classList.contains("hidden")) {
-    badge.textContent = selectedGameMode === "lobby2p" ? "Шаг 5 из 5 · Игрок 2" : "Шаг 4 из 4 · Соперник";
-    const startLabel = selectedGameMode === "versus"
-      ? "Начать игру"
-      : selectedGameMode === "lobby2p"
-        ? "Начать лобби 2P"
-        : "Начать забег";
+    badge.textContent = selectedGameMode === "lobby2p"
+      ? `Шаг 4 из ${totalSteps} · Игрок 2`
+      : `Шаг 4 из 4 · Соперник`;
     hint.textContent = selectedGameMode === "lobby2p"
-      ? `Класс второго игрока · «${startLabel}» внизу`
-      : `Выберите героиню соперника, затем «${startLabel}» внизу экрана`;
+      ? "Класс игрока 2 · нажмите ещё раз — спутник"
+      : (() => {
+        const startLabel = selectedGameMode === "versus" ? "Начать игру" : "Начать забег";
+        return `Выберите героиню соперника, затем «${startLabel}» внизу экрана`;
+      })();
   } else {
     badge.textContent = "";
     hint.textContent = "";
@@ -2364,10 +2414,13 @@ function syncBottomChromeIntro() {
   const onMode = modeStep && !modeStep.classList.contains("hidden");
   const onSummary = summaryStep && !summaryStep.classList.contains("hidden");
   const onOpponent = opponentStep && !opponentStep.classList.contains("hidden");
+  const onP2Companion = companionStep
+    && !companionStep.classList.contains("hidden")
+    && introCompanionTarget === "player2";
 
   if (backBtn) backBtn.classList.toggle("hidden", !overlayOpen || onMode);
   if (startBtn) {
-    const showStart = overlayOpen && (onSummary || onOpponent);
+    const showStart = overlayOpen && (onSummary || (onOpponent && selectedGameMode !== "lobby2p") || onP2Companion);
     startBtn.classList.toggle("hidden", !showStart);
   }
 
@@ -2482,6 +2535,8 @@ function selectGameMode(mode) {
               : "ai";
   pendingPlayerClass = null;
   pendingPlayerCompanionId = null;
+  pendingEnemyCompanionId = null;
+  introCompanionTarget = "player1";
   selectedEnemyClass = null;
   document.querySelectorAll(".game-mode-card").forEach((card) => {
     card.classList.toggle("selected", card.dataset.gameMode === mode);
@@ -2498,6 +2553,8 @@ function resetClassSelectOverlay() {
   pendingPlayerClass = null;
   pendingMutationIntentId = null;
   pendingPlayerCompanionId = null;
+  pendingEnemyCompanionId = null;
+  introCompanionTarget = "player1";
   selectedEnemyClass = null;
   selectedGameMode = "solo";
   selectedOpponentMode = "ai";
@@ -2568,14 +2625,31 @@ function syncClassMobileDock() {
 function updateStartRunButton() {
   const btn = document.getElementById("btn-start-run");
   if (!btn) return;
-  const ready = !!(pendingPlayerClass && pendingPlayerCompanionId);
+  let ready = !!(pendingPlayerClass && pendingPlayerCompanionId);
+  if (selectedGameMode === "lobby2p") {
+    const opponentStep = document.getElementById("class-step-opponent");
+    const companionStep = document.getElementById("class-step-companion");
+    const onP2Companion = companionStep
+      && !companionStep.classList.contains("hidden")
+      && introCompanionTarget === "player2";
+    if (onP2Companion) {
+      ready = !!(selectedEnemyClass && pendingEnemyCompanionId);
+    } else if (opponentStep && !opponentStep.classList.contains("hidden")) {
+      ready = false;
+    }
+  } else if (selectedGameMode === "versus") {
+    const opponentStep = document.getElementById("class-step-opponent");
+    if (opponentStep && !opponentStep.classList.contains("hidden")) {
+      ready = !!(pendingPlayerClass && pendingPlayerCompanionId && selectedEnemyClass);
+    }
+  }
   btn.disabled = !ready;
   if (selectedGameMode === "versus") btn.textContent = "Начать игру";
   else if (selectedGameMode === "lobby") btn.textContent = "Начать лобби";
   else if (selectedGameMode === "lobby2p") btn.textContent = "Начать лобби 2P";
   else btn.textContent = "Старт";
   const summaryBtn = document.getElementById("btn-class-summary-start");
-  if (summaryBtn) summaryBtn.disabled = !ready;
+  if (summaryBtn) summaryBtn.disabled = !(pendingPlayerClass && pendingPlayerCompanionId);
 }
 
 function scrollClassPickerCardIntoView(card) {
@@ -2616,12 +2690,17 @@ function selectPlayerClass(classId) {
 }
 
 function selectOpponentClass(classId) {
+  const reclick = selectedEnemyClass === classId;
   selectedEnemyClass = classId;
   document.querySelectorAll(".opponent-class-card").forEach((card) => {
     card.classList.toggle("selected", card.dataset.opponentClass === classId);
   });
   scrollClassPickerCardIntoView(document.querySelector(`.opponent-class-card[data-opponent-class="${classId}"]`));
   syncClassHeroShowcase();
+  if (reclick && selectedGameMode === "lobby2p") {
+    showCompanionStep({ forPlayer2: true });
+    return;
+  }
   updateStartRunButton();
 }
 
@@ -3440,9 +3519,12 @@ function init() {
     const playerStep = document.getElementById("class-step-player");
     const campaignTrialStep = document.getElementById("class-step-campaign");
     if (summaryStep && !summaryStep.classList.contains("hidden")) showCompanionStep({ keepSelection: true });
-    else if (opponentStep && !opponentStep.classList.contains("hidden")) showCompanionStep();
-    else if (companionStep && !companionStep.classList.contains("hidden")) showPlayerClassStep();
-    else if (playerStep && !playerStep.classList.contains("hidden")) {
+    else if (opponentStep && !opponentStep.classList.contains("hidden")) {
+      showCompanionStep({ keepSelection: true });
+    } else if (companionStep && !companionStep.classList.contains("hidden")) {
+      if (introCompanionTarget === "player2") showSecondClassStep();
+      else showPlayerClassStep();
+    } else if (playerStep && !playerStep.classList.contains("hidden")) {
       if (selectedGameMode === "campaign") showCampaignTrialStep();
       else showGameModeStep();
     }
@@ -3465,7 +3547,7 @@ function init() {
   document.getElementById("btn-battle-continue")?.addEventListener("click", () => {
     if (isPhaseTransitioning()) return;
     if (typeof PrepCountdown !== "undefined") PrepCountdown.clearBattleResultWindow();
-    if (isLobbyMode() && lobbyRoundSettling) {
+    if (isAnyLobbyMode() && lobbyRoundSettling) {
       finishLobbyRoundFromContinue();
     }
     const continueAfterResult = () => {
@@ -4144,9 +4226,11 @@ function startRunFromOverlay() {
   gameMode = selectedGameMode;
   playerClass = pendingPlayerClass;
   playerCompanionId = pendingPlayerCompanionId;
-  enemyCompanionId = typeof defaultCompanionForClass === "function"
-    ? defaultCompanionForClass(selectedEnemyClass || pendingPlayerClass)
-    : "s_stranger";
+  enemyCompanionId = selectedGameMode === "lobby2p" && pendingEnemyCompanionId
+    ? pendingEnemyCompanionId
+    : (typeof defaultCompanionForClass === "function"
+      ? defaultCompanionForClass(selectedEnemyClass || pendingPlayerClass)
+      : "s_stranger");
   playerMutationFormId = null;
   playerMutationId = null;
   enemyMutationFormId = null;
@@ -6759,7 +6843,11 @@ function tickLobbyRoundBattles(dt, ts) {
   const simOpts = { spectateMatchId: lobbySpectateMatchId };
 
   const tickMatchStep = (match, stepDt) => {
-    if (match.isPlayerMatch && !battleEndHandled) {
+    const matchIndex = lobbyMatches.indexOf(match);
+    const isSpectated = matchIndex === lobbySpectateMatchId;
+    if (match.isPlayerMatch) {
+      if (!isLobby2pMode() && battleEndHandled) return;
+      if (match.state?.finished) return;
       battleState = match.state;
       try {
         tickSingleBattleState(match.state, stepDt);
@@ -6771,17 +6859,17 @@ function tickLobbyRoundBattles(dt, ts) {
     }
     if (match.state?.finished) {
       match.finished = true;
-      if (match.isPlayerMatch) playerJustFinished = true;
+      if (match.isPlayerMatch && isSpectated) playerJustFinished = true;
     }
   };
 
-  lobbyMatches.forEach((match, index) => {
+  lobbyMatches.forEach((match) => {
     if (match.byeFighterId || !match.state || match.state.finished) return;
-    if (match.isPlayerMatch && battleEndHandled) return;
+    if (match.isPlayerMatch && battleEndHandled && !isLobby2pMode()) return;
 
     const fullSim = typeof isLobbyMatchFullySimulated === "function"
-      ? isLobbyMatchFullySimulated(match, index, simOpts)
-      : index === lobbySpectateMatchId;
+      ? isLobbyMatchFullySimulated(match, lobbyMatches.indexOf(match), simOpts)
+      : lobbyMatches.indexOf(match) === lobbySpectateMatchId;
 
     if (fullSim) {
       lobbyBackgroundSimAcc.delete(match.id);
@@ -6860,7 +6948,7 @@ function cleanupLobbyRoundTransition() {
 }
 
 function finishLobbyRoundFromContinue() {
-  if (!isLobbyMode() || !lobbyState) return;
+  if (!isAnyLobbyMode() || !lobbyState) return;
   ensureLobbyBackgroundMatchesReady();
   fastForwardRemainingLobbyMatches(lobbyMatches);
   try {
@@ -6898,7 +6986,7 @@ function gameLoop(ts) {
       if (typeof tickSynergyVisualController === "function") tickSynergyVisualController(fxDt);
     }
     if (isLobby2pMode()) tickLobby2pSideBattles(dt);
-    if (isLobbyMode() && lobbyState && typeof tickLobbyFighterThoughts === "function") {
+    if (isAnyLobbyMode() && lobbyState && typeof tickLobbyFighterThoughts === "function") {
       const thoughtsOk = typeof BattleFxTier === "undefined"
         || !BattleFxTier.prepLobbyFxReduced
         || !BattleFxTier.prepLobbyFxReduced();
@@ -6906,21 +6994,21 @@ function gameLoop(ts) {
         const thoughtDirty = tickLobbyFighterThoughts(lobbyState, {
           phase: "prep",
           round,
-          viewFighterId: lobbyViewFighterId,
+          viewFighterId: isLobby2pMode() ? (prepViewSide === "player" ? 0 : 1) : lobbyViewFighterId,
           matches: lobbyMatches,
           timerRemaining: lobbyPrepTimerRemaining,
-          timerActive: lobbyPrepTimerActive,
+          timerActive: lobbyPrepTimerActive && !isLobby2pMode(),
         });
         if (thoughtDirty && typeof syncLobbyFighterAvatars === "function") {
           syncLobbyFighterAvatars(lobbyState, {
             phase: "prep",
             round,
-            viewFighterId: lobbyViewFighterId,
+            viewFighterId: isLobby2pMode() ? (prepViewSide === "player" ? 0 : 1) : lobbyViewFighterId,
             matches: lobbyMatches,
           });
         }
       }
-    } else if (!isLobbyMode() && !isLobby2pMode() && typeof tickSoloPrepThoughts === "function") {
+    } else if (!isAnyLobbyMode() && typeof tickSoloPrepThoughts === "function") {
       const thoughtsOk = typeof BattleFxTier === "undefined"
         || !BattleFxTier.prepLobbyFxReduced
         || !BattleFxTier.prepLobbyFxReduced();
@@ -6929,21 +7017,21 @@ function gameLoop(ts) {
     const dialogueOk = typeof BattleFxTier === "undefined"
       || !BattleFxTier.prepLobbyFxReduced
       || !BattleFxTier.prepLobbyFxReduced();
-    if (dialogueOk && isLobbyMode() && lobbyState && typeof DialogueEngine !== "undefined") {
+    if (dialogueOk && isAnyLobbyMode() && lobbyState && typeof DialogueEngine !== "undefined") {
       const prepDurationSec = typeof LOBBY_PREP_SECONDS !== "undefined" ? LOBBY_PREP_SECONDS : 55;
       const dialogueCtx = {
         lobby: lobbyState,
         phase: "prep",
         round,
         matches: lobbyMatches,
-        timerRemaining: lobbyPrepTimerRemaining,
-        timerActive: lobbyPrepTimerActive,
+        timerRemaining: isLobby2pMode() ? null : lobbyPrepTimerRemaining,
+        timerActive: isLobby2pMode() ? false : lobbyPrepTimerActive,
         prepDurationSec,
       };
       if (DialogueEngine.shouldProcessTick(dialogueCtx)) {
         DialogueEngine.tick(dialogueCtx);
       }
-    } else if (dialogueOk && !isLobbyMode() && !isLobby2pMode() && phase === "prep" && typeof DialogueEngine !== "undefined") {
+    } else if (dialogueOk && !isAnyLobbyMode() && phase === "prep" && typeof DialogueEngine !== "undefined") {
       const soloCtx = { round, prepDurationSec: 60 };
       if (DialogueEngine.shouldProcessTick(soloCtx)) {
         DialogueEngine.tickSolo(soloCtx);

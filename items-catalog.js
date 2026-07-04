@@ -881,7 +881,7 @@ const ITEM_CATALOG_RAW = {
     synergies: [
       { id: "migrated_damage_1_per_tag", adjacency: "strong", neighborTags: ["food"], target: "self", apply: { type: "damageBonus", value: 1 }, desc: "+1 урона соседям" }
     ],
-    description: "+1 к урону за каждую еду на вашем поле.",
+    description: "+1 урона за каждый предмет с тегом «еда».",
     buildHints: "Билд: еда / Pan · Ветка: Eggscalibur, Pandamonium, Shovel · Пары: любая еда (⭐)",
     sockets: 1,
   },
@@ -3310,7 +3310,7 @@ const ITEM_CATALOG_RAW = {
     metaEffects: [
       { phase: "shop_enter", type: "consume_recombo", target: "inside" }
     ],
-    description: "При входе в магазин: Использовать предметы. Создать другого предметы по на суммарная стоимость. Каждые 2.5с: Получить 1 случайный бафф и снять 1 дебафф стака",
+    description: "+10% урона. Каждые 2.5с: +1 к самому слабому стаку и −1 дебафф. При входе в магазин: съедает предметы в сумке и создаёт новые на их суммарную стоимость.",
     buildHints: "Универсальный / автономный",
   },
   stamina_sack: {
@@ -3573,7 +3573,7 @@ const ITEM_CATALOG_RAW = {
     metaEffects: [
       { phase: "shop_enter", type: "consume_recombo", target: "self" }
     ],
-    description: "При входе в магазин: Использовать этот предмет и предметы. Создать другого предметы по на суммарная стоимость. Каждые 4с: Получить 1 случайный бафф и снять 1 дебафф удачи",
+    description: "+12 удачи. Каждые 4с: +15% урона на 3с; случайно — +1 удача, яд врагу или +5 HP. При входе в магазин: съедает себя и соседей, создаёт предметы на их суммарную стоимость.",
     buildHints: "Универсальный / автономный",
   },
   utility_pouch: {

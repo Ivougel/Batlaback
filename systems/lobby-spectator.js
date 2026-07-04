@@ -115,6 +115,7 @@ function initLobbyRoundBattles(lobby, battleRound) {
 function isLobbyMatchFullySimulated(match, matchIndex, opts = {}) {
   const { spectateMatchId = 0 } = opts;
   if (!match || match.byeFighterId || !match.state || match.state.finished) return false;
+  if (typeof isLobby2pMode === "function" && isLobby2pMode() && match.isPlayerMatch) return true;
   return matchIndex === spectateMatchId;
 }
 
@@ -515,7 +516,8 @@ function renderLobbyBattleBottomStrip(lobby, opts = {}) {
   const { spectateMatchId = 0, matches = [], round = 1 } = opts;
   const spectateMatch = matches[spectateMatchId];
   const chips = lobby.fighters.map((fighter) => {
-    if (!fighter.alive && fighter.id !== lobby.playerId) {
+    const keepDeadChip = lobby.isSplitLobby && fighter.isHuman;
+    if (!fighter.alive && !keepDeadChip && fighter.id !== lobby.playerId) {
       return renderLobbyBattleBottomChip(fighter, lobby, {
         spectateMatchId,
         matches,
@@ -568,14 +570,16 @@ function renderLobbyRosterStrip(lobby, opts = {}) {
     if (spectateMatch && !spectateMatch.byeFighterId) {
       const spectateLabels = getLobbyMatchLabels(lobby, spectateMatch);
       if (spectateMatch.isPlayerMatch) {
-        banner = `<div class="lobby-spectate-banner lobby-spectate-banner--yours" role="status">⚔ Ваш бой · ${spectateLabels.a} vs ${spectateLabels.b}</div>`;
+        const humanTag = lobby.isSplitLobby && spectateMatch.humanId === 1 ? "Игрок 2" : "Ваш бой";
+        banner = `<div class="lobby-spectate-banner lobby-spectate-banner--yours" role="status">⚔ ${humanTag} · ${spectateLabels.a} vs ${spectateLabels.b}</div>`;
       } else {
         banner = `<div class="lobby-spectate-banner lobby-spectate-banner--watch" role="status">👁 Смотрите: ${spectateLabels.a} ⚔ ${spectateLabels.b}</div>`;
       }
     }
 
     const fighterCards = lobby.fighters.map((fighter) => {
-      if (!fighter.alive && fighter.id !== lobby.playerId) {
+      const keepDeadChip = lobby.isSplitLobby && fighter.isHuman;
+      if (!fighter.alive && !keepDeadChip && fighter.id !== lobby.playerId) {
         return renderLobbyFighterCard(fighter, lobby, {
           phase,
           spectateMatchId,

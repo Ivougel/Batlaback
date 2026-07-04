@@ -756,11 +756,13 @@ const CASES = [
         const chrome = document.getElementById("bottom-chrome")?.getBoundingClientRect();
         const vv = window.visualViewport;
         const viewBottom = (vv?.offsetTop ?? 0) + (vv?.height ?? window.innerHeight);
+        const screenBottom = Math.max(window.innerHeight, viewBottom);
         const app = document.getElementById("app")?.getBoundingClientRect();
         const pinY = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--bottom-chrome-pin-y")) || 0;
         return {
           chromeBottom: chrome?.bottom ?? 0,
           viewBottom,
+          screenBottom,
           innerH: window.innerHeight,
           appBottom: app?.bottom ?? 0,
           chromeTop: chrome?.top ?? 0,
@@ -769,7 +771,7 @@ const CASES = [
         };
       });
       assert(m.tier === "tablet", `expected tablet tier, got ${m.tier}`);
-      assert(m.chromeBottom >= m.viewBottom - 4, `chrome above visual bottom: gap=${m.viewBottom - m.chromeBottom}px pin=${m.pinY}`);
+      assert(m.chromeBottom >= m.screenBottom - 4, `chrome above screen bottom: gap=${m.screenBottom - m.chromeBottom}px pin=${m.pinY}`);
       assert(m.appBottom <= m.chromeTop + 4, `app overlaps bottom chrome: app=${m.appBottom} chrome=${m.chromeTop}`);
     },
   },
