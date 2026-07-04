@@ -191,57 +191,35 @@
   box-shadow: none;
 }
 
-/* ─── Lobby roster (prep) ─── */
+/* ─── Lobby roster (prep) — кружки на поле ─── */
 
-#app[data-phase="prep"] .lobby-prep-roster-panel,
-#app[data-phase="prep"] #lobby-prep-roster-panel {
-  background: transparent;
-  border: none;
-  box-shadow: none;
+#app[data-phase="prep"] .lobby-prep-field-chip {
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.12), rgba(8, 10, 14, 0.78));
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
-#app[data-phase="prep"] .lobby-prep-roster-body {
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+#app[data-phase="prep"] .lobby-prep-field-chip--yours {
+  border-color: rgba(92, 184, 92, 0.45);
 }
 
-#app[data-phase="prep"] .lobby-fighter-card {
-  background: transparent;
-  border: none;
-  box-shadow: none;
+#app[data-phase="prep"] .lobby-prep-field-chip:not(.lobby-prep-field-chip--yours):hover:not(:disabled),
+#app[data-phase="prep"] .lobby-prep-field-chip:not(.lobby-prep-field-chip--yours):focus-visible:not(:disabled),
+#app[data-phase="prep"] .lobby-prep-field-chip:not(.lobby-prep-field-chip--yours).lobby-prep-field-chip--touch:not(:disabled) {
+  border-color: rgba(245, 200, 66, 0.62);
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.18), rgba(20, 16, 10, 0.88));
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, 0.35),
+    0 0 0 2px rgba(245, 200, 66, 0.22);
 }
 
-#app[data-phase="prep"] .lobby-fighter-card--yours,
-#app[data-phase="prep"] .lobby-fighter-card--yours-match {
-  outline: 2px solid rgba(92, 184, 92, 0.45);
-  outline-offset: 1px;
-}
-
-#app[data-phase="prep"] .lobby-fighter-card:not(.lobby-fighter-card--yours):not(.lobby-fighter-card--yours-match):hover:not(:disabled),
-#app[data-phase="prep"] .lobby-fighter-card:not(.lobby-fighter-card--yours):not(.lobby-fighter-card--yours-match):focus-visible:not(:disabled),
-#app[data-phase="prep"] .lobby-fighter-card:not(.lobby-fighter-card--yours):not(.lobby-fighter-card--yours-match).lobby-fighter-card--touch:not(:disabled) {
-  background: rgba(255, 255, 255, 0.14);
-  outline: 2px solid rgba(245, 200, 66, 0.55);
-  outline-offset: 1px;
-}
-
-#app[data-phase="prep"] .lobby-fighter-card--active:not(.lobby-fighter-card--yours):not(.lobby-fighter-card--yours-match),
-#app[data-phase="prep"] .lobby-fighter-card--next:not(.lobby-fighter-card--yours):not(.lobby-fighter-card--yours-match) {
-  background: transparent;
-  border: none;
-  box-shadow: none;
+#app[data-phase="prep"] .lobby-prep-field-chip--active:not(.lobby-prep-field-chip--yours),
+#app[data-phase="prep"] .lobby-prep-field-chip--next:not(.lobby-prep-field-chip--yours) {
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
   outline: none;
 }
 
-#app[data-phase="prep"] .lobby-fighter-card-avatar {
-  background: transparent;
-  border: none;
-}
-
-#app[data-phase="prep"] .lobby-fighter-emoji {
+#app[data-phase="prep"] .lobby-prep-field-chip .lobby-fighter-emoji {
   filter: none;
 }
 
@@ -274,7 +252,10 @@
 #app[data-phase="prep"] .lobby2p-bench-slots .bench-card .icon,
 #app[data-phase="prep"] .lobby2p-bench-slots .bench-card .item-icon-shell,
 #app[data-phase="prep"] .shop-card--amplifier .item-icon-shell,
-#app[data-phase="prep"] .shop-card--enhancement .item-icon-shell--enhancement {
+#app[data-phase="prep"] .shop-card--enhancement .item-icon-shell--enhancement,
+#prep-shop-popover #shop-panel .shop-item-visual .icon,
+#prep-shop-popover #shop-panel .shop-item-visual .item-icon-shell,
+#prep-shop-popover #shop-panel .item-icon-shell--enhancement {
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
@@ -289,7 +270,13 @@
 #app[data-phase="prep"] #shop-panel .shop-card.frozen.rarity-uncommon .shop-item-visual .icon,
 #app[data-phase="prep"] #shop-panel .shop-card.frozen.rarity-rare .shop-item-visual .icon,
 #app[data-phase="prep"] #shop-panel .shop-card.frozen.rarity-epic .shop-item-visual .icon,
-#app[data-phase="prep"] #shop-panel .shop-card.frozen.rarity-legendary .shop-item-visual .icon {
+#app[data-phase="prep"] #shop-panel .shop-card.frozen.rarity-legendary .shop-item-visual .icon,
+#prep-shop-popover #shop-panel .shop-card.rarity-common .shop-item-visual .icon,
+#prep-shop-popover #shop-panel .shop-card.rarity-uncommon .shop-item-visual .icon,
+#prep-shop-popover #shop-panel .shop-card.rarity-rare .shop-item-visual .icon,
+#prep-shop-popover #shop-panel .shop-card.rarity-epic .shop-item-visual .icon,
+#prep-shop-popover #shop-panel .shop-card.rarity-legendary .shop-item-visual .icon,
+#prep-shop-popover #shop-panel .shop-card.frozen .shop-item-visual .icon {
   box-shadow: none !important;
 }
 
@@ -412,4 +399,52 @@ html[data-visual-theme="diablo"] #app[data-phase="prep"] .btn-refresh-shop:hover
 #app[data-phase="prep"] #shop-panel .sell-drop-zone:hover,
 #app[data-phase="prep"] #shop-panel .sell-drop-zone.sell-drop-active {
   background: rgba(255, 255, 255, 0.14) !important;
+}
+
+/* ─── Магазин: единый масштаб иконок (все типы карточек) ─── */
+
+#app[data-phase="prep"] #shop-panel .shop-item-stack,
+#prep-shop-popover #shop-panel .shop-item-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-item-stack > .shop-item-visual,
+#prep-shop-popover #shop-panel .shop-item-stack > .shop-item-visual {
+  order: 1;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-item-stack > .cost,
+#prep-shop-popover #shop-panel .shop-item-stack > .cost {
+  order: 2;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-item-stack > .enh-shop-slot-tag,
+#prep-shop-popover #shop-panel .shop-item-stack > .enh-shop-slot-tag {
+  order: 3;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-item-visual .icon,
+#app[data-phase="prep"] #shop-panel .shop-item-visual .item-icon-shell,
+#app[data-phase="prep"] #shop-panel .shop-item-visual .item-icon-shell--enhancement,
+#prep-shop-popover #shop-panel .shop-item-visual .icon,
+#prep-shop-popover #shop-panel .shop-item-visual .item-icon-shell,
+#prep-shop-popover #shop-panel .shop-item-visual .item-icon-shell--enhancement {
+  width: var(--shop-card-icon-box);
+  height: var(--shop-card-icon-box);
+  font-size: var(--shop-card-icon-font);
+}
+
+#app[data-phase="prep"] #shop-panel .shop-item-visual .icon.icon--duo,
+#prep-shop-popover #shop-panel .shop-item-visual .icon.icon--duo {
+  width: var(--shop-card-icon-duo-w);
+  height: var(--shop-card-icon-box);
+  font-size: var(--shop-card-icon-duo-font);
+}
+
+#app[data-phase="prep"] #shop-panel .shop-item-visual .enh-shop-icon,
+#prep-shop-popover #shop-panel .shop-item-visual .enh-shop-icon {
+  font-size: inherit;
+  line-height: 1;
 }

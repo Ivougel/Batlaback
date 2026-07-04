@@ -217,7 +217,6 @@ html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="fl
 html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="replay"] .avatar-thought-slot {
   overflow: visible !important;
   contain: none;
-  z-index: 26;
 }
 
 html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="battle"] .avatar-thought-slot .battle-thought-body,

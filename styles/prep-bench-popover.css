@@ -147,41 +147,44 @@ html[data-game-phase="replay"] .prep-bench-fab,
 .prep-bench-popover {
   position: fixed;
   inset: 0;
-  z-index: calc(var(--z-system, 100) + 8);
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
-  padding:
-    0
-    max(calc(6px * var(--ui-scale, 1)), env(safe-area-inset-right, 0px))
-    calc(var(--prep-bench-popover-bottom, 140px) + env(safe-area-inset-bottom, 0px))
-    calc(6px * var(--ui-scale, 1));
+  z-index: 9450;
+  display: block;
   pointer-events: none;
   background: transparent;
 }
 
-/* Backdrop визуальный — поле остаётся интерактивным (как prep-shop-backdrop на mobile) */
+/* Backdrop — клик закрывает (см. prep-shop-popover.js dismiss) */
 .prep-bench-popover__backdrop {
   position: absolute;
   inset: 0;
   z-index: 0;
   pointer-events: none;
   background: transparent;
+  transition: background 0.2s ease;
+}
+
+html[data-prep-bench-open="true"] .prep-bench-popover__backdrop {
+  background: rgba(0, 0, 0, 0.28);
+  pointer-events: auto;
 }
 
 .prep-bench-popover__panel {
-  position: relative;
+  position: fixed;
   z-index: 1;
-  pointer-events: auto;
-  width: min(calc(var(--shop-panel-w, 248px) - 4px), 92vw);
-  max-width: 320px;
+  left: var(--prep-bench-popover-x, calc(100vw - 392px));
+  bottom: calc(var(--prep-bench-popover-bottom, 140px) + env(safe-area-inset-bottom, 0px));
+  width: var(--prep-bench-popover-w, min(320px, 36vw));
+  max-width: min(392px, var(--prep-bench-popover-w, 392px));
   max-height: min(52dvh, 360px);
+  pointer-events: auto;
   display: flex;
   flex-direction: column;
   border-radius: calc(12px * var(--ui-scale, 1));
-  background: rgba(255, 252, 240, 0.97);
-  border: 2px solid rgba(92, 184, 92, 0.35);
-  box-shadow: 0 12px 36px rgba(30, 60, 28, 0.28);
+  background: var(--meadow-chrome, rgba(255, 252, 240, 0.97));
+  border: 2px solid var(--meadow-border-soft, rgba(92, 184, 92, 0.35));
+  box-shadow:
+    0 12px 36px rgba(30, 60, 28, 0.28),
+    0 0 0 1px rgba(255, 255, 255, 0.35) inset;
   overflow: hidden;
   animation: prep-bench-popover-in 0.2s ease-out;
 }
@@ -189,11 +192,11 @@ html[data-game-phase="replay"] .prep-bench-fab,
 @keyframes prep-bench-popover-in {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(0.96);
+    transform: translateX(12px) scale(0.97);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateX(0) scale(1);
   }
 }
 
@@ -265,6 +268,52 @@ html[data-prep-bench-popover="true"] #prep-bench-popover .bench-panel.bench-drop
 html[data-visual-theme="diablo"][data-prep-bench-popover="true"] .prep-bench-popover__panel {
   background: rgba(14, 12, 10, 0.96);
   border-color: rgba(192, 57, 43, 0.45);
+  box-shadow:
+    0 12px 36px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(201, 162, 39, 0.12) inset;
+}
+
+html[data-visual-theme="diablo"][data-prep-bench-popover="true"] .prep-bench-popover__head {
+  border-bottom-color: rgba(139, 105, 20, 0.35);
+}
+
+html[data-visual-theme="diablo"][data-prep-bench-popover="true"] .prep-bench-popover__title {
+  color: var(--meadow-gold-bright, #e8c878);
+}
+
+html[data-visual-theme="diablo"][data-prep-bench-popover="true"] .prep-bench-popover__close {
+  background: rgba(74, 56, 32, 0.55);
+  color: var(--meadow-gold-bright, #e8c878);
+}
+
+html[data-visual-theme="diablo"][data-prep-bench-popover="true"] .prep-bench-popover__close:hover {
+  background: rgba(96, 72, 40, 0.72);
+  color: #fff3d0;
+}
+
+html[data-visual-theme="diablo"][data-prep-bench-popover="true"] #prep-bench-popover .bench-panel .bench-card:not(.empty) {
+  background: rgba(32, 24, 18, 0.9);
+  border: 2px solid rgba(139, 105, 20, 0.45);
+}
+
+html[data-visual-theme="diablo"][data-prep-bench-popover="true"] #prep-bench-popover .bench-panel .bench-card.empty {
+  background: rgba(22, 16, 12, 0.72);
+  border: 1px dashed rgba(139, 105, 20, 0.35);
+  color: rgba(232, 200, 120, 0.55);
+}
+
+html[data-visual-theme="meadow"][data-prep-bench-popover="true"] .prep-bench-fab {
+  background: var(--meadow-chrome);
+  border: 2px solid var(--meadow-border);
+  color: var(--meadow-ink);
+  box-shadow: 0 4px 16px var(--meadow-shadow);
+}
+
+html[data-visual-theme="diablo"][data-prep-bench-popover="true"] .prep-bench-fab {
+  background: rgba(22, 16, 12, 0.94);
+  border: 2px solid rgba(139, 105, 20, 0.55);
+  color: var(--meadow-gold-bright, #e8c878);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
 }
 
 /* Во время drag — панель не перехватывает события; дуга (z≈9250) рисуется поверх */

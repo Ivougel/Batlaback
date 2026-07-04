@@ -114,6 +114,25 @@ html[data-visual-theme="diablo"] .shop-card:hover .item-emoji-sparkle-host .icon
     brightness(1.15);
 }
 
+html[data-battle-fx-light="true"] .item-emoji-sparkle {
+  animation: none;
+  opacity: 0.7;
+  transform: scale(1);
+}
+
+html[data-battle-fx-light="true"] .item-emoji-sparkle-host::after {
+  animation: none;
+  opacity: 0.55;
+}
+
+html[data-battle-fx-light="true"] .item-emoji-sparkle-host:hover .icon-glyph,
+html[data-battle-fx-light="true"] .item-emoji-sparkle-host.is-sparkle-active .icon-glyph,
+html[data-battle-fx-light="true"] .item-emoji-sparkle-host:hover .icon-duo,
+html[data-battle-fx-light="true"] .item-emoji-sparkle-host.is-sparkle-active .icon-duo {
+  filter: drop-shadow(0 0 4px rgba(255, 230, 120, 0.55));
+  transform: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .item-emoji-sparkle {
     animation: none;

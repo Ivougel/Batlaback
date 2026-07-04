@@ -330,6 +330,64 @@ function isLobbyRosterPrepStripHtml(stripHtml) {
   return typeof stripHtml === "string" && stripHtml.includes('data-lobby-fighter="');
 }
 
+function renderLobbyPrepFieldChip(fighter, lobby, opts = {}) {
+  const {
+    matches = [],
+    round = 1,
+    active = false,
+    disabled = false,
+    dataAttrs = "",
+  } = opts;
+
+  const visual = typeof resolveLobbyFighterAvatarVisual === "function"
+    ? resolveLobbyFighterAvatarVisual(fighter, lobby, { phase: "prep", matches, round })
+    : { emoji: "❓", mode: "idle", animClass: "" };
+
+  const mutationBadge = typeof renderLobbyMutationBadgeHtml === "function"
+    ? renderLobbyMutationBadgeHtml(fighter, round)
+    : "";
+
+  const cls = [
+    "lobby-prep-field-chip",
+    active ? "lobby-prep-field-chip--active" : "",
+    fighter.isHuman ? "lobby-prep-field-chip--yours" : "",
+    !fighter.alive ? "lobby-prep-field-chip--out" : "",
+    fighter.id === lobby.currentOpponentId ? "lobby-prep-field-chip--next" : "",
+  ].filter(Boolean).join(" ");
+
+  const emojiClasses = [
+    "lobby-fighter-emoji",
+    visual.mode === "prep-orbit" ? "lobby-fighter-emoji--prep-orbit" : "",
+    visual.isMutation ? "lobby-fighter-emoji--mutation" : "",
+    visual.animClass || "",
+  ].filter(Boolean).join(" ");
+
+  const title = `${fighter.name}${fighter.isHuman ? " (вы)" : ""}${!fighter.alive ? " · выбыл" : ""}`;
+
+  return `<button type="button" class="${cls}" ${dataAttrs} ${disabled ? "disabled" : ""} title="${title}" aria-label="${title}">
+    <span class="lobby-prep-field-chip-avatar${visual.isMutation ? " lobby-fighter-card-avatar--mutation" : ""}" data-lobby-fighter-avatar="${fighter.id}" aria-hidden="true">
+      <span class="${emojiClasses}">${visual.emoji}</span>
+      ${mutationBadge}
+    </span>
+  </button>`;
+}
+
+function renderLobbyPrepFieldRoster(lobby, opts = {}) {
+  const { viewFighterId = 0, matches = [], round = 1 } = opts;
+  const chips = lobby.fighters.map((fighter) => {
+    const active = fighter.id === viewFighterId;
+    const disabled = !fighter.alive;
+    return renderLobbyPrepFieldChip(fighter, lobby, {
+      matches,
+      round,
+      active,
+      disabled,
+      dataAttrs: `data-lobby-fighter="${fighter.id}"`,
+    });
+  }).join("");
+  return chips;
+}
+
 function renderLobbyFighterHpBar(current, max) {
   const pct = Math.max(0, Math.min(100, (current / Math.max(1, max)) * 100));
   return `
@@ -548,19 +606,7 @@ function renderLobbyRosterStrip(lobby, opts = {}) {
     return `${banner}${header}<div class="lobby-fighter-card-list lobby-fighter-card-list--battle">${fighterCards}</div>`;
   }
 
-  return `<div class="lobby-fighter-card-list">${lobby.fighters.map((fighter) => {
-    const active = fighter.id === viewFighterId;
-    const disabled = !fighter.alive;
-    return renderLobbyFighterCard(fighter, lobby, {
-      phase,
-      viewFighterId,
-      matches,
-      round,
-      active,
-      disabled,
-      dataAttrs: `data-lobby-fighter="${fighter.id}"`,
-    });
-  }).join("")}</div>`;
+  return renderLobbyPrepFieldRoster(lobby, opts);
 }
 
 function formatLobbyPrepTimer(seconds) {

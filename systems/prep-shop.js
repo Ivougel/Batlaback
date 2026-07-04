@@ -241,6 +241,9 @@ function commitShopPurchase(index, side = rt.getPrepViewSide()) {
     const ctx = getShopContextForSide(side);
     applyShopBuyMeta(side, st.items, purchasedId, st, ctx, (msg) => rt.log(msg));
   }
+  if (rt.getPhase() === "prep" && !rt.getGameOver()) {
+    renderShop(side);
+  }
   return purchasedId;
 }
 
@@ -495,9 +498,7 @@ function renderShop(side = rt.getPrepViewSide(), containerEl = null) {
         if (Date.now() < rt.getSuppressShopClickUntil()) return;
         if (e.target.closest(".shop-pin") || rt.getShopDidDrag()) {
           rt.setShopDidDrag(false);
-          return;
         }
-        buyFromShop(+card.dataset.index, side);
       });
     }
   });
@@ -529,7 +530,8 @@ function renderBench(side = rt.getPrepViewSide(), containerEl = null) {
     const idx = +card.dataset.bench;
     card.addEventListener("mousedown", (e) => {
       if (rt.isSyntheticMouseFromTouch()) return;
-      rt.startBenchDrag(idx, e, side);
+      if (e.button !== 0) return;
+      rt.beginPendingBenchDrag(idx, e, side);
     });
   });
   if (typeof refreshGamepadPrepFocus === "function") refreshGamepadPrepFocus();

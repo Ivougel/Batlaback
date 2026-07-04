@@ -1,0 +1,250 @@
+/**
+ * Shop chrome в prep-shop-popover (#shop-panel вне #app).
+ * Дублирует prep-стили магазина: прозрачные карточки, иконки, пин, цена.
+ */
+
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-card,
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-card.rarity-common,
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-card.rarity-uncommon,
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-card.rarity-rare,
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-card.rarity-epic,
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-card.rarity-legendary,
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-card.frozen {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0;
+  padding:
+    calc(4px * var(--ui-scale, 1))
+    calc(6px * var(--ui-scale, 1))
+    calc(4px * var(--ui-scale, 1))
+    calc(4px * var(--ui-scale, 1));
+  gap: calc(4px * var(--ui-scale, 1));
+  min-height: var(--prep-shop-row-h, var(--shop-card-row-h, calc(72px * var(--ui-scale, 1))));
+  height: auto;
+  max-height: none;
+  overflow: visible;
+  cursor: pointer;
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-card:hover:not(.empty):not(.unaffordable) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  transform: translateY(-2px) scale(1.04);
+  filter: drop-shadow(0 4px 12px rgba(30, 60, 28, 0.15));
+}
+
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-card.unaffordable {
+  opacity: 0.55;
+}
+
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-card .info {
+  display: none;
+}
+
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-item-main {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-item-stack {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(5px * var(--ui-scale, 1));
+  width: fit-content;
+  max-width: 100%;
+  min-width: 0;
+  padding-top: calc(var(--shop-pin-size, 28px) * 0.42);
+}
+
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-item-visual {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: calc(5px * var(--ui-scale, 1));
+  overflow: visible;
+}
+
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-item-stack .shop-item-visual .icon,
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-item-stack .shop-item-visual .item-icon-shell,
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-item-visual .icon,
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-item-visual .item-icon-shell,
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .item-icon-shell--enhancement {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--shop-card-icon-box);
+  height: var(--shop-card-icon-box);
+  font-size: var(--shop-card-icon-font);
+  line-height: 1;
+  margin: 0;
+  flex-shrink: 0;
+  border-radius: calc(14px * var(--ui-scale, 1));
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  box-sizing: border-box;
+  padding: calc(2px * var(--ui-scale, 1));
+  overflow: visible;
+}
+
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-item-stack .shop-item-visual .icon.icon--duo,
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-card .shop-item-visual .icon.icon--duo {
+  width: var(--shop-card-icon-duo-w);
+  height: var(--shop-card-icon-box);
+  font-size: var(--shop-card-icon-duo-font);
+  border-radius: 0;
+  box-shadow: none !important;
+  padding: 0;
+}
+
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-item-visual .enh-shop-icon {
+  font-size: inherit;
+  line-height: 1;
+}
+
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-card.rarity-common .shop-item-visual .icon,
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-card.rarity-uncommon .shop-item-visual .icon,
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-card.rarity-rare .shop-item-visual .icon,
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-card.rarity-epic .shop-item-visual .icon,
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-card.rarity-legendary .shop-item-visual .icon,
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-card.frozen .shop-item-visual .icon,
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-card.frozen.rarity-uncommon .shop-item-visual .icon,
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-card.frozen.rarity-rare .shop-item-visual .icon,
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-card.frozen.rarity-epic .shop-item-visual .icon,
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-card.frozen.rarity-legendary .shop-item-visual .icon {
+  box-shadow: none !important;
+}
+
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-item-stack .shop-pin {
+  position: absolute;
+  top: var(--shop-pin-offset-y, calc(-12px * var(--ui-scale, 1)));
+  left: var(--shop-pin-offset-x, calc(-10px * var(--ui-scale, 1)));
+  z-index: 30;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-pin:hover,
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-pin:focus-visible {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-pin.active {
+  background: rgba(88, 166, 255, 0.22) !important;
+}
+
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-item-stack > .cost,
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-item-side-meta > .cost {
+  position: static;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(4px * var(--ui-scale, 1));
+  align-self: center;
+  margin: 0;
+  z-index: 1;
+  padding: calc(4px * var(--ui-scale, 1)) calc(10px * var(--ui-scale, 1));
+  min-height: calc(28px * var(--ui-scale, 1));
+  border-radius: calc(10px * var(--ui-scale, 1));
+  background:
+    radial-gradient(circle at 35% 28%, rgba(255, 255, 255, 0.12) 0%, transparent 42%),
+    linear-gradient(180deg, rgba(42, 32, 18, 0.94), rgba(18, 12, 8, 0.98)) !important;
+  border: 2px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 3px 10px rgba(0, 0, 0, 0.28) !important;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-item-stack > .cost .cost-value,
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-item-side-meta > .cost .cost-value {
+  font-size: calc(var(--font-sm) * 1.06);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #f5c842;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65), 0 0 1px rgba(0, 0, 0, 0.75);
+}
+
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-item-stack > .cost .cost-coin {
+  font-size: calc(var(--font-sm) * 1.02);
+  line-height: 1;
+  opacity: 0.95;
+}
+
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-card .item-shape-mini,
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-item-visual .item-shape-mini--shop-overlay {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  opacity: 0.88;
+}
+
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .enh-shop-slot-tag {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .btn-refresh-shop {
+  background: linear-gradient(180deg, #fff 0%, #f5edd4 100%) !important;
+  border: 2px solid var(--meadow-border, rgba(92, 184, 92, 0.45)) !important;
+  color: var(--juice-ink, #2e6432);
+  font-weight: 800;
+  box-shadow: 0 3px 0 rgba(74, 158, 74, 0.35), var(--juice-shadow, 0 4px 12px rgba(30, 60, 28, 0.12));
+  border-radius: calc(12px * var(--ui-scale, 1));
+}
+
+html[data-visual-theme="diablo"][data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .btn-refresh-shop {
+  background: linear-gradient(180deg, #4a3820 0%, #3a2818 100%) !important;
+  border-color: var(--meadow-border, rgba(139, 105, 20, 0.55)) !important;
+  color: var(--meadow-gold-bright, #e8c878) !important;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.35), 0 4px 12px rgba(0, 0, 0, 0.28) !important;
+}
+
+html[data-visual-theme="diablo"][data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-card:hover:not(.empty):not(.unaffordable) {
+  background: transparent !important;
+  filter: drop-shadow(0 4px 12px rgba(201, 162, 39, 0.18));
+}
+
+html[data-visual-theme="meadow"][data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-card:hover:not(.empty):not(.unaffordable) {
+  background: transparent !important;
+}
+
+html[data-touch="true"][data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-card:not(.empty) {
+  position: relative;
+}
+
+html[data-touch="true"][data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-card:not(.empty)::before {
+  content: "";
+  position: absolute;
+  inset: -20px;
+  z-index: 0;
+}
+
+html[data-touch="true"][data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-card:not(.empty) > *:not(.shop-pin) {
+  position: relative;
+  z-index: 1;
+}

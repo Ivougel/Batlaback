@@ -200,7 +200,6 @@ let lobbyRoundSettling = false;
 let lastLobbyPlayerBattleWinner = null;
 let lastLobbyRosterStripSig = "";
 let lastLobbyRosterStripPhase = "";
-let lobbyRosterHidden = false;
 let lastEndedBattleState = null;
 let prepViewSide = "player";
 let prepDollOpen = false;
@@ -705,7 +704,7 @@ function syncPrepBottomBarChrome() {
     standingsAnchor?.toggleAttribute("hidden", true);
     return;
   }
-  // В лобби список соперников — плавающая кнопка 👀 на поле, не нижняя панель.
+  // В лобби список соперников — кружки с эмоциями поверх поля prep.
   const showStandings = false;
   standingsAnchor?.toggleAttribute("hidden", !showStandings);
 
@@ -760,12 +759,12 @@ function bindStandingsToggle() {
 }
 
 function renderLobbyChrome(force = false) {
-  const prepRosterPanel = document.getElementById("lobby-prep-roster-panel");
+  const prepFieldRoster = document.getElementById("lobby-prep-field-roster");
   const battleRosterBar = document.getElementById("lobby-battle-roster-bar");
   const stripPrep = document.getElementById("lobby-roster-strip-prep");
   const stripBattle = document.getElementById("lobby-roster-strip-battle");
   const show = isAnyLobbyMode() && !!lobbyState;
-  prepRosterPanel?.classList.toggle("hidden", !show || phase !== "prep" || (isLobby2pMode() && lobbyState?.isSplitLobby));
+  prepFieldRoster?.classList.toggle("hidden", !show || phase !== "prep" || (isLobby2pMode() && lobbyState?.isSplitLobby));
   battleRosterBar?.classList.toggle("hidden", !show || !isBattleUiPhase());
   syncPrepBottomBarChrome();
   if (!show) {
@@ -791,7 +790,7 @@ function renderLobbyChrome(force = false) {
     const stripHtml = renderLobbyRosterStrip(lobbyState, rosterOpts);
     const prepStrip = typeof isLobbyRosterPrepStripHtml === "function"
       ? isLobbyRosterPrepStripHtml(stripHtml)
-      : stripHtml.includes("lobby-fighter-card-list");
+      : stripHtml.includes('data-lobby-fighter="');
     if (stripPrep && (phase === "prep" || prepStrip)) stripPrep.innerHTML = stripHtml;
     if (stripBattle && isBattleUiPhase()) stripBattle.innerHTML = stripHtml;
   }
@@ -820,42 +819,26 @@ function renderLobbyChrome(force = false) {
       queuePrewarmBattleInventoryPopover();
     }
   }
-  syncLobbyRosterCollapse();
-  if (show && phase === "prep" && typeof layoutLobbyRosterPanel === "function") {
-    requestAnimationFrame(() => layoutLobbyRosterPanel());
-  } else if (show && phase === "prep" && typeof restoreLobbyRosterFloatPosition === "function") {
-    restoreLobbyRosterFloatPosition();
-  }
-}
-
-function syncLobbyRosterCollapse() {
-  const panel = document.getElementById("lobby-prep-roster-panel");
-  const btn = document.getElementById("btn-lobby-roster-hide");
-  if (!panel) return;
-  const collapsed = lobbyRosterHidden && phase === "prep";
-  panel.classList.toggle("lobby-prep-roster-panel--collapsed", collapsed);
-  if (btn) {
-    btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
-    btn.setAttribute("aria-label", collapsed ? "Показать список участников" : "Скрыть список участников");
-    btn.title = collapsed ? "Показать список" : "Скрыть список";
-    btn.textContent = collapsed ? "👀" : "🙈";
-  }
 }
 
 function clearLobbyRosterTouchHighlights(root) {
-  root?.querySelectorAll(".lobby-fighter-card--touch").forEach((el) => {
-    el.classList.remove("lobby-fighter-card--touch");
+  root?.querySelectorAll(".lobby-fighter-card--touch, .lobby-prep-field-chip--touch").forEach((el) => {
+    el.classList.remove("lobby-fighter-card--touch", "lobby-prep-field-chip--touch");
   });
 }
 
 function bindLobbyRosterClicks() {
   const onRosterPointerDown = (e) => {
     if (e.button !== 0) return;
-    const hideBtn = e.target.closest("#btn-lobby-roster-hide");
-    if (hideBtn) return;
-    const enemyCard = e.target.closest(".lobby-fighter-card:not(.lobby-fighter-card--yours)");
-    if (enemyCard && phase === "prep") {
-      enemyCard.classList.add("lobby-fighter-card--touch");
+    const enemyChip = e.target.closest(
+      ".lobby-fighter-card:not(.lobby-fighter-card--yours), .lobby-prep-field-chip:not(.lobby-prep-field-chip--yours)",
+    );
+    if (enemyChip && phase === "prep") {
+      enemyChip.classList.add(
+        enemyChip.classList.contains("lobby-prep-field-chip")
+          ? "lobby-prep-field-chip--touch"
+          : "lobby-fighter-card--touch",
+      );
     }
     const fighterBtn = e.target.closest("[data-lobby-fighter]");
     if (fighterBtn && isLobbyMode() && phase === "prep" && !fighterBtn.disabled) {
@@ -886,24 +869,13 @@ function bindLobbyRosterClicks() {
   standingsDropdown?.addEventListener("pointerup", onRosterPointerEnd);
   standingsDropdown?.addEventListener("pointercancel", onRosterPointerEnd);
   standingsDropdown?.addEventListener("pointerleave", onRosterPointerEnd);
-  const prepPanel = document.getElementById("lobby-prep-roster-panel");
-  prepPanel?.addEventListener("pointerdown", onRosterPointerDown);
-  prepPanel?.addEventListener("pointerup", onRosterPointerEnd);
-  prepPanel?.addEventListener("pointercancel", onRosterPointerEnd);
-  prepPanel?.addEventListener("pointerleave", onRosterPointerEnd);
+  const prepFieldRoster = document.getElementById("lobby-prep-field-roster");
+  prepFieldRoster?.addEventListener("pointerdown", onRosterPointerDown);
+  prepFieldRoster?.addEventListener("pointerup", onRosterPointerEnd);
+  prepFieldRoster?.addEventListener("pointercancel", onRosterPointerEnd);
+  prepFieldRoster?.addEventListener("pointerleave", onRosterPointerEnd);
   document.getElementById("lobby-battle-roster-bar")?.addEventListener("pointerdown", onRosterPointerDown);
   bindStandingsToggle();
-  if (typeof initLobbyRosterFloat === "function") {
-    initLobbyRosterFloat({
-      toggleCollapse() {
-        lobbyRosterHidden = !lobbyRosterHidden;
-        syncLobbyRosterCollapse();
-        if (typeof layoutLobbyRosterPanel === "function") {
-          requestAnimationFrame(() => layoutLobbyRosterPanel());
-        }
-      },
-    });
-  }
   document.getElementById("btn-lobby-return-table")?.addEventListener("click", (e) => {
     e.preventDefault();
     returnToLobbyPlayerMatch();
@@ -2732,6 +2704,15 @@ function getPrepHeroGridTooltipZone(margin = 10) {
   }
   if (right - left < 72) return null;
 
+  const root = document.documentElement;
+  if (root.dataset.prepShopPopover === "true" && root.hasAttribute("data-prep-shop-open")) {
+    const shopX = parseFloat(getComputedStyle(root).getPropertyValue("--prep-shop-popover-x"));
+    if (Number.isFinite(shopX) && shopX > left + 48) {
+      right = Math.min(right, Math.round(shopX - margin));
+    }
+  }
+  if (right - left < 72) return null;
+
   const top = (topBarRect?.bottom ?? viewTop) + margin;
   const bottom = (bottomRect?.top ?? viewBottom) - margin;
   if (bottom <= top + 48) return null;
@@ -3201,6 +3182,9 @@ function bindTouchInput() {
   }, bubbleOpts);
 
   bindTouchTooltipDismiss();
+  window.resetPrepTouchGesture = () => {
+    activeGesture = null;
+  };
 }
 
 /** Глобальный pointer bridge: drag из TD-магазина / рюкзака на touch и pen. */
@@ -4363,6 +4347,11 @@ function closeNestedPopups() {
     closed = true;
   }
 
+  if (typeof window.isPrepShopPopoverOpen === "function" && window.isPrepShopPopoverOpen()) {
+    window.closePrepShopPopover?.();
+    closed = true;
+  }
+
   return closed;
 }
 
@@ -4776,9 +4765,12 @@ function clearSellDropHighlight() {
 
 function syncPrepBenchPopoverPassthrough() {
   const benchUi = typeof usesPrepBenchPopover === "function" && usesPrepBenchPopover();
-  const popoverOpen = typeof isPrepBenchPopoverOpen === "function" && isPrepBenchPopoverOpen();
+  const shopUi = typeof window.usesPrepShopPopover === "function" && window.usesPrepShopPopover();
+  const benchOpen = typeof isPrepBenchPopoverOpen === "function" && isPrepBenchPopoverOpen();
+  const shopOpen = typeof window.isPrepShopPopoverOpen === "function" && window.isPrepShopPopoverOpen();
   const dragging = !!(dragPayload || pendingShopDrag || pendingBenchDrag || pendingEnhancementDrag);
-  document.documentElement.toggleAttribute("data-prep-bench-drag", !!(benchUi && popoverOpen && dragging));
+  document.documentElement.toggleAttribute("data-prep-bench-drag", !!(benchUi && benchOpen && dragging));
+  document.documentElement.toggleAttribute("data-prep-shop-drag", !!(shopUi && shopOpen && dragging));
 }
 
 function syncUiDragState() {
@@ -5123,7 +5115,21 @@ function getPrepBackpackClientRect() {
 }
 
 function getShopDrawerRect() {
-  return document.getElementById("shop-panel")?.getBoundingClientRect() || null;
+  const panel = document.getElementById("shop-panel");
+  if (!panel) return null;
+  if (typeof window.usesPrepShopPopover === "function" && window.usesPrepShopPopover()) {
+    if (typeof window.isPrepShopPopoverOpen === "function" && !window.isPrepShopPopoverOpen()) {
+      return null;
+    }
+  }
+  const r = panel.getBoundingClientRect();
+  if (!r || r.width < 1 || r.height < 1) return null;
+  return r;
+}
+
+function usesPrepCommercePopoverMode() {
+  return (typeof usesPrepBenchPopover === "function" && usesPrepBenchPopover())
+    || (typeof window.usesPrepShopPopover === "function" && window.usesPrepShopPopover());
 }
 
 function isPointerInsideShopDrawerBounds(clientX, clientY) {
@@ -5789,6 +5795,7 @@ function clearDragUiState() {
   }
   hideDragGhostOverlay();
   syncUiDragState();
+  if (typeof window.resetPrepTouchGesture === "function") window.resetPrepTouchGesture();
 }
 
 function canStartBattle() {
@@ -8238,6 +8245,7 @@ function canvasCoordsFromClient(clientX, clientY) {
 function getElementClientCenter(el) {
   if (!el) return null;
   const r = el.getBoundingClientRect();
+  if (r.width <= 0 || r.height <= 0) return null;
   return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
 }
 
@@ -9884,7 +9892,7 @@ function isPointerOverPrepSidebar(clientX, clientY) {
   const hit = document.elementFromPoint(clientX, clientY);
   if (!hit) return false;
   return !!hit.closest(
-    "#shop-panel, #td-build-panel, .td-build-shop-card, .run-stats-anchor, #prep-run-stats-anchor, #run-stats-popover, #sidebar-tooltip, #prep-tooltip-dock, #recipe-book-overlay, #combat-feed-dock, #combat-feed-panel, #combat-feed-scroll, #prep-doll-layer",
+    "#shop-panel, #td-build-panel, .td-build-shop-card, #prep-bench-popover, #bench-panel, #bench-slots, .bench-card, #btn-prep-bench-fab, #prep-shop-popover, .run-stats-anchor, #prep-run-stats-anchor, #run-stats-popover, #sidebar-tooltip, #prep-tooltip-dock, #recipe-book-overlay, #combat-feed-dock, #combat-feed-panel, #combat-feed-scroll, #prep-doll-layer",
   );
 }
 
@@ -9902,15 +9910,24 @@ function isPointerOverBenchPopoverPanel(clientX, clientY) {
   return !!hit.closest("#prep-bench-popover .prep-bench-popover__panel, #btn-prep-bench-fab");
 }
 
+function isPointerOverShopPopoverPanel(clientX, clientY) {
+  if (clientX == null || clientY == null) return false;
+  const hit = document.elementFromPoint(clientX, clientY);
+  if (!hit) return false;
+  return !!hit.closest("#prep-shop-popover .prep-shop-popover__panel, #btn-mobile-shop, #btn-prep-sell-fab");
+}
+
 function syncPrepShopDragBackdrop(clientX, clientY) {
   const root = document.documentElement;
   const dragActive = !!(dragPayload || pendingShopDrag || pendingBenchDrag || pendingEnhancementDrag);
   const benchOpen = root.hasAttribute("data-prep-bench-open");
+  const shopOpen = root.hasAttribute("data-prep-shop-open");
   const overSidebar = isPointerOverShopDrawer(clientX, clientY)
-    || isPointerOverBenchPopoverPanel(clientX, clientY);
+    || isPointerOverBenchPopoverPanel(clientX, clientY)
+    || isPointerOverShopPopoverPanel(clientX, clientY);
   const targetsBoard = dragActive
     && !overSidebar
-    && (root.hasAttribute("data-prep-shop-open") || benchOpen);
+    && (root.hasAttribute("data-prep-shop-open") || benchOpen || shopOpen);
   root.toggleAttribute("data-prep-drag-targets-board", targetsBoard);
 }
 
@@ -10519,7 +10536,7 @@ function tryShowPrepPointerTapTooltip(clientX, clientY) {
       const { index, side } = pendingShopDrag;
       const st = getSideState(side);
       const entry = st.shop[index];
-      const card = document.querySelectorAll("#shop-slots .shop-card")[index];
+      const card = document.querySelector(`.shop-card[data-index="${index}"]`);
       if (entry && card && !card.classList.contains("empty")) {
         pendingShopDrag = null;
         syncUiDragState();
@@ -10737,6 +10754,7 @@ function drawItemSocketMarkers(ctx, item, def, team, cellRectFn) {
 
 function finishDragDrop(e) {
   pendingShopDrag = null;
+  pendingBenchDrag = null;
   if (!dragPayload || !dragFrom) {
     clearDragUiState();
     return;
@@ -10764,12 +10782,15 @@ function finishDragDrop(e) {
   }
 
   const dropOnSell = isDropOnSell(dropE);
-  const dropBackToShop = isPrepSidebarArcDrag() && isPointerInsideShopDrawerBounds(dropClientX, dropClientY);
+  const sidebarPlacement = isPrepSidebarArcDrag() ? getPrepDropPlacement(st, side) : null;
+  const dropBackToShop = isPrepSidebarArcDrag()
+    && isPointerInsideShopDrawerBounds(dropClientX, dropClientY)
+    && !hasPrepBoardDropTarget()
+    && !sidebarPlacement?.valid;
   const { x: mx, y: my } = canvasCoordsFromClient(dropClientX, dropClientY);
   const onBoard = isOnBoard(mx, my, side);
   const boardCol = onBoard ? xToCol(mx, side) : null;
   const boardRow = onBoard ? yToRow(my, side) : null;
-  const sidebarPlacement = isPrepSidebarArcDrag() ? getPrepDropPlacement(st, side) : null;
   const dropCol = sidebarPlacement?.col ?? boardCol;
   const dropRow = sidebarPlacement?.row ?? boardRow;
   const hasDropCell = dropCol != null && dropRow != null;
@@ -11103,15 +11124,18 @@ function tryBuyFromPendingShopDrag(clientX, clientY) {
   const dx = clientX - pendingShopDrag.startX;
   const dy = clientY - pendingShopDrag.startY;
   if (Math.hypot(dx, dy) >= getPrepDragCommitThresholdPx()) return false;
+  if (isTouchUi()) return false;
   const { index, side } = pendingShopDrag;
   pendingShopDrag = null;
   syncUiDragState();
-  if (!isTouchUi()) {
-    buyFromShop(index, side);
-    suppressShopClickUntil = Date.now() + 500;
-    return true;
-  }
-  return false;
+
+  const st = getSideState(side);
+  const entry = st.shop[index];
+  const card = document.querySelector(`.shop-card[data-index="${index}"]`);
+  if (!entry || !card || card.classList.contains("empty")) return false;
+  showSidebarTooltipAt(clientX, clientY, entry, null, "shop", card, { pinned: true });
+  suppressShopClickUntil = Date.now() + 500;
+  return true;
 }
 
 function beginPendingShopDrag(index, e, side = prepViewSide) {
@@ -11140,11 +11164,11 @@ function updatePendingShopDrag(e) {
   startShopDrag(index, e, side);
 }
 
-function beginPrepDragArcFromCard(cardEl, itemIdOverride = null) {
-  if (!isLoadoutInteractionPhase() || !cardEl || typeof PrepDragArc === "undefined") return;
-  const c = getElementClientCenter(cardEl);
+function beginPrepDragArcFromCard(cardEl, itemIdOverride = null, originOverride = null) {
+  if (!isLoadoutInteractionPhase() || typeof PrepDragArc === "undefined") return;
+  const c = originOverride || getElementClientCenter(cardEl);
   if (!c) return;
-  const itemId = itemIdOverride || cardEl.dataset.itemId || dragPayload?.itemId;
+  const itemId = itemIdOverride || cardEl?.dataset?.itemId || dragPayload?.itemId;
   PrepDragArc.begin({ fromX: c.x, fromY: c.y, itemId });
 }
 
@@ -11180,16 +11204,20 @@ function startShopDrag(index, e, side = prepViewSide) {
   hideSidebarTooltip();
   dragPayload = { itemId: entryId, rotation: 0 };
   dragFrom = { type: "shop", index, side };
-  prepSidebarDragUnlocked = false;
+  prepSidebarDragUnlocked = usesPrepCommercePopoverMode();
   prepSidebarStickyHover = null;
   const cardSel = isTdLoadoutEditPhase()
     ? `.td-build-shop-card[data-shop-index="${index}"]`
     : `.shop-card[data-index="${index}"]`;
-  beginPrepDragArcFromCard(document.querySelector(cardSel), entryId);
+  const arcCard = document.querySelector(cardSel);
+  const arcOrigin = getElementClientCenter(arcCard)
+    || (e?.clientX != null && e?.clientY != null ? { x: e.clientX, y: e.clientY } : null);
+  beginPrepDragArcFromCard(arcCard, entryId, arcOrigin);
   startSynergyPreview();
   document.querySelector(cardSel)?.classList.add("shop-dragging");
   syncUiDragState();
   if (typeof onPrepDragStart === "function") onPrepDragStart();
+  if (typeof window.resetPrepTouchGesture === "function") window.resetPrepTouchGesture();
   if (e?.clientX != null && e?.clientY != null) {
     lastPointerClient.x = e.clientX;
     lastPointerClient.y = e.clientY;
@@ -11205,6 +11233,8 @@ function startBenchDrag(index, e, side = prepViewSide) {
   clearTouchTapGesture();
   hideSidebarTooltip();
   const arcCard = document.querySelector(`.bench-card[data-bench="${index}"]`);
+  const arcOrigin = getElementClientCenter(arcCard)
+    || (e?.clientX != null && e?.clientY != null ? { x: e.clientX, y: e.clientY } : null);
   const benchEntry = takeBenchEntryOnDragStart(st, index);
   if (!benchEntry) return;
   selectedBench = -1;
@@ -11213,10 +11243,11 @@ function startBenchDrag(index, e, side = prepViewSide) {
   });
   dragPayload = { itemId: benchEntry.itemId, rotation: benchEntry.rotation || 0 };
   dragFrom = { type: "bench", index, side, benchEntry };
-  prepSidebarDragUnlocked = typeof usesPrepBenchPopover === "function" && usesPrepBenchPopover();
+  prepSidebarDragUnlocked = usesPrepCommercePopoverMode();
   prepSidebarStickyHover = null;
   renderBench(side);
-  beginPrepDragArcFromCard(arcCard);
+  beginPrepDragArcFromCard(arcCard, benchEntry.itemId, arcOrigin);
+  if (typeof window.resetPrepTouchGesture === "function") window.resetPrepTouchGesture();
   startSynergyPreview();
   syncUiDragState();
   if (typeof onPrepDragStart === "function") onPrepDragStart();
@@ -11739,6 +11770,7 @@ function renderBattleStats() {
 }
 
 window.positionPrepTooltipDock = positionPrepTooltipDock;
+window.getPrepHeroGridTooltipZone = getPrepHeroGridTooltipZone;
 window.syncPrepTooltipDockVisibility = syncPrepTooltipDockVisibility;
 window.isLivePrepSession = isLivePrepSession;
 window.bindPointerTapTooltip = bindPointerTapTooltip;
@@ -11805,6 +11837,7 @@ registerPrepShopRuntime({
   getSideMutationId: (side) => (side === "enemy" ? enemyMutationId : playerMutationId),
   getSideMutationFormId: (side) => (side === "enemy" ? enemyMutationFormId : playerMutationFormId),
   beginPendingShopDrag,
+  beginPendingBenchDrag,
   startBenchDrag,
   renderTdBuildPanel: () => {
     if (typeof renderTdBuildPanel === "function") renderTdBuildPanel();

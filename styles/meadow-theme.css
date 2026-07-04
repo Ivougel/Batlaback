@@ -337,9 +337,10 @@ body:has(#app[data-phase="replay"]) .bottom-chrome {
   color: var(--meadow-ink);
 }
 
-#lobby-prep-roster-panel {
-  background: rgba(255, 252, 240, 0.88);
-  border: 2px solid var(--meadow-border-soft);
+#lobby-prep-field-roster .lobby-prep-field-chip {
+  background: radial-gradient(circle at 35% 30%, rgba(255, 252, 240, 0.95), rgba(240, 230, 210, 0.92));
+  border-color: var(--meadow-border-soft);
+  color: var(--meadow-ink);
 }
 
 /* ─── Settings & recipe book ─── */

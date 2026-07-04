@@ -276,6 +276,12 @@ function drawPlacedItemIcons(ctx, def, item, cellRectFn, options = {}) {
     return;
   }
 
+  const lightFx = typeof BattleFxTier !== "undefined" && BattleFxTier.isLightBattleFx();
+  if (lightFx) {
+    drawIcons();
+    return;
+  }
+
   ctx.save();
   ctx.shadowColor = "rgba(255, 230, 120, 0.95)";
   ctx.shadowBlur = 16;

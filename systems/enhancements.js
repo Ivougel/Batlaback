@@ -556,10 +556,8 @@ function renderEnhancementShopCardHTML(def, { extraClasses = "", innerBefore = "
             <span class="enh-shop-icon" aria-hidden="true">${def.icon}</span>
           </div>
         </div>
-        <div class="shop-item-side-meta">
-          <div class="cost shop-item-cost" aria-label="Цена ${cost}"><span class="cost-value">${cost}</span><span class="cost-coin" aria-hidden="true">💰</span></div>
-          <div class="enh-shop-slot-tag">${escapeEnhancementHtml(ENHANCEMENT_SLOT_META[def.slot]?.label || def.slot)}</div>
-        </div>
+        <div class="cost shop-item-cost" aria-label="Цена ${cost}"><span class="cost-value">${cost}</span><span class="cost-coin" aria-hidden="true">💰</span></div>
+        <div class="enh-shop-slot-tag">${escapeEnhancementHtml(ENHANCEMENT_SLOT_META[def.slot]?.label || def.slot)}</div>
       </div>
     </div>
   </div>`;

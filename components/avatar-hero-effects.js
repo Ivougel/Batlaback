@@ -375,9 +375,6 @@ function syncAvatarHeroEffects(team, profile, state) {
 function syncAllAvatarHeroEffects(playerProfile, enemyProfile, state) {
   syncAvatarHeroEffects("player", playerProfile, state);
   syncAvatarHeroEffects("enemy", enemyProfile, state);
-  if (isFlankArenaBattleHud() && typeof syncBattleHudAnchors === "function") {
-    syncBattleHudAnchors();
-  }
 }
 
 function profileHeroShellSignature(profile) {

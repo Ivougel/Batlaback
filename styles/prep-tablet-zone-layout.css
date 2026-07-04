@@ -125,14 +125,15 @@ html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel .shop-ca
 
 html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel .shop-item-visual .icon,
 html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel .shop-card--enhancement .item-icon-shell--enhancement {
-  width: var(--shop-item-icon-size, calc(64px * var(--ui-scale, 1)));
-  height: var(--shop-item-icon-size, calc(64px * var(--ui-scale, 1)));
-  font-size: var(--shop-item-icon-font, calc(48px * var(--ui-scale, 1)));
+  width: var(--shop-card-icon-box);
+  height: var(--shop-card-icon-box);
+  font-size: var(--shop-card-icon-font);
 }
 
 html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel .shop-item-visual .icon.icon--duo {
-  width: var(--shop-item-icon-duo-width, calc(var(--shop-item-icon-size, 64px) * 1.72));
-  font-size: calc(var(--shop-item-icon-font, 48px) * 0.72);
+  width: var(--shop-card-icon-duo-w);
+  height: var(--shop-card-icon-box);
+  font-size: var(--shop-card-icon-duo-font);
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;

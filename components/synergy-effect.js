@@ -13,6 +13,17 @@ function glowPad(strongPad, weakPad, isStrong) {
   return Math.max(1, Math.round((isStrong ? strongPad : weakPad) * GLOW_RADIUS));
 }
 
+function isLightSynergyFx() {
+  return typeof BattleFxTier !== "undefined" && BattleFxTier.isLightBattleFx();
+}
+
+function activeSynergyPulse(time) {
+  if (isLightSynergyFx()) {
+    return 0.82 + Math.sin(time * 1.1) * 0.06;
+  }
+  return 0.5 + Math.sin(time * 2.6) * 0.5;
+}
+
 function synergyCellPath(ctx, rect) {
   ctx.rect(rect.x, rect.y, rect.w, rect.h);
 }
@@ -97,7 +108,7 @@ function drawActiveCellSurface(ctx, col, row, team, type, strength, pulse) {
   ctx.stroke();
 
   ctx.shadowBlur = 0;
-  if (pulse > 0.55) {
+  if (!isLightSynergyFx() && pulse > 0.55) {
     const sparkAlpha = (pulse - 0.55) * 0.9;
     ctx.globalAlpha = sparkAlpha;
     ctx.font = `${uiPx(isStrong ? 11 : 9)}px sans-serif`;
@@ -165,7 +176,7 @@ function resolveGroupItemCenters(group, items, team) {
 function drawActiveSynergyCellLayer(ctx, cellGroups, team, items, time, layer) {
   if (!cellGroups?.length) return;
 
-  const pulse = 0.5 + Math.sin(time * 2.6) * 0.5;
+  const pulse = activeSynergyPulse(time);
   const drawn = new Set();
 
   cellGroups.forEach((group) => {
@@ -182,7 +193,7 @@ function drawActiveSynergyCellLayer(ctx, cellGroups, team, items, time, layer) {
       }
     });
 
-    if (layer === "surface") {
+    if (layer === "surface" && !isLightSynergyFx()) {
       const centers = resolveGroupItemCenters(group, items, team);
       if (centers) {
         drawActiveEnergyBridge(

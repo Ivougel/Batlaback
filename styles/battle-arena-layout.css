@@ -33,6 +33,30 @@ html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #layer-
   z-index: var(--z-layer-hud);
 }
 
+/* L4.5 — эмодзи-аватар над колонкой, выше HUD-чипов (не в layer-objects) */
+html[data-battle-hero-placement="flank-arena"] #battle-thought-layer {
+  display: none;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #battle-thought-layer,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #battle-thought-layer {
+  display: block;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+  z-index: calc(var(--z-layer-hud) + 6);
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #battle-run-hud,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #battle-run-hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+  z-index: calc(var(--z-layer-hud) + 1);
+}
+
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #layer-objects,
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #layer-objects {
   z-index: var(--z-layer-objects);
@@ -516,7 +540,20 @@ html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .avatar
   position: fixed;
   overflow: visible;
   pointer-events: none;
-  z-index: 26;
+  z-index: 1;
+}
+
+html[data-thought-above-hero="true"] #app[data-phase="battle"] .battle-hud-status-stack,
+html[data-thought-above-hero="true"] #app[data-phase="replay"] .battle-hud-status-stack {
+  flex-shrink: 1;
+  min-height: 0;
+  max-height: var(--battle-hud-status-max-h, none);
+  overflow: visible;
+}
+
+html[data-thought-above-hero="true"] #app[data-phase="battle"] .battle-hud-side,
+html[data-thought-above-hero="true"] #app[data-phase="replay"] .battle-hud-side {
+  overflow: visible;
 }
 
 html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-thought-slot,

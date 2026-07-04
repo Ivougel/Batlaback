@@ -3,7 +3,7 @@
  */
 
 .item-card-cluster,
-#app[data-phase="prep"] #shop-panel .bench-card .item-card-cluster {
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .bench-card .item-card-cluster {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -14,20 +14,20 @@
 }
 
 /* Магазин: [пин] + иконка + footprint / цена снизу */
-#app[data-phase="prep"] #shop-panel .shop-card:not(.empty) {
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-card:not(.empty) {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
 }
 
-#app[data-phase="prep"] #shop-panel .shop-item-main {
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-main {
   width: 100%;
   display: flex;
   justify-content: center;
 }
 
-#app[data-phase="prep"] #shop-panel .shop-item-stack:not(.shop-item-stack--enhancement) {
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-stack {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -40,7 +40,19 @@
   padding-top: calc(var(--shop-pin-size, 28px) * 0.42);
 }
 
-#app[data-phase="prep"] #shop-panel .shop-item-visual {
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-stack > .shop-item-visual {
+  order: 1;
+}
+
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-stack > .cost {
+  order: 2;
+}
+
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-stack > .enh-shop-slot-tag {
+  order: 3;
+}
+
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-visual {
   position: relative;
   flex: 0 0 auto;
   display: flex;
@@ -51,21 +63,37 @@
   overflow: visible;
 }
 
-#app[data-phase="prep"] #shop-panel .shop-item-stack:not(.shop-item-stack--enhancement) .shop-item-visual .icon,
-#app[data-phase="prep"] #shop-panel .shop-item-stack:not(.shop-item-stack--enhancement) .shop-item-visual .item-icon-shell {
-  width: calc(var(--shop-item-icon-size, 56px) * 1.1);
-  height: calc(var(--shop-item-icon-size, 56px) * 1.1);
-  font-size: calc(var(--shop-item-icon-font, 42px) * 1.06);
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-stack .shop-item-visual .icon,
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-stack .shop-item-visual .item-icon-shell,
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-stack .shop-item-visual .item-icon-shell--enhancement {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--shop-card-icon-box);
+  height: var(--shop-card-icon-box);
+  font-size: var(--shop-card-icon-font);
+  line-height: 1;
+  margin: 0;
+  flex-shrink: 0;
+  border-radius: calc(14px * var(--ui-scale, 1));
+  box-sizing: border-box;
+  padding: calc(2px * var(--ui-scale, 1));
+  overflow: visible;
 }
 
-#app[data-phase="prep"] #shop-panel .shop-item-stack:not(.shop-item-stack--enhancement) .shop-item-visual .icon.icon--duo {
-  width: calc(var(--shop-item-icon-duo-width, 96px) * 1.06);
-  height: calc(var(--shop-item-icon-size, 56px) * 1.1);
-  font-size: calc(var(--shop-item-icon-font, 42px) * 0.76);
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-stack .shop-item-visual .icon.icon--duo {
+  width: var(--shop-card-icon-duo-w);
+  height: var(--shop-card-icon-box);
+  font-size: var(--shop-card-icon-duo-font);
 }
 
-#app[data-phase="prep"] #shop-panel .shop-item-stack > .cost,
-#app[data-phase="prep"] #shop-panel .shop-item-side-meta > .cost {
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-visual .enh-shop-icon {
+  font-size: inherit;
+  line-height: 1;
+}
+
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-stack > .cost,
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-side-meta > .cost {
   position: static;
   flex: 0 0 auto;
   align-self: center;
@@ -73,7 +101,7 @@
   z-index: 1;
 }
 
-#app[data-phase="prep"] #shop-panel .shop-item-stack:not(.shop-item-stack--enhancement) > .cost {
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-stack > .cost {
   padding: 0;
   min-height: 0;
   border-radius: 0;
@@ -83,18 +111,18 @@
   gap: calc(4px * var(--ui-scale, 1));
 }
 
-#app[data-phase="prep"] #shop-panel .shop-item-stack:not(.shop-item-stack--enhancement) > .cost .cost-value {
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-stack > .cost .cost-value {
   font-size: calc(var(--font-sm) * 1.06);
   font-weight: 800;
   color: #f5c842;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 0 1px rgba(0, 0, 0, 0.65);
 }
 
-#app[data-phase="prep"] #shop-panel .shop-item-stack:not(.shop-item-stack--enhancement) > .cost .cost-coin {
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-stack > .cost .cost-coin {
   font-size: calc(var(--font-sm) * 1.02);
 }
 
-#app[data-phase="prep"] #shop-panel .shop-item-visual .item-shape-mini--shop-overlay {
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-visual .item-shape-mini--shop-overlay {
   position: static;
   right: auto;
   bottom: auto;
@@ -103,27 +131,6 @@
   opacity: 0.9;
   pointer-events: none;
   flex-shrink: 0;
-}
-
-/* Усиления: иконка | (цена + слот) — горизонтально */
-#app[data-phase="prep"] #shop-panel .shop-item-stack--enhancement {
-  position: relative;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: calc(5px * var(--ui-scale, 1));
-  width: fit-content;
-  max-width: 100%;
-}
-
-.shop-item-side-meta {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: calc(3px * var(--ui-scale, 1));
-  min-width: 0;
-  flex: 0 0 auto;
 }
 
 .shop-item-stack--enhancement .enh-shop-slot-tag {
@@ -150,8 +157,8 @@
 }
 
 .item-card-cluster .item-shape-mini,
-#app[data-phase="prep"] #shop-panel .shop-card .item-shape-mini,
-#app[data-phase="prep"] #shop-panel .bench-card .item-shape-mini {
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-card .item-shape-mini,
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .bench-card .item-shape-mini {
   flex: 0 0 auto;
   align-self: center;
   margin: 0;
@@ -166,26 +173,26 @@
 }
 
 /* Карточки магазина/скамейки: min-height, без жёсткого max-height */
-#app[data-phase="prep"] #shop-panel .shop-slots {
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-slots {
   grid-auto-rows: minmax(var(--shop-card-row-h, calc(96px * var(--ui-scale, 1))), auto);
   align-items: stretch;
 }
 
-#app[data-phase="prep"] #shop-panel .shop-card:not(.empty),
-#app[data-phase="prep"] #shop-panel .shop-card.empty {
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-card:not(.empty),
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-card.empty {
   height: auto;
   max-height: none;
   min-height: var(--shop-card-row-h, calc(96px * var(--ui-scale, 1)));
   overflow: visible;
 }
 
-#app[data-phase="prep"] #shop-panel .bench-panel .bench-card:not(.empty) {
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .bench-panel .bench-card:not(.empty) {
   height: auto;
   max-height: none;
   overflow: visible;
 }
 
-#app[data-phase="prep"] #shop-panel .bench-panel .bench-slots {
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .bench-panel .bench-slots {
   grid-auto-rows: minmax(var(--prep-bench-row-h, calc(52px * var(--ui-scale, 1))), auto);
 }
 
@@ -200,7 +207,7 @@ html[data-prep-viewport-fit="true"] #app[data-phase="prep"] .shop-panel .shop-ca
   min-height: var(--prep-shop-row-h, calc(96px * var(--ui-scale, 1)));
 }
 
-html[data-prep-shop-drawer="true"][data-layout-profile="tablet-portrait"] #app[data-phase="prep"] #shop-panel .shop-slots {
+html[data-prep-shop-drawer="true"][data-layout-profile="tablet-portrait"] :is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-slots {
   grid-auto-rows: minmax(var(--prep-shop-row-h, 68px), auto);
 }
 
@@ -211,13 +218,13 @@ html[data-prep-shop-drawer="true"][data-layout-profile="tablet-portrait"] #app[d
   min-height: var(--prep-shop-row-h, 68px);
 }
 
-html[data-prep-shop-drawer="true"][data-layout-profile="tablet-portrait"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-card {
+html[data-prep-shop-drawer="true"][data-layout-profile="tablet-portrait"] :is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .bench-panel .bench-card {
   height: auto;
   max-height: none;
   min-height: var(--prep-bench-row-h, 52px);
 }
 
 /* Enemy prep: зеркало колонки */
-#app[data-phase="prep"][data-prep-side="enemy"] #shop-panel .shop-item-stack:not(.shop-item-stack--enhancement) {
+#app[data-phase="prep"][data-prep-side="enemy"] #shop-panel .shop-item-stack {
   align-items: center;
 }

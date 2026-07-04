@@ -39,7 +39,7 @@ html[data-lobby2p-hud] #bottom-chrome .bottom-chrome-prep-left .prep-side-btn,
 html[data-lobby2p-hud] #bottom-chrome .bottom-chrome-prep-left .btn-prep-hero-info,
 html[data-lobby2p-hud] #bottom-chrome .bottom-chrome-prep-right,
 html[data-lobby2p-hud] #bottom-chrome #prep-bottom-stats,
-html[data-lobby2p-hud] #lobby-prep-roster-panel,
+html[data-lobby2p-hud] #lobby-prep-field-roster,
 html[data-lobby2p-hud] #btn-prep-bench-fab,
 html[data-lobby2p-hud] #btn-mobile-shop {
   display: none !important;

@@ -141,7 +141,7 @@ try {
       campaignHintDisplay: document.getElementById("campaign-hint-bar")
         ? getComputedStyle(document.getElementById("campaign-hint-bar")).display
         : null,
-      lobbyRoster: document.getElementById("lobby-prep-roster-panel")?.classList.contains("hidden"),
+      lobbyRoster: document.getElementById("lobby-prep-field-roster")?.classList.contains("hidden"),
     }));
 
     assert(state.gameMode === mode, `${mode}: gameMode`);

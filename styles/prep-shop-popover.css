@@ -1,0 +1,214 @@
+/**
+ * Prep shop popover — tablet-side / desktop side layout.
+ * html[data-prep-shop-popover="true"]
+ * Панель справа (зелёная колонка), не перекрывает tooltip-коридор.
+ */
+
+html[data-prep-shop-popover="true"] #app[data-phase="prep"] .game-layout {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+html[data-prep-shop-popover="true"] #app[data-phase="prep"] #shop-panel {
+  display: none;
+}
+
+html[data-prep-shop-popover="true"][data-prep-shop-open] #prep-shop-popover #shop-panel {
+  display: flex;
+}
+
+/* ─── Popover shell ─── */
+
+.prep-shop-popover.hidden,
+.prep-shop-popover[hidden] {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+html:not(:has(#app[data-phase="prep"])) .prep-shop-popover,
+body:not(.screen-app-visible) .prep-shop-popover,
+body:has(#class-overlay:not(.hidden)) .prep-shop-popover,
+html[data-game-phase="battle"] .prep-shop-popover,
+html[data-game-phase="replay"] .prep-shop-popover,
+#app[data-phase="battle"] ~ #prep-shop-popover,
+#app[data-phase="replay"] ~ #prep-shop-popover {
+  display: none !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+.prep-shop-popover {
+  position: fixed;
+  inset: 0;
+  z-index: 9450;
+  display: block;
+  pointer-events: none;
+  background: transparent;
+}
+
+html[data-prep-shop-popover="true"] .prep-shop-popover:not(.hidden):not([hidden]) {
+  display: block;
+}
+
+.prep-shop-popover__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: transparent;
+  transition: background 0.2s ease;
+}
+
+html[data-prep-shop-popover="true"][data-prep-shop-open] .prep-shop-popover__backdrop {
+  background: rgba(0, 0, 0, 0.32);
+  pointer-events: auto;
+}
+
+.prep-shop-popover__panel {
+  position: fixed;
+  z-index: 1;
+  left: var(--prep-shop-popover-x, calc(100vw - 280px));
+  top: var(--prep-shop-popover-y, 14px);
+  width: var(--prep-shop-popover-w, min(240px, 28vw));
+  height: var(--prep-shop-popover-h, auto);
+  max-width: min(280px, var(--prep-shop-popover-w, 280px));
+  max-height: var(--prep-shop-popover-h, 52dvh);
+  display: flex;
+  flex-direction: column;
+  pointer-events: auto;
+  border-radius: calc(12px * var(--ui-scale, 1));
+  background: var(--meadow-chrome, rgba(255, 249, 235, 0.96));
+  border: 2px solid var(--meadow-border-soft, rgba(92, 184, 92, 0.35));
+  box-shadow:
+    0 16px 48px rgba(30, 60, 28, 0.28),
+    0 0 0 1px rgba(255, 255, 255, 0.35) inset;
+  overflow: hidden;
+  animation: prep-shop-popover-in 0.22s ease-out;
+}
+
+@keyframes prep-shop-popover-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+html[data-prep-shop-popover="true"] #prep-shop-popover #shop-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: calc(8px * var(--ui-scale, 1));
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  overflow: auto;
+  position: static;
+  transform: none !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+html[data-prep-shop-popover="true"] #prep-shop-popover #shop-panel .shop-chrome {
+  flex-shrink: 0;
+  padding-bottom: calc(4px * var(--ui-scale, 1));
+}
+
+html[data-prep-shop-popover="true"] #prep-shop-popover #shop-panel .shop-panel-header {
+  gap: calc(6px * var(--ui-scale, 1));
+}
+
+html[data-prep-shop-popover="true"] #prep-shop-popover #shop-panel .shop-hint,
+html[data-prep-shop-popover="true"] #prep-shop-popover #shop-panel .shop-hint-touch {
+  display: none;
+}
+
+html[data-prep-shop-popover="true"] #prep-shop-popover #shop-panel .shop-objects {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+html[data-prep-shop-popover="true"] #prep-shop-popover #shop-panel .shop-slots {
+  flex: 1 1 auto;
+  min-height: 0 !important;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: minmax(var(--prep-shop-row-h, var(--shop-card-row-h, calc(72px * var(--ui-scale, 1)))), auto);
+  align-content: start;
+  justify-items: stretch;
+  gap: calc(6px * var(--ui-scale, 1));
+  overflow-x: visible;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+html[data-touch="true"][data-prep-shop-popover="true"] #prep-shop-popover #shop-panel .shop-slots {
+  grid-template-columns: 1fr;
+}
+
+html[data-prep-shop-popover="true"] #prep-shop-popover #shop-panel .shop-card:not(.empty):last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+  width: calc(50% - calc(3px * var(--ui-scale, 1)));
+  justify-self: center;
+}
+
+html[data-prep-shop-popover="true"] #prep-shop-popover #shop-panel .shop-card:has(.icon--duo) {
+  grid-column: 1 / -1;
+  width: 100%;
+  justify-self: stretch;
+}
+
+html[data-prep-shop-popover="true"] #prep-shop-popover #shop-panel .shop-card {
+  min-height: var(--prep-shop-row-h, calc(72px * var(--ui-scale, 1)));
+}
+
+html[data-prep-shop-popover="true"] #prep-shop-popover #shop-panel .shop-sell-zone {
+  display: none !important;
+}
+
+html[data-prep-shop-popover="true"] #prep-shop-popover .prep-shop-drawer-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+html[data-visual-theme="diablo"][data-prep-shop-popover="true"] .prep-shop-popover__panel {
+  background: rgba(14, 12, 10, 0.96);
+  border-color: rgba(192, 57, 43, 0.45);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(201, 162, 39, 0.12) inset;
+}
+
+html[data-visual-theme="meadow"][data-prep-shop-popover="true"] .prep-shop-popover__panel {
+  background: var(--meadow-chrome, rgba(255, 249, 235, 0.96));
+  border-color: var(--meadow-border-soft, rgba(92, 184, 92, 0.35));
+}
+
+html[data-prep-shop-drag="true"] .prep-shop-popover__panel {
+  pointer-events: none !important;
+}
+
+html[data-prep-shop-open][data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-field-island,
+html[data-prep-shop-open][data-ui-surface="desktop"] #app[data-phase="prep"] .prep-field-island {
+  z-index: 6;
+}
+
+html[data-prep-shop-popover="true"][data-prep-shop-open][data-prep-drag-targets-board] #app[data-phase="prep"] .prep-field-island .canvas-scale-wrap {
+  box-shadow:
+    0 16px 46px rgba(0, 0, 0, 0.28),
+    0 0 0 2px rgba(88, 166, 255, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+html[data-prep-sell-fab] #btn-mobile-shop,
+html[data-prep-shop-popover="true"] #btn-mobile-shop {
+  display: none !important;
+}

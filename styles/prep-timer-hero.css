@@ -17,19 +17,11 @@
   display: none !important;
 }
 
-/* Ростер лобби: без портретов — только имена и HP */
-html[data-prep-layout="side"] #app[data-phase="prep"] .lobby-prep-roster-panel .lobby-fighter-card-avatar,
-html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .lobby-prep-roster-panel .lobby-fighter-card-avatar {
-  display: none !important;
-}
-
-html[data-prep-layout="side"] #app[data-phase="prep"] .lobby-prep-roster-panel .lobby-fighter-card,
-html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .lobby-prep-roster-panel .lobby-fighter-card {
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-areas:
-    "name"
-    "hp";
-  min-height: 2.4rem;
+/* Ростер лобби: компактные кружки на поле */
+html[data-prep-layout="side"] #app[data-phase="prep"] .lobby-prep-field-chip,
+html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .lobby-prep-field-chip {
+  width: calc(var(--lobby-roster-avatar-size) * 0.9);
+  height: calc(var(--lobby-roster-avatar-size) * 0.9);
 }
 
 .prep-timer-hero {

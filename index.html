@@ -14,18 +14,18 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles/tokens.css?v=18">
+  <link rel="stylesheet" href="styles/tokens.css?v=19">
   <link rel="stylesheet" href="styles/layers.css?v=7">
   <link rel="stylesheet" href="styles/bottom-chrome.css?v=24">
   <link rel="stylesheet" href="styles.css?v=39">
-  <link rel="stylesheet" href="styles/shop.css?v=10">
-  <link rel="stylesheet" href="styles/item-card-chrome.css?v=6">
+  <link rel="stylesheet" href="styles/shop.css?v=11">
+  <link rel="stylesheet" href="styles/item-card-chrome.css?v=8">
   <link rel="stylesheet" href="styles/shop-pin-chrome.css?v=7">
   <link rel="stylesheet" href="styles/prep-top-bar.css?v=2">
   <link rel="stylesheet" href="styles/campaign.css?v=1">
   <link rel="stylesheet" href="styles/mutations.css?v=1">
   <link rel="stylesheet" href="styles/battle-archetype-banner.css?v=1">
-  <link rel="stylesheet" href="styles/enhancements.css?v=5">
+  <link rel="stylesheet" href="styles/enhancements.css?v=7">
   <link rel="stylesheet" href="styles/doll.css?v=25">
   <link rel="stylesheet" href="styles/combat-feed.css?v=5">
   <link rel="stylesheet" href="styles/surface-profiles.css?v=3">
@@ -57,16 +57,17 @@
   <link rel="stylesheet" href="styles/desktop-prep.css?v=2">
   <link rel="stylesheet" href="styles/desktop-battle.css?v=2">
   <link rel="stylesheet" href="styles/tablet-stacked.css?v=7">
-  <link rel="stylesheet" href="styles/prep-bench-popover.css?v=8">
-  <link rel="stylesheet" href="styles/prep-sell-fab.css?v=3">
+  <link rel="stylesheet" href="styles/prep-bench-popover.css?v=9">
+  <link rel="stylesheet" href="styles/prep-shop-popover.css?v=8">
+  <link rel="stylesheet" href="styles/prep-sell-fab.css?v=5">
   <link rel="stylesheet" href="styles/tablet-side.css?v=35">
-  <link rel="stylesheet" href="styles/prep-tablet-zone-layout.css?v=6">
+  <link rel="stylesheet" href="styles/prep-tablet-zone-layout.css?v=7">
   <link rel="stylesheet" href="styles/battle-inventory-popover.css?v=9">
   <link rel="stylesheet" href="styles/lobby.css?v=13">
   <link rel="stylesheet" href="styles/lobby-2p-hud.css?v=3">
   <link rel="stylesheet" href="styles/td-mode.css?v=22">
   <link rel="stylesheet" href="styles/td-run-compact.css?v=14">
-  <link rel="stylesheet" href="styles/lobby-roster-float.css?v=2">
+  <link rel="stylesheet" href="styles/lobby-prep-field-roster.css?v=1">
   <link rel="stylesheet" href="styles/meadow-theme.css?v=2">
   <link rel="stylesheet" href="styles/battle-theme-ui.css?v=2">
   <link rel="stylesheet" href="styles/prep-juice.css?v=10">
@@ -82,7 +83,8 @@
   <link rel="stylesheet" href="styles/theme-diablo.css?v=3">
   <link rel="stylesheet" href="styles/battle-borderless.css?v=1">
   <link rel="stylesheet" href="styles/item-stats-report.css?v=4">
-  <link rel="stylesheet" href="styles/prep-borderless.css?v=5">
+  <link rel="stylesheet" href="styles/prep-borderless.css?v=6">
+  <link rel="stylesheet" href="styles/prep-shop-popover-chrome.css?v=5">
   <link rel="stylesheet" href="styles/sell-drop-highlight.css?v=1">
   <link rel="stylesheet" href="styles/item-hint-card.css?v=3">
   <script>
@@ -99,7 +101,7 @@
   <script src="systems/layout-scales.js?v=2"></script>
   <script src="systems/battle-fx-tier.js?v=4"></script>
   <script src="systems/battle-hero-anchor.js?v=28"></script>
-  <script src="ui-layout.js?v=117"></script>
+  <script src="ui-layout.js?v=122"></script>
 </head>
 <body>
   <div id="ui-ornament-frame" class="ui-ornament-frame" aria-hidden="true">
@@ -179,18 +181,6 @@
               <span class="campaign-hint-bar__text" id="campaign-hint-text"></span>
             </div>
             <div class="prep-field-column scene-viewport" id="prep-field-column">
-              <aside class="lobby-prep-roster-panel hidden" id="lobby-prep-roster-panel" aria-label="Список противников">
-                <button type="button"
-                        class="lobby-roster-float-handle lobby-roster-hide-btn"
-                        id="btn-lobby-roster-hide"
-                        aria-expanded="true"
-                        aria-controls="lobby-prep-roster-body"
-                        title="Скрыть список"
-                        aria-label="Скрыть список участников">🙈</button>
-                <div class="lobby-prep-roster-body" id="lobby-prep-roster-body">
-                  <div class="lobby-roster-strip lobby-roster-strip--prep-body" id="lobby-roster-strip-prep" role="tablist" aria-label="Участники лобби"></div>
-                </div>
-              </aside>
               <button type="button" class="td-loadout-fab hidden" id="btn-td-loadout" aria-label="Рюкзак башни 6×6" title="Рюкзак 6×6" hidden>🎒</button>
               <div class="layer layer-world" id="layer-world">
                 <div class="scene-bg" aria-hidden="true"></div>
@@ -206,6 +196,9 @@
                   <div class="doll-slot" data-slot="amulet">📿</div>
                 </div>
                 <div class="prep-field-island" id="prep-field-island">
+                  <div class="lobby-prep-field-roster hidden" id="lobby-prep-field-roster" aria-label="Участники забега">
+                    <div class="lobby-roster-strip lobby-roster-strip--prep-field" id="lobby-roster-strip-prep" role="tablist" aria-label="Участники лобби"></div>
+                  </div>
                   <div class="battle-canvas-stage">
                     <div class="canvas-scale-wrap canvas-stack">
                       <canvas id="game-canvas"></canvas>
@@ -241,7 +234,6 @@
                   <div class="field-avatar-wrap battle-scene-avatar battle-scene-avatar-player" id="player-avatar-panel" aria-label="Аватар игрока">
                     <button type="button" class="btn-secondary btn-player-stats" id="btn-player-stats" aria-expanded="false" aria-controls="player-characteristics-popup" title="H — характеристики">📋 Характеристики</button>
                     <div class="field-avatar-slot" id="player-avatar-slot"></div>
-                    <div class="avatar-thought-slot" id="player-thought-slot" data-team="player" aria-live="polite" aria-label="Мысли игрока"></div>
                     <div class="player-characteristics-popup hidden" id="player-characteristics-popup" role="dialog" aria-labelledby="player-char-title" aria-modal="true">
                       <div id="player-characteristics-content"></div>
                     </div>
@@ -250,7 +242,6 @@
                   <div class="field-avatar-wrap battle-scene-avatar battle-scene-avatar-enemy" id="enemy-avatar-panel" aria-label="Аватар противника">
                     <button type="button" class="btn-secondary btn-player-stats btn-enemy-stats" id="btn-enemy-stats" aria-expanded="false" aria-controls="enemy-characteristics-popup" title="Характеристики противника">📋 Характеристики</button>
                     <div class="field-avatar-slot" id="enemy-avatar-slot"></div>
-                    <div class="avatar-thought-slot" id="enemy-thought-slot" data-team="enemy" aria-live="polite" aria-label="Мысли противника"></div>
                     <div class="player-characteristics-popup fighter-char-popup-enemy hidden" id="enemy-characteristics-popup" role="dialog" aria-labelledby="enemy-char-title" aria-modal="true">
                       <div id="enemy-characteristics-content"></div>
                     </div>
@@ -299,6 +290,11 @@
                 <div class="battle-run-hud" id="battle-run-hud" hidden aria-hidden="true">
                   <div class="battle-hud-side" id="battle-hud-player" data-team="player"></div>
                   <div class="battle-hud-side" id="battle-hud-enemy" data-team="enemy"></div>
+                </div>
+                <!-- L4.5 — эмодзи-аватар (отдельно от HUD-чипов баффов/дебаффов) -->
+                <div class="battle-thought-layer" id="battle-thought-layer" aria-hidden="true">
+                  <div class="avatar-thought-slot" id="player-thought-slot" data-team="player" aria-live="polite" aria-label="Мысли игрока"></div>
+                  <div class="avatar-thought-slot" id="enemy-thought-slot" data-team="enemy" aria-live="polite" aria-label="Мысли противника"></div>
                 </div>
               </div>
 
@@ -1055,6 +1051,10 @@
   </div>
 
   <div id="prep-shop-backdrop" class="prep-shop-backdrop hidden" aria-hidden="true"></div>
+  <div class="prep-shop-popover hidden" id="prep-shop-popover" role="dialog" aria-labelledby="prep-shop-popover-title" aria-hidden="true">
+    <div class="prep-shop-popover__backdrop" id="prep-shop-popover-backdrop" aria-hidden="true"></div>
+    <div class="prep-shop-popover__panel"></div>
+  </div>
   <div class="prep-bench-popover hidden" id="prep-bench-popover" role="dialog" aria-labelledby="prep-bench-popover-title" aria-hidden="true">
     <div class="prep-bench-popover__backdrop" id="prep-bench-popover-backdrop" aria-hidden="true"></div>
     <div class="prep-bench-popover__panel">
@@ -1106,7 +1106,7 @@
   <script src="systems/gem-sockets.js"></script>
   <script src="systems/crafting.js"></script>
   <script src="systems/synergy.js"></script>
-  <script src="components/item-emoji-sparkle.js?v=1"></script>
+  <script src="components/item-emoji-sparkle.js?v=2"></script>
   <script src="systems/combat.js"></script>
   <script src="systems/combat-profile.js?v=4"></script>
   <script src="components/run-stats.js"></script>
@@ -1129,7 +1129,8 @@
   <script src="components/escape-menu.js"></script>
   <script src="components/combat-feed.js?v=2"></script>
   <script src="components/mobile-prep-ui.js"></script>
-  <script src="components/prep-bench-popover.js?v=3"></script>
+  <script src="components/prep-shop-popover.js?v=3"></script>
+  <script src="components/prep-bench-popover.js?v=4"></script>
   <script src="components/battle-aura-frame.js"></script>
   <script src="components/battle-result-theater.js"></script>
   <script src="components/battle-result.js"></script>
@@ -1161,7 +1162,6 @@
   <script src="systems/lobby-opponents.js?v=6"></script>
   <script src="systems/lobby-fighter-avatar.js?v=4"></script>
   <script src="systems/lobby-spectator.js?v=8"></script>
-  <script src="systems/lobby-roster-float.js?v=2"></script>
   <script src="systems/td-engine.js?v=11"></script>
   <script src="battle-engine.js?v=2"></script>
   <script src="battle-float-layer.js?v=18"></script>
@@ -1173,13 +1173,13 @@
   <script src="emotion-engine.js?v=21"></script>
   <script src="battle-hud.js?v=6"></script>
   <script src="components/lobby-2p-hud.js?v=1"></script>
-  <script src="systems/prep-shop.js?v=5"></script>
+  <script src="systems/prep-shop.js?v=6"></script>
   <script src="systems/campaign.js?v=1"></script>
   <script src="systems/doll-engine.js"></script>
   <script src="systems/screen-transitions.js?v=1"></script>
   <script src="components/prep-hud-collapse.js?v=1"></script>
   <script src="components/prep-hud-hero.js?v=3"></script>
-  <script src="game.js?v=98"></script>
+  <script src="game.js?v=101"></script>
   <script src="pwa-register.js"></script>
 </body>
 </html>

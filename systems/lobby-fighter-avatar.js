@@ -369,6 +369,8 @@ function syncLobbyFighterCardHp(lobby, opts = {}) {
     if (val) val.textContent = `♥ ${Math.ceil(hp.current)}`;
     card.classList.toggle("lobby-fighter-card--live", !!hp.inBattle);
     card.classList.toggle("lobby-fighter-card--out", !fighter.alive);
+    card.classList.toggle("lobby-prep-field-chip--live", !!hp.inBattle);
+    card.classList.toggle("lobby-prep-field-chip--out", !fighter.alive);
   });
 }
 

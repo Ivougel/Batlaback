@@ -92,25 +92,9 @@
 }
 
 .shop-card--enhancement .shop-item-stack--enhancement {
+  display: flex;
   align-items: center;
-  flex-direction: row;
-}
-
-.shop-card--enhancement .shop-item-side-meta {
-  align-items: center;
-}
-
-.shop-card--enhancement .item-icon-shell--enhancement {
-  width: calc(42px * var(--ui-scale));
-  height: calc(42px * var(--ui-scale));
-  display: grid;
-  place-items: center;
-  border-radius: calc(8px * var(--ui-scale));
-}
-
-.enh-shop-icon {
-  font-size: calc(22px * var(--ui-scale));
-  line-height: 1;
+  flex-direction: column;
 }
 
 .enh-shop-slot-tag {

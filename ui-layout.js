@@ -434,7 +434,7 @@
     root.style.setProperty("--shop-card-row-h", `${rowH}px`);
     root.style.setProperty("--shop-item-icon-size", `${shopIconSize}px`);
     root.style.setProperty("--shop-item-icon-font", `${shopIconFont}px`);
-    root.style.setProperty("--shop-item-icon-duo-width", `${Math.round(shopIconSize * 1.72)}px`);
+    root.style.setProperty("--shop-item-icon-duo-width", `${Math.round(shopIconSize * 1.38)}px`);
     const benchRowH = Math.max(44, Math.round(rowH * 0.78));
     root.style.setProperty("--prep-bench-row-h", `${benchRowH}px`);
     if (cfg.shopCols) {
@@ -1029,19 +1029,19 @@
           const hudWidth = Math.max(120, Math.min(zoneW, Math.round(prepRect.width)));
           const hudLeft = Math.round(prepRect.left - vpRect.left);
           const heroTopVp = sharedHeroTopVp != null ? sharedHeroTopVp : prepRect.top - vpRect.top;
+          const thoughtBand = readCssPx(
+            "--battle-thought-band-h",
+            typeof BattleHeroAnchor !== "undefined" ? BattleHeroAnchor.thoughtSlotSize() : 150,
+          );
+          const barsMin = Math.round(54 * uiScale);
 
           hud.style.left = `${hudLeft}px`;
           hud.style.width = `${hudWidth}px`;
           hud.style.maxWidth = `${hudWidth}px`;
-          hud.style.top = "0";
-          let hudHeight = hud.offsetHeight;
-          if (hudHeight < 8) {
-            hud.style.visibility = "hidden";
-            hudHeight = hud.offsetHeight;
-            hud.style.visibility = "";
-          }
-          const hudTopPx = Math.max(0, Math.round(heroTopVp - hudHeight - barsGap));
+          // Фиксированный top: чипы растут вниз, не поднимая HUD и не сдвигая эмодзи-аватар.
+          const hudTopPx = Math.max(0, Math.round(heroTopVp - thoughtBand - barsMin - barsGap));
           hud.style.top = `${hudTopPx}px`;
+          root.style.setProperty(`--battle-hud-anchor-top-${team}`, `${hudTopPx}px`);
 
           const heroRowTop = readCssPx("--battle-hero-row-top", 0);
           const heroZoneH = readCssPx("--battle-hero-zone-h-active", readCssPx("--battle-hero-zone-h", 0));
@@ -1049,6 +1049,8 @@
             const heroRowBottomVp = heroRowTop + heroZoneH - vpRect.top;
             const maxHudH = Math.max(40, Math.round(heroRowBottomVp - hudTopPx - barsGap));
             hud.style.setProperty("--battle-hud-max-h", `${maxHudH}px`);
+            const statusMax = Math.max(48, maxHudH - barsMin - Math.round(8 * uiScale));
+            hud.style.setProperty("--battle-hud-status-max-h", `${statusMax}px`);
           }
           return;
         }
@@ -1118,7 +1120,25 @@
       hud.style.top = `${hudTopPx}px`;
       hud.style.width = `${Math.round(hudWidth)}px`;
       hud.style.maxWidth = `${Math.round(hudWidth)}px`;
+      root.style.setProperty(`--battle-hud-anchor-top-${team}`, `${hudTopPx}px`);
+
+      if (useFlankZones && tabletLandscapeSide) {
+        const thoughtBand = readCssPx(
+          "--battle-thought-band-h",
+          typeof BattleHeroAnchor !== "undefined" ? BattleHeroAnchor.thoughtSlotSize() : 150,
+        );
+        const barsMin = Math.round(54 * uiScale);
+        const maxHudH = readCssPx("--battle-hud-max-h", 0);
+        if (maxHudH > barsMin + 8) {
+          const statusMax = Math.max(48, maxHudH - barsMin - Math.round(8 * uiScale));
+          hud.style.setProperty("--battle-hud-status-max-h", `${statusMax}px`);
+        }
+      }
     });
+
+    if (sharedHudTopPx != null) {
+      root.style.setProperty("--battle-hud-anchor-top", `${sharedHudTopPx}px`);
+    }
 
     if (typeof syncBattleHudSurfaceFlags === "function") syncBattleHudSurfaceFlags();
     if (useFlankZones) syncHeroEmotionSlotAnchors();
@@ -1357,6 +1377,170 @@
     }
   }
 
+  function syncPrepShopPopoverMode(prepLayout) {
+    const root = document.documentElement;
+    const surface = root.dataset.uiSurface;
+    const drawer = root.dataset.prepShopDrawer === "true";
+    const use = prepLayout === "side"
+      && !drawer
+      && (surface === "tablet-side" || surface === "desktop");
+    if (use) {
+      root.dataset.prepShopPopover = "true";
+    } else {
+      root.removeAttribute("data-prep-shop-popover");
+    }
+    if (typeof window.syncShopMount === "function") {
+      window.syncShopMount();
+    }
+    if (typeof window.syncPrepShopPopoverPosition === "function") {
+      window.syncPrepShopPopoverPosition();
+    }
+  }
+
+  function getPrepSideCommerceAnchorLeft(gap = 8) {
+    const panelW = readCssPx("--shop-panel-w", 248);
+    return Math.round(window.innerWidth - panelW - gap);
+  }
+
+  function syncPrepSideFabAnchorRight(root, gap) {
+    const panelW = readCssPx("--shop-panel-w", 248);
+    root.style.setProperty("--prep-bench-fab-right", `${Math.round(panelW + gap)}px`);
+  }
+
+  /** Узкий popover магазина: справа от FAB, слева — полоса под item-tooltip. */
+  function syncPrepShopPopoverRect(gap, panelW, uiScale) {
+    const island = document.getElementById("prep-field-island");
+    const canvas = document.getElementById("game-canvas");
+    const heroLayer = document.getElementById("prep-character-layer");
+    const fab = document.getElementById("btn-prep-bench-fab");
+    const islandRect = island?.getBoundingClientRect();
+    const canvasRect = canvas?.getBoundingClientRect();
+    const heroRect = heroLayer?.getBoundingClientRect();
+    const fabRect = fab?.getBoundingClientRect();
+
+    const fabSize = readCssPx("--prep-bench-fab-size", 75 * uiScale);
+    const fabRight = readCssPx("--prep-bench-fab-right", panelW + gap);
+    const shopRight = fabRect && fabRect.width > 8
+      ? Math.round(fabRect.left - gap)
+      : Math.round(window.innerWidth - fabRight - fabSize - gap);
+
+    const tooltipStripW = Math.round(248 * uiScale);
+    const heroBound = heroRect && heroRect.width > 24
+      ? Math.round(heroRect.right + gap)
+      : gap;
+    const shopLeftMin = heroBound + tooltipStripW + gap;
+
+    const shopTargetW = Math.min(
+      Math.round(panelW + 4 * uiScale),
+      Math.round(236 * uiScale),
+    );
+    const shopMinW = Math.round(148 * uiScale);
+
+    const availableW = Math.max(0, shopRight - shopLeftMin);
+    let shopW = Math.min(shopTargetW, availableW);
+    shopW = Math.max(shopMinW, shopW);
+    let shopLeft = shopRight - shopW;
+    if (shopLeft < shopLeftMin) {
+      shopLeft = shopLeftMin;
+      shopW = Math.max(shopMinW, shopRight - shopLeft);
+    }
+
+    return {
+      corridorLeft: shopLeft,
+      corridorW: shopW,
+      topSourceRect: islandRect ?? canvasRect,
+    };
+  }
+
+  /** Popover скамейки — отдельная геометрия, якорь по FAB-колонке справа. */
+  function syncPrepBenchPopoverRect(gap, panelW, uiScale) {
+    const fab = document.getElementById("btn-prep-bench-fab");
+    const fabRect = fab?.getBoundingClientRect();
+    const benchTargetW = Math.min(
+      Math.round(320 * uiScale),
+      Math.round(panelW * 1.08 + 8 * uiScale),
+    );
+    const benchMinW = Math.round(168 * uiScale);
+
+    let benchRight = Math.round(window.innerWidth - gap);
+    if (fabRect && fabRect.width > 8) {
+      benchRight = Math.round(fabRect.right);
+    }
+
+    let benchLeft = benchRight - benchTargetW;
+    benchLeft = Math.max(gap, benchLeft);
+    const benchW = Math.max(benchMinW, benchRight - benchLeft);
+
+    return { corridorLeft: benchLeft, corridorW: benchW };
+  }
+
+  function syncPrepCommerceCorridorRect(gap, panelW, uiScale) {
+    const island = document.getElementById("prep-field-island");
+    const canvas = document.getElementById("game-canvas");
+    const scaleWrap = document.querySelector("#prep-field-island .canvas-scale-wrap");
+    const heroLayer = document.getElementById("prep-character-layer");
+    const islandRect = island?.getBoundingClientRect();
+    const canvasRect = canvas?.getBoundingClientRect();
+    const scaleRect = scaleWrap?.getBoundingClientRect();
+    const heroRect = heroLayer?.getBoundingClientRect();
+
+    const fieldRect = (scaleRect && scaleRect.width >= 40)
+      ? scaleRect
+      : (canvasRect && canvasRect.width >= 40)
+        ? canvasRect
+        : islandRect;
+
+    const popoverTargetW = Math.min(392, Math.round(panelW * 1.12 + 12 * uiScale));
+    const fabSize = readCssPx("--prep-bench-fab-size", 75 * uiScale);
+    const fabRight = readCssPx("--prep-bench-fab-right", panelW + gap);
+    const corridorRight = Math.round(window.innerWidth - fabRight - fabSize - gap);
+    const corridorInnerRight = corridorRight - gap;
+
+    const gridLeft = Math.round(fieldRect?.left ?? corridorInnerRight);
+    const fieldRight = gridLeft - gap;
+    const panelRight = Math.min(fieldRight, corridorInnerRight);
+
+    const heroBound = heroRect && heroRect.width > 24
+      ? Math.round(heroRect.right + gap)
+      : gap;
+    const minPanelLeft = Math.max(gap, heroBound);
+    const availableW = Math.max(0, panelRight - minPanelLeft);
+    let corridorW = Math.min(popoverTargetW, availableW);
+    corridorW = Math.max(120, corridorW);
+    let corridorLeft = panelRight - corridorW;
+    if (corridorLeft < minPanelLeft) {
+      corridorLeft = minPanelLeft;
+      corridorW = Math.max(120, panelRight - corridorLeft);
+    }
+
+    return { corridorLeft, corridorW, topSourceRect: islandRect ?? canvasRect };
+  }
+
+  function syncPrepShopPopoverPosition() {
+    const root = document.documentElement;
+    if (root.dataset.prepShopPopover !== "true") return;
+    if (document.getElementById("app")?.dataset.phase !== "prep") return;
+
+    const uiScale = readCssPx("--ui-scale", 1);
+    const gap = Math.round(8 * uiScale);
+    const panelW = readCssPx("--shop-panel-w", 300);
+
+    const chrome = getBottomChrome();
+    const chromeTop = chrome && getComputedStyle(chrome).display !== "none"
+      ? chrome.getBoundingClientRect().top
+      : (window.visualViewport?.height ?? window.innerHeight);
+
+    const { corridorLeft, corridorW, topSourceRect } = syncPrepShopPopoverRect(gap, panelW, uiScale);
+    const top = Math.round(Math.max(gap, topSourceRect?.top ?? gap));
+    const height = Math.max(180, Math.round(chromeTop - gap - top));
+
+    root.style.setProperty("--prep-shop-popover-x", `${corridorLeft}px`);
+    root.style.setProperty("--prep-shop-popover-y", `${top}px`);
+    root.style.setProperty("--prep-shop-popover-w", `${corridorW}px`);
+    root.style.setProperty("--prep-shop-popover-h", `${height}px`);
+    syncOpenPrepTooltipDock();
+  }
+
   function syncPrepSellFabPosition() {
     const root = document.documentElement;
     if (typeof window.usesPrepSellFab !== "function" || !window.usesPrepSellFab()) return;
@@ -1376,7 +1560,9 @@
     const fabSize = Math.round(readCssPx("--prep-sell-fab-size", baseFabPx * uiScale));
     root.style.setProperty("--prep-sell-fab-size", `${fabSize}px`);
 
-    if (shopRect && shopRect.width > 8) {
+    if (root.dataset.prepShopPopover === "true") {
+      syncPrepSideFabAnchorRight(root, gap);
+    } else if (shopRect && shopRect.width > 8) {
       root.style.setProperty(
         "--prep-sell-fab-right",
         `${Math.round(window.innerWidth - shopRect.left + gap)}px`,
@@ -1417,7 +1603,9 @@
     const fabSize = Math.round(readCssPx("--prep-bench-fab-size", baseFabPx * uiScale));
     const gap = Math.round(6 * uiScale);
 
-    if (shopRect && shopRect.width > 8) {
+    if (root.dataset.prepShopPopover === "true") {
+      syncPrepSideFabAnchorRight(root, gap);
+    } else if (shopRect && shopRect.width > 8) {
       root.style.setProperty(
         "--prep-bench-fab-right",
         `${Math.round(window.innerWidth - shopRect.left + gap)}px`,
@@ -1440,6 +1628,18 @@
     const fabBottom = readCssPx("--prep-bench-fab-bottom", 80);
     root.style.setProperty("--prep-bench-popover-bottom", `${Math.round(fabBottom + fabSize + gap)}px`);
     root.style.setProperty("--prep-bench-fab-size", `${fabSize}px`);
+    const panelW = readCssPx("--shop-panel-w", 300);
+    const gap8 = Math.round(8 * uiScale);
+    if (root.dataset.prepShopPopover === "true") {
+      syncPrepShopPopoverPosition();
+    }
+    if (root.dataset.prepBenchPopover === "true") {
+      const { corridorLeft, corridorW } = root.dataset.prepShopPopover === "true"
+        ? syncPrepBenchPopoverRect(gap8, panelW, uiScale)
+        : syncPrepCommerceCorridorRect(gap8, panelW, uiScale);
+      root.style.setProperty("--prep-bench-popover-x", `${corridorLeft}px`);
+      root.style.setProperty("--prep-bench-popover-w", `${corridorW}px`);
+    }
     syncPrepSellFabPosition();
   }
 
@@ -1773,7 +1973,14 @@
       && typeof BattleHeroAnchor !== "undefined"
       && BattleHeroAnchor.usesHeadBadgeAnchors?.();
     root.dataset.thoughtHeadBadge = headBadge ? "true" : "false";
+    const aboveHero = typeof BattleHeroAnchor !== "undefined"
+      && BattleHeroAnchor.usesHeroAboveThoughtAnchors?.();
+    root.dataset.thoughtAboveHero = aboveHero ? "true" : "false";
     root.dataset.thoughtSlotBelowHero = "false";
+
+    if (typeof BattleHeroAnchor !== "undefined" && BattleHeroAnchor.invalidateMeasureCache) {
+      BattleHeroAnchor.invalidateMeasureCache();
+    }
 
     const vmin = Math.min(
       window.visualViewport?.width ?? window.innerWidth,
@@ -1782,6 +1989,7 @@
     const size = typeof BattleHeroAnchor !== "undefined"
       ? BattleHeroAnchor.thoughtSlotSize(vmin)
       : Math.round(Math.min(112, Math.max(68, vmin * 0.12)));
+    root.style.setProperty("--battle-thought-band-h", `${size}px`);
 
     if (!syncHeroEmotionSlotAnchors._layout) {
       syncHeroEmotionSlotAnchors._layout = { player: "", enemy: "" };
@@ -2988,6 +3196,7 @@
     clamped = applyIntroUiScaleFloor(clamped, layoutProfile);
     applyPrepProfileVars(layoutProfile, clamped);
     syncPrepBenchPopoverMode(prepLayout);
+    syncPrepShopPopoverMode(prepLayout);
 
     const typeScale = computeTypeScale(clamped, layoutProfile);
     document.documentElement.style.setProperty("--type-scale", String(typeScale));
@@ -3063,6 +3272,7 @@
       scheduleCanvasFit();
       syncMobileShopFabPosition();
       syncPrepBenchFabPosition();
+      if (typeof window.syncPrepShopPopoverPosition === "function") window.syncPrepShopPopoverPosition();
       if (typeof window.syncPrepSellFabPosition === "function") window.syncPrepSellFabPosition();
       if (typeof window.syncPrepSellFabVisibility === "function") window.syncPrepSellFabVisibility();
       syncPrepHeroSlotHeight();
@@ -3193,6 +3403,7 @@
   window.flushDeferredLayoutPasses = flushDeferredLayoutPasses;
   window.syncMobileShopFabPosition = syncMobileShopFabPosition;
   window.syncPrepBenchFabPosition = syncPrepBenchFabPosition;
+  window.syncPrepShopPopoverPosition = syncPrepShopPopoverPosition;
   window.syncPrepSellFabPosition = syncPrepSellFabPosition;
   window.syncTabletPortraitShopRows = syncTabletPortraitShopRows;
   window.syncMobileOverlayAnchors = syncMobileOverlayAnchors;

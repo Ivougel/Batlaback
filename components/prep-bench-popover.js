@@ -145,6 +145,8 @@
       closePrepBenchPopover();
     });
     document.getElementById("prep-bench-popover-backdrop")?.addEventListener("click", (e) => {
+      if (typeof window.shouldDismissPrepCommercePopover === "function"
+        && !window.shouldDismissPrepCommercePopover(e.target)) return;
       e.preventDefault();
       e.stopPropagation();
       closePrepBenchPopover();

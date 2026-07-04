@@ -91,8 +91,33 @@
     return typeof prepViewSide !== "undefined" ? prepViewSide : "player";
   }
 
+  function isLightItemSparkleFx() {
+    return typeof BattleFxTier !== "undefined" && BattleFxTier.isLightBattleFx();
+  }
+
+  function drawCanvasItemEmojiSparkleLight(ctx, cx, cy, size) {
+    const radius = Math.max(10, size * 0.46);
+    ctx.save();
+    ctx.globalAlpha = 0.42;
+    ctx.strokeStyle = "rgba(255, 230, 120, 0.9)";
+    ctx.lineWidth = Math.max(1.5, radius * 0.07);
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius * 0.4, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 0.22;
+    ctx.fillStyle = "rgba(255, 248, 190, 0.55)";
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius * 0.28, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
   function drawCanvasItemEmojiSparkle(ctx, cx, cy, size, time, seed = 0) {
     if (!ctx) return;
+    if (isLightItemSparkleFx()) {
+      drawCanvasItemEmojiSparkleLight(ctx, cx, cy, size);
+      return;
+    }
     const radius = Math.max(12, size * 0.52);
     const sparkleChars = ["✦", "✨", "★", "·"];
 

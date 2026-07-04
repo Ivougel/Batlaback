@@ -1,0 +1,122 @@
+/* ─── Лобби prep: кружки участников поверх поля ─── */
+
+html[data-game-mode="lobby"] #app[data-phase="prep"] .prep-field-island {
+  position: relative;
+}
+
+.lobby-prep-field-roster {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  pointer-events: none;
+  padding: calc(3px * var(--ui-scale)) calc(4px * var(--ui-scale));
+}
+
+.lobby-prep-field-roster.hidden {
+  display: none !important;
+}
+
+.lobby-roster-strip--prep-field,
+.lobby-prep-field-roster-strip {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: calc(4px * var(--ui-scale));
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  pointer-events: auto;
+}
+
+.lobby-roster-strip--prep-field::-webkit-scrollbar,
+.lobby-prep-field-roster-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.lobby-prep-field-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: var(--lobby-roster-avatar-size);
+  height: var(--lobby-roster-avatar-size);
+  padding: 0;
+  border: 2px solid rgba(255, 255, 255, 0.16);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.14), rgba(8, 10, 14, 0.82));
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.lobby-prep-field-chip:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.18), rgba(12, 14, 18, 0.88));
+}
+
+.lobby-prep-field-chip:focus-visible {
+  outline: 2px solid rgba(245, 200, 66, 0.75);
+  outline-offset: 2px;
+}
+
+.lobby-prep-field-chip--yours {
+  border-color: rgba(88, 166, 255, 0.55);
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(88, 166, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.lobby-prep-field-chip--next {
+  outline: 1px dashed rgba(255, 196, 77, 0.5);
+  outline-offset: 2px;
+}
+
+.lobby-prep-field-chip--out,
+.lobby-prep-field-chip:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+
+.lobby-prep-field-chip-avatar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+.lobby-prep-field-chip .lobby-fighter-emoji {
+  font-size: var(--lobby-roster-emoji-size);
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .lobby-prep-field-roster {
+  padding: calc(2px * var(--ui-scale)) calc(3px * var(--ui-scale));
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .lobby-roster-strip--prep-field,
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .lobby-prep-field-roster-strip {
+  gap: calc(3px * var(--ui-scale));
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .lobby-prep-field-chip {
+  width: calc(var(--lobby-roster-avatar-size) * 0.92);
+  height: calc(var(--lobby-roster-avatar-size) * 0.92);
+}

@@ -17,12 +17,12 @@ html[data-prep-layout="stacked"] {
   --shop-pin-offset-y: calc(-16px * var(--ui-scale, 1));
 }
 
-#app[data-phase="prep"] #shop-panel .shop-card:not(.empty) {
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-card:not(.empty) {
   position: relative;
   isolation: isolate;
 }
 
-#app[data-phase="prep"] #shop-panel .shop-item-stack .shop-pin {
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-stack .shop-pin {
   position: absolute;
   top: var(--shop-pin-offset-y, calc(-12px * var(--ui-scale, 1)));
   left: var(--shop-pin-offset-x, calc(-10px * var(--ui-scale, 1)));

@@ -496,7 +496,7 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] .shop-panel .shop-card.e
 html[data-prep-layout="mobile"] #app[data-phase="prep"] {
   --shop-item-icon-size: 40px;
   --shop-item-icon-font: 32px;
-  --shop-item-icon-duo-width: calc(var(--shop-item-icon-size) * 1.72);
+  --shop-item-icon-duo-width: calc(var(--shop-item-icon-size) * 1.38);
 }
 
 html[data-prep-layout="mobile"] #app[data-phase="prep"] #shop-panel .shop-item-visual {

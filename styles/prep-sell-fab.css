@@ -20,7 +20,7 @@ html[data-prep-sell-fab] #btn-prep-sell-fab:not(.hidden):not(.hidden-by-campaign
   align-items: center;
   justify-content: center;
   position: fixed;
-  z-index: 9051;
+  z-index: 9500;
   padding: 0;
   border-radius: 50%;
   font-size: calc(var(--prep-sell-fab-size, 56px) * 0.52);
@@ -61,21 +61,36 @@ html[data-prep-sell-fab] #btn-prep-sell-fab.is-drag-target {
   transform: scale(1.06);
 }
 
-/* Tablet-side / desktop: магазин — popover справа, скрыт пока не открыт */
-html[data-prep-sell-fab][data-ui-surface="tablet-side"] #app[data-phase="prep"] .game-layout,
-html[data-prep-sell-fab][data-ui-surface="desktop"] #app[data-phase="prep"] .game-layout {
+html[data-visual-theme="meadow"][data-prep-sell-fab][data-prep-shop-popover="true"] #btn-prep-sell-fab:not(.hidden):not(.hidden-by-campaign) {
+  background: var(--meadow-chrome, rgba(255, 249, 235, 0.96));
+  border: 2px solid var(--meadow-border, rgba(92, 184, 92, 0.55));
+  color: var(--meadow-ink, #2e6432);
+  box-shadow: 0 4px 16px var(--meadow-shadow, rgba(30, 60, 28, 0.22));
+}
+
+html[data-visual-theme="diablo"][data-prep-sell-fab][data-prep-shop-popover="true"] #btn-prep-sell-fab:not(.hidden):not(.hidden-by-campaign) {
+  background: rgba(22, 16, 12, 0.94);
+  border: 2px solid rgba(139, 105, 20, 0.55);
+  color: var(--meadow-gold-bright, #e8c878);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* Tablet-side / desktop: магазин — popover (не drawer), если html[data-prep-shop-popover="true"] */
+
+html[data-prep-sell-fab]:not([data-prep-shop-popover="true"])[data-ui-surface="tablet-side"] #app[data-phase="prep"] .game-layout,
+html[data-prep-sell-fab]:not([data-prep-shop-popover="true"])[data-ui-surface="desktop"] #app[data-phase="prep"] .game-layout {
   grid-template-columns: minmax(0, 1fr) !important;
 }
 
-html[data-prep-sell-fab]:not([data-prep-shop-open])[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel,
-html[data-prep-sell-fab]:not([data-prep-shop-open])[data-ui-surface="desktop"] #app[data-phase="prep"] #shop-panel {
+html[data-prep-sell-fab]:not([data-prep-shop-popover="true"]):not([data-prep-shop-open])[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel,
+html[data-prep-sell-fab]:not([data-prep-shop-popover="true"]):not([data-prep-shop-open])[data-ui-surface="desktop"] #app[data-phase="prep"] #shop-panel {
   transform: translateX(105%) !important;
   visibility: hidden !important;
   pointer-events: none !important;
 }
 
-html[data-prep-sell-fab][data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel,
-html[data-prep-sell-fab][data-ui-surface="desktop"] #app[data-phase="prep"] #shop-panel {
+html[data-prep-sell-fab]:not([data-prep-shop-popover="true"])[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel,
+html[data-prep-sell-fab]:not([data-prep-shop-popover="true"])[data-ui-surface="desktop"] #app[data-phase="prep"] #shop-panel {
   position: fixed;
   top: calc(var(--prep-scene-top, 14px) + env(safe-area-inset-top, 0px));
   right: 0;
@@ -95,15 +110,15 @@ html[data-prep-sell-fab][data-ui-surface="desktop"] #app[data-phase="prep"] #sho
   transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1), visibility 0.28s;
 }
 
-html[data-prep-sell-fab][data-prep-shop-open][data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel,
-html[data-prep-sell-fab][data-prep-shop-open][data-ui-surface="desktop"] #app[data-phase="prep"] #shop-panel {
+html[data-prep-sell-fab]:not([data-prep-shop-popover="true"])[data-prep-shop-open][data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel,
+html[data-prep-sell-fab]:not([data-prep-shop-popover="true"])[data-prep-shop-open][data-ui-surface="desktop"] #app[data-phase="prep"] #shop-panel {
   transform: translateX(0) !important;
   visibility: visible !important;
   pointer-events: auto !important;
 }
 
-html[data-prep-sell-fab][data-ui-surface="tablet-side"] .prep-shop-drawer-close,
-html[data-prep-sell-fab][data-ui-surface="desktop"] .prep-shop-drawer-close {
+html[data-prep-sell-fab]:not([data-prep-shop-popover="true"])[data-ui-surface="tablet-side"] .prep-shop-drawer-close,
+html[data-prep-sell-fab]:not([data-prep-shop-popover="true"])[data-ui-surface="desktop"] .prep-shop-drawer-close {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -120,13 +135,13 @@ html[data-prep-sell-fab] .prep-shop-backdrop {
   transition: opacity 0.22s ease;
 }
 
-html[data-prep-sell-fab][data-prep-shop-open] .prep-shop-backdrop:not(.hidden) {
+html[data-prep-sell-fab]:not([data-prep-shop-popover="true"])[data-prep-shop-open] .prep-shop-backdrop:not(.hidden) {
   opacity: 1;
   pointer-events: auto;
 }
 
-html[data-prep-sell-fab][data-prep-shop-open][data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-field-island,
-html[data-prep-sell-fab][data-prep-shop-open][data-ui-surface="desktop"] #app[data-phase="prep"] .prep-field-island {
+html[data-prep-sell-fab]:not([data-prep-shop-popover="true"])[data-prep-shop-open][data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-field-island,
+html[data-prep-sell-fab]:not([data-prep-shop-popover="true"])[data-prep-shop-open][data-ui-surface="desktop"] #app[data-phase="prep"] .prep-field-island {
   z-index: 6;
 }
 

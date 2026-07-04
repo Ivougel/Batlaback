@@ -10,16 +10,19 @@
       && (root.dataset.uiSurface === "tablet-side" || root.dataset.uiSurface === "desktop");
   }
 
+  function usesPrepShopPopover() {
+    return typeof window.usesPrepShopPopover === "function" && window.usesPrepShopPopover();
+  }
+
   function usesPrepShopDrawer() {
     const root = document.documentElement;
     return root.dataset.prepLayout === "mobile"
       || root.dataset.prepShopDrawer === "true"
-      || root.dataset.uiSurface === "tablet-stacked"
-      || usesPrepSellFabSideLayout();
+      || root.dataset.uiSurface === "tablet-stacked";
   }
 
   function usesPrepSellFab() {
-    return usesPrepShopDrawer();
+    return usesPrepShopDrawer() || usesPrepSellFabSideLayout();
   }
 
   function isMobilePrepLayout() {
@@ -31,8 +34,14 @@
   }
 
   function setShopOpen(open) {
-    if (!usesPrepShopDrawer()) return;
     const next = !!open;
+    if (usesPrepShopPopover()) {
+      if (typeof window.setPrepShopPopoverOpen === "function") {
+        window.setPrepShopPopoverOpen(next && isPrepPhase());
+      }
+      return;
+    }
+    if (!usesPrepShopDrawer()) return;
     document.documentElement.toggleAttribute(OPEN_ATTR, next);
     if (!next) document.documentElement.removeAttribute("data-prep-drag-targets-board");
     const toggle = document.getElementById("btn-mobile-shop");
@@ -65,19 +74,28 @@
   }
 
   function openMobilePrepShop() {
-    if (!usesPrepShopDrawer() || !isPrepPhase()) return;
-    setShopOpen(true);
+    if (!isPrepPhase()) return;
+    if (usesPrepShopPopover()) {
+      if (typeof window.openPrepShopPopover === "function") window.openPrepShopPopover();
+      return;
+    }
+    if (usesPrepShopDrawer()) setShopOpen(true);
   }
 
   function toggleMobilePrepShop() {
-    if (!usesPrepShopDrawer() || !isPrepPhase()) return;
+    if (!isPrepPhase()) return;
+    if (usesPrepShopPopover()) {
+      if (typeof window.togglePrepShopPopover === "function") window.togglePrepShopPopover();
+      return;
+    }
+    if (!usesPrepShopDrawer()) return;
     setShopOpen(!document.documentElement.hasAttribute(OPEN_ATTR));
   }
 
   function syncPrepShopFabVisibility() {
     const shopBtn = document.getElementById("btn-mobile-shop");
-    const show = usesPrepShopDrawer() && isPrepPhase();
     if (!shopBtn) return;
+    const show = usesPrepShopDrawer() && isPrepPhase() && !usesPrepSellFab();
     shopBtn.classList.toggle("hidden", !show);
     shopBtn.hidden = !show;
     shopBtn.setAttribute("aria-hidden", show ? "false" : "true");
@@ -97,6 +115,9 @@
     syncPrepShopFabVisibility();
     if (show && typeof window.syncPrepSellFabPosition === "function") {
       requestAnimationFrame(() => window.syncPrepSellFabPosition());
+    }
+    if (show && typeof window.syncPrepShopPopoverPosition === "function") {
+      requestAnimationFrame(() => window.syncPrepShopPopoverPosition());
     }
     if (show && isPrepPhase() && !document.documentElement.hasAttribute(OPEN_ATTR)) {
       if (typeof scheduleCanvasFit === "function") scheduleCanvasFit();
@@ -133,17 +154,33 @@
   }
 
   function bind() {
-    document.getElementById("btn-mobile-shop")?.addEventListener("click", toggleMobilePrepShop);
-    document.getElementById("btn-prep-shop-close")?.addEventListener("click", closeMobilePrepShop);
+    document.getElementById("btn-mobile-shop")?.addEventListener("click", (e) => {
+      if (!isPrepPhase()) return;
+      e.stopPropagation();
+      toggleMobilePrepShop();
+    });
+    document.getElementById("btn-prep-shop-close")?.addEventListener("click", (e) => {
+      if (usesPrepShopPopover()) {
+        if (typeof window.closePrepShopPopover === "function") window.closePrepShopPopover();
+        return;
+      }
+      closeMobilePrepShop();
+    });
     document.getElementById("btn-prep-sell-fab")?.addEventListener("click", handlePrepSellFabClick);
     document.getElementById("prep-shop-backdrop")?.addEventListener("click", (e) => {
+      if (usesPrepShopPopover()) return;
       if (!usesPrepSellFabSideLayout()) return;
       e.preventDefault();
       closeMobilePrepShop();
     });
 
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closeMobilePrepShop();
+      if (e.key !== "Escape") return;
+      if (usesPrepShopPopover() && typeof window.isPrepShopPopoverOpen === "function" && window.isPrepShopPopoverOpen()) {
+        closeMobilePrepShop();
+      } else if (usesPrepShopDrawer()) {
+        closeMobilePrepShop();
+      }
     });
 
     window.addEventListener("resize", syncRotatePrompt, { passive: true });
@@ -154,17 +191,17 @@
       new MutationObserver(() => {
         onPrepPhaseChange(app.dataset.phase);
         syncRotatePrompt();
-        if (!usesPrepShopDrawer()) closeMobilePrepShop();
+        if (!usesPrepShopDrawer() && !usesPrepShopPopover()) closeMobilePrepShop();
       }).observe(app, { attributes: true, attributeFilter: ["data-phase"] });
     }
 
     new MutationObserver(() => {
       syncRotatePrompt();
       syncPrepSellFabVisibility();
-      if (!usesPrepShopDrawer()) closeMobilePrepShop();
+      if (!usesPrepShopDrawer() && !usesPrepShopPopover()) closeMobilePrepShop();
     }).observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ["data-prep-layout", "data-orientation", "data-prep-shop-drawer", "data-ui-surface", "data-game-phase"],
+      attributeFilter: ["data-prep-layout", "data-orientation", "data-prep-shop-drawer", "data-prep-shop-popover", "data-ui-surface", "data-game-phase"],
     });
 
     syncRotatePrompt();
