@@ -3,9 +3,11 @@
  * Работает в prep, battle и replay; в solo prep — на персонажах под полем.
  */
 
-const LOBBY_THOUGHT_TICK_MS = 900;
-const LOBBY_AMBIENT_INTERVAL_MS = 5500;
-const SOLO_PREP_THOUGHT_TICK_MS = 1100;
+const LOBBY_THOUGHT_TICK_MS = 2400;
+const LOBBY_AMBIENT_INTERVAL_MS = 16000;
+const SOLO_PREP_THOUGHT_TICK_MS = 3200;
+const MIN_FIGHTER_EMOJI_HOLD_MS = 7000;
+const MIN_FIGHTER_EMOJI_HOLD_URGENT_MS = 2800;
 
 const CLASS_PERSONALITY_THOUGHTS = {
   warrior: ["😤", "💪", "🗿", "😠"],
@@ -18,12 +20,15 @@ const PREP_AMBIENT_THOUGHTS = ["🛍️", "📦", "💭", "😌", "🤔", "😏"
 
 const lobbyFighterEmotionById = new Map();
 const lobbyFighterMainThoughtById = new Map();
+const lobbyFighterLastEmojiChangeAt = new Map();
 const lobbyMatchEmotionSnaps = new Map();
 const soloPrepThoughtBySide = { player: null, enemy: null };
 
 let lobbyThoughtLastTickAt = 0;
 let lobbyAmbientLastAt = 0;
 let soloPrepThoughtLastAt = 0;
+let lobbyPrepTimerThoughtSec = null;
+let lobbyPrepOpponentThoughtId = null;
 
 function getLobbyFighterClassEmoji(classId) {
   const cls = typeof getClassById === "function"
@@ -56,6 +61,16 @@ function splitPrimaryEmoji(text) {
     if (first) return first;
   }
   return [...raw][0] || raw;
+}
+
+function canChangeFighterEmoji(fighterId, priority = 0) {
+  const last = lobbyFighterLastEmojiChangeAt.get(fighterId) || 0;
+  const minGap = priority >= 4 ? 1800 : (priority >= 3 ? MIN_FIGHTER_EMOJI_HOLD_URGENT_MS : MIN_FIGHTER_EMOJI_HOLD_MS);
+  return Date.now() - last >= minGap;
+}
+
+function markFighterEmojiChanged(fighterId) {
+  lobbyFighterLastEmojiChangeAt.set(fighterId, Date.now());
 }
 
 function pickFromPool(pool) {
@@ -104,12 +119,15 @@ function clearLobbyFighterEmotions() {
 
 function resetLobbyFighterThoughts() {
   lobbyFighterMainThoughtById.clear();
+  lobbyFighterLastEmojiChangeAt.clear();
   clearLobbyFighterEmotions();
   soloPrepThoughtBySide.player = null;
   soloPrepThoughtBySide.enemy = null;
   lobbyThoughtLastTickAt = 0;
   lobbyAmbientLastAt = 0;
   soloPrepThoughtLastAt = 0;
+  lobbyPrepTimerThoughtSec = null;
+  lobbyPrepOpponentThoughtId = null;
 }
 
 function ensureLobbyFighterMainThought(fighterId, fighter) {
@@ -131,7 +149,12 @@ function seedLobbyFighterThoughts(lobby) {
 }
 
 function setLobbyFighterMainThought(fighterId, emoji, animation = "nod") {
-  lobbyFighterMainThoughtById.set(fighterId, makeThoughtVisual(emoji, animation, 0));
+  const nextEmoji = splitPrimaryEmoji(emoji);
+  const prev = lobbyFighterMainThoughtById.get(fighterId);
+  if (prev?.emoji === nextEmoji) return;
+  if (!canChangeFighterEmoji(fighterId, 0)) return;
+  lobbyFighterMainThoughtById.set(fighterId, makeThoughtVisual(nextEmoji, animation, 0));
+  markFighterEmojiChanged(fighterId);
 }
 
 function setLobbyFighterEmotion(fighterId, { emoji, animation, priority = 1 }) {
@@ -140,6 +163,7 @@ function setLobbyFighterEmotion(fighterId, { emoji, animation, priority = 1 }) {
   const nextEmoji = splitPrimaryEmoji(emoji);
   if (prev && pri < (prev.priority ?? 0)) return;
   if (prev && pri === (prev.priority ?? 0) && prev.emoji === nextEmoji) return;
+  if (!canChangeFighterEmoji(fighterId, pri)) return;
 
   lobbyFighterEmotionById.set(fighterId, {
     emoji: nextEmoji,
@@ -149,6 +173,7 @@ function setLobbyFighterEmotion(fighterId, { emoji, animation, priority = 1 }) {
     priority: pri,
     at: Date.now(),
   });
+  markFighterEmojiChanged(fighterId);
 }
 
 function decayLobbyFighterEmotions() {
@@ -156,9 +181,9 @@ function decayLobbyFighterEmotions() {
   lobbyFighterEmotionById.forEach((em, fighterId) => {
     const age = now - (em.at || 0);
     const pri = em.priority ?? 0;
-    if (pri >= 4 && age > 2800) lobbyFighterEmotionById.delete(fighterId);
-    else if (pri >= 2 && age > 2200) lobbyFighterEmotionById.delete(fighterId);
-    else if (age > 1600) lobbyFighterEmotionById.delete(fighterId);
+    if (pri >= 4 && age > 7200) lobbyFighterEmotionById.delete(fighterId);
+    else if (pri >= 2 && age > 5800) lobbyFighterEmotionById.delete(fighterId);
+    else if (age > 4500) lobbyFighterEmotionById.delete(fighterId);
   });
 }
 
@@ -291,19 +316,28 @@ function tickLobbyPrepContextThoughts(lobby, opts = {}) {
     }
 
     if (timerActive && timerRemaining != null && timerRemaining <= 12) {
-      const emoji = timerRemaining <= 3 ? "😱" : (timerRemaining <= 8 ? "⏰" : "😤");
-      setLobbyFighterEmotion(fighter.id, {
-        emoji,
-        animation: timerRemaining <= 5 ? "shake" : "nod",
-        priority: fighter.isHuman ? 3 : 2,
-      });
-      dirty = true;
+      if (fighter.isHuman) {
+        const timerSec = Math.floor(timerRemaining);
+        if (lobbyPrepTimerThoughtSec !== timerSec) {
+          lobbyPrepTimerThoughtSec = timerSec;
+          const emoji = timerSec <= 3 ? "😱" : (timerSec <= 8 ? "⏰" : "😤");
+          setLobbyFighterEmotion(fighter.id, {
+            emoji,
+            animation: timerSec <= 5 ? "wobble" : "nod",
+            priority: 3,
+          });
+          dirty = true;
+        }
+      }
       return;
     }
 
     if (fighter.id === lobby.currentOpponentId && !hp.inBattle) {
-      setLobbyFighterEmotion(fighter.id, { emoji: "😏", animation: "nod", priority: 1 });
-      dirty = true;
+      if (lobbyPrepOpponentThoughtId !== fighter.id) {
+        lobbyPrepOpponentThoughtId = fighter.id;
+        setLobbyFighterEmotion(fighter.id, { emoji: "😏", animation: "nod", priority: 1 });
+        dirty = true;
+      }
     }
   });
 
@@ -314,7 +348,7 @@ function tickLobbyPrepContextThoughts(lobby, opts = {}) {
     if (alive.length) {
       const fighter = alive[Math.floor(Math.random() * alive.length)];
       const emoji = pickPrepAmbientThought(fighter);
-      setLobbyFighterEmotion(fighter.id, { emoji, animation: "bounce", priority: 1 });
+      setLobbyFighterEmotion(fighter.id, { emoji, animation: "nod", priority: 1 });
       setLobbyFighterMainThought(fighter.id, emoji, "nod");
       dirty = true;
     }
@@ -372,8 +406,8 @@ function tickSoloPrepThoughts() {
   ["player", "enemy"].forEach((side) => {
     const next = buildSoloPrepThought(side);
     const prev = soloPrepThoughtBySide[side];
-    if (!prev || prev.emoji !== next.emoji || Math.random() > 0.55) {
-      if (Math.random() > 0.35) {
+    if (!prev || (prev.emoji !== next.emoji && Math.random() > 0.82)) {
+      if (Math.random() > 0.55) {
         const classId = side === "player"
           ? (typeof playerClass !== "undefined" ? playerClass : "warrior")
           : (typeof enemyClass !== "undefined" ? enemyClass : "rogue");
@@ -492,8 +526,6 @@ function syncLobbyFighterAvatarEl(el, visual) {
   if (!emojiEl) return;
 
   const nextEmoji = visual.emoji || "🤔";
-  if (emojiEl.textContent !== nextEmoji) emojiEl.textContent = nextEmoji;
-
   const modeClass = [
     "lobby-fighter-emoji--prep-orbit",
     "lobby-fighter-emoji--live",
@@ -504,12 +536,29 @@ function syncLobbyFighterAvatarEl(el, visual) {
     "lobby-fighter-emoji--wobble",
     "lobby-fighter-emoji--mutation",
   ];
-  emojiEl.classList.remove(...modeClass);
-  if (visual.mode === "prep-orbit") {
-    emojiEl.classList.add("lobby-fighter-emoji--prep-orbit");
-  } else if (visual.mode !== "battle-idle") {
-    if (visual.animClass) emojiEl.classList.add(visual.animClass);
-    else if (visual.mode) emojiEl.classList.add(`lobby-fighter-emoji--${visual.mode}`);
+
+  let nextAnimKey = "none";
+  if (visual.mode === "prep-orbit") nextAnimKey = "prep-orbit";
+  else if (visual.mode !== "battle-idle") {
+    nextAnimKey = visual.animClass || (visual.mode ? `lobby-fighter-emoji--${visual.mode}` : "none");
+  }
+
+  if (emojiEl.dataset.thoughtEmoji !== nextEmoji) {
+    emojiEl.dataset.thoughtEmoji = nextEmoji;
+    emojiEl.classList.add("lobby-fighter-emoji--swap");
+    emojiEl.textContent = nextEmoji;
+    window.setTimeout(() => emojiEl.classList.remove("lobby-fighter-emoji--swap"), 480);
+  }
+
+  if (emojiEl.dataset.thoughtAnim !== nextAnimKey) {
+    emojiEl.dataset.thoughtAnim = nextAnimKey;
+    emojiEl.classList.remove(...modeClass);
+    if (visual.mode === "prep-orbit") {
+      emojiEl.classList.add("lobby-fighter-emoji--prep-orbit");
+    } else if (visual.mode !== "battle-idle") {
+      if (visual.animClass) emojiEl.classList.add(visual.animClass);
+      else if (visual.mode) emojiEl.classList.add(`lobby-fighter-emoji--${visual.mode}`);
+    }
   }
 
   el.dataset.avatarMode = visual.mode || "";

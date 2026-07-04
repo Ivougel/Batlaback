@@ -860,8 +860,9 @@ function initLobbyRun() {
   if (typeof resetLobbyFighterThoughts === "function") resetLobbyFighterThoughts();
   if (typeof seedLobbyFighterThoughts === "function") seedLobbyFighterThoughts(lobbyState);
   if (typeof DialogueEngine !== "undefined") {
+    const prepDurationSec = typeof LOBBY_PREP_SECONDS !== "undefined" ? LOBBY_PREP_SECONDS : 55;
     DialogueEngine.reset(`lobby:${lobbyState?.seed || Date.now()}`);
-    DialogueEngine.onRunStart(lobbyState, round);
+    DialogueEngine.onRunStart(lobbyState, round, { prepDurationSec });
   }
   setLobbyViewFighter(lobbyState.playerId);
   delete document.documentElement.dataset.lobbySplit;
@@ -6352,8 +6353,9 @@ function applyPostBattlePrep(battleWinner) {
     renderRunStats();
     renderLobbyChrome(true);
     if (typeof DialogueEngine !== "undefined") {
+      const prepDurationSec = typeof LOBBY_PREP_SECONDS !== "undefined" ? LOBBY_PREP_SECONDS : 55;
       if (dialogueWinnerId != null) DialogueEngine.onPostBattle(lobbyState, dialogueWinnerId, []);
-      DialogueEngine.onRoundPrep(lobbyState, round, []);
+      DialogueEngine.onRoundPrep(lobbyState, round, [], { prepDurationSec });
     }
     return;
   }
@@ -6648,6 +6650,7 @@ function gameLoop(ts) {
       tickSoloPrepThoughts();
     }
     if (isLobbyMode() && lobbyState && typeof DialogueEngine !== "undefined") {
+      const prepDurationSec = typeof LOBBY_PREP_SECONDS !== "undefined" ? LOBBY_PREP_SECONDS : 55;
       DialogueEngine.tick({
         lobby: lobbyState,
         phase: "prep",
@@ -6655,9 +6658,10 @@ function gameLoop(ts) {
         matches: lobbyMatches,
         timerRemaining: lobbyPrepTimerRemaining,
         timerActive: lobbyPrepTimerActive,
+        prepDurationSec,
       });
     } else if (!isLobbyMode() && !isLobby2pMode() && phase === "prep" && typeof DialogueEngine !== "undefined") {
-      DialogueEngine.tickSolo({ round });
+      DialogueEngine.tickSolo({ round, prepDurationSec: 60 });
     }
     if (isLobbyMode() && lobbyPrepTimerActive) {
       lobbyPrepTimerRemaining = Math.max(0, lobbyPrepTimerRemaining - dt);

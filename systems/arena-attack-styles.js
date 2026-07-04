@@ -114,6 +114,60 @@ const ArenaAttackStyles = (() => {
     };
   }
 
+  /** Стили, где оружие остаётся на месте, а к цели летит отдельный снаряд-эмодзи. */
+  const PROJECTILE_STYLES = new Set([
+    "arrow",
+    "javelin",
+    "fireball",
+    "arcane",
+    "ice",
+    "poisonCloud",
+    "holy",
+    "drain",
+    "energy",
+    "shadow",
+  ]);
+
+  const PROJECTILE_GLYPH = {
+    arrow: "➶",
+    javelin: "🗡️",
+    fireball: "🔥",
+    arcane: "✨",
+    ice: "❄️",
+    poisonCloud: "💨",
+    holy: "🌟",
+    drain: "🟣",
+    energy: "⚡",
+    shadow: "🌑",
+  };
+
+  function isProjectileStyle(styleId) {
+    return PROJECTILE_STYLES.has(styleId);
+  }
+
+  function getProjectileGlyph(styleId, itemId) {
+    if (styleId === "fireball") return "🔥";
+    if (styleId === "arcane") return "✨";
+    return PROJECTILE_GLYPH[styleId] || "•";
+  }
+
+  function weaponHomePose(atk, body, style, vmin, params) {
+    const homeX = atk.useEmojiAvatarArc
+      ? atk.homeVpX
+      : (atk.useViewport ? atk.homeVpX : body.homeX);
+    const homeY = atk.useEmojiAvatarArc
+      ? atk.homeVpY
+      : (atk.useViewport ? atk.homeVpY : body.homeY);
+    const holdAtk = { ...atk, fromX: homeX, fromY: homeY };
+    const holdPose = style.windup ? style.windup(holdAtk, 1, vmin, params) : null;
+    return {
+      x: homeX,
+      y: homeY,
+      scale: holdPose?.scale ?? 1,
+      rotation: holdPose?.rotation ?? body.rotation ?? 0,
+    };
+  }
+
   /** @type {Record<string, object>} */
   const STYLES = {
     slash: {
@@ -778,6 +832,9 @@ const ArenaAttackStyles = (() => {
     molten_dagger: "flameSlash",
     shortbow: "arrow",
     bow_and_arrow: "arrow",
+    apprentice_staff: "arcane",
+    fire_staff: "fireball",
+    enchanted_staff: "arcane",
     piercing_arrow: "javelin",
     belladonnas_shade: "poison",
     belladonnas_whisper: "poisonCloud",
@@ -892,35 +949,48 @@ const ArenaAttackStyles = (() => {
     const params = atk.styleParams || itemParams(body.itemId);
     const phases = style.phases;
     const dur = (phases[atk.phase] || 0.2) * ATTACK_TIME_SCALE;
+    const projectile = isProjectileStyle(atk.styleId);
 
     atk.phaseT += dt;
     const t = atk.phaseT / dur;
 
+    if (atk.projectileFade != null) {
+      atk.projectileFade += dt * 5;
+    }
+
     let visual;
     if (atk.phase === "windup") {
-      if (atk.useEmojiAvatarArc) {
-        const pulse = 1 + Math.sin(t * Math.PI) * 0.07;
-        visual = {
-          x: atk.homeVpX,
-          y: atk.homeVpY,
-          scale: pulse,
-          rotation: body.rotation || 0,
-        };
-      } else {
-        visual = style.windup(atk, t, vmin, params);
+      if (atk.useEmojiAvatarArc || atk.useViewport) {
+        atk.fromX = atk.homeVpX;
+        atk.fromY = atk.homeVpY;
       }
+      visual = style.windup(atk, t, vmin, params);
+      if (projectile) atk.projectileVisual = null;
     } else if (atk.phase === "strike") {
-      visual = atk.useEmojiAvatarArc
-        ? emojiAvatarStrikeArc(atk, t, vmin, params)
-        : style.strike(atk, t, vmin, params);
+      if (projectile) {
+        visual = weaponHomePose(atk, body, style, vmin, params);
+        if (atk.projectileFade == null || atk.projectileFade < 1) {
+          atk.projectileVisual = style.strike(atk, t, vmin, params);
+        } else {
+          atk.projectileVisual = null;
+        }
+      } else if (atk.useEmojiAvatarArc) {
+        visual = style.strike(atk, t, vmin, params);
+      } else {
+        visual = style.strike(atk, t, vmin, params);
+      }
       if (t >= 0.82 && !atk.hitReacted) {
         atk.hitReacted = true;
         fireThoughtReaction(body, style);
+        if (projectile) atk.projectileFade = 0;
       }
     } else if (atk.phase === "recover") {
-      visual = atk.useEmojiAvatarArc
-        ? emojiAvatarRecoverArc(atk, t, vmin, params)
-        : style.recover(atk, t, vmin, params);
+      if (projectile) {
+        visual = weaponHomePose(atk, body, style, vmin, params);
+        atk.projectileVisual = null;
+      } else {
+        visual = style.recover(atk, t, vmin, params);
+      }
     } else {
       visual = { x: body.renderX, y: body.renderY, scale: 1, rotation: body.rotation || 0 };
     }
@@ -996,5 +1066,7 @@ const ArenaAttackStyles = (() => {
     createAttack,
     stepAttack,
     itemParams,
+    isProjectileStyle,
+    getProjectileGlyph,
   };
 })();

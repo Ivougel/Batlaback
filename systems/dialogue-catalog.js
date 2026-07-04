@@ -192,7 +192,151 @@ const DIALOGUE_LINES = [
   { id: "banter_priest_warrior", trigger: "prep_banter", fromClass: "priest", toClass: "warrior", weight: 2,
     text: "Ты снова забыл поесть перед боем.",
     reply: { warrior: "Я забыл только страх. Еда подождёт." } },
+
+  // ─── Текст + эмодзи (чат-стиль) ───
+  { id: "chat_flirt_rogue", trigger: "prep_emoji", classId: "rogue", weight: 2, text: "Ты сегодня опасно хороша 😏" },
+  { id: "chat_flirt_mage", trigger: "prep_emoji", classId: "mage", weight: 2, text: "Эта сборка — чистая эстетика ✨" },
+  { id: "chat_flirt_priest", trigger: "prep_emoji", classId: "priest", weight: 2, text: "Обнимашки перед боем? 🥰" },
+  { id: "chat_flirt_warrior", trigger: "prep_emoji", classId: "warrior", weight: 2, text: "Смотри в глаза, не на мой меч 😤" },
+  { id: "chat_hype_1", trigger: "prep_emoji", weight: 2, text: "Погнали! 🔥" },
+  { id: "chat_hype_2", trigger: "prep_emoji", weight: 2, text: "Это будет легенда 👑" },
+  { id: "chat_hype_3", trigger: "prep_emoji", weight: 2, text: "Я в ударе 💪" },
+  { id: "chat_mock_1", trigger: "prep_emoji", weight: 2, text: "Серьёзно? 🙃" },
+  { id: "chat_mock_2", trigger: "prep_emoji", weight: 2, text: "Окей, режиссёр 🎬" },
+  { id: "chat_love_1", trigger: "prep_emoji", weight: 2, text: "Люблю этот хаос 💕" },
+  { id: "chat_love_2", trigger: "prep_emoji", weight: 2, text: "Вы лучшие 🫶" },
+  { id: "chat_food_priest", trigger: "prep_emoji", classId: "priest", weight: 2, text: "Кто забыл перекус? 🍌" },
+  { id: "chat_food_any", trigger: "prep_emoji", weight: 1, text: "Хочу пиццу после раунда 🍕" },
+  { id: "chat_timer_panic", trigger: "prep_emoji", triggerAlso: "prep_timer", weight: 3, text: "ААА ВРЕМЯ ⏰😱" },
+  { id: "chat_win_vibe", trigger: "prep_emoji", phase: "early", weight: 2, text: "Сегодня наш день 🥳" },
+  { id: "chat_late_run", trigger: "prep_emoji", phase: "late", weight: 2, text: "Финишная прямая 🏁🔥" },
 ];
+
+/** Категории чистых эмодзи-сообщений (как в мессенджере). */
+const DIALOGUE_EMOJI_CATEGORIES = {
+  kisses: ["😘", "😚", "😙", "😗", "💋", "🥰", "😍", "💏", "💑"],
+  hearts: ["❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍", "🤎", "💕", "💞", "💓", "💗", "💖", "💘", "💝", "♥️", "💌"],
+  hugs: ["🤗", "🫂", "🥹", "🫶"],
+  flirt: ["😉", "😏", "🫦", "💅", "👀", "🌹", "💐", "✨", "😼"],
+  silly: ["🙃", "😜", "🤪", "😝", "🤡", "👻", "🫠", "🗿", "💀"],
+  hype: ["🔥", "⚡", "💥", "🚀", "🎯", "👑", "🏆", "💪", "🥇", "🎉", "🥳", "🎊", "👏", "🙌"],
+  pain: ["😭", "😢", "🥺", "😿", "💔", "🤕", "😵‍💫", "😖", "😫"],
+  chill: ["😌", "🙂", "😊", "☺️", "😇", "🥱", "💤", "🍵", "🧘"],
+  angry: ["😤", "😠", "💢", "👿", "😡", "🤬"],
+  food: ["🍎", "🍌", "🥪", "🍕", "🍩", "🧃", "🍪", "🥕", "🍉", "🥐"],
+  hands: ["👍", "👎", "👊", "✊", "🤝", "🫡", "🤞", "✌️", "🤟", "👋", "🖐️"],
+  combo: [
+    "😘✨", "💋🔥", "🥰💕", "😏👀", "💀😂", "😭🙏", "🔥👑", "💪😤",
+    "🤔💭", "😇🙏", "😼💅", "👀🍿", "🥺👉👈", "💅😌", "🫶✨", "😘💋",
+    "🥰🌹", "😏🔥", "💕😚", "🙃💀", "😤⚔️", "🔮✨", "🍌😇", "🗡️😏",
+  ],
+};
+
+/** Предпочтения классов — чаще шлют эти категории. */
+const CLASS_EMOJI_CATEGORY_BIAS = {
+  warrior: ["hype", "angry", "hands", "combo"],
+  rogue: ["flirt", "silly", "combo", "kisses"],
+  mage: ["combo", "chill", "hype", "hearts"],
+  priest: ["hearts", "hugs", "food", "kisses"],
+};
+
+/** Ответ-эмодзи на входящее сообщение. */
+const DIALOGUE_EMOJI_REPLY_MAP = {
+  kisses: ["😘", "🥰", "😍", "💋", "😚", "🫶"],
+  hearts: ["💕", "❤️", "🥰", "💖", "💞", "🫶"],
+  hugs: ["🤗", "🫂", "🥹", "🫶"],
+  flirt: ["😏", "😉", "👀", "😼", "💅"],
+  silly: ["🙃", "😜", "💀", "🗿", "😂"],
+  hype: ["🔥", "💪", "🥳", "👏", "⚡"],
+  pain: ["🥺", "🫂", "😢", "🙏", "💔"],
+  chill: ["😌", "🙂", "👍", "🫡"],
+  angry: ["😤", "💢", "👿", "🙄"],
+  food: ["😋", "🤤", "🍕", "🍌", "🙏"],
+  hands: ["👍", "🤝", "🫡", "✌️", "👋"],
+  combo: ["🔥", "😘", "💀😂", "🥰✨", "👀🍿", "😏👑"],
+  default: ["👀", "😏", "🔥", "🥰", "💀", "👍", "😘"],
+};
+
+function flattenDialogueEmojiPool() {
+  const all = [];
+  Object.values(DIALOGUE_EMOJI_CATEGORIES).forEach((list) => {
+    list.forEach((emoji) => all.push(emoji));
+  });
+  return all;
+}
+
+const DIALOGUE_EMOJI_FLAT_POOL = flattenDialogueEmojiPool();
+
+function isDialogueEmojiOnly(text) {
+  const raw = String(text || "").trim();
+  if (!raw) return false;
+  if (/^[\p{Extended_Pictographic}\u200d\uFE0F\u20e3\s]+$/u.test(raw)) return true;
+  return raw.length <= 8 && !/[a-zA-Zа-яА-ЯёЁ0-9]/.test(raw);
+}
+
+function categorizeDialogueEmoji(text) {
+  const raw = String(text || "").trim();
+  for (const [cat, list] of Object.entries(DIALOGUE_EMOJI_CATEGORIES)) {
+    if (list.some((emoji) => raw.includes(emoji) || emoji.includes(raw))) return cat;
+  }
+  if (isDialogueEmojiOnly(raw)) return "combo";
+  return "default";
+}
+
+function pickFromList(list) {
+  if (!list?.length) return "😏";
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+function pickDialogueEmoji(opts = {}) {
+  const classId = opts.classId;
+  const bias = CLASS_EMOJI_CATEGORY_BIAS[classId];
+  if (bias?.length && Math.random() > 0.28) {
+    const cat = bias[Math.floor(Math.random() * bias.length)];
+    const pool = DIALOGUE_EMOJI_CATEGORIES[cat];
+    if (pool?.length) return pickFromList(pool);
+  }
+  return pickFromList(DIALOGUE_EMOJI_FLAT_POOL);
+}
+
+function pickDialogueEmojiReply(incomingText, classId) {
+  const cat = categorizeDialogueEmoji(incomingText);
+  const pool = DIALOGUE_EMOJI_REPLY_MAP[cat] || DIALOGUE_EMOJI_REPLY_MAP.default;
+  if (Math.random() > 0.55) return pickDialogueEmoji({ classId });
+  return pickFromList(pool);
+}
+
+function buildRandomEmojiLine(classId) {
+  const emoji = pickDialogueEmoji({ classId });
+  return {
+    id: `emoji_dyn_${emoji}_${Math.random().toString(36).slice(2, 7)}`,
+    trigger: "prep_emoji",
+    text: emoji,
+    emojiOnly: true,
+    weight: 1,
+  };
+}
+
+function buildTextEmojiLine(classId) {
+  const templates = [
+    "ого {e}", "смотри {e}", "это я {e}", "настроение {e}", "поймала вайб {e}",
+    "держи {e}", "тебе {e}", "ну {e}", "лол {e}", "погнали {e}",
+  ];
+  const emoji = pickDialogueEmoji({ classId });
+  const tpl = templates[Math.floor(Math.random() * templates.length)];
+  return {
+    id: `chat_dyn_${emoji}_${Math.random().toString(36).slice(2, 7)}`,
+    trigger: "prep_emoji",
+    text: tpl.replace("{e}", emoji),
+    emojiOnly: false,
+    weight: 1,
+  };
+}
+
+function pickDialogueEmojiMessage(classId) {
+  if (Math.random() > 0.55) return buildRandomEmojiLine(classId);
+  return buildTextEmojiLine(classId);
+}
 
 function getDialogueRunPhase(round = 1) {
   const r = Math.max(1, round);
@@ -224,10 +368,16 @@ function resolveDialogueLineText(line, classId) {
   return "";
 }
 
+function isDialogueLineEmojiOnly(line, classId) {
+  if (line?.emojiOnly) return true;
+  const text = resolveDialogueLineText(line, classId);
+  return isDialogueEmojiOnly(text);
+}
+
 function getDialogueLinesForTrigger(trigger, ctx = {}) {
   const phase = ctx.phase || getDialogueRunPhase(ctx.round || 1);
   return DIALOGUE_LINES.filter((line) => {
-    if (line.trigger !== trigger) return false;
+    if (line.trigger !== trigger && line.triggerAlso !== trigger) return false;
     if (line.phase && line.phase !== phase) return false;
     if (line.classId && line.classId !== ctx.classId) return false;
     if (line.fromClass && line.fromClass !== ctx.fromClass) return false;
@@ -271,3 +421,10 @@ window.getDialogueLinesForTrigger = getDialogueLinesForTrigger;
 window.pickWeightedDialogueLine = pickWeightedDialogueLine;
 window.findDialogueLineById = findDialogueLineById;
 window.findBanterLine = findBanterLine;
+window.DIALOGUE_EMOJI_CATEGORIES = DIALOGUE_EMOJI_CATEGORIES;
+window.isDialogueEmojiOnly = isDialogueEmojiOnly;
+window.isDialogueLineEmojiOnly = isDialogueLineEmojiOnly;
+window.pickDialogueEmoji = pickDialogueEmoji;
+window.pickDialogueEmojiReply = pickDialogueEmojiReply;
+window.pickDialogueEmojiMessage = pickDialogueEmojiMessage;
+window.buildRandomEmojiLine = buildRandomEmojiLine;

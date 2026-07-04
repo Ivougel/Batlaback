@@ -3,8 +3,8 @@
  */
 
 const DialogueOverlay = (() => {
-  const MAX_VISIBLE = 5;
-  const DEFAULT_TTL_MS = 5200;
+  const MAX_VISIBLE = 3;
+  const DEFAULT_TTL_MS = 6000;
   const TRAVEL_MS = 680;
 
   /** @type {Array<object>} */
@@ -59,20 +59,25 @@ const DialogueOverlay = (() => {
 
   function buildBubbleEl(payload) {
     const el = document.createElement("div");
+    const emojiOnly = !!payload.emojiOnly
+      || (typeof isDialogueEmojiOnly === "function" && isDialogueEmojiOnly(payload.text));
     el.className = "hero-dialogue-bubble";
     el.dataset.classId = payload.classId || "";
     if (payload.reply) el.classList.add("hero-dialogue-bubble--reply");
     if (payload.human) el.classList.add("hero-dialogue-bubble--human");
+    if (emojiOnly) el.classList.add("hero-dialogue-bubble--emoji-only");
 
     const head = document.createElement("div");
     head.className = "hero-dialogue-bubble__head";
-    head.innerHTML = `<span class="hero-dialogue-bubble__name">${escapeHtml(payload.speakerName || "Герой")}</span>`;
+    if (!emojiOnly) {
+      head.innerHTML = `<span class="hero-dialogue-bubble__name">${escapeHtml(payload.speakerName || "Герой")}</span>`;
+      el.appendChild(head);
+    }
 
     const body = document.createElement("div");
     body.className = "hero-dialogue-bubble__text";
     body.textContent = payload.text || "";
 
-    el.appendChild(head);
     el.appendChild(body);
     return el;
   }
@@ -180,19 +185,23 @@ const DialogueOverlay = (() => {
   }
 
   function showExchange(from, to, lineText, opts = {}) {
-    const fromBubble = spawnBubble({
+    const emojiOnly = opts.emojiOnly
+      ?? (typeof isDialogueEmojiOnly === "function" && isDialogueEmojiOnly(lineText));
+    return spawnBubble({
       fromId: from.id,
       toId: to?.id ?? null,
       classId: from.classId,
       speakerName: from.name,
       text: lineText,
       human: !!from.isHuman,
-      ttlMs: opts.ttlMs,
+      emojiOnly,
+      ttlMs: opts.ttlMs ?? (emojiOnly ? 4200 : DEFAULT_TTL_MS),
     });
-    return fromBubble;
   }
 
   function showReply(from, to, lineText, opts = {}) {
+    const emojiOnly = opts.emojiOnly
+      ?? (typeof isDialogueEmojiOnly === "function" && isDialogueEmojiOnly(lineText));
     return spawnBubble({
       fromId: from.id,
       toId: to?.id ?? null,
@@ -201,8 +210,9 @@ const DialogueOverlay = (() => {
       text: lineText,
       human: !!from.isHuman,
       reply: true,
+      emojiOnly,
       travelMs: opts.travelMs ?? TRAVEL_MS * 0.85,
-      ttlMs: opts.ttlMs ?? DEFAULT_TTL_MS,
+      ttlMs: opts.ttlMs ?? (emojiOnly ? 4000 : DEFAULT_TTL_MS),
     });
   }
 

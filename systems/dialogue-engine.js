@@ -3,9 +3,12 @@
  */
 
 const DialogueEngine = (() => {
-  const TICK_MIN_MS = 4200;
-  const TICK_MAX_MS = 7800;
-  const REPLY_DELAY_MS = 1400;
+  /** ~8 обменов на фазу prep ≈ 50–60 с (реплика + ответ не считаются отдельным «битом»). */
+  const PREP_TARGET_EXCHANGES = 8;
+  const MIN_GAP_BETWEEN_EMITS_MS = 7000;
+  const REPLY_DELAY_MS = 3200;
+  const PREP_WARMUP_MS = 5000;
+  const DEFAULT_PREP_SEC = 50;
 
   let state = createState();
   let nextBeatAt = 0;
@@ -16,14 +19,55 @@ const DialogueEngine = (() => {
       runKey: "",
       round: 1,
       phase: "prep",
+      prepDurationSec: DEFAULT_PREP_SEC,
       history: [],
       spokenCounts: {},
       lastLineId: null,
       lastSpeakerId: null,
+      lastEmitAt: 0,
       openedRun: false,
       shopPingAt: 0,
+      roundPrepStartedAt: 0,
       enabled: true,
     };
+  }
+
+  function resolvePrepDurationSec(ctx = {}) {
+    if (ctx.prepDurationSec > 0) return ctx.prepDurationSec;
+    if (ctx.timerTotal > 0) return ctx.timerTotal;
+    if (typeof LOBBY_PREP_SECONDS !== "undefined") return LOBBY_PREP_SECONDS;
+    return DEFAULT_PREP_SEC;
+  }
+
+  function getPrepBeatIntervalMs(prepSec = state.prepDurationSec || DEFAULT_PREP_SEC) {
+    const sec = Math.max(30, prepSec);
+    const avgGapSec = sec / PREP_TARGET_EXCHANGES;
+    const min = Math.round(avgGapSec * 0.82 * 1000);
+    const max = Math.round(avgGapSec * 1.18 * 1000);
+    return {
+      min: Math.max(8500, min),
+      max: Math.max(11000, max),
+    };
+  }
+
+  function scheduleNextBeat(min, max) {
+    const gap = getPrepBeatIntervalMs();
+    const lo = min ?? gap.min;
+    const hi = max ?? gap.max;
+    nextBeatAt = Date.now() + lo + Math.random() * Math.max(500, hi - lo);
+  }
+
+  function canEmitNow() {
+    return Date.now() - (state.lastEmitAt || 0) >= MIN_GAP_BETWEEN_EMITS_MS;
+  }
+
+  function afterEmit() {
+    state.lastEmitAt = Date.now();
+    scheduleNextBeat();
+  }
+
+  function queueReplyDelay(emojiOnly = false) {
+    return emojiOnly ? REPLY_DELAY_MS * 0.9 : REPLY_DELAY_MS;
   }
 
   function fighterKey(fighter) {
@@ -65,14 +109,10 @@ const DialogueEngine = (() => {
     state.lastSpeakerId = entry.fromId;
   }
 
-  function scheduleNextBeat(min = TICK_MIN_MS, max = TICK_MAX_MS) {
-    nextBeatAt = Date.now() + min + Math.random() * (max - min);
-  }
-
   function reset(runKey = "") {
     state = createState();
     state.runKey = runKey;
-    nextBeatAt = 0;
+    nextBeatAt = Date.now() + PREP_WARMUP_MS;
     pendingReply = null;
     if (typeof DialogueOverlay !== "undefined") DialogueOverlay.clearAll();
   }
@@ -102,17 +142,23 @@ const DialogueEngine = (() => {
 
   function emitLine(from, to, line, opts = {}) {
     if (!line || !from) return;
+    if (!opts.force && !canEmitNow() && !opts.reply) return;
     const text = typeof resolveDialogueLineText === "function"
       ? resolveDialogueLineText(line, from.classId)
       : (line.text || "");
     if (!text) return;
 
+    const emojiOnly = opts.emojiOnly
+      ?? (typeof isDialogueLineEmojiOnly === "function"
+        ? isDialogueLineEmojiOnly(line, from.classId)
+        : false);
+
     const fromWrap = wrapFighter(from);
     const toWrap = to ? wrapFighter(to) : null;
 
     if (typeof DialogueOverlay !== "undefined") {
-      if (opts.reply) DialogueOverlay.showReply(fromWrap, toWrap, text, opts);
-      else DialogueOverlay.showExchange(fromWrap, toWrap, text, opts);
+      if (opts.reply) DialogueOverlay.showReply(fromWrap, toWrap, text, { ...opts, emojiOnly });
+      else DialogueOverlay.showExchange(fromWrap, toWrap, text, { ...opts, emojiOnly });
     }
 
     if (typeof setLobbyFighterEmotion === "function") {
@@ -121,7 +167,7 @@ const DialogueEngine = (() => {
         : null;
       setLobbyFighterEmotion(from.id, {
         emoji: voice?.emoji || "💭",
-        animation: opts.reply ? "nod" : "bounce",
+        animation: "nod",
         priority: opts.reply ? 2 : 1,
       });
     }
@@ -134,8 +180,9 @@ const DialogueEngine = (() => {
       trigger: line.trigger,
     });
     markSpoken(line.id);
+    if (!opts.reply) afterEmit();
 
-    if (typeof syncLobbyFighterAvatars === "function" && opts.lobby) {
+    if (typeof syncLobbyFighterAvatars === "function" && opts.lobby && !opts.reply) {
       syncLobbyFighterAvatars(opts.lobby, {
         phase: state.phase,
         round: state.round,
@@ -157,6 +204,7 @@ const DialogueEngine = (() => {
   }
 
   function tryEmitFromCatalog(trigger, ctx, lobby, matches) {
+    if (!canEmitNow()) return false;
     const lines = typeof getDialogueLinesForTrigger === "function"
       ? getDialogueLinesForTrigger(trigger, ctx)
       : [];
@@ -205,7 +253,7 @@ const DialogueEngine = (() => {
       const replyText = line.reply[target.classId];
       if (replyText) {
         pendingReply = {
-          at: Date.now() + REPLY_DELAY_MS,
+          at: Date.now() + queueReplyDelay(),
           from: target,
           to: speaker,
           customText: replyText,
@@ -223,10 +271,14 @@ const DialogueEngine = (() => {
     pendingReply = null;
 
     if (job.customText) {
+      const emojiOnly = job.emojiOnly ?? (typeof isDialogueEmojiOnly === "function"
+        ? isDialogueEmojiOnly(job.customText)
+        : false);
       emitLine(job.from, job.to, { id: `custom_${Date.now()}`, text: job.customText, trigger: "reply" }, {
         lobby: job.lobby,
         matches: job.matches,
         reply: true,
+        emojiOnly,
       });
       return;
     }
@@ -248,31 +300,93 @@ const DialogueEngine = (() => {
     }
   }
 
-  function onRunStart(lobby, round = 1) {
+  function tryEmitEmojiExchange(lobby, matches = []) {
+    if (!canEmitNow()) return false;
+    const fighters = pickRandomFighters(lobby, 2);
+    if (fighters.length < 1) return false;
+    const from = fighters[0];
+    const to = fighters[1] || null;
+
+    let line = null;
+    if (Math.random() > 0.38 && typeof pickDialogueEmojiMessage === "function") {
+      line = pickDialogueEmojiMessage(from.classId);
+    } else {
+      const lines = typeof getDialogueLinesForTrigger === "function"
+        ? getDialogueLinesForTrigger("prep_emoji", { round: state.round, classId: from.classId })
+        : [];
+      const available = lines.filter((entry) => !wasSpokenRecently(entry.id, 1));
+      line = typeof pickWeightedDialogueLine === "function"
+        ? pickWeightedDialogueLine(available.length ? available : lines)
+        : lines[0];
+    }
+    if (!line) return false;
+
+    const text = typeof resolveDialogueLineText === "function"
+      ? resolveDialogueLineText(line, from.classId)
+      : line.text;
+    const emojiOnly = typeof isDialogueLineEmojiOnly === "function"
+      ? isDialogueLineEmojiOnly(line, from.classId)
+      : false;
+
+    emitLine(from, to, line, { lobby, matches, emojiOnly });
+
+    if (to && Math.random() > 0.35) {
+      const replyText = typeof pickDialogueEmojiReply === "function"
+        ? pickDialogueEmojiReply(text, to.classId)
+        : (typeof pickDialogueEmoji === "function" ? pickDialogueEmoji({ classId: to.classId }) : "😏");
+      pendingReply = {
+        at: Date.now() + queueReplyDelay(emojiOnly),
+        from: to,
+        to: from,
+        customText: replyText,
+        lobby,
+        matches,
+        emojiOnly: typeof isDialogueEmojiOnly === "function" ? isDialogueEmojiOnly(replyText) : emojiOnly,
+      };
+    }
+    return true;
+  }
+
+  function onRunStart(lobby, round = 1, opts = {}) {
     if (!state.enabled || !lobby) return;
     state.round = round;
     state.phase = "prep";
+    state.prepDurationSec = resolvePrepDurationSec(opts);
     state.openedRun = true;
-    scheduleNextBeat(800, 1800);
+    state.roundPrepStartedAt = Date.now();
+    nextBeatAt = Date.now() + PREP_WARMUP_MS + getPrepBeatIntervalMs().min;
 
-    const openers = (lobby.fighters || []).filter((f) => f.alive !== false).slice(0, 3);
-    openers.forEach((fighter, i) => {
-      setTimeout(() => {
-        tryEmitFromCatalog("run_open", {
-          round,
-          classId: fighter.classId,
-          speaker: fighter,
-        }, lobby, []);
-      }, 500 + i * 1100);
-    });
+    const opener = lobby.fighters?.find((f) => f.isHuman && f.alive !== false)
+      || pickRandomFighters(lobby, 1)[0];
+    if (!opener) return;
+
+    const openDelay = 3500 + Math.random() * 2500;
+    setTimeout(() => {
+      if (!canEmitNow() && state.lastEmitAt > 0) return;
+      if (Math.random() > 0.5) {
+        tryEmitEmojiExchange(lobby, []);
+        return;
+      }
+      tryEmitFromCatalog("run_open", {
+        round,
+        classId: opener.classId,
+        speaker: opener,
+      }, lobby, []);
+    }, openDelay);
   }
 
-  function onRoundPrep(lobby, round, matches = []) {
+  function onRoundPrep(lobby, round, matches = [], opts = {}) {
     state.round = round;
     state.phase = "prep";
+    state.prepDurationSec = resolvePrepDurationSec(opts);
+    state.roundPrepStartedAt = Date.now();
+    pendingReply = null;
+    nextBeatAt = Date.now() + PREP_WARMUP_MS + getPrepBeatIntervalMs().min * 0.6;
+
     if (lobby?.currentOpponentId != null) {
       const [human, opponent] = pickOpponentPair(lobby);
       if (human && opponent) {
+        const delay = 6000 + Math.random() * 4000;
         setTimeout(() => {
           tryEmitFromCatalog("prep_opponent", {
             round,
@@ -280,17 +394,16 @@ const DialogueEngine = (() => {
             speaker: human,
             target: opponent,
           }, lobby, matches);
-        }, 900);
+        }, delay);
       }
     }
-    scheduleNextBeat();
   }
 
   function onShopActivity(lobby, fighterId, matches = []) {
     const fighter = lobby?.fighters?.[fighterId];
-    if (!fighter) return;
+    if (!fighter || !canEmitNow()) return;
     const now = Date.now();
-    if (now - state.shopPingAt < 2500) return;
+    if (now - state.shopPingAt < 12000) return;
     state.shopPingAt = now;
     tryEmitFromCatalog("prep_shop", {
       round: state.round,
@@ -302,19 +415,24 @@ const DialogueEngine = (() => {
   function onPostBattle(lobby, winnerId, matches = []) {
     if (!lobby) return;
     const fighters = getAliveFighters(lobby);
-    fighters.forEach((fighter) => {
+    const sample = pickRandomFighters(lobby, Math.min(2, fighters.length));
+    sample.forEach((fighter, i) => {
       const won = fighter.id === winnerId;
-      tryEmitFromCatalog(won ? "post_battle_win" : "post_battle_loss", {
-        round: state.round,
-        classId: fighter.classId,
-        speaker: fighter,
-      }, lobby, matches);
+      setTimeout(() => {
+        if (!canEmitNow() && i > 0) return;
+        tryEmitFromCatalog(won ? "post_battle_win" : "post_battle_loss", {
+          round: state.round,
+          classId: fighter.classId,
+          speaker: fighter,
+        }, lobby, matches);
+      }, 2500 + i * 5000);
     });
-    scheduleNextBeat(3000, 5000);
+    nextBeatAt = Date.now() + PREP_WARMUP_MS + getPrepBeatIntervalMs().min;
   }
 
   function tick(ctx = {}) {
     if (!state.enabled) return false;
+    state.prepDurationSec = resolvePrepDurationSec(ctx);
     processPendingReply();
 
     const lobby = ctx.lobby;
@@ -324,17 +442,16 @@ const DialogueEngine = (() => {
     state.phase = ctx.phase ?? state.phase;
 
     if (ctx.timerActive && ctx.timerRemaining != null && ctx.timerRemaining <= 12 && ctx.timerRemaining > 0) {
-      if (!state._timerLineAt || Date.now() - state._timerLineAt > 9000) {
+      if (!state._timerLineAt || Date.now() - state._timerLineAt > 14000) {
         state._timerLineAt = Date.now();
         const [speaker] = pickRandomFighters(lobby, 1);
-        if (speaker) {
+        if (speaker && canEmitNow()) {
           tryEmitFromCatalog("prep_timer", {
             round: state.round,
             timerRemaining: ctx.timerRemaining,
             classId: speaker.classId,
             speaker,
           }, lobby, ctx.matches || []);
-          scheduleNextBeat(5000, 8000);
           return true;
         }
       }
@@ -348,19 +465,18 @@ const DialogueEngine = (() => {
         ? getLobbyFighterLiveHp(fighter.id, lobby, ctx.matches || [])
         : { current: fighter.hp ?? 100, max: 100 };
       const hpPct = hp.max > 0 ? hp.current / hp.max : 1;
-      if (hpPct < 0.35 && Math.random() > 0.45) {
+      if (hpPct < 0.35 && Math.random() > 0.55 && canEmitNow()) {
         tryEmitFromCatalog("low_hp", {
           round: state.round,
           hpPct,
           classId: fighter.classId,
           speaker: fighter,
         }, lobby, ctx.matches || []);
-        scheduleNextBeat();
         return true;
       }
     }
 
-    if (Math.random() > 0.35) {
+    if (Math.random() > 0.5) {
       const a = alive[Math.floor(Math.random() * alive.length)];
       const b = alive.filter((f) => f.id !== a.id)[Math.floor(Math.random() * Math.max(1, alive.length - 1))];
       if (a && b && typeof findBanterLine === "function") {
@@ -372,7 +488,7 @@ const DialogueEngine = (() => {
           const replyText = banter.reply?.[to.classId];
           if (replyText) {
             pendingReply = {
-              at: Date.now() + REPLY_DELAY_MS,
+              at: Date.now() + queueReplyDelay(),
               from: to,
               to: from,
               customText: replyText,
@@ -380,33 +496,33 @@ const DialogueEngine = (() => {
               matches: ctx.matches || [],
             };
           }
-          scheduleNextBeat();
           return true;
         }
       }
     }
 
-    const trigger = Math.random() > 0.25 ? "prep_idle" : "prep_banter";
-    const ok = tryEmitFromCatalog(trigger, { round: state.round }, lobby, ctx.matches || []);
-    scheduleNextBeat();
-    return ok;
+    const roll = Math.random();
+    if (roll < 0.42) {
+      return tryEmitEmojiExchange(lobby, ctx.matches || []);
+    }
+
+    const trigger = roll < 0.72 ? "prep_idle" : "prep_banter";
+    return tryEmitFromCatalog(trigger, { round: state.round }, lobby, ctx.matches || []);
   }
 
   function tickSolo(ctx = {}) {
     if (!state.enabled || typeof DialogueOverlay === "undefined") return false;
+    state.prepDurationSec = resolvePrepDurationSec(ctx);
     if (Date.now() < nextBeatAt) return false;
+    if (!canEmitNow()) {
+      scheduleNextBeat();
+      return false;
+    }
 
     const playerClassId = typeof playerClass !== "undefined" ? playerClass : "warrior";
     const enemyClassId = typeof enemyClass !== "undefined" ? enemyClass : "rogue";
     const playerVoice = getHeroDialogueVoice(playerClassId);
     const enemyVoice = getHeroDialogueVoice(enemyClassId);
-
-    const lines = getDialogueLinesForTrigger("prep_idle", {
-      round: ctx.round || 1,
-      phase: getDialogueRunPhase(ctx.round || 1),
-    });
-    const line = pickWeightedDialogueLine(lines);
-    if (!line) return false;
 
     const fromPlayer = Math.random() > 0.5;
     const from = fromPlayer
@@ -416,7 +532,36 @@ const DialogueEngine = (() => {
       ? { id: "enemy", classId: enemyClassId, name: enemyVoice.label }
       : { id: "player", classId: playerClassId, name: playerVoice.label };
 
-    DialogueOverlay.showExchange(from, to, resolveDialogueLineText(line, from.classId));
+    let text = "";
+    let emojiOnly = false;
+
+    if (Math.random() > 0.4 && typeof pickDialogueEmojiMessage === "function") {
+      const line = pickDialogueEmojiMessage(from.classId);
+      text = resolveDialogueLineText(line, from.classId);
+      emojiOnly = isDialogueLineEmojiOnly(line, from.classId);
+    } else {
+      const trigger = Math.random() > 0.35 ? "prep_emoji" : "prep_idle";
+      const lines = getDialogueLinesForTrigger(trigger, {
+        round: ctx.round || 1,
+        phase: getDialogueRunPhase(ctx.round || 1),
+        classId: from.classId,
+      });
+      const line = pickWeightedDialogueLine(lines);
+      if (!line) return false;
+      text = resolveDialogueLineText(line, from.classId);
+      emojiOnly = isDialogueLineEmojiOnly(line, from.classId);
+    }
+
+    DialogueOverlay.showExchange(from, to, text, { emojiOnly });
+    state.lastEmitAt = Date.now();
+    if (Math.random() > 0.35 && typeof pickDialogueEmojiReply === "function") {
+      const replyText = pickDialogueEmojiReply(text, to.classId);
+      setTimeout(() => {
+        DialogueOverlay.showReply(to, from, replyText, {
+          emojiOnly: isDialogueEmojiOnly(replyText),
+        });
+      }, queueReplyDelay(isDialogueEmojiOnly(replyText)));
+    }
     scheduleNextBeat();
     return true;
   }

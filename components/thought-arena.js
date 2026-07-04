@@ -54,8 +54,9 @@ const ThoughtArena = (() => {
 
   function isAnchoredFlankArena() {
     const root = document.documentElement;
-    return root.dataset.battleHeroPlacement === "flank-arena"
-      && root.dataset.battleArenaLayout === "true";
+    if (root.dataset.battleHeroPlacement !== "flank-arena") return false;
+    if (root.dataset.battleArenaLayout === "true") return true;
+    return root.dataset.battlePrepHeroLayer === "true";
   }
 
   function getCompanionAnchorNorm(side) {

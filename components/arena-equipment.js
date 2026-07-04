@@ -943,6 +943,51 @@ const ArenaEquipment = (() => {
     return true;
   }
 
+  function ensureAttackProjectile(body, atk) {
+    if (typeof ArenaAttackStyles === "undefined"
+      || !ArenaAttackStyles.isProjectileStyle?.(atk.styleId)
+      || atk.projectileEl?.isConnected) {
+      return;
+    }
+    const layer = ensureEquipFxLayer();
+    const el = document.createElement("div");
+    el.className = `arena-equip-projectile arena-equip-projectile--${atk.styleId}`;
+    el.setAttribute("aria-hidden", "true");
+    el.textContent = ArenaAttackStyles.getProjectileGlyph(atk.styleId, body.itemId);
+    layer.appendChild(el);
+    atk.projectileEl = el;
+  }
+
+  function applyAttackProjectile(body, atk) {
+    const el = atk.projectileEl;
+    if (!el) return;
+    const pv = atk.projectileVisual;
+    if (!pv) {
+      el.style.opacity = "0";
+      return;
+    }
+    const x = Math.round(pv.x);
+    const y = Math.round(pv.y);
+    const scale = pv.scale ?? 1;
+    const rot = Math.round((pv.rotation ?? 0) * 10) / 10;
+    const key = `${x}|${y}|${scale}|${rot}`;
+    if (el._projKey !== key) {
+      el._projKey = key;
+      el.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%) scale(${scale}) rotate(${rot}deg)`;
+    }
+    const fade = atk.projectileFade != null
+      ? Math.max(0, 1 - atk.projectileFade)
+      : 1;
+    el.style.opacity = String(fade);
+  }
+
+  function destroyAttackProjectile(atk) {
+    atk.projectileEl?.remove();
+    atk.projectileEl = null;
+    atk.projectileVisual = null;
+    atk.projectileFade = null;
+  }
+
   function stepAttack(body, dt) {
     const atk = body.attack;
     if (!atk) return;
@@ -963,9 +1008,12 @@ const ArenaEquipment = (() => {
           }
         }
       }
+      ensureAttackProjectile(body, atk);
       const vmin = viewportMin();
       const done = ArenaAttackStyles.stepAttack(body, atk, dt, vmin);
+      applyAttackProjectile(body, atk);
       if (done) {
+        destroyAttackProjectile(atk);
         remountOrbitAfterAttack(body);
         body.attack = null;
         body.el.classList.remove("is-attacking");

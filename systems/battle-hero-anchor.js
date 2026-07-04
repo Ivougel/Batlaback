@@ -302,7 +302,10 @@ const BattleHeroAnchor = (() => {
 
   /** Размер fixed-слота: голый глиф над героем — без halo-паддинга (иначе slot уезжает в safeTop). */
   function thoughtSlotMountSize(emojiSize = thoughtSlotEmojiSize()) {
-    if (usesHeroAboveThoughtAnchors() && !usesHeadBadgeAnchors()) {
+    if (usesHeadBadgeAnchors()) {
+      return emojiSize + thoughtSlotHaloPx(emojiSize) * 2;
+    }
+    if (usesHeroAboveThoughtAnchors() || usesBattlePrepHeroThoughtAnchors()) {
       return emojiSize;
     }
     return emojiSize + thoughtSlotHaloPx(emojiSize) * 2;
@@ -443,7 +446,73 @@ const BattleHeroAnchor = (() => {
   function usesHeroAboveThoughtAnchors() {
     if (!isFlankArenaBattle()) return false;
     if (usesHeadBadgeAnchors()) return false;
+    if (usesBattlePrepHeroThoughtAnchors()) return false;
     return true;
+  }
+
+  /** Full-body prep-герой на поле боя: мысль у головы (как prep spec-slot), не «потолок» колонки. */
+  function usesBattlePrepHeroThoughtAnchors() {
+    if (!isFlankArenaBattle()) return false;
+    if (usesHeadBadgeAnchors()) return false;
+    return document.documentElement.dataset.battlePrepHeroLayer === "true";
+  }
+
+  function normalizeThoughtSlotAnchor(anchor) {
+    if (!anchor) return null;
+    const emojiSize = anchor.emojiSize ?? thoughtSlotEmojiSize();
+    const mountSize = thoughtSlotMountSize(emojiSize);
+    const cx = anchor.cx;
+    const cy = anchor.cy;
+    return {
+      ...anchor,
+      emojiSize,
+      containerSize: mountSize,
+      size: mountSize,
+      top: cy - mountSize / 2,
+      left: cx - mountSize / 2,
+    };
+  }
+
+  /** Якорь prep spec-slot (battle-prep-hero-parity.css: ~68% ширины слота, уровень головы). */
+  function getPrepSpecSlotThoughtAnchor(side) {
+    if (document.documentElement.dataset.battlePrepHeroLayer !== "true") return null;
+
+    const specId = side === "enemy" ? "prep-character-spec-slot-enemy" : "prep-character-spec-slot";
+    const specEl = document.getElementById(specId);
+    const ar = getAvatarAnchorRect(side);
+    if (!specEl && (!ar || ar.height < 40)) return null;
+
+    const emojiSize = thoughtSlotEmojiSize();
+    const halo = thoughtSlotHaloPx(emojiSize);
+    const prof = emojiProfile();
+
+    let cx;
+    let cy;
+
+    if (specEl) {
+      const pt = specEl.getBoundingClientRect();
+      cx = pt.left + pt.width / 2;
+      cy = pt.top + pt.height / 2;
+      if (pt.height < 4 && ar && ar.height >= 40) {
+        cy = ar.top + ar.height * (prof.heroSpecYRatio ?? 0.18);
+      }
+      if (pt.width < 4 && ar && ar.width >= 40) {
+        const inward = prof.heroSpecXBias ?? 0.34;
+        cx = side === "enemy"
+          ? ar.left + ar.width * (0.5 - inward)
+          : ar.left + ar.width * (0.5 + inward);
+      }
+    } else if (ar) {
+      const inward = prof.heroSpecXBias ?? 0.34;
+      cx = side === "enemy"
+        ? ar.left + ar.width * (0.5 - inward)
+        : ar.left + ar.width * (0.5 + inward);
+      cy = ar.top + ar.height * (prof.heroSpecYRatio ?? 0.18);
+    } else {
+      return null;
+    }
+
+    return normalizeThoughtSlotAnchor({ cx, cy, emojiSize, halo });
   }
 
   /** Верх колонки героя (портрет) — потолок для эмодзи-аватара. Не привязываем к HUD HP/стамины. */
@@ -708,6 +777,13 @@ const BattleHeroAnchor = (() => {
       if (badge) return badge;
     }
 
+    if (usesBattlePrepHeroThoughtAnchors()) {
+      const prepHead = getPrepSpecSlotThoughtAnchor(side);
+      if (prepHead) return prepHead;
+      const nearHero = getHeroNearSpecAnchor(side);
+      if (nearHero) return normalizeThoughtSlotAnchor(nearHero);
+    }
+
     if (usesHeroAboveThoughtAnchors()) {
       const above = getHeroAboveThoughtAnchor(side);
       if (above) return above;
@@ -819,6 +895,8 @@ const BattleHeroAnchor = (() => {
     getHeroBelowThoughtAnchor,
     getHeroNearSpecAnchor,
     usesHeroAboveThoughtAnchors,
+    usesBattlePrepHeroThoughtAnchors,
+    getPrepSpecSlotThoughtAnchor,
     usesHeroBelowThoughtAnchors,
     invalidateMeasureCache,
   };

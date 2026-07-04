@@ -121,7 +121,7 @@ html[data-game-mode="lobby"] #app[data-phase="prep"] .lobby-prep-field-chip-avat
 }
 
 html[data-game-mode="lobby"] #app[data-phase="prep"] .lobby-prep-field-chip--yours .lobby-fighter-emoji {
-  animation-duration: 3s;
+  animation-duration: 9s;
 }
 
 html[data-prep-layout="mobile"] #app[data-phase="prep"] .lobby-prep-field-chip {
