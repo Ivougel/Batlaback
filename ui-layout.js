@@ -1716,7 +1716,7 @@
       && typeof BattleHeroAnchor !== "undefined"
       && BattleHeroAnchor.usesHeadBadgeAnchors?.();
     root.dataset.thoughtHeadBadge = headBadge ? "true" : "false";
-    root.dataset.thoughtSlotBelowHero = combatFloor && !headBadge ? "true" : "false";
+    root.dataset.thoughtSlotBelowHero = "false";
 
     const vmin = Math.min(
       window.visualViewport?.width ?? window.innerWidth,
@@ -1802,7 +1802,7 @@
 
       thoughtSlot.style.position = "fixed";
       thoughtSlot.style.left = `${Math.round(cx - slotSize / 2)}px`;
-      thoughtSlot.style.top = `${Math.round(Math.max(4, top))}px`;
+      thoughtSlot.style.top = `${Math.round(top)}px`;
       thoughtSlot.style.width = `${slotSize}px`;
       thoughtSlot.style.height = `${slotSize}px`;
       thoughtSlot.style.right = "auto";

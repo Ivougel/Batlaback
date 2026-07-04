@@ -212,7 +212,7 @@ html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel .shop-se
   font-size: var(--font-sm);
 }
 
-/* Бой tablet-side landscape iPad: эмодзи-аватар под героем + орбита спутников */
+/* Бой tablet-side landscape iPad: эмодзи-аватар над героем + орбита спутников */
 html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="battle"] .avatar-thought-slot,
 html[data-battle-profile="tablet-landscape-side"][data-battle-hero-placement="flank-arena"][data-ui-surface="tablet-side"] #app[data-phase="replay"] .avatar-thought-slot {
   overflow: visible !important;

@@ -213,7 +213,8 @@ function showBattleResultPopup(summary, battleLog = []) {
 
   const reveal = () => {
     animateBattleResultStatCounts(accordionsEl);
-    if (typeof startBattleResultTheater === "function" && !summary.isTd) {
+    const lightFx = typeof BattleFxTier !== "undefined" && BattleFxTier.isLightBattleFx();
+    if (typeof startBattleResultTheater === "function" && !summary.isTd && !lightFx) {
       startBattleResultTheater(summary);
     }
     if (typeof refreshGamepadHints === "function") refreshGamepadHints();

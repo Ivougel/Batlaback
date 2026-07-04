@@ -22,7 +22,9 @@
     "test:snapshots:prep": "playwright test tools/prep-snapshots.spec.mjs tools/layout-snapshots.spec.mjs",
     "test:snapshots:update": "playwright test --update-snapshots",
     "test:ui": "npm run test:layout && npm run test:structure && npm run test:transitions && npm run test:geometry && npm run test:qa && npm run test:snapshots",
-    "profile:battle": "node tools/battle-perf-profile.mjs"
+    "profile:battle": "node tools/battle-perf-profile.mjs",
+    "profile:transitions": "node tools/transition-perf-profile.mjs",
+    "audit:transitions": "node tools/audit-phase-transitions.mjs"
   },
   "dependencies": {
     "@playwright/test": "^1.49.0",

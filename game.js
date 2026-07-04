@@ -4288,6 +4288,13 @@ function isPopupOpen(id) {
   return !!(el && !el.classList.contains("hidden"));
 }
 
+/** Итоги боя: phase=battle, симуляция остановлена, overlay открыт. */
+function isBattleResultIdle() {
+  return phase === "battle"
+    && !battleState
+    && isPopupOpen("battle-result-overlay");
+}
+
 /** Intro не должен оставаться поверх живого забега (PWA / resize). */
 function syncClassOverlayHiddenDuringGame() {
   const overlay = document.getElementById("class-overlay");
@@ -7072,6 +7079,12 @@ function endTdWave() {
   if (typeof closeBattleInventoryPopover === "function") closeBattleInventoryPopover();
   if (typeof hideBattleCountdownOverlay === "function") hideBattleCountdownOverlay();
   if (typeof resetBattleAuraFrame === "function") resetBattleAuraFrame();
+  if (typeof ArenaEquipment !== "undefined" && typeof ArenaEquipment.clearAll === "function") {
+    ArenaEquipment.clearAll();
+  }
+  if (typeof ThoughtArena !== "undefined" && typeof ThoughtArena.clearAll === "function") {
+    ThoughtArena.clearAll();
+  }
 
   let battleSummary;
   try {
@@ -7167,6 +7180,12 @@ function endBattle() {
   if (typeof clearBattleDamageSummary === "function") clearBattleDamageSummary(finishedState);
   if (typeof hideBattleCountdownOverlay === "function") hideBattleCountdownOverlay();
   if (typeof resetBattleAuraFrame === "function") resetBattleAuraFrame();
+  if (typeof ArenaEquipment !== "undefined" && typeof ArenaEquipment.clearAll === "function") {
+    ArenaEquipment.clearAll();
+  }
+  if (typeof ThoughtArena !== "undefined" && typeof ThoughtArena.clearAll === "function") {
+    ThoughtArena.clearAll();
+  }
 
   let battleSummary;
   try {
@@ -7599,6 +7618,7 @@ function showRunComplete() {
 }
 
 function tickBattlePresentation() {
+  if (isBattleResultIdle()) return;
   const presentState = getDisplayBattleState();
   if (!isBattleUiPhase() || !presentState) return;
   const elapsed = battleStartTime ? (Date.now() - battleStartTime) / 1000 : 0;
@@ -8679,6 +8699,7 @@ function rotateDragItem() {
 }
 
 function draw() {
+  if (isBattleResultIdle()) return;
   drawWorldLayer();
   drawFxLayer();
   if (isTdMode() && isBattleUiPhase() && tdState && typeof TdArena !== "undefined" && typeof TdArena.drawFrame === "function") {

@@ -183,6 +183,9 @@
       requestAnimationFrame(() => {
         applyPhase("prep");
         afterTransition?.();
+        window.applyUiLayout?.();
+        window.scheduleCanvasFit?.();
+        window.flushDeferredLayoutPasses?.();
         resolve();
       });
     });
@@ -191,6 +194,9 @@
       window.flushDeferredLayoutPasses?.();
       window.scheduleCanvasFit?.();
       requestAnimationFrame(() => {
+        window.applyUiLayout?.();
+        window.scheduleCanvasFit?.();
+        window.flushDeferredLayoutPasses?.();
         requestAnimationFrame(() => {
           transitioning = false;
           document.body.classList.remove("screen-transitioning", "result-to-prep-transition");

@@ -6,6 +6,7 @@ import { chromium, devices } from "playwright";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import fs from "node:fs";
+import { quickStartPrep } from "./lib/quick-start.mjs";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const baseUrl = `file://${root}/index.html`;
@@ -174,22 +175,7 @@ async function quickStart(page) {
   await page.goto(baseUrl, { waitUntil: "domcontentloaded", timeout: 20000 });
   await page.waitForFunction(() => typeof startRunFromOverlay === "function", { timeout: 10000 });
   await installProfiler(page);
-  await page.evaluate(() => {
-    selectGameMode("solo");
-    selectPlayerClass("warrior");
-    selectOpponentClass("mage");
-    startRunFromOverlay();
-  });
-  await page.waitForFunction(
-    () => document.getElementById("app")?.dataset.phase === "prep",
-    { timeout: 8000 },
-  );
-  await page.waitForTimeout(1200);
-  await page.evaluate(() => {
-    window.applyUiLayout?.();
-    window.scheduleCanvasFit?.();
-  });
-  await page.waitForTimeout(600);
+  await quickStartPrep(page, { settleMs: 1000 });
 }
 
 async function startBattleAndWait(page) {

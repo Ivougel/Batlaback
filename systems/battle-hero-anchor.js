@@ -176,7 +176,7 @@ const BattleHeroAnchor = (() => {
       haloRatio: 0.28,
       satelliteScale: 0.62,
       heroBelowZoneBias: 0.72,
-      floorAnchorYRatio: 0.72,
+      heroAboveZoneBias: 0.82,
       heroSpecYRatio: 0.20,
       heroSpecXBias: 0.34,
     },
@@ -411,7 +411,62 @@ const BattleHeroAnchor = (() => {
     return prof.heroBelow === true || currentBattleProfile() === "tablet-landscape-side";
   }
 
-  /** Крупный эмодзи-аватар: X в колонке героя, Y на «полу» коридора (не центр арены, не торс). */
+  function getHeroColumnTop(side) {
+    const ar = getAvatarAnchorRect(side);
+    if (ar && ar.height > 24) return ar.top;
+
+    const panelId = side === "enemy" ? "enemy-avatar-panel" : "player-avatar-panel";
+    const panelRect = document.getElementById(panelId)?.getBoundingClientRect();
+    if (panelRect && panelRect.height > 16) return panelRect.top;
+
+    const objectsLayer = document.getElementById("layer-objects");
+    const heroRowTop = readCssPx("--battle-hero-row-top", 0);
+    if (objectsLayer && heroRowTop > 0) {
+      return objectsLayer.getBoundingClientRect().top + heroRowTop;
+    }
+
+    return null;
+  }
+
+  function usesHeroAboveThoughtAnchors() {
+    if (!isFlankArenaBattle() || usesHeadBadgeAnchors()) return false;
+    const profile = currentBattleProfile();
+    return profile === "tablet-landscape-side" || profile.startsWith("desktop-");
+  }
+
+  /** Flank-arena: эмодзи-аватар над героем/HUD (верх колонки), не на торсе и не на «полу». */
+  function getHeroAboveThoughtAnchor(side) {
+    const cx = getHeroColumnCenterX(side);
+    if (cx == null) return null;
+
+    const emojiSize = thoughtSlotEmojiSize();
+    const halo = thoughtSlotHaloPx(emojiSize);
+    const containerSize = emojiSize + halo * 2;
+    const gap = Math.max(thoughtSlotGapPx(), Math.round(10 * readCssPx("--ui-scale", 1)));
+
+    const heroTop = getHeroColumnTop(side);
+    const hudRect = getBattleHudEl(side)?.getBoundingClientRect();
+
+    const ceilingCandidates = [heroTop, hudRect?.top].filter((v) => Number.isFinite(v) && v > 0);
+    const ceilingY = ceilingCandidates.length ? Math.min(...ceilingCandidates) : null;
+    if (ceilingY == null) return null;
+
+    const slotTop = ceilingY - gap - containerSize;
+    const cy = slotTop + containerSize / 2;
+
+    return {
+      cx,
+      cy,
+      emojiSize,
+      halo,
+      containerSize,
+      top: slotTop,
+      left: cx - containerSize / 2,
+      size: containerSize,
+    };
+  }
+
+  /** Центральная арена: эмодзи на боевом полу (x20/y58, x80/y58). */
   function getCombatFloorThoughtAnchor(side) {
     const floor = getCombatFloorRect();
     if (!floor) return null;
@@ -420,22 +475,9 @@ const BattleHeroAnchor = (() => {
     const emojiSize = thoughtSlotEmojiSize();
     const halo = thoughtSlotHaloPx(emojiSize);
     const containerSize = emojiSize + halo * 2;
-    const gap = thoughtSlotGapPx();
-    const prof = emojiProfile();
 
-    const cx = isFlankArenaBattle()
-      ? (getHeroColumnCenterX(side) ?? floor.left + floor.width * anchorNorm.x)
-      : floor.left + floor.width * anchorNorm.x;
-
-    const yRatio = prof.floorAnchorYRatio ?? anchorNorm.y ?? 0.58;
-    let cy = floor.top + floor.height * yRatio;
-
-    const hudRect = getBattleHudEl(side)?.getBoundingClientRect();
-    const minCy = (hudRect?.bottom ?? floor.top) + gap + emojiSize * 0.42;
-    const maxCy = visibleBattleCorridorTopPx() - gap - emojiSize * 0.42;
-    if (Number.isFinite(maxCy) && maxCy > minCy) {
-      cy = Math.min(maxCy, Math.max(minCy, cy));
-    }
+    const cx = floor.left + floor.width * anchorNorm.x;
+    const cy = floor.top + floor.height * anchorNorm.y;
 
     return {
       cx,
@@ -599,7 +641,12 @@ const BattleHeroAnchor = (() => {
 
   /** Позиция thought-slot в viewport (px). */
   function getThoughtSlotAnchor(side) {
-    // Flank-arena: эмодзи в колонке героя на боевом полу (не центр арены, не торс).
+    // Tablet-side / desktop flank: эмодзи над героем в колонке (как на макете).
+    if (usesHeroAboveThoughtAnchors()) {
+      const aboveHero = getHeroAboveThoughtAnchor(side);
+      if (aboveHero) return aboveHero;
+    }
+
     if (usesCombatFloorAnchors() && !usesHeadBadgeAnchors()) {
       const floorAnchor = getCombatFloorThoughtAnchor(side);
       if (floorAnchor) return floorAnchor;
@@ -714,8 +761,11 @@ const BattleHeroAnchor = (() => {
     usesHeadBadgeAnchors,
     getHeadBadgeThoughtAnchor,
     getCombatFloorThoughtAnchor,
+    getHeroAboveThoughtAnchor,
+    getHeroColumnTop,
     getHeroBelowThoughtAnchor,
     getHeroNearSpecAnchor,
+    usesHeroAboveThoughtAnchors,
     usesHeroBelowThoughtAnchors,
     invalidateMeasureCache,
   };

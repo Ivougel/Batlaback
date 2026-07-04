@@ -257,7 +257,8 @@ function startBattleResultTheater(summary) {
   }, 720);
 
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (!reduced) {
+  const lightFx = typeof BattleFxTier !== "undefined" && BattleFxTier.isLightBattleFx();
+  if (!reduced && !lightFx) {
     battleTheaterTimer = window.setInterval(() => cycleTheaterBubbles(summary), 3200);
     battleTheaterMoodTimer = window.setInterval(() => rerollTheaterMoods(summary), 6800);
   }
