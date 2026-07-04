@@ -786,8 +786,14 @@ html[data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel .btn-refresh-sh
   content: "🔄";
   font-size: calc(30px * var(--ui-scale, 1));
   line-height: 1;
-  color: inherit;
+  color: var(--meadow-ink, #2a4a2e);
+  -webkit-text-fill-color: initial;
   filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.35));
+}
+
+html[data-visual-theme="diablo"][data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel .btn-refresh-shop::before {
+  color: var(--meadow-gold-bright, #f0c14b);
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.55));
 }
 
 html[data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel .btn-refresh-shop:hover:not(:disabled) {
