@@ -46,6 +46,11 @@ html[data-lobby2p-hud] #btn-fight {
   display: none !important;
 }
 
+html[data-lobby2p-hud][data-prep-shop-open] .prep-shop-popover__backdrop {
+  background: transparent !important;
+  pointer-events: none !important;
+}
+
 html[data-lobby2p-hud] #app {
   display: flex;
   flex-direction: column;
@@ -122,7 +127,7 @@ html[data-lobby2p-hud] #app {
   grid-template-areas:
     "head0 gap0 head1"
     "canvas canvas canvas"
-    "shop0 gap1 shop1"
+    "comm0 gap1 comm1"
     "bench0 gap2 bench1"
     "act0 gap3 act1";
   gap: 0;
@@ -133,8 +138,8 @@ html[data-lobby2p-hud] #app {
 .lobby2p-col-head[data-human="0"] { grid-area: head0; }
 .lobby2p-col-head[data-human="1"] { grid-area: head1; }
 .lobby2p-canvas-host { grid-area: canvas; }
-.lobby2p-col-shop[data-human="0"] { grid-area: shop0; }
-.lobby2p-col-shop[data-human="1"] { grid-area: shop1; }
+.lobby2p-col-commerce[data-human="0"] { grid-area: comm0; }
+.lobby2p-col-commerce[data-human="1"] { grid-area: comm1; }
 .lobby2p-col-bench[data-human="0"] { grid-area: bench0; }
 .lobby2p-col-bench[data-human="1"] { grid-area: bench1; }
 .lobby2p-col-actions[data-human="0"] { grid-area: act0; }
@@ -275,6 +280,67 @@ html[data-lobby2p-hud] #app {
   height: 100%;
 }
 
+html[data-lobby2p-hud] .lobby2p-canvas-host .layer-fx {
+  pointer-events: none !important;
+}
+
+html[data-lobby2p-hud] .lobby2p-canvas-host .layer-world {
+  pointer-events: auto !important;
+  z-index: 1;
+}
+
+/* Перебиваем tablet-side / prep-side: поле на всю ширину host, без сдвига вправо */
+html[data-lobby2p-hud] .lobby2p-canvas-host .layer-world,
+html[data-lobby2p-hud][data-ui-surface="tablet-side"] #app[data-phase="prep"] .lobby2p-canvas-host .layer-world {
+  display: flex !important;
+  align-items: stretch !important;
+  justify-content: stretch !important;
+  padding: 0 !important;
+}
+
+html[data-lobby2p-hud] .lobby2p-canvas-host .prep-field-island,
+html[data-lobby2p-hud][data-ui-surface="tablet-side"] #app[data-phase="prep"] .lobby2p-canvas-host .prep-field-island {
+  position: relative !important;
+  flex: 1 1 auto !important;
+  align-self: stretch !important;
+  order: unset !important;
+  margin: 0 !important;
+  left: auto !important;
+  top: auto !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  min-height: 0 !important;
+  display: flex !important;
+}
+
+html[data-lobby2p-hud] .lobby2p-canvas-host .battle-canvas-stage,
+html[data-lobby2p-hud] .lobby2p-canvas-host .canvas-scale-wrap,
+html[data-lobby2p-hud][data-ui-surface="tablet-side"] #app[data-phase="prep"] .lobby2p-canvas-host .battle-canvas-stage,
+html[data-lobby2p-hud][data-ui-surface="tablet-side"] #app[data-phase="prep"] .lobby2p-canvas-host .canvas-scale-wrap,
+html[data-lobby2p-hud][data-ui-surface="tablet-side"] #app[data-phase="prep"] .lobby2p-canvas-host .prep-field-island .canvas-scale-wrap {
+  width: 100% !important;
+  height: 100% !important;
+  flex: 1 1 auto !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 !important;
+}
+
+html[data-lobby2p-hud] .lobby2p-canvas-host #game-canvas,
+html[data-lobby2p-hud] .lobby2p-canvas-host #canvas-fx,
+html[data-lobby2p-hud][data-ui-surface="tablet-side"] #app[data-phase="prep"] .lobby2p-canvas-host #game-canvas,
+html[data-lobby2p-hud][data-ui-surface="tablet-side"] #app[data-phase="prep"] .lobby2p-canvas-host #canvas-fx {
+  width: var(--prep-canvas-display-w, auto) !important;
+  height: var(--prep-canvas-display-h, auto) !important;
+  max-width: min(100%, var(--prep-canvas-display-w, 100%)) !important;
+  max-height: min(100%, var(--prep-canvas-display-h, 100%)) !important;
+  object-fit: contain !important;
+  display: block !important;
+  flex: 0 0 auto !important;
+}
+
 .lobby2p-canvas-host .prep-field-island,
 .lobby2p-canvas-host .battle-canvas-stage,
 .lobby2p-canvas-host .canvas-scale-wrap {
@@ -286,102 +352,69 @@ html[data-lobby2p-hud] #app {
 }
 
 .lobby2p-canvas-host canvas {
-  width: 100%;
-  height: 100%;
-  max-width: 100%;
-  max-height: 100%;
   object-fit: contain;
 }
 
-/* ── Shop ── */
-.lobby2p-col-shop {
+/* ── Commerce (shop popover FAB + sell) ── */
+.lobby2p-col-commerce {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   padding: 6px 8px;
   border-left: 1px solid rgba(212, 168, 83, 0.15);
   border-right: 1px solid rgba(212, 168, 83, 0.15);
   background: rgba(12, 9, 7, 0.88);
-  max-height: calc(118px * var(--ui-scale, 1));
   min-height: 0;
-  overflow: hidden;
 }
 
-.lobby2p-col-shop--active {
-  background: rgba(18, 24, 36, 0.55);
-  box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.25);
+html[data-lobby2p-hud] .lobby2p-col-commerce--active .lobby2p-shop-fab {
+  border-color: rgba(96, 165, 250, 0.65);
+  box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.35);
 }
 
-.lobby2p-shop-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  margin-bottom: 6px;
-}
-
-.lobby2p-shop-label {
-  font-size: 0.72rem;
-  color: rgba(212, 196, 168, 0.8);
-}
-
-.lobby2p-refresh {
-  padding: 4px 8px;
-  font-size: 0.76rem;
-  min-height: 28px;
-  border-radius: 8px;
-}
-
-.lobby2p-shop-body {
-  display: flex;
-  align-items: stretch;
-  gap: 6px;
-}
-
-.lobby2p-shop-slots {
-  display: flex;
+.lobby2p-shop-fab {
   flex: 1 1 auto;
-  flex-wrap: nowrap;
-  gap: 4px;
-  align-items: stretch;
-  min-height: 0;
-  max-height: calc(84px * var(--ui-scale, 1));
-  overflow-x: auto;
-  overflow-y: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: calc(44px * var(--ui-scale, 1));
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  border-radius: 10px;
+  white-space: nowrap;
 }
 
-.lobby2p-shop-slots .shop-card {
+.lobby2p-shop-fab[aria-expanded="true"] {
+  border-color: rgba(212, 168, 83, 0.75);
+  background: rgba(24, 18, 12, 0.95);
+}
+
+.lobby2p-col-commerce .lobby2p-sell-zone {
   flex: 0 0 auto;
-  width: calc(72px * var(--ui-scale, 1));
-  min-width: calc(72px * var(--ui-scale, 1));
-  max-width: calc(72px * var(--ui-scale, 1));
-  min-height: calc(72px * var(--ui-scale, 1));
-}
-
-.lobby2p-shop-slots .shop-item-main {
-  padding: 4px;
-}
-
-.lobby2p-shop-slots .shop-item-visual .item-icon-shell {
-  width: 36px;
-  height: 36px;
-}
-
-.lobby2p-sell-zone {
-  flex: 0 0 auto;
-  width: 44px;
-  min-height: 44px;
-  border-radius: 8px;
+  width: calc(44px * var(--ui-scale, 1));
+  min-height: calc(44px * var(--ui-scale, 1));
+  border-radius: 10px;
   border: 1px dashed rgba(212, 168, 83, 0.45);
   background: rgba(12, 8, 6, 0.85);
   font-size: 1.1rem;
   cursor: pointer;
 }
 
-.lobby2p-sell-zone.is-drag-active {
+.lobby2p-col-commerce .lobby2p-sell-zone.is-drag-active {
   border-color: rgba(248, 113, 113, 0.55);
 }
 
-.lobby2p-sell-zone.is-drag-target {
+.lobby2p-col-commerce .lobby2p-sell-zone.is-drag-target {
   border-color: rgba(74, 222, 128, 0.75);
   box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.35);
+}
+
+/* legacy shop row — скрыто, popover через FAB */
+.lobby2p-col-shop,
+.lobby2p-shop-slots {
+  display: none !important;
 }
 
 /* ── Bench ── */
@@ -760,9 +793,9 @@ html[data-lobby2p-hud][data-ui-surface="tablet-side"] .lobby2p-col-actions butto
 }
 
 html[data-lobby2p-hud][data-ui-surface="tablet-side"] .lobby2p-shop-slots .shop-card {
-  flex: 1 1 calc(33% - 4px);
+  flex: 0 0 auto;
   min-width: calc(70px * var(--ui-scale, 1));
-  max-width: calc(100px * var(--ui-scale, 1));
+  max-width: calc(88px * var(--ui-scale, 1));
   min-height: calc(78px * var(--ui-scale, 1));
 }
 

@@ -18,7 +18,7 @@ const COMPANION_CATALOG = {
     id: "s_stranger",
     name: "Странник",
     emoji: "🐣",
-    desc: "+1% ко всем характеристикам · без ограничений экипа",
+    desc: "Все характеристики +1%. Экип без ограничений.",
     equipRestrict: [],
     combat: { allMult: 0.01 },
     mutationBias: ["w_veteran", "r_rogue", "m_sage", "p_hermit"],
@@ -27,7 +27,7 @@ const COMPANION_CATALOG = {
     id: "s_blade",
     name: "Дух мечника",
     emoji: "⚔️",
-    desc: "+физика · −12% магии",
+    desc: "Физический урон +4%. Магический урон −12%.",
     equipRestrict: [],
     combat: { damageMult: 0.04, magicDamageMult: -0.12 },
     mutationBias: ["w_guardian", "w_berserk", "w_crusader", "p_paladin", "r_plague", "m_battlemage"],
@@ -36,7 +36,7 @@ const COMPANION_CATALOG = {
     id: "s_spark",
     name: "Огненная искорка",
     emoji: "🔥",
-    desc: "+огонь · −холод",
+    desc: "Огненные эффекты +8%. Холодные −10%.",
     equipRestrict: [],
     combat: { fireTagMult: 0.08, coldTagMult: -0.1 },
     mutationBias: ["m_pyro", "p_inquisitor", "p_zrecrela"],
@@ -45,7 +45,7 @@ const COMPANION_CATALOG = {
     id: "s_frost",
     name: "Ледяная крупинка",
     emoji: "❄️",
-    desc: "+холод и мана · −огонь",
+    desc: "Холодные эффекты +8%. Огненные −10%.",
     equipRestrict: [],
     combat: { coldTagMult: 0.08, fireTagMult: -0.1 },
     mutationBias: ["m_cryo", "m_seer"],
@@ -54,7 +54,7 @@ const COMPANION_CATALOG = {
     id: "s_arcane",
     name: "Искра арканы",
     emoji: "✨",
-    desc: "+магия · −физика · без двуручного на манекене",
+    desc: "Магический урон +6%. Физический −8%. На манекене нельзя двуручное.",
     equipRestrict: ["no_two_hand"],
     combat: { magicDamageMult: 0.06, damageMult: -0.08 },
     mutationBias: ["m_arcanist", "p_discipline"],
@@ -63,7 +63,7 @@ const COMPANION_CATALOG = {
     id: "s_shadow",
     name: "Тень",
     emoji: "🌑",
-    desc: "+яд и скорость · −блок · без щита на манекене",
+    desc: "Яд +8%, предметы быстрее. Блок слабее. На манекене нельзя щит.",
     equipRestrict: ["no_shield"],
     combat: { poisonTagMult: 0.08, cooldownMult: -0.04, shieldBlockMult: -0.1 },
     mutationBias: ["r_assassin", "r_shadow", "r_nightblade"],
@@ -72,11 +72,48 @@ const COMPANION_CATALOG = {
     id: "s_light",
     name: "Свет",
     emoji: "🌟",
-    desc: "+holy и хил · −burst",
+    desc: "Святой урон +8%, лечение +6%.",
     equipRestrict: [],
     combat: { holyTagMult: 0.08, healTagMult: 0.06 },
     mutationBias: ["p_paladin", "p_zrecrela", "p_oracle", "p_hierophant", "r_bard", "w_crusader"],
   },
+};
+
+const MUTATION_FORM_PERK = "Предметы перезаряжаются на 2% быстрее";
+
+const MUTATION_CAPSTONE_DESCS = {
+  w_guardian: "При блоке выше 25: раз в 8 с отражает 20% святого урона",
+  w_berserk: "Ниже половины HP: +12% к урону и −8% к получаемому (один раз)",
+  w_crusader: "15% физического урона превращается в блок; святые предметы рядом перезаряжаются быстрее",
+  w_duelist: "Первый удар каждые 5 с: +25% урона и дополнительная уязвимость врагу",
+  w_juggernaut: "Стоите на месте — +2 блока в секунду (максимум +10)",
+  w_gladiator: "30% шанс колющего ответа, когда по вам попадают",
+  w_breaker: "Каждый четвёртый удар снижает блок врага на 30% на 3 с",
+  w_veteran: "+1% ко всем характеристикам за каждый тип предметов в рюкзаке (до +5%)",
+  r_assassin: "При 3+ стаках яда на враге: следующий удар +35% (раз в 6 с)",
+  r_bard: "Раз в 7 с гимн: +8 блока, −1 стамина врагу, музыкальные предметы быстрее",
+  r_plague: "Яд накладывает кровотечение; яд и кровотечение усиливают друг друга на 8%",
+  r_trickster: "Раз в 9 с крадёт у врага один положительный эффект",
+  r_shadow: "Первые 10 с боя: +15% к уклонению",
+  r_nightblade: "8% урона от яда превращается в лечение",
+  r_scout: "Питомцы и ядовитые предметы: +10% к периодическому урону",
+  r_rogue: "+1 золото за раунд, продажа на 5% выгоднее, бонус за разнообразие предметов",
+  m_pyro: "Каждый пятый огненный тик разогревает все огненные предметы в рюкзаке",
+  m_cryo: "При 4+ стаках льда на враге: 1,5 с замедления (−20% перезарядки врага)",
+  m_arcanist: "+2 к максимуму стаков маны",
+  m_elementalist: "Нечётные активации +8% огня, чётные +8% льда",
+  m_battlemage: "После магического удара: следующий ближний +20% (2 с)",
+  m_chaos: "10% срабатываний дают случайный бонус от соседних предметов",
+  m_sage: "+0,5% к магическому урону за каждый тип предметов в рюкзаке (до +4%)",
+  m_seer: "Раз в 8 с: следующий удар врага наносит на 25% меньше урона",
+  p_paladin: "12% урона превращается в блок; при блоке выше 30 следующий святой удар +25%",
+  p_discipline: "Раз в 5 с: стак Покаяния (+8% к получаемому святому и магическому урону)",
+  p_zrecrela: "Раз в 6 с гимн: снимает дебафф, −1 стамина врагу, святые предметы рядом сильнее",
+  p_oracle: "Лечение до 90% HP без штрафа насыщения",
+  p_plague: "Святые периодические эффекты также накладывают яд (50% силы)",
+  p_hierophant: "Святые эффекты на 15% сильнее",
+  p_inquisitor: "Против врага с 2+ дебаффами: святой и огненный урон +10%",
+  p_hermit: "+1% ко всем характеристикам за тип предметов; лечение и еда не конфликтуют",
 };
 
 function mut(id, noviceClass, name, formName, weights, opts = {}) {
@@ -92,6 +129,8 @@ function mut(id, noviceClass, name, formName, weights, opts = {}) {
     maxLeaderPct: opts.maxLeaderPct ?? 0.35,
     requiresCompanion: opts.requiresCompanion || null,
     capstoneId: opts.capstoneId || id,
+    capstoneDesc: MUTATION_CAPSTONE_DESCS[id] || opts.capstoneDesc || "",
+    formPerk: MUTATION_FORM_PERK,
   };
 }
 
@@ -139,6 +178,99 @@ function getCompanionById(id) {
 
 function getMutationById(id) {
   return MUTATION_CATALOG[id] || null;
+}
+
+const MUTATION_TAG_LABELS = {
+  weapon: "оружие",
+  armor: "броня",
+  shield: "щит",
+  magic: "магия",
+  gem: "кристалл",
+  poison: "яд",
+  food: "еда",
+  fire: "огонь",
+  cold: "лёд",
+  holy: "святой",
+  luck: "удача",
+  pet: "питомец",
+  debuff: "дебафф",
+  melee: "ближний",
+  musical: "музыка",
+  heal: "лечение",
+  utility: "универсальный",
+  speed: "скорость",
+  vampiric: "вампирский",
+};
+
+function formatMutationTagLabel(tag) {
+  if (typeof formatTagLabel === "function") return formatTagLabel(tag);
+  return MUTATION_TAG_LABELS[tag] || tag;
+}
+
+function formatMutationCompanionBias(bias = []) {
+  if (!bias.length) return "";
+  const names = bias
+    .map((id) => getCompanionById(id)?.name || id)
+    .filter(Boolean);
+  if (!names.length) return "";
+  return ` · лучше со спутником ${names.join(" или ")}`;
+}
+
+function getMutationGrowthHint(mutation) {
+  if (!mutation) return "";
+  if (mutation.diversity) {
+    return "Разные типы предметов в рюкзаке · нужен спутник Странник";
+  }
+  const tags = Object.entries(mutation.tagWeights || {})
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([tag]) => formatMutationTagLabel(tag));
+  const bias = formatMutationCompanionBias(mutation.companionBias);
+  return tags.length ? `Копите предметы: ${tags.join(", ")}${bias}` : "";
+}
+
+function getMutationPerkMeta(mutationId) {
+  const def = getMutationById(mutationId);
+  if (!def) return null;
+  return {
+    growthHint: getMutationGrowthHint(def),
+    formPerk: def.formPerk || MUTATION_FORM_PERK,
+    capstoneDesc: def.capstoneDesc || MUTATION_CAPSTONE_DESCS[mutationId] || "",
+    perkTagline: def.capstoneDesc || MUTATION_CAPSTONE_DESCS[mutationId] || "",
+  };
+}
+
+function escapeMutationHtml(text) {
+  return String(text ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function formatMutationMilestoneGap(progress, round = 1, formId = null, mutationId = null) {
+  if (mutationId) {
+    const perks = getMutationPerkMeta(mutationId);
+    return perks?.capstoneDesc ? `R16: ${perks.capstoneDesc}` : "Мутация R16";
+  }
+  if (formId && round >= MUTATION_ROUND_FORM) {
+    return `R8: ${MUTATION_FORM_PERK}`;
+  }
+  if (!progress?.leader) return "";
+  const sharePct = Math.round((progress.leaderShare ?? progress.leaderPct ?? 0) * 100);
+  if (round >= MUTATION_ROUND_FINAL) {
+    const need = Math.round(MUTATION_FINAL_THRESHOLD * 100);
+    if (sharePct >= need) return `Готово к мутации R${MUTATION_ROUND_FINAL}`;
+    return `До мутации R${MUTATION_ROUND_FINAL}: ещё ${Math.max(0, need - sharePct)}%`;
+  }
+  if (round >= MUTATION_ROUND_FORM) {
+    const need = Math.round(MUTATION_FINAL_THRESHOLD * 100);
+    if (sharePct >= need) return `Готово к мутации R${MUTATION_ROUND_FINAL}`;
+    return `До мутации R${MUTATION_ROUND_FINAL}: ещё ${Math.max(0, need - sharePct)}%`;
+  }
+  const need = Math.round(MUTATION_FORM_THRESHOLD * 100);
+  if (sharePct >= need) return `Готово к форме R${MUTATION_ROUND_FORM}`;
+  return `До формы R${MUTATION_ROUND_FORM}: ещё ${Math.max(0, need - sharePct)}%`;
 }
 
 function getMutationsForNoviceClass(classId) {
@@ -387,37 +519,76 @@ function tickMutationCapstones(state, dt) {
   }
 }
 
+function renderMutationDeltaBadgeHtml(delta, compact = false) {
+  if (!delta) return "";
+  if (typeof renderMutationDeltaBadge === "function") {
+    return renderMutationDeltaBadge(delta, { compact });
+  }
+  const sign = delta > 0 ? "+" : "";
+  const dir = delta > 0 ? "up" : "down";
+  const compactClass = compact ? " mutation-progress-delta--compact" : "";
+  return `<span class="mutation-progress-delta mutation-progress-delta--${dir}${compactClass}">${escapeMutationHtml(`${sign}${delta}%`)}</span>`;
+}
+
+function renderMutationAltLine(entry, deltas) {
+  const delta = deltas?.[entry.id];
+  const deltaHtml = renderMutationDeltaBadgeHtml(delta, true);
+  return `<span class="mutation-progress-alt${delta ? " mutation-progress-alt--changed" : ""}">${escapeMutationHtml(entry.name)} ${entry.pct}%${deltaHtml}</span>`;
+}
+
 function renderMutationProgressHtml(progress, formId, mutationId, round, options = {}) {
   if (!progress) return "";
   const leader = progress.leader;
   const alt = progress.ranked.slice(1, 3);
+  const deltas = options.deltas || null;
+  const hasDeltas = deltas && Object.keys(deltas).length > 0;
+  const pathId = mutationId || formId || leader?.id || null;
   const targetName = mutationId
     ? getMutationById(mutationId)?.name
     : formId
       ? getMutationById(formId)?.formName
       : leader?.name || "—";
   const pct = leader?.pct ?? 0;
+  const leaderDelta = leader?.id ? deltas?.[leader.id] : null;
+  const leaderDeltaHtml = renderMutationDeltaBadgeHtml(leaderDelta);
   const milestone = round >= MUTATION_ROUND_FINAL
     ? "финал"
     : round >= MUTATION_ROUND_FORM
       ? "форма"
       : "рост";
+  const perks = pathId ? getMutationPerkMeta(pathId) : null;
+  const perkLine = mutationId
+    ? perks?.capstoneDesc
+    : formId && round >= MUTATION_ROUND_FORM
+      ? perks?.formPerk
+      : perks?.perkTagline;
+  const gapLine = formatMutationMilestoneGap(progress, round, formId, mutationId);
+  const pathAttr = pathId ? ` data-mutation-id="${escapeMutationHtml(pathId)}"` : "";
+  const pulseClass = hasDeltas ? " mutation-progress--delta-pulse" : "";
+  const perkHtml = perkLine
+    ? `<p class="mutation-progress-perk">${escapeMutationHtml(perkLine)}</p>`
+    : "";
+  const gapHtml = gapLine
+    ? `<span class="mutation-progress-gap">${escapeMutationHtml(gapLine)}</span>`
+    : "";
 
   if (options.heroCard) {
     const altHtml = alt.length
-      ? `<div class="mutation-progress-alts mutation-progress-alts--hero-card">${alt.map((a) => `<span>${a.name} ${a.pct}%</span>`).join("")}</div>`
+      ? `<div class="mutation-progress-alts mutation-progress-alts--hero-card">${alt.map((a) => renderMutationAltLine(a, deltas)).join("")}</div>`
       : "";
     return `
-      <div class="mutation-progress mutation-progress--hero-card" role="status" aria-live="polite">
+      <div class="mutation-progress mutation-progress--hero-card mutation-progress--interactive${pulseClass}"${pathAttr} role="status" aria-live="polite" tabindex="0" title="Подробнее о пути">
         <div class="mutation-progress-head">
           <span class="mutation-progress-eyebrow">Мутация · ${milestone}</span>
-          <strong class="mutation-progress-target">${String(targetName || "—").toUpperCase()}</strong>
+          <strong class="mutation-progress-target">${escapeMutationHtml(String(targetName || "—").toUpperCase())}</strong>
         </div>
+        ${perkHtml}
         <div class="mutation-progress-bar" aria-hidden="true">
           <div class="mutation-progress-fill" style="width:${Math.min(100, pct)}%"></div>
         </div>
         <div class="mutation-progress-meta">
-          <span>${pct}%</span>
+          <span class="mutation-progress-pct">${pct}%${leaderDeltaHtml}</span>
+          ${gapHtml}
         </div>
         ${altHtml}
       </div>
@@ -425,20 +596,22 @@ function renderMutationProgressHtml(progress, formId, mutationId, round, options
   }
 
   const altHtml = alt.length
-    ? `<div class="mutation-progress-alts">${alt.map((a) => `<span>${a.name} ${a.pct}%</span>`).join("")}</div>`
+    ? `<div class="mutation-progress-alts">${alt.map((a) => renderMutationAltLine(a, deltas)).join("")}</div>`
     : "";
 
   return `
-    <div class="mutation-progress" role="status" aria-live="polite">
+    <div class="mutation-progress mutation-progress--interactive${pulseClass}"${pathAttr} role="status" aria-live="polite" tabindex="0" title="Подробнее о пути">
       <div class="mutation-progress-head">
         <span class="mutation-progress-eyebrow">Мутация · ${milestone}</span>
-        <strong class="mutation-progress-target">${targetName}</strong>
+        <strong class="mutation-progress-target">${escapeMutationHtml(targetName)}</strong>
       </div>
+      ${perkHtml}
       <div class="mutation-progress-bar" aria-hidden="true">
         <div class="mutation-progress-fill" style="width:${Math.min(100, pct)}%"></div>
       </div>
       <div class="mutation-progress-meta">
-        <span>${pct}%</span>
+        <span class="mutation-progress-pct">${pct}%${leaderDeltaHtml}</span>
+        ${gapHtml}
         ${formId && !mutationId ? `<span class="mutation-progress-locked">форма R${MUTATION_ROUND_FORM}</span>` : ""}
         ${mutationId ? `<span class="mutation-progress-locked">мутация R${MUTATION_ROUND_FINAL}</span>` : ""}
       </div>

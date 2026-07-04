@@ -80,7 +80,7 @@ const AMPLIFIER_CATALOG = {
     amplifyFamily: "melee",
     rarity: "common",
     implemented: true,
-    desc: "Подсвечивает ближний бой. Если есть melee-предмет: +2% урона.",
+    desc: "Подсвечивает ближний бой. Если есть предмет ближнего боя: +2% урона.",
     combat: { damageMult: 0.02 },
   },
   amplify_staff: {

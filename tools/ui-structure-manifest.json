@@ -22,7 +22,8 @@
     { "id": "battle-result-overlay", "layer": "system", "hiddenByDefault": true },
     { "id": "battle-detail-overlay", "layer": "system", "hiddenByDefault": true },
     { "id": "board-preview-overlay", "layer": "system", "hiddenByDefault": true },
-    { "id": "recipe-book-overlay", "layer": "system", "hiddenByDefault": true }
+    { "id": "recipe-book-overlay", "layer": "system", "hiddenByDefault": true },
+    { "id": "class-detail-overlay", "layer": "menu", "hiddenByDefault": true }
   ],
   "appSheets": [],
   "gamePanels": [

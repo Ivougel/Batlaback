@@ -67,9 +67,6 @@ function isLobby2pSplitPrep() {
 
 function resolveShopContainer(side, containerEl) {
   if (containerEl) return containerEl;
-  if (isLobby2pSplitPrep()) {
-    return document.getElementById(side === "player" ? "lobby2p-shop-slots-0" : "lobby2p-shop-slots-1");
-  }
   return document.getElementById("shop-slots");
 }
 
@@ -83,8 +80,10 @@ function resolveBenchContainer(side, containerEl) {
 
 function renderCommerceForMode(affectedSide) {
   if (isLobby2pSplitPrep()) {
-    renderShop("player", resolveShopContainer("player"));
-    renderShop("enemy", resolveShopContainer("enemy"));
+    const shopOpen = typeof window.isPrepShopPopoverOpen === "function" && window.isPrepShopPopoverOpen();
+    if (shopOpen) {
+      renderShop(rt.getPrepViewSide(), document.getElementById("shop-slots"));
+    }
     renderBench("player", resolveBenchContainer("player"));
     renderBench("enemy", resolveBenchContainer("enemy"));
   } else if (affectedSide) {
@@ -365,8 +364,15 @@ function renderShopCostHTML(cost) {
   return `<div class="cost shop-item-cost" aria-label="Цена ${cost}"><span class="cost-value">${cost}</span><span class="cost-coin" aria-hidden="true">💰</span></div>`;
 }
 
-function renderShopCardHTML(def, { extraClasses = "", innerBefore = "", dataAttrs = "", shapeSize = "md", showShape = true } = {}) {
-  const classes = getRarityCardClasses(def.rarity, ["shop-card", extraClasses].filter(Boolean).join(" "));
+function renderShopCardHTML(def, { extraClasses = "", innerBefore = "", dataAttrs = "", shapeSize = "md", showShape = true, trackItemId = null } = {}) {
+  const trackId = trackItemId || def?.id;
+  const trackClass = typeof getShopCardTrackExtraClasses === "function"
+    ? getShopCardTrackExtraClasses(trackId)
+    : "";
+  const trackBadge = typeof renderShopTrackBadge === "function"
+    ? renderShopTrackBadge(trackId)
+    : "";
+  const classes = getRarityCardClasses(def.rarity, ["shop-card", extraClasses, trackClass].filter(Boolean).join(" "));
   const shapeHtml = showShape
     ? renderItemShapeMiniHTML(def, { size: shapeSize }).replace(
       'class="item-shape-mini',
@@ -377,7 +383,7 @@ function renderShopCardHTML(def, { extraClasses = "", innerBefore = "", dataAttr
   return `<div class="${classes}"${dataAttrs ? ` ${dataAttrs}` : ""} style="--shop-rarity-color:${rarityColor};--item-rarity-color:${rarityColor}">
     <div class="shop-item-main">
       <div class="shop-item-stack">
-        ${innerBefore}
+        ${trackBadge}${innerBefore}
         <div class="shop-item-hero">
           <div class="shop-item-visual">
             <div class="${getItemIconShellClass(def)}">${renderItemIconsHTML(def)}</div>
@@ -431,6 +437,7 @@ function renderShop(side = rt.getPrepViewSide(), containerEl = null) {
               innerBefore: pinBtn,
               shapeSize: "sm",
               showShape: false,
+              trackItemId: itemId,
               dataAttrs: `data-index="${index}" data-item-id="${itemId}" data-build-key="1"${affordable || !editable ? "" : ' data-unaffordable="1" title="Недостаточно золота"'}`,
             });
           }
@@ -443,6 +450,7 @@ function renderShop(side = rt.getPrepViewSide(), containerEl = null) {
               innerBefore: pinBtn,
               shapeSize: "sm",
               showShape: false,
+              trackItemId: itemId,
               dataAttrs: `data-index="${index}" data-item-id="${itemId}" data-amplifier="1"${affordable || !editable ? "" : ' data-unaffordable="1" title="Недостаточно золота"'}`,
             });
           }
@@ -454,8 +462,9 @@ function renderShop(side = rt.getPrepViewSide(), containerEl = null) {
             const affordable = st.gold >= (def.cost ?? 0);
             const pinBtn = renderShopPinButton(index, frozen, editable);
             return renderEnhancementShopCardHTML(enhDef || def, {
-              extraClasses: [frozen ? "frozen" : "", affordable || !editable ? "" : "unaffordable"].filter(Boolean).join(" "),
-              innerBefore: pinBtn,
+              extraClasses: [getShopCardTrackExtraClasses?.(itemId) || "", frozen ? "frozen" : "", affordable || !editable ? "" : "unaffordable"].filter(Boolean).join(" "),
+              innerBefore: `${renderShopTrackBadge?.(itemId) || ""}${pinBtn}`,
+              trackItemId: itemId,
               dataAttrs: `data-index="${index}" data-item-id="${itemId}" data-enhancement="1"${affordable || !editable ? "" : ' data-unaffordable="1" title="Недостаточно золота"'}`,
             });
           }
@@ -466,7 +475,8 @@ function renderShop(side = rt.getPrepViewSide(), containerEl = null) {
             extraClasses: [frozen ? "frozen" : "", affordable || !editable ? "" : "unaffordable"].filter(Boolean).join(" "),
             innerBefore: pinBtn,
             shapeSize: "md",
-            dataAttrs: `data-index="${index}" data-item-id="${itemId}"${affordable || !editable ? "" : ' data-unaffordable="1" title="Недостаточно золота"'}`, 
+            trackItemId: itemId,
+            dataAttrs: `data-index="${index}" data-item-id="${itemId}"${affordable || !editable ? "" : ' data-unaffordable="1" title="Недостаточно золота"'}`,
           });
         } catch (itemErr) {
           console.error("renderShop item failed:", itemId, itemErr);
@@ -496,6 +506,7 @@ function renderShop(side = rt.getPrepViewSide(), containerEl = null) {
       toggleShopFreeze(+btn.dataset.pin, side);
     });
   });
+  if (typeof syncBuildTrackShopBar === "function") syncBuildTrackShopBar();
   el.querySelectorAll(".shop-card:not(.empty)").forEach((card) => {
     if (!card.dataset.unaffordable) {
       card.addEventListener("mousedown", (e) => {

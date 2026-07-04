@@ -142,6 +142,27 @@ const ENHANCEMENT_CATALOG = {
   },
 };
 
+function formatEnhancementPct(value) {
+  const n = Math.round(Math.abs(Number(value) || 0) * 1000) / 10;
+  return Number.isInteger(n) ? `${n}` : String(n).replace(/\.0$/, "");
+}
+
+function formatEnhancementCombatDesc(combat = {}) {
+  if (!combat || typeof combat !== "object") return "";
+  const parts = [];
+  if (combat.maxHp) parts.push(`+${combat.maxHp} к макс. HP`);
+  if (combat.damageMult) parts.push(`+${formatEnhancementPct(combat.damageMult)}% урона`);
+  if (combat.magicDamageMult) parts.push(`+${formatEnhancementPct(combat.magicDamageMult)}% маг. урона`);
+  if (combat.allMult) parts.push(`+${formatEnhancementPct(combat.allMult)}% ко всем эффектам`);
+  if (combat.cooldownMult != null && combat.cooldownMult !== 0) {
+    const pct = formatEnhancementPct(combat.cooldownMult);
+    parts.push(combat.cooldownMult < 0
+      ? `Предметы срабатывают на ${pct}% быстрее`
+      : `Предметы срабатывают на ${pct}% медленнее`);
+  }
+  return parts.join(". ");
+}
+
 function createEmptyEnhancementLoadout() {
   return { head: null, chest: null, boots: null };
 }
@@ -165,7 +186,7 @@ function getEnhancementItemDef(enhDef) {
     cost: getEnhancementShopCost(enhDef),
     tags: [...(enhDef.families || []), "enhancement"],
     cooldown: 0,
-    description: enhDef.desc || "",
+    description: formatEnhancementCombatDesc(enhDef.combat) || enhDef.desc || "",
     craftOnly,
     isEnhancementItem: true,
     enhancementId: enhDef.id,

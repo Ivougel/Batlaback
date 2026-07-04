@@ -142,7 +142,7 @@ const Lobby2pHud = (() => {
     const benchCountEl = document.getElementById(`lobby2p-bench-count-${humanId}`);
     const head = document.querySelector(`.lobby2p-col-head[data-human="${humanId}"]`);
     const actions = document.querySelector(`.lobby2p-col-actions[data-human="${humanId}"]`);
-    const shop = document.querySelector(`.lobby2p-col-shop[data-human="${humanId}"]`);
+    const commerce = document.querySelector(`.lobby2p-col-commerce[data-human="${humanId}"]`);
 
     if (nameEl) nameEl.textContent = fighter?.name || `Игрок ${humanId + 1}`;
     if (goldEl) goldEl.textContent = String(fighter?.gold ?? 0);
@@ -165,7 +165,7 @@ const Lobby2pHud = (() => {
     head?.classList.toggle("lobby2p-col-head--ready", ready);
     head?.classList.toggle("lobby2p-col-head--fighting", fighting);
     head?.classList.toggle("lobby2p-col-head--out", !alive);
-    shop?.classList.toggle("lobby2p-col-shop--active", humanId === activeHuman);
+    commerce?.classList.toggle("lobby2p-col-commerce--active", humanId === activeHuman);
     actions?.classList.toggle("lobby2p-col-actions--ready", ready);
     actions?.classList.toggle("lobby2p-col-actions--fighting", fighting);
 
@@ -189,15 +189,6 @@ const Lobby2pHud = (() => {
       else if (ready) tags.push("готов");
       else if (humanId === activeHuman) tags.push("редакт.");
       badgesEl.textContent = tags.length ? tags.join(" · ") : "";
-    }
-
-    const refreshBtn = shop?.querySelector(".lobby2p-refresh");
-    if (refreshBtn) {
-      const gold = fighter?.gold ?? 0;
-      const canPay = gold >= 1 && !blocked && !fighting && humanId === activeHuman;
-      refreshBtn.disabled = !canPay;
-      const costEl = refreshBtn.querySelector("b");
-      if (costEl) costEl.textContent = "1";
     }
 
     if (benchCountEl && typeof callbacks.getBenchCount === "function") {
@@ -234,10 +225,13 @@ const Lobby2pHud = (() => {
     if (!active) {
       unmountCanvas();
       document.getElementById("lobby2p-roster-drawer")?.classList.add("hidden");
+      if (typeof window.closePrepShopPopover === "function") window.closePrepShopPopover();
+      if (typeof window.syncShopMount === "function") window.syncShopMount();
       return;
     }
 
     mountCanvas();
+    if (typeof window.syncShopMount === "function") window.syncShopMount();
     const roundEl = document.getElementById("lobby2p-top-round");
     if (roundEl && typeof callbacks.getRound === "function") {
       roundEl.textContent = String(callbacks.getRound());
@@ -280,18 +274,19 @@ const Lobby2pHud = (() => {
     bindBattle();
     const split = document.getElementById("lobby2p-split");
     split?.addEventListener("click", (e) => {
-      const shopCol = e.target.closest(".lobby2p-col-shop, .lobby2p-col-bench");
-      if (shopCol && !e.target.closest(".lobby2p-refresh, .shop-pin, button")) {
-        callbacks.setActiveHuman?.(Number(shopCol.dataset.human));
+      const shopFab = e.target.closest(".lobby2p-shop-fab");
+      if (shopFab) {
+        e.stopPropagation();
+        callbacks.toggleShop?.(Number(shopFab.dataset.human));
+        return;
+      }
+      const benchCol = e.target.closest(".lobby2p-col-bench");
+      if (benchCol && !e.target.closest("button")) {
+        callbacks.setActiveHuman?.(Number(benchCol.dataset.human));
       }
       const head = e.target.closest(".lobby2p-col-head");
       if (head && !e.target.closest("button")) {
         callbacks.setActiveHuman?.(Number(head.dataset.human));
-        return;
-      }
-      const refreshBtn = e.target.closest(".lobby2p-refresh");
-      if (refreshBtn) {
-        callbacks.refreshShop?.(Number(refreshBtn.dataset.human));
         return;
       }
       const actions = e.target.closest(".lobby2p-col-actions");

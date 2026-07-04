@@ -21,7 +21,7 @@ function loadUiSandbox() {
   sandbox.global = sandbox;
   sandbox.window = sandbox;
   const ctx = vm.createContext(sandbox);
-  for (const file of ["classes.js", "systems/mutations.js", "systems/mutation-lore-quips.js", "systems/mutation-ui.js"]) {
+  for (const file of ["classes.js", "systems/mutations.js", "systems/mutation-ui.js"]) {
     vm.runInContext(fs.readFileSync(path.join(ROOT, file), "utf8"), ctx);
   }
   vm.runInContext(`
@@ -29,7 +29,11 @@ function loadUiSandbox() {
       getMutationsForNoviceClass,
       getMutationById,
       getNoviceClassLabel,
-      getMutationLoreQuip,
+      getMutationPerkMeta,
+      getMutationGrowthHint,
+      getClassIntroBlurb,
+      formatMutationMilestoneGap,
+      renderMutationProgressHtml,
       formatMutationIntentLabel,
       buildClassMutationGalleryHtml,
       getPrepMutationBadgeMeta,
@@ -38,6 +42,7 @@ function loadUiSandbox() {
       escapeMutationUiHtml,
       MUTATION_ROUND_FORM,
       MUTATION_ROUND_FINAL,
+      MUTATION_FORM_THRESHOLD,
     });
   `, ctx);
   return sandbox;
@@ -59,8 +64,8 @@ function run() {
   assert(html.includes("Жрец-мыковичок"), "галерея: подпись класса");
   passed++;
 
-  const quip = s.getMutationLoreQuip("m_chaos");
-  assert(quip.includes("умная"), "лор-квип: хаотичный учёный");
+  const introBlurb = s.getClassIntroBlurb("priest");
+  assert(introBlurb.includes("еду") && introBlurb.includes("Старт:"), "class intro blurb: факты");
   passed++;
 
   const escaped = s.escapeMutationUiHtml('<script>"&');
@@ -82,6 +87,37 @@ function run() {
 
   const badgeHtml = s.renderLobbyMutationBadgeHtml({ mutationFormId: "p_oracle" }, 10);
   assert(badgeHtml.includes("lobby-mutation-badge--form"), "lobby badge form");
+  passed++;
+
+  const sagePerks = s.getMutationPerkMeta("m_sage");
+  assert(sagePerks?.capstoneDesc.includes("магическ"), "perk meta: мудрец capstone");
+  assert(sagePerks?.formPerk.includes("перезаряжаются"), "perk meta: form perk");
+  passed++;
+
+  const zrecrelaGrowth = s.getMutationGrowthHint(s.getMutationById("p_zrecrela"));
+  assert(zrecrelaGrowth.includes("святой") && zrecrelaGrowth.includes("музыка"), "growth hint: русские теги");
+  passed++;
+
+  const progress = {
+    leader: { id: "m_arcanist", name: "АРКАНИСТ", pct: 42 },
+    leaderShare: 0.42,
+    ranked: [
+      { id: "m_arcanist", name: "АРКАНИСТ", pct: 42 },
+      { id: "m_sage", name: "МУДРЕЦ", pct: 18 },
+    ],
+  };
+  const htmlProgress = s.renderMutationProgressHtml(progress, null, null, 3, { heroCard: true });
+  assert(htmlProgress.includes("mutation-progress-perk"), "progress: perk line");
+  assert(htmlProgress.includes("mutation-progress-gap"), "progress: milestone gap");
+  assert(htmlProgress.includes('data-mutation-id="m_arcanist"'), "progress: clickable path");
+  passed++;
+
+  const gap = s.formatMutationMilestoneGap(progress, 3, null, null);
+  assert(gap.includes("Готово к форме"), "milestone gap: готово к R8");
+  passed++;
+
+  const mutMetaPerk = s.getPrepMutationBadgeMeta(null, "m_arcanist", 16);
+  assert(mutMetaPerk?.perk?.includes("стаков"), "бейдж R16: perk line");
   passed++;
 
   console.log(`mutation-ui.test.mjs: ${passed}/${passed} OK`);

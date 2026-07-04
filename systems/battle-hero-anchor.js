@@ -785,18 +785,36 @@ const BattleHeroAnchor = (() => {
     return visibleViewportBottomPx();
   }
 
-  /** Эмодзи спека — верх колонки героя (как на макете flank-arena). */
+  /** Эмодзи спека — над головой full-body героя (prep / battle-prep-hero-layer). */
   function getHeroNearSpecAnchor(side) {
+    const prof = emojiProfile();
+    const xBias = prof.heroSpecXBias ?? 0.34;
+    const emojiSize = thoughtSlotEmojiSize();
+    const halo = thoughtSlotHaloPx(emojiSize);
+    const containerSize = emojiSize + halo * 2;
+
+    const prepRect = getPrepCharacterAnchorRect(side);
+    if (prepRect && prepRect.height >= 48) {
+      const cx = side === "enemy"
+        ? prepRect.left + prepRect.width * (0.5 - xBias)
+        : prepRect.left + prepRect.width * (0.5 + xBias);
+      const cy = prepRect.top + prepRect.height * (prof.heroSpecYRatio ?? 0.12);
+      return {
+        cx,
+        cy,
+        emojiSize,
+        halo,
+        containerSize,
+        top: cy - containerSize / 2,
+        left: cx - containerSize / 2,
+        size: containerSize,
+      };
+    }
+
     const panelId = side === "enemy" ? "enemy-avatar-panel" : "player-avatar-panel";
     const panelRect = document.getElementById(panelId)?.getBoundingClientRect();
     const ar = getAvatarAnchorRect(side);
     if ((!panelRect || panelRect.width < 40) && (!ar || ar.height < 40)) return null;
-
-    const emojiSize = thoughtSlotEmojiSize();
-    const halo = thoughtSlotHaloPx(emojiSize);
-    const containerSize = emojiSize + halo * 2;
-    const prof = emojiProfile();
-    const xBias = prof.heroSpecXBias ?? 0.34;
 
     let cx;
     let cy;

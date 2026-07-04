@@ -265,6 +265,18 @@ html[data-ui-surface="tablet-side"] #app:is([data-phase="prep"], [data-prep-hero
   text-transform: uppercase;
 }
 
+html[data-prep-layout="side"] #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .mutation-progress--hero-card .mutation-progress-perk,
+html[data-ui-surface="tablet-side"] #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .mutation-progress--hero-card .mutation-progress-perk {
+  font-size: max(9px, calc(0.58rem * var(--type-scale, 1)));
+  line-height: 1.3;
+  opacity: 0.9;
+}
+
+html[data-prep-layout="side"] #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .mutation-progress--hero-card .mutation-progress-gap,
+html[data-ui-surface="tablet-side"] #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .mutation-progress--hero-card .mutation-progress-gap {
+  color: rgba(184, 240, 200, 0.95);
+}
+
 html[data-prep-layout="side"] #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .mutation-progress--hero-card .mutation-progress-bar,
 html[data-ui-surface="tablet-side"] #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .mutation-progress--hero-card .mutation-progress-bar {
   height: calc(10px * var(--ui-scale, 1));

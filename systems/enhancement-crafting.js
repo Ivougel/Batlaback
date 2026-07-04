@@ -3,6 +3,23 @@
  * @see docs/enhancement-item-set-gdd.md
  */
 
+function getBuildKeyPlayerDescription(buildId) {
+  const spec = BUILD_UNLOCK_CATALOG[buildId];
+  const label = spec?.label || buildId;
+  switch (buildId) {
+    case "triple_pyro_mage":
+      return `Открывает ветку «${label}»: чаще огненные усиления и рецепты в магазине.`;
+    case "triple_zrecrela":
+      return `Открывает ветку «${label}»: видны рецепты и чаще святые усиления.`;
+    case "triple_paladin":
+      return `Открывает ветку «${label}»: чаще святые опоры и усиления.`;
+    case "triple_assassin":
+      return `Открывает ветку «${label}»: чаще ядовитые опоры.`;
+    default:
+      return `Открывает ветку «${label}»: чаще предметы этой ветки в магазине.`;
+  }
+}
+
 const BUILD_UNLOCK_CATALOG = {
   triple_pyro_mage: {
     id: "triple_pyro_mage",
@@ -52,7 +69,7 @@ const KEY_ITEM_CATALOG = {
     rarity: "rare",
     cost: 4,
     tags: ["key", "fire", "enhancement"],
-    description: "Открывает ветку «Огненный пиромант»: bias усилений и крафтов в магазине.",
+    description: getBuildKeyPlayerDescription("triple_pyro_mage"),
     isBuildKey: true,
     unlockBuild: "triple_pyro_mage",
     metaEffects: [{ type: "unlock_build", build: "triple_pyro_mage", phase: "passive" }],
@@ -67,7 +84,7 @@ const KEY_ITEM_CATALOG = {
     rarity: "epic",
     cost: 5,
     tags: ["key", "holy", "musical", "enhancement"],
-    description: "Открывает ветку «ЖРЕЦИЛА»: видны рецепты и чаще святые усиления.",
+    description: getBuildKeyPlayerDescription("triple_zrecrela"),
     isBuildKey: true,
     unlockBuild: "triple_zrecrela",
     metaEffects: [{ type: "unlock_build", build: "triple_zrecrela", phase: "passive" }],
@@ -82,7 +99,7 @@ const KEY_ITEM_CATALOG = {
     rarity: "rare",
     cost: 4,
     tags: ["key", "holy", "enhancement"],
-    description: "Открывает ветку «Паладин»: bias святых опор и усилений.",
+    description: getBuildKeyPlayerDescription("triple_paladin"),
     isBuildKey: true,
     unlockBuild: "triple_paladin",
     metaEffects: [{ type: "unlock_build", build: "triple_paladin", phase: "passive" }],
@@ -97,7 +114,7 @@ const KEY_ITEM_CATALOG = {
     rarity: "rare",
     cost: 4,
     tags: ["key", "poison", "enhancement"],
-    description: "Открывает ветку «Ассасин»: чаще ядовитые опоры.",
+    description: getBuildKeyPlayerDescription("triple_assassin"),
     isBuildKey: true,
     unlockBuild: "triple_assassin",
     metaEffects: [{ type: "unlock_build", build: "triple_assassin", phase: "passive" }],
@@ -378,10 +395,10 @@ function collectPrepBuildKeyIconChips(items = []) {
       chips.push({
         icon: "🗝️",
         tipTitle: spec?.label || buildId,
-        tipLines: ["Ветка открыта", "bias магазина / крафта"],
+        tipLines: ["Ветка открыта", "В магазине чаще предметы этой ветки"],
         active: true,
         kind: "key",
-        ariaLabel: `${spec?.label || buildId}: bias магазина/крафта`,
+        ariaLabel: `${spec?.label || buildId}: ветка открыта`,
       });
     });
 

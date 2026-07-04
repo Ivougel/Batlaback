@@ -598,23 +598,94 @@ body:has(#class-overlay:not(.hidden)) .mutation-lore-popup {
     0 12px 32px rgba(46, 100, 50, 0.18);
 }
 
-body:has(#class-overlay:not(.hidden)) .mutation-lore-popup-name {
+body:has(#class-overlay:not(.hidden)) .mutation-lore-popup .mutation-lore-popup-name {
   color: var(--intro-ink);
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.65);
 }
 
-body:has(#class-overlay:not(.hidden)) .mutation-lore-popup-form {
+body:has(#class-overlay:not(.hidden)) .mutation-lore-popup .mutation-lore-popup-form {
   color: var(--intro-ink-muted);
 }
 
-body:has(#class-overlay:not(.hidden)) .mutation-lore-popup-quip {
+body:has(#class-overlay:not(.hidden)) .mutation-lore-popup .mutation-lore-popup-perks {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(92, 184, 92, 0.42);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 2px 8px rgba(46, 100, 50, 0.12);
+}
+
+body:has(#class-overlay:not(.hidden)) .mutation-lore-popup .mutation-lore-popup-perk {
+  color: var(--intro-ink);
+}
+
+body:has(#class-overlay:not(.hidden)) .mutation-lore-popup .mutation-lore-popup-perk-text {
+  color: var(--intro-ink);
+  text-shadow: none;
+}
+
+body:has(#class-overlay:not(.hidden)) .mutation-lore-popup .mutation-lore-popup-perk-label {
+  color: #2f5c28;
+  background: rgba(92, 184, 92, 0.18);
+  border-color: rgba(92, 184, 92, 0.38);
+  text-shadow: none;
+}
+
+body:has(#class-overlay:not(.hidden)) .mutation-lore-popup .mutation-lore-popup-quip {
   border-top-color: rgba(92, 184, 92, 0.35);
   color: #6b4a10;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 
-body:has(#class-overlay:not(.hidden)) .mutation-lore-popup-glow {
+body:has(#class-overlay:not(.hidden)) .mutation-lore-popup .mutation-lore-popup-glow {
   background: radial-gradient(circle at 50% 18%, rgba(245, 200, 66, 0.2) 0%, transparent 70%);
+}
+
+/* Подтверждение пути — светлая панель, тёмный текст (не наследует --intro-ink overlay) */
+body:has(#class-overlay:not(.hidden)) .mutation-intent-popup {
+  --intent-popup-ink: #2d4a28;
+  --intent-popup-ink-muted: #5a7354;
+  --intent-popup-ink-lead: rgba(74, 99, 68, 0.92);
+  --intent-popup-perk-label: #3d6b35;
+  --intent-popup-perk-bg: rgba(248, 252, 245, 0.92);
+  --intent-popup-perk-border: rgba(92, 184, 92, 0.38);
+  --intent-popup-quip: #6b4a10;
+  --intent-popup-panel-bg: linear-gradient(180deg, rgba(255, 252, 240, 0.99) 0%, rgba(255, 244, 218, 0.98) 100%);
+  --intent-popup-panel-border: rgba(232, 163, 23, 0.72);
+}
+
+body:has(#class-overlay:not(.hidden)) .mutation-intent-popup-panel {
+  border-color: var(--intent-popup-panel-border);
+  background: var(--intent-popup-panel-bg);
+}
+
+body:has(#class-overlay:not(.hidden)) .mutation-intent-popup-lead {
+  color: var(--intent-popup-ink-lead);
+}
+
+body:has(#class-overlay:not(.hidden)) .mutation-intent-popup-title {
+  color: var(--intent-popup-ink);
+}
+
+body:has(#class-overlay:not(.hidden)) .mutation-intent-popup-form {
+  color: var(--intent-popup-ink-muted);
+}
+
+body:has(#class-overlay:not(.hidden)) .mutation-intent-popup-perks {
+  background: var(--intent-popup-perk-bg);
+  border-color: var(--intent-popup-perk-border);
+}
+
+body:has(#class-overlay:not(.hidden)) .mutation-intent-popup-perks .mutation-lore-popup-perk {
+  color: var(--intent-popup-ink);
+}
+
+body:has(#class-overlay:not(.hidden)) .mutation-intent-popup-perks .mutation-lore-popup-perk-label {
+  color: var(--intent-popup-perk-label);
+}
+
+body:has(#class-overlay:not(.hidden)) .mutation-intent-popup-quip {
+  color: var(--intent-popup-quip);
 }
 
 /* Витрина героя — тёмная подпись с лором */

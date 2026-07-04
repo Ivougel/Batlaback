@@ -6,6 +6,7 @@
   const OPEN_ATTR = "data-prep-shop-open";
 
   function usesPrepShopPopover() {
+    if (document.documentElement.hasAttribute("data-lobby2p-hud")) return true;
     return document.documentElement.dataset.prepShopPopover === "true";
   }
 
@@ -72,6 +73,9 @@
       popover.hidden = false;
       popover.setAttribute("aria-hidden", "false");
     }
+    if (typeof window.syncLobby2pShopFabExpanded === "function") {
+      window.syncLobby2pShopFabExpanded();
+    }
     if (typeof window.syncPrepShopPopoverPosition === "function") {
       requestAnimationFrame(() => window.syncPrepShopPopoverPosition());
     }
@@ -122,7 +126,7 @@
       "#prep-shop-popover .prep-shop-popover__panel, #prep-bench-popover .prep-bench-popover__panel",
     )) return false;
     if (target.closest(
-      "#btn-prep-sell-fab, #btn-prep-bench-fab, #btn-mobile-shop, #btn-prep-shop-close, #btn-prep-bench-close",
+      "#btn-prep-sell-fab, #btn-prep-bench-fab, #btn-mobile-shop, #btn-prep-shop-close, #btn-prep-bench-close, .lobby2p-shop-fab",
     )) return false;
     if (target.closest(".shop-card, .bench-card")) return false;
     if (target.closest("#game-canvas, #prep-field-island, .prep-field-island, .canvas-scale-wrap")) return false;

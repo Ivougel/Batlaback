@@ -266,7 +266,7 @@ function describeMeta(e) {
       return `При покупке сумки ${ch}та же сумка снова появляется в магазине`;
     }
     case "starting_value":
-      return `+${e.value || 1} к стартовой ценности`;
+      return `+${e.value || 1}💰 в начале забега`;
     case "bag_slots":
       return `+${e.value || 1} слота в контейнере`;
     default:
@@ -634,9 +634,16 @@ export function humanizeItemDescription(item) {
   // Бой → магазин: сначала боевые эффекты, потом мета
   const battleLines = [];
   const shopLines = [];
+  const seenLines = new Set();
+  const pushUnique = (bucket, line) => {
+    const key = line.toLowerCase().replace(/\s+/g, " ").trim();
+    if (!key || seenLines.has(key)) return;
+    seenLines.add(key);
+    bucket.push(line);
+  };
   lines.forEach((line) => {
-    if (/^В магазине|^При обновлении магазина|^При покупке/.test(line)) shopLines.push(line);
-    else battleLines.push(line);
+    if (/^В магазине|^При обновлении магазина|^При покупке/.test(line)) pushUnique(shopLines, line);
+    else pushUnique(battleLines, line);
   });
 
   const text = [...battleLines, ...shopLines].filter(Boolean).join(". ").replace(/\s+/g, " ").replace(/\.\./g, ".");

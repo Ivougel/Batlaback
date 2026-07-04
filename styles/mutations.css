@@ -31,6 +31,26 @@
   color: #e8d4ff;
 }
 
+.mutation-progress-perk {
+  margin: 0 0 calc(4px * var(--ui-scale));
+  font-size: calc(10px * var(--ui-scale));
+  line-height: 1.35;
+  color: rgba(200, 220, 255, 0.82);
+}
+
+.mutation-progress-gap {
+  color: rgba(184, 240, 200, 0.9);
+}
+
+.mutation-progress--interactive {
+  cursor: help;
+}
+
+.mutation-progress--interactive:focus-visible {
+  outline: 2px solid rgba(124, 77, 255, 0.75);
+  outline-offset: 2px;
+}
+
 .mutation-progress-bar {
   height: calc(6px * var(--ui-scale));
   border-radius: 999px;
@@ -65,6 +85,58 @@
   margin-top: calc(4px * var(--ui-scale));
   font-size: calc(10px * var(--ui-scale));
   opacity: 0.65;
+}
+
+.mutation-progress-alt--changed {
+  opacity: 0.95;
+  color: #f0e8ff;
+}
+
+.mutation-progress-pct {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(4px * var(--ui-scale));
+}
+
+.mutation-progress-delta {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 calc(4px * var(--ui-scale));
+  border-radius: 999px;
+  font-size: calc(10px * var(--ui-scale));
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  animation: mutation-progress-delta-pop 0.55s ease;
+}
+
+.mutation-progress-delta--compact {
+  font-size: calc(9px * var(--ui-scale));
+  margin-left: calc(2px * var(--ui-scale));
+}
+
+.mutation-progress-delta--up {
+  color: #b8f0c8;
+  background: rgba(72, 160, 96, 0.22);
+}
+
+.mutation-progress-delta--down {
+  color: #ffb4b4;
+  background: rgba(180, 72, 72, 0.22);
+}
+
+.mutation-progress--delta-pulse .mutation-progress-fill {
+  animation: mutation-progress-fill-pulse 0.65s ease;
+}
+
+@keyframes mutation-progress-delta-pop {
+  0% { transform: scale(0.7); opacity: 0; }
+  65% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+@keyframes mutation-progress-fill-pulse {
+  0%, 100% { filter: brightness(1); }
+  45% { filter: brightness(1.25); }
 }
 
 .companion-grid {
@@ -220,30 +292,82 @@
   position: relative;
   z-index: 1;
   display: block;
-  font-size: clamp(2.6rem, 8vw, 3.4rem);
+  font-size: clamp(2.2rem, 7vw, 3rem);
   line-height: 1;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   filter: drop-shadow(0 0 16px rgba(245, 200, 66, 0.35));
 }
 
 .mutation-lore-popup-name {
   position: relative;
   z-index: 1;
-  margin: 0 0 4px;
+  margin: 0 0 3px;
   font-size: clamp(1rem, 3.2vw, 1.2rem);
   font-weight: 900;
   letter-spacing: 0.06em;
-  color: #f0e8ff;
-  text-shadow: 0 0 14px rgba(167, 139, 250, 0.35);
+  color: #faf6ff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
 }
 
 .mutation-lore-popup-form {
   position: relative;
   z-index: 1;
-  margin: 0 0 10px;
+  margin: 0 0 8px;
   font-size: var(--font-sm);
   font-weight: 700;
-  color: rgba(220, 200, 255, 0.78);
+  color: rgba(235, 220, 255, 0.92);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.mutation-lore-popup-perks {
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  padding: 9px 10px;
+  border-radius: 8px;
+  background: rgba(8, 6, 18, 0.94);
+  border: 1px solid rgba(196, 168, 255, 0.42);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 2px 8px rgba(0, 0, 0, 0.28);
+  text-align: left;
+}
+
+.mutation-lore-popup-perk {
+  margin: 0;
+  font-size: max(var(--font-sm), calc(0.84rem * var(--type-scale, 1)));
+  line-height: 1.42;
+  color: #f2f6ff;
+  font-weight: 600;
+  -webkit-font-smoothing: antialiased;
+}
+
+.mutation-lore-popup-perk + .mutation-lore-popup-perk {
+  margin-top: 7px;
+  padding-top: 7px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mutation-lore-popup-perk-label {
+  display: inline-block;
+  margin: 0 6px 0 0;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: max(var(--font-xs), calc(0.74rem * var(--type-scale, 1)));
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: baseline;
+  color: #d4ffe4;
+  background: rgba(72, 168, 108, 0.28);
+  border: 1px solid rgba(154, 245, 184, 0.35);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.mutation-lore-popup-perk-text {
+  color: #f4f7ff;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.42);
 }
 
 .mutation-lore-popup-quip {
@@ -265,6 +389,16 @@
 
 /* Подтверждение пути на экране выбора героя */
 .mutation-intent-popup {
+  --intent-popup-ink: #2d4a28;
+  --intent-popup-ink-muted: #5a7354;
+  --intent-popup-ink-lead: rgba(74, 99, 68, 0.92);
+  --intent-popup-perk-label: #3d6b35;
+  --intent-popup-perk-bg: rgba(248, 252, 245, 0.92);
+  --intent-popup-perk-border: rgba(92, 184, 92, 0.38);
+  --intent-popup-quip: #6b4a10;
+  --intent-popup-panel-bg: linear-gradient(180deg, rgba(255, 252, 240, 0.99) 0%, rgba(255, 244, 218, 0.98) 100%);
+  --intent-popup-panel-border: rgba(232, 163, 23, 0.72);
+
   position: fixed;
   inset: 0;
   z-index: calc(var(--z-system) + 40);
@@ -297,8 +431,8 @@
   width: min(92vw, 340px);
   padding: 22px 22px 18px;
   border-radius: 18px;
-  border: 2px solid rgba(232, 163, 23, 0.72);
-  background: linear-gradient(180deg, rgba(255, 252, 240, 0.99) 0%, rgba(255, 244, 218, 0.98) 100%);
+  border: 2px solid var(--intent-popup-panel-border);
+  background: var(--intent-popup-panel-bg);
   box-shadow:
     0 0 0 2px rgba(245, 200, 66, 0.28),
     0 0 28px rgba(245, 200, 66, 0.22),
@@ -340,7 +474,7 @@
   margin: 0 0 4px;
   font-size: var(--font-md);
   font-weight: 700;
-  color: rgba(74, 99, 68, 0.9);
+  color: var(--intent-popup-ink-lead);
 }
 
 .mutation-intent-popup-title {
@@ -350,7 +484,7 @@
   font-size: clamp(1.05rem, 3.4vw, 1.28rem);
   font-weight: 900;
   letter-spacing: 0.03em;
-  color: #2d4a28;
+  color: var(--intent-popup-ink);
   line-height: 1.25;
 }
 
@@ -360,7 +494,34 @@
   margin: 0 0 10px;
   font-size: var(--font-sm);
   font-weight: 700;
-  color: rgba(74, 99, 68, 0.82);
+  color: var(--intent-popup-ink-muted);
+}
+
+.mutation-intent-popup-perks {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--intent-popup-perk-bg);
+  border: 1px solid var(--intent-popup-perk-border);
+  text-align: left;
+}
+
+.mutation-intent-popup-perks .mutation-lore-popup-perk {
+  color: var(--intent-popup-ink);
+}
+
+.mutation-intent-popup-perks .mutation-lore-popup-perk-text {
+  color: var(--intent-popup-ink);
+  text-shadow: none;
+}
+
+.mutation-intent-popup-perks .mutation-lore-popup-perk-label {
+  color: var(--intent-popup-perk-label);
+  background: rgba(92, 184, 92, 0.14);
+  border-color: rgba(92, 184, 92, 0.32);
+  text-shadow: none;
 }
 
 .mutation-intent-popup-quip {
@@ -368,11 +529,11 @@
   z-index: 1;
   margin: 0 0 14px;
   padding-top: 10px;
-  border-top: 1px solid rgba(92, 184, 92, 0.32);
+  border-top: 1px solid var(--intent-popup-perk-border);
   font-size: var(--font-md);
   line-height: 1.4;
   font-weight: 700;
-  color: #6b4a10;
+  color: var(--intent-popup-quip);
 }
 
 .mutation-intent-popup-actions {
@@ -615,6 +776,15 @@ html:is([data-prep-layout="side"], [data-ui-surface="tablet-side"], [data-ui-sur
   font-size: calc(8px * var(--ui-scale));
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+.prep-mutation-badge-perk {
+  display: block;
+  margin-top: calc(2px * var(--ui-scale));
+  font-size: calc(9px * var(--ui-scale));
+  line-height: 1.3;
+  opacity: 0.88;
+  color: #d8e8ff;
 }
 
 .prep-character-emoji--mutation {

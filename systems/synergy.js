@@ -83,10 +83,7 @@ function formatSynergyHumanDesc(rule) {
   }
 
   if (rule.target === "neighbor") {
-    if (rule.apply.type === "cooldownReduction") {
-      return `${placement} ${neighbor} — сосед ${bonus}`;
-    }
-    return `${placement} ${neighbor} — сосед получает ${bonus}`;
+    return `Соседние ${neighbor}: ${bonus}`;
   }
 
   if (rule.apply.type === "cooldownReduction") {

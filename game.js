@@ -1161,6 +1161,8 @@ function initLobby2pRun() {
     DialogueEngine.onRunStart(lobbyState, round, { prepDurationSec });
   }
   syncLobby2pHudDom();
+  applyPhaseCanvasLayout();
+  draw();
 }
 
 function getLobby2pHumanGlobals(humanId) {
@@ -1275,18 +1277,96 @@ function getLobby2pColumnClip(half) {
   return { x: half === "left" ? 0 : colW, w: colW };
 }
 
+/** Popover магазина: какой humanId (0|1) открыл drawer. */
+let lobby2pShopPopoverHuman = 0;
+
+function getLobby2pShopPopoverHuman() {
+  return lobby2pShopPopoverHuman;
+}
+
+function syncLobby2pShopFabExpanded() {
+  const open = typeof window.isPrepShopPopoverOpen === "function" && window.isPrepShopPopoverOpen();
+  document.querySelectorAll(".lobby2p-shop-fab").forEach((btn) => {
+    const humanId = Number(btn.dataset.human);
+    btn.setAttribute("aria-expanded", open && humanId === lobby2pShopPopoverHuman ? "true" : "false");
+  });
+}
+
+function openLobby2pShop(humanId) {
+  if (!isLobby2pMode() || !lobbyState?.isSplitLobby || phase !== "prep") return;
+  lobby2pShopPopoverHuman = humanId;
+  setLobby2pActiveHuman(humanId);
+  if (typeof window.syncShopMount === "function") window.syncShopMount();
+  renderShop(prepViewSide, document.getElementById("shop-slots"));
+  if (typeof window.openPrepShopPopover === "function") window.openPrepShopPopover();
+  syncLobby2pShopFabExpanded();
+  requestAnimationFrame(() => {
+    if (typeof window.syncPrepShopPopoverPosition === "function") window.syncPrepShopPopoverPosition();
+  });
+}
+
+function toggleLobby2pShop(humanId) {
+  if (typeof window.isPrepShopPopoverOpen === "function" && window.isPrepShopPopoverOpen()
+    && lobby2pShopPopoverHuman === humanId) {
+    if (typeof window.closePrepShopPopover === "function") window.closePrepShopPopover();
+    syncLobby2pShopFabExpanded();
+    return;
+  }
+  openLobby2pShop(humanId);
+}
+
+function lobby2pSideFromCommerceTarget(target) {
+  if (!isLobby2pMode() || !lobbyState?.isSplitLobby) return null;
+  const col = target?.closest?.(".lobby2p-col-commerce[data-human], .lobby2p-col-shop[data-human]");
+  if (!col) return null;
+  return Number(col.dataset.human) === 0 ? "player" : "enemy";
+}
+
+function ensureLobby2pActiveHumanForSide(side) {
+  if (!isLobby2pMode() || !lobbyState?.isSplitLobby) return;
+  const humanId = side === "player" ? 0 : 1;
+  if ((prepViewSide === "player" ? 0 : 1) !== humanId) setLobby2pActiveHuman(humanId);
+}
+
+function resolveShopCardElement(side, index) {
+  return document.querySelector(`#shop-slots .shop-card[data-index="${index}"]`)
+    || document.querySelector(`.shop-card[data-index="${index}"]`);
+}
+
+function resolveBenchCardElement(side, index) {
+  if (isLobby2pMode() && lobbyState?.isSplitLobby) {
+    const humanId = side === "player" ? 0 : 1;
+    return document.querySelector(`#lobby2p-bench-slots-${humanId} .bench-card[data-bench="${index}"]`);
+  }
+  return document.querySelector(`#bench-slots .bench-card[data-bench="${index}"]`);
+}
+
 function lobby2pSideFromCanvasX(mx) {
   return mx < getLobby2pColumnWidth() ? "player" : "enemy";
 }
 
 /** 'column' — сетка P1/P2 по центру своей половины canvas. */
 let lobby2pDrawLayout = null;
+/** true во время drawLobby2pPrepHalf: origin в локальных координатах колонки + ctx.translate. */
+let lobby2pDrawColumnLocal = false;
+
+function isLobby2pColumnLayoutActive() {
+  return lobby2pDrawLayout === "column"
+    || lobby2pDrawColumnLocal
+    || isLobby2pColumnPrepLayout();
+}
+
+function lobby2pColumnInset() {
+  const colW = getLobby2pColumnWidth();
+  return Math.max(0, (colW - GRID_INNER_W) / 2);
+}
 
 function setLobby2pActiveHuman(humanId) {
   if (!isLobby2pMode()) return;
   syncLobby2pHumanFromGlobals(prepViewSide === "player" ? 0 : 1);
   prepViewSide = humanId === 0 ? "player" : "enemy";
   lobbyViewFighterId = humanId;
+  lobby2pShopPopoverHuman = humanId;
   const app = document.getElementById("app");
   if (app) app.dataset.prepSide = prepViewSide;
   clearDragUiState();
@@ -1295,6 +1375,7 @@ function setLobby2pActiveHuman(humanId) {
   updatePrepSideUI();
   if (isLobby2pMode() && lobbyState?.isSplitLobby) {
     renderLobby2pCommerce();
+    syncLobby2pShopFabExpanded();
   } else {
     renderShop();
     renderBench();
@@ -1472,8 +1553,10 @@ function tickLobby2pSideBattles(dt) {
 function renderLobby2pCommerce() {
   ensureShopReadyForSide("player");
   ensureShopReadyForSide("enemy");
-  renderShop("player", document.getElementById("lobby2p-shop-slots-0"));
-  renderShop("enemy", document.getElementById("lobby2p-shop-slots-1"));
+  const shopOpen = typeof window.isPrepShopPopoverOpen === "function" && window.isPrepShopPopoverOpen();
+  if (shopOpen) {
+    renderShop(prepViewSide, document.getElementById("shop-slots"));
+  }
   renderBench("player", document.getElementById("lobby2p-bench-slots-0"));
   renderBench("enemy", document.getElementById("lobby2p-bench-slots-1"));
 }
@@ -1507,11 +1590,17 @@ function initLobby2pHudBridge() {
     startDuel: (id) => startLobby2pDuel(id),
     refreshShop: (id) => {
       const side = id === 0 ? "player" : "enemy";
+      setLobby2pActiveHuman(id);
       refreshShop(true, side);
       syncLobby2pHumanFromGlobals(id);
       renderLobby2pCommerce();
+      if (typeof window.isPrepShopPopoverOpen === "function" && window.isPrepShopPopoverOpen()) {
+        renderShop(prepViewSide, document.getElementById("shop-slots"));
+      }
       syncLobby2pHudDom();
     },
+    toggleShop: (id) => toggleLobby2pShop(id),
+    openShop: (id) => openLobby2pShop(id),
     renderCommerce: () => renderLobby2pCommerce(),
     renderRosterHtml: () => {
       if (!lobbyState || typeof renderLobbyRosterStrip !== "function") return "";
@@ -1524,6 +1613,8 @@ function initLobby2pHudBridge() {
     scheduleLayout: () => {
       if (typeof window.scheduleLayout === "function") window.scheduleLayout();
       else if (typeof applyUiLayout === "function") applyUiLayout();
+      if (typeof window.syncShopMount === "function") window.syncShopMount();
+      document.documentElement.dataset.prepShopPopover = "true";
       if (typeof window.fitCanvasDisplaySize === "function") window.fitCanvasDisplaySize();
       draw();
     },
@@ -1558,12 +1649,27 @@ function initLobby2pHudBridge() {
   Lobby2pHud.bind();
 }
 
-function drawLobby2pPrepHalf(side) {
+function drawLobby2pPrepHalf(side, useColumnLayout = false) {
+  const prevLayout = lobby2pDrawLayout;
+  const prevLocal = lobby2pDrawColumnLocal;
+  const half = side === "player" ? "left" : "right";
+  let columnClip = null;
+  if (useColumnLayout) {
+    lobby2pDrawLayout = "column";
+    lobby2pDrawColumnLocal = true;
+    columnClip = getLobby2pColumnClip(half);
+  }
   const st = getSideState(side);
   const shake = typeof getPrepBackpackShakeOffset === "function"
     ? getPrepBackpackShakeOffset()
     : { x: 0, y: 0 };
   ctx.save();
+  if (columnClip) {
+    ctx.beginPath();
+    ctx.rect(columnClip.x, 0, columnClip.w, canvas.height);
+    ctx.clip();
+    ctx.translate(columnClip.x, 0);
+  }
   ctx.translate(shake.x, shake.y);
   const frameOptions = {
     showFullPlacementGrid: shouldShowFullContainerPlacementGrid(),
@@ -1586,6 +1692,8 @@ function drawLobby2pPrepHalf(side) {
     else drawDropPreview(ctx);
   }
   ctx.restore();
+  lobby2pDrawLayout = prevLayout;
+  lobby2pDrawColumnLocal = prevLocal;
 }
 
 function drawLobby2pSideBattleHalf(sideBattle, half, humanId) {
@@ -1645,17 +1753,18 @@ function drawLobby2pSplitPrep() {
     }
     return;
   }
+  const columnPrep = isLobby2pColumnPrepLayout();
   const sb0 = lobbyState.sideBattles[0];
   const sb1 = lobbyState.sideBattles[1];
   if (sb0?.state && !sb0.state.finished && !sb0.shared) {
     drawLobby2pSideBattleHalf(sb0, "left", 0);
   } else {
-    drawLobby2pPrepHalf("player");
+    drawLobby2pPrepHalf("player", columnPrep);
   }
   if (sb1?.state && !sb1.state.finished && !sb1.shared) {
     drawLobby2pSideBattleHalf(sb1, "right", 1);
   } else if (!sb0?.shared) {
-    drawLobby2pPrepHalf("enemy");
+    drawLobby2pPrepHalf("enemy", columnPrep);
   }
 }
 
@@ -1679,6 +1788,7 @@ function setPrepViewSide(side) {
   clearDragUiState();
   closePrepHeroTooltip();
   prepViewSide = side;
+  if (typeof resetMutationProgressHintTracking === "function") resetMutationProgressHintTracking();
   const app = document.getElementById("app");
   if (app) app.dataset.prepSide = side;
   if (typeof resetPrepFocus === "function") resetPrepFocus();
@@ -2251,14 +2361,14 @@ function buildClassSummaryTooltipHtml(kind) {
       ? escapeClassHtml(cls.heroLabel || cls.noviceLabel || cls.name)
       : (cls.heroLabel || cls.noviceLabel || cls.name);
     const body = typeof escapeClassHtml === "function"
-      ? escapeClassHtml(cls.heroLore || cls.desc || "")
-      : (cls.heroLore || cls.desc || "");
-    const bonus = typeof escapeClassHtml === "function"
-      ? escapeClassHtml(cls.desc || "")
-      : (cls.desc || "");
+      ? escapeClassHtml(typeof getClassIntroBlurb === "function"
+        ? getClassIntroBlurb(pendingPlayerClass)
+        : (cls.desc || ""))
+      : (typeof getClassIntroBlurb === "function"
+        ? getClassIntroBlurb(pendingPlayerClass)
+        : (cls.desc || ""));
     return `<p class="class-summary-tooltip-title">${title}</p>
-      <p class="class-summary-tooltip-body">${body}</p>
-      <p class="class-summary-tooltip-bonus">${bonus}</p>`;
+      <p class="class-summary-tooltip-body">${body}</p>`;
   }
   if (kind === "companion" && pendingPlayerCompanionId) {
     const companion = COMPANION_CATALOG?.[pendingPlayerCompanionId];
@@ -2491,7 +2601,7 @@ function syncClassOverlayUi() {
 
   if (modeStep && !modeStep.classList.contains("hidden")) {
     badge.textContent = `Шаг 1 из ${totalSteps} · Режим`;
-    hint.textContent = "Четыре девочки-звери скрестили клички с именами — выберите режим";
+    hint.textContent = "Выберите режим забега";
   } else if (document.getElementById("class-step-campaign") && !document.getElementById("class-step-campaign").classList.contains("hidden")) {
     badge.textContent = `Шаг 2 из ${totalSteps} · Испытание`;
     hint.textContent = "4 урока: рюкзак, заполнение, манекен и финальный манекен";
@@ -2501,7 +2611,7 @@ function syncClassOverlayUi() {
       : `Шаг 2 из ${totalSteps} · Герой`;
     hint.textContent = pendingPlayerClass
       ? "Нажмите героя ещё раз — к выбору спутника"
-      : "Читайте описание на плитке · после выбора слева — полная история";
+      : "Выберите героиню · слева — портрет и «Подробнее»";
   } else if (companionStep && !companionStep.classList.contains("hidden")) {
     const forP2 = introCompanionTarget === "player2";
     badge.textContent = selectedGameMode === "lobby2p" && forP2
@@ -2647,7 +2757,7 @@ function showGameModeStep() {
   hideClassSummaryTooltip();
   setClassIntroStep("mode");
   document.getElementById("class-modal-title").textContent = "Режим игры";
-  document.getElementById("class-modal-subtitle").textContent = "Зверушки скрестили клички с именами — выберите режим забега";
+  document.getElementById("class-modal-subtitle").textContent = "Выберите режим и соберите забег";
   syncClassOverlayUi();
   syncClassMobileDock();
 }
@@ -3399,7 +3509,8 @@ function bindTouchInput() {
   const prepShopPopover = document.getElementById("prep-shop-popover");
   const benchPopover = document.getElementById("prep-bench-popover");
   const benchFab = document.getElementById("btn-prep-bench-fab");
-  const touchTargets = [boardSection, canvas, shopPanel, prepShopPopover, benchPopover, benchFab].filter(Boolean);
+  const lobby2pSplit = document.getElementById("lobby2p-split");
+  const touchTargets = [boardSection, canvas, shopPanel, prepShopPopover, benchPopover, benchFab, lobby2pSplit].filter(Boolean);
   const captureOpts = { passive: false, capture: true };
   const bubbleOpts = { passive: false };
   let activeGesture = null;
@@ -3407,6 +3518,18 @@ function bindTouchInput() {
   const isTouchLikePointer = (e) => e.pointerType === "touch" || e.pointerType === "pen";
   const gestureKey = (kind, id) => `${kind}:${id}`;
   const ignoreTarget = (target) => target?.closest?.("button, a, input, select, textarea");
+
+  const prepPointerSurface = canvas;
+  const capturePointerSurface = (id) => {
+    try {
+      prepPointerSurface?.setPointerCapture(id);
+    } catch (_) {}
+  };
+  const releasePointerSurface = (id) => {
+    try {
+      prepPointerSurface?.releasePointerCapture(id);
+    } catch (_) {}
+  };
 
   const onDown = (kind, id, x, y, e) => {
     if (activeGesture) return;
@@ -3437,9 +3560,7 @@ function bindTouchInput() {
       "#prep-shop-popover, #shop-panel, .shop-card, .shop-pin, .btn-refresh-shop",
     );
     if (kind === "pointer" && !shopPointerSurface) {
-      try {
-        boardSection?.setPointerCapture(id);
-      } catch (_) {}
+      capturePointerSurface(id);
     }
     gamepadPointerDownAt(x, y);
   };
@@ -3462,38 +3583,50 @@ function bindTouchInput() {
       pendingCanvasPick = null;
       syncUiDragState();
       activeGesture = null;
-      if (kind === "pointer") {
-        try {
-          boardSection?.releasePointerCapture(id);
-        } catch (_) {}
-      }
+      if (kind === "pointer") releasePointerSurface(id);
       return;
     }
     gamepadPointerUpAt(x, y);
-    if (kind === "pointer") {
-      try {
-        boardSection?.releasePointerCapture(id);
-      } catch (_) {}
-    }
+    if (kind === "pointer") releasePointerSurface(id);
     activeGesture = null;
   };
 
-  boardSection?.addEventListener("pointerdown", (e) => {
+  prepPointerSurface?.addEventListener("pointerdown", (e) => {
     if (!isTouchLikePointer(e)) return;
     onDown("pointer", e.pointerId, e.clientX, e.clientY, e);
   }, captureOpts);
 
-  boardSection?.addEventListener("pointermove", (e) => {
+  prepPointerSurface?.addEventListener("pointermove", (e) => {
     if (!isTouchLikePointer(e)) return;
     onMove("pointer", e.pointerId, e.clientX, e.clientY, e);
   }, captureOpts);
 
-  boardSection?.addEventListener("pointerup", (e) => {
+  prepPointerSurface?.addEventListener("pointerup", (e) => {
     if (!isTouchLikePointer(e)) return;
     onUp("pointer", e.pointerId, e.clientX, e.clientY);
   }, captureOpts);
 
-  boardSection?.addEventListener("pointercancel", (e) => {
+  prepPointerSurface?.addEventListener("pointercancel", (e) => {
+    if (!isTouchLikePointer(e)) return;
+    onUp("pointer", e.pointerId, e.clientX, e.clientY);
+  }, captureOpts);
+
+  lobby2pSplit?.addEventListener("pointerdown", (e) => {
+    if (!isTouchLikePointer(e)) return;
+    onDown("pointer", e.pointerId, e.clientX, e.clientY, e);
+  }, captureOpts);
+
+  lobby2pSplit?.addEventListener("pointermove", (e) => {
+    if (!isTouchLikePointer(e)) return;
+    onMove("pointer", e.pointerId, e.clientX, e.clientY, e);
+  }, captureOpts);
+
+  lobby2pSplit?.addEventListener("pointerup", (e) => {
+    if (!isTouchLikePointer(e)) return;
+    onUp("pointer", e.pointerId, e.clientX, e.clientY);
+  }, captureOpts);
+
+  lobby2pSplit?.addEventListener("pointercancel", (e) => {
     if (!isTouchLikePointer(e)) return;
     onUp("pointer", e.pointerId, e.clientX, e.clientY);
   }, captureOpts);
@@ -3761,6 +3894,7 @@ function init() {
   initBoardPreviewControls();
   if (typeof initBattleInventoryPopover === "function") initBattleInventoryPopover();
   initRecipeBookControls();
+  if (typeof initClassDetailPopup === "function") initClassDetailPopup();
   initSettingsControls();
   if (typeof initEscapeMenu === "function") {
     initEscapeMenu({
@@ -3803,10 +3937,11 @@ function init() {
     isPopupOpen,
     isBoardPreviewOpen,
     isRecipeBookOpen,
+    isClassDetailPopupOpen,
     closeAllPopups,
     useVirtualCursor: () => phase === "prep" && !gameOver && !isPopupOpen("class-overlay")
       && !isPopupOpen("battle-result-overlay") && !isPopupOpen("overlay")
-      && !isRecipeBookOpen() && !isBoardPreviewOpen(),
+      && !isRecipeBookOpen() && !isClassDetailPopupOpen?.() && !isBoardPreviewOpen(),
     isDragging: () => !!dragPayload,
     getPrepSideKey: () => `${prepViewSide}:${phase}:${round}`,
     getGridCols: () => GRID_COLS,
@@ -4003,6 +4138,10 @@ function renderPhase() {
     app.dataset.gameMode = gameMode;
     if (phase === "prep") app.dataset.prepSide = prepViewSide;
   }
+  if (phase === "prep" && renderPhase._lastPhase !== "prep" && typeof resetMutationProgressHintTracking === "function") {
+    resetMutationProgressHintTracking();
+  }
+  renderPhase._lastPhase = phase;
   if (root) {
     root.dataset.gamePhase = phase === "battle" || phase === "replay" ? phase : phase === "prep" ? "prep" : "";
     root.dataset.gameMode = gameMode;
@@ -4225,9 +4364,36 @@ function refreshPrepHeroTooltip() {
     let desc = cls?.desc || "Описание класса недоступно.";
     if (companion) desc += ` · Спутник: ${companion.emoji} ${companion.name}`;
     if (rt.mutationId && typeof getMutationById === "function") {
-      desc += ` · Мутация: ${getMutationById(rt.mutationId)?.name || rt.mutationId}`;
+      const m = getMutationById(rt.mutationId);
+      desc += ` · Мутация: ${m?.name || rt.mutationId}`;
+      if (typeof getMutationPerkMeta === "function") {
+        const perks = getMutationPerkMeta(rt.mutationId);
+        if (perks?.capstoneDesc) desc += ` · ${perks.capstoneDesc}`;
+      }
     } else if (rt.formId && typeof getMutationById === "function") {
-      desc += ` · Форма: ${getMutationById(rt.formId)?.formName || rt.formId}`;
+      const m = getMutationById(rt.formId);
+      desc += ` · Форма: ${m?.formName || rt.formId}`;
+      if (typeof getMutationPerkMeta === "function") {
+        const perks = getMutationPerkMeta(rt.formId);
+        if (perks?.formPerk) desc += ` · ${perks.formPerk}`;
+      }
+    } else if (typeof resolveMutationProgress === "function") {
+      const progress = resolveMutationProgress({
+        classId: rt.classId,
+        companionId: rt.companionId,
+        items: rt.items,
+        enhancements: rt.enhancements,
+        round,
+      });
+      const leaderId = progress?.leader?.id;
+      if (leaderId && typeof getMutationPerkMeta === "function") {
+        const perks = getMutationPerkMeta(leaderId);
+        const gap = typeof formatMutationMilestoneGap === "function"
+          ? formatMutationMilestoneGap(progress, round, rt.formId, rt.mutationId)
+          : "";
+        if (perks?.perkTagline) desc += ` · Путь: ${perks.perkTagline}`;
+        if (gap) desc += ` · ${gap}`;
+      }
     }
     if (classId === "priest" && typeof countFoodItemsInLoadout === "function") {
       const items = prepViewSide === "player" ? playerItems : enemyItems;
@@ -4350,6 +4516,7 @@ function returnToMainMenu() {
   hideSynergyTooltip();
   hideBoardPreviewPopup();
   hideBattleResultPopup();
+  if (typeof clearTrackedBuild === "function") clearTrackedBuild();
   document.getElementById("overlay")?.classList.add("hidden");
 
   const finishReturn = () => {
@@ -4740,6 +4907,11 @@ function closeNestedPopups() {
     closed = true;
   }
 
+  if (typeof isClassDetailPopupOpen === "function" && isClassDetailPopupOpen()) {
+    hideClassDetailPopup();
+    closed = true;
+  }
+
   if (isRecipeBookOpen()) {
     hideRecipeBookPopup();
     closed = true;
@@ -5045,6 +5217,15 @@ function sellDraggedItem(side = prepViewSide) {
 
 function sellDraggedItemQuick(side = prepViewSide) {
   if (!sellDraggedItem(side)) return false;
+  if (typeof markPrepLoadoutMutationChange === "function") {
+    markPrepLoadoutMutationChange({
+      itemId: dragFrom?.item?.itemId
+        || dragFrom?.benchEntry?.itemId
+        || dragFrom?.container?.itemId
+        || null,
+      cause: "sell",
+    });
+  }
   clearDragUiState();
   renderBench();
   recalcSynergies();
@@ -5398,6 +5579,7 @@ function maybePrepArcHoverSound(col, row) {
 }
 
 function applyPrepBoardHoverFromCanvasXY(mx, my, side, st) {
+  if (isLobby2pColumnPrepLayout() && lobby2pSideFromCanvasX(mx) !== side) return false;
   if (!isOnBoard(mx, my, side)) return false;
   const col = xToCol(mx, side);
   const row = yToRow(my, side);
@@ -5558,7 +5740,14 @@ function getPrepBackpackClientRect() {
   };
 }
 
-function getShopDrawerRect() {
+function getShopDrawerRect(side = dragFrom?.side || prepViewSide) {
+  if (isLobby2pMode() && lobbyState?.isSplitLobby) {
+    const humanId = side === "player" ? 0 : 1;
+    const col = document.querySelector(`.lobby2p-col-shop[data-human="${humanId}"]`);
+    const r = col?.getBoundingClientRect();
+    if (r && r.width >= 1 && r.height >= 1) return r;
+    return null;
+  }
   const panel = document.getElementById("shop-panel");
   if (!panel) return null;
   if (typeof window.usesPrepShopPopover === "function" && window.usesPrepShopPopover()) {
@@ -5576,9 +5765,9 @@ function usesPrepCommercePopoverMode() {
     || (typeof window.usesPrepShopPopover === "function" && window.usesPrepShopPopover());
 }
 
-function isPointerInsideShopDrawerBounds(clientX, clientY) {
+function isPointerInsideShopDrawerBounds(clientX, clientY, side = dragFrom?.side || prepViewSide) {
   if (clientX == null || clientY == null) return false;
-  const r = getShopDrawerRect();
+  const r = getShopDrawerRect(side);
   if (!r) return false;
   return clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom;
 }
@@ -5651,7 +5840,7 @@ function getPrepSidebarDragMapRect() {
 /** Проецирует палец на рюкзак: абсолютное 1:1 по коридору (CD ratio ≈ 1). */
 function projectClientPointToPrepBackpack(clientX, clientY) {
   if (!canvas || clientX == null || clientY == null) return null;
-  const team = prepViewSide;
+  const team = dragFrom?.side || prepViewSide;
   const coords = canvasCoordsFromClient(clientX, clientY);
   let ox;
   let oy;
@@ -6350,6 +6539,19 @@ function syncCampaignChrome() {
   const refreshBtn = document.getElementById("btn-refresh");
   const sellBtn = document.getElementById("sell-drop-zone");
   const sellFab = document.getElementById("btn-prep-sell-fab");
+
+  if (bar?.classList.contains("mutation-hint-active")) {
+    if (isCampaignMode() && phase === "prep" && !gameOver && typeof Campaign !== "undefined" && Campaign.isActive()) {
+      const step = Campaign.getStep();
+      const prep = step?.prep || {};
+      refreshBtn?.classList.toggle("hidden-by-campaign", prep.allowRefresh === false);
+      sellBtn?.classList.toggle("hidden-by-campaign", prep.allowSell === false);
+      sellFab?.classList.toggle("hidden-by-campaign", prep.allowSell === false);
+      if (typeof window.syncPrepSellFabVisibility === "function") window.syncPrepSellFabVisibility();
+    }
+    return;
+  }
+
   if (!isCampaignMode() || phase !== "prep" || gameOver || typeof Campaign === "undefined" || !Campaign.isActive()) {
     bar?.classList.add("hidden");
     refreshBtn?.classList.remove("hidden-by-campaign");
@@ -7328,7 +7530,10 @@ function gameLoop(ts) {
 }
 
 function layoutGridOrigin(team) {
-  if (lobby2pDrawLayout === "column") {
+  if (lobby2pDrawColumnLocal) {
+    return lobby2pColumnInset();
+  }
+  if (lobby2pDrawLayout === "column" || isLobby2pColumnPrepLayout()) {
     return getLobby2pColumnGridOrigin(team);
   }
   if (phase === "prep" && isLobby2pMode()) {
@@ -7454,7 +7659,7 @@ function gridStrideFor(team) {
   return team === "enemy" ? GRID_STRIDE : GRID_STRIDE;
 }
 function cellRect(team, col, row) {
-  const cell = team === "enemy" ? GRID_CELL : layoutCell;
+  const cell = isLobby2pColumnLayoutActive() ? layoutCell : (team === "enemy" ? GRID_CELL : layoutCell);
   const stride = gridStrideFor(team);
   return {
     x: layoutGridOrigin(team) + col * stride,
@@ -8009,18 +8214,23 @@ function updatePointerFromClient(clientX, clientY) {
 }
 
 function gamepadPointerDownAt(clientX, clientY) {
-  if (!isLoadoutInteractionPhase() || gameOver || !canEditPrepSide()) return;
+  if (!isLoadoutInteractionPhase() || gameOver) return;
   updatePointerFromClient(clientX, clientY);
   const synthetic = createSyntheticPointerEvent(clientX, clientY);
   const target = document.elementFromPoint(clientX, clientY);
 
   const shopCard = target?.closest?.(".shop-card:not(.empty)");
-  if (shopCard && canEditPrepSide(prepViewSide)) {
+  if (shopCard) {
+    const side = (isLobby2pMode() && lobbyState?.isSplitLobby)
+      ? prepViewSide
+      : (lobby2pSideFromCommerceTarget(shopCard) || prepViewSide);
+    ensureLobby2pActiveHumanForSide(side);
+    if (!canEditPrepSide(side)) return;
     const index = shopCard.dataset.shopIndex != null
       ? +shopCard.dataset.shopIndex
       : +shopCard.dataset.index;
     if (!Number.isNaN(index)) {
-      beginPendingShopDrag(index, synthetic, prepViewSide);
+      beginPendingShopDrag(index, synthetic, side);
       if (isTouchUi()) {
         armPointerTapTooltip(clientX, clientY, () => {
           if (dragPayload || shopDidDrag) return;
@@ -8040,13 +8250,16 @@ function gamepadPointerDownAt(clientX, clientY) {
   }
 
   const benchCard = target?.closest?.(".bench-card:not(.empty)");
-  if (benchCard && canEditPrepSide(prepViewSide)) {
+  if (benchCard) {
+    let side = lobby2pSideFromCommerceTarget(benchCard) || prepViewSide;
+    ensureLobby2pActiveHumanForSide(side);
+    if (!canEditPrepSide(side)) return;
     const index = +benchCard.dataset.bench;
     if (!Number.isNaN(index)) {
       if (isTouchUi()) {
-        const st = getSideState(prepViewSide);
+        const st = getSideState(side);
         const entry = st.bench[index];
-        beginPendingBenchDrag(index, synthetic, prepViewSide);
+        beginPendingBenchDrag(index, synthetic, side);
         armPointerTapTooltip(clientX, clientY, () => {
           if (dragPayload) return;
           if (!entry) return;
@@ -8061,11 +8274,13 @@ function gamepadPointerDownAt(clientX, clientY) {
           );
         }, { pointerType: "touch" });
       } else {
-        startBenchDrag(index, synthetic, prepViewSide);
+        startBenchDrag(index, synthetic, side);
       }
       return;
     }
   }
+
+  if (!canEditPrepSide()) return;
 
   const enhSlot = target?.closest?.(".enh-slot--filled[data-enh-slot]");
   if (enhSlot && canEditPrepSide(prepViewSide)) {
@@ -8155,9 +8370,7 @@ function drawWorldLayer() {
         : { x: 0, y: 0 };
       ctx.save();
       ctx.translate(shake.x, shake.y);
-      if (isLobby2pColumnPrepLayout()) lobby2pDrawLayout = "column";
       drawLobby2pSplitPrep();
-      lobby2pDrawLayout = null;
       ctx.restore();
     } else {
     const side = prepViewSide;
@@ -8401,6 +8614,7 @@ function drawBackpackFrame(team, options = {}) {
 }
 
 function teamLayoutCell(team) {
+  if (isLobby2pColumnLayoutActive()) return layoutCell;
   return team === "enemy" ? GRID_CELL : layoutCell;
 }
 
@@ -9389,7 +9603,7 @@ function isPointerOverPrepSidebar(clientX, clientY) {
   const hit = document.elementFromPoint(clientX, clientY);
   if (!hit) return false;
   return !!hit.closest(
-    "#shop-panel, #prep-bench-popover, #bench-panel, #bench-slots, .bench-card, #btn-prep-bench-fab, #prep-shop-popover, .run-stats-anchor, #prep-run-stats-anchor, #run-stats-popover, #sidebar-tooltip, #prep-tooltip-dock, #recipe-book-overlay, #combat-feed-dock, #combat-feed-panel, #combat-feed-scroll, #prep-doll-layer",
+    "#shop-panel, #prep-bench-popover, #bench-panel, #bench-slots, .bench-card, #btn-prep-bench-fab, #prep-shop-popover, .run-stats-anchor, #prep-run-stats-anchor, #run-stats-popover, #sidebar-tooltip, #prep-tooltip-dock, #recipe-book-overlay, #combat-feed-dock, #combat-feed-panel, #combat-feed-scroll, #prep-doll-layer, .lobby2p-col-shop, .lobby2p-col-bench, .lobby2p-shop-slots, .lobby2p-bench-slots",
   );
 }
 
@@ -9422,9 +9636,15 @@ function syncPrepShopDragBackdrop(clientX, clientY) {
   const overSidebar = isPointerOverShopDrawer(clientX, clientY)
     || isPointerOverBenchPopoverPanel(clientX, clientY)
     || isPointerOverShopPopoverPanel(clientX, clientY);
+  const lobby2pHud = root.hasAttribute("data-lobby2p-hud");
+  const canvasEl = document.getElementById("game-canvas");
+  const canvasRect = canvasEl?.getBoundingClientRect();
+  const overLobby2pCanvas = lobby2pHud && canvasRect && canvasRect.width > 0
+    && clientX >= canvasRect.left && clientX <= canvasRect.right
+    && clientY >= canvasRect.top && clientY <= canvasRect.bottom;
   const targetsBoard = dragActive
     && !overSidebar
-    && (root.hasAttribute("data-prep-shop-open") || benchOpen || shopOpen);
+    && (root.hasAttribute("data-prep-shop-open") || benchOpen || shopOpen || overLobby2pCanvas);
   root.toggleAttribute("data-prep-drag-targets-board", targetsBoard);
 }
 
@@ -10281,7 +10501,10 @@ function finishDragDrop(e) {
     && !hasPrepBoardDropTarget()
     && !sidebarPlacement?.valid;
   const { x: mx, y: my } = canvasCoordsFromClient(dropClientX, dropClientY);
-  const onBoard = isOnBoard(mx, my, side);
+  let onBoard = isOnBoard(mx, my, side);
+  if (onBoard && isLobby2pColumnPrepLayout() && lobby2pSideFromCanvasX(mx) !== side) {
+    onBoard = false;
+  }
   const boardCol = onBoard ? xToCol(mx, side) : null;
   const boardRow = onBoard ? yToRow(my, side) : null;
   const dropCol = pointerOnBench ? null : (sidebarPlacement?.col ?? boardCol);
@@ -10567,6 +10790,16 @@ function finishDragDrop(e) {
   }
 
   maybeCelebratePrepArcDrop(prepArcCelebrate);
+  if (prepArcCelebrate && typeof markPrepLoadoutMutationChange === "function") {
+    markPrepLoadoutMutationChange({
+      itemId: dragPayload?.itemId
+        || dragFrom?.item?.itemId
+        || dragFrom?.benchEntry?.itemId
+        || dragFrom?.container?.itemId
+        || null,
+      cause: dragFrom?.type === "shop" ? "buy" : "place",
+    });
+  }
   clearDragUiState();
   if (shopPurchasedDuringDrop) suppressShopClickUntil = 0;
   if (canEditPrepSide(side)) applyCraftingForSide(side);
@@ -10639,6 +10872,7 @@ function tryBuyFromPendingShopDrag(clientX, clientY) {
 
 function beginPendingShopDrag(index, e, side = prepViewSide) {
   if (!isLoadoutInteractionPhase() || gameOver || !canEditPrepSide(side)) return;
+  ensureLobby2pActiveHumanForSide(side);
   const st = getSideState(side);
   if (!st.shop[index]) return;
   const entryId = st.shop[index];
@@ -10705,13 +10939,12 @@ function startShopDrag(index, e, side = prepViewSide) {
   dragFrom = { type: "shop", index, side };
   prepSidebarDragUnlocked = usesPrepCommercePopoverMode();
   prepSidebarStickyHover = null;
-  const cardSel = `.shop-card[data-index="${index}"]`;
-  const arcCard = document.querySelector(cardSel);
+  const arcCard = resolveShopCardElement(side, index);
   const arcOrigin = getElementClientCenter(arcCard)
     || (e?.clientX != null && e?.clientY != null ? { x: e.clientX, y: e.clientY } : null);
   beginPrepDragArcFromCard(arcCard, entryId, arcOrigin);
   startSynergyPreview();
-  document.querySelector(cardSel)?.classList.add("shop-dragging");
+  arcCard?.classList.add("shop-dragging");
   syncUiDragState();
   if (typeof onPrepDragStart === "function") onPrepDragStart();
   if (typeof window.resetPrepTouchGesture === "function") window.resetPrepTouchGesture();
@@ -10729,13 +10962,13 @@ function startBenchDrag(index, e, side = prepViewSide) {
   e.preventDefault();
   clearTouchTapGesture();
   hideSidebarTooltip();
-  const arcCard = document.querySelector(`.bench-card[data-bench="${index}"]`);
+  const arcCard = resolveBenchCardElement(side, index);
   const arcOrigin = getElementClientCenter(arcCard)
     || (e?.clientX != null && e?.clientY != null ? { x: e.clientX, y: e.clientY } : null);
   const benchEntry = takeBenchEntryOnDragStart(st, index);
   if (!benchEntry) return;
   selectedBench = -1;
-  document.querySelectorAll("#bench-slots .bench-card").forEach((card) => {
+  document.querySelectorAll(`#lobby2p-bench-slots-${side === "player" ? 0 : 1} .bench-card, #bench-slots .bench-card`).forEach((card) => {
     card.classList.toggle("selected", +card.dataset.bench === index);
   });
   dragPayload = { itemId: benchEntry.itemId, rotation: benchEntry.rotation || 0 };
@@ -10863,6 +11096,7 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
     prepPlayer?.removeAttribute("hidden");
     prepEnemy?.removeAttribute("hidden");
     if (typeof scheduleBattleHeroRowSync === "function") scheduleBattleHeroRowSync();
+    if (typeof syncPrepBuildEmojiBtnMount === "function") syncPrepBuildEmojiBtnMount();
     if (typeof syncPrepBuildEmojiBtn === "function") {
       const playerArchetype = getSideMutationRuntime("player");
       const enemyArchetype = getSideMutationRuntime("enemy");
@@ -10920,8 +11154,14 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
   const companion = typeof getCompanionById === "function" ? getCompanionById(mutRt.companionId) : null;
   const displayTitle = getRunDisplayTitle(side);
   const heroCardHud = isPrepHeroCardHud();
+  const mutationDeltas = typeof notifyPrepMutationProgressChange === "function"
+    ? notifyPrepMutationProgressChange(mutationProgress)
+    : null;
   const mutationHtml = typeof renderMutationProgressHtml === "function"
-    ? renderMutationProgressHtml(mutationProgress, mutRt.formId, mutRt.mutationId, round, { heroCard: heroCardHud })
+    ? renderMutationProgressHtml(mutationProgress, mutRt.formId, mutRt.mutationId, round, {
+      heroCard: heroCardHud,
+      deltas: mutationDeltas,
+    })
     : "";
   const enhancementHtml = typeof renderPrepEnhancementStripHtml === "function"
     ? renderPrepEnhancementStripHtml(round, mutRt.enhancements, { heroCard: heroCardHud })
@@ -10973,6 +11213,8 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
       roundLabel,
       lobbyHp: !!lobbyPlayer,
     });
+    const buildSlot = document.getElementById("prep-hero-card-build-slot");
+    if (buildSlot?.isConnected) buildSlot.remove();
     const statsHeaderHtml = heroCardHud
       ? `
       <div class="prep-hero-card__stats-row">
@@ -10996,6 +11238,10 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
       ${enhancementHtml}
       ${modifierStripHtml}
     `;
+    if (heroCardHud && buildSlot) {
+      const statsRow = statsHud.querySelector(".prep-hero-card__stats-row");
+      if (statsRow) statsRow.insertBefore(buildSlot, statsRow.firstChild);
+    }
     bindPrepEnhancementStrip(side);
     bindPrepCompanionTooltip(statsHud);
     if (typeof syncPrepHudCollapseChrome === "function") syncPrepHudCollapseChrome();
@@ -11038,6 +11284,10 @@ function renderPlayerProfiles(opts = {}) {
 
   if (opts.battleHudOnly && viewState && (phase === "battle" || phase === "replay")) {
     if (typeof syncLiveAvatarHeroFrame === "function") syncLiveAvatarHeroFrame(viewState);
+    if (document.documentElement.dataset.battlePrepHeroLayer === "true"
+      && typeof syncBattleArchetypeFloatsFromRuntime === "function") {
+      syncBattleArchetypeFloatsFromRuntime();
+    }
     return;
   }
 
@@ -11251,6 +11501,7 @@ function renderPlayerProfiles(opts = {}) {
     }
     if (document.documentElement.dataset.battlePrepHeroLayer === "true"
       && typeof syncPrepBuildEmojiBtn === "function") {
+      if (typeof syncPrepBuildEmojiBtnMount === "function") syncPrepBuildEmojiBtnMount();
       syncPrepBuildEmojiBtn({
         formId: playerProfile.archetypeFormId,
         mutationId: playerProfile.archetypeMutationId,
@@ -11413,5 +11664,8 @@ registerPrepShopRuntime({
   },
   isLobby2pSplitPrep: () => isLobby2pMode() && phase === "prep" && !!lobbyState?.isSplitLobby,
 });
+
+window.getLobby2pShopPopoverHuman = getLobby2pShopPopoverHuman;
+window.syncLobby2pShopFabExpanded = syncLobby2pShopFabExpanded;
 
 init();

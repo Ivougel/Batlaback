@@ -23,7 +23,7 @@
   <link rel="stylesheet" href="styles/shop-pin-chrome.css?v=11">
   <link rel="stylesheet" href="styles/prep-top-bar.css?v=2">
   <link rel="stylesheet" href="styles/campaign.css?v=1">
-  <link rel="stylesheet" href="styles/mutations.css?v=1">
+  <link rel="stylesheet" href="styles/mutations.css?v=4">
   <link rel="stylesheet" href="styles/battle-archetype-banner.css?v=1">
   <link rel="stylesheet" href="styles/enhancements.css?v=7">
   <link rel="stylesheet" href="styles/doll.css?v=25">
@@ -34,24 +34,25 @@
   <link rel="stylesheet" href="styles/replay-chrome.css?v=2">
   <link rel="stylesheet" href="styles/emotion-thoughts.css?v=11">
   <link rel="stylesheet" href="styles/hero-dialogue.css?v=4">
-  <link rel="stylesheet" href="styles/player-spec-emoji.css?v=7">
-  <link rel="stylesheet" href="styles/archetype-magic-glow.css?v=2">
+  <link rel="stylesheet" href="styles/player-spec-emoji.css?v=8">
+  <link rel="stylesheet" href="styles/archetype-magic-glow.css?v=3">
   <link rel="stylesheet" href="styles/arena-equipment.css?v=21">
   <link rel="stylesheet" href="styles/prep-drag-arc.css?v=10">
   <link rel="stylesheet" href="styles/battle-arena-layout.css?v=41">
-  <link rel="stylesheet" href="styles/battle-prep-hero-parity.css?v=5">
+  <link rel="stylesheet" href="styles/battle-prep-hero-parity.css?v=7">
   <link rel="stylesheet" href="styles/phone-landscape.css?v=9">
   <link rel="stylesheet" href="styles/battle-scale.css?v=4">
   <link rel="stylesheet" href="styles/battle-hud-compact.css?v=3">
   <link rel="stylesheet" href="styles/hero-card.css?v=4">
   <link rel="stylesheet" href="styles/battle-hero-levitate.css?v=1">
   <link rel="stylesheet" href="styles/hero-portrait-frame.css?v=5">
-  <link rel="stylesheet" href="styles/prep-hero-card.css?v=19">
+  <link rel="stylesheet" href="styles/prep-hero-card.css?v=20">
   <link rel="stylesheet" href="styles/prep-hud-collapse.css?v=2">
   <link rel="stylesheet" href="styles/class-picker.css?v=8">
+  <link rel="stylesheet" href="styles/class-detail-popup.css?v=1">
   <link rel="stylesheet" href="styles/class-hero-showcase.css?v=8">
   <link rel="stylesheet" href="styles/class-hero-portrait-frame.css?v=1">
-  <link rel="stylesheet" href="styles/class-intro-theme.css?v=8">
+  <link rel="stylesheet" href="styles/class-intro-theme.css?v=9">
   <link rel="stylesheet" href="styles/class-intro-summary.css?v=1">
   <link rel="stylesheet" href="styles/tablet-intro-typography.css?v=2">
   <link rel="stylesheet" href="styles/desktop-intro-layout.css?v=1">
@@ -61,13 +62,13 @@
   <link rel="stylesheet" href="styles/desktop-battle.css?v=2">
   <link rel="stylesheet" href="styles/tablet-stacked.css?v=7">
   <link rel="stylesheet" href="styles/prep-bench-popover.css?v=9">
-  <link rel="stylesheet" href="styles/prep-shop-popover.css?v=11">
+  <link rel="stylesheet" href="styles/prep-shop-popover.css?v=12">
   <link rel="stylesheet" href="styles/prep-sell-fab.css?v=5">
   <link rel="stylesheet" href="styles/tablet-side.css?v=35">
   <link rel="stylesheet" href="styles/prep-tablet-zone-layout.css?v=7">
   <link rel="stylesheet" href="styles/battle-inventory-popover.css?v=9">
   <link rel="stylesheet" href="styles/lobby.css?v=15">
-  <link rel="stylesheet" href="styles/lobby-2p-hud.css?v=6">
+  <link rel="stylesheet" href="styles/lobby-2p-hud.css?v=11">
   <link rel="stylesheet" href="styles/lobby-prep-field-roster.css?v=1">
   <link rel="stylesheet" href="styles/meadow-theme.css?v=2">
   <link rel="stylesheet" href="styles/battle-theme-ui.css?v=2">
@@ -218,7 +219,15 @@
                 <div class="prep-character-layer" id="prep-character-layer" aria-hidden="true">
                   <div class="prep-character" id="prep-character-player" hidden></div>
                   <div class="prep-character" id="prep-character-enemy" hidden></div>
-                  <div class="prep-character-spec-slot" id="prep-character-spec-slot" aria-hidden="true"></div>
+                  <div class="prep-character-spec-slot" id="prep-character-spec-slot" aria-hidden="true">
+                    <span class="battle-archetype-float prep-build-emoji-btn--hero-field-float"
+                          id="battle-player-archetype-float"
+                          role="img"
+                          hidden>
+                      <span class="prep-build-emoji-btn-glow" aria-hidden="true"></span>
+                      <span class="prep-build-emoji-btn-glyph battle-archetype-float-glyph" aria-hidden="true"></span>
+                    </span>
+                  </div>
                   <div class="prep-character-spec-slot prep-character-spec-slot--enemy" id="prep-character-spec-slot-enemy" aria-hidden="true">
                     <span class="battle-archetype-float prep-build-emoji-btn--hero-field-float"
                           id="battle-enemy-archetype-float"
@@ -310,6 +319,7 @@
                 <button type="button" class="prep-shop-drawer-close" id="btn-prep-shop-close" aria-label="Закрыть магазин">✕</button>
               </div>
               <p class="shop-hint" id="shop-panel-hint">✚ — навигация · A — выбрать · ← — доска · 📍 слева — закрепить</p>
+              <div class="shop-build-track-bar hidden" id="shop-build-track-bar" aria-live="polite" aria-hidden="true"></div>
               <p class="shop-hint shop-hint-touch">Коснитесь — подсказка · перетащите на поле · 📍 слева — закрепить · два пальца — поворот</p>
             </div>
             <div class="shop-objects">
@@ -375,28 +385,16 @@
 
         <div class="lobby2p-canvas-host" id="lobby2p-canvas-host"></div>
 
-        <div class="lobby2p-col-shop" data-human="0">
-          <div class="lobby2p-shop-head">
-            <span class="lobby2p-shop-label">магазин · тап на предмет — инфо</span>
-            <button type="button" class="lobby2p-refresh btn-secondary" data-human="0" title="Обновить магазин">↻ <b>1</b></button>
-          </div>
-          <div class="lobby2p-shop-body">
-            <div class="shop-slots lobby2p-shop-slots" id="lobby2p-shop-slots-0"></div>
-            <button type="button" class="lobby2p-sell-zone sell-drop-zone" data-human="0" aria-label="Продать">💰</button>
-          </div>
+        <div class="lobby2p-col-commerce" data-human="0">
+          <button type="button" class="lobby2p-shop-fab btn-secondary prep-mobile-shop-btn" data-human="0" aria-expanded="false" aria-controls="shop-panel" aria-label="Магазин игрока 1">🛒 <span>Магазин</span></button>
+          <button type="button" class="lobby2p-sell-zone sell-drop-zone" data-human="0" aria-label="Продать">💰</button>
         </div>
 
         <div class="lobby2p-split-gap" aria-hidden="true"></div>
 
-        <div class="lobby2p-col-shop" data-human="1">
-          <div class="lobby2p-shop-head">
-            <span class="lobby2p-shop-label">магазин · тап на предмет — инфо</span>
-            <button type="button" class="lobby2p-refresh btn-secondary" data-human="1" title="Обновить магазин">↻ <b>1</b></button>
-          </div>
-          <div class="lobby2p-shop-body">
-            <div class="shop-slots lobby2p-shop-slots" id="lobby2p-shop-slots-1"></div>
-            <button type="button" class="lobby2p-sell-zone sell-drop-zone" data-human="1" aria-label="Продать">💰</button>
-          </div>
+        <div class="lobby2p-col-commerce" data-human="1">
+          <button type="button" class="lobby2p-shop-fab btn-secondary prep-mobile-shop-btn" data-human="1" aria-expanded="false" aria-controls="shop-panel" aria-label="Магазин игрока 2">🛒 <span>Магазин</span></button>
+          <button type="button" class="lobby2p-sell-zone sell-drop-zone" data-human="1" aria-label="Продать">💰</button>
         </div>
 
         <div class="lobby2p-col-bench" data-human="0">
@@ -488,7 +486,7 @@
               </div>
               <div class="class-hero-showcase-caption">
                 <p class="class-hero-showcase-name" id="class-hero-showcase-name"></p>
-                <p class="class-hero-showcase-desc" id="class-hero-showcase-desc"></p>
+                <button type="button" class="btn-secondary btn-class-detail hidden" id="btn-class-detail" aria-haspopup="dialog">Подробнее</button>
               </div>
             </div>
           </div>
@@ -506,7 +504,7 @@
               <div class="class-hero-roster-grid" id="class-hero-roster-grid"></div>
               <div class="class-hero-roster-caption">
                 <p class="class-hero-roster-title">Мартовичок · Роксивичок · Морковичок · Мыковичок</p>
-                <p class="class-hero-roster-hint">Девочки-звери собрались, чтобы скрестить кличку с именем — и решить, кто идёт в забег.</p>
+                <p class="class-hero-roster-hint">Четыре героини с разными бонусами — выберите, кто пойдёт в забег.</p>
               </div>
             </div>
           </div>
@@ -516,9 +514,9 @@
           <p class="class-modal-eyebrow">BACKPACK BATTLES</p>
           <p class="class-step-badge" id="class-step-badge">Шаг 1 из 4</p>
           <h2 class="class-modal-title" id="class-modal-title">Режим игры</h2>
-          <p class="class-subtitle" id="class-modal-subtitle">Зверушки скрестили клички с именами — выберите режим забега</p>
+          <p class="class-subtitle" id="class-modal-subtitle">Выберите режим и соберите забег</p>
         </header>
-        <p class="class-action-hint" id="class-action-hint" role="status">Четыре девочки-звери скрестили клички с именами — выберите режим</p>
+        <p class="class-action-hint" id="class-action-hint" role="status">Выберите режим забега</p>
         <p class="class-controls-hint">✚ — выбор · A — подтвердить · B — назад · + — начать</p>
         <div class="class-step" id="class-step-mode">
           <div class="game-mode-grid">
@@ -793,6 +791,19 @@
       </div>
     </div>
 
+    <div class="overlay class-detail-overlay hidden" id="class-detail-overlay">
+      <div class="modal class-detail-modal" role="dialog" aria-modal="true" aria-labelledby="class-detail-title">
+        <div class="class-detail-header">
+          <div class="class-detail-heading">
+            <h2 id="class-detail-title">Подробнее о герое</h2>
+            <p class="class-detail-subtitle">Пассивка, сборки и предметы · Esc — закрыть</p>
+          </div>
+          <button type="button" class="class-detail-close" id="btn-class-detail-close" aria-label="Закрыть">✕</button>
+        </div>
+        <div class="class-detail-body" id="class-detail-body"></div>
+      </div>
+    </div>
+
   <div class="escape-menu-overlay hidden" id="escape-menu-overlay" aria-hidden="true">
     <div class="escape-menu-panel" role="dialog" aria-modal="true" aria-labelledby="escape-menu-title">
       <h2 class="escape-menu-title" id="escape-menu-title">Меню игры</h2>
@@ -1062,10 +1073,11 @@
   </div>
 
   <script src="components/layer-host.js"></script>
-  <script src="classes.js?v=5"></script>
-  <script src="systems/mutations.js?v=3"></script>
-  <script src="systems/mutation-lore-quips.js?v=1"></script>
-  <script src="systems/mutation-ui.js?v=11"></script>
+  <script src="classes.js?v=7"></script>
+  <script src="systems/build-tracker.js?v=1"></script>
+  <script src="systems/mutations.js?v=5"></script>
+  <script src="systems/mutation-ui.js?v=13"></script>
+  <script src="systems/mutation-progress-hints.js?v=1"></script>
   <script src="systems/mutation-capstones.js?v=1"></script>
   <script src="systems/item-pool-120.js?v=1"></script>
   <script src="items.js?v=4"></script>
@@ -1089,7 +1101,7 @@
   <script src="systems/combat-profile.js?v=5"></script>
   <script src="components/run-stats.js"></script>
   <script src="components/player-characteristics.js"></script>
-  <script src="components/avatar-hero-effects.js?v=15"></script>
+  <script src="components/avatar-hero-effects.js?v=16"></script>
   <script src="systems/attack-events.js"></script>
   <script src="systems/arena-attack-styles.js?v=5"></script>
   <script src="systems/battle-analyzer.js"></script>
@@ -1101,6 +1113,7 @@
   <script src="components/item-stats.js"></script>
   <script src="components/board-preview.js"></script>
   <script src="components/battle-inventory-popover.js?v=13"></script>
+  <script src="components/class-detail-popup.js?v=1"></script>
   <script src="components/recipe-book.js?v=2"></script>
   <script src="systems/visual-theme.js?v=1"></script>
   <script src="systems/prep-hud-preset.js?v=1"></script>

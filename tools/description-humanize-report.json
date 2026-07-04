@@ -1,24 +1,66 @@
 {
-  "generatedAt": "2026-07-04T17:59:19.871Z",
+  "generatedAt": "2026-07-04T18:47:59.571Z",
   "total": 198,
   "changed": [
     {
-      "id": "stone",
-      "name": "Камень",
-      "before": "Уничтожить 4 стака у врага. До 1 активаций за бой. Удар 2–4 урона.",
-      "after": "Уничтожить 4 бонусов у врага. До 1 активаций за бой. Удар 2–4 урона."
+      "id": "holy_armor",
+      "name": "Святая броня",
+      "before": "+4 защиты. В начале боя: +65 блок. +2 блок за «броня». +4 защиты. Каждые 2.2 сек: тратит 2 блок.",
+      "after": "+4 защиты. В начале боя: +65 блок. +2 блок за «броня». Каждые 2.2 сек: тратит 2 блок."
     },
     {
-      "id": "mrs_struggles",
-      "name": "Миссис Страглз",
-      "before": "На 10% быстрее за «тёмный». Каждые 4.7 сек: снять по 1 стаку каждого типа у врага.",
-      "after": "На 10% быстрее за «тёмный». Каждые 4.7 сек: снять по 1 бонусу каждого типа у врага."
+      "id": "iron_helmet",
+      "name": "Железный шлем",
+      "before": "+3 защиты. +3 защиты. Блок 4.",
+      "after": "+3 защиты. Блок 4."
     },
     {
-      "id": "prismatic_orb",
-      "name": "Призматическая сфера",
-      "before": "+2 мана за «магия». +1 мана за «огонь». +12% к магическому урону. +4% к лечению. Каждые 8 сек: +1 ко всем стакам. Лечение 2 HP.",
-      "after": "+2 мана за «магия». +1 мана за «огонь». +12% к магическому урону. +4% к лечению. Каждые 8 сек: +1 ко всем бонусам. Лечение 2 HP."
+      "id": "leather_armor",
+      "name": "Кожаная броня",
+      "before": "+4 защиты. В начале боя: +45 блок. +4 защиты. +8% к урону.",
+      "after": "+4 защиты. В начале боя: +45 блок. +8% к урону."
+    },
+    {
+      "id": "piggybank",
+      "name": "Копилка",
+      "before": "+2 макс. HP за стартовый предмет. +2 к макс. здоровью. +2 макс. HP за стартовый предмет. В магазине даёт +1 усиление к следующему бою.",
+      "after": "+2 макс. HP за стартовый предмет. +2 к макс. здоровью. В магазине даёт +1 усиление к следующему бою."
+    },
+    {
+      "id": "royal_helmet",
+      "name": "Королевский шлем",
+      "before": "+10 защиты. +10 защиты. +15 к макс. здоровью. Блок 10.",
+      "after": "+10 защиты. +15 к макс. здоровью. Блок 10."
+    },
+    {
+      "id": "star_of_courage",
+      "name": "Звезда мужества",
+      "before": "+1 к стартовой ценности.",
+      "after": "+1💰 в начале забега."
+    },
+    {
+      "id": "titan_armor",
+      "name": "Доспех титана",
+      "before": "+16 защиты. +16 защиты. +15 к макс. здоровью.",
+      "after": "+16 защиты. +15 к макс. здоровью."
+    },
+    {
+      "id": "spell_scroll_frostbolt",
+      "name": "Свиток заклинания: Ледяная стрела",
+      "before": "До 3 активаций за бой. Каждые 3 сек: наносит 5 магического урона. Каждые 3 сек: наносит 5 магического урона. замедление 12%.",
+      "after": "До 3 активаций за бой. Каждые 3 сек: наносит 5 магического урона. замедление 12%."
+    },
+    {
+      "id": "stone_golem",
+      "name": "Каменный голем",
+      "before": "+4 защиты. При попадании: +1 блок. При попадании: 30% оглушает на 0.5 сек. +4 защиты. замедление 18%.",
+      "after": "+4 защиты. При попадании: +1 блок. При попадании: 30% оглушает на 0.5 сек. замедление 18%."
+    },
+    {
+      "id": "wolf_badge",
+      "name": "Волчий значок",
+      "before": "Боевая ярость (<50% HP): −урон, быстрее предметы. Боевая ярость (<50% HP): −урон, быстрее предметы. Если здоровье ниже 50%, один раз за бой. В магазине чаще встречаются предметы: берсерк.",
+      "after": "Боевая ярость (<50% HP): −урон, быстрее предметы. Если здоровье ниже 50%, один раз за бой. В магазине чаще встречаются предметы: берсерк."
     }
   ],
   "unchanged": [
@@ -57,13 +99,10 @@
     "health_potion",
     "health_stone",
     "heroic_potion",
-    "holy_armor",
     "hungry_blade",
-    "iron_helmet",
     "iron_patch",
     "iron_shield",
     "knight_sword",
-    "leather_armor",
     "leather_boots",
     "leather_pouch",
     "lucky_charm",
@@ -71,7 +110,6 @@
     "mana_crystal",
     "pan",
     "pestilence_flask",
-    "piggybank",
     "pineapple",
     "pocket_sand",
     "poison_dagger",
@@ -79,7 +117,6 @@
     "protective_purse",
     "rage_potion",
     "ripsaw_blade",
-    "royal_helmet",
     "rusty_sword",
     "shelly",
     "shiny_shell",
@@ -89,11 +126,10 @@
     "snowcake",
     "spark_stone",
     "spear",
-    "star_of_courage",
+    "stone",
     "stone_skin_potion",
     "storm_burst",
     "thorn_whip",
-    "titan_armor",
     "vampiric_potion",
     "villain_sword",
     "wooden_buckler",
@@ -161,10 +197,12 @@
     "maneki_neko",
     "molten_dagger",
     "mr_struggles",
+    "mrs_struggles",
     "offering_bowl",
     "paradise_birb",
     "pop",
     "potion_belt",
+    "prismatic_orb",
     "prismatic_sword",
     "puzzle_badge",
     "rainbow_badge",
@@ -190,14 +228,12 @@
     "snowmaster",
     "spectral_dagger",
     "speed_amulet",
-    "spell_scroll_frostbolt",
     "spider_web",
     "spiked_collar",
     "squirrel",
     "stable_recombobulator",
     "stamina_sack",
     "stone_badge",
-    "stone_golem",
     "storage_chest",
     "the_fool",
     "the_lovers",
@@ -213,15 +249,14 @@
     "war_hammer",
     "whetstone",
     "white_eyes_blue_dragon",
-    "wolf_badge",
     "wolpertinger",
     "shovel",
     "starter_bag"
   ],
   "empty": [],
   "summary": {
-    "changed": 3,
-    "unchanged": 195,
+    "changed": 10,
+    "unchanged": 188,
     "empty": 0
   }
 }

@@ -650,7 +650,7 @@ const ITEM_CATALOG_RAW = {
       { type: "tagScaledStack", stack: "block", perTag: 2, tag: "armor", trigger: "battle_start" },
       { type: "periodic", interval: 2.2, trigger: "passive", spendStack: {"stack":"block","value":2,"cleansePoisonSelf":1} }
     ],
-    description: "+4 защиты. В начале боя: +65 блок. +2 блок за «броня». +4 защиты. Каждые 2.2 сек: тратит 2 блок.",
+    description: "+4 защиты. В начале боя: +65 блок. +2 блок за «броня». Каждые 2.2 сек: тратит 2 блок.",
     buildHints: "Билд: анти-яд / святой · Пары: Holy Spear, святые аксессуары",
     sockets: 3,
   },
@@ -693,7 +693,7 @@ const ITEM_CATALOG_RAW = {
       { type: "passiveDefense", value: 3, trigger: "passive" },
       { type: "block", value: 4 }
     ],
-    description: "+3 защиты. +3 защиты. Блок 4.",
+    description: "+3 защиты. Блок 4.",
   },
   iron_patch: {
     id: "iron_patch",
@@ -766,7 +766,7 @@ const ITEM_CATALOG_RAW = {
     synergies: [
       { id: "migrated_block_1", adjacency: "strong", neighborTags: ["shield"], target: "neighbor", apply: { type: "blockBonus", value: 1 }, desc: "+1 блока" }
     ],
-    description: "+4 защиты. В начале боя: +45 блок. +4 защиты. +8% к урону.",
+    description: "+4 защиты. В начале боя: +45 блок. +8% к урону.",
     buildHints: "Билд: выживание · Ветка: Stone / Vampiric / Holy / Ice Armor",
     sockets: 2,
   },
@@ -920,7 +920,7 @@ const ITEM_CATALOG_RAW = {
     metaEffects: [
       { phase: "shop_enter", type: "gain_buff", value: 1 }
     ],
-    description: "+2 макс. HP за стартовый предмет. +2 к макс. здоровью. +2 макс. HP за стартовый предмет. В магазине даёт +1 усиление к следующему бою.",
+    description: "+2 макс. HP за стартовый предмет. +2 к макс. здоровью. В магазине даёт +1 усиление к следующему бою.",
     buildHints: "Билд: экономика / золото",
   },
   pineapple: {
@@ -1072,7 +1072,7 @@ const ITEM_CATALOG_RAW = {
     synergies: [
       { id: "royal_block_buff", adjacency: "strong", neighborTags: ["weapon"], target: "self", apply: { type: "grantBlockBuff", value: 4, buffTargetTags: ["weapon"], cap: 20 }, desc: "[при блоке]: +4 к атаке соседнего оружия (макс. +20 за бой)" }
     ],
-    description: "+10 защиты. +10 защиты. +15 к макс. здоровью. Блок 10.",
+    description: "+10 защиты. +15 к макс. здоровью. Блок 10.",
   },
   rusty_sword: {
     id: "rusty_sword",
@@ -1253,7 +1253,7 @@ const ITEM_CATALOG_RAW = {
     metaEffects: [
       { phase: "passive", type: "starting_value", value: 1 }
     ],
-    description: "+1 к стартовой ценности.",
+    description: "+1💰 в начале забега.",
     buildHints: "Универсальный / автономный",
   },
   stone: {
@@ -1348,7 +1348,7 @@ const ITEM_CATALOG_RAW = {
       { type: "passiveDefense", value: 16, trigger: "passive" },
       { type: "passiveMaxHp", value: 15, trigger: "passive" }
     ],
-    description: "+16 защиты. +16 защиты. +15 к макс. здоровью.",
+    description: "+16 защиты. +15 к макс. здоровью.",
   },
   vampiric_potion: {
     id: "vampiric_potion",
@@ -3238,7 +3238,7 @@ const ITEM_CATALOG_RAW = {
       { type: "periodic", interval: 3, trigger: "passive", damage: 5, damageType: "magic", consumesUse: true },
       { type: "activationLimit", base: 3, perTag: 1, tag: "cold", excludeSelf: true, trigger: "passive" }
     ],
-    description: "До 3 активаций за бой. Каждые 3 сек: наносит 5 магического урона. Каждые 3 сек: наносит 5 магического урона. замедление 12%.",
+    description: "До 3 активаций за бой. Каждые 3 сек: наносит 5 магического урона. замедление 12%.",
     buildHints: "Билд: лёд",
   },
   spider_web: {
@@ -3376,7 +3376,7 @@ const ITEM_CATALOG_RAW = {
       { type: "gainStack", stack: "block", value: 1, trigger: "on_hit" },
       { type: "applyStun", chance: 0.3, duration: 0.5, trigger: "on_hit" }
     ],
-    description: "+4 защиты. При попадании: +1 блок. При попадании: 30% оглушает на 0.5 сек. +4 защиты. замедление 18%.",
+    description: "+4 защиты. При попадании: +1 блок. При попадании: 30% оглушает на 0.5 сек. замедление 18%.",
     buildHints: "Универсальный / автономный",
     sockets: 1,
   },
@@ -3697,7 +3697,7 @@ const ITEM_CATALOG_RAW = {
     metaEffects: [
       { phase: "shop_pool", type: "offer_tag", tag: "berserker" }
     ],
-    description: "Боевая ярость (<50% HP): −урон, быстрее предметы. Боевая ярость (<50% HP): −урон, быстрее предметы. Если здоровье ниже 50%, один раз за бой. В магазине чаще встречаются предметы: берсерк.",
+    description: "Боевая ярость (<50% HP): −урон, быстрее предметы. Если здоровье ниже 50%, один раз за бой. В магазине чаще встречаются предметы: берсерк.",
     buildHints: "Универсальный / автономный",
   },
   wolpertinger: {

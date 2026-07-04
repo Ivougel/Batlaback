@@ -77,7 +77,7 @@ html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-ph
   bottom: calc(var(--prep-hero-slot-bottom, 8px) + var(--prep-hero-slot-height, 50vh) * 0.88);
   left: calc(var(--prep-hero-slot-left, 2%) + var(--prep-hero-slot-width, 28%) * 0.68);
   transform: translateX(-50%);
-  z-index: 8;
+  z-index: 28;
 }
 
 html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-character-layer #prep-character-spec-slot-enemy {
@@ -87,7 +87,30 @@ html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-ph
   bottom: calc(var(--prep-hero-slot-bottom, 8px) + var(--prep-hero-slot-height, 50vh) * 0.88);
   right: calc(var(--prep-hero-slot-left, 2%) + var(--prep-hero-slot-width, 28%) * 0.68);
   transform: translateX(50%);
-  z-index: 8;
+  z-index: 28;
+}
+
+/* JS: syncBattleHeroSpecAnchors — точная позиция над головой (перебивает % fallback). */
+html[data-battle-spec-anchored="true"][data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-character-layer .prep-character-spec-slot {
+  bottom: auto !important;
+}
+
+html[data-battle-spec-anchored="true"][data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-character-layer #prep-character-spec-slot {
+  right: auto !important;
+}
+
+html[data-battle-spec-anchored="true"][data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-character-layer #prep-character-spec-slot-enemy {
+  left: auto !important;
+  right: auto !important;
+}
+
+html[data-prep-spec-anchored="true"] #app[data-phase="prep"] .prep-character-layer .prep-character-spec-slot {
+  bottom: auto !important;
+  right: auto !important;
+}
+
+html[data-prep-spec-anchored="true"] #app[data-phase="prep"][data-prep-side="enemy"] .prep-character-layer #prep-character-spec-slot {
+  left: auto !important;
 }
 
 html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-build-emoji-btn--hero-field-float,

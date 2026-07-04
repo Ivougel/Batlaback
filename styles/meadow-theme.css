@@ -75,6 +75,7 @@ body {
 .battle-detail-modal,
 .settings-modal,
 .recipe-book-modal,
+.class-detail-modal,
 .board-preview-modal {
   color: var(--meadow-ink);
 }

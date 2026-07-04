@@ -101,17 +101,10 @@ function applyArchetypeMagicGlow(el, pathId, classId = null) {
 
 function getMutationUnlockHint(mutDef) {
   if (!mutDef) return "";
-  if (mutDef.diversity) {
-    return "4+ семейств тегов · спутник Странник";
+  if (typeof getMutationGrowthHint === "function") {
+    return getMutationGrowthHint(mutDef);
   }
-  const tags = Object.entries(mutDef.tagWeights || {})
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3)
-    .map(([tag]) => tag);
-  const bias = (mutDef.companionBias || []).length
-    ? ` · спутник: ${mutDef.companionBias.join(", ")}`
-    : "";
-  return `Теги: ${tags.join(", ")}${bias} · форма R8, мутация R16`;
+  return "";
 }
 
 function buildClassMutationGalleryHtml(classId) {
@@ -181,7 +174,7 @@ function ensureMutationIntentPopup() {
       <p class="mutation-intent-popup-lead">Вы будете</p>
       <p class="mutation-intent-popup-title" id="mutation-intent-popup-title"></p>
       <p class="mutation-intent-popup-form"></p>
-      <p class="mutation-intent-popup-quip"></p>
+      <div class="mutation-intent-popup-perks"></div>
       <div class="mutation-intent-popup-actions">
         <button type="button" class="btn-secondary mutation-intent-popup-no">Нет</button>
         <button type="button" class="btn-primary mutation-intent-popup-yes">Да</button>
@@ -227,7 +220,12 @@ function showMutationIntentPopup(cell, mutationId, classId) {
   popup.querySelector(".mutation-intent-popup-emoji").textContent = meta.emoji;
   popup.querySelector(".mutation-intent-popup-title").textContent = title;
   popup.querySelector(".mutation-intent-popup-form").textContent = meta.formName;
-  popup.querySelector(".mutation-intent-popup-quip").textContent = meta.quip;
+  const intentPerks = popup.querySelector(".mutation-intent-popup-perks");
+  if (intentPerks) {
+    const perksHtml = renderMutationLorePerksHtml(meta);
+    intentPerks.innerHTML = perksHtml;
+    intentPerks.hidden = !perksHtml;
+  }
 
   popup.classList.remove("hidden", "mutation-intent-popup--enter");
   popup.setAttribute("aria-hidden", "false");
@@ -276,7 +274,7 @@ function ensureMutationLorePopup() {
     <span class="mutation-lore-popup-emoji" aria-hidden="true"></span>
     <p class="mutation-lore-popup-name"></p>
     <p class="mutation-lore-popup-form"></p>
-    <p class="mutation-lore-popup-quip"></p>
+    <div class="mutation-lore-popup-perks"></div>
   `;
   document.body.appendChild(popup);
 
@@ -293,11 +291,14 @@ function ensureMutationLorePopup() {
 function getMutationLorePopupMeta(mutationId) {
   const def = typeof getMutationById === "function" ? getMutationById(mutationId) : null;
   if (!def) return null;
+  const perks = typeof getMutationPerkMeta === "function" ? getMutationPerkMeta(mutationId) : null;
   return {
     emoji: getMutationUiEmoji(mutationId),
     name: def.name,
     formName: def.formName,
-    quip: typeof getMutationLoreQuip === "function" ? getMutationLoreQuip(mutationId) : "",
+    growthHint: perks?.growthHint || "",
+    formPerk: perks?.formPerk || "",
+    capstoneDesc: perks?.capstoneDesc || "",
   };
 }
 
@@ -359,9 +360,27 @@ function attachMutationLoreOutsideCloser() {
     if (event.target.closest(`#${MUTATION_LORE_POPUP_ID}`)) return;
     if (event.target.closest(".mutation-silhouette[data-mutation-id]")) return;
     if (event.target.closest(".prep-build-emoji-btn[data-mutation-id]")) return;
+    if (event.target.closest(".mutation-progress--interactive[data-mutation-id]")) return;
     hideMutationLorePopup();
   };
   document.addEventListener("pointerdown", mutationLoreOutsideCloser, true);
+}
+
+function renderMutationLorePerksHtml(meta) {
+  if (!meta) return "";
+  const rows = [];
+  if (meta.growthHint) {
+    rows.push(`<p class="mutation-lore-popup-perk"><span class="mutation-lore-popup-perk-label">Путь</span><span class="mutation-lore-popup-perk-text">${escapeMutationUiHtml(meta.growthHint)}</span></p>`);
+  }
+  if (meta.formPerk) {
+    const formRound = typeof MUTATION_ROUND_FORM !== "undefined" ? MUTATION_ROUND_FORM : 8;
+    rows.push(`<p class="mutation-lore-popup-perk"><span class="mutation-lore-popup-perk-label">R${formRound} · форма</span><span class="mutation-lore-popup-perk-text">${escapeMutationUiHtml(meta.formPerk)}</span></p>`);
+  }
+  if (meta.capstoneDesc) {
+    const finalRound = typeof MUTATION_ROUND_FINAL !== "undefined" ? MUTATION_ROUND_FINAL : 16;
+    rows.push(`<p class="mutation-lore-popup-perk"><span class="mutation-lore-popup-perk-label">R${finalRound} · мутация</span><span class="mutation-lore-popup-perk-text">${escapeMutationUiHtml(meta.capstoneDesc)}</span></p>`);
+  }
+  return rows.join("");
 }
 
 function showMutationLorePopup(cell, mutationId, opts = {}) {
@@ -376,7 +395,12 @@ function showMutationLorePopup(cell, mutationId, opts = {}) {
   popup.querySelector(".mutation-lore-popup-emoji").textContent = meta.emoji;
   popup.querySelector(".mutation-lore-popup-name").textContent = meta.name;
   popup.querySelector(".mutation-lore-popup-form").textContent = meta.formName;
-  popup.querySelector(".mutation-lore-popup-quip").textContent = meta.quip;
+  const perksEl = popup.querySelector(".mutation-lore-popup-perks");
+  if (perksEl) {
+    const perksHtml = renderMutationLorePerksHtml(meta);
+    perksEl.innerHTML = perksHtml;
+    perksEl.hidden = !perksHtml;
+  }
 
   highlightMutationLoreCell(cell, true);
   positionMutationLorePopup(cell, popup);
@@ -478,19 +502,23 @@ function getPrepMutationBadgeMeta(formId, mutationId, round = 1) {
   const r = round || 1;
   if (mutationId) {
     const def = typeof getMutationById === "function" ? getMutationById(mutationId) : null;
+    const perks = typeof getMutationPerkMeta === "function" ? getMutationPerkMeta(mutationId) : null;
     return {
       kind: "mutation",
       label: def?.name || mutationId,
       sub: `R${typeof MUTATION_ROUND_FINAL !== "undefined" ? MUTATION_ROUND_FINAL : 16}`,
+      perk: perks?.capstoneDesc || "",
       emoji: getMutationUiEmoji(mutationId),
     };
   }
   if (formId && r >= (typeof MUTATION_ROUND_FORM !== "undefined" ? MUTATION_ROUND_FORM : 8)) {
     const def = typeof getMutationById === "function" ? getMutationById(formId) : null;
+    const perks = typeof getMutationPerkMeta === "function" ? getMutationPerkMeta(formId) : null;
     return {
       kind: "form",
       label: def?.formName || formId,
       sub: `форма R${typeof MUTATION_ROUND_FORM !== "undefined" ? MUTATION_ROUND_FORM : 8}`,
+      perk: perks?.formPerk || "",
       emoji: getMutationUiEmoji(formId),
     };
   }
@@ -500,11 +528,16 @@ function getPrepMutationBadgeMeta(formId, mutationId, round = 1) {
 function renderPrepMutationBadgeHtml(formId, mutationId, round = 1) {
   const meta = getPrepMutationBadgeMeta(formId, mutationId, round);
   if (!meta) return "";
+  const perkHtml = meta.perk
+    ? `<span class="prep-mutation-badge-perk">${escapeMutationUiHtml(meta.perk)}</span>`
+    : "";
+  const title = meta.perk ? `${meta.label} · ${meta.perk}` : meta.label;
   return `
-    <span class="prep-mutation-badge prep-mutation-badge--${meta.kind}" title="${escapeMutationUiHtml(meta.label)}">
+    <span class="prep-mutation-badge prep-mutation-badge--${meta.kind}" title="${escapeMutationUiHtml(title)}">
       <span class="prep-mutation-badge-emoji" aria-hidden="true">${meta.emoji}</span>
       <span class="prep-mutation-badge-text">${escapeMutationUiHtml(meta.label)}</span>
       <span class="prep-mutation-badge-sub">${escapeMutationUiHtml(meta.sub)}</span>
+      ${perkHtml}
     </span>
   `;
 }
@@ -573,6 +606,42 @@ function resolvePrepBuildEmojiDisplay(opts = {}) {
 
 let prepBuildEmojiBtnBound = false;
 
+function ensurePrepBuildEmojiDom() {
+  const heroCard = document.getElementById("prep-hero-card");
+  let heroSlot = document.getElementById("prep-hero-card-build-slot");
+  let btn = document.getElementById("prep-build-emoji-btn");
+
+  if (!heroCard) return { heroSlot, btn };
+
+  if (!heroSlot) {
+    heroSlot = document.createElement("div");
+    heroSlot.className = "prep-hero-card__build-slot";
+    heroSlot.id = "prep-hero-card-build-slot";
+    heroSlot.setAttribute("aria-hidden", "true");
+    const actions = heroCard.querySelector(".prep-hero-card__actions");
+    if (actions) heroCard.insertBefore(heroSlot, actions);
+    else heroCard.appendChild(heroSlot);
+  }
+
+  if (!btn) {
+    btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "prep-build-emoji-btn build-preview-toggle hidden";
+    btn.id = "prep-build-emoji-btn";
+    btn.dataset.mutationId = "";
+    btn.dataset.emojiSlot = "build";
+    btn.setAttribute("aria-label", "Путь сборки");
+    btn.title = "Путь сборки";
+    btn.innerHTML = `
+      <span class="prep-build-emoji-btn-glow" aria-hidden="true"></span>
+      <span class="prep-build-emoji-btn-glyph" aria-hidden="true"></span>`;
+    heroSlot.appendChild(btn);
+    prepBuildEmojiBtnBound = false;
+  }
+
+  return { heroSlot, btn };
+}
+
 function isPrepBuildEmojiHeroHudMount() {
   const root = document.documentElement;
   return root.dataset.prepLayout === "side"
@@ -597,7 +666,14 @@ function isPrepFullBodyHeroLayerVisible() {
 function shouldUseHeroFieldFloatMount() {
   const specSlot = document.getElementById("prep-character-spec-slot");
   if (!specSlot) return false;
-  return isBattlePrepHeroSpecFloat() || isPrepFullBodyHeroLayerVisible();
+  if (isBattlePrepHeroSpecFloat()) return true;
+  const app = document.getElementById("app");
+  // Tablet/desktop prep: спек в hero-card HUD (stats row), не float у full-body на поле.
+  if (app?.dataset?.phase === "prep" && isPrepBuildEmojiHeroHudMount()) {
+    const heroSlot = document.getElementById("prep-hero-card-build-slot");
+    if (heroSlot) return false;
+  }
+  return isPrepFullBodyHeroLayerVisible();
 }
 
 function restorePrepBuildEmojiHeroSlot(heroCard, heroSlot) {
@@ -608,6 +684,7 @@ function restorePrepBuildEmojiHeroSlot(heroCard, heroSlot) {
 }
 
 function syncPrepBuildEmojiBtnMount() {
+  ensurePrepBuildEmojiDom();
   const btn = document.getElementById("prep-build-emoji-btn");
   const heroSlot = document.getElementById("prep-hero-card-build-slot");
   const specSlot = document.getElementById("prep-character-spec-slot");
@@ -618,9 +695,10 @@ function syncPrepBuildEmojiBtnMount() {
 
   const heroHud = isPrepBuildEmojiHeroHudMount();
   const battlePrepHero = isBattlePrepHeroSpecFloat();
-  const heroFieldFloat = shouldUseHeroFieldFloatMount();
+  const heroFieldFloat = shouldUseHeroFieldFloatMount() && !battlePrepHero;
 
   if (heroFieldFloat) {
+    hideBattleArchetypeFloat("player");
     specSlot.removeAttribute("aria-hidden");
     btn.classList.add("prep-build-emoji-btn--hero-field-float");
     btn.classList.remove("prep-build-emoji-btn--hud-float");
@@ -630,6 +708,16 @@ function syncPrepBuildEmojiBtnMount() {
       heroSlot.classList.remove("prep-hero-card__build-slot--hud-inline");
       heroSlot.setAttribute("aria-hidden", "true");
     }
+  } else if (battlePrepHero) {
+    specSlot?.removeAttribute("aria-hidden");
+    btn.classList.remove("prep-build-emoji-btn--hero-field-float", "prep-build-emoji-btn--hud-float");
+    if (specSlot?.contains(btn)) specSlot.removeChild(btn);
+    if (heroSlot) {
+      restorePrepBuildEmojiHeroSlot(heroCard, heroSlot);
+      if (!heroSlot.contains(btn)) heroSlot.appendChild(btn);
+      heroSlot.setAttribute("aria-hidden", "true");
+    }
+    btn.classList.add("hidden");
   } else if (heroHud && heroSlot) {
     specSlot?.setAttribute("aria-hidden", "true");
     btn.classList.remove("prep-build-emoji-btn--hero-field-float");
@@ -655,17 +743,35 @@ function syncPrepBuildEmojiBtnMount() {
   }
 
   const enemySpecSlot = document.getElementById("prep-character-spec-slot-enemy");
-  if (!battlePrepHero) hideBattleEnemyArchetypeFloat();
-  else if (enemySpecSlot) enemySpecSlot.removeAttribute("aria-hidden");
+  if (!battlePrepHero) {
+    hideBattleArchetypeFloat("player");
+    hideBattleArchetypeFloat("enemy");
+  } else {
+    specSlot?.removeAttribute("aria-hidden");
+    enemySpecSlot?.removeAttribute("aria-hidden");
+  }
 }
 
-function hideBattleEnemyArchetypeFloat() {
-  const slot = document.getElementById("prep-character-spec-slot-enemy");
-  const floatEl = document.getElementById("battle-enemy-archetype-float");
+function getBattleArchetypeFloatElements(side) {
+  if (side === "enemy") {
+    return {
+      slot: document.getElementById("prep-character-spec-slot-enemy"),
+      floatEl: document.getElementById("battle-enemy-archetype-float"),
+    };
+  }
+  return {
+    slot: document.getElementById("prep-character-spec-slot"),
+    floatEl: document.getElementById("battle-player-archetype-float"),
+  };
+}
+
+function hideBattleArchetypeFloat(side) {
+  const { slot, floatEl } = getBattleArchetypeFloatElements(side);
   if (slot) slot.setAttribute("aria-hidden", "true");
   if (!floatEl) return;
   floatEl.hidden = true;
-  const glyph = floatEl.querySelector(".battle-archetype-float-glyph");
+  const glyph = floatEl.querySelector(".battle-archetype-float-glyph")
+    || floatEl.querySelector(".prep-build-emoji-btn-glyph");
   if (glyph) glyph.textContent = "";
   floatEl.removeAttribute("title");
   floatEl.removeAttribute("aria-label");
@@ -675,13 +781,20 @@ function hideBattleEnemyArchetypeFloat() {
   clearArchetypeMagicGlow(floatEl);
 }
 
-function syncBattleEnemyArchetypeFloat(opts = {}) {
-  const slot = document.getElementById("prep-character-spec-slot-enemy");
-  const floatEl = document.getElementById("battle-enemy-archetype-float");
+function hideBattleEnemyArchetypeFloat() {
+  hideBattleArchetypeFloat("enemy");
+}
+
+function hideBattlePlayerArchetypeFloat() {
+  hideBattleArchetypeFloat("player");
+}
+
+function syncBattleArchetypeFloat(side, opts = {}) {
+  const { slot, floatEl } = getBattleArchetypeFloatElements(side);
   if (!slot || !floatEl) return;
 
   if (!isBattlePrepHeroSpecFloat()) {
-    hideBattleEnemyArchetypeFloat();
+    hideBattleArchetypeFloat(side);
     return;
   }
 
@@ -696,20 +809,25 @@ function syncBattleEnemyArchetypeFloat(opts = {}) {
 
   const emoji = opts.profile?.archetypeEmoji ?? display.emoji;
   if (!emoji) {
-    hideBattleEnemyArchetypeFloat();
+    hideBattleArchetypeFloat(side);
     return;
   }
 
   slot.removeAttribute("aria-hidden");
   floatEl.hidden = false;
-  const glyph = floatEl.querySelector(".battle-archetype-float-glyph");
+  const glyph = floatEl.querySelector(".battle-archetype-float-glyph")
+    || floatEl.querySelector(".prep-build-emoji-btn-glyph");
   if (glyph) glyph.textContent = emoji;
 
   const pathId = opts.profile?.archetypePathId || display.pathId || "";
   floatEl.dataset.archetypePath = pathId;
   floatEl.dataset.mutationId = pathId;
   floatEl.dataset.emoji = emoji;
-  const label = opts.profile?.archetypeLabel || display.label;
+  const label = formatArchetypeTooltipLabel(pathId, {
+    fallback: opts.profile?.archetypeLabel || display.label,
+    mutationId: opts.mutationId ?? opts.profile?.archetypeMutationId,
+    formId: opts.formId ?? opts.profile?.archetypeFormId,
+  });
   floatEl.title = label;
   floatEl.setAttribute("aria-label", label);
   floatEl.classList.toggle("prep-build-emoji-btn--has-path", !!pathId);
@@ -719,17 +837,86 @@ function syncBattleEnemyArchetypeFloat(opts = {}) {
   if (pathId && typeof bindAvatarArchetypeBannerInteractions === "function") {
     bindAvatarArchetypeBannerInteractions(floatEl);
   }
+
+  if (typeof window.syncBattleHeroSpecAnchors === "function") {
+    requestAnimationFrame(() => window.syncBattleHeroSpecAnchors());
+  }
+}
+
+function syncBattleEnemyArchetypeFloat(opts = {}) {
+  syncBattleArchetypeFloat("enemy", opts);
+}
+
+function syncBattlePlayerArchetypeFloat(opts = {}) {
+  syncBattleArchetypeFloat("player", opts);
+}
+
+function resolveBattleArchetypeFloatOpts(side) {
+  const viewState = typeof getDisplayBattleState === "function" ? getDisplayBattleState() : null;
+  const profile = viewState?._heroProfiles?.[side];
+  const runRound = typeof round !== "undefined" ? round : 1;
+  if (profile && (profile.archetypeEmoji || profile.archetypePathId || profile.archetypeMutationId || profile.archetypeFormId)) {
+    const classId = side === "player"
+      ? (typeof playerClass !== "undefined" ? playerClass : profile.classId)
+      : (typeof enemyClass !== "undefined" ? enemyClass : profile.classId);
+    return {
+      profile,
+      formId: profile.archetypeFormId,
+      mutationId: profile.archetypeMutationId,
+      classId: classId || profile.classId,
+      round: profile.archetypeRound ?? runRound,
+      emojiOverride: profile.archetypeEmoji,
+    };
+  }
+  if (typeof getSideMutationRuntime !== "function") return null;
+  const mutRt = getSideMutationRuntime(side);
+  const mutationProgress = typeof resolveMutationProgress === "function"
+    ? resolveMutationProgress({
+      classId: mutRt.classId,
+      companionId: mutRt.companionId,
+      items: mutRt.items,
+      enhancements: mutRt.enhancements,
+      round: runRound,
+    })
+    : null;
+  return {
+    formId: mutRt.formId,
+    mutationId: mutRt.mutationId,
+    classId: mutRt.classId,
+    leaderId: mutationProgress?.leader?.id,
+    round: runRound,
+  };
+}
+
+function syncBattleArchetypeFloatsFromRuntime() {
+  if (!isBattlePrepHeroSpecFloat()) return;
+  const playerOpts = resolveBattleArchetypeFloatOpts("player");
+  const enemyOpts = resolveBattleArchetypeFloatOpts("enemy");
+  if (playerOpts) syncBattlePlayerArchetypeFloat(playerOpts);
+  if (enemyOpts) syncBattleEnemyArchetypeFloat(enemyOpts);
 }
 
 window.syncBattleEnemyArchetypeFloat = syncBattleEnemyArchetypeFloat;
+window.syncBattlePlayerArchetypeFloat = syncBattlePlayerArchetypeFloat;
+window.syncBattleArchetypeFloatsFromRuntime = syncBattleArchetypeFloatsFromRuntime;
+window.hideBattleArchetypeFloat = hideBattleArchetypeFloat;
 
 function syncPrepBuildEmojiBtn(opts = {}) {
+  ensurePrepBuildEmojiDom();
   const btn = document.getElementById("prep-build-emoji-btn");
   if (!btn) return;
 
   syncPrepBuildEmojiBtnMount();
 
-  if (!isBattlePrepHeroSpecFloat()) hideBattleEnemyArchetypeFloat();
+  if (isBattlePrepHeroSpecFloat()) {
+    syncBattlePlayerArchetypeFloat(opts);
+    const enemyOpts = resolveBattleArchetypeFloatOpts("enemy");
+    if (enemyOpts) syncBattleEnemyArchetypeFloat(enemyOpts);
+    return;
+  }
+
+  hideBattleArchetypeFloat("player");
+  hideBattleArchetypeFloat("enemy");
 
   const display = resolvePrepBuildEmojiDisplay(opts);
   const glyph = btn.querySelector(".prep-build-emoji-btn-glyph");
@@ -737,10 +924,17 @@ function syncPrepBuildEmojiBtn(opts = {}) {
 
   btn.dataset.mutationId = display.pathId || "";
   btn.dataset.emoji = display.emoji;
-  btn.title = display.label;
+  const tooltip = display.pathId
+    ? formatArchetypeTooltipLabel(display.pathId, {
+      fallback: display.label,
+      mutationId: opts.mutationId,
+      formId: opts.formId,
+    })
+    : display.label;
+  btn.title = tooltip;
   btn.setAttribute("aria-label", display.loreEnabled
-    ? `${display.label} · наведите для «правды»`
-    : display.label);
+    ? `${tooltip} · нажмите для подробностей`
+    : tooltip);
 
   btn.classList.toggle("prep-build-emoji-btn--has-path", !!display.pathId);
   btn.classList.toggle("prep-build-emoji-btn--lore", display.loreEnabled);
@@ -753,6 +947,10 @@ function syncPrepBuildEmojiBtn(opts = {}) {
     specSlot.removeAttribute("aria-hidden");
   } else if (heroSlot && isPrepBuildEmojiHeroHudMount() && !btn.classList.contains("hidden")) {
     heroSlot.removeAttribute("aria-hidden");
+  }
+
+  if (typeof window.syncBattleHeroSpecAnchors === "function") {
+    requestAnimationFrame(() => window.syncBattleHeroSpecAnchors());
   }
 }
 
@@ -816,6 +1014,7 @@ function bindPrepBuildEmojiBtnInteractions() {
 
 function initPrepBuildEmojiBtn() {
   bindPrepBuildEmojiBtnInteractions();
+  bindMutationProgressInteractions();
   syncPrepBuildEmojiBtnMount();
 }
 
@@ -824,9 +1023,14 @@ function syncPrepBuildEmojiBtnFromRuntime() {
   const app = document.getElementById("app");
   const phase = app?.dataset?.phase;
   if (phase !== "prep" && phase !== "battle" && phase !== "replay") return;
-  const side = (phase === "battle" || phase === "replay")
-    ? "player"
-    : (typeof prepViewSide !== "undefined" ? prepViewSide : "player");
+
+  if ((phase === "battle" || phase === "replay") && isBattlePrepHeroSpecFloat()) {
+    syncPrepBuildEmojiBtnMount();
+    syncBattleArchetypeFloatsFromRuntime();
+    return;
+  }
+
+  const side = typeof prepViewSide !== "undefined" ? prepViewSide : "player";
   const mutRt = getSideMutationRuntime(side);
   const runRound = typeof round !== "undefined" ? round : 1;
   const mutationProgress = typeof resolveMutationProgress === "function"
@@ -907,6 +1111,68 @@ function triggerMutationMilestoneCelebration(side, milestone = "mutation") {
   }, MUTATION_REVEAL_MS);
 }
 
+function formatArchetypeTooltipLabel(pathId, opts = {}) {
+  if (!pathId) return opts.fallback || "Герой";
+  const def = typeof getMutationById === "function" ? getMutationById(pathId) : null;
+  const perks = typeof getMutationPerkMeta === "function" ? getMutationPerkMeta(pathId) : null;
+  const name = def?.name || pathId;
+  if (opts.mutationId === pathId && perks?.capstoneDesc) {
+    return `${name} · R16: ${perks.capstoneDesc}`;
+  }
+  if (opts.formId === pathId && perks?.formPerk) {
+    return `${def?.formName || name} · R8: ${perks.formPerk}`;
+  }
+  if (perks?.capstoneDesc) return `${name} · R16: ${perks.capstoneDesc}`;
+  return name;
+}
+
+let mutationProgressBound = false;
+
+function bindMutationProgressInteractions() {
+  if (mutationProgressBound) return;
+  mutationProgressBound = true;
+
+  document.addEventListener("pointerover", (event) => {
+    if (isCoarseMutationPointer()) return;
+    const el = event.target.closest(".mutation-progress--interactive[data-mutation-id]");
+    if (!el) return;
+    showMutationLorePopup(el, el.dataset.mutationId);
+  });
+
+  document.addEventListener("pointerout", (event) => {
+    if (isCoarseMutationPointer() || mutationLorePopupPinned) return;
+    const el = event.target.closest(".mutation-progress--interactive[data-mutation-id]");
+    if (!el) return;
+    const to = event.relatedTarget;
+    if (to?.closest?.(`#${MUTATION_LORE_POPUP_ID}`)) return;
+    if (to?.closest?.(".mutation-progress--interactive[data-mutation-id]")) return;
+    hideMutationLorePopup();
+  });
+
+  document.addEventListener("click", (event) => {
+    const el = event.target.closest(".mutation-progress--interactive[data-mutation-id]");
+    if (!el) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const pathId = el.dataset.mutationId;
+    if (!pathId) return;
+    if (isCoarseMutationPointer()) {
+      if (mutationLorePopupCell === el && mutationLorePopupPinned) hideMutationLorePopup();
+      else showMutationLorePopup(el, pathId, { pin: true });
+      return;
+    }
+    showMutationLorePopup(el, pathId, { pin: true });
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    const el = event.target.closest(".mutation-progress--interactive[data-mutation-id]");
+    if (!el) return;
+    event.preventDefault();
+    showMutationLorePopup(el, el.dataset.mutationId, { pin: true });
+  });
+}
+
 const avatarArchetypeBannerBound = new WeakSet();
 
 function bindAvatarArchetypeBannerInteractions(banner) {
@@ -943,4 +1209,5 @@ function bindAvatarArchetypeBannerInteractions(banner) {
 }
 
 window.bindAvatarArchetypeBannerInteractions = bindAvatarArchetypeBannerInteractions;
+window.bindMutationProgressInteractions = bindMutationProgressInteractions;
 window.getPrepMutationBadgeMeta = getPrepMutationBadgeMeta;

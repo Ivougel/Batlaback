@@ -333,6 +333,76 @@ html[data-visual-theme="diablo"] #class-overlay .mutation-silhouette {
   border-color: rgba(139, 105, 20, 0.35);
 }
 
+/* Подтверждение пути — тёмная панель, светлый текст */
+html[data-visual-theme="diablo"] body:has(#class-overlay:not(.hidden)) .mutation-intent-popup {
+  --intent-popup-ink: #e8dcc8;
+  --intent-popup-ink-muted: #b8a890;
+  --intent-popup-ink-lead: #d4c8b4;
+  --intent-popup-perk-label: #c9a227;
+  --intent-popup-perk-bg: rgba(0, 0, 0, 0.34);
+  --intent-popup-perk-border: rgba(201, 162, 39, 0.38);
+  --intent-popup-quip: #f0d878;
+  --intent-popup-panel-bg: linear-gradient(180deg, rgba(42, 32, 24, 0.98) 0%, rgba(26, 20, 14, 0.99) 100%);
+  --intent-popup-panel-border: rgba(201, 162, 39, 0.72);
+}
+
+html[data-visual-theme="diablo"] .mutation-intent-popup-backdrop {
+  background: rgba(0, 0, 0, 0.58);
+}
+
+html[data-visual-theme="diablo"] .mutation-intent-popup-panel {
+  box-shadow:
+    0 0 0 2px rgba(201, 162, 39, 0.28),
+    0 0 28px rgba(201, 162, 39, 0.18),
+    0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+html[data-visual-theme="diablo"] .mutation-intent-popup-glow {
+  background: radial-gradient(circle at 50% 16%, rgba(201, 162, 39, 0.18) 0%, transparent 72%);
+}
+
+/* Lore-popup у силуэтов — тёмная панель на intro Diablo */
+html[data-visual-theme="diablo"] body:has(#class-overlay:not(.hidden)) .mutation-lore-popup {
+  border-color: rgba(201, 162, 39, 0.72);
+  background: linear-gradient(180deg, rgba(42, 32, 24, 0.98) 0%, rgba(26, 20, 14, 0.99) 100%);
+  box-shadow:
+    0 0 0 2px rgba(201, 162, 39, 0.28),
+    0 0 22px rgba(201, 162, 39, 0.16),
+    0 12px 32px rgba(0, 0, 0, 0.42);
+}
+
+html[data-visual-theme="diablo"] body:has(#class-overlay:not(.hidden)) .mutation-lore-popup .mutation-lore-popup-name {
+  color: #e8dcc8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+html[data-visual-theme="diablo"] body:has(#class-overlay:not(.hidden)) .mutation-lore-popup .mutation-lore-popup-form {
+  color: #b8a890;
+}
+
+html[data-visual-theme="diablo"] body:has(#class-overlay:not(.hidden)) .mutation-lore-popup .mutation-lore-popup-perks {
+  background: rgba(0, 0, 0, 0.34);
+  border-color: rgba(201, 162, 39, 0.35);
+}
+
+html[data-visual-theme="diablo"] body:has(#class-overlay:not(.hidden)) .mutation-lore-popup .mutation-lore-popup-perk {
+  color: #e8dcc8;
+}
+
+html[data-visual-theme="diablo"] body:has(#class-overlay:not(.hidden)) .mutation-lore-popup .mutation-lore-popup-perk-label {
+  color: #c9a227;
+}
+
+html[data-visual-theme="diablo"] body:has(#class-overlay:not(.hidden)) .mutation-lore-popup .mutation-lore-popup-quip {
+  border-top-color: rgba(201, 162, 39, 0.35);
+  color: #f0d878;
+  text-shadow: 0 0 10px rgba(201, 162, 39, 0.22);
+}
+
+html[data-visual-theme="diablo"] body:has(#class-overlay:not(.hidden)) .mutation-lore-popup .mutation-lore-popup-glow {
+  background: radial-gradient(circle at 50% 18%, rgba(201, 162, 39, 0.16) 0%, transparent 70%);
+}
+
 html[data-visual-theme="diablo"] #class-overlay .btn-glass-back {
   background: linear-gradient(180deg, #3a3028 0%, #2a2218 100%);
   border: 2px solid var(--meadow-border-soft);

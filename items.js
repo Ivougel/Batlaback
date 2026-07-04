@@ -466,6 +466,7 @@ const TAG_LABELS = {
   bag: "сумка",
   utility: "универсальный",
   craft: "крафт",
+  speed: "скорость",
 };
 
 function formatTagLabel(tag) {

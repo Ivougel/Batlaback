@@ -94,7 +94,13 @@ function renderAvatarArchetypeBannerHTML(profile) {
   if (!profile?.archetypeEmoji) return "";
   const label = escapeProfileHtml(profile.archetypeLabel || "Архетип");
   const sub = profile.archetypeSub ? escapeProfileHtml(profile.archetypeSub) : "";
-  const title = sub ? `${label} · ${sub}` : label;
+  const title = typeof formatArchetypeTooltipLabel === "function" && profile.archetypePathId
+    ? escapeProfileHtml(formatArchetypeTooltipLabel(profile.archetypePathId, {
+      fallback: profile.archetypeLabel || "Архетип",
+      mutationId: profile.archetypeMutationId,
+      formId: profile.archetypeFormId,
+    }))
+    : escapeProfileHtml(sub ? `${profile.archetypeLabel || "Архетип"} · ${profile.archetypeSub}` : (profile.archetypeLabel || "Архетип"));
   const kind = escapeProfileHtml(profile.archetypeKind || "form");
   const pathId = escapeProfileHtml(profile.archetypePathId || "");
   return `

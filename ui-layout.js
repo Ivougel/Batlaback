@@ -1536,6 +1536,12 @@
 
   function syncPrepShopPopoverMode(prepLayout) {
     const root = document.documentElement;
+    if (root.hasAttribute("data-lobby2p-hud")) {
+      root.dataset.prepShopPopover = "true";
+      if (typeof window.syncShopMount === "function") window.syncShopMount();
+      if (typeof window.syncPrepShopPopoverPosition === "function") window.syncPrepShopPopoverPosition();
+      return;
+    }
     const surface = root.dataset.uiSurface;
     const drawer = root.dataset.prepShopDrawer === "true";
     const use = prepLayout === "side"
@@ -1796,6 +1802,38 @@
     const root = document.documentElement;
     if (root.dataset.prepShopPopover !== "true") return;
     if (document.getElementById("app")?.dataset.phase !== "prep") return;
+
+    if (root.hasAttribute("data-lobby2p-hud")) {
+      const humanId = typeof window.getLobby2pShopPopoverHuman === "function"
+        ? window.getLobby2pShopPopoverHuman()
+        : (document.getElementById("app")?.dataset.prepSide === "enemy" ? 1 : 0);
+      const split = document.getElementById("lobby2p-split");
+      const splitRect = split?.getBoundingClientRect();
+      const fab = document.querySelector(`.lobby2p-shop-fab[data-human="${humanId}"]`);
+      const fabRect = fab?.getBoundingClientRect();
+      const uiScale = readCssPx("--ui-scale", 1);
+      const gap = Math.round(8 * uiScale);
+      const chrome = getBottomChrome();
+      const chromeTop = chrome && getComputedStyle(chrome).display !== "none"
+        ? chrome.getBoundingClientRect().top
+        : (window.visualViewport?.height ?? window.innerHeight);
+      const colW = splitRect ? Math.max(160, Math.floor(splitRect.width / 2) - gap * 2) : Math.round(240 * uiScale);
+      const colLeft = splitRect
+        ? Math.round(splitRect.left + (humanId === 0 ? gap : splitRect.width / 2 + gap))
+        : gap;
+      const top = fabRect && fabRect.top > gap
+        ? Math.max(gap, Math.round(fabRect.top - gap))
+        : gap;
+      const height = Math.max(180, Math.round((fabRect?.top ?? chromeTop) - gap * 2 - top));
+      root.style.setProperty("--prep-shop-popover-x", `${colLeft}px`);
+      root.style.removeProperty("--prep-shop-popover-right");
+      root.style.setProperty("--prep-shop-popover-y", `${Math.max(gap, top - Math.min(height, 280))}px`);
+      root.style.setProperty("--prep-shop-popover-w", `${colW}px`);
+      root.style.setProperty("--prep-shop-popover-max-h", `${Math.max(200, Math.min(320, height))}px`);
+      root.style.removeProperty("--prep-shop-popover-h");
+      syncOpenPrepTooltipDock();
+      return;
+    }
 
     const uiScale = readCssPx("--ui-scale", 1);
     const gap = Math.round(8 * uiScale);
@@ -2462,6 +2500,107 @@
     return r;
   }
 
+  function positionHeroSpecSlot(side, layerRect) {
+    const slotId = side === "enemy" ? "prep-character-spec-slot-enemy" : "prep-character-spec-slot";
+    const slot = document.getElementById(slotId);
+    if (!slot || slot.getAttribute("aria-hidden") === "true") return false;
+
+    let cx;
+    let cy;
+    const heroRect = measureBattlePrepHeroRect(side);
+    if (heroRect) {
+      const xBias = 0.34;
+      cx = side === "enemy"
+        ? heroRect.left + heroRect.width * (0.5 - xBias)
+        : heroRect.left + heroRect.width * (0.5 + xBias);
+      cy = heroRect.top + heroRect.height * 0.12;
+    } else if (typeof BattleHeroAnchor !== "undefined") {
+      const anchor = BattleHeroAnchor.getHeroNearSpecAnchor(side);
+      if (anchor) {
+        cx = anchor.cx;
+        cy = anchor.cy;
+      }
+    }
+    if (cx == null || cy == null) return false;
+
+    slot.style.position = "absolute";
+    slot.style.left = `${cx - layerRect.left}px`;
+    slot.style.top = `${cy - layerRect.top}px`;
+    slot.style.right = "auto";
+    slot.style.bottom = "auto";
+    slot.style.transform = "translate(-50%, -50%)";
+    slot.style.zIndex = "28";
+    return true;
+  }
+
+  /** Спек+свечение над головой full-body героя (обычное лобби / solo battle-prep-hero-layer). */
+  function syncBattleHeroSpecAnchors() {
+    const root = document.documentElement;
+    const specIds = ["prep-character-spec-slot", "prep-character-spec-slot-enemy"];
+    const app = document.getElementById("app");
+    const isBattle = app?.dataset?.phase === "battle" || app?.dataset?.phase === "replay";
+    const battleLayer = root.dataset.battlePrepHeroLayer === "true" && isBattle;
+    const prepLayer = app?.dataset?.phase === "prep";
+    const prepHeroCardHud = prepLayer && (
+      root.dataset.prepLayout === "side"
+      || root.dataset.uiSurface === "tablet-side"
+      || root.dataset.uiSurface === "desktop"
+    ) && document.getElementById("prep-hero-card-build-slot");
+
+    if (!battleLayer && !prepLayer) {
+      root.removeAttribute("data-battle-spec-anchored");
+      root.removeAttribute("data-prep-spec-anchored");
+      specIds.forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.style.removeProperty("left");
+        el.style.removeProperty("top");
+        el.style.removeProperty("right");
+        el.style.removeProperty("bottom");
+        el.style.removeProperty("transform");
+        el.style.removeProperty("z-index");
+      });
+      return;
+    }
+
+    if (prepHeroCardHud) {
+      root.removeAttribute("data-prep-spec-anchored");
+      specIds.forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.style.removeProperty("left");
+        el.style.removeProperty("top");
+        el.style.removeProperty("right");
+        el.style.removeProperty("bottom");
+        el.style.removeProperty("transform");
+        el.style.removeProperty("z-index");
+      });
+      return;
+    }
+
+    const layer = document.getElementById("prep-character-layer");
+    if (!layer || layer.getAttribute("aria-hidden") === "true") return;
+    const layerRect = layer.getBoundingClientRect();
+    if (layerRect.width < 40 || layerRect.height < 40) return;
+
+    let anchored = false;
+    const sides = prepLayer && !battleLayer
+      ? [app?.dataset?.prepSide === "enemy" ? "enemy" : "player"]
+      : ["player", "enemy"];
+    sides.forEach((side) => {
+      if (positionHeroSpecSlot(side, layerRect)) anchored = true;
+    });
+
+    if (anchored) {
+      root.dataset[battleLayer ? "battleSpecAnchored" : "prepSpecAnchored"] = "true";
+      if (battleLayer) root.removeAttribute("data-prep-spec-anchored");
+      else root.removeAttribute("data-battle-spec-anchored");
+      if (prepLayer && typeof window.syncPrepBuildEmojiBtnMount === "function") {
+        window.syncPrepBuildEmojiBtnMount();
+      }
+    }
+  }
+
   /** L2/L3 hero row: 3 зоны (player | emoji arena | enemy), Safari-safe 4-layer. */
   function syncFlankArenaHeroAnchors() {
     const fieldCol = document.getElementById("prep-field-column");
@@ -2571,6 +2710,7 @@
           thoughtArena.style.minHeight = `${readCssPx("--battle-thought-arena-min-h", 110)}px`;
         }
 
+        syncBattleHeroSpecAnchors();
         if (typeof syncBattleHudAnchors === "function") {
           syncBattleHudAnchors();
         } else {
@@ -3098,33 +3238,30 @@
       const host = document.getElementById("lobby2p-canvas-host");
       const hostW = host?.clientWidth ?? 0;
       const hostH = host?.clientHeight ?? 0;
-      if (hostW > 8 && hostH > 8) {
-        const scale = Math.min(hostW / canvas.width, hostH / canvas.height);
-        const finalScale = Math.min(Math.max(scale, 0.62), 1.08);
-        const w = Math.max(1, Math.floor(canvas.width * finalScale));
-        const h = Math.max(1, Math.floor(canvas.height * finalScale));
+      if (hostW > 8 && hostH > 8 && canvas.width > 0 && canvas.height > 0) {
+        const aspect = canvas.width / canvas.height;
+        let w = hostW;
+        let h = Math.round(w / aspect);
+        if (h > hostH) {
+          h = hostH;
+          w = Math.round(h * aspect);
+        }
+        setCanvasDisplaySize(canvas, w, h);
         root.style.setProperty("--prep-canvas-display-w", `${w}px`);
         root.style.setProperty("--prep-canvas-display-h", `${h}px`);
-        setCanvasDisplaySize(canvas, w, h);
-        const stage = canvas.closest(".battle-canvas-stage");
-        const wrap = canvas.closest(".canvas-scale-wrap");
-        if (stage) {
-          stage.style.width = "100%";
-          stage.style.height = "100%";
-          stage.style.alignItems = "stretch";
-          stage.style.justifyContent = "stretch";
-        }
-        if (wrap) {
-          wrap.style.width = "100%";
-          wrap.style.height = "100%";
-          wrap.style.display = "flex";
-          wrap.style.alignItems = "stretch";
-          wrap.style.justifyContent = "stretch";
-        }
-        canvas.style.width = "100%";
-        canvas.style.height = "100%";
-        canvas.style.maxWidth = "100%";
-        canvas.style.maxHeight = "100%";
+        ["battle-canvas-stage", "canvas-scale-wrap", "prep-field-island"].forEach((sel) => {
+          const el = host?.querySelector(`.${sel}`) || canvas.closest(`.${sel}`);
+          if (!el) return;
+          el.style.width = "100%";
+          el.style.height = "100%";
+          el.style.display = "flex";
+          el.style.alignItems = "center";
+          el.style.justifyContent = "center";
+        });
+        canvas.style.width = `${w}px`;
+        canvas.style.height = `${h}px`;
+        canvas.style.maxWidth = `${w}px`;
+        canvas.style.maxHeight = `${h}px`;
         canvas.style.objectFit = "contain";
         syncMobileShopFabPosition();
         syncFxCanvasGeometry();
@@ -3632,6 +3769,7 @@
       } else if (typeof syncPrepBuildEmojiBtnMount === "function") {
         syncPrepBuildEmojiBtnMount();
       }
+      syncBattleHeroSpecAnchors();
 
       if (usesTabletPrepHeroLayout() && appPhase === "prep") {
         syncTabletSidePrepGridMetrics();
@@ -3778,4 +3916,5 @@
   window.syncHeroEmotionSlotAnchors = syncHeroEmotionSlotAnchors;
   window.usesBattlePrepHeroLayer = usesBattlePrepHeroLayer;
   window.measureBattlePrepHeroRect = measureBattlePrepHeroRect;
+  window.syncBattleHeroSpecAnchors = syncBattleHeroSpecAnchors;
 })();

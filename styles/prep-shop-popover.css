@@ -261,3 +261,23 @@ html[data-prep-sell-fab] #btn-mobile-shop,
 html[data-prep-shop-popover="true"] #btn-mobile-shop {
   display: none !important;
 }
+
+html[data-lobby2p-hud][data-prep-shop-open] #prep-shop-popover {
+  z-index: 140;
+}
+
+html[data-lobby2p-hud] .prep-shop-popover__backdrop {
+  background: transparent !important;
+  pointer-events: none !important;
+}
+
+html[data-lobby2p-hud] #prep-shop-popover .prep-shop-popover__panel {
+  pointer-events: auto;
+}
+
+html[data-lobby2p-hud][data-prep-shop-open][data-prep-drag-targets-board] #lobby2p-canvas-host .canvas-scale-wrap {
+  box-shadow:
+    0 16px 46px rgba(0, 0, 0, 0.28),
+    0 0 0 2px rgba(88, 166, 255, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}

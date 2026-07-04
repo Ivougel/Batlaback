@@ -1,10 +1,10 @@
 /**
  * Герои игрока — стартовый лоадаут и пассивные бонусы забега.
- * noviceLabel / heroLabel — имя героя; heroTagline — строка на плитке; heroLore — история в витрине.
+ * noviceLabel / heroLabel — имя героя; desc — бонус; getClassIntroBlurb — текст для UI.
  */
 const CLASS_HERO_ROSTER_COPY = {
   title: "Мартовичок · Роксивичок · Морковичок · Мыковичок",
-  hint: "Девочки-звери собрались, чтобы скрестить кличку с именем — и решить, кто идёт в забег.",
+  hint: "Четыре героини с разными бонусами — выберите, кто пойдёт в забег.",
 };
 
 const CLASS_CATALOG = {
@@ -13,8 +13,8 @@ const CLASS_CATALOG = {
     name: "Воин",
     noviceLabel: "Воин-мартовичок",
     heroLabel: "Воин-мартовичок",
-    heroTagline: "Американская амбулка: клялась оставаться милым арбузиком на лугу — и пошла в бой с мечом.",
-    heroLore: "Мартовичок — упрямая американская амбулка: кличку скрестили с именем, характер не смягчили. На тропинке она широкая и мирная, в рюкзаке — ржавый меч и железный шлем. За весь забег даёт чуть больше максимального здоровья и стоит на лапах, когда другие уже валятся.",
+    heroTagline: "+3% максимального HP на весь забег.",
+    heroLore: "+3% максимального HP на весь забег. Старт: ржавый меч и железный шлем.",
     icon: "⚔️",
     iconSrc: "img/sticker_warrior.png",
     heroPortraitSrc: "img/gem/Warior new.png",
@@ -29,8 +29,8 @@ const CLASS_CATALOG = {
     name: "Разбойник",
     noviceLabel: "Разбойник-роксивичок",
     heroLabel: "Разбойник-роксивичок",
-    heroTagline: "Коричнево-чёрная кошка с двумя жизнями: хитрые ловушки днём, слава в чате — ночью.",
-    heroLore: "Роксивичок — коричнево-чёрная разбойница, которая успевает и подстроить сюрприз на поляне, и засиять в переписке. Кинжал и яд всегда под лапой: бьёт чаще и быстрее, чем соперник успевает моргнуть.",
+    heroTagline: "+3% скорости атаки на весь забег.",
+    heroLore: "+3% скорости атаки на весь забег. Старт: кинжал и флакон яда.",
     icon: "🗡️",
     iconSrc: "img/sticker_rogue.png",
     heroPortraitSrc: "img/gem/roguenew.png",
@@ -45,8 +45,8 @@ const CLASS_CATALOG = {
     name: "Маг",
     noviceLabel: "Маг-морковичок",
     heroLabel: "Маг-морковичок",
-    heroTagline: "Маг с блестящими заклинаниями — превращает хаос на поле в урон.",
-    heroLore: "Морковичок — колдунья с театральным жестом: на поле боя сыплет искры, усиливает мана-стаки и выжимает из посоха ученика лишний магический урон. Чем больше магии в рюкзаке, тем ярче финал раунда.",
+    heroTagline: "+4% магического урона · мана-стаки усиливают урон.",
+    heroLore: "+4% магического урона · мана-стаки дают +25% к урону. Старт: посох ученика и мана-кристалл.",
     icon: "🔮",
     iconSrc: "img/sticker_mage.png",
     heroPortraitSrc: "img/gem/Magenew.png",
@@ -61,8 +61,8 @@ const CLASS_CATALOG = {
     name: "Жрец",
     noviceLabel: "Жрец-мыковичок",
     heroLabel: "Жрец-мыковичок",
-    heroTagline: "Жрица с оперным голосом и корзиной перекусов под рясой.",
-    heroLore: "Мыковичок — корги-сопрано, о которой пишут в журнале DOG. Благословляет яблоки и бананы: каждая еда в рюкзаке чуть раздувает максимум HP, а лечение от перекусов работает сильнее.",
+    heroTagline: "+1,5% макс. HP за еду · еда лечит на 8% сильнее.",
+    heroLore: "+1,5% макс. HP за каждую еду в рюкзаке · еда лечит на 8% сильнее. Старт: яблоко и банан.",
     icon: "✨",
     iconSrc: "img/sticker_priest.png",
     heroPortraitSrc: "img/gem/priestnew.png",
@@ -171,13 +171,25 @@ function renderHeroPortraitFrameHTML(classId, options = {}) {
   </div>`;
 }
 
+function getClassIntroBlurb(classId) {
+  const cls = getClassById(classId);
+  const guide = getClassDetailGuide(classId);
+  if (!cls) return "";
+  const parts = [
+    guide?.bonusDetail || cls.desc,
+    cls.loadoutDesc ? `Старт: ${cls.loadoutDesc}` : "",
+    guide?.tagFocus ? `Ищите: ${guide.tagFocus}` : "",
+  ].filter(Boolean);
+  return parts.join(" · ");
+}
+
 function getHeroLore(classId) {
-  return getClassById(classId)?.heroLore || "";
+  return getClassIntroBlurb(classId) || getClassById(classId)?.desc || "";
 }
 
 function getHeroTagline(classId) {
   const cls = getClassById(classId);
-  return cls?.heroTagline || cls?.heroLore || "";
+  return cls?.desc || cls?.heroTagline || "";
 }
 
 function syncClassHeroRosterCaption() {
@@ -259,6 +271,7 @@ function hideClassHeroShowcase() {
   document.getElementById("class-hero-showcase-single")?.classList.add("hidden");
   document.getElementById("class-hero-showcase-roster")?.classList.add("hidden");
   overlay?.classList.remove("class-overlay--hero-visible");
+  syncClassDetailButton(null);
 }
 
 function ensureClassHeroRosterGrid() {
@@ -298,7 +311,6 @@ function updateClassHeroShowcase(classId) {
   const showcase = document.getElementById("class-hero-showcase");
   const img = document.getElementById("class-hero-showcase-img");
   const nameEl = document.getElementById("class-hero-showcase-name");
-  const descEl = document.getElementById("class-hero-showcase-desc");
   const overlay = document.getElementById("class-overlay");
   if (!showcase || !img) return;
 
@@ -315,11 +327,146 @@ function updateClassHeroShowcase(classId) {
   if (img.getAttribute("src") !== src) img.setAttribute("src", src || "");
   img.alt = cls.heroLabel || cls.noviceLabel || cls.name;
   if (nameEl) nameEl.textContent = cls.heroLabel || cls.noviceLabel || cls.name;
-  if (descEl) descEl.textContent = cls.heroLore || cls.desc || "";
 
   showcase.dataset.class = classId;
   showcase.classList.remove("hidden");
   showcase.classList.add("is-visible");
   showcase.setAttribute("aria-hidden", "false");
   overlay?.classList.add("class-overlay--hero-visible");
+  syncClassDetailButton(classId);
+}
+
+/** Подробности для попапа «Подробнее» на экране выбора героя. */
+const CLASS_DETAIL_GUIDES = {
+  warrior: {
+    bonusDetail: "На весь забег +3% к максимальному HP — выдерживает длинные дуэли.",
+    tagFocus: "Оружие, броня, щиты",
+    builds: [
+      {
+        id: "guardian",
+        name: "Страж",
+        emoji: "🛡️",
+        desc: "Блок, броня и живучесть — стойте на линии и не отступайте.",
+        items: ["great_shield", "iron_helmet", "titan_armor", "wooden_buckler"],
+      },
+      {
+        id: "berserk",
+        name: "Берсерк",
+        emoji: "🔥",
+        desc: "Много оружия и темп — давите уроном, пока живы.",
+        items: ["axe", "war_hammer", "whetstone", "rage_potion"],
+      },
+      {
+        id: "crusader",
+        name: "Крестоносец",
+        emoji: "✝️",
+        desc: "Святая броня и молот — путь к ветке Паладина.",
+        items: ["holy_armor", "weapon_holy_mace", "shield_of_valor", "key_paladin_oath"],
+      },
+    ],
+    recommendedItems: ["rusty_sword", "axe", "great_shield", "iron_helmet", "whetstone", "titan_armor"],
+  },
+  rogue: {
+    bonusDetail: "+3% скорости атаки — чаще срабатывают оружие и ядовитые эффекты.",
+    tagFocus: "Оружие, яд, ловушки",
+    builds: [
+      {
+        id: "assassin",
+        name: "Ассасин",
+        emoji: "🗡️",
+        desc: "Яд и быстрые удары — добивайте ослабленного врага.",
+        items: ["dagger", "poison_dagger", "pestilence_flask", "spectral_dagger"],
+      },
+      {
+        id: "shadow",
+        name: "Тень",
+        emoji: "🌑",
+        desc: "Скрытность и контроль — уклонение, дым и внезапный урон.",
+        items: ["smoke_bomb", "shadow_blade", "poison_vial", "garlic"],
+      },
+      {
+        id: "plague",
+        name: "Чума",
+        emoji: "☣️",
+        desc: "Стаки яда и урон со временем — медленно, но верно.",
+        items: ["pestilence_flask", "darkest_lotus", "poison_vial", "enh_plague_bindings"],
+      },
+    ],
+    recommendedItems: ["dagger", "poison_dagger", "poison_vial", "garlic", "pestilence_flask", "smoke_bomb"],
+  },
+  mage: {
+    bonusDetail: "+4% магического урона · мана-стаки дают +25% к урону.",
+    tagFocus: "Магия, кристаллы, огонь",
+    builds: [
+      {
+        id: "pyro",
+        name: "Пиромант",
+        emoji: "🔥",
+        desc: "Огонь и жар — поджигайте поле и усиливайте огненные предметы.",
+        items: ["fire_staff", "fire_crystal", "lump_of_coal", "key_ember_codex"],
+      },
+      {
+        id: "cryo",
+        name: "Криомант",
+        emoji: "❄️",
+        desc: "Холод и контроль — замедляйте и бейте магией.",
+        items: ["frost_crystal", "snow_stick", "spell_scroll_frostbolt", "frozen_flame"],
+      },
+      {
+        id: "arcanist",
+        name: "Арканист",
+        emoji: "💎",
+        desc: "Мана, кристаллы и повтор заклинаний.",
+        items: ["mana_crystal", "prismatic_orb", "enchanted_staff", "rune_of_magic"],
+      },
+    ],
+    recommendedItems: ["apprentice_staff", "mana_crystal", "fire_staff", "enchanted_staff", "prismatic_orb", "fly_agaric"],
+  },
+  priest: {
+    bonusDetail: "+1.5% макс. HP за каждую еду · еда лечит на 8% сильнее.",
+    tagFocus: "Еда, зелья, святой",
+    builds: [
+      {
+        id: "paladin",
+        name: "Паладин",
+        emoji: "⚔️",
+        desc: "Святой танк — броня, блок и исцеление.",
+        items: ["holy_armor", "divine_potion", "weapon_holy_mace", "key_paladin_oath"],
+      },
+      {
+        id: "zrecrela",
+        name: "ЖРЕЦИЛА",
+        emoji: "🎵",
+        desc: "Хор, музыка и святые усиления — путь к ключу гимна.",
+        items: ["armor_holy_choir", "accessory_musical_slippers", "key_hymn_folio", "enh_hymn_veil"],
+      },
+      {
+        id: "oracle",
+        name: "Провидец",
+        emoji: "🔮",
+        desc: "Лечение и выживание через зелья и травы.",
+        items: ["healing_herbs", "health_potion", "bandage", "cheese"],
+      },
+    ],
+    recommendedItems: ["apple", "banana", "healing_herbs", "health_potion", "divine_potion", "cheese"],
+  },
+};
+
+function getClassDetailGuide(classId) {
+  const cls = getClassById(classId);
+  const guide = CLASS_DETAIL_GUIDES[classId];
+  if (!cls || !guide) return null;
+  return { ...guide, classId, cls };
+}
+
+function syncClassDetailButton(classId) {
+  const btn = document.getElementById("btn-class-detail");
+  if (!btn) return;
+  const playerStep = document.getElementById("class-step-player");
+  const onPlayerStep = playerStep && !playerStep.classList.contains("hidden");
+  const show = onPlayerStep && !!classId && !!getClassDetailGuide(classId);
+  btn.classList.toggle("hidden", !show);
+  btn.disabled = !show;
+  if (show) btn.dataset.classId = classId;
+  else delete btn.dataset.classId;
 }

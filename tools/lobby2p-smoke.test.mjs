@@ -21,8 +21,9 @@ async function readLobby2pState(page) {
     lobby2pHud: document.documentElement.hasAttribute("data-lobby2p-hud"),
     layoutVisible: !document.getElementById("lobby2p-prep-layout")?.classList.contains("hidden"),
     canvasInHost: !!document.getElementById("lobby2p-canvas-host")?.querySelector("#layer-world"),
-    shopSlots0: document.getElementById("lobby2p-shop-slots-0")?.children.length ?? 0,
-    shopSlots1: document.getElementById("lobby2p-shop-slots-1")?.children.length ?? 0,
+    shopFabCount: document.querySelectorAll(".lobby2p-shop-fab").length,
+    shopPopoverMode: document.documentElement.dataset.prepShopPopover === "true",
+    shopSlotsOpen: document.getElementById("shop-slots")?.children.length ?? 0,
     humanCount: typeof lobbyState !== "undefined" && lobbyState?.humanIds?.length,
     fighterCount: typeof lobbyState !== "undefined" ? lobbyState?.fighters?.length : 0,
     alive: typeof getAliveLobbyFighters === "function" && lobbyState
@@ -51,7 +52,30 @@ async function main() {
   assert(prep.lobby2pHud, "data-lobby2p-hud missing");
   assert(prep.layoutVisible, "lobby2p-prep-layout hidden");
   assert(prep.canvasInHost, "canvas not mounted in lobby2p host");
-  assert(prep.shopSlots0 > 0 && prep.shopSlots1 > 0, "dual shops empty");
+  assert(prep.shopFabCount === 2, `expected 2 shop FABs, got ${prep.shopFabCount}`);
+  assert(prep.shopPopoverMode, "prep shop popover mode off");
+
+  await page.click('.lobby2p-shop-fab[data-human="0"]');
+  await page.waitForFunction(
+    () => document.documentElement.hasAttribute("data-prep-shop-open")
+      && (document.getElementById("shop-slots")?.children.length ?? 0) > 0,
+    { timeout: 3000 },
+  );
+  const shopOpen = await page.evaluate(() => ({
+    open: document.documentElement.hasAttribute("data-prep-shop-open"),
+    slots: document.getElementById("shop-slots")?.children.length ?? 0,
+    prepSide: document.getElementById("app")?.dataset.prepSide,
+  }));
+  assert(shopOpen.open && shopOpen.slots > 0, "shop popover empty for P1");
+  assert(shopOpen.prepSide === "player", `P1 shop should activate player side, got ${shopOpen.prepSide}`);
+
+  await page.click('.lobby2p-shop-fab[data-human="1"]');
+  await page.waitForFunction(
+    () => document.getElementById("app")?.dataset.prepSide === "enemy"
+      && (document.getElementById("shop-slots")?.children.length ?? 0) > 0,
+    { timeout: 3000 },
+  );
+
   assert(prep.fighterCount === 16, `expected 16 fighters, got ${prep.fighterCount}`);
   assert(prep.humanCount === 2, `expected 2 humans, got ${prep.humanCount}`);
 

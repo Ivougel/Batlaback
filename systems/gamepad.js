@@ -119,6 +119,7 @@ const GP_HINT_SETS = {
     { keys: "B", label: "закрыть" },
   ],
   recipeBook: [{ keys: "B", label: "закрыть" }],
+  classDetail: [{ keys: "B", label: "закрыть" }],
   boardPreview: [{ keys: "B", label: "закрыть" }],
 };
 
@@ -589,6 +590,7 @@ function moveGamepadCursor(dx, dy, dt) {
 
 function getMenuContext() {
   if (typeof isDetailPopupOpen === "function" && isDetailPopupOpen()) return "battleDetail";
+  if (gpHandlers?.isClassDetailPopupOpen?.()) return "classDetail";
   if (gpHandlers?.isRecipeBookOpen?.()) return "recipeBook";
   if (gpHandlers?.isBoardPreviewOpen?.()) return "boardPreview";
   if (gpHandlers?.isPopupOpen?.("battle-result-overlay")) return "battleResult";
@@ -776,6 +778,7 @@ function queryMenuFocusables(context) {
       document.getElementById("btn-restart"),
     ].filter(Boolean);
   }
+  if (context === "classDetail") return [document.getElementById("btn-class-detail-close")].filter(Boolean);
   if (context === "recipeBook") return [document.getElementById("btn-recipe-book-close")].filter(Boolean);
   if (context === "boardPreview") return [document.getElementById("btn-board-preview-close")].filter(Boolean);
   return [];
