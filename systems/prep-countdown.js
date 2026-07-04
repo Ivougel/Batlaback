@@ -6,11 +6,14 @@ const PrepCountdown = (() => {
   const PREP_COUNTDOWN_SEC = 3;
   const BATTLE_RESULT_VIEW_SEC = 6;
 
+  const COUNTDOWN_STALE_MS = 5000;
+
   let countdown = {
     active: false,
     remaining: 0,
     label: null,
     onComplete: null,
+    startedAt: 0,
   };
   let audioPhaseKey = "";
   let audioTenPlayed = false;
@@ -60,6 +63,7 @@ const PrepCountdown = (() => {
     countdown.remaining = 0;
     countdown.label = null;
     countdown.onComplete = null;
+    countdown.startedAt = 0;
     if (typeof hideBattleCountdownOverlay === "function") hideBattleCountdownOverlay();
   }
 
@@ -89,13 +93,25 @@ const PrepCountdown = (() => {
       remaining: PREP_COUNTDOWN_SEC,
       label: "3",
       onComplete: typeof onComplete === "function" ? onComplete : null,
+      startedAt: Date.now(),
     };
     playSfx("battle_countdown_tick");
     render();
   }
 
+  function finishCountdown() {
+    const cb = countdown.onComplete;
+    cancel();
+    if (cb) cb();
+    return true;
+  }
+
   function tick(dt) {
     if (!countdown.active) return false;
+    if (countdown.startedAt && Date.now() - countdown.startedAt > COUNTDOWN_STALE_MS) {
+      console.warn("PrepCountdown stale — forcing battle start");
+      return finishCountdown();
+    }
     const prevLabel = countdown.label;
     countdown.remaining -= dt;
     const left = Math.ceil(Math.max(0, countdown.remaining));
@@ -108,12 +124,7 @@ const PrepCountdown = (() => {
 
     render();
 
-    if (countdown.remaining <= 0) {
-      const cb = countdown.onComplete;
-      cancel();
-      if (cb) cb();
-      return true;
-    }
+    if (countdown.remaining <= 0) return finishCountdown();
     return false;
   }
 

@@ -135,14 +135,28 @@
     });
   }
 
+  function clearPhaseTransitionLock() {
+    const layout = document.querySelector(".game-layout");
+    layout?.classList.remove("phase-transitioning");
+    transitioning = false;
+    document.body.classList.remove("screen-transitioning");
+    window.flushDeferredLayoutPasses?.();
+    window.scheduleCanvasFit?.();
+  }
+
   function transitionPhase(newPhase, applyPhase, afterTransition) {
     const layout = document.querySelector(".game-layout");
     const outMs = durationMs(TIMING.phaseOut);
     const inMs = durationMs(TIMING.phaseIn);
 
     if (outMs <= 0) {
-      applyPhase(newPhase);
-      afterTransition?.();
+      try {
+        applyPhase(newPhase);
+        afterTransition?.();
+      } catch (err) {
+        console.error("transitionPhase failed:", err);
+        throw err;
+      }
       return Promise.resolve();
     }
 
@@ -152,15 +166,15 @@
     layout?.classList.add("phase-transitioning");
 
     return wait(outMs).then(() => {
-      applyPhase(newPhase);
-      afterTransition?.();
-      return wait(0);
-    }).then(() => {
-      layout?.classList.remove("phase-transitioning");
-      transitioning = false;
-      document.body.classList.remove("screen-transitioning");
-      window.flushDeferredLayoutPasses?.();
-      window.scheduleCanvasFit?.();
+      try {
+        applyPhase(newPhase);
+        afterTransition?.();
+      } catch (err) {
+        console.error("transitionPhase failed:", err);
+        throw err;
+      } finally {
+        clearPhaseTransitionLock();
+      }
       return wait(inMs);
     });
   }
@@ -250,6 +264,7 @@
     INTRO_ORDER,
     prefersReducedScreenMotion,
     isScreenTransitioning,
+    clearPhaseTransitionLock,
     showScreenOverlay,
     hideScreenOverlay,
     getIntroDirection,

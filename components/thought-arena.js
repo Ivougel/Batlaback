@@ -326,9 +326,12 @@ const ThoughtArena = (() => {
     return true;
   }
 
-  /** Статичный flank: один глиф-узел, без split-mount (иначе ResizeObserver ↔ layout петля). */
+  /** На flank-arena один глиф в центре слота — без перестройки кластера при смене emoji. */
   function normalizeGlyphsForDisplay(glyphs, rawEmoji) {
     if (!glyphs.length) return glyphs;
+    if (isAnchoredFlankArena() && glyphs.length > 1) {
+      return [String(rawEmoji || glyphs.join("")).trim()];
+    }
     if (isStaticThoughts() && isAnchoredFlankArena() && glyphs.length > 1) {
       return [String(rawEmoji || glyphs.join("")).trim()];
     }
@@ -480,8 +483,7 @@ const ThoughtArena = (() => {
     const onHeroCard = isAnchoredFlankArena();
     if (onHeroCard && typeof BattleHeroAnchor !== "undefined") {
       const emojiSize = BattleHeroAnchor.thoughtSlotEmojiSize();
-      const scale = glyphCount > 1 ? 0.92 : 1;
-      return Math.round(emojiSize * scale);
+      return Math.round(emojiSize);
     }
     const ratio = glyphCount > 1
       ? (onHeroCard ? HERO_CARD_CLUSTER_SIZE_RATIO : CLUSTER_SIZE_RATIO)
@@ -515,6 +517,29 @@ const ThoughtArena = (() => {
       ox: -span * 0.5 + i * spacing,
       oy: horizontalOnly ? 0 : (Math.random() - 0.5) * spacing * 0.28,
     }));
+  }
+
+  function snapAnchoredClusterHome(cluster) {
+    if (!cluster?.members?.length || !isAnchoredFlankArena()) return;
+    cluster.members.forEach((body) => {
+      const mount = getBodyMountEl(body);
+      if (!mount) return;
+      const mw = mount.clientWidth || thoughtDiameterPx(1);
+      const mh = mount.clientHeight || thoughtDiameterPx(1);
+      const anchor = getLocalAnchorPx(mw, mh);
+      body.offsetOx = 0;
+      body.offsetOy = 0;
+      body.homeX = anchor.x;
+      body.homeY = anchor.y;
+      body.x = anchor.x;
+      body.y = anchor.y;
+      body.renderX = anchor.x;
+      body.renderY = anchor.y;
+      body.vx = 0;
+      body.vy = 0;
+      body.rotVel = 0;
+      body.wobbleAmp = 0.16;
+    });
   }
 
   function refreshClusterMemberOffsets(cluster) {
@@ -1137,7 +1162,7 @@ const ThoughtArena = (() => {
       : spawnPosition(w, h, r * glyphCount, side);
     const baseVel = anchored ? { vx: 0, vy: 0 } : randomVelocity(arenaPhys);
     const vmin = viewportMin();
-    const perturb = anchored ? vmin * 0.0006 : vmin * 0.018;
+    const perturb = anchored ? 0 : vmin * 0.018;
     const physicsGlyphCount = splitMounts ? 1 : glyphCount;
 
     const members = glyphs.map((glyph, index) => {
@@ -1257,6 +1282,7 @@ const ThoughtArena = (() => {
         styleBodyEl(body, glyph);
       }
     });
+    if (isAnchoredFlankArena()) snapAnchoredClusterHome(cluster);
   }
 
   function upsert(side, event) {
@@ -1275,11 +1301,13 @@ const ThoughtArena = (() => {
       const sameKey = cluster.eventKey === key;
       if (sameKey) return;
       updateClusterGlyphs(cluster, glyphs, event);
-      if (!isStaticThoughts()) pulseCluster(cluster);
+      if (!isStaticThoughts() && !isAnchoredFlankArena()) pulseCluster(cluster);
     } else {
       removeCluster(side, true);
       createCluster(side, glyphs, key, event);
     }
+
+    if (isAnchoredFlankArena()) snapAnchoredClusterHome(clusters.get(side));
 
     clusters.get(side)?.members.forEach(applyVisual);
     if (!isStaticThoughts()) scheduleFrame();
@@ -1327,7 +1355,10 @@ const ThoughtArena = (() => {
     thoughtResizeInProgress = true;
     thoughtResizeLastAt = now;
     try {
-      clusters.forEach((cluster) => refreshClusterMemberOffsets(cluster));
+      clusters.forEach((cluster) => {
+        refreshClusterMemberOffsets(cluster);
+        if (isAnchoredFlankArena()) snapAnchoredClusterHome(cluster);
+      });
       getAllBodies().forEach((body) => {
         body.radius = thoughtRadiusPx(body.glyphCount);
         styleBodyEl(body, body.glyph);

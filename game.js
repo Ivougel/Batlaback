@@ -6139,8 +6139,16 @@ function getLoadoutEditState(side = prepViewSide) {
 }
 
 function startBattle() {
-  if (typeof PrepCountdown !== "undefined" && PrepCountdown.isActive()) return;
-  if (typeof ScreenTransitions !== "undefined" && ScreenTransitions.isScreenTransitioning()) return;
+  if (typeof PrepCountdown !== "undefined" && PrepCountdown.isActive()) {
+    PrepCountdown.cancel();
+    executeBattleStart();
+    return;
+  }
+  if (typeof ScreenTransitions !== "undefined" && ScreenTransitions.isScreenTransitioning()) {
+    if (typeof ScreenTransitions.clearPhaseTransitionLock === "function") {
+      ScreenTransitions.clearPhaseTransitionLock();
+    }
+  }
   if (!canStartBattle()) {
     playPrepSfx("ui_error");
     if (phase === "prep" && isCampaignMode() && typeof Campaign !== "undefined") {
@@ -6200,6 +6208,9 @@ function executeBattleStart() {
     } catch (err) {
       console.error("startBattle failed:", err);
       rollbackPreparedBattleStart();
+      if (typeof ScreenTransitions !== "undefined" && typeof ScreenTransitions.clearPhaseTransitionLock === "function") {
+        ScreenTransitions.clearPhaseTransitionLock();
+      }
       transitionToPhase("prep", () => {
         ensureShopReady();
         renderShop();
@@ -6873,6 +6884,7 @@ function gameLoop(ts) {
   synergyAnimTime += dt;
 
   if (phase === "prep") {
+    try {
     gameLoop._prepFxAcc = (gameLoop._prepFxAcc || 0) + dt;
     const prepFxStep = 1 / 30;
     if (gameLoop._prepFxAcc >= prepFxStep) {
@@ -6962,6 +6974,9 @@ function gameLoop(ts) {
     }
     if (phase === "prep" && typeof PrepCountdown !== "undefined" && PrepCountdown.isActive()) {
       PrepCountdown.tick(dt);
+    }
+    } catch (err) {
+      console.error("prep gameLoop tick failed:", err);
     }
   }
 

@@ -261,6 +261,8 @@ self.PWA_PRECACHE_URLS = [
   "styles/escape-menu.css?v=1",
   "styles/hero-card.css",
   "styles/hero-card.css?v=4",
+  "styles/battle-hero-levitate.css",
+  "styles/battle-hero-levitate.css?v=1",
   "styles/hero-portrait-frame.css",
   "styles/hero-portrait-frame.css?v=5",
   "styles/item-card-chrome.css",

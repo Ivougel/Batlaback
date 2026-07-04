@@ -1,0 +1,83 @@
+/**
+ * Бой: левитация full-body героев (flank-arena + prep-character-layer).
+ */
+
+@keyframes battle-hero-levitate {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, calc(-12px * var(--ui-scale, 1)), 0);
+  }
+}
+
+@keyframes battle-hero-levitate-scaled {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(var(--battle-portrait-zoom, 1));
+  }
+  50% {
+    transform: translate3d(0, calc(-12px * var(--ui-scale, 1)), 0) scale(var(--battle-portrait-zoom, 1));
+  }
+}
+
+/* Flank-arena: портрет в колонке героя */
+html[data-battle-hero-placement="flank-arena"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-scene-ui .portrait-zoom-clip img,
+html[data-battle-hero-placement="flank-arena"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-scene-avatar .portrait-zoom-clip img {
+  animation: battle-hero-levitate-scaled 3.4s ease-in-out infinite;
+  animation-delay: var(--battle-hero-levitate-delay, 0s);
+  will-change: transform;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-scene-ui .profile-avatar,
+html[data-battle-hero-placement="flank-arena"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-scene-avatar .profile-avatar {
+  animation: none;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app:is([data-phase="battle"], [data-phase="replay"]) .avatar-hero-shell-enemy .portrait-zoom-clip img {
+  --battle-hero-levitate-delay: -1.7s;
+}
+
+/* Тот же full-body слой, что на prep */
+html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-character-layer .prep-character-img,
+html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-character-layer .prep-character-emoji {
+  animation: battle-hero-levitate 3.4s ease-in-out infinite;
+  animation-delay: var(--battle-hero-levitate-delay, 0s);
+  will-change: transform;
+}
+
+html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-phase="replay"]) #prep-character-enemy .prep-character-img,
+html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-phase="replay"]) #prep-character-enemy .prep-character-emoji {
+  --battle-hero-levitate-delay: -1.7s;
+}
+
+/* Legacy / compact battle portrait */
+#app:is([data-phase="battle"], [data-phase="replay"]) .battle-scene-ui .avatar-hero-stage .profile-avatar,
+#app:is([data-phase="battle"], [data-phase="replay"]) .battle-scene-ui .avatar-hero-stage .profile-avatar-img {
+  animation: battle-hero-levitate 3.4s ease-in-out infinite;
+  animation-delay: var(--battle-hero-levitate-delay, 0s);
+  will-change: transform;
+}
+
+#app:is([data-phase="battle"], [data-phase="replay"]) .avatar-hero-shell-enemy .avatar-hero-stage .profile-avatar,
+#app:is([data-phase="battle"], [data-phase="replay"]) .avatar-hero-shell-enemy .avatar-hero-stage .profile-avatar-img {
+  --battle-hero-levitate-delay: -1.7s;
+}
+
+/* Удар — краткая тряска поверх левитации (на оболочке, не на img) */
+#app:is([data-phase="battle"], [data-phase="replay"]) .avatar-hero-shell.hero-taking-hit .portrait-zoom-clip img,
+#app:is([data-phase="battle"], [data-phase="replay"]) .avatar-hero-shell.hero-taking-hit .profile-avatar,
+html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-character.profile-avatar-hit-shake .prep-character-img {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-battle-hero-placement="flank-arena"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-scene-ui .portrait-zoom-clip img,
+  html[data-battle-hero-placement="flank-arena"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-scene-avatar .portrait-zoom-clip img,
+  html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-character-layer .prep-character-img,
+  html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-character-layer .prep-character-emoji,
+  #app:is([data-phase="battle"], [data-phase="replay"]) .battle-scene-ui .avatar-hero-stage .profile-avatar,
+  #app:is([data-phase="battle"], [data-phase="replay"]) .battle-scene-ui .avatar-hero-stage .profile-avatar-img {
+    animation: none !important;
+    will-change: auto;
+  }
+}
