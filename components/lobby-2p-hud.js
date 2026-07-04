@@ -113,6 +113,25 @@ const Lobby2pHud = (() => {
     if (farmBtn) farmBtn.disabled = blocked || !!callbacks.hasAnySideBattle?.();
     if (duelBtn) duelBtn.disabled = blocked || !!callbacks.hasAnySideBattle?.();
 
+    const badgesEl = document.getElementById(`lobby2p-badges-${humanId}`);
+    if (badgesEl) {
+      const tags = [];
+      if (!alive) tags.push("выбыл");
+      else if (fighting) tags.push("в бою");
+      else if (ready) tags.push("готов");
+      else if (humanId === activeHuman) tags.push("редакт.");
+      badgesEl.textContent = tags.length ? tags.join(" · ") : "";
+    }
+
+    const refreshBtn = shop?.querySelector(".lobby2p-refresh");
+    if (refreshBtn) {
+      const gold = fighter?.gold ?? 0;
+      const canPay = gold >= 1 && !blocked && !fighting && humanId === activeHuman;
+      refreshBtn.disabled = !canPay;
+      const costEl = refreshBtn.querySelector("b");
+      if (costEl) costEl.textContent = "1";
+    }
+
     if (benchCountEl && typeof callbacks.getBenchCount === "function") {
       benchCountEl.textContent = String(callbacks.getBenchCount(humanId));
     }
@@ -154,6 +173,10 @@ const Lobby2pHud = (() => {
     const roundEl = document.getElementById("lobby2p-top-round");
     if (roundEl && typeof callbacks.getRound === "function") {
       roundEl.textContent = String(callbacks.getRound());
+    }
+    const aliveEl = document.getElementById("lobby2p-top-alive-count");
+    if (aliveEl && typeof callbacks.getAliveCount === "function") {
+      aliveEl.textContent = String(callbacks.getAliveCount());
     }
 
     if (typeof callbacks.getFighter === "function") {

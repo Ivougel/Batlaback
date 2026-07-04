@@ -1,7 +1,7 @@
 {
   "version": 2,
   "fixedAt": "2026-07-04",
-  "gameModes": ["solo", "versus", "hardbot", "lobby", "campaign"],
+  "gameModes": ["solo", "versus", "hardbot", "lobby", "lobby2p", "campaign"],
   "phases": {
     "js": ["classSelect", "prep", "battle", "replay"],
     "appDataset": ["prep", "battle", "replay"]
@@ -31,7 +31,25 @@
     { "id": "prep-top-bar", "phases": ["prep"], "modes": ["solo", "versus", "hardbot", "lobby", "campaign"] },
     { "id": "prep-field-column", "phases": ["prep", "battle", "replay"], "modes": ["*"] },
     { "id": "lobby-prep-field-roster", "phases": ["prep"], "modes": ["lobby"] },
+    { "id": "lobby2p-prep-layout", "phases": ["prep"], "modes": ["lobby2p"] },
     { "id": "campaign-hint-bar", "phases": ["prep"], "modes": ["campaign"] }
+  ],
+  "prepSnapshots": [
+    {
+      "name": "ipad-landscape-solo-prep",
+      "mode": "solo",
+      "target": "#prep-field-column"
+    },
+    {
+      "name": "ipad-landscape-lobby-prep",
+      "mode": "lobby",
+      "target": "#prep-field-column"
+    },
+    {
+      "name": "ipad-landscape-lobby2p-prep",
+      "mode": "lobby2p",
+      "target": "#lobby2p-prep-layout"
+    }
   ],
   "layoutProfiles": [
     {

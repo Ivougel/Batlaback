@@ -37,7 +37,15 @@ async function startPrep(page, mode) {
       );
     }
     if (gameMode === "versus") selectOpponentClass("warrior");
-    else if (gameMode !== "lobby" && gameMode !== "campaign") selectOpponentClass("mage");
+    else if (gameMode === "lobby2p") {
+      selectOpponentClass("warrior");
+      selectOpponentClass("warrior");
+      selectCompanion(
+        typeof defaultCompanionForClass === "function"
+          ? defaultCompanionForClass("warrior")
+          : "s_stranger",
+      );
+    } else if (gameMode !== "lobby" && gameMode !== "campaign") selectOpponentClass("mage");
     startRunFromOverlay();
   }, mode);
   await page.waitForFunction(
@@ -129,6 +137,8 @@ try {
         ? getComputedStyle(document.getElementById("campaign-hint-bar")).display
         : null,
       lobbyRoster: document.getElementById("lobby-prep-field-roster")?.classList.contains("hidden"),
+      lobby2pHud: document.documentElement.hasAttribute("data-lobby2p-hud"),
+      lobby2pLayoutHidden: document.getElementById("lobby2p-prep-layout")?.classList.contains("hidden"),
     }));
 
     assert(state.gameMode === mode, `${mode}: gameMode`);
@@ -136,6 +146,10 @@ try {
 
     if (mode === "lobby") {
       assert(!state.lobbyRoster, `${mode}: lobby roster should be visible`);
+    }
+    if (mode === "lobby2p") {
+      assert(state.lobby2pHud, `${mode}: data-lobby2p-hud expected`);
+      assert(!state.lobby2pLayoutHidden, `${mode}: lobby2p-prep-layout should be visible`);
     }
     if (mode === "campaign") {
       assert(!state.campaignHintHidden, `${mode}: campaign-hint should be visible in prep`);

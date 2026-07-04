@@ -41,6 +41,65 @@ const AI_SHOP_REFRESH_CHANCE = 0.5;
 const AI_KILL_COMMIT_ROUND = 3;
 const AI_KILL_COMMIT_ITEMS = 4;
 
+/** Лобби: целевой размер билда и агрессия магазина (сильнее solo AI). */
+const AI_LOBBY_TARGET_ITEMS = {
+  1: 3, 2: 4, 3: 5, 4: 6, 6: 7, 8: 8, 10: 9, 12: 10, 14: 11, 16: 12,
+};
+const AI_LOBBY_SHOP_REFRESH = 0.72;
+const AI_LOBBY_LOSS_REFRESH = 0.92;
+const AI_LOBBY_MAX_REROLLS = 3;
+const AI_LOBBY_COUNTER_PICK_BONUS = 1.4;
+const AI_LOBBY_SYNERGY_BONUS = 1.25;
+
+function getAiTargetLoadoutSize(round, prepOpts = {}) {
+  const table = prepOpts.lobbyMode ? AI_LOBBY_TARGET_ITEMS : null;
+  if (!table) return 0;
+  const keys = Object.keys(table).map(Number).sort((a, b) => a - b);
+  let target = table[keys[0]];
+  keys.forEach((k) => {
+    if (round >= k) target = table[k];
+  });
+  return target;
+}
+
+function getLobbyResultStreak(recentResults, kind) {
+  if (!Array.isArray(recentResults) || !recentResults.length) return 0;
+  let streak = 0;
+  for (let i = recentResults.length - 1; i >= 0; i -= 1) {
+    if (recentResults[i] === kind) streak += 1;
+    else break;
+  }
+  return streak;
+}
+
+function getAiPrepProfile(prepOpts = {}, round = 1, battleWon = null, state = null) {
+  const lobbyMode = !!prepOpts.lobbyMode;
+  const lossStreak = getLobbyResultStreak(prepOpts.recentResults, "loss");
+  const winStreak = getLobbyResultStreak(prepOpts.recentResults, "win");
+  const targetItems = getAiTargetLoadoutSize(round, prepOpts);
+  const itemDeficit = targetItems > 0 && state
+    ? Math.max(0, targetItems - (state.items?.length || 0) - (state.bench?.length || 0))
+    : 0;
+
+  return {
+    lobbyMode,
+    lossStreak,
+    winStreak,
+    targetItems,
+    itemDeficit,
+    counterPickMult: lobbyMode ? AI_LOBBY_COUNTER_PICK_BONUS + lossStreak * 0.12 : 1,
+    synergyMult: lobbyMode ? AI_LOBBY_SYNERGY_BONUS : 1,
+    refreshChance: lobbyMode
+      ? (battleWon === false || lossStreak >= 1
+        ? Math.min(0.96, AI_LOBBY_LOSS_REFRESH + lossStreak * 0.03)
+        : AI_LOBBY_SHOP_REFRESH + Math.min(0.12, winStreak * 0.04))
+      : (battleWon === false ? Math.min(0.85, AI_SHOP_REFRESH_CHANCE + 0.25) : AI_SHOP_REFRESH_CHANCE),
+    maxRerolls: lobbyMode ? AI_LOBBY_MAX_REROLLS + (itemDeficit >= 2 ? 1 : 0) : 1,
+    buyLoopCap: lobbyMode ? 40 + itemDeficit * 4 : 30,
+    goldReserveCap: lobbyMode ? 3 : 6,
+  };
+}
+
 /** Бонусы за «закрытие» известных пар синергий при покупке. */
 const AI_SYNERGY_COMPLETION = [
   { needTags: ["poison"], preferIds: ["poison_dagger"], preferTags: ["weapon"], bonus: 20 },
@@ -404,7 +463,7 @@ function itemHasMagicDamage(def) {
   ) || def.tags.includes("magic") || def.tags.includes("fire");
 }
 
-function scoreCounterPick(def, scout, ownItems, ownBench) {
+function scoreCounterPick(def, scout, ownItems, ownBench, counterPickMult = 1) {
   if (!scout) return 0;
   let score = 0;
   const hasHeal = (def.effects || []).some((e) => e.type === "heal");
@@ -444,6 +503,7 @@ function scoreCounterPick(def, scout, ownItems, ownBench) {
 
   if (scout.blockSources >= 2 && hasMagic) score += 8;
 
+  if (counterPickMult !== 1 && score > 0) score *= counterPickMult;
   return score;
 }
 
@@ -493,9 +553,12 @@ function scoreItemForAI(
   containers = [],
   scout = null,
   round = 1,
+  prepOpts = {},
 ) {
   const def = ITEM_CATALOG[itemId];
   if (!def) return -999;
+  const profile = getAiPrepProfile(prepOpts, round, null, { items, bench });
+  const synergyWeight = profile.synergyMult;
   if (def.shopContainer) {
     return scoreContainerForAI(itemId, { containers, items, bench }, gridW, gridH);
   }
@@ -505,9 +568,9 @@ function scoreItemForAI(
   const { score: tagScore, hasPriority } = countTagAffinity(def, archetype);
   let score = tagScore;
   score += getItemPowerScore(def);
-  score += countSynergyPotential(itemId, items);
-  score += countSynergyPotential(itemId, bench);
-  score += countCraftPotential(itemId, items, bench);
+  score += countSynergyPotential(itemId, items) * synergyWeight;
+  score += countSynergyPotential(itemId, bench) * synergyWeight;
+  score += countCraftPotential(itemId, items, bench) * (profile.lobbyMode ? 1.35 : 1);
   if (typeof isGemItem === "function" && isGemItem(itemId)) {
     const emptySockets = items.filter((i) => {
       if (typeof getItemSocketCount !== "function" || getItemSocketCount(i.itemId) <= 0) return false;
@@ -516,10 +579,16 @@ function scoreItemForAI(
     }).length;
     if (emptySockets > 0) score += 10 + emptySockets * 3;
   }
-  score += scoreSynergyCompletion(itemId, items, bench);
-  score += scoreCounterPick(def, scout, items, bench);
+  score += scoreSynergyCompletion(itemId, items, bench) * synergyWeight;
+  score += scoreCounterPick(def, scout, items, bench, profile.counterPickMult);
   score += scoreKillPressure(def, scout, archetype);
   score += scoreBuildCoherence(def, archetype, items, bench, round);
+
+  if (profile.itemDeficit > 0 && itemMatchesKillArchetype(def, archetype)) {
+    score += 8 + profile.itemDeficit * 3;
+  }
+  if (profile.lobbyMode && def.rarity === "rare") score += 4;
+  if (profile.lobbyMode && def.rarity === "legendary") score += 8;
 
   const hasBlock = (def.effects || []).some((e) => e.type === "block" && e.trigger !== "passive");
   if (hasBlock) {
@@ -707,7 +776,7 @@ function generateAIShopSlots(count = 4, ctx = {}) {
   return rollShopBatch(count, ctx);
 }
 
-function aiScoreContext(state, archetype, gridW, gridH, scout, round = 1) {
+function aiScoreContext(state, archetype, gridW, gridH, scout, round = 1, prepOpts = {}) {
   return {
     archetype,
     items: state.items,
@@ -718,6 +787,7 @@ function aiScoreContext(state, archetype, gridW, gridH, scout, round = 1) {
     containers: state.containers,
     scout,
     round,
+    prepOpts,
   };
 }
 
@@ -733,6 +803,7 @@ function aiItemScore(itemId, ctx) {
     ctx.containers,
     ctx.scout,
     ctx.round,
+    ctx.prepOpts || {},
   );
 }
 
@@ -1190,9 +1261,82 @@ function aiSocketGems(state) {
   }
 }
 
-function aiBuyFromShop(state, archetype, shop, gridW = 9, gridH = 7, scout = null, round = 1, battleWon = null) {
+function getAiBuyMinScore(state, round, battleWon, prepOpts = {}) {
+  const profile = getAiPrepProfile(prepOpts, round, battleWon, state);
+  let min = round <= 4 ? -6 : -2;
+  if (battleWon === false || profile.lossStreak >= 1) min -= 3;
+  if (profile.lobbyMode) min -= 2;
+  if (profile.itemDeficit >= 2) min -= 4 + profile.itemDeficit;
+  if (state.gold >= 20) min = Math.min(min, -4);
+  if (state.gold >= 35) min = Math.min(min, -10);
+  if (profile.lobbyMode && state.gold >= 15) min = Math.min(min, -8);
+  return min;
+}
+
+function shouldAiBuyCandidate(pick, state, round, battleWon, minScore, prepOpts = {}) {
+  const profile = getAiPrepProfile(prepOpts, round, battleWon, state);
+  if (pick.score >= minScore) return true;
+  if (pick.score < -14) return false;
+  if (profile.itemDeficit >= 2 && pick.score >= minScore - 6) return true;
+  if (state.gold >= 30 && pick.score >= minScore - 8) return Math.random() < 0.7;
+  const skipChance = profile.lobbyMode
+    ? (state.gold >= 20 ? 0.18 : 0.28)
+    : (state.gold >= 25 ? 0.3 : (round <= 5 ? 0.4 : 0.9));
+  return Math.random() > skipChance;
+}
+
+function aiTryBuyShopCandidate(state, pick, shop, activeArchetype, candidates, lockClassId) {
+  const def = ITEM_CATALOG[pick.itemId];
+  if (!def || state.gold < def.cost) return { bought: false, archetype: activeArchetype };
+  if (state.bench.length >= AI_MAX_BENCH && pick.score < AI_SELL_THRESHOLD + 2) {
+    return { bought: false, archetype: activeArchetype };
+  }
+
+  state.gold -= def.cost;
+  state.bench.push({
+    itemId: pick.itemId,
+    uid: `ai-bench-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+  });
+  shop[pick.index] = null;
+
+  let nextArchetype = activeArchetype;
+  if (!lockClassId) {
+    const nextArch = Object.values(AI_ARCHETYPES).find((a) =>
+      itemMatchesKillArchetype(def, a) && a.priorityTags.some((t) => def.tags.includes(t)),
+    );
+    if (nextArch && nextArch.id !== activeArchetype.id) {
+      const onBoard = countArchetypeItems(state.items, nextArch);
+      const onBench = state.bench.filter((b) => itemMatchesKillArchetype(ITEM_CATALOG[b.itemId], nextArch)).length;
+      if (onBoard + onBench >= 2 || pick.score > (candidates[1]?.score || 0) + 8) {
+        nextArchetype = nextArch;
+        state.archetype = nextArch;
+        state.classId = nextArch.id;
+      }
+    }
+  }
+
+  return { bought: true, archetype: nextArchetype };
+}
+
+function aiBuyFromShop(
+  state,
+  archetype,
+  shop,
+  gridW = 9,
+  gridH = 7,
+  scout = null,
+  round = 1,
+  battleWon = null,
+  lockClassId = null,
+  prepOpts = {},
+) {
   let activeArchetype = state.archetype || archetype;
-  const ctx = () => aiScoreContext(state, activeArchetype, gridW, gridH, scout, round);
+  const profile = getAiPrepProfile(prepOpts, round, battleWon, state);
+  const ctx = () => aiScoreContext(state, activeArchetype, gridW, gridH, scout, round, prepOpts);
+  const minScore = getAiBuyMinScore(state, round, battleWon, prepOpts);
+  const goldReserve = battleWon === false || profile.lossStreak >= 1
+    ? 1
+    : Math.max(2, Math.min(profile.goldReserveCap, Math.floor((state.gold || 0) * 0.1)));
 
   const ranked = () =>
     shop
@@ -1204,48 +1348,45 @@ function aiBuyFromShop(state, archetype, shop, gridW = 9, gridH = 7, scout = nul
       .filter((c) => c.itemId && ITEM_CATALOG[c.itemId])
       .sort((a, b) => b.score - a.score);
 
-  let progress = true;
-  let guard = 0;
-  while (progress && guard < 30) {
-    guard++;
-    progress = false;
+  const tryBuyPass = (floorScore, relaxNegative) => {
+    let bought = false;
     const candidates = ranked();
-
     for (const pick of candidates) {
       const def = ITEM_CATALOG[pick.itemId];
       if (state.gold < def.cost) continue;
-      if (state.bench.length >= AI_MAX_BENCH && pick.score < AI_SELL_THRESHOLD + 2) continue;
-      if (pick.score < 0 && Math.random() > 0.08) continue;
+      const accept = relaxNegative
+        ? pick.score >= floorScore
+        : shouldAiBuyCandidate(pick, state, round, battleWon, floorScore, prepOpts);
+      if (!accept) continue;
 
       if (state.bench.length >= AI_MAX_BENCH) {
         aiTrySellWeakest(state, activeArchetype, gridW, gridH, scout, round, battleWon);
       }
       if (state.bench.length >= AI_MAX_BENCH) continue;
 
-      state.gold -= def.cost;
-      state.bench.push({
-        itemId: pick.itemId,
-        uid: `ai-bench-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
-      });
-      shop[pick.index] = null;
-      progress = true;
-
-      const nextArch = Object.values(AI_ARCHETYPES).find((a) =>
-        itemMatchesKillArchetype(def, a) && a.priorityTags.some((t) => def.tags.includes(t)),
-      );
-      if (nextArch && nextArch.id !== activeArchetype.id) {
-        const onBoard = countArchetypeItems(state.items, nextArch);
-        const onBench = state.bench.filter((b) => itemMatchesKillArchetype(ITEM_CATALOG[b.itemId], nextArch)).length;
-        if (onBoard + onBench >= 2 || pick.score > (candidates[1]?.score || 0) + 8) {
-          activeArchetype = nextArch;
-          state.archetype = nextArch;
-          state.classId = nextArch.id;
-        }
-      }
-
+      const purchase = aiTryBuyShopCandidate(state, pick, shop, activeArchetype, candidates, lockClassId);
+      if (!purchase.bought) continue;
+      activeArchetype = purchase.archetype;
       aiTrySellWeakest(state, activeArchetype, gridW, gridH, scout, round, battleWon);
+      bought = true;
       break;
     }
+    return bought;
+  };
+
+  let progress = true;
+  let guard = 0;
+  while (progress && guard < profile.buyLoopCap) {
+    guard++;
+    progress = tryBuyPass(minScore, false);
+  }
+
+  const sinkFloor = profile.lobbyMode ? -14 : -12;
+  let sinkGuard = 0;
+  const sinkCap = profile.lobbyMode ? 18 + profile.itemDeficit * 2 : 12;
+  while (state.gold > goldReserve + (profile.lobbyMode ? 4 : 6) && sinkGuard < sinkCap) {
+    sinkGuard += 1;
+    if (!tryBuyPass(sinkFloor, true)) break;
   }
 
   return activeArchetype;
@@ -1271,8 +1412,12 @@ function aiEnemyPrepPhase(
   const scoutItems = prepOpts.scoutItems ?? playerItems;
   const scoutClass = prepOpts.scoutClass ?? playerClass;
   const scout = buildPlayerScout(scoutItems);
-  const killArchetype = prepOpts.forceArchetypeId && AI_ARCHETYPES[prepOpts.forceArchetypeId]
-    ? AI_ARCHETYPES[prepOpts.forceArchetypeId]
+  const prepProfile = getAiPrepProfile(prepOpts, round, battleWon, state);
+  const lockClassId = prepOpts.forceArchetypeId
+    || (prepOpts.allowClassSwitch !== true && state.classId)
+    || null;
+  const killArchetype = lockClassId && AI_ARCHETYPES[lockClassId]
+    ? AI_ARCHETYPES[lockClassId]
     : pickKillArchetype(
       scout,
       scoutClass,
@@ -1283,7 +1428,7 @@ function aiEnemyPrepPhase(
     );
   const next = {
     archetype: killArchetype,
-    classId: killArchetype.id,
+    classId: lockClassId || killArchetype.id,
     gold: state.gold ?? AI_ECON.START_GOLD,
     containers: state.containers || createStartingContainers(),
     items: [...(state.items || [])],
@@ -1300,7 +1445,9 @@ function aiEnemyPrepPhase(
 
   aiOptimizeLoadout(next);
   aiTrySellWeakest(next, killArchetype, gridW, gridH, scout, round, battleWon);
-  aiPurgeOffBuildBoard(next, killArchetype, scout, round, battleWon);
+  if (!(prepProfile.lobbyMode && prepProfile.itemDeficit > 0)) {
+    aiPurgeOffBuildBoard(next, killArchetype, scout, round, battleWon);
+  }
 
   const shopCtx = {
     round,
@@ -1321,11 +1468,20 @@ function aiEnemyPrepPhase(
 
   let shopArchetype = next.archetype;
   const shop = generateAIShopSlots(4, shopCtx);
-  shopArchetype = aiBuyFromShop(next, shopArchetype, shop, gridW, gridH, scout, round, battleWon);
+  shopArchetype = aiBuyFromShop(
+    next, shopArchetype, shop, gridW, gridH, scout, round, battleWon, lockClassId, prepOpts,
+  );
 
-  const refreshChance = battleWon === false ? Math.min(0.85, AI_SHOP_REFRESH_CHANCE + 0.25) : AI_SHOP_REFRESH_CHANCE;
-  if (next.gold >= 1 && Math.random() < refreshChance) {
+  let rerolls = 0;
+  let refreshChance = prepProfile.refreshChance;
+  const needsForcedReroll = prepProfile.lobbyMode && prepProfile.itemDeficit >= 2 && next.gold >= 1;
+  while (next.gold >= 1 && rerolls < prepProfile.maxRerolls) {
+    const shouldReroll = (rerolls === 0 && needsForcedReroll) || Math.random() < refreshChance;
+    if (!shouldReroll) break;
+    rerolls += 1;
     next.gold -= 1;
+    shopCtx.gold = next.gold;
+    shopCtx.isReroll = true;
     shopArchetype = aiBuyFromShop(
       next,
       shopArchetype,
@@ -1335,11 +1491,15 @@ function aiEnemyPrepPhase(
       scout,
       round,
       battleWon,
+      lockClassId,
+      prepOpts,
     );
+    refreshChance *= prepProfile.lobbyMode ? 0.82 : 0.55;
+    if (!prepProfile.lobbyMode) break;
   }
 
   next.archetype = shopArchetype;
-  next.classId = shopArchetype.id;
+  next.classId = lockClassId || shopArchetype.id;
   aiTrySellWeakest(next, next.archetype, gridW, gridH, scout, round, battleWon);
   aiPlaceBenchItems(next, gridW, gridH, next.archetype, scout, round);
   aiOptimizeLoadout(next);
@@ -1358,6 +1518,12 @@ function aiEnemyPrepPhase(
   aiSocketGems(next);
   aiNudgeForCrafting(next);
   aiApplyCrafting(next);
+  if (prepProfile.lobbyMode && prepProfile.itemDeficit > 0) {
+    aiPlaceBenchItems(next, gridW, gridH, next.archetype, scout, round);
+    aiOptimizeLoadout(next);
+    aiApplyCrafting(next);
+    aiSocketGems(next);
+  }
   applySynergyModifiersToContainers(next.containers, next.items);
 
   return next;

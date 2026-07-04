@@ -34,7 +34,15 @@ async function startPrep(page, mode) {
       );
     }
     if (gameMode === "versus") selectOpponentClass("warrior");
-    else if (gameMode !== "lobby" && gameMode !== "campaign") selectOpponentClass("mage");
+    else if (gameMode === "lobby2p") {
+      selectOpponentClass("warrior");
+      selectOpponentClass("warrior");
+      selectCompanion(
+        typeof defaultCompanionForClass === "function"
+          ? defaultCompanionForClass("warrior")
+          : "s_stranger",
+      );
+    } else if (gameMode !== "lobby" && gameMode !== "campaign") selectOpponentClass("mage");
     startRunFromOverlay();
   }, mode);
   await page.waitForFunction(
@@ -76,6 +84,8 @@ for (const snap of manifest.prepSnapshots) {
         mask: [
           page.locator("#prep-hero-card-timer"),
           page.locator("#prep-hud-hero-round"),
+          page.locator("#lobby2p-top-round"),
+          page.locator("#lobby2p-top-alive-count"),
         ],
       });
     } finally {

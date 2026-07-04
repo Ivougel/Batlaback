@@ -686,6 +686,7 @@ function setLobbySpectateMatch(matchIndex) {
   syncLobbySpectateBoards(match);
   const app = document.getElementById("app");
   if (app) app.dataset.lobbySpectate = match.isPlayerMatch ? "yours" : "watch";
+  syncLobby2pBattleTabs();
   queueLobbySpectatePresentation();
 }
 
@@ -764,6 +765,61 @@ function getLobbySpectateProfileNames() {
     enemyMutationFormId: fighterB?.mutationFormId ?? null,
     enemyMutationId: fighterB?.mutationId ?? null,
   };
+}
+
+function findLobby2pHumanMatchIndex(humanId) {
+  if (!lobbyMatches?.length) return -1;
+  return lobbyMatches.findIndex(
+    (m) => m.isPlayerMatch && m.humanId === humanId && !m.byeFighterId && m.state,
+  );
+}
+
+function syncLobby2pBattleTabs() {
+  const wrap = document.getElementById("lobby2p-battle-tabs");
+  if (!wrap) return;
+  const show = isLobby2pMode() && isBattleUiPhase() && !!lobbyState;
+  wrap.classList.toggle("hidden", !show);
+  if (!show) return;
+
+  [0, 1].forEach((humanId) => {
+    const btn = document.getElementById(`lobby2p-battle-tab-${humanId}`);
+    if (!btn) return;
+    const fighter = getLobbyHumanFighter(lobbyState, humanId);
+    const matchIdx = findLobby2pHumanMatchIndex(humanId);
+    const match = matchIdx >= 0 ? lobbyMatches[matchIdx] : null;
+    const alive = fighter?.alive !== false;
+    const inBattle = !!(match?.state && !match.state.finished);
+    const finished = !!(match?.state?.finished);
+    const spectating = matchIdx === lobbySpectateMatchId;
+    const oppId = match
+      ? (match.fighterAId === humanId ? match.fighterBId : match.fighterAId)
+      : null;
+    const opp = oppId != null ? lobbyState.fighters[oppId] : null;
+
+    btn.disabled = !alive || matchIdx < 0;
+    btn.classList.toggle("lobby2p-battle-tab--active", spectating);
+    btn.classList.toggle("lobby2p-battle-tab--live", inBattle);
+    btn.classList.toggle("lobby2p-battle-tab--done", finished);
+    btn.classList.toggle("lobby2p-battle-tab--out", !alive);
+    btn.setAttribute("aria-selected", spectating ? "true" : "false");
+
+    const hp = fighter?.hp ?? 0;
+    const status = !alive ? "выбыл" : inBattle ? "в бою" : finished ? "готово" : "—";
+    btn.textContent = `${fighter?.name || `Игрок ${humanId + 1}`} · ♥${hp}${opp ? ` vs ${opp.name}` : ""} · ${status}`;
+  });
+}
+
+function bindLobby2pBattleTabs() {
+  const wrap = document.getElementById("lobby2p-battle-tabs");
+  if (!wrap || wrap.dataset.bound === "1") return;
+  wrap.dataset.bound = "1";
+  wrap.addEventListener("click", (e) => {
+    const tab = e.target.closest(".lobby2p-battle-tab");
+    if (!tab || tab.disabled) return;
+    const humanId = Number(tab.dataset.human);
+    const idx = findLobby2pHumanMatchIndex(humanId);
+    if (idx >= 0) setLobbySpectateMatch(idx);
+  });
 }
 
 function returnToLobbyPlayerMatch() {
@@ -934,6 +990,7 @@ function renderLobbyChrome(force = false) {
     if (stripBattle && isBattleUiPhase()) stripBattle.innerHTML = stripHtml;
   }
   syncLobbyReturnTableButton();
+  syncLobby2pBattleTabs();
   if (show && phase === "prep") {
     if (typeof syncLobbyFighterAvatars === "function") {
       syncLobbyFighterAvatars(lobbyState, rosterOpts);
@@ -1220,7 +1277,7 @@ function tryStartLobby2pScheduledRound() {
   lobbyState.ready[1] = false;
   syncLobby2pBothFromGlobals();
   syncLobby2pHudDom();
-  startBattle();
+  executeBattleStart();
 }
 
 function createLobby2pSideBattleState(humanId, opponentFighter, type) {
@@ -1383,6 +1440,7 @@ function initLobby2pHudBridge() {
   Lobby2pHud.register({
     isActive: () => isLobby2pMode() && phase === "prep" && !!lobbyState?.isSplitLobby,
     getRound: () => round,
+    getAliveCount: () => (lobbyState ? getAliveLobbyFighters(lobbyState).length : 0),
     getFighter: (id) => getLobbyHumanFighter(lobbyState, id),
     getClassId: (id) => (id === 0 ? playerClass : enemyClass),
     getEnhancements: (id) => (id === 0 ? playerEnhancements : enemyEnhancements),
@@ -1456,22 +1514,50 @@ function drawLobby2pPrepHalf(side) {
   ctx.restore();
 }
 
-function drawLobby2pSideBattleHalf(sideBattle, half) {
+function drawLobby2pSideBattleHalf(sideBattle, half, humanId) {
   const state = sideBattle.state;
   if (!state) return;
   const clipX = half === "left" ? 0 : ENEMY_X;
   const clipW = GRID_INNER_W;
+  const mirror = humanId === 1;
+  const humanTeam = mirror ? "enemy" : "player";
+  const oppTeam = mirror ? "player" : "enemy";
+  const humanContainers = mirror ? enemyContainers : playerContainers;
+  const oppContainers = mirror ? playerContainers : enemyContainers;
   ctx.save();
   ctx.beginPath();
   ctx.rect(clipX, 0, clipW, canvas.height);
   ctx.clip();
-  drawBackpackFrame("player", { containers: playerContainers, items: state.player.items });
-  drawBackpackFrame("enemy", { containers: enemyContainers, items: state.enemy.items });
-  drawContainers(playerContainers, "player", false);
-  drawContainers(enemyContainers, "enemy", false);
-  drawPlacedItems(state.player.items, "player", false, true);
-  drawPlacedItems(state.enemy.items, "enemy", true, true);
+  drawBackpackFrame(humanTeam, { containers: humanContainers, items: state.player.items });
+  drawBackpackFrame(oppTeam, { containers: oppContainers, items: state.enemy.items });
+  drawContainers(humanContainers, humanTeam, false);
+  drawContainers(oppContainers, oppTeam, false);
+  drawPlacedItems(state.player.items, humanTeam, false, true);
+  drawPlacedItems(state.enemy.items, oppTeam, true, true);
   ctx.restore();
+}
+
+function drawLobby2pSideBattleFx(fxLayerCtx, state, half, humanId) {
+  if (!state || !fxLayerCtx) return;
+  const clipX = half === "left" ? 0 : ENEMY_X;
+  const clipW = GRID_INNER_W;
+  const mirror = humanId === 1;
+  fxLayerCtx.save();
+  fxLayerCtx.beginPath();
+  fxLayerCtx.rect(clipX, 0, fxCanvas.width, fxCanvas.height);
+  fxLayerCtx.clip();
+  if (mirror) {
+    fxLayerCtx.save();
+    fxLayerCtx.translate(ENEMY_X + GRID_INNER_W, 0);
+    fxLayerCtx.scale(-1, 1);
+    fxLayerCtx.translate(-(ENEMY_X + GRID_INNER_W), 0);
+    drawAttackAnimations(fxLayerCtx, state);
+    fxLayerCtx.restore();
+  } else {
+    drawAttackAnimations(fxLayerCtx, state);
+  }
+  if (typeof renderBattleEffectsOverlay === "function") renderBattleEffectsOverlay(state);
+  fxLayerCtx.restore();
 }
 
 function drawLobby2pSplitPrep() {
@@ -1490,12 +1576,12 @@ function drawLobby2pSplitPrep() {
   const sb0 = lobbyState.sideBattles[0];
   const sb1 = lobbyState.sideBattles[1];
   if (sb0?.state && !sb0.state.finished && !sb0.shared) {
-    drawLobby2pSideBattleHalf(sb0, "left");
+    drawLobby2pSideBattleHalf(sb0, "left", 0);
   } else {
     drawLobby2pPrepHalf("player");
   }
   if (sb1?.state && !sb1.state.finished && !sb1.shared) {
-    drawLobby2pSideBattleHalf(sb1, "right");
+    drawLobby2pSideBattleHalf(sb1, "right", 1);
   } else if (!sb0?.shared) {
     drawLobby2pPrepHalf("enemy");
   }
@@ -3537,6 +3623,7 @@ function init() {
   bindClassSummaryInteractions();
   document.getElementById("btn-start-run")?.addEventListener("click", startRunFromOverlay);
   bindLobbyRosterClicks();
+  bindLobby2pBattleTabs();
   initLobby2pHudBridge();
   bindLobby2pSellZones();
   window.addEventListener("resize", syncClassMobileDock, { passive: true });
@@ -6715,6 +6802,7 @@ function applyPostBattlePrep(battleWinner) {
       enemyBattleWon,
       playerItems,
       playerClass,
+      { forceArchetypeId: enemyClass },
     );
     enemyArchetype = enemyPrep.archetype;
     enemyClass = enemyPrep.classId;
@@ -8076,6 +8164,7 @@ function drawFxLayer() {
   if (!fxCtx || !fxCanvas) return;
   fxCtx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
   if (phase === "prep") {
+    const lobby2pSideFx = isLobby2pMode() && lobbyState?.isSplitLobby && lobby2pHasAnySideBattle();
     const side = prepViewSide;
     const st = getLoadoutEditState(side);
     const shake = typeof getPrepBackpackShakeOffset === "function"
@@ -8083,12 +8172,32 @@ function drawFxLayer() {
       : { x: 0, y: 0 };
     fxCtx.save();
     fxCtx.translate(shake.x, shake.y);
-    drawDisplaceAnimations(fxCtx, side);
-    if (canEditPrepSide() && hoverSlot && !dragPayload && !gamepadBoardFocus) drawHoverCell();
-    if (canEditPrepSide() && gamepadBoardFocus && isGamepadInteraction()) drawGamepadBoardFocus();
-    if (typeof drawPrepCellReactions === "function") drawPrepCellReactions(fxCtx, side);
+    if (!lobby2pSideFx) {
+      drawDisplaceAnimations(fxCtx, side);
+      if (canEditPrepSide() && hoverSlot && !dragPayload && !gamepadBoardFocus) drawHoverCell();
+      if (canEditPrepSide() && gamepadBoardFocus && isGamepadInteraction()) drawGamepadBoardFocus();
+      if (typeof drawPrepCellReactions === "function") drawPrepCellReactions(fxCtx, side);
+    }
     if (typeof drawBoardTooltipItemSparkles === "function") {
       drawBoardTooltipItemSparkles(fxCtx, synergyAnimTime);
+    }
+    if (lobby2pSideFx) {
+      if (lobby2pHasActiveDuel()) {
+        const duelState = lobbyState.sideBattles[0]?.state;
+        if (duelState) {
+          drawAttackAnimations(fxCtx, duelState);
+          if (typeof renderBattleEffectsOverlay === "function") renderBattleEffectsOverlay(duelState);
+        }
+      } else {
+        const seen = new Set();
+        [0, 1].forEach((humanId) => {
+          const sb = lobbyState.sideBattles[humanId];
+          if (!sb?.state || sb.state.finished || sb.shared) return;
+          if (seen.has(sb.state)) return;
+          seen.add(sb.state);
+          drawLobby2pSideBattleFx(fxCtx, sb.state, humanId === 0 ? "left" : "right", humanId);
+        });
+      }
     }
     fxCtx.restore();
     return;

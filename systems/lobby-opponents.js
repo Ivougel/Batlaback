@@ -229,7 +229,17 @@ function pickLobbyOpponent(lobby) {
     lobby.currentOpponentId = null;
     return null;
   }
-  const opponent = alive[Math.floor(Math.random() * alive.length)];
+  const ranked = alive
+    .map((f) => ({
+      fighter: f,
+      score: (f.items?.length || 0) * 5 + (f.gold || 0) * 0.12 + (f.hp || 0) * 0.06,
+    }))
+    .sort((a, b) => b.score - a.score);
+  const strongPool = ranked.slice(0, Math.max(1, Math.ceil(ranked.length / 2)));
+  const roll = Math.random();
+  const pool = roll < 0.7 ? strongPool : ranked;
+  const pick = pool[Math.floor(Math.random() * pool.length)];
+  const opponent = pick.fighter;
   lobby.currentOpponentId = opponent.id;
   return opponent;
 }
@@ -245,9 +255,23 @@ function pickLobbyScoutTarget(lobby, fighter) {
   const others = getAliveLobbyFighters(lobby).filter((f) => f.id !== fighter.id);
   if (!others.length) return { items: [], classId: null };
 
-  const nonHuman = others.filter((f) => !f.isHuman);
-  const pool = nonHuman.length ? nonHuman : others;
-  const target = pool[Math.floor(Math.random() * pool.length)];
+  const human = others.find((f) => f.isHuman && f.items?.length);
+  if (human) {
+    return { items: human.items, classId: human.classId };
+  }
+
+  const ranked = others
+    .filter((f) => f.items?.length)
+    .map((f) => ({
+      fighter: f,
+      score: (f.items?.length || 0) * 5
+        + (f.gold || 0) * 0.15
+        + (f.hp || 0) * 0.08
+        + (f.isHuman ? 6 : 0),
+    }))
+    .sort((a, b) => b.score - a.score);
+
+  const target = ranked[0]?.fighter || others[Math.floor(Math.random() * others.length)];
   return { items: target.items || [], classId: target.classId || null };
 }
 
@@ -275,7 +299,11 @@ function advanceLobbyFighterPrep(fighter, round, gridW, gridH, battleWon, scoutI
     battleWon,
     scoutItems || [],
     scoutClass,
-    prepOpts,
+    {
+      ...prepOpts,
+      lobbyMode: true,
+      forceArchetypeId: fighter.classId,
+    },
   );
 
   fighter.archetype = prep.archetype;
@@ -299,7 +327,7 @@ function runLobbyBotsShopPhase(lobby, round) {
       fighter.lastBattleWon,
       scout.items,
       scout.classId,
-      { recentResults: (fighter.recentResults || []).slice(-3) },
+      { recentResults: (fighter.recentResults || []).slice(-3), lobbyMode: true },
     );
     syncLobbyFighterMutationMilestones(fighter, round);
   });
@@ -597,6 +625,19 @@ function getLobbyPlacement(lobby) {
   return { rank, total: lobby.fighters.length, sorted };
 }
 
+function getLobby2pHumanPlacements(lobby) {
+  const sorted = [...lobby.fighters].sort((a, b) => {
+    if (a.alive !== b.alive) return a.alive ? -1 : 1;
+    return b.hp - a.hp;
+  });
+  const humans = getLobby2pHumans(lobby);
+  return humans.map((human) => ({
+    fighter: human,
+    rank: sorted.findIndex((f) => f.id === human.id) + 1,
+    total: lobby.fighters.length,
+  }));
+}
+
 function renderLobbyStandingsPanel(lobby, roundNum, runResults, goldStats = null) {
   if (!lobby) return "";
   const { rank, sorted } = getLobbyPlacement(lobby);
@@ -609,6 +650,7 @@ function renderLobbyStandingsPanel(lobby, roundNum, runResults, goldStats = null
       fighter.isHuman ? "lobby-row--player" : "",
       !fighter.alive ? "lobby-row--out" : "",
       fighter.id === lobby.currentOpponentId ? "lobby-row--next" : "",
+      lobby.isSplitLobby && lobby.humanIds?.includes(fighter.id) ? "lobby-row--human" : "",
     ].filter(Boolean).join(" ");
     const status = fighter.alive ? `${fighter.hp} HP · ${fighter.gold}💰` : "выбыл";
     const marker = fighter.id === lobby.currentOpponentId ? " ⚔" : "";
@@ -624,12 +666,28 @@ function renderLobbyStandingsPanel(lobby, roundNum, runResults, goldStats = null
     ? `<div class="run-gold-summary">Получено: <b>${goldStats.earned ?? 0}💰</b> · Потрачено: <b>${goldStats.spent ?? 0}💰</b></div>`
     : "";
 
+  const header = lobby.isSplitLobby
+    ? `🏟 Лобби 2P · ${getAliveLobbyFighters(lobby).length} в игре`
+    : `🏟 Лобби · ${getAliveLobbyFighters(lobby).length} в игре`;
+
+  const humanSummary = lobby.isSplitLobby
+    ? getLobby2pHumanPlacements(lobby).map(({ fighter, rank: humanRank, total }) => (
+      `<div class="lobby-player-hp">${fighter.name}: <b>${humanRank}</b>/${total} · ♥ <b>${fighter.hp ?? 0}</b> / ${LOBBY_START_HP}</div>`
+    )).join("")
+    : `<div class="lobby-next-opponent">Следующий бой: <b>${opponent?.name || "—"}</b></div>
+    <div class="lobby-player-hp">Ваше HP: <b>${player?.hp ?? 0}</b> / ${LOBBY_START_HP}</div>`;
+
+  const placementLine = lobby.isSplitLobby
+    ? getLobby2pHumanPlacements(lobby).map(({ fighter, rank: humanRank, total }) => (
+      `${fighter.name}: <b>${humanRank}</b>/${total}`
+    )).join(" · ")
+    : `Место: <b>${rank}</b>/${lobby.fighters.length}`;
+
   return `
-    <div class="bstat-header">🏟 Лобби · ${getAliveLobbyFighters(lobby).length} в игре</div>
-    <div class="lobby-next-opponent">Следующий бой: <b>${opponent?.name || "—"}</b></div>
-    <div class="lobby-player-hp">Ваше HP: <b>${player?.hp ?? 0}</b> / ${LOBBY_START_HP}</div>
+    <div class="bstat-header">${header}</div>
+    ${humanSummary}
     <div class="lobby-standings">${rows}</div>
-    <div class="run-summary">Раунд <b>${roundNum}</b> · Победы: <b>${wins}</b> · Поражения: <b>${losses}</b>${draws ? ` · Ничьи: <b>${draws}</b>` : ""} · Место: <b>${rank}</b>/${lobby.fighters.length}</div>
+    <div class="run-summary">Раунд <b>${roundNum}</b> · Победы: <b>${wins}</b> · Поражения: <b>${losses}</b>${draws ? ` · Ничьи: <b>${draws}</b>` : ""} · ${placementLine}</div>
     ${goldLine}
   `;
 }
@@ -641,12 +699,31 @@ function showLobbyRunCompleteOverlay(lobby, runResults, runItemStats, roundNum, 
   document.getElementById("battle-result-overlay")?.classList.add("hidden");
 
   const { rank, total } = getLobbyPlacement(lobby);
-  const player = getLobbyPlayer(lobby);
-  const won = player?.alive && getAliveLobbyFighters(lobby).length === 1;
-  const title = won ? "Победа в лобби!" : "Лобби завершено";
-  const subtitle = won
-    ? `Вы последний выживший! Место: ${rank} из ${total}`
-    : `Место: ${rank} из ${total} · HP: ${player?.hp ?? 0}`;
+  const alive = getAliveLobbyFighters(lobby);
+  let title;
+  let subtitle;
+
+  if (lobby.isSplitLobby) {
+    const placements = getLobby2pHumanPlacements(lobby);
+    const winner = alive.length === 1 ? alive[0] : null;
+    const humanWinner = winner?.isHuman ? winner : null;
+    title = humanWinner
+      ? (placements.filter((p) => p.fighter.alive).length === 1 ? "Победа в лобби 2P!" : "Лобби 2P завершено")
+      : "Лобби 2P завершено";
+    const placementText = placements.map(({ fighter, rank: humanRank }) => (
+      `${fighter.name}: ${humanRank}/${total}${fighter.alive ? ` · ♥${fighter.hp}` : " · выбыл"}`
+    )).join(" · ");
+    subtitle = humanWinner && placements.filter((p) => p.fighter.alive).length === 1
+      ? `${humanWinner.name} — последний выживший! ${placementText}`
+      : placementText;
+  } else {
+    const player = getLobbyPlayer(lobby);
+    const won = player?.alive && alive.length === 1;
+    title = won ? "Победа в лобби!" : "Лобби завершено";
+    subtitle = won
+      ? `Вы последний выживший! Место: ${rank} из ${total}`
+      : `Место: ${rank} из ${total} · HP: ${player?.hp ?? 0}`;
+  }
 
   document.getElementById("overlay-title").textContent = title;
   document.getElementById("overlay-text").textContent = subtitle;
@@ -656,7 +733,7 @@ function showLobbyRunCompleteOverlay(lobby, runResults, runItemStats, roundNum, 
   if (accordionsEl) {
     renderAccordions(accordionsEl, [
       {
-        title: "🏟 Итоги лобби",
+        title: lobby.isSplitLobby ? "🏟 Итоги лобби 2P" : "🏟 Итоги лобби",
         html: renderLobbyStandingsPanel(lobby, roundNum, runResults, goldStats),
         open: true,
       },
