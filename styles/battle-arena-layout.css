@@ -379,7 +379,22 @@ html[data-battle-combat-floor="true"] #app[data-phase="replay"] .battle-thought-
   overflow: visible;
 }
 
-/* ─── L4 HUD: HP/stamina + debuff chips под строкой стамины ─── */
+/* ─── L4 HUD: HP/stamina над героем; чипы над строкой стамины ─── */
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-hud-vitals-column,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-hud-vitals-column {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: calc(3px * var(--ui-scale));
+  width: 100%;
+  flex-shrink: 0;
+}
+
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] #battle-hud-enemy .battle-hud-vitals-column,
+html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] #battle-hud-enemy .battle-hud-vitals-column {
+  align-items: flex-end;
+}
 
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="battle"] .battle-hud-side,
 html[data-battle-hero-placement="flank-arena"] #app[data-phase="replay"] .battle-hud-side {

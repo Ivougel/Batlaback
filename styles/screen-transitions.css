@@ -35,11 +35,20 @@ body.screen-app-visible #app {
 }
 
 body:not(.screen-app-visible):has(#class-overlay:not(.hidden)) #app,
-body:has(#battle-result-overlay:not(.hidden):not(.overlay-exiting)) #app,
 body:has(#overlay:not(.hidden):not(.overlay-exiting)) #app {
   opacity: 0;
   transform: scale(1.012);
   filter: saturate(0.92) brightness(0.96);
+}
+
+/* Результат боя — мгновенно прячем #app без scale/opacity-transition (театр + modal сами анимируются) */
+body:has(#battle-result-overlay:not(.hidden)) #app {
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+  transform: none !important;
+  filter: none !important;
+  transition: none !important;
 }
 
 /* Prep ↔ Battle — anticipation pulse перед сменой фазы */

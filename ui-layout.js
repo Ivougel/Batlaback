@@ -51,7 +51,7 @@
       root.style.removeProperty("--bottom-chrome-pin-y");
       return;
     }
-    if (isModalOpen() && !isClassOverlayOpen()) {
+    if (isLayoutBlockingModal() && !isClassOverlayOpen()) {
       root.style.removeProperty("--bottom-chrome-pin-y");
       return;
     }
@@ -102,7 +102,7 @@
       if (getComputedStyle(bar).display === "none") return readCssPx("--bottom-chrome-h", 44);
       return bar.offsetHeight + pinY || readCssPx("--bottom-chrome-h", 44);
     }
-    if (isModalOpen()) return 0;
+    if (isLayoutBlockingModal()) return 0;
     const bar = getBottomChrome();
     if (!bar || bar.classList.contains("hidden")) return readCssPx("--bottom-chrome-h", 44);
     if (getComputedStyle(bar).display === "none") return readCssPx("--bottom-chrome-h", 44);
@@ -124,6 +124,13 @@
 
   function isModalOpen() {
     return ["class-overlay", "battle-result-overlay", "battle-detail-overlay", "overlay", "settings-overlay", "escape-menu-overlay"].some((id) => {
+      const el = document.getElementById(id);
+      return el && !el.classList.contains("hidden");
+    });
+  }
+
+  function isLayoutBlockingModal() {
+    return ["class-overlay", "battle-detail-overlay", "overlay", "settings-overlay", "escape-menu-overlay"].some((id) => {
       const el = document.getElementById(id);
       return el && !el.classList.contains("hidden");
     });
@@ -944,9 +951,22 @@
     const root = document.documentElement;
     const useFlankZones = root.dataset.battleHeroPlacement === "flank-arena";
     const tabletLandscapeSide = isTabletLandscapeSideBattle(root);
+    const prepHeroLayer = typeof usesBattlePrepHeroLayer === "function"
+      && usesBattlePrepHeroLayer(root);
+
+    let sharedHeroTopVp = null;
+    if (prepHeroLayer) {
+      const heroTops = ["player", "enemy"]
+        .map((side) => {
+          const rect = measureBattlePrepHeroRect(side);
+          return rect && rect.height >= 48 ? rect.top - vpRect.top : null;
+        })
+        .filter((top) => top != null);
+      if (heroTops.length) sharedHeroTopVp = Math.min(...heroTops);
+    }
 
     let sharedStageBottom = null;
-    if (tabletLandscapeSide && useFlankZones) {
+    if (!prepHeroLayer && tabletLandscapeSide && useFlankZones) {
       const stageBottoms = ["player-avatar-slot", "enemy-avatar-slot"]
         .map((slotId) => document.getElementById(slotId)?.querySelector(".avatar-hero-stage"))
         .filter(Boolean)
@@ -956,7 +976,7 @@
     }
 
     let sharedHudTopPx = null;
-    if (tabletLandscapeSide) {
+    if (tabletLandscapeSide && !prepHeroLayer) {
       const barsGapEarly = Math.round(6 * readCssPx("--ui-scale", 1));
       const hudOverlapEarly = readCssPx("--hero-hud-overlap", Math.round(10 * readCssPx("--ui-scale", 1)));
       const heroRowTop = readCssPx("--battle-hero-row-top", 0);
@@ -992,11 +1012,47 @@
         zoneLeftVar: "--battle-enemy-zone-left",
         zoneWidthVar: "--battle-enemy-zone-width",
       },
-    ].forEach(({ slotId, panelId, hudId, zoneLeftVar, zoneWidthVar }) => {
+    ].forEach(({ team, slotId, panelId, hudId, zoneLeftVar, zoneWidthVar }) => {
       const slot = document.getElementById(slotId);
       const panel = document.getElementById(panelId);
       const hud = document.getElementById(hudId);
       if (!slot || !hud) return;
+
+      const uiScale = readCssPx("--ui-scale", 1);
+      const barsGap = Math.round(6 * uiScale);
+
+      if (prepHeroLayer) {
+        const prepRect = measureBattlePrepHeroRect(team);
+        if (prepRect && prepRect.height >= 48) {
+          const zoneLeft = readCssPx(zoneLeftVar, 0);
+          const zoneW = readCssPx(zoneWidthVar, 180);
+          const hudWidth = Math.max(120, Math.min(zoneW, Math.round(prepRect.width)));
+          const hudLeft = Math.round(prepRect.left - vpRect.left);
+          const heroTopVp = sharedHeroTopVp != null ? sharedHeroTopVp : prepRect.top - vpRect.top;
+
+          hud.style.left = `${hudLeft}px`;
+          hud.style.width = `${hudWidth}px`;
+          hud.style.maxWidth = `${hudWidth}px`;
+          hud.style.top = "0";
+          let hudHeight = hud.offsetHeight;
+          if (hudHeight < 8) {
+            hud.style.visibility = "hidden";
+            hudHeight = hud.offsetHeight;
+            hud.style.visibility = "";
+          }
+          const hudTopPx = Math.max(0, Math.round(heroTopVp - hudHeight - barsGap));
+          hud.style.top = `${hudTopPx}px`;
+
+          const heroRowTop = readCssPx("--battle-hero-row-top", 0);
+          const heroZoneH = readCssPx("--battle-hero-zone-h-active", readCssPx("--battle-hero-zone-h", 0));
+          if (heroZoneH > 40) {
+            const heroRowBottomVp = heroRowTop + heroZoneH - vpRect.top;
+            const maxHudH = Math.max(40, Math.round(heroRowBottomVp - hudTopPx - barsGap));
+            hud.style.setProperty("--battle-hud-max-h", `${maxHudH}px`);
+          }
+          return;
+        }
+      }
 
       const shell = slot.querySelector(".avatar-hero-shell");
       const upper = shell?.querySelector(".avatar-hero-upper");
@@ -1039,7 +1095,6 @@
         }
       }
 
-      const barsGap = Math.round(6 * readCssPx("--ui-scale", 1));
       const hudOverlap = useFlankZones
         ? readCssPx("--hero-hud-overlap", Math.round(16 * readCssPx("--ui-scale", 1)))
         : 0;
@@ -2751,7 +2806,7 @@
     document.documentElement.style.removeProperty("--zone-fit-shrink");
 
     const cfg = PREP_PROFILES[layoutProfile?.id] || PREP_PROFILES["desktop-landscape"];
-    const hudH = isModalOpen() ? 0 : measureBottomChromeHeight();
+    const hudH = isLayoutBlockingModal() ? 0 : measureBottomChromeHeight();
     const chromeH = measurePrepChromeHeight() + hudH;
     const available = Math.max(400, h - chromeH);
 
@@ -2888,7 +2943,7 @@
     }
 
     const classOverlayOpen = isClassOverlayOpen();
-    const modalBlocksHud = isModalOpen() && !classOverlayOpen;
+    const modalBlocksHud = isLayoutBlockingModal() && !classOverlayOpen;
     const hudVisible = !modalBlocksHud;
     const hudH = measureBottomChromeHeight();
     document.documentElement.style.setProperty("--bottom-chrome-h-measured", `${hudH}px`);

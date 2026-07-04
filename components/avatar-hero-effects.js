@@ -46,29 +46,31 @@ function renderAvatarBarsHTML(profile, team) {
   const staminaPct = Math.max(0, Math.min(100, (staminaCurrent / Math.max(1, staminaMax)) * 100));
 
   return `
-    <div class="avatar-hero-bars">
-      <div class="avatar-hero-bars-col">
-        <div class="avatar-hero-hp-bar">
-          <div class="avatar-hero-hp-track">
-            <div class="avatar-hero-hp-fill avatar-hero-hp-fill-${team}" style="width:${hpPct}%"></div>
-            <div class="avatar-hero-hp-heal-preview" hidden style="left:${hpPct}%;width:0%"></div>
-          </div>
-          <span class="avatar-hero-hp-label">${Math.ceil(hpCurrent)}/${hpMax}</span>
-        </div>
-        <div class="avatar-hero-stamina-bar">
-          <div class="avatar-hero-stamina-track">
-            <div class="avatar-hero-stamina-fill avatar-hero-stamina-fill-${team}" style="width:${staminaPct}%"></div>
-          </div>
-          <span class="avatar-hero-stamina-label">${Math.ceil(staminaCurrent)}/${staminaMax}</span>
+    <div class="battle-hud-vitals-column">
+      <div class="battle-hud-status-stack">
+        <div class="battle-hud-runtime-chips" aria-hidden="true" hidden></div>
+        <div class="battle-hud-effects-grid">
+          <div class="avatar-benefit-stacks battle-hud-benefit-stacks" aria-hidden="true" hidden></div>
+          <div class="avatar-hero-debuff-row battle-hud-debuff-row" hidden></div>
+          <div class="avatar-dot-stacks battle-hud-dot-stacks" aria-hidden="true" hidden></div>
         </div>
       </div>
-    </div>
-    <div class="battle-hud-status-stack">
-      <div class="battle-hud-runtime-chips" aria-hidden="true" hidden></div>
-      <div class="battle-hud-effects-grid">
-        <div class="avatar-benefit-stacks battle-hud-benefit-stacks" aria-hidden="true" hidden></div>
-        <div class="avatar-hero-debuff-row battle-hud-debuff-row" hidden></div>
-        <div class="avatar-dot-stacks battle-hud-dot-stacks" aria-hidden="true" hidden></div>
+      <div class="avatar-hero-bars">
+        <div class="avatar-hero-bars-col">
+          <div class="avatar-hero-hp-bar">
+            <div class="avatar-hero-hp-track">
+              <div class="avatar-hero-hp-fill avatar-hero-hp-fill-${team}" style="width:${hpPct}%"></div>
+              <div class="avatar-hero-hp-heal-preview" hidden style="left:${hpPct}%;width:0%"></div>
+            </div>
+            <span class="avatar-hero-hp-label">${Math.ceil(hpCurrent)}/${hpMax}</span>
+          </div>
+          <div class="avatar-hero-stamina-bar">
+            <div class="avatar-hero-stamina-track">
+              <div class="avatar-hero-stamina-fill avatar-hero-stamina-fill-${team}" style="width:${staminaPct}%"></div>
+            </div>
+            <span class="avatar-hero-stamina-label">${Math.ceil(staminaCurrent)}/${staminaMax}</span>
+          </div>
+        </div>
       </div>
     </div>
   `;
@@ -511,7 +513,8 @@ function ensureBattleHeroShells(state, playerProfile, enemyProfile, opts = {}) {
     const barsEl = getBattleHudBarsEl(team);
     const barsSig = profileBarsSignature(profile);
     if (barsEl && (
-      !barsEl.querySelector(".battle-hud-status-stack")
+      !barsEl.querySelector(".battle-hud-vitals-column")
+      || !barsEl.querySelector(".battle-hud-status-stack")
       || !barsEl.querySelector(".battle-hud-effects-grid")
       || barsEl.dataset.barsSig !== barsSig
     )) {
@@ -526,6 +529,12 @@ function ensureBattleHeroShells(state, playerProfile, enemyProfile, opts = {}) {
 }
 
 function getAvatarHeroStageRect(team) {
+  if (document.documentElement.dataset.battlePrepHeroLayer === "true"
+    && typeof window.measureBattlePrepHeroRect === "function") {
+    const prepRect = window.measureBattlePrepHeroRect(team);
+    if (prepRect && prepRect.width > 0 && prepRect.height > 0) return prepRect;
+  }
+
   const slot = getAvatarSlotEl(team);
   const candidates = [
     slot?.querySelector(".avatar-hero-stage"),

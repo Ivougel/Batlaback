@@ -304,9 +304,31 @@ const BattleInventoryPopover = (() => {
     return document.getElementById(team === "player" ? "player-avatar-panel" : "enemy-avatar-panel");
   }
 
+  function getPrepCharacterClickRect(team) {
+    const root = document.documentElement;
+    if (root.dataset.battlePrepHeroLayer !== "true") return null;
+    const charEl = document.getElementById(team === "enemy" ? "prep-character-enemy" : "prep-character-player");
+    if (!charEl || charEl.hasAttribute("hidden")) return null;
+    const visual = charEl.querySelector(".prep-character-img, .prep-character-emoji") || charEl;
+    const rect = visual.getBoundingClientRect();
+    return rect.width >= 48 && rect.height >= 48 ? rect : null;
+  }
+
   function getPortraitAnchorRect(team) {
+    const prepRect = getPrepCharacterClickRect(team);
     const panel = getPortraitPanelEl(team);
     const panelRect = panel?.getBoundingClientRect();
+    if (prepRect) {
+      return {
+        left: panelRect?.left ?? prepRect.left,
+        right: panelRect?.right ?? prepRect.right,
+        top: prepRect.top,
+        bottom: prepRect.bottom,
+        width: panelRect?.width ?? prepRect.width,
+        height: prepRect.height,
+      };
+    }
+
     const stageRect = typeof getAvatarHeroStageRect === "function"
       ? getAvatarHeroStageRect(team)
       : null;
@@ -364,6 +386,22 @@ const BattleInventoryPopover = (() => {
     const zoneW = readRootCssPx(zoneWidthVar, 180);
     const left = layoutRect.left + zoneLeft;
     const right = left + zoneW;
+
+    const prepRect = document.documentElement.dataset.battlePrepHeroLayer === "true"
+      && typeof window.measureBattlePrepHeroRect === "function"
+      ? window.measureBattlePrepHeroRect(team)
+      : null;
+    if (prepRect && prepRect.height >= 48) {
+      return {
+        left,
+        right,
+        top: Math.max(bounds.top + 8, bounds.top),
+        bottom: prepRect.bottom - 8,
+        width: right - left,
+        height: Math.max(96, prepRect.bottom - bounds.top - 16),
+      };
+    }
+
     const heroRowTop = readRootCssPx("--battle-hero-row-top", 0);
     const sceneUi = document.getElementById("battle-scene-ui");
     const sceneTop = sceneUi?.getBoundingClientRect().top ?? bounds.top;
@@ -567,6 +605,18 @@ const BattleInventoryPopover = (() => {
 
   function resolveTeamFromPortraitTarget(target) {
     if (!target?.closest) return null;
+
+    if (document.documentElement.dataset.battlePrepHeroLayer === "true") {
+      if (target.closest("#prep-character-player, #prep-character-player .prep-character-img, #prep-character-player .prep-character-emoji")) {
+        return "player";
+      }
+      if (target.closest("#prep-character-enemy, #prep-character-enemy .prep-character-img, #prep-character-enemy .prep-character-emoji")) {
+        return "enemy";
+      }
+      if (target.closest("#player-avatar-panel")) return "player";
+      if (target.closest("#enemy-avatar-panel")) return "enemy";
+    }
+
     const avatar = target.closest(".profile-avatar");
     if (!avatar) return null;
     if (avatar.closest("#player-avatar-slot")) return "player";
