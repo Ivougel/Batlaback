@@ -182,6 +182,9 @@ const BattleHeroAnchor = (() => {
       heroHeadInward: 0.10,
       heroHeadThoughtYRatio: 0.08,
       heroHeadLiftRatio: 0.30,
+      thoughtDuelGapRatio: 0.70,
+      thoughtDuelGlyphBleed: 0.12,
+      thoughtDuelYRatio: 0.24,
     },
     "tablet-portrait": {
       ...FLOOR_EMOJI_PROFILE,
@@ -212,6 +215,9 @@ const BattleHeroAnchor = (() => {
       heroHeadInward: 0.10,
       heroHeadThoughtYRatio: 0.08,
       heroHeadLiftRatio: 0.30,
+      thoughtDuelGapRatio: 0.70,
+      thoughtDuelGlyphBleed: 0.12,
+      thoughtDuelYRatio: 0.24,
     },
   };
 
@@ -305,7 +311,7 @@ const BattleHeroAnchor = (() => {
     if (usesHeadBadgeAnchors()) {
       return emojiSize + thoughtSlotHaloPx(emojiSize) * 2;
     }
-    if (usesHeroAboveThoughtAnchors() || usesBattlePrepHeroThoughtAnchors()) {
+    if (usesHeroAboveThoughtAnchors() || usesBattlePrepHeroThoughtAnchors() || usesCenterDuelThoughtAnchors()) {
       return emojiSize;
     }
     return emojiSize + thoughtSlotHaloPx(emojiSize) * 2;
@@ -443,9 +449,16 @@ const BattleHeroAnchor = (() => {
     return null;
   }
 
+  function usesCenterDuelThoughtAnchors() {
+    if (!isFlankArenaBattle()) return false;
+    if (usesHeadBadgeAnchors()) return false;
+    return true;
+  }
+
   function usesHeroAboveThoughtAnchors() {
     if (!isFlankArenaBattle()) return false;
     if (usesHeadBadgeAnchors()) return false;
+    if (usesCenterDuelThoughtAnchors()) return false;
     if (usesBattlePrepHeroThoughtAnchors()) return false;
     return true;
   }
@@ -454,6 +467,7 @@ const BattleHeroAnchor = (() => {
   function usesBattlePrepHeroThoughtAnchors() {
     if (!isFlankArenaBattle()) return false;
     if (usesHeadBadgeAnchors()) return false;
+    if (usesCenterDuelThoughtAnchors()) return false;
     return document.documentElement.dataset.battlePrepHeroLayer === "true";
   }
 
@@ -471,6 +485,54 @@ const BattleHeroAnchor = (() => {
       top: cy - mountSize / 2,
       left: cx - mountSize / 2,
     };
+  }
+
+  /** Пара эмодзи-аватаров: рядом по центру экрана, зеркально друг к другу. */
+  function getCenterDuelThoughtAnchor(side) {
+    const vv = window.visualViewport;
+    const vw = vv?.width ?? window.innerWidth;
+    const vh = vv?.height ?? window.innerHeight;
+    const offsetTop = vv?.offsetTop ?? 0;
+    const offsetLeft = vv?.offsetLeft ?? 0;
+    const screenCx = offsetLeft + vw / 2;
+
+    const emojiSize = thoughtSlotEmojiSize();
+    const halo = thoughtSlotHaloPx(emojiSize);
+    const slotSize = thoughtSlotMountSize(emojiSize);
+    const prof = emojiProfile();
+    const uiScale = readCssPx("--ui-scale", 1);
+    // Зазор между внешними краями слотов + запас под тень/ширину глифа.
+    const edgeGap = Math.max(
+      Math.round(70 * uiScale),
+      Math.round(emojiSize * (prof.thoughtDuelGapRatio ?? 0.70)),
+    );
+    const glyphBleed = Math.round(emojiSize * (prof.thoughtDuelGlyphBleed ?? 0.12));
+    const halfSpan = (slotSize + edgeGap) / 2 + glyphBleed;
+    const cx = side === "enemy" ? screenCx + halfSpan : screenCx - halfSpan;
+
+    const playerAr = getAvatarAnchorRect("player");
+    const enemyAr = getAvatarAnchorRect("enemy");
+    let cy;
+    if (playerAr?.height >= 40 && enemyAr?.height >= 40) {
+      const headRatio = prof.heroSpecYRatio ?? 0.18;
+      const playerHead = playerAr.top + playerAr.height * headRatio;
+      const enemyHead = enemyAr.top + enemyAr.height * headRatio;
+      cy = (playerHead + enemyHead) / 2;
+    } else {
+      const sceneUi = document.getElementById("battle-scene-ui");
+      const sceneRect = sceneUi?.getBoundingClientRect();
+      const yRatio = prof.thoughtDuelYRatio ?? 0.24;
+      cy = sceneRect
+        ? sceneRect.top + sceneRect.height * yRatio
+        : offsetTop + vh * yRatio;
+    }
+
+    const mountSize = thoughtSlotMountSize(emojiSize);
+    const safeTop = offsetTop + Math.round(8 * uiScale);
+    const minCy = safeTop + mountSize / 2;
+    if (cy < minCy) cy = minCy;
+
+    return normalizeThoughtSlotAnchor({ cx, cy, emojiSize, halo });
   }
 
   /** Якорь prep spec-slot (battle-prep-hero-parity.css: ~68% ширины слота, уровень головы). */
@@ -777,6 +839,11 @@ const BattleHeroAnchor = (() => {
       if (badge) return badge;
     }
 
+    if (usesCenterDuelThoughtAnchors()) {
+      const duel = getCenterDuelThoughtAnchor(side);
+      if (duel) return duel;
+    }
+
     if (usesBattlePrepHeroThoughtAnchors()) {
       const prepHead = getPrepSpecSlotThoughtAnchor(side);
       if (prepHead) return prepHead;
@@ -895,6 +962,8 @@ const BattleHeroAnchor = (() => {
     getHeroBelowThoughtAnchor,
     getHeroNearSpecAnchor,
     usesHeroAboveThoughtAnchors,
+    usesCenterDuelThoughtAnchors,
+    getCenterDuelThoughtAnchor,
     usesBattlePrepHeroThoughtAnchors,
     getPrepSpecSlotThoughtAnchor,
     usesHeroBelowThoughtAnchors,

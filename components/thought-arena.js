@@ -6,13 +6,44 @@
 const ThoughtArena = (() => {
   const SIZE_RATIO = 0.15;
   const CLUSTER_SIZE_RATIO = 0.12;
-  const RESTITUTION = 0.9;
-  const AIR_DRAG = 0.9992;
-  const MAX_DT = 0.032;
+  const MAX_DT = 0.028;
   const CLUSTER_SPACING_RATIO = 0.58;
   const CLUSTER_MAX_SPREAD_RATIO = 1.35;
   /** Доля диаметра тела, занимаемая глифом (без legacy-усадки 0.72). */
   const THOUGHT_GLYPH_FONT_RATIO = 0.90;
+
+  /** Параметры «мысленного пузыря» — мягкая пружина, критическое демпфирование, левитация. */
+  const PHYS = {
+    anchored: {
+      springK: 13,
+      dampC: 7.4,
+      buoyancy: 12,
+      gravity: 11,
+      turbAmp: 2.2,
+      turbFreqScale: 0.48,
+      wallRest: 0.26,
+      wallFric: 0.9,
+      angSpring: 8.5,
+      angDamp: 5.4,
+      subSteps: 3,
+      renderSmooth: 18,
+      rotRenderSmooth: 14,
+      scaleSmooth: 3.2,
+    },
+    arena: {
+      restitution: 0.56,
+      wallFriction: 0.88,
+      airLinear: 2.4,
+      airQuad: 0.0016,
+      gravity: 34,
+      buoyancy: 26,
+      clusterSpring: 14,
+      clusterDamp: 2.8,
+      spawnSpeedMin: 0.028,
+      spawnSpeedMax: 0.052,
+      subSteps: 3,
+    },
+  };
 
   /** Legacy: центр арены (боевой пол — красные точки на макете) */
   const COMPANION_ANCHOR_NORM = {
@@ -23,6 +54,8 @@ const ThoughtArena = (() => {
   /** Компактнее, когда эмодзи сидит на портрете */
   const HERO_CARD_SIZE_RATIO = 0.055;
   const HERO_CARD_CLUSTER_SIZE_RATIO = 0.048;
+  const CLUSTER_ROOT_CLASS = "battle-thought-cluster";
+  const GLYPH_MOUNT_CLASS = "battle-thought-glyph-mount";
 
   /** @type {Map<string, { eventKey: string, members: object[] }>} */
   const clusters = new Map();
@@ -34,11 +67,169 @@ const ThoughtArena = (() => {
   let lastThoughtStepAt = 0;
 
   function thoughtStepGapMs() {
+    if (isAnchoredFlankArena()) return 0;
     if (typeof BattleFxTier !== "undefined") return BattleFxTier.thoughtStepGapMs();
-    const tier = document.documentElement?.dataset?.uiTier;
-    if (tier === "phone") return 50;
-    if (tier === "tablet") return 50;
     return 0;
+  }
+
+  function prefersReducedThoughtMotion() {
+    return window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
+  }
+
+  function thoughtPhysicsProfile() {
+    const light = typeof BattleFxTier !== "undefined" && BattleFxTier.isLightBattleFx();
+    const anchored = { ...PHYS.anchored };
+    const arena = { ...PHYS.arena };
+    if (light) {
+      anchored.turbAmp *= 0.55;
+      anchored.subSteps = 1;
+      arena.subSteps = 2;
+      arena.spawnSpeedMax *= 0.75;
+    }
+    if (prefersReducedThoughtMotion()) {
+      anchored.turbAmp = 0;
+      anchored.springK *= 1.35;
+      anchored.dampC *= 1.5;
+      arena.turbAmp = 0;
+    }
+    return { anchored, arena };
+  }
+
+  function turbulenceForce(t, seed, amp, freqScale = 1) {
+    if (amp <= 0) return { fx: 0, fy: 0 };
+    const f = freqScale;
+    return {
+      fx: Math.sin(t * 1.65 * f + seed) * amp * 0.5 + Math.sin(t * 0.41 * f + seed * 2.3) * amp * 0.3,
+      fy: Math.cos(t * 1.22 * f + seed * 1.4) * amp * 0.42 + Math.sin(t * 0.36 * f + seed * 0.8) * amp * 0.28,
+    };
+  }
+
+  function expSmoothingAlpha(dt, rate) {
+    return 1 - Math.exp(-Math.max(0, dt) * rate);
+  }
+
+  function applyAirDrag(body, dt, arenaPhys) {
+    const mass = body.mass ?? 1;
+    const v = Math.hypot(body.vx, body.vy);
+    if (v < 0.5) {
+      body.vx *= Math.max(0, 1 - dt * 3.5);
+      body.vy *= Math.max(0, 1 - dt * 3.5);
+      return;
+    }
+    const drag = (arenaPhys.airLinear * v + arenaPhys.airQuad * v * v) / mass;
+    const scale = Math.max(0, 1 - drag * dt);
+    body.vx *= scale;
+    body.vy *= scale;
+  }
+
+  function resolveWallCollision(body, w, h, restitution, friction) {
+    const r = body.radius;
+    if (body.x - r < 0) {
+      body.x = r;
+      body.vx = Math.abs(body.vx) * restitution;
+      body.vy *= friction;
+    } else if (body.x + r > w) {
+      body.x = w - r;
+      body.vx = -Math.abs(body.vx) * restitution;
+      body.vy *= friction;
+    }
+    if (body.y - r < 0) {
+      body.y = r;
+      body.vy = Math.abs(body.vy) * restitution;
+      body.vx *= friction;
+    } else if (body.y + r > h) {
+      body.y = h - r;
+      body.vy = -Math.abs(body.vy) * restitution;
+      body.vx *= friction;
+    }
+  }
+
+  function resolveBodyCollision(a, b, restitution) {
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    let dist = Math.hypot(dx, dy);
+    const minDist = a.radius + b.radius;
+    if (dist >= minDist) return;
+    if (dist < 0.001) dist = 0.001;
+
+    const nx = dx / dist;
+    const ny = dy / dist;
+    const overlap = (minDist - dist) * 0.5;
+    a.x -= nx * overlap;
+    a.y -= ny * overlap;
+    b.x += nx * overlap;
+    b.y += ny * overlap;
+
+    const m1 = a.mass ?? 1;
+    const m2 = b.mass ?? 1;
+    const relVelN = (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;
+    if (relVelN <= 0) return;
+    const impulse = (-(1 + restitution) * relVelN) / (1 / m1 + 1 / m2);
+    a.vx += (impulse / m1) * nx;
+    a.vy += (impulse / m1) * ny;
+    b.vx -= (impulse / m2) * nx;
+    b.vy -= (impulse / m2) * ny;
+  }
+
+  function integrateAnchoredBody(body, homeX, homeY, w, h, dt, prof) {
+    const mass = body.mass ?? 1;
+    const dx = body.x - homeX;
+    const dy = body.y - homeY;
+
+    let ax = (-prof.springK * dx - prof.dampC * body.vx) / mass;
+    let ay = (-prof.springK * dy - prof.dampC * body.vy) / mass;
+    ay += (prof.buoyancy - prof.gravity) / mass;
+
+    body.turbPhase = (body.turbPhase ?? 0) + dt;
+    const turb = turbulenceForce(
+      body.turbPhase,
+      body.turbSeed ?? 0,
+      prof.turbAmp * (body.wobbleAmp ?? 1),
+      prof.turbFreqScale ?? 1,
+    );
+    ax += turb.fx / mass;
+    ay += turb.fy / mass;
+
+    body.vx += ax * dt;
+    body.vy += ay * dt;
+    body.x += body.vx * dt;
+    body.y += body.vy * dt;
+
+    const angAcc = (-prof.angSpring * body.rotation - prof.angDamp * body.rotVel) / mass;
+    body.rotVel += angAcc * dt;
+    body.rotation += body.rotVel * dt;
+
+    body.wobbleAmp = Math.max(0.45, (body.wobbleAmp ?? 1) * (1 - dt * 0.35));
+
+    if ((body.glyphCount ?? 1) <= 1) {
+      resolveWallCollision(body, w, h, prof.wallRest, prof.wallFric);
+    }
+  }
+
+  function applyClusterCohesion(members, dt, maxSpread, arenaPhys) {
+    if (members.length < 2) return;
+
+    let cx = 0;
+    let cy = 0;
+    members.forEach((body) => {
+      cx += body.x;
+      cy += body.y;
+    });
+    cx /= members.length;
+    cy /= members.length;
+
+    const softR = maxSpread * 0.42;
+    members.forEach((body) => {
+      const dx = cx - body.x;
+      const dy = cy - body.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < 0.001) return;
+      const mass = body.mass ?? 1;
+      const beyond = Math.max(0, dist - softR);
+      const pull = (beyond * arenaPhys.clusterSpring + dist * arenaPhys.clusterSpring * 0.12) / mass;
+      body.vx += (dx / dist) * pull * dt;
+      body.vy += (dy / dist) * pull * dt;
+    });
   }
 
   function getArenaEl() {
@@ -50,6 +241,78 @@ const ThoughtArena = (() => {
       return document.getElementById(side === "player" ? "player-thought-slot" : "enemy-thought-slot");
     }
     return getArenaEl();
+  }
+
+  function usesGlyphMountContainers(glyphCount) {
+    return glyphCount > 1;
+  }
+
+  function getClusterRootEl(side) {
+    return getHeroMountEl(side)?.querySelector(`.${CLUSTER_ROOT_CLASS}`) ?? null;
+  }
+
+  function getBodyMountEl(body) {
+    return body.mountEl || getHeroMountEl(body.side);
+  }
+
+  function clearClusterRootEl(side) {
+    getClusterRootEl(side)?.remove();
+  }
+
+  function ensureClusterRoot(side, glyphCount) {
+    const slot = getHeroMountEl(side);
+    if (!slot || !usesGlyphMountContainers(glyphCount)) {
+      clearClusterRootEl(side);
+      return null;
+    }
+    let root = slot.querySelector(`.${CLUSTER_ROOT_CLASS}`);
+    if (!root) {
+      root = document.createElement("div");
+      root.className = CLUSTER_ROOT_CLASS;
+      root.dataset.team = side;
+      slot.prepend(root);
+    }
+    root.dataset.glyphCount = String(glyphCount);
+    return root;
+  }
+
+  function ensureGlyphMountEl(clusterRoot, side, index) {
+    let mount = clusterRoot.querySelector(`.${GLYPH_MOUNT_CLASS}[data-glyph-index="${index}"]`);
+    if (!mount) {
+      mount = document.createElement("div");
+      mount.className = GLYPH_MOUNT_CLASS;
+      mount.dataset.team = side;
+      mount.dataset.glyphIndex = String(index);
+      clusterRoot.appendChild(mount);
+    }
+    const size = thoughtDiameterPx(1);
+    mount.style.width = `${size}px`;
+    mount.style.height = `${size}px`;
+    return mount;
+  }
+
+  function layoutGlyphMounts(clusterRoot, glyphCount, anchored) {
+    const emojiSize = thoughtDiameterPx(1);
+    const spacing = clusterGlyphSpacingPx(glyphCount, anchored);
+    const offsets = clusterOffsets(glyphCount, spacing, { horizontalOnly: anchored });
+    const totalW = glyphCount <= 1
+      ? emojiSize
+      : Math.ceil(emojiSize + (glyphCount - 1) * spacing);
+
+    clusterRoot.style.width = `${totalW}px`;
+    clusterRoot.style.height = `${emojiSize}px`;
+
+    [...clusterRoot.querySelectorAll(`.${GLYPH_MOUNT_CLASS}`)].forEach((mount, index) => {
+      if (index >= glyphCount) {
+        mount.remove();
+        return;
+      }
+      const offset = offsets[index] || { ox: 0, oy: 0 };
+      const cx = totalW / 2 + offset.ox;
+      const cy = emojiSize / 2 + offset.oy;
+      mount.style.left = `${Math.round(cx - emojiSize / 2)}px`;
+      mount.style.top = `${Math.round(cy - emojiSize / 2)}px`;
+    });
   }
 
   function isAnchoredFlankArena() {
@@ -127,6 +390,54 @@ const ThoughtArena = (() => {
     return thoughtDiameterPx(glyphCount) * 0.5;
   }
 
+  function clusterGlyphGapPx(glyphPx) {
+    return Math.max(4, Math.round(glyphPx * 0.08));
+  }
+
+  /** Расстояние между центрами соседних глифов — не меньше ширины символа + зазор. */
+  function clusterGlyphSpacingPx(glyphCount, anchored) {
+    const glyphPx = Math.round(thoughtDiameterPx(1) * THOUGHT_GLYPH_FONT_RATIO);
+    const gap = clusterGlyphGapPx(glyphPx);
+    const sideBySide = glyphPx + gap;
+    if (anchored) return sideBySide;
+    const clusterDiameter = thoughtDiameterPx(glyphCount);
+    return Math.max(sideBySide, clusterDiameter * CLUSTER_SPACING_RATIO);
+  }
+
+  function clusterOffsets(count, spacing, opts = {}) {
+    const horizontalOnly = !!opts.horizontalOnly;
+    if (count <= 1) return [{ ox: 0, oy: 0 }];
+    const span = spacing * (count - 1);
+    return Array.from({ length: count }, (_, i) => ({
+      ox: -span * 0.5 + i * spacing,
+      oy: horizontalOnly ? 0 : (Math.random() - 0.5) * spacing * 0.28,
+    }));
+  }
+
+  function refreshClusterMemberOffsets(cluster) {
+    const glyphCount = cluster.members[0]?.clusterGlyphCount
+      ?? cluster.members[0]?.glyphCount
+      ?? cluster.members.length;
+    const anchored = isAnchoredFlankArena();
+    if (usesGlyphMountContainers(glyphCount)) {
+      const side = cluster.members[0]?.side;
+      const root = getClusterRootEl(side) || ensureClusterRoot(side, glyphCount);
+      if (root) layoutGlyphMounts(root, glyphCount, anchored);
+      cluster.members.forEach((body) => {
+        body.offsetOx = 0;
+        body.offsetOy = 0;
+      });
+      return;
+    }
+    const spacing = clusterGlyphSpacingPx(glyphCount, anchored);
+    const offsets = clusterOffsets(glyphCount, spacing, { horizontalOnly: anchored });
+    cluster.members.forEach((body, index) => {
+      const offset = offsets[index] || { ox: 0, oy: 0 };
+      body.offsetOx = offset.ox;
+      body.offsetOy = offset.oy;
+    });
+  }
+
   function spawnPosition(w, h, r, side) {
     if (isAnchoredFlankArena()) {
       return getLocalAnchorPx(w, h);
@@ -147,23 +458,17 @@ const ThoughtArena = (() => {
     };
   }
 
-  function randomVelocity() {
+  function randomVelocity(arenaPhys) {
     const vmin = viewportMin();
-    const speed = vmin * (0.11 + Math.random() * 0.1);
+    const speed = vmin * (
+      arenaPhys.spawnSpeedMin
+      + Math.random() * (arenaPhys.spawnSpeedMax - arenaPhys.spawnSpeedMin)
+    );
     const angle = Math.random() * Math.PI * 2;
     return {
       vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed,
+      vy: Math.sin(angle) * speed * 0.85,
     };
-  }
-
-  function clusterOffsets(count, spacing) {
-    if (count <= 1) return [{ ox: 0, oy: 0 }];
-    const span = spacing * (count - 1);
-    return Array.from({ length: count }, (_, i) => ({
-      ox: -span * 0.5 + i * spacing,
-      oy: (Math.random() - 0.5) * spacing * 0.28,
-    }));
   }
 
   function getAllBodies() {
@@ -180,6 +485,7 @@ const ThoughtArena = (() => {
     cluster.members.forEach((body) => {
       if (immediate) body.el.remove();
     });
+    if (immediate) clearClusterRootEl(side);
     clusters.delete(side);
   }
 
@@ -189,95 +495,28 @@ const ThoughtArena = (() => {
     body.y = Math.max(r, Math.min(h - r, body.y));
   }
 
-  function resolveWallCollision(body, w, h) {
-    const r = body.radius;
-    if (body.x - r < 0) {
-      body.x = r;
-      body.vx = Math.abs(body.vx) * RESTITUTION;
-    } else if (body.x + r > w) {
-      body.x = w - r;
-      body.vx = -Math.abs(body.vx) * RESTITUTION;
-    }
-    if (body.y - r < 0) {
-      body.y = r;
-      body.vy = Math.abs(body.vy) * RESTITUTION;
-    } else if (body.y + r > h) {
-      body.y = h - r;
-      body.vy = -Math.abs(body.vy) * RESTITUTION;
-    }
-  }
-
-  function resolveBodyCollision(a, b) {
-    const dx = b.x - a.x;
-    const dy = b.y - a.y;
-    let dist = Math.hypot(dx, dy);
-    const minDist = a.radius + b.radius;
-    if (dist >= minDist) return;
-    if (dist < 0.001) dist = 0.001;
-
-    const nx = dx / dist;
-    const ny = dy / dist;
-    const overlap = (minDist - dist) * 0.5;
-    a.x -= nx * overlap;
-    a.y -= ny * overlap;
-    b.x += nx * overlap;
-    b.y += ny * overlap;
-
-    const dvx = a.vx - b.vx;
-    const dvy = a.vy - b.vy;
-    const dvn = dvx * nx + dvy * ny;
-    if (dvn <= 0) return;
-    const impulse = dvn * RESTITUTION;
-    a.vx -= impulse * nx;
-    a.vy -= impulse * ny;
-    b.vx += impulse * nx;
-    b.vy += impulse * ny;
-  }
-
-  function applyClusterCohesion(members, dt, maxSpread) {
-    if (members.length < 2) return;
-
-    let cx = 0;
-    let cy = 0;
-    members.forEach((body) => {
-      cx += body.x;
-      cy += body.y;
-    });
-    cx /= members.length;
-    cy /= members.length;
-
-    members.forEach((body) => {
-      const dx = cx - body.x;
-      const dy = cy - body.y;
-      const dist = Math.hypot(dx, dy);
-      if (dist < 0.001) return;
-
-      body.vx += (dx / dist) * 1.1 * dt;
-      body.vy += (dy / dist) * 1.1 * dt;
-
-      if (dist > maxSpread) {
-        const pull = (dist - maxSpread) * 3.2 * dt;
-        body.vx += (dx / dist) * pull;
-        body.vy += (dy / dist) * pull;
-      }
-    });
-  }
-
   function isBattlePausedNow() {
     return typeof isBattlePaused === "function" ? isBattlePaused() : !!window.battlePaused;
   }
 
+  function usesThoughtDuelMirror() {
+    return document.documentElement.dataset.thoughtDuelCenter === "true";
+  }
+
   function applyVisual(body) {
-    const wobble = 1 + Math.sin(body.wobblePhase) * 0.04 * body.wobbleAmp;
-    const scale = body.displayScale * wobble * (body.reactScale ?? 1);
+    const speed = Math.hypot(body.vx ?? 0, body.vy ?? 0);
+    const stretch = Math.min(0.05, speed * 0.0018);
+    const squash = 1 + stretch * Math.sin((body.turbPhase ?? 0) * 4.2);
+    const scale = body.displayScale * squash * (body.reactScale ?? 1);
+    const mirrorX = body.mirrorX ? -1 : 1;
     const x = (body.renderX ?? body.x) + (body.reactOx ?? 0);
     const y = (body.renderY ?? body.y) + (body.reactOy ?? 0);
-    const rot = (body.rotation ?? 0) + (body.reactRot ?? 0);
+    const rot = (body.renderRot ?? body.rotation ?? 0) + (body.reactRot ?? 0);
     const transform = [
       `translate3d(${x}px, ${y}px, 0)`,
-      "translate(-50%, -50%)",
+      `translate(-50%, -50%)`,
       `rotate(${rot}deg)`,
-      `scale(${scale})`,
+      `scale(${mirrorX * scale}, ${scale})`,
     ].join(" ");
     if (body._lastTransform !== transform) {
       body._lastTransform = transform;
@@ -492,12 +731,14 @@ const ThoughtArena = (() => {
         body.el.remove();
         return false;
       });
-      if (cluster.members.length === 0) clusters.delete(side);
+      if (cluster.members.length === 0) {
+        clearClusterRootEl(side);
+        clusters.delete(side);
+      }
     });
   }
 
-  function stepAnchoredHover(list, dt) {
-    const vmin = viewportMin();
+  function stepAnchoredSpring(list, dt, prof) {
     const mountSizeCache = new Map();
     const readMountSize = (mount) => {
       if (!mount) return null;
@@ -509,34 +750,93 @@ const ThoughtArena = (() => {
       return cached;
     };
 
+    const subDt = dt / Math.max(1, prof.subSteps);
+    for (let step = 0; step < prof.subSteps; step += 1) {
+      list.forEach((body) => {
+        const mount = getBodyMountEl(body);
+        if (!mount) return;
+        const size = readMountSize(mount);
+        if (!size || size.w <= 0 || size.h <= 0) return;
+        const { w, h } = size;
+
+        const targetR = thoughtRadiusPx(body.glyphCount);
+        body.radius += (targetR - body.radius) * Math.min(1, subDt * 5);
+        body.displayScale += (body.targetScale - body.displayScale) * Math.min(1, subDt * (prof.scaleSmooth ?? 3.2));
+
+        if (body.fadeOut) {
+          body.opacity = Math.max(0, body.opacity - subDt * 4.5);
+        }
+
+        const anchor = getLocalAnchorPx(w, h);
+        body.homeX = anchor.x + (body.offsetOx || 0);
+        body.homeY = anchor.y + (body.offsetOy || 0);
+
+        if (prefersReducedThoughtMotion()) {
+          body.x = body.homeX;
+          body.y = body.homeY;
+          body.vx = 0;
+          body.vy = 0;
+          body.rotation = 0;
+          body.rotVel = 0;
+        } else {
+          integrateAnchoredBody(body, body.homeX, body.homeY, w, h, subDt, prof);
+        }
+      });
+    }
+
+    const posAlpha = expSmoothingAlpha(dt, prof.renderSmooth ?? 18);
+    const rotAlpha = expSmoothingAlpha(dt, prof.rotRenderSmooth ?? 14);
     list.forEach((body) => {
-      const mount = getHeroMountEl(body.side);
-      if (!mount) return;
-      const size = readMountSize(mount);
-      if (!size || size.w <= 0 || size.h <= 0) return;
-      const { w, h } = size;
+      const rx = body.renderX ?? body.x;
+      const ry = body.renderY ?? body.y;
+      body.renderX = rx + (body.x - rx) * posAlpha;
+      body.renderY = ry + (body.y - ry) * posAlpha;
+      const rr = body.renderRot ?? body.rotation ?? 0;
+      body.renderRot = rr + ((body.rotation ?? 0) - rr) * rotAlpha;
+    });
+  }
 
-      const targetR = thoughtRadiusPx(body.glyphCount);
-      body.radius += (targetR - body.radius) * Math.min(1, dt * 6);
-      body.displayScale += (body.targetScale - body.displayScale) * Math.min(1, dt * 5);
-      body.wobblePhase += dt * (1.8 + body.wobbleSpeed * 0.6);
-      body.wobbleAmp = Math.max(0.35, body.wobbleAmp * 0.98);
+  function stepArenaPhysics(list, w, h, dt, arenaPhys) {
+    const subDt = dt / Math.max(1, arenaPhys.subSteps);
+    for (let step = 0; step < arenaPhys.subSteps; step += 1) {
+      list.forEach((body) => {
+        const mass = body.mass ?? 1;
+        body.vy += (arenaPhys.gravity - arenaPhys.buoyancy) / mass * subDt;
+        applyAirDrag(body, subDt, arenaPhys);
+        body.x += body.vx * subDt;
+        body.y += body.vy * subDt;
+        body.rotation += body.rotVel * subDt;
+        resolveWallCollision(body, w, h, arenaPhys.restitution, arenaPhys.wallFriction);
+        clampBodyToArena(body, w, h);
+      });
 
-      if (body.fadeOut) {
-        body.opacity = Math.max(0, body.opacity - dt * 4.5);
+      const alive = getAllBodies();
+      for (let i = 0; i < alive.length; i++) {
+        for (let j = i + 1; j < alive.length; j++) {
+          resolveBodyCollision(alive[i], alive[j], arenaPhys.restitution);
+        }
       }
 
-      const anchor = getLocalAnchorPx(w, h);
-      body.homeX = anchor.x + (body.offsetOx || 0);
-      body.homeY = anchor.y + (body.offsetOy || 0);
+      clusters.forEach((cluster) => {
+        const glyphCount = cluster.members[0]?.clusterGlyphCount
+          || cluster.members[0]?.glyphCount
+          || cluster.members.length;
+        const spacing = clusterGlyphSpacingPx(glyphCount, false);
+        const layoutSpan = spacing * Math.max(1, glyphCount - 1);
+        const maxSpread = Math.max(
+          thoughtDiameterPx(glyphCount) * CLUSTER_MAX_SPREAD_RATIO,
+          layoutSpan * 0.58,
+        );
+        applyClusterCohesion(cluster.members, subDt, maxSpread, arenaPhys);
+      });
+    }
 
-      const wobbleX = Math.sin(body.wobblePhase) * vmin * 0.005 * body.wobbleAmp;
-      const wobbleY = Math.cos(body.wobblePhase * 0.82) * vmin * 0.004 * body.wobbleAmp;
-      body.x = body.homeX;
-      body.y = body.homeY;
-      body.renderX = body.homeX + wobbleX;
-      body.renderY = body.homeY + wobbleY;
-      body.rotation += Math.sin(body.wobblePhase * 0.5) * dt * 8;
+    list.forEach((body) => {
+      body.renderX = body.renderX ?? body.x;
+      body.renderY = body.renderY ?? body.y;
+      const smooth = Math.min(1, dt * 12);
+      body.renderX += (body.x - body.renderX) * smooth;
+      body.renderY += (body.y - body.renderY) * smooth;
     });
   }
 
@@ -572,21 +872,19 @@ const ThoughtArena = (() => {
 
     const list = getAllBodies();
     const anchored = isAnchoredFlankArena();
+    const { anchored: anchoredProf, arena: arenaPhys } = thoughtPhysicsProfile();
 
     list.forEach((body) => {
       const targetR = thoughtRadiusPx(body.glyphCount);
-      body.radius += (targetR - body.radius) * Math.min(1, dt * 6);
-      body.displayScale += (body.targetScale - body.displayScale) * Math.min(1, dt * 5);
-      body.wobblePhase += dt * (2.2 + body.wobbleSpeed);
-      body.wobbleAmp *= 0.96;
-
+      body.radius += (targetR - body.radius) * Math.min(1, dt * 5);
+      body.displayScale += (body.targetScale - body.displayScale) * Math.min(1, dt * (anchoredProf.scaleSmooth ?? 3.2));
       if (body.fadeOut) {
         body.opacity = Math.max(0, body.opacity - dt * 4.5);
       }
     });
 
     if (anchored) {
-      stepAnchoredHover(list, dt);
+      stepAnchoredSpring(list, dt, anchoredProf);
     } else {
       const arena = getArenaEl();
       if (!arena) {
@@ -599,38 +897,8 @@ const ThoughtArena = (() => {
         scheduleFrame();
         return;
       }
-
-      list.forEach((body) => {
-        body.vx *= AIR_DRAG;
-        body.vy *= AIR_DRAG;
-        body.x += body.vx * dt;
-        body.y += body.vy * dt;
-        body.rotation += body.rotVel * dt;
-        resolveWallCollision(body, w, h);
-        clampBodyToArena(body, w, h);
-      });
-
+      stepArenaPhysics(list, w, h, dt, arenaPhys);
       pruneFadedBodies();
-
-      const alive = getAllBodies();
-      for (let i = 0; i < alive.length; i++) {
-        for (let j = i + 1; j < alive.length; j++) {
-          resolveBodyCollision(alive[i], alive[j]);
-        }
-      }
-
-      clusters.forEach((cluster) => {
-        const maxSpread = thoughtDiameterPx(cluster.members[0]?.glyphCount || 1) * CLUSTER_MAX_SPREAD_RATIO;
-        applyClusterCohesion(cluster.members, dt, maxSpread);
-      });
-
-      alive.forEach((body) => {
-        body.renderX = body.renderX ?? body.x;
-        body.renderY = body.renderY ?? body.y;
-        const smooth = Math.min(1, dt * 16);
-        body.renderX += (body.x - body.renderX) * smooth;
-        body.renderY += (body.y - body.renderY) * smooth;
-      });
     }
 
     pruneFadedBodies();
@@ -675,7 +943,7 @@ const ThoughtArena = (() => {
   }
 
   function styleBodyEl(body, glyph) {
-    const size = thoughtDiameterPx(body.glyphCount);
+    const size = thoughtDiameterPx(body.mountEl ? 1 : body.glyphCount);
     body.el.textContent = glyph;
     if (isAnchoredFlankArena()) {
       body.el.style.width = "";
@@ -690,36 +958,67 @@ const ThoughtArena = (() => {
   }
 
   function createCluster(side, glyphs, eventKey, event) {
-    const mount = getHeroMountEl(side);
-    if (!mount) return;
+    const slot = getHeroMountEl(side);
+    if (!slot) return;
 
-    const w = mount.clientWidth || mount.offsetWidth || Math.round(viewportMin() * 0.14);
-    const h = mount.clientHeight || mount.offsetHeight || Math.round(viewportMin() * 0.14);
     const glyphCount = glyphs.length;
-    const r = thoughtRadiusPx(glyphCount);
+    const r = thoughtRadiusPx(usesGlyphMountContainers(glyphCount) ? 1 : glyphCount);
     const anchored = isAnchoredFlankArena();
-    const center = spawnPosition(w, h, r * glyphCount, side);
-    const baseVel = anchored ? { vx: 0, vy: 0 } : randomVelocity();
-    const spacing = thoughtDiameterPx(glyphCount) * (anchored ? 0.42 : CLUSTER_SPACING_RATIO);
-    const offsets = clusterOffsets(glyphCount, spacing);
+    const splitMounts = usesGlyphMountContainers(glyphCount);
+    const clusterRoot = splitMounts ? ensureClusterRoot(side, glyphCount) : null;
+    if (splitMounts && clusterRoot) {
+      layoutGlyphMounts(clusterRoot, glyphCount, anchored);
+      clusterRoot.style.position = "absolute";
+      clusterRoot.style.left = "50%";
+      clusterRoot.style.top = "50%";
+      clusterRoot.style.transform = "translate(-50%, -50%)";
+      if (!anchored) {
+        const clusterCenter = spawnPosition(w, h, r * glyphCount, side);
+        clusterRoot.style.left = `${clusterCenter.x}px`;
+        clusterRoot.style.top = `${clusterCenter.y}px`;
+      }
+    }
+
+    const w = slot.clientWidth || slot.offsetWidth || Math.round(viewportMin() * 0.14);
+    const h = slot.clientHeight || slot.offsetHeight || Math.round(viewportMin() * 0.14);
+    const { arena: arenaPhys } = thoughtPhysicsProfile();
+    const spacing = clusterGlyphSpacingPx(glyphCount, anchored);
+    const offsets = clusterOffsets(glyphCount, spacing, { horizontalOnly: anchored });
+    const center = splitMounts
+      ? getLocalAnchorPx(thoughtDiameterPx(1), thoughtDiameterPx(1))
+      : spawnPosition(w, h, r * glyphCount, side);
+    const baseVel = anchored ? { vx: 0, vy: 0 } : randomVelocity(arenaPhys);
     const vmin = viewportMin();
-    const perturb = anchored ? 0 : vmin * 0.035;
+    const perturb = anchored ? vmin * 0.0012 : vmin * 0.018;
+    const physicsGlyphCount = splitMounts ? 1 : glyphCount;
 
     const members = glyphs.map((glyph, index) => {
+      const mountEl = splitMounts ? ensureGlyphMountEl(clusterRoot, side, index) : null;
       const el = createBodyEl(side, index);
-      mount.appendChild(el);
+      (mountEl || slot).appendChild(el);
       if (event.animation) el.dataset.animation = event.animation;
       if (event.replyTo) el.dataset.replyTo = event.replyTo;
 
-      const offset = offsets[index];
-      const x = center.x + offset.ox;
-      const y = center.y + offset.oy;
+      const mountW = mountEl
+        ? (mountEl.clientWidth || thoughtDiameterPx(1))
+        : w;
+      const mountH = mountEl
+        ? (mountEl.clientHeight || thoughtDiameterPx(1))
+        : h;
+      const offset = splitMounts ? { ox: 0, oy: 0 } : (offsets[index] || { ox: 0, oy: 0 });
+      const spawn = splitMounts
+        ? getLocalAnchorPx(mountW, mountH)
+        : center;
+      const x = spawn.x + offset.ox;
+      const y = spawn.y + offset.oy;
       const body = {
         side,
         clusterSide: side,
         glyph,
         glyphIndex: index,
-        glyphCount,
+        glyphCount: physicsGlyphCount,
+        clusterGlyphCount: glyphCount,
+        mountEl,
         el,
         eventKey,
         offsetOx: offset.ox,
@@ -730,18 +1029,21 @@ const ThoughtArena = (() => {
         y,
         renderX: x,
         renderY: y,
+        renderRot: (Math.random() - 0.5) * 4,
         vx: baseVel.vx + (Math.random() - 0.5) * perturb,
         vy: baseVel.vy + (Math.random() - 0.5) * perturb,
+        mass: 0.92 + glyphCount * 0.06 + index * 0.04,
+        turbSeed: Math.random() * 80,
+        turbPhase: Math.random() * Math.PI * 2,
         radius: r * 0.65,
-        rotation: (Math.random() - 0.5) * 18,
-        rotVel: (Math.random() - 0.5) * 28,
-        displayScale: anchored ? 1 : 0.35,
+        rotation: (Math.random() - 0.5) * 4,
+        rotVel: (Math.random() - 0.5) * 3,
+        displayScale: anchored ? 1 : 0.42,
         targetScale: 1,
         opacity: 1,
         fadeOut: false,
-        wobblePhase: Math.random() * Math.PI * 2,
-        wobbleAmp: 0.6,
-        wobbleSpeed: 1,
+        wobbleAmp: 0.55,
+        mirrorX: usesThoughtDuelMirror() && side === "player",
       };
       styleBodyEl(body, glyph);
       return body;
@@ -751,31 +1053,35 @@ const ThoughtArena = (() => {
   }
 
   function pulseCluster(cluster) {
+    const vmin = viewportMin();
+    const impulse = vmin * 0.013;
+
     if (isAnchoredFlankArena()) {
       cluster.members.forEach((body) => {
-        body.targetScale = 1.1;
-        body.wobbleAmp = 1.15;
+        body.vy -= impulse * (0.28 + Math.random() * 0.12);
+        body.vx += (Math.random() - 0.5) * impulse * 0.18;
+        body.wobbleAmp = Math.min(1.25, (body.wobbleAmp ?? 1) + 0.28);
+        body.targetScale = 1.025;
       });
       window.setTimeout(() => {
         cluster.members.forEach((body) => {
           body.targetScale = 1;
         });
-      }, 180);
+      }, 380);
       return;
     }
 
-    const vmin = viewportMin();
     cluster.members.forEach((body) => {
-      body.targetScale = 1.14;
-      body.wobbleAmp = 1;
-      body.vx += (Math.random() - 0.5) * vmin * 0.04;
-      body.vy += (Math.random() - 0.5) * vmin * 0.04;
+      body.targetScale = 1.1;
+      body.wobbleAmp = 1.1;
+      body.vy -= impulse * 0.6;
+      body.vx += (Math.random() - 0.5) * impulse;
     });
     window.setTimeout(() => {
       cluster.members.forEach((body) => {
         body.targetScale = 1;
       });
-    }, 180);
+    }, 220);
   }
 
   function updateClusterGlyphs(cluster, glyphs, event) {
@@ -830,6 +1136,8 @@ const ThoughtArena = (() => {
       cluster.members.forEach((body) => body.el.remove());
     });
     clusters.clear();
+    clearClusterRootEl("player");
+    clearClusterRootEl("enemy");
     equipReactions.player = [];
     equipReactions.enemy = [];
     cancelThoughtScheduler();
@@ -837,11 +1145,12 @@ const ThoughtArena = (() => {
   }
 
   function onResize() {
+    clusters.forEach((cluster) => refreshClusterMemberOffsets(cluster));
     getAllBodies().forEach((body) => {
       body.radius = thoughtRadiusPx(body.glyphCount);
       styleBodyEl(body, body.glyph);
       if (isAnchoredFlankArena()) {
-        const mount = getHeroMountEl(body.side);
+        const mount = getBodyMountEl(body);
         if (!mount) return;
         const w = mount.clientWidth;
         const h = mount.clientHeight;
@@ -850,6 +1159,7 @@ const ThoughtArena = (() => {
         body.homeY = anchor.y + (body.offsetOy || 0);
         body.x = body.homeX;
         body.y = body.homeY;
+        body.mirrorX = usesThoughtDuelMirror() && body.side === "player";
       } else {
         const arena = getArenaEl();
         if (!arena) return;

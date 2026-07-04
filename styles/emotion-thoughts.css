@@ -83,6 +83,34 @@ html[data-battle-hero-placement="flank-arena"] .battle-thought-body {
   z-index: 1;
 }
 
+/* Составная эмоция: каждый глиф — в своём контейнере внутри кластера */
+.battle-thought-cluster {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  overflow: visible;
+  z-index: 1;
+}
+
+.battle-thought-glyph-mount {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.battle-thought-glyph-mount .battle-thought-body {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
 .battle-thought-bubble {
   display: inline-flex;
   align-items: center;

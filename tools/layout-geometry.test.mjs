@@ -661,11 +661,15 @@ const CASES = [
         const playerBody = document.querySelector("#player-thought-slot .battle-thought-body")?.getBoundingClientRect();
         const BHA = window.BattleHeroAnchor;
         const aboveAnchor = BHA?.getHeroAboveThoughtAnchor?.("player");
+        const duelAnchor = BHA?.getCenterDuelThoughtAnchor?.("player");
         const heroTop = BHA?.getHeroColumnTop?.("player") ?? playerStage?.top ?? 0;
+        const vw = window.innerWidth;
+        const screenCx = vw / 2;
         return {
           profile: document.documentElement.dataset.battleProfile,
           headBadge: BHA?.usesHeadBadgeAnchors?.() ?? false,
           heroBelow: BHA?.usesHeroBelowThoughtAnchors?.() ?? false,
+          duelCenter: document.documentElement.dataset.thoughtDuelCenter === "true",
           emojiPx: BHA?.thoughtSlotEmojiSize?.() ?? 0,
           satScale: BHA?.satelliteScaleFactor?.() ?? 0,
           floorLeft: floor?.left ?? 0,
@@ -682,35 +686,41 @@ const CASES = [
           stageH: playerStage?.height ?? 0,
           heroTop,
           playerZoneW: parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--battle-player-zone-width")) || 0,
-          vw: window.innerWidth,
+          vw,
+          screenCx,
           playerSlotCx: playerSlot ? playerSlot.left + playerSlot.width / 2 : 0,
           enemySlotCx: enemySlot ? enemySlot.left + enemySlot.width / 2 : 0,
           playerColCx: playerPanel ? playerPanel.left + playerPanel.width / 2 : 0,
           anchorCx: aboveAnchor?.cx ?? 0,
           anchorCy: aboveAnchor?.cy ?? 0,
+          duelCx: duelAnchor?.cx ?? 0,
           thoughtAboveHero: document.documentElement.dataset.thoughtAboveHero === "true",
           thoughtHeadBadge: document.documentElement.dataset.thoughtHeadBadge === "true",
         };
       });
       assert(m.profile === "tablet-landscape-side", `profile: ${m.profile}`);
       assert(m.headBadge === false, "tablet landscape should not anchor emoji on portrait head");
-      assert(m.thoughtAboveHero, "emoji layer should be above-hero mode");
-      assert(m.thoughtHeadBadge, "above-hero emoji should use floating badge chrome");
-      assert(m.heroBelow === false, "above-hero anchor replaces below-hero");
+      assert(m.duelCenter, "flank battle emoji should use center duel anchors");
+      assert(!m.thoughtAboveHero, "center duel replaces above-hero mode");
+      assert(!m.thoughtHeadBadge, "center duel uses bare glyph, not head badge");
+      assert(m.heroBelow === false, "center duel replaces below-hero");
       assert(m.emojiPx >= 88 && m.emojiPx <= 175, `emoji size out of range: ${m.emojiPx}px`);
       assert(Math.abs(m.satScale - 0.62) < 0.06, `satellite scale: ${m.satScale}`);
       assert(m.floorH >= 100, `combat floor too small: ${m.floorH}px`);
       assert(Math.abs(m.hudTop - m.enemyHudTop) <= 16, `HUD misaligned: player=${m.hudTop} enemy=${m.enemyHudTop}`);
       assert(m.playerZoneW >= m.vw * 0.24, `hero column too narrow: ${m.playerZoneW}px`);
       assert(m.heroTop > 0, "hero top missing");
-      assert(m.playerEmojiCy < m.heroTop - 8, `emoji should sit above hero: cy=${m.playerEmojiCy} heroTop=${m.heroTop}`);
-      assert(m.playerEmojiCy < m.playerHudBottom - 4 || m.playerEmojiCy < m.heroTop - 8,
-        `emoji should stay above HUD/hero stack: cy=${m.playerEmojiCy}`);
       assert(m.playerEmojiCy < m.chromeTop - 24, `emoji should stay above toolbar: cy=${m.playerEmojiCy}`);
-      assert(m.playerColCx > 0, "player column center missing");
-      assert(Math.abs(m.playerSlotCx - m.playerColCx) <= 48, `player emoji off column: slot=${m.playerSlotCx} want~=${m.playerColCx}`);
-      assert(m.playerSlotCx < m.vw * 0.38, `player emoji too central: ${m.playerSlotCx}`);
-      assert(m.enemySlotCx > m.vw * 0.62, `enemy emoji too central: ${m.enemySlotCx}`);
+      assert(m.playerSlotCx > 0 && m.enemySlotCx > 0, "thought slots missing");
+      const pairGap = m.enemySlotCx - m.playerSlotCx;
+      assert(pairGap > m.emojiPx * 0.5 && pairGap < m.emojiPx * 2.5, `duel pair gap: ${pairGap}px`);
+      assert(Math.abs((m.playerSlotCx + m.enemySlotCx) / 2 - m.screenCx) <= 24,
+        `duel pair should straddle screen center: player=${m.playerSlotCx} enemy=${m.enemySlotCx} cx=${m.screenCx}`);
+      assert(m.playerSlotCx < m.screenCx, `player emoji should be left of center: ${m.playerSlotCx}`);
+      assert(m.enemySlotCx > m.screenCx, `enemy emoji should be right of center: ${m.enemySlotCx}`);
+      if (m.duelCx > 0) {
+        assert(Math.abs(m.playerSlotCx - m.duelCx) <= 20, `player slot should match duel anchor: slot=${m.playerSlotCx} anchor=${m.duelCx}`);
+      }
     },
   },
   {

@@ -2106,6 +2106,7 @@
       root.removeAttribute("data-thought-slot-below-hero");
       root.removeAttribute("data-battle-combat-floor");
       root.removeAttribute("data-battle-hud-below-hero");
+      root.removeAttribute("data-thought-duel-center");
       syncHeroEmotionSlotAnchors._layout = null;
       return;
     }
@@ -2121,6 +2122,10 @@
     root.dataset.thoughtAboveHero = aboveHero ? "true" : "false";
     root.dataset.thoughtHeadBadge = portraitHeadBadge ? "true" : "false";
     root.dataset.thoughtSlotBelowHero = "false";
+    const duelCenter = typeof BattleHeroAnchor !== "undefined"
+      && BattleHeroAnchor.usesCenterDuelThoughtAnchors?.();
+    if (duelCenter) root.dataset.thoughtDuelCenter = "true";
+    else root.removeAttribute("data-thought-duel-center");
 
     if (typeof BattleHeroAnchor !== "undefined" && BattleHeroAnchor.invalidateMeasureCache) {
       BattleHeroAnchor.invalidateMeasureCache();

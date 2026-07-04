@@ -1,6 +1,3 @@
-/**
- * Уровень боевых FX: auto по tier, prefers-reduced-motion, настройка в settings.
- */
 (function initBattleFxTier() {
   const STORAGE_KEY = "bb-light-battle-fx";
 
@@ -31,12 +28,15 @@
     return document.documentElement?.dataset?.uiTier === "phone";
   }
 
-  /** Flank battle: мысль + орбита — не душим в light FX. */
+  /** Flank battle: мысль + орбита — полный rAF-шаг физики. */
   function isFlankBattleThoughtFxActive() {
     const app = document.getElementById("app");
     const phase = app?.dataset?.phase;
     if (phase !== "battle" && phase !== "replay") return false;
-    return document.documentElement?.dataset?.battleArenaLayout === "true";
+    const root = document.documentElement;
+    if (root.dataset.battleHeroPlacement !== "flank-arena") return false;
+    if (root.dataset.battleArenaLayout === "true") return true;
+    return root.dataset.battlePrepHeroLayer === "true";
   }
 
   function setLightBattleFx(enabled) {

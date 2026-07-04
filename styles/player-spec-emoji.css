@@ -143,7 +143,8 @@ html[data-battle-hero-placement="flank-arena"]:not([data-thought-head-badge="tru
   font-size: var(--battle-thought-emoji-size, 56px);
   line-height: 1;
   filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.48));
-  animation: player-spec-emoji-levitate 2.6s ease-in-out infinite;
+  animation: none !important;
+  will-change: transform, opacity;
 }
 
 html[data-battle-hero-placement="flank-arena"]:not([data-thought-head-badge="true"]) .avatar-thought-slot .battle-thought-body::before {
@@ -168,7 +169,8 @@ html[data-thought-above-hero="true"] #app:is([data-phase="battle"], [data-phase=
   font-size: var(--battle-thought-emoji-size, 56px);
   line-height: 1;
   filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.48));
-  animation: player-spec-emoji-levitate 2.8s ease-in-out infinite;
+  animation: none !important;
+  will-change: transform, opacity;
 }
 
 html[data-thought-above-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .avatar-thought-slot .battle-thought-body::before {

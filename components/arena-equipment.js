@@ -192,6 +192,93 @@ const ArenaEquipment = (() => {
     return slot === "twoHand" || slot === "rightHand";
   }
 
+  function isMeleeWeaponDef(def) {
+    if (!isWeaponDef(def)) return false;
+    if (def.tags?.includes("melee")) return true;
+    const styleId = resolveBodyAttackStyle(def);
+    if (typeof ArenaAttackStyles !== "undefined" && ArenaAttackStyles.isProjectileStyle(styleId)) {
+      return false;
+    }
+    return true;
+  }
+
+  function isMeleeWeaponInFlight(body) {
+    if (!body?.isWeapon || !body.attack || body.isMelee === false) return false;
+    const atk = body.attack;
+    if (typeof ArenaAttackStyles !== "undefined" && ArenaAttackStyles.isProjectileStyle(atk.styleId)) {
+      return false;
+    }
+    if (!atk.useEmojiAvatarArc && !atk.useViewport) return false;
+    return atk.phase === "strike" || atk.phase === "recover";
+  }
+
+  function meleeFlightRepelRadius(body) {
+    return (body.radius || equipRadiusPx()) * 0.92;
+  }
+
+  /** Мили-оружие в полёте между эмодзи-аватарами отталкивается при пересечении. */
+  function resolveMeleeFlightRepulsion(bodies, dt) {
+    if (!usesEmojiAvatarEquipHome()) return;
+
+    const flyers = bodies.filter(isMeleeWeaponInFlight).map((body) => {
+      const x = (body.renderX ?? body.x) + (body.flightRepelX || 0);
+      const y = (body.renderY ?? body.y) + (body.flightRepelY || 0);
+      return { body, x, y, r: meleeFlightRepelRadius(body) };
+    });
+    if (flyers.length < 2) return;
+
+    const vmin = viewportMin();
+    const maxPush = vmin * 0.028;
+
+    for (let i = 0; i < flyers.length; i++) {
+      for (let j = i + 1; j < flyers.length; j++) {
+        const a = flyers[i];
+        const b = flyers[j];
+        let dx = b.x - a.x;
+        let dy = b.y - a.y;
+        let dist = Math.hypot(dx, dy);
+        const minDist = a.r + b.r;
+        if (dist >= minDist) continue;
+        if (dist < 0.001) {
+          const angle = (hashItemSeed(a.body.uid, b.body.uid) % 628) / 100;
+          dx = Math.cos(angle);
+          dy = Math.sin(angle);
+          dist = 0.001;
+        }
+        const nx = dx / dist;
+        const ny = dy / dist;
+        const overlap = minDist - dist;
+        const push = Math.min(maxPush, overlap * 0.62);
+
+        a.body.flightRepelX = (a.body.flightRepelX || 0) - nx * push;
+        a.body.flightRepelY = (a.body.flightRepelY || 0) - ny * push;
+        b.body.flightRepelX = (b.body.flightRepelX || 0) + nx * push;
+        b.body.flightRepelY = (b.body.flightRepelY || 0) + ny * push;
+
+        a.x = a.body.renderX + (a.body.flightRepelX || 0);
+        a.y = a.body.renderY + (a.body.flightRepelY || 0);
+        b.x = b.body.renderX + (b.body.flightRepelX || 0);
+        b.y = b.body.renderY + (b.body.flightRepelY || 0);
+      }
+    }
+
+    const decay = Math.exp(-dt * 5.5);
+    bodies.forEach((body) => {
+      if (!body.flightRepelX && !body.flightRepelY) return;
+      body.flightRepelX = (body.flightRepelX || 0) * decay;
+      body.flightRepelY = (body.flightRepelY || 0) * decay;
+      if (Math.abs(body.flightRepelX) < 0.15) body.flightRepelX = 0;
+      if (Math.abs(body.flightRepelY) < 0.15) body.flightRepelY = 0;
+    });
+  }
+
+  function hashItemSeed(a, b) {
+    const s = `${a || ""}|${b || ""}`;
+    let h = 0;
+    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+    return Math.abs(h);
+  }
+
   function easeOutCubic(t) {
     const u = 1 - t;
     return 1 - u * u * u;
@@ -656,8 +743,8 @@ const ArenaEquipment = (() => {
     const rot = body.rotation ?? 0;
 
     if (body.attack || body.fxMounted) {
-      const x = body.renderX ?? body.x;
-      const y = body.renderY ?? body.y;
+      const x = (body.renderX ?? body.x) + (body.flightRepelX || 0);
+      const y = (body.renderY ?? body.y) + (body.flightRepelY || 0);
       const rx = Math.round(x);
       const ry = Math.round(y);
       const rr = Math.round(rot * 10) / 10;
@@ -749,6 +836,7 @@ const ArenaEquipment = (() => {
       itemId: entry.itemId,
       slotId: entry.slotId,
       isWeapon: isWeaponDef(entry.def),
+      isMelee: isMeleeWeaponDef(entry.def),
       attackStyle: resolveBodyAttackStyle(entry.def),
       glyph: equipDisplayGlyph(entry.def),
       x: 0,
@@ -775,6 +863,8 @@ const ArenaEquipment = (() => {
       wobbleAmp: 0.7 + Math.random() * 0.5,
       wobbleSpeed: 0.9 + Math.random() * 0.6,
       attack: null,
+      flightRepelX: 0,
+      flightRepelY: 0,
       burstsTotal: 0,
       burstsDone: 0,
       burstInterval: 3.5,
@@ -939,6 +1029,8 @@ const ArenaEquipment = (() => {
     body.el.classList.add("is-attacking");
     body.el.dataset.attackStyle = styleId;
     body.el.classList.add(`arena-equip-attack--${styleId}`);
+    body.flightRepelX = 0;
+    body.flightRepelY = 0;
     body.nextAttackAt = elapsed + body.burstInterval * (0.75 + Math.random() * 0.35);
     return true;
   }
@@ -1016,6 +1108,8 @@ const ArenaEquipment = (() => {
         destroyAttackProjectile(atk);
         remountOrbitAfterAttack(body);
         body.attack = null;
+        body.flightRepelX = 0;
+        body.flightRepelY = 0;
         body.el.classList.remove("is-attacking");
         body.el.classList.remove(`arena-equip-attack--${atk.styleId}`);
         applyVisual(body);
@@ -1067,6 +1161,8 @@ const ArenaEquipment = (() => {
         body.renderY = body.homeY;
         body.displayScale = 1;
         body.attack = null;
+        body.flightRepelX = 0;
+        body.flightRepelY = 0;
         body.el.classList.remove("is-attacking");
         remountOrbitAfterAttack(body);
         applyVisual(body);
@@ -1171,6 +1267,17 @@ const ArenaEquipment = (() => {
       } else {
         stepIdle(body, dt);
       }
+    });
+
+    resolveMeleeFlightRepulsion(all, dt);
+
+    all.forEach((body) => {
+      const { w, h } = sizeBySide[body.side] || { w: 0, h: 0 };
+      if (body.orbitSlotMounted || usesEmojiAvatarEquipHome()) {
+        if (!getEmojiAvatarSlotEl(body.side)) return;
+      } else if (w < 8 || h < 8) {
+        return;
+      }
       applyVisual(body);
     });
 
@@ -1237,6 +1344,7 @@ const ArenaEquipment = (() => {
         body.slotId = entry.slotId;
         body.itemId = entry.itemId;
         body.isWeapon = isWeapon;
+        body.isMelee = isMeleeWeaponDef(entry.def);
         body.el.classList.remove("arena-equip-body--player", "arena-equip-body--enemy");
         body.el.classList.add(`arena-equip-body--${side}`);
         body.el.dataset.team = side;
