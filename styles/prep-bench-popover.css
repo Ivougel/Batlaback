@@ -160,12 +160,12 @@ html[data-game-phase="replay"] .prep-bench-fab,
   background: transparent;
 }
 
-/* Корень popover не ловит клики — только backdrop и панель */
+/* Backdrop визуальный — поле остаётся интерактивным (как prep-shop-backdrop на mobile) */
 .prep-bench-popover__backdrop {
   position: absolute;
   inset: 0;
   z-index: 0;
-  pointer-events: auto;
+  pointer-events: none;
   background: transparent;
 }
 
@@ -267,8 +267,20 @@ html[data-visual-theme="diablo"][data-prep-bench-popover="true"] .prep-bench-pop
   border-color: rgba(192, 57, 43, 0.45);
 }
 
-/* Во время drag — пропускаем события на поле; дуга (z≈9250) рисуется поверх */
-html[data-prep-bench-drag="true"] .prep-bench-popover__backdrop,
+/* Во время drag — панель не перехватывает события; дуга (z≈9250) рисуется поверх */
 html[data-prep-bench-drag="true"] .prep-bench-popover__panel {
   pointer-events: none !important;
+}
+
+/* Поле поверх chrome при открытой скамейке — hit-test доходит до canvas */
+html[data-prep-bench-open="true"][data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-field-island,
+html[data-prep-bench-open="true"][data-ui-surface="desktop"] #app[data-phase="prep"] .prep-field-island {
+  z-index: 6;
+}
+
+html[data-prep-bench-popover="true"][data-prep-bench-open="true"][data-prep-drag-targets-board] #app[data-phase="prep"] .prep-field-island .canvas-scale-wrap {
+  box-shadow:
+    0 16px 46px rgba(0, 0, 0, 0.28),
+    0 0 0 2px rgba(92, 184, 92, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }

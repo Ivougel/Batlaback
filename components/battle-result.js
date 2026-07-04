@@ -143,10 +143,11 @@ function animateBattleResultStatCounts(root) {
   const scope = root || document.getElementById("battle-result-accordions");
   if (!scope) return;
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const lightFx = typeof BattleFxTier !== "undefined" && BattleFxTier.isLightBattleFx();
   const counters = scope.querySelectorAll("[data-br-count]");
   counters.forEach((el) => {
     const final = Number(el.dataset.brValue) || 0;
-    if (reduced) {
+    if (reduced || lightFx) {
       el.textContent = formatBrCountText(el, final);
       return;
     }

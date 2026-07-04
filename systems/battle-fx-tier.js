@@ -60,6 +60,11 @@
     return !isLightBattleFx();
   }
 
+  function equipSyncGapMs() {
+    if (!isLightBattleFx()) return 450;
+    return isPhoneTier() ? 550 : 650;
+  }
+
   function emotionPresentGapMs() {
     if (!isLightBattleFx()) return 66;
     return isPhoneTier() ? 120 : 100;
@@ -107,6 +112,7 @@
     auraPresentGapMs,
     auraRunnersEnabled,
     equipIdleWobbleEnabled,
+    equipSyncGapMs,
     applyBattleFxTierFlags,
     syncLightBattleFxSettingsUi,
   };

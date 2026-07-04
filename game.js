@@ -4774,6 +4774,13 @@ function clearSellDropHighlight() {
   });
 }
 
+function syncPrepBenchPopoverPassthrough() {
+  const benchUi = typeof usesPrepBenchPopover === "function" && usesPrepBenchPopover();
+  const popoverOpen = typeof isPrepBenchPopoverOpen === "function" && isPrepBenchPopoverOpen();
+  const dragging = !!(dragPayload || pendingShopDrag || pendingBenchDrag || pendingEnhancementDrag);
+  document.documentElement.toggleAttribute("data-prep-bench-drag", !!(benchUi && popoverOpen && dragging));
+}
+
 function syncUiDragState() {
   const dragging = !!(dragPayload || pendingShopDrag || pendingBenchDrag || pendingEnhancementDrag);
   document.body.classList.toggle("is-ui-dragging", dragging);
@@ -4783,6 +4790,7 @@ function syncUiDragState() {
   } else {
     window.flushDeferredLayoutPasses?.();
   }
+  syncPrepBenchPopoverPassthrough();
   syncPrepShopDragBackdrop(lastPointerClient.x, lastPointerClient.y);
   syncSellDropHighlight(lastPointerClient.x, lastPointerClient.y);
   if (typeof refreshGamepadHints === "function") refreshGamepadHints();
@@ -5755,10 +5763,6 @@ function hasPrepBoardDropTarget() {
   return !!(hoverSlot || hoverCell || prepDropPreviewHover);
 }
 
-function setPrepBenchDragPassthrough(active) {
-  document.documentElement.toggleAttribute("data-prep-bench-drag", !!active);
-}
-
 function clearDragUiState() {
   document.querySelectorAll(".shop-card.shop-dragging, .td-build-shop-card.shop-dragging").forEach((el) => el.classList.remove("shop-dragging"));
   pendingShopDrag = null;
@@ -5766,7 +5770,7 @@ function clearDragUiState() {
   pendingEnhancementDrag = null;
   pendingCanvasPick = null;
   shopDidDrag = false;
-  setPrepBenchDragPassthrough(false);
+  syncPrepBenchPopoverPassthrough();
   endSynergyPreview();
   synergyPreviewBuilt = null;
   canvas?.classList.remove("synergy-preview-mode");
@@ -7912,7 +7916,11 @@ function gameLoop(ts) {
   } catch (err) {
     console.error("draw failed:", err);
   }
-  requestAnimationFrame(gameLoop);
+  if (isBattleResultIdle()) {
+    setTimeout(() => gameLoop(performance.now()), 250);
+  } else {
+    requestAnimationFrame(gameLoop);
+  }
 }
 
 function layoutGridOrigin(team) {
@@ -9887,12 +9895,22 @@ function isPointerOverShopDrawer(clientX, clientY) {
   return !!hit.closest("#shop-panel, #td-build-panel, .td-build-shop-card");
 }
 
+function isPointerOverBenchPopoverPanel(clientX, clientY) {
+  if (clientX == null || clientY == null) return false;
+  const hit = document.elementFromPoint(clientX, clientY);
+  if (!hit) return false;
+  return !!hit.closest("#prep-bench-popover .prep-bench-popover__panel, #btn-prep-bench-fab");
+}
+
 function syncPrepShopDragBackdrop(clientX, clientY) {
   const root = document.documentElement;
-  const dragActive = !!(dragPayload || pendingShopDrag || pendingBenchDrag);
-  const targetsBoard = root.hasAttribute("data-prep-shop-open")
-    && dragActive
-    && !isPointerOverShopDrawer(clientX, clientY);
+  const dragActive = !!(dragPayload || pendingShopDrag || pendingBenchDrag || pendingEnhancementDrag);
+  const benchOpen = root.hasAttribute("data-prep-bench-open");
+  const overSidebar = isPointerOverShopDrawer(clientX, clientY)
+    || isPointerOverBenchPopoverPanel(clientX, clientY);
+  const targetsBoard = dragActive
+    && !overSidebar
+    && (root.hasAttribute("data-prep-shop-open") || benchOpen);
   root.toggleAttribute("data-prep-drag-targets-board", targetsBoard);
 }
 
@@ -11197,7 +11215,6 @@ function startBenchDrag(index, e, side = prepViewSide) {
   dragFrom = { type: "bench", index, side, benchEntry };
   prepSidebarDragUnlocked = typeof usesPrepBenchPopover === "function" && usesPrepBenchPopover();
   prepSidebarStickyHover = null;
-  setPrepBenchDragPassthrough(true);
   renderBench(side);
   beginPrepDragArcFromCard(arcCard);
   startSynergyPreview();

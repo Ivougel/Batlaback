@@ -1218,6 +1218,9 @@
   }
 
   function usesPrepShopDrawer() {
+    if (typeof window.usesPrepShopDrawer === "function") {
+      return window.usesPrepShopDrawer();
+    }
     const root = document.documentElement;
     return root.dataset.prepLayout === "mobile"
       || root.dataset.prepShopDrawer === "true";
@@ -1362,10 +1365,10 @@
     const uiScale = readCssPx("--ui-scale", 1);
     const gap = Math.round(8 * uiScale);
     const surface = root.dataset.uiSurface;
-    const drawer = typeof window.usesPrepShopDrawerOnly === "function"
-      && window.usesPrepShopDrawerOnly();
+    const mobileDrawerOnly = root.dataset.prepLayout === "mobile"
+      || root.dataset.prepShopDrawer === "true";
 
-    if (drawer) return;
+    if (mobileDrawerOnly) return;
 
     const shop = document.getElementById("shop-panel");
     const shopRect = shop?.getBoundingClientRect();

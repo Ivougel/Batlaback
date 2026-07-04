@@ -10,6 +10,13 @@ const ArenaEquipment = (() => {
   const AIR_DRAG = 0.992;
   const MAX_DT = 0.032;
   const SYNC_INTERVAL_MS = 450;
+
+  function equipSyncIntervalMs() {
+    if (typeof BattleFxTier !== "undefined" && BattleFxTier.equipSyncGapMs) {
+      return BattleFxTier.equipSyncGapMs();
+    }
+    return SYNC_INTERVAL_MS;
+  }
   const BURST_SPACING_SEC = 3.8;
   const MIN_BURSTS = 6;
   const MAX_BURSTS = 28;
@@ -121,6 +128,7 @@ const ArenaEquipment = (() => {
   /** @type {object|null} */
   let activeBattle = null;
   let lastSyncAt = 0;
+  let emotionAnchorsSyncedFor = null;
   let battleDurationEst = 60;
   let paused = false;
 
@@ -1263,19 +1271,25 @@ const ArenaEquipment = (() => {
       clearAll();
       activeBattle = battleState;
       lastSyncAt = 0;
+      emotionAnchorsSyncedFor = null;
     }
 
     const now = Date.now();
-    const needsFullSync = bodiesBySide.size === 0 || now - lastSyncAt >= SYNC_INTERVAL_MS;
+    const syncGap = equipSyncIntervalMs();
+    const needsFullSync = bodiesBySide.size === 0 || now - lastSyncAt >= syncGap;
     if (!needsFullSync) {
       if (!paused) scheduleFrame();
       return;
     }
     lastSyncAt = now;
 
+    const hadBodies = getAllBodies().length > 0;
+
     if (usesEmojiAvatarEquipHome()
-      && typeof window.syncHeroEmotionSlotAnchors === "function") {
+      && typeof window.syncHeroEmotionSlotAnchors === "function"
+      && emotionAnchorsSyncedFor !== battleState) {
       window.syncHeroEmotionSlotAnchors({ skipEquipRelayout: true });
+      emotionAnchorsSyncedFor = battleState;
     }
 
     const burstPlan = computeBurstPlan(battleState);
@@ -1288,7 +1302,7 @@ const ArenaEquipment = (() => {
       syncSide(side, listFn(items), battleState, elapsed, burstPlan);
     });
 
-    if (usesEmojiAvatarEquipHome()) onResize();
+    if (usesEmojiAvatarEquipHome() && !hadBodies) onResize();
 
     if (getAllBodies().length) scheduleFrame();
   }
@@ -1303,6 +1317,7 @@ const ArenaEquipment = (() => {
     bodiesBySide.clear();
     activeBattle = null;
     lastSyncAt = 0;
+    emotionAnchorsSyncedFor = null;
     lastTs = 0;
     const fxLayer = document.getElementById("arena-equip-fx-layer");
     if (fxLayer) fxLayer.innerHTML = "";

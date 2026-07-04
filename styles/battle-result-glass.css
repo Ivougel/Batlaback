@@ -32,8 +32,24 @@ html[data-battle-fx-light="true"] #battle-result-overlay .battle-result-actions 
 
 html[data-battle-fx-light="true"] #battle-result-overlay:not(.hidden):not(.overlay-entering):not(.overlay-exiting) .battle-result-modal,
 html[data-battle-fx-light="true"] #battle-result-overlay[data-outcome="player"]:not(.hidden) .battle-result-modal,
-html[data-battle-fx-light="true"] #battle-result-overlay[data-outcome="enemy"]:not(.hidden) .battle-result-modal {
-  box-shadow: 0 8px 28px rgba(30, 60, 28, 0.18);
+html[data-battle-fx-light="true"] #battle-result-overlay[data-outcome="enemy"]:not(.hidden) .battle-result-modal,
+html[data-battle-fx-light="true"] #battle-result-overlay[data-outcome="draw"]:not(.hidden) .battle-result-modal {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border: 2px solid rgba(255, 255, 255, 0.52) !important;
+  box-shadow: 0 8px 28px rgba(30, 60, 28, 0.18) !important;
+}
+
+html[data-battle-fx-light="true"] #battle-result-overlay[data-outcome="player"]:not(.hidden) .battle-result-modal > h2,
+html[data-battle-fx-light="true"] #battle-result-overlay[data-outcome="player"]:not(.hidden) .battle-result-headline {
+  background: none !important;
+  -webkit-background-clip: border-box !important;
+  background-clip: border-box !important;
+  color: var(--juice-ink) !important;
+  filter: none !important;
+}
+
+html[data-battle-fx-light="true"] #battle-result-theater {
+  display: none !important;
 }
 
 #battle-result-overlay .battle-result-modal > h2,

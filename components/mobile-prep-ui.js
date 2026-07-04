@@ -1,27 +1,24 @@
 /**
- * Мобильная подготовка: магазин в bottom-sheet, FAB 💰/🛒.
+ * Мобильная подготовка: магазин в bottom-sheet / popover, FAB 💰/🛒.
  */
 (function initMobilePrepUi() {
   const OPEN_ATTR = "data-prep-shop-open";
+
+  function usesPrepSellFabSideLayout() {
+    const root = document.documentElement;
+    return root.dataset.prepLayout === "side"
+      && (root.dataset.uiSurface === "tablet-side" || root.dataset.uiSurface === "desktop");
+  }
 
   function usesPrepShopDrawer() {
     const root = document.documentElement;
     return root.dataset.prepLayout === "mobile"
       || root.dataset.prepShopDrawer === "true"
-      || root.dataset.uiSurface === "tablet-stacked";
+      || root.dataset.uiSurface === "tablet-stacked"
+      || usesPrepSellFabSideLayout();
   }
 
   function usesPrepSellFab() {
-    const root = document.documentElement;
-    if (usesPrepShopDrawer()) return true;
-    if (root.dataset.prepLayout === "side"
-      && (root.dataset.uiSurface === "tablet-side" || root.dataset.uiSurface === "desktop")) {
-      return true;
-    }
-    return false;
-  }
-
-  function usesPrepShopDrawerOnly() {
     return usesPrepShopDrawer();
   }
 
@@ -34,6 +31,7 @@
   }
 
   function setShopOpen(open) {
+    if (!usesPrepShopDrawer()) return;
     const next = !!open;
     document.documentElement.toggleAttribute(OPEN_ATTR, next);
     if (!next) document.documentElement.removeAttribute("data-prep-drag-targets-board");
@@ -63,18 +61,27 @@
   }
 
   function closeMobilePrepShop() {
-    if (!document.documentElement.hasAttribute(OPEN_ATTR)) return;
     setShopOpen(false);
   }
 
   function openMobilePrepShop() {
-    if (!usesPrepShopDrawer()) return;
+    if (!usesPrepShopDrawer() || !isPrepPhase()) return;
     setShopOpen(true);
   }
 
   function toggleMobilePrepShop() {
-    if (!usesPrepShopDrawer()) return;
+    if (!usesPrepShopDrawer() || !isPrepPhase()) return;
     setShopOpen(!document.documentElement.hasAttribute(OPEN_ATTR));
+  }
+
+  function syncPrepShopFabVisibility() {
+    const shopBtn = document.getElementById("btn-mobile-shop");
+    const show = usesPrepShopDrawer() && isPrepPhase();
+    if (!shopBtn) return;
+    shopBtn.classList.toggle("hidden", !show);
+    shopBtn.hidden = !show;
+    shopBtn.setAttribute("aria-hidden", show ? "false" : "true");
+    if (!show) shopBtn.setAttribute("aria-expanded", "false");
   }
 
   function syncPrepSellFabVisibility() {
@@ -87,29 +94,20 @@
     document.documentElement.toggleAttribute("data-prep-sell-fab", show);
     if (show) document.documentElement.dataset.prepSellFab = "true";
     else delete document.documentElement.dataset.prepSellFab;
+    syncPrepShopFabVisibility();
     if (show && typeof window.syncPrepSellFabPosition === "function") {
       requestAnimationFrame(() => window.syncPrepSellFabPosition());
     }
-  }
-
-  function focusPrepShopPanel() {
-    const shop = document.getElementById("shop-panel");
-    if (!shop) return;
-    shop.classList.add("prep-shop-focus-pulse");
-    window.setTimeout(() => shop.classList.remove("prep-shop-focus-pulse"), 700);
-    shop.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    document.getElementById("shop-slots")?.scrollTo({ top: 0, behavior: "smooth" });
+    if (show && isPrepPhase() && !document.documentElement.hasAttribute(OPEN_ATTR)) {
+      if (typeof scheduleCanvasFit === "function") scheduleCanvasFit();
+    }
   }
 
   function handlePrepSellFabClick(e) {
     if (!usesPrepSellFab() || !isPrepPhase()) return;
     e.preventDefault();
     e.stopPropagation();
-    if (usesPrepShopDrawerOnly()) {
-      openMobilePrepShop();
-    } else {
-      focusPrepShopPanel();
-    }
+    openMobilePrepShop();
   }
 
   function syncRotatePrompt() {
@@ -122,11 +120,27 @@
     if (show) closeMobilePrepShop();
   }
 
+  function onPrepPhaseChange(phase) {
+    if (phase === "prep") {
+      closeMobilePrepShop();
+      syncPrepSellFabVisibility();
+      syncPrepShopFabVisibility();
+      return;
+    }
+    closeMobilePrepShop();
+    syncPrepSellFabVisibility();
+    syncPrepShopFabVisibility();
+  }
+
   function bind() {
     document.getElementById("btn-mobile-shop")?.addEventListener("click", toggleMobilePrepShop);
     document.getElementById("btn-prep-shop-close")?.addEventListener("click", closeMobilePrepShop);
     document.getElementById("btn-prep-sell-fab")?.addEventListener("click", handlePrepSellFabClick);
-    /* Backdrop is visual-only (pointer-events: none) — field stays interactive while shop is open. */
+    document.getElementById("prep-shop-backdrop")?.addEventListener("click", (e) => {
+      if (!usesPrepSellFabSideLayout()) return;
+      e.preventDefault();
+      closeMobilePrepShop();
+    });
 
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") closeMobilePrepShop();
@@ -138,9 +152,8 @@
     const app = document.getElementById("app");
     if (app) {
       new MutationObserver(() => {
-        if (app.dataset.phase !== "prep") closeMobilePrepShop();
+        onPrepPhaseChange(app.dataset.phase);
         syncRotatePrompt();
-        syncPrepSellFabVisibility();
         if (!usesPrepShopDrawer()) closeMobilePrepShop();
       }).observe(app, { attributes: true, attributeFilter: ["data-phase"] });
     }
@@ -156,15 +169,17 @@
 
     syncRotatePrompt();
     syncPrepSellFabVisibility();
+    syncPrepShopFabVisibility();
+    if (isPrepPhase()) closeMobilePrepShop();
   }
 
   window.closeMobilePrepShop = closeMobilePrepShop;
   window.openMobilePrepShop = openMobilePrepShop;
   window.toggleMobilePrepShop = toggleMobilePrepShop;
+  window.usesPrepShopDrawer = usesPrepShopDrawer;
   window.usesPrepSellFab = usesPrepSellFab;
-  window.usesPrepShopDrawerOnly = usesPrepShopDrawerOnly;
   window.syncPrepSellFabVisibility = syncPrepSellFabVisibility;
-  window.focusPrepShopPanel = focusPrepShopPanel;
+  window.syncPrepShopFabVisibility = syncPrepShopFabVisibility;
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", bind);

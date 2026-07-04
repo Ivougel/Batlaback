@@ -1,9 +1,17 @@
 /**
- * FAB продажи (💰): mobile drawer + tablet-side / desktop side.
+ * FAB продажи (💰): mobile drawer + tablet-side / desktop side popover.
  * html[data-prep-sell-fab]
  */
 
 html[data-prep-sell-fab] #app[data-phase="prep"] #shop-panel .shop-sell-zone {
+  display: none !important;
+}
+
+/* FAB только на prep */
+html:not([data-game-phase="prep"]) #btn-prep-sell-fab,
+html:not([data-game-phase="prep"]) #btn-mobile-shop,
+body:not(:has(#app[data-phase="prep"])) #btn-prep-sell-fab,
+body:not(:has(#app[data-phase="prep"])) #btn-mobile-shop {
   display: none !important;
 }
 
@@ -53,11 +61,80 @@ html[data-prep-sell-fab] #btn-prep-sell-fab.is-drag-target {
   transform: scale(1.06);
 }
 
+/* Tablet-side / desktop: магазин — popover справа, скрыт пока не открыт */
+html[data-prep-sell-fab][data-ui-surface="tablet-side"] #app[data-phase="prep"] .game-layout,
+html[data-prep-sell-fab][data-ui-surface="desktop"] #app[data-phase="prep"] .game-layout {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+html[data-prep-sell-fab]:not([data-prep-shop-open])[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel,
+html[data-prep-sell-fab]:not([data-prep-shop-open])[data-ui-surface="desktop"] #app[data-phase="prep"] #shop-panel {
+  transform: translateX(105%) !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+html[data-prep-sell-fab][data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel,
+html[data-prep-sell-fab][data-ui-surface="desktop"] #app[data-phase="prep"] #shop-panel {
+  position: fixed;
+  top: calc(var(--prep-scene-top, 14px) + env(safe-area-inset-top, 0px));
+  right: 0;
+  bottom: calc(var(--zone-toolbar-h, 56px) + env(safe-area-inset-bottom, 0px));
+  width: min(var(--shop-panel-w, 320px), 38vw);
+  max-width: 360px;
+  z-index: 9200;
+  margin: 0;
+  border-radius: 14px 0 0 14px;
+  border: 1px solid rgba(88, 166, 255, 0.25);
+  border-right: none;
+  background: rgba(14, 17, 22, 0.98);
+  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.55);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1), visibility 0.28s;
+}
+
+html[data-prep-sell-fab][data-prep-shop-open][data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel,
+html[data-prep-sell-fab][data-prep-shop-open][data-ui-surface="desktop"] #app[data-phase="prep"] #shop-panel {
+  transform: translateX(0) !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+html[data-prep-sell-fab][data-ui-surface="tablet-side"] .prep-shop-drawer-close,
+html[data-prep-sell-fab][data-ui-surface="desktop"] .prep-shop-drawer-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+html[data-prep-sell-fab] .prep-shop-backdrop {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 9150;
+  background: rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease;
+}
+
+html[data-prep-sell-fab][data-prep-shop-open] .prep-shop-backdrop:not(.hidden) {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+html[data-prep-sell-fab][data-prep-shop-open][data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-field-island,
+html[data-prep-sell-fab][data-prep-shop-open][data-ui-surface="desktop"] #app[data-phase="prep"] .prep-field-island {
+  z-index: 6;
+}
+
 html[data-prep-sell-fab] #app[data-phase="prep"] #shop-panel.prep-shop-focus-pulse {
   animation: prep-shop-focus-pulse 0.65s ease;
 }
 
 @keyframes prep-shop-focus-pulse {
-  0%, 100% { box-shadow: none; }
-  40% { box-shadow: 0 0 0 3px rgba(255, 210, 80, 0.45), 0 0 24px rgba(200, 134, 10, 0.25); }
+  0%, 100% { box-shadow: -12px 0 40px rgba(0, 0, 0, 0.55); }
+  40% { box-shadow: -12px 0 40px rgba(0, 0, 0, 0.55), 0 0 0 3px rgba(255, 210, 80, 0.45); }
 }
