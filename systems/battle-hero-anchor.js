@@ -82,13 +82,65 @@ const BattleHeroAnchor = (() => {
     return document.getElementById("battle-thought-arena");
   }
 
+  function resolveLayoutCombatFloorRect() {
+    const objectsLayer = document.getElementById("layer-objects");
+    const floorTop = readCssPx("--battle-combat-floor-top", 0);
+    const floorH = readCssPx("--battle-combat-floor-h", 0);
+    const arenaLeft = readCssPx("--battle-arena-zone-left", 0);
+    const arenaW = readCssPx("--battle-arena-zone-width", 0);
+    const gap = thoughtSlotGapPx();
+
+    const buildRect = (left, top, width, height) => {
+      if (width < 40 || height < 48) return null;
+      return {
+        left,
+        top,
+        width,
+        height,
+        bottom: top + height,
+        right: left + width,
+      };
+    };
+
+    if (objectsLayer && floorTop > 0 && floorH > 40 && arenaW > 40) {
+      const base = objectsLayer.getBoundingClientRect();
+      const top = base.top + floorTop;
+      const left = base.left + arenaLeft;
+      const chromeTop = visibleBattleCorridorTopPx();
+      const bottom = Math.min(top + floorH, chromeTop - gap);
+      const height = Math.max(0, bottom - top);
+      const fromLayout = buildRect(left, top, arenaW, height);
+      if (fromLayout) return fromLayout;
+    }
+
+    if (objectsLayer && arenaW > 40) {
+      const base = objectsLayer.getBoundingClientRect();
+      const left = base.left + (arenaLeft > 0 ? arenaLeft : Math.max(0, (base.width - arenaW) / 2));
+      const playerHud = getBattleHudEl("player")?.getBoundingClientRect();
+      const enemyHud = getBattleHudEl("enemy")?.getBoundingClientRect();
+      const hudBottom = Math.max(playerHud?.bottom ?? 0, enemyHud?.bottom ?? 0);
+      const chromeTop = visibleBattleCorridorTopPx();
+      const top = hudBottom + gap;
+      const bottom = chromeTop - gap;
+      const fromCorridor = buildRect(left, top, arenaW, bottom - top);
+      if (fromCorridor) return fromCorridor;
+    }
+
+    const dom = getCombatFloorEl()?.getBoundingClientRect();
+    if (!dom || dom.width < 8) return null;
+
+    const chromeTop = visibleBattleCorridorTopPx();
+    const bottom = Math.min(dom.bottom, chromeTop - gap);
+    const height = Math.max(0, bottom - dom.top);
+    return buildRect(dom.left, dom.top, dom.width, height);
+  }
+
   function getCombatFloorRect() {
     refreshMeasureCache();
     if (measureCache.combatFloor !== undefined) {
       return measureCache.combatFloor;
     }
-    const r = getCombatFloorEl()?.getBoundingClientRect();
-    measureCache.combatFloor = (r && r.width > 8 && r.height > 8) ? r : null;
+    measureCache.combatFloor = resolveLayoutCombatFloorRect();
     return measureCache.combatFloor;
   }
 
@@ -123,7 +175,8 @@ const BattleHeroAnchor = (() => {
       maxPx: 168,
       haloRatio: 0.28,
       satelliteScale: 0.62,
-      heroBelowZoneBias: 0.38,
+      heroBelowZoneBias: 0.72,
+      floorAnchorYRatio: 0.72,
       heroSpecYRatio: 0.20,
       heroSpecXBias: 0.34,
     },
@@ -358,7 +411,7 @@ const BattleHeroAnchor = (() => {
     return prof.heroBelow === true || currentBattleProfile() === "tablet-landscape-side";
   }
 
-  /** Крупный эмодзи-аватар на боевом полу (точки x20/y58 и x80/y58). */
+  /** Крупный эмодзи-аватар: X в колонке героя, Y на «полу» коридора (не центр арены, не торс). */
   function getCombatFloorThoughtAnchor(side) {
     const floor = getCombatFloorRect();
     if (!floor) return null;
@@ -367,23 +420,22 @@ const BattleHeroAnchor = (() => {
     const emojiSize = thoughtSlotEmojiSize();
     const halo = thoughtSlotHaloPx(emojiSize);
     const containerSize = emojiSize + halo * 2;
+    const gap = thoughtSlotGapPx();
+    const prof = emojiProfile();
 
-    const chromeTop = visibleBattleCorridorTopPx();
-    const onScreenBottom = Math.min(
-      floor.bottom,
-      visibleViewportBottomPx(),
-      chromeTop > floor.top + 8 ? chromeTop : floor.bottom,
-    );
-    let usableH = Math.max(0, onScreenBottom - floor.top);
-    if (usableH < emojiSize * 0.2) {
-      const underHero = getHeroBelowThoughtAnchor(side);
-      if (underHero) return underHero;
-      usableH = Math.max(usableH, floor.height * (anchorNorm.y || 0.58));
+    const cx = isFlankArenaBattle()
+      ? (getHeroColumnCenterX(side) ?? floor.left + floor.width * anchorNorm.x)
+      : floor.left + floor.width * anchorNorm.x;
+
+    const yRatio = prof.floorAnchorYRatio ?? anchorNorm.y ?? 0.58;
+    let cy = floor.top + floor.height * yRatio;
+
+    const hudRect = getBattleHudEl(side)?.getBoundingClientRect();
+    const minCy = (hudRect?.bottom ?? floor.top) + gap + emojiSize * 0.42;
+    const maxCy = visibleBattleCorridorTopPx() - gap - emojiSize * 0.42;
+    if (Number.isFinite(maxCy) && maxCy > minCy) {
+      cy = Math.min(maxCy, Math.max(minCy, cy));
     }
-
-    const heroCx = getHeroColumnCenterX(side);
-    const cx = heroCx != null ? heroCx : floor.left + floor.width * anchorNorm.x;
-    const cy = floor.top + usableH * anchorNorm.y;
 
     return {
       cx,
@@ -547,15 +599,7 @@ const BattleHeroAnchor = (() => {
 
   /** Позиция thought-slot в viewport (px). */
   function getThoughtSlotAnchor(side) {
-    // iPad / tablet-side landscape: крупный эмодзи в коридоре под HUD (пол арены там перекрыт chrome).
-    if (currentBattleProfile() === "tablet-landscape-side"
-      && isFlankArenaBattle()
-      && !usesHeadBadgeAnchors()) {
-      const underHero = getHeroBelowThoughtAnchor(side);
-      if (underHero) return underHero;
-    }
-
-    // Flank-arena: эмодзи на боевом полу (20%/80% × 58%).
+    // Flank-arena: эмодзи в колонке героя на боевом полу (не центр арены, не торс).
     if (usesCombatFloorAnchors() && !usesHeadBadgeAnchors()) {
       const floorAnchor = getCombatFloorThoughtAnchor(side);
       if (floorAnchor) return floorAnchor;
@@ -581,31 +625,10 @@ const BattleHeroAnchor = (() => {
     const emojiSize = thoughtSlotEmojiSize();
     const halo = thoughtSlotHaloPx(emojiSize);
     const containerSize = emojiSize + halo * 2;
-    const cx = floor ? getHeroColumnCenterX(side) : null;
 
-    if (floor && cx != null) {
-      const gap = thoughtSlotGapPx();
-      const floorBottom = visibleCombatFloorBottom(floor) ?? floor.bottom;
-      const floorTop = floor.top;
-      const usableH = Math.max(0, floorBottom - floorTop);
-      const prof = emojiProfile();
-      const centerRatio = prof.slotCenterRatio ?? 0.52;
-      let cy;
-      if (usableH > emojiSize * 2.4) {
-        cy = floorTop + usableH * centerRatio;
-      } else {
-        cy = floorBottom - gap - emojiSize / 2;
-      }
-      return {
-        cx,
-        cy,
-        emojiSize,
-        halo,
-        containerSize,
-        top: cy - containerSize / 2,
-        left: cx - containerSize / 2,
-        size: containerSize,
-      };
+    if (floor) {
+      const floorAnchor = getCombatFloorThoughtAnchor(side);
+      if (floorAnchor) return floorAnchor;
     }
 
     const ar = getAvatarAnchorRect(side);

@@ -6918,7 +6918,7 @@ function startBattle() {
         }
         if (typeof resetStackOrbitVfx === "function") resetStackOrbitVfx();
         battleStartTime = Date.now();
-        tickBattlePresentation._at = { emotion: 0, arena: 0 };
+        tickBattlePresentation._at = { emotion: 0, arena: 0, orbit: 0 };
         if (typeof resetEmotionEngine === "function") resetEmotionEngine();
         if (typeof resetBattleAuraFrame === "function") resetBattleAuraFrame();
         if (typeof hideBattleCountdownOverlay === "function") hideBattleCountdownOverlay();
@@ -7008,7 +7008,7 @@ function startBattle() {
       }
       if (typeof resetStackOrbitVfx === "function") resetStackOrbitVfx();
       battleStartTime = Date.now();
-      tickBattlePresentation._at = { emotion: 0, arena: 0 };
+      tickBattlePresentation._at = { emotion: 0, arena: 0, orbit: 0 };
       if (typeof resetEmotionEngine === "function") resetEmotionEngine();
       if (typeof resetBattleAuraFrame === "function") resetBattleAuraFrame();
       if (typeof initBattleHud === "function") initBattleHud();
@@ -7604,7 +7604,7 @@ function tickBattlePresentation() {
   const elapsed = battleStartTime ? (Date.now() - battleStartTime) / 1000 : 0;
   const now = performance.now();
   if (!tickBattlePresentation._at) {
-    tickBattlePresentation._at = { emotion: 0, arena: 0 };
+    tickBattlePresentation._at = { emotion: 0, arena: 0, orbit: 0 };
   }
   const emotionGap = typeof BattleFxTier !== "undefined"
     ? BattleFxTier.emotionPresentGapMs()
@@ -7612,6 +7612,9 @@ function tickBattlePresentation() {
   const arenaGap = typeof BattleFxTier !== "undefined"
     ? BattleFxTier.arenaPresentGapMs()
     : 450;
+  const orbitGap = typeof BattleFxTier !== "undefined"
+    ? BattleFxTier.stackOrbitGapMs()
+    : 170;
 
   if (now - tickBattlePresentation._at.emotion >= emotionGap) {
     tickBattlePresentation._at.emotion = now;
@@ -7623,6 +7626,12 @@ function tickBattlePresentation() {
     tickBattlePresentation._at.arena = now;
     if (typeof tickBattleArenaPresentation === "function") {
       tickBattleArenaPresentation(presentState, elapsed);
+    }
+  }
+  if (now - tickBattlePresentation._at.orbit >= orbitGap) {
+    tickBattlePresentation._at.orbit = now;
+    if (!presentState.finished && typeof syncStackOrbitFromBattle === "function") {
+      syncStackOrbitFromBattle(presentState);
     }
   }
   if (typeof syncBattleAuraFrame === "function") {
@@ -7691,11 +7700,6 @@ function tickLobbyRoundBattles(dt, ts) {
       lobbyBackgroundSimAcc.delete(match.id);
     }
   });
-
-  const displayState = getDisplayBattleState();
-  if (displayState && !displayState.finished && typeof syncStackOrbitFromBattle === "function") {
-    syncStackOrbitFromBattle(displayState);
-  }
 
   if (battleState && !battleEndHandled) {
     flushBattleEvents();
@@ -7840,9 +7844,6 @@ function gameLoop(ts) {
       }
       flushBattleEvents();
       recordBattleFrame(battleState);
-    }
-    if (!battleState.finished && typeof syncStackOrbitFromBattle === "function") {
-      syncStackOrbitFromBattle(battleState);
     }
     if (Math.floor(ts / 500) !== Math.floor((ts - dt * 1000) / 500)) {
       renderBattleStats();

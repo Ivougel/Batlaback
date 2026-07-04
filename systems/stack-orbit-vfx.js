@@ -93,6 +93,7 @@ function positionOrbitRing(ring, team) {
     ring.style.left = "50%";
     ring.style.top = "50%";
     ring.style.transform = "translate(-50%, -50%)";
+    delete ring.dataset.orbitPosKey;
     return;
   }
 
@@ -102,6 +103,9 @@ function positionOrbitRing(ring, team) {
 
   const cx = bodyRect.left + bodyRect.width / 2 - mountRect.left;
   const cy = bodyRect.top + bodyRect.height / 2 - mountRect.top;
+  const posKey = `${Math.round(cx)}|${Math.round(cy)}`;
+  if (ring.dataset.orbitPosKey === posKey) return;
+  ring.dataset.orbitPosKey = posKey;
   ring.style.left = `${cx}px`;
   ring.style.top = `${cy}px`;
   ring.style.transform = "translate(-50%, -50%)";
@@ -179,14 +183,16 @@ function clearStackOrbitRings() {
   });
 }
 
-function syncStackOrbitFromBattle(battleState) {
+function syncStackOrbitFromBattle(battleState, opts = {}) {
   if (!battleState || battleState.finished) return;
+  const now = performance.now();
+  const force = opts.force === true;
+  if (!force && now - stackOrbitLastSyncAt < stackOrbitSyncGapMs()) return;
   if (!sideHasOrbitStacks(battleState.player) && !sideHasOrbitStacks(battleState.enemy)) {
-    clearStackOrbitRings();
+    if (stackOrbitLastSyncAt > 0) clearStackOrbitRings();
+    stackOrbitLastSyncAt = now;
     return;
   }
-  const now = performance.now();
-  if (now - stackOrbitLastSyncAt < stackOrbitSyncGapMs()) return;
   stackOrbitLastSyncAt = now;
 
   const speedSig = typeof getEmojiOrbitDurationSec === "function"

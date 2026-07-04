@@ -16,8 +16,24 @@ let auraIntensity = 0;
 let auraLastPlayerHp = null;
 let auraLastEnemyHp = null;
 let auraLastRunnerAt = 0;
+let auraLastPresentAt = 0;
+let auraLastCssKey = "";
 let auraActive = false;
 let auraLayoutKey = "";
+
+function auraPresentGapMs() {
+  if (typeof BattleFxTier !== "undefined" && BattleFxTier.auraPresentGapMs) {
+    return BattleFxTier.auraPresentGapMs();
+  }
+  return 50;
+}
+
+function auraRunnersEnabled() {
+  if (typeof BattleFxTier !== "undefined" && BattleFxTier.auraRunnersEnabled) {
+    return BattleFxTier.auraRunnersEnabled();
+  }
+  return true;
+}
 
 function clearBattleAuraFrameLayout() {
   const frame = document.getElementById("battle-aura-frame");
@@ -89,6 +105,8 @@ function resetBattleAuraFrame() {
   auraLastPlayerHp = null;
   auraLastEnemyHp = null;
   auraLastRunnerAt = 0;
+  auraLastPresentAt = 0;
+  auraLastCssKey = "";
   auraActive = false;
   const frame = document.getElementById("battle-aura-frame");
   const runners = document.getElementById("battle-aura-runners");
@@ -179,23 +197,34 @@ function syncBattleAuraFrame(state, elapsed) {
     return;
   }
 
+  const now = performance.now();
+  const firstPresent = !auraActive;
   auraActive = true;
-  syncBattleAuraFrameLayout();
+  if (firstPresent) syncBattleAuraFrameLayout();
   frame.classList.remove("hidden");
   frame.setAttribute("aria-hidden", "false");
+
+  if (!firstPresent && now - auraLastPresentAt < auraPresentGapMs()) return;
+  auraLastPresentAt = now;
 
   bumpAuraIntensity(state);
   const progress = computeAuraProgress(state, elapsed);
   const coldHue = 195;
   const darkHue = 285 + progress * 35;
   const hue = coldHue + (darkHue - coldHue) * progress;
+  const finished = state.finished ? "true" : "false";
+  const cssKey = `${progress.toFixed(2)}|${auraIntensity.toFixed(2)}|${Math.round(hue)}|${finished}`;
 
-  frame.style.setProperty("--aura-progress", progress.toFixed(3));
-  frame.style.setProperty("--aura-intensity", auraIntensity.toFixed(3));
-  frame.style.setProperty("--aura-hue", String(Math.round(hue)));
-  frame.dataset.finished = state.finished ? "true" : "false";
+  if (cssKey !== auraLastCssKey) {
+    auraLastCssKey = cssKey;
+    frame.style.setProperty("--aura-progress", progress.toFixed(3));
+    frame.style.setProperty("--aura-intensity", auraIntensity.toFixed(3));
+    frame.style.setProperty("--aura-hue", String(Math.round(hue)));
+    frame.dataset.finished = finished;
+  }
 
-  const now = performance.now();
+  if (!auraRunnersEnabled()) return;
+
   const runnerGap = state.finished ? 180 : 520 + Math.random() * 380;
   if (now - auraLastRunnerAt >= runnerGap) {
     auraLastRunnerAt = now;

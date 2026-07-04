@@ -218,3 +218,25 @@ body:has(#app[data-phase="replay"]) .ui-ornament-frame {
     opacity: 0.85;
   }
 }
+
+/* Light FX (auto на tablet/phone): без conic-gradient, бегущих эмодзи и breathe */
+html[data-battle-fx-light="true"] .battle-aura-runners {
+  display: none !important;
+}
+
+html[data-battle-fx-light="true"] .battle-aura-frame-glow {
+  animation: none;
+  box-shadow:
+    inset 0 0 0 2px hsla(var(--aura-hue), 78%, 58%, calc(0.38 + var(--aura-intensity) * 0.35)),
+    inset 0 0 calc(8px + var(--aura-intensity) * 14px) hsla(var(--aura-hue), 90%, 48%, calc(0.1 + var(--aura-intensity) * 0.22));
+}
+
+html[data-battle-fx-light="true"] .battle-aura-frame-glow::before {
+  animation: none;
+  opacity: calc(0.28 + var(--aura-progress) * 0.32);
+  filter: none;
+}
+
+html[data-battle-fx-light="true"] .battle-aura-frame-glow::after {
+  display: none;
+}

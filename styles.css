@@ -1360,6 +1360,12 @@ body:has(#app[data-phase="replay"]) #battle-controls:not(.hidden) {
   }
 }
 
+/* iPad / phone light FX: статичные стаки без вращающейся орбиты */
+html[data-battle-fx-light="true"] .avatar-stack-orbit-particle {
+  animation: none;
+  opacity: 0.92;
+}
+
 .avatar-damage-stacks {
   position: absolute;
   bottom: 100%;

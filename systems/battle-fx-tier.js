@@ -67,7 +67,16 @@
 
   function stackOrbitGapMs() {
     if (!isLightBattleFx()) return 70;
-    return isPhoneTier() ? 200 : 170;
+    return isPhoneTier() ? 220 : 280;
+  }
+
+  function auraPresentGapMs() {
+    if (!isLightBattleFx()) return 50;
+    return isPhoneTier() ? 220 : 180;
+  }
+
+  function auraRunnersEnabled() {
+    return !isLightBattleFx();
   }
 
   function syncLightBattleFxSettingsUi() {
@@ -91,6 +100,8 @@
     emotionPresentGapMs,
     arenaPresentGapMs,
     stackOrbitGapMs,
+    auraPresentGapMs,
+    auraRunnersEnabled,
     applyBattleFxTierFlags,
     syncLightBattleFxSettingsUi,
   };
