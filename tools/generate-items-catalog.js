@@ -141,6 +141,7 @@ function main() {
   lines.push("");
 
   const craftIds = data.items.filter((item) => item.craftOnly).map((item) => item.id);
+  lines.push("/** Заполняется syncCraftOutputIdSet() в systems/crafting.js из ITEM_RECIPES. */");
   lines.push(`const CRAFT_OUTPUT_IDS = new Set(${JSON.stringify(craftIds)});`);
   lines.push("");
   lines.push("function buildItemCatalog() {");

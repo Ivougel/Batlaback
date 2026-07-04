@@ -3760,6 +3760,8 @@ const ITEM_CATALOG_RAW = {
 
 const CRAFT_OUTPUT_IDS = new Set([]);
 
+/** Синхронизируется syncCraftOutputIdSet() в systems/crafting.js. */
+
 function buildItemCatalog() {
   const out = {};
   Object.entries(ITEM_CATALOG_RAW).forEach(([key, opts]) => {

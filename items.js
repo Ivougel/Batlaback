@@ -779,13 +779,21 @@ function defItem(opts) {
 
 /** Данные предметов — единый каталог в items-catalog.js (см. tools/items-migrated.json). */
 
+function isCraftOutputItemId(itemId) {
+  if (!itemId) return false;
+  if (typeof CRAFT_OUTPUT_IDS !== "undefined" && CRAFT_OUTPUT_IDS.has(itemId)) return true;
+  if (typeof getCraftOutputItemIds === "function") {
+    return getCraftOutputItemIds().includes(itemId);
+  }
+  return false;
+}
 
 function isShopEligibleItem(item, playerClass = null, round = 1) {
   if (!item || item.craftOnly) return false;
   if (item.isEnhancementItem) return false;
   if (item.isBuildKey) return false;
   if (item.isAmplifierItem) return false;
-  if (typeof CRAFT_OUTPUT_IDS !== "undefined" && CRAFT_OUTPUT_IDS.has(item.id)) return false;
+  if (isCraftOutputItemId(item.id)) return false;
   if (item.classRestriction && item.classRestriction !== playerClass) return false;
   if (item.isContainer) {
     if (!item.shopContainer || item.immovable) return false;

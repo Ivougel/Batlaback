@@ -156,7 +156,7 @@ function addItemToBenchOrShop(st, itemId, ctx, logFn, sourceName) {
 
 function rollCheapShopItem(ctx, maxCost = 3) {
   const pool = typeof getBaseShopPool === "function"
-    ? getBaseShopPool(ctx.playerClass, ctx.round).filter((i) => (i.cost ?? 0) <= maxCost && !i.craftOnly)
+    ? getBaseShopPool(ctx.playerClass, ctx.round).filter((i) => (i.cost ?? 0) <= maxCost && !i.craftOnly && !(typeof isCraftOutputItemId === "function" && isCraftOutputItemId(i.id)))
     : [];
   return pool.length ? pool[Math.floor(Math.random() * pool.length)].id : null;
 }

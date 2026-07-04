@@ -162,7 +162,7 @@ function getExpandedShopPool(ctx) {
   Object.values(ITEM_CATALOG).forEach((item) => {
     if (byId.has(item.id)) return;
     if (item.craftOnly) return;
-    if (typeof CRAFT_OUTPUT_IDS !== "undefined" && CRAFT_OUTPUT_IDS.has(item.id)) return;
+    if (isCraftOutputItemId(item.id)) return;
     if (isItemExcludedByShopModifiers(item, ctx)) return;
     if (!itemMatchesShopModifiers(item, mods)) return;
     if (item.isContainer && (!item.shopContainer || item.immovable)) return;

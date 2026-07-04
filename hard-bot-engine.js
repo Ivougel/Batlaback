@@ -33,6 +33,7 @@ function getHardBotItemPool(classId, round) {
 
   return pool.filter((item) => {
     if (!item || item.craftOnly || item.protected) return false;
+    if (typeof isCraftOutputItemId === "function" && isCraftOutputItemId(item.id)) return false;
     if (item.classRestriction && item.classRestriction !== classId) return false;
     if (item.isContainer && (!item.shopContainer || item.immovable)) return false;
     return true;

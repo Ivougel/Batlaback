@@ -118,7 +118,17 @@ function pruneCraftRecipesOutsidePool() {
 }
 
 pruneCraftRecipesOutsidePool();
+
+function syncCraftOutputIdSet() {
+  if (typeof CRAFT_OUTPUT_IDS === "undefined") return;
+  CRAFT_OUTPUT_IDS.clear();
+  ITEM_RECIPES.forEach((recipe) => {
+    if (recipe?.output) CRAFT_OUTPUT_IDS.add(recipe.output);
+  });
+}
+
 rebuildCraftRecipeIndex();
+syncCraftOutputIdSet();
 
 function recipeInputTotal(recipe) {
   return recipe.inputs.reduce((sum, input) => sum + input.count, 0);
