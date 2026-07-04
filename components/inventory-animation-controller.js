@@ -241,7 +241,6 @@ const InventoryAnimationController = (() => {
     const cells = typeof getItemCells === "function" ? getItemCells(item) : [];
     queuePlacement(item.uid, cells, true);
     triggerBackpackShake(def || ITEM_CATALOG?.[item.itemId]);
-    if (typeof playGameSfx === "function") playGameSfx("prep_place");
   }
 
   function notifyPlacementRejected(item) {
@@ -650,6 +649,9 @@ function getPrepDragVisualRotation() {
 function notifyPrepItemPlaced(item, def) {
   InventoryAnimationController.notifyItemPlaced(item, def);
   if (typeof CombatLog !== "undefined" && def) CombatLog.notifyItemPlaced(def);
+  if (typeof playPrepItemPlacedSfx === "function") {
+    playPrepItemPlacedSfx(item, def);
+  }
 }
 
 function notifyPrepPlacementRejected(item) {

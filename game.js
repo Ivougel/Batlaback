@@ -202,6 +202,7 @@ function playPrepSfx(id, opts) {
 }
 
 function setPrepDollOpen(open) {
+  const wasOpen = prepDollOpen;
   prepDollOpen = !!open;
   const app = document.getElementById("app");
   const btn = document.getElementById("btn-toggle-doll");
@@ -219,6 +220,11 @@ function setPrepDollOpen(open) {
     layer.setAttribute("aria-hidden", prepDollOpen ? "false" : "true");
   }
   if (!prepDollOpen && sidebarTooltipSource === "doll") hideSidebarTooltip();
+  if (prepDollOpen && !wasOpen && typeof playPrepCommerceSfx === "function") {
+    playPrepCommerceSfx("doll", "open");
+  } else if (!prepDollOpen && wasOpen && typeof playPrepCommerceSfx === "function") {
+    playPrepCommerceSfx("doll", "close");
+  }
 }
 
 function togglePrepDollOpen(e) {
@@ -1715,7 +1721,11 @@ function unequipEnhancementSlotToBench(slotId, side = prepViewSide) {
     ? getEnhancementDef(getEnhancementIdFromItem(item.itemId))
     : null;
   log(`📦 ${enhDef?.name || item.itemId} → скамейка`);
-  playPrepSfx("prep_pickup");
+  if (typeof playPrepEnhancementSfx === "function") {
+    playPrepEnhancementSfx("unequip", enhDef);
+  } else {
+    playPrepSfx("prep_pickup");
+  }
   return true;
 }
 
@@ -9922,6 +9932,14 @@ function finishDragDrop(e) {
             rotation: dragPayload.rotation || 0,
           });
           prepArcCelebrate = true;
+          const boughtDef = ITEM_CATALOG[itemId];
+          if (typeof playPrepBuyFanfare === "function") playPrepBuyFanfare(boughtDef);
+          if (boughtDef?.isEnhancementItem && typeof playPrepEnhancementSfx === "function") {
+            const enhDef = typeof getEnhancementDef === "function"
+              ? getEnhancementDef(typeof getEnhancementIdFromItem === "function" ? getEnhancementIdFromItem(itemId) : itemId)
+              : boughtDef;
+            playPrepEnhancementSfx("buy", enhDef || boughtDef);
+          }
         }
       } else {
         log("Скамейка полна!");
@@ -10878,12 +10896,13 @@ function log(msg) {
 
 function buildItemCardHTML(def, { cardType = "item-card", extraClasses = "", tagsHtml = "", innerBefore = "", innerAfter = "", dataAttrs = "", showShape = true, shapeSize = "md" } = {}) {
   const classes = getRarityCardClasses(def.rarity, [cardType, extraClasses].filter(Boolean).join(" "));
+  const rarityColor = getRarityNameColor(def.rarity);
   const shapeHtml = showShape ? renderItemShapeMiniHTML(def, { size: shapeSize }) : "";
   const iconHtml = `<div class="${getItemIconShellClass(def)}">${renderItemIconsHTML(def)}</div>`;
   const visualHtml = showShape
     ? `<div class="item-card-cluster">${iconHtml}${shapeHtml}</div>`
     : iconHtml;
-  return `<div class="${classes}"${dataAttrs ? ` ${dataAttrs}` : ""}>
+  return `<div class="${classes}" style="--item-rarity-color:${rarityColor}"${dataAttrs ? ` ${dataAttrs}` : ""}>
     ${innerBefore}
     ${visualHtml}
     <div class="info"><div class="name">${def.name}</div>${tagsHtml ? `<div class="tags">${tagsHtml}</div>` : ""}</div>

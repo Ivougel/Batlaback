@@ -178,13 +178,16 @@ function showRecipeBookPopup() {
   });
   overlay.classList.remove("hidden");
   document.body.classList.add("recipe-book-open");
+  if (typeof playPrepCommerceSfx === "function") playPrepCommerceSfx("recipe", "open");
   if (typeof refreshGamepadHints === "function") refreshGamepadHints();
 }
 
 function hideRecipeBookPopup() {
   hideSidebarTooltip();
+  const wasOpen = isRecipeBookOpen();
   document.getElementById("recipe-book-overlay")?.classList.add("hidden");
   document.body.classList.remove("recipe-book-open");
+  if (wasOpen && typeof playPrepCommerceSfx === "function") playPrepCommerceSfx("recipe", "close");
   if (typeof refreshGamepadHints === "function") refreshGamepadHints();
 }
 

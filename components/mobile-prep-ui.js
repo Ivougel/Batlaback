@@ -34,6 +34,9 @@
   }
 
   function setShopOpen(open) {
+    const wasOpen = usesPrepShopPopover()
+      ? (typeof window.isPrepShopPopoverOpen === "function" && window.isPrepShopPopoverOpen())
+      : document.documentElement.hasAttribute(OPEN_ATTR);
     const next = !!open;
     if (usesPrepShopPopover()) {
       if (typeof window.setPrepShopPopoverOpen === "function") {
@@ -67,6 +70,14 @@
       requestAnimationFrame(() => window.syncTabletPortraitShopRows());
     }
     if (typeof scheduleCanvasFit === "function") scheduleCanvasFit();
+    if (!usesPrepShopPopover() && usesPrepShopDrawer()) {
+      const isNowOpen = document.documentElement.hasAttribute(OPEN_ATTR);
+      if (isNowOpen && !wasOpen && typeof playPrepCommerceSfx === "function") {
+        playPrepCommerceSfx("shop", "open");
+      } else if (!isNowOpen && wasOpen && typeof playPrepCommerceSfx === "function") {
+        playPrepCommerceSfx("shop", "close");
+      }
+    }
   }
 
   function closeMobilePrepShop() {

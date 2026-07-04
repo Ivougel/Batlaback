@@ -12,26 +12,27 @@ const ThoughtArena = (() => {
   /** Доля диаметра тела, занимаемая глифом (без legacy-усадки 0.72). */
   const THOUGHT_GLYPH_FONT_RATIO = 0.90;
   /** Глобальный множитель амплитуды тряски/дрожи эмодзи-мыслей (1 = эталон). */
-  const THOUGHT_SHAKE_DYNAMICS = 0.82;
+  const THOUGHT_SHAKE_DYNAMICS = 0.58;
   const GLYPH_DANCE_STAGGER_S = 0.58;
+  const DANCE_TIME_SCALE = 0.72;
 
   /** Параметры «мысленного пузыря» — мягкая пружина, критическое демпфирование, левитация. */
   const PHYS = {
     anchored: {
-      springK: 13,
-      dampC: 7.4,
-      buoyancy: 12,
-      gravity: 11,
-      turbAmp: 0.32,
-      turbFreqScale: 0.38,
-      wallRest: 0.26,
-      wallFric: 0.9,
-      angSpring: 4.25,
-      angDamp: 5.4,
+      springK: 10.5,
+      dampC: 8.6,
+      buoyancy: 10,
+      gravity: 9,
+      turbAmp: 0.16,
+      turbFreqScale: 0.26,
+      wallRest: 0.18,
+      wallFric: 0.92,
+      angSpring: 3.2,
+      angDamp: 6.8,
       subSteps: 3,
-      renderSmooth: 18,
-      rotRenderSmooth: 14,
-      scaleSmooth: 3.2,
+      renderSmooth: 22,
+      rotRenderSmooth: 18,
+      scaleSmooth: 2.4,
     },
     arena: {
       restitution: 0.56,
@@ -85,10 +86,10 @@ const ThoughtArena = (() => {
     const arena = { ...PHYS.arena };
     if (light || flank) {
       anchored.subSteps = Math.min(anchored.subSteps, 2);
-      anchored.renderSmooth = 10;
-      anchored.rotRenderSmooth = 8;
-      anchored.springK *= 1.2;
-      anchored.dampC *= 1.25;
+      anchored.renderSmooth = 20;
+      anchored.rotRenderSmooth = 16;
+      anchored.springK *= 0.95;
+      anchored.dampC *= 1.08;
       arena.subSteps = 2;
     }
     if (prefersReducedThoughtMotion()) {
@@ -106,52 +107,52 @@ const ThoughtArena = (() => {
     return key;
   }
 
-  /** Плавные «танцы» мыслей — каждый глиф со своим phase offset. */
+  /** Плавные «танцы» мыслей — низкая частота, без резких рывков. */
   const THOUGHT_DANCE = {
     nod: (t, phase) => ({
       ox: 0,
-      oy: Math.sin(t * 2.4 + phase) * 3.2,
-      rot: Math.sin(t * 1.2 + phase) * 2.8,
+      oy: Math.sin(t * 1.35 + phase) * 2.4,
+      rot: Math.sin(t * 0.75 + phase) * 1.8,
       scale: 1,
     }),
     wobble: (t, phase) => ({
-      ox: Math.sin(t * 2.1 + phase * 1.2) * 2.8,
-      oy: Math.cos(t * 1.65 + phase * 0.9) * 2.2,
-      rot: Math.sin(t * 1.85 + phase) * 5.5,
+      ox: Math.sin(t * 1.15 + phase * 1.2) * 2.0,
+      oy: Math.cos(t * 0.95 + phase * 0.9) * 1.6,
+      rot: Math.sin(t * 1.05 + phase) * 3.2,
       scale: 1,
     }),
     bounce: (t, phase) => {
-      const s = Math.sin(t * 2.8 + phase * 0.75);
+      const s = Math.sin(t * 1.55 + phase * 0.75);
       return {
-        ox: Math.sin(t * 1.1 + phase) * 1.2,
-        oy: -Math.abs(s) * 4.8,
-        rot: s * 2.5,
-        scale: 1 + Math.max(0, s) * 0.065,
+        ox: Math.sin(t * 0.7 + phase) * 0.9,
+        oy: -Math.abs(s) * 3.2,
+        rot: s * 1.6,
+        scale: 1 + Math.max(0, s) * 0.04,
       };
     },
     grow: (t, phase) => ({
       ox: 0,
-      oy: Math.sin(t * 1.4 + phase) * 1.5,
+      oy: Math.sin(t * 0.85 + phase) * 1.1,
       rot: 0,
-      scale: 1 + Math.max(0, Math.sin(t * 2 + phase * 0.55)) * 0.12,
+      scale: 1 + Math.max(0, Math.sin(t * 1.15 + phase * 0.55)) * 0.08,
     }),
     fly: (t, phase) => ({
-      ox: Math.sin(t * 1.35 + phase * 1.1) * 4.2,
-      oy: -Math.abs(Math.sin(t * 1.75 + phase)) * 3.6,
-      rot: Math.sin(t * 1.5 + phase) * 7,
-      scale: 1 + Math.sin(t * 2.2 + phase) * 0.04,
+      ox: Math.sin(t * 0.8 + phase * 1.1) * 2.8,
+      oy: -Math.abs(Math.sin(t * 1.05 + phase)) * 2.4,
+      rot: Math.sin(t * 0.9 + phase) * 3.8,
+      scale: 1 + Math.sin(t * 1.25 + phase) * 0.025,
     }),
     dance: (t, phase) => ({
-      ox: Math.sin(t * 1.25 + phase * 1.45) * 4.8,
-      oy: Math.cos(t * 1.05 + phase * 0.85) * 3.6,
-      rot: Math.sin(t * 0.95 + phase * 1.15) * 9,
-      scale: 1 + Math.sin(t * 1.6 + phase) * 0.045,
+      ox: Math.sin(t * 0.75 + phase * 1.45) * 3.0,
+      oy: Math.cos(t * 0.68 + phase * 0.85) * 2.2,
+      rot: Math.sin(t * 0.62 + phase * 1.15) * 4.8,
+      scale: 1 + Math.sin(t * 0.95 + phase) * 0.03,
     }),
     particles: (t, phase) => ({
-      ox: (Math.sin(t * 3.2 + phase) + Math.sin(t * 5.1 + phase * 1.6)) * 1.4,
-      oy: Math.cos(t * 2.8 + phase) * 1.8,
-      rot: Math.sin(t * 3.6 + phase) * 4.5,
-      scale: 1 + Math.sin(t * 3.2 + phase) * 0.035,
+      ox: Math.sin(t * 1.35 + phase) * 1.1,
+      oy: Math.cos(t * 1.15 + phase) * 1.2,
+      rot: Math.sin(t * 1.25 + phase) * 2.4,
+      scale: 1 + Math.sin(t * 1.2 + phase) * 0.02,
     }),
   };
 
@@ -162,7 +163,7 @@ const ThoughtArena = (() => {
     const phase = body.dancePhaseOffset ?? 0;
     const raw = fn(t, phase);
     const vmin = viewportMin();
-    const amp = vmin * 0.00112 * THOUGHT_SHAKE_DYNAMICS;
+    const amp = vmin * 0.00092 * THOUGHT_SHAKE_DYNAMICS;
     return {
       ox: (raw.ox ?? 0) * amp,
       oy: (raw.oy ?? 0) * amp,
@@ -275,7 +276,7 @@ const ThoughtArena = (() => {
     body.rotVel += angAcc * dt;
     body.rotation += body.rotVel * dt;
 
-    body.wobbleAmp = Math.max(0.22, (body.wobbleAmp ?? 1) * (1 - dt * 0.35));
+    body.wobbleAmp = Math.max(0.18, (body.wobbleAmp ?? 1) * (1 - dt * 0.42));
 
     if ((body.glyphCount ?? 1) <= 1) {
       resolveWallCollision(body, w, h, prof.wallRest, prof.wallFric);
@@ -607,8 +608,8 @@ const ThoughtArena = (() => {
 
   function applyVisual(body) {
     const speed = Math.hypot(body.vx ?? 0, body.vy ?? 0);
-    const stretch = Math.min(0.018, speed * 0.0007);
-    const squash = 1 + stretch * Math.sin((body.turbPhase ?? 0) * 3.4);
+    const stretch = Math.min(0.008, speed * 0.0004);
+    const squash = 1 + stretch * Math.sin((body.turbPhase ?? 0) * 1.6);
     const dance = isAnchoredFlankArena() ? sampleThoughtDance(body) : { ox: 0, oy: 0, rot: 0, scaleMult: 1 };
     const scale = body.displayScale * squash * (body.reactScale ?? 1) * dance.scaleMult;
     const mirrorX = body.mirrorX ? -1 : 1;
@@ -648,8 +649,8 @@ const ThoughtArena = (() => {
     if (!clusters.has(side) || !spec) return;
     equipReactions[side].push({
       kind: spec.kind || "shake",
-      intensity: spec.intensity ?? 1,
-      duration: spec.duration ?? 0.35,
+      intensity: (spec.intensity ?? 1) * 0.72,
+      duration: spec.duration ?? 0.48,
       fromSide: spec.fromSide,
       styleId: spec.styleId,
       t: 0,
@@ -880,14 +881,6 @@ const ThoughtArena = (() => {
         if (!size || size.w <= 0 || size.h <= 0) return;
         const { w, h } = size;
 
-        const targetR = thoughtRadiusPx(body.glyphCount);
-        body.radius += (targetR - body.radius) * Math.min(1, subDt * 5);
-        body.displayScale += (body.targetScale - body.displayScale) * Math.min(1, subDt * (prof.scaleSmooth ?? 3.2));
-
-        if (body.fadeOut) {
-          body.opacity = Math.max(0, body.opacity - subDt * 4.5);
-        }
-
         const anchor = getLocalAnchorPx(w, h);
         body.homeX = anchor.x + (body.offsetOx || 0);
         body.homeY = anchor.y + (body.offsetOy || 0);
@@ -961,8 +954,34 @@ const ThoughtArena = (() => {
     });
   }
 
+  function smoothAnchoredRender(list, dt, prof) {
+    const posAlpha = expSmoothingAlpha(dt, prof.renderSmooth ?? 22);
+    const rotAlpha = expSmoothingAlpha(dt, prof.rotRenderSmooth ?? 18);
+    list.forEach((body) => {
+      const rx = body.renderX ?? body.x;
+      const ry = body.renderY ?? body.y;
+      body.renderX = rx + (body.x - rx) * posAlpha;
+      body.renderY = ry + (body.y - ry) * posAlpha;
+      const rr = body.renderRot ?? body.rotation ?? 0;
+      body.renderRot = rr + ((body.rotation ?? 0) - rr) * rotAlpha;
+    });
+  }
+
+  function advanceThoughtPresentation(list, dt, anchoredProf) {
+    list.forEach((body) => {
+      body.danceTime = (body.danceTime ?? 0) + dt * DANCE_TIME_SCALE;
+      const targetR = thoughtRadiusPx(body.glyphCount);
+      body.radius += (targetR - body.radius) * Math.min(1, dt * 4);
+      body.displayScale += (body.targetScale - body.displayScale) * Math.min(1, dt * (anchoredProf.scaleSmooth ?? 2.4));
+      if (body.fadeOut) {
+        body.opacity = Math.max(0, body.opacity - dt * 4.5);
+      }
+    });
+  }
+
   function thoughtsNeedMotionStep(list) {
     if (equipReactions.player.length || equipReactions.enemy.length) return true;
+    if (isAnchoredFlankArena() && !isStaticThoughts() && list.length > 0) return true;
     for (const body of list) {
       if (body.fadeOut) return true;
       if (Math.abs((body.displayScale ?? 1) - (body.targetScale ?? 1)) > 0.025) return true;
@@ -989,18 +1008,6 @@ const ThoughtArena = (() => {
       return;
     }
 
-    const gap = thoughtStepGapMs();
-    if (gap > 0) {
-      const now = performance.now();
-      if (now - lastThoughtStepAt < gap) {
-        if (thoughtsNeedMotionStep(getAllBodies())) {
-          scheduleThoughtWait(gap - (now - lastThoughtStepAt));
-        }
-        return;
-      }
-      lastThoughtStepAt = now;
-    }
-
     if (!lastTs) lastTs = ts;
     let dt = Math.min(MAX_DT, (ts - lastTs) / 1000);
     lastTs = ts;
@@ -1010,35 +1017,36 @@ const ThoughtArena = (() => {
     const anchored = isAnchoredFlankArena();
     const { anchored: anchoredProf, arena: arenaPhys } = thoughtPhysicsProfile();
 
-    list.forEach((body) => {
-      body.danceTime = (body.danceTime ?? 0) + dt;
-      const targetR = thoughtRadiusPx(body.glyphCount);
-      body.radius += (targetR - body.radius) * Math.min(1, dt * 5);
-      body.displayScale += (body.targetScale - body.displayScale) * Math.min(1, dt * (anchoredProf.scaleSmooth ?? 3.2));
-      if (body.fadeOut) {
-        body.opacity = Math.max(0, body.opacity - dt * 4.5);
-      }
-    });
+    advanceThoughtPresentation(list, dt, anchoredProf);
 
-    if (anchored) {
-      stepAnchoredSpring(list, dt, anchoredProf);
-    } else {
-      const arena = getArenaEl();
-      if (!arena) {
-        lastTs = 0;
-        return;
+    const gap = thoughtStepGapMs();
+    const now = performance.now();
+    const runPhysics = gap <= 0 || now - lastThoughtStepAt >= gap;
+    if (runPhysics) {
+      if (gap > 0) lastThoughtStepAt = now;
+
+      if (anchored) {
+        stepAnchoredSpring(list, dt, anchoredProf);
+      } else {
+        const arena = getArenaEl();
+        if (!arena) {
+          lastTs = 0;
+          return;
+        }
+        const w = arena.clientWidth;
+        const h = arena.clientHeight;
+        if (w <= 0 || h <= 0) {
+          scheduleFrame();
+          return;
+        }
+        stepArenaPhysics(list, w, h, dt, arenaPhys);
+        pruneFadedBodies();
       }
-      const w = arena.clientWidth;
-      const h = arena.clientHeight;
-      if (w <= 0 || h <= 0) {
-        scheduleFrame();
-        return;
-      }
-      stepArenaPhysics(list, w, h, dt, arenaPhys);
       pruneFadedBodies();
+    } else if (anchored) {
+      smoothAnchoredRender(list, dt, anchoredProf);
     }
 
-    pruneFadedBodies();
     stepEquipReactions(list, dt);
     getAllBodies().forEach(applyVisual);
 
@@ -1206,16 +1214,16 @@ const ThoughtArena = (() => {
   function pulseClusterMember(body) {
     if (isStaticThoughts()) return;
     const vmin = viewportMin();
-    const impulse = vmin * 0.009;
+    const impulse = vmin * 0.0055;
 
     if (isAnchoredFlankArena()) {
-      body.vy -= impulse * (0.1 + Math.random() * 0.04);
-      body.vx += (Math.random() - 0.5) * impulse * 0.06;
-      body.wobbleAmp = Math.min(0.38, (body.wobbleAmp ?? 1) + 0.08);
-      body.targetScale = 1 + 0.018 * THOUGHT_SHAKE_DYNAMICS;
+      body.vy -= impulse * (0.06 + Math.random() * 0.025);
+      body.vx += (Math.random() - 0.5) * impulse * 0.04;
+      body.wobbleAmp = Math.min(0.28, (body.wobbleAmp ?? 1) + 0.05);
+      body.targetScale = 1 + 0.012 * THOUGHT_SHAKE_DYNAMICS;
       window.setTimeout(() => {
         body.targetScale = 1;
-      }, 420);
+      }, 520);
       return;
     }
 
@@ -1231,7 +1239,7 @@ const ThoughtArena = (() => {
   function pulseCluster(cluster) {
     if (isStaticThoughts()) return;
     cluster.members.forEach((body, index) => {
-      window.setTimeout(() => pulseClusterMember(body), index * 130);
+      window.setTimeout(() => pulseClusterMember(body), index * 180);
     });
   }
 

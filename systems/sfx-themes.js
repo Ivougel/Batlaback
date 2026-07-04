@@ -1174,9 +1174,97 @@
     return sfx;
   }
 
+  /** Магазин, скамейка, кукла, рецепты, усиления — общие для всех тем. */
+  function applySharedPrepCommerceSfx(sfx, api) {
+    const { tone, arpeggio, noiseBurst } = api;
+
+    sfx.ui_confirm = () => {
+      arpeggio([523, 659, 784], 0.045, { volume: 0.075, type: "triangle", duration: 0.09 });
+    };
+
+    sfx.prep_shop_open = () => {
+      tone(330, 0.08, { volume: 0.04, type: "sine" });
+      window.setTimeout(() => arpeggio([392, 494, 587, 659], 0.04, { volume: 0.055, type: "triangle", duration: 0.08 }), 60);
+      window.setTimeout(() => noiseBurst(0.05, { volume: 0.028, freq: 1800, q: 1.2 }), 140);
+    };
+    sfx.prep_shop_close = () => {
+      tone(587, 0.07, { volume: 0.038, type: "triangle" });
+      window.setTimeout(() => tone(392, 0.1, { volume: 0.032, type: "sine" }), 55);
+    };
+    sfx.prep_bench_open = () => {
+      tone(220, 0.1, { volume: 0.05, type: "sine" });
+      window.setTimeout(() => tone(294, 0.09, { volume: 0.042, type: "triangle" }), 70);
+      window.setTimeout(() => noiseBurst(0.06, { volume: 0.035, freq: 420, q: 0.6 }), 90);
+    };
+    sfx.prep_bench_close = () => {
+      tone(262, 0.08, { volume: 0.04, type: "triangle" });
+      window.setTimeout(() => tone(196, 0.11, { volume: 0.034, type: "sine" }), 60);
+    };
+    sfx.prep_doll_open = () => {
+      arpeggio([440, 554], 0.05, { volume: 0.045, type: "sine", duration: 0.1 });
+      window.setTimeout(() => noiseBurst(0.07, { volume: 0.03, freq: 600, q: 0.5 }), 80);
+    };
+    sfx.prep_doll_close = () => {
+      tone(494, 0.07, { volume: 0.036, type: "triangle" });
+      window.setTimeout(() => tone(370, 0.09, { volume: 0.03, type: "sine" }), 50);
+    };
+    sfx.prep_recipe_open = () => {
+      noiseBurst(0.04, { volume: 0.025, freq: 2400, q: 1.5 });
+      window.setTimeout(() => tone(523, 0.08, { volume: 0.038, type: "sine" }), 40);
+      window.setTimeout(() => tone(659, 0.07, { volume: 0.032, type: "triangle" }), 100);
+    };
+    sfx.prep_recipe_close = () => {
+      tone(587, 0.06, { volume: 0.03, type: "triangle" });
+      window.setTimeout(() => noiseBurst(0.035, { volume: 0.02, freq: 2000, q: 1.3 }), 35);
+    };
+
+    sfx.prep_enh_equip = () => {
+      tone(523, 0.1, { volume: 0.05, type: "triangle" });
+      window.setTimeout(() => tone(784, 0.12, { volume: 0.048, type: "sine" }), 70);
+    };
+    sfx.prep_enh_equip_epic = () => {
+      arpeggio([494, 622, 740], 0.048, { volume: 0.055, type: "triangle", duration: 0.1 });
+      window.setTimeout(() => noiseBurst(0.06, { volume: 0.032, freq: 1600, q: 1.1 }), 120);
+    };
+    sfx.prep_enh_equip_legendary = () => {
+      arpeggio([523, 659, 784, 988], 0.05, { volume: 0.062, type: "sine", duration: 0.1 });
+      window.setTimeout(() => tone(1047, 0.14, { volume: 0.045, type: "triangle" }), 200);
+      window.setTimeout(() => noiseBurst(0.08, { volume: 0.038, freq: 2200, q: 1.4 }), 160);
+    };
+    sfx.prep_enh_unequip = () => {
+      tone(440, 0.08, { volume: 0.038, type: "sine" });
+      window.setTimeout(() => tone(330, 0.1, { volume: 0.034, type: "triangle" }), 55);
+    };
+    sfx.prep_enh_buy = () => {
+      arpeggio([587, 740], 0.042, { volume: 0.05, type: "sine", duration: 0.09 });
+    };
+    sfx.prep_enh_buy_epic = () => {
+      arpeggio([622, 784, 932], 0.045, { volume: 0.058, type: "triangle", duration: 0.09 });
+    };
+    sfx.prep_enh_buy_legendary = () => {
+      arpeggio([659, 831, 988, 1175], 0.048, { volume: 0.065, type: "sine", duration: 0.1 });
+    };
+
+    sfx.prep_buy_rare = () => {
+      tone(740, 0.09, { volume: 0.04, type: "sine" });
+    };
+    sfx.prep_buy_epic = () => {
+      arpeggio([587, 740, 880], 0.04, { volume: 0.048, type: "triangle", duration: 0.08 });
+    };
+    sfx.prep_buy_legendary = () => {
+      arpeggio([659, 831, 988], 0.045, { volume: 0.055, type: "sine", duration: 0.09 });
+      window.setTimeout(() => tone(1175, 0.1, { volume: 0.04, type: "triangle" }), 130);
+    };
+
+    return sfx;
+  }
+
   function buildSfxTheme(themeId, api) {
     const build = builders[themeId] || builders.classic;
-    return applySharedThoughtSfx(applySharedPrepClockSfx(build(api), api), api);
+    return applySharedPrepCommerceSfx(
+      applySharedThoughtSfx(applySharedPrepClockSfx(build(api), api), api),
+      api,
+    );
   }
 
   global.SfxThemes = {

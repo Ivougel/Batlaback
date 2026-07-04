@@ -53,6 +53,7 @@
 
   function setOpen(open) {
     syncShopMount();
+    const wasOpen = isOpen();
     const next = !!(open && usesPrepShopPopover() && isPrepPhase());
     document.documentElement.toggleAttribute(OPEN_ATTR, next);
     if (!next) document.documentElement.removeAttribute("data-prep-drag-targets-board");
@@ -78,6 +79,11 @@
       requestAnimationFrame(() => window.positionPrepTooltipDock());
     }
     if (typeof scheduleCanvasFit === "function") scheduleCanvasFit();
+    if (next && !wasOpen && typeof playPrepCommerceSfx === "function") {
+      playPrepCommerceSfx("shop", "open");
+    } else if (!next && wasOpen && typeof playPrepCommerceSfx === "function") {
+      playPrepCommerceSfx("shop", "close");
+    }
   }
 
   function closePrepShopPopover() {

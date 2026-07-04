@@ -257,6 +257,13 @@ function buyFromShop(index, side = rt.getPrepViewSide()) {
   if (!itemId) return;
   st.bench.push({ itemId, uid: `bench-${Date.now()}-${Math.random().toString(36).slice(2, 5)}` });
   rt.playPrepSfx("prep_buy");
+  const boughtDef = ITEM_CATALOG[itemId];
+  if (typeof playPrepBuyFanfare === "function") playPrepBuyFanfare(boughtDef);
+  if (boughtDef?.isEnhancementItem && typeof playPrepEnhancementSfx === "function") {
+    const enhId = typeof getEnhancementIdFromItem === "function" ? getEnhancementIdFromItem(itemId) : null;
+    const enhDef = typeof getEnhancementDef === "function" && enhId ? getEnhancementDef(enhId) : boughtDef;
+    playPrepEnhancementSfx("buy", enhDef || boughtDef);
+  }
   if (side === rt.getPrepViewSide() && typeof CombatLog !== "undefined") {
     CombatLog.notifyPurchase(ITEM_CATALOG[itemId]);
   }
@@ -367,7 +374,7 @@ function renderShopCardHTML(def, { extraClasses = "", innerBefore = "", dataAttr
     )
     : "";
   const rarityColor = getRarityNameColor(def.rarity);
-  return `<div class="${classes}"${dataAttrs ? ` ${dataAttrs}` : ""} style="--shop-rarity-color:${rarityColor}">
+  return `<div class="${classes}"${dataAttrs ? ` ${dataAttrs}` : ""} style="--shop-rarity-color:${rarityColor};--item-rarity-color:${rarityColor}">
     <div class="shop-item-main">
       <div class="shop-item-stack">
         ${innerBefore}

@@ -471,8 +471,13 @@ function renderPrepEnhancementStripHtml(round, enhancements = {}, options = {}) 
       : def
         ? "enh-slot--filled"
         : "enh-slot--empty";
+    const rarityClass = def?.rarity ? ` rarity-${def.rarity}` : "";
+    const rarityColor = def?.rarity && typeof getRarityNameColor === "function"
+      ? getRarityNameColor(def.rarity)
+      : "";
+    const rarityStyle = rarityColor ? ` style="--item-rarity-color:${rarityColor}"` : "";
     return `
-      <div class="enh-slot ${stateClass}" data-enh-slot="${slot.slotId}" data-enh-id="${def?.id || ""}" title="${escapeEnhancementHtml(title)}">
+      <div class="enh-slot ${stateClass}${rarityClass}" data-enh-slot="${slot.slotId}" data-enh-id="${def?.id || ""}" title="${escapeEnhancementHtml(title)}"${rarityStyle}>
         <span class="enh-slot-kicker">${escapeEnhancementHtml(slotLabel)}</span>
         <span class="enh-slot-icon" aria-hidden="true">${icon}</span>
         ${nameHtml}
@@ -546,7 +551,7 @@ function renderEnhancementShopCardHTML(def, { extraClasses = "", innerBefore = "
   const classes = typeof getRarityCardClasses === "function"
     ? getRarityCardClasses(def.rarity, ["shop-card", "shop-card--enhancement", extraClasses].filter(Boolean).join(" "))
     : `shop-card shop-card--enhancement ${extraClasses}`.trim();
-  return `<div class="${classes}"${dataAttrs ? ` ${dataAttrs}` : ""} style="--shop-rarity-color:${rarityColor}">
+  return `<div class="${classes}"${dataAttrs ? ` ${dataAttrs}` : ""} style="--shop-rarity-color:${rarityColor};--item-rarity-color:${rarityColor}">
     <div class="shop-item-main">
       <div class="shop-item-stack shop-item-stack--enhancement">
         ${innerBefore}

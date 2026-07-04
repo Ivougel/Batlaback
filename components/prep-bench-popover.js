@@ -66,6 +66,7 @@
   }
 
   function setOpen(open) {
+    const wasOpen = isOpen();
     const next = !!(open && usesPrepBenchPopover() && isPrepPhase());
     document.documentElement.toggleAttribute(OPEN_ATTR, next);
     const popover = document.getElementById("prep-bench-popover");
@@ -84,6 +85,11 @@
     }
     if (typeof window.positionPrepTooltipDock === "function") {
       requestAnimationFrame(() => window.positionPrepTooltipDock());
+    }
+    if (next && !wasOpen && typeof playPrepCommerceSfx === "function") {
+      playPrepCommerceSfx("bench", "open");
+    } else if (!next && wasOpen && typeof playPrepCommerceSfx === "function") {
+      playPrepCommerceSfx("bench", "close");
     }
   }
 
