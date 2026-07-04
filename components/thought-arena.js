@@ -11,6 +11,8 @@ const ThoughtArena = (() => {
   const CLUSTER_MAX_SPREAD_RATIO = 1.35;
   /** Доля диаметра тела, занимаемая глифом (без legacy-усадки 0.72). */
   const THOUGHT_GLYPH_FONT_RATIO = 0.90;
+  /** Глобальный множитель амплитуды тряски/дрожи эмодзи-мыслей (1 = эталон). */
+  const THOUGHT_SHAKE_DYNAMICS = 0.5;
 
   /** Параметры «мысленного пузыря» — мягкая пружина, критическое демпфирование, левитация. */
   const PHYS = {
@@ -19,11 +21,11 @@ const ThoughtArena = (() => {
       dampC: 7.4,
       buoyancy: 12,
       gravity: 11,
-      turbAmp: 2.2,
+      turbAmp: 1.1,
       turbFreqScale: 0.48,
       wallRest: 0.26,
       wallFric: 0.9,
-      angSpring: 8.5,
+      angSpring: 4.25,
       angDamp: 5.4,
       subSteps: 3,
       renderSmooth: 18,
@@ -199,7 +201,7 @@ const ThoughtArena = (() => {
     body.rotVel += angAcc * dt;
     body.rotation += body.rotVel * dt;
 
-    body.wobbleAmp = Math.max(0.45, (body.wobbleAmp ?? 1) * (1 - dt * 0.35));
+    body.wobbleAmp = Math.max(0.22, (body.wobbleAmp ?? 1) * (1 - dt * 0.35));
 
     if ((body.glyphCount ?? 1) <= 1) {
       resolveWallCollision(body, w, h, prof.wallRest, prof.wallFric);
@@ -505,7 +507,7 @@ const ThoughtArena = (() => {
 
   function applyVisual(body) {
     const speed = Math.hypot(body.vx ?? 0, body.vy ?? 0);
-    const stretch = Math.min(0.05, speed * 0.0018);
+    const stretch = Math.min(0.025, speed * 0.0009);
     const squash = 1 + stretch * Math.sin((body.turbPhase ?? 0) * 4.2);
     const scale = body.displayScale * squash * (body.reactScale ?? 1);
     const mirrorX = body.mirrorX ? -1 : 1;
@@ -545,6 +547,17 @@ const ThoughtArena = (() => {
       t: 0,
     });
     scheduleFrame();
+  }
+
+  function scaleThoughtReaction(sample) {
+    if (!sample || THOUGHT_SHAKE_DYNAMICS === 1) return sample;
+    const s = THOUGHT_SHAKE_DYNAMICS;
+    const out = { ...sample };
+    if (sample.ox) out.ox = sample.ox * s;
+    if (sample.oy) out.oy = sample.oy * s;
+    if (sample.rot) out.rot = sample.rot * s;
+    if (sample.scale != null) out.scale = 1 + (sample.scale - 1) * s;
+    return out;
   }
 
   function sampleEquipReaction(spec, p, vmin) {
@@ -708,7 +721,7 @@ const ThoughtArena = (() => {
 
       reactions.forEach((spec) => {
         const p = Math.min(1, spec.t / spec.duration);
-        const sample = sampleEquipReaction(spec, p, vmin);
+        const sample = scaleThoughtReaction(sampleEquipReaction(spec, p, vmin));
         ox += sample.ox || 0;
         oy += sample.oy || 0;
         scale *= sample.scale ?? 1;
@@ -989,7 +1002,7 @@ const ThoughtArena = (() => {
       : spawnPosition(w, h, r * glyphCount, side);
     const baseVel = anchored ? { vx: 0, vy: 0 } : randomVelocity(arenaPhys);
     const vmin = viewportMin();
-    const perturb = anchored ? vmin * 0.0012 : vmin * 0.018;
+    const perturb = anchored ? vmin * 0.0006 : vmin * 0.018;
     const physicsGlyphCount = splitMounts ? 1 : glyphCount;
 
     const members = glyphs.map((glyph, index) => {
@@ -1029,20 +1042,20 @@ const ThoughtArena = (() => {
         y,
         renderX: x,
         renderY: y,
-        renderRot: (Math.random() - 0.5) * 4,
+        renderRot: (Math.random() - 0.5) * 2,
         vx: baseVel.vx + (Math.random() - 0.5) * perturb,
         vy: baseVel.vy + (Math.random() - 0.5) * perturb,
         mass: 0.92 + glyphCount * 0.06 + index * 0.04,
         turbSeed: Math.random() * 80,
         turbPhase: Math.random() * Math.PI * 2,
         radius: r * 0.65,
-        rotation: (Math.random() - 0.5) * 4,
-        rotVel: (Math.random() - 0.5) * 3,
+        rotation: (Math.random() - 0.5) * 2,
+        rotVel: (Math.random() - 0.5) * 1.5,
         displayScale: anchored ? 1 : 0.42,
         targetScale: 1,
         opacity: 1,
         fadeOut: false,
-        wobbleAmp: 0.55,
+        wobbleAmp: 0.28,
         mirrorX: usesThoughtDuelMirror() && side === "player",
       };
       styleBodyEl(body, glyph);
@@ -1058,10 +1071,10 @@ const ThoughtArena = (() => {
 
     if (isAnchoredFlankArena()) {
       cluster.members.forEach((body) => {
-        body.vy -= impulse * (0.28 + Math.random() * 0.12);
-        body.vx += (Math.random() - 0.5) * impulse * 0.18;
-        body.wobbleAmp = Math.min(1.25, (body.wobbleAmp ?? 1) + 0.28);
-        body.targetScale = 1.025;
+        body.vy -= impulse * (0.14 + Math.random() * 0.06);
+        body.vx += (Math.random() - 0.5) * impulse * 0.09;
+        body.wobbleAmp = Math.min(0.62, (body.wobbleAmp ?? 1) + 0.14);
+        body.targetScale = 1 + 0.025 * THOUGHT_SHAKE_DYNAMICS;
       });
       window.setTimeout(() => {
         cluster.members.forEach((body) => {
