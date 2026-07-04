@@ -21,7 +21,7 @@
     if (prefersReducedMotion()) return true;
     const stored = readStoredLightFx();
     if (stored !== null) return stored;
-    return isAutoLightTier();
+    return true;
   }
 
   function isPhoneTier() {
@@ -54,10 +54,10 @@
     }
   }
 
-  /** ~25–30 FPS cap для орбиты/мыслей во flank-бою (0 = лаги на планшете). */
+  /** ~12–14 FPS cap для орбиты/мыслей во flank-бою (0 = лаги на планшете). */
   function flankFxStepGapMs() {
-    if (prefersReducedMotion()) return 80;
-    return isPhoneTier() ? 48 : 40;
+    if (prefersReducedMotion()) return 96;
+    return isPhoneTier() ? 80 : 72;
   }
 
   function arenaPhysicsGapMs() {
@@ -78,24 +78,24 @@
   }
 
   function equipSyncGapMs() {
-    if (isFlankBattleThoughtFxActive()) return 450;
+    if (isFlankBattleThoughtFxActive()) return isPhoneTier() ? 700 : 650;
     if (!isLightBattleFx()) return 450;
     return isPhoneTier() ? 550 : 650;
   }
 
   function emotionPresentGapMs() {
-    if (isFlankBattleThoughtFxActive()) return isPhoneTier() ? 110 : 90;
+    if (isFlankBattleThoughtFxActive()) return isPhoneTier() ? 200 : 160;
     if (!isLightBattleFx()) return 66;
     return isPhoneTier() ? 120 : 100;
   }
 
   function arenaPresentGapMs() {
-    if (isFlankBattleThoughtFxActive()) return 550;
+    if (isFlankBattleThoughtFxActive()) return 720;
     return isLightBattleFx() ? 500 : 450;
   }
 
   function stackOrbitGapMs() {
-    if (isFlankBattleThoughtFxActive()) return isPhoneTier() ? 140 : 110;
+    if (isFlankBattleThoughtFxActive()) return isPhoneTier() ? 220 : 180;
     if (!isLightBattleFx()) return 70;
     return isPhoneTier() ? 220 : 280;
   }
@@ -105,7 +105,17 @@
     return isPhoneTier() ? 220 : 180;
   }
 
+  function stackOrbitParticlesEnabled() {
+    if (prefersReducedMotion()) return false;
+    if (isLightBattleFx()) return false;
+    return true;
+  }
+
   function auraRunnersEnabled() {
+    return !isLightBattleFx();
+  }
+
+  function battleAuraFrameEnabled() {
     return !isLightBattleFx();
   }
 
@@ -130,8 +140,10 @@
     emotionPresentGapMs,
     arenaPresentGapMs,
     stackOrbitGapMs,
+    stackOrbitParticlesEnabled,
     auraPresentGapMs,
     auraRunnersEnabled,
+    battleAuraFrameEnabled,
     equipIdleWobbleEnabled,
     equipSyncGapMs,
     applyBattleFxTierFlags,

@@ -594,7 +594,12 @@ function analyzeBattleState(battleState, elapsedReal) {
 }
 
 function bootstrapBattleThoughts(opts = {}) {
-  if (opts.battleState) emotionActiveBattle = opts.battleState;
+  if (opts.battleState) {
+    if (opts.battleState === emotionActiveBattle && emotionEngine.playerMain && emotionEngine.enemyMain) {
+      return;
+    }
+    emotionActiveBattle = opts.battleState;
+  }
   ensureMainEmotions();
   const playerEmoji = opts.playerEmoji || DEFAULT_MAIN_EMOJI.player;
   const enemyEmoji = opts.enemyEmoji || DEFAULT_MAIN_EMOJI.enemy;

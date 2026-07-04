@@ -79,13 +79,17 @@ const ThoughtArena = (() => {
 
   function thoughtPhysicsProfile() {
     const light = typeof BattleFxTier !== "undefined" && BattleFxTier.isLightBattleFx();
+    const flank = isAnchoredFlankArena();
     const anchored = { ...PHYS.anchored };
     const arena = { ...PHYS.arena };
-    if (light) {
-      anchored.turbAmp *= 0.55;
+    if (light || flank) {
+      anchored.turbAmp = 0;
       anchored.subSteps = 1;
+      anchored.renderSmooth = 10;
+      anchored.rotRenderSmooth = 8;
+      anchored.springK *= 1.35;
+      anchored.dampC *= 1.45;
       arena.subSteps = 2;
-      arena.spawnSpeedMax *= 0.75;
     }
     if (prefersReducedThoughtMotion()) {
       anchored.turbAmp = 0;
@@ -852,6 +856,27 @@ const ThoughtArena = (() => {
     });
   }
 
+  function thoughtsNeedMotionStep(list) {
+    if (equipReactions.player.length || equipReactions.enemy.length) return true;
+    const anchoredLight = isAnchoredFlankArena()
+      && typeof BattleFxTier !== "undefined"
+      && BattleFxTier.isLightBattleFx();
+    if (anchoredLight) {
+      return list.some((body) => body.fadeOut || (body.opacity ?? 1) < 0.97);
+    }
+    for (const body of list) {
+      if (body.fadeOut) return true;
+      if (Math.abs((body.displayScale ?? 1) - (body.targetScale ?? 1)) > 0.025) return true;
+      if ((body.opacity ?? 1) < 0.97) return true;
+      if (Math.hypot(body.vx ?? 0, body.vy ?? 0) > 0.35) return true;
+      if (Math.abs(body.rotVel ?? 0) > 0.6) return true;
+      if (Math.abs((body.renderX ?? body.x) - body.x) > 0.35) return true;
+      if (Math.abs((body.renderY ?? body.y) - body.y) > 0.35) return true;
+      if (body.reactOx || body.reactOy || body.reactRot || body.reactFilter) return true;
+    }
+    return false;
+  }
+
   function step(ts) {
     rafId = null;
     if (clusters.size === 0) {
@@ -865,16 +890,16 @@ const ThoughtArena = (() => {
       return;
     }
 
-    if (isAnchoredFlankArena()) {
-      const gap = thoughtStepGapMs();
-      if (gap > 0) {
-        const now = performance.now();
-        if (now - lastThoughtStepAt < gap) {
+    const gap = thoughtStepGapMs();
+    if (gap > 0) {
+      const now = performance.now();
+      if (now - lastThoughtStepAt < gap) {
+        if (thoughtsNeedMotionStep(getAllBodies())) {
           scheduleThoughtWait(gap - (now - lastThoughtStepAt));
-          return;
         }
-        lastThoughtStepAt = now;
+        return;
       }
+      lastThoughtStepAt = now;
     }
 
     if (!lastTs) lastTs = ts;
@@ -917,8 +942,11 @@ const ThoughtArena = (() => {
     stepEquipReactions(list, dt);
     getAllBodies().forEach(applyVisual);
 
-    if (clusters.size > 0) scheduleFrame();
-    else lastTs = 0;
+    if (thoughtsNeedMotionStep(list)) {
+      scheduleFrame();
+    } else {
+      lastTs = 0;
+    }
   }
 
   function cancelThoughtScheduler() {

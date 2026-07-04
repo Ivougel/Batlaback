@@ -313,9 +313,15 @@ const ArenaEquipment = (() => {
     const elapsed = battleState.elapsed || 0;
     const est = estimateBattleDuration(battleState);
     battleDurationEst = est;
+    const light = typeof BattleFxTier !== "undefined" && BattleFxTier.isLightBattleFx();
+    const flank = isFlankAttackLayout();
+    const cut = light || flank;
+    const minBursts = cut ? 2 : MIN_BURSTS;
+    const maxBursts = cut ? 5 : MAX_BURSTS;
+    const spacing = cut ? BURST_SPACING_SEC * 2.5 : BURST_SPACING_SEC;
     const totalBursts = Math.max(
-      MIN_BURSTS,
-      Math.min(MAX_BURSTS, Math.round(est / BURST_SPACING_SEC)),
+      minBursts,
+      Math.min(maxBursts, Math.round(est / spacing)),
     );
     const remaining = Math.max(4, est - elapsed);
     const interval = remaining / totalBursts;

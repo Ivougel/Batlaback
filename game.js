@@ -3659,6 +3659,12 @@ function shouldDrawCanvasLoadoutInBattle() {
   return document.documentElement.dataset.battleHeroPlacement !== "flank-arena";
 }
 
+function shouldThrottleBattleCanvasDraw() {
+  if (!isBattleUiPhase()) return false;
+  if (document.documentElement.dataset.battleHeroPlacement === "flank-arena") return true;
+  return typeof BattleFxTier !== "undefined" && BattleFxTier.isLightBattleFx();
+}
+
 function getAppDataPhase() {
   if (phase === "battle" || phase === "replay") return phase;
   return "prep";
@@ -6115,6 +6121,9 @@ function endBattle() {
   if (typeof ThoughtArena !== "undefined" && typeof ThoughtArena.clearAll === "function") {
     ThoughtArena.clearAll();
   }
+  renderPlayerProfiles._bootKey = null;
+  renderPlayerProfiles._avatarAt = 0;
+  renderPlayerProfiles._gridSynced = false;
 
   let battleSummary;
   try {
@@ -6570,7 +6579,9 @@ function tickBattlePresentation() {
   }
   if (now - tickBattlePresentation._at.aura >= auraGap) {
     tickBattlePresentation._at.aura = now;
-    if (typeof syncBattleAuraFrame === "function") {
+    const auraOk = typeof BattleFxTier === "undefined"
+      || (BattleFxTier.battleAuraFrameEnabled?.() ?? !BattleFxTier.isLightBattleFx());
+    if (auraOk && typeof syncBattleAuraFrame === "function") {
       syncBattleAuraFrame(presentState, elapsed);
     }
   }
@@ -6642,7 +6653,7 @@ function tickLobbyRoundBattles(dt, ts) {
     flushBattleEvents();
   }
 
-  const uiTickMs = typeof getLobbyBackgroundSimHz === "function" && getLobbyBackgroundSimHz() <= 3 ? 800 : 650;
+  const uiTickMs = typeof getLobbyBackgroundSimHz === "function" && getLobbyBackgroundSimHz() <= 3 ? 1000 : 900;
   if (Math.floor(ts / uiTickMs) !== Math.floor((ts - dt * 1000) / uiTickMs)) {
     renderBattleStats();
     renderPlayerProfiles();
@@ -6844,7 +6855,21 @@ function gameLoop(ts) {
     }
   }
   try {
-    draw();
+    const needsSmoothDraw = !!dragPayload || synergyState.isDragging;
+    const throttleBattleDraw = shouldThrottleBattleCanvasDraw() && !needsSmoothDraw;
+    if ((phase === "prep" && !needsSmoothDraw) || throttleBattleDraw) {
+      const accKey = throttleBattleDraw ? "_battleDrawAcc" : "_drawAcc";
+      const fps = throttleBattleDraw ? 20 : 30;
+      gameLoop[accKey] = (gameLoop[accKey] || 0) + dt;
+      if (gameLoop[accKey] < 1 / fps) {
+        // skip canvas redraw this frame
+      } else {
+        gameLoop[accKey] = 0;
+        draw();
+      }
+    } else {
+      draw();
+    }
   } catch (err) {
     console.error("draw failed:", err);
   }
@@ -10519,13 +10544,17 @@ function renderPlayerProfiles(opts = {}) {
 
   const liveBattle = phase === "battle" || phase === "replay";
   if (liveBattle && viewState && typeof bootstrapBattleThoughts === "function") {
-    if (typeof syncBattleArenaLayout === "function") syncBattleArenaLayout();
-    if (typeof window.syncHeroEmotionSlotAnchors === "function") {
-      window.syncHeroEmotionSlotAnchors();
+    if (renderPlayerProfiles._bootKey !== viewState) {
+      renderPlayerProfiles._bootKey = viewState;
+      renderPlayerProfiles._gridSynced = false;
+      if (typeof syncBattleArenaLayout === "function") syncBattleArenaLayout();
+      if (typeof window.syncHeroEmotionSlotAnchors === "function") {
+        window.syncHeroEmotionSlotAnchors();
+      }
+      bootstrapBattleThoughts({
+        battleState: viewState,
+      });
     }
-    bootstrapBattleThoughts({
-      battleState: viewState,
-    });
   }
 
   if (!statsEl || !playerAvatarEl || !enemyAvatarEl) return;
@@ -10581,7 +10610,8 @@ function renderPlayerProfiles(opts = {}) {
         }
       }
     }
-    if (!lightSpectate && typeof syncBattleSceneGridMetrics === "function") {
+    if (!lightSpectate && typeof syncBattleSceneGridMetrics === "function" && !renderPlayerProfiles._gridSynced) {
+      renderPlayerProfiles._gridSynced = true;
       requestAnimationFrame(() => syncBattleSceneGridMetrics());
     }
   } else {
@@ -10601,7 +10631,14 @@ function renderPlayerProfiles(opts = {}) {
   }
   if (liveBattle && viewState) {
     viewState._heroProfiles = { player: playerProfile, enemy: enemyProfile };
-    syncAllAvatarHeroEffects(playerProfile, enemyProfile, viewState);
+    const avatarNow = performance.now();
+    const avatarGap = 200;
+    if (avatarNow - (renderPlayerProfiles._avatarAt || 0) >= avatarGap) {
+      renderPlayerProfiles._avatarAt = avatarNow;
+      syncAllAvatarHeroEffects(playerProfile, enemyProfile, viewState);
+    } else if (typeof syncLiveAvatarHeroFrame === "function") {
+      syncLiveAvatarHeroFrame(viewState);
+    }
     if (document.documentElement.dataset.battlePrepHeroLayer === "true"
       && typeof syncPrepBuildEmojiBtn === "function") {
       syncPrepBuildEmojiBtn({
@@ -10625,7 +10662,7 @@ function renderPlayerProfiles(opts = {}) {
     }
     if (!lightSpectate && typeof updateBattleAnalyzer === "function") updateBattleAnalyzer(viewState, 0);
   }
-  if (!lightSpectate) syncBattleArenaLayout();
+  if (!lightSpectate && !liveBattle) syncBattleArenaLayout();
 }
 
 function renderRunStats() {

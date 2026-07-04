@@ -190,6 +190,11 @@ function isPrepHeroStackOrbitDisabled() {
 
 function syncStackOrbitFromBattle(battleState, opts = {}) {
   if (!battleState || battleState.finished) return;
+  if (typeof BattleFxTier !== "undefined" && BattleFxTier.stackOrbitParticlesEnabled
+    && !BattleFxTier.stackOrbitParticlesEnabled()) {
+    clearStackOrbitRings();
+    return;
+  }
   if (isPrepHeroStackOrbitDisabled()) {
     clearStackOrbitRings();
     return;
