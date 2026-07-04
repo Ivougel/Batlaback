@@ -50,6 +50,17 @@
 
 Touch-цели: `min-height: var(--touch-target-min)` (≥ 44px).
 
+## Эталон HUD — iPad mini 7 PWA (LOCKED)
+
+> **Зафиксировано 2026-07-04.** Gold-скрины: `tools/baseline/prep-ipad-mini-pwa-gold.png`, `tools/baseline/battle-ipad-mini-pwa-gold.png`.  
+> Git-база: коммит `464f042`. Правило для агента: `.cursor/rules/prep-hud-layout-baseline.mdc`.
+
+**Prep (1133×744, `tablet-side`):** hero-card с крупным bust-портретом · full-body герой слева · сетка 7×9 у **правого** края · узкий магазин справа · bottom chrome с метриками.
+
+**Battle:** flank-arena · full-bleed портреты по бокам · HP/stamina под героем · toolbar внизу.
+
+Косметику (цвета, glow, SFX) можно менять; **геометрию и размеры зон HUD — нет**, пока пользователь явно не попросит.
+
 ## CSS по поверхностям
 
 | Файл | Поверхность |

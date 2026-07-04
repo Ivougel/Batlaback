@@ -1,0 +1,55 @@
+---
+description: Зафиксированный эталон HUD prep/battle — iPad mini 7 PWA; размеры и зоны не менять
+globs: ui-layout.js,styles/prep-*.css,styles/tablet-side.css,styles/hero-*.css,styles/battle-*.css,styles/shop.css,components/prep-hud-*.js,LAYOUT.md
+alwaysApply: true
+---
+
+# Эталон HUD (iPad mini 7 PWA) — LOCKED
+
+**Git-база:** `464f042` (2026-07-03, вечер).  
+**Референсы:** `tools/baseline/prep-ipad-mini-pwa-gold.png`, `tools/baseline/battle-ipad-mini-pwa-gold.png`  
+**Viewport:** 1133×744 landscape, `data-ui-surface="tablet-side"`, `data-hero-card-mode="full-bleed"`.
+
+## Prep — как должно быть (не менять геометрию)
+
+| Зона | Эталон |
+|------|--------|
+| **Hero card HUD** | Крупный прямоугольный bust-портрет слева + stats/mutation/enhancements справа. Не кружок, не compact top-bar. |
+| **Герой на поле** | Full-body слева (`prep-character-layer`), не перекрывает сетку. |
+| **Инвентарь (7×9)** | Прижат **к правому краю** поля, вплотную к магазину. Слева — воздух под героя (`--prep-hero-reserve-w`). |
+| **Магазин** | Узкая правая колонка, высота по контенту, компактные ряды. Скамейка — FAB/popover, не раздувает панель. |
+| **Bottom chrome** | Золото / HP / раунд / таймер / «БОЙ» — как на gold-скрине. |
+
+## Battle — как должно быть
+
+| Зона | Эталон |
+|------|--------|
+| **Раскладка** | `flank-arena`: full-bleed портреты по бокам, арена по центру. |
+| **Портреты** | Крупные, full-body, HP/stamina под героем. |
+| **Toolbar** | x1/x2/x3, пропуск, emoji-статусы — в нижнем chrome, не ломая колонки героев. |
+
+## Можно менять (косметика)
+
+- Цвета, темы (meadow/diablo), рамки, glow, SFX, анимации, tooltip-тексты
+- Иконки предметов, emoji-орбиты, lobby-roster polish
+- Новые кнопки **внутри** существующих зон, если не сдвигают соседей
+
+## Нельзя без явного запроса пользователя
+
+- Менять `--shop-panel-w`, `PREP_PROFILES.tablet-landscape`, `IPAD_MINI_SHOP`, row-h магазина
+- Менять ориентацию/позицию сетки (7×9 → другое, center вместо flex-end)
+- Сворачивать hero-card HUD в круг / compact chip
+- Раздувать магазин (340px+, крупные touch-карточки на всю колонку)
+- Переносить bench обратно в `#shop-panel` на tablet-side
+- Менять `BATTLE_PROFILES["tablet-landscape-side"]` zone shares / hero img ratio
+
+## Файлы-владельцы (осторожно)
+
+- `ui-layout.js` — `syncTabletSidePrepGridMetrics`, `applyPrepProfileVars`, `fitFlankArenaBattleLayout`
+- `styles/prep-tablet-zone-layout.css`, `styles/tablet-side.css`, `styles/prep-hero-card.css`
+- `styles/hero-portrait-frame.css`, `styles/hero-card.css`, `styles/battle-arena-layout.css`
+
+## Перед merge UI-изменений
+
+1. Сверить с gold PNG на iPad mini PWA (1133×744)
+2. `npm run test:layout` + `npm run test:snapshots` если трогали layout/CSS
