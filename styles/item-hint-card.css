@@ -196,6 +196,7 @@ html[data-prep-theme="diablo"] .item-hint-card__art {
 
 html[data-game-phase="prep"] #prep-tooltip-dock:not(.hidden):has(.sidebar-tooltip--card:not(.hidden)),
 html[data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--hero-grid:not(.hidden):has(.sidebar-tooltip--card:not(.hidden)),
+html[data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--hero-portrait:not(.hidden):has(.sidebar-tooltip--card:not(.hidden)),
 html[data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--item:not(.hidden):has(.sidebar-tooltip--card:not(.hidden)) {
   padding: 0 !important;
   background: transparent !important;
@@ -259,6 +260,12 @@ html[data-ui-surface="tablet-side"][data-game-phase="prep"] #prep-tooltip-dock.p
   width: auto;
   max-width: calc(240px * var(--ui-scale, 1));
   max-height: none;
+}
+
+html[data-ui-surface="tablet-side"][data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--hero-portrait .sidebar-tooltip.sidebar-tooltip--card:not(.hidden) {
+  width: auto;
+  max-width: min(100%, calc(228px * var(--ui-scale, 1)));
+  max-height: min(42vh, calc(280px * var(--ui-scale, 1)));
 }
 
 html[data-touch="true"] .item-hint-card {

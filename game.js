@@ -2714,6 +2714,37 @@ function getPrepHeroGridTooltipZone(margin = 10) {
   return { left, right, top, bottom };
 }
 
+/** Зона портрета героя на prep (tablet-side): тултипы предметов магазина. */
+function getPrepHeroPortraitTooltipZone(margin = 8) {
+  const heroLayer = document.getElementById("prep-character-layer");
+  const heroVisual = heroLayer?.querySelector(".prep-character-img, .prep-character-emoji, .prep-character");
+  const topBar = document.getElementById("prep-top-bar");
+  const bottomChrome = document.getElementById("bottom-chrome");
+
+  const heroRect = (heroVisual?.getBoundingClientRect().width > 24)
+    ? heroVisual.getBoundingClientRect()
+    : heroLayer?.getBoundingClientRect();
+  if (!heroRect || heroRect.width < 24) return null;
+
+  const topBarRect = topBar?.getBoundingClientRect();
+  const bottomRect = bottomChrome?.getBoundingClientRect();
+  const vv = window.visualViewport;
+  const viewTop = (topBarRect?.bottom ?? vv?.offsetTop ?? 0) + margin;
+  const viewBottom = (bottomRect?.top ?? (vv?.offsetTop ?? 0) + (vv?.height ?? window.innerHeight)) - margin;
+
+  const top = Math.max(viewTop, Math.round(heroRect.top + margin));
+  const bottom = Math.min(viewBottom, Math.round(heroRect.bottom - margin));
+  const left = Math.round(heroRect.left + margin);
+  const right = Math.round(heroRect.right - margin);
+  if (right - left < 48 || bottom - top < 48) return null;
+
+  return { left, right, top, bottom };
+}
+
+function isTabletSideShopHeroTooltipDock() {
+  return isTabletSidePrepTooltipDock() && sidebarTooltipSource === "shop";
+}
+
 function setPrepTooltipDockPassthrough(active) {
   const dock = document.getElementById("prep-tooltip-dock");
   if (!dock) return;
@@ -2728,23 +2759,24 @@ function syncPrepTooltipDockVisibility() {
 
   if (!isLivePrepSession()) {
     dock.classList.add("hidden");
-    dock.classList.remove("prep-tooltip-dock--passthrough", "prep-tooltip-dock--item", "prep-tooltip-dock--hero-grid");
+    dock.classList.remove("prep-tooltip-dock--passthrough", "prep-tooltip-dock--item", "prep-tooltip-dock--hero-grid", "prep-tooltip-dock--hero-portrait");
     return;
   }
 
   if (isMobilePrepPortrait() || isTabletSidePrepTooltipDock()) {
-    const shopOpen = document.documentElement.hasAttribute("data-prep-shop-open");
     const hasItemTip = el && !el.classList.contains("hidden")
       && !el.classList.contains("sidebar-tooltip--floating");
+    const shopHeroTip = hasItemTip && isTabletSideShopHeroTooltipDock();
     dock.classList.remove("prep-tooltip-dock--passthrough");
-    dock.classList.toggle("hidden", !hasItemTip || shopOpen);
+    dock.classList.toggle("hidden", !hasItemTip);
     dock.classList.toggle("prep-tooltip-dock--item", hasItemTip);
-    dock.classList.toggle("prep-tooltip-dock--hero-grid", isTabletSidePrepTooltipDock());
+    dock.classList.toggle("prep-tooltip-dock--hero-portrait", shopHeroTip);
+    dock.classList.toggle("prep-tooltip-dock--hero-grid", isTabletSidePrepTooltipDock() && hasItemTip && !shopHeroTip);
     if (hasItemTip) positionPrepTooltipDock();
     return;
   }
 
-  dock.classList.remove("prep-tooltip-dock--item", "prep-tooltip-dock--hero-grid");
+  dock.classList.remove("prep-tooltip-dock--item", "prep-tooltip-dock--hero-grid", "prep-tooltip-dock--hero-portrait");
 
   if (!el) return;
 
@@ -2844,6 +2876,21 @@ function positionTabletSidePrepTooltipDock(dock) {
   const root = document.documentElement;
   const uiScale = parseFloat(getComputedStyle(root).getPropertyValue("--ui-scale")) || 1;
   const margin = Math.round(6 * uiScale);
+
+  if (isTabletSideShopHeroTooltipDock()) {
+    const heroZone = getPrepHeroPortraitTooltipZone(margin);
+    if (heroZone) {
+      const zoneW = heroZone.right - heroZone.left;
+      const zoneH = heroZone.bottom - heroZone.top;
+      dock.style.left = `${heroZone.left}px`;
+      dock.style.top = `${heroZone.top}px`;
+      dock.style.width = `${zoneW}px`;
+      dock.style.maxHeight = `${zoneH}px`;
+      dock.style.height = `${zoneH}px`;
+      return;
+    }
+  }
+
   const zone = getPrepHeroGridTooltipZone(margin);
 
   if (!zone) {
@@ -11781,6 +11828,7 @@ function renderBattleStats() {
 
 window.positionPrepTooltipDock = positionPrepTooltipDock;
 window.getPrepHeroGridTooltipZone = getPrepHeroGridTooltipZone;
+window.getPrepHeroPortraitTooltipZone = getPrepHeroPortraitTooltipZone;
 window.syncPrepTooltipDockVisibility = syncPrepTooltipDockVisibility;
 window.isLivePrepSession = isLivePrepSession;
 window.bindPointerTapTooltip = bindPointerTapTooltip;
