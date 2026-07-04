@@ -61,28 +61,11 @@ html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #
   justify-content: center;
 }
 
+/* Grid pin → hero → cost — из item-card-chrome; здесь только ширина ячейки */
 html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-item-stack {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: calc(5px * var(--ui-scale, 1));
-  width: fit-content;
+  width: 100%;
   max-width: 100%;
-  min-width: 0;
-  padding-top: var(--shop-pin-size, calc(28px * var(--ui-scale, 1)));
-}
-
-html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-item-visual {
-  position: relative;
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-  overflow: visible;
+  margin-inline: auto;
 }
 
 html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-item-stack .shop-item-visual .icon,
@@ -136,14 +119,8 @@ html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #
   box-shadow: none !important;
 }
 
-html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-item-stack .shop-pin {
-  position: absolute;
-  top: var(--shop-pin-offset-y, 0);
-  left: var(--shop-pin-offset-x, 0);
-  z-index: calc(var(--z-layer-objects, 20) + 5);
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-item-stack > .shop-pin {
+  z-index: calc(var(--z-layer-objects, 20) + 10);
 }
 
 html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-pin:hover,
@@ -155,20 +132,8 @@ html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #
   background: rgba(88, 166, 255, 0.22) !important;
 }
 
-html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-item-stack > .cost,
-html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-item-side-meta > .cost {
-  position: static;
-  align-self: center;
-  margin: 0;
-  z-index: 1;
-}
-
-html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-card .item-shape-mini,
-html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-item-visual .item-shape-mini--shop-overlay {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  opacity: 0.88;
+html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .shop-item-hero .item-shape-mini--shop-overlay {
+  opacity: 0.72;
 }
 
 html[data-prep-shop-popover="true"][data-game-phase="prep"] #prep-shop-popover #shop-panel .enh-shop-slot-tag {

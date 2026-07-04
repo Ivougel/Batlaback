@@ -1,0 +1,116 @@
+/**
+ * Магическое свечение архетипа — без подложки, центр на glyph (Safari / iPad PWA safe).
+ */
+
+@keyframes archetype-glow-pulse {
+  0%, 100% { opacity: 0.72; transform: translate(-50%, -50%) scale(0.94); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.06); }
+}
+
+@keyframes archetype-glow-orbit {
+  0%, 100% { opacity: 0.55; transform: translate(-50%, -50%) scale(0.98); }
+  50% { opacity: 0.92; transform: translate(-50%, -50%) scale(1.04); }
+}
+
+.prep-build-emoji-btn--hero-field-float,
+.battle-archetype-float.prep-build-emoji-btn--hero-field-float {
+  position: relative;
+  display: inline-grid !important;
+  place-items: center;
+  isolation: isolate;
+  width: auto !important;
+  height: auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0;
+  overflow: visible;
+}
+
+.prep-build-emoji-btn--hero-field-float > .prep-build-emoji-btn-glyph,
+.battle-archetype-float > .battle-archetype-float-glyph,
+.battle-archetype-float > .prep-build-emoji-btn-glyph {
+  grid-area: 1 / 1;
+}
+
+/* Отдельный span-glow не используем — на iOS уезжал от emoji */
+.prep-build-emoji-btn--hero-field-float > .prep-build-emoji-btn-glow,
+.battle-archetype-float > .prep-build-emoji-btn-glow {
+  display: none !important;
+}
+
+.prep-build-emoji-btn--hero-field-float .prep-build-emoji-btn-glyph,
+.battle-archetype-float .battle-archetype-float-glyph,
+.battle-archetype-float .prep-build-emoji-btn-glyph {
+  position: relative;
+  display: inline-block;
+  line-height: 1;
+  z-index: 1;
+  filter:
+    drop-shadow(0 0 calc(10px * var(--ui-scale, 1)) var(--archetype-glow-ring, rgba(167, 139, 250, 0.55)))
+    drop-shadow(0 3px calc(12px * var(--ui-scale, 1)) rgba(0, 0, 0, 0.38));
+}
+
+.prep-build-emoji-btn--hero-field-float.archetype-magic-glow--active .prep-build-emoji-btn-glyph::before,
+.battle-archetype-float.archetype-magic-glow--active .battle-archetype-float-glyph::before,
+.battle-archetype-float.archetype-magic-glow--active .prep-build-emoji-btn-glyph::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1.5em;
+  height: 1.5em;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+  background: radial-gradient(
+    circle,
+    var(--archetype-glow-core, rgba(167, 139, 250, 0.62)) 0%,
+    var(--archetype-glow-mid, rgba(120, 80, 220, 0.28)) 46%,
+    transparent 74%
+  );
+  filter: blur(calc(7px * var(--ui-scale, 1)));
+  transform: translate(-50%, -50%);
+  animation: archetype-glow-pulse 2.8s ease-in-out infinite;
+}
+
+.prep-build-emoji-btn--hero-field-float.archetype-magic-glow--active .prep-build-emoji-btn-glyph::after,
+.battle-archetype-float.archetype-magic-glow--active .battle-archetype-float-glyph::after,
+.battle-archetype-float.archetype-magic-glow--active .prep-build-emoji-btn-glyph::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1.15em;
+  height: 1.15em;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+  box-shadow:
+    0 0 calc(16px * var(--ui-scale, 1)) var(--archetype-glow-ring, rgba(167, 139, 250, 0.48)),
+    0 0 calc(34px * var(--ui-scale, 1)) var(--archetype-glow-halo, rgba(120, 80, 220, 0.24)),
+    0 0 calc(52px * var(--ui-scale, 1)) var(--archetype-glow-halo, rgba(120, 80, 220, 0.12));
+  transform: translate(-50%, -50%);
+  animation: archetype-glow-orbit 3.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .prep-build-emoji-btn--hero-field-float.archetype-magic-glow--active .prep-build-emoji-btn-glyph::before,
+  .prep-build-emoji-btn--hero-field-float.archetype-magic-glow--active .prep-build-emoji-btn-glyph::after,
+  .battle-archetype-float.archetype-magic-glow--active .battle-archetype-float-glyph::before,
+  .battle-archetype-float.archetype-magic-glow--active .battle-archetype-float-glyph::after,
+  .battle-archetype-float.archetype-magic-glow--active .prep-build-emoji-btn-glyph::before,
+  .battle-archetype-float.archetype-magic-glow--active .prep-build-emoji-btn-glyph::after {
+    animation: none;
+    opacity: 0.85;
+    transform: translate(-50%, -50%);
+  }
+}

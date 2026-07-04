@@ -915,10 +915,7 @@ function bindProfileStatusTooltips() {
 
     panel.addEventListener("animationend", (e) => {
       if (e.target.classList?.contains("field-avatar-slot") && e.animationName === "profile-avatar-hit-shake") {
-        e.target.classList.remove("profile-avatar-hit-shake");
-        e.target.style.removeProperty("--hit-shake-x");
-        e.target.style.removeProperty("--hit-shake-y");
-        e.target.style.removeProperty("--hit-shake-ms");
+        clearProfileAvatarHitShake(e.target);
       }
       if (e.target.classList?.contains("profile-avatar-img") && e.animationName.startsWith("profile-avatar-crit-flip")) {
         clearAvatarFlipBusy(e.target);
@@ -934,6 +931,56 @@ function bindProfileStatusTooltips() {
     });
   });
 
+  bindBattlePrepHeroHitShakeCleanup();
+}
+
+function usesBattlePrepHeroLayer() {
+  return document.documentElement?.dataset?.battlePrepHeroLayer === "true";
+}
+
+function getPrepCharacterEl(team) {
+  const id = team === "enemy" ? "prep-character-enemy" : "prep-character-player";
+  const el = document.getElementById(id);
+  if (!el || el.hasAttribute("hidden")) return null;
+  return el;
+}
+
+function clearProfileAvatarHitShake(el) {
+  if (!el) return;
+  el.classList.remove("profile-avatar-hit-shake");
+  el.style.removeProperty("--hit-shake-x");
+  el.style.removeProperty("--hit-shake-y");
+  el.style.removeProperty("--hit-shake-ms");
+}
+
+function applyProfileAvatarHitShake(el, shakeX, shakeY, durationMs) {
+  if (!el) return;
+  el.style.setProperty("--hit-shake-x", `${shakeX}px`);
+  el.style.setProperty("--hit-shake-y", `${shakeY}px`);
+  el.style.setProperty("--hit-shake-ms", `${durationMs}ms`);
+  restartAvatarReaction(el, "profile-avatar-hit-shake");
+}
+
+function bindBattlePrepHeroHitShakeCleanup() {
+  const layer = document.getElementById("prep-character-layer");
+  if (layer && !layer.dataset.hitShakeBound) {
+    layer.dataset.hitShakeBound = "1";
+    layer.addEventListener("animationend", (e) => {
+      if (e.target.classList?.contains("prep-character") && e.animationName === "profile-avatar-hit-shake") {
+        clearProfileAvatarHitShake(e.target);
+      }
+    });
+  }
+
+  const thoughtLayer = document.getElementById("battle-thought-layer");
+  if (thoughtLayer && !thoughtLayer.dataset.hitShakeBound) {
+    thoughtLayer.dataset.hitShakeBound = "1";
+    thoughtLayer.addEventListener("animationend", (e) => {
+      if (e.target.classList?.contains("avatar-thought-slot") && e.animationName === "profile-avatar-hit-shake") {
+        clearProfileAvatarHitShake(e.target);
+      }
+    });
+  }
 }
 
 function getProfileAvatarElements(team) {
@@ -1023,18 +1070,42 @@ function startAvatarMirrorFlipAnimation(team, { source = "dot", onComplete = nul
   return true;
 }
 
-function triggerProfileAvatarHitShake(team) {
-  const { slot } = getProfileAvatarElements(team);
-  if (!slot) return;
+function getThoughtSlotEl(team) {
+  return document.getElementById(team === "player" ? "player-thought-slot" : "enemy-thought-slot");
+}
+
+function triggerThoughtSlotHitShake(team) {
+  if (document.documentElement.dataset.battleArenaLayout !== "true") return;
+  const thoughtSlot = getThoughtSlotEl(team);
+  if (!thoughtSlot) return;
 
   const shakeX = uiPx(Math.round((Math.random() - 0.5) * 10));
   const shakeY = uiPx(Math.round((Math.random() - 0.5) * 8));
   const durationMs = 80 + Math.floor(Math.random() * 71);
+  applyProfileAvatarHitShake(thoughtSlot, shakeX, shakeY, durationMs);
 
-  slot.style.setProperty("--hit-shake-x", `${shakeX}px`);
-  slot.style.setProperty("--hit-shake-y", `${shakeY}px`);
-  slot.style.setProperty("--hit-shake-ms", `${durationMs}ms`);
-  restartAvatarReaction(slot, "profile-avatar-hit-shake");
+  if (typeof ThoughtArena !== "undefined" && ThoughtArena.triggerEquipHitReaction) {
+    ThoughtArena.triggerEquipHitReaction(team, {
+      kind: "shake",
+      intensity: 1.15,
+      duration: 0.34,
+    });
+  }
+}
+
+function triggerProfileAvatarHitShake(team) {
+  const shakeX = uiPx(Math.round((Math.random() - 0.5) * 10));
+  const shakeY = uiPx(Math.round((Math.random() - 0.5) * 8));
+  const durationMs = 80 + Math.floor(Math.random() * 71);
+
+  if (usesBattlePrepHeroLayer()) {
+    applyProfileAvatarHitShake(getPrepCharacterEl(team), shakeX, shakeY, durationMs);
+  } else {
+    const { slot } = getProfileAvatarElements(team);
+    applyProfileAvatarHitShake(slot, shakeX, shakeY, durationMs);
+  }
+
+  triggerThoughtSlotHitShake(team);
 }
 
 function triggerProfileAvatarCritFlip(team) {

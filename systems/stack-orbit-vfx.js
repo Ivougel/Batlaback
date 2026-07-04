@@ -106,6 +106,7 @@ function positionOrbitRing(ring, team) {
   const posKey = `${Math.round(cx)}|${Math.round(cy)}`;
   if (ring.dataset.orbitPosKey === posKey) return;
   ring.dataset.orbitPosKey = posKey;
+  delete ring.dataset.orbitSig;
   ring.style.left = `${cx}px`;
   ring.style.top = `${cy}px`;
   ring.style.transform = "translate(-50%, -50%)";
@@ -183,8 +184,16 @@ function clearStackOrbitRings() {
   });
 }
 
+function isPrepHeroStackOrbitDisabled() {
+  return document.documentElement.dataset.battlePrepHeroLayer === "true";
+}
+
 function syncStackOrbitFromBattle(battleState, opts = {}) {
   if (!battleState || battleState.finished) return;
+  if (isPrepHeroStackOrbitDisabled()) {
+    clearStackOrbitRings();
+    return;
+  }
   const now = performance.now();
   const force = opts.force === true;
   if (!force && now - stackOrbitLastSyncAt < stackOrbitSyncGapMs()) return;

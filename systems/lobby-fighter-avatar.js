@@ -1,6 +1,29 @@
 /**
- * Компактные emoji-аватары в карточках лобби: орбита в prep, эмоции в бою.
+ * Мысли героев в лобби: кружки участников показывают эмоции/мысли, а не иконки классов.
+ * Работает в prep, battle и replay; в solo prep — на персонажах под полем.
  */
+
+const LOBBY_THOUGHT_TICK_MS = 900;
+const LOBBY_AMBIENT_INTERVAL_MS = 5500;
+const SOLO_PREP_THOUGHT_TICK_MS = 1100;
+
+const CLASS_PERSONALITY_THOUGHTS = {
+  warrior: ["😤", "💪", "🗿", "😠"],
+  rogue: ["😏", "😼", "👀", "💨"],
+  mage: ["🤔", "✨", "😌", "🧐"],
+  priest: ["🙏", "😇", "💭", "😊"],
+};
+
+const PREP_AMBIENT_THOUGHTS = ["🛍️", "📦", "💭", "😌", "🤔", "😏", "💪"];
+
+const lobbyFighterEmotionById = new Map();
+const lobbyFighterMainThoughtById = new Map();
+const lobbyMatchEmotionSnaps = new Map();
+const soloPrepThoughtBySide = { player: null, enemy: null };
+
+let lobbyThoughtLastTickAt = 0;
+let lobbyAmbientLastAt = 0;
+let soloPrepThoughtLastAt = 0;
 
 function getLobbyFighterClassEmoji(classId) {
   const cls = typeof getClassById === "function"
@@ -35,8 +58,14 @@ function splitPrimaryEmoji(text) {
   return [...raw][0] || raw;
 }
 
-const lobbyFighterEmotionById = new Map();
-const lobbyMatchEmotionSnaps = new Map();
+function pickFromPool(pool) {
+  if (!pool?.length) return "🤔";
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function getClassPersonalityThought(classId) {
+  return pickFromPool(CLASS_PERSONALITY_THOUGHTS[classId] || ["🤔", "😌", "🗿"]);
+}
 
 function lobbyEmotionAnimationClass(animation) {
   const map = {
@@ -56,9 +85,53 @@ function lobbyEmotionModeFromAnimation(animation) {
   return lobbyEmotionAnimationClass(animation).replace("lobby-fighter-emoji--", "") || "live";
 }
 
+function makeThoughtVisual(emoji, animation = "nod", priority = 0) {
+  const anim = animation || "nod";
+  return {
+    emoji: splitPrimaryEmoji(emoji),
+    animation: anim,
+    animClass: lobbyEmotionAnimationClass(anim),
+    mode: lobbyEmotionModeFromAnimation(anim),
+    priority: priority ?? 0,
+    at: Date.now(),
+  };
+}
+
 function clearLobbyFighterEmotions() {
   lobbyFighterEmotionById.clear();
   lobbyMatchEmotionSnaps.clear();
+}
+
+function resetLobbyFighterThoughts() {
+  lobbyFighterMainThoughtById.clear();
+  clearLobbyFighterEmotions();
+  soloPrepThoughtBySide.player = null;
+  soloPrepThoughtBySide.enemy = null;
+  lobbyThoughtLastTickAt = 0;
+  lobbyAmbientLastAt = 0;
+  soloPrepThoughtLastAt = 0;
+}
+
+function ensureLobbyFighterMainThought(fighterId, fighter) {
+  if (lobbyFighterMainThoughtById.has(fighterId)) return;
+  lobbyFighterMainThoughtById.set(
+    fighterId,
+    makeThoughtVisual(getClassPersonalityThought(fighter?.classId), "nod", 0),
+  );
+}
+
+function seedLobbyFighterThoughts(lobby) {
+  if (!lobby?.fighters?.length) return;
+  lobby.fighters.forEach((fighter) => {
+    ensureLobbyFighterMainThought(fighter.id, fighter);
+    if (!fighter.alive) {
+      lobbyFighterMainThoughtById.set(fighter.id, makeThoughtVisual("💀", "shake", 0));
+    }
+  });
+}
+
+function setLobbyFighterMainThought(fighterId, emoji, animation = "nod") {
+  lobbyFighterMainThoughtById.set(fighterId, makeThoughtVisual(emoji, animation, 0));
 }
 
 function setLobbyFighterEmotion(fighterId, { emoji, animation, priority = 1 }) {
@@ -143,6 +216,7 @@ function syncSpectatedMatchEmotions(match) {
     const em = getSpectatedMainEmotion(team);
     if (!em?.emoji) return;
     setLobbyFighterEmotion(fighterId, em);
+    setLobbyFighterMainThought(fighterId, em.emoji, em.animation);
   });
 }
 
@@ -158,7 +232,10 @@ function analyzeBackgroundMatchEmotions(match) {
     ["enemy", match.fighterBId],
   ].forEach(([team, fighterId]) => {
     const inferred = inferBackgroundFighterEmotion(team, snap, prev);
-    if (inferred) setLobbyFighterEmotion(fighterId, inferred);
+    if (inferred) {
+      setLobbyFighterEmotion(fighterId, inferred);
+      setLobbyFighterMainThought(fighterId, inferred.emoji, inferred.animation);
+    }
   });
 
   lobbyMatchEmotionSnaps.set(match.id, snap);
@@ -175,6 +252,145 @@ function refreshLobbyBattleEmotions(lobby, matches) {
   });
 
   decayLobbyFighterEmotions();
+}
+
+function pickPrepAmbientThought(fighter) {
+  const classPool = CLASS_PERSONALITY_THOUGHTS[fighter?.classId] || [];
+  return pickFromPool([...classPool, ...PREP_AMBIENT_THOUGHTS]);
+}
+
+function tickLobbyPrepContextThoughts(lobby, opts = {}) {
+  const {
+    matches = [],
+    timerRemaining = null,
+    timerActive = false,
+  } = opts;
+  let dirty = false;
+
+  lobby.fighters.forEach((fighter) => {
+    ensureLobbyFighterMainThought(fighter.id, fighter);
+    if (!fighter.alive) {
+      setLobbyFighterMainThought(fighter.id, "💀", "shake");
+      setLobbyFighterEmotion(fighter.id, { emoji: "💀", animation: "shake", priority: 5 });
+      dirty = true;
+      return;
+    }
+
+    const hp = getLobbyFighterLiveHp(fighter.id, lobby, matches);
+    const hpPct = hp.max > 0 ? hp.current / hp.max : 1;
+
+    if (hpPct < 0.2) {
+      setLobbyFighterEmotion(fighter.id, { emoji: "😱", animation: "shake", priority: 4 });
+      dirty = true;
+      return;
+    }
+    if (hpPct < 0.35) {
+      setLobbyFighterEmotion(fighter.id, { emoji: "😰", animation: "wobble", priority: 3 });
+      dirty = true;
+      return;
+    }
+
+    if (timerActive && timerRemaining != null && timerRemaining <= 12) {
+      const emoji = timerRemaining <= 3 ? "😱" : (timerRemaining <= 8 ? "⏰" : "😤");
+      setLobbyFighterEmotion(fighter.id, {
+        emoji,
+        animation: timerRemaining <= 5 ? "shake" : "nod",
+        priority: fighter.isHuman ? 3 : 2,
+      });
+      dirty = true;
+      return;
+    }
+
+    if (fighter.id === lobby.currentOpponentId && !hp.inBattle) {
+      setLobbyFighterEmotion(fighter.id, { emoji: "😏", animation: "nod", priority: 1 });
+      dirty = true;
+    }
+  });
+
+  const now = Date.now();
+  if (now - lobbyAmbientLastAt >= LOBBY_AMBIENT_INTERVAL_MS) {
+    lobbyAmbientLastAt = now;
+    const alive = lobby.fighters.filter((f) => f.alive);
+    if (alive.length) {
+      const fighter = alive[Math.floor(Math.random() * alive.length)];
+      const emoji = pickPrepAmbientThought(fighter);
+      setLobbyFighterEmotion(fighter.id, { emoji, animation: "bounce", priority: 1 });
+      setLobbyFighterMainThought(fighter.id, emoji, "nod");
+      dirty = true;
+    }
+  }
+
+  decayLobbyFighterEmotions();
+  return dirty;
+}
+
+function tickLobbyFighterThoughts(lobby, opts = {}) {
+  if (!lobby) return false;
+  const now = Date.now();
+  if (now - lobbyThoughtLastTickAt < LOBBY_THOUGHT_TICK_MS) return false;
+  lobbyThoughtLastTickAt = now;
+
+  const phase = opts.phase || document.getElementById("app")?.dataset.phase || "prep";
+  const matches = opts.matches || [];
+
+  seedLobbyFighterThoughts(lobby);
+
+  if (phase === "battle" || phase === "replay") {
+    refreshLobbyBattleEmotions(lobby, matches);
+    return true;
+  }
+
+  return tickLobbyPrepContextThoughts(lobby, opts);
+}
+
+function buildSoloPrepThought(side) {
+  const classId = side === "player"
+    ? (typeof playerClass !== "undefined" ? playerClass : "warrior")
+    : (typeof enemyClass !== "undefined" ? enemyClass : "rogue");
+  const st = typeof getSideState === "function" ? getSideState(side) : null;
+  const maxHp = Math.max(1, st?.maxHp ?? 100);
+  const hpPct = (st?.hp ?? maxHp) / maxHp;
+
+  if (hpPct < 0.2) return makeThoughtVisual("😱", "shake", 3);
+  if (hpPct < 0.35) return makeThoughtVisual("😰", "wobble", 2);
+  return makeThoughtVisual(getClassPersonalityThought(classId), "nod", 0);
+}
+
+function syncSoloPrepCharacterThought(side, thought) {
+  const el = document.getElementById(side === "player" ? "prep-character-player" : "prep-character-enemy");
+  if (!el || el.hasAttribute("hidden")) return;
+  const emojiEl = el.querySelector(".prep-character-emoji");
+  if (emojiEl && thought?.emoji) emojiEl.textContent = thought.emoji;
+}
+
+function tickSoloPrepThoughts() {
+  const now = Date.now();
+  if (now - soloPrepThoughtLastAt < SOLO_PREP_THOUGHT_TICK_MS) return false;
+  soloPrepThoughtLastAt = now;
+
+  let dirty = false;
+  ["player", "enemy"].forEach((side) => {
+    const next = buildSoloPrepThought(side);
+    const prev = soloPrepThoughtBySide[side];
+    if (!prev || prev.emoji !== next.emoji || Math.random() > 0.55) {
+      if (Math.random() > 0.35) {
+        const classId = side === "player"
+          ? (typeof playerClass !== "undefined" ? playerClass : "warrior")
+          : (typeof enemyClass !== "undefined" ? enemyClass : "rogue");
+        soloPrepThoughtBySide[side] = makeThoughtVisual(
+          pickFromPool([...CLASS_PERSONALITY_THOUGHTS[classId] || [], ...PREP_AMBIENT_THOUGHTS]),
+          "nod",
+          0,
+        );
+      } else {
+        soloPrepThoughtBySide[side] = next;
+      }
+      dirty = true;
+    }
+    syncSoloPrepCharacterThought(side, soloPrepThoughtBySide[side]);
+  });
+
+  return dirty;
 }
 
 function findLobbyMatchForFighter(matches, fighterId) {
@@ -206,52 +422,68 @@ function getLobbyFighterLiveHp(fighterId, lobby, matches) {
   return { current: fighter.hp, max: maxHp, inBattle: false };
 }
 
-function resolveLobbyFighterAvatarVisual(fighter, lobby, opts = {}) {
-  const { phase = "prep", matches = [], spectateMatchId = 0, round = 1 } = opts;
-  const baseEmoji = getLobbyFighterDisplayEmoji(fighter, round);
+function resolveLobbyThoughtVisual(fighter, lobby, opts = {}) {
+  const { phase = "prep", matches = [] } = opts;
+  ensureLobbyFighterMainThought(fighter.id, fighter);
+
   const isMutation = !!fighter?.mutationId;
-  const isForm = !isMutation && !!fighter?.mutationFormId && round >= (typeof MUTATION_ROUND_FORM !== "undefined" ? MUTATION_ROUND_FORM : 8);
-  if (phase !== "battle" && phase !== "replay") {
+  const isForm = !isMutation && !!fighter?.mutationFormId
+    && (opts.round ?? 1) >= (typeof MUTATION_ROUND_FORM !== "undefined" ? MUTATION_ROUND_FORM : 8);
+
+  if (!fighter.alive) {
     return {
-      emoji: baseEmoji,
-      mode: "prep-orbit",
-      animClass: isMutation ? "lobby-fighter-emoji--mutation" : "",
+      emoji: "💀",
+      mode: "live",
+      animClass: "lobby-fighter-emoji--shake",
       isMutation,
       isForm,
     };
   }
 
   const hp = getLobbyFighterLiveHp(fighter.id, lobby, matches);
-  const stored = lobbyFighterEmotionById.get(fighter.id);
-
-  if (stored && hp.inBattle) {
+  const transient = lobbyFighterEmotionById.get(fighter.id);
+  if (transient) {
     return {
-      emoji: stored.emoji,
-      mode: stored.mode,
-      animClass: stored.animClass,
+      emoji: transient.emoji,
+      mode: transient.mode,
+      animClass: transient.animClass,
       isMutation,
       isForm,
     };
   }
 
+  const main = lobbyFighterMainThoughtById.get(fighter.id);
+  const mainEmoji = main?.emoji || getClassPersonalityThought(fighter.classId);
+  const mainAnim = main?.animClass || "lobby-fighter-emoji--nod";
+
   if (hp.inBattle) {
     const hpPct = hp.max > 0 ? hp.current / hp.max : 1;
+    if (hpPct < 0.2) {
+      return { emoji: "😱", mode: "live", animClass: "lobby-fighter-emoji--shake", isMutation, isForm };
+    }
+    if (hpPct < 0.35) {
+      return { emoji: "😰", mode: "wobble", animClass: "lobby-fighter-emoji--wobble", isMutation, isForm };
+    }
     return {
-      emoji: baseEmoji,
-      mode: "live",
-      animClass: hpPct < 0.35 ? "lobby-fighter-emoji--wobble" : "lobby-fighter-emoji--live",
+      emoji: mainEmoji,
+      mode: main?.mode || "live",
+      animClass: mainAnim || "lobby-fighter-emoji--live",
       isMutation,
       isForm,
     };
   }
 
   return {
-    emoji: baseEmoji,
-    mode: "battle-idle",
-    animClass: "",
+    emoji: mainEmoji,
+    mode: phase === "prep" ? "prep-orbit" : (main?.mode || "nod"),
+    animClass: phase === "prep" ? "" : (mainAnim || ""),
     isMutation,
     isForm,
   };
+}
+
+function resolveLobbyFighterAvatarVisual(fighter, lobby, opts = {}) {
+  return resolveLobbyThoughtVisual(fighter, lobby, opts);
 }
 
 function syncLobbyFighterAvatarEl(el, visual) {
@@ -259,7 +491,7 @@ function syncLobbyFighterAvatarEl(el, visual) {
   const emojiEl = el.querySelector(".lobby-fighter-emoji");
   if (!emojiEl) return;
 
-  const nextEmoji = visual.emoji || "❓";
+  const nextEmoji = visual.emoji || "🤔";
   if (emojiEl.textContent !== nextEmoji) emojiEl.textContent = nextEmoji;
 
   const modeClass = [
@@ -281,6 +513,7 @@ function syncLobbyFighterAvatarEl(el, visual) {
   }
 
   el.dataset.avatarMode = visual.mode || "";
+  el.dataset.avatarThought = nextEmoji;
   el.classList.toggle("lobby-fighter-card-avatar--mutation", !!visual.isMutation);
   el.classList.toggle("lobby-fighter-card-avatar--form", !!visual.isForm);
 }
@@ -397,10 +630,9 @@ function syncLobbyFighterAvatars(lobby, opts = {}) {
   const phase = opts.phase || document.getElementById("app")?.dataset.phase || "prep";
   const rosterOpts = { ...opts, phase };
 
+  seedLobbyFighterThoughts(lobby);
   if (phase === "battle" || phase === "replay") {
     refreshLobbyBattleEmotions(lobby, rosterOpts.matches || []);
-  } else {
-    clearLobbyFighterEmotions();
   }
 
   document.querySelectorAll("[data-lobby-fighter-avatar]").forEach((mount) => {
@@ -421,6 +653,10 @@ window.renderLobbyBattleStatusHTML = renderLobbyBattleStatusHTML;
 
 window.syncLobbyFighterAvatars = syncLobbyFighterAvatars;
 window.clearLobbyFighterEmotions = clearLobbyFighterEmotions;
+window.resetLobbyFighterThoughts = resetLobbyFighterThoughts;
+window.seedLobbyFighterThoughts = seedLobbyFighterThoughts;
+window.tickLobbyFighterThoughts = tickLobbyFighterThoughts;
+window.tickSoloPrepThoughts = tickSoloPrepThoughts;
 window.getLobbyFighterLiveHp = getLobbyFighterLiveHp;
 window.getLobbyFighterDisplayEmoji = getLobbyFighterDisplayEmoji;
 window.findLobbyMatchForFighter = findLobbyMatchForFighter;

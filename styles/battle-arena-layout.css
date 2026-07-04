@@ -14,6 +14,8 @@
 html[data-battle-hero-placement="flank-arena"] {
   --battle-hud-hip-portrait-ratio: 0.58;
   --battle-hud-hip-floor-ratio: 0.58;
+  --battle-vitals-band-h: 88px;
+  --battle-hud-chip-band-h: 56px;
 }
 
 /* ─── Layer compositor (battle) ─── */
@@ -570,6 +572,22 @@ html[data-thought-above-hero="true"] #app[data-phase="replay"] .battle-hud-statu
 html[data-thought-above-hero="true"] #app[data-phase="battle"] .battle-hud-side,
 html[data-thought-above-hero="true"] #app[data-phase="replay"] .battle-hud-side {
   overflow: visible;
+}
+
+/* Full-body: vitals band под героем — чипы в потоке, не absolute над телом */
+html[data-battle-hud-below-hero="true"] #app[data-phase="battle"] .battle-hud-status-stack,
+html[data-battle-hud-below-hero="true"] #app[data-phase="replay"] .battle-hud-status-stack {
+  position: static;
+  bottom: auto;
+  max-height: var(--battle-hud-status-max-h, var(--battle-hud-chip-band-h, 56px));
+  overflow: hidden;
+  transform: none;
+}
+
+html[data-battle-hud-below-hero="true"] #app[data-phase="battle"] .battle-hud-side,
+html[data-battle-hud-below-hero="true"] #app[data-phase="replay"] .battle-hud-side {
+  overflow: visible;
+  max-height: var(--battle-hud-max-h, none);
 }
 
 html[data-battle-hero-placement="flank-arena"][data-prep-layout="mobile"] #app[data-phase="battle"] .avatar-thought-slot,

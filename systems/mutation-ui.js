@@ -32,6 +32,73 @@ function getMutationUiEmoji(mutationId) {
   return MUTATION_UI_EMOJI[mutationId] || "❓";
 }
 
+/** [core, mid, ring, halo] — уникальное свечение каждого архетипа */
+const ARCHETYPE_MAGIC_GLOW = {
+  w_guardian: ["rgba(150, 210, 255, 0.72)", "rgba(80, 150, 230, 0.34)", "rgba(120, 190, 255, 0.55)", "rgba(60, 110, 210, 0.22)"],
+  w_berserk: ["rgba(255, 120, 70, 0.78)", "rgba(220, 50, 30, 0.36)", "rgba(255, 90, 50, 0.58)", "rgba(180, 40, 20, 0.24)"],
+  w_crusader: ["rgba(255, 230, 140, 0.82)", "rgba(230, 180, 60, 0.38)", "rgba(255, 210, 90, 0.6)", "rgba(200, 150, 40, 0.26)"],
+  w_duelist: ["rgba(180, 220, 255, 0.74)", "rgba(100, 160, 220, 0.32)", "rgba(140, 200, 255, 0.52)", "rgba(70, 120, 200, 0.22)"],
+  w_juggernaut: ["rgba(190, 200, 215, 0.76)", "rgba(120, 130, 150, 0.34)", "rgba(160, 175, 195, 0.54)", "rgba(90, 100, 120, 0.24)"],
+  w_gladiator: ["rgba(255, 190, 110, 0.78)", "rgba(210, 120, 50, 0.36)", "rgba(255, 170, 80, 0.56)", "rgba(180, 100, 40, 0.24)"],
+  w_breaker: ["rgba(255, 160, 90, 0.8)", "rgba(230, 90, 40, 0.38)", "rgba(255, 130, 60, 0.58)", "rgba(200, 70, 30, 0.26)"],
+  w_veteran: ["rgba(220, 185, 120, 0.76)", "rgba(160, 120, 70, 0.34)", "rgba(210, 170, 100, 0.54)", "rgba(130, 95, 55, 0.24)"],
+  r_assassin: ["rgba(180, 90, 220, 0.76)", "rgba(110, 40, 160, 0.36)", "rgba(160, 70, 210, 0.54)", "rgba(80, 30, 130, 0.24)"],
+  r_bard: ["rgba(255, 150, 210, 0.78)", "rgba(200, 80, 170, 0.36)", "rgba(255, 120, 200, 0.56)", "rgba(170, 60, 140, 0.24)"],
+  r_plague: ["rgba(130, 230, 110, 0.76)", "rgba(60, 160, 50, 0.36)", "rgba(100, 210, 85, 0.54)", "rgba(40, 120, 35, 0.24)"],
+  r_trickster: ["rgba(255, 210, 90, 0.78)", "rgba(190, 120, 220, 0.34)", "rgba(255, 190, 70, 0.56)", "rgba(160, 90, 200, 0.24)"],
+  r_shadow: ["rgba(120, 90, 180, 0.74)", "rgba(50, 30, 90, 0.38)", "rgba(90, 60, 150, 0.52)", "rgba(30, 20, 70, 0.28)"],
+  r_nightblade: ["rgba(150, 130, 255, 0.76)", "rgba(70, 50, 170, 0.36)", "rgba(120, 100, 240, 0.54)", "rgba(50, 35, 130, 0.26)"],
+  r_scout: ["rgba(140, 220, 130, 0.76)", "rgba(70, 150, 70, 0.34)", "rgba(110, 200, 100, 0.54)", "rgba(45, 110, 45, 0.24)"],
+  r_rogue: ["rgba(200, 190, 170, 0.72)", "rgba(130, 110, 90, 0.32)", "rgba(180, 165, 140, 0.5)", "rgba(100, 85, 70, 0.22)"],
+  m_pyro: ["rgba(255, 140, 60, 0.82)", "rgba(230, 60, 20, 0.4)", "rgba(255, 110, 40, 0.62)", "rgba(200, 45, 15, 0.28)"],
+  m_cryo: ["rgba(140, 230, 255, 0.8)", "rgba(60, 170, 230, 0.38)", "rgba(100, 210, 255, 0.58)", "rgba(40, 130, 200, 0.26)"],
+  m_arcanist: ["rgba(190, 140, 255, 0.8)", "rgba(120, 60, 220, 0.38)", "rgba(170, 110, 255, 0.58)", "rgba(90, 40, 190, 0.26)"],
+  m_elementalist: ["rgba(255, 170, 120, 0.76)", "rgba(90, 190, 255, 0.34)", "rgba(220, 140, 200, 0.54)", "rgba(70, 150, 230, 0.24)"],
+  m_battlemage: ["rgba(200, 130, 255, 0.78)", "rgba(120, 70, 210, 0.36)", "rgba(180, 100, 255, 0.56)", "rgba(90, 50, 180, 0.26)"],
+  m_chaos: ["rgba(255, 120, 220, 0.78)", "rgba(120, 80, 255, 0.36)", "rgba(255, 90, 200, 0.56)", "rgba(100, 60, 230, 0.26)"],
+  m_sage: ["rgba(170, 210, 255, 0.76)", "rgba(90, 140, 210, 0.34)", "rgba(140, 190, 255, 0.54)", "rgba(70, 110, 190, 0.24)"],
+  m_seer: ["rgba(170, 120, 255, 0.78)", "rgba(90, 50, 180, 0.38)", "rgba(140, 90, 240, 0.56)", "rgba(60, 30, 150, 0.26)"],
+  p_paladin: ["rgba(255, 225, 130, 0.84)", "rgba(240, 180, 50, 0.4)", "rgba(255, 210, 80, 0.62)", "rgba(210, 150, 30, 0.28)"],
+  p_discipline: ["rgba(210, 230, 255, 0.8)", "rgba(120, 160, 230, 0.36)", "rgba(180, 205, 255, 0.56)", "rgba(90, 130, 210, 0.26)"],
+  p_zrecrela: ["rgba(255, 180, 220, 0.78)", "rgba(230, 120, 180, 0.36)", "rgba(255, 150, 210, 0.56)", "rgba(200, 90, 160, 0.26)"],
+  p_oracle: ["rgba(170, 210, 255, 0.82)", "rgba(100, 140, 255, 0.4)", "rgba(140, 180, 255, 0.62)", "rgba(80, 110, 230, 0.28)"],
+  p_plague: ["rgba(160, 240, 130, 0.76)", "rgba(80, 170, 70, 0.36)", "rgba(130, 220, 100, 0.54)", "rgba(50, 130, 45, 0.26)"],
+  p_hierophant: ["rgba(255, 245, 180, 0.86)", "rgba(255, 210, 90, 0.42)", "rgba(255, 230, 130, 0.64)", "rgba(230, 180, 60, 0.3)"],
+  p_inquisitor: ["rgba(255, 150, 90, 0.82)", "rgba(230, 70, 40, 0.4)", "rgba(255, 120, 60, 0.6)", "rgba(200, 50, 25, 0.28)"],
+  p_hermit: ["rgba(255, 210, 140, 0.78)", "rgba(200, 130, 60, 0.36)", "rgba(255, 190, 110, 0.56)", "rgba(170, 100, 45, 0.26)"],
+};
+
+const CLASS_MAGIC_GLOW = {
+  warrior: ["rgba(220, 170, 100, 0.72)", "rgba(170, 110, 50, 0.34)", "rgba(210, 150, 80, 0.52)", "rgba(140, 85, 40, 0.24)"],
+  rogue: ["rgba(170, 120, 220, 0.74)", "rgba(100, 60, 160, 0.34)", "rgba(150, 90, 210, 0.52)", "rgba(70, 40, 130, 0.24)"],
+  mage: ["rgba(160, 130, 255, 0.78)", "rgba(90, 60, 210, 0.36)", "rgba(140, 100, 255, 0.56)", "rgba(60, 35, 180, 0.26)"],
+  priest: ["rgba(255, 230, 150, 0.8)", "rgba(220, 180, 70, 0.38)", "rgba(255, 215, 100, 0.58)", "rgba(190, 150, 50, 0.26)"],
+};
+
+const DEFAULT_MAGIC_GLOW = ["rgba(167, 139, 250, 0.72)", "rgba(120, 80, 220, 0.34)", "rgba(167, 139, 250, 0.52)", "rgba(90, 60, 190, 0.24)"];
+
+function clearArchetypeMagicGlow(el) {
+  if (!el) return;
+  el.classList.remove("archetype-magic-glow--active");
+  el.style.removeProperty("--archetype-glow-core");
+  el.style.removeProperty("--archetype-glow-mid");
+  el.style.removeProperty("--archetype-glow-ring");
+  el.style.removeProperty("--archetype-glow-halo");
+}
+
+function applyArchetypeMagicGlow(el, pathId, classId = null) {
+  if (!el) return;
+  const palette = (pathId && ARCHETYPE_MAGIC_GLOW[pathId])
+    || (classId && CLASS_MAGIC_GLOW[classId])
+    || DEFAULT_MAGIC_GLOW;
+  el.style.setProperty("--archetype-glow-core", palette[0]);
+  el.style.setProperty("--archetype-glow-mid", palette[1]);
+  el.style.setProperty("--archetype-glow-ring", palette[2]);
+  el.style.setProperty("--archetype-glow-halo", palette[3]);
+  el.classList.add("archetype-magic-glow--active");
+  if (pathId) el.dataset.archetypePath = pathId;
+}
+
 function getMutationUnlockHint(mutDef) {
   if (!mutDef) return "";
   if (mutDef.diversity) {
@@ -72,7 +139,7 @@ function buildClassMutationGalleryHtml(classId) {
   return `
     <div class="mutation-gallery" role="group" aria-label="Мутации класса">
       <p class="mutation-gallery-eyebrow">${escapeMutationUiHtml(novice)} · 8 путей R16</p>
-      <p class="mutation-gallery-hint">Силуэты откроются в забеге · наведите для подсказки · нажмите путь — подтвердите намерение</p>
+      <p class="mutation-gallery-hint">Нажмите путь — подтвердите намерение</p>
       <div class="mutation-gallery-grid">${cells}</div>
     </div>
   `;
@@ -513,6 +580,26 @@ function isPrepBuildEmojiHeroHudMount() {
     || root.dataset.uiSurface === "desktop";
 }
 
+function isBattlePrepHeroSpecFloat() {
+  const app = document.getElementById("app");
+  const phase = app?.dataset?.phase;
+  return document.documentElement.dataset.battlePrepHeroLayer === "true"
+    && (phase === "battle" || phase === "replay");
+}
+
+function isPrepFullBodyHeroLayerVisible() {
+  const app = document.getElementById("app");
+  if (app?.dataset?.phase !== "prep") return false;
+  const layer = document.getElementById("prep-character-layer");
+  return !!layer && layer.getAttribute("aria-hidden") !== "true";
+}
+
+function shouldUseHeroFieldFloatMount() {
+  const specSlot = document.getElementById("prep-character-spec-slot");
+  if (!specSlot) return false;
+  return isBattlePrepHeroSpecFloat() || isPrepFullBodyHeroLayerVisible();
+}
+
 function restorePrepBuildEmojiHeroSlot(heroCard, heroSlot) {
   if (!heroCard || !heroSlot || heroCard.contains(heroSlot)) return;
   const actions = heroCard.querySelector(".prep-hero-card__actions");
@@ -530,7 +617,8 @@ function syncPrepBuildEmojiBtnMount() {
   if (!btn) return;
 
   const heroHud = isPrepBuildEmojiHeroHudMount();
-  const heroFieldFloat = heroHud && specSlot;
+  const battlePrepHero = isBattlePrepHeroSpecFloat();
+  const heroFieldFloat = shouldUseHeroFieldFloatMount();
 
   if (heroFieldFloat) {
     specSlot.removeAttribute("aria-hidden");
@@ -565,13 +653,83 @@ function syncPrepBuildEmojiBtnMount() {
     if (heroHud && !btn.classList.contains("hidden")) heroSlot.removeAttribute("aria-hidden");
     else heroSlot.setAttribute("aria-hidden", "true");
   }
+
+  const enemySpecSlot = document.getElementById("prep-character-spec-slot-enemy");
+  if (!battlePrepHero) hideBattleEnemyArchetypeFloat();
+  else if (enemySpecSlot) enemySpecSlot.removeAttribute("aria-hidden");
 }
+
+function hideBattleEnemyArchetypeFloat() {
+  const slot = document.getElementById("prep-character-spec-slot-enemy");
+  const floatEl = document.getElementById("battle-enemy-archetype-float");
+  if (slot) slot.setAttribute("aria-hidden", "true");
+  if (!floatEl) return;
+  floatEl.hidden = true;
+  const glyph = floatEl.querySelector(".battle-archetype-float-glyph");
+  if (glyph) glyph.textContent = "";
+  floatEl.removeAttribute("title");
+  floatEl.removeAttribute("aria-label");
+  floatEl.dataset.archetypePath = "";
+  floatEl.dataset.mutationId = "";
+  floatEl.dataset.emoji = "";
+  clearArchetypeMagicGlow(floatEl);
+}
+
+function syncBattleEnemyArchetypeFloat(opts = {}) {
+  const slot = document.getElementById("prep-character-spec-slot-enemy");
+  const floatEl = document.getElementById("battle-enemy-archetype-float");
+  if (!slot || !floatEl) return;
+
+  if (!isBattlePrepHeroSpecFloat()) {
+    hideBattleEnemyArchetypeFloat();
+    return;
+  }
+
+  const display = resolvePrepBuildEmojiDisplay({
+    formId: opts.formId ?? opts.profile?.archetypeFormId,
+    mutationId: opts.mutationId ?? opts.profile?.archetypeMutationId,
+    classId: opts.classId,
+    leaderId: opts.leaderId,
+    round: opts.round ?? 1,
+    emojiOverride: opts.emojiOverride ?? opts.profile?.archetypeEmoji,
+  });
+
+  const emoji = opts.profile?.archetypeEmoji ?? display.emoji;
+  if (!emoji) {
+    hideBattleEnemyArchetypeFloat();
+    return;
+  }
+
+  slot.removeAttribute("aria-hidden");
+  floatEl.hidden = false;
+  const glyph = floatEl.querySelector(".battle-archetype-float-glyph");
+  if (glyph) glyph.textContent = emoji;
+
+  const pathId = opts.profile?.archetypePathId || display.pathId || "";
+  floatEl.dataset.archetypePath = pathId;
+  floatEl.dataset.mutationId = pathId;
+  floatEl.dataset.emoji = emoji;
+  const label = opts.profile?.archetypeLabel || display.label;
+  floatEl.title = label;
+  floatEl.setAttribute("aria-label", label);
+  floatEl.classList.toggle("prep-build-emoji-btn--has-path", !!pathId);
+  floatEl.classList.toggle("prep-build-emoji-btn--lore", !!pathId && display.loreEnabled);
+  applyArchetypeMagicGlow(floatEl, pathId, opts.classId);
+
+  if (pathId && typeof bindAvatarArchetypeBannerInteractions === "function") {
+    bindAvatarArchetypeBannerInteractions(floatEl);
+  }
+}
+
+window.syncBattleEnemyArchetypeFloat = syncBattleEnemyArchetypeFloat;
 
 function syncPrepBuildEmojiBtn(opts = {}) {
   const btn = document.getElementById("prep-build-emoji-btn");
   if (!btn) return;
 
   syncPrepBuildEmojiBtnMount();
+
+  if (!isBattlePrepHeroSpecFloat()) hideBattleEnemyArchetypeFloat();
 
   const display = resolvePrepBuildEmojiDisplay(opts);
   const glyph = btn.querySelector(".prep-build-emoji-btn-glyph");
@@ -587,6 +745,7 @@ function syncPrepBuildEmojiBtn(opts = {}) {
   btn.classList.toggle("prep-build-emoji-btn--has-path", !!display.pathId);
   btn.classList.toggle("prep-build-emoji-btn--lore", display.loreEnabled);
   btn.classList.remove("hidden");
+  applyArchetypeMagicGlow(btn, display.pathId || "", opts.classId);
 
   const specSlot = document.getElementById("prep-character-spec-slot");
   const heroSlot = document.getElementById("prep-hero-card-build-slot");
@@ -659,6 +818,38 @@ function initPrepBuildEmojiBtn() {
   bindPrepBuildEmojiBtnInteractions();
   syncPrepBuildEmojiBtnMount();
 }
+
+function syncPrepBuildEmojiBtnFromRuntime() {
+  if (typeof getSideMutationRuntime !== "function") return;
+  const app = document.getElementById("app");
+  const phase = app?.dataset?.phase;
+  if (phase !== "prep" && phase !== "battle" && phase !== "replay") return;
+  const side = (phase === "battle" || phase === "replay")
+    ? "player"
+    : (typeof prepViewSide !== "undefined" ? prepViewSide : "player");
+  const mutRt = getSideMutationRuntime(side);
+  const runRound = typeof round !== "undefined" ? round : 1;
+  const mutationProgress = typeof resolveMutationProgress === "function"
+    ? resolveMutationProgress({
+      classId: mutRt.classId,
+      companionId: mutRt.companionId,
+      items: mutRt.items,
+      enhancements: mutRt.enhancements,
+      round: runRound,
+    })
+    : null;
+  syncPrepBuildEmojiBtn({
+    formId: mutRt.formId,
+    mutationId: mutRt.mutationId,
+    classId: mutRt.classId,
+    leaderId: mutationProgress?.leader?.id,
+    round: runRound,
+  });
+}
+
+window.syncPrepBuildEmojiBtnMount = syncPrepBuildEmojiBtnMount;
+window.syncPrepBuildEmojiBtn = syncPrepBuildEmojiBtn;
+window.syncPrepBuildEmojiBtnFromRuntime = syncPrepBuildEmojiBtnFromRuntime;
 
 function renderPrepCharacterHtml(side, profile, runRound = 1) {
   const classId = profile?.classId;
@@ -733,7 +924,7 @@ function bindAvatarArchetypeBannerInteractions(banner) {
     if (isCoarseMutationPointer() || mutationLorePopupPinned) return;
     const to = event.relatedTarget;
     if (to?.closest?.(`#${MUTATION_LORE_POPUP_ID}`)) return;
-    if (to?.closest?.(".avatar-hero-archetype-banner")) return;
+    if (to?.closest?.(".avatar-hero-archetype-banner, .battle-archetype-float")) return;
     hideMutationLorePopup();
   });
 

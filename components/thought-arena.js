@@ -676,12 +676,16 @@ const ThoughtArena = (() => {
   function styleBodyEl(body, glyph) {
     const size = thoughtDiameterPx(body.glyphCount);
     body.el.textContent = glyph;
+    if (isAnchoredFlankArena()) {
+      body.el.style.width = "";
+      body.el.style.height = "";
+      body.el.style.fontSize = `${Math.round(size * THOUGHT_GLYPH_FONT_RATIO)}px`;
+      body.el.style.zIndex = "1";
+      return;
+    }
     body.el.style.width = `${size}px`;
     body.el.style.height = `${size}px`;
     body.el.style.fontSize = `${Math.round(size * THOUGHT_GLYPH_FONT_RATIO)}px`;
-    if (isAnchoredFlankArena()) {
-      body.el.style.zIndex = "1";
-    }
   }
 
   function createCluster(side, glyphs, eventKey, event) {

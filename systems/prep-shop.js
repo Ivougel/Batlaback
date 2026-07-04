@@ -371,8 +371,10 @@ function renderShopCardHTML(def, { extraClasses = "", innerBefore = "", dataAttr
     <div class="shop-item-main">
       <div class="shop-item-stack">
         ${innerBefore}
-        <div class="shop-item-visual">
-          <div class="${getItemIconShellClass(def)}">${renderItemIconsHTML(def)}</div>
+        <div class="shop-item-hero">
+          <div class="shop-item-visual">
+            <div class="${getItemIconShellClass(def)}">${renderItemIconsHTML(def)}</div>
+          </div>
           ${shapeHtml}
         </div>
         ${renderShopCostHTML(def.cost)}

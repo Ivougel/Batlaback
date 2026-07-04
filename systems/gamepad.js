@@ -657,6 +657,30 @@ function refreshPrepToolbarHints(pad) {
   const el = document.getElementById("prep-toolbar-hints");
   if (!el) return;
   const context = getMenuContext();
+  const desktopKeyboard = !isTouchInteraction()
+    && !isGamepadInteraction()
+    && (context === "prep" || context === "prepDrag");
+
+  if (desktopKeyboard) {
+    el.classList.remove("hidden");
+    const hints = context === "prepDrag"
+      ? [
+        { keys: "ПКМ / R", label: "поворот" },
+        { keys: "B", label: "магазин" },
+        { keys: "Esc", label: "отмена" },
+      ]
+      : [
+        { keys: "B", label: "магазин" },
+        { keys: "R", label: "обновить" },
+        { keys: "Shift+B", label: "рецепты" },
+        { keys: "Enter", label: "бой" },
+      ];
+    el.innerHTML = hints.map((h) =>
+      `<span class="prep-hint-chip"><kbd class="prep-hint-key">${h.keys}</kbd><span>${h.label}</span></span>`,
+    ).join("");
+    return;
+  }
+
   if (!isGamepadInteraction() || (context !== "prep" && context !== "prepDrag")) {
     el.classList.add("hidden");
     el.innerHTML = "";

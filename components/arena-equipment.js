@@ -388,11 +388,15 @@ const ArenaEquipment = (() => {
     body.orbitSlotMounted = true;
     body.homeViewport = false;
     body.fxMounted = false;
+    body.fxTransformOnly = false;
     body.el.classList.add("arena-equip-body--thought-orbit");
     body.el.classList.remove("arena-equip-body--emoji-avatar-orbit", "arena-equip-body--fx-flight");
     body.el.style.position = "";
     body.el.style.left = "";
     body.el.style.top = "";
+    body.el.style.zIndex = "";
+    delete body._arenaVisKey;
+    delete body._arenaOpacity;
   }
 
   function mountToFxForAttack(body) {
@@ -501,6 +505,7 @@ const ArenaEquipment = (() => {
         body.renderOy = home.oy;
         mountOrbitThoughtSlot(body);
         styleBodyEl(body);
+        applyVisual(body);
       }
       return;
     }
@@ -1199,6 +1204,7 @@ const ArenaEquipment = (() => {
         styleBodyEl(body);
         if (!body.attack) {
           applyHomeToBody(body, home);
+          applyVisual(body);
         } else {
           body.homeOx = home.ox;
           body.homeOy = home.oy;
@@ -1283,7 +1289,7 @@ const ArenaEquipment = (() => {
     if (usesEmojiAvatarEquipHome()
       && typeof window.syncHeroEmotionSlotAnchors === "function"
       && emotionAnchorsSyncedFor !== battleState) {
-      window.syncHeroEmotionSlotAnchors({ skipEquipRelayout: true });
+      window.syncHeroEmotionSlotAnchors();
       emotionAnchorsSyncedFor = battleState;
     }
 

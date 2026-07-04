@@ -542,18 +542,18 @@ html[data-prep-layout="mobile"] #app:is([data-phase="prep"], [data-prep-hero-hud
   box-shadow: var(--juice-shadow);
 }
 
-#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-build-emoji-btn:not(.prep-build-emoji-btn--hud-float) {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-build-emoji-btn:not(.prep-build-emoji-btn--hud-float):not(.prep-build-emoji-btn--hero-field-float) {
   background: rgba(255, 255, 255, 0.42);
   border: 2px solid rgba(255, 255, 255, 0.62);
   box-shadow: var(--juice-shadow);
 }
 
-#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-build-emoji-btn:not(.prep-build-emoji-btn--hud-float):hover:not(:disabled) {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-build-emoji-btn:not(.prep-build-emoji-btn--hud-float):not(.prep-build-emoji-btn--hero-field-float):hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.62);
   border-color: rgba(140, 100, 200, 0.55);
 }
 
-#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-build-emoji-btn:not(.prep-build-emoji-btn--hud-float).prep-build-emoji-btn--lore-active {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-build-emoji-btn:not(.prep-build-emoji-btn--hud-float):not(.prep-build-emoji-btn--hero-field-float).prep-build-emoji-btn--lore-active {
   border-color: rgba(245, 200, 66, 0.72);
   box-shadow:
     0 0 0 2px rgba(245, 200, 66, 0.28),

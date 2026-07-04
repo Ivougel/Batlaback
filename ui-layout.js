@@ -428,8 +428,8 @@
       ? Math.max(cfg.shopRowMin, Math.min(lobbyRowCap, Math.round(shopRowH * 0.82)))
       : (ipadMiniBoost ? Math.max(shopRowH, 92) : shopRowH);
     root.style.setProperty("--prep-shop-row-h", `${rowH}px`);
-    const shopIconSize = Math.round(rowH * (ipadMiniBoost ? 0.72 : 0.68));
-    const shopIconFont = Math.round(rowH * (ipadMiniBoost ? 0.56 : 0.52));
+    const shopIconSize = Math.round(rowH * (ipadMiniBoost ? 0.8 : 0.76));
+    const shopIconFont = Math.round(rowH * (ipadMiniBoost ? 0.64 : 0.6));
     root.style.setProperty("--shop-card-row-h", `${rowH}px`);
     root.style.setProperty("--shop-item-icon-size", `${shopIconSize}px`);
     root.style.setProperty("--shop-item-icon-font", `${shopIconFont}px`);
@@ -918,9 +918,10 @@
     return root.dataset.battleProfile === "tablet-landscape-side";
   }
 
-  /** Flank-arena: HP/stamina на бёдрах (не под ногами портрета). */
+  /** Flank-arena bust: HP на бёдрах портрета. Full-body prep-layer — ниже (usesBattleHudHipAnchor). */
   function usesBattleHudHipAnchor(root = document.documentElement) {
     if (root.dataset.battleHeroPlacement !== "flank-arena") return false;
+    if (typeof usesBattlePrepHeroLayer === "function" && usesBattlePrepHeroLayer(root)) return false;
     const profile = root.dataset.battleProfile || "";
     return profile !== "phone-portrait" && profile !== "tablet-portrait";
   }
@@ -935,6 +936,18 @@
     const barH = Math.round(16 * uiScale);
     const gap = Math.round(3 * uiScale);
     return barH * 2 + gap;
+  }
+
+  /** Full-body: зарезервированная полоса под героем (чипы + HP/stamina). */
+  function measureBattleHudVitalsBandPx(uiScale = readCssPx("--ui-scale", 1)) {
+    const barsBlock = measureBattleHudBarsBlockPx(uiScale);
+    const chipBand = Math.round(56 * uiScale);
+    const gap = Math.round(6 * uiScale);
+    return gap + chipBand + gap + barsBlock;
+  }
+
+  function measureBattleHudChipBandPx(uiScale = readCssPx("--ui-scale", 1)) {
+    return Math.round(56 * uiScale);
   }
 
   function measureBattleHudSideRect(side) {
@@ -1001,12 +1014,27 @@
   }
 
   function measureBattleHudPrepLeftVp(team, prepRect, vpRect, zoneLeft, zoneW, hudWidth, uiScale) {
-    const gap = Math.round(6 * uiScale);
+    const edgeInset = Math.round(6 * uiScale);
     let hudLeft = team === "player"
-      ? Math.round(prepRect.right - vpRect.left + gap)
-      : Math.round(prepRect.left - vpRect.left - hudWidth - gap);
-    hudLeft = Math.max(0, Math.min(hudLeft, Math.round(vpRect.width - hudWidth)));
+      ? Math.round(prepRect.right - vpRect.left - hudWidth + edgeInset)
+      : Math.round(prepRect.left - vpRect.left - edgeInset);
+    hudLeft = Math.max(zoneLeft, Math.min(hudLeft, zoneLeft + zoneW - hudWidth));
     return hudLeft;
+  }
+
+  /** Full-body: HUD на всю колонку героя (чипы + полоски). */
+  function measureBattleHudPrepColumnVp(team, prepRect, vpRect, zoneW, uiScale) {
+    const hudWidth = Math.max(120, Math.min(Math.round(200 * uiScale), zoneW));
+    const hudLeft = team === "player"
+      ? Math.round(prepRect.left - vpRect.left)
+      : Math.round(prepRect.right - vpRect.left - hudWidth);
+    return { hudLeft, hudWidth };
+  }
+
+  /** Full-body prep hero: HP/stamina под ногами спрайта (не hip-ratio). */
+  function measureBattleHudBelowHeroTopVp(heroRect, vpRect, uiScale = readCssPx("--ui-scale", 1)) {
+    const barsGap = Math.round(6 * uiScale);
+    return Math.max(0, Math.round(heroRect.bottom - vpRect.top + barsGap));
   }
 
   function syncBattleHudAnchors() {
@@ -1030,6 +1058,17 @@
     const tabletLandscapeSide = isTabletLandscapeSideBattle(root);
     const prepHeroLayer = typeof usesBattlePrepHeroLayer === "function"
       && usesBattlePrepHeroLayer(root);
+
+    if (prepHeroLayer) {
+      root.dataset.battleHudBelowHero = "true";
+      root.style.setProperty(
+        "--battle-vitals-band-h",
+        `${measureBattleHudVitalsBandPx(readCssPx("--ui-scale", 1))}px`,
+      );
+    } else {
+      root.removeAttribute("data-battle-hud-below-hero");
+      root.style.removeProperty("--battle-vitals-band-h");
+    }
 
     let sharedStageBottom = null;
     if (!prepHeroLayer && tabletLandscapeSide && useFlankZones) {
@@ -1080,26 +1119,21 @@
       if (prepHeroLayer) {
         const prepRect = measureBattlePrepHeroRect(team);
         if (prepRect && prepRect.height >= 48) {
-          const zoneLeft = readCssPx(zoneLeftVar, 0);
           const zoneW = readCssPx(zoneWidthVar, 180);
-          const hudWidth = measureBattleHudPrepWidthPx(zoneW, prepRect, uiScale);
-          const hudLeft = measureBattleHudPrepLeftVp(team, prepRect, vpRect, zoneLeft, zoneW, hudWidth, uiScale);
+          const column = measureBattleHudPrepColumnVp(team, prepRect, vpRect, zoneW, uiScale);
+          const hudTopPx = measureBattleHudBelowHeroTopVp(prepRect, vpRect, uiScale);
           const barsBlock = measureBattleHudBarsBlockPx(uiScale);
-          const hudTopPx = sharedHudTopPx != null
-            ? sharedHudTopPx
-            : Math.max(0, Math.round(
-              prepRect.top - vpRect.top + prepRect.height * readBattleHudHipPortraitRatio(root) - barsBlock * 0.5,
-            ));
+          const chipBand = measureBattleHudChipBandPx(uiScale);
 
-          hud.style.left = `${hudLeft}px`;
-          hud.style.width = `${hudWidth}px`;
-          hud.style.maxWidth = `${hudWidth}px`;
+          hud.style.left = `${column.hudLeft}px`;
+          hud.style.width = `${column.hudWidth}px`;
+          hud.style.maxWidth = `${column.hudWidth}px`;
           hud.style.top = `${hudTopPx}px`;
           root.style.setProperty(`--battle-hud-anchor-top-${team}`, `${hudTopPx}px`);
 
-          const chipHeadroom = Math.max(48, Math.round(hudTopPx - barsGap));
-          hud.style.setProperty("--battle-hud-max-h", `${chipHeadroom + barsBlock}px`);
-          hud.style.setProperty("--battle-hud-status-max-h", `${chipHeadroom}px`);
+          hud.style.setProperty("--battle-hud-status-max-h", `${chipBand}px`);
+          hud.style.setProperty("--battle-hud-max-h", `${chipBand + barsGap + barsBlock}px`);
+          hud.style.setProperty("--battle-hud-chip-band-h", `${chipBand}px`);
           return;
         }
       }
@@ -1141,9 +1175,8 @@
             hudLeft = measureBattleHudPrepLeftVp(team, liveRect, vpRect, zoneLeft, zoneW, hudWidth, uiScale);
           } else {
             hudLeft = team === "player"
-              ? zoneLeft + zoneW + edgeInset
-              : zoneLeft - hudWidth - edgeInset;
-            hudLeft = Math.max(0, Math.min(hudLeft, Math.round(vpRect.width - hudWidth)));
+              ? zoneLeft + zoneW - hudWidth - edgeInset
+              : zoneLeft + edgeInset;
           }
         } else if (tabletLandscapeSide && stageRect && stageRect.width > 40) {
           hudLeft = stageRect.left - vpRect.left;
@@ -1647,7 +1680,8 @@
     root.style.removeProperty("--prep-shop-popover-right");
     root.style.setProperty("--prep-shop-popover-y", `${top}px`);
     root.style.setProperty("--prep-shop-popover-w", `${corridorW}px`);
-    root.style.setProperty("--prep-shop-popover-h", `${height}px`);
+    root.style.setProperty("--prep-shop-popover-max-h", `${height}px`);
+    root.style.removeProperty("--prep-shop-popover-h");
     syncOpenPrepTooltipDock();
   }
 
@@ -2064,13 +2098,14 @@
       && BattleHeroAnchor.usesCombatFloorAnchors();
   }
 
-  /** Эмодзи-аватар: в combat floor (нижняя полоса дуэли) на всех tier. */
+  /** Эмодзи-аватар (мысль): над колонкой героя; combat floor — только для атак. */
   function syncHeroEmotionSlotAnchors(opts = {}) {
     const root = document.documentElement;
     if (root.dataset.battleHeroPlacement !== "flank-arena") {
       root.removeAttribute("data-tablet-thought-corners");
       root.removeAttribute("data-thought-slot-below-hero");
       root.removeAttribute("data-battle-combat-floor");
+      root.removeAttribute("data-battle-hud-below-hero");
       syncHeroEmotionSlotAnchors._layout = null;
       return;
     }
@@ -2079,14 +2114,12 @@
       && BattleHeroAnchor.usesCombatFloorAnchors();
     root.dataset.battleCombatFloor = combatFloor ? "true" : "false";
     root.dataset.tabletThoughtCorners = combatFloor ? "true" : "false";
+    const portraitHeadBadge = typeof BattleHeroAnchor !== "undefined"
+      && BattleHeroAnchor.usesHeadBadgeAnchors?.();
     const aboveHero = typeof BattleHeroAnchor !== "undefined"
       && BattleHeroAnchor.usesHeroAboveThoughtAnchors?.();
-    const headBadge = aboveHero
-      || (combatFloor
-        && typeof BattleHeroAnchor !== "undefined"
-        && BattleHeroAnchor.usesHeadBadgeAnchors?.());
-    root.dataset.thoughtHeadBadge = headBadge ? "true" : "false";
     root.dataset.thoughtAboveHero = aboveHero ? "true" : "false";
+    root.dataset.thoughtHeadBadge = portraitHeadBadge ? "true" : "false";
     root.dataset.thoughtSlotBelowHero = "false";
 
     if (typeof BattleHeroAnchor !== "undefined" && BattleHeroAnchor.invalidateMeasureCache) {
@@ -2151,7 +2184,7 @@
         }
         if (cx == null || top == null) {
           const rescue = typeof BattleHeroAnchor !== "undefined"
-            ? (BattleHeroAnchor.getHeroBelowThoughtAnchor?.(side)
+            ? (BattleHeroAnchor.getHeroAboveThoughtAnchor?.(side)
               || BattleHeroAnchor.getThoughtSlotAnchor?.(side))
             : null;
           if (rescue) {
@@ -2326,9 +2359,12 @@
         const arenaLeft = playerZoneLeft + playerZoneW;
         const arenaW = Math.max(120, enemyZoneLeft - arenaLeft);
         const layoutHeight = Math.max(layoutRect.height, sceneRect.height, fieldCol.clientHeight);
-        const combatFloorTop = Math.round(
-          Math.max(playerRect.bottom, enemyRect.bottom) - sceneRect.top + arenaGap,
+        const vitalsBandH = measureBattleHudVitalsBandPx(uiScale);
+        root.style.setProperty("--battle-vitals-band-h", `${vitalsBandH}px`);
+        const heroBottomScene = Math.round(
+          Math.max(playerRect.bottom, enemyRect.bottom) - sceneRect.top,
         );
+        const combatFloorTop = Math.round(heroBottomScene + vitalsBandH + arenaGap);
         const combatFloorH = Math.max(
           readCssPx("--battle-thought-arena-min-h", 110),
           layoutHeight - combatFloorTop - toolbarReserve - arenaGap,
@@ -2694,7 +2730,11 @@
   }
 
   function setBattleArenaLayout(enabled) {
+    const wasEnabled = document.documentElement.dataset.battleArenaLayout === "true";
     document.documentElement.dataset.battleArenaLayout = enabled ? "true" : "false";
+    if (enabled && !wasEnabled && typeof ArenaEquipment !== "undefined" && ArenaEquipment.onResize) {
+      ArenaEquipment.onResize();
+    }
   }
 
   function setBattleHeroPlacement(mode) {
@@ -3333,7 +3373,11 @@
       ensurePrepHeroCardPortraitObserver();
       syncPrepHeroCardPortraitSize();
       window.syncPrepHeroCardChrome?.();
-      if (typeof syncPrepBuildEmojiBtnMount === "function") syncPrepBuildEmojiBtnMount();
+      if (typeof syncPrepBuildEmojiBtnFromRuntime === "function") {
+        syncPrepBuildEmojiBtnFromRuntime();
+      } else if (typeof syncPrepBuildEmojiBtnMount === "function") {
+        syncPrepBuildEmojiBtnMount();
+      }
 
       if (usesTabletPrepHeroLayout() && appPhase === "prep") {
         syncTabletSidePrepGridMetrics();

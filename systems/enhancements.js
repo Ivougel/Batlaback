@@ -550,10 +550,12 @@ function renderEnhancementShopCardHTML(def, { extraClasses = "", innerBefore = "
     <div class="shop-item-main">
       <div class="shop-item-stack shop-item-stack--enhancement">
         ${innerBefore}
-        <div class="shop-item-visual">
-          <div class="item-icon-shell item-icon-shell--enhancement item-emoji-sparkle-host">
-            ${typeof renderItemEmojiSparklesHTML === "function" ? renderItemEmojiSparklesHTML() : ""}
-            <span class="enh-shop-icon" aria-hidden="true">${def.icon}</span>
+        <div class="shop-item-hero">
+          <div class="shop-item-visual">
+            <div class="item-icon-shell item-icon-shell--enhancement item-emoji-sparkle-host">
+              ${typeof renderItemEmojiSparklesHTML === "function" ? renderItemEmojiSparklesHTML() : ""}
+              <span class="enh-shop-icon" aria-hidden="true">${def.icon}</span>
+            </div>
           </div>
         </div>
         <div class="cost shop-item-cost" aria-label="Цена ${cost}"><span class="cost-value">${cost}</span><span class="cost-coin" aria-hidden="true">💰</span></div>

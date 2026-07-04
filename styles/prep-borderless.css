@@ -394,24 +394,14 @@ html[data-visual-theme="diablo"] #app[data-phase="prep"] .btn-refresh-shop:hover
 
 #app[data-phase="prep"] #shop-panel .shop-item-stack,
 #prep-shop-popover #shop-panel .shop-item-stack {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  flex-direction: unset;
   align-items: center;
 }
 
-#app[data-phase="prep"] #shop-panel .shop-item-stack > .shop-item-visual,
-#prep-shop-popover #shop-panel .shop-item-stack > .shop-item-visual {
-  order: 1;
-}
-
-#app[data-phase="prep"] #shop-panel .shop-item-stack > .cost,
-#prep-shop-popover #shop-panel .shop-item-stack > .cost {
-  order: 2;
-}
-
-#app[data-phase="prep"] #shop-panel .shop-item-stack > .enh-shop-slot-tag,
-#prep-shop-popover #shop-panel .shop-item-stack > .enh-shop-slot-tag {
-  order: 3;
+#app[data-phase="prep"] #shop-panel .shop-item-stack > .shop-item-hero,
+#prep-shop-popover #shop-panel .shop-item-stack > .shop-item-hero {
+  width: fit-content;
 }
 
 #app[data-phase="prep"] #shop-panel .shop-item-visual .icon,

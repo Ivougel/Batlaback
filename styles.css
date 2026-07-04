@@ -1357,13 +1357,20 @@ body:has(#app[data-phase="replay"]) #battle-controls:not(.hidden) {
 @media (prefers-reduced-motion: reduce) {
   .avatar-stack-orbit-particle {
     animation: none;
+    transform: rotate(var(--orbit-a)) translateX(var(--orbit-r)) rotate(calc(-1 * var(--orbit-a)));
   }
 }
 
-/* iPad / phone light FX: статичные стаки без вращающейся орбиты */
+/* iPad / phone light FX: статичное кольцо без вращения (keyframes не применяются при animation:none) */
 html[data-battle-fx-light="true"] .avatar-stack-orbit-particle {
   animation: none;
   opacity: 0.92;
+  transform: rotate(var(--orbit-a)) translateX(var(--orbit-r)) rotate(calc(-1 * var(--orbit-a)));
+}
+
+html[data-battle-arena-layout="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .avatar-stack-orbit-particle {
+  animation: avatar-stack-orbit linear infinite;
+  opacity: 1;
 }
 
 .avatar-damage-stacks {
@@ -3596,10 +3603,10 @@ html[data-game-phase="replay"] #prep-tooltip-dock .sidebar-tooltip {
   width: auto;
   max-width: calc(320px * var(--ui-scale));
   padding: calc(12px * var(--ui-scale)) calc(14px * var(--ui-scale));
-  background: #161b22;
-  border: 1.5px solid #30363d;
+  background: var(--tooltip-bg);
+  border: 1.5px solid var(--tooltip-border);
   border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--tooltip-shadow);
   pointer-events: none;
   max-height: none;
   overflow: visible;
@@ -3607,12 +3614,10 @@ html[data-game-phase="replay"] #prep-tooltip-dock .sidebar-tooltip {
 
 html[data-game-phase="prep"] #prep-tooltip-dock:not(.hidden) {
   padding: calc(10px * var(--ui-scale));
-  background: rgba(14, 17, 22, 0.94);
-  border: 1px solid rgba(88, 166, 255, 0.22);
+  background: var(--tooltip-bg);
+  border: 1px solid var(--tooltip-border);
   border-radius: 14px;
-  box-shadow:
-    0 16px 40px rgba(0, 0, 0, 0.48),
-    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  box-shadow: var(--tooltip-shadow);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   pointer-events: auto;
@@ -3653,10 +3658,10 @@ html[data-game-phase="prep"] #sidebar-tooltip.sidebar-tooltip--floating {
   max-width: calc(320px * var(--ui-scale));
   margin: 0;
   padding: calc(12px * var(--ui-scale)) calc(14px * var(--ui-scale));
-  background: #161b22;
-  border: 1.5px solid #30363d;
+  background: var(--tooltip-bg);
+  border: 1.5px solid var(--tooltip-border);
   border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--tooltip-shadow);
   pointer-events: none;
   z-index: 10001;
   max-height: min(50vh, 360px);
@@ -3670,11 +3675,12 @@ html[data-game-phase="prep"] #sidebar-tooltip.sidebar-tooltip--floating {
   z-index: 9999;
   max-width: calc(320px * var(--ui-scale));
   padding: calc(12px * var(--ui-scale)) calc(14px * var(--ui-scale));
-  background: #161b22;
-  border: 1.5px solid #30363d;
+  background: var(--tooltip-bg);
+  border: 1.5px solid var(--tooltip-border);
   border-radius: 8px;
   pointer-events: none;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--tooltip-shadow);
+  color: var(--tooltip-text);
 }
 
 .sidebar-tooltip.hidden {
@@ -3684,7 +3690,7 @@ html[data-game-phase="prep"] #sidebar-tooltip.sidebar-tooltip--floating {
 .sidebar-tooltip .tt-line {
   font-size: calc(12px * var(--ui-scale));
   line-height: 1.45;
-  color: #e6edf3;
+  color: var(--tooltip-text);
   white-space: pre-wrap;
 }
 
@@ -3692,11 +3698,12 @@ html[data-game-phase="prep"] #sidebar-tooltip.sidebar-tooltip--floating {
   font-size: calc(14px * var(--ui-scale));
   font-weight: 700;
   margin-bottom: var(--gap-xs);
+  color: var(--tooltip-text);
 }
 
 .sidebar-tooltip .tt-label {
   font-weight: 600;
-  color: #f0c14b;
+  color: var(--tooltip-label);
   margin-top: var(--gap-xs);
 }
 
@@ -3708,33 +3715,33 @@ html[data-game-phase="prep"] #sidebar-tooltip.sidebar-tooltip--floating {
 }
 
 .sidebar-tooltip .tt-stat-base {
-  color: #8b949e;
+  color: var(--tooltip-stat-base);
   text-decoration: line-through;
-  text-decoration-color: rgba(139, 148, 158, 0.55);
+  text-decoration-color: color-mix(in srgb, var(--tooltip-stat-base) 55%, transparent);
 }
 
 .sidebar-tooltip .tt-stat-arrow {
-  color: #6e7681;
+  color: var(--tooltip-stat-arrow);
   font-size: 0.92em;
 }
 
 .sidebar-tooltip .tt-stat-buff {
-  color: #3fb950;
+  color: var(--tooltip-stat-buff);
   font-weight: 700;
 }
 
 .sidebar-tooltip .tt-stat-buff--purple {
-  color: #a371f7;
+  color: var(--tooltip-stat-buff-purple);
 }
 
 .sidebar-tooltip .tt-sub {
-  color: #8b949e;
+  color: var(--tooltip-text-muted);
   margin-bottom: var(--gap-xs);
 }
 
 .mechanic-tag {
   display: inline;
-  color: #58a6ff;
+  color: var(--tooltip-mechanic);
   font-weight: 600;
   white-space: nowrap;
 }
@@ -3742,7 +3749,7 @@ html[data-game-phase="prep"] #sidebar-tooltip.sidebar-tooltip--floating {
 .recipe-book-item-synergy .mechanic-tag,
 .synergy-tooltip .mechanic-tag,
 .prep-hero-tooltip-desc .mechanic-tag {
-  color: #58a6ff;
+  color: var(--tooltip-mechanic);
 }
 
 html[data-touch="true"] .sidebar-tooltip {

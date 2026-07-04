@@ -1,9 +1,9 @@
 /**
- * Shop pin — оверлей в левом верхнем углу кластера предмета.
- * Пин живёт внутри .shop-item-stack (offset ≥ 0) — не клипится overflow/scroll.
+ * Shop pin — слева от эмодзи (в потоке grid), не поверх иконки.
  */
 
 :root {
+  --shop-pin-gap: calc(6px * var(--ui-scale, 1));
   --shop-pin-size: calc(28px * var(--ui-scale, 1));
   --shop-pin-glyph: calc(18px * var(--ui-scale, 1));
   --shop-pin-offset-x: 0;
@@ -31,15 +31,21 @@ html[data-prep-layout="stacked"] {
 }
 
 :is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-stack .shop-pin {
-  position: absolute;
-  top: var(--shop-pin-offset-y, 0);
-  left: var(--shop-pin-offset-x, 0);
-  z-index: calc(var(--z-layer-objects, 20) + 5);
+  position: relative;
+  top: auto;
+  left: auto;
+  right: auto;
+  z-index: calc(var(--z-layer-objects, 20) + 8);
+  pointer-events: auto;
 }
 
-#app[data-phase="prep"][data-prep-side="enemy"] #shop-panel .shop-item-stack .shop-pin {
-  left: auto;
-  right: var(--shop-pin-offset-x, 0);
+html[data-prep-shop-popover="true"] {
+  --shop-pin-size: calc(36px * var(--ui-scale, 1));
+  --shop-pin-glyph: calc(22px * var(--ui-scale, 1));
+}
+
+html[data-prep-shop-popover="true"] .shop-pin::before {
+  inset: calc(-10px * var(--ui-scale, 1));
 }
 
 .shop-pin {

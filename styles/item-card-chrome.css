@@ -1,5 +1,5 @@
 /**
- * Item card chrome — магазин: иконка сверху, цена в тёмной pill снизу, footprint на углу иконки.
+ * Item card chrome — магазин: пин → иконка → цена; footprint за эмодзи.
  */
 
 .item-card-cluster,
@@ -13,12 +13,12 @@
   max-width: 100%;
 }
 
-/* Магазин: [пин] + иконка + цена снизу */
+/* Магазин: пин → hero (shape + emoji) → цена */
 :is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-card:not(.empty) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 :is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-main {
@@ -29,38 +29,104 @@
 
 :is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-stack {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-areas:
+    "pin hero"
+    "cost cost"
+    "tag tag";
   justify-content: center;
-  gap: calc(4px * var(--ui-scale, 1));
-  width: fit-content;
+  justify-items: center;
+  align-items: center;
+  column-gap: calc(4px * var(--ui-scale, 1));
+  row-gap: calc(4px * var(--ui-scale, 1));
+  width: 100%;
   max-width: 100%;
   min-width: 0;
-  padding-top: var(--shop-pin-size, calc(28px * var(--ui-scale, 1)));
+  padding-top: 0;
 }
 
-:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-stack > .shop-item-visual {
-  order: 1;
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-stack:not(:has(.shop-pin)) {
+  grid-template-columns: auto;
+  grid-template-areas:
+    "hero"
+    "cost"
+    "tag";
+}
+
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-stack > .shop-pin {
+  grid-area: pin;
+  position: relative;
+  top: auto;
+  left: auto;
+  align-self: center;
+  justify-self: end;
+  z-index: calc(var(--z-layer-objects, 20) + 8);
+  margin: 0;
+  pointer-events: auto;
+}
+
+#app[data-phase="prep"][data-prep-side="enemy"] #shop-panel .shop-item-stack > .shop-pin {
+  justify-self: start;
+}
+
+#app[data-phase="prep"][data-prep-side="enemy"] #shop-panel .shop-item-stack:has(.shop-pin),
+#app[data-phase="prep"][data-prep-side="enemy"] ~ #prep-shop-popover #shop-panel .shop-item-stack:has(.shop-pin) {
+  grid-template-areas:
+    "hero pin"
+    "cost cost"
+    "tag tag";
+}
+
+#app[data-phase="prep"][data-prep-side="enemy"] ~ #prep-shop-popover #shop-panel .shop-item-stack > .shop-pin {
+  justify-self: start;
+}
+
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-hero {
+  grid-area: hero;
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: calc(5px * var(--ui-scale, 1));
+  justify-self: start;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 0;
+}
+
+#app[data-phase="prep"][data-prep-side="enemy"] #shop-panel .shop-item-stack:has(.shop-pin) .shop-item-hero,
+#app[data-phase="prep"][data-prep-side="enemy"] ~ #prep-shop-popover #shop-panel .shop-item-stack:has(.shop-pin) .shop-item-hero {
+  justify-self: end;
+}
+
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-hero .shop-item-visual {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-hero .item-shape-mini--shop-overlay {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  align-self: center;
+  margin: 0;
+  opacity: 0.72;
+  pointer-events: none;
+  transform: none;
 }
 
 :is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-stack > .cost {
-  order: 2;
+  grid-area: cost;
 }
 
 :is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-stack > .enh-shop-slot-tag {
-  order: 3;
-}
-
-:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-visual {
-  position: relative;
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-  overflow: visible;
+  grid-area: tag;
 }
 
 :is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-stack .shop-item-visual .icon,
@@ -134,17 +200,6 @@
   font-size: calc(var(--font-sm) * 1.02);
   line-height: 1;
   opacity: 0.95;
-  flex-shrink: 0;
-}
-
-:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel) .shop-item-visual .item-shape-mini--shop-overlay {
-  position: absolute;
-  right: calc(1px * var(--ui-scale, 1));
-  bottom: calc(1px * var(--ui-scale, 1));
-  z-index: 2;
-  margin: 0;
-  opacity: 0.92;
-  pointer-events: none;
   flex-shrink: 0;
 }
 

@@ -593,6 +593,18 @@ function analyzeBattleState(battleState, elapsedReal) {
   emotionEngine.snapshot = snap;
 }
 
+function bootstrapBattleThoughts(opts = {}) {
+  if (opts.battleState) emotionActiveBattle = opts.battleState;
+  ensureMainEmotions();
+  const playerEmoji = opts.playerEmoji || DEFAULT_MAIN_EMOJI.player;
+  const enemyEmoji = opts.enemyEmoji || DEFAULT_MAIN_EMOJI.enemy;
+  emotionEngine.playerMain = createMainEmotionEvent("player", playerEmoji);
+  emotionEngine.enemyMain = createMainEmotionEvent("enemy", enemyEmoji);
+  renderEmotionDom(emotionEngine.playerMain, "player");
+  renderEmotionDom(emotionEngine.enemyMain, "enemy");
+  emotionEngine.lastRenderAt = Date.now();
+}
+
 function drawEmotionLayer(_ctx, battleState, elapsedReal) {
   if (!battleState) {
     clearEmotionLayer();

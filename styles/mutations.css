@@ -578,7 +578,7 @@ html:is([data-prep-layout="side"], [data-ui-surface="tablet-side"], [data-ui-sur
   align-items: center;
 }
 
-#app:not([data-phase="prep"]) .prep-build-emoji-btn {
+#app:not([data-phase="prep"]) .prep-build-emoji-btn:not(.prep-build-emoji-btn--hero-field-float) {
   display: none !important;
 }
 

@@ -18,17 +18,20 @@ function resetHeroHpTracking(team) {
 }
 
 function maybeTriggerHeroTakingHit(team, shell, hpCurrent) {
-  if (!shell) return;
   const prev = lastSyncedHeroHp[team];
   if (prev != null && hpCurrent < prev - 0.01) {
-    shell.classList.remove("hero-taking-hit");
-    void shell.offsetWidth;
-    shell.classList.add("hero-taking-hit");
-    if (heroHitAnimTimers[team]) clearTimeout(heroHitAnimTimers[team]);
-    heroHitAnimTimers[team] = window.setTimeout(() => {
+    if (document.documentElement.dataset.battlePrepHeroLayer === "true") {
+      if (typeof triggerProfileAvatarHitShake === "function") triggerProfileAvatarHitShake(team);
+    } else if (shell) {
       shell.classList.remove("hero-taking-hit");
-      heroHitAnimTimers[team] = null;
-    }, 300);
+      void shell.offsetWidth;
+      shell.classList.add("hero-taking-hit");
+      if (heroHitAnimTimers[team]) clearTimeout(heroHitAnimTimers[team]);
+      heroHitAnimTimers[team] = window.setTimeout(() => {
+        shell.classList.remove("hero-taking-hit");
+        heroHitAnimTimers[team] = null;
+      }, 300);
+    }
   }
   lastSyncedHeroHp[team] = hpCurrent;
 }
@@ -98,6 +101,15 @@ function renderAvatarArchetypeBannerHTML(profile) {
 
 function syncAvatarArchetypeBanner(shell, profile) {
   if (!shell) return;
+  const appPhase = document.getElementById("app")?.dataset?.phase;
+  if (
+    document.documentElement.dataset.battlePrepHeroLayer === "true"
+    && (appPhase === "battle" || appPhase === "replay")
+  ) {
+    shell.querySelector(".avatar-hero-archetype-banner")?.remove();
+    shell.classList.remove("avatar-hero-has-archetype");
+    return;
+  }
   const stage = shell.querySelector(".avatar-hero-stage");
   if (!stage) return;
   const sig = profile?.archetypePathId

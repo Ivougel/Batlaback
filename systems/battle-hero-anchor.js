@@ -27,8 +27,8 @@ const BattleHeroAnchor = (() => {
     measureCache.combatFloor = undefined;
   }
 
-  /** Множитель эмодзи на боевом полу арены. */
-  const BATTLE_THOUGHT_EMOJI_SCALE = 1;
+  /** Множитель эмодзи-мысли в бою (flank / thought-slot). */
+  const BATTLE_THOUGHT_EMOJI_SCALE = 2.5 / 1.5;
 
   function battleThoughtEmojiScale() {
     return BATTLE_THOUGHT_EMOJI_SCALE;
@@ -179,6 +179,9 @@ const BattleHeroAnchor = (() => {
       heroAboveZoneBias: 0.82,
       heroSpecYRatio: 0.20,
       heroSpecXBias: 0.34,
+      heroHeadInward: 0.10,
+      heroHeadThoughtYRatio: 0.08,
+      heroHeadLiftRatio: 0.30,
     },
     "tablet-portrait": {
       ...FLOOR_EMOJI_PROFILE,
@@ -206,6 +209,9 @@ const BattleHeroAnchor = (() => {
       satelliteScale: 0.62,
       heroSpecYRatio: 0.18,
       heroSpecXBias: 0.32,
+      heroHeadInward: 0.10,
+      heroHeadThoughtYRatio: 0.08,
+      heroHeadLiftRatio: 0.30,
     },
   };
 
@@ -285,8 +291,8 @@ const BattleHeroAnchor = (() => {
       }
     }
     const raw = Math.max(fromFloor, fromVmin, fromAvatar) * emojiMod * BATTLE_THOUGHT_EMOJI_SCALE;
-    const minPx = Math.round(prof.minPx);
-    const maxPx = Math.round(prof.maxPx);
+    const minPx = Math.round(prof.minPx * BATTLE_THOUGHT_EMOJI_SCALE);
+    const maxPx = Math.round(prof.maxPx * BATTLE_THOUGHT_EMOJI_SCALE);
     return Math.round(Math.min(maxPx, Math.max(minPx, raw)));
   }
 
@@ -294,10 +300,17 @@ const BattleHeroAnchor = (() => {
     return Math.round(emojiSize * emojiProfile().haloRatio);
   }
 
+  /** Размер fixed-слота: голый глиф над героем — без halo-паддинга (иначе slot уезжает в safeTop). */
+  function thoughtSlotMountSize(emojiSize = thoughtSlotEmojiSize()) {
+    if (usesHeroAboveThoughtAnchors() && !usesHeadBadgeAnchors()) {
+      return emojiSize;
+    }
+    return emojiSize + thoughtSlotHaloPx(emojiSize) * 2;
+  }
+
   /** Размер контейнера слота (эмодзи + орбита спутников). */
   function thoughtSlotSize(vmin = viewportMin()) {
-    const emoji = thoughtSlotEmojiSize(vmin);
-    return emoji + thoughtSlotHaloPx(emoji) * 2;
+    return thoughtSlotMountSize(thoughtSlotEmojiSize(vmin));
   }
 
   function getThoughtSlotEl(side) {
@@ -406,9 +419,8 @@ const BattleHeroAnchor = (() => {
 
   function usesHeroBelowThoughtAnchors() {
     if (usesHeadBadgeAnchors()) return false;
-    if (usesCombatFloorAnchors() && !emojiProfile().headBadge) return false;
-    const prof = emojiProfile();
-    return prof.heroBelow === true || currentBattleProfile() === "tablet-landscape-side";
+    if (usesHeroAboveThoughtAnchors()) return false;
+    return emojiProfile().heroBelow === true;
   }
 
   function getHeroColumnTop(side) {
@@ -429,9 +441,9 @@ const BattleHeroAnchor = (() => {
   }
 
   function usesHeroAboveThoughtAnchors() {
-    if (!isFlankArenaBattle() || usesHeadBadgeAnchors()) return false;
-    const profile = currentBattleProfile();
-    return profile === "tablet-landscape-side" || profile.startsWith("desktop-");
+    if (!isFlankArenaBattle()) return false;
+    if (usesHeadBadgeAnchors()) return false;
+    return true;
   }
 
   /** Верх колонки героя (портрет) — потолок для эмодзи-аватара. Не привязываем к HUD HP/стамины. */
@@ -453,48 +465,55 @@ const BattleHeroAnchor = (() => {
     return null;
   }
 
-  /** Flank-arena: эмодзи-аватар над героем/HUD (верх колонки), не на торсе и не на «полу». */
+  /** Flank-arena: эмодзи-мысль над головой героя, чуть к центру арены. */
   function getHeroAboveThoughtAnchor(side) {
-    const cx = getHeroColumnCenterX(side);
-    if (cx == null) return null;
-
+    const ar = getAvatarAnchorRect(side);
     const emojiSize = thoughtSlotEmojiSize();
     const halo = thoughtSlotHaloPx(emojiSize);
-    const containerSize = emojiSize + halo * 2;
-    const gap = Math.max(thoughtSlotGapPx(), Math.round(10 * readCssPx("--ui-scale", 1)));
+    const mountSize = thoughtSlotMountSize(emojiSize);
+    const prof = emojiProfile();
+    const uiScale = readCssPx("--ui-scale", 1);
+    const gap = Math.max(thoughtSlotGapPx(), Math.round(8 * uiScale));
 
-    let ceilingY = getHeroEmojiColumnCeilingY(side);
+    let cx;
+    let cy;
 
-    if (ceilingY == null) {
-      const panelId = side === "enemy" ? "enemy-avatar-panel" : "player-avatar-panel";
-      const panelRect = document.getElementById(panelId)?.getBoundingClientRect();
-      const stageRect = getAvatarAnchorRect(side);
-      const heroTop = getHeroColumnTop(side);
-      ceilingY = stageRect?.top ?? panelRect?.top ?? heroTop ?? null;
+    if (ar && ar.height >= 40) {
+      const inward = prof.heroHeadInward ?? 0.10;
+      cx = side === "enemy"
+        ? ar.left + ar.width * (0.5 - inward)
+        : ar.left + ar.width * (0.5 + inward);
+      const headLine = ar.top + ar.height * (prof.heroHeadThoughtYRatio ?? 0.08);
+      cy = headLine - gap - emojiSize * (prof.heroHeadLiftRatio ?? 0.30);
+    } else {
+      cx = getHeroColumnCenterX(side);
+      if (cx == null) return null;
+      const ceilingY = getHeroEmojiColumnCeilingY(side)
+        ?? getHeroColumnTop(side);
+      if (ceilingY == null) return null;
+      cy = ceilingY - gap - emojiSize * 0.30;
     }
 
-    if (ceilingY == null) return null;
-
     const vv = window.visualViewport;
-    const safeTop = (vv?.offsetTop ?? 0) + Math.max(gap, Math.round(8 * readCssPx("--ui-scale", 1)));
-    let slotTop = ceilingY - gap - containerSize;
-    if (slotTop < safeTop) slotTop = safeTop;
+    const safeTop = (vv?.offsetTop ?? 0) + Math.round(8 * uiScale);
+    const minCy = safeTop + mountSize / 2;
+    if (cy < minCy) cy = minCy;
 
-    const cy = slotTop + containerSize / 2;
+    const slotTop = cy - mountSize / 2;
 
     return {
       cx,
       cy,
       emojiSize,
       halo,
-      containerSize,
+      containerSize: mountSize,
       top: slotTop,
-      left: cx - containerSize / 2,
-      size: containerSize,
+      left: cx - mountSize / 2,
+      size: mountSize,
     };
   }
 
-  /** Центральная арена: эмодзи на боевом полу (x20/y58, x80/y58). */
+  /** @deprecated Combat floor — только attack/float; не для emoji-мысли. */
   function getCombatFloorThoughtAnchor(side) {
     const floor = getCombatFloorRect();
     if (!floor) return null;
@@ -504,8 +523,22 @@ const BattleHeroAnchor = (() => {
     const halo = thoughtSlotHaloPx(emojiSize);
     const containerSize = emojiSize + halo * 2;
 
-    const cx = floor.left + floor.width * anchorNorm.x;
-    const cy = floor.top + floor.height * anchorNorm.y;
+    const chromeTop = visibleBattleCorridorTopPx();
+    const onScreenBottom = Math.min(
+      floor.bottom,
+      visibleViewportBottomPx(),
+      chromeTop > floor.top + 8 ? chromeTop : floor.bottom,
+    );
+    let usableH = Math.max(0, onScreenBottom - floor.top);
+    if (usableH < emojiSize * 0.2) {
+      const aboveHero = getHeroAboveThoughtAnchor(side);
+      if (aboveHero) return aboveHero;
+      usableH = Math.max(usableH, floor.height * (anchorNorm.y || 0.58));
+    }
+
+    const heroCx = getHeroColumnCenterX(side);
+    const cx = heroCx != null ? heroCx : floor.left + floor.width * anchorNorm.x;
+    const cy = floor.top + usableH * anchorNorm.y;
 
     return {
       cx,
@@ -667,49 +700,17 @@ const BattleHeroAnchor = (() => {
     };
   }
 
-  /** Позиция thought-slot в viewport (px). */
+
+  /** Позиция thought-slot в viewport (px): мысль над колонкой героя. */
   function getThoughtSlotAnchor(side) {
-    // Tablet-side / desktop flank: эмодзи над героем в колонке (как на макете).
-    if (usesHeroAboveThoughtAnchors()) {
-      const aboveHero = getHeroAboveThoughtAnchor(side);
-      if (aboveHero) return aboveHero;
-
-      const nearHero = getHeroNearSpecAnchor(side);
-      if (nearHero) return nearHero;
-
-      const underHero = getHeroBelowThoughtAnchor(side);
-      if (underHero) return underHero;
-
-      const cx = getHeroColumnCenterX(side);
-      const ar = getAvatarAnchorRect(side);
-      if (cx != null && ar) {
-        const emojiSize = thoughtSlotEmojiSize();
-        const halo = thoughtSlotHaloPx(emojiSize);
-        const containerSize = emojiSize + halo * 2;
-        const gap = Math.max(thoughtSlotGapPx(), Math.round(10 * readCssPx("--ui-scale", 1)));
-        const slotTop = ar.top - gap - containerSize;
-        return {
-          cx,
-          cy: slotTop + containerSize / 2,
-          emojiSize,
-          halo,
-          containerSize,
-          top: slotTop,
-          left: cx - containerSize / 2,
-          size: containerSize,
-        };
-      }
-      return null;
-    }
-
-    if (usesCombatFloorAnchors() && !usesHeadBadgeAnchors()) {
-      const floorAnchor = getCombatFloorThoughtAnchor(side);
-      if (floorAnchor) return floorAnchor;
-    }
-
     if (usesHeadBadgeAnchors()) {
       const badge = getHeadBadgeThoughtAnchor(side);
       if (badge) return badge;
+    }
+
+    if (usesHeroAboveThoughtAnchors()) {
+      const above = getHeroAboveThoughtAnchor(side);
+      if (above) return above;
     }
 
     if (usesHeroBelowThoughtAnchors()) {
@@ -717,36 +718,32 @@ const BattleHeroAnchor = (() => {
       if (underHero) return underHero;
     }
 
-    // Fallback: спек-эмодзи у верхней части колонки (prep-аналог).
     if (isFlankArenaBattle()) {
       const nearHero = getHeroNearSpecAnchor(side);
       if (nearHero) return nearHero;
     }
 
-    const floor = getCombatFloorRect();
-    const emojiSize = thoughtSlotEmojiSize();
-    const halo = thoughtSlotHaloPx(emojiSize);
-    const containerSize = emojiSize + halo * 2;
-
-    if (floor) {
-      const floorAnchor = getCombatFloorThoughtAnchor(side);
-      if (floorAnchor) return floorAnchor;
-    }
+    const aboveFallback = getHeroAboveThoughtAnchor(side);
+    if (aboveFallback) return aboveFallback;
 
     const ar = getAvatarAnchorRect(side);
     if (!ar) return null;
 
+    const emojiSize = thoughtSlotEmojiSize();
+    const halo = thoughtSlotHaloPx(emojiSize);
+    const containerSize = emojiSize + halo * 2;
     const gap = thoughtSlotGapPx();
-    const fallbackCx = ar.left + ar.width / 2;
-    const cy = ar.bottom + gap + emojiSize / 2;
+    const cx = ar.left + ar.width / 2;
+    const slotTop = Math.max(0, ar.top - gap - containerSize);
+    const cy = slotTop + containerSize / 2;
     return {
-      cx: fallbackCx,
+      cx,
       cy,
       emojiSize,
       halo,
       containerSize,
-      top: cy - containerSize / 2,
-      left: fallbackCx - containerSize / 2,
+      top: slotTop,
+      left: cx - containerSize / 2,
       size: containerSize,
     };
   }
@@ -805,6 +802,7 @@ const BattleHeroAnchor = (() => {
     thoughtSlotEmojiSize,
     thoughtSlotHaloPx,
     thoughtSlotSize,
+    thoughtSlotMountSize,
     getThoughtSlotEl,
     getAvatarAnchorRect,
     getHeroColumnCenterX,

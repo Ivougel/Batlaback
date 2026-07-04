@@ -857,6 +857,12 @@ function initLobbyRun() {
   }
   pickLobbyOpponent(lobbyState);
   resetLobbyPrepTimer();
+  if (typeof resetLobbyFighterThoughts === "function") resetLobbyFighterThoughts();
+  if (typeof seedLobbyFighterThoughts === "function") seedLobbyFighterThoughts(lobbyState);
+  if (typeof DialogueEngine !== "undefined") {
+    DialogueEngine.reset(`lobby:${lobbyState?.seed || Date.now()}`);
+    DialogueEngine.onRunStart(lobbyState, round);
+  }
   setLobbyViewFighter(lobbyState.playerId);
   delete document.documentElement.dataset.lobbySplit;
   syncLobby2pHudDom();
@@ -2265,14 +2271,14 @@ function showPlayerClassStep() {
       ? "Игрок 1 — герой"
       : "Выберите героя";
   document.getElementById("class-modal-subtitle").textContent = selectedGameMode === "versus"
-    ? "Первый игрок выбирает героиню — все четверо девочки с кличками на имя."
+    ? "Игрок 1 — выберите героиню."
     : selectedGameMode === "lobby2p"
-      ? "Split-screen лобби: 16 бойцов (2 игрока + 14 ботов)."
+      ? "16 бойцов: 2 игрока + 14 ботов."
       : selectedGameMode === "lobby"
-      ? "Лобби из восьми бойцов — кого из подружек отправим в рейтинг?"
+      ? "Восьмерка бойцов — выберите героиню."
       : selectedGameMode === "campaign"
-          ? "Герой для обучения — мягкие уроки и тренировочные манекены."
-          : "Кого из девочек-зверушек отправим в забег? У каждой свой характер и бонус.";
+          ? "Герой для обучения и тренировок."
+          : "Выберите героиню для забега.";
   syncClassOverlayUi();
   syncClassMobileDock();
   if (typeof renderClassMutationGallery === "function") {
@@ -4299,9 +4305,55 @@ function handleEnterHotkey(e) {
   return false;
 }
 
+function prepKeyboardBlocked() {
+  return isBoardPreviewOpen()
+    || isRecipeBookOpen()
+    || isPopupOpen("class-overlay")
+    || isPopupOpen("overlay")
+    || isPopupOpen("battle-result-overlay")
+    || (typeof isDetailPopupOpen === "function" && isDetailPopupOpen());
+}
+
+function togglePrepShopKeyboard() {
+  if (typeof window.toggleMobilePrepShop === "function") {
+    window.toggleMobilePrepShop();
+    return;
+  }
+  if (typeof window.togglePrepShopPopover === "function") {
+    window.togglePrepShopPopover();
+  }
+}
+
+function handleDesktopPrepShopHotkey(e) {
+  if (e.key !== "b" && e.key !== "B") return false;
+  if (e.shiftKey || e.ctrlKey || e.altKey || e.metaKey) return false;
+  if (isTouchUi()) return false;
+  if (phase !== "prep" || gameOver || isPhaseTransitioning()) return false;
+  if (prepKeyboardBlocked()) return false;
+  togglePrepShopKeyboard();
+  e.preventDefault();
+  return true;
+}
+
+function handleDesktopPrepRefreshHotkey(e) {
+  if (e.key !== "r" && e.key !== "R" && e.key !== "к" && e.key !== "К") return false;
+  if (e.shiftKey || e.ctrlKey || e.altKey || e.metaKey) return false;
+  if (isTouchUi()) return false;
+  if (phase !== "prep" || gameOver || isPhaseTransitioning()) return false;
+  if (dragPayload) return false;
+  if (prepKeyboardBlocked()) return false;
+  if (typeof refreshShop === "function") refreshShop(true);
+  e.preventDefault();
+  return true;
+}
+
 function handleRecipeBookHotkey(e) {
   if (e.key !== "b" && e.key !== "B") return false;
   if (isPhaseTransitioning()) return false;
+  if (!isTouchUi() && phase === "prep" && !gameOver && !e.shiftKey) return false;
+  if (!isTouchUi() && phase === "prep" && !gameOver && e.shiftKey && prepKeyboardBlocked() && !isRecipeBookOpen()) {
+    return false;
+  }
   toggleRecipeBookPopup();
   e.preventDefault();
   return true;
@@ -4508,11 +4560,15 @@ function handleGlobalKeydown(e) {
     if (handleEnterHotkey(e)) return;
   }
 
+  if (handleDesktopPrepShopHotkey(e)) return;
+
   if (handleRecipeBookHotkey(e)) return;
 
   if (handleCharacteristicsHotkey(e)) return;
 
   if (handlePrepTooltipsHotkey(e)) return;
+
+  if (handleDesktopPrepRefreshHotkey(e)) return;
 
   if (e.key === "r" || e.key === "R" || e.key === "к" || e.key === "К") {
     if (dragPayload && isLoadoutInteractionPhase()) rotateDragItem();
@@ -5908,6 +5964,18 @@ function startBattle() {
       if (typeof resetStackOrbitVfx === "function") resetStackOrbitVfx();
       battleStartTime = Date.now();
       tickBattlePresentation._at = { emotion: 0, arena: 0, orbit: 0 };
+      if (typeof BattleHeroAnchor !== "undefined" && BattleHeroAnchor.invalidateMeasureCache) {
+        BattleHeroAnchor.invalidateMeasureCache();
+      }
+      if (typeof window.syncHeroEmotionSlotAnchors === "function") {
+        if (window.syncHeroEmotionSlotAnchors._layout) {
+          window.syncHeroEmotionSlotAnchors._layout.player = "";
+          window.syncHeroEmotionSlotAnchors._layout.enemy = "";
+        }
+        window.syncHeroEmotionSlotAnchors();
+      }
+      if (typeof window.applyUiLayout === "function") window.applyUiLayout();
+      if (typeof window.syncBattleHudAnchors === "function") window.syncBattleHudAnchors();
       if (typeof resetEmotionEngine === "function") resetEmotionEngine();
       if (typeof resetBattleAuraFrame === "function") resetBattleAuraFrame();
       if (typeof initBattleHud === "function") initBattleHud();
@@ -5928,6 +5996,13 @@ function startBattle() {
       playPrepSfx("battle_start");
       renderBattleStats();
       renderPlayerProfiles();
+      if (typeof bootstrapBattleThoughts === "function" && battleState) {
+        if (typeof syncBattleArenaLayout === "function") syncBattleArenaLayout();
+        if (typeof window.syncHeroEmotionSlotAnchors === "function") {
+          window.syncHeroEmotionSlotAnchors();
+        }
+        bootstrapBattleThoughts({ battleState });
+      }
       renderFightButton();
       renderLobbyChrome();
       if (typeof queuePrewarmBattleInventoryPopover === "function") {
@@ -6230,6 +6305,10 @@ function applyPostBattlePrep(battleWinner) {
     }
 
     if (typeof disposeLobbyMatches === "function") disposeLobbyMatches(lobbyMatches);
+    const dialoguePlayerMatch = lobbyMatches.find((m) => m.isPlayerMatch && !m.byeFighterId);
+    const dialogueWinnerId = dialoguePlayerMatch?.state?.winner === "player"
+      ? dialoguePlayerMatch.fighterAId
+      : (dialoguePlayerMatch?.state?.winner === "enemy" ? dialoguePlayerMatch.fighterBId : null);
     lobbyMatches = [];
     lobbyBackgroundSimAcc.clear();
     battleState = null;
@@ -6272,6 +6351,10 @@ function applyPostBattlePrep(battleWinner) {
     updateUI();
     renderRunStats();
     renderLobbyChrome(true);
+    if (typeof DialogueEngine !== "undefined") {
+      if (dialogueWinnerId != null) DialogueEngine.onPostBattle(lobbyState, dialogueWinnerId, []);
+      DialogueEngine.onRoundPrep(lobbyState, round, []);
+    }
     return;
   }
 
@@ -6544,6 +6627,38 @@ function gameLoop(ts) {
     if (typeof tickInventoryAnimationController === "function") tickInventoryAnimationController(dt);
     if (typeof tickSynergyVisualController === "function") tickSynergyVisualController(dt);
     if (isLobby2pMode()) tickLobby2pSideBattles(dt);
+    if (isLobbyMode() && lobbyState && typeof tickLobbyFighterThoughts === "function") {
+      const thoughtDirty = tickLobbyFighterThoughts(lobbyState, {
+        phase: "prep",
+        round,
+        viewFighterId: lobbyViewFighterId,
+        matches: lobbyMatches,
+        timerRemaining: lobbyPrepTimerRemaining,
+        timerActive: lobbyPrepTimerActive,
+      });
+      if (thoughtDirty && typeof syncLobbyFighterAvatars === "function") {
+        syncLobbyFighterAvatars(lobbyState, {
+          phase: "prep",
+          round,
+          viewFighterId: lobbyViewFighterId,
+          matches: lobbyMatches,
+        });
+      }
+    } else if (!isLobbyMode() && !isLobby2pMode() && typeof tickSoloPrepThoughts === "function") {
+      tickSoloPrepThoughts();
+    }
+    if (isLobbyMode() && lobbyState && typeof DialogueEngine !== "undefined") {
+      DialogueEngine.tick({
+        lobby: lobbyState,
+        phase: "prep",
+        round,
+        matches: lobbyMatches,
+        timerRemaining: lobbyPrepTimerRemaining,
+        timerActive: lobbyPrepTimerActive,
+      });
+    } else if (!isLobbyMode() && !isLobby2pMode() && phase === "prep" && typeof DialogueEngine !== "undefined") {
+      DialogueEngine.tickSolo({ round });
+    }
     if (isLobbyMode() && lobbyPrepTimerActive) {
       lobbyPrepTimerRemaining = Math.max(0, lobbyPrepTimerRemaining - dt);
       if (Math.floor(ts / 250) !== Math.floor((ts - dt * 1000) / 250)) {
@@ -10036,6 +10151,37 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
     prepPlayer?.removeAttribute("hidden");
     prepEnemy?.removeAttribute("hidden");
     if (typeof scheduleBattleHeroRowSync === "function") scheduleBattleHeroRowSync();
+    if (typeof syncPrepBuildEmojiBtn === "function") {
+      const playerArchetype = getSideMutationRuntime("player");
+      const enemyArchetype = getSideMutationRuntime("enemy");
+      const playerProgress = typeof resolveMutationProgress === "function"
+        ? resolveMutationProgress({
+          classId: playerArchetype.classId,
+          companionId: playerArchetype.companionId,
+          items: playerArchetype.items,
+          enhancements: playerArchetype.enhancements,
+          round,
+        })
+        : null;
+      syncPrepBuildEmojiBtn({
+        formId: playerProfile?.archetypeFormId ?? playerArchetype.formId,
+        mutationId: playerProfile?.archetypeMutationId ?? playerArchetype.mutationId,
+        classId: playerArchetype.classId,
+        leaderId: playerProgress?.leader?.id,
+        round,
+        emojiOverride: playerProfile?.archetypeEmoji,
+      });
+      if (typeof syncBattleEnemyArchetypeFloat === "function") {
+        syncBattleEnemyArchetypeFloat({
+          profile: enemyProfile,
+          formId: enemyProfile?.archetypeFormId ?? enemyArchetype.formId,
+          mutationId: enemyProfile?.archetypeMutationId ?? enemyArchetype.mutationId,
+          classId: enemyArchetype.classId,
+          round,
+          emojiOverride: enemyProfile?.archetypeEmoji,
+        });
+      }
+    }
     return;
   } else {
     layer?.setAttribute("aria-hidden", "true");
@@ -10141,18 +10287,19 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
     bindPrepEnhancementStrip(side);
     bindPrepCompanionTooltip(statsHud);
     if (typeof syncPrepHudCollapseChrome === "function") syncPrepHudCollapseChrome();
-    if (typeof syncPrepBuildEmojiBtn === "function") {
-      syncPrepBuildEmojiBtn({
-        formId: mutRt.formId,
-        mutationId: mutRt.mutationId,
-        classId: mutRt.classId,
-        leaderId: mutationProgress?.leader?.id,
-        round,
-      });
-    }
     if (!document.getElementById("prep-hero-tooltip")?.classList.contains("hidden")) {
       refreshPrepHeroTooltip();
     }
+  }
+
+  if (phase === "prep" && typeof syncPrepBuildEmojiBtn === "function") {
+    syncPrepBuildEmojiBtn({
+      formId: mutRt.formId,
+      mutationId: mutRt.mutationId,
+      classId: mutRt.classId,
+      leaderId: mutationProgress?.leader?.id,
+      round,
+    });
   }
 
   if (typeof syncPrepHudHero === "function") {
@@ -10160,6 +10307,10 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
   }
 
   syncPrepHeroCardChrome(side);
+
+  if (phase === "prep" && !isAnyLobbyMode() && typeof tickSoloPrepThoughts === "function") {
+    tickSoloPrepThoughts();
+  }
 }
 
 function renderPlayerProfiles(opts = {}) {
@@ -10277,9 +10428,21 @@ function renderPlayerProfiles(opts = {}) {
 
   renderPrepStageChrome(playerProfile, enemyProfile);
 
+  const liveBattle = phase === "battle" || phase === "replay";
+  if (liveBattle && viewState && typeof bootstrapBattleThoughts === "function") {
+    if (typeof syncBattleArenaLayout === "function") syncBattleArenaLayout();
+    if (typeof window.syncHeroEmotionSlotAnchors === "function") {
+      window.syncHeroEmotionSlotAnchors();
+    }
+    bootstrapBattleThoughts({
+      battleState: viewState,
+      playerEmoji: playerProfile?.archetypeEmoji || undefined,
+      enemyEmoji: enemyProfile?.archetypeEmoji || undefined,
+    });
+  }
+
   if (!statsEl || !playerAvatarEl || !enemyAvatarEl) return;
 
-  const liveBattle = phase === "battle" || phase === "replay";
   const buildStatsEl = document.getElementById("battle-build-stats-content");
   const statsOptions = {
     round,
@@ -10352,6 +10515,27 @@ function renderPlayerProfiles(opts = {}) {
   if (liveBattle && viewState) {
     viewState._heroProfiles = { player: playerProfile, enemy: enemyProfile };
     syncAllAvatarHeroEffects(playerProfile, enemyProfile, viewState);
+    if (document.documentElement.dataset.battlePrepHeroLayer === "true"
+      && typeof syncPrepBuildEmojiBtn === "function") {
+      syncPrepBuildEmojiBtn({
+        formId: playerProfile.archetypeFormId,
+        mutationId: playerProfile.archetypeMutationId,
+        classId: profilePlayerClass || playerClass,
+        leaderId: null,
+        round,
+        emojiOverride: playerProfile.archetypeEmoji,
+      });
+      if (typeof syncBattleEnemyArchetypeFloat === "function") {
+        syncBattleEnemyArchetypeFloat({
+          profile: enemyProfile,
+          formId: enemyProfile.archetypeFormId,
+          mutationId: enemyProfile.archetypeMutationId,
+          classId: profileEnemyClass || enemyClass,
+          round,
+          emojiOverride: enemyProfile.archetypeEmoji,
+        });
+      }
+    }
     if (!lightSpectate && typeof updateBattleAnalyzer === "function") updateBattleAnalyzer(viewState, 0);
   }
   if (!lightSpectate) syncBattleArenaLayout();

@@ -31,6 +31,14 @@
     return document.documentElement?.dataset?.uiTier === "phone";
   }
 
+  /** Flank battle: мысль + орбита — не душим в light FX. */
+  function isFlankBattleThoughtFxActive() {
+    const app = document.getElementById("app");
+    const phase = app?.dataset?.phase;
+    if (phase !== "battle" && phase !== "replay") return false;
+    return document.documentElement?.dataset?.battleArenaLayout === "true";
+  }
+
   function setLightBattleFx(enabled) {
     localStorage.setItem(STORAGE_KEY, enabled ? "1" : "0");
     applyBattleFxTierFlags();
@@ -47,34 +55,41 @@
   }
 
   function arenaPhysicsGapMs() {
+    if (isFlankBattleThoughtFxActive()) return 0;
     if (!isLightBattleFx()) return 0;
     return isPhoneTier() ? 50 : 50;
   }
 
   function thoughtStepGapMs() {
+    if (isFlankBattleThoughtFxActive()) return 0;
     if (!isLightBattleFx()) return 0;
     return isPhoneTier() ? 50 : 50;
   }
 
   function equipIdleWobbleEnabled() {
+    if (isFlankBattleThoughtFxActive()) return true;
     return !isLightBattleFx();
   }
 
   function equipSyncGapMs() {
+    if (isFlankBattleThoughtFxActive()) return 450;
     if (!isLightBattleFx()) return 450;
     return isPhoneTier() ? 550 : 650;
   }
 
   function emotionPresentGapMs() {
+    if (isFlankBattleThoughtFxActive()) return 66;
     if (!isLightBattleFx()) return 66;
     return isPhoneTier() ? 120 : 100;
   }
 
   function arenaPresentGapMs() {
+    if (isFlankBattleThoughtFxActive()) return 450;
     return isLightBattleFx() ? 500 : 450;
   }
 
   function stackOrbitGapMs() {
+    if (isFlankBattleThoughtFxActive()) return 70;
     if (!isLightBattleFx()) return 70;
     return isPhoneTier() ? 220 : 280;
   }

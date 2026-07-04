@@ -10,7 +10,7 @@
 }
 
 .sidebar-tooltip.sidebar-tooltip--card .item-hint-card {
-  filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.55));
+  filter: drop-shadow(var(--hint-card-shadow));
 }
 
 .item-hint-card {
@@ -27,13 +27,11 @@
   flex-direction: column;
   border-radius: calc(16px * var(--ui-scale, 1));
   overflow: hidden;
-  background:
-    linear-gradient(165deg, rgba(255, 255, 255, 0.08), transparent 38%),
-    linear-gradient(180deg, #1a1410 0%, #0d1117 42%, #071009 100%);
-  border: calc(3px * var(--ui-scale, 1)) solid color-mix(in srgb, var(--hint-rarity) 55%, #3d2914);
+  background: var(--hint-frame-bg);
+  border: calc(3px * var(--ui-scale, 1)) solid color-mix(in srgb, var(--hint-rarity) 55%, var(--hint-frame-border-mix));
   box-shadow:
-    0 0 0 calc(1px * var(--ui-scale, 1)) rgba(255, 255, 255, 0.08) inset,
-    0 0 calc(18px * var(--ui-scale, 1)) color-mix(in srgb, var(--hint-rarity) 35%, transparent);
+    var(--hint-frame-inset),
+    var(--hint-frame-glow);
 }
 
 .item-hint-card__hud {
@@ -44,8 +42,8 @@
     calc(11px * var(--ui-scale, 1))
     calc(12px * var(--ui-scale, 1))
     calc(10px * var(--ui-scale, 1));
-  background: rgba(8, 10, 14, 0.97);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--hint-hud-bg);
+  border-bottom: 1px solid var(--hint-hud-border);
   overflow-x: hidden;
   overflow-y: auto;
   max-height: min(46vh, calc(280px * var(--ui-scale, 1)));
@@ -61,9 +59,7 @@
   justify-content: center;
   min-height: calc(128px * var(--ui-scale, 1));
   padding: calc(8px * var(--ui-scale, 1)) calc(6px * var(--ui-scale, 1)) calc(14px * var(--ui-scale, 1));
-  background:
-    radial-gradient(ellipse 88% 72% at 50% 58%, color-mix(in srgb, var(--hint-rarity) 24%, transparent), transparent 70%),
-    radial-gradient(circle at 50% 82%, rgba(20, 60, 35, 0.55), rgba(8, 12, 10, 0.98) 74%);
+  background: var(--hint-art-bg);
 }
 
 .item-hint-card__art-glow {
@@ -71,7 +67,7 @@
   inset: 12% 8% 10%;
   border-radius: 50%;
   background: radial-gradient(circle, color-mix(in srgb, var(--hint-rarity) 30%, transparent), transparent 68%);
-  opacity: 0.85;
+  opacity: var(--hint-art-glow-opacity);
   pointer-events: none;
 }
 
@@ -80,7 +76,7 @@
   z-index: 1;
   font-size: calc(108px * var(--ui-scale, 1));
   line-height: 1;
-  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.45));
+  filter: drop-shadow(var(--hint-emoji-shadow));
 }
 
 .item-hint-card__title {
@@ -89,13 +85,14 @@
   line-height: 1.22;
   letter-spacing: 0.01em;
   margin-bottom: calc(5px * var(--ui-scale, 1));
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  color: var(--hint-title-color);
+  text-shadow: var(--hint-title-shadow);
 }
 
 .item-hint-card__line {
   font-size: calc(13px * var(--ui-scale, 1));
   line-height: 1.4;
-  color: #e6edf3;
+  color: var(--hint-line-color);
   white-space: pre-wrap;
 }
 
@@ -106,7 +103,7 @@
 
 .item-hint-card__line--sub {
   font-size: calc(12px * var(--ui-scale, 1));
-  color: #8b949e;
+  color: var(--hint-line-sub-color);
 }
 
 .item-hint-card__line--label {
@@ -122,23 +119,23 @@
 }
 
 .item-hint-card__stat-base {
-  color: #8b949e;
+  color: var(--hint-stat-base-color);
   text-decoration: line-through;
-  text-decoration-color: rgba(139, 148, 158, 0.55);
+  text-decoration-color: color-mix(in srgb, var(--hint-stat-base-color) 55%, transparent);
 }
 
 .item-hint-card__stat-arrow {
-  color: #6e7681;
+  color: var(--hint-stat-arrow-color);
   font-size: 0.92em;
 }
 
 .item-hint-card__stat-buff {
-  color: #3fb950;
+  color: var(--hint-stat-buff-color);
   font-weight: 700;
 }
 
 .item-hint-card__stat-buff--purple {
-  color: #a371f7;
+  color: var(--hint-stat-buff-purple-color);
 }
 
 .item-hint-card__cost {
@@ -177,21 +174,9 @@
   width: calc(14px * var(--ui-scale, 1));
   height: calc(18px * var(--ui-scale, 1));
   border-radius: 50% / 40%;
-  background: linear-gradient(180deg, #e2e8f0, #94a3b8 45%, #64748b);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+  background: var(--hint-gem-bg);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
   opacity: 0.75;
-}
-
-html[data-prep-theme="diablo"] .item-hint-card__frame {
-  background:
-    linear-gradient(165deg, rgba(255, 210, 120, 0.06), transparent 38%),
-    linear-gradient(180deg, #1a1008 0%, #120a06 42%, #080504 100%);
-}
-
-html[data-prep-theme="diablo"] .item-hint-card__art {
-  background:
-    radial-gradient(ellipse 88% 72% at 50% 58%, rgba(180, 80, 20, 0.18), transparent 70%),
-    radial-gradient(circle at 50% 82%, rgba(60, 20, 8, 0.55), rgba(10, 6, 4, 0.98) 74%);
 }
 
 html[data-game-phase="prep"] #prep-tooltip-dock:not(.hidden):has(.sidebar-tooltip--card:not(.hidden)),
@@ -274,4 +259,52 @@ html[data-touch="true"] .item-hint-card {
 
 html[data-touch="true"] .item-hint-card__emoji {
   font-size: calc(117px * var(--ui-scale, 1));
+}
+
+/* Открытый popover магазина: подсказка поверх панели + магическое свечение */
+@keyframes hint-magic-glow-pulse {
+  0%, 100% {
+    opacity: 0.78;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+html[data-prep-shop-open][data-game-phase="prep"] #prep-tooltip-dock:not(.hidden) {
+  z-index: 9480 !important;
+}
+
+html[data-prep-shop-open][data-game-phase="prep"] #prep-tooltip-dock .sidebar-tooltip.sidebar-tooltip--card:not(.hidden) .item-hint-card {
+  filter:
+    drop-shadow(var(--hint-card-shadow))
+    drop-shadow(0 0 calc(22px * var(--ui-scale, 1)) color-mix(in srgb, var(--hint-rarity, #5a7354) 38%, transparent));
+}
+
+html[data-prep-shop-open][data-game-phase="prep"] #prep-tooltip-dock .item-hint-card__frame {
+  box-shadow:
+    var(--hint-frame-inset),
+    0 0 calc(22px * var(--ui-scale, 1)) color-mix(in srgb, var(--hint-rarity, #5a7354) 52%, transparent),
+    0 0 calc(44px * var(--ui-scale, 1)) color-mix(in srgb, var(--hint-rarity, #5a7354) 26%, transparent);
+}
+
+html[data-prep-shop-open][data-game-phase="prep"] #prep-tooltip-dock .item-hint-card__art-glow {
+  opacity: 1;
+  animation: hint-magic-glow-pulse 2.4s ease-in-out infinite;
+}
+
+html[data-prep-shop-open][data-game-phase="prep"] #prep-tooltip-dock .item-hint-card__emoji {
+  filter:
+    drop-shadow(var(--hint-emoji-shadow))
+    drop-shadow(0 0 calc(16px * var(--ui-scale, 1)) color-mix(in srgb, var(--hint-rarity, #5a7354) 58%, transparent));
+  animation: hint-magic-glow-pulse 2.4s ease-in-out infinite;
+}
+
+html[data-visual-theme="diablo"][data-prep-shop-open][data-game-phase="prep"] #prep-tooltip-dock .item-hint-card__frame {
+  box-shadow:
+    var(--hint-frame-inset),
+    0 0 calc(24px * var(--ui-scale, 1)) color-mix(in srgb, var(--hint-rarity, #c9a227) 58%, transparent),
+    0 0 calc(48px * var(--ui-scale, 1)) color-mix(in srgb, var(--hint-rarity, #c9a227) 32%, transparent);
 }

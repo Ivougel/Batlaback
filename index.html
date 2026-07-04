@@ -14,13 +14,13 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles/tokens.css?v=19">
+  <link rel="stylesheet" href="styles/tokens.css?v=20">
   <link rel="stylesheet" href="styles/layers.css?v=7">
   <link rel="stylesheet" href="styles/bottom-chrome.css?v=24">
   <link rel="stylesheet" href="styles.css?v=39">
   <link rel="stylesheet" href="styles/shop.css?v=11">
-  <link rel="stylesheet" href="styles/item-card-chrome.css?v=9">
-  <link rel="stylesheet" href="styles/shop-pin-chrome.css?v=9">
+  <link rel="stylesheet" href="styles/item-card-chrome.css?v=14">
+  <link rel="stylesheet" href="styles/shop-pin-chrome.css?v=11">
   <link rel="stylesheet" href="styles/prep-top-bar.css?v=2">
   <link rel="stylesheet" href="styles/campaign.css?v=1">
   <link rel="stylesheet" href="styles/mutations.css?v=1">
@@ -33,11 +33,13 @@
   <link rel="stylesheet" href="styles/modal-scale.css?v=6">
   <link rel="stylesheet" href="styles/replay-chrome.css?v=2">
   <link rel="stylesheet" href="styles/emotion-thoughts.css?v=10">
-  <link rel="stylesheet" href="styles/player-spec-emoji.css?v=3">
+  <link rel="stylesheet" href="styles/hero-dialogue.css?v=1">
+  <link rel="stylesheet" href="styles/player-spec-emoji.css?v=6">
+  <link rel="stylesheet" href="styles/archetype-magic-glow.css?v=2">
   <link rel="stylesheet" href="styles/arena-equipment.css?v=20">
   <link rel="stylesheet" href="styles/prep-drag-arc.css?v=10">
-  <link rel="stylesheet" href="styles/battle-arena-layout.css?v=40">
-  <link rel="stylesheet" href="styles/battle-prep-hero-parity.css?v=4">
+  <link rel="stylesheet" href="styles/battle-arena-layout.css?v=41">
+  <link rel="stylesheet" href="styles/battle-prep-hero-parity.css?v=5">
   <link rel="stylesheet" href="styles/phone-landscape.css?v=9">
   <link rel="stylesheet" href="styles/battle-scale.css?v=4">
   <link rel="stylesheet" href="styles/battle-hud-compact.css?v=3">
@@ -45,12 +47,12 @@
   <link rel="stylesheet" href="styles/hero-portrait-frame.css?v=5">
   <link rel="stylesheet" href="styles/prep-hero-card.css?v=19">
   <link rel="stylesheet" href="styles/prep-hud-collapse.css?v=2">
-  <link rel="stylesheet" href="styles/class-picker.css?v=7">
+  <link rel="stylesheet" href="styles/class-picker.css?v=8">
   <link rel="stylesheet" href="styles/class-hero-showcase.css?v=8">
   <link rel="stylesheet" href="styles/class-hero-portrait-frame.css?v=1">
   <link rel="stylesheet" href="styles/class-intro-theme.css?v=8">
   <link rel="stylesheet" href="styles/class-intro-summary.css?v=1">
-  <link rel="stylesheet" href="styles/tablet-intro-typography.css?v=1">
+  <link rel="stylesheet" href="styles/tablet-intro-typography.css?v=2">
   <link rel="stylesheet" href="styles/desktop-intro-layout.css?v=1">
   <link rel="stylesheet" href="styles/tablet-pwa-layout.css?v=6">
   <link rel="stylesheet" href="styles/mobile-prep.css?v=23">
@@ -58,7 +60,7 @@
   <link rel="stylesheet" href="styles/desktop-battle.css?v=2">
   <link rel="stylesheet" href="styles/tablet-stacked.css?v=7">
   <link rel="stylesheet" href="styles/prep-bench-popover.css?v=9">
-  <link rel="stylesheet" href="styles/prep-shop-popover.css?v=8">
+  <link rel="stylesheet" href="styles/prep-shop-popover.css?v=11">
   <link rel="stylesheet" href="styles/prep-sell-fab.css?v=5">
   <link rel="stylesheet" href="styles/tablet-side.css?v=35">
   <link rel="stylesheet" href="styles/prep-tablet-zone-layout.css?v=7">
@@ -78,14 +80,14 @@
   <link rel="stylesheet" href="styles/ui-ornament-frame.css?v=1">
   <link rel="stylesheet" href="styles/escape-menu.css?v=1">
   <link rel="stylesheet" href="styles/pass-laugh-balls.css?v=1">
-  <link rel="stylesheet" href="styles/theme-diablo.css?v=3">
+  <link rel="stylesheet" href="styles/theme-diablo.css?v=4">
   <link rel="stylesheet" href="styles/battle-borderless.css?v=1">
   <link rel="stylesheet" href="styles/item-stats-report.css?v=4">
   <link rel="stylesheet" href="styles/prep-borderless.css?v=6">
-  <link rel="stylesheet" href="styles/prep-shop-popover-chrome.css?v=5">
+  <link rel="stylesheet" href="styles/prep-shop-popover-chrome.css?v=6">
   <link rel="stylesheet" href="styles/sell-drop-highlight.css?v=1">
   <link rel="stylesheet" href="styles/item-emoji-sparkle.css?v=1">
-  <link rel="stylesheet" href="styles/item-hint-card.css?v=3">
+  <link rel="stylesheet" href="styles/item-hint-card.css?v=5">
   <script>
     (function () {
       try {
@@ -99,8 +101,8 @@
   </script>
   <script src="systems/layout-scales.js?v=2"></script>
   <script src="systems/battle-fx-tier.js?v=4"></script>
-  <script src="systems/battle-hero-anchor.js?v=29"></script>
-  <script src="ui-layout.js?v=125"></script>
+  <script src="systems/battle-hero-anchor.js?v=32"></script>
+  <script src="ui-layout.js?v=127"></script>
 </head>
 <body>
   <div id="ui-ornament-frame" class="ui-ornament-frame" aria-hidden="true">
@@ -206,6 +208,15 @@
                   <div class="prep-character" id="prep-character-player" hidden></div>
                   <div class="prep-character" id="prep-character-enemy" hidden></div>
                   <div class="prep-character-spec-slot" id="prep-character-spec-slot" aria-hidden="true"></div>
+                  <div class="prep-character-spec-slot prep-character-spec-slot--enemy" id="prep-character-spec-slot-enemy" aria-hidden="true">
+                    <span class="battle-archetype-float prep-build-emoji-btn--hero-field-float"
+                          id="battle-enemy-archetype-float"
+                          role="img"
+                          hidden>
+                      <span class="prep-build-emoji-btn-glow" aria-hidden="true"></span>
+                      <span class="prep-build-emoji-btn-glyph battle-archetype-float-glyph" aria-hidden="true"></span>
+                    </span>
+                  </div>
                   <button type="button"
                           class="btn-secondary btn-toggle-doll"
                           id="btn-toggle-doll"
@@ -983,10 +994,10 @@
   </div>
 
   <script src="components/layer-host.js"></script>
-  <script src="classes.js?v=4"></script>
+  <script src="classes.js?v=5"></script>
   <script src="systems/mutations.js?v=3"></script>
   <script src="systems/mutation-lore-quips.js?v=1"></script>
-  <script src="systems/mutation-ui.js?v=9"></script>
+  <script src="systems/mutation-ui.js?v=11"></script>
   <script src="systems/mutation-capstones.js?v=1"></script>
   <script src="systems/item-pool-120.js?v=1"></script>
   <script src="items.js?v=3"></script>
@@ -1038,7 +1049,7 @@
   <script src="systems/battle-speed.js"></script>
   <script src="systems/battle-stacks.js"></script>
   <script src="systems/emoji-orbit-speed.js?v=1"></script>
-  <script src="systems/stack-orbit-vfx.js?v=10"></script>
+  <script src="systems/stack-orbit-vfx.js?v=11"></script>
   <script src="systems/battle-debuffs.js"></script>
   <script src="systems/sfx-themes.js?v=7"></script>
   <script src="systems/sfx.js?v=5"></script>
@@ -1058,14 +1069,17 @@
   <script src="ai-engine.js"></script>
   <script src="hard-bot-engine.js"></script>
   <script src="systems/lobby-opponents.js?v=6"></script>
-  <script src="systems/lobby-fighter-avatar.js?v=4"></script>
+  <script src="systems/dialogue-catalog.js?v=1"></script>
+  <script src="components/dialogue-overlay.js?v=1"></script>
+  <script src="systems/dialogue-engine.js?v=1"></script>
+  <script src="systems/lobby-fighter-avatar.js?v=5"></script>
   <script src="systems/lobby-spectator.js?v=8"></script>
   <script src="battle-engine.js?v=2"></script>
   <script src="battle-float-layer.js?v=18"></script>
-  <script src="components/thought-arena.js?v=16"></script>
+  <script src="components/thought-arena.js?v=17"></script>
   <script src="components/arena-equipment.js?v=26"></script>
   <script src="components/emotion-presenter.js?v=5"></script>
-  <script src="emotion-engine.js?v=21"></script>
+  <script src="emotion-engine.js?v=22"></script>
   <script src="battle-hud.js?v=6"></script>
   <script src="components/lobby-2p-hud.js?v=1"></script>
   <script src="systems/prep-shop.js?v=7"></script>
@@ -1074,7 +1088,7 @@
   <script src="systems/screen-transitions.js?v=1"></script>
   <script src="components/prep-hud-collapse.js?v=1"></script>
   <script src="components/prep-hud-hero.js?v=3"></script>
-  <script src="game.js?v=103"></script>
+  <script src="game.js?v=106"></script>
   <script src="pwa-register.js"></script>
 </body>
 </html>

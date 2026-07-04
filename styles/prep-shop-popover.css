@@ -71,9 +71,9 @@ html[data-prep-shop-popover="true"][data-prep-shop-open] .prep-shop-popover__bac
   right: auto;
   top: var(--prep-shop-popover-y, 14px);
   width: var(--prep-shop-popover-w, min(240px, 28vw));
-  height: var(--prep-shop-popover-h, auto);
+  height: auto;
   max-width: var(--prep-shop-popover-w, 280px);
-  max-height: var(--prep-shop-popover-h, 52dvh);
+  max-height: var(--prep-shop-popover-max-h, var(--prep-shop-popover-h, 52dvh));
   display: flex;
   flex-direction: column;
   pointer-events: auto;
@@ -83,7 +83,8 @@ html[data-prep-shop-popover="true"][data-prep-shop-open] .prep-shop-popover__bac
   box-shadow:
     0 16px 48px rgba(30, 60, 28, 0.28),
     0 0 0 1px rgba(255, 255, 255, 0.35) inset;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   transform-origin: right center;
   animation: prep-shop-popover-in 0.22s ease-out;
 }
@@ -100,7 +101,7 @@ html[data-prep-shop-popover="true"][data-prep-shop-open] .prep-shop-popover__bac
 }
 
 html[data-prep-shop-popover="true"] #prep-shop-popover #shop-panel {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-height: 0;
   width: 100%;
   max-width: none;
@@ -110,7 +111,7 @@ html[data-prep-shop-popover="true"] #prep-shop-popover #shop-panel {
   border: none;
   box-shadow: none;
   border-radius: 0;
-  overflow: auto;
+  overflow: visible;
   position: static;
   transform: none !important;
   visibility: visible !important;
@@ -123,7 +124,22 @@ html[data-prep-shop-popover="true"] #prep-shop-popover #shop-panel .shop-chrome 
 }
 
 html[data-prep-shop-popover="true"] #prep-shop-popover #shop-panel .shop-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: calc(6px * var(--ui-scale, 1));
+  width: 100%;
+  min-width: 0;
+}
+
+html[data-prep-shop-popover="true"] #prep-shop-popover #shop-panel .shop-panel-header .btn-refresh-shop {
+  flex: 1 1 auto;
+  min-width: 0;
+  justify-content: center;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 html[data-prep-shop-popover="true"] #prep-shop-popover #shop-panel .shop-hint,
@@ -132,13 +148,13 @@ html[data-prep-shop-popover="true"] #prep-shop-popover #shop-panel .shop-hint-to
 }
 
 html[data-prep-shop-popover="true"] #prep-shop-popover #shop-panel .shop-objects {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-height: 0;
-  overflow: auto;
+  overflow: visible;
 }
 
 html[data-prep-shop-popover="true"] #prep-shop-popover #shop-panel .shop-slots {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-height: 0 !important;
   min-width: 0;
   display: grid;
@@ -147,13 +163,21 @@ html[data-prep-shop-popover="true"] #prep-shop-popover #shop-panel .shop-slots {
   align-content: start;
   justify-items: stretch;
   gap: calc(6px * var(--ui-scale, 1));
-  overflow-x: visible;
-  overflow-y: auto;
+  overflow: visible;
   -webkit-overflow-scrolling: touch;
 }
 
 html[data-touch="true"][data-prep-shop-popover="true"] #prep-shop-popover #shop-panel .shop-slots {
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+html[data-touch="true"][data-prep-shop-popover="true"] #prep-shop-popover #shop-panel .shop-card:not(.empty) > *:not(.shop-pin) {
+  position: relative;
+  z-index: 1;
+}
+
+html[data-touch="true"][data-prep-shop-popover="true"] #prep-shop-popover #shop-panel .shop-item-stack .shop-pin {
+  z-index: calc(var(--z-layer-objects, 20) + 10);
 }
 
 html[data-prep-shop-popover="true"] #prep-shop-popover #shop-panel .shop-card:not(.empty):last-child:nth-child(odd) {
@@ -180,6 +204,27 @@ html[data-prep-shop-popover="true"] #prep-shop-popover .prep-shop-drawer-close {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex: 0 0 auto;
+  width: calc(34px * var(--ui-scale, 1));
+  height: calc(34px * var(--ui-scale, 1));
+  margin: 0;
+  padding: 0;
+  border-radius: calc(10px * var(--ui-scale, 1));
+  border: calc(2px * var(--ui-scale, 1)) solid var(--meadow-border-soft, rgba(92, 184, 92, 0.35));
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--juice-ink, #2e6432);
+  font-size: calc(14px * var(--ui-scale, 1));
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 2px 0 rgba(74, 158, 74, 0.22);
+}
+
+html[data-visual-theme="diablo"][data-prep-shop-popover="true"] #prep-shop-popover .prep-shop-drawer-close {
+  border-color: rgba(139, 105, 20, 0.55);
+  background: rgba(40, 30, 22, 0.88);
+  color: var(--meadow-gold-bright, #e8c878);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
 }
 
 html[data-visual-theme="diablo"][data-prep-shop-popover="true"] .prep-shop-popover__panel {

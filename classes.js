@@ -206,20 +206,17 @@ function syncClassPickerCardsFromCatalog() {
     const nameEl = card.querySelector(".class-name");
     const descEl = card.querySelector(".class-desc");
     const bonusEl = card.querySelector(".class-bonus");
-    if (nameEl) nameEl.textContent = cls.noviceLabel || cls.heroLabel || cls.name;
-    const tagline = getHeroTagline(card.dataset.class);
+    if (nameEl) nameEl.textContent = cls.heroLabel || cls.noviceLabel || cls.name;
     if (descEl) {
-      if (tagline) {
-        descEl.textContent = tagline;
-        descEl.classList.remove("hidden");
-        descEl.removeAttribute("aria-hidden");
-      } else {
-        descEl.textContent = "";
-        descEl.classList.add("hidden");
-        descEl.setAttribute("aria-hidden", "true");
-      }
+      descEl.textContent = "";
+      descEl.classList.add("hidden");
+      descEl.setAttribute("aria-hidden", "true");
     }
-    if (bonusEl) bonusEl.textContent = cls.desc || "";
+    if (bonusEl) {
+      bonusEl.textContent = "";
+      bonusEl.classList.add("hidden");
+      bonusEl.setAttribute("aria-hidden", "true");
+    }
     syncClassPickPortrait(card, card.dataset.class);
   });
   document.querySelectorAll(".opponent-class-card[data-opponent-class]").forEach((card) => {

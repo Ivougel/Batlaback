@@ -4,11 +4,12 @@
 
 @keyframes player-spec-emoji-levitate {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(calc(-5px * var(--ui-scale, 1))); }
+  50% { transform: translateY(calc(-8px * var(--ui-scale, 1))); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .prep-build-emoji-btn--hero-field-float,
+  .battle-archetype-float,
   html[data-battle-hero-placement="flank-arena"]:not([data-thought-head-badge="true"]) .avatar-thought-slot .battle-thought-body {
     animation: none !important;
   }
@@ -19,14 +20,39 @@
 .prep-character-spec-slot {
   position: absolute;
   z-index: 6;
-  top: 8%;
-  right: 4%;
   pointer-events: none;
 }
 
-#app[data-prep-side="enemy"] .prep-character-spec-slot {
+#app[data-phase="prep"] .prep-character-layer #prep-character-spec-slot {
+  top: auto;
   right: auto;
-  left: 4%;
+  left: 74%;
+  bottom: calc(var(--prep-hero-slot-height, 220px) * 0.86);
+  transform: translateX(-50%);
+  pointer-events: auto;
+  z-index: 8;
+}
+
+#app[data-phase="prep"][data-prep-side="enemy"] .prep-character-layer #prep-character-spec-slot {
+  left: auto;
+  right: 74%;
+  transform: translateX(50%);
+}
+
+#app[data-phase="prep"] .prep-build-emoji-btn--hero-field-float:not([hidden]) {
+  display: inline-flex !important;
+}
+
+/* Боевой float врага — только battle/replay, на prep не показываем «призрак» прошлого оппонента */
+#app[data-phase="prep"] #prep-character-spec-slot-enemy,
+#app[data-phase="prep"] #battle-enemy-archetype-float {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+.prep-character-spec-slot--enemy {
+  left: auto;
+  right: auto;
 }
 
 .prep-character-spec-slot:not(:empty) {
@@ -34,7 +60,8 @@
 }
 
 .prep-build-emoji-btn--hero-field-float {
-  --prep-build-emoji-btn-size: calc(38px * var(--ui-scale, 1));
+  --prep-archetype-float-size: calc(76px * var(--ui-scale, 1));
+  --prep-build-emoji-btn-size: var(--prep-archetype-float-size);
   width: auto;
   height: auto;
   min-width: 0;
@@ -47,13 +74,8 @@
   animation: player-spec-emoji-levitate 2.6s ease-in-out infinite;
 }
 
-.prep-build-emoji-btn--hero-field-float .prep-build-emoji-btn-glow {
-  display: none;
-}
-
 .prep-build-emoji-btn--hero-field-float .prep-build-emoji-btn-glyph {
-  font-size: calc(38px * var(--ui-scale, 1));
-  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.42));
+  font-size: var(--prep-archetype-float-size, calc(76px * var(--ui-scale, 1)));
 }
 
 .prep-build-emoji-btn--hero-field-float:hover:not(:disabled) {
@@ -68,17 +90,43 @@
   transform: scale(1.08);
 }
 
-html[data-prep-layout="mobile"] .prep-character-spec-slot {
-  top: 6%;
-  right: 2%;
+.battle-archetype-float {
+  --prep-archetype-float-size: calc(76px * var(--ui-scale, 1));
+  width: auto;
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  cursor: help;
+  pointer-events: auto;
+  animation: player-spec-emoji-levitate 2.6s ease-in-out infinite;
 }
 
-html[data-prep-layout="mobile"] #app[data-prep-side="enemy"] .prep-character-spec-slot {
-  left: 2%;
+.battle-archetype-float .battle-archetype-float-glyph,
+.battle-archetype-float .prep-build-emoji-btn-glyph {
+  font-size: var(--prep-archetype-float-size, calc(76px * var(--ui-scale, 1)));
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"] .prep-character-layer #prep-character-spec-slot {
+  left: 72%;
+  bottom: calc(var(--prep-hero-slot-height, 180px) * 0.82);
+  right: auto;
+  top: auto;
+  transform: translateX(-50%);
+}
+
+html[data-prep-layout="mobile"] #app[data-phase="prep"][data-prep-side="enemy"] .prep-character-layer #prep-character-spec-slot {
+  left: auto;
+  right: 72%;
+  transform: translateX(50%);
 }
 
 html[data-prep-layout="mobile"] .prep-build-emoji-btn--hero-field-float .prep-build-emoji-btn-glyph {
-  font-size: calc(32px * var(--ui-scale, 1));
+  font-size: calc(64px * var(--ui-scale, 1));
 }
 
 /* ─── Battle: эмодзи на combat floor — без диска, левитация ─── */
@@ -102,11 +150,29 @@ html[data-battle-hero-placement="flank-arena"]:not([data-thought-head-badge="tru
   display: none !important;
 }
 
-/* Над героем: парящий бейдж (отдельно от HUD HP/стамины) */
+html[data-battle-arena-layout="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .avatar-thought-slot.profile-avatar-hit-shake {
+  animation: profile-avatar-hit-shake var(--hit-shake-ms, 120ms) ease-out both;
+  transition: none;
+}
+
+/* Над героем: крупный голый эмодзи, без бейдж-подложки */
 html[data-thought-above-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .avatar-thought-slot .battle-thought-body {
-  width: var(--thought-size, var(--battle-thought-emoji-size, 56px)) !important;
-  height: var(--thought-size, var(--battle-thought-emoji-size, 56px)) !important;
+  width: auto !important;
+  height: auto !important;
+  min-width: 0;
+  min-height: 0;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  font-size: var(--battle-thought-emoji-size, 56px);
+  line-height: 1;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.48));
   animation: player-spec-emoji-levitate 2.8s ease-in-out infinite;
+}
+
+html[data-thought-above-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .avatar-thought-slot .battle-thought-body::before {
+  display: none !important;
 }
 
 /* Центральная арена без визуального шума — эмодзи только у колонок героев */

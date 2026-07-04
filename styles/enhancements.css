@@ -92,9 +92,8 @@
 }
 
 .shop-card--enhancement .shop-item-stack--enhancement {
-  display: flex;
+  display: grid;
   align-items: center;
-  flex-direction: column;
 }
 
 .enh-shop-slot-tag {

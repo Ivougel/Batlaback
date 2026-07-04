@@ -222,13 +222,13 @@
     calc(var(--shop-panel-w) * 0.18 * var(--prep-build-emoji-btn-scale, 1)),
     calc(4.5rem * var(--ui-scale, 1))
   );
-  --shop-card-row-h: calc(100px * var(--ui-scale, 1));
-  --shop-item-icon-size: calc(63px * var(--ui-scale, 1));
-  --shop-item-icon-font: calc(50px * var(--ui-scale, 1));
+  --shop-card-row-h: calc(108px * var(--ui-scale, 1));
+  --shop-item-icon-size: calc(68px * var(--ui-scale, 1));
+  --shop-item-icon-font: calc(54px * var(--ui-scale, 1));
   --shop-item-icon-duo-width: calc(var(--shop-item-icon-size) * 1.38);
   --shop-item-icon-duo-gap: 0px;
-  --shop-card-icon-box: calc(var(--shop-item-icon-size) * 1.1);
-  --shop-card-icon-font: calc(var(--shop-item-icon-font) * 1.06);
+  --shop-card-icon-box: calc(var(--shop-item-icon-size) * 1.12);
+  --shop-card-icon-font: calc(var(--shop-item-icon-font) * 1.08);
   --shop-card-icon-duo-w: calc(var(--shop-item-icon-size) * 1.38);
   --shop-card-icon-duo-font: calc(var(--shop-item-icon-font) * 0.86);
   --fx-float-scale: 1;
@@ -246,6 +246,43 @@
   --z-chrome: 50;
   --z-system: 100;
   --z-drag-ghost: 5;
+
+  /* Tooltips — plain sidebar + item hint card (meadow default) */
+  --tooltip-bg: rgba(255, 252, 240, 0.98);
+  --tooltip-border: var(--meadow-border);
+  --tooltip-shadow: 0 8px 24px var(--meadow-shadow);
+  --tooltip-text: var(--meadow-ink);
+  --tooltip-text-muted: var(--meadow-ink-muted);
+  --tooltip-label: #9a7010;
+  --tooltip-mechanic: #3a7a4a;
+  --tooltip-stat-base: var(--meadow-ink-muted);
+  --tooltip-stat-arrow: rgba(90, 115, 84, 0.85);
+  --tooltip-stat-buff: #2d8a45;
+  --tooltip-stat-buff-purple: var(--juice-magic);
+
+  --hint-card-shadow: 0 14px 28px var(--meadow-shadow);
+  --hint-frame-bg:
+    linear-gradient(165deg, rgba(255, 255, 255, 0.72), transparent 38%),
+    linear-gradient(180deg, #fff9eb 0%, #f5edd4 42%, #e8f0d8 100%);
+  --hint-frame-border-mix: #8b9a6e;
+  --hint-frame-inset: 0 0 0 calc(1px * var(--ui-scale, 1)) rgba(255, 255, 255, 0.65) inset;
+  --hint-frame-glow: 0 0 calc(18px * var(--ui-scale, 1)) color-mix(in srgb, var(--hint-rarity, #5a7354) 28%, transparent);
+  --hint-hud-bg: rgba(255, 252, 240, 0.98);
+  --hint-hud-border: var(--meadow-border-soft);
+  --hint-art-bg:
+    radial-gradient(ellipse 88% 72% at 50% 58%, color-mix(in srgb, var(--hint-rarity, #5a7354) 18%, transparent), transparent 70%),
+    radial-gradient(circle at 50% 82%, rgba(143, 214, 148, 0.38), rgba(245, 237, 212, 0.96) 74%);
+  --hint-art-glow-opacity: 0.72;
+  --hint-title-color: var(--meadow-ink);
+  --hint-title-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);
+  --hint-line-color: var(--meadow-ink);
+  --hint-line-sub-color: var(--meadow-ink-muted);
+  --hint-stat-base-color: var(--meadow-ink-muted);
+  --hint-stat-arrow-color: rgba(90, 115, 84, 0.85);
+  --hint-stat-buff-color: #2d8a45;
+  --hint-stat-buff-purple-color: var(--juice-magic);
+  --hint-emoji-shadow: 0 8px 16px rgba(46, 100, 50, 0.22);
+  --hint-gem-bg: linear-gradient(180deg, #f0e8d8, #c4b89a 45%, #9a8f78);
 }
 
 /* ui-layout.js: --cell-size, --grid-gap, --shop-panel-w, --battle-stats-panel-w */

@@ -362,7 +362,7 @@ function renderLobbyPrepFieldChip(fighter, lobby, opts = {}) {
     visual.animClass || "",
   ].filter(Boolean).join(" ");
 
-  const title = `${fighter.name}${fighter.isHuman ? " (вы)" : ""}${!fighter.alive ? " · выбыл" : ""}`;
+  const title = `${fighter.name}${fighter.isHuman ? " (вы)" : ""}${!fighter.alive ? " · выбыл" : ""} · мысль: ${visual.emoji}`;
 
   return `<button type="button" class="${cls}" ${dataAttrs} ${disabled ? "disabled" : ""} title="${title}" aria-label="${title}">
     <span class="lobby-prep-field-chip-avatar${visual.isMutation ? " lobby-fighter-card-avatar--mutation" : ""}" data-lobby-fighter-avatar="${fighter.id}" aria-hidden="true">

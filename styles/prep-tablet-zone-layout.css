@@ -292,12 +292,10 @@ html[data-ui-surface="tablet-side"][data-game-phase="prep"] #prep-tooltip-dock.p
   max-height: min(42vh, calc(280px * var(--ui-scale, 1)));
   margin: 0;
   padding: calc(8px * var(--ui-scale, 1)) calc(10px * var(--ui-scale, 1));
-  background: rgba(14, 17, 22, 0.92);
-  border: 1px solid rgba(88, 166, 255, 0.28);
+  background: var(--tooltip-bg);
+  border: 1px solid var(--tooltip-border);
   border-radius: calc(10px * var(--ui-scale, 1));
-  box-shadow:
-    0 12px 28px rgba(0, 0, 0, 0.48),
-    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  box-shadow: var(--tooltip-shadow);
   pointer-events: auto;
   overflow-x: hidden;
   overflow-y: auto;
@@ -354,12 +352,10 @@ html[data-ui-surface="tablet-side"][data-game-phase="prep"] #prep-tooltip-dock.p
   max-height: min(38vh, calc(260px * var(--ui-scale, 1)));
   margin: 0;
   padding: calc(8px * var(--ui-scale, 1)) calc(10px * var(--ui-scale, 1));
-  background: rgba(14, 17, 22, 0.94);
-  border: 1px solid rgba(88, 166, 255, 0.22);
+  background: var(--tooltip-bg);
+  border: 1px solid var(--tooltip-border);
   border-radius: calc(10px * var(--ui-scale, 1));
-  box-shadow:
-    0 12px 28px rgba(0, 0, 0, 0.42),
-    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  box-shadow: var(--tooltip-shadow);
   pointer-events: auto;
   overflow-x: hidden;
   overflow-y: auto;

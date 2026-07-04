@@ -42,6 +42,11 @@ html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-ph
   cursor: pointer;
 }
 
+html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-character.profile-avatar-hit-shake {
+  animation: profile-avatar-hit-shake var(--hit-shake-ms, 120ms) ease-out both;
+  transition: none;
+}
+
 html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-character-layer .prep-character-img,
 html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-character-layer .prep-character-emoji {
   pointer-events: auto;
@@ -65,8 +70,33 @@ html[data-hero-card-mode="full-bleed"][data-battle-prep-hero-layer="true"] #app:
   max-width: 108%;
 }
 
-html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-character-layer .prep-character-spec-slot {
+html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-character-layer #prep-character-spec-slot {
   pointer-events: auto;
+  top: auto;
+  right: auto;
+  bottom: calc(var(--prep-hero-slot-bottom, 8px) + var(--prep-hero-slot-height, 50vh) * 0.88);
+  left: calc(var(--prep-hero-slot-left, 2%) + var(--prep-hero-slot-width, 28%) * 0.68);
+  transform: translateX(-50%);
+  z-index: 8;
+}
+
+html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-character-layer #prep-character-spec-slot-enemy {
+  pointer-events: auto;
+  top: auto;
+  left: auto;
+  bottom: calc(var(--prep-hero-slot-bottom, 8px) + var(--prep-hero-slot-height, 50vh) * 0.88);
+  right: calc(var(--prep-hero-slot-left, 2%) + var(--prep-hero-slot-width, 28%) * 0.68);
+  transform: translateX(50%);
+  z-index: 8;
+}
+
+html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-build-emoji-btn--hero-field-float,
+html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-archetype-float {
+  display: inline-flex !important;
+}
+
+html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .avatar-hero-archetype-banner {
+  display: none !important;
 }
 
 html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-character-layer .btn-toggle-doll {
@@ -111,7 +141,7 @@ html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-ph
   display: none !important;
 }
 
-/* HP/stamina + чипы — на бёдрах full-body героя, к центру арены */
+/* HP/stamina + чипы — под full-body героем, в колонке героя */
 html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-side {
   display: flex;
   flex-direction: column;
@@ -138,4 +168,86 @@ html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-ph
 
 html[data-battle-prep-hero-layer="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-side .avatar-hero-bars-col {
   width: min(100%, calc(var(--battle-avatar-w, 210px) * 0.92));
+}
+
+/* Vitals band: чипы в потоке (не absolute вверх), HP/stamina под чипами */
+html[data-battle-hud-below-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-vitals-column {
+  gap: calc(4px * var(--ui-scale));
+}
+
+html[data-battle-hud-below-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-status-stack {
+  position: static;
+  bottom: auto;
+  left: auto;
+  right: auto;
+  margin: 0;
+  max-height: var(--battle-hud-status-max-h, var(--battle-hud-chip-band-h, 56px));
+  overflow: hidden;
+  flex-shrink: 0;
+  pointer-events: auto;
+  gap: calc(3px * var(--ui-scale));
+  padding: calc(4px * var(--ui-scale)) calc(6px * var(--ui-scale));
+  border-radius: calc(10px * var(--ui-scale));
+  background: linear-gradient(
+    165deg,
+    rgba(8, 12, 18, 0.78) 0%,
+    rgba(12, 18, 28, 0.62) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+html[data-battle-hud-below-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-effects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(calc(36px * var(--ui-scale)), 1fr));
+  gap: calc(4px * var(--ui-scale));
+  width: 100%;
+  max-height: var(--battle-hud-status-max-h, var(--battle-hud-chip-band-h, 56px));
+  overflow: hidden;
+  align-content: start;
+}
+
+html[data-battle-hud-below-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) #battle-hud-enemy .battle-hud-effects-grid {
+  justify-items: end;
+}
+
+html[data-battle-hud-below-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-benefit-stacks,
+html[data-battle-hud-below-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-dot-stacks,
+html[data-battle-hud-below-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-debuff-row {
+  display: contents;
+}
+
+html[data-battle-hud-below-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-effects-grid .avatar-benefit-stack,
+html[data-battle-hud-below-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-effects-grid .avatar-dot-stack,
+html[data-battle-hud-below-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-debuff-row .battle-status-tile {
+  position: relative;
+  left: auto;
+  top: auto;
+  transform: none;
+  animation: none;
+}
+
+html[data-battle-hud-below-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-runtime-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(4px * var(--ui-scale));
+  width: 100%;
+  min-height: calc(20px * var(--ui-scale));
+  margin-bottom: calc(2px * var(--ui-scale));
+}
+
+html[data-battle-hud-below-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) #battle-hud-enemy .battle-hud-runtime-chips {
+  justify-content: flex-end;
+}
+
+html[data-battle-hud-below-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .avatar-stack-orbit-ring {
+  display: none !important;
+}
+
+html[data-battle-hud-below-hero="true"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hud-side .avatar-hero-bars {
+  flex-shrink: 0;
+  width: 100%;
 }

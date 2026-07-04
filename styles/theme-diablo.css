@@ -53,6 +53,42 @@ html[data-visual-theme="diablo"] {
   --border: var(--meadow-border);
   --panel: var(--meadow-panel);
   --hp: #c41e3a;
+
+  --tooltip-bg: rgba(22, 16, 12, 0.97);
+  --tooltip-border: rgba(201, 162, 39, 0.38);
+  --tooltip-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+  --tooltip-text: var(--meadow-ink);
+  --tooltip-text-muted: var(--meadow-ink-muted);
+  --tooltip-label: var(--meadow-gold-bright);
+  --tooltip-mechanic: #7eb8ff;
+  --tooltip-stat-base: #8b7a68;
+  --tooltip-stat-arrow: #6e6254;
+  --tooltip-stat-buff: #5cb85c;
+  --tooltip-stat-buff-purple: #c77dff;
+
+  --hint-card-shadow: 0 14px 28px rgba(0, 0, 0, 0.55);
+  --hint-frame-bg:
+    linear-gradient(165deg, rgba(255, 210, 120, 0.06), transparent 38%),
+    linear-gradient(180deg, #1a1008 0%, #120a06 42%, #080504 100%);
+  --hint-frame-border-mix: #3d2914;
+  --hint-frame-inset: 0 0 0 calc(1px * var(--ui-scale, 1)) rgba(255, 255, 255, 0.08) inset;
+  --hint-frame-glow: 0 0 calc(18px * var(--ui-scale, 1)) color-mix(in srgb, var(--hint-rarity, #c9a227) 35%, transparent);
+  --hint-hud-bg: rgba(8, 10, 14, 0.97);
+  --hint-hud-border: rgba(255, 255, 255, 0.08);
+  --hint-art-bg:
+    radial-gradient(ellipse 88% 72% at 50% 58%, rgba(180, 80, 20, 0.18), transparent 70%),
+    radial-gradient(circle at 50% 82%, rgba(60, 20, 8, 0.55), rgba(10, 6, 4, 0.98) 74%);
+  --hint-art-glow-opacity: 0.85;
+  --hint-title-color: var(--meadow-ink);
+  --hint-title-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  --hint-line-color: #e6edf3;
+  --hint-line-sub-color: #8b949e;
+  --hint-stat-base-color: #8b949e;
+  --hint-stat-arrow-color: #6e7681;
+  --hint-stat-buff-color: #3fb950;
+  --hint-stat-buff-purple-color: #a371f7;
+  --hint-emoji-shadow: 0 8px 16px rgba(0, 0, 0, 0.45);
+  --hint-gem-bg: linear-gradient(180deg, #e2e8f0, #94a3b8 45%, #64748b);
 }
 
 /* ─── Типографика ─── */
