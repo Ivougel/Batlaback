@@ -226,6 +226,7 @@ const Lobby2pHud = (() => {
       unmountCanvas();
       document.getElementById("lobby2p-roster-drawer")?.classList.add("hidden");
       if (typeof window.closePrepShopPopover === "function") window.closePrepShopPopover();
+      if (typeof window.closePrepBenchPopover === "function") window.closePrepBenchPopover();
       if (typeof window.syncShopMount === "function") window.syncShopMount();
       return;
     }
@@ -280,9 +281,11 @@ const Lobby2pHud = (() => {
         callbacks.toggleShop?.(Number(shopFab.dataset.human));
         return;
       }
-      const benchCol = e.target.closest(".lobby2p-col-bench");
-      if (benchCol && !e.target.closest("button")) {
-        callbacks.setActiveHuman?.(Number(benchCol.dataset.human));
+      const benchFab = e.target.closest(".lobby2p-bench-fab");
+      if (benchFab) {
+        e.stopPropagation();
+        callbacks.toggleBench?.(Number(benchFab.dataset.human));
+        return;
       }
       const head = e.target.closest(".lobby2p-col-head");
       if (head && !e.target.closest("button")) {

@@ -151,6 +151,12 @@ html[data-ui-surface="tablet-side"] #app:is([data-phase="prep"], [data-prep-hero
   pointer-events: none;
 }
 
+html[data-prep-layout="side"] #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .mutation-progress--hero-card.mutation-progress--interactive,
+html[data-ui-surface="tablet-side"] #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .mutation-progress--hero-card.mutation-progress--interactive {
+  pointer-events: auto;
+  cursor: help;
+}
+
 html:is([data-prep-layout="side"], [data-ui-surface="tablet-side"], [data-ui-surface="desktop"]) #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-enhancement-strip--hero-card,
 html[data-prep-layout="side"] #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-enhancement-strip--hero-card,
 html[data-ui-surface="tablet-side"] #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-enhancement-strip--hero-card {
@@ -168,6 +174,9 @@ html[data-ui-surface="tablet-side"] #app:is([data-phase="prep"], [data-prep-hero
     calc(8px * var(--ui-scale, 1))
     calc(10px * var(--ui-scale, 1));
   border-top: 2px solid rgba(200, 160, 56, 0.35);
+  pointer-events: auto;
+  position: relative;
+  z-index: 2;
 }
 
 html[data-prep-layout="side"] #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-modifier-strip,
@@ -340,6 +349,12 @@ html[data-ui-surface="tablet-side"] #app:is([data-phase="prep"], [data-prep-hero
   padding: calc(4px * var(--ui-scale, 1)) calc(6px * var(--ui-scale, 1));
   border-radius: calc(10px * var(--ui-scale, 1));
   pointer-events: auto;
+  cursor: help;
+}
+
+html[data-prep-layout="side"] #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-enhancement-strip--hero-card .enh-slot--filled,
+html[data-ui-surface="tablet-side"] #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-enhancement-strip--hero-card .enh-slot--filled {
+  cursor: grab;
 }
 
 html[data-prep-layout="side"] #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-enhancement-strip--hero-card .enh-slot-kicker,

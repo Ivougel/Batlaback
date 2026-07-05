@@ -8,6 +8,46 @@ const MUTATION_ROUND_FINAL = 16;
 const MUTATION_FORM_THRESHOLD = 0.4;
 const MUTATION_FINAL_THRESHOLD = 0.55;
 
+function getMutationFormThresholdPct() {
+  return Math.round(MUTATION_FORM_THRESHOLD * 100);
+}
+
+function getMutationFinalThresholdPct() {
+  return Math.round(MUTATION_FINAL_THRESHOLD * 100);
+}
+
+function getMutationMilestoneSharePct(progress) {
+  return Math.round((progress?.leaderShare ?? progress?.leaderPct ?? 0) * 100);
+}
+
+function getMutationMilestoneEyebrow(round) {
+  if (round >= MUTATION_ROUND_FINAL) return "мутация";
+  if (round >= MUTATION_ROUND_FORM) return "трансформация";
+  return "развитие";
+}
+
+function getMutationProgressPathContext(progress, formId, mutationId) {
+  if (mutationId) {
+    const def = getMutationById(mutationId);
+    return { pathId: mutationId, targetName: def?.name || mutationId, mode: "mutation" };
+  }
+  if (formId) {
+    const def = getMutationById(formId);
+    return { pathId: formId, targetName: def?.formName || formId, mode: "form" };
+  }
+  const dominant = progress?.dominant || progress?.ranked?.[0] || null;
+  const leader = progress?.leader || null;
+  const blended = !!progress?.isBlendedBuild && dominant && leader && dominant.id !== leader.id;
+  const path = blended ? dominant : (leader || dominant);
+  return {
+    pathId: path?.id || null,
+    targetName: path?.name || "—",
+    mode: "growth",
+    blended,
+    blendedLabel: blended ? leader?.name : null,
+  };
+}
+
 const MUTATION_TAG_FAMILIES = [
   "melee", "weapon", "magic", "holy", "poison", "fire", "cold", "armor", "shield",
   "heal", "pet", "luck", "musical", "gem", "debuff", "vampiric", "food", "nature", "utility", "speed",
@@ -251,26 +291,25 @@ function escapeMutationHtml(text) {
 function formatMutationMilestoneGap(progress, round = 1, formId = null, mutationId = null) {
   if (mutationId) {
     const perks = getMutationPerkMeta(mutationId);
-    return perks?.capstoneDesc ? `R16: ${perks.capstoneDesc}` : "Мутация R16";
+    return perks?.capstoneDesc || "Полная мутация открыта";
   }
   if (formId && round >= MUTATION_ROUND_FORM) {
-    return `R8: ${MUTATION_FORM_PERK}`;
+    return MUTATION_FORM_PERK;
   }
-  if (!progress?.leader) return "";
-  const sharePct = Math.round((progress.leaderShare ?? progress.leaderPct ?? 0) * 100);
+  if (!progress?.leader && !progress?.dominant) return "";
+  const sharePct = getMutationMilestoneSharePct(progress);
+  const formNeed = getMutationFormThresholdPct();
+  const finalNeed = getMutationFinalThresholdPct();
   if (round >= MUTATION_ROUND_FINAL) {
-    const need = Math.round(MUTATION_FINAL_THRESHOLD * 100);
-    if (sharePct >= need) return `Готово к мутации R${MUTATION_ROUND_FINAL}`;
-    return `До мутации R${MUTATION_ROUND_FINAL}: ещё ${Math.max(0, need - sharePct)}%`;
+    if (sharePct >= finalNeed) return "Готово к полной мутации";
+    return `ещё ${Math.max(0, finalNeed - sharePct)}% до мутации`;
   }
   if (round >= MUTATION_ROUND_FORM) {
-    const need = Math.round(MUTATION_FINAL_THRESHOLD * 100);
-    if (sharePct >= need) return `Готово к мутации R${MUTATION_ROUND_FINAL}`;
-    return `До мутации R${MUTATION_ROUND_FINAL}: ещё ${Math.max(0, need - sharePct)}%`;
+    if (sharePct >= finalNeed) return "Готово к полной мутации";
+    return `ещё ${Math.max(0, finalNeed - sharePct)}% до мутации`;
   }
-  const need = Math.round(MUTATION_FORM_THRESHOLD * 100);
-  if (sharePct >= need) return `Готово к форме R${MUTATION_ROUND_FORM}`;
-  return `До формы R${MUTATION_ROUND_FORM}: ещё ${Math.max(0, need - sharePct)}%`;
+  if (sharePct >= formNeed) return "Готово к трансформации";
+  return `ещё ${Math.max(0, formNeed - sharePct)}% до трансформации`;
 }
 
 function getMutationsForNoviceClass(classId) {
@@ -431,7 +470,8 @@ function resolveMutationProgress(ctx = {}) {
     diversityLeader = ranked.find((r) => MUTATION_CATALOG[r.id]?.diversity) || null;
   }
 
-  const effectiveLeader = leaderShare < 0.35 && diversityLeader
+  const isBlendedBuild = leaderShare < 0.35 && familyCount >= 4;
+  const effectiveLeader = isBlendedBuild && diversityLeader
     ? diversityLeader
     : leader;
 
@@ -445,10 +485,15 @@ function resolveMutationProgress(ctx = {}) {
       ...r,
       pct: totalScore > 0 ? Math.round((r.score / totalScore) * 100) : 0,
     })),
+    dominant: leader ? {
+      ...leader,
+      pct: totalScore > 0 ? Math.round((leader.score / totalScore) * 100) : 0,
+    } : null,
     leader: effectiveLeader ? {
       ...effectiveLeader,
       pct: totalScore > 0 ? Math.round((effectiveLeader.score / totalScore) * 100) : 0,
     } : null,
+    isBlendedBuild: isBlendedBuild && !!diversityLeader && diversityLeader.id !== leader?.id,
     maxScore,
     leaderShare,
     leaderPct: leaderShare,
@@ -538,24 +583,19 @@ function renderMutationAltLine(entry, deltas) {
 
 function renderMutationProgressHtml(progress, formId, mutationId, round, options = {}) {
   if (!progress) return "";
-  const leader = progress.leader;
+  const pathCtx = getMutationProgressPathContext(progress, formId, mutationId);
+  const pathId = pathCtx.pathId;
+  const targetName = pathCtx.targetName;
+  const sharePct = getMutationMilestoneSharePct(progress);
+  const formNeed = getMutationFormThresholdPct();
+  const finalNeed = getMutationFinalThresholdPct();
+  const goalPct = round >= MUTATION_ROUND_FORM && !mutationId ? finalNeed : formNeed;
   const alt = progress.ranked.slice(1, 3);
   const deltas = options.deltas || null;
   const hasDeltas = deltas && Object.keys(deltas).length > 0;
-  const pathId = mutationId || formId || leader?.id || null;
-  const targetName = mutationId
-    ? getMutationById(mutationId)?.name
-    : formId
-      ? getMutationById(formId)?.formName
-      : leader?.name || "—";
-  const pct = leader?.pct ?? 0;
-  const leaderDelta = leader?.id ? deltas?.[leader.id] : null;
+  const leaderDelta = pathId ? deltas?.[pathId] : null;
   const leaderDeltaHtml = renderMutationDeltaBadgeHtml(leaderDelta);
-  const milestone = round >= MUTATION_ROUND_FINAL
-    ? "финал"
-    : round >= MUTATION_ROUND_FORM
-      ? "форма"
-      : "рост";
+  const milestone = getMutationMilestoneEyebrow(round);
   const perks = pathId ? getMutationPerkMeta(pathId) : null;
   const perkLine = mutationId
     ? perks?.capstoneDesc
@@ -571,6 +611,17 @@ function renderMutationProgressHtml(progress, formId, mutationId, round, options
   const gapHtml = gapLine
     ? `<span class="mutation-progress-gap">${escapeMutationHtml(gapLine)}</span>`
     : "";
+  const goalHtml = !mutationId
+    ? `<span class="mutation-progress-goal">→ ${goalPct}%</span>`
+    : "";
+  const blendedHtml = pathCtx.blended && pathCtx.blendedLabel
+    ? `<span class="mutation-progress-blended">универсальный · ${escapeMutationHtml(pathCtx.blendedLabel)}</span>`
+    : "";
+  const lockedHtml = formId && !mutationId
+    ? `<span class="mutation-progress-locked">трансформация</span>`
+    : mutationId
+      ? `<span class="mutation-progress-locked">полная мутация</span>`
+      : "";
 
   if (options.heroCard) {
     const altHtml = alt.length
@@ -579,15 +630,17 @@ function renderMutationProgressHtml(progress, formId, mutationId, round, options
     return `
       <div class="mutation-progress mutation-progress--hero-card mutation-progress--interactive${pulseClass}"${pathAttr} role="status" aria-live="polite" tabindex="0" title="Подробнее о пути">
         <div class="mutation-progress-head">
-          <span class="mutation-progress-eyebrow">Мутация · ${milestone}</span>
+          <span class="mutation-progress-eyebrow">Путь · ${milestone}</span>
           <strong class="mutation-progress-target">${escapeMutationHtml(String(targetName || "—").toUpperCase())}</strong>
         </div>
         ${perkHtml}
+        ${blendedHtml}
         <div class="mutation-progress-bar" aria-hidden="true">
-          <div class="mutation-progress-fill" style="width:${Math.min(100, pct)}%"></div>
+          <div class="mutation-progress-fill" style="width:${Math.min(100, sharePct)}%"></div>
         </div>
         <div class="mutation-progress-meta">
-          <span class="mutation-progress-pct">${pct}%${leaderDeltaHtml}</span>
+          <span class="mutation-progress-pct">${sharePct}%${leaderDeltaHtml}</span>
+          ${goalHtml}
           ${gapHtml}
         </div>
         ${altHtml}
@@ -602,18 +655,19 @@ function renderMutationProgressHtml(progress, formId, mutationId, round, options
   return `
     <div class="mutation-progress mutation-progress--interactive${pulseClass}"${pathAttr} role="status" aria-live="polite" tabindex="0" title="Подробнее о пути">
       <div class="mutation-progress-head">
-        <span class="mutation-progress-eyebrow">Мутация · ${milestone}</span>
+        <span class="mutation-progress-eyebrow">Путь · ${milestone}</span>
         <strong class="mutation-progress-target">${escapeMutationHtml(targetName)}</strong>
       </div>
       ${perkHtml}
+      ${blendedHtml}
       <div class="mutation-progress-bar" aria-hidden="true">
-        <div class="mutation-progress-fill" style="width:${Math.min(100, pct)}%"></div>
+        <div class="mutation-progress-fill" style="width:${Math.min(100, sharePct)}%"></div>
       </div>
       <div class="mutation-progress-meta">
-        <span class="mutation-progress-pct">${pct}%${leaderDeltaHtml}</span>
+        <span class="mutation-progress-pct">${sharePct}%${leaderDeltaHtml}</span>
+        ${goalHtml}
         ${gapHtml}
-        ${formId && !mutationId ? `<span class="mutation-progress-locked">форма R${MUTATION_ROUND_FORM}</span>` : ""}
-        ${mutationId ? `<span class="mutation-progress-locked">мутация R${MUTATION_ROUND_FINAL}</span>` : ""}
+        ${lockedHtml}
       </div>
       ${altHtml}
     </div>

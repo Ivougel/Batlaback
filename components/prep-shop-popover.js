@@ -126,7 +126,7 @@
       "#prep-shop-popover .prep-shop-popover__panel, #prep-bench-popover .prep-bench-popover__panel",
     )) return false;
     if (target.closest(
-      "#btn-prep-sell-fab, #btn-prep-bench-fab, #btn-mobile-shop, #btn-prep-shop-close, #btn-prep-bench-close, .lobby2p-shop-fab",
+      "#btn-prep-sell-fab, #btn-prep-bench-fab, #btn-mobile-shop, #btn-prep-shop-close, #btn-prep-bench-close, .lobby2p-shop-fab, .lobby2p-bench-fab",
     )) return false;
     if (target.closest(".shop-card, .bench-card")) return false;
     if (target.closest("#game-canvas, #prep-field-island, .prep-field-island, .canvas-scale-wrap")) return false;

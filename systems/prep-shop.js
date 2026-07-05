@@ -73,7 +73,10 @@ function resolveShopContainer(side, containerEl) {
 function resolveBenchContainer(side, containerEl) {
   if (containerEl) return containerEl;
   if (isLobby2pSplitPrep()) {
-    return document.getElementById(side === "player" ? "lobby2p-bench-slots-0" : "lobby2p-bench-slots-1");
+    if (typeof window.isPrepBenchPopoverOpen === "function" && window.isPrepBenchPopoverOpen()) {
+      return document.getElementById("bench-slots");
+    }
+    return null;
   }
   return document.getElementById("bench-slots");
 }
@@ -84,8 +87,11 @@ function renderCommerceForMode(affectedSide) {
     if (shopOpen) {
       renderShop(rt.getPrepViewSide(), document.getElementById("shop-slots"));
     }
-    renderBench("player", resolveBenchContainer("player"));
-    renderBench("enemy", resolveBenchContainer("enemy"));
+    const benchOpen = typeof window.isPrepBenchPopoverOpen === "function" && window.isPrepBenchPopoverOpen();
+    if (benchOpen) {
+      renderBench(rt.getPrepViewSide(), document.getElementById("bench-slots"));
+    }
+    if (typeof window.syncLobby2pBenchFabBadges === "function") window.syncLobby2pBenchFabBadges();
   } else if (affectedSide) {
     renderShop(affectedSide);
     renderBench(affectedSide);
@@ -144,16 +150,6 @@ function ensureShopReadyForSide(side = rt.getPrepViewSide()) {
   const st = rt.getSideState(side);
   ensureSideShopArrays(st);
   if (st.shopReadyForRound !== rt.getRound()) resetShopForNewRoundForSide(side);
-  else ensureShopHasStock(side);
-}
-
-function ensureShopHasStock(side = rt.getPrepViewSide()) {
-  if (rt.getPhase() !== "prep" || rt.getGameOver()) return;
-  const st = rt.getSideState(side);
-  ensureSideShopArrays(st);
-  if (st.shop.some(Boolean)) return;
-  refreshShopSlotsForSide(side);
-  st.shopReadyForRound = rt.getRound();
 }
 
 function shouldHideShopHints() {
@@ -417,7 +413,6 @@ function renderShop(side = rt.getPrepViewSide(), containerEl = null) {
   ensureSideShopArrays(st);
   if (rt.getPhase() === "prep" && !rt.getGameOver()) {
     if (st.shopReadyForRound !== rt.getRound()) resetShopForNewRoundForSide(side);
-    else ensureShopHasStock(side);
   }
   const editable = rt.canEditPrepSide(side);
   let html = "";

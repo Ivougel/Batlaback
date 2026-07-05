@@ -47,13 +47,15 @@ function renderClassDetailStarterRow(cls) {
   `;
 }
 
-function renderClassDetailBuilds(classId, builds = []) {
+function renderClassDetailBuilds(classId, builds = [], options = {}) {
   if (!builds.length) return "";
+  const highlightBuildId = options.highlightBuildId || null;
   const rows = builds.map((build) => {
     const active = typeof isTrackedBuildActive === "function"
       && isTrackedBuildActive(classId, build.id);
+    const highlighted = highlightBuildId === build.id;
     return `
-    <article class="class-detail-build${active ? " class-detail-build--active" : ""}" data-build-id="${escapeClassHtml(build.id)}">
+    <article class="class-detail-build${active ? " class-detail-build--active" : ""}${highlighted ? " class-detail-build--highlight" : ""}" data-build-id="${escapeClassHtml(build.id)}">
       <header class="class-detail-build-head">
         <span class="class-detail-build-emoji" aria-hidden="true">${build.emoji || "✨"}</span>
         <div class="class-detail-build-copy">
@@ -69,10 +71,38 @@ function renderClassDetailBuilds(classId, builds = []) {
   `;
   }).join("");
   return `
-    <section class="class-detail-section">
-      <h3 class="class-detail-section-title">🛤️ Рекомендуемые сборки</h3>
-      <p class="class-detail-section-lead">8 путей мутации на R16 — выберите билд и отслеживайте нужные предметы в магазине.</p>
+    <section class="class-detail-section" id="class-detail-builds-section">
+      <h3 class="class-detail-section-title">🛤️ Как собирать билд</h3>
+      <p class="class-detail-section-lead">Примеры наборов предметов — отслеживайте билд, и нужное будет подсвечено в магазине 🎯</p>
       <div class="class-detail-builds">${rows}</div>
+    </section>
+  `;
+}
+
+function renderClassDetailMutationPaths(classId, options = {}) {
+  if (typeof getMutationsForNoviceClass !== "function") return "";
+  const mutations = getMutationsForNoviceClass(classId);
+  if (!mutations.length) return "";
+  const highlightMutationId = options.highlightMutationId || null;
+  const cls = typeof getClassById === "function" ? getClassById(classId) : null;
+  const cells = mutations.map((mut) => {
+    const emoji = typeof getMutationUiEmoji === "function" ? getMutationUiEmoji(mut.id) : "✨";
+    const hint = typeof getMutationGrowthHint === "function" ? getMutationGrowthHint(mut) : "";
+    const isCurrent = highlightMutationId === mut.id;
+    return `
+      <div class="class-detail-path${isCurrent ? " class-detail-path--current" : ""}" data-mutation-id="${escapeClassHtml(mut.id)}" title="${escapeClassHtml(hint)}">
+        <span class="class-detail-path-emoji" aria-hidden="true">${emoji}</span>
+        <span class="class-detail-path-name">${escapeClassHtml(mut.name)}</span>
+        <span class="class-detail-path-form">${escapeClassHtml(mut.formName || "")}</span>
+        ${isCurrent ? `<span class="class-detail-path-badge">ваш путь</span>` : ""}
+      </div>
+    `;
+  }).join("");
+  return `
+    <section class="class-detail-section class-detail-section--paths" id="class-detail-paths-section">
+      <h3 class="class-detail-section-title">🔀 Варианты развития</h3>
+      <p class="class-detail-section-lead">${escapeClassHtml(cls?.heroLabel || cls?.name || "Герой")} · 8 путей трансформации к 8–16 раунду</p>
+      <div class="class-detail-paths">${cells}</div>
     </section>
   `;
 }
@@ -100,10 +130,14 @@ function renderClassDetailTrackStatus(classId) {
   `;
 }
 
-function renderClassDetailBody(classId) {
+function renderClassDetailBody(classId, options = {}) {
   const data = typeof getClassDetailGuide === "function" ? getClassDetailGuide(classId) : null;
   if (!data) return "<p>Нет данных по этому классу.</p>";
-  const { cls, bonusDetail, tagFocus, builds, recommendedItems } = data;
+  const { cls, tagFocus, builds, recommendedItems } = data;
+  const highlightBuildId = options.highlightBuildId
+    || (options.highlightMutationId && typeof resolveBuildIdForMutation === "function"
+      ? resolveBuildIdForMutation(options.highlightMutationId)
+      : null);
   const portraitSrc = getClassHeroPortraitSrc(classId);
   const label = cls.heroLabel || cls.noviceLabel || cls.name;
   return `
@@ -122,7 +156,8 @@ function renderClassDetailBody(classId) {
       ${tagFocus ? `<p class="class-detail-tags">Ищите в магазине: <strong>${escapeClassHtml(tagFocus)}</strong></p>` : ""}
     </section>
     ${renderClassDetailStarterRow(cls)}
-    ${renderClassDetailBuilds(classId, builds)}
+    ${renderClassDetailMutationPaths(classId, options)}
+    ${renderClassDetailBuilds(classId, builds, { highlightBuildId })}
     ${renderClassDetailRecommended(recommendedItems)}
     ${renderClassDetailTrackStatus(classId)}
   `;
@@ -160,11 +195,34 @@ function bindClassDetailTrackControls(root, classId) {
   });
 }
 
+function getClassDetailPopupOptions() {
+  const overlay = document.getElementById("class-detail-overlay");
+  if (!overlay || overlay.classList.contains("hidden")) return {};
+  return {
+    highlightMutationId: overlay.dataset.highlightMutationId || null,
+    highlightBuildId: overlay.dataset.highlightBuildId || null,
+  };
+}
+
+function scrollClassDetailToHighlight(body, options = {}) {
+  if (!body) return;
+  const target = (options.highlightBuildId
+    ? body.querySelector(`.class-detail-build[data-build-id="${options.highlightBuildId}"]`)
+    : null)
+    || (options.highlightMutationId
+      ? body.querySelector(`.class-detail-path[data-mutation-id="${options.highlightMutationId}"]`)
+      : null)
+    || body.querySelector("#class-detail-builds-section")
+    || body.querySelector("#class-detail-paths-section");
+  target?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
 function refreshClassDetailPopupBody(classId) {
   const body = document.getElementById("class-detail-body");
   const overlay = document.getElementById("class-detail-overlay");
   if (!body || !classId || overlay?.classList.contains("hidden")) return;
-  body.innerHTML = renderClassDetailBody(classId);
+  const options = getClassDetailPopupOptions();
+  body.innerHTML = renderClassDetailBody(classId, options);
   bindClassDetailItemTooltips(body);
   bindClassDetailTrackControls(body, classId);
 }
@@ -182,25 +240,46 @@ function isClassDetailPopupOpen() {
     : !document.getElementById("class-detail-overlay")?.classList.contains("hidden");
 }
 
-function showClassDetailPopup(classId) {
+function showClassDetailPopup(classId, options = {}) {
   const overlay = document.getElementById("class-detail-overlay");
   const body = document.getElementById("class-detail-body");
   const title = document.getElementById("class-detail-title");
   if (!overlay || !body || !classId) return;
   const cls = typeof getClassById === "function" ? getClassById(classId) : null;
+  const highlightMutationId = options.highlightMutationId || null;
+  const highlightBuildId = options.highlightBuildId
+    || (highlightMutationId && typeof resolveBuildIdForMutation === "function"
+      ? resolveBuildIdForMutation(highlightMutationId)
+      : null);
   if (title) {
     title.textContent = cls
       ? `${cls.heroLabel || cls.noviceLabel || cls.name}`
       : "Подробнее о герое";
   }
-  body.innerHTML = renderClassDetailBody(classId);
+  body.innerHTML = renderClassDetailBody(classId, { highlightMutationId, highlightBuildId });
   bindClassDetailItemTooltips(body);
   bindClassDetailTrackControls(body, classId);
   overlay.classList.remove("hidden");
   overlay.dataset.classId = classId;
+  if (highlightMutationId) overlay.dataset.highlightMutationId = highlightMutationId;
+  else delete overlay.dataset.highlightMutationId;
+  if (highlightBuildId) overlay.dataset.highlightBuildId = highlightBuildId;
+  else delete overlay.dataset.highlightBuildId;
   document.body.classList.add("class-detail-open");
   document.getElementById("btn-class-detail-close")?.focus();
+  requestAnimationFrame(() => scrollClassDetailToHighlight(body, { highlightMutationId, highlightBuildId }));
   if (typeof refreshGamepadHints === "function") refreshGamepadHints();
+}
+
+function showClassBuildGuideFromMutation(mutationId) {
+  if (!mutationId) return false;
+  const classId = typeof getClassIdForMutation === "function"
+    ? getClassIdForMutation(mutationId)
+    : null;
+  if (!classId || typeof getClassDetailGuide !== "function" || !getClassDetailGuide(classId)) return false;
+  if (typeof hideMutationLorePopup === "function") hideMutationLorePopup();
+  showClassDetailPopup(classId, { highlightMutationId: mutationId });
+  return true;
 }
 
 function hideClassDetailPopup() {
@@ -209,6 +288,8 @@ function hideClassDetailPopup() {
   if (typeof hideSidebarTooltip === "function") hideSidebarTooltip();
   overlay.classList.add("hidden");
   delete overlay.dataset.classId;
+  delete overlay.dataset.highlightMutationId;
+  delete overlay.dataset.highlightBuildId;
   document.body.classList.remove("class-detail-open");
   if (typeof refreshGamepadHints === "function") refreshGamepadHints();
 }
@@ -232,6 +313,7 @@ function initClassDetailPopup() {
 }
 
 window.showClassDetailPopup = showClassDetailPopup;
+window.showClassBuildGuideFromMutation = showClassBuildGuideFromMutation;
 window.hideClassDetailPopup = hideClassDetailPopup;
 window.isClassDetailPopupOpen = isClassDetailPopupOpen;
 window.refreshClassDetailBuildButtons = refreshClassDetailBuildButtons;

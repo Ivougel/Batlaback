@@ -356,11 +356,46 @@ html[data-lobby2p-hud][data-ui-surface="tablet-side"] #app[data-phase="prep"] .l
 }
 
 /* ── Commerce (shop popover FAB + sell) ── */
+/* ── Bench ── */
+.lobby2p-col-bench {
+  padding: 4px 8px 6px;
+  border-left: 1px solid rgba(212, 168, 83, 0.12);
+  border-right: 1px solid rgba(212, 168, 83, 0.12);
+  background: rgba(10, 8, 6, 0.85);
+  min-height: 0;
+}
+
+.lobby2p-bench-fab {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: calc(40px * var(--ui-scale, 1));
+  padding: 8px 10px;
+  font-size: 0.78rem;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.lobby2p-bench-fab[aria-expanded="true"] {
+  border-color: rgba(212, 168, 83, 0.75);
+  background: rgba(24, 18, 12, 0.95);
+}
+
+.lobby2p-bench-fab--has-items {
+  border-color: rgba(96, 165, 250, 0.45);
+}
+
+.lobby2p-bench-count {
+  color: #f0e0c0;
+}
+
 .lobby2p-col-commerce {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   padding: 6px 8px;
   border-left: 1px solid rgba(212, 168, 83, 0.15);
   border-right: 1px solid rgba(212, 168, 83, 0.15);
@@ -413,46 +448,10 @@ html[data-lobby2p-hud] .lobby2p-col-commerce--active .lobby2p-shop-fab {
 
 /* legacy shop row — скрыто, popover через FAB */
 .lobby2p-col-shop,
-.lobby2p-shop-slots {
-  display: none !important;
-}
-
-/* ── Bench ── */
-.lobby2p-col-bench {
-  padding: 4px 8px 6px;
-  border-left: 1px solid rgba(212, 168, 83, 0.12);
-  border-right: 1px solid rgba(212, 168, 83, 0.12);
-  background: rgba(10, 8, 6, 0.85);
-  max-height: calc(56px * var(--ui-scale, 1));
-  min-height: 0;
-  overflow: hidden;
-}
-
+.lobby2p-shop-slots,
+.lobby2p-bench-slots,
 .lobby2p-bench-head {
-  font-size: 0.72rem;
-  color: rgba(212, 196, 168, 0.75);
-  margin-bottom: 4px;
-}
-
-.lobby2p-bench-slots {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 4px;
-  overflow-x: auto;
-  overflow-y: hidden;
-}
-
-.lobby2p-bench-slots .bench-card {
-  flex: 0 0 auto;
-  width: calc(44px * var(--ui-scale, 1));
-  min-width: calc(44px * var(--ui-scale, 1));
-  max-width: calc(44px * var(--ui-scale, 1));
-  min-height: calc(44px * var(--ui-scale, 1));
-  font-size: 0.65rem;
-}
-
-.lobby2p-bench-slots .bench-card.empty {
-  opacity: 0.35;
+  display: none !important;
 }
 
 /* ── Actions ── */

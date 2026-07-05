@@ -113,7 +113,24 @@ function run() {
   passed++;
 
   const gap = s.formatMutationMilestoneGap(progress, 3, null, null);
-  assert(gap.includes("Готово к форме"), "milestone gap: готово к R8");
+  assert(gap.includes("трансформации"), "milestone gap: готово к трансформации");
+  passed++;
+
+  const blendedProgress = {
+    leader: { id: "m_sage", name: "МУДРЕЦ", pct: 0 },
+    dominant: { id: "m_arcanist", name: "АРКАНИСТ", pct: 21 },
+    leaderShare: 0.21,
+    isBlendedBuild: true,
+    ranked: [
+      { id: "m_arcanist", name: "АРКАНИСТ", pct: 21 },
+      { id: "m_cryo", name: "КРИОМАНТ", pct: 20 },
+      { id: "m_sage", name: "МУДРЕЦ", pct: 0 },
+    ],
+  };
+  const blendedHtml = s.renderMutationProgressHtml(blendedProgress, null, null, 3, { heroCard: true });
+  assert(blendedHtml.includes("АРКАНИСТ"), "progress: blended build shows dominant path");
+  assert(blendedHtml.includes("21%"), "progress: blended build uses leaderShare pct");
+  assert(blendedHtml.includes("→ 40%"), "progress: shows goal threshold");
   passed++;
 
   const mutMetaPerk = s.getPrepMutationBadgeMeta(null, "m_arcanist", 16);

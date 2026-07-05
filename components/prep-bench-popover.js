@@ -6,6 +6,7 @@
   const OPEN_ATTR = "data-prep-bench-open";
 
   function usesPrepBenchPopover() {
+    if (document.documentElement.hasAttribute("data-lobby2p-hud")) return true;
     return document.documentElement.dataset.prepBenchPopover === "true";
   }
 
@@ -80,7 +81,12 @@
     if (!next) {
       forceHidePrepBenchChrome();
     }
-    if (typeof window.syncPrepBenchFabPosition === "function") {
+    if (typeof window.syncLobby2pBenchFabExpanded === "function") {
+      window.syncLobby2pBenchFabExpanded();
+    }
+    if (typeof window.syncLobby2pBenchPopoverPosition === "function") {
+      requestAnimationFrame(() => window.syncLobby2pBenchPopoverPosition());
+    } else if (typeof window.syncPrepBenchFabPosition === "function") {
       requestAnimationFrame(() => window.syncPrepBenchFabPosition());
     }
     if (typeof window.positionPrepTooltipDock === "function") {
@@ -111,6 +117,15 @@
   function syncFabVisibility() {
     syncBenchMount();
     const fab = document.getElementById("btn-prep-bench-fab");
+    const isLobby2p = document.documentElement.hasAttribute("data-lobby2p-hud");
+    if (isLobby2p) {
+      fab?.classList.add("hidden");
+      if (fab) {
+        fab.hidden = true;
+        fab.setAttribute("aria-hidden", "true");
+      }
+      return;
+    }
     const show = usesPrepBenchPopover() && isPrepPhase();
     if (!show) {
       forceHidePrepBenchChrome();
@@ -176,7 +191,9 @@
         forceHidePrepBenchChrome();
       }
       syncFabVisibility();
-      if (!usesPrepBenchPopover()) forceHidePrepBenchChrome();
+      if (!usesPrepBenchPopover() && !root.hasAttribute("data-lobby2p-hud")) {
+        forceHidePrepBenchChrome();
+      }
     }).observe(root, {
       attributes: true,
       attributeFilter: ["data-prep-bench-popover", "data-prep-layout", "data-prep-shop-drawer", "data-ui-surface", "data-game-phase"],

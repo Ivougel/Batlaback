@@ -505,7 +505,7 @@ function enrichProfileArchetypeBanner(profile, formId, mutationId, round = 1, le
     meta = {
       kind: "form",
       label: def?.formName || def?.name || leaderId,
-      sub: typeof MUTATION_ROUND_FORM !== "undefined" ? `R${MUTATION_ROUND_FORM}` : "форма",
+      sub: "трансформация",
       emoji: getMutationUiEmoji(leaderId),
     };
     pathId = leaderId;

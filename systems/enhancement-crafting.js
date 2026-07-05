@@ -137,7 +137,7 @@ const ENHANCEMENT_CRAFT_RECIPES = [
       loadoutTags: ["armor", "holy"],
       recommendedMutation: "p_paladin",
     },
-    hint: "R6+ · форма R8 · armor+holy · или мутация Паладин",
+    hint: "С 6-го раунда · после трансформации · броня+святой · или мутация Паладин",
   },
   {
     id: "craft_enh_holy_aegis",
@@ -153,7 +153,7 @@ const ENHANCEMENT_CRAFT_RECIPES = [
       loadoutTags: ["holy", "armor"],
       recommendedMutation: "p_paladin",
     },
-    hint: "Форма R8+ · holy+armor в рюкзаке",
+    hint: "После трансформации · святой+броня в рюкзаке",
   },
   {
     id: "craft_enh_guardian_mail",
@@ -169,7 +169,7 @@ const ENHANCEMENT_CRAFT_RECIPES = [
       loadoutTags: ["armor"],
       recommendedMutation: "w_guardian",
     },
-    hint: "Форма R8+ · тег armor",
+    hint: "После трансформации · тег броня",
   },
   {
     id: "craft_enh_zealot_vestment",
@@ -186,7 +186,7 @@ const ENHANCEMENT_CRAFT_RECIPES = [
       build: "triple_zrecrela",
       recommendedMutation: "p_zrecrela",
     },
-    hint: "Форма R8+ · ключ ЖРЕЦИЛЫ или мутация",
+    hint: "После трансформации · ключ ЖРЕЦИЛЫ или мутация",
   },
   {
     id: "craft_enh_plague_bindings",
@@ -236,7 +236,7 @@ const ENHANCEMENT_CRAFT_RECIPES = [
       loadoutTags: ["armor"],
       recommendedMutation: "w_juggernaut",
     },
-    hint: "R6+ · форма R8 · тяжёлая броня",
+    hint: "С 6-го раунда · после трансформации · тяжёлая броня",
   },
   {
     id: "craft_enh_guardian_sabatons",
@@ -252,7 +252,7 @@ const ENHANCEMENT_CRAFT_RECIPES = [
       loadoutTags: ["armor"],
       recommendedMutation: "w_guardian",
     },
-    hint: "R6+ · форма R8 · страж",
+    hint: "С 6-го раунда · после трансформации · страж",
   },
 ];
 

@@ -131,8 +131,8 @@ function buildClassMutationGalleryHtml(classId) {
 
   return `
     <div class="mutation-gallery" role="group" aria-label="Мутации класса">
-      <p class="mutation-gallery-eyebrow">${escapeMutationUiHtml(novice)} · 8 путей R16</p>
-      <p class="mutation-gallery-hint">Нажмите путь — подтвердите намерение</p>
+      <p class="mutation-gallery-eyebrow">${escapeMutationUiHtml(novice)} · 8 путей развития</p>
+      <p class="mutation-gallery-hint">Нажмите путь — посмотрите бонусы и подтвердите намерение</p>
       <div class="mutation-gallery-grid">${cells}</div>
     </div>
   `;
@@ -275,8 +275,20 @@ function ensureMutationLorePopup() {
     <p class="mutation-lore-popup-name"></p>
     <p class="mutation-lore-popup-form"></p>
     <div class="mutation-lore-popup-perks"></div>
+    <div class="mutation-lore-popup-actions">
+      <button type="button" class="btn-secondary mutation-lore-popup-guide-btn">🛤️ Пути и сборки</button>
+    </div>
   `;
   document.body.appendChild(popup);
+
+  popup.querySelector(".mutation-lore-popup-guide-btn")?.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const mutationId = popup.dataset.mutationId;
+    if (typeof showClassBuildGuideFromMutation === "function") {
+      showClassBuildGuideFromMutation(mutationId);
+    }
+  });
 
   popup.addEventListener("pointerenter", () => {
     if (!isCoarseMutationPointer()) mutationLorePopupPinned = false;
@@ -374,11 +386,11 @@ function renderMutationLorePerksHtml(meta) {
   }
   if (meta.formPerk) {
     const formRound = typeof MUTATION_ROUND_FORM !== "undefined" ? MUTATION_ROUND_FORM : 8;
-    rows.push(`<p class="mutation-lore-popup-perk"><span class="mutation-lore-popup-perk-label">R${formRound} · форма</span><span class="mutation-lore-popup-perk-text">${escapeMutationUiHtml(meta.formPerk)}</span></p>`);
+    rows.push(`<p class="mutation-lore-popup-perk"><span class="mutation-lore-popup-perk-label">На ${formRound}-м раунде</span><span class="mutation-lore-popup-perk-text">${escapeMutationUiHtml(meta.formPerk)}</span></p>`);
   }
   if (meta.capstoneDesc) {
     const finalRound = typeof MUTATION_ROUND_FINAL !== "undefined" ? MUTATION_ROUND_FINAL : 16;
-    rows.push(`<p class="mutation-lore-popup-perk"><span class="mutation-lore-popup-perk-label">R${finalRound} · мутация</span><span class="mutation-lore-popup-perk-text">${escapeMutationUiHtml(meta.capstoneDesc)}</span></p>`);
+    rows.push(`<p class="mutation-lore-popup-perk"><span class="mutation-lore-popup-perk-label">На ${finalRound}-м раунде</span><span class="mutation-lore-popup-perk-text">${escapeMutationUiHtml(meta.capstoneDesc)}</span></p>`);
   }
   return rows.join("");
 }
@@ -395,6 +407,14 @@ function showMutationLorePopup(cell, mutationId, opts = {}) {
   popup.querySelector(".mutation-lore-popup-emoji").textContent = meta.emoji;
   popup.querySelector(".mutation-lore-popup-name").textContent = meta.name;
   popup.querySelector(".mutation-lore-popup-form").textContent = meta.formName;
+  popup.dataset.mutationId = mutationId;
+  const guideBtn = popup.querySelector(".mutation-lore-popup-guide-btn");
+  const classId = typeof getClassIdForMutation === "function" ? getClassIdForMutation(mutationId) : null;
+  const hasGuide = classId && typeof getClassDetailGuide === "function" && getClassDetailGuide(classId);
+  if (guideBtn) {
+    guideBtn.hidden = !hasGuide;
+    guideBtn.disabled = !hasGuide;
+  }
   const perksEl = popup.querySelector(".mutation-lore-popup-perks");
   if (perksEl) {
     const perksHtml = renderMutationLorePerksHtml(meta);
@@ -419,6 +439,7 @@ function hideMutationLorePopup() {
   popup.classList.add("hidden");
   popup.classList.remove("mutation-lore-popup--enter", "mutation-lore-popup--below");
   popup.setAttribute("aria-hidden", "true");
+  delete popup.dataset.mutationId;
   highlightMutationLoreCell(mutationLorePopupCell, false);
   mutationLorePopupCell = null;
   mutationLorePopupPinned = false;
@@ -506,7 +527,7 @@ function getPrepMutationBadgeMeta(formId, mutationId, round = 1) {
     return {
       kind: "mutation",
       label: def?.name || mutationId,
-      sub: `R${typeof MUTATION_ROUND_FINAL !== "undefined" ? MUTATION_ROUND_FINAL : 16}`,
+      sub: "полная мутация",
       perk: perks?.capstoneDesc || "",
       emoji: getMutationUiEmoji(mutationId),
     };
@@ -517,7 +538,7 @@ function getPrepMutationBadgeMeta(formId, mutationId, round = 1) {
     return {
       kind: "form",
       label: def?.formName || formId,
-      sub: `форма R${typeof MUTATION_ROUND_FORM !== "undefined" ? MUTATION_ROUND_FORM : 8}`,
+      sub: "трансформация",
       perk: perks?.formPerk || "",
       emoji: getMutationUiEmoji(formId),
     };
@@ -637,6 +658,10 @@ function ensurePrepBuildEmojiDom() {
       <span class="prep-build-emoji-btn-glyph" aria-hidden="true"></span>`;
     heroSlot.appendChild(btn);
     prepBuildEmojiBtnBound = false;
+  }
+
+  if (btn && typeof bindPrepBuildEmojiBtnInteractions === "function") {
+    bindPrepBuildEmojiBtnInteractions();
   }
 
   return { heroSlot, btn };
@@ -1028,6 +1053,14 @@ function bindPrepBuildEmojiBtnInteractions() {
     showMutationLorePopup(btn, pathId, { pin: true });
   });
 
+  if (typeof bindPointerTapTooltip === "function") {
+    bindPointerTapTooltip(btn, () => {
+      const pathId = btn.dataset.mutationId;
+      if (!pathId) return;
+      showMutationLorePopup(btn, pathId, { pin: true });
+    });
+  }
+
   btn.addEventListener("focusin", () => {
     const pathId = btn.dataset.mutationId;
     if (pathId) showMutationLorePopup(btn, pathId);
@@ -1146,12 +1179,12 @@ function formatArchetypeTooltipLabel(pathId, opts = {}) {
   const perks = typeof getMutationPerkMeta === "function" ? getMutationPerkMeta(pathId) : null;
   const name = def?.name || pathId;
   if (opts.mutationId === pathId && perks?.capstoneDesc) {
-    return `${name} · R16: ${perks.capstoneDesc}`;
+    return `${name} · ${perks.capstoneDesc}`;
   }
   if (opts.formId === pathId && perks?.formPerk) {
-    return `${def?.formName || name} · R8: ${perks.formPerk}`;
+    return `${def?.formName || name} · ${perks.formPerk}`;
   }
-  if (perks?.capstoneDesc) return `${name} · R16: ${perks.capstoneDesc}`;
+  if (perks?.capstoneDesc) return `${name} · ${perks.capstoneDesc}`;
   return name;
 }
 

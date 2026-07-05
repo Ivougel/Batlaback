@@ -275,6 +275,22 @@ html[data-lobby2p-hud] #prep-shop-popover .prep-shop-popover__panel {
   pointer-events: auto;
 }
 
+html[data-lobby2p-hud][data-prep-bench-open] #prep-bench-popover {
+  z-index: 140;
+}
+
+html[data-lobby2p-hud] .prep-bench-popover__backdrop {
+  background: transparent !important;
+  pointer-events: none !important;
+}
+
+html[data-lobby2p-hud] #prep-bench-popover .prep-bench-popover__panel {
+  pointer-events: auto;
+  top: var(--prep-bench-popover-y, auto);
+  bottom: auto;
+  max-height: min(var(--prep-bench-popover-max-h, 260px), 52dvh);
+}
+
 html[data-lobby2p-hud][data-prep-shop-open][data-prep-drag-targets-board] #lobby2p-canvas-host .canvas-scale-wrap {
   box-shadow:
     0 16px 46px rgba(0, 0, 0, 0.28),

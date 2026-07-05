@@ -1538,7 +1538,9 @@
     const root = document.documentElement;
     if (root.hasAttribute("data-lobby2p-hud")) {
       root.dataset.prepShopPopover = "true";
+      root.dataset.prepBenchPopover = "true";
       if (typeof window.syncShopMount === "function") window.syncShopMount();
+      if (typeof window.syncBenchMount === "function") window.syncBenchMount();
       if (typeof window.syncPrepShopPopoverPosition === "function") window.syncPrepShopPopoverPosition();
       return;
     }
@@ -1858,6 +1860,37 @@
     root.style.setProperty("--prep-shop-popover-w", `${corridorW}px`);
     root.style.setProperty("--prep-shop-popover-max-h", `${height}px`);
     root.style.removeProperty("--prep-shop-popover-h");
+    syncOpenPrepTooltipDock();
+  }
+
+  function syncLobby2pBenchPopoverPosition() {
+    const root = document.documentElement;
+    if (root.dataset.prepBenchPopover !== "true") return;
+    if (!root.hasAttribute("data-lobby2p-hud")) return;
+    if (document.getElementById("app")?.dataset.phase !== "prep") return;
+
+    const humanId = typeof window.getLobby2pBenchPopoverHuman === "function"
+      ? window.getLobby2pBenchPopoverHuman()
+      : (document.getElementById("app")?.dataset.prepSide === "enemy" ? 1 : 0);
+    const split = document.getElementById("lobby2p-split");
+    const splitRect = split?.getBoundingClientRect();
+    const fab = document.querySelector(`.lobby2p-bench-fab[data-human="${humanId}"]`);
+    const fabRect = fab?.getBoundingClientRect();
+    const uiScale = readCssPx("--ui-scale", 1);
+    const gap = Math.round(8 * uiScale);
+    const colW = splitRect ? Math.max(160, Math.floor(splitRect.width / 2) - gap * 2) : Math.round(240 * uiScale);
+    const colLeft = splitRect
+      ? Math.round(splitRect.left + (humanId === 0 ? gap : splitRect.width / 2 + gap))
+      : gap;
+    const top = fabRect && fabRect.top > gap
+      ? Math.max(gap, Math.round(fabRect.top - gap * 3))
+      : gap;
+    const height = Math.max(160, Math.min(260, Math.round((fabRect?.top ?? top) - gap * 2)));
+    root.style.setProperty("--prep-bench-popover-x", `${colLeft}px`);
+    root.style.setProperty("--prep-bench-popover-w", `${colW}px`);
+    root.style.setProperty("--prep-bench-popover-y", `${Math.max(gap, top - height)}px`);
+    root.style.setProperty("--prep-bench-popover-max-h", `${height}px`);
+    root.style.removeProperty("--prep-bench-popover-bottom");
     syncOpenPrepTooltipDock();
   }
 
@@ -3929,6 +3962,7 @@
   window.syncMobileShopFabPosition = syncMobileShopFabPosition;
   window.syncPrepBenchFabPosition = syncPrepBenchFabPosition;
   window.syncPrepShopPopoverPosition = syncPrepShopPopoverPosition;
+  window.syncLobby2pBenchPopoverPosition = syncLobby2pBenchPopoverPosition;
   window.syncPrepSellFabPosition = syncPrepSellFabPosition;
   window.syncTabletPortraitShopRows = syncTabletPortraitShopRows;
   window.syncMobileOverlayAnchors = syncMobileOverlayAnchors;

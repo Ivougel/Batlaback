@@ -452,6 +452,31 @@ const CLASS_DETAIL_GUIDES = {
   },
 };
 
+/** Связь пути мутации с рекомендуемой сборкой в CLASS_DETAIL_GUIDES (если есть). */
+const MUTATION_TO_BUILD_ID = {
+  w_guardian: "guardian",
+  w_berserk: "berserk",
+  w_crusader: "crusader",
+  r_assassin: "assassin",
+  r_shadow: "shadow",
+  r_plague: "plague",
+  m_pyro: "pyro",
+  m_cryo: "cryo",
+  m_arcanist: "arcanist",
+  p_paladin: "paladin",
+  p_zrecrela: "zrecrela",
+  p_oracle: "oracle",
+};
+
+function getClassIdForMutation(mutationId) {
+  const def = typeof getMutationById === "function" ? getMutationById(mutationId) : null;
+  return def?.noviceClass || null;
+}
+
+function resolveBuildIdForMutation(mutationId) {
+  return MUTATION_TO_BUILD_ID[mutationId] || null;
+}
+
 function getClassDetailGuide(classId) {
   const cls = getClassById(classId);
   const guide = CLASS_DETAIL_GUIDES[classId];

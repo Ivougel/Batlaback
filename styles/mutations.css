@@ -39,7 +39,22 @@
 }
 
 .mutation-progress-gap {
-  color: rgba(184, 240, 200, 0.9);
+  color: rgba(184, 240, 200, 0.95);
+  font-weight: 700;
+}
+
+.mutation-progress-goal {
+  color: rgba(220, 200, 255, 0.72);
+  font-weight: 600;
+}
+
+.mutation-progress-blended {
+  display: block;
+  margin: 0 0 calc(4px * var(--ui-scale));
+  font-size: calc(10px * var(--ui-scale));
+  line-height: 1.35;
+  color: rgba(200, 220, 255, 0.72);
+  font-style: italic;
 }
 
 .mutation-progress--interactive {
@@ -381,6 +396,26 @@
   font-weight: 700;
   color: #ffe566;
   text-shadow: 0 0 12px rgba(245, 200, 66, 0.28);
+}
+
+.mutation-lore-popup-actions {
+  position: relative;
+  z-index: 2;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(180, 140, 255, 0.28);
+}
+
+.mutation-lore-popup-guide-btn {
+  width: 100%;
+  pointer-events: auto;
+  font-size: max(var(--font-sm), calc(0.82rem * var(--type-scale, 1)));
+  padding: calc(8px * var(--ui-scale)) calc(12px * var(--ui-scale));
+  border-radius: calc(10px * var(--ui-scale));
+}
+
+.mutation-lore-popup-guide-btn[hidden] {
+  display: none;
 }
 
 .mutation-lore-popup--below.mutation-lore-popup--enter {

@@ -33,7 +33,7 @@ test("mutation gallery — 8 silhouettes after hero pick", async ({ page }) => {
   const gallery = page.locator("#class-mutation-gallery");
   await expect(gallery).toBeVisible({ timeout: 5000 });
   await expect(gallery.locator(".mutation-silhouette")).toHaveCount(8);
-  await expect(gallery).toContainText("8 путей R16");
+  await expect(gallery).toContainText("8 путей развития");
 
   if (errors.length) throw new Error(errors.join("; "));
 });
