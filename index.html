@@ -43,8 +43,8 @@
   <link rel="stylesheet" href="styles/hero-card.css?v=4">
   <link rel="stylesheet" href="styles/battle-hero-levitate.css?v=1">
   <link rel="stylesheet" href="styles/hero-portrait-frame.css?v=5">
-  <link rel="stylesheet" href="styles/prep-hero-card.css?v=20">
-  <link rel="stylesheet" href="styles/prep-hero-card-banner.css?v=1">
+  <link rel="stylesheet" href="styles/prep-hero-card.css?v=22">
+  <link rel="stylesheet" href="styles/prep-hero-card-banner.css?v=2">
   <link rel="stylesheet" href="styles/prep-hud-collapse.css?v=2">
   <link rel="stylesheet" href="styles/class-picker.css?v=9">
   <link rel="stylesheet" href="styles/class-detail-popup.css?v=1">
@@ -71,6 +71,10 @@
   <link rel="stylesheet" href="styles/meadow-theme.css?v=2">
   <link rel="stylesheet" href="styles/battle-theme-ui.css?v=2">
   <link rel="stylesheet" href="styles/prep-juice.css?v=10">
+  <link rel="stylesheet" href="styles/bb-synergy-commerce.css?v=1">
+  <link rel="stylesheet" href="styles/bb-prep-stack.css?v=1">
+  <link rel="stylesheet" href="styles/bb-vs-overlay.css?v=1">
+  <link rel="stylesheet" href="styles/bb-battle-stack.css?v=1">
   <link rel="stylesheet" href="styles/item-rarity-glow.css?v=2">
   <link rel="stylesheet" href="styles/prep-forest-hud.css?v=3">
   <link rel="stylesheet" href="styles/prep-unit-frame-hud.css?v=1">
@@ -120,7 +124,7 @@
   <script src="systems/battle-fx-tier.js?v=24"></script>
   <script src="systems/runtime-loader.js?v=1"></script>
   <script src="systems/battle-hero-anchor.js?v=38"></script>
-  <script src="ui-layout.js?v=132"></script>
+  <script src="ui-layout.js?v=133"></script>
 </head>
 <body>
   <div id="ui-ornament-frame" class="ui-ornament-frame" aria-hidden="true">
@@ -154,6 +158,7 @@
                     <img class="hero-portrait-media" id="prep-hud-hero-img" alt="" draggable="false">
                     <span class="prep-hud-hero-round" id="prep-hud-hero-round" aria-hidden="true"></span>
                   </div>
+                  <div class="prep-hero-card__mutation-badge-mount" id="prep-hero-mutation-badge-mount" aria-hidden="true"></div>
                   <span class="prep-hud-hero-badge hidden" id="run-hud-phase" aria-hidden="true"></span>
                 </div>
                 <div class="prep-hero-card__body">
@@ -178,6 +183,7 @@
                 </div>
               </div>
               <div class="prep-unit-frame-hud hidden" id="prep-unit-frame-hud" aria-hidden="true" aria-label="Статус бойцов"></div>
+              <div class="bb-prep-header-actions" id="bb-prep-header-actions" hidden></div>
               <div class="prep-hud-chrome" id="prep-hud-chrome">
                 <div class="prep-hero-tooltip hidden" id="prep-hero-tooltip" role="dialog" aria-labelledby="prep-hero-tooltip-title">
                   <div class="prep-hero-tooltip-title" id="prep-hero-tooltip-title"></div>
@@ -298,6 +304,7 @@
           <div class="shop-panel" id="shop-panel">
             <div class="shop-chrome">
               <div class="shop-panel-header">
+                <p class="bb-prep-section-label bb-prep-section-label--shop" id="bb-prep-shop-label">Магазин</p>
                 <button type="button" class="btn-secondary btn-refresh-shop" id="btn-refresh">🔄 Обновить (1💰)</button>
                 <button type="button" class="prep-shop-drawer-close" id="btn-prep-shop-close" aria-label="Закрыть магазин">✕</button>
               </div>
@@ -311,6 +318,13 @@
                 <button type="button" class="sell-drop-zone" id="sell-drop-zone" aria-label="Продать предмет" title="Перетащите сюда, чтобы продать">💰</button>
               </div>
             </div>
+          </div>
+          <div class="bb-prep-storage" id="bb-prep-storage" hidden>
+            <button type="button" class="bb-prep-storage__handle" id="bb-prep-storage-handle" aria-expanded="true" aria-controls="bb-prep-storage-body">
+              <span class="bb-prep-storage__label">Хранилище</span>
+              <span class="bb-prep-storage__chevron" aria-hidden="true">▲</span>
+            </button>
+            <div class="bb-prep-storage__body" id="bb-prep-storage-body"></div>
           </div>
         </div>
         <div class="board-hint" id="board-hint">
@@ -673,6 +687,33 @@
       </div>
     </div>
 
+    <div class="bb-battle-hud hidden" id="bb-battle-hud" aria-hidden="true">
+      <p class="bb-battle-hud__round" id="bb-battle-hud-round"></p>
+      <div id="bb-battle-hud-enemy" data-team="enemy"></div>
+      <div id="bb-battle-hud-player" data-team="player"></div>
+    </div>
+
+    <div class="overlay bb-vs-overlay hidden" id="bb-vs-overlay" aria-hidden="true">
+      <div class="bb-vs-overlay__backdrop" aria-hidden="true"></div>
+      <div class="bb-vs-overlay__content" role="status" aria-live="polite" aria-label="Противостояние">
+        <div class="bb-vs-fighter bb-vs-fighter--player">
+          <div class="bb-vs-fighter__portrait-wrap">
+            <img class="bb-vs-fighter__portrait" id="bb-vs-player-portrait" alt="" draggable="false">
+          </div>
+          <p class="bb-vs-fighter__name" id="bb-vs-player-name"></p>
+          <p class="bb-vs-fighter__sub" id="bb-vs-player-sub" hidden></p>
+        </div>
+        <div class="bb-vs-badge" aria-hidden="true">VS</div>
+        <div class="bb-vs-fighter bb-vs-fighter--enemy">
+          <div class="bb-vs-fighter__portrait-wrap">
+            <img class="bb-vs-fighter__portrait" id="bb-vs-enemy-portrait" alt="" draggable="false">
+          </div>
+          <p class="bb-vs-fighter__name" id="bb-vs-enemy-name"></p>
+          <p class="bb-vs-fighter__sub" id="bb-vs-enemy-sub" hidden></p>
+        </div>
+      </div>
+    </div>
+
     <div class="overlay hidden" id="battle-result-overlay">
       <div class="battle-result-theater hidden" id="battle-result-theater" aria-hidden="true">
         <div class="br-theater-backdrop" aria-hidden="true">
@@ -868,10 +909,11 @@
             <input type="radio" name="prep-hero-card-preset" value="banner">
             <span class="settings-theme-copy">
               <span class="settings-theme-name">📋 Баннер</span>
-              <span class="settings-theme-hint">Компактная шапка: портрет + путь и прогресс, адаптивно под экран</span>
+              <span class="settings-theme-hint">Компактная шапка: портрет + имя/путь + усиления. Нужен режим «Путь» или «Соло»</span>
             </span>
           </label>
         </div>
+        <p class="settings-select-hint" id="settings-prep-hero-card-hint">В «Классике» видна только раскладка. Путь, прогресс мутации, усиления head/chest/boots и модификаторы — в режимах с мутациями.</p>
         <div class="settings-row settings-row--select">
           <label class="settings-label" for="settings-sound-theme" id="settings-sound-theme-label">🔊 Звуковое оформление</label>
         </div>
@@ -1092,13 +1134,15 @@
   <script src="systems/mutation-capstones.js?v=1"></script>
   <script src="systems/item-pool-120.js?v=1"></script>
   <script src="items.js?v=4"></script>
+  <script src="systems/enhancements.js?v=1"></script>
   <script src="items-catalog.js"></script>
   <script src="systems/build-keys.js?v=1"></script>
   <script src="systems/backpack-amplifiers.js?v=2"></script>
   <script src="systems/meta-effects.js"></script>
   <script src="systems/triple-support-items.js?v=1"></script>
   <script src="shop-engine.js"></script>
-  <script src="systems/bb-classic.js?v=1"></script>
+  <script src="systems/bb-classic.js?v=2"></script>
+  <script src="systems/bb-fidelity.js?v=3"></script>
   <script src="systems/bb-reference-unlocks.js?v=1"></script>
   <script src="systems/item-unlock-tiers.js?v=2"></script>
   <script src="systems/meta-progress.js?v=2"></script>
@@ -1115,6 +1159,7 @@
   <script src="systems/craft-pending.js?v=1"></script>
   <script src="systems/craft-preview.js?v=1"></script>
   <script src="systems/synergy.js"></script>
+  <script src="systems/synergy-shop.js?v=1"></script>
   <script src="components/item-emoji-sparkle.js?v=3"></script>
   <script src="systems/combat.js"></script>
   <script src="systems/combat-profile.js?v=5"></script>
@@ -1142,7 +1187,7 @@
   <script src="components/escape-menu.js"></script>
   <script src="components/combat-feed-stub.js?v=1"></script>
   <script src="components/mobile-prep-ui.js?v=2"></script>
-  <script src="components/prep-shop-popover.js?v=4"></script>
+  <script src="components/prep-shop-popover.js?v=5"></script>
   <script src="components/prep-bench-popover.js?v=7"></script>
   <script src="components/battle-aura-frame.js"></script>
   <script src="components/battle-result-theater.js"></script>
@@ -1168,6 +1213,10 @@
   <script src="components/item-hint-card.js?v=4"></script>
   <script src="components/inventory-animation-controller.js?v=18"></script>
   <script src="components/prep-drag-arc.js?v=16"></script>
+  <script src="components/bb-synergy-tether.js?v=1"></script>
+  <script src="components/bb-prep-layout.js?v=1"></script>
+  <script src="components/bb-vs-overlay.js?v=1"></script>
+  <script src="components/bb-battle-hud.js?v=1"></script>
   <script src="components/item-effects-controller.js"></script>
   <script src="components/synergy-visual-controller.js?v=2"></script>
   <script src="components/battle-controls.js"></script>
@@ -1184,7 +1233,7 @@
   <script src="components/emotion-presenter.js?v=5"></script>
   <script src="emotion-engine.js?v=26"></script>
   <script src="battle-hud.js?v=6"></script>
-  <script src="systems/prep-shop.js?v=8"></script>
+  <script src="systems/prep-shop.js?v=9"></script>
   <script src="systems/campaign.js?v=1"></script>
   <script src="systems/doll-engine.js"></script>
   <script src="systems/screen-transitions.js?v=3"></script>
@@ -1195,7 +1244,7 @@
   <script src="systems/presentation-clock.js?v=2"></script>
   <script src="systems/lobby-runtime-stub.js?v=1"></script>
   <script src="battle-loop.js?v=3"></script>
-  <script src="game.js?v=131"></script>
+  <script src="game.js?v=133"></script>
   <script src="pwa-wake-lock.js"></script>
   <script src="pwa-register.js"></script>
 </body>

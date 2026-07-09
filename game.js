@@ -67,6 +67,10 @@ function applyGridMetricsFromCss() {
   GAP_W = GRID_GAP;
   BATTLE_CANVAS_W = GRID_INNER_W + GRID_GAP + GRID_INNER_W;
   BATTLE_CANVAS_H = GRID_INNER_H;
+  if (typeof shouldUseBBStackBattleLayout === "function" && shouldUseBBStackBattleLayout()) {
+    BATTLE_CANVAS_W = GRID_INNER_W;
+    BATTLE_CANVAS_H = GRID_INNER_H * 2 + GRID_GAP;
+  }
   CANVAS_W = BATTLE_CANVAS_W;
   CANVAS_H = BATTLE_CANVAS_H;
 
@@ -77,7 +81,10 @@ function applyGridMetricsFromCss() {
   if (canvas) {
     applyPhaseCanvasLayout();
     syncBattleArenaLayout();
-    if (phase === "prep") draw();
+    const gamePhase = typeof phase !== "undefined"
+      ? phase
+      : document.getElementById("app")?.dataset?.phase;
+    if (gamePhase === "prep" && typeof draw === "function") draw();
   }
 }
 
@@ -1958,6 +1965,9 @@ function isBattleUiPhase() {
 /** В flank-arena рюкзак показывается по тапу на портрет, не на canvas. */
 function shouldDrawCanvasLoadoutInBattle() {
   if (!isBattleUiPhase()) return false;
+  if (typeof shouldUseBBStackBattleLayout === "function" && shouldUseBBStackBattleLayout()) {
+    return true;
+  }
   return document.documentElement.dataset.battleHeroPlacement !== "flank-arena";
 }
 
@@ -2008,8 +2018,17 @@ function applyPhaseCanvasLayout() {
       canvas.height = PREP_CANVAS_H;
     }
   } else {
-    canvas.width = BATTLE_CANVAS_W;
-    canvas.height = BATTLE_CANVAS_H;
+    if (typeof shouldUseBBStackBattleLayout === "function" && shouldUseBBStackBattleLayout()) {
+      canvas.width = GRID_INNER_W;
+      canvas.height = GRID_INNER_H * 2 + GRID_GAP;
+      BATTLE_CANVAS_W = canvas.width;
+      BATTLE_CANVAS_H = canvas.height;
+      CANVAS_W = BATTLE_CANVAS_W;
+      CANVAS_H = BATTLE_CANVAS_H;
+    } else {
+      canvas.width = BATTLE_CANVAS_W;
+      canvas.height = BATTLE_CANVAS_H;
+    }
   }
   if (fxCanvas) {
     fxCanvas.width = canvas.width;
@@ -2073,6 +2092,7 @@ function renderPhase() {
     root.dataset.gamePhase = phase === "battle" || phase === "replay" ? phase : phase === "prep" ? "prep" : "";
     root.dataset.gameMode = gameMode;
   }
+  if (typeof syncBBFidelityContext === "function") syncBBFidelityContext();
   syncClassOverlayHiddenDuringGame();
   applyPhaseCanvasLayout();
   setBattleControlsVisible(isBattleUiPhase());
@@ -2100,6 +2120,9 @@ function renderPhase() {
   }
   syncPrepTooltipDockVisibility();
   renderFightButton();
+  if (typeof syncBBPrepLayout === "function") syncBBPrepLayout();
+  if (typeof syncBBFidelityBattleLayout === "function") syncBBFidelityBattleLayout();
+  if (typeof syncBBBattleHud === "function") syncBBBattleHud();
   if (phase !== "prep") closeAllFighterCharacteristicsPopups();
   if (!isBattleUiPhase() && typeof closeBattleInventoryPopover === "function") closeBattleInventoryPopover();
   if (phase !== "prep" && typeof closeMobilePrepShop === "function") closeMobilePrepShop();
@@ -2126,9 +2149,10 @@ function syncBattleHudVisibility() {
   const battleHud = document.getElementById("battle-run-hud");
   const runHud = document.getElementById("run-hud");
   const live = isBattleUiPhase();
+  const bbStack = typeof shouldUseBBStackBattleLayout === "function" && shouldUseBBStackBattleLayout();
   if (battleHud) {
-    battleHud.hidden = !live;
-    if (live) battleHud.removeAttribute("aria-hidden");
+    battleHud.hidden = !live || bbStack;
+    if (live && !bbStack) battleHud.removeAttribute("aria-hidden");
     else battleHud.setAttribute("aria-hidden", "true");
   }
   if (runHud) {
@@ -2435,6 +2459,7 @@ function startRunFromOverlay() {
     const app = document.getElementById("app");
     if (app) app.dataset.gameMode = gameMode;
     document.documentElement.dataset.gameMode = gameMode;
+    if (typeof syncBBFidelityContext === "function") syncBBFidelityContext();
 
     const beginRun = () => {
       if (typeof RuntimeLoader !== "undefined" && RuntimeLoader.preloadCombatFeedBundle) {
@@ -3023,7 +3048,9 @@ function renderFightButton() {
   if (visible && isCampaignMode()) {
     btn.textContent = `⚔️ ${typeof Campaign !== "undefined" ? Campaign.getFightLabel() : "К тренировке"}`;
   } else if (visible) {
-    btn.textContent = "⚔️ Бой";
+    btn.textContent = (typeof isBBFidelityMode === "function" && isBBFidelityMode())
+      ? "⚔️ В бой!"
+      : "⚔️ Бой";
   }
   if (visible && isVersusMode() && enemyItems.length === 0) {
     btn.title = "Игрок 2: положите предметы на стол";
@@ -3216,6 +3243,11 @@ function getLoadoutEditState(side = prepViewSide) {
 }
 
 function startBattle() {
+  if (typeof BBVsOverlay !== "undefined" && BBVsOverlay.isActive()) {
+    BBVsOverlay.cancel();
+    executeBattleStart();
+    return;
+  }
   if (typeof PrepCountdown !== "undefined" && PrepCountdown.isActive()) {
     PrepCountdown.cancel();
     executeBattleStart();
@@ -3236,6 +3268,10 @@ function startBattle() {
     } else if (phase === "prep" && isVersusMode() && enemyItems.length === 0) {
       log("Игрок 2: положите предметы на стол (Tab — переключить магазин)");
     }
+    return;
+  }
+  if (phase === "prep" && typeof BBVsOverlay !== "undefined" && BBVsOverlay.shouldUse()) {
+    BBVsOverlay.start(() => executeBattleStart());
     return;
   }
   if (phase === "prep" && typeof PrepCountdown !== "undefined") {
@@ -3809,10 +3845,16 @@ function layoutGridOrigin(team) {
     return team === "player" ? 0 : ENEMY_X;
   }
   if (phase === "prep") return 0;
+  if (typeof shouldUseBBStackBattleLayout === "function" && shouldUseBBStackBattleLayout()) {
+    return 0;
+  }
   return team === "player" ? 0 : ENEMY_X;
 }
 
-function layoutBackpackY() {
+function layoutBackpackY(team = "player") {
+  if (typeof shouldUseBBStackBattleLayout === "function" && shouldUseBBStackBattleLayout()) {
+    return team === "enemy" ? 0 : GRID_INNER_H + GRID_GAP;
+  }
   return 0;
 }
 
@@ -3886,7 +3928,7 @@ function handleBattleEvent(ev) {
         floatLayer.spawn(`☠️ −${ev.amount}`, "poison", pt.x, pt.y);
       } else {
         const cx = gridOrigin(ev.targetTeam) + GRID_INNER_W / 2;
-        const cy = BACKPACK_Y + GRID_INNER_H / 2;
+        const cy = layoutBackpackY(ev.targetTeam) + GRID_INNER_H / 2;
         const { vx, vy } = floatLayer.canvasToViewport(canvas, cx, cy);
         floatLayer.spawn(`☠️ −${ev.amount}`, "poison", vx, vy);
       }
@@ -3900,7 +3942,7 @@ function handleBattleEvent(ev) {
         floatLayer.spawn(`🛡 ${ev.amount}`, "block", pt.x, pt.y);
       } else {
         const cx = gridOrigin(ev.targetTeam) + GRID_INNER_W / 2;
-        const cy = BACKPACK_Y + 20;
+        const cy = layoutBackpackY(ev.targetTeam) + 20;
         const { vx, vy } = floatLayer.canvasToViewport(canvas, cx, cy);
         floatLayer.spawn(`🛡 ${ev.amount}`, "block", vx, vy);
       }
@@ -3932,7 +3974,7 @@ function cellRect(team, col, row) {
   const stride = gridStrideFor(team);
   return {
     x: layoutGridOrigin(team) + col * stride,
-    y: layoutBackpackY() + row * stride,
+    y: layoutBackpackY(team) + row * stride,
     w: cell,
     h: cell,
   };
@@ -3943,11 +3985,11 @@ function xToCol(x, team = "player") {
 }
 function yToRow(y, team = "player") {
   const stride = gridStrideFor(team);
-  return Math.floor((y - layoutBackpackY()) / stride);
+  return Math.floor((y - layoutBackpackY(team)) / stride);
 }
 function isOnBoard(mx, my, team = "player") {
   const ox = layoutGridOrigin(team);
-  const oy = layoutBackpackY();
+  const oy = layoutBackpackY(team);
   return mx >= ox && mx < ox + GRID_INNER_W && my >= oy && my < oy + GRID_INNER_H;
 }
 
@@ -4148,7 +4190,7 @@ function canvasPointToClient(x, y) {
 function getBattleTeamAnchorClient(team) {
   if (!isBattleUiPhase()) return null;
   const x = gridOrigin(team) + GRID_INNER_W / 2;
-  const y = layoutBackpackY() + GRID_INNER_H / 2;
+  const y = layoutBackpackY(team) + GRID_INNER_H / 2;
   return canvasPointToClient(x, y);
 }
 
@@ -4447,7 +4489,7 @@ function drawBackground() {
 function getFieldFrameRect(team) {
   const cell = teamLayoutCell(team);
   const ox = layoutGridOrigin(team);
-  const oy = layoutBackpackY();
+  const oy = layoutBackpackY(team);
   const gridW = GRID_INNER_W;
   const gridH = GRID_INNER_H;
   if (phase === "prep") {
@@ -4543,7 +4585,7 @@ function drawContainers(containers, team, dimmed) {
     const cell = teamLayoutCell(team);
     const gap = Math.max(0, stride - cell);
     const ox = gridOrigin(team) + bounds.minCol * stride;
-    const oy = layoutBackpackY() + bounds.minRow * stride;
+    const oy = layoutBackpackY(team) + bounds.minRow * stride;
     const boardPixW = boardW * cell + Math.max(0, boardW - 1) * gap;
     const boardPixH = boardH * cell + Math.max(0, boardH - 1) * gap;
     const alpha = dimmed ? 0.55 : 1;
@@ -5193,10 +5235,53 @@ function updateUI() {
       || root.dataset.uiSurface === "desktop";
   }
 
-function getPrepHeroCardName(profile) {
-  return typeof getNoviceClassLabel === "function"
-    ? getNoviceClassLabel(profile?.classId)
-    : profile?.className || "Герой";
+function getPrepHeroCardDisplayTitle(side = prepViewSide || "player", mutationProgress = null) {
+  const rt = getSideMutationRuntime(side);
+  const novice = typeof getNoviceClassLabel === "function"
+    ? getNoviceClassLabel(rt.classId)
+    : "Герой";
+  if (rt.mutationId && typeof getMutationById === "function") {
+    const m = getMutationById(rt.mutationId);
+    return `${novice} → ${String(m?.name || rt.mutationId).toUpperCase()}`;
+  }
+  const formRound = typeof MUTATION_ROUND_FORM !== "undefined" ? MUTATION_ROUND_FORM : 8;
+  if (rt.formId && round >= formRound && typeof getMutationById === "function") {
+    const m = getMutationById(rt.formId);
+    return `${novice} → ${String(m?.formName || rt.formId).toUpperCase()}`;
+  }
+  const leaderName = mutationProgress?.leader?.name;
+  if (leaderName) {
+    return `${novice} → ${String(leaderName).toUpperCase()}`;
+  }
+  return novice;
+}
+
+function renderPrepMilestoneHintHtml(roundNum, formId, mutationId) {
+  const formR = typeof MUTATION_ROUND_FORM !== "undefined" ? MUTATION_ROUND_FORM : 8;
+  const finalR = typeof MUTATION_ROUND_FINAL !== "undefined" ? MUTATION_ROUND_FINAL : 16;
+  if (mutationId) return "";
+  if (formId && roundNum >= formR) {
+    const left = Math.max(0, finalR - roundNum);
+    if (!left) return "";
+    return `<span class="prep-milestone-chip" title="Полная мутация R${finalR}">R${finalR} · ещё ${left}</span>`;
+  }
+  if (roundNum < formR) {
+    return `<span class="prep-milestone-chip" title="Первая форма R${formR}">R${formR} · ещё ${formR - roundNum}</span>`;
+  }
+  return "";
+}
+
+function renderPrepCompanionChipHtml(companion) {
+  if (!companion) return "—";
+  const safeName = typeof escapeClassHtml === "function"
+    ? escapeClassHtml(companion.name)
+    : companion.name;
+  const hintRaw = String(companion.desc || "").split(/[.!]/)[0]?.trim() || "";
+  const hint = typeof escapeClassHtml === "function" ? escapeClassHtml(hintRaw) : hintRaw;
+  const hintHtml = hint
+    ? `<span class="prep-companion-chip-hint">${hint}</span>`
+    : "";
+  return `<span class="prep-companion-chip"><button type="button" class="prep-companion-tip" data-companion-id="${companion.id}" aria-label="Спутник: ${safeName}">${companion.emoji} ${safeName}</button>${hintHtml}</span>`;
 }
 
 function syncPrepHeroCardChrome(side = prepViewSide || "player") {
@@ -5235,6 +5320,7 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
       prepPlayer?.setAttribute("hidden", "");
       prepEnemy?.setAttribute("hidden", "");
       if (statsHud) statsHud.innerHTML = "";
+      if (typeof syncPrepHeroMutationBadge === "function") syncPrepHeroMutationBadge(null, null, round);
       if (typeof syncUnitFrameHudChrome === "function") syncUnitFrameHudChrome();
       return;
     }
@@ -5291,6 +5377,7 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
     layer?.setAttribute("aria-hidden", "true");
     prepPlayer?.setAttribute("hidden", "");
     prepEnemy?.setAttribute("hidden", "");
+    if (typeof syncPrepHeroMutationBadge === "function") syncPrepHeroMutationBadge(null, null, round);
     return;
   }
 
@@ -5311,24 +5398,33 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
   const companion = typeof getCompanionById === "function" ? getCompanionById(mutRt.companionId) : null;
   const displayTitle = getRunDisplayTitle(side);
   const heroCardHud = isPrepHeroCardHud();
+  const useMutationHud = typeof shouldUseMutationSystem !== "function" || shouldUseMutationSystem();
   const mutationDeltas = typeof notifyPrepMutationProgressChange === "function"
     ? notifyPrepMutationProgressChange(mutationProgress)
     : null;
-  const mutationHtml = typeof renderMutationProgressHtml === "function"
+  const mutationHtml = useMutationHud && typeof renderMutationProgressHtml === "function"
     ? renderMutationProgressHtml(mutationProgress, mutRt.formId, mutRt.mutationId, round, {
       heroCard: heroCardHud,
       deltas: mutationDeltas,
     })
     : "";
-  const keyStatusHtml = typeof renderPrepBuildKeyStatusHtml === "function"
+  const keyStatusHtml = useMutationHud && typeof renderPrepBuildKeyStatusHtml === "function"
     ? renderPrepBuildKeyStatusHtml(mutRt.items)
     : "";
-  const ampStatusHtml = typeof renderPrepAmplifierStatusHtml === "function"
+  const ampStatusHtml = useMutationHud && typeof renderPrepAmplifierStatusHtml === "function"
     ? renderPrepAmplifierStatusHtml(mutRt.items)
     : "";
-  const modifierStripHtml = typeof renderPrepModifierStripHtml === "function"
-    ? renderPrepModifierStripHtml(mutRt.items)
-    : `${keyStatusHtml}${ampStatusHtml}`;
+  const modifierStripHtml = `${keyStatusHtml}${ampStatusHtml}`;
+  const enhancements = useMutationHud && typeof syncEnhancementsFromBackpack === "function"
+    ? syncEnhancementsFromBackpack(
+      mutRt.items,
+      typeof createEmptyEnhancementLoadout === "function" ? createEmptyEnhancementLoadout() : { head: null, chest: null, boots: null },
+      round,
+    )
+    : null;
+  const enhancementHtml = enhancements && typeof renderPrepEnhancementStripHtml === "function"
+    ? renderPrepEnhancementStripHtml(round, enhancements, { heroCard: heroCardHud })
+    : "";
 
   if (statsHud) {
     const lobbyPlayer = isLobbyMode() ? getLobbyPlayer(lobbyState) : null;
@@ -5343,19 +5439,28 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
           : profile.hpDisplay;
     const hpRowClass = lobbyPlayer ? " prep-stats-row--lobby-hp" : "";
     const companionLabel = renderPrepCompanionLabelHtml(companion);
-    const heroCardName = getPrepHeroCardName(profile);
-    const metricsInBottomBar = heroCardHud;
-    const roundCaption = "Раунд";
-    const collapsedMetricsHtml = heroCardHud
-      ? `
-        <div class="hud-character-panel__collapsed-metrics" aria-hidden="true">
-          <div class="prep-stats-row"><span>💰</span><b>${st.gold}</b></div>
-          <div class="prep-stats-row${hpRowClass}"><span>❤️</span><b>${hpLabel}</b></div>
-          <div class="prep-stats-row prep-stats-row--round"><span>${roundCaption}</span><b>${roundLabel}</b></div>
-        </div>`
+    const heroCardName = heroCardHud
+      ? getPrepHeroCardDisplayTitle(side, mutationProgress)
+      : displayTitle;
+    const milestoneHint = heroCardHud && useMutationHud
+      ? renderPrepMilestoneHintHtml(round, mutRt.formId, mutRt.mutationId)
       : "";
+    const identitySubParts = [];
+    if (milestoneHint) identitySubParts.push(milestoneHint);
+    if (heroCardHud && useMutationHud && companion) {
+      identitySubParts.push(`<span class="prep-hero-card__companion-wrap">${renderPrepCompanionChipHtml(companion)}</span>`);
+    }
+    if (heroCardHud && !useMutationHud) {
+      identitySubParts.push('<span class="prep-mode-hint-chip">Классика — для пути, усилений и спутника выберите «Путь» или «Соло»</span>');
+    }
+    const identitySubHtml = identitySubParts.length
+      ? `<div class="prep-hero-card__identity-sub">${identitySubParts.join("")}</div>`
+      : "";
+    const metricsInBottomBar = heroCardHud;
     const metricsHtml = metricsInBottomBar
-      ? `<div class="prep-stats-row prep-stats-row--companion"><span>${companionLabel}</span></div>`
+      ? (useMutationHud
+        ? ""
+        : `<div class="prep-stats-row prep-stats-row--companion"><span>${companionLabel}</span></div>`)
       : `
         <div class="prep-stats-row prep-stats-row--companion"><span>${companionLabel}</span></div>
         <div class="prep-stats-row"><span>💰</span><b>${st.gold}</b></div>
@@ -5372,11 +5477,13 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
     const statsHeaderHtml = heroCardHud
       ? `
       <div class="prep-hero-card__stats-row">
-        <div class="prep-stats-class">${heroCardName}</div>
+        <div class="prep-hero-card__identity">
+          <div class="prep-stats-class">${heroCardName}</div>
+          ${identitySubHtml}
+        </div>
         <div class="prep-stats-metrics">
           ${metricsHtml}
         </div>
-        ${collapsedMetricsHtml}
       </div>`
       : `
       <div class="prep-stats-class">${displayTitle}</div>
@@ -5389,6 +5496,7 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
     statsHud.innerHTML = `
       ${statsHeaderHtml}
       ${mutationHtml}
+      ${enhancementHtml}
       ${modifierStripHtml}
     `;
     if (heroCardHud && buildSlot) {
@@ -5397,6 +5505,9 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
     }
     bindPrepModChipTooltips(statsHud);
     bindPrepCompanionTooltip(statsHud);
+    if (typeof syncPrepHeroMutationBadge === "function") {
+      syncPrepHeroMutationBadge(useMutationHud ? mutRt.formId : null, useMutationHud ? mutRt.mutationId : null, round);
+    }
     if (typeof syncPrepHudCollapseChrome === "function") syncPrepHudCollapseChrome();
     if (!document.getElementById("prep-hero-tooltip")?.classList.contains("hidden")) {
       refreshPrepHeroTooltip();
@@ -5551,7 +5662,8 @@ function renderPlayerProfiles(opts = {}) {
   renderPrepStageChrome(playerProfile, enemyProfile);
 
   const liveBattle = phase === "battle" || phase === "replay";
-  if (liveBattle && viewState && typeof bootstrapBattleThoughts === "function") {
+  const bbStackBattle = typeof shouldUseBBStackBattleLayout === "function" && shouldUseBBStackBattleLayout();
+  if (liveBattle && viewState && typeof bootstrapBattleThoughts === "function" && !bbStackBattle) {
     if (renderPlayerProfiles._bootKey !== viewState) {
       renderPlayerProfiles._bootKey = viewState;
       renderPlayerProfiles._gridSynced = false;
@@ -5593,7 +5705,11 @@ function renderPlayerProfiles(opts = {}) {
   }
 
   if (liveBattle) {
-    if (typeof ensureBattleHeroShells === "function") {
+    if (bbStackBattle) {
+      if (typeof syncBBBattleHud === "function") {
+        syncBBBattleHud(viewState, playerProfile, enemyProfile);
+      }
+    } else if (typeof ensureBattleHeroShells === "function") {
       ensureBattleHeroShells(viewState, playerProfile, enemyProfile);
     } else {
       const battleHud = document.getElementById("battle-run-hud");

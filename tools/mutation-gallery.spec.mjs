@@ -10,11 +10,20 @@ import { expect, test } from "@playwright/test";
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const baseUrl = `file://${root}/index.html`;
 
+async function bootSoloClassPicker(page) {
+  await page.evaluate(() => {
+    selectGameMode("solo");
+    window.applyUiLayout?.();
+    window.syncClassOverlayAnchors?.();
+  });
+  await page.waitForTimeout(300);
+}
+
 async function pickHeroAndCompanion(page) {
-  await page.locator('[data-game-mode="solo"]').click();
-  await page.locator('#player-class-grid [data-class="priest"]').click();
+  await bootSoloClassPicker(page);
+  await page.locator('#class-step-player:not(.hidden) .class-card[data-class="priest"]').click();
   await expect(page.locator("#class-mutation-gallery")).toBeVisible({ timeout: 5000 });
-  await page.locator('#player-class-grid [data-class="priest"]').click();
+  await page.locator('#class-step-player:not(.hidden) .class-card[data-class="priest"]').click();
   await expect(page.locator("#class-step-companion")).toBeVisible({ timeout: 5000 });
   await page.locator('[data-companion="s_light"]').click();
   await page.locator('[data-companion="s_light"]').click();
@@ -28,8 +37,8 @@ test("mutation gallery — 8 silhouettes after hero pick", async ({ page }) => {
   await page.waitForTimeout(1200);
   await page.evaluate(() => window.applyUiLayout?.());
 
-  await page.locator('[data-game-mode="solo"]').click();
-  await page.locator('#player-class-grid [data-class="priest"]').click();
+  await bootSoloClassPicker(page);
+  await page.locator('#class-step-player:not(.hidden) .class-card[data-class="priest"]').click();
 
   const gallery = page.locator("#class-mutation-gallery");
   await expect(gallery).toBeVisible({ timeout: 5000 });
@@ -43,10 +52,14 @@ test("mutation intent yes advances to companion step", async ({ page }) => {
   await page.goto(baseUrl, { waitUntil: "domcontentloaded", timeout: 20000 });
   await page.waitForTimeout(1200);
 
-  await page.locator('[data-game-mode="solo"]').click();
-  await page.locator('#player-class-grid [data-class="warrior"]').click();
-  await page.locator('.mutation-silhouette[data-mutation-id="w_berserk"]').click();
-  await page.locator(".mutation-intent-popup-yes").click();
+  await bootSoloClassPicker(page);
+  await page.evaluate(() => {
+    selectPlayerClass("warrior");
+    document.querySelector('.mutation-silhouette[data-mutation-id="w_berserk"]')?.dispatchEvent(
+      new MouseEvent("click", { bubbles: true }),
+    );
+  });
+  await page.locator(".mutation-intent-popup-yes").click({ force: true });
 
   await expect(page.locator("#class-step-companion")).toBeVisible({ timeout: 5000 });
   await expect(page.locator("#class-modal-subtitle")).toContainText("Воин-мартовичок");

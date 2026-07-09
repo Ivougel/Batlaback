@@ -13,8 +13,21 @@
   function syncShopMount() {
     const shopPanel = document.getElementById("shop-panel");
     const gameLayout = document.querySelector("#app .game-layout");
+    const battleArena = document.getElementById("battle-arena");
     const popoverInner = document.querySelector("#prep-shop-popover .prep-shop-popover__panel");
     if (!shopPanel) return;
+
+    if (document.documentElement.dataset.prepLayout === "bb-stack" && battleArena) {
+      if (shopPanel.parentElement !== battleArena) {
+        const storage = document.getElementById("bb-prep-storage");
+        if (storage && storage.parentElement === battleArena) {
+          battleArena.insertBefore(shopPanel, storage);
+        } else {
+          battleArena.appendChild(shopPanel);
+        }
+      }
+      return;
+    }
 
     if (usesPrepShopPopover() && popoverInner) {
       if (shopPanel.parentElement !== popoverInner) {
@@ -39,9 +52,12 @@
     return document.getElementById("app")?.dataset.phase === "prep";
   }
 
-  function forceHidePrepShopChrome() {
-    document.documentElement.removeAttribute(OPEN_ATTR);
-    document.documentElement.removeAttribute("data-prep-drag-targets-board");
+  function forceHidePrepShopChrome(opts = {}) {
+    const forceDrawer = opts.forceDrawer === true;
+    if (usesPrepShopPopover() || forceDrawer) {
+      document.documentElement.removeAttribute(OPEN_ATTR);
+      document.documentElement.removeAttribute("data-prep-drag-targets-board");
+    }
     const popover = document.getElementById("prep-shop-popover");
     if (popover) {
       popover.classList.add("hidden");
@@ -50,6 +66,14 @@
     }
     document.getElementById("btn-mobile-shop")?.setAttribute("aria-expanded", "false");
     document.getElementById("btn-prep-shop-close")?.setAttribute("aria-expanded", "false");
+  }
+
+  function hidePrepShopPopoverChrome() {
+    const popover = document.getElementById("prep-shop-popover");
+    if (!popover) return;
+    popover.classList.add("hidden");
+    popover.hidden = true;
+    popover.setAttribute("aria-hidden", "true");
   }
 
   function setOpen(open) {
@@ -110,13 +134,14 @@
     const popover = document.getElementById("prep-shop-popover");
     const showChrome = usesPrepShopPopover() && isPrepPhase();
     if (!showChrome) {
-      forceHidePrepShopChrome();
+      hidePrepShopPopoverChrome();
+      if (!usesPrepShopPopover() && !isPrepPhase()) {
+        forceHidePrepShopChrome({ forceDrawer: true });
+      }
       return;
     }
     if (popover && !isOpen()) {
-      popover.classList.add("hidden");
-      popover.hidden = true;
-      popover.setAttribute("aria-hidden", "true");
+      hidePrepShopPopoverChrome();
     }
   }
 
@@ -176,7 +201,7 @@
     const app = document.getElementById("app");
     if (app) {
       new MutationObserver(() => {
-        if (app.dataset.phase !== "prep") forceHidePrepShopChrome();
+        if (app.dataset.phase !== "prep") forceHidePrepShopChrome({ forceDrawer: true });
         syncChromeVisibility();
       }).observe(app, { attributes: true, attributeFilter: ["data-phase"] });
     }
@@ -184,10 +209,9 @@
     const root = document.documentElement;
     new MutationObserver(() => {
       if (root.dataset.gamePhase && root.dataset.gamePhase !== "prep") {
-        forceHidePrepShopChrome();
+        forceHidePrepShopChrome({ forceDrawer: true });
       }
       syncChromeVisibility();
-      if (!usesPrepShopPopover()) forceHidePrepShopChrome();
     }).observe(root, {
       attributes: true,
       attributeFilter: ["data-prep-shop-popover", "data-prep-layout", "data-prep-shop-drawer", "data-ui-surface", "data-game-phase"],

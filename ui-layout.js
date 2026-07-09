@@ -303,6 +303,7 @@
 
   function resolveUiSurface(ctx) {
     const { prepLayout, tabletSideFit, tabletPrepHero, layoutProfile } = ctx;
+    if (prepLayout === "bb-stack") return "bb-stack";
     if (prepLayout === "mobile") return "phone-drawer";
     if (tabletSideFit || tabletPrepHero) return "tablet-side";
     if (layoutProfile.id === "phone-landscape") return "phone-landscape";
@@ -1644,6 +1645,18 @@
     const root = document.documentElement;
     const surface = root.dataset.uiSurface;
     const drawer = root.dataset.prepShopDrawer === "true";
+    if (prepLayout === "bb-stack") {
+      root.dataset.bbBenchDrawer = "true";
+      root.removeAttribute("data-prep-bench-popover");
+      if (typeof window.syncPrepBenchFabBadge === "function") {
+        window.syncPrepBenchFabBadge();
+      }
+      if (typeof window.syncBenchMount === "function") {
+        window.syncBenchMount();
+      }
+      return;
+    }
+    root.removeAttribute("data-bb-bench-drawer");
     const use = prepLayout === "side"
       && !drawer
       && (surface === "tablet-side" || surface === "desktop");
@@ -1662,6 +1675,12 @@
 
   function syncPrepShopPopoverMode(prepLayout) {
     const root = document.documentElement;
+    if (prepLayout === "bb-stack") {
+      root.removeAttribute("data-prep-shop-popover");
+      root.dataset.prepShopDrawer = "false";
+      if (typeof window.syncShopMount === "function") window.syncShopMount();
+      return;
+    }
     if (root.hasAttribute("data-lobby2p-hud")) {
       root.dataset.prepShopPopover = "true";
       root.dataset.prepBenchPopover = "true";
@@ -2645,9 +2664,8 @@
     const app = document.getElementById("app");
     if (!app || (app.dataset.phase !== "battle" && app.dataset.phase !== "replay")) return false;
     if (root.dataset.battleHeroPlacement !== "flank-arena") return false;
-    if (root.dataset.prepLayout === "mobile") return false;
     if (root.dataset.battlePrepHeroLayer !== "true") return false;
-    return usesTabletPrepHeroLayout(root) || root.dataset.uiSurface === "desktop";
+    return root.dataset.uiSurface === "desktop";
   }
 
   function invalidateBattleHeroLayoutCache() {
@@ -2929,10 +2947,19 @@
           Math.max(playerRect.bottom, enemyRect.bottom) - sceneRect.top,
         );
         const combatFloorTop = Math.round(heroBottomScene + arenaGap);
-        const combatFloorH = Math.max(
+        let combatFloorH = Math.max(
           readCssPx("--battle-thought-arena-min-h", 110),
           layoutHeight - combatFloorTop - toolbarReserve - arenaGap,
         );
+        if (root.dataset.battlePhoneLandscape === "true") {
+          const chromeBar = getBottomChrome();
+          const chromeTop = chromeBar && getComputedStyle(chromeBar).display !== "none"
+            ? chromeBar.getBoundingClientRect().top
+            : (window.visualViewport?.height ?? window.innerHeight);
+          const floorTopVp = layoutRect.top + combatFloorTop;
+          const maxH = Math.max(64, Math.round(chromeTop - floorTopVp - arenaGap));
+          combatFloorH = Math.min(combatFloorH, maxH);
+        }
 
         root.style.setProperty("--battle-hero-img-h", `${heroCardH}px`);
         root.style.setProperty("--tablet-battle-hero-img-h", `${heroCardH}px`);
@@ -3152,7 +3179,8 @@
           const chromeTop = chromeBar && getComputedStyle(chromeBar).display !== "none"
             ? chromeBar.getBoundingClientRect().top
             : (window.visualViewport?.height ?? window.innerHeight);
-          const maxH = Math.max(72, Math.round(chromeTop - combatFloorTop - arenaGap));
+          const floorTopVp = layoutRect.top + combatFloorTop;
+          const maxH = Math.max(64, Math.round(chromeTop - floorTopVp - arenaGap));
           h = Math.min(h, maxH);
         }
         return h;
@@ -3228,9 +3256,14 @@
       const canvas = document.getElementById("game-canvas");
       const fieldCol = document.getElementById("prep-field-column");
       const stageW = fieldCol?.clientWidth ?? 0;
-      if (canvas && canvas.width > 0 && stageW > 0) {
+      if (canvas && canvas.width > 0 && stageW > 0
+        && !(typeof shouldUseBBStackBattleLayout === "function" && shouldUseBBStackBattleLayout())) {
         fitFlankArenaBattleLayout(root, canvas, fieldCol, stageW);
       }
+    }
+
+    if (typeof shouldUseBBStackBattleLayout === "function" && shouldUseBBStackBattleLayout()) {
+      return;
     }
 
     if (root.dataset.battleHeroPlacement !== "flank-arena") return;
@@ -3365,8 +3398,42 @@
     "--tablet-battle-chrome-bottom",
   ];
 
+  /** BB Fidelity: вертикальный стек сеток, canvas по центру. */
+  function fitBBStackBattleLayout(root, canvas, fieldCol, stageW) {
+    setBattleArenaLayout(false);
+    setBattleHeroPlacement(null);
+    root.dataset.battleLayout = "bb-stack";
+    root.removeAttribute("data-battle-mobile-stack");
+    clearBattleLayoutVars(BATTLE_LAYOUT_VAR_NAMES);
+
+    const fieldH = fieldCol?.clientHeight ?? 0;
+    const hudReserve = measureBattleHudReserve();
+    const vh = window.visualViewport?.height ?? window.innerHeight;
+    const maxH = Math.max(180, (fieldH > 80 ? fieldH : vh - hudReserve - 48));
+    const aspect = canvas.width / Math.max(1, canvas.height);
+    let displayH = maxH;
+    let displayW = Math.round(displayH * aspect);
+    if (displayW > stageW) {
+      displayW = Math.max(120, stageW);
+      displayH = Math.round(displayW / aspect);
+    }
+    displayW = Math.max(1, displayW);
+    displayH = Math.max(1, displayH);
+
+    setCanvasDisplaySize(canvas, displayW, displayH);
+    root.style.setProperty("--bb-battle-canvas-display-w", `${displayW}px`);
+    root.style.setProperty("--bb-battle-canvas-display-h", `${displayH}px`);
+
+    const syncGrid = () => {
+      if (typeof syncBattleSceneGridMetrics === "function") syncBattleSceneGridMetrics();
+      if (typeof syncBBBattleHud === "function") syncBBBattleHud();
+    };
+    requestAnimationFrame(() => requestAnimationFrame(syncGrid));
+  }
+
   /** Единая раскладка боя: player | arena | enemy на всех tier. */
   function fitFlankArenaBattleLayout(root, canvas, fieldCol, stageW) {
+    delete root.dataset.battleLayout;
     const vh = window.visualViewport?.height ?? window.innerHeight;
     const hudReserve = measureBattleHudReserve();
     const cssW = readCssPx("--battle-canvas-w", canvas.width);
@@ -3480,7 +3547,11 @@
       const fieldCol = canvas.closest(".prep-field-column");
       const stageW = fieldCol?.clientWidth ?? stage?.clientWidth ?? 0;
       if (stage && stageW > 0) {
-        fitFlankArenaBattleLayout(root, canvas, fieldCol, stageW);
+        if (typeof shouldUseBBStackBattleLayout === "function" && shouldUseBBStackBattleLayout()) {
+          fitBBStackBattleLayout(root, canvas, fieldCol, stageW);
+        } else {
+          fitFlankArenaBattleLayout(root, canvas, fieldCol, stageW);
+        }
         syncFxCanvasGeometry();
         return;
       }
@@ -3887,6 +3958,17 @@
       return Math.round(fitScale * 1000) / 1000;
     }
 
+    if (prepLayout === "bb-stack") {
+      document.documentElement.dataset.prepViewportFit = "true";
+      document.documentElement.dataset.prepShopDrawer = "false";
+      document.documentElement.removeAttribute("data-prep-shop-open");
+      let fitScale = Math.min(baseScale, available / cfg.fitAvailH, w / (DESIGN_W * 0.92));
+      fitScale = Math.max(cfg.fitMinScale ?? SCALE_MIN, Math.min(SCALE_MAX, fitScale));
+      const canvasMax = Math.round(Math.min(available * 0.42, (cfg.canvasMaxCap ?? 320) * fitScale));
+      document.documentElement.style.setProperty("--prep-canvas-max-h", `${canvasMax}px`);
+      return Math.round(fitScale * 1000) / 1000;
+    }
+
     document.documentElement.dataset.prepShopDrawer = "false";
 
     if (prepLayout === "side" && w >= 600) {
@@ -3930,9 +4012,11 @@
     if (w <= 720 || h <= 520) tier = "phone";
     else if (w <= 1366 || h <= 940) tier = "tablet";
 
-    const prepLayout = shouldUseMobilePrepLayout(w, h, tier)
-      ? "mobile"
-      : (shouldUseStackedPrep(w, h, tier) ? "stacked" : "side");
+    const prepLayout = (typeof shouldUseBBStackPrepLayout === "function" && shouldUseBBStackPrepLayout())
+      ? "bb-stack"
+      : (shouldUseMobilePrepLayout(w, h, tier)
+        ? "mobile"
+        : (shouldUseStackedPrep(w, h, tier) ? "stacked" : "side"));
     const tabletSideFit = shouldUseTabletSideFit(w, h, prepLayout, touchDev, tier);
     const tabletPrepHero = tabletSideFit
       || (prepLayout === "side" && w > h && tier === "tablet" && touchDev);
@@ -4028,6 +4112,10 @@
     if (typeof syncBattleHudSurfaceFlags === "function") syncBattleHudSurfaceFlags();
 
     syncClassOverlayAnchors();
+
+    if (typeof syncBBPrepLayout === "function") syncBBPrepLayout();
+    if (typeof syncBBFidelityBattleLayout === "function") syncBBFidelityBattleLayout();
+    if (typeof syncBBBattleHud === "function") syncBBBattleHud();
 
     if (isBattleUiPhase() && syncHeroEmotionSlotAnchors._layout) {
       syncHeroEmotionSlotAnchors._layout.player = "";

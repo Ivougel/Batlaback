@@ -3,27 +3,32 @@
  */
 
 function prepHeroForMode(mode) {
-  if (mode === "classic" || mode === "path") return "warrior";
-  return "priest";
+  if (mode === "campaign") return "warrior";
+  return "warrior";
 }
 
 async function runPrepStart(page, mode, playerClass, enemyClass) {
   await page.evaluate(
     async ({ mode, playerClass, enemyClass }) => {
-      const hero = playerClass
-        || ((mode === "classic" || mode === "path") ? "warrior" : "priest");
+      const hero = playerClass || "warrior";
       const enemy = enemyClass || (mode === "versus" ? "warrior" : "mage");
-      const skipCompanion = typeof shouldSkipCompanionIntro === "function" && shouldSkipCompanionIntro();
 
       selectGameMode(mode);
       if (mode === "campaign" && typeof selectCampaignTrial === "function") {
         selectCampaignTrial("build-trial");
       }
+      const skipCompanion = typeof shouldSkipCompanionIntro === "function" && shouldSkipCompanionIntro();
+      const useMutations = typeof shouldUseMutationSystem === "function" && shouldUseMutationSystem();
       selectPlayerClass(hero);
+      if (useMutations || skipCompanion) {
+        selectPlayerClass(hero);
+      }
       if (!skipCompanion && typeof selectCompanion === "function") {
-        selectCompanion(
-          typeof defaultCompanionForClass === "function" ? defaultCompanionForClass(hero) : "s_stranger",
-        );
+        const companion = typeof defaultCompanionForClass === "function"
+          ? defaultCompanionForClass(hero)
+          : "s_stranger";
+        selectCompanion(companion);
+        selectCompanion(companion);
       }
       if (mode === "versus") selectOpponentClass(enemy);
       else if (mode === "lobby2p") {
@@ -51,9 +56,7 @@ export async function quickStartPrep(page, opts = {}) {
     () =>
       document.body.classList.contains("screen-app-visible") &&
       document.getElementById("app")?.dataset.phase === "prep" &&
-      document.getElementById("class-overlay")?.classList.contains("hidden") &&
-      typeof playerClass !== "undefined" &&
-      playerClass !== null,
+      document.getElementById("class-overlay")?.classList.contains("hidden"),
     { timeout: 12000 },
   );
   await page.waitForTimeout(settleMs);
