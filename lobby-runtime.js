@@ -14,13 +14,6 @@ function applyLobbyGhostToEnemy() {
   if (ghost.companionId) enemyCompanionId = ghost.companionId;
   enemyMutationFormId = ghost.mutationFormId ?? null;
   enemyMutationId = ghost.mutationId ?? null;
-  if (ghost.enhancements) {
-    enemyEnhancements = {
-      head: ghost.enhancements.head ?? null,
-      chest: ghost.enhancements.chest ?? null,
-      boots: ghost.enhancements.boots ?? null,
-    };
-  }
 }
 
 function resetLobbyPrepTimer() {
@@ -140,7 +133,6 @@ function syncLobbyPlayerFromGlobals() {
     companionId: playerCompanionId,
     mutationFormId: playerMutationFormId,
     mutationId: playerMutationId,
-    enhancements: playerEnhancements,
     round,
   });
 }
@@ -175,6 +167,21 @@ function setLobbySpectateMatch(matchIndex) {
 }
 
 function queueLobbySpectatePresentation() {
+  const throttleMs = typeof BattleFxTier !== "undefined" && BattleFxTier.lobbySpectatePresentationThrottleMs
+    ? BattleFxTier.lobbySpectatePresentationThrottleMs()
+    : 0;
+  if (throttleMs > 0) {
+    if (queueLobbySpectatePresentation._timer) return;
+    queueLobbySpectatePresentation._timer = setTimeout(() => {
+      queueLobbySpectatePresentation._timer = 0;
+      queueLobbySpectatePresentationRaf();
+    }, throttleMs);
+    return;
+  }
+  queueLobbySpectatePresentationRaf();
+}
+
+function queueLobbySpectatePresentationRaf() {
   if (queueLobbySpectatePresentation._raf) return;
   queueLobbySpectatePresentation._raf = requestAnimationFrame(() => {
     queueLobbySpectatePresentation._raf = 0;
@@ -612,7 +619,6 @@ function initLobbyRun() {
   const player = getLobbyPlayer(lobbyState);
   if (player) {
     player.companionId = playerCompanionId;
-    player.enhancements = playerEnhancements;
   }
   runLobbyBotsShopPhase(lobbyState, round);
   if (typeof syncAllLobbyFighterMutations === "function") {
@@ -641,11 +647,9 @@ function initLobby2pRun() {
   const h1 = getLobbyHumanFighter(lobbyState, 1);
   if (h0) {
     h0.companionId = playerCompanionId;
-    h0.enhancements = playerEnhancements;
   }
   if (h1) {
     h1.companionId = enemyCompanionId;
-    h1.enhancements = enemyEnhancements;
   }
   importLobby2pHumanToGlobals(0);
   importLobby2pHumanToGlobals(1);
@@ -686,7 +690,6 @@ function getLobby2pHumanGlobals(humanId) {
       companionId: playerCompanionId,
       mutationFormId: playerMutationFormId,
       mutationId: playerMutationId,
-      enhancements: playerEnhancements,
       round,
     };
   }
@@ -700,7 +703,6 @@ function getLobby2pHumanGlobals(humanId) {
     companionId: enemyCompanionId,
     mutationFormId: enemyMutationFormId,
     mutationId: enemyMutationId,
-    enhancements: enemyEnhancements,
     round,
   };
 }
@@ -729,7 +731,6 @@ function importLobby2pHumanToGlobals(humanId) {
     playerCompanionId = ghost.companionId || playerCompanionId;
     playerMutationFormId = ghost.mutationFormId ?? null;
     playerMutationId = ghost.mutationId ?? null;
-    if (ghost.enhancements) playerEnhancements = { ...ghost.enhancements };
   } else {
     enemyClass = ghost.classId;
     enemyGold = ghost.gold;
@@ -739,7 +740,6 @@ function importLobby2pHumanToGlobals(humanId) {
     enemyCompanionId = ghost.companionId || enemyCompanionId;
     enemyMutationFormId = ghost.mutationFormId ?? null;
     enemyMutationId = ghost.mutationId ?? null;
-    if (ghost.enhancements) enemyEnhancements = { ...ghost.enhancements };
   }
 }
 
@@ -915,10 +915,8 @@ function lobby2pSideFromCanvasX(mx) {
   return mx < getLobby2pColumnWidth() ? "player" : "enemy";
 }
 
-/** 'column' — сетка P1/P2 по центру своей половины canvas. */
-let lobby2pDrawLayout = null;
+/** 'column' — сетка P1/P2 по центру своей половины canvas. (var в game.js) */
 /** true во время drawLobby2pPrepHalf: origin в локальных координатах колонки + ctx.translate. */
-let lobby2pDrawColumnLocal = false;
 
 function isLobby2pColumnLayoutActive() {
   return lobby2pDrawLayout === "column"
@@ -1165,7 +1163,6 @@ function initLobby2pHudBridge() {
     getAliveCount: () => (lobbyState ? getAliveLobbyFighters(lobbyState).length : 0),
     getFighter: (id) => getLobbyHumanFighter(lobbyState, id),
     getClassId: (id) => (id === 0 ? playerClass : enemyClass),
-    getEnhancements: (id) => (id === 0 ? playerEnhancements : enemyEnhancements),
     getItems: (id) => (id === 0 ? playerItems : enemyItems),
     getActiveHuman: () => (prepViewSide === "player" ? 0 : 1),
     getReady: (id) => !!lobbyState?.ready?.[id],
@@ -1360,3 +1357,22 @@ function drawLobby2pSplitPrep() {
     drawLobby2pPrepHalf("enemy", columnPrep);
   }
 }
+
+function wireLobbyRuntimeBindings() {
+  if (wireLobbyRuntimeBindings._done) return;
+  wireLobbyRuntimeBindings._done = true;
+  bindLobbyRosterClicks();
+  bindLobby2pBattleTabs();
+  initLobby2pHudBridge();
+  if (typeof initLobbyRosterFloat === "function") {
+    initLobbyRosterFloat();
+  }
+  window.getLobby2pShopPopoverHuman = getLobby2pShopPopoverHuman;
+  window.getLobby2pBenchPopoverHuman = getLobby2pBenchPopoverHuman;
+  window.syncLobby2pShopFabExpanded = syncLobby2pShopFabExpanded;
+  window.syncLobby2pBenchFabExpanded = syncLobby2pBenchFabExpanded;
+  window.syncLobby2pBenchFabBadges = syncLobby2pBenchFabBadges;
+  window.toggleLobby2pBench = toggleLobby2pBench;
+}
+
+wireLobbyRuntimeBindings();

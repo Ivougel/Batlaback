@@ -41,7 +41,7 @@ const COMBAT_FEED_CONFIG = {
   },
 };
 
-const CombatLog = (() => {
+var CombatLog = (() => {
   const messages = [];
   let enabled = true;
   let collapsed = true;
@@ -284,6 +284,7 @@ const CombatLog = (() => {
   }
 
   function syncCombatFeedPhase() {
+    if (!initCombatFeed._done) initCombatFeed();
     if (!isCombatFeedPhaseActive()) hideFeedHint();
     syncVisibility();
     flushDeferredEvents();
@@ -421,13 +422,17 @@ const CombatLog = (() => {
     lastMerge = { key: mergeKey, baseText: text, at: now };
 
     if (scrollEl) {
-      scrollEl.appendChild(renderMessageBubble(entry, true));
+      const animate = typeof BattleFxTier !== "undefined" && BattleFxTier.combatFeedEnterFxEnabled
+        ? BattleFxTier.combatFeedEnterFxEnabled()
+        : true;
+      scrollEl.appendChild(renderMessageBubble(entry, animate));
       trimHistory();
       scrollToBottomIfNeeded();
     }
   }
 
   function addEvent(payload = {}) {
+    if (!initCombatFeed._done) initCombatFeed();
     if (!isCombatFeedPhaseActive()) {
       const text = String(payload.text || "").trim();
       if (!text) return;
@@ -585,6 +590,8 @@ const CombatLog = (() => {
   }
 
   function initCombatFeed() {
+    if (initCombatFeed._done) return;
+    initCombatFeed._done = true;
     loadEnabled();
 
     rootEl = document.getElementById("combat-feed");
@@ -625,6 +632,14 @@ const CombatLog = (() => {
     });
 
     /* Архитектура для будущего drag: headerEl.dataset.draggable = "true" */
+    drainCombatFeedStubQueue();
+  }
+
+  function drainCombatFeedStubQueue() {
+    const q = typeof __combatFeedStubQueue !== "undefined" ? __combatFeedStubQueue : null;
+    if (!q?.length) return;
+    const pending = q.splice(0, q.length);
+    pending.forEach((evt) => addEvent(evt));
   }
 
   return {
@@ -648,12 +663,5 @@ const CombatLog = (() => {
 })();
 
 function initCombatFeedControls() {
-  CombatLog.init();
-}
-
-function syncCombatFeedSettingsUi() {
-  if (typeof CombatLog?.isEnabled === "function") {
-    const cb = document.getElementById("settings-combat-feed-enabled");
-    if (cb) cb.checked = CombatLog.isEnabled();
-  }
+  if (typeof CombatLog?.init === "function") CombatLog.init();
 }
