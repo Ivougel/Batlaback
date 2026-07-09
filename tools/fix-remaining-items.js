@@ -19,7 +19,7 @@ const REPLACEMENTS = {
   pop: {
     effects: [
       { type: "periodic", interval: 8, trigger: "passive", foePoison: 3 },
-      { type: "cooldownMultPerSocket", perSocket: 0.03, maxBonus: 0.60, trigger: "passive" },
+      { type: "cooldownMultPerSocket", perSocket: 0.03, maxBonus: 0.6, trigger: "passive" },
     ],
     cooldown: 8,
     description: "Каждые 8с: +3 яда. Атаки на 3% быстрее за каждый заполненный сокет (до 60%).",
@@ -30,7 +30,8 @@ const REPLACEMENTS = {
       { type: "cooldownMultPerItemCost", perCost: 0.01, trigger: "passive" },
     ],
     cooldown: 6,
-    description: "При обновлении магазина: 40% шанс торгового предложения. Каждые 6с: +3 к сильнейшему стаку. На 1% быстрее за каждое очко стоимости предметов.",
+    description:
+      "При обновлении магазина: 40% шанс торгового предложения. Каждые 6с: +3 к сильнейшему стаку. На 1% быстрее за каждое очко стоимости предметов.",
   },
   flute: {
     effects: [
@@ -38,16 +39,13 @@ const REPLACEMENTS = {
         type: "periodic",
         interval: 4.7,
         trigger: "passive",
-        randomPick: [
-          { block: 14 },
-          { restoreStamina: 2 },
-          { gainStack: { stack: "luck", value: 2 } },
-        ],
+        randomPick: [{ block: 14 }, { restoreStamina: 2 }, { gainStack: { stack: "luck", value: 2 } }],
       },
-      { type: "cooldownMultPerAdjacent", perAdjacent: 0.10, maxBonus: 0.60, trigger: "passive" },
+      { type: "cooldownMultPerAdjacent", perAdjacent: 0.1, maxBonus: 0.6, trigger: "passive" },
     ],
     cooldown: 4.7,
-    description: "Каждые 4.7с: случайно +14 блока, +2 выносливости или +2 удачи. На 10% быстрее за каждый соседний предмет (до 60%).",
+    description:
+      "Каждые 4.7с: случайно +14 блока, +2 выносливости или +2 удачи. На 10% быстрее за каждый соседний предмет (до 60%).",
   },
   fanfare: {
     effects: [
@@ -62,12 +60,13 @@ const REPLACEMENTS = {
       },
     ],
     cooldown: 3,
-    description: "Каждые 3с: −1 выносливости противнику (+0.8с к своему кулдауну). Каждые 5 срабатываний: оглушение на 1с.",
+    description:
+      "Каждые 3с: −1 выносливости противнику (+0.8с к своему кулдауну). Каждые 5 срабатываний: оглушение на 1с.",
   },
   mrs_struggles: {
     effects: [
       { type: "periodic", interval: 4.7, trigger: "passive", stripFoeStacksOnceEach: true },
-      { type: "cooldownMultPerTag", tags: ["dark"], perTag: 0.10, trigger: "passive" },
+      { type: "cooldownMultPerTag", tags: ["dark"], perTag: 0.1, trigger: "passive" },
     ],
     cooldown: 4.7,
     description: "Каждые 4.7с: снять по 1 стаку каждого типа у противника. На 10% быстрее за каждый тёмный предмет.",

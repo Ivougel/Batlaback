@@ -1,11 +1,11 @@
 #!/usr/bin/env node
+import { spawnSync } from "node:child_process";
 /**
  * Генерация пула v240: 120 системных + 188 предметов рюкзака (68 база + 120 расширение).
  * node tools/generate-item-pool-120.mjs
  */
 import fs from "node:fs";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { autoDescribeItem } from "./auto-item-descriptions.mjs";
 
@@ -15,81 +15,250 @@ const MIGRATED_LEGACY = path.join(ROOT, "tools/items-migrated-legacy.json");
 const MANIFEST_OUT = path.join(ROOT, "tools/item-pool-120-manifest.json");
 const RUNTIME_OUT = path.join(ROOT, "systems/item-pool-120.js");
 
-const POOL_TOTAL = 240;
+const POOL_TOTAL = 216;
+
+/** Вне пула v240, но нужны в ITEM_CATALOG (classic craft / ингредиенты BB). */
+const CATALOG_APPEND_IDS = new Set([
+  "acorn_collar",
+  "death_scythe",
+  "bunch_of_coins",
+  "war_scythe",
+  "spiked_staff",
+  "chain_whip",
+  "busted_blade",
+  "improved_whetstone",
+  "blazing_spear",
+  "red_orchid_collar",
+  "white_lily_collar",
+  "blue_sage_collar",
+  "pine_protector",
+  "stankus_toothpick",
+  "boiling_pot",
+  "gold_armor",
+]);
 
 /** 120 предметов из legacy: 63 shop + 57 бывших craftOnly (включаются в магазин). */
 const EXPANSION_SHOP = [
-  "artifact_stone_cold", "artifact_stone_heat", "beast_fang", "blood_amulet", "blood_harvester",
-  "blood_stone", "box_of_riches", "corrupted_crystal", "cthulhu", "cubert", "dancing_dragon",
-  "djinn_lamp", "fancy_fencing_rapier", "fanfare", "flute", "frozen_flame", "goobert",
-  "great_shield", "happy_bomb", "holdall", "impractically_large_greatsword", "katana",
-  "king_crown", "large_sack", "leather_bag", "lightsaber", "lil_chestnut", "mana_orb",
-  "mana_orb_charm", "maneki_neko", "mr_struggles", "mrs_struggles", "offering_bowl",
-  "paradise_birb", "pop", "potion_belt", "prismatic_orb", "prismatic_sword", "relic_case",
-  "repeater", "ring_of_power", "ruby_egg", "rune_of_magic", "rune_of_protection",
-  "shadow_blade", "shield_of_valor", "snowmaster", "speed_amulet", "spider_web",
-  "stable_recombobulator", "stamina_sack", "stone_golem", "storage_chest", "tim",
-  "time_dilator", "unsettling_presence", "unstable_recombobulator", "utility_pouch",
-  "walrus_tusk", "war_hammer", "whetstone",   "wolpertinger", "shovel",
-  "crossblades", "eggscalibur", "enchanted_staff", "falcon_blade", "hero_long_sword",
-  "hero_sword", "manathirst", "spectral_dagger", "the_fool", "burning_coal",
-  "flawed_amethyst", "flawed_emerald", "flawed_ruby", "flawed_sapphire", "flawed_topaz",
-  "lucky_clover", "ace_of_spades", "carrot", "forging_hammer", "reverse", "the_lovers",
-  "dragon_claws", "jimbo", "rat", "regular_amethyst", "regular_emerald", "regular_ruby",
-  "regular_sapphire", "regular_topaz", "shortbow", "spell_scroll_frostbolt", "burning_torch",
-  "chili_pepper", "darkest_lotus", "flame_badge", "holo_fire_lizard", "leaf_badge",
-  "magic_badge", "puzzle_badge", "rainbow_badge", "shell_totem", "sir_sand", "skull_badge",
-  "squirrel", "stone_badge", "torch", "twine_badge", "white_eyes_blue_dragon", "wolf_badge",
-  "axe", "dragonskin_boots", "hedgehog", "mana_potion", "molten_dagger", "spiked_collar",
-  "toad", "bow_and_arrow",
+  "artifact_stone_cold",
+  "artifact_stone_heat",
+  "beast_fang",
+  "blood_amulet",
+  "blood_harvester",
+  "blood_stone",
+  "box_of_riches",
+  "corrupted_crystal",
+  "cthulhu",
+  "cubert",
+  "dancing_dragon",
+  "djinn_lamp",
+  "fancy_fencing_rapier",
+  "fanfare",
+  "flute",
+  "frozen_flame",
+  "goobert",
+  "great_shield",
+  "happy_bomb",
+  "holdall",
+  "impractically_large_greatsword",
+  "katana",
+  "king_crown",
+  "large_sack",
+  "leather_bag",
+  "lightsaber",
+  "lil_chestnut",
+  "mana_orb",
+  "mana_orb_charm",
+  "maneki_neko",
+  "mr_struggles",
+  "mrs_struggles",
+  "offering_bowl",
+  "paradise_birb",
+  "pop",
+  "potion_belt",
+  "prismatic_orb",
+  "prismatic_sword",
+  "relic_case",
+  "repeater",
+  "ring_of_power",
+  "ruby_egg",
+  "rune_of_magic",
+  "rune_of_protection",
+  "shadow_blade",
+  "shield_of_valor",
+  "snowmaster",
+  "speed_amulet",
+  "spider_web",
+  "stable_recombobulator",
+  "stamina_sack",
+  "stone_golem",
+  "storage_chest",
+  "tim",
+  "time_dilator",
+  "unsettling_presence",
+  "unstable_recombobulator",
+  "utility_pouch",
+  "walrus_tusk",
+  "war_hammer",
+  "whetstone",
+  "wolpertinger",
+  "shovel",
+  "crossblades",
+  "eggscalibur",
+  "enchanted_staff",
+  "falcon_blade",
+  "hero_long_sword",
+  "hero_sword",
+  "manathirst",
+  "spectral_dagger",
+  "the_fool",
+  "burning_coal",
+  "flawed_amethyst",
+  "flawed_emerald",
+  "flawed_ruby",
+  "flawed_sapphire",
+  "flawed_topaz",
+  "lucky_clover",
+  "ace_of_spades",
+  "carrot",
+  "forging_hammer",
+  "reverse",
+  "the_lovers",
+  "dragon_claws",
+  "jimbo",
+  "rat",
+  "regular_amethyst",
+  "regular_emerald",
+  "regular_ruby",
+  "regular_sapphire",
+  "regular_topaz",
+  "shortbow",
+  "spell_scroll_frostbolt",
+  "burning_torch",
+  "chili_pepper",
+  "darkest_lotus",
+  "flame_badge",
+  "holo_fire_lizard",
+  "leaf_badge",
+  "magic_badge",
+  "puzzle_badge",
+  "rainbow_badge",
+  "shell_totem",
+  "sir_sand",
+  "skull_badge",
+  "squirrel",
+  "stone_badge",
+  "torch",
+  "twine_badge",
+  "white_eyes_blue_dragon",
+  "wolf_badge",
+  "axe",
+  "dragonskin_boots",
+  "hedgehog",
+  "mana_potion",
+  "molten_dagger",
+  "spiked_collar",
+  "toad",
+  "bow_and_arrow",
 ];
 
 const EXPANSION_CRAFT_IDS = new Set([
-  "crossblades", "eggscalibur", "enchanted_staff", "falcon_blade", "hero_long_sword",
-  "hero_sword", "manathirst", "shovel", "spectral_dagger", "the_fool", "burning_coal",
-  "flawed_amethyst", "flawed_emerald", "flawed_ruby", "flawed_sapphire", "flawed_topaz",
-  "lucky_clover", "ace_of_spades", "carrot", "forging_hammer", "reverse", "the_lovers",
-  "dragon_claws", "jimbo", "rat", "regular_amethyst", "regular_emerald", "regular_ruby",
-  "regular_sapphire", "regular_topaz", "shortbow", "spell_scroll_frostbolt", "burning_torch",
-  "chili_pepper", "darkest_lotus", "flame_badge", "holo_fire_lizard", "leaf_badge",
-  "magic_badge", "puzzle_badge", "rainbow_badge", "shell_totem", "sir_sand", "skull_badge",
-  "squirrel", "stone_badge", "torch", "twine_badge", "white_eyes_blue_dragon", "wolf_badge",
-  "axe", "dragonskin_boots", "hedgehog", "mana_potion", "molten_dagger", "spiked_collar",
-  "toad", "bow_and_arrow",
+  "crossblades",
+  "eggscalibur",
+  "enchanted_staff",
+  "falcon_blade",
+  "hero_long_sword",
+  "hero_sword",
+  "manathirst",
+  "shovel",
+  "spectral_dagger",
+  "the_fool",
+  "burning_coal",
+  "flawed_amethyst",
+  "flawed_emerald",
+  "flawed_ruby",
+  "flawed_sapphire",
+  "flawed_topaz",
+  "lucky_clover",
+  "ace_of_spades",
+  "carrot",
+  "forging_hammer",
+  "reverse",
+  "the_lovers",
+  "dragon_claws",
+  "jimbo",
+  "rat",
+  "regular_amethyst",
+  "regular_emerald",
+  "regular_ruby",
+  "regular_sapphire",
+  "regular_topaz",
+  "shortbow",
+  "spell_scroll_frostbolt",
+  "burning_torch",
+  "chili_pepper",
+  "darkest_lotus",
+  "flame_badge",
+  "holo_fire_lizard",
+  "leaf_badge",
+  "magic_badge",
+  "puzzle_badge",
+  "rainbow_badge",
+  "shell_totem",
+  "sir_sand",
+  "skull_badge",
+  "squirrel",
+  "stone_badge",
+  "torch",
+  "twine_badge",
+  "white_eyes_blue_dragon",
+  "wolf_badge",
+  "axe",
+  "dragonskin_boots",
+  "hedgehog",
+  "mana_potion",
+  "molten_dagger",
+  "spiked_collar",
+  "toad",
+  "bow_and_arrow",
 ]);
 
 const LAYERS = {
   starter: [
-    "rusty_sword", "iron_helmet",
-    "dagger", "poison_vial",
-    "apprentice_staff", "mana_crystal",
-    "apple", "banana",
-  ],
-  enhancement: [
-    "enh_stray_charm", "enh_ember_crown", "enh_hymn_veil", "enh_shadow_hood",
-    "enh_frost_circlet", "enh_inquisitor_mask", "enh_bard_crown", "enh_oracle_diadem",
-    "enh_defeated_breastplate", "enh_holy_aegis", "enh_guardian_mail", "enh_zealot_vestment",
-    "enh_plague_bindings", "enh_arcane_robe", "enh_juggernaut_plate", "enh_rogue_vest",
-    "enh_mad_scholar_sandals", "enh_assassin_treads", "enh_swift_treads", "enh_paladin_greaves",
-    "enh_frost_walkers", "enh_trickster_slippers", "enh_pyro_steps", "enh_guardian_sabatons",
+    "rusty_sword",
+    "iron_helmet",
+    "dagger",
+    "poison_vial",
+    "apprentice_staff",
+    "mana_crystal",
+    "apple",
+    "banana",
   ],
   amplifier: [
-    "amplify_fire", "amplify_holy", "amplify_poison", "amplify_magic", "amplify_melee",
-    "amplify_staff", "amplify_wand", "amplify_twohand", "amplify_chest", "amplify_boots",
+    "amplify_fire",
+    "amplify_holy",
+    "amplify_poison",
+    "amplify_magic",
+    "amplify_melee",
+    "amplify_staff",
+    "amplify_wand",
+    "amplify_twohand",
+    "amplify_chest",
+    "amplify_boots",
   ],
-  key: [
-    "key_ember_codex", "key_hymn_folio", "key_paladin_oath", "key_shadow_pact",
-  ],
+  key: ["key_ember_codex", "key_hymn_folio", "key_paladin_oath", "key_shadow_pact"],
   triple_support: [
-    "fire_staff", "weapon_holy_mace", "armor_holy_choir", "accessory_musical_slippers",
-    "boots_steadfast", "armor_light_weave", "dagger",
+    "fire_staff",
+    "weapon_holy_mace",
+    "armor_holy_choir",
+    "accessory_musical_slippers",
+    "boots_steadfast",
+    "armor_light_weave",
+    "dagger",
   ],
   expansion_shop: EXPANSION_SHOP,
 };
 
-const CORE_EXCLUDE = new Set([
-  "artifact_stone_death", "heart_container", "more_stats", "gloves_of_haste",
-]);
+const CORE_EXCLUDE = new Set(["artifact_stone_death", "heart_container", "more_stats", "gloves_of_haste"]);
 
 const CORE_QUOTAS = [
   ["weapon", 12],
@@ -158,10 +327,24 @@ function pickCoreShop(migratedItems, reserved) {
     if (used.has(item.id) || CORE_EXCLUDE.has(item.id) || item.craftOnly) return false;
     if (item.isContainer) return item.shopContainer;
     const tags = item.tags || [];
-    return tags.some((t) => [
-      "weapon", "armor", "shield", "food", "potion", "poison", "magic", "gem",
-      "fire", "cold", "holy", "nature", "accessory", "utility",
-    ].includes(t));
+    return tags.some((t) =>
+      [
+        "weapon",
+        "armor",
+        "shield",
+        "food",
+        "potion",
+        "poison",
+        "magic",
+        "gem",
+        "fire",
+        "cold",
+        "holy",
+        "nature",
+        "accessory",
+        "utility",
+      ].includes(t),
+    );
   };
 
   const sortedBackfill = [...migratedItems].sort((a, b) => (a.cost || 0) - (b.cost || 0));
@@ -216,10 +399,7 @@ function main() {
   const { seen, flat: layerFlat } = layerIdsFlat();
 
   const coreShop = pickCoreShop(migrated, seen);
-  const entries = [
-    ...layerFlat,
-    ...coreShop.map((id) => ({ id, layer: "core_shop" })),
-  ];
+  const entries = [...layerFlat, ...coreShop.map((id) => ({ id, layer: "core_shop" }))];
 
   if (entries.length !== POOL_TOTAL) {
     throw new Error(`Ожидалось ${POOL_TOTAL} предметов, получено ${entries.length}`);
@@ -239,7 +419,6 @@ function main() {
     generatedAt: new Date().toISOString(),
     counts: {
       starter: LAYERS.starter.length,
-      enhancement: LAYERS.enhancement.length,
       amplifier: LAYERS.amplifier.length,
       key: LAYERS.key.length,
       triple_support: LAYERS.triple_support.length,
@@ -269,10 +448,11 @@ function main() {
   const INFRA_ITEM_IDS = new Set(["starter_bag"]);
   const filtered = migratedData.items.filter((item) => poolIdsSet.has(item.id));
   const filteredIds = new Set(filtered.map((item) => item.id));
-  const infraItems = legacySource.items.filter(
-    (item) => INFRA_ITEM_IDS.has(item.id) && !filteredIds.has(item.id),
+  const infraItems = legacySource.items.filter((item) => INFRA_ITEM_IDS.has(item.id) && !filteredIds.has(item.id));
+  const catalogAppend = legacySource.items.filter(
+    (item) => CATALOG_APPEND_IDS.has(item.id) && !filteredIds.has(item.id) && !INFRA_ITEM_IDS.has(item.id),
   );
-  migratedData.items = [...filtered, ...infraItems];
+  migratedData.items = [...filtered, ...infraItems, ...catalogAppend];
   fs.writeFileSync(MIGRATED, `${JSON.stringify(migratedData, null, 2)}\n`, "utf8");
 
   const runtime = `/**

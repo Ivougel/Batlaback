@@ -10,14 +10,14 @@ alwaysApply: false
 
 ## Обязательно
 
-- Режимы игры: только `solo | versus | hardbot | lobby | lobby2p | campaign` (`data-game-mode`).
+- Режимы игры: только `classic | solo | path | versus | hardbot | lobby | lobby2p | campaign` (`data-game-mode`).
 - Фазы `#app`: `prep | battle | replay`. Intro — через `#class-overlay`, не через `data-phase`.
 - Новый overlay / шаг intro → обновить `tools/ui-structure-manifest.json` + `docs/ui-screens-modes.md`.
 - После UI-изменений: `npm run test:structure` и при визуале `npm run test:snapshots`.
 
 ## Layout
 
-- Профили viewport и `data-ui-surface` — см. [LAYOUT.md](LAYOUT.md). iPad landscape PWA = `tablet-side`, крупная prep-сетка через `syncTabletSidePrepGridMetrics`.
+- Профили viewport и `data-ui-surface` — см. [LAYOUT.md](LAYOUT.md). Раскладка подстраивается под профиль; цель — **доступный игровой UI на всех экранах**, не pixel-match с одним устройством.
 - Размеры через токены / `ui-layout.js`, не magic px в JS без причины.
 
 ## Запрещено

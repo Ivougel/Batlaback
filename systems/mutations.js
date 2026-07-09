@@ -447,9 +447,6 @@ function resolveMutationProgress(ctx = {}) {
       : []);
 
   const tagCounts = collectLoadoutTagCounts(items, slotItemIds);
-  if (typeof applyEnhancementTagsToCounts === "function") {
-    applyEnhancementTagsToCounts(tagCounts, ctx.enhancements);
-  }
   const familyCount = countTagFamiliesFromCounts(tagCounts);
   const pool = getMutationsForNoviceClass(classId);
 
@@ -551,10 +548,10 @@ function applyMutationMilestoneBonus(side, formId, mutationId) {
 }
 
 function applyRunModifiersToSide(side, prepMeta = {}) {
-  applyCompanionCombatBonus(side, prepMeta.companionId || "s_stranger");
-  if (typeof applyEnhancementRunModifiers === "function") {
-    applyEnhancementRunModifiers(side, prepMeta);
+  if (typeof shouldUseMutationSystem === "function" && !shouldUseMutationSystem()) {
+    return;
   }
+  applyCompanionCombatBonus(side, prepMeta.companionId || "s_stranger");
   if (typeof applyAmplifierRunModifiers === "function") {
     applyAmplifierRunModifiers(side, prepMeta);
   }

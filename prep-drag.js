@@ -3,77 +3,6 @@
  * Состояние (dragPayload, dragFrom, pending*Drag, …) остаётся в game.js.
  */
 
-function startEnhancementSlotDrag(slotId, e, side = prepViewSide) {
-  if (!isLoadoutInteractionPhase() || gameOver || !canEditPrepSide(side)) return;
-  const st = getLoadoutEditState(side);
-  const item = findEnhancementLoadoutItem(slotId, side);
-  if (!item) return;
-  if (e?.preventDefault) e.preventDefault();
-  clearTouchTapGesture();
-  hideSidebarTooltip();
-  selectedBench = -1;
-  enhancementSlotDidDrag = true;
-  dragPayload = { itemId: item.itemId, rotation: item.rotation || 0 };
-  dragFrom = { type: "enhancement", item, side, slotId };
-  st.items = st.items.filter((i) => i.uid !== item.uid);
-  prepSidebarDragUnlocked = false;
-  prepSidebarStickyHover = null;
-  const slotEl = e?.currentTarget || document.querySelector(`.enh-slot--filled[data-enh-slot="${slotId}"]`);
-  if (slotEl && e?.pointerId != null) {
-    try { slotEl.setPointerCapture(e.pointerId); } catch (_) {}
-  }
-  if (typeof beginPrepDragArcFromCard === "function" && slotEl) {
-    beginPrepDragArcFromCard(slotEl, item.itemId);
-  } else if (typeof beginPrepDragArcFromBackpack === "function") {
-    beginPrepDragArcFromBackpack(item.col, item.row, side);
-  }
-  startSynergyPreview();
-  recalcSynergies();
-  syncUiDragState();
-  if (typeof onPrepDragStart === "function") onPrepDragStart();
-  if (e?.clientX != null && e?.clientY != null) {
-    lastPointerClient.x = e.clientX;
-    lastPointerClient.y = e.clientY;
-    syncPrepDragBoardHover(e.clientX, e.clientY, e.clientX, e.clientY);
-  }
-  syncDragGhostOverlay(lastPointerClient.x, lastPointerClient.y);
-}
-
-function beginPendingEnhancementDrag(slotId, e, side = prepViewSide) {
-  if (phase !== "prep" || gameOver || !canEditPrepSide(side)) return;
-  if (!findEnhancementLoadoutItem(slotId, side)) return;
-  pendingEnhancementDrag = { slotId, startX: e.clientX, startY: e.clientY, side };
-  syncUiDragState();
-}
-
-function updatePendingEnhancementDrag(e) {
-  if (!pendingEnhancementDrag || dragPayload) return;
-  const dx = e.clientX - pendingEnhancementDrag.startX;
-  const dy = e.clientY - pendingEnhancementDrag.startY;
-  if (Math.hypot(dx, dy) < getPrepDragCommitThresholdPx()) return;
-  const { slotId, side } = pendingEnhancementDrag;
-  pendingEnhancementDrag = null;
-  clearTouchTapGesture();
-  hideSidebarTooltip();
-  const slotEl = document.querySelector(`.enh-slot--filled[data-enh-slot="${slotId}"]`);
-  startEnhancementSlotDrag(slotId, { ...e, currentTarget: slotEl }, side);
-}
-
-function tryUnequipEnhancementFromPendingDrag(clientX, clientY) {
-  if (!pendingEnhancementDrag || dragPayload) return false;
-  const dx = clientX - pendingEnhancementDrag.startX;
-  const dy = clientY - pendingEnhancementDrag.startY;
-  if (Math.hypot(dx, dy) >= getPrepDragCommitThresholdPx()) return false;
-  const { slotId, side } = pendingEnhancementDrag;
-  pendingEnhancementDrag = null;
-  syncUiDragState();
-  if (!unequipEnhancementSlotToBench(slotId, side)) return false;
-  renderBench(side);
-  recalcSynergies();
-  updateUI();
-  return true;
-}
-
 function getDragThresholdPx() {
   return isTouchUi() ? TOUCH_DRAG_THRESHOLD_PX : MOUSE_DRAG_THRESHOLD_PX;
 }
@@ -101,7 +30,7 @@ function bindPrepLoadoutDragPointer() {
   if (bindPrepLoadoutDragPointer._done) return;
   bindPrepLoadoutDragPointer._done = true;
 
-  const isActiveDrag = () => !!(dragPayload || pendingShopDrag || pendingBenchDrag || pendingEnhancementDrag);
+  const isActiveDrag = () => !!(dragPayload || pendingShopDrag || pendingBenchDrag);
 
   const onMove = (e) => {
     if (!isLoadoutInteractionPhase() || !isActiveDrag()) return;
@@ -134,7 +63,7 @@ function sellDraggedItem(side = prepViewSide) {
     }
     return sellBenchEntry(dragFrom.index, side);
   }
-  if (dragFrom.type === "item" || dragFrom.type === "enhancement") {
+  if (dragFrom.type === "item") {
     creditItemSale(dragFrom.item.itemId, side);
     return true;
   }
@@ -196,7 +125,7 @@ function commitBenchDragEntry(dragFrom) {
 function restoreDraggedItem(side = prepViewSide) {
   if (!dragFrom) return;
   const st = getLoadoutEditState(side);
-  if (dragFrom.type === "item" || dragFrom.type === "enhancement") {
+  if (dragFrom.type === "item") {
     st.items = [...st.items, dragFrom.item];
   } else if (dragFrom.type === "container") {
     st.containers = [...st.containers, dragFrom.container];
@@ -254,13 +183,13 @@ function syncPrepBenchPopoverPassthrough() {
   const shopUi = typeof window.usesPrepShopPopover === "function" && window.usesPrepShopPopover();
   const benchOpen = typeof isPrepBenchPopoverOpen === "function" && isPrepBenchPopoverOpen();
   const shopOpen = typeof window.isPrepShopPopoverOpen === "function" && window.isPrepShopPopoverOpen();
-  const dragging = !!(dragPayload || pendingShopDrag || pendingBenchDrag || pendingEnhancementDrag);
+  const dragging = !!(dragPayload || pendingShopDrag || pendingBenchDrag);
   document.documentElement.toggleAttribute("data-prep-bench-drag", !!(benchUi && benchOpen && dragging));
   document.documentElement.toggleAttribute("data-prep-shop-drag", !!(shopUi && shopOpen && dragging));
 }
 
 function syncUiDragState() {
-  const dragging = !!(dragPayload || pendingShopDrag || pendingBenchDrag || pendingEnhancementDrag);
+  const dragging = !!(dragPayload || pendingShopDrag || pendingBenchDrag);
   document.body.classList.toggle("is-ui-dragging", dragging);
   if (dragging) {
     tooltipItem = null;
@@ -276,18 +205,8 @@ function syncUiDragState() {
 }
 
 function notifyPrepDragRejectedFromDragFrom() {
-  if ((dragFrom?.type === "item" || dragFrom?.type === "enhancement") && dragFrom.item) {
+  if (dragFrom?.type === "item" && dragFrom.item) {
     notifyPrepPlacementRejected(dragFrom.item);
-    return;
-  }
-  if (dragPayload?.itemId && typeof getEnhancementPlacementBlockReason === "function") {
-    const side = dragFrom?.side || prepViewSide;
-    const st = getSideState(side);
-    const excludeUid = (dragFrom?.type === "item" || dragFrom?.type === "enhancement")
-      ? dragFrom.item?.uid
-      : null;
-    const reason = getEnhancementPlacementBlockReason(dragPayload.itemId, st.items, excludeUid);
-    if (reason) log(reason);
   }
 }
 
@@ -295,19 +214,14 @@ function isPrepBackpackArcDrag() {
   return dragFrom?.type === "item" || dragFrom?.type === "container";
 }
 
-function isPrepEnhancementStripDrag() {
-  return dragFrom?.type === "enhancement";
-}
-
 function isPrepLoadoutItemDrag() {
-  return dragFrom?.type === "item" || dragFrom?.type === "enhancement";
+  return dragFrom?.type === "item";
 }
 
 function isPrepArcDragSource() {
   if (!dragFrom) return false;
   return dragFrom.type === "shop"
     || dragFrom.type === "bench"
-    || dragFrom.type === "enhancement"
     || dragFrom.type === "item"
     || dragFrom.type === "container";
 }
@@ -538,8 +452,7 @@ function applyPrepBoardHoverFromNearestPlaceable(mx, my, side, st) {
 
 function isPrepSidebarArcDrag() {
   return dragFrom?.type === "shop"
-    || dragFrom?.type === "bench"
-    || dragFrom?.type === "enhancement";
+    || dragFrom?.type === "bench";
 }
 
 function shouldDrawPrepGridFigurePreview() {
@@ -1193,7 +1106,6 @@ function clearDragUiState() {
   document.querySelectorAll(".shop-card.shop-dragging").forEach((el) => el.classList.remove("shop-dragging"));
   pendingShopDrag = null;
   pendingBenchDrag = null;
-  pendingEnhancementDrag = null;
   pendingCanvasPick = null;
   shopDidDrag = false;
   syncPrepBenchPopoverPassthrough();
@@ -1250,7 +1162,7 @@ function getDragGhostAnchorClient(clientX, clientY) {
   const side = dragFrom?.side || prepViewSide;
   if (!canEditPrepSide(side)) return { x: clientX, y: clientY };
 
-  if (isPrepBackpackArcDrag() || isPrepEnhancementStripDrag()) {
+  if (isPrepBackpackArcDrag()) {
     const sidebarAnchor = getPrepArcSidebarAnchorClient(clientX, clientY);
     if (sidebarAnchor) return sidebarAnchor;
     return { x: clientX, y: clientY };
@@ -1305,9 +1217,7 @@ function syncDragGhostOverlay(clientX, clientY) {
       arcRotation = null;
       const outsideShopArea = !isPointerInsideShopDrawerBounds(clientX, clientY);
       let linkTarget = null;
-      if (isPrepEnhancementStripDrag()) {
-        linkTarget = getPrepArcSidebarAnchorClient(clientX, clientY);
-      } else if (outsideShopArea) {
+      if (outsideShopArea) {
         linkTarget = getPrepSidebarLinkTargetClient();
       }
       PrepDragArc.sync(clientX, clientY, clientX, clientY, {
@@ -1409,7 +1319,6 @@ function updatePointerFromClient(clientX, clientY) {
     updatePendingShopDrag(synthetic);
     if (phase === "prep") {
       updatePendingBenchDrag(synthetic);
-      updatePendingEnhancementDrag(synthetic);
     }
     if (phase === "prep") updatePendingCanvasPick(clientX, clientY);
     const side = dragPayload && dragFrom?.side ? dragFrom.side : prepViewSide;
@@ -1524,19 +1433,6 @@ function gamepadPointerDownAt(clientX, clientY) {
 
   if (!canEditPrepSide()) return;
 
-  const enhSlot = target?.closest?.(".enh-slot--filled[data-enh-slot]");
-  if (enhSlot && canEditPrepSide(prepViewSide)) {
-    const slotId = enhSlot.dataset.enhSlot;
-    if (slotId) {
-      if (isTouchUi()) {
-        beginPendingEnhancementDrag(slotId, synthetic, prepViewSide);
-      } else {
-        startEnhancementSlotDrag(slotId, { ...synthetic, currentTarget: enhSlot }, prepViewSide);
-      }
-      return;
-    }
-  }
-
   const clickable = target?.closest?.("button:not([disabled]), .shop-pin");
   if (clickable && !clickable.closest("#game-canvas")) {
     clickable.click();
@@ -1560,9 +1456,7 @@ function gamepadPointerUpAt(clientX, clientY) {
   updatePointerFromClient(clientX, clientY);
   if (tryShowPrepPointerTapTooltip(clientX, clientY)) return;
   if (tryBuyFromPendingShopDrag(clientX, clientY)) return;
-  if (tryUnequipEnhancementFromPendingDrag(clientX, clientY)) return;
   pendingBenchDrag = null;
-  pendingEnhancementDrag = null;
   pendingCanvasPick = null;
   finishDragDrop(createSyntheticPointerEvent(clientX, clientY));
 }
@@ -1638,7 +1532,7 @@ function tryGemSocketDrop(st, dragFrom, dragPayload, col, row, side) {
   if (dragFrom.type === "shop") {
     // Покупку откладываем до успешной вставки в сокет.
     purchasedGemId = dragFrom.index;
-  } else if (dragFrom.type === "item" || dragFrom.type === "enhancement") {
+  } else if (dragFrom.type === "item") {
     st.items = st.items.filter((i) => i.uid !== dragFrom.item.uid);
   }
 
@@ -1810,20 +1704,13 @@ function finishDragDrop(e) {
           prepArcCelebrate = true;
           const boughtDef = ITEM_CATALOG[itemId];
           if (typeof playPrepBuyFanfare === "function") playPrepBuyFanfare(boughtDef);
-          if (boughtDef?.isEnhancementItem && typeof playPrepEnhancementSfx === "function") {
-            const enhDef = typeof getEnhancementDef === "function"
-              ? getEnhancementDef(typeof getEnhancementIdFromItem === "function" ? getEnhancementIdFromItem(itemId) : itemId)
-              : boughtDef;
-            playPrepEnhancementSfx("buy", enhDef || boughtDef);
-          }
         }
       } else {
         log("Скамейка полна!");
       }
-    } else if (dragFrom.type === "item" || dragFrom.type === "enhancement") {
+    } else if (dragFrom.type === "item") {
       st.bench.push({ itemId: dragFrom.item.itemId, uid: dragFrom.item.uid, rotation: dragPayload.rotation || 0 });
       prepArcCelebrate = true;
-      if (dragFrom.type === "enhancement") syncEnhancementsForSide(side);
     } else if (dragFrom.type === "container") {
       st.bench.push({
         itemId: dragFrom.container.itemId,
@@ -2008,8 +1895,7 @@ function finishDragDrop(e) {
         if (typeof notifyPrepItemPlaced === "function") {
           notifyPrepItemPlaced(placed, ITEM_CATALOG[placed.itemId]);
         }
-        if (dragFrom.type === "enhancement") syncEnhancementsForSide(side);
-        if (dragFrom.type === "shop" || dragFrom.type === "bench" || dragFrom.type === "enhancement") {
+        if (dragFrom.type === "shop" || dragFrom.type === "bench") {
           prepArcCelebrate = true;
         }
       } else if (isPrepLoadoutItemDrag()) {

@@ -52,9 +52,6 @@ function createLobbyFighter(id, name, classId, isHuman = false) {
     companionId,
     mutationFormId: null,
     mutationId: null,
-    enhancements: typeof createEmptyEnhancementLoadout === "function"
-      ? createEmptyEnhancementLoadout()
-      : { head: null, chest: null, boots: null },
     hp: LOBBY_START_HP,
     alive: true,
     gold: AI_ECON.START_GOLD,
@@ -198,13 +195,6 @@ function importLobbyFighterGlobals(lobby, fighterId, globals) {
     : [];
   if (globals.pendingShopBuffs != null) fighter.pendingShopBuffs = globals.pendingShopBuffs;
   if (globals.companionId != null) fighter.companionId = globals.companionId;
-  if (globals.enhancements) {
-    fighter.enhancements = {
-      head: globals.enhancements.head ?? null,
-      chest: globals.enhancements.chest ?? null,
-      boots: globals.enhancements.boots ?? null,
-    };
-  }
   if (globals.mutationFormId != null) fighter.mutationFormId = globals.mutationFormId;
   if (globals.mutationId != null) fighter.mutationId = globals.mutationId;
   syncLobbyFighterMutationMilestones(fighter, globals.round ?? 1);
@@ -408,7 +398,6 @@ function syncLobbyFighterMutationMilestones(fighter, round = 1) {
     classId: fighter.classId,
     companionId: fighter.companionId,
     items: fighter.items || [],
-    enhancements: fighter.enhancements || {},
     round,
   });
   const pickId = typeof pickMutationIdForMilestone === "function"
@@ -438,7 +427,6 @@ function lobbyFighterPrepMeta(fighter) {
     companionId: fighter.companionId,
     mutationFormId: fighter.mutationFormId,
     mutationId: fighter.mutationId,
-    enhancements: fighter.enhancements || {},
     pendingShopBuffs: fighter.pendingShopBuffs || 0,
   };
 }
@@ -453,13 +441,6 @@ function importLobbyPlayerGlobals(lobby, globals) {
   player.bench = Array.isArray(globals.bench) ? globals.bench.map((e) => (e ? { ...e } : null)) : [];
   if (globals.pendingShopBuffs != null) player.pendingShopBuffs = globals.pendingShopBuffs;
   if (globals.companionId != null) player.companionId = globals.companionId;
-  if (globals.enhancements) {
-    player.enhancements = {
-      head: globals.enhancements.head ?? null,
-      chest: globals.enhancements.chest ?? null,
-      boots: globals.enhancements.boots ?? null,
-    };
-  }
   if (globals.mutationFormId != null) player.mutationFormId = globals.mutationFormId;
   if (globals.mutationId != null) player.mutationId = globals.mutationId;
   syncLobbyFighterMutationMilestones(player, globals.round ?? 1);
@@ -478,7 +459,6 @@ function exportGhostFighterState(fighter) {
     companionId: fighter.companionId,
     mutationFormId: fighter.mutationFormId,
     mutationId: fighter.mutationId,
-    enhancements: fighter.enhancements,
   };
 }
 

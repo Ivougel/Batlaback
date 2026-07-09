@@ -167,10 +167,6 @@ function canPlaceContainer(itemId, col, row, rotation, gridW, gridH, containers,
 function canPlaceInLoadout(itemId, col, row, rotation, containers, items, excludeUid = null) {
   const def = ITEM_CATALOG[itemId];
   if (!def || def.isContainer) return false;
-  if (typeof canPlaceEnhancementItemInLoadout === "function"
-    && !canPlaceEnhancementItemInLoadout(itemId, items, excludeUid)) {
-    return false;
-  }
   if (typeof canAddSlotItemToLoadout === "function"
     && !canAddSlotItemToLoadout(items, itemId, excludeUid)) {
     return false;
@@ -455,6 +451,10 @@ function applySynergyModifiers(items) {
   items.forEach((item) => {
     if (typeof clampItemRuntimeBonuses === "function") clampItemRuntimeBonuses(item);
   });
+
+  if (typeof applyPlacementSlotModifiers === "function") {
+    applyPlacementSlotModifiers(items);
+  }
 
   return items;
 }

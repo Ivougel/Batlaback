@@ -8,7 +8,6 @@
 const fs = require("fs");
 const path = require("path");
 
-const ROOT = path.join(__dirname, "..");
 const SRC = path.join(__dirname, "items-migrated.json");
 const RULES = path.join(__dirname, "element-tag-assignments.json");
 

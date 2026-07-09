@@ -79,14 +79,17 @@ function createSimSandbox() {
     vm.runInContext(fs.readFileSync(path.join(ROOT, file), "utf8"), ctx);
   }
 
-  vm.runInContext(`
+  vm.runInContext(
+    `
     if (typeof ITEM_CATALOG !== "undefined") globalThis.ITEM_CATALOG = ITEM_CATALOG;
     if (typeof CRAFT_OUTPUT_IDS !== "undefined") globalThis.CRAFT_OUTPUT_IDS = CRAFT_OUTPUT_IDS;
     if (typeof CLASS_CATALOG !== "undefined") globalThis.CLASS_CATALOG = CLASS_CATALOG;
     if (typeof AI_ARCHETYPES !== "undefined") globalThis.AI_ARCHETYPES = AI_ARCHETYPES;
     if (typeof getClassById !== "undefined") globalThis.getClassById = getClassById;
     if (typeof MAX_BATTLE_DURATION !== "undefined") globalThis.MAX_BATTLE_DURATION = MAX_BATTLE_DURATION;
-  `, ctx);
+  `,
+    ctx,
+  );
 
   BATTLE_STUBS.forEach((name) => {
     sandbox[name] = () => {};

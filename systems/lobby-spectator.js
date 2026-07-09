@@ -291,13 +291,6 @@ function syncEnemyBoardFromLobbyFighter(fighter) {
   if (ghost.companionId) enemyCompanionId = ghost.companionId;
   enemyMutationFormId = ghost.mutationFormId ?? null;
   enemyMutationId = ghost.mutationId ?? null;
-  if (ghost.enhancements) {
-    enemyEnhancements = {
-      head: ghost.enhancements.head ?? null,
-      chest: ghost.enhancements.chest ?? null,
-      boots: ghost.enhancements.boots ?? null,
-    };
-  }
 }
 
 function buildLobbyRosterStripSignature(lobby, opts = {}) {

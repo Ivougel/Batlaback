@@ -83,16 +83,18 @@
   --ui-scale: 1;
   --type-scale: 1;
   --game-scale: 1;
+  /* Legacy px-типографика: предпочитайте --font-* (rem). --text-scale ≈ type boost поверх ui. */
+  --text-scale: var(--type-scale);
 
   /* Typography — rem относительно --font-root (ui-layout задаёт --type-scale) */
   --font-root: calc(16px * var(--type-scale));
-  --font-xs: 0.75rem;
-  --font-sm: 0.8125rem;
-  --font-md: 0.9375rem;
-  --font-lg: 1.0625rem;
-  --font-xl: 1.2rem;
-  --font-2xl: 1.6rem;
-  --font-chip: 1.725rem;
+  --font-xs: 0.8rem;
+  --font-sm: 0.875rem;
+  --font-md: 1rem;
+  --font-lg: 1.125rem;
+  --font-xl: 1.25rem;
+  --font-2xl: 1.65rem;
+  --font-chip: 1.75rem;
   --touch-target-min: max(44px, 2.75rem);
 
   /* Spacing */

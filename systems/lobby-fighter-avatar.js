@@ -477,6 +477,9 @@ function resolveLobbyThoughtVisual(fighter, lobby, opts = {}) {
   const isMutation = !!fighter?.mutationId;
   const isForm = !isMutation && !!fighter?.mutationFormId
     && (opts.round ?? 1) >= (typeof MUTATION_ROUND_FORM !== "undefined" ? MUTATION_ROUND_FORM : 8);
+  const mutationDisplayEmoji = (isForm || isMutation)
+    ? getLobbyFighterDisplayEmoji(fighter, opts.round ?? 1)
+    : null;
 
   if (!fighter.alive) {
     return {
@@ -501,7 +504,7 @@ function resolveLobbyThoughtVisual(fighter, lobby, opts = {}) {
   }
 
   const main = lobbyFighterMainThoughtById.get(fighter.id);
-  const mainEmoji = main?.emoji || getClassPersonalityThought(fighter.classId);
+  const mainEmoji = mutationDisplayEmoji || main?.emoji || getClassPersonalityThought(fighter.classId);
   const mainAnim = main?.animClass || "lobby-fighter-emoji--nod";
 
   if (hp.inBattle) {

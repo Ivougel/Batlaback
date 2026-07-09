@@ -2,7 +2,7 @@ import { chromium, devices } from "playwright";
 
 const baseUrl = `file://${process.cwd()}/index.html`;
 
-async function inspectPortraits(page, label) {
+async function inspectPortraits(page, _label) {
   return page.evaluate(() => {
     const readSlot = (id) => {
       const slot = document.getElementById(id);

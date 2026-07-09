@@ -3,62 +3,6 @@
  * Состояние (tooltipItem, sidebarTooltipSource, …) остаётся в game.js.
  */
 
-function bindEnhancementTooltipEvents(el, enhancementId, context = "shop") {
-  if (!el || !enhancementId || el.dataset.enhTooltipBound === "1") return;
-  el.dataset.enhTooltipBound = "1";
-  el.removeAttribute("title");
-  const showAt = (clientX, clientY) => {
-    const def = getEnhancementDef(enhancementId);
-    if (!def) return;
-    showEnhancementTooltipAt(clientX, clientY, def, context, el);
-  };
-  bindPointerTapTooltip(el, showAt);
-  el.addEventListener("mouseenter", (e) => {
-    if (isTouchUi() || dragPayload) return;
-    showAt(e.clientX, e.clientY);
-  });
-  el.addEventListener("mouseleave", () => {
-    if (isTouchUi() || sidebarTooltipPinned) return;
-    if (sidebarTooltipSource === context || sidebarTooltipSource === "enhancement") hideSidebarTooltip();
-  });
-  if (typeof bindItemEmojiSparklePointer === "function") {
-    bindItemEmojiSparklePointer(el);
-  }
-}
-
-function showEnhancementTooltipAt(clientX, clientY, def, context = "shop", sourceEl = null, options = {}) {
-  if (shouldSuppressTooltipReshow(sourceEl)) return;
-  const el = document.getElementById("sidebar-tooltip");
-  if (!el || !def || typeof buildEnhancementTooltipLines !== "function") return;
-  cancelScheduledTooltipHide();
-  sidebarTooltipPinned = !!options.pinned;
-  sidebarTooltipSource = context === "shop" ? "shop" : "enhancement";
-  if (typeof syncDomSparkleFromTooltipSource === "function") {
-    syncDomSparkleFromTooltipSource(sourceEl);
-  }
-  tooltipItem = null;
-  fieldTooltipVisible = false;
-  el.classList.remove("synergy-tooltip");
-  if (sourceEl?.dataset?.unaffordable) {
-    const sideGold = getSideState(prepViewSide).gold;
-    const cost = getEnhancementShopCost(def);
-    applySidebarTooltipCard(el, [
-      { text: "Недостаточно золота", style: "title", color: "#f85149" },
-      { text: `${cost}💰 · у вас ${sideGold}💰`, style: "sub", color: "#8b949e" },
-    ], { emoji: "💰", rarityColor: (typeof RARITY_COLORS !== "undefined" ? RARITY_COLORS[def.rarity] : null) || "#30363d", costBadge: cost });
-  } else {
-    applySidebarTooltipCard(
-      el,
-      buildEnhancementTooltipLines(def, context),
-      getEnhancementTooltipCardOptions(def, context),
-    );
-  }
-  el.classList.remove("hidden");
-  syncPrepTooltipDockVisibility();
-  const boundsKind = context === "shop" ? "shop" : "viewport";
-  positionSidebarTooltip(clientX, clientY, boundsKind, context);
-}
-
 function showPrepModChipTooltipAt(clientX, clientY, chipEl, options = {}) {
   if (!chipEl || (typeof prepTooltipsEnabled !== "undefined" && !prepTooltipsEnabled)) return;
   const el = document.getElementById("sidebar-tooltip");
@@ -77,14 +21,14 @@ function showPrepModChipTooltipAt(clientX, clientY, chipEl, options = {}) {
 
   cancelScheduledTooltipHide();
   sidebarTooltipPinned = !!options.pinned;
-  sidebarTooltipSource = "enhancement";
+  sidebarTooltipSource = "mod-chip";
   tooltipItem = null;
   fieldTooltipVisible = false;
   el.classList.remove("synergy-tooltip", "sidebar-tooltip--card");
   applySidebarTooltipCard(el, lines, { emoji: chipEl.querySelector(".prep-mod-chip-emoji")?.textContent || "✨" });
   el.classList.remove("hidden");
   syncPrepTooltipDockVisibility();
-  positionSidebarTooltip(clientX, clientY, "viewport", "enhancement");
+  positionSidebarTooltip(clientX, clientY, "viewport", "mod-chip");
 }
 
 function bindPrepModChipTooltips(root = null) {
@@ -104,7 +48,7 @@ function bindPrepModChipTooltips(root = null) {
     });
     chip.addEventListener("mouseleave", () => {
       if (isTouchUi() || sidebarTooltipPinned) return;
-      if (sidebarTooltipSource === "enhancement") hideSidebarTooltip();
+      if (sidebarTooltipSource === "mod-chip") hideSidebarTooltip();
     });
     chip.addEventListener("keydown", (event) => {
       if (event.key !== "Enter" && event.key !== " ") return;
@@ -445,7 +389,7 @@ function syncPrepTooltipDockVisibility() {
 
 function shouldUsePrepTooltipDock(placement) {
   if (!isLivePrepSession()) return false;
-  if (sidebarTooltipSource === "enhancement"
+  if (sidebarTooltipSource === "mod-chip"
     || sidebarTooltipSource === "companion"
     || sidebarTooltipSource === "combat-feed") {
     return false;
@@ -775,7 +719,6 @@ function refreshPrepHeroTooltip() {
         classId: rt.classId,
         companionId: rt.companionId,
         items: rt.items,
-        enhancements: rt.enhancements,
         round,
       });
       const leaderId = progress?.leader?.id;
@@ -1035,6 +978,9 @@ function renderTooltipLinesHtml(lines) {
         const suffix = l.statDelta.suffix ? escapeTooltipHtml(l.statDelta.suffix) : "";
         return `<div class="tt-line tt-line-stat tt-${l.style || "normal"}"${color}>${fmt(l.text)} <span class="tt-stat-base">${escapeTooltipHtml(l.statDelta.from)}</span><span class="tt-stat-arrow">→</span><span class="tt-stat-buff${buffClass}">${escapeTooltipHtml(l.statDelta.to)}</span>${suffix}</div>`;
       }
+      if (l.html) {
+        return `<div class="tt-line tt-${l.style || "normal"} tt-line--html"${color}>${l.html}</div>`;
+      }
       return `<div class="tt-line tt-${l.style || "normal"}"${color}>${fmt(l.text)}</div>`;
     })
     .join("");
@@ -1121,7 +1067,17 @@ function filterRedundantTooltipText(text, canonicalTexts) {
 }
 
 /** context: shop — магазин; bench — скамейка; field — предмет на поле / canvas */
-function buildItemTooltipLines(def, contentItem, rotation, context = "field") {
+function buildItemTooltipLines(def, contentItem, rotation, context = "field", opts = {}) {
+  const heroClass = opts.heroClass
+    || (typeof pendingPlayerClass !== "undefined" ? pendingPlayerClass : null)
+    || (typeof playerClass !== "undefined" ? playerClass : null);
+  const presentation = typeof getItemPresentationState === "function"
+    ? getItemPresentationState(def.id, heroClass, opts)
+    : null;
+  if (presentation?.locked && typeof buildLockedItemTooltipLines === "function") {
+    return buildLockedItemTooltipLines(def, presentation);
+  }
+
   const lines = [];
   lines.push({ text: `${getItemIcons(def).join("")} ${typeof getItemDisplayName === "function" ? getItemDisplayName(def) : def.name}`, style: "title", color: RARITY_COLORS[def.rarity] || "#e6edf3" });
 
@@ -1197,6 +1153,12 @@ function buildItemTooltipLines(def, contentItem, rotation, context = "field") {
       text: `⭕ Сокеты: ${used}/${def.sockets}`,
       style: "normal",
       color: "#bc8cff",
+    });
+  }
+
+  if (typeof getPlacementSlotTooltipLines === "function") {
+    getPlacementSlotTooltipLines(def.id).forEach((line) => {
+      lines.push({ text: line, style: "normal", color: "#f0c14b" });
     });
   }
 
@@ -1516,7 +1478,7 @@ function positionSidebarTooltip(clientX, clientY, boundsKind = "viewport", place
   let left;
   let top;
 
-  if (placement === "enhancement" || placement === "companion") {
+  if (placement === "mod-chip" || placement === "companion") {
     const heroHudPos = positionHeroHudTooltip(clientX, clientY, tipW, tipH, margin, gap);
     left = heroHudPos.left;
     top = heroHudPos.top;
@@ -1799,13 +1761,6 @@ function updateTooltip(mx, my) {
 
 function showSidebarTooltipAt(clientX, clientY, itemId, contentItem, context = "shop", sourceEl = null, options = {}) {
   if (shouldSuppressTooltipReshow(sourceEl)) return;
-  if (typeof isEnhancementBackpackItem === "function" && isEnhancementBackpackItem(itemId)) {
-    const def = typeof getEnhancementDef === "function" ? getEnhancementDef(getEnhancementIdFromItem(itemId)) : null;
-    if (def) {
-      showEnhancementTooltipAt(clientX, clientY, def, context, sourceEl, options);
-      return;
-    }
-  }
   const el = document.getElementById("sidebar-tooltip");
   const def = ITEM_CATALOG[itemId];
   if (!el || !def) return;
@@ -1818,6 +1773,16 @@ function showSidebarTooltipAt(clientX, clientY, itemId, contentItem, context = "
   tooltipItem = null;
   fieldTooltipVisible = false;
   el.classList.remove("synergy-tooltip");
+  const heroClass = typeof playerClass !== "undefined" ? playerClass : null;
+  const presentation = typeof getItemPresentationState === "function"
+    ? getItemPresentationState(itemId, heroClass)
+    : null;
+  const cardOpts = getItemTooltipCardOptions(def, context);
+  if (presentation?.locked) {
+    cardOpts.emoji = "🔒";
+    cardOpts.locked = true;
+    cardOpts.rarityColor = "#484f58";
+  }
   if (sourceEl?.dataset?.unaffordable) {
     const sideGold = getSideState(prepViewSide).gold;
     applySidebarTooltipCard(el, [
@@ -1826,7 +1791,7 @@ function showSidebarTooltipAt(clientX, clientY, itemId, contentItem, context = "
     ], getItemTooltipCardOptions(def, context));
   } else {
     const lines = buildItemTooltipLines(def, contentItem, 0, context);
-    applySidebarTooltipCard(el, lines, getItemTooltipCardOptions(def, context));
+    applySidebarTooltipCard(el, lines, cardOpts);
   }
   el.classList.remove("hidden");
   syncPrepTooltipDockVisibility();

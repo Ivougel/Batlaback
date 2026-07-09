@@ -2,9 +2,10 @@
  * E2E: prep и battle после быстрого старта забега.
  * Запуск: npm run test:phases
  */
-import { chromium, devices } from "playwright";
+
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { chromium, devices } from "playwright";
 import { quickStartPrep } from "./lib/quick-start.mjs";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -109,18 +110,18 @@ for (const profile of PHASE_PROFILES) {
       assert(prep.uiSurface === profile.expectUiSurface, `uiSurface: ${prep.uiSurface} !== ${profile.expectUiSurface}`);
     }
 
-    console.log(`✓ ${profile.id} prep`, JSON.stringify({
-      uiSurface: prep.uiSurface,
-      canvasH: prep.canvasH,
-      zoneUsedH: prep.zoneUsedH,
-      appH: prep.appH,
-    }));
+    console.log(
+      `✓ ${profile.id} prep`,
+      JSON.stringify({
+        uiSurface: prep.uiSurface,
+        canvasH: prep.canvasH,
+        zoneUsedH: prep.zoneUsedH,
+        appH: prep.appH,
+      }),
+    );
 
     await page.evaluate(() => startBattle());
-    await page.waitForFunction(
-      () => document.getElementById("app")?.dataset.phase === "battle",
-      { timeout: 10000 },
-    );
+    await page.waitForFunction(() => document.getElementById("app")?.dataset.phase === "battle", { timeout: 10000 });
     await page.waitForTimeout(1500);
     await page.evaluate(() => {
       window.applyUiLayout?.();
@@ -129,12 +130,12 @@ for (const profile of PHASE_PROFILES) {
     });
     await page.waitForTimeout(800);
 
-      const battle = await readBattleState(page);
-      assert(battle.phase === "battle", `expected battle, got ${battle.phase}`);
-      const fxScale = await page.evaluate(() => parseFloat(
-        getComputedStyle(document.documentElement).getPropertyValue("--fx-float-scale"),
-      ) || 0);
-      assert(fxScale > 0 && fxScale <= 1.05, `fx-float-scale missing: ${fxScale}`);
+    const battle = await readBattleState(page);
+    assert(battle.phase === "battle", `expected battle, got ${battle.phase}`);
+    const fxScale = await page.evaluate(
+      () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--fx-float-scale")) || 0,
+    );
+    assert(fxScale > 0 && fxScale <= 1.05, `fx-float-scale missing: ${fxScale}`);
     assert(battle.heroPlacement === "flank-arena", `hero placement: ${battle.heroPlacement}`);
     assert(battle.arenaLayout === "true", `arena layout not active: ${battle.arenaLayout}`);
     assert(battle.floorH > 36, `combat floor too small: ${battle.floorH}px`);
@@ -153,14 +154,20 @@ for (const profile of PHASE_PROFILES) {
         vh,
       };
     });
-    assert(inViewport.floorBottom <= inViewport.vh + 4, `combat floor below viewport: ${inViewport.floorBottom} > ${inViewport.vh}`);
+    assert(
+      inViewport.floorBottom <= inViewport.vh + 4,
+      `combat floor below viewport: ${inViewport.floorBottom} > ${inViewport.vh}`,
+    );
     assert(inViewport.sceneTop >= -8, `battle scene clipped above: top=${inViewport.sceneTop}`);
 
-    console.log(`✓ ${profile.id} battle`, JSON.stringify({
-      battleProfile: battle.battleProfile,
-      floorH: battle.floorH,
-      heroZoneH: battle.heroZoneH,
-    }));
+    console.log(
+      `✓ ${profile.id} battle`,
+      JSON.stringify({
+        battleProfile: battle.battleProfile,
+        floorH: battle.floorH,
+        heroZoneH: battle.heroZoneH,
+      }),
+    );
   } catch (e) {
     failures.push({ id: profile.id, error: e.message });
     console.error(`✗ ${profile.id}: ${e.message}`);

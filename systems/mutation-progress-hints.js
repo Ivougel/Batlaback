@@ -31,11 +31,7 @@ function buildLoadoutFingerprint(rt) {
   const slotItemIds = typeof listSlotItemIds === "function"
     ? listSlotItemIds(rt.items || []).sort()
     : [];
-  const enh = rt.enhancements || {};
-  const enhKey = ["head", "chest", "boots"]
-    .map((slot) => `${slot}:${enh[slot] || ""}`)
-    .join("|");
-  return JSON.stringify({ itemIds, slotItemIds, enhKey, classId: rt.classId, companionId: rt.companionId });
+  return JSON.stringify({ itemIds, slotItemIds, classId: rt.classId, companionId: rt.companionId });
 }
 
 function captureMutationProgressSnapshot(progress) {

@@ -591,6 +591,10 @@ const PrepDragArc = (() => {
   }
 
   function schedulePulse() {
+    if (typeof BattleFxTier !== "undefined" && BattleFxTier.prepDragArcFxEnabled
+      && !BattleFxTier.prepDragArcFxEnabled()) {
+      return;
+    }
     if (rafId != null) return;
     rafId = requestAnimationFrame((ts) => {
       rafId = null;
@@ -615,7 +619,6 @@ const PrepDragArc = (() => {
     if (typeof dragFrom === "undefined" || !dragFrom) return false;
     return dragFrom.type === "shop"
       || dragFrom.type === "bench"
-      || dragFrom.type === "enhancement"
       || dragFrom.type === "item"
       || dragFrom.type === "container";
   }

@@ -1,11 +1,11 @@
 #!/usr/bin/env node
+import { execSync } from "node:child_process";
 /**
  * Описания предметов для игроков 16+: понятный русский, без dev-жаргона.
  * node tools/humanize-item-descriptions.mjs [--apply] [--report tools/description-audit.json]
  */
 import fs from "node:fs";
 import path from "node:path";
-import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -47,8 +47,13 @@ const TAG = {
 };
 
 const THRESHOLD_TYPES = new Set([
-  "debuffThreshold", "mutualHpThreshold", "foeHpThreshold", "hpThreshold",
-  "stackThreshold", "activationThreshold", "heartThreshold",
+  "debuffThreshold",
+  "mutualHpThreshold",
+  "foeHpThreshold",
+  "hpThreshold",
+  "stackThreshold",
+  "activationThreshold",
+  "heartThreshold",
 ]);
 
 const GEM_SOCKET = {
@@ -141,9 +146,7 @@ function triggerPrefix(trigger, phase) {
 function statMultLine(e) {
   const v = Number(e.value) || 0;
   if (e.stat === "cooldown") {
-    return v <= 0
-      ? `Предметы перезаряжаются на ${pct(v)} быстрее`
-      : `Предметы перезаряжаются на ${pct(v)} медленнее`;
+    return v <= 0 ? `Предметы перезаряжаются на ${pct(v)} быстрее` : `Предметы перезаряжаются на ${pct(v)} медленнее`;
   }
   if (e.stat === "magicDamage") return `+${pct(v)} к магическому урону`;
   if (e.stat === "heal") return `+${pct(v)} к лечению`;
@@ -215,7 +218,9 @@ function describePeriodic(e, item) {
   if (e.restoreStamina) bits.push(`+${e.restoreStamina} выносливости`);
   if (e.randomTimedBuff) bits.push("даёт случайное усиление");
   if (e.weaponDamageBonus) {
-    bits.push(item?.isContainer ? `оружие внутри +${e.weaponDamageBonus} урона` : `оружие +${e.weaponDamageBonus} урона`);
+    bits.push(
+      item?.isContainer ? `оружие внутри +${e.weaponDamageBonus} урона` : `оружие +${e.weaponDamageBonus} урона`,
+    );
   }
   if (e.stunEvery) bits.push(`оглушение ${e.stunDuration || 1}с каждые ${e.stunEvery} тика`);
   if (e.applyColdOrSelf) bits.push("+1 холод (себе или врагу)");
@@ -275,7 +280,9 @@ function describeMeta(e) {
 }
 
 function describeGem(item) {
-  const m = String(item.id).match(/^(?:chipped|flawed|regular|flawless|perfect)_(amethyst|emerald|ruby|sapphire|topaz)$/);
+  const m = String(item.id).match(
+    /^(?:chipped|flawed|regular|flawless|perfect)_(amethyst|emerald|ruby|sapphire|topaz)$/,
+  );
   if (!m) return null;
   const sockets = GEM_SOCKET[m[1]];
   if (!sockets) return null;
@@ -306,9 +313,7 @@ function describeEffect(e, item, { forActivation = false } = {}) {
       return forActivation || !trig ? `Блок ${e.value}` : `${trig}: блок ${e.value}`;
     case "poison":
       if (trig) {
-        const body = e.chance != null && e.chance < 1
-          ? `${pct(e.chance)} шанс: +${e.value} яда`
-          : `+${e.value} яда`;
+        const body = e.chance != null && e.chance < 1 ? `${pct(e.chance)} шанс: +${e.value} яда` : `+${e.value} яда`;
         return `${trig}: ${body}`;
       }
       if (e.chance != null && e.chance < 1) return `${pct(e.chance)} шанс: +${e.value} яда`;
@@ -318,7 +323,7 @@ function describeEffect(e, item, { forActivation = false } = {}) {
         ? `${trig}: замедляет на ${pct(e.value)} на ${e.duration || 3} сек`
         : `Замедляет на ${pct(e.value)} на ${e.duration || 3} сек`;
     case "buffTimed": {
-      const stat = e.stat === "damage" ? "урона" : (e.stat || "урона");
+      const stat = e.stat === "damage" ? "урона" : e.stat || "урона";
       const dur = `${e.duration || 3} сек`;
       return forActivation || !trig
         ? `+${pct(e.value)} ${stat} на ${dur}`
@@ -362,7 +367,7 @@ function describeEffect(e, item, { forActivation = false } = {}) {
       if (e.attackBuff) parts.push(`следующая атака +${e.attackBuff} урона`);
       if (e.heal) parts.push(`лечит на ${e.heal} HP`);
       const body = parts.join(", ");
-      return forActivation ? `При активации: ${body}` : (trig ? `${trig}: ${body}` : body);
+      return forActivation ? `При активации: ${body}` : trig ? `${trig}: ${body}` : body;
     }
     case "damagePerStack":
       return `+${e.value || 1} урона за каждый ${stackWord(e.stack)}`;
@@ -588,14 +593,20 @@ export function humanizeItemDescription(item) {
     if (e.type === "periodic" || isPassiveEffect(e) || isActivationEffect(e)) return;
     if (THRESHOLD_TYPES.has(e.type)) return;
     const line = describeEffect(e, item);
-    if (line) { lines.push(line); used.add(i); }
+    if (line) {
+      lines.push(line);
+      used.add(i);
+    }
   });
 
   effects.forEach((e, i) => {
     if (!isPassiveEffect(e) || used.has(i)) return;
     if (e.type === "periodic") return;
     const line = describeEffect(e, item);
-    if (line) { lines.push(line); used.add(i); }
+    if (line) {
+      lines.push(line);
+      used.add(i);
+    }
   });
 
   effects.forEach((e, i) => {
@@ -605,20 +616,23 @@ export function humanizeItemDescription(item) {
   });
 
   [...THRESHOLD_TYPES].forEach((type) => {
-    effects.filter((e) => e.type === type).forEach((e) => {
-      const line = describeEffect(e, item);
-      if (line) lines.push(line);
-    });
+    effects
+      .filter((e) => e.type === type)
+      .forEach((e) => {
+        const line = describeEffect(e, item);
+        if (line) lines.push(line);
+      });
   });
 
   const activationFx = effects.filter((e, i) => !used.has(i) && isActivationEffect(e));
   if (activationFx.length) {
     const bundle = describeActivationBundle(activationFx, item);
     if (bundle) lines.push(bundle.replace(/\.$/, ""));
-    else activationFx.forEach((e) => {
-      const line = describeEffect(e, item, { forActivation: true });
-      if (line) lines.push(line);
-    });
+    else
+      activationFx.forEach((e) => {
+        const line = describeEffect(e, item, { forActivation: true });
+        if (line) lines.push(line);
+      });
   }
 
   const shopMeta = meta.filter((e) => String(e.phase || "").startsWith("shop") || e.phase === "passive");
@@ -652,8 +666,9 @@ export function humanizeItemDescription(item) {
 
 function main() {
   const apply = process.argv.includes("--apply");
-  const reportPath = process.argv.find((a) => a.startsWith("--report="))?.slice(9)
-    || path.join(ROOT, "tools/description-humanize-report.json");
+  const reportPath =
+    process.argv.find((a) => a.startsWith("--report="))?.slice(9) ||
+    path.join(ROOT, "tools/description-humanize-report.json");
 
   const data = JSON.parse(fs.readFileSync(MIGRATED, "utf8"));
   const report = {
@@ -694,7 +709,9 @@ function main() {
     }
   }
 
-  console.log(`Описания: изменено ${report.summary.changed}, без изменений ${report.summary.unchanged}, пусто ${report.summary.empty}`);
+  console.log(
+    `Описания: изменено ${report.summary.changed}, без изменений ${report.summary.unchanged}, пусто ${report.summary.empty}`,
+  );
   console.log(`Отчёт: ${reportPath}`);
   if (!apply) console.log("Запустите с --apply для записи в items-migrated.json");
 }

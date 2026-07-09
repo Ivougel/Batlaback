@@ -1,56 +1,52 @@
 ---
-description: Зафиксированный эталон HUD prep/battle — iPad mini 7 PWA; размеры и зоны не менять
+description: Адаптивный HUD — игровой интерфейс доступен на всех профилях viewport; не привязываться к эталону iPad
 globs: ui-layout.js,styles/prep-*.css,styles/tablet-side.css,styles/hero-*.css,styles/battle-*.css,styles/shop.css,components/prep-hud-*.js,LAYOUT.md
 alwaysApply: true
 ---
 
-# Эталон HUD (iPad mini 7 PWA) — LOCKED
+# Адаптивный HUD — доступность на всех экранах
 
-**Git-база:** `464f042` (2026-07-03, вечер).  
-**Референсы:** `tools/baseline/prep-ipad-mini-pwa-gold.png`, `tools/baseline/battle-ipad-mini-pwa-gold.png`  
-**Viewport:** 1133×744 landscape, `data-ui-surface="tablet-side"`, `data-hero-card-mode="full-bleed"`.
+**Цель:** на любом поддерживаемом viewport игрок видит и может использовать весь игровой интерфейс — без обрезанных кнопок, недоступной сетки и скрытых критичных панелей.
 
-## Prep — как должно быть (не менять геометрию)
+**Не цель:** пиксельное совпадение с одним устройством. Скрины `tools/baseline/*-gold.png` (iPad mini PWA) — **опциональный** регрессионный референс, не эталон для блокировки правок.
 
-| Зона | Эталон |
-|------|--------|
-| **Hero card HUD** | Крупный прямоугольный bust-портрет слева + stats/mutation/enhancements справа. Не кружок, не compact top-bar. |
-| **Герой на поле** | Full-body слева (`prep-character-layer`), не перекрывает сетку. |
-| **Инвентарь (7×9)** | Прижат **к правому краю** поля, вплотную к магазину. Слева — воздух под героя (`--prep-hero-reserve-w`). |
-| **Магазин** | Узкая правая колонка, высота по контенту, компактные ряды. Скамейка — FAB/popover, не раздувает панель. |
-| **Bottom chrome** | Золото / HP / раунд / таймер / «БОЙ» — как на gold-скрине. |
+## Поддерживаемые профили
 
-## Battle — как должно быть
+См. [LAYOUT.md](LAYOUT.md): iPhone portrait/landscape, iPad portrait/landscape, desktop.  
+Оркестратор: `ui-layout.js` → `applyLayoutContext()`, `measureLayoutZones()`, `applyMeasuredZoneFit()`.
 
-| Зона | Эталон |
-|------|--------|
-| **Раскладка** | `flank-arena`: full-bleed портреты по бокам, арена по центру. |
-| **Портреты** | Крупные, full-body, HP/stamina под героем. |
-| **Toolbar** | x1/x2/x3, пропуск, emoji-статусы — в нижнем chrome, не ломая колонки героев. |
+## Что должно быть доступно всегда
 
-## Можно менять (косметика)
+| Экран | Критичный UI |
+|-------|----------------|
+| **Prep** | сетка инвентаря, магазин (или FAB/sheet), скамейка (или popover), hero HUD, bottom chrome (золото / HP / «БОЙ») |
+| **Battle** | арена/поле, портреты или компактный HUD, HP/stamina, toolbar (скорость, пропуск) |
+| **Intro** | шаги выбора без page-scroll; CTA и назад в viewport |
+| **Модалки** | кнопки действий и основной контент без выхода за экран |
 
-- Цвета, темы (meadow/diablo), рамки, glow, SFX, анимации, tooltip-тексты
-- Иконки предметов, emoji-орбиты, lobby-roster polish
-- Новые кнопки **внутри** существующих зон, если не сдвигают соседей
+## При нехватке места (порядок сжатия)
 
-## Нельзя без явного запроса пользователя
+1. Canvas / combat floor / декоративные отступы
+2. Второстепенные подписи, footer intro, косметика
+3. Компактные варианты HUD (chips, clamp типографики) — **допустимы** по профилю
+4. `--ui-scale` / profile tokens — **допустимы** для вписывания в viewport
+5. **Нельзя** убирать доступ к магазину, скамейке, сетке, старту боя без альтернативы (FAB, sheet, popover)
 
-- Менять `--shop-panel-w`, `html[data-layout-profile="tablet-landscape"]` в `tokens.css`, `getPrepProfileCfg()`, row-h магазина
-- Менять ориентацию/позицию сетки (7×9 → другое, center вместо flex-end)
-- Сворачивать hero-card HUD в круг / compact chip
-- Раздувать магазин (340px+, крупные touch-карточки на всю колонку)
-- Переносить bench обратно в `#shop-panel` на tablet-side
-- Менять `html[data-battle-profile="tablet-landscape-side"]` в `tokens.css` / `getBattleProfileCfg()` — zone shares, hero img ratio
+## Допустимо менять по профилю
 
-## Файлы-владельцы (осторожно)
+- Коэффициенты в `tokens.css` (`data-layout-profile`, `data-battle-profile`)
+- `getPrepProfileCfg()` / `getBattleProfileCfg()` в `ui-layout.js`
+- Компактный hero-card / flank-arena / drawer-layout на узких экранах
+- Размеры shop panel, grid alignment, zone shares — если UI остаётся playable на всех 5 профилях
 
-- `ui-layout.js` — `applyLayoutContext`, `syncTabletSidePrepGridMetrics`, `applyPrepProfileVars`, `fitFlankArenaBattleLayout`
-- `styles/tokens.css` — коэффициенты `data-layout-profile` / `data-battle-profile`
-- `styles/prep-tablet-zone-layout.css`, `styles/tablet-side.css`, `styles/prep-hero-card.css`
-- `styles/hero-portrait-frame.css`, `styles/hero-card.css`, `styles/battle-arena-layout.css`
+## По-прежнему осторожно
+
+- `applyLayoutContext`, `syncTabletSidePrepGridMetrics`, `fitFlankArenaBattleLayout` — трогать осознанно, прогонять тесты
+- Не ломать DOM-контракт экранов ([docs/ui-screens-modes.md](docs/ui-screens-modes.md))
+- Селектор `html[data-ui-surface="…"], html[data-prep-layout="…"]` **без пробела** после запятой — скрывает весь `<html>`
 
 ## Перед merge UI-изменений
 
-1. Сверить с gold PNG на iPad mini PWA (1133×744)
-2. `npm run test:layout` + `npm run test:snapshots` если трогали layout/CSS
+1. Проверить **все релевантные профили** (не только iPad): `npm run test:layout`, `npm run test:geometry`
+2. При визуале: `npm run test:snapshots` (обновить эталоны при намеренном изменении: `npm run test:snapshots:update`)
+3. Ручной smoke: intro, prep, battle на phone portrait + desktop minimum

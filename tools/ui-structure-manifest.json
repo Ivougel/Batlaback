@@ -1,7 +1,7 @@
 {
   "version": 2,
   "fixedAt": "2026-07-04",
-  "gameModes": ["solo", "versus", "hardbot", "lobby", "lobby2p", "campaign"],
+  "gameModes": ["classic", "solo", "path", "versus", "hardbot", "lobby", "lobby2p", "campaign"],
   "phases": {
     "js": ["classSelect", "prep", "battle", "replay"],
     "appDataset": ["prep", "battle", "replay"]
@@ -27,9 +27,9 @@
   ],
   "appSheets": [],
   "gamePanels": [
-    { "id": "shop-panel", "phases": ["prep"], "modes": ["solo", "versus", "hardbot", "lobby", "campaign"] },
-    { "id": "bench-panel", "phases": ["prep"], "modes": ["solo", "versus", "hardbot", "lobby", "campaign"] },
-    { "id": "prep-top-bar", "phases": ["prep"], "modes": ["solo", "versus", "hardbot", "lobby", "campaign"] },
+    { "id": "shop-panel", "phases": ["prep"], "modes": ["classic", "solo", "path", "versus", "hardbot", "lobby", "campaign"] },
+    { "id": "bench-panel", "phases": ["prep"], "modes": ["classic", "solo", "path", "versus", "hardbot", "lobby", "campaign"] },
+    { "id": "prep-top-bar", "phases": ["prep"], "modes": ["classic", "solo", "path", "versus", "hardbot", "lobby", "campaign"] },
     { "id": "prep-field-column", "phases": ["prep", "battle", "replay"], "modes": ["*"] },
     { "id": "lobby-prep-field-roster", "phases": ["prep"], "modes": ["lobby"] },
     { "id": "lobby2p-prep-layout", "phases": ["prep"], "modes": ["lobby2p"] },
@@ -62,7 +62,7 @@
     {
       "id": "iphone-landscape",
       "viewport": { "width": 932, "height": 430 },
-      "expect": { "prepLayout": "mobile", "uiSurface": "phone-landscape", "battleProfile": "phone-landscape" }
+      "expect": { "prepLayout": "side", "uiSurface": "tablet-side", "battleProfile": "phone-landscape" }
     },
     {
       "id": "ipad-landscape",
@@ -71,7 +71,7 @@
     },
     {
       "id": "desktop",
-      "viewport": { "width": 1440, "height": 900 },
+      "viewport": { "width": 1600, "height": 1000 },
       "expect": { "prepLayout": "side", "uiSurface": "desktop", "battleProfile": "desktop-landscape" }
     }
   ]

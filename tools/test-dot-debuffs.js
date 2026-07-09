@@ -72,8 +72,6 @@ const {
   createRuntimeState,
   battleTick,
   collectBattleStatusEffects,
-  resolveGroundFireValue,
-  getMaxGroundFireFromEffects,
   getBattleEffectsForItem,
 } = sandbox;
 
@@ -102,15 +100,15 @@ executeEffect(state, { type: "poison", value: 2 }, pv, state.player, state.playe
 assert(state.player.poisonStacks >= 1, "self-poison should stack on self");
 
 const fsItem = state.enemy.items[0];
-const groundValues = getBattleEffectsForItem(fsItem)
-  .filter((e) => e.type === "groundFire")
-  .map((e) => e.value || 0);
 const scaledGround = sandbox.resolveGroundFireValue(getBattleEffectsForItem(fsItem));
 state.player.groundFire = Math.max(state.player.groundFire, scaledGround);
 assert(state.player.groundFire >= 2, `groundFire should be >= 2 after pacing, got ${state.player.groundFire}`);
 
 // Несколько groundFire на одном предмете — берётся максимум
-const sunShieldFx = [{ type: "groundFire", value: 1 }, { type: "groundFire", value: 2 }];
+const sunShieldFx = [
+  { type: "groundFire", value: 1 },
+  { type: "groundFire", value: 2 },
+];
 assert(sandbox.getMaxGroundFireFromEffects(sunShieldFx) === 2, "max groundFire should be 2");
 
 // Лимит стаков яда
@@ -123,10 +121,8 @@ state.enemy.slowDebuff = 0.15;
 state.enemy.slowTimer = 4;
 state.enemy.stunTimer = 1.5;
 
-const playerDebuffIds = collectBattleStatusEffects(state.player, state.player.items, state)
-  .debuffs.map((d) => d.id);
-const enemyDebuffIds = collectBattleStatusEffects(state.enemy, state.enemy.items, state)
-  .debuffs.map((d) => d.id);
+const playerDebuffIds = collectBattleStatusEffects(state.player, state.player.items, state).debuffs.map((d) => d.id);
+const enemyDebuffIds = collectBattleStatusEffects(state.enemy, state.enemy.items, state).debuffs.map((d) => d.id);
 
 assert(playerDebuffIds.includes("poison"), "self poison chip missing");
 assert(playerDebuffIds.includes("ground-fire"), "ground fire chip missing on player");

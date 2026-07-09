@@ -59,11 +59,14 @@ for (const file of ENGINE_FILES) {
   vm.runInContext(fs.readFileSync(path.join(ROOT, file), "utf8"), ctx);
 }
 
-vm.runInContext(`
+vm.runInContext(
+  `
   if (typeof ITEM_CATALOG !== "undefined") globalThis.ITEM_CATALOG = ITEM_CATALOG;
   if (typeof getClassById !== "undefined") globalThis.getClassById = getClassById;
   if (typeof MAX_BATTLE_DURATION !== "undefined") globalThis.MAX_BATTLE_DURATION = MAX_BATTLE_DURATION;
-`, ctx);
+`,
+  ctx,
+);
 
 [
   "initBattleAnimations",
@@ -86,13 +89,7 @@ vm.runInContext(`
 
 sandbox.battleTeamLabel = (team) => (team === "player" ? "Игрок" : team === "enemy" ? "Враг" : team);
 
-const {
-  createPlacedItem,
-  createBattleState,
-  battleTick,
-  applySynergyModifiers,
-  MAX_BATTLE_DURATION,
-} = sandbox;
+const { createPlacedItem, createBattleState, battleTick, applySynergyModifiers, MAX_BATTLE_DURATION } = sandbox;
 
 function getCatalog() {
   return sandbox.ITEM_CATALOG;
@@ -104,8 +101,15 @@ const PRESETS = {
     label: "Жрец: food sustain",
     classId: "priest",
     items: [
-      "iron_helmet", "apple", "apple", "apple", "banana",
-      "healing_herb", "garlic", "apprentice_staff", "iron_patch",
+      "iron_helmet",
+      "apple",
+      "apple",
+      "apple",
+      "banana",
+      "healing_herb",
+      "garlic",
+      "apprentice_staff",
+      "iron_patch",
     ],
   },
   priest_minimal: {
@@ -325,8 +329,8 @@ function buildLoadout(presetKey, teamPrefix) {
 }
 
 function sumSideStats(side, state) {
-  let damageDealt = side.totalDamageDealt || 0;
-  let healingDone = side.totalHealingDone || 0;
+  const damageDealt = side.totalDamageDealt || 0;
+  const healingDone = side.totalHealingDone || 0;
   let blockDone = 0;
 
   if (state?.itemDamageStats) {
@@ -366,8 +370,7 @@ function runBattle(playerKey, enemyKey, round) {
   const enemyDamageTaken = Math.max(0, enemyStartHp - state.enemy.hp + enemyStats.healingDone);
 
   const maxDur = MAX_BATTLE_DURATION || 120;
-  const timedOut = state.elapsed >= maxDur - 0.001
-    || (state.finished && state.player.hp > 0 && state.enemy.hp > 0);
+  const timedOut = state.elapsed >= maxDur - 0.001 || (state.finished && state.player.hp > 0 && state.enemy.hp > 0);
 
   return {
     playerKey,
@@ -392,15 +395,11 @@ function runBattle(playerKey, enemyKey, round) {
     enemyBlock: Math.round(enemyStats.blockDone),
     playerDamageTaken: Math.round(playerDamageTaken * 10) / 10,
     enemyDamageTaken: Math.round(enemyDamageTaken * 10) / 10,
-    playerHealRatio: playerStats.damageDealt > 0
-      ? Math.round((playerStats.healingDone / playerStats.damageDealt) * 100) / 100
-      : null,
-    playerHealVsTaken: playerDamageTaken > 0
-      ? Math.round((playerStats.healingDone / playerDamageTaken) * 100) / 100
-      : null,
-    enemyHealVsTaken: enemyDamageTaken > 0
-      ? Math.round((enemyStats.healingDone / enemyDamageTaken) * 100) / 100
-      : null,
+    playerHealRatio:
+      playerStats.damageDealt > 0 ? Math.round((playerStats.healingDone / playerStats.damageDealt) * 100) / 100 : null,
+    playerHealVsTaken:
+      playerDamageTaken > 0 ? Math.round((playerStats.healingDone / playerDamageTaken) * 100) / 100 : null,
+    enemyHealVsTaken: enemyDamageTaken > 0 ? Math.round((enemyStats.healingDone / enemyDamageTaken) * 100) / 100 : null,
     healAdvantagePlayer: Math.round((playerStats.healingDone - playerStats.damageDealt) * 10) / 10,
     healAdvantageEnemy: Math.round((enemyStats.healingDone - enemyStats.damageDealt) * 10) / 10,
     playerSkippedItems: playerLoadout.skipped,
@@ -410,9 +409,7 @@ function runBattle(playerKey, enemyKey, round) {
 
 function csvEscape(value) {
   const s = value == null ? "" : String(value);
-  return s.includes(",") || s.includes('"') || s.includes("\n")
-    ? `"${s.replace(/"/g, '""')}"`
-    : s;
+  return s.includes(",") || s.includes('"') || s.includes("\n") ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
 function toCsvRow(obj, headers) {
@@ -473,16 +470,20 @@ function printSummary(results) {
   const pfAvgDmg = priestFood.reduce((s, r) => s + r.playerDamageDealt, 0) / (priestFood.length || 1);
 
   console.log(`\n=== Сводка ${n} автосимов ===`);
-  console.log(`Бои: ${n} | Таймаут 120с: ${timeouts} (${Math.round(timeouts / n * 100)}%)`);
+  console.log(`Бои: ${n} | Таймаут 120с: ${timeouts} (${Math.round((timeouts / n) * 100)}%)`);
   console.log(`Победы — игрок: ${playerWins}, враг: ${enemyWins}, ничья: ${draws}`);
   console.log(`Средняя длительность: ${avgDuration.toFixed(1)}с`);
-  console.log(`Жрец food (${priestFood.length} боёв): таймаут ${pfTimeouts}, ср. хил ${pfAvgHeal.toFixed(1)}, ср. урон ${pfAvgDmg.toFixed(1)}`);
+  console.log(
+    `Жрец food (${priestFood.length} боёв): таймаут ${pfTimeouts}, ср. хил ${pfAvgHeal.toFixed(1)}, ср. урон ${pfAvgDmg.toFixed(1)}`,
+  );
 
   SIM_ROUNDS.forEach((round) => {
     const subset = results.filter((r) => r.round === round);
     const to = subset.filter((r) => r.timeout).length;
     const avg = subset.reduce((s, r) => s + r.durationSec, 0) / (subset.length || 1);
-    console.log(`  Раунд ${round}: ${subset.length} боёв, таймаут ${to} (${Math.round(to / (subset.length || 1) * 100)}%), ср. ${avg.toFixed(1)}с`);
+    console.log(
+      `  Раунд ${round}: ${subset.length} боёв, таймаут ${to} (${Math.round((to / (subset.length || 1)) * 100)}%), ср. ${avg.toFixed(1)}с`,
+    );
   });
 
   const byPlayerPreset = aggregateByKey(results, (r) => r.playerKey)
@@ -490,20 +491,26 @@ function printSummary(results) {
     .slice(0, 8);
   console.log("\nТоп пресетов игрока по ср. хилу:");
   byPlayerPreset.forEach((row) => {
-    console.log(`  ${row.key}: хил ${row.avgPlayerHeal}, урон ${row.avgPlayerDmg}, таймаут ${row.timeoutRate}% (${row.count} боёв)`);
+    console.log(
+      `  ${row.key}: хил ${row.avgPlayerHeal}, урон ${row.avgPlayerDmg}, таймаут ${row.timeoutRate}% (${row.count} боёв)`,
+    );
   });
 
   const topHeal = [...results].sort((a, b) => b.playerHealing - a.playerHealing).slice(0, 5);
   console.log("\nТоп-5 по лечению игрока:");
   topHeal.forEach((r) => {
-    console.log(`  ${r.durationSec}s | ${r.playerLabel} vs ${r.enemyLabel} R${r.round} | хил ${r.playerHealing} | урон ${r.playerDamageDealt} | ${r.winner}${r.timeout ? " (timeout)" : ""}`);
+    console.log(
+      `  ${r.durationSec}s | ${r.playerLabel} vs ${r.enemyLabel} R${r.round} | хил ${r.playerHealing} | урон ${r.playerDamageDealt} | ${r.winner}${r.timeout ? " (timeout)" : ""}`,
+    );
   });
 
   const topTimeout = results.filter((r) => r.timeout).slice(0, 8);
   if (topTimeout.length) {
     console.log("\nПримеры боёв до таймера:");
     topTimeout.forEach((r) => {
-      console.log(`  ${r.playerLabel} vs ${r.enemyLabel} R${r.round} → ${r.winner} | P ${r.playerEndHp}/${r.playerMaxHp} E ${r.enemyEndHp}/${r.enemyMaxHp}`);
+      console.log(
+        `  ${r.playerLabel} vs ${r.enemyLabel} R${r.round} → ${r.winner} | P ${r.playerEndHp}/${r.playerMaxHp} E ${r.enemyEndHp}/${r.enemyMaxHp}`,
+      );
     });
   }
 
@@ -541,25 +548,41 @@ function main() {
   });
 
   const headers = [
-    "simId", "round", "playerKey", "enemyKey", "playerLabel", "enemyLabel",
-    "playerClass", "enemyClass", "winner", "timeout", "durationSec",
-    "playerEndHp", "playerMaxHp", "enemyEndHp", "enemyMaxHp",
-    "playerDamageDealt", "enemyDamageDealt",
-    "playerHealing", "enemyHealing",
-    "playerBlock", "enemyBlock",
-    "playerDamageTaken", "enemyDamageTaken",
-    "playerHealVsTaken", "playerHealRatio", "enemyHealVsTaken",
-    "healAdvantagePlayer", "healAdvantageEnemy",
+    "simId",
+    "round",
+    "playerKey",
+    "enemyKey",
+    "playerLabel",
+    "enemyLabel",
+    "playerClass",
+    "enemyClass",
+    "winner",
+    "timeout",
+    "durationSec",
+    "playerEndHp",
+    "playerMaxHp",
+    "enemyEndHp",
+    "enemyMaxHp",
+    "playerDamageDealt",
+    "enemyDamageDealt",
+    "playerHealing",
+    "enemyHealing",
+    "playerBlock",
+    "enemyBlock",
+    "playerDamageTaken",
+    "enemyDamageTaken",
+    "playerHealVsTaken",
+    "playerHealRatio",
+    "enemyHealVsTaken",
+    "healAdvantagePlayer",
+    "healAdvantageEnemy",
   ];
 
   const csvPath = process.argv.includes("--csv")
     ? process.argv[process.argv.indexOf("--csv") + 1]
     : path.join(__dirname, "battle-auto-sim-results.csv");
 
-  const csv = [
-    headers.join(","),
-    ...results.map((row) => toCsvRow(row, headers)),
-  ].join("\n");
+  const csv = [headers.join(","), ...results.map((row) => toCsvRow(row, headers))].join("\n");
 
   fs.writeFileSync(csvPath, csv, "utf8");
   console.log(`Записано ${results.length} симов → ${csvPath}`);

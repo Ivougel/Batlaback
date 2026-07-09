@@ -1,6 +1,6 @@
-import { chromium, devices } from "playwright";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { chromium, devices } from "playwright";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const url = `file://${root}/index.html`;

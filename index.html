@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="styles/tokens.css?v=21">
   <link rel="stylesheet" href="styles/layers.css?v=7">
   <link rel="stylesheet" href="styles/bottom-chrome.css?v=25">
-  <link rel="stylesheet" href="styles.css?v=41">
+  <link rel="stylesheet" href="styles.css?v=42">
   <link rel="stylesheet" href="styles/shop.css?v=11">
   <link rel="stylesheet" href="styles/item-card-chrome.css?v=14">
   <link rel="stylesheet" href="styles/shop-pin-chrome.css?v=11">
@@ -25,7 +25,6 @@
   <link rel="stylesheet" href="styles/campaign.css?v=1">
   <link rel="stylesheet" href="styles/mutations.css?v=4">
   <link rel="stylesheet" href="styles/battle-archetype-banner.css?v=1">
-  <link rel="stylesheet" href="styles/enhancements.css?v=7">
   <link rel="stylesheet" href="styles/combat-feed.css?v=5">
   <link rel="stylesheet" href="styles/surface-profiles.css?v=3">
   <link rel="stylesheet" href="styles/container-queries.css?v=2">
@@ -45,15 +44,16 @@
   <link rel="stylesheet" href="styles/battle-hero-levitate.css?v=1">
   <link rel="stylesheet" href="styles/hero-portrait-frame.css?v=5">
   <link rel="stylesheet" href="styles/prep-hero-card.css?v=20">
+  <link rel="stylesheet" href="styles/prep-hero-card-banner.css?v=1">
   <link rel="stylesheet" href="styles/prep-hud-collapse.css?v=2">
-  <link rel="stylesheet" href="styles/class-picker.css?v=8">
+  <link rel="stylesheet" href="styles/class-picker.css?v=9">
   <link rel="stylesheet" href="styles/class-detail-popup.css?v=1">
   <link rel="stylesheet" href="styles/class-hero-showcase.css?v=8">
   <link rel="stylesheet" href="styles/class-hero-portrait-frame.css?v=1">
-  <link rel="stylesheet" href="styles/class-intro-theme.css?v=9">
+  <link rel="stylesheet" href="styles/class-intro-theme.css?v=10">
   <link rel="stylesheet" href="styles/class-intro-summary.css?v=1">
   <link rel="stylesheet" href="styles/tablet-intro-typography.css?v=2">
-  <link rel="stylesheet" href="styles/desktop-intro-layout.css?v=1">
+  <link rel="stylesheet" href="styles/desktop-intro-layout.css?v=2">
   <link rel="stylesheet" href="styles/tablet-pwa-layout.css?v=7">
   <link rel="stylesheet" href="styles/mobile-prep.css?v=23">
   <link rel="stylesheet" href="styles/desktop-prep.css?v=2">
@@ -107,12 +107,20 @@
       } catch (e2) {
         document.documentElement.setAttribute("data-prep-hud-preset", "hero-card");
       }
+      try {
+        var c = localStorage.getItem("bb-prep-hero-card-preset") || "classic";
+        if (c !== "classic" && c !== "banner") c = "classic";
+        document.documentElement.setAttribute("data-prep-hero-card-preset", c);
+      } catch (e3) {
+        document.documentElement.setAttribute("data-prep-hero-card-preset", "classic");
+      }
     })();
   </script>
   <script src="systems/layout-scales.js?v=2"></script>
-  <script src="systems/battle-fx-tier.js?v=17"></script>
+  <script src="systems/battle-fx-tier.js?v=24"></script>
+  <script src="systems/runtime-loader.js?v=1"></script>
   <script src="systems/battle-hero-anchor.js?v=38"></script>
-  <script src="ui-layout.js?v=130"></script>
+  <script src="ui-layout.js?v=132"></script>
 </head>
 <body>
   <div id="ui-ornament-frame" class="ui-ornament-frame" aria-hidden="true">
@@ -340,7 +348,6 @@
             <span class="lobby2p-col-gold">💰 <b id="lobby2p-gold-0">0</b></span>
             <span class="lobby2p-col-hp">❤️ <b id="lobby2p-hp-0">100</b></span>
           </span>
-          <span class="lobby2p-col-equip" id="lobby2p-equip-0" aria-label="Усиления"></span>
         </header>
 
         <div class="lobby2p-split-gap" aria-hidden="true"></div>
@@ -355,7 +362,6 @@
             <span class="lobby2p-col-gold">💰 <b id="lobby2p-gold-1">0</b></span>
             <span class="lobby2p-col-hp">❤️ <b id="lobby2p-hp-1">100</b></span>
           </span>
-          <span class="lobby2p-col-equip" id="lobby2p-equip-1" aria-label="Усиления"></span>
         </header>
 
         <div class="lobby2p-canvas-host" id="lobby2p-canvas-host"></div>
@@ -493,11 +499,23 @@
         <p class="class-controls-hint">✚ — выбор · A — подтвердить · B — назад · + — начать</p>
         <div class="class-step" id="class-step-mode">
           <div class="game-mode-grid">
-            <button type="button" class="class-card game-mode-card glass-card selected" data-game-mode="solo">
+            <button type="button" class="class-card game-mode-card glass-card selected" data-game-mode="classic">
+              <span class="glass-card-icon glass-card-icon--classic class-icon" aria-hidden="true">🎒</span>
+              <span class="class-name">Классика</span>
+              <span class="class-desc">Backpack Battles: 4 слота магазина, прогресс предметов, без мутаций</span>
+              <span class="class-badge class-badge--classic">BB</span>
+            </button>
+            <button type="button" class="class-card game-mode-card glass-card" data-game-mode="solo">
               <span class="glass-card-icon glass-card-icon--solo class-icon" aria-hidden="true">🤖</span>
               <span class="class-name">Одиночная</span>
-              <span class="class-desc">Против ИИ, без ограничений по времени</span>
+              <span class="class-desc">Против ИИ, полный каталог — для тестов и экспериментов</span>
               <span class="class-badge class-badge--solo">Против бота</span>
+            </button>
+            <button type="button" class="class-card game-mode-card glass-card" data-game-mode="path">
+              <span class="glass-card-icon glass-card-icon--path class-icon" aria-hidden="true">⭐</span>
+              <span class="class-name">Путь героя</span>
+              <span class="class-desc">16 раундов · герои и предметы открываются постепенно</span>
+              <span class="class-badge class-badge--path">Прогресс</span>
             </button>
             <button type="button" class="class-card game-mode-card glass-card" data-game-mode="versus">
               <span class="glass-card-icon glass-card-icon--versus class-icon" aria-hidden="true">⚔️</span>
@@ -835,6 +853,25 @@
             </span>
           </label>
         </div>
+        <div class="settings-row settings-row--theme">
+          <span class="settings-label" id="settings-prep-hero-card-label">🧾 Карточка героя (prep)</span>
+        </div>
+        <div class="settings-theme-picker" role="radiogroup" aria-labelledby="settings-prep-hero-card-label">
+          <label class="settings-theme-option settings-prep-hero-card-option">
+            <input type="radio" name="prep-hero-card-preset" value="classic" checked>
+            <span class="settings-theme-copy">
+              <span class="settings-theme-name">🃏 Классическая</span>
+              <span class="settings-theme-hint">Bust-портрет на всю высоту карточки</span>
+            </span>
+          </label>
+          <label class="settings-theme-option settings-prep-hero-card-option">
+            <input type="radio" name="prep-hero-card-preset" value="banner">
+            <span class="settings-theme-copy">
+              <span class="settings-theme-name">📋 Баннер</span>
+              <span class="settings-theme-hint">Компактная шапка: портрет + путь и прогресс, адаптивно под экран</span>
+            </span>
+          </label>
+        </div>
         <div class="settings-row settings-row--select">
           <label class="settings-label" for="settings-sound-theme" id="settings-sound-theme-label">🔊 Звуковое оформление</label>
         </div>
@@ -1056,20 +1093,24 @@
   <script src="systems/item-pool-120.js?v=1"></script>
   <script src="items.js?v=4"></script>
   <script src="items-catalog.js"></script>
-  <script src="systems/enhancements.js?v=7"></script>
-  <script src="systems/enhancement-catalog-ext.js?v=1"></script>
-  <script src="systems/enhancement-crafting.js?v=3"></script>
+  <script src="systems/build-keys.js?v=1"></script>
   <script src="systems/backpack-amplifiers.js?v=2"></script>
   <script src="systems/meta-effects.js"></script>
   <script src="systems/triple-support-items.js?v=1"></script>
   <script src="shop-engine.js"></script>
-  <script src="systems/item-unlock-tiers.js?v=1"></script>
-  <script src="systems/meta-progress.js?v=1"></script>
+  <script src="systems/bb-classic.js?v=1"></script>
+  <script src="systems/bb-reference-unlocks.js?v=1"></script>
+  <script src="systems/item-unlock-tiers.js?v=2"></script>
+  <script src="systems/meta-progress.js?v=2"></script>
+  <script src="systems/item-presentation.js?v=1"></script>
   <script src="backpack-engine.js"></script>
+  <script src="systems/placement-slots.js?v=1"></script>
+  <script src="systems/placement-slots-catalog.js?v=1"></script>
   <script src="systems/mechanic-tags.js"></script>
   <script src="systems/item-locale.js"></script>
   <script src="systems/tooltip-effect-text.js"></script>
   <script src="systems/gem-sockets.js"></script>
+  <script src="systems/bb-reference-recipes.js?v=1"></script>
   <script src="systems/crafting.js"></script>
   <script src="systems/craft-pending.js?v=1"></script>
   <script src="systems/craft-preview.js?v=1"></script>
@@ -1079,26 +1120,27 @@
   <script src="systems/combat-profile.js?v=5"></script>
   <script src="components/run-stats.js"></script>
   <script src="components/player-characteristics.js"></script>
-  <script src="components/avatar-hero-effects.js?v=16"></script>
+  <script src="components/avatar-hero-effects.js?v=17"></script>
   <script src="systems/attack-events.js"></script>
   <script src="systems/battle-analyzer.js"></script>
   <script src="components/battle-damage-summary.js?v=5"></script>
-  <script src="systems/prep-countdown.js?v=3"></script>
+  <script src="systems/prep-countdown.js?v=4"></script>
   <script src="components/attack-animation-manager.js?v=2"></script>
   <script src="systems/animation.js"></script>
   <script src="components/accordion.js"></script>
   <script src="components/item-stats.js"></script>
   <script src="components/board-preview.js"></script>
-  <script src="components/battle-inventory-popover.js?v=13"></script>
+  <script src="components/battle-inventory-popover.js?v=14"></script>
   <script src="components/class-detail-popup.js?v=1"></script>
   <script src="components/recipe-book.js?v=2"></script>
   <script src="systems/visual-theme.js?v=1"></script>
   <script src="systems/prep-hud-preset.js?v=1"></script>
+  <script src="systems/prep-hero-card-preset.js?v=1"></script>
   <script src="components/prep-unit-frame-hud.js?v=1"></script>
   <script src="components/settings.js"></script>
   <script src="components/pass-laugh-balls.js?v=1"></script>
   <script src="components/escape-menu.js"></script>
-  <script src="components/combat-feed.js?v=2"></script>
+  <script src="components/combat-feed-stub.js?v=1"></script>
   <script src="components/mobile-prep-ui.js?v=2"></script>
   <script src="components/prep-shop-popover.js?v=4"></script>
   <script src="components/prep-bench-popover.js?v=7"></script>
@@ -1132,13 +1174,9 @@
   <script src="components/replay-timeline.js?v=1"></script>
   <script src="bot-solver.js?v=1"></script>
   <script src="ai-engine.js"></script>
-  <script src="hard-bot-engine.js"></script>
-  <script src="systems/lobby-opponents.js?v=6"></script>
   <script src="systems/dialogue-catalog.js?v=2"></script>
   <script src="components/dialogue-overlay.js?v=6"></script>
   <script src="systems/dialogue-engine.js?v=5"></script>
-  <script src="systems/lobby-fighter-avatar.js?v=10"></script>
-  <script src="systems/lobby-spectator.js?v=9"></script>
   <script src="battle-engine.js?v=2"></script>
   <script src="battle-float-layer.js?v=21"></script>
   <script src="components/thought-arena.js?v=31"></script>
@@ -1146,19 +1184,18 @@
   <script src="components/emotion-presenter.js?v=5"></script>
   <script src="emotion-engine.js?v=26"></script>
   <script src="battle-hud.js?v=6"></script>
-  <script src="components/lobby-2p-hud.js?v=3"></script>
   <script src="systems/prep-shop.js?v=8"></script>
   <script src="systems/campaign.js?v=1"></script>
   <script src="systems/doll-engine.js"></script>
-  <script src="systems/screen-transitions.js?v=2"></script>
+  <script src="systems/screen-transitions.js?v=3"></script>
   <script src="components/prep-hud-collapse.js?v=1"></script>
   <script src="components/prep-hud-hero.js?v=4"></script>
-  <script src="lobby-runtime.js?v=1"></script>
   <script src="prep-drag.js?v=1"></script>
   <script src="game-tooltip.js?v=1"></script>
-  <script src="systems/presentation-clock.js?v=1"></script>
-  <script src="battle-loop.js?v=2"></script>
-  <script src="game.js?v=125"></script>
+  <script src="systems/presentation-clock.js?v=2"></script>
+  <script src="systems/lobby-runtime-stub.js?v=1"></script>
+  <script src="battle-loop.js?v=3"></script>
+  <script src="game.js?v=131"></script>
   <script src="pwa-wake-lock.js"></script>
   <script src="pwa-register.js"></script>
 </body>

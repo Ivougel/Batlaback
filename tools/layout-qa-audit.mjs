@@ -2,9 +2,10 @@
  * Расширенный QA-аудит геометрии UI — все ключевые экраны.
  * Запуск: node tools/layout-qa-audit.mjs
  */
-import { chromium, devices } from "playwright";
+
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { chromium, devices } from "playwright";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const baseUrl = `file://${root}/index.html`;
@@ -124,10 +125,19 @@ async function auditProfile(browser, profile) {
     };
   });
   if (classDock.dockVisible && classDock.stepBottom > classDock.dockTop + 8) {
-    found.push(issue(profile.id, "class-opponent", `step overlaps dock: ${classDock.stepBottom} > ${classDock.dockTop}`, "fail"));
+    found.push(
+      issue(profile.id, "class-opponent", `step overlaps dock: ${classDock.stepBottom} > ${classDock.dockTop}`, "fail"),
+    );
   }
   if (classDock.dockVisible && !classDock.startBtn.ok && !classDock.startBtn.skip) {
-    found.push(issue(profile.id, "class-opponent", `start btn too small: ${classDock.startBtn.w}x${classDock.startBtn.h}`, "fail"));
+    found.push(
+      issue(
+        profile.id,
+        "class-opponent",
+        `start btn too small: ${classDock.startBtn.w}x${classDock.startBtn.h}`,
+        "fail",
+      ),
+    );
   }
 
   // ── Prep ──
@@ -174,7 +184,8 @@ async function auditProfile(browser, profile) {
     };
   });
   if (prep.canvasH < 80) found.push(issue(profile.id, "prep", `canvas too small: ${prep.canvasH}px`, "fail"));
-  if (prep.overflow) found.push(issue(profile.id, "prep", `zone overflow: used=${prep.zoneUsed} appH=${prep.appH}`, "fail"));
+  if (prep.overflow)
+    found.push(issue(profile.id, "prep", `zone overflow: used=${prep.zoneUsed} appH=${prep.appH}`, "fail"));
   if (prep.barTop > prep.vh + 2) found.push(issue(profile.id, "prep", "toolbar below viewport", "fail"));
   if (!prep.fightTouch.ok && !prep.fightTouch.skip) {
     found.push(issue(profile.id, "prep", `fight btn touch: ${prep.fightTouch.w}x${prep.fightTouch.h}`, "warn"));
@@ -183,7 +194,9 @@ async function auditProfile(browser, profile) {
     found.push(issue(profile.id, "prep", `shop FAB touch: ${prep.shopFabTouch.w}x${prep.shopFabTouch.h}`, "fail"));
   }
   if (prep.prepLayout === "mobile" && prep.heroTop > 0 && prep.islandBottom > prep.heroTop + 4) {
-    found.push(issue(profile.id, "prep", `hero overlaps canvas: island=${prep.islandBottom} hero=${prep.heroTop}`, "warn"));
+    found.push(
+      issue(profile.id, "prep", `hero overlaps canvas: island=${prep.islandBottom} hero=${prep.heroTop}`, "warn"),
+    );
   }
 
   // ── Shop open (mobile only) ──
@@ -260,22 +273,30 @@ async function auditProfile(browser, profile) {
   if (battle.floorH < 60) found.push(issue(profile.id, "battle", `combat floor too small: ${battle.floorH}px`, "fail"));
   if (battle.barTop > battle.vh + 2) found.push(issue(profile.id, "battle", "battle toolbar off-screen", "fail"));
   if (battle.htmlHud === "true" && battle.hudTop > 0 && battle.hudTop < battle.stageBottom - 12) {
-    found.push(issue(profile.id, "battle", `HUD overlaps portrait: hud=${battle.hudTop} stage=${battle.stageBottom}`, "fail"));
+    found.push(
+      issue(profile.id, "battle", `HUD overlaps portrait: hud=${battle.hudTop} stage=${battle.stageBottom}`, "fail"),
+    );
   }
   if (battle.htmlHud === "true" && battle.hpTop > 0 && battle.hpTop < battle.stageBottom - 8) {
-    found.push(issue(profile.id, "battle", `HP bar overlaps portrait: hp=${battle.hpTop} stage=${battle.stageBottom}`, "fail"));
+    found.push(
+      issue(profile.id, "battle", `HP bar overlaps portrait: hp=${battle.hpTop} stage=${battle.stageBottom}`, "fail"),
+    );
   }
   if (battle.buildFabTouch.skip === undefined && battle.buildFabTouch.ok === false) {
-    found.push(issue(profile.id, "battle", `build-stats FAB touch: ${battle.buildFabTouch.w}x${battle.buildFabTouch.h}`, "warn"));
+    found.push(
+      issue(profile.id, "battle", `build-stats FAB touch: ${battle.buildFabTouch.w}x${battle.buildFabTouch.h}`, "warn"),
+    );
   }
 
   // ── Inventory popover + tooltip (touch profiles) ──
   if (profile.device.hasTouch) {
-    await page.waitForFunction(
-      () => !document.getElementById("battle-countdown-overlay")
-        ?.classList.contains("battle-countdown-overlay-visible"),
-      { timeout: 12000 },
-    ).catch(() => {});
+    await page
+      .waitForFunction(
+        () =>
+          !document.getElementById("battle-countdown-overlay")?.classList.contains("battle-countdown-overlay-visible"),
+        { timeout: 12000 },
+      )
+      .catch(() => {});
     await page.evaluate(() => {
       window.openBattleInventoryPopover?.("player");
     });
@@ -296,24 +317,18 @@ async function auditProfile(browser, profile) {
       };
     });
     if (pop.popOpen && pop.popBottom > pop.barTop + 8) {
-      found.push(issue(profile.id, "battle-inventory", `popover overlaps toolbar: ${pop.popBottom} > ${pop.barTop}`, "fail"));
+      found.push(
+        issue(profile.id, "battle-inventory", `popover overlaps toolbar: ${pop.popBottom} > ${pop.barTop}`, "fail"),
+      );
     }
 
     const tipState = await page.evaluate(() => {
-      const cell = document.querySelector(
-        "#battle-inventory-popover-player .bp-cell.bp-has-item[data-item-id]",
-      );
+      const cell = document.querySelector("#battle-inventory-popover-player .bp-cell.bp-has-item[data-item-id]");
       if (!cell || typeof showSidebarTooltipAt !== "function") return { skip: true };
       const r = cell.getBoundingClientRect();
-      showSidebarTooltipAt(
-        r.left + r.width / 2,
-        r.top + r.height / 2,
-        cell.dataset.itemId,
-        null,
-        "inventory",
-        cell,
-        { pinned: true },
-      );
+      showSidebarTooltipAt(r.left + r.width / 2, r.top + r.height / 2, cell.dataset.itemId, null, "inventory", cell, {
+        pinned: true,
+      });
       const tip = document.getElementById("sidebar-tooltip");
       return {
         visible: !!(tip && !tip.classList.contains("hidden")),

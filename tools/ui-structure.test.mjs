@@ -2,16 +2,16 @@
  * Контракт UI: режимы, фазы, overlay DOM, layout-профили.
  * Запуск: npm run test:structure
  */
-import { chromium, devices } from "playwright";
+
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { chromium, devices } from "playwright";
+import { quickStartPrep } from "./lib/quick-start.mjs";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const baseUrl = `file://${root}/index.html`;
-const manifest = JSON.parse(
-  fs.readFileSync(path.join(root, "tools/ui-structure-manifest.json"), "utf8"),
-);
+const manifest = JSON.parse(fs.readFileSync(path.join(root, "tools/ui-structure-manifest.json"), "utf8"));
 
 function assert(cond, msg) {
   if (!cond) throw new Error(msg);
@@ -23,41 +23,7 @@ async function boot(page) {
 }
 
 async function startPrep(page, mode) {
-  await page.evaluate((gameMode) => {
-    selectGameMode(gameMode);
-    if (gameMode === "campaign" && typeof selectCampaignTrial === "function") {
-      selectCampaignTrial("build-trial");
-    }
-    selectPlayerClass("priest");
-    if (typeof selectCompanion === "function") {
-      selectCompanion(
-        typeof defaultCompanionForClass === "function"
-          ? defaultCompanionForClass("priest")
-          : "s_stranger",
-      );
-    }
-    if (gameMode === "versus") selectOpponentClass("warrior");
-    else if (gameMode === "lobby2p") {
-      selectOpponentClass("warrior");
-      selectOpponentClass("warrior");
-      selectCompanion(
-        typeof defaultCompanionForClass === "function"
-          ? defaultCompanionForClass("warrior")
-          : "s_stranger",
-      );
-    } else if (gameMode !== "lobby" && gameMode !== "campaign") selectOpponentClass("mage");
-    startRunFromOverlay();
-  }, mode);
-  await page.waitForFunction(
-    () => document.getElementById("app")?.dataset.phase === "prep",
-    { timeout: 12000 },
-  );
-  await page.waitForTimeout(800);
-  await page.evaluate(() => {
-    window.applyUiLayout?.();
-    window.scheduleCanvasFit?.();
-  });
-  await page.waitForTimeout(400);
+  await quickStartPrep(page, { mode, settleMs: 800 });
 }
 
 const browser = await chromium.launch();
@@ -66,20 +32,23 @@ const failures = [];
 try {
   const page = await browser.newPage();
   await boot(page);
-  const domCheck = await page.evaluate((ids) => {
-    const missing = ids.filter((id) => !document.getElementById(id));
-    return { missing, total: ids.length };
-  }, [
-    ...manifest.overlays.map((o) => o.id),
-    ...manifest.appSheets.map((s) => s.id),
-    ...manifest.gamePanels.map((p) => p.id),
-    ...manifest.classIntroSteps.map((s) => s.elementId),
-    "app",
-    "bottom-chrome",
-    "game-canvas",
-    "battle-scene-ui",
-    "battle-thought-arena",
-  ]);
+  const domCheck = await page.evaluate(
+    (ids) => {
+      const missing = ids.filter((id) => !document.getElementById(id));
+      return { missing, total: ids.length };
+    },
+    [
+      ...manifest.overlays.map((o) => o.id),
+      ...manifest.appSheets.map((s) => s.id),
+      ...manifest.gamePanels.map((p) => p.id),
+      ...manifest.classIntroSteps.map((s) => s.elementId),
+      "app",
+      "bottom-chrome",
+      "game-canvas",
+      "battle-scene-ui",
+      "battle-thought-arena",
+    ],
+  );
 
   if (domCheck.missing.length) {
     failures.push(`Missing DOM ids: ${domCheck.missing.join(", ")}`);
@@ -156,7 +125,10 @@ try {
       assert(state.campaignHintDisplay !== "none", `${mode}: campaign-hint display, got ${state.campaignHintDisplay}`);
     } else {
       assert(state.campaignHintHidden, `${mode}: campaign-hint should have hidden class`);
-      assert(state.campaignHintDisplay === "none", `${mode}: campaign-hint display none, got ${state.campaignHintDisplay}`);
+      assert(
+        state.campaignHintDisplay === "none",
+        `${mode}: campaign-hint display none, got ${state.campaignHintDisplay}`,
+      );
     }
     console.log(`✓ prep mode ${mode}`, JSON.stringify(state));
   }

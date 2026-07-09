@@ -2,9 +2,10 @@
  * Smoke: lobby2p intro → split prep HUD → scheduled battle → P1/P2 tabs.
  * Запуск: npm run test:lobby2p
  */
-import { chromium, devices } from "playwright";
+
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { chromium, devices } from "playwright";
 import { quickStartLobby2p } from "./lib/quick-start.mjs";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -26,9 +27,7 @@ async function readLobby2pState(page) {
     shopSlotsOpen: document.getElementById("shop-slots")?.children.length ?? 0,
     humanCount: typeof lobbyState !== "undefined" && lobbyState?.humanIds?.length,
     fighterCount: typeof lobbyState !== "undefined" ? lobbyState?.fighters?.length : 0,
-    alive: typeof getAliveLobbyFighters === "function" && lobbyState
-      ? getAliveLobbyFighters(lobbyState).length
-      : 0,
+    alive: typeof getAliveLobbyFighters === "function" && lobbyState ? getAliveLobbyFighters(lobbyState).length : 0,
   }));
 }
 
@@ -57,8 +56,9 @@ async function main() {
 
   await page.click('.lobby2p-shop-fab[data-human="0"]');
   await page.waitForFunction(
-    () => document.documentElement.hasAttribute("data-prep-shop-open")
-      && (document.getElementById("shop-slots")?.children.length ?? 0) > 0,
+    () =>
+      document.documentElement.hasAttribute("data-prep-shop-open") &&
+      (document.getElementById("shop-slots")?.children.length ?? 0) > 0,
     { timeout: 3000 },
   );
   const shopOpen = await page.evaluate(() => ({
@@ -71,8 +71,9 @@ async function main() {
 
   await page.click('.lobby2p-shop-fab[data-human="1"]');
   await page.waitForFunction(
-    () => document.getElementById("app")?.dataset.prepSide === "enemy"
-      && (document.getElementById("shop-slots")?.children.length ?? 0) > 0,
+    () =>
+      document.getElementById("app")?.dataset.prepSide === "enemy" &&
+      (document.getElementById("shop-slots")?.children.length ?? 0) > 0,
     { timeout: 3000 },
   );
 
@@ -94,10 +95,7 @@ async function main() {
     tryStartLobby2pScheduledRound();
   });
 
-  await page.waitForFunction(
-    () => document.getElementById("app")?.dataset.phase === "battle",
-    { timeout: 15000 },
-  );
+  await page.waitForFunction(() => document.getElementById("app")?.dataset.phase === "battle", { timeout: 15000 });
   await page.waitForTimeout(1000);
 
   const battle = await page.evaluate(() => {

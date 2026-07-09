@@ -248,17 +248,16 @@ function rollShopBatch(count, ctx) {
       ctx.bonusUniqueGranted = true;
       continue;
     }
-    const keyEntry = typeof tryRollShopKeyItem === "function" ? tryRollShopKeyItem(ctx) : null;
+    const keyEntry = typeof tryRollShopKeyItem === "function" && shouldUseCustomShopRolls()
+      ? tryRollShopKeyItem(ctx)
+      : null;
     if (keyEntry) {
       slots.push(keyEntry);
       continue;
     }
-    const enhEntry = typeof tryRollShopEnhancement === "function" ? tryRollShopEnhancement(ctx) : null;
-    if (enhEntry) {
-      slots.push(enhEntry);
-      continue;
-    }
-    const ampEntry = typeof tryRollShopAmplifier === "function" ? tryRollShopAmplifier(ctx) : null;
+    const ampEntry = typeof tryRollShopAmplifier === "function" && shouldUseCustomShopRolls()
+      ? tryRollShopAmplifier(ctx)
+      : null;
     if (ampEntry) {
       slots.push(ampEntry);
       continue;

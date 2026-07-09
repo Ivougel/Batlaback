@@ -67,19 +67,24 @@ function renderRecipeBookItemStats(def) {
 
 function renderRecipeBookItemCard(def, meta = "") {
   if (!def) return "";
+  const heroClass = typeof pendingPlayerClass !== "undefined" ? pendingPlayerClass : (typeof playerClass !== "undefined" ? playerClass : null);
+  const presentation = typeof getItemPresentationState === "function"
+    ? getItemPresentationState(def.id, heroClass)
+    : null;
+  const lockedClass = presentation?.locked ? " recipe-book-item--locked" : "";
   const rarityClass = `rarity-${def.rarity || "common"}`;
-  const stats = renderRecipeBookItemStats(def);
+  const stats = presentation?.showStats === false ? "" : renderRecipeBookItemStats(def);
   const tags = def.tags?.length ? formatTagsList(def.tags) : "";
   const source = def.craftOnly
     ? "Только крафт"
     : (def.cost > 0 ? `${def.cost}💰 в магазине` : "Стартовый");
   return `
-    <article class="recipe-book-item ${rarityClass}" data-item-id="${def.id}">
+    <article class="recipe-book-item ${rarityClass}${lockedClass}" data-item-id="${def.id}">
       <div class="recipe-book-item-head">
-        <span class="recipe-book-item-icon">${def.icon}</span>
+        <span class="recipe-book-item-icon">${presentation?.locked ? "🔒" : def.icon}</span>
         <div class="recipe-book-item-title">
-          <h4 style="color:${getRarityNameColor(def.rarity)}">${def.name}</h4>
-          <span class="recipe-book-item-meta">${source}${meta ? ` · ${meta}` : ""}</span>
+          <h4 style="color:${presentation?.locked ? "#8b949e" : getRarityNameColor(def.rarity)}">${def.name}</h4>
+          <span class="recipe-book-item-meta">${presentation?.locked ? presentation.hint : `${source}${meta ? ` · ${meta}` : ""}`}</span>
         </div>
       </div>
       ${stats ? `<p class="recipe-book-item-stats">${stats}</p>` : ""}
@@ -99,19 +104,24 @@ function renderRecipeBookItemCard(def, meta = "") {
 
 function renderRecipeBookRecipesSection() {
   const ctx = typeof getCraftContextFromGame === "function" ? getCraftContextFromGame() : {};
-  const recipes = typeof getVisibleCraftRecipes === "function"
-    ? getVisibleCraftRecipes(ctx)
-    : getAllCraftRecipes();
+  const recipes = typeof getAllCraftRecipes === "function"
+    ? getAllCraftRecipes()
+    : [];
   const rows = recipes.map((recipe) => {
     const out = ITEM_CATALOG[recipe.output];
+    const available = typeof isCraftRecipeAvailable !== "function" || isCraftRecipeAvailable(recipe, ctx);
+    const lockedClass = available ? "" : " recipe-book-recipe--locked";
+    const lockHint = !available && typeof MetaProgress !== "undefined" && MetaProgress.isActiveForRun()
+      ? " · ингредиенты ещё не открыты"
+      : "";
     return `
-      <div class="recipe-book-recipe">
+      <div class="recipe-book-recipe${lockedClass}">
         <div class="recipe-book-formula">
           <span class="recipe-book-inputs">${formatRecipeInputs(recipe)}</span>
           <span class="recipe-book-arrow" aria-hidden="true">→</span>
-          <span class="recipe-book-output">${out ? `${out.icon} ${out.name}` : recipe.output}</span>
+          <span class="recipe-book-output">${out ? `${available ? out.icon : "🔒"} ${out.name}` : recipe.output}</span>
         </div>
-        <p class="recipe-book-recipe-hint">Сложите все части вплотную — ребро к ребру. Слияние в начале следующего раунда подготовки${recipe.hint ? ` · ${recipe.hint}` : ""}</p>
+        <p class="recipe-book-recipe-hint">Сложите все части вплотную — ребро к ребру. Слияние в начале следующего раунда подготовки${recipe.hint ? ` · ${recipe.hint}` : ""}${lockHint}</p>
       </div>
     `;
   }).join("");

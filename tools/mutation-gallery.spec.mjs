@@ -2,9 +2,10 @@
  * Smoke: галерея мутаций и саммари на экране выбора.
  * Запуск: npx playwright test tools/mutation-gallery.spec.mjs
  */
-import { test, expect } from "@playwright/test";
+
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { expect, test } from "@playwright/test";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const baseUrl = `file://${root}/index.html`;

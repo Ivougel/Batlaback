@@ -35,10 +35,15 @@ function getCellCount(def) {
 function getShapeLabel(def) {
   const cells = normalizeShape(def.shape);
   if (cells.length === 1) return "1×1";
-  let minC = Infinity, minR = Infinity, maxC = -Infinity, maxR = -Infinity;
+  let minC = Infinity,
+    minR = Infinity,
+    maxC = -Infinity,
+    maxR = -Infinity;
   cells.forEach(([c, r]) => {
-    minC = Math.min(minC, c); minR = Math.min(minR, r);
-    maxC = Math.max(maxC, c); maxR = Math.max(maxR, r);
+    minC = Math.min(minC, c);
+    minR = Math.min(minR, r);
+    maxC = Math.max(maxC, c);
+    maxR = Math.max(maxR, r);
   });
   return `${maxC - minC + 1}×${maxR - minR + 1} (${cells.length} кл.)`;
 }
@@ -263,9 +268,7 @@ function main() {
     .filter((r) => r.densityRatio >= 1.35 && r.power >= 15)
     .sort((a, b) => b.densityRatio - a.densityRatio);
 
-  const singleCellStrong = rows
-    .filter((r) => r.cells === 1 && r.power >= 25)
-    .sort((a, b) => b.power - a.power);
+  const singleCellStrong = rows.filter((r) => r.cells === 1 && r.power >= 25).sort((a, b) => b.power - a.power);
 
   const undersizedWeapons = rows
     .filter((r) => r.tags.includes("weapon") && r.cells <= 2 && r.power >= 30)
@@ -283,35 +286,37 @@ function main() {
       const list = byRarity[rarity];
       const avgCells = list.reduce((s, x) => s + x.cells, 0) / list.length;
       console.log(
-        `  ${rarity.padEnd(10)} n=${String(list.length).padStart(3)}  `
-        + `медиана=${expectedDensity[rarity].toFixed(1).padStart(5)}  `
-        + `ср.клеток=${avgCells.toFixed(2)}`,
+        `  ${rarity.padEnd(10)} n=${String(list.length).padStart(3)}  ` +
+          `медиана=${expectedDensity[rarity].toFixed(1).padStart(5)}  ` +
+          `ср.клеток=${avgCells.toFixed(2)}`,
       );
     });
 
   console.log("\n--- Распределение по размеру ---");
   const byCells = {};
-  rows.forEach((r) => { byCells[r.cells] = (byCells[r.cells] || 0) + 1; });
-  Object.keys(byCells).sort((a, b) => a - b).forEach((c) => {
-    const subset = rows.filter((r) => r.cells === Number(c));
-    const medPow = median(subset.map((x) => x.power));
-    console.log(`  ${c} кл.: ${byCells[c]} предм., медиана power=${medPow.toFixed(0)}`);
+  rows.forEach((r) => {
+    byCells[r.cells] = (byCells[r.cells] || 0) + 1;
   });
+  Object.keys(byCells)
+    .sort((a, b) => a - b)
+    .forEach((c) => {
+      const subset = rows.filter((r) => r.cells === Number(c));
+      const medPow = median(subset.map((x) => x.power));
+      console.log(`  ${c} кл.: ${byCells[c]} предм., медиана power=${medPow.toFixed(0)}`);
+    });
 
   console.log("\n=== ТОП: слишком мощные для своего размера (density ≥135% от медианы редкости, power≥15) ===");
   flagged.slice(0, 40).forEach((r, i) => {
     console.log(
-      `${String(i + 1).padStart(2)}. [${r.rarity}] ${r.name} (${r.id})`
-      + ` | ${r.shape} | power=${r.power} | ${r.density.toFixed(0)}/cell`
-      + ` (${(r.densityRatio * 100).toFixed(0)}% от нормы) | ${r.cost}💰`,
+      `${String(i + 1).padStart(2)}. [${r.rarity}] ${r.name} (${r.id})` +
+        ` | ${r.shape} | power=${r.power} | ${r.density.toFixed(0)}/cell` +
+        ` (${(r.densityRatio * 100).toFixed(0)}% от нормы) | ${r.cost}💰`,
     );
   });
 
   console.log("\n=== 1×1 предметы с power ≥ 25 ===");
   singleCellStrong.slice(0, 30).forEach((r, i) => {
-    console.log(
-      `${String(i + 1).padStart(2)}. [${r.rarity}] ${r.name} | power=${r.power} | ${r.cost}💰 | ${r.tags}`,
-    );
+    console.log(`${String(i + 1).padStart(2)}. [${r.rarity}] ${r.name} | power=${r.power} | ${r.cost}💰 | ${r.tags}`);
   });
 
   console.log("\n=== Оружие ≤2 клеток с power ≥ 30 ===");
@@ -332,21 +337,27 @@ function main() {
     });
   recommendations.forEach((r, i) => {
     console.log(
-      `${i + 1}. ${r.name} [${r.rarity}]: сейчас ${r.shape}, power=${r.power}`
-      + ` → предложение: ${r.targetShape}`,
+      `${i + 1}. ${r.name} [${r.rarity}]: сейчас ${r.shape}, power=${r.power}` + ` → предложение: ${r.targetShape}`,
     );
   });
 
   const outPath = path.join(__dirname, "audit-item-shapes-report.json");
-  fs.writeFileSync(outPath, JSON.stringify({
-    generatedAt: new Date().toISOString(),
-    totals: { items: rows.length, globalMedianDensity },
-    expectedDensityByRarity: expectedDensity,
-    flagged: flagged.slice(0, 60),
-    singleCellStrong: singleCellStrong.slice(0, 40),
-    undersizedWeapons: undersizedWeapons.slice(0, 30),
-    all: rows.sort((a, b) => b.densityRatio - a.densityRatio),
-  }, null, 2));
+  fs.writeFileSync(
+    outPath,
+    JSON.stringify(
+      {
+        generatedAt: new Date().toISOString(),
+        totals: { items: rows.length, globalMedianDensity },
+        expectedDensityByRarity: expectedDensity,
+        flagged: flagged.slice(0, 60),
+        singleCellStrong: singleCellStrong.slice(0, 40),
+        undersizedWeapons: undersizedWeapons.slice(0, 30),
+        all: rows.sort((a, b) => b.densityRatio - a.densityRatio),
+      },
+      null,
+      2,
+    ),
+  );
   console.log(`\nПолный отчёт: ${outPath}`);
 }
 

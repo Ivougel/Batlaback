@@ -928,7 +928,6 @@ function resolveBattleArchetypeFloatOpts(side) {
       classId: mutRt.classId,
       companionId: mutRt.companionId,
       items: mutRt.items,
-      enhancements: mutRt.enhancements,
       round: runRound,
     })
     : null;
@@ -1100,7 +1099,6 @@ function syncPrepBuildEmojiBtnFromRuntime() {
       classId: mutRt.classId,
       companionId: mutRt.companionId,
       items: mutRt.items,
-      enhancements: mutRt.enhancements,
       round: runRound,
     })
     : null;

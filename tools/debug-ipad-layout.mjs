@@ -39,15 +39,21 @@ async function inspectLayout(page) {
       const img = slot?.querySelector(".profile-avatar-img");
       const thought = document.getElementById(side === "player" ? "player-thought-slot" : "enemy-thought-slot");
       const hud = document.getElementById(side === "player" ? "battle-hud-player" : "battle-hud-enemy");
-      const sceneUi = document.getElementById("battle-scene-ui");
       const r = (el) => {
         if (!el) return null;
         const b = el.getBoundingClientRect();
         const cs = getComputedStyle(el);
         return {
-          x: Math.round(b.x), y: Math.round(b.y), w: Math.round(b.width), h: Math.round(b.height),
-          display: cs.display, visibility: cs.visibility, opacity: cs.opacity,
-          overflow: cs.overflow, zIndex: cs.zIndex, clip: cs.clipPath || cs.clip,
+          x: Math.round(b.x),
+          y: Math.round(b.y),
+          w: Math.round(b.width),
+          h: Math.round(b.height),
+          display: cs.display,
+          visibility: cs.visibility,
+          opacity: cs.opacity,
+          overflow: cs.overflow,
+          zIndex: cs.zIndex,
+          clip: cs.clipPath || cs.clip,
           maxH: cs.maxHeight,
         };
       };
@@ -58,7 +64,7 @@ async function inspectLayout(page) {
         img: r(img),
         thought: r(thought),
         hud: r(hud),
-        imgVisible: img ? (img.offsetParent !== null && img.getBoundingClientRect().height > 2) : false,
+        imgVisible: img ? img.offsetParent !== null && img.getBoundingClientRect().height > 2 : false,
       };
     };
     return {
@@ -67,7 +73,11 @@ async function inspectLayout(page) {
         const el = document.getElementById("battle-scene-ui");
         const b = el?.getBoundingClientRect();
         const cs = el ? getComputedStyle(el) : null;
-        return { rect: b ? { x: Math.round(b.x), y: Math.round(b.y), w: Math.round(b.width), h: Math.round(b.height) } : null, overflow: cs?.overflow, maxH: cs?.maxHeight };
+        return {
+          rect: b ? { x: Math.round(b.x), y: Math.round(b.y), w: Math.round(b.width), h: Math.round(b.height) } : null,
+          overflow: cs?.overflow,
+          maxH: cs?.maxHeight,
+        };
       })(),
       player: read("player"),
       enemy: read("enemy"),

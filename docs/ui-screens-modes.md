@@ -36,7 +36,8 @@ body
 
 | ID | Название | Противник | Особенности prep |
 |----|----------|-----------|------------------|
-| `solo` | Одиночная | ИИ | Стандартный prep, магазин, скамейка |
+| `solo` | Одиночная | ИИ | Стандартный prep, магазин, скамейка — **полный каталог** |
+| `path` | Путь героя | ИИ | Как solo, но **мета-прогрессия**: герои и предметы открываются по уровню |
 | `versus` | Противостояние | 2-й игрок | Переключение `data-prep-side` player/enemy |
 | `hardbot` | Сложный бот | Hard AI | Как solo, усиленный бот |
 | `lobby` | Лобби | 8 ghost-бойцов | `#lobby-prep-roster-panel`, таймер prep |
@@ -47,7 +48,7 @@ body
 
 | Режим | Шаги class-overlay |
 |-------|-------------------|
-| solo, hardbot, lobby | mode → player → companion → summary → старт |
+| solo, path, hardbot, lobby | mode → player → companion → summary → старт |
 | lobby2p | mode → player → companion → класс P2 → спутник P2 → старт |
 | versus | mode → player → companion → summary → **opponent** → старт |
 | campaign | mode → **campaign-trial** → player → companion → summary → старт |

@@ -169,7 +169,10 @@ function describeItem(item) {
   if (item.maxHp && !(item.effects || []).some((e) => e.type === "passiveMaxHp")) {
     parts.unshift(`+${item.maxHp} макс. HP`);
   }
-  const syn = (item.synergies || []).slice(0, 2).map((s) => s.desc || s.apply?.type).filter(Boolean);
+  const syn = (item.synergies || [])
+    .slice(0, 2)
+    .map((s) => s.desc || s.apply?.type)
+    .filter(Boolean);
   if (syn.length) parts.push(`Синергия: ${syn.join(", ")}`);
   return parts.filter(Boolean).join(". ").replace(/\.\./g, ".") + (parts.length ? "." : "");
 }

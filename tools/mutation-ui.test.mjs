@@ -4,8 +4,8 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import vm from "node:vm";
 import { fileURLToPath } from "node:url";
+import vm from "node:vm";
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 
@@ -15,7 +15,16 @@ function assert(cond, msg) {
 
 function loadUiSandbox() {
   const sandbox = {
-    console, Math, Object, Array, Map, Set, JSON, Number, String, Boolean,
+    console,
+    Math,
+    Object,
+    Array,
+    Map,
+    Set,
+    JSON,
+    Number,
+    String,
+    Boolean,
     document: { getElementById: () => null },
   };
   sandbox.global = sandbox;
@@ -24,7 +33,8 @@ function loadUiSandbox() {
   for (const file of ["classes.js", "systems/mutations.js", "systems/mutation-ui.js"]) {
     vm.runInContext(fs.readFileSync(path.join(ROOT, file), "utf8"), ctx);
   }
-  vm.runInContext(`
+  vm.runInContext(
+    `
     Object.assign(globalThis, {
       getMutationsForNoviceClass,
       getMutationById,
@@ -44,7 +54,9 @@ function loadUiSandbox() {
       MUTATION_ROUND_FINAL,
       MUTATION_FORM_THRESHOLD,
     });
-  `, ctx);
+  `,
+    ctx,
+  );
   return sandbox;
 }
 

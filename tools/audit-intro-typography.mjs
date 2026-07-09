@@ -8,19 +8,6 @@ const viewports = [
   { name: "iPad Mini PW landscape", ...devices["iPad Mini"], viewport: { width: 1024, height: 768 } },
 ];
 
-function readType(el) {
-  if (!el) return null;
-  const cs = getComputedStyle(el);
-  const b = el.getBoundingClientRect();
-  return {
-    text: (el.textContent || "").trim().slice(0, 40),
-    fontSize: cs.fontSize,
-    lineHeight: cs.lineHeight,
-    w: Math.round(b.width),
-    h: Math.round(b.height),
-  };
-}
-
 async function auditPage(page, label) {
   await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
   await page.waitForFunction(() => typeof window.applyUiLayout === "function");

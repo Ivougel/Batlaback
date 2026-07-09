@@ -2,9 +2,10 @@
  * Стабильность layout во время drag и phase-transition.
  * Запуск: npm run test:drag-stability
  */
-import { chromium, devices } from "playwright";
+
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { chromium, devices } from "playwright";
 import { quickStartPrep } from "./lib/quick-start.mjs";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -57,32 +58,38 @@ const dragMetrics = await page.evaluate(async () => {
     });
   };
   sample();
-  card.dispatchEvent(new MouseEvent("mousedown", {
-    bubbles: true,
-    cancelable: true,
-    clientX: sx,
-    clientY: sy,
-    buttons: 1,
-  }));
-  sample();
-  for (let i = 1; i <= 8; i += 1) {
-    document.dispatchEvent(new MouseEvent("mousemove", {
+  card.dispatchEvent(
+    new MouseEvent("mousedown", {
       bubbles: true,
       cancelable: true,
-      clientX: sx + i * 18,
-      clientY: sy + i * 12,
+      clientX: sx,
+      clientY: sy,
       buttons: 1,
-    }));
+    }),
+  );
+  sample();
+  for (let i = 1; i <= 8; i += 1) {
+    document.dispatchEvent(
+      new MouseEvent("mousemove", {
+        bubbles: true,
+        cancelable: true,
+        clientX: sx + i * 18,
+        clientY: sy + i * 12,
+        buttons: 1,
+      }),
+    );
     sample();
     await new Promise((r) => requestAnimationFrame(r));
   }
-  document.dispatchEvent(new MouseEvent("mouseup", {
-    bubbles: true,
-    cancelable: true,
-    clientX: sx + 144,
-    clientY: sy + 96,
-    buttons: 0,
-  }));
+  document.dispatchEvent(
+    new MouseEvent("mouseup", {
+      bubbles: true,
+      cancelable: true,
+      clientX: sx + 144,
+      clientY: sy + 96,
+      buttons: 0,
+    }),
+  );
   sample();
   return { samples, hadDragging: samples.some((s) => s.dragging) };
 });
@@ -114,12 +121,15 @@ const phaseLock = await page.evaluate(() => ({
 assert(phaseLock.overlayHidden, "class-overlay must stay hidden in battle");
 assert(!phaseLock.screenTransitioning, "screen-transitioning stuck after battle start");
 
-console.log("✓ layout-drag-stability", JSON.stringify({
-  baseline,
-  maxWDelta,
-  maxHDelta,
-  maxCellDelta,
-  sampleCount: dragMetrics.samples.length,
-}));
+console.log(
+  "✓ layout-drag-stability",
+  JSON.stringify({
+    baseline,
+    maxWDelta,
+    maxHDelta,
+    maxCellDelta,
+    sampleCount: dragMetrics.samples.length,
+  }),
+);
 
 await browser.close();

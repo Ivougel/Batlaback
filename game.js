@@ -11,6 +11,7 @@ const BACKPACK_ROWS = GRID_ROWS;
 const START_GOLD = 12;
 const ROUND_GOLD = 10;
 const WIN_GOLD = 3;
+const MAX_SHOP = 5;
 
 /** Читаются из CSS (--cell-size, --cell-gap, …) и пересчитываются на resize. */
 let GRID_CELL = 46;
@@ -113,17 +114,13 @@ let playerMutationFormId = null;
 let playerMutationId = null;
 let enemyMutationFormId = null;
 let enemyMutationId = null;
-let playerEnhancements = typeof createEmptyEnhancementLoadout === "function"
-  ? createEmptyEnhancementLoadout()
-  : { head: null, chest: null, boots: null };
-let enemyEnhancements = typeof createEmptyEnhancementLoadout === "function"
-  ? createEmptyEnhancementLoadout()
-  : { head: null, chest: null, boots: null };
 let goldSpentTotal = 0;
 let goldEarnedTotal = 0;
 let recentBattleResults = [];
 let battleStartTime = 0;
 let battleState = null;
+var lobby2pDrawLayout = null;
+var lobby2pDrawColumnLocal = false;
 let dragPayload = null;
 let dragFrom = null;
 let prepSidebarDragUnlocked = false;
@@ -166,8 +163,6 @@ let runItemStats = createEmptyRunItemStats();
 let battleEndHandled = false;
 let pendingShopDrag = null;
 let pendingBenchDrag = null;
-let pendingEnhancementDrag = null;
-let enhancementSlotDidDrag = false;
 let pendingCanvasPick = null;
 let shopDidDrag = false;
 let lastTouchEventAt = 0;
@@ -203,7 +198,7 @@ function playPrepSfx(id, opts) {
   if (typeof playGameSfx === "function") playGameSfx(id, opts);
 }
 
-let selectedGameMode = "solo";
+let selectedGameMode = "classic";
 let selectedOpponentMode = "ai";
 /** Выбранное испытание кампании в интро. */
 let selectedCampaignTrial = "build-trial";
@@ -284,6 +279,14 @@ function isAnyLobbyMode() {
 
 function isCampaignMode() {
   return gameMode === "campaign";
+}
+
+function isPathMode() {
+  return gameMode === "path";
+}
+
+function isClassicModeActive() {
+  return typeof isClassicMode === "function" && isClassicMode();
 }
 
 function isPrepHeroHudVisible() {
@@ -424,14 +427,12 @@ function prepareBattleStartState() {
           companionId: playerCompanionId,
           mutationFormId: playerMutationFormId,
           mutationId: playerMutationId,
-          enhancements: playerEnhancements,
         },
         enemy: {
           pendingShopBuffs: enemyPendingShopBuffs,
           companionId: enemyCompanionId,
           mutationFormId: enemyMutationFormId,
           mutationId: enemyMutationId,
-          enhancements: enemyEnhancements,
         },
       },
     );
@@ -591,104 +592,7 @@ function getActiveCompanionIdForLoadout() {
   return prepViewSide === "enemy" ? enemyCompanionId : playerCompanionId;
 }
 
-function getSideEnhancementsRaw(side = "player") {
-  return side === "enemy" ? enemyEnhancements : playerEnhancements;
-}
-
-function syncEnhancementsForSide(side = prepViewSide) {
-  const items = side === "enemy" ? enemyItems : playerItems;
-  if (typeof syncEnhancementsFromBackpack === "function") {
-    syncEnhancementsFromBackpack(items, getSideEnhancementsRaw(side), round);
-  }
-}
-
-function getSideEnhancements(side = "player") {
-  syncEnhancementsForSide(side);
-  return getSideEnhancementsRaw(side);
-}
-
-
-function bindPrepEnhancementStrip(side = prepViewSide, root = null) {
-  const strips = root
-    ? root.querySelectorAll(".prep-enhancement-strip")
-    : document.querySelectorAll(".prep-stats-hud .prep-enhancement-strip, #prep-hero-card .prep-enhancement-strip");
-  strips.forEach((strip) => {
-  strip.querySelectorAll(".enh-slot--filled").forEach((slotEl) => {
-    const enhId = slotEl.dataset.enhId;
-    const slotId = slotEl.dataset.enhSlot;
-    if (!enhId || !slotId) return;
-    bindEnhancementTooltipEvents(slotEl, enhId, "enhancement");
-    if (!canEditPrepSide(side)) return;
-    if (slotEl.dataset.enhInteractBound === "1") return;
-    slotEl.dataset.enhInteractBound = "1";
-
-    slotEl.addEventListener("click", (event) => {
-      if (!canEditPrepSide(side) || dragPayload) return;
-      if (enhancementSlotDidDrag) {
-        enhancementSlotDidDrag = false;
-        return;
-      }
-      if (sidebarTooltipPinned && sidebarTooltipSource === "enhancement") {
-        event.preventDefault();
-        event.stopPropagation();
-        sidebarTooltipPinned = false;
-        hideSidebarTooltip();
-        return;
-      }
-      if (unequipEnhancementSlotToBench(slotId, side)) {
-        renderBench(side);
-        recalcSynergies();
-        updateUI();
-      }
-    });
-
-    slotEl.addEventListener("pointerdown", (e) => {
-      if (e.pointerType !== "mouse") return;
-      if (!canEditPrepSide(side) || e.button !== 0) return;
-      if (isSyntheticMouseFromTouch()) return;
-      e.stopPropagation();
-      try { slotEl.setPointerCapture(e.pointerId); } catch (_) {}
-      startEnhancementSlotDrag(slotId, e, side);
-    });
-
-    slotEl.addEventListener("pointerup", (e) => {
-      if (e.pointerType !== "mouse" || e.button !== 0) return;
-      try { slotEl.releasePointerCapture(e.pointerId); } catch (_) {}
-    });
-  });
-  });
-  bindPrepModChipTooltips(root);
-}
-
-
-function findEnhancementLoadoutItem(slotId, side = prepViewSide) {
-  if (typeof findLoadoutItemForEnhancementSlot !== "function") return null;
-  const st = getSideState(side);
-  return findLoadoutItemForEnhancementSlot(st.items, slotId);
-}
-
-function unequipEnhancementSlotToBench(slotId, side = prepViewSide) {
-  if (!canEditPrepSide(side)) return false;
-  const item = findEnhancementLoadoutItem(slotId, side);
-  if (!item || typeof removeLoadoutItemToBench !== "function") return false;
-  const ok = removeLoadoutItemToBench(item.uid, side);
-  if (!ok) return false;
-  syncEnhancementsForSide(side);
-  const enhDef = typeof getEnhancementDef === "function"
-    ? getEnhancementDef(getEnhancementIdFromItem(item.itemId))
-    : null;
-  log(`📦 ${enhDef?.name || item.itemId} → скамейка`);
-  if (typeof playPrepEnhancementSfx === "function") {
-    playPrepEnhancementSfx("unequip", enhDef);
-  } else {
-    playPrepSfx("prep_pickup");
-  }
-  return true;
-}
-
-
 function getSideMutationRuntime(side = "player") {
-  syncEnhancementsForSide(side);
   if (side === "enemy") {
     return {
       classId: enemyClass,
@@ -696,7 +600,6 @@ function getSideMutationRuntime(side = "player") {
       formId: enemyMutationFormId,
       mutationId: enemyMutationId,
       items: enemyItems,
-      enhancements: enemyEnhancements,
     };
   }
   return {
@@ -705,11 +608,11 @@ function getSideMutationRuntime(side = "player") {
     formId: playerMutationFormId,
     mutationId: playerMutationId,
     items: playerItems,
-    enhancements: playerEnhancements,
   };
 }
 
 function syncMutationMilestonesForSide(side = "player") {
+  if (typeof shouldUseMutationSystem === "function" && !shouldUseMutationSystem()) return null;
   if (typeof resolveMutationProgress !== "function" || typeof pickMutationIdForMilestone !== "function") return null;
   const rt = getSideMutationRuntime(side);
   if (!rt.classId) return null;
@@ -717,7 +620,6 @@ function syncMutationMilestonesForSide(side = "player") {
     classId: rt.classId,
     companionId: rt.companionId,
     items: rt.items,
-    enhancements: rt.enhancements,
     round,
   });
 
@@ -827,6 +729,7 @@ function classIntroUsesTrialStep() {
 function getClassIntroTotalSteps() {
   if (classIntroUsesTrialStep()) return 5;
   if (selectedGameMode === "versus" || selectedGameMode === "lobby2p") return 5;
+  if (typeof shouldSkipCompanionIntro === "function" && shouldSkipCompanionIntro()) return 3;
   return 4;
 }
 
@@ -899,7 +802,8 @@ function bindClassSummaryInteractions() {
 
 function renderClassSummaryStep() {
   const cls = pendingPlayerClass ? getClassById(pendingPlayerClass) : null;
-  const companion = pendingPlayerCompanionId ? COMPANION_CATALOG?.[pendingPlayerCompanionId] : null;
+  const skipCompanion = typeof shouldSkipCompanionIntro === "function" && shouldSkipCompanionIntro();
+  const companion = !skipCompanion && pendingPlayerCompanionId ? COMPANION_CATALOG?.[pendingPlayerCompanionId] : null;
   const lead = document.getElementById("class-summary-lead");
   const heroImg = document.getElementById("class-summary-hero-img");
   const heroName = document.getElementById("class-summary-hero-name");
@@ -907,13 +811,16 @@ function renderClassSummaryStep() {
   const companionName = document.getElementById("class-summary-companion-name");
   const startBtn = document.getElementById("btn-class-summary-start");
   const heroFloat = document.getElementById("class-summary-hero");
+  const companionBlock = companionEmoji?.closest(".class-summary-companion, [data-summary-kind=\"companion\"]");
 
   const heroLabel = cls?.heroLabel || cls?.noviceLabel || cls?.name || "—";
   if (lead) {
     const diffLine = selectedGameMode === "campaign"
-        ? ` · ${Campaign.getTrial(selectedCampaignTrial)?.title || "Кампания"}`
+        ? ` · ${typeof Campaign !== "undefined" ? (Campaign.getTrial(selectedCampaignTrial)?.title || "Кампания") : "Кампания"}`
         : "";
-    lead.textContent = `Ваш выбор: ${heroLabel} и ${companion?.name || "—"}${diffLine}`;
+    lead.textContent = skipCompanion
+      ? `Ваш выбор: ${heroLabel}${diffLine}`
+      : `Ваш выбор: ${heroLabel} и ${companion?.name || "—"}${diffLine}`;
   }
   if (heroImg && pendingPlayerClass) {
     const src = typeof getClassHeroPortraitSrc === "function"
@@ -923,14 +830,15 @@ function renderClassSummaryStep() {
     heroImg.alt = heroLabel;
   }
   if (heroName) heroName.textContent = heroLabel;
-  if (companionEmoji) companionEmoji.textContent = companion?.emoji || "🐾";
-  if (companionName) companionName.textContent = companion?.name || "—";
+  if (companionEmoji) companionEmoji.textContent = companion?.emoji || (skipCompanion ? "" : "🐾");
+  if (companionName) companionName.textContent = companion?.name || (skipCompanion ? "" : "—");
+  if (companionBlock) companionBlock.classList.toggle("hidden", skipCompanion);
   if (heroFloat) {
     if (pendingPlayerClass) heroFloat.dataset.class = pendingPlayerClass;
     else heroFloat.removeAttribute("data-class");
   }
   if (startBtn) {
-    startBtn.disabled = !(pendingPlayerClass && pendingPlayerCompanionId);
+    startBtn.disabled = !(pendingPlayerClass && (skipCompanion || pendingPlayerCompanionId));
     if (selectedGameMode === "versus") startBtn.textContent = "Игрок 2 →";
     else if (selectedGameMode === "lobby") startBtn.textContent = "Начать лобби";
     else startBtn.textContent = "Старт";
@@ -940,21 +848,26 @@ function renderClassSummaryStep() {
 function showSummaryStep() {
   dismissClassOverlayTooltip();
   hideClassSummaryTooltip();
-  if (!pendingPlayerClass || !pendingPlayerCompanionId) return;
+  const skipCompanion = typeof shouldSkipCompanionIntro === "function" && shouldSkipCompanionIntro();
+  if (!pendingPlayerClass || (!skipCompanion && !pendingPlayerCompanionId)) return;
   setClassIntroStep("summary");
   if (!selectedEnemyClass && selectedGameMode !== "versus") {
     selectedEnemyClass = pendingPlayerClass === "mage" ? "warrior" : "mage";
   }
   const modeTitles = {
+    classic: "Классика",
     lobby: "Лобби",
     lobby2p: "Лобби 2P",
     versus: "Противостояние",
     hardbot: "Сложный бот",
     solo: "Одиночная",
+    path: "Путь героя",
     campaign: "Кампания",
   };
   document.getElementById("class-modal-title").textContent = modeTitles[selectedGameMode] || "Готовы?";
-  document.getElementById("class-modal-subtitle").textContent = "Наведите на героя или спутника — подробности о выборе";
+  document.getElementById("class-modal-subtitle").textContent = skipCompanion
+    ? "Проверьте выбор · «Старт» по центру"
+    : "Наведите на героя или спутника — подробности о выборе";
   renderClassSummaryStep();
   syncClassOverlayUi();
   syncClassMobileDock();
@@ -1062,7 +975,9 @@ function syncClassOverlayUi() {
       ? `Шаг 3 из ${totalSteps} · Герой`
       : `Шаг 2 из ${totalSteps} · Герой`;
     hint.textContent = pendingPlayerClass
-      ? "Нажмите героя ещё раз — к выбору спутника"
+      ? ((typeof shouldSkipCompanionIntro === "function" && shouldSkipCompanionIntro())
+        ? "Нажмите героя ещё раз — к обзору и старту"
+        : "Нажмите героя ещё раз — к выбору спутника")
       : "Выберите героиню · слева — портрет и «Подробнее»";
   } else if (companionStep && !companionStep.classList.contains("hidden")) {
     const forP2 = introCompanionTarget === "player2";
@@ -1239,20 +1154,26 @@ function showPlayerClassStep() {
       ? "16 бойцов: 2 игрока + 14 ботов."
       : selectedGameMode === "lobby"
       ? "Восьмерка бойцов — выберите героиню."
+      : selectedGameMode === "path"
+        ? "Коллекция героев и предметов открывается по мере прогресса."
       : selectedGameMode === "campaign"
           ? "Герой для обучения и тренировок."
           : "Выберите героиню для забега.";
   syncClassOverlayUi();
   syncClassMobileDock();
   if (typeof renderClassMutationGallery === "function") {
-    renderClassMutationGallery(pendingPlayerClass);
+    renderClassMutationGallery(typeof shouldUseMutationSystem === "function" && shouldUseMutationSystem() ? pendingPlayerClass : null);
   }
-  if (typeof MetaProgress !== "undefined") MetaProgress.refreshClassPickerCards();
+  if (typeof MetaProgress !== "undefined") {
+    MetaProgress.setPickerMode(selectedGameMode);
+    MetaProgress.refreshClassPickerCards();
+  }
 }
 
 function selectGameMode(mode) {
-  if (mode !== "solo" && mode !== "versus" && mode !== "hardbot" && mode !== "lobby" && mode !== "lobby2p" && mode !== "campaign") return;
+  if (mode !== "solo" && mode !== "classic" && mode !== "versus" && mode !== "hardbot" && mode !== "lobby" && mode !== "lobby2p" && mode !== "campaign" && mode !== "path") return;
   selectedGameMode = mode;
+  if (typeof MetaProgress !== "undefined") MetaProgress.setPickerMode(mode);
   selectedOpponentMode = mode === "versus"
     ? "manual"
     : mode === "hardbot"
@@ -1262,8 +1183,8 @@ function selectGameMode(mode) {
         : mode === "lobby2p"
           ? "ghost2p"
           : mode === "campaign"
-              ? "campaign"
-              : "ai";
+            ? "campaign"
+            : "ai";
   pendingPlayerClass = null;
   pendingPlayerCompanionId = null;
   pendingEnemyCompanionId = null;
@@ -1278,6 +1199,7 @@ function selectGameMode(mode) {
   } else {
     showPlayerClassStep();
   }
+  if (typeof RuntimeLoader !== "undefined") RuntimeLoader.preloadModeBundle(mode);
 }
 
 function resetClassSelectOverlay() {
@@ -1287,12 +1209,13 @@ function resetClassSelectOverlay() {
   pendingEnemyCompanionId = null;
   introCompanionTarget = "player1";
   selectedEnemyClass = null;
-  selectedGameMode = "solo";
+  selectedGameMode = "classic";
   selectedOpponentMode = "ai";
   selectedCampaignTrial = "build-trial";
   if (typeof Campaign !== "undefined") Campaign.reset();
+  if (typeof MetaProgress !== "undefined") MetaProgress.setPickerMode("classic");
   document.querySelectorAll(".game-mode-card").forEach((card) => {
-    card.classList.toggle("selected", card.dataset.gameMode === "solo");
+    card.classList.toggle("selected", card.dataset.gameMode === "classic");
   });
   document.querySelectorAll(".class-card[data-class]").forEach((card) => card.classList.remove("selected"));
   document.querySelectorAll(".opponent-class-card").forEach((card) => card.classList.remove("selected"));
@@ -1300,7 +1223,6 @@ function resetClassSelectOverlay() {
   showGameModeStep();
   updateStartRunButton();
   if (typeof syncClassPickerCardsFromCatalog === "function") syncClassPickerCardsFromCatalog();
-  if (typeof MetaProgress !== "undefined") MetaProgress.refreshClassPickerCards();
   if (typeof MetaProgress !== "undefined") MetaProgress.refreshClassPickerCards();
   syncClassOverlayUi();
   syncClassMobileDock();
@@ -1355,7 +1277,7 @@ function syncClassMobileDock() {
 function updateStartRunButton() {
   const btn = document.getElementById("btn-start-run");
   if (!btn) return;
-  let ready = !!(pendingPlayerClass && pendingPlayerCompanionId);
+  let ready = !!(pendingPlayerClass && ((typeof shouldSkipCompanionIntro === "function" && shouldSkipCompanionIntro()) || pendingPlayerCompanionId));
   if (selectedGameMode === "lobby2p") {
     const opponentStep = document.getElementById("class-step-opponent");
     const companionStep = document.getElementById("class-step-companion");
@@ -1379,7 +1301,9 @@ function updateStartRunButton() {
   else if (selectedGameMode === "lobby2p") btn.textContent = "Начать лобби 2P";
   else btn.textContent = "Старт";
   const summaryBtn = document.getElementById("btn-class-summary-start");
-  if (summaryBtn) summaryBtn.disabled = !(pendingPlayerClass && pendingPlayerCompanionId);
+  if (summaryBtn) {
+    summaryBtn.disabled = !(pendingPlayerClass && ((typeof shouldSkipCompanionIntro === "function" && shouldSkipCompanionIntro()) || pendingPlayerCompanionId));
+  }
 }
 
 function scrollClassPickerCardIntoView(card) {
@@ -1398,7 +1322,7 @@ function onMutationIntentConfirmed(mutationId, classId) {
 }
 
 function selectPlayerClass(classId) {
-  if (typeof MetaProgress !== "undefined" && MetaProgress.isEnabled() && !MetaProgress.isHeroUnlocked(classId)) {
+  if (typeof MetaProgress !== "undefined" && MetaProgress.isActiveForPicker() && !MetaProgress.isHeroUnlocked(classId)) {
     const hint = MetaProgress.getHeroUnlockHint(classId);
     if (typeof log === "function" && hint) log(`🔒 ${hint}`);
     return;
@@ -1410,10 +1334,18 @@ function selectPlayerClass(classId) {
     card.classList.toggle("selected", card.dataset.class === classId);
   });
   scrollClassPickerCardIntoView(document.querySelector(`.class-card[data-class="${classId}"]`));
-  if (typeof renderClassMutationGallery === "function") renderClassMutationGallery(classId);
+  if (typeof renderClassMutationGallery === "function") {
+    renderClassMutationGallery(
+      typeof shouldUseMutationSystem === "function" && shouldUseMutationSystem() ? classId : null,
+    );
+  }
   if (reclick) {
     pendingPlayerCompanionId = null;
-    showCompanionStep({ keepSelection: false });
+    if (typeof shouldSkipCompanionIntro === "function" && shouldSkipCompanionIntro()) {
+      showSummaryStep();
+    } else {
+      showCompanionStep({ keepSelection: false });
+    }
     return;
   }
   syncClassOverlayUi();
@@ -1425,7 +1357,7 @@ function selectPlayerClass(classId) {
 }
 
 function selectOpponentClass(classId) {
-  if (typeof MetaProgress !== "undefined" && MetaProgress.isEnabled() && !MetaProgress.isHeroUnlocked(classId)) {
+  if (typeof MetaProgress !== "undefined" && MetaProgress.isActiveForPicker() && !MetaProgress.isHeroUnlocked(classId)) {
     const hint = MetaProgress.getHeroUnlockHint(classId);
     if (typeof log === "function" && hint) log(`🔒 ${hint}`);
     return;
@@ -1591,7 +1523,6 @@ function bindTouchInput() {
     if (tapHandled && !dragPayload) {
       pendingShopDrag = null;
       pendingBenchDrag = null;
-      pendingEnhancementDrag = null;
       pendingCanvasPick = null;
       syncUiDragState();
       activeGesture = null;
@@ -1778,7 +1709,10 @@ function init() {
     btn.addEventListener("click", () => selectCampaignTrial(btn.dataset.campaignTrial));
   });
   if (typeof syncClassPickerCardsFromCatalog === "function") syncClassPickerCardsFromCatalog();
-  if (typeof MetaProgress !== "undefined") MetaProgress.refreshClassPickerCards();
+  if (typeof MetaProgress !== "undefined") {
+    MetaProgress.setPickerMode(selectedGameMode);
+    MetaProgress.refreshClassPickerCards();
+  }
   if (typeof syncClassHeroRosterCaption === "function") syncClassHeroRosterCaption();
   document.querySelectorAll(".class-card[data-class]").forEach((btn) => {
     btn.addEventListener("click", () => selectPlayerClass(btn.dataset.class));
@@ -1816,9 +1750,9 @@ function init() {
   document.getElementById("btn-chrome-back")?.addEventListener("click", () => returnToMainMenu());
   bindClassSummaryInteractions();
   document.getElementById("btn-start-run")?.addEventListener("click", startRunFromOverlay);
-  bindLobbyRosterClicks();
-  bindLobby2pBattleTabs();
-  initLobby2pHudBridge();
+  if (typeof bindLobbyRosterClicks === "function") bindLobbyRosterClicks();
+  if (typeof bindLobby2pBattleTabs === "function") bindLobby2pBattleTabs();
+  if (typeof initLobby2pHudBridge === "function") initLobby2pHudBridge();
   bindLobby2pSellZones();
   window.addEventListener("resize", syncClassMobileDock, { passive: true });
   window.addEventListener("orientationchange", syncClassMobileDock, { passive: true });
@@ -1910,11 +1844,11 @@ function init() {
   }
   if (typeof initVisualTheme === "function") initVisualTheme();
   if (typeof initPrepHudPreset === "function") initPrepHudPreset();
+  if (typeof initPrepHeroCardPreset === "function") initPrepHeroCardPreset();
   if (typeof initSoundTheme === "function") initSoundTheme();
   if (typeof initPrepBuildEmojiBtn === "function") initPrepBuildEmojiBtn();
   if (typeof initLightBattleFxControls === "function") initLightBattleFxControls();
   if (typeof initEmojiOrbitSpeedControls === "function") initEmojiOrbitSpeedControls();
-  if (typeof initCombatFeedControls === "function") initCombatFeedControls();
   initMusic();
   initGamepadControls({
     getSelectedGameMode: () => selectedGameMode,
@@ -2056,6 +1990,7 @@ function battleProfileTickMs() {
 }
 
 function getAppDataPhase() {
+  if (phase === "classSelect") return "classSelect";
   if (phase === "battle" || phase === "replay") return phase;
   return "prep";
 }
@@ -2389,7 +2324,9 @@ function returnToMainMenu() {
   pendingGameOver = false;
   gameOver = false;
   playerClass = null;
-  gameMode = "solo";
+  if (typeof MetaProgress !== "undefined") {
+    MetaProgress.setRunMode(null);
+  }
   opponentMode = "ai";
   lobbyState = null;
   lobbyViewFighterId = 0;
@@ -2425,6 +2362,7 @@ function returnToMainMenu() {
 
   const finishReturn = () => {
     resetClassSelectOverlay();
+    gameMode = selectedGameMode;
     ensureCompanionGrid();
     setPhaseLabel("Выбор класса", false);
     renderPhase();
@@ -2448,67 +2386,88 @@ function showClassSelect() {
 
 function startRunFromOverlay() {
   if (!pendingPlayerClass) return;
-  if (typeof MetaProgress !== "undefined" && MetaProgress.isEnabled()
+  if (typeof MetaProgress !== "undefined" && MetaProgress.isActiveForPicker()
     && !MetaProgress.isHeroUnlocked(pendingPlayerClass)) return;
-  if (!pendingPlayerCompanionId) return;
+  const skipCompanion = typeof shouldSkipCompanionIntro === "function" && shouldSkipCompanionIntro();
+  if (!skipCompanion && !pendingPlayerCompanionId) return;
   if (typeof ScreenTransitions !== "undefined" && ScreenTransitions.isScreenTransitioning()) return;
   if (!selectedEnemyClass) {
     selectedEnemyClass = pendingPlayerClass === "mage" ? "warrior" : "mage";
   }
-  gameMode = selectedGameMode;
-  playerClass = pendingPlayerClass;
-  playerCompanionId = pendingPlayerCompanionId;
-  enemyCompanionId = selectedGameMode === "lobby2p" && pendingEnemyCompanionId
-    ? pendingEnemyCompanionId
-    : (typeof defaultCompanionForClass === "function"
-      ? defaultCompanionForClass(selectedEnemyClass || pendingPlayerClass)
-      : "s_stranger");
-  playerMutationFormId = null;
-  playerMutationId = null;
-  enemyMutationFormId = null;
-  enemyMutationId = null;
-  opponentMode = selectedGameMode === "versus"
-    ? "manual"
-    : selectedGameMode === "hardbot"
-      ? "hardbot"
-      : selectedGameMode === "lobby"
-        ? "ghost"
-        : selectedGameMode === "lobby2p"
-          ? "ghost2p"
-          : selectedGameMode === "campaign"
-              ? "campaign"
-              : "ai";
-  enemyClass = selectedEnemyClass || pendingPlayerClass;
-  enemyArchetype = AI_ARCHETYPES[enemyClass] || AI_ARCHETYPES.warrior;
-  prepViewSide = "player";
-  if (selectedGameMode === "campaign" && typeof Campaign !== "undefined") {
-    Campaign.startTrial(selectedCampaignTrial);
-  }
-  dismissClassOverlayTooltip();
-  hideClassSummaryTooltip();
-  const overlay = document.getElementById("class-overlay");
-  overlay?.classList.remove("class-overlay--summary");
-  const app = document.getElementById("app");
-  if (app) app.dataset.gameMode = gameMode;
-  document.documentElement.dataset.gameMode = gameMode;
 
-  const beginRun = () => {
-    restartGame();
+  const proceedStartRun = () => {
+    gameMode = selectedGameMode;
+    if (typeof MetaProgress !== "undefined") MetaProgress.setRunMode(gameMode);
+    playerClass = pendingPlayerClass;
+    playerCompanionId = skipCompanion
+      ? null
+      : pendingPlayerCompanionId;
+    enemyCompanionId = selectedGameMode === "lobby2p" && pendingEnemyCompanionId
+      ? pendingEnemyCompanionId
+      : (typeof defaultCompanionForClass === "function"
+        ? defaultCompanionForClass(selectedEnemyClass || pendingPlayerClass)
+        : "s_stranger");
+    playerMutationFormId = null;
+    playerMutationId = null;
+    enemyMutationFormId = null;
+    enemyMutationId = null;
+    opponentMode = selectedGameMode === "versus"
+      ? "manual"
+      : selectedGameMode === "hardbot"
+        ? "hardbot"
+        : selectedGameMode === "lobby"
+          ? "ghost"
+          : selectedGameMode === "lobby2p"
+            ? "ghost2p"
+            : selectedGameMode === "campaign"
+                ? "campaign"
+                : "ai";
+    enemyClass = selectedEnemyClass || pendingPlayerClass;
+    enemyArchetype = AI_ARCHETYPES[enemyClass] || AI_ARCHETYPES.warrior;
+    prepViewSide = "player";
+    if (selectedGameMode === "campaign" && typeof Campaign !== "undefined") {
+      Campaign.startTrial(selectedCampaignTrial);
+    }
+    dismissClassOverlayTooltip();
+    hideClassSummaryTooltip();
+    const overlay = document.getElementById("class-overlay");
+    overlay?.classList.remove("class-overlay--summary");
+    const app = document.getElementById("app");
+    if (app) app.dataset.gameMode = gameMode;
+    document.documentElement.dataset.gameMode = gameMode;
+
+    const beginRun = () => {
+      if (typeof RuntimeLoader !== "undefined" && RuntimeLoader.preloadCombatFeedBundle) {
+        RuntimeLoader.preloadCombatFeedBundle();
+      }
+      restartGame();
+    };
+
+    if (typeof ScreenTransitions !== "undefined") {
+      void ScreenTransitions.crossfadeMenuToGame(beginRun);
+      return;
+    }
+
+    overlay?.classList.add("hidden");
+    overlay?.setAttribute("aria-hidden", "true");
+    document.body.classList.add("screen-app-visible");
+    if (app) {
+      app.style.removeProperty("visibility");
+      app.style.removeProperty("pointer-events");
+    }
+    beginRun();
   };
 
-  if (typeof ScreenTransitions !== "undefined") {
-    void ScreenTransitions.crossfadeMenuToGame(beginRun);
-    return;
+  if (typeof RuntimeLoader !== "undefined") {
+    return RuntimeLoader.ensureModeBundle(selectedGameMode)
+      .then(proceedStartRun)
+      .catch((err) => {
+        console.error("Mode bundle load failed:", err);
+      });
   }
 
-  overlay?.classList.add("hidden");
-  overlay?.setAttribute("aria-hidden", "true");
-  document.body.classList.add("screen-app-visible");
-  if (app) {
-    app.style.removeProperty("visibility");
-    app.style.removeProperty("pointer-events");
-  }
-  beginRun();
+  proceedStartRun();
+  return Promise.resolve();
 }
 
 function startRun(classId) {
@@ -2523,7 +2482,7 @@ function restartGame() {
     showClassSelect();
     return;
   }
-  if (!playerCompanionId) {
+  if (!playerCompanionId && !(typeof isClassicMode === "function" && isClassicMode())) {
     playerCompanionId = typeof defaultCompanionForClass === "function"
       ? defaultCompanionForClass(playerClass)
       : "s_stranger";
@@ -2538,12 +2497,6 @@ function restartGame() {
   enemyMutationFormId = null;
   enemyMutationId = null;
   if (typeof resetPendingCraftState === "function") resetPendingCraftState();
-  playerEnhancements = typeof createEmptyEnhancementLoadout === "function"
-    ? createEmptyEnhancementLoadout()
-    : { head: null, chest: null, boots: null };
-  enemyEnhancements = typeof createEmptyEnhancementLoadout === "function"
-    ? createEmptyEnhancementLoadout()
-    : { head: null, chest: null, boots: null };
   phase = "prep";
   round = 1;
   gold = START_GOLD;
@@ -3087,8 +3040,6 @@ function renderFightButton() {
 }
 
 function recalcSynergies() {
-  syncEnhancementsForSide("player");
-  syncEnhancementsForSide("enemy");
   applySynergyModifiersToContainers(playerContainers, playerItems);
   applySynergyModifiersToContainers(enemyContainers, enemyItems);
   refreshActiveSynergies(playerItems, enemyItems);
@@ -3708,7 +3659,14 @@ function applyPostBattlePrep(battleWinner) {
   }
 
   const enemyBattleWon = battleWinner === "enemy" ? true : battleWinner === "player" ? false : null;
-  if (typeof applyDuePendingCraftsInstant === "function") {
+  if (typeof resolveDuePendingCraftsForSideInstant === "function") {
+    if (resolveDuePendingCraftsForSideInstant("player")) {
+      recalcSynergies();
+    }
+  }
+  if (typeof resolveDuePendingCraftsForSideInstant === "function") {
+    resolveDuePendingCraftsForSideInstant("enemy");
+  } else if (typeof applyDuePendingCraftsInstant === "function") {
     applyDuePendingCraftsInstant("enemy");
   }
   if (opponentMode === "hardbot") {
@@ -3776,10 +3734,8 @@ function applyPostBattlePrep(battleWinner) {
 }
 
 function shouldApplyMetaUnlockForSide(side) {
-  if (typeof MetaProgress === "undefined" || !MetaProgress.isEnabled()) return false;
-  if (isCampaignMode()) return false;
-  if (isVersusMode() || isLobby2pMode()) return true;
-  if (isAnyLobbyMode()) return side === "player";
+  if (isClassicModeActive()) return side === "player";
+  if (!isPathMode()) return false;
   return side === "player";
 }
 
@@ -3788,7 +3744,7 @@ function showRunComplete() {
   releasePreviousBattleReplayFrames();
   lastBattleReplay = null;
   if (typeof DialogueEngine !== "undefined") DialogueEngine.reset("");
-  if (typeof MetaProgress !== "undefined" && MetaProgress.isEnabled() && !isCampaignMode()) {
+  if (typeof MetaProgress !== "undefined" && MetaProgress.isEnabled() && isPathMode()) {
     const { wins } = typeof computeRunWinrate === "function"
       ? computeRunWinrate(runResults)
       : { wins: 0 };
@@ -4293,7 +4249,7 @@ function activateGamepadPrepFocus(focus) {
 
 
 function draw() {
-  if (isBattleResultIdle()) return;
+  if (isBattleResultFrozen()) return;
   if (shouldSkipFlankBattleCanvasDraw()) return;
   drawWorldLayer();
   drawFxLayer();
@@ -4328,6 +4284,9 @@ function drawWorldLayer() {
     drawContainers(st.containers, side, false);
     drawSynergyVisuals(ctx, synergyAnimTime, synergyPreviewBuilt, "under", side);
     drawLoadoutItems(st.items, side, false);
+    if (typeof drawAllPlacementSlotVisuals === "function") {
+      drawAllPlacementSlotVisuals(ctx, st.items, (c, r) => cellRect(side, c, r));
+    }
     if (typeof drawAllPrepItemIdleEffects === "function") {
       drawAllPrepItemIdleEffects(ctx, st.items, side, synergyAnimTime);
     }
@@ -5130,7 +5089,7 @@ function isPointerOverShopPopoverPanel(clientX, clientY) {
 
 function syncPrepShopDragBackdrop(clientX, clientY) {
   const root = document.documentElement;
-  const dragActive = !!(dragPayload || pendingShopDrag || pendingBenchDrag || pendingEnhancementDrag);
+  const dragActive = !!(dragPayload || pendingShopDrag || pendingBenchDrag);
   const benchOpen = root.hasAttribute("data-prep-bench-open");
   const shopOpen = root.hasAttribute("data-prep-shop-open");
   const overSidebar = isPointerOverShopDrawer(clientX, clientY)
@@ -5203,6 +5162,9 @@ function onGlobalMouseMove(e) {
 
 
 function updateUI() {
+  if ((phase === "prep" || isBattleUiPhase()) && typeof ensureCombatFeedReady === "function") {
+    ensureCombatFeedReady();
+  }
   renderPlayerProfiles();
   renderRunStats();
   renderLobbyChrome();
@@ -5302,7 +5264,6 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
           classId: playerArchetype.classId,
           companionId: playerArchetype.companionId,
           items: playerArchetype.items,
-          enhancements: playerArchetype.enhancements,
           round,
         })
         : null;
@@ -5344,7 +5305,6 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
       classId: mutRt.classId,
       companionId: mutRt.companionId,
       items: mutRt.items,
-      enhancements: mutRt.enhancements,
       round,
     })
     : null;
@@ -5359,9 +5319,6 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
       heroCard: heroCardHud,
       deltas: mutationDeltas,
     })
-    : "";
-  const enhancementHtml = typeof renderPrepEnhancementStripHtml === "function"
-    ? renderPrepEnhancementStripHtml(round, mutRt.enhancements, { heroCard: heroCardHud })
     : "";
   const keyStatusHtml = typeof renderPrepBuildKeyStatusHtml === "function"
     ? renderPrepBuildKeyStatusHtml(mutRt.items)
@@ -5432,14 +5389,12 @@ function renderPrepStageChrome(playerProfile, enemyProfile) {
     statsHud.innerHTML = `
       ${statsHeaderHtml}
       ${mutationHtml}
-      ${enhancementHtml}
       ${modifierStripHtml}
     `;
     if (heroCardHud && buildSlot) {
       const statsRow = statsHud.querySelector(".prep-hero-card__stats-row");
       if (statsRow) statsRow.insertBefore(buildSlot, statsRow.firstChild);
     }
-    bindPrepEnhancementStrip(side);
     bindPrepModChipTooltips(statsHud);
     bindPrepCompanionTooltip(statsHud);
     if (typeof syncPrepHudCollapseChrome === "function") syncPrepHudCollapseChrome();
@@ -5535,7 +5490,6 @@ function renderPlayerProfiles(opts = {}) {
               classId: fighter?.classId,
               companionId: fighter?.companionId,
               items: fighter?.items,
-              enhancements: fighter?.enhancements,
               round,
             })
             : null;
@@ -5555,7 +5509,6 @@ function renderPlayerProfiles(opts = {}) {
           classId,
           companionId: rt.companionId,
           items: rt.items,
-          enhancements: rt.enhancements,
           round,
         })
         : null;
@@ -5832,14 +5785,13 @@ registerPrepShopRuntime({
   playPrepSfx,
   isSyntheticMouseFromTouch,
   isTouchUi,
-  getSideEnhancements,
+  isPrepCommerceDragActive: () => !!(dragPayload || pendingShopDrag || pendingBenchDrag),
   getSideCompanionId: (side) => (side === "enemy" ? enemyCompanionId : playerCompanionId),
   getSideMutationId: (side) => (side === "enemy" ? enemyMutationId : playerMutationId),
   getSideMutationFormId: (side) => (side === "enemy" ? enemyMutationFormId : playerMutationFormId),
   beginPendingShopDrag,
   beginPendingBenchDrag,
   startBenchDrag,
-  isPrepCommerceDragActive: () => !!(dragPayload || pendingShopDrag || pendingBenchDrag || pendingEnhancementDrag),
   shouldUseFixedShop: (side) => isCampaignMode() && side === "player" && typeof Campaign !== "undefined" && Campaign.isActive(),
   applyFixedShop: (side) => {
     if (side === "player" && typeof Campaign !== "undefined") Campaign.applyPrepStep();
@@ -5855,12 +5807,5 @@ registerPrepShopRuntime({
   isLobby2pSplitPrep: () => isLobby2pMode() && phase === "prep" && !!lobbyState?.isSplitLobby,
   shouldApplyMetaUnlockForSide,
 });
-
-window.getLobby2pShopPopoverHuman = getLobby2pShopPopoverHuman;
-window.getLobby2pBenchPopoverHuman = getLobby2pBenchPopoverHuman;
-window.syncLobby2pShopFabExpanded = syncLobby2pShopFabExpanded;
-window.syncLobby2pBenchFabExpanded = syncLobby2pBenchFabExpanded;
-window.syncLobby2pBenchFabBadges = syncLobby2pBenchFabBadges;
-window.toggleLobby2pBench = toggleLobby2pBench;
 
 init();

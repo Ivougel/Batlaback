@@ -12,8 +12,7 @@ const POOL120_EXTRA_FILES = [
   "items-catalog.js",
   "systems/mutations.js",
   "systems/mutation-capstones.js",
-  "systems/enhancements.js",
-  "systems/enhancement-catalog-ext.js",
+  "systems/build-keys.js",
   "systems/triple-support-items.js",
   "systems/backpack-amplifiers.js",
   "systems/meta-effects.js",
@@ -35,7 +34,7 @@ const POOL120_EXTRA_FILES = [
 ];
 
 function seededRandom(seed) {
-  let s = (seed >>> 0) || 1;
+  let s = seed >>> 0 || 1;
   return () => {
     s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
     return s / 0x100000000;
@@ -80,7 +79,8 @@ function createPool120SimSandbox(seed = 42) {
     vm.runInContext(fs.readFileSync(path.join(ROOT, file), "utf8"), ctx);
   }
 
-  vm.runInContext(`
+  vm.runInContext(
+    `
     if (typeof setItemPool120Enabled === "function") setItemPool120Enabled(true);
     if (typeof ITEM_CATALOG !== "undefined") globalThis.ITEM_CATALOG = ITEM_CATALOG;
     if (typeof CLASS_CATALOG !== "undefined") globalThis.CLASS_CATALOG = CLASS_CATALOG;
@@ -93,7 +93,9 @@ function createPool120SimSandbox(seed = 42) {
     if (typeof pickMutationIdForMilestone === "function") globalThis.pickMutationIdForMilestone = pickMutationIdForMilestone;
     if (typeof MUTATION_ROUND_FORM !== "undefined") globalThis.MUTATION_ROUND_FORM = MUTATION_ROUND_FORM;
     if (typeof MUTATION_ROUND_FINAL !== "undefined") globalThis.MUTATION_ROUND_FINAL = MUTATION_ROUND_FINAL;
-  `, ctx);
+  `,
+    ctx,
+  );
 
   BATTLE_STUBS.forEach((name) => {
     sandbox[name] = () => {};

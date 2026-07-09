@@ -2,10 +2,12 @@
  * Pixel-snapshots prep (solo + lobby) — iPad Mini landscape PWA.
  * Обновить: npm run test:snapshots:update
  */
-import { test, expect, devices } from "@playwright/test";
+
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import fs from "node:fs";
+import { devices, expect, test } from "@playwright/test";
+import { quickStartPrep } from "./lib/quick-start.mjs";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const baseUrl = `file://${root}/index.html`;
@@ -20,47 +22,14 @@ const IPAD_LANDSCAPE = {
 async function startPrep(page, mode) {
   await page.goto(baseUrl, { waitUntil: "domcontentloaded", timeout: 20000 });
   await page.waitForFunction(() => typeof startRunFromOverlay === "function", { timeout: 10000 });
-  await page.evaluate((gameMode) => {
-    selectGameMode(gameMode);
-    if (gameMode === "campaign" && typeof selectCampaignTrial === "function") {
-      selectCampaignTrial("build-trial");
-    }
-    selectPlayerClass("priest");
-    if (typeof selectCompanion === "function") {
-      selectCompanion(
-        typeof defaultCompanionForClass === "function"
-          ? defaultCompanionForClass("priest")
-          : "s_stranger",
-      );
-    }
-    if (gameMode === "versus") selectOpponentClass("warrior");
-    else if (gameMode === "lobby2p") {
-      selectOpponentClass("warrior");
-      selectOpponentClass("warrior");
-      selectCompanion(
-        typeof defaultCompanionForClass === "function"
-          ? defaultCompanionForClass("warrior")
-          : "s_stranger",
-      );
-    } else if (gameMode !== "lobby" && gameMode !== "campaign") selectOpponentClass("mage");
-    startRunFromOverlay();
-  }, mode);
-  await page.waitForFunction(
-    () => document.getElementById("app")?.dataset.phase === "prep",
-    { timeout: 12000 },
-  );
-  await page.waitForTimeout(1400);
+  await quickStartPrep(page, { mode, settleMs: 1400 });
   await page.evaluate(() => {
-    window.applyUiLayout?.();
-    window.scheduleCanvasFit?.();
     window.fitCanvasDisplaySize?.();
   });
   await page.waitForTimeout(600);
 }
 
-const manifest = JSON.parse(
-  fs.readFileSync(path.join(root, "tools/ui-structure-manifest.json"), "utf8"),
-);
+const manifest = JSON.parse(fs.readFileSync(path.join(root, "tools/ui-structure-manifest.json"), "utf8"));
 
 for (const snap of manifest.prepSnapshots) {
   test(`${snap.name} — prep field`, async ({ browser }) => {

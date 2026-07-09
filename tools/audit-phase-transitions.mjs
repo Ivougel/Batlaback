@@ -2,9 +2,10 @@
  * Аудит дрожания при переходах: prep↔battle, battle→result, result→prep.
  * Запуск: node tools/audit-phase-transitions.mjs
  */
-import { chromium, devices } from "playwright";
+
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { chromium, devices } from "playwright";
 import { quickStartPrep } from "./lib/quick-start.mjs";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -26,7 +27,6 @@ function sampleFrame() {
   const layout = document.querySelector(".game-layout");
   const resultOverlay = document.getElementById("battle-result-overlay");
   const modal = resultOverlay?.querySelector(".battle-result-modal");
-  const html = document.documentElement;
   const appCs = app ? getComputedStyle(app) : null;
   const layoutCs = layout ? getComputedStyle(layout) : null;
   const modalCs = modal ? getComputedStyle(modal) : null;
@@ -115,12 +115,17 @@ for (const profile of PROFILES) {
       layoutOpacityDelta: maxDelta(prepBattleSamples, "layoutOpacity"),
       layoutTransformChanges: countChanges(prepBattleSamples, "layoutTransform"),
       appOpacityDelta: maxDelta(prepBattleSamples, "appOpacity"),
-      islandHDelta: maxDelta(prepBattleSamples.filter((s) => s.phase === "prep"), "islandH"),
+      islandHDelta: maxDelta(
+        prepBattleSamples.filter((s) => s.phase === "prep"),
+        "islandH",
+      ),
       floorHAfter: battleSettled.floorH,
     };
 
     if (entry.metrics.prepToBattle.layoutOpacityDelta > 0.5) {
-      entry.issues.push(`prep→battle: layout opacity swing ${entry.metrics.prepToBattle.layoutOpacityDelta.toFixed(2)}`);
+      entry.issues.push(
+        `prep→battle: layout opacity swing ${entry.metrics.prepToBattle.layoutOpacityDelta.toFixed(2)}`,
+      );
     }
     if (entry.metrics.prepToBattle.islandHDelta > 8) {
       entry.issues.push(`prep→battle: island height jump ${entry.metrics.prepToBattle.islandHDelta}px`);
@@ -159,13 +164,19 @@ for (const profile of PROFILES) {
       entry.issues.push("battle→result: phase остаётся battle при открытом overlay (game loop + layout под капотом)");
     }
     if (entry.metrics.battleToResult.modalTransformChanges > 4) {
-      entry.issues.push(`battle→result: modal transform скачет (${entry.metrics.battleToResult.modalTransformChanges} смен) — двойная анимация?`);
+      entry.issues.push(
+        `battle→result: modal transform скачет (${entry.metrics.battleToResult.modalTransformChanges} смен) — двойная анимация?`,
+      );
     }
     if (entry.metrics.battleToResult.modalAnimationChanges > 2) {
-      entry.issues.push(`battle→result: modal animation сменилась ${entry.metrics.battleToResult.modalAnimationChanges}× (st-result-modal-enter → result-modal-in?)`);
+      entry.issues.push(
+        `battle→result: modal animation сменилась ${entry.metrics.battleToResult.modalAnimationChanges}× (st-result-modal-enter → result-modal-in?)`,
+      );
     }
     if (entry.metrics.battleToResult.appOpacityDelta > 0.3 && resultMid.appVisibility === "visible") {
-      entry.issues.push(`battle→result: #app opacity drift ${entry.metrics.battleToResult.appOpacityDelta.toFixed(2)} while visible`);
+      entry.issues.push(
+        `battle→result: #app opacity drift ${entry.metrics.battleToResult.appOpacityDelta.toFixed(2)} while visible`,
+      );
     }
 
     // result → prep (как btn-battle-continue)
@@ -184,7 +195,10 @@ for (const profile of PROFILES) {
       appTransformChanges: countChanges(resultPrepSamples, "appTransform"),
       layoutOpacityDelta: maxDelta(resultPrepSamples, "layoutOpacity"),
       layoutTransformChanges: countChanges(resultPrepSamples, "layoutTransform"),
-      islandHDelta: maxDelta(resultPrepSamples.filter((s) => s.phase === "prep"), "islandH"),
+      islandHDelta: maxDelta(
+        resultPrepSamples.filter((s) => s.phase === "prep"),
+        "islandH",
+      ),
       canvasHAfter: prepReturned.canvasH,
       canvasHBeforeBattle: battleSettled.canvasH,
       overlappingTransitions: resultPrepSamples.filter(
@@ -197,11 +211,15 @@ for (const profile of PROFILES) {
     };
 
     if (entry.metrics.resultToPrep.battleFlashFrames > 0) {
-      entry.issues.push(`result→prep: кадр battle без overlay (${entry.metrics.resultToPrep.battleFlashFrames} frames)`);
+      entry.issues.push(
+        `result→prep: кадр battle без overlay (${entry.metrics.resultToPrep.battleFlashFrames} frames)`,
+      );
     }
 
     if (entry.metrics.resultToPrep.overlappingTransitions > 0) {
-      entry.issues.push(`result→prep: overlay-exit и phase-transition одновременно (${entry.metrics.resultToPrep.overlappingTransitions} кадров)`);
+      entry.issues.push(
+        `result→prep: overlay-exit и phase-transition одновременно (${entry.metrics.resultToPrep.overlappingTransitions} кадров)`,
+      );
     }
     if (entry.metrics.resultToPrep.appTransformChanges > 3) {
       entry.issues.push(`result→prep: #app transform скачет ${entry.metrics.resultToPrep.appTransformChanges}×`);
@@ -214,7 +232,9 @@ for (const profile of PROFILES) {
     console.log(JSON.stringify(entry.metrics, null, 2));
     if (entry.issues.length) {
       console.log("ISSUES:");
-      entry.issues.forEach((i) => console.log(`  • ${i}`));
+      entry.issues.forEach((i) => {
+        console.log(`  • ${i}`);
+      });
     } else {
       console.log("No automated jitter signals detected.");
     }

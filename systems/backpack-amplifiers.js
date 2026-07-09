@@ -121,7 +121,7 @@ const AMPLIFIER_CATALOG = {
     amplifySlot: "chest",
     rarity: "rare",
     implemented: true,
-    desc: "Подсвечивает броню и грудные усиления. Если есть броня/грудь: +2 HP.",
+    desc: "Подсвечивает броню. Если есть броня: +2 HP.",
     combat: { maxHp: 2 },
   },
   amplify_boots: {
@@ -131,7 +131,7 @@ const AMPLIFIER_CATALOG = {
     amplifySlot: "boots",
     rarity: "rare",
     implemented: true,
-    desc: "Подсвечивает обувь и ботинки. Если есть обувь/ботинки: −1.5% перезарядки.",
+    desc: "Подсвечивает обувь. Если есть обувь: −1.5% перезарядки.",
     combat: { cooldownMult: -0.015 },
   },
 };
@@ -157,9 +157,8 @@ function getAmplifierItemDef(ampDef) {
   const hintParts = [];
   if (ampDef.amplifyFamily) hintParts.push(`семейство «${ampDef.amplifyFamily}»`);
   if (ampDef.amplifySlot) {
-    const slotLabel = typeof ENHANCEMENT_SLOT_META !== "undefined"
-      ? (ENHANCEMENT_SLOT_META[ampDef.amplifySlot]?.label || ampDef.amplifySlot)
-      : ampDef.amplifySlot;
+    const slotLabels = { head: "голова", chest: "грудь", boots: "ботинки" };
+    const slotLabel = slotLabels[ampDef.amplifySlot] || ampDef.amplifySlot;
     hintParts.push(`слот «${slotLabel}»`);
   }
   if (ampDef.amplifyEquip) hintParts.push(`экипировка «${ampDef.amplifyEquip}»`);
@@ -231,16 +230,10 @@ function itemMatchesAmplifierTarget(itemId, ampDef) {
   if (def.isAmplifierItem) return false;
 
   if (ampDef.amplifyFamily) {
-    if (def.tags?.includes(ampDef.amplifyFamily)) return true;
-    if (def.isEnhancementItem && typeof getEnhancementDef === "function") {
-      const enhDef = getEnhancementDef(def.enhancementId || itemId);
-      if (enhDef?.families?.includes(ampDef.amplifyFamily)) return true;
-    }
-    return false;
+    return !!def.tags?.includes(ampDef.amplifyFamily);
   }
 
   if (ampDef.amplifySlot) {
-    if (def.isEnhancementItem && def.enhancementSlot === ampDef.amplifySlot) return true;
     const slot = typeof resolveItemSlot === "function" ? resolveItemSlot(def) : null;
     if (ampDef.amplifySlot === "head") {
       return slot === "head" || def.tags?.includes("helmet");
@@ -400,7 +393,7 @@ function scoreAmplifierShopBias(def, ctx = {}) {
   const mutationId = ctx.mutationId || ctx.mutationFormId;
   if (mutationId && (def.recommendedTriples || []).some((tripleId) => {
     const spec = typeof BUILD_UNLOCK_CATALOG !== "undefined" ? BUILD_UNLOCK_CATALOG[tripleId] : null;
-    return spec?.enhancementIds?.length;
+    return spec?.supportItemIds?.length;
   })) {
     score += 0.5;
   }
@@ -524,9 +517,8 @@ function buildAmplifierTooltipExtraLines(def) {
   const lines = [];
   if (def.amplifyFamily) lines.push(`Подсветка: тег «${def.amplifyFamily}»`);
   if (def.amplifySlot) {
-    const slotLabel = typeof ENHANCEMENT_SLOT_META !== "undefined"
-      ? (ENHANCEMENT_SLOT_META[def.amplifySlot]?.label || def.amplifySlot)
-      : def.amplifySlot;
+    const slotLabels = { head: "голова", chest: "грудь", boots: "ботинки" };
+    const slotLabel = slotLabels[def.amplifySlot] || def.amplifySlot;
     lines.push(`Подсветка: ${slotLabel} / броня`);
   }
   if (def.amplifyEquip) lines.push(`Подсветка: ${def.amplifyEquip}`);

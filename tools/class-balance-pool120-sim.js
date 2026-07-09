@@ -37,7 +37,6 @@ function buildPrepMeta(sb, preset) {
       classId: preset.classId,
       companionId,
       items: preset.items.map((e) => ({ itemId: e.itemId })),
-      enhancements: {},
       round,
     });
     const pick = sb.pickMutationIdForMilestone(progress, round);
@@ -55,9 +54,6 @@ function buildPrepMeta(sb, preset) {
     companionId,
     mutationFormId,
     mutationId,
-    enhancements: typeof sb.createEmptyEnhancementLoadout === "function"
-      ? sb.createEmptyEnhancementLoadout()
-      : { head: null, chest: null, boots: null },
   };
 }
 
@@ -65,7 +61,7 @@ function buildLoadoutFromPreset(preset, teamPrefix, sandbox) {
   const items = preset.items.map((entry, index) => {
     const item = sandbox.createPlacedItem(
       entry.itemId,
-      entry.col ?? (index % 8),
+      entry.col ?? index % 8,
       entry.row ?? Math.floor(index / 8),
       entry.rotation || 0,
     );
@@ -98,8 +94,7 @@ function runBattle(sandbox, playerPreset, enemyPreset) {
   }
 
   const maxDur = sandbox.MAX_BATTLE_DURATION || 120;
-  const timedOut = state.elapsed >= maxDur - 0.001
-    || (state.finished && state.player.hp > 0 && state.enemy.hp > 0);
+  const timedOut = state.elapsed >= maxDur - 0.001 || (state.finished && state.player.hp > 0 && state.enemy.hp > 0);
 
   return {
     playerKey: playerPreset.key,
@@ -153,7 +148,9 @@ function printMatrix(results, prepRound) {
   const matrix = {};
   CLASSES.forEach((row) => {
     matrix[row] = {};
-    CLASSES.forEach((col) => { matrix[row][col] = null; });
+    CLASSES.forEach((col) => {
+      matrix[row][col] = null;
+    });
   });
   slice.forEach((r) => {
     if (r.playerClass === r.enemyClass) return;
@@ -162,7 +159,9 @@ function printMatrix(results, prepRound) {
 
   console.log(`\n─── Матрица WR · prep R${prepRound} (player row → enemy col) ───`);
   process.stdout.write("".padEnd(10));
-  CLASSES.forEach((c) => process.stdout.write(c.slice(0, 6).padStart(8)));
+  CLASSES.forEach((c) => {
+    process.stdout.write(c.slice(0, 6).padStart(8));
+  });
   process.stdout.write("\n");
   CLASSES.forEach((row) => {
     process.stdout.write(row.slice(0, 8).padEnd(10));
@@ -219,7 +218,9 @@ function main() {
     );
   });
 
-  PREP_ROUNDS.forEach((r) => printMatrix(results, r));
+  PREP_ROUNDS.forEach((r) => {
+    printMatrix(results, r);
+  });
 
   console.log("\n─── Средняя длительность боя по prep-раунду ───");
   PREP_ROUNDS.forEach((r) => {

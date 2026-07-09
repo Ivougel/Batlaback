@@ -10,11 +10,26 @@ const path = require("path");
 const SRC = path.join(__dirname, "items-migrated.json");
 
 const ACTIVATABLE_TYPES = new Set([
-  "damage", "heal", "block", "poison", "slow", "buffTimed", "lifesteal",
-  "onHitCapBonus", "breakBlockOnHit", "selfPoison",
+  "damage",
+  "heal",
+  "block",
+  "poison",
+  "slow",
+  "buffTimed",
+  "lifesteal",
+  "onHitCapBonus",
+  "breakBlockOnHit",
+  "selfPoison",
 ]);
 const SKIP_TRIGGERS = new Set([
-  "passive", "battle_start", "on_hit", "on_block", "on_miss", "on_defend", "on_revive", "on_foe_heal",
+  "passive",
+  "battle_start",
+  "on_hit",
+  "on_block",
+  "on_miss",
+  "on_defend",
+  "on_revive",
+  "on_foe_heal",
 ]);
 
 function isActivatable(effect) {
@@ -31,10 +46,11 @@ function isStubDamage(effect, tags) {
 }
 
 function hasPassiveBlockMechanic(effects) {
-  return effects.some((e) =>
-    e.type === "shieldBlockMult"
-    || e.type === "passiveDefense"
-    || (e.type === "gainStack" && e.stack === "block" && (e.trigger === "battle_start" || e.trigger === "passive"))
+  return effects.some(
+    (e) =>
+      e.type === "shieldBlockMult" ||
+      e.type === "passiveDefense" ||
+      (e.type === "gainStack" && e.stack === "block" && (e.trigger === "battle_start" || e.trigger === "passive")),
   );
 }
 

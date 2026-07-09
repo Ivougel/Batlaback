@@ -4,8 +4,8 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import vm from "node:vm";
 import { fileURLToPath } from "node:url";
+import vm from "node:vm";
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 
@@ -15,7 +15,14 @@ function assert(cond, msg) {
 
 function loadSandbox() {
   const sandbox = {
-    console, Math, Object, Array, JSON, Number, String, Boolean,
+    console,
+    Math,
+    Object,
+    Array,
+    JSON,
+    Number,
+    String,
+    Boolean,
     document: {
       getElementById: () => null,
     },
@@ -24,20 +31,16 @@ function loadSandbox() {
       classId: "mage",
       companionId: "s_stranger",
       items: [],
-      enhancements: {},
     }),
   };
   sandbox.global = sandbox;
   sandbox.window = sandbox;
   const ctx = vm.createContext(sandbox);
-  for (const file of [
-    "classes.js",
-    "systems/mutations.js",
-    "systems/mutation-progress-hints.js",
-  ]) {
+  for (const file of ["classes.js", "systems/mutations.js", "systems/mutation-progress-hints.js"]) {
     vm.runInContext(fs.readFileSync(path.join(ROOT, file), "utf8"), ctx);
   }
-  vm.runInContext(`
+  vm.runInContext(
+    `
     Object.assign(globalThis, {
       captureMutationProgressSnapshot,
       diffMutationProgressSnapshots,
@@ -46,7 +49,9 @@ function loadSandbox() {
       resetMutationProgressHintTracking,
       MUTATION_HINT_DELTA_THRESHOLD,
     });
-  `, ctx);
+  `,
+    ctx,
+  );
   return sandbox;
 }
 
@@ -78,7 +83,10 @@ function run() {
 
   const diff = s.diffMutationProgressSnapshots(before, after);
   assert(diff.leaderChanged, "diff: leader changed");
-  assert(diff.branchDeltas.some((row) => row.id === "m_arcanist" && row.delta === 9), "diff: arcanist +9");
+  assert(
+    diff.branchDeltas.some((row) => row.id === "m_arcanist" && row.delta === 9),
+    "diff: arcanist +9",
+  );
   passed++;
 
   const hint = s.buildMutationProgressHint(diff, before, after, { itemId: "mana_crystal" });
@@ -95,7 +103,6 @@ function run() {
     classId: "mage",
     companionId: "s_stranger",
     items: [{ itemId: "mana_crystal" }],
-    enhancements: {},
   });
   const deltas = s.notifyPrepMutationProgressChange(progressAfter, { itemId: "mana_crystal", cause: "buy" });
   assert(deltas?.m_arcanist === 9, "notify: returns active deltas");

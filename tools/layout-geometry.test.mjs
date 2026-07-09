@@ -2,9 +2,10 @@
  * Геометрия ключевых зон — без pixel-snapshots (стабильно в CI).
  * Запуск: npm run test:geometry
  */
-import { chromium, devices } from "playwright";
+
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { chromium, devices } from "playwright";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const baseUrl = `file://${root}/index.html`;
@@ -21,9 +22,7 @@ async function quickStart(page) {
     selectPlayerClass("warrior");
     if (typeof selectCompanion === "function") {
       selectCompanion(
-        typeof defaultCompanionForClass === "function"
-          ? defaultCompanionForClass("warrior")
-          : "s_stranger",
+        typeof defaultCompanionForClass === "function" ? defaultCompanionForClass("warrior") : "s_stranger",
       );
     }
     selectOpponentClass("mage");
@@ -60,7 +59,9 @@ const CASES = [
       await page.evaluate(() => startBattle());
       await page.waitForFunction(() => document.getElementById("app")?.dataset.phase === "battle");
       await page.waitForTimeout(800);
-      await page.evaluate(() => { window.applyUiLayout?.(); });
+      await page.evaluate(() => {
+        window.applyUiLayout?.();
+      });
       const m = await page.evaluate(() => {
         const bar = document.querySelector(".bottom-chrome")?.getBoundingClientRect();
         const gamepad = document.querySelector(".bottom-chrome-gamepad");
@@ -116,7 +117,8 @@ const CASES = [
         const shop = document.getElementById("shop-panel")?.getBoundingClientRect();
         const chrome = document.getElementById("bottom-chrome")?.getBoundingClientRect();
         const island = document.getElementById("prep-field-island")?.getBoundingClientRect();
-        const maxH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--prep-shop-sheet-max-h")) || 0;
+        const maxH =
+          parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--prep-shop-sheet-max-h")) || 0;
         return {
           shopTop: shop?.top ?? 0,
           shopBottom: shop?.bottom ?? 0,
@@ -154,8 +156,10 @@ const CASES = [
         const step = document.querySelector("#class-step-opponent:not(.hidden)");
         const dockRect = dock?.getBoundingClientRect();
         const stepRect = step?.getBoundingClientRect();
-        const token = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--class-mobile-dock-h")) || 0;
-        const scrollMax = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--class-modal-scroll-max-h")) || 0;
+        const token =
+          parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--class-mobile-dock-h")) || 0;
+        const scrollMax =
+          parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--class-modal-scroll-max-h")) || 0;
         return {
           dockVisible: !!(dock && !dock.classList.contains("hidden")),
           dockTop: dockRect?.top ?? 0,
@@ -174,7 +178,10 @@ const CASES = [
       assert(m.token >= 72, `class dock token: ${m.token}`);
       assert(m.dockBottom <= m.vh + 2, "dock below viewport");
       assert(m.stepBottom <= m.dockTop + 8, `class step overlaps dock: step=${m.stepBottom} dock=${m.dockTop}`);
-      assert(m.stepScrollH <= m.stepClientH + 4, `class step should not scroll: scroll=${m.stepScrollH} client=${m.stepClientH}`);
+      assert(
+        m.stepScrollH <= m.stepClientH + 4,
+        `class step should not scroll: scroll=${m.stepScrollH} client=${m.stepClientH}`,
+      );
     },
   },
   {
@@ -185,8 +192,8 @@ const CASES = [
       await page.evaluate(() => startBattle());
       await page.waitForFunction(() => document.getElementById("app")?.dataset.phase === "battle");
       await page.waitForFunction(
-        () => !document.getElementById("battle-countdown-overlay")
-          ?.classList.contains("battle-countdown-overlay-visible"),
+        () =>
+          !document.getElementById("battle-countdown-overlay")?.classList.contains("battle-countdown-overlay-visible"),
         { timeout: 12000 },
       );
       await page.waitForTimeout(1000);
@@ -241,7 +248,10 @@ const CASES = [
       assert(island && island.h > 40, "canvas island missing");
       assert(hero && hero.h > 40, "hero layer missing");
       assert(chrome && chrome.h > 20, "bottom chrome missing");
-      assert(hero.top >= island.bottom - 6, `hero above canvas gap: hero.top=${hero.top} island.bottom=${island.bottom}`);
+      assert(
+        hero.top >= island.bottom - 6,
+        `hero above canvas gap: hero.top=${hero.top} island.bottom=${island.bottom}`,
+      );
       assert(hero.bottom <= chrome.top + 8, `hero above toolbar: hero.bottom=${hero.bottom} chrome.top=${chrome.top}`);
       if (fab) {
         assert(fab.top >= island.bottom - 4, "FAB not above canvas");
@@ -257,11 +267,16 @@ const CASES = [
       const prep = await page.evaluate(() => {
         const chrome = document.getElementById("bottom-chrome")?.getBoundingClientRect();
         const doll = document.getElementById("btn-toggle-doll")?.getBoundingClientRect();
-        const fabBottom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--prep-mobile-fab-bottom"));
+        const fabBottom = parseFloat(
+          getComputedStyle(document.documentElement).getPropertyValue("--prep-mobile-fab-bottom"),
+        );
         return { chromeTop: chrome?.top ?? 0, dollBottom: doll?.bottom ?? 0, fabBottom };
       });
       assert(prep.fabBottom > 0, "prep mobile fab bottom token missing");
-      assert(prep.dollBottom <= prep.chromeTop + 4, `doll FAB overlaps toolbar: ${prep.dollBottom} > ${prep.chromeTop}`);
+      assert(
+        prep.dollBottom <= prep.chromeTop + 4,
+        `doll FAB overlaps toolbar: ${prep.dollBottom} > ${prep.chromeTop}`,
+      );
 
       await page.evaluate(() => startBattle());
       await page.waitForFunction(() => document.getElementById("app")?.dataset.phase === "battle");
@@ -275,7 +290,9 @@ const CASES = [
       const battle = await page.evaluate(() => {
         const chrome = document.getElementById("bottom-chrome")?.getBoundingClientRect();
         const stats = document.getElementById("btn-battle-build-stats")?.getBoundingClientRect();
-        const fabBottom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--prep-mobile-fab-bottom"));
+        const fabBottom = parseFloat(
+          getComputedStyle(document.documentElement).getPropertyValue("--prep-mobile-fab-bottom"),
+        );
         const anchorDisplay = getComputedStyle(document.getElementById("battle-build-stats-anchor")).display;
         return {
           chromeTop: chrome?.top ?? 0,
@@ -286,7 +303,10 @@ const CASES = [
       });
       assert(battle.fabBottom > 0, "battle mobile fab bottom token missing");
       assert(battle.anchorDisplay !== "none", "build-stats anchor hidden in mobile battle");
-      assert(battle.statsBottom <= battle.chromeTop + 4, `build-stats overlaps toolbar: ${battle.statsBottom} > ${battle.chromeTop}`);
+      assert(
+        battle.statsBottom <= battle.chromeTop + 4,
+        `build-stats overlaps toolbar: ${battle.statsBottom} > ${battle.chromeTop}`,
+      );
     },
   },
   {
@@ -297,8 +317,8 @@ const CASES = [
       await page.evaluate(() => startBattle());
       await page.waitForFunction(() => document.getElementById("app")?.dataset.phase === "battle");
       await page.waitForFunction(
-        () => !document.getElementById("battle-countdown-overlay")
-          ?.classList.contains("battle-countdown-overlay-visible"),
+        () =>
+          !document.getElementById("battle-countdown-overlay")?.classList.contains("battle-countdown-overlay-visible"),
         { timeout: 12000 },
       );
       await page.waitForTimeout(1000);
@@ -315,9 +335,7 @@ const CASES = [
       assert(opened, "battle inventory popover did not open");
 
       const tipOk = await page.evaluate(() => {
-        const cell = document.querySelector(
-          "#battle-inventory-popover-player .bp-cell.bp-has-item[data-item-id]",
-        );
+        const cell = document.querySelector("#battle-inventory-popover-player .bp-cell.bp-has-item[data-item-id]");
         if (!cell || typeof showSidebarTooltipAt !== "function") return { ok: false, reason: "no-cell" };
         const rect = cell.getBoundingClientRect();
         showSidebarTooltipAt(
@@ -379,7 +397,10 @@ const CASES = [
       assert(m.prepLayout === "side", `expected side prep, got ${m.prepLayout}`);
       assert(m.canvasH >= 120, `canvas too small: ${m.canvasH}px`);
       assert(m.shopLeft >= m.fieldRight - 12, `shop not on right: shop.left=${m.shopLeft} field.right=${m.fieldRight}`);
-      assert(m.heroTop >= m.islandBottom - 12, `hero should sit below canvas: hero.top=${m.heroTop} island.bottom=${m.islandBottom}`);
+      assert(
+        m.heroTop >= m.islandBottom - 12,
+        `hero should sit below canvas: hero.top=${m.heroTop} island.bottom=${m.islandBottom}`,
+      );
       assert(m.fightH >= 42, `fight btn too short on landscape side prep: ${m.fightH}px`);
       assert(m.fightW <= m.barW * 0.42, `toolbar too wide/spread: fight=${m.fightW} bar=${m.barW}`);
       if (m.heroImgH > 0 && m.heroLayerH > 0) {
@@ -419,7 +440,10 @@ const CASES = [
       assert(chrome && chrome.h > 20, "bottom chrome missing");
       assert(floor.bottom <= vh + 4, `floor overflows: ${floor.bottom} > ${vh}`);
       assert(scene.top >= -4, `scene clipped: top=${scene.top}`);
-      assert(floor.top >= scene.bottom - 12, `floor should sit below portraits: floor.top=${floor.top} scene.bottom=${scene.bottom}`);
+      assert(
+        floor.top >= scene.bottom - 12,
+        `floor should sit below portraits: floor.top=${floor.top} scene.bottom=${scene.bottom}`,
+      );
     },
   },
   {
@@ -474,8 +498,8 @@ const CASES = [
       await page.evaluate(() => startBattle());
       await page.waitForFunction(() => document.getElementById("app")?.dataset.phase === "battle");
       await page.waitForFunction(
-        () => !document.getElementById("battle-countdown-overlay")
-          ?.classList.contains("battle-countdown-overlay-visible"),
+        () =>
+          !document.getElementById("battle-countdown-overlay")?.classList.contains("battle-countdown-overlay-visible"),
         { timeout: 12000 },
       );
       await page.waitForTimeout(1000);
@@ -515,8 +539,8 @@ const CASES = [
       await page.evaluate(() => startBattle());
       await page.waitForFunction(() => document.getElementById("app")?.dataset.phase === "battle");
       await page.waitForFunction(
-        () => !document.getElementById("battle-countdown-overlay")
-          ?.classList.contains("battle-countdown-overlay-visible"),
+        () =>
+          !document.getElementById("battle-countdown-overlay")?.classList.contains("battle-countdown-overlay-visible"),
         { timeout: 12000 },
       );
       await page.waitForTimeout(1000);
@@ -550,7 +574,7 @@ const CASES = [
       assert(m.hudToSlotGap >= -8, `emoji overlaps HUD: ${m.hudToSlotGap}px`);
       const corridorH = m.chromeTop - m.hudBottom;
       const slotRel = corridorH > 0 ? (m.slotCenterY - m.hudBottom) / corridorH : 0;
-      assert(slotRel <= 0.40, `emoji too low on tablet portrait: rel=${slotRel.toFixed(2)}`);
+      assert(slotRel <= 0.4, `emoji too low on tablet portrait: rel=${slotRel.toFixed(2)}`);
     },
   },
   {
@@ -570,7 +594,7 @@ const CASES = [
       const m = await page.evaluate(() => {
         const root = document.documentElement;
         const canvas = document.getElementById("game-canvas")?.getBoundingClientRect();
-        const hero = document.querySelector("#app[data-phase=\"prep\"] .prep-character-layer")?.getBoundingClientRect();
+        const hero = document.querySelector('#app[data-phase="prep"] .prep-character-layer')?.getBoundingClientRect();
         const shop = document.getElementById("shop-panel")?.getBoundingClientRect();
         const fab = document.getElementById("btn-mobile-shop")?.getBoundingClientRect();
         const fabCs = document.getElementById("btn-mobile-shop")
@@ -616,7 +640,8 @@ const CASES = [
         const slotsCs = slots ? getComputedStyle(slots) : null;
         const cols = slotsCs?.gridTemplateColumns?.split(" ").filter(Boolean).length ?? 0;
         return {
-          sheetH: parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--prep-shop-sheet-max-h")) || 0,
+          sheetH:
+            parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--prep-shop-sheet-max-h")) || 0,
           panelH: panel?.offsetHeight ?? 0,
           scrollable: (slots?.scrollHeight ?? 0) > (slots?.clientHeight ?? 0) + 4,
           benchScroll: (bench?.scrollHeight ?? 0) > (bench?.clientHeight ?? 0) + 4,
@@ -639,8 +664,8 @@ const CASES = [
       await page.evaluate(() => startBattle());
       await page.waitForFunction(() => document.getElementById("app")?.dataset.phase === "battle");
       await page.waitForFunction(
-        () => !document.getElementById("battle-countdown-overlay")
-          ?.classList.contains("battle-countdown-overlay-visible"),
+        () =>
+          !document.getElementById("battle-countdown-overlay")?.classList.contains("battle-countdown-overlay-visible"),
         { timeout: 12000 },
       );
       await page.waitForTimeout(1000);
@@ -679,13 +704,18 @@ const CASES = [
           hudTop: playerHud?.top ?? 0,
           enemyHudTop: enemyHud?.top ?? 0,
           playerHudBottom: playerHud?.bottom ?? 0,
-          playerEmojiCy: playerBody ? playerBody.top + playerBody.height / 2 : (playerSlot ? playerSlot.top + playerSlot.height / 2 : 0),
+          playerEmojiCy: playerBody
+            ? playerBody.top + playerBody.height / 2
+            : playerSlot
+              ? playerSlot.top + playerSlot.height / 2
+              : 0,
           chromeTop: document.getElementById("bottom-chrome")?.getBoundingClientRect().top ?? 0,
           stageBottom: playerStage?.bottom ?? 0,
           stageTop: playerStage?.top ?? 0,
           stageH: playerStage?.height ?? 0,
           heroTop,
-          playerZoneW: parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--battle-player-zone-width")) || 0,
+          playerZoneW:
+            parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--battle-player-zone-width")) || 0,
           vw,
           screenCx,
           playerSlotCx: playerSlot ? playerSlot.left + playerSlot.width / 2 : 0,
@@ -717,15 +747,24 @@ const CASES = [
       assert(m.playerSlotCx < m.screenCx, `player emoji should be left of center: ${m.playerSlotCx}`);
       assert(m.enemySlotCx > m.screenCx, `enemy emoji should be right of center: ${m.enemySlotCx}`);
       if (m.playerColCx > 0) {
-        assert(m.playerSlotCx > m.playerColCx - 8,
-          `player emoji should sit inward from hero column: slot=${m.playerSlotCx} col=${m.playerColCx}`);
-        assert(m.playerSlotCx < m.screenCx - m.emojiPx * 0.15,
-          `player emoji should stay left of center corridor: slot=${m.playerSlotCx}`);
+        assert(
+          m.playerSlotCx > m.playerColCx - 8,
+          `player emoji should sit inward from hero column: slot=${m.playerSlotCx} col=${m.playerColCx}`,
+        );
+        assert(
+          m.playerSlotCx < m.screenCx - m.emojiPx * 0.15,
+          `player emoji should stay left of center corridor: slot=${m.playerSlotCx}`,
+        );
       }
-      assert(m.playerEmojiCy <= m.stageTop + m.stageH * 0.22 + 8,
-        `emoji should sit above hero head: cy=${m.playerEmojiCy} stageTop=${m.stageTop}`);
+      assert(
+        m.playerEmojiCy <= m.stageTop + m.stageH * 0.22 + 8,
+        `emoji should sit above hero head: cy=${m.playerEmojiCy} stageTop=${m.stageTop}`,
+      );
       if (m.duelCx > 0) {
-        assert(Math.abs(m.playerSlotCx - m.duelCx) <= 20, `player slot should match duel anchor: slot=${m.playerSlotCx} anchor=${m.duelCx}`);
+        assert(
+          Math.abs(m.playerSlotCx - m.duelCx) <= 20,
+          `player slot should match duel anchor: slot=${m.playerSlotCx} anchor=${m.duelCx}`,
+        );
       }
     },
   },
@@ -739,7 +778,10 @@ const CASES = [
       const vw = await page.evaluate(() => window.innerWidth);
       assert(island && island.w > 100, "field missing");
       assert(shop && shop.w > 120, "shop missing");
-      assert(shop.left >= island.right - 24, `shop should be right of field: shop.left=${shop.left} island.right=${island.right}`);
+      assert(
+        shop.left >= island.right - 24,
+        `shop should be right of field: shop.left=${shop.left} island.right=${island.right}`,
+      );
       assert(shop.right <= vw + 2, "shop overflows viewport");
     },
   },
@@ -758,7 +800,8 @@ const CASES = [
         const viewBottom = (vv?.offsetTop ?? 0) + (vv?.height ?? window.innerHeight);
         const screenBottom = Math.max(window.innerHeight, viewBottom);
         const app = document.getElementById("app")?.getBoundingClientRect();
-        const pinY = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--bottom-chrome-pin-y")) || 0;
+        const pinY =
+          parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--bottom-chrome-pin-y")) || 0;
         return {
           chromeBottom: chrome?.bottom ?? 0,
           viewBottom,
@@ -771,7 +814,10 @@ const CASES = [
         };
       });
       assert(m.tier === "tablet", `expected tablet tier, got ${m.tier}`);
-      assert(m.chromeBottom >= m.screenBottom - 4, `chrome above screen bottom: gap=${m.screenBottom - m.chromeBottom}px pin=${m.pinY}`);
+      assert(
+        m.chromeBottom >= m.screenBottom - 4,
+        `chrome above screen bottom: gap=${m.screenBottom - m.chromeBottom}px pin=${m.pinY}`,
+      );
       assert(m.appBottom <= m.chromeTop + 4, `app overlaps bottom chrome: app=${m.appBottom} chrome=${m.chromeTop}`);
     },
   },
@@ -790,15 +836,20 @@ const CASES = [
         const img = document.getElementById("prep-hud-hero-img");
         if (!frame || !portrait || !img) return { ok: false, reason: "missing nodes" };
         if (img.decode) {
-          try { await img.decode(); } catch { /* ignore */ }
+          try {
+            await img.decode();
+          } catch {
+            /* ignore */
+          }
         }
         const fr = frame.getBoundingClientRect();
         const pr = portrait.getBoundingClientRect();
         const ir = img.getBoundingClientRect();
         const frameCs = getComputedStyle(frame);
-        const bustScale = parseFloat(frameCs.getPropertyValue("--prep-hud-portrait-bust-scale"))
-          || parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--prep-hud-portrait-bust-scale"))
-          || 0;
+        const bustScale =
+          parseFloat(frameCs.getPropertyValue("--prep-hud-portrait-bust-scale")) ||
+          parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--prep-hud-portrait-bust-scale")) ||
+          0;
         const interW = Math.max(0, Math.min(ir.right, fr.right) - Math.max(ir.left, fr.left));
         let bustInk = { left: false, mid: false, right: false };
         if (img.naturalWidth > 0 && img.naturalHeight > 0) {
@@ -844,7 +895,10 @@ const CASES = [
       assert(m.bustScale > 0 && m.bustScale <= 2.2, `bust scale out of range: ${m.bustScale}`);
       assert(!m.imgHidden && m.imgW > 48 && m.imgH > 64, `hero img not visible: ${m.imgW}x${m.imgH}`);
       assert(m.interRatio >= 0.88, `portrait horizontal crop too tight: ${(m.interRatio * 100).toFixed(0)}%`);
-      assert(m.bustInk.left && m.bustInk.mid && m.bustInk.right, `bust band missing sprite ink: ${JSON.stringify(m.bustInk)}`);
+      assert(
+        m.bustInk.left && m.bustInk.mid && m.bustInk.right,
+        `bust band missing sprite ink: ${JSON.stringify(m.bustInk)}`,
+      );
     },
   },
   {

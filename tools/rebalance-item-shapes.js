@@ -58,19 +58,35 @@ function scoreItemPower(def) {
         if (tr === "on_hit" || tr === "on_block" || tr === "on_miss") break;
         score += avgDamage(effect, def) * pace * 3.2 * chance(effect.chance);
         break;
-      case "block": score += (effect.value || 0) * pace * 2.4 * chance(effect.chance); break;
-      case "heal": score += (effect.value || 0) * pace * 1.8 * chance(effect.chance); break;
+      case "block":
+        score += (effect.value || 0) * pace * 2.4 * chance(effect.chance);
+        break;
+      case "heal":
+        score += (effect.value || 0) * pace * 1.8 * chance(effect.chance);
+        break;
       case "poison": {
         const interval = effect.interval > 1 ? effect.interval : 1;
         score += (effect.value || 1) * (pace / interval) * 2.2 * chance(effect.chance);
         break;
       }
-      case "groundFire": score += (effect.value || 2) * pace * 1.5; break;
-      case "slow": score += 4 * pace * chance(effect.chance); break;
-      case "buffTimed": score += (effect.value || 0.1) * 100 * pace * 0.35; break;
-      case "passiveDefense": score += (effect.value || 0) * 1.15; break;
-      case "passiveMaxHp": score += (effect.value || 0) * 0.4; break;
-      case "passiveLuck": score += (effect.value || 0) * 3; break;
+      case "groundFire":
+        score += (effect.value || 2) * pace * 1.5;
+        break;
+      case "slow":
+        score += 4 * pace * chance(effect.chance);
+        break;
+      case "buffTimed":
+        score += (effect.value || 0.1) * 100 * pace * 0.35;
+        break;
+      case "passiveDefense":
+        score += (effect.value || 0) * 1.15;
+        break;
+      case "passiveMaxHp":
+        score += (effect.value || 0) * 0.4;
+        break;
+      case "passiveLuck":
+        score += (effect.value || 0) * 3;
+        break;
       case "statMult": {
         const v = effect.value || 0;
         const stat = effect.stat || "";
@@ -85,14 +101,24 @@ function scoreItemPower(def) {
       case "cooldownMultPerTag":
         score += Math.abs(effect.value || effect.perTag || 0) * 30;
         break;
-      case "lifesteal": score += (effect.value || 0) * 40; break;
-      case "shieldBlockMult": score += (effect.value || 0) * 25; break;
+      case "lifesteal":
+        score += (effect.value || 0) * 40;
+        break;
+      case "shieldBlockMult":
+        score += (effect.value || 0) * 25;
+        break;
       case "gainStack":
         score += (effect.value || 1) * 2.5 * (isPassive ? 1 : pace * 0.5) * chance(effect.chance);
         break;
-      case "damagePerStack": score += (effect.value || 1) * 4; break;
-      case "damagePerTag": score += (effect.value || 1) * 3; break;
-      case "damagePerFoeDebuff": score += (effect.value || 1) * 5; break;
+      case "damagePerStack":
+        score += (effect.value || 1) * 4;
+        break;
+      case "damagePerTag":
+        score += (effect.value || 1) * 3;
+        break;
+      case "damagePerFoeDebuff":
+        score += (effect.value || 1) * 5;
+        break;
       case "damageBonus":
       case "blockBonus":
       case "healBonus":
@@ -104,22 +130,45 @@ function scoreItemPower(def) {
       case "breakBlockOnHit":
         score += (effect.value || 0) * 0.8 * chance(effect.chance);
         break;
-      case "applyStun": score += 6 * chance(effect.chance); break;
-      case "extraAttackOnStun": score += 8; break;
-      case "periodic": score += 5; break;
-      case "stackThreshold": score += 4; break;
-      case "activationThreshold": score += 3; break;
-      case "invulnOnStaminaSpend": score += 12; break;
-      case "battleRageLowHp": score += 8; break;
-      case "foeHpThreshold": score += (effect.damageMult || 0) * 15; break;
-      case "procChanceBonus": score += (effect.value || 0) * 20; break;
+      case "applyStun":
+        score += 6 * chance(effect.chance);
+        break;
+      case "extraAttackOnStun":
+        score += 8;
+        break;
+      case "periodic":
+        score += 5;
+        break;
+      case "stackThreshold":
+        score += 4;
+        break;
+      case "activationThreshold":
+        score += 3;
+        break;
+      case "invulnOnStaminaSpend":
+        score += 12;
+        break;
+      case "battleRageLowHp":
+        score += 8;
+        break;
+      case "foeHpThreshold":
+        score += (effect.damageMult || 0) * 15;
+        break;
+      case "procChanceBonus":
+        score += (effect.value || 0) * 20;
+        break;
       case "stealWeaponDamage":
       case "stealRandomStack":
         score += 6;
         break;
-      case "dig_item": score += 8; break;
-      case "offer_tag": score += 2; break;
-      default: break;
+      case "dig_item":
+        score += 8;
+        break;
+      case "offer_tag":
+        score += 2;
+        break;
+      default:
+        break;
     }
   });
   if (def.stats?.defense) score += def.stats.defense * 1.1;
@@ -155,19 +204,37 @@ function pickShape(cells, def) {
 
   if (cells === 3) {
     if (weapon && !armor) return { w: 1, h: 3 };
-    return [[0, 0], [1, 0], [0, 1]];
+    return [
+      [0, 0],
+      [1, 0],
+      [0, 1],
+    ];
   }
 
   if (cells === 4) return { w: 2, h: 2 };
 
-  if (cells === 5) return [[0, 0], [1, 0], [0, 1], [1, 1], [0, 2]];
+  if (cells === 5)
+    return [
+      [0, 0],
+      [1, 0],
+      [0, 1],
+      [1, 1],
+      [0, 2],
+    ];
 
   if (cells === 6) return { w: 2, h: 3 };
 
   const w = 2;
   const h = Math.ceil(cells / w);
   if (w * h === cells) return { w, h };
-  return [[0, 0], [1, 0], [0, 1], [1, 1], [0, 2], [1, 2]].slice(0, cells);
+  return [
+    [0, 0],
+    [1, 0],
+    [0, 1],
+    [1, 1],
+    [0, 2],
+    [1, 2],
+  ].slice(0, cells);
 }
 
 function targetCells(power, powerPerCell, id, currentCells) {
@@ -230,12 +297,12 @@ function main() {
     const power = scoreItemPower(def);
     const prevShape = Array.isArray(def.shape)
       ? def.shape
-      : (def.shape?.w ? { w: def.shape.w, h: def.shape.h } : { w: 1, h: 1 });
+      : def.shape?.w
+        ? { w: def.shape.w, h: def.shape.h }
+        : { w: 1, h: 1 };
     const oldCells = cellCountFromShape(prevShape);
     const cells = targetCells(power, powerPerCell, def.id, oldCells);
-    const newShape = (cells === oldCells && def.id !== ANCHOR_ID)
-      ? prevShape
-      : pickShape(cells, def);
+    const newShape = cells === oldCells && def.id !== ANCHOR_ID ? prevShape : pickShape(cells, def);
     shapeMap[def.id] = newShape;
 
     const newCellCount = cellCountFromShape(newShape);
@@ -278,7 +345,7 @@ function main() {
   fs.writeFileSync(MIGRATED, `${JSON.stringify(migrated, null, 2)}\n`, "utf8");
   console.log(`\nОбновлено в items-migrated.json: ${jsonUpdated}`);
 
-  let itemsJs = fs.readFileSync(ITEMS_JS, "utf8");
+  const itemsJs = fs.readFileSync(ITEMS_JS, "utf8");
   const protectedIds = new Set(migrated.protectedIds || []);
   const protectedShapeMap = {};
   protectedIds.forEach((id) => {
@@ -289,7 +356,11 @@ function main() {
     delete protectedShapeMap[id];
   });
 
-  const newItemsJs = updateItemsJs(itemsJs, shapeMap, changes.map((c) => c.id));
+  const newItemsJs = updateItemsJs(
+    itemsJs,
+    shapeMap,
+    changes.map((c) => c.id),
+  );
   if (newItemsJs !== itemsJs) {
     fs.writeFileSync(ITEMS_JS, newItemsJs, "utf8");
     const protectedChanged = changes.filter((c) => protectedIds.has(c.id)).length;

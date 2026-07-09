@@ -5,8 +5,8 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import vm from "node:vm";
 import { fileURLToPath } from "node:url";
+import vm from "node:vm";
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const OUT_JSON = path.join(ROOT, "tools/item-mechanics-audit.json");
@@ -18,9 +18,7 @@ const LOAD_ORDER = [
   "items.js",
   "items-catalog.js",
   "systems/mutations.js",
-  "systems/enhancements.js",
-  "systems/enhancement-catalog-ext.js",
-  "systems/enhancement-crafting.js",
+  "systems/build-keys.js",
   "systems/triple-support-items.js",
   "systems/backpack-amplifiers.js",
   "systems/meta-effects.js",
@@ -33,49 +31,175 @@ const LOAD_ORDER = [
 ];
 
 const COOLDOWN_ACTIVATION = new Set([
-  "damage", "heal", "block", "poison", "slow", "buffTimed", "lifesteal",
-  "onHitCapBonus", "breakBlockOnHit", "selfPoison",
+  "damage",
+  "heal",
+  "block",
+  "poison",
+  "slow",
+  "buffTimed",
+  "lifesteal",
+  "onHitCapBonus",
+  "breakBlockOnHit",
+  "selfPoison",
 ]);
 
 const PASSIVE_TRIGGERS = new Set([
-  "passive", "battle_start", "on_hit", "on_miss", "on_block", "on_defend", "on_revive", "on_foe_heal",
+  "passive",
+  "battle_start",
+  "on_hit",
+  "on_miss",
+  "on_block",
+  "on_defend",
+  "on_revive",
+  "on_foe_heal",
 ]);
 
 const KNOWN_BATTLE_EFFECTS = new Set([
-  "damage", "heal", "block", "poison", "slow", "buffTimed", "lifesteal", "onHitCapBonus",
-  "breakBlockOnHit", "selfPoison", "passiveMaxHp", "passiveDefense", "passiveLuck", "passiveMaxStamina",
-  "statMult", "damagePerStack", "damagePerTag", "damagePerFoeDebuff", "damagePerTotalStacks",
-  "gainStack", "spendStack", "gainWeakestStack", "tagScaledStack", "neutralScaledStack", "stackThreshold",
-  "weaponDamageStart", "shieldBlockMult", "shieldBreakBonus", "breakBlockOnCrit", "timedDamageReduction",
-  "onDefend", "groundFire", "applyStun", "extraAttackOnStun", "bonusDamageOnStun", "dodgePeriodic",
-  "selfPoisonStart", "crit", "critPerStack", "critPerFoeDebuff", "critPerFoeFatigue", "critDamageMult",
-  "procChanceBonus", "lifestealPerTag", "healPerTag", "healAsDamageMult", "hpThreshold", "heartThreshold",
-  "mutualHpThreshold", "onFoeHeal", "debuffThreshold", "cooldownMultPerTag", "cooldownMultPerAdjacent",
-  "cooldownMultPerItemCost", "cooldownMultPerSocket", "cooldownMultPerTotalStacks", "cooldownStartMult",
-  "repeatCast", "stealWeaponDamage", "stealRandomStack", "destroyFoeStacks", "cleanseDebuffs",
-  "activationLimit", "activationThreshold", "stonesMultiThrow", "invulnOnStaminaSpend", "zeroStamina",
-  "revive", "onRevive", "preventMiss", "fatigueDamageOnHit", "attackBuff", "onHitCapBonus",
-  "hitCounter", "staminaSpendOnHit", "bonusDamageOnHit", "foeHpThreshold", "battleRageLowHp", "convertHp",
-  "maxHpPercentStart", "tagScaledMaxHp", "stackGainMult", "staminaRegenPerStack",   "onActivate", "periodic", "cardScaledBonus", "cardScaledDamage",
-  "max_hp_per_start_item", "synergyHint",
+  "damage",
+  "heal",
+  "block",
+  "poison",
+  "slow",
+  "buffTimed",
+  "lifesteal",
+  "onHitCapBonus",
+  "breakBlockOnHit",
+  "selfPoison",
+  "passiveMaxHp",
+  "passiveDefense",
+  "passiveLuck",
+  "passiveMaxStamina",
+  "statMult",
+  "damagePerStack",
+  "damagePerTag",
+  "damagePerFoeDebuff",
+  "damagePerTotalStacks",
+  "gainStack",
+  "spendStack",
+  "gainWeakestStack",
+  "tagScaledStack",
+  "neutralScaledStack",
+  "stackThreshold",
+  "weaponDamageStart",
+  "shieldBlockMult",
+  "shieldBreakBonus",
+  "breakBlockOnCrit",
+  "timedDamageReduction",
+  "onDefend",
+  "groundFire",
+  "applyStun",
+  "extraAttackOnStun",
+  "bonusDamageOnStun",
+  "dodgePeriodic",
+  "selfPoisonStart",
+  "crit",
+  "critPerStack",
+  "critPerFoeDebuff",
+  "critPerFoeFatigue",
+  "critDamageMult",
+  "procChanceBonus",
+  "lifestealPerTag",
+  "healPerTag",
+  "healAsDamageMult",
+  "hpThreshold",
+  "heartThreshold",
+  "mutualHpThreshold",
+  "onFoeHeal",
+  "debuffThreshold",
+  "cooldownMultPerTag",
+  "cooldownMultPerAdjacent",
+  "cooldownMultPerItemCost",
+  "cooldownMultPerSocket",
+  "cooldownMultPerTotalStacks",
+  "cooldownStartMult",
+  "repeatCast",
+  "stealWeaponDamage",
+  "stealRandomStack",
+  "destroyFoeStacks",
+  "cleanseDebuffs",
+  "activationLimit",
+  "activationThreshold",
+  "stonesMultiThrow",
+  "invulnOnStaminaSpend",
+  "zeroStamina",
+  "revive",
+  "onRevive",
+  "preventMiss",
+  "fatigueDamageOnHit",
+  "attackBuff",
+  "onHitCapBonus",
+  "hitCounter",
+  "staminaSpendOnHit",
+  "bonusDamageOnHit",
+  "foeHpThreshold",
+  "battleRageLowHp",
+  "convertHp",
+  "maxHpPercentStart",
+  "tagScaledMaxHp",
+  "stackGainMult",
+  "staminaRegenPerStack",
+  "onActivate",
+  "periodic",
+  "cardScaledBonus",
+  "cardScaledDamage",
+  "max_hp_per_start_item",
+  "synergyHint",
 ]);
 
 const KNOWN_META = new Set([
-  "offer_tag", "offer_class", "exclude_player_class", "unique_chance_bonus", "bonus_unique",
-  "sell_bonus", "starting_value", "gain_gold", "gain_buff", "generate_gem", "generate_flame",
-  "dig_item", "items_not_gold", "upgrade_adjacent_potion", "consume_recombo", "consume_inside_flame",
-  "gem_if_godly", "rarity_up", "trade_offer", "restock_tag", "restock_bag", "starred_chance_bonus",
-  "unlock_build", "generate_worth",
+  "offer_tag",
+  "offer_class",
+  "exclude_player_class",
+  "unique_chance_bonus",
+  "bonus_unique",
+  "sell_bonus",
+  "starting_value",
+  "gain_gold",
+  "gain_buff",
+  "generate_gem",
+  "generate_flame",
+  "dig_item",
+  "items_not_gold",
+  "upgrade_adjacent_potion",
+  "consume_recombo",
+  "consume_inside_flame",
+  "gem_if_godly",
+  "rarity_up",
+  "trade_offer",
+  "restock_tag",
+  "restock_bag",
+  "starred_chance_bonus",
+  "unlock_build",
+  "generate_worth",
 ]);
 
 const SYNERGY_APPLY = new Set([
-  "damageBonus", "healBonus", "blockBonus", "cooldownReduction", "grantBlockBuff", "poisonBonus",
+  "damageBonus",
+  "healBonus",
+  "blockBonus",
+  "cooldownReduction",
+  "grantBlockBuff",
+  "poisonBonus",
 ]);
 
 function loadSandbox() {
   const sandbox = {
-    console, Math, Object, Array, Map, Set, JSON, Number, String, Boolean,
-    parseInt, parseFloat, isNaN, Infinity, Error, Date,
+    console,
+    Math,
+    Object,
+    Array,
+    Map,
+    Set,
+    JSON,
+    Number,
+    String,
+    Boolean,
+    parseInt,
+    parseFloat,
+    isNaN,
+    Infinity,
+    Error,
+    Date,
     performance: { now: () => 0 },
     document: { documentElement: { dataset: {} } },
     localStorage: { getItem: () => null },
@@ -89,11 +213,14 @@ function loadSandbox() {
   for (const file of LOAD_ORDER) {
     vm.runInContext(fs.readFileSync(path.join(ROOT, file), "utf8"), ctx);
   }
-  vm.runInContext(`
+  vm.runInContext(
+    `
     if (typeof registerTripleSupportItems === "function") registerTripleSupportItems();
     globalThis.__sb = globalThis;
     globalThis.__catalog = ITEM_CATALOG;
-  `, ctx);
+  `,
+    ctx,
+  );
   return { sandbox, catalog: sandbox.__catalog };
 }
 
@@ -103,17 +230,6 @@ function classifyItem(def, helpers) {
   const effects = def.effects || [];
   const meta = def.metaEffects || [];
   const synergies = def.synergies || [];
-
-  if (def.isEnhancementItem) {
-    const enh = helpers.getEnhancementDef(def.enhancementId || def.id);
-    if (!enh?.implemented) issues.push("enhancement not implemented");
-    else {
-      paths.push("enhancement_slot");
-      if (enh.combat) paths.push("enhancement_combat");
-      if (enh.families?.length) paths.push("enhancement_tag_bias");
-    }
-    return { paths, issues, activity: enh?.implemented ? "prep+battle" : "none" };
-  }
 
   if (def.isAmplifierItem) {
     const amp = helpers.getAmplifierDef(def.amplifierId || def.id);
@@ -156,7 +272,9 @@ function classifyItem(def, helpers) {
       paths.push(`battle_${tr}`);
     } else if (e.type === "passiveMaxHp" || e.type === "passiveDefense" || tr === "passive" || tr === "battle_start") {
       paths.push("battle_passive");
-    } else if (["stackThreshold", "activationThreshold", "hpThreshold", "heartThreshold", "mutualHpThreshold"].includes(e.type)) {
+    } else if (
+      ["stackThreshold", "activationThreshold", "hpThreshold", "heartThreshold", "mutualHpThreshold"].includes(e.type)
+    ) {
       paths.push("battle_threshold");
     } else if (KNOWN_BATTLE_EFFECTS.has(e.type)) {
       paths.push("battle_passive");
@@ -205,10 +323,9 @@ function runIntegrationTests(sb) {
     detail: `highlighted ${hi.length}`,
   });
 
-  const ampDrag = sb.collectAmplifiersInLoadout(
-    [{ uid: "b1", itemId: "fire_staff", col: 1, row: 0 }],
-    { extraItemId: "amplify_fire" },
-  );
+  const ampDrag = sb.collectAmplifiersInLoadout([{ uid: "b1", itemId: "fire_staff", col: 1, row: 0 }], {
+    extraItemId: "amplify_fire",
+  });
   tests.push({
     name: "amplify_drag_preview",
     ok: ampDrag.length === 1 && ampDrag[0].id === "amplify_fire",
@@ -277,7 +394,6 @@ function main() {
   const { sandbox: sb, catalog } = loadSandbox();
   const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, "tools/item-pool-120-manifest.json"), "utf8"));
   const helpers = {
-    getEnhancementDef: sb.getEnhancementDef,
     getAmplifierDef: sb.getAmplifierDef,
   };
 
@@ -311,28 +427,40 @@ function main() {
   const integration = runIntegrationTests(sb);
   const intFails = integration.filter((t) => !t.ok);
 
-  fs.writeFileSync(OUT_JSON, `${JSON.stringify({ summary: { ok, warn, fail, total: rows.length }, integration, rows }, null, 2)}\n`);
+  fs.writeFileSync(
+    OUT_JSON,
+    `${JSON.stringify({ summary: { ok, warn, fail, total: rows.length }, integration, rows }, null, 2)}\n`,
+  );
   const header = "id,status,activity,paths,issues\n";
-  fs.writeFileSync(OUT_CSV, header + rows.map((r) => [
-    r.id, r.status, r.activity, r.paths, r.issues,
-  ].map(csvEscape).join(",")).join("\n") + "\n");
+  fs.writeFileSync(
+    OUT_CSV,
+    header +
+      rows.map((r) => [r.id, r.status, r.activity, r.paths, r.issues].map(csvEscape).join(",")).join("\n") +
+      "\n",
+  );
 
   console.log("=== Item mechanics audit ===\n");
   console.log(`Пул: ${rows.length} · OK ${ok} · WARN ${warn} · FAIL ${fail}`);
   console.log("\nИнтеграционные тесты:");
-  integration.forEach((t) => console.log(`  ${t.ok ? "✓" : "✗"} ${t.name}: ${t.detail}`));
+  integration.forEach((t) => {
+    console.log(`  ${t.ok ? "✓" : "✗"} ${t.name}: ${t.detail}`);
+  });
 
   const fails = rows.filter((r) => r.status === "FAIL");
   if (fails.length) {
     console.log(`\nFAIL (${fails.length}):`);
-    fails.slice(0, 15).forEach((r) => console.log(`  ${r.id}: ${r.issues || "no paths"}`));
+    fails.slice(0, 15).forEach((r) => {
+      console.log(`  ${r.id}: ${r.issues || "no paths"}`);
+    });
     if (fails.length > 15) console.log(`  …ещё ${fails.length - 15}`);
   }
 
   const warns = rows.filter((r) => r.status === "WARN");
   if (warns.length) {
     console.log(`\nWARN (${warns.length}):`);
-    warns.slice(0, 10).forEach((r) => console.log(`  ${r.id}: ${r.issues}`));
+    warns.slice(0, 10).forEach((r) => {
+      console.log(`  ${r.id}: ${r.issues}`);
+    });
   }
 
   console.log(`\n→ ${OUT_CSV}`);

@@ -106,8 +106,8 @@ function renderPrepUnitFrameCompanionHtml(companion) {
     </div>`;
 }
 
-function renderPrepUnitFrameExtrasHtml(mutationHtml, enhancementHtml, modifierStripHtml) {
-  const chunks = [mutationHtml, enhancementHtml, modifierStripHtml].filter(Boolean);
+function renderPrepUnitFrameExtrasHtml(mutationHtml, modifierStripHtml) {
+  const chunks = [mutationHtml, modifierStripHtml].filter(Boolean);
   if (!chunks.length) return "";
   return `<div class="prep-unit-frame__extras">${chunks.join("")}</div>`;
 }
@@ -117,7 +117,6 @@ function renderPrepUnitFrameSideHtml({
   profile,
   extras,
   mutationHtml,
-  enhancementHtml,
   modifierStripHtml,
   companion,
   badge,
@@ -132,7 +131,7 @@ function renderPrepUnitFrameSideHtml({
     ? `<div class="unit-frame-battle-hud-mount">${renderAvatarBarsHTML(profile, team)}</div>`
     : renderPrepUnitFrameBarsHtml(profile, team, extras);
   const pet = !battle && team === "player" ? renderPrepUnitFrameCompanionHtml(companion) : "";
-  const extrasHtml = battle ? "" : renderPrepUnitFrameExtrasHtml(mutationHtml, enhancementHtml, modifierStripHtml);
+  const extrasHtml = battle ? "" : renderPrepUnitFrameExtrasHtml(mutationHtml, modifierStripHtml);
   const badgeHtml = badge
     ? `<span class="prep-unit-frame__level-badge" aria-label="Раунд">${badge}</span>`
     : "";
@@ -211,8 +210,6 @@ function syncPrepUnitFrameHud(context = {}) {
     enemyState = {},
     playerMutationHtml = "",
     enemyMutationHtml = "",
-    playerEnhancementHtml = "",
-    enemyEnhancementHtml = "",
     playerModifierHtml = "",
     enemyModifierHtml = "",
     playerCompanion = null,
@@ -241,7 +238,6 @@ function syncPrepUnitFrameHud(context = {}) {
         resourceKind: "gold",
       },
       mutationHtml: playerMutationHtml,
-      enhancementHtml: playerEnhancementHtml,
       modifierStripHtml: playerModifierHtml,
       companion: playerCompanion,
       isActive: activeSide === "player",
@@ -256,7 +252,6 @@ function syncPrepUnitFrameHud(context = {}) {
         resourceKind: "round",
       },
       mutationHtml: enemyMutationHtml,
-      enhancementHtml: enemyEnhancementHtml,
       modifierStripHtml: enemyModifierHtml,
       badge: roundLabel || String(round || 1),
       isActive: activeSide === "enemy",
@@ -265,11 +260,9 @@ function syncPrepUnitFrameHud(context = {}) {
 
   const playerFrame = strip.querySelector(".prep-unit-frame--player");
   const enemyFrame = strip.querySelector(".prep-unit-frame--enemy");
-  if (playerFrame && typeof bindPrepEnhancementStrip === "function") {
-    bindPrepEnhancementStrip("player", playerFrame);
-  }
-  if (enemyFrame && typeof bindPrepEnhancementStrip === "function") {
-    bindPrepEnhancementStrip("enemy", enemyFrame);
+  if (typeof bindPrepModChipTooltips === "function") {
+    bindPrepModChipTooltips(playerFrame);
+    bindPrepModChipTooltips(enemyFrame);
   }
   if (typeof bindPrepCompanionTooltip === "function") {
     bindPrepCompanionTooltip(strip);

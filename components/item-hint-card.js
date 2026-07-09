@@ -52,6 +52,9 @@ function renderTooltipHudLineHtml(line) {
     const suffix = line.statDelta.suffix ? esc(line.statDelta.suffix) : "";
     return `<div class="item-hint-card__line item-hint-card__line-stat item-hint-card__line--${line.style || "normal"}${toneClass}">${fmt(line.text)} <span class="item-hint-card__stat-base">${esc(line.statDelta.from)}</span><span class="item-hint-card__stat-arrow">→</span><span class="item-hint-card__stat-buff${buffClass}">${esc(line.statDelta.to)}</span>${suffix}</div>`;
   }
+  if (line.html) {
+    return `<div class="item-hint-card__line item-hint-card__line--${line.style || "normal"}${toneClass} item-hint-card__line--html">${line.html}</div>`;
+  }
   return `<div class="item-hint-card__line item-hint-card__line--${line.style || "normal"}${toneClass}">${fmt(line.text)}</div>`;
 }
 
@@ -80,7 +83,7 @@ function renderTooltipCardHtml(lines, options = {}) {
     ? `<div class="item-hint-card__cost" aria-hidden="true"><span class="item-hint-card__cost-value">${typeof escapeTooltipHtml === "function" ? escapeTooltipHtml(String(costBadge)) : String(costBadge)}</span></div>`
     : "";
 
-  return `<div class="item-hint-card${costBadge != null && costBadge !== "" ? " item-hint-card--has-cost" : ""}" style="--hint-rarity:${rarityColor}">
+  return `<div class="item-hint-card${costBadge != null && costBadge !== "" ? " item-hint-card--has-cost" : ""}${options.locked ? " item-hint-card--locked" : ""}" style="--hint-rarity:${rarityColor}">
     <div class="item-hint-card__frame">
       ${costHtml}
       <div class="item-hint-card__hud">${bodyHtml}</div>
@@ -106,17 +109,21 @@ function getItemTooltipCardOptions(def, context = "field") {
   return { emoji, rarityColor, costBadge };
 }
 
-function getEnhancementTooltipCardOptions(def, context = "shop") {
-  if (!def) return { emoji: "✨", rarityColor: "#30363d" };
-  const emoji = def.icon || "✨";
-  const rarityColor = typeof RARITY_COLORS !== "undefined"
-    ? (RARITY_COLORS[def.rarity] || "#30363d")
-    : "#30363d";
-  let costBadge = null;
-  if (context === "shop" && typeof getEnhancementShopCost === "function") {
-    costBadge = getEnhancementShopCost(def);
-  }
-  return { emoji, rarityColor, costBadge };
+function bindCraftRecipeChipHints(root) {
+  if (!root) return;
+  root.querySelectorAll(".craft-recipe-chip").forEach((chip) => {
+    if (chip.dataset.craftTipBound === "1") return;
+    chip.dataset.craftTipBound = "1";
+    chip.addEventListener("pointerdown", (e) => {
+      e.stopPropagation();
+      if (e.pointerType === "mouse") return;
+      const scope = root.closest(".sidebar-tooltip, .item-hint-card") || root;
+      scope.querySelectorAll(".craft-recipe-chip--show-name").forEach((el) => {
+        el.classList.remove("craft-recipe-chip--show-name");
+      });
+      chip.classList.add("craft-recipe-chip--show-name");
+    });
+  });
 }
 
 function applySidebarTooltipCard(el, lines, cardOptions) {
@@ -128,6 +135,7 @@ function applySidebarTooltipCard(el, lines, cardOptions) {
   el.style.background = "";
   el.style.boxShadow = "";
   el.innerHTML = renderTooltipCardHtml(lines, cardOptions || {});
+  bindCraftRecipeChipHints(el);
 }
 
 function applySidebarTooltipPlain(el, lines) {

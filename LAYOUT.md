@@ -65,16 +65,17 @@
 
 Touch-цели: `min-height: var(--touch-target-min)` (≥ 44px).
 
-## Эталон HUD — iPad mini 7 PWA (LOCKED)
+## Принцип HUD — доступность на всех экранах
 
-> **Зафиксировано 2026-07-04.** Gold-скрины: `tools/baseline/prep-ipad-mini-pwa-gold.png`, `tools/baseline/battle-ipad-mini-pwa-gold.png`.  
-> Git-база: коммит `464f042`. Правило для агента: `.cursor/rules/prep-hud-layout-baseline.mdc`.
+> **Приоритет:** игровой интерфейс должен быть **доступен и playable** на каждом профиле viewport (см. матрицу ниже).  
+> Скрины `tools/baseline/prep-ipad-mini-pwa-gold.png` и `battle-ipad-mini-pwa-gold.png` — **опциональный** регрессионный референс (iPad mini PWA), не жёсткий pixel-lock.  
+> Правило для агента: `.cursor/rules/prep-hud-layout-baseline.mdc`.
 
-**Prep (1133×744, `tablet-side`):** hero-card с крупным bust-портретом · full-body герой слева · сетка 7×9 у **правого** края · узкий магазин справа · bottom chrome с метриками.
+**Prep:** hero HUD, full-body герой (или компактный вариант на узком экране), сетка 7×9, магазин + скамейка (колонка / drawer / FAB), bottom chrome.
 
-**Battle:** flank-arena · full-bleed портреты по бокам · HP/stamina под героем · toolbar внизу.
+**Battle:** `flank-arena` или компактный HUD по профилю; HP/stamina и toolbar всегда в viewport.
 
-Косметику (цвета, glow, SFX) можно менять; **геометрию и размеры зон HUD — нет**, пока пользователь явно не попросит.
+Косметику (цвета, glow, SFX) менять свободно. Геометрию и токены — **можно** подстраивать под профиль, если критичный UI остаётся доступным и проходят `test:layout` / `test:geometry`.
 
 ## CSS по поверхностям
 

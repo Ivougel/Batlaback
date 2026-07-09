@@ -4,8 +4,8 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import vm from "node:vm";
 import { fileURLToPath } from "node:url";
+import vm from "node:vm";
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 
@@ -24,8 +24,23 @@ function assert(cond, msg) {
 
 function loadSandbox() {
   const sandbox = {
-    console, Math, Object, Array, Map, Set, JSON, Number, String, Boolean,
-    parseInt, parseFloat, isNaN, Infinity, Error, Date, performance: { now: () => 0 },
+    console,
+    Math,
+    Object,
+    Array,
+    Map,
+    Set,
+    JSON,
+    Number,
+    String,
+    Boolean,
+    parseInt,
+    parseFloat,
+    isNaN,
+    Infinity,
+    Error,
+    Date,
+    performance: { now: () => 0 },
     pushBattleLog: () => {},
     battleTeamLabel: (t) => t,
     deriveDollFromItems: () => ({ doll: {} }),
@@ -41,7 +56,8 @@ function loadSandbox() {
   for (const file of LOAD_ORDER) {
     vm.runInContext(fs.readFileSync(path.join(ROOT, file), "utf8"), ctx);
   }
-  vm.runInContext(`
+  vm.runInContext(
+    `
     function applyClassCombatBonus(side, classId) {
       const cls = getClassById(classId);
       if (!cls?.combatBonus) return;
@@ -69,7 +85,9 @@ function loadSandbox() {
       CAPSTONE_INIT,
       MAGE_MANA_STACK_DAMAGE_MULT,
     });
-  `, ctx);
+  `,
+    ctx,
+  );
   return sandbox;
 }
 
@@ -83,7 +101,10 @@ function makeSide(overrides = {}) {
     cooldownMult: 1,
     poisonStacks: 0,
     stamina: 10,
-    items: [{ itemId: "dagger", uid: "a" }, { itemId: "apple", uid: "b" }],
+    items: [
+      { itemId: "dagger", uid: "a" },
+      { itemId: "apple", uid: "b" },
+    ],
     stacks: {},
     ...overrides,
   };
@@ -119,11 +140,14 @@ function testCapstoneInit(sb) {
 }
 
 function testAssassinBurst(sb) {
-  const state = { player: makeSide({ mutationId: "r_assassin", mutationRuntime: { assassinBurstCd: 0, assassinBurstMult: 1.35 } }), enemy: makeSide({ poisonStacks: 4 }) };
+  const state = {
+    player: makeSide({ mutationId: "r_assassin", mutationRuntime: { assassinBurstCd: 0, assassinBurstMult: 1.35 } }),
+    enemy: makeSide({ poisonStacks: 4 }),
+  };
   state.player.mutationId = "r_assassin";
-  const dmg = sb.modifyMutationCapstoneDamage(
-    state, "player", state.player, state.enemy, "enemy", 10, { damageType: "physical" },
-  );
+  const dmg = sb.modifyMutationCapstoneDamage(state, "player", state.player, state.enemy, "enemy", 10, {
+    damageType: "physical",
+  });
   assert(dmg === 13, `assassin burst 10→13, got ${dmg}`);
   assert(state.player.mutationRuntime.assassinBurstCd === 6, "assassin cd");
 }
@@ -131,8 +155,11 @@ function testAssassinBurst(sb) {
 function testDiversityCapstone(sb) {
   const side = makeSide({
     items: [
-      { itemId: "dagger" }, { itemId: "apple" }, { itemId: "mana_crystal" },
-      { itemId: "holy_armor" }, { itemId: "pestilence_flask" },
+      { itemId: "dagger" },
+      { itemId: "apple" },
+      { itemId: "mana_crystal" },
+      { itemId: "holy_armor" },
+      { itemId: "pestilence_flask" },
     ],
   });
   sb.applyMutationMilestoneCapstones(side, null, "w_veteran");
@@ -148,7 +175,9 @@ function testHymnTick(sb) {
   state.player.mutationId = "p_zrecrela";
   let logs = 0;
   const prevLog = sb.pushBattleLog;
-  sb.pushBattleLog = () => { logs += 1; };
+  sb.pushBattleLog = () => {
+    logs += 1;
+  };
   sb.tickMutationCapstonesImpl(state, 6.1);
   sb.pushBattleLog = prevLog;
   assert(state.player.poisonStacks === 1, "hymn cleanse poison");

@@ -45,7 +45,9 @@ function countByTag(items, sb) {
   const counts = {};
   items.forEach((item) => {
     const def = sb.ITEM_CATALOG[item.itemId];
-    (def?.tags || []).forEach((t) => { counts[t] = (counts[t] || 0) + 1; });
+    (def?.tags || []).forEach((t) => {
+      counts[t] = (counts[t] || 0) + 1;
+    });
   });
   return counts;
 }
@@ -57,21 +59,22 @@ function trimLoadoutToCap(sb, state, classId, cap, round) {
     let worstScore = Infinity;
     state.items.forEach((item) => {
       const def = sb.ITEM_CATALOG[item.itemId];
-      const offBuild = typeof sb.itemMatchesKillArchetype === "function"
-        && !sb.itemMatchesKillArchetype(def, archetype);
+      const offBuild =
+        typeof sb.itemMatchesKillArchetype === "function" && !sb.itemMatchesKillArchetype(def, archetype);
       const others = state.items.filter((i) => i.uid !== item.uid);
-      const s = sb.scoreItemForAI(
-        item.itemId,
-        archetype,
-        others,
-        state.bench,
-        classId,
-        GRID_W,
-        GRID_H,
-        state.containers,
-        null,
-        round,
-      ) + (offBuild ? -40 : 0);
+      const s =
+        sb.scoreItemForAI(
+          item.itemId,
+          archetype,
+          others,
+          state.bench,
+          classId,
+          GRID_W,
+          GRID_H,
+          state.containers,
+          null,
+          round,
+        ) + (offBuild ? -40 : 0);
       if (s < worstScore) {
         worstScore = s;
         worst = item;
@@ -93,8 +96,8 @@ function simulateArchetypePrep(sb, classId, targetRound) {
 
   const lockedArchetype = sb.AI_ARCHETYPES[classId];
 
-  let containers = sb.createStartingContainers(GRID_W, GRID_H);
-  let items = sb.applyClassStarters(containers, [], classId);
+  const containers = sb.createStartingContainers(GRID_W, GRID_H);
+  const items = sb.applyClassStarters(containers, [], classId);
   let state = {
     archetype: sb.AI_ARCHETYPES[classId],
     classId,
@@ -110,19 +113,10 @@ function simulateArchetypePrep(sb, classId, targetRound) {
       if (bag.granted) state.containers = bag.containers;
     }
     const battleWon = prepBattleResult(r);
-    state = sb.aiEnemyPrepPhase(
-      state,
-      r,
-      GRID_W,
-      GRID_H,
-      battleWon,
-      [],
-      classId,
-      {
-        recentResults: prepRecentResults(r),
-        forceArchetypeId: classId,
-      },
-    );
+    state = sb.aiEnemyPrepPhase(state, r, GRID_W, GRID_H, battleWon, [], classId, {
+      recentResults: prepRecentResults(r),
+      forceArchetypeId: classId,
+    });
     state.classId = classId;
     state.archetype = lockedArchetype;
   }
@@ -133,9 +127,10 @@ function simulateArchetypePrep(sb, classId, targetRound) {
     sb.applySynergyModifiers(state.items);
   }
 
-  const power = typeof sb.computeBackpackPower === "function"
-    ? sb.computeBackpackPower(state.containers, state.items, classId).score
-    : 0;
+  const power =
+    typeof sb.computeBackpackPower === "function"
+      ? sb.computeBackpackPower(state.containers, state.items, classId).score
+      : 0;
 
   return {
     classId,

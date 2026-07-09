@@ -1,21 +1,16 @@
-/**
- * Подсветка партнёров крафта при перетаскивании из магазина + маркеры pending на поле.
- */
+// Transpiled from TypeScript — npm run compile:ts
 
 const CRAFT_PREVIEW_COLORS = {
   stroke: "rgba(188, 140, 255, 0.82)",
   fill: "rgba(140, 90, 220, 0.16)",
-  glow: "#bc8cff",
+  glow: "#bc8cff"
 };
-
 const CRAFT_PENDING_COLORS = {
   stroke: "rgba(255, 210, 120, 0.78)",
   fill: "rgba(255, 190, 80, 0.12)",
-  glow: "#ffd27a",
+  glow: "#ffd27a"
 };
-
 let craftPartnerBenchIndices = [];
-
 function drawCraftCellHighlight(ctx, team, col, row, style, pulse, strong = false) {
   if (typeof cellRect !== "function") return;
   const rect = cellRect(team, col, row);
@@ -34,12 +29,10 @@ function drawCraftCellHighlight(ctx, team, col, row, style, pulse, strong = fals
   }
   ctx.restore();
 }
-
 function getCraftPartnerTargets(shopItemId, containers, items, bench, ctx = null) {
   if (!shopItemId || typeof getRecipesUsingIngredient !== "function") {
     return { boardUids: [], benchIndices: [] };
   }
-
   const craftCtx = ctx || (typeof getCraftContextFromGame === "function" ? getCraftContextFromGame() : {});
   const recipes = getRecipesUsingIngredient(shopItemId).filter((recipe) => {
     if (typeof isCraftRecipeAvailable === "function" && !isCraftRecipeAvailable(recipe, craftCtx)) {
@@ -47,10 +40,8 @@ function getCraftPartnerTargets(shopItemId, containers, items, bench, ctx = null
     }
     return recipe.inputs.some((input) => input.itemId === shopItemId);
   });
-
-  const boardUids = new Set();
-  const benchIndices = new Set();
-
+  const boardUids = /* @__PURE__ */ new Set();
+  const benchIndices = /* @__PURE__ */ new Set();
   recipes.forEach((recipe) => {
     recipe.inputs.forEach((input) => {
       if (input.itemId === shopItemId) return;
@@ -62,13 +53,11 @@ function getCraftPartnerTargets(shopItemId, containers, items, bench, ctx = null
       });
     });
   });
-
   return {
     boardUids: [...boardUids],
-    benchIndices: [...benchIndices],
+    benchIndices: [...benchIndices]
   };
 }
-
 function syncCraftPartnerBenchDom(benchIndices = []) {
   craftPartnerBenchIndices = [...benchIndices];
   const slots = document.getElementById("bench-slots");
@@ -78,28 +67,23 @@ function syncCraftPartnerBenchDom(benchIndices = []) {
     card.classList.toggle("craft-partner-glow", benchIndices.includes(index));
   });
 }
-
 function clearCraftPartnerBenchDom() {
   syncCraftPartnerBenchDom([]);
 }
-
 function drawPrepCraftHighlights(ctx, time, side, items, bench, dragContext = null) {
   if (typeof phase !== "undefined" && phase !== "prep") return false;
   if (!dragContext?.shopItemId) return false;
-
   const targets = getCraftPartnerTargets(
     dragContext.shopItemId,
-    dragContext.containers,
+    dragContext.containers ?? [],
     items,
     bench,
-    dragContext.ctx,
+    dragContext.ctx ?? null
   );
   if (!targets.boardUids.length) return false;
-
   const pulse = 0.5 + Math.sin((time || 0) * 3.1) * 0.5;
   const uidSet = new Set(targets.boardUids);
   let drew = false;
-
   items.forEach((item) => {
     if (!uidSet.has(item.uid)) return;
     drew = true;
@@ -107,20 +91,15 @@ function drawPrepCraftHighlights(ctx, time, side, items, bench, dragContext = nu
       drawCraftCellHighlight(ctx, side, col, row, CRAFT_PREVIEW_COLORS, pulse, true);
     });
   });
-
   return drew;
 }
-
 function drawPrepPendingCraftHighlights(ctx, time, side, items) {
   if (typeof phase !== "undefined" && phase !== "prep") return false;
   if (typeof getPendingCraftBoardUids !== "function") return false;
-
   const pendingUids = getPendingCraftBoardUids(side);
   if (!pendingUids.size) return false;
-
   const pulse = 0.5 + Math.sin((time || 0) * 2.4) * 0.5;
   let drew = false;
-
   items.forEach((item) => {
     if (!pendingUids.has(item.uid)) return;
     drew = true;
@@ -128,17 +107,14 @@ function drawPrepPendingCraftHighlights(ctx, time, side, items) {
       drawCraftCellHighlight(ctx, side, col, row, CRAFT_PENDING_COLORS, pulse, false);
     });
   });
-
   return drew;
 }
-
 function syncCraftPreviewFromDrag() {
   if (typeof dragPayload === "undefined" || typeof dragFrom === "undefined") return;
   if (!dragPayload || dragFrom?.type !== "shop") {
     clearCraftPartnerBenchDom();
     return;
   }
-
   const side = dragFrom.side || (typeof prepViewSide !== "undefined" ? prepViewSide : "player");
   const st = getSideState(side);
   const ctx = typeof getCraftContextFromGame === "function" ? getCraftContextFromGame(side) : {};
@@ -147,7 +123,7 @@ function syncCraftPreviewFromDrag() {
     st.containers,
     st.items,
     st.bench,
-    ctx,
+    ctx
   );
   syncCraftPartnerBenchDom(targets.benchIndices);
 }

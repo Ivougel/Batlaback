@@ -90,18 +90,6 @@ const Lobby2pHud = (() => {
     renderBattleChip(1);
   }
 
-  function renderEnhancements(enhancements) {
-    if (!enhancements) return '<span class="lobby2p-equip-slot empty">—</span>'.repeat(3);
-    const slots = ["head", "chest", "boots"];
-    return slots.map((slot) => {
-      const id = enhancements[slot];
-      if (!id) return '<span class="lobby2p-equip-slot empty">—</span>';
-      const def = typeof getEnhancementDef === "function" ? getEnhancementDef(id) : null;
-      const icon = def?.icon || "✨";
-      return `<span class="lobby2p-equip-slot" title="${def?.name || id}">${icon}</span>`;
-    }).join("");
-  }
-
   function mountCanvas() {
     const host = document.getElementById("lobby2p-canvas-host");
     const layerWorld = document.getElementById("layer-world");
@@ -133,12 +121,11 @@ const Lobby2pHud = (() => {
     if (typeof callbacks.scheduleLayout === "function") callbacks.scheduleLayout();
   }
 
-  function renderColumn(humanId, fighter, classId, enhancements) {
+  function renderColumn(humanId, fighter, classId) {
     const nameEl = document.getElementById(`lobby2p-name-${humanId}`);
     const goldEl = document.getElementById(`lobby2p-gold-${humanId}`);
     const hpEl = document.getElementById(`lobby2p-hp-${humanId}`);
     const avatarEl = document.getElementById(`lobby2p-avatar-${humanId}`);
-    const equipEl = document.getElementById(`lobby2p-equip-${humanId}`);
     const benchCountEl = document.getElementById(`lobby2p-bench-count-${humanId}`);
     const head = document.querySelector(`.lobby2p-col-head[data-human="${humanId}"]`);
     const actions = document.querySelector(`.lobby2p-col-actions[data-human="${humanId}"]`);
@@ -154,8 +141,6 @@ const Lobby2pHud = (() => {
         avatarEl.alt = fighter?.name || "";
       }
     }
-    if (equipEl) equipEl.innerHTML = renderEnhancements(enhancements);
-
     const activeHuman = typeof callbacks.getActiveHuman === "function" ? callbacks.getActiveHuman() : 0;
     const ready = !!callbacks.getReady?.(humanId);
     const fighting = !!callbacks.hasSideBattle?.(humanId);
@@ -243,8 +228,8 @@ const Lobby2pHud = (() => {
     }
 
     if (typeof callbacks.getFighter === "function") {
-      renderColumn(0, callbacks.getFighter(0), callbacks.getClassId?.(0), callbacks.getEnhancements?.(0));
-      renderColumn(1, callbacks.getFighter(1), callbacks.getClassId?.(1), callbacks.getEnhancements?.(1));
+      renderColumn(0, callbacks.getFighter(0), callbacks.getClassId?.(0));
+      renderColumn(1, callbacks.getFighter(1), callbacks.getClassId?.(1));
     }
     renderPowerBar();
     renderCommerce();

@@ -2863,6 +2863,7 @@ body:has(#overlay:not(.hidden):not(.overlay-exiting)) #app {
   overflow: hidden;
 }
 
+html:has(#class-overlay:not(.hidden)),
 body:has(#class-overlay:not(.hidden)),
 body:has(#battle-result-overlay:not(.hidden)),
 body:has(#overlay:not(.hidden)) {
@@ -3142,6 +3143,13 @@ html[data-visual-theme="diablo"] body:has(#class-overlay:not(.hidden)) {
 
 #class-overlay .class-modal #class-step-mode:not(.hidden) {
   overflow: visible;
+}
+
+#class-overlay .class-modal #class-step-companion:not(.hidden),
+#class-overlay .class-modal #class-step-player:not(.hidden) {
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: manipulation;
 }
 
 .class-overlay-bg {
@@ -3637,7 +3645,7 @@ html[data-game-phase="prep"] #prep-tooltip-dock:not(.hidden) {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   pointer-events: auto;
-  overflow: hidden;
+  overflow: visible;
 }
 
 html[data-game-phase="prep"] #prep-tooltip-dock .sidebar-tooltip {
@@ -3657,10 +3665,8 @@ html[data-game-phase="prep"] #prep-tooltip-dock .sidebar-tooltip {
   box-shadow: none;
   pointer-events: auto;
   z-index: auto;
-  max-height: min(38vh, 340px);
-  overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  max-height: none;
+  overflow: visible;
 }
 
 html[data-game-phase="prep"] #prep-tooltip-dock .sidebar-tooltip.hidden {
@@ -3680,10 +3686,8 @@ html[data-game-phase="prep"] #sidebar-tooltip.sidebar-tooltip--floating {
   box-shadow: var(--tooltip-shadow);
   pointer-events: none;
   z-index: 10001;
-  max-height: min(50vh, 360px);
-  overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  max-height: none;
+  overflow: visible;
 }
 
 .sidebar-tooltip {
@@ -3704,14 +3708,14 @@ html[data-game-phase="prep"] #sidebar-tooltip.sidebar-tooltip--floating {
 }
 
 .sidebar-tooltip .tt-line {
-  font-size: calc(12px * var(--ui-scale));
+  font-size: var(--font-sm);
   line-height: 1.45;
   color: var(--tooltip-text);
   white-space: pre-wrap;
 }
 
 .sidebar-tooltip .tt-title {
-  font-size: calc(14px * var(--ui-scale));
+  font-size: var(--font-lg);
   font-weight: 700;
   margin-bottom: var(--gap-xs);
   color: var(--tooltip-text);
@@ -3774,18 +3778,18 @@ html[data-touch="true"] .sidebar-tooltip {
 }
 
 html[data-touch="true"] .sidebar-tooltip .tt-line {
-  font-size: calc(16px * var(--ui-scale));
+  font-size: var(--font-md);
   line-height: 1.4;
 }
 
 html[data-touch="true"] .sidebar-tooltip .tt-title {
-  font-size: calc(19px * var(--ui-scale));
+  font-size: var(--font-xl);
   margin-bottom: 6px;
 }
 
 html[data-touch="true"] .sidebar-tooltip .tt-sub,
 html[data-touch="true"] .sidebar-tooltip .tt-label {
-  font-size: calc(15px * var(--ui-scale));
+  font-size: var(--font-sm);
 }
 
 html[data-touch="true"] .sidebar-tooltip.synergy-tooltip {

@@ -44,10 +44,8 @@
     calc(10px * var(--ui-scale, 1));
   background: var(--hint-hud-bg);
   border-bottom: 1px solid var(--hint-hud-border);
-  overflow-x: hidden;
-  overflow-y: auto;
-  max-height: min(46vh, calc(280px * var(--ui-scale, 1)));
-  -webkit-overflow-scrolling: touch;
+  overflow: visible;
+  max-height: none;
 }
 
 .item-hint-card__art {
@@ -80,7 +78,7 @@
 }
 
 .item-hint-card__title {
-  font-size: calc(16px * var(--ui-scale, 1));
+  font-size: var(--font-lg);
   font-weight: 800;
   line-height: 1.22;
   letter-spacing: 0.01em;
@@ -90,7 +88,7 @@
 }
 
 .item-hint-card__line {
-  font-size: calc(13px * var(--ui-scale, 1));
+  font-size: var(--font-sm);
   line-height: 1.4;
   color: var(--hint-line-color);
   white-space: pre-wrap;
@@ -102,7 +100,7 @@
 }
 
 .item-hint-card__line--sub {
-  font-size: calc(12px * var(--ui-scale, 1));
+  font-size: var(--font-xs);
   color: var(--hint-line-sub-color);
 }
 
@@ -177,7 +175,7 @@
 }
 
 .item-hint-card__cost-value {
-  font-size: calc(15px * var(--ui-scale, 1));
+  font-size: var(--font-md);
   font-weight: 900;
   color: #fff;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
@@ -269,7 +267,7 @@ html[data-ui-surface="tablet-side"][data-game-phase="prep"] #prep-tooltip-dock.p
 html[data-ui-surface="tablet-side"][data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--hero-portrait .sidebar-tooltip.sidebar-tooltip--card:not(.hidden) {
   width: auto;
   max-width: min(100%, calc(228px * var(--ui-scale, 1)));
-  max-height: min(42vh, calc(280px * var(--ui-scale, 1)));
+  max-height: none;
 }
 
 html[data-touch="true"] .item-hint-card {
@@ -326,4 +324,104 @@ html[data-visual-theme="diablo"][data-prep-shop-open][data-game-phase="prep"] #p
     var(--hint-frame-inset),
     0 0 calc(24px * var(--ui-scale, 1)) color-mix(in srgb, var(--hint-rarity, #c9a227) 58%, transparent),
     0 0 calc(48px * var(--ui-scale, 1)) color-mix(in srgb, var(--hint-rarity, #c9a227) 32%, transparent);
+}
+
+/* Крафт в тултипе: только emoji, название — по hover / tap */
+.item-hint-card__line--html,
+.tt-line--html {
+  overflow: visible;
+}
+
+.craft-recipe-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(2px * var(--ui-scale, 1)) calc(4px * var(--ui-scale, 1));
+  line-height: 1.35;
+}
+
+.craft-recipe-op {
+  opacity: 0.72;
+  font-weight: 600;
+  padding: 0 calc(1px * var(--ui-scale, 1));
+}
+
+.craft-recipe-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: calc(2px * var(--ui-scale, 1));
+  padding: calc(2px * var(--ui-scale, 1)) calc(4px * var(--ui-scale, 1));
+  border-radius: calc(6px * var(--ui-scale, 1));
+  cursor: help;
+  touch-action: manipulation;
+  isolation: isolate;
+}
+
+.craft-recipe-chip__count {
+  font-size: 0.82em;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+.craft-recipe-chip__icon {
+  font-size: calc(1.15em * var(--ui-scale, 1));
+  line-height: 1;
+}
+
+.craft-recipe-chip__tip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px * var(--ui-scale, 1));
+  transform: translateX(-50%) translateY(6px);
+  padding:
+    calc(6px * var(--ui-scale, 1))
+    calc(12px * var(--ui-scale, 1));
+  border-radius: calc(8px * var(--ui-scale, 1));
+  background: rgba(8, 12, 20, 0.98);
+  border: calc(1.5px * var(--ui-scale, 1)) solid rgba(255, 255, 255, 0.22);
+  color: #f3f6fa;
+  font-size: max(var(--font-md), calc(14px * var(--ui-scale, 1)));
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.12s ease, transform 0.12s ease, visibility 0.12s ease;
+  z-index: 30;
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+
+.craft-recipe-chip__tip::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  border: calc(6px * var(--ui-scale, 1)) solid transparent;
+  border-top-color: rgba(8, 12, 20, 0.98);
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.12));
+}
+
+@media (hover: hover) {
+  .craft-recipe-chip:hover .craft-recipe-chip__tip,
+  .craft-recipe-chip:focus-visible .craft-recipe-chip__tip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.craft-recipe-chip--show-name .craft-recipe-chip__tip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.item-hint-card__frame:has(.craft-recipe-chip) {
+  overflow: visible;
 }

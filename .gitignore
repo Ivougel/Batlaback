@@ -4,3 +4,6 @@
 *.pyc
 node_modules/
 test-results/
+dist/
+generated/
+index.vite.html

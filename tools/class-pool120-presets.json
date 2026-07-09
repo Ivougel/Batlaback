@@ -38,11 +38,7 @@
           "rotation": 0
         }
       ],
-      "itemIds": [
-        "iron_helmet",
-        "dagger",
-        "poison_vial"
-      ],
+      "itemIds": ["iron_helmet", "dagger", "poison_vial"],
       "key": "warrior_r1_tagged",
       "label": "Воин · архетип · R1 · pool120"
     },
@@ -109,15 +105,7 @@
           "rotation": 1
         }
       ],
-      "itemIds": [
-        "rusty_sword",
-        "broom",
-        "dagger",
-        "wooden_buckler",
-        "poison_dagger",
-        "ripsaw_blade",
-        "hungry_blade"
-      ],
+      "itemIds": ["rusty_sword", "broom", "dagger", "wooden_buckler", "poison_dagger", "ripsaw_blade", "hungry_blade"],
       "key": "warrior_r8_tagged",
       "label": "Воин · архетип · R8 · pool120"
     },
@@ -173,13 +161,7 @@
           "rotation": 0
         }
       ],
-      "itemIds": [
-        "ripsaw_blade",
-        "poison_dagger",
-        "cap_of_resilience",
-        "snow_stick",
-        "garlic"
-      ],
+      "itemIds": ["ripsaw_blade", "poison_dagger", "cap_of_resilience", "snow_stick", "garlic"],
       "key": "warrior_r16_tagged",
       "label": "Воин · архетип · R16 · pool120"
     },
@@ -204,9 +186,7 @@
           "rotation": 0
         }
       ],
-      "itemIds": [
-        "healing_herb"
-      ],
+      "itemIds": ["healing_herb"],
       "key": "rogue_r1_tagged",
       "label": "Разбойник · архетип · R1 · pool120"
     },
@@ -230,9 +210,7 @@
           "rotation": 0
         }
       ],
-      "itemIds": [
-        "spark_stone"
-      ],
+      "itemIds": ["spark_stone"],
       "key": "rogue_r8_tagged",
       "label": "Разбойник · архетип · R8 · pool120"
     },
@@ -296,14 +274,7 @@
           "rotation": 1
         }
       ],
-      "itemIds": [
-        "ripsaw_blade",
-        "holy_armor",
-        "titan_armor",
-        "leather_armor",
-        "rusty_sword",
-        "glowing_crown"
-      ],
+      "itemIds": ["ripsaw_blade", "holy_armor", "titan_armor", "leather_armor", "rusty_sword", "glowing_crown"],
       "key": "rogue_r16_tagged",
       "label": "Разбойник · архетип · R16 · pool120"
     },
@@ -341,10 +312,7 @@
           "rotation": 0
         }
       ],
-      "itemIds": [
-        "apprentice_staff",
-        "mana_crystal"
-      ],
+      "itemIds": ["apprentice_staff", "mana_crystal"],
       "key": "mage_r1_tagged",
       "label": "Маг · архетип · R1 · pool120"
     },
@@ -392,12 +360,7 @@
           "rotation": 0
         }
       ],
-      "itemIds": [
-        "apprentice_staff",
-        "hammer",
-        "leather_boots",
-        "broom"
-      ],
+      "itemIds": ["apprentice_staff", "hammer", "leather_boots", "broom"],
       "key": "mage_r8_tagged",
       "label": "Маг · архетип · R8 · pool120"
     },
@@ -534,11 +497,7 @@
           "rotation": 0
         }
       ],
-      "itemIds": [
-        "apprentice_staff",
-        "star_of_courage",
-        "blueberries"
-      ],
+      "itemIds": ["apprentice_staff", "star_of_courage", "blueberries"],
       "key": "priest_r1_tagged",
       "label": "Жрец · архетип · R1 · pool120"
     },
@@ -584,12 +543,7 @@
           "rotation": 0
         }
       ],
-      "itemIds": [
-        "knight_sword",
-        "iron_shield",
-        "hungry_blade",
-        "leather_armor"
-      ],
+      "itemIds": ["knight_sword", "iron_shield", "hungry_blade", "leather_armor"],
       "key": "priest_r8_tagged",
       "label": "Жрец · архетип · R8 · pool120"
     },
@@ -656,14 +610,7 @@
           "rotation": 0
         }
       ],
-      "itemIds": [
-        "apple",
-        "banana",
-        "pan",
-        "rage_potion",
-        "snowcake",
-        "cheese"
-      ],
+      "itemIds": ["apple", "banana", "pan", "rage_potion", "snowcake", "cheese"],
       "key": "priest_r16_tagged",
       "label": "Жрец · архетип · R16 · pool120"
     }

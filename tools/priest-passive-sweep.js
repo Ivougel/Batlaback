@@ -27,7 +27,7 @@ const PRIEST_VARIANTS = {
   },
   variant_B_plus: {
     label: "B+: 4% HP/еда + 30% хил + 8 base",
-    combatBonus: { type: "foodInventory", baseMaxHp: 8, maxHpPctPerFood: 0.04, foodHealMult: 0.30 },
+    combatBonus: { type: "foodInventory", baseMaxHp: 8, maxHpPctPerFood: 0.04, foodHealMult: 0.3 },
   },
   variant_B_pp: {
     label: "B++: 5% HP/еда + 35% хил + 8 base",
@@ -87,10 +87,13 @@ for (const file of ENGINE_FILES) {
   vm.runInContext(fs.readFileSync(path.join(ROOT, file), "utf8"), ctx);
 }
 
-vm.runInContext(`
+vm.runInContext(
+  `
   if (typeof CLASS_CATALOG !== "undefined") globalThis.CLASS_CATALOG = CLASS_CATALOG;
   if (typeof ITEM_CATALOG !== "undefined") globalThis.ITEM_CATALOG = ITEM_CATALOG;
-`, ctx);
+`,
+  ctx,
+);
 
 [
   "initBattleAnimations",
@@ -112,7 +115,8 @@ vm.runInContext(`
 });
 sandbox.battleTeamLabel = (team) => (team === "player" ? "Игрок" : team === "enemy" ? "Враг" : team);
 
-vm.runInContext(`
+vm.runInContext(
+  `
   globalThis.applyClassCombatBonus = function applyClassCombatBonusSweep(side, classId) {
     const cls = getClassById(classId);
     if (!cls?.combatBonus) return;
@@ -139,16 +143,21 @@ vm.runInContext(`
       if (foodHealMult > 0) side.classFoodHealMult = 1 + foodHealMult;
     }
   };
-`, ctx);
+`,
+  ctx,
+);
 
 const simDefs = fs.readFileSync(path.join(__dirname, "battle-auto-sim.js"), "utf8");
 const defsBlock = simDefs.slice(simDefs.indexOf("const PRESETS ="), simDefs.indexOf("function buildLoadout("));
-vm.runInContext(`${defsBlock}
+vm.runInContext(
+  `${defsBlock}
   globalThis.PRESETS = PRESETS;
   globalThis.SCENARIOS = SCENARIOS;
   globalThis.SIM_ROUNDS = SIM_ROUNDS;
   globalThis.MATCHUPS = MATCHUPS;
-`, ctx);
+`,
+  ctx,
+);
 
 function sb(name) {
   return sandbox[name];
@@ -182,8 +191,7 @@ function runBattle(playerKey, enemyKey, round) {
     sb("battleTick")(state, DT);
   }
   const maxDur = sb("MAX_BATTLE_DURATION") || 120;
-  const timedOut = state.elapsed >= maxDur - 0.001
-    || (state.finished && state.player.hp > 0 && state.enemy.hp > 0);
+  const timedOut = state.elapsed >= maxDur - 0.001 || (state.finished && state.player.hp > 0 && state.enemy.hp > 0);
   return {
     playerKey,
     enemyKey,
@@ -264,12 +272,7 @@ for (const [key, meta] of Object.entries(PRIEST_VARIANTS)) {
 console.log("\n");
 
 console.log("─── Max HP (жрец, до боя) ───");
-console.log(
-  "Вариант".padEnd(22),
-  "Старт".padStart(6),
-  "Food6".padStart(6),
-  "Без еды".padStart(8),
-);
+console.log("Вариант".padEnd(22), "Старт".padStart(6), "Food6".padStart(6), "Без еды".padStart(8));
 for (const [key, data] of Object.entries(report)) {
   console.log(
     key.padEnd(22),
@@ -280,13 +283,7 @@ for (const [key, data] of Object.entries(report)) {
 }
 
 console.log("\n─── Все бои где игрок = жрец (36 из 100) ───");
-console.log(
-  "Вариант".padEnd(22),
-  "WR".padStart(6),
-  "TO%".padStart(5),
-  "Хил".padStart(7),
-  "Урон".padStart(7),
-);
+console.log("Вариант".padEnd(22), "WR".padStart(6), "TO%".padStart(5), "Хил".padStart(7), "Урон".padStart(7));
 for (const [key, data] of Object.entries(report)) {
   const s = data.stats.all;
   const wr = Math.round((100 * s.wins) / s.n);
@@ -301,13 +298,7 @@ for (const [key, data] of Object.entries(report)) {
 }
 
 console.log("\n─── priest_food (18 боёв) ───");
-console.log(
-  "Вариант".padEnd(22),
-  "WR".padStart(6),
-  "Хил".padStart(7),
-  "Урон".padStart(7),
-  "maxHP".padStart(7),
-);
+console.log("Вариант".padEnd(22), "WR".padStart(6), "Хил".padStart(7), "Урон".padStart(7), "maxHP".padStart(7));
 for (const [key, data] of Object.entries(report)) {
   const s = data.stats.byPreset.priest_food;
   if (!s) continue;
@@ -322,23 +313,13 @@ for (const [key, data] of Object.entries(report)) {
 }
 
 console.log("\n─── heal_stack (8 боёв) ───");
-console.log(
-  "Вариант".padEnd(22),
-  "WR".padStart(6),
-  "TO%".padStart(5),
-  "Хил".padStart(7),
-);
+console.log("Вариант".padEnd(22), "WR".padStart(6), "TO%".padStart(5), "Хил".padStart(7));
 for (const [key, data] of Object.entries(report)) {
   const s = data.stats.byPreset.heal_stack;
   if (!s) continue;
   const wr = Math.round((100 * s.wins) / s.n);
   const to = Math.round((100 * s.timeouts) / s.n);
-  console.log(
-    key.padEnd(22),
-    `${wr}%`.padStart(6),
-    `${to}%`.padStart(5),
-    s.avgHeal.toFixed(1).padStart(7),
-  );
+  console.log(key.padEnd(22), `${wr}%`.padStart(6), `${to}%`.padStart(5), s.avgHeal.toFixed(1).padStart(7));
 }
 
 const outPath = path.join(__dirname, "priest-passive-sweep-results.json");

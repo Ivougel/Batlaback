@@ -5,8 +5,8 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import vm from "node:vm";
 import { fileURLToPath } from "node:url";
+import vm from "node:vm";
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const OUT_CSV = path.join(ROOT, "tools/pool120-items-export.csv");
@@ -35,7 +35,16 @@ const LAYER_LABELS = {
 
 function loadCatalog() {
   const sandbox = {
-    console, Math, Object, Array, Map, Set, JSON, Number, String, Boolean,
+    console,
+    Math,
+    Object,
+    Array,
+    Map,
+    Set,
+    JSON,
+    Number,
+    String,
+    Boolean,
     document: { documentElement: { dataset: {} } },
   };
   sandbox.window = sandbox;
@@ -44,7 +53,8 @@ function loadCatalog() {
   for (const file of LOAD_ORDER) {
     vm.runInContext(fs.readFileSync(path.join(ROOT, file), "utf8"), ctx);
   }
-  vm.runInContext(`
+  vm.runInContext(
+    `
     if (typeof registerEnhancementItemsInCatalog === "function") registerEnhancementItemsInCatalog();
     if (typeof registerAmplifierItemsInCatalog === "function") registerAmplifierItemsInCatalog();
     if (typeof registerTripleSupportItems === "function") registerTripleSupportItems();
@@ -52,7 +62,9 @@ function loadCatalog() {
     globalThis.__catalog = ITEM_CATALOG;
     globalThis.__getEnh = typeof getEnhancementDef === "function" ? getEnhancementDef : null;
     globalThis.__getAmp = typeof getAmplifierDef === "function" ? getAmplifierDef : null;
-  `, ctx);
+  `,
+    ctx,
+  );
   return {
     catalog: sandbox.__catalog,
     getEnhancementDef: sandbox.__getEnh,
@@ -149,7 +161,13 @@ function resolveRuntimeMechanics(def, helpers) {
   if (syn.length) parts.push(`синергии: ${syn.join(" | ")}`);
 
   return {
-    mechanic_layer: hasMetaOnly ? "только prep/магазин" : hasBattle ? "бой (рюкзак)" : syn.length ? "только синергии" : "—",
+    mechanic_layer: hasMetaOnly
+      ? "только prep/магазин"
+      : hasBattle
+        ? "бой (рюкзак)"
+        : syn.length
+          ? "только синергии"
+          : "—",
     runtime_mechanics: parts.join(" · ") || "—",
     works_in_battle: hasBattle ? "да" : syn.length ? "косвенно" : "нет",
     works_in_prep: meta.length || syn.length ? "да" : hasBattle ? "—" : "нет",
@@ -198,12 +216,12 @@ function csvEscape(v) {
 function main() {
   const { catalog, getEnhancementDef, getAmplifierDef } = loadCatalog();
   const helpers = { getEnhancementDef, getAmplifierDef };
-  const manifest = JSON.parse(
-    fs.readFileSync(path.join(ROOT, "tools/item-pool-120-manifest.json"), "utf8"),
-  );
+  const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, "tools/item-pool-120-manifest.json"), "utf8"));
   const layerById = new Map();
   for (const [layer, ids] of Object.entries(manifest.layers)) {
-    ids.forEach((id) => layerById.set(id, layer));
+    ids.forEach((id) => {
+      layerById.set(id, layer);
+    });
   }
 
   const ids = manifest.items.filter((id) => catalog[id]);
@@ -216,9 +234,8 @@ function main() {
     const def = catalog[id];
     const layer = layerById.get(id) || "?";
     const runtime = resolveRuntimeMechanics(def, helpers);
-    const playerText = def.description
-      || (def.isEnhancementItem ? getEnhancementDef?.(def.enhancementId || def.id)?.desc : "")
-      || "";
+    const playerText =
+      def.description || (def.isEnhancementItem ? getEnhancementDef?.(def.enhancementId || def.id)?.desc : "") || "";
     return {
       layer,
       layer_label: LAYER_LABELS[layer] || layer,
@@ -252,13 +269,33 @@ function main() {
   });
 
   const columns = [
-    "layer_label", "id", "name", "icon", "rarity", "cost", "shape", "tags",
-    "mechanic_layer", "runtime_mechanics", "works_in_battle", "works_in_prep",
-    "description", "build_hints", "export_note",
-    "battle_mechanics", "meta_mechanics", "synergies",
-    "craft_only", "is_enhancement", "is_amplifier", "is_build_key",
-    "unlock_build", "recommended_triple",
-    "cooldown", "stamina", "sockets",
+    "layer_label",
+    "id",
+    "name",
+    "icon",
+    "rarity",
+    "cost",
+    "shape",
+    "tags",
+    "mechanic_layer",
+    "runtime_mechanics",
+    "works_in_battle",
+    "works_in_prep",
+    "description",
+    "build_hints",
+    "export_note",
+    "battle_mechanics",
+    "meta_mechanics",
+    "synergies",
+    "craft_only",
+    "is_enhancement",
+    "is_amplifier",
+    "is_build_key",
+    "unlock_build",
+    "recommended_triple",
+    "cooldown",
+    "stamina",
+    "sockets",
   ];
   const header = columns.join(",");
   const csvLines = [header, ...rows.map((r) => columns.map((c) => csvEscape(r[c])).join(","))];
@@ -269,15 +306,21 @@ function main() {
   md.push("");
   md.push(`Сгенерировано: ${new Date().toISOString().slice(0, 10)} · **${rows.length}** предметов`);
   md.push("");
-  md.push("> Не все колонки `battle_mechanics` = боевой эффект. Усиления, усилители, ключи и сумки работают через **отдельные слои** — смотри `mechanic_layer` и `runtime_mechanics`.");
+  md.push(
+    "> Не все колонки `battle_mechanics` = боевой эффект. Усиления, усилители, ключи и сумки работают через **отдельные слои** — смотри `mechanic_layer` и `runtime_mechanics`.",
+  );
   md.push("");
   md.push("CSV: `tools/pool120-items-export.csv`");
   md.push("");
   const summary = {};
-  rows.forEach((r) => { summary[r.mechanic_layer] = (summary[r.mechanic_layer] || 0) + 1; });
+  rows.forEach((r) => {
+    summary[r.mechanic_layer] = (summary[r.mechanic_layer] || 0) + 1;
+  });
   md.push("### Сводка по слоям механик");
   md.push("");
-  Object.entries(summary).forEach(([k, n]) => md.push(`- **${k}**: ${n}`));
+  Object.entries(summary).forEach(([k, n]) => {
+    md.push(`- **${k}**: ${n}`);
+  });
   md.push("");
 
   const layerOrder = ["starter", "enhancement", "amplifier", "key", "triple_support", "core_shop"];

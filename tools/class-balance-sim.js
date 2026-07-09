@@ -32,7 +32,7 @@ function buildLoadoutFromPreset(preset, teamPrefix, sandbox) {
   const items = preset.items.map((entry, index) => {
     const item = sandbox.createPlacedItem(
       entry.itemId,
-      entry.col ?? (index % 8),
+      entry.col ?? index % 8,
       entry.row ?? Math.floor(index / 8),
       entry.rotation || 0,
     );
@@ -55,16 +55,12 @@ function runBattle(sandbox, playerPreset, enemyPreset, battleRound) {
     battleRound,
   );
 
-  const playerStartHp = state.player.maxHp;
-  const enemyStartHp = state.enemy.maxHp;
-
   for (let step = 0; step < MAX_STEPS && !state.finished; step++) {
     sandbox.battleTick(state, DT);
   }
 
   const maxDur = sandbox.MAX_BATTLE_DURATION || 120;
-  const timedOut = state.elapsed >= maxDur - 0.001
-    || (state.finished && state.player.hp > 0 && state.enemy.hp > 0);
+  const timedOut = state.elapsed >= maxDur - 0.001 || (state.finished && state.player.hp > 0 && state.enemy.hp > 0);
 
   return {
     playerKey: playerPreset.key,
@@ -175,11 +171,16 @@ function main() {
   }
 
   console.log("\n─── Матрица WR (prep R8, battle fatigue R8, player row vs enemy col) ───");
-  const r8Results = results.filter((r) => r.prepRound === 8 && r.battleRound === 8 && !r.playerKey.includes("hybrid") && !r.enemyKey.includes("hybrid"));
+  const r8Results = results.filter(
+    (r) =>
+      r.prepRound === 8 && r.battleRound === 8 && !r.playerKey.includes("hybrid") && !r.enemyKey.includes("hybrid"),
+  );
   const matrix = {};
   CLASSES.forEach((row) => {
     matrix[row] = {};
-    CLASSES.forEach((col) => { matrix[row][col] = null; });
+    CLASSES.forEach((col) => {
+      matrix[row][col] = null;
+    });
   });
   r8Results.forEach((r) => {
     if (r.playerClass === r.enemyClass) return;
@@ -187,7 +188,9 @@ function main() {
     matrix[r.playerClass][r.enemyClass] = wr;
   });
   process.stdout.write("".padEnd(10));
-  CLASSES.forEach((c) => process.stdout.write(c.slice(0, 6).padStart(8)));
+  CLASSES.forEach((c) => {
+    process.stdout.write(c.slice(0, 6).padStart(8));
+  });
   process.stdout.write("\n");
   CLASSES.forEach((row) => {
     process.stdout.write(row.slice(0, 8).padEnd(10));
@@ -202,12 +205,16 @@ function main() {
   });
 
   console.log("\n─── Priest: default opt vs hybrid (R8) ───");
-  const priestCmp = results.filter((r) => r.prepRound === 8 && r.playerKey.includes("priest") && r.enemyKey.includes("priest"));
+  const priestCmp = results.filter(
+    (r) => r.prepRound === 8 && r.playerKey.includes("priest") && r.enemyKey.includes("priest"),
+  );
   const hybridAsPlayer = priestCmp.filter((r) => r.playerKey.includes("hybrid"));
   const hybridWins = hybridAsPlayer.filter((r) => r.winner === "player").length;
   console.log(`Hybrid as player: ${hybridWins}/${hybridAsPlayer.length} wins`);
   hybridAsPlayer.forEach((r) => {
-    console.log(`  ${r.playerKey} vs ${r.enemyKey} → ${r.winner} | dmg ${r.playerDamage} vs ${r.enemyDamage} | ${r.durationSec}s`);
+    console.log(
+      `  ${r.playerKey} vs ${r.enemyKey} → ${r.winner} | dmg ${r.playerDamage} vs ${r.enemyDamage} | ${r.durationSec}s`,
+    );
   });
 
   const out = {

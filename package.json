@@ -1,17 +1,34 @@
 {
   "scripts": {
-    "test:enhancements": "node tools/enhancement-system.test.mjs",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "dev": "vite",
+    "dev:bundle": "npm run generate:vite-entry && vite --open /index.vite.html",
+    "generate:vite-entry": "node tools/generate-vite-entry.mjs",
+    "build": "npm run compile:ts && npm run generate:vite-entry && vite build && node tools/post-vite-build.mjs",
+    "preview": "vite preview",
+    "compile:ts": "node tools/compile-ts.mjs",
+    "typecheck": "npm run compile:ts && tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.compile.json",
+    "test:unit": "vitest run",
+    "test:game": "npm run test:unit",
     "test:mutations": "node tools/mutation-capstones.test.mjs",
     "test:mutation-ui": "node tools/mutation-ui.test.mjs && node tools/lobby-mutations.test.mjs && npx playwright test tools/mutation-gallery.spec.mjs",
     "test:item-pool": "node tools/item-pool-120.test.mjs",
     "generate:item-pool": "node tools/generate-item-pool-120.mjs",
+    "generate:bb-unlocks": "node tools/generate-bb-unlock-tiers.mjs",
+    "generate:bb-recipes": "node tools/generate-bb-recipes.mjs",
+    "import:bb-items": "node tools/import-bb-reference-items.mjs",
     "patch:pool120-descriptions": "node tools/patch-pool120-item-descriptions.mjs",
     "audit:mechanics": "node tools/item-mechanics-audit.mjs",
     "export:pool120": "node tools/export-pool120-items.mjs",
     "generate:pool120-presets": "node tools/generate-class-pool120-presets.js",
     "sim:balance-pool120": "node tools/generate-class-pool120-presets.js && node tools/class-balance-pool120-sim.js --json",
     "test:lobby2p": "node tools/lobby2p-smoke.test.mjs",
-    "test:meta": "node tools/meta-progress.test.mjs",
+    "test:runtime-loader": "node tools/runtime-loader.test.mjs",
+    "test:meta": "node tools/meta-progress.test.mjs && node tools/bb-classic.test.mjs && node tools/bb-craft.test.mjs",
+    "test:placement-slots": "node tools/placement-slots.test.mjs",
+    "audit:placement-slots": "node tools/placement-slots-audit.mjs",
     "test:layout": "node tools/layout-profiles.test.mjs",
     "test:structure": "node tools/ui-structure.test.mjs",
     "test:phases": "node tools/layout-phases.test.mjs",
@@ -33,5 +50,14 @@
   "dependencies": {
     "@playwright/test": "^1.49.0",
     "playwright": "^1.49.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.3",
+    "esbuild": "^0.28.1",
+    "serve": "^14.2.6",
+    "typescript": "^7.0.2",
+    "vite": "^8.1.4",
+    "vite-plugin-static-copy": "^4.1.1",
+    "vitest": "^4.1.10"
   }
 }

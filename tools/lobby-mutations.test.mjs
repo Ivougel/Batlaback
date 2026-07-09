@@ -4,8 +4,8 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import vm from "node:vm";
 import { fileURLToPath } from "node:url";
+import vm from "node:vm";
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 
@@ -15,8 +15,23 @@ function assert(cond, msg) {
 
 function loadSandbox() {
   const sandbox = {
-    console, Math, Object, Array, Map, Set, JSON, Number, String, Boolean,
-    parseInt, parseFloat, isNaN, Infinity, Error, Date, performance: { now: () => 0 },
+    console,
+    Math,
+    Object,
+    Array,
+    Map,
+    Set,
+    JSON,
+    Number,
+    String,
+    Boolean,
+    parseInt,
+    parseFloat,
+    isNaN,
+    Infinity,
+    Error,
+    Date,
+    performance: { now: () => 0 },
     document: { getElementById: () => null, querySelectorAll: () => [] },
   };
   sandbox.global = sandbox;
@@ -28,7 +43,7 @@ function loadSandbox() {
     "items-catalog.js",
     "systems/mutations.js",
     "systems/mutation-ui.js",
-    "systems/enhancements.js",
+    "systems/build-keys.js",
     "shop-engine.js",
     "backpack-engine.js",
     "ai-engine.js",
@@ -38,7 +53,8 @@ function loadSandbox() {
   for (const file of files) {
     vm.runInContext(fs.readFileSync(path.join(ROOT, file), "utf8"), ctx);
   }
-  vm.runInContext(`
+  vm.runInContext(
+    `
     Object.assign(globalThis, {
       syncLobbyFighterMutationMilestones,
       lobbyFighterPrepMeta,
@@ -46,7 +62,9 @@ function loadSandbox() {
       MUTATION_ROUND_FORM,
       MUTATION_ROUND_FINAL,
     });
-  `, ctx);
+  `,
+    ctx,
+  );
   return sandbox;
 }
 
@@ -58,7 +76,6 @@ function run() {
     classId: "priest",
     companionId: "s_light",
     items: [],
-    enhancements: { head: null, chest: null, boots: null },
     mutationFormId: null,
     mutationId: null,
     alive: true,

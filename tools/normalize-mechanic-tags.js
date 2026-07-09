@@ -8,10 +8,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = path.join(__dirname, "..");
-const FILES = [
-  path.join(ROOT, "items-catalog.js"),
-  path.join(ROOT, "items.js"),
-];
+const FILES = [path.join(ROOT, "items-catalog.js"), path.join(ROOT, "items.js")];
 
 const MECHANIC_TRIGGER_REPLACEMENTS = [
   ["При входе в магазин", "[при входе в магазин]"],
@@ -53,10 +50,7 @@ function patchQuotedField(src, fieldName) {
     const next = normalizeMechanicTags(decoded);
     if (next === decoded) return match;
     changes += 1;
-    const encoded = next
-      .replace(/\\/g, "\\\\")
-      .replace(/"/g, '\\"')
-      .replace(/\n/g, "\\n");
+    const encoded = next.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n");
     return `${pre}${encoded}${post}`;
   });
   return { out, changes };

@@ -1,0 +1,597 @@
+{
+  "version": 1,
+  "description": "Предметы BB classic, отсутствовавшие в legacy — см. tools/import-bb-reference-items.mjs",
+  "items": [
+    {
+      "id": "war_scythe",
+      "name": "Боевая коса",
+      "icon": "⚔️🌾",
+      "color": "#f0c14b",
+      "shape": [[0, 0], [1, 0], [0, 1], [1, 1]],
+      "classRestriction": "rogue",
+      "rarity": "legendary",
+      "cost": 14,
+      "tags": ["weapon", "melee", "poison", "dark", "craft"],
+      "cooldown": 1.4,
+      "craftOnly": true,
+      "effects": [
+        {
+          "type": "damage",
+          "value": 10,
+          "valueMin": 8,
+          "valueMax": 12,
+          "damageType": null
+        },
+        {
+          "type": "damagePerFoeDebuff",
+          "value": 0.35,
+          "trigger": "passive"
+        },
+        {
+          "type": "critPerFoeDebuff",
+          "value": 0.03,
+          "trigger": "passive"
+        },
+        {
+          "type": "spendStack",
+          "stack": "heat",
+          "value": 1,
+          "trigger": "on_attack",
+          "cleansePoisonFoe": 3,
+          "attackBuff": 5
+        }
+      ],
+      "synergies": [],
+      "description": "При атаке: −1 жар → снять 3 яда с противника и +5 урона. +0.35 урона и +3% крит за дебафф.",
+      "goldPerRound": 0,
+      "buildHints": "Крафт: Death Scythe + Whetstone · Reaper / яд",
+      "staminaCost": 1.5,
+      "damage": 10,
+      "sockets": 3,
+      "protected": false
+    },
+    {
+      "id": "spiked_staff",
+      "name": "Шипастый посох",
+      "icon": "🪄🌵",
+      "color": "#ffa657",
+      "shape": [[0, 0], [0, 1]],
+      "classRestriction": "warrior",
+      "rarity": "legendary",
+      "cost": 12,
+      "tags": ["weapon", "magic", "melee", "spikes", "craft"],
+      "cooldown": 2,
+      "craftOnly": true,
+      "effects": [
+        {
+          "type": "damage",
+          "value": 8,
+          "valueMin": 6,
+          "valueMax": 10,
+          "damageType": "magic"
+        },
+        {
+          "type": "spendStack",
+          "stack": "mana",
+          "value": 3,
+          "trigger": "on_attack",
+          "attackBuff": 6,
+          "gainStack": { "stack": "spikes", "value": 4 },
+          "permanentDamage": 1
+        },
+        {
+          "type": "gainStack",
+          "stack": "empower",
+          "value": 2,
+          "trigger": "on_attack"
+        },
+        {
+          "type": "battleRageLowHp",
+          "trigger": "passive",
+          "cooldownBoost": 0.25
+        }
+      ],
+      "synergies": [],
+      "description": "При атаке: −3 маны → +6 урона, +4 шипа, +1 урона навсегда и +2 усиления.",
+      "goldPerRound": 0,
+      "buildHints": "Крафт: Magic Staff + Spiked Collar · Berserker / шипы",
+      "staminaCost": 1.2,
+      "damage": 8,
+      "sockets": 1,
+      "protected": false
+    },
+    {
+      "id": "chain_whip",
+      "name": "Цепной кнут",
+      "icon": "⛓️🪢",
+      "color": "#f0c14b",
+      "shape": [[0, 0], [0, 1]],
+      "classRestriction": "warrior",
+      "rarity": "legendary",
+      "cost": 11,
+      "tags": ["weapon", "melee", "spikes", "craft"],
+      "cooldown": 2.4,
+      "craftOnly": true,
+      "effects": [
+        {
+          "type": "damage",
+          "value": 8,
+          "valueMin": 6,
+          "valueMax": 11,
+          "damageType": null
+        },
+        {
+          "type": "damagePerFoeDebuff",
+          "value": 0.6,
+          "trigger": "passive"
+        },
+        {
+          "type": "heal",
+          "value": 12,
+          "trigger": "on_hit"
+        },
+        {
+          "type": "gainStack",
+          "stack": "spikes",
+          "value": 1,
+          "trigger": "on_hit"
+        },
+        {
+          "type": "battleRageLowHp",
+          "trigger": "passive",
+          "cooldownBoost": 0.35
+        }
+      ],
+      "synergies": [],
+      "description": "При попадании: +12 HP и +1 шип. +0.6 урона за дебафф противника.",
+      "goldPerRound": 0,
+      "buildHints": "Крафт: Thorn Whip + Forging Hammer · Berserker",
+      "staminaCost": 2.1,
+      "damage": 8,
+      "sockets": 2,
+      "protected": false
+    },
+    {
+      "id": "busted_blade",
+      "name": "Сломанный клинок",
+      "icon": "⚔️💥",
+      "color": "#ff7b72",
+      "shape": [[0, 0], [1, 0], [0, 1]],
+      "classRestriction": "warrior",
+      "rarity": "godly",
+      "cost": 16,
+      "tags": ["weapon", "melee", "craft"],
+      "cooldown": 2.8,
+      "craftOnly": true,
+      "effects": [
+        {
+          "type": "damage",
+          "value": 28,
+          "valueMin": 24,
+          "valueMax": 32,
+          "damageType": null
+        },
+        {
+          "type": "damagePerTotalStacks",
+          "value": 1,
+          "trigger": "passive"
+        },
+        {
+          "type": "battleRageLowHp",
+          "trigger": "passive",
+          "cooldownBoost": 0.4
+        },
+        {
+          "type": "statMult",
+          "stat": "damage",
+          "value": 0.05,
+          "trigger": "passive"
+        }
+      ],
+      "synergies": [],
+      "description": "Боевая ярость: предметы на 40% быстрее. +1 урона за каждый бонус на панели.",
+      "goldPerRound": 0,
+      "buildHints": "Крафт: Impractically Large Greatsword + Forging Hammer",
+      "staminaCost": 2.8,
+      "damage": 28,
+      "sockets": 3,
+      "protected": false
+    },
+    {
+      "id": "improved_whetstone",
+      "name": "Улучшенный точильный камень",
+      "icon": "🪨✨",
+      "color": "#8b949e",
+      "shape": [[0, 0]],
+      "classRestriction": "warrior",
+      "rarity": "uncommon",
+      "cost": 5,
+      "tags": ["accessory", "craft", "utility"],
+      "cooldown": 0,
+      "craftOnly": true,
+      "effects": [
+        {
+          "type": "synergyHint",
+          "neighborTags": ["weapon"],
+          "value": 1,
+          "trigger": "passive"
+        },
+        {
+          "type": "weaponDamageStart",
+          "value": 1,
+          "trigger": "battle_start"
+        }
+      ],
+      "synergies": [
+        {
+          "id": "improved_whetstone_damage",
+          "adjacency": "strong",
+          "neighborTags": ["weapon"],
+          "target": "neighbor",
+          "apply": { "type": "damageBonus", "value": 1 },
+          "desc": "+1 урона соседям"
+        }
+      ],
+      "description": "В начале боя: оружие +1 урона. Больше слотов для соседей.",
+      "goldPerRound": 0,
+      "buildHints": "Крафт: Whetstone + Forging Hammer",
+      "sockets": 3,
+      "protected": false
+    },
+    {
+      "id": "blazing_spear",
+      "name": "Пылающее копьё",
+      "icon": "🔱🔥",
+      "color": "#ff7b72",
+      "shape": [[0, 0], [0, 1]],
+      "classRestriction": null,
+      "rarity": "godly",
+      "cost": 14,
+      "tags": ["weapon", "fire", "melee", "craft"],
+      "cooldown": 1.4,
+      "craftOnly": true,
+      "effects": [
+        {
+          "type": "damage",
+          "value": 9,
+          "valueMin": 7,
+          "valueMax": 12,
+          "damageType": null
+        },
+        {
+          "type": "preventMiss",
+          "trigger": "passive",
+          "spendStack": { "stack": "heat", "value": 1 },
+          "attackBuff": 8
+        },
+        {
+          "type": "breakBlockOnHit",
+          "value": 8,
+          "trigger": "on_hit"
+        },
+        {
+          "type": "gainStack",
+          "stack": "heat",
+          "value": 2,
+          "trigger": "on_hit"
+        }
+      ],
+      "synergies": [],
+      "description": "Перед промахом: −1 жар → попадание и +8 урона. Снять 8 блока. При попадании: +2 жара.",
+      "goldPerRound": 0,
+      "buildHints": "Крафт: Molten Spear + 4× Lump of Coal",
+      "staminaCost": 1.5,
+      "damage": 9,
+      "sockets": 2,
+      "protected": false
+    },
+    {
+      "id": "red_orchid_collar",
+      "name": "Ошейник красной орхидеи",
+      "icon": "🌺",
+      "color": "#f85149",
+      "shape": [[0, 0]],
+      "classRestriction": null,
+      "rarity": "legendary",
+      "cost": 10,
+      "tags": ["accessory", "luck", "vampiric", "craft"],
+      "cooldown": 0,
+      "craftOnly": true,
+      "effects": [
+        {
+          "type": "passiveLuck",
+          "value": 2,
+          "trigger": "passive"
+        },
+        {
+          "type": "lifestealPerTag",
+          "tag": "weapon",
+          "value": 0.04,
+          "trigger": "passive"
+        },
+        {
+          "type": "critPerStack",
+          "stack": "luck",
+          "value": 0.04,
+          "trigger": "passive"
+        }
+      ],
+      "synergies": [],
+      "description": "+2 удачи. +4% вампиризма за соседнее оружие. +4% крит за удачу.",
+      "goldPerRound": 0,
+      "buildHints": "Крафт: Acorn Collar + Blood Amulet · ветка Lily/Sage",
+      "protected": false
+    },
+    {
+      "id": "white_lily_collar",
+      "name": "Ошейник белой лилии",
+      "icon": "🤍",
+      "color": "#f0f6fc",
+      "shape": [[0, 0]],
+      "classRestriction": null,
+      "rarity": "godly",
+      "cost": 14,
+      "tags": ["accessory", "luck", "holy", "craft"],
+      "cooldown": 0,
+      "craftOnly": true,
+      "effects": [
+        {
+          "type": "passiveLuck",
+          "value": 3,
+          "trigger": "passive"
+        },
+        {
+          "type": "passiveDefense",
+          "value": 2,
+          "trigger": "passive"
+        },
+        {
+          "type": "periodic",
+          "interval": 3.5,
+          "trigger": "passive",
+          "heal": 6,
+          "cleanseDebuffs": 1
+        },
+        {
+          "type": "critPerStack",
+          "stack": "luck",
+          "value": 0.05,
+          "trigger": "passive"
+        }
+      ],
+      "synergies": [],
+      "description": "+3 удачи, +2 защиты. Каждые 3.5с: +6 HP и снять 1 дебафф.",
+      "goldPerRound": 0,
+      "buildHints": "Крафт: Red Orchid Collar + Holy Armor",
+      "protected": false
+    },
+    {
+      "id": "blue_sage_collar",
+      "name": "Ошейник синего шалфея",
+      "icon": "💠",
+      "color": "#79c0ff",
+      "shape": [[0, 0]],
+      "classRestriction": null,
+      "rarity": "godly",
+      "cost": 14,
+      "tags": ["accessory", "luck", "magic", "craft"],
+      "cooldown": 0,
+      "craftOnly": true,
+      "effects": [
+        {
+          "type": "passiveLuck",
+          "value": 3,
+          "trigger": "passive"
+        },
+        {
+          "type": "gainStack",
+          "stack": "mana",
+          "value": 4,
+          "trigger": "battle_start"
+        },
+        {
+          "type": "spendStack",
+          "stack": "mana",
+          "value": 2,
+          "trigger": "on_attack",
+          "attackBuff": 5,
+          "guaranteedCrit": 1.2
+        },
+        {
+          "type": "critPerStack",
+          "stack": "luck",
+          "value": 0.05,
+          "trigger": "passive"
+        }
+      ],
+      "synergies": [],
+      "description": "В начале боя: +4 маны. При атаке: −2 маны → +5 урона и гарант. крит 1.2с.",
+      "goldPerRound": 0,
+      "buildHints": "Крафт: Red Orchid Collar + Mana Crystal",
+      "protected": false
+    },
+    {
+      "id": "pine_protector",
+      "name": "Сосновый защитник",
+      "icon": "🛡️🌲",
+      "color": "#3fb950",
+      "shape": [[0, 0], [1, 0]],
+      "classRestriction": null,
+      "rarity": "epic",
+      "cost": 10,
+      "tags": ["shield", "armor", "nature", "craft"],
+      "cooldown": 3,
+      "craftOnly": true,
+      "effects": [
+        {
+          "type": "block",
+          "value": 6
+        },
+        {
+          "type": "heal",
+          "value": 8,
+          "trigger": "on_block"
+        },
+        {
+          "type": "gainStack",
+          "stack": "regen",
+          "value": 2,
+          "trigger": "on_block"
+        },
+        {
+          "type": "passiveDefense",
+          "value": 1,
+          "trigger": "passive"
+        }
+      ],
+      "synergies": [],
+      "description": "При блоке: +8 HP и +2 регена. +1 защиты.",
+      "goldPerRound": 0,
+      "buildHints": "Крафт: Spiked Shield + Pineapple",
+      "sockets": 1,
+      "protected": false
+    },
+    {
+      "id": "stankus_toothpick",
+      "name": "Зубочистка Стэнкуса",
+      "icon": "🗡️🧄",
+      "color": "#8b949e",
+      "shape": [[0, 0], [0, 1]],
+      "classRestriction": null,
+      "rarity": "legendary",
+      "cost": 10,
+      "tags": ["weapon", "melee", "food", "craft"],
+      "cooldown": 2.2,
+      "craftOnly": true,
+      "effects": [
+        {
+          "type": "damage",
+          "value": 6,
+          "valueMin": 4,
+          "valueMax": 8,
+          "damageType": null
+        },
+        {
+          "type": "cooldownMultPerTag",
+          "tag": "food",
+          "value": -0.12,
+          "trigger": "passive"
+        },
+        {
+          "type": "poison",
+          "value": 2,
+          "trigger": "on_hit"
+        },
+        {
+          "type": "slow",
+          "value": 1,
+          "duration": 2,
+          "trigger": "on_hit",
+          "chance": 0.35
+        }
+      ],
+      "synergies": [],
+      "description": "−12% кулдаун за каждую еду на панели. При попадании: +2 яда, 35% замедление.",
+      "goldPerRound": 0,
+      "buildHints": "Крафт: Hero Sword + Garlic",
+      "staminaCost": 10,
+      "damage": 6,
+      "sockets": 1,
+      "protected": false
+    },
+    {
+      "id": "boiling_pot",
+      "name": "Кипящий котёл",
+      "icon": "🍲",
+      "color": "#ffa657",
+      "shape": [[0, 0], [1, 0], [0, 1]],
+      "classRestriction": null,
+      "rarity": "epic",
+      "cost": 8,
+      "tags": ["accessory", "food", "potion", "craft"],
+      "cooldown": 0,
+      "craftOnly": true,
+      "effects": [
+        {
+          "type": "periodic",
+          "interval": 4,
+          "trigger": "passive",
+          "heal": 10
+        },
+        {
+          "type": "tagScaledStack",
+          "stack": "regen",
+          "perTag": 1,
+          "tag": "food",
+          "trigger": "battle_start"
+        },
+        {
+          "type": "tagScaledStack",
+          "stack": "mana",
+          "perTag": 1,
+          "tag": "potion",
+          "trigger": "battle_start"
+        },
+        {
+          "type": "cooldownStartMult",
+          "value": 0.15,
+          "trigger": "battle_start"
+        }
+      ],
+      "synergies": [],
+      "description": "Каждые 4с: +10 HP. В начале боя: +1 реген за еду, +1 мана за зелье, −15% кулдаун.",
+      "goldPerRound": 0,
+      "buildHints": "Крафт: Pan + Wooden Buckler",
+      "sockets": 2,
+      "protected": false
+    },
+    {
+      "id": "gold_armor",
+      "name": "Золотая броня",
+      "icon": "🦺🪙",
+      "color": "#f0c14b",
+      "shape": { "w": 2, "h": 3 },
+      "classRestriction": null,
+      "rarity": "godly",
+      "cost": 16,
+      "tags": ["armor", "holy", "treasure", "craft"],
+      "cooldown": 2.2,
+      "craftOnly": true,
+      "effects": [
+        {
+          "type": "passiveDefense",
+          "value": 5,
+          "trigger": "passive"
+        },
+        {
+          "type": "gainStack",
+          "stack": "block",
+          "value": 75,
+          "trigger": "battle_start"
+        },
+        {
+          "type": "passiveLuck",
+          "value": 4,
+          "trigger": "passive"
+        },
+        {
+          "type": "periodic",
+          "interval": 2.2,
+          "trigger": "passive",
+          "spendStack": { "stack": "block", "value": 2, "cleansePoisonSelf": 1 },
+          "heal": 8
+        }
+      ],
+      "synergies": [],
+      "description": "В начале боя: +75 блока. +4 удачи. Каждые 2.2с: −2 блока, +8 HP, снять 1 яд.",
+      "goldPerRound": 2,
+      "metaEffects": [
+        { "phase": "passive", "type": "sell_bonus", "value": 0.25 }
+      ],
+      "buildHints": "Крафт: Holy Armor + Bunch of Coins",
+      "defense": 5,
+      "sockets": 2,
+      "protected": false
+    }
+  ]
+}

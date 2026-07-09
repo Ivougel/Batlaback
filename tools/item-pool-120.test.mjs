@@ -4,8 +4,8 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import vm from "node:vm";
 import { fileURLToPath } from "node:url";
+import vm from "node:vm";
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 
@@ -15,8 +15,18 @@ function assert(cond, msg) {
 
 function loadSandbox() {
   const sandbox = {
-    console, Math, Object, Array, Map, Set, JSON, Number, String, Boolean,
-    window: null, document: { documentElement: { dataset: {} } },
+    console,
+    Math,
+    Object,
+    Array,
+    Map,
+    Set,
+    JSON,
+    Number,
+    String,
+    Boolean,
+    window: null,
+    document: { documentElement: { dataset: {} } },
     localStorage: { getItem: () => null },
     location: { search: "" },
   };
@@ -24,7 +34,8 @@ function loadSandbox() {
   sandbox.global = sandbox;
   const ctx = vm.createContext(sandbox);
   vm.runInContext(fs.readFileSync(path.join(ROOT, "systems/item-pool-120.js"), "utf8"), ctx);
-  vm.runInContext(`
+  vm.runInContext(
+    `
     Object.assign(globalThis, {
       ITEM_POOL_120_MANIFEST,
       isItemInPool120,
@@ -33,7 +44,9 @@ function loadSandbox() {
       filterItemsToPool120,
       setItemPool120Enabled,
     });
-  `, ctx);
+  `,
+    ctx,
+  );
   return sandbox;
 }
 
@@ -42,15 +55,15 @@ function run() {
   const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, "tools/item-pool-120-manifest.json"), "utf8"));
   let passed = 0;
 
-  assert(manifest.items.length === 240, "manifest: 240 items");
-  assert(new Set(manifest.items).size === 240, "manifest: unique ids");
+  assert(manifest.items.length === 216, "manifest: 216 items");
+  assert(new Set(manifest.items).size === 216, "manifest: unique ids");
   passed++;
 
-  assert(s.getItemPool120Ids().length === 240, "runtime set size");
+  assert(s.getItemPool120Ids().length === 216, "runtime set size");
   passed++;
 
   assert(s.isItemInPool120("apple"), "starter apple");
-  assert(s.isItemInPool120("enh_hymn_veil"), "enhancement");
+  assert(s.isItemInPool120("key_ember_codex"), "build key");
   assert(s.isItemInPool120("amplify_fire"), "amplifier");
   assert(s.isItemInPool120("katana"), "expansion katana");
   assert(!s.isItemInPool120("artifact_stone_death"), "excluded artifact");
@@ -63,9 +76,7 @@ function run() {
   assert(s.isItemPool120Enabled() === true, "pool always enabled");
   passed++;
 
-  const filtered = s.filterItemsToPool120([
-    { id: "apple" }, { id: "artifact_stone_death" },
-  ]);
+  const filtered = s.filterItemsToPool120([{ id: "apple" }, { id: "artifact_stone_death" }]);
   assert(filtered.length === 1 && filtered[0].id === "apple", "filter excludes legacy");
   passed++;
 

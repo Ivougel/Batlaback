@@ -19,6 +19,7 @@ function showSettingsPopup() {
   if (typeof syncEmojiOrbitSpeedSettingsUi === "function") syncEmojiOrbitSpeedSettingsUi();
   if (typeof syncVisualThemeSettingsUi === "function") syncVisualThemeSettingsUi();
   if (typeof syncPrepHudPresetSettingsUi === "function") syncPrepHudPresetSettingsUi();
+  if (typeof syncPrepHeroCardPresetSettingsUi === "function") syncPrepHeroCardPresetSettingsUi();
   if (typeof syncSoundThemeSettingsUi === "function") syncSoundThemeSettingsUi();
   if (typeof syncMusicTrackSettingsUi === "function") syncMusicTrackSettingsUi();
   overlay.classList.remove("hidden");
@@ -83,6 +84,7 @@ function initSettingsControls() {
 
   if (typeof initVisualThemeControls === "function") initVisualThemeControls();
   if (typeof initPrepHudPresetControls === "function") initPrepHudPresetControls();
+  if (typeof initPrepHeroCardPresetControls === "function") initPrepHeroCardPresetControls();
   if (typeof initSoundThemeControls === "function") initSoundThemeControls();
   if (typeof initMusicTrackControls === "function") initMusicTrackControls();
 

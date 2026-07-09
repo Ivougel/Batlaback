@@ -13,7 +13,9 @@ const OUT_PATH = path.join(__dirname, "items-balance-export.csv");
 function loadCatalog() {
   const itemsJs = fs.readFileSync(path.join(ROOT, "items.js"), "utf8");
   const catalogJs = fs.readFileSync(path.join(ROOT, "items-catalog.js"), "utf8");
-  const fn = new Function(`${itemsJs}\n${catalogJs}\nreturn { catalog: ITEM_CATALOG, craftIds: typeof CRAFT_OUTPUT_IDS !== "undefined" ? CRAFT_OUTPUT_IDS : new Set() };`);
+  const fn = new Function(
+    `${itemsJs}\n${catalogJs}\nreturn { catalog: ITEM_CATALOG, craftIds: typeof CRAFT_OUTPUT_IDS !== "undefined" ? CRAFT_OUTPUT_IDS : new Set() };`,
+  );
   return fn();
 }
 
@@ -49,9 +51,7 @@ function getShapeBounds(def) {
     cells: cells.length,
     width: maxC - minC + 1,
     height: maxR - minR + 1,
-    label: cells.length === 1
-      ? "1×1"
-      : `${maxC - minC + 1}×${maxR - minR + 1} (${cells.length} кл.)`,
+    label: cells.length === 1 ? "1×1" : `${maxC - minC + 1}×${maxR - minR + 1} (${cells.length} кл.)`,
   };
 }
 
@@ -305,16 +305,15 @@ function main() {
 
     const effectTypes = [...new Set((def.effects || []).map((e) => e.type))].join("; ");
     const metaTypes = [...new Set((def.metaEffects || []).map((e) => e.type))].join("; ");
-    const triggers = [...new Set(
-      [...(def.effects || []), ...(def.metaEffects || [])]
-        .map((e) => e.trigger || e.phase)
-        .filter(Boolean),
-    )].join("; ");
+    const triggers = [
+      ...new Set([...(def.effects || []), ...(def.metaEffects || [])].map((e) => e.trigger || e.phase).filter(Boolean)),
+    ].join("; ");
 
-    const shopEligible = !def.craftOnly
-      && !craftIds.has(def.id)
-      && (!def.classRestriction || true)
-      && (!def.isContainer || (def.shopContainer && !def.immovable));
+    const shopEligible =
+      !def.craftOnly &&
+      !craftIds.has(def.id) &&
+      (!def.classRestriction || true) &&
+      (!def.isContainer || (def.shopContainer && !def.immovable));
 
     return {
       id: def.id,
@@ -353,9 +352,7 @@ function main() {
       cost_per_cell: cells > 0 ? Math.round(((def.cost ?? 0) / cells) * 100) / 100 : "",
       expected_density_rarity: Math.round((expected || 0) * 100) / 100,
       density_vs_rarity: densityRatio,
-      density_vs_global: globalMedianDensity > 0
-        ? Math.round((density / globalMedianDensity) * 1000) / 1000
-        : 1,
+      density_vs_global: globalMedianDensity > 0 ? Math.round((density / globalMedianDensity) * 1000) / 1000 : 1,
     };
   });
 
@@ -401,7 +398,12 @@ function main() {
 
   const lines = [
     columns.map((c) => csvEscape(c.header)).join(","),
-    ...rows.map((row) => rowToCsv(row, columns.map((c) => c.key))),
+    ...rows.map((row) =>
+      rowToCsv(
+        row,
+        columns.map((c) => c.key),
+      ),
+    ),
   ];
 
   fs.writeFileSync(OUT_PATH, `\uFEFF${lines.join("\n")}\n`, "utf8");

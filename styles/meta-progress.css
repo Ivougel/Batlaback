@@ -2,6 +2,34 @@
  * Мета-прогрессия: locked class cards, панель наград забега.
  */
 
+.recipe-book-recipe--locked {
+  opacity: 0.65;
+  filter: grayscale(0.4);
+}
+
+.recipe-book-recipe--locked .recipe-book-recipe-hint {
+  color: #f0b86e;
+}
+
+.recipe-book-item--locked {
+  opacity: 0.72;
+  filter: grayscale(0.45) saturate(0.65);
+}
+
+.recipe-book-item--locked .recipe-book-item-stats,
+.recipe-book-item--locked .recipe-book-item-tags,
+.recipe-book-item--locked .recipe-book-item-synergy {
+  display: none;
+}
+
+.item-hint-card--locked {
+  filter: grayscale(0.35) saturate(0.75);
+}
+
+.item-hint-card--locked .item-hint-card__emoji {
+  opacity: 0.55;
+}
+
 .class-card--locked {
   opacity: 0.55;
   filter: grayscale(0.35) saturate(0.7);

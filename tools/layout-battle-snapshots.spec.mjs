@@ -2,9 +2,10 @@
  * Pixel-snapshots боевой сцены (flank-arena) после quick start.
  * Обновить эталоны: npm run test:snapshots:update
  */
-import { test, expect, devices } from "@playwright/test";
+
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { devices, expect, test } from "@playwright/test";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const baseUrl = `file://${root}/index.html`;
@@ -27,23 +28,16 @@ async function enterBattle(page) {
     selectOpponentClass("mage");
     startRunFromOverlay();
   });
-  await page.waitForFunction(
-    () => document.getElementById("app")?.dataset.phase === "prep",
-    { timeout: 8000 },
-  );
+  await page.waitForFunction(() => document.getElementById("app")?.dataset.phase === "prep", { timeout: 8000 });
   await page.waitForTimeout(1000);
   await page.evaluate(() => {
     window.applyUiLayout?.();
     window.scheduleCanvasFit?.();
   });
   await page.evaluate(() => startBattle());
+  await page.waitForFunction(() => document.getElementById("app")?.dataset.phase === "battle", { timeout: 10000 });
   await page.waitForFunction(
-    () => document.getElementById("app")?.dataset.phase === "battle",
-    { timeout: 10000 },
-  );
-  await page.waitForFunction(
-    () => !document.getElementById("battle-countdown-overlay")
-      ?.classList.contains("battle-countdown-overlay-visible"),
+    () => !document.getElementById("battle-countdown-overlay")?.classList.contains("battle-countdown-overlay-visible"),
     { timeout: 12000 },
   );
   await page.waitForTimeout(600);
@@ -67,7 +61,7 @@ for (const profile of BATTLE_SNAPSHOT_PROFILES) {
     try {
       await enterBattle(page);
 
-      const arena = page.locator("#app[data-phase=\"battle\"] .prep-field-column");
+      const arena = page.locator('#app[data-phase="battle"] .prep-field-column');
       await expect(arena).toBeVisible({ timeout: 8000 });
 
       const box = await arena.boundingBox();
@@ -77,10 +71,7 @@ for (const profile of BATTLE_SNAPSHOT_PROFILES) {
       if (errors.length) throw new Error(errors.join("; "));
 
       await expect(arena).toHaveScreenshot(`${profile.name}-battle-arena.png`, {
-        mask: [
-          page.locator("#layer-fx"),
-          page.locator(".battle-countdown-overlay"),
-        ],
+        mask: [page.locator("#layer-fx"), page.locator(".battle-countdown-overlay")],
       });
     } finally {
       await context.close();

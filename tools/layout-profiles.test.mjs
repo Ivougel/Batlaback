@@ -2,9 +2,10 @@
  * Регрессия адаптивной раскладки — 5 профилей viewport.
  * Запуск: node tools/layout-profiles.test.mjs
  */
-import { chromium, devices } from "playwright";
-import { fileURLToPath } from "node:url";
+
 import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { chromium, devices } from "playwright";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const indexUrl = `file://${root}/index.html`;
@@ -118,11 +119,17 @@ for (const profile of PROFILES) {
     const state = await readState(page);
     const exp = profile.expect;
 
-    if (exp.prepLayout) assert(state.prepLayout === exp.prepLayout, `prepLayout: ${state.prepLayout} !== ${exp.prepLayout}`);
-    if (exp.prepLayoutNot) assert(state.prepLayout !== exp.prepLayoutNot, `prepLayout should not be ${exp.prepLayoutNot}`);
+    if (exp.prepLayout)
+      assert(state.prepLayout === exp.prepLayout, `prepLayout: ${state.prepLayout} !== ${exp.prepLayout}`);
+    if (exp.prepLayoutNot)
+      assert(state.prepLayout !== exp.prepLayoutNot, `prepLayout should not be ${exp.prepLayoutNot}`);
     if (exp.uiSurface) assert(state.uiSurface === exp.uiSurface, `uiSurface: ${state.uiSurface} !== ${exp.uiSurface}`);
     if (exp.uiSurfaceNot) assert(state.uiSurface !== exp.uiSurfaceNot, `uiSurface should not be ${exp.uiSurfaceNot}`);
-    if (exp.layoutProfile) assert(state.layoutProfile === exp.layoutProfile, `layoutProfile: ${state.layoutProfile} !== ${exp.layoutProfile}`);
+    if (exp.layoutProfile)
+      assert(
+        state.layoutProfile === exp.layoutProfile,
+        `layoutProfile: ${state.layoutProfile} !== ${exp.layoutProfile}`,
+      );
     if (exp.tier) assert(state.tier === exp.tier, `tier: ${state.tier} !== ${exp.tier}`);
     if (exp.orientation) assert(state.orientation === exp.orientation, `orientation: ${state.orientation}`);
     if (exp.htmlDisplay) assert(state.htmlDisplay === exp.htmlDisplay, `html display: ${state.htmlDisplay}`);
@@ -138,12 +145,15 @@ for (const profile of PROFILES) {
     }
     if (errors.length) throw new Error(`JS errors: ${errors.join("; ")}`);
 
-    console.log(`✓ ${profile.id}`, JSON.stringify({
-      prepLayout: state.prepLayout,
-      uiSurface: state.uiSurface,
-      layoutProfile: state.layoutProfile,
-      htmlDisplay: state.htmlDisplay,
-    }));
+    console.log(
+      `✓ ${profile.id}`,
+      JSON.stringify({
+        prepLayout: state.prepLayout,
+        uiSurface: state.uiSurface,
+        layoutProfile: state.layoutProfile,
+        htmlDisplay: state.htmlDisplay,
+      }),
+    );
   } catch (e) {
     failures.push({ id: profile.id, error: e.message });
     console.error(`✗ ${profile.id}: ${e.message}`);

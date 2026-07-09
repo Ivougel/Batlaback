@@ -43,12 +43,7 @@
           "rotation": 0
         }
       ],
-      "itemIds": [
-        "heart_container",
-        "gloves_of_haste",
-        "hammer",
-        "royal_helmet"
-      ]
+      "itemIds": ["heart_container", "gloves_of_haste", "hammer", "royal_helmet"]
     },
     "warrior_r8_opt": {
       "key": "warrior_r8_opt",
@@ -92,12 +87,7 @@
           "rotation": 0
         }
       ],
-      "itemIds": [
-        "heart_container",
-        "gloves_of_haste",
-        "hammer",
-        "royal_helmet"
-      ]
+      "itemIds": ["heart_container", "gloves_of_haste", "hammer", "royal_helmet"]
     },
     "warrior_r16_opt": {
       "key": "warrior_r16_opt",
@@ -141,12 +131,7 @@
           "rotation": 0
         }
       ],
-      "itemIds": [
-        "heart_container",
-        "gloves_of_haste",
-        "hammer",
-        "royal_helmet"
-      ]
+      "itemIds": ["heart_container", "gloves_of_haste", "hammer", "royal_helmet"]
     },
     "rogue_r1_opt": {
       "key": "rogue_r1_opt",
@@ -196,13 +181,7 @@
           "rotation": 0
         }
       ],
-      "itemIds": [
-        "heart_container",
-        "shadow_blade",
-        "more_stats",
-        "gloves_of_haste",
-        "artifact_stone_death"
-      ]
+      "itemIds": ["heart_container", "shadow_blade", "more_stats", "gloves_of_haste", "artifact_stone_death"]
     },
     "rogue_r8_opt": {
       "key": "rogue_r8_opt",
@@ -252,13 +231,7 @@
           "rotation": 0
         }
       ],
-      "itemIds": [
-        "heart_container",
-        "shadow_blade",
-        "more_stats",
-        "gloves_of_haste",
-        "artifact_stone_death"
-      ]
+      "itemIds": ["heart_container", "shadow_blade", "more_stats", "gloves_of_haste", "artifact_stone_death"]
     },
     "rogue_r16_opt": {
       "key": "rogue_r16_opt",
@@ -308,13 +281,7 @@
           "rotation": 0
         }
       ],
-      "itemIds": [
-        "heart_container",
-        "shadow_blade",
-        "more_stats",
-        "gloves_of_haste",
-        "artifact_stone_death"
-      ]
+      "itemIds": ["heart_container", "shadow_blade", "more_stats", "gloves_of_haste", "artifact_stone_death"]
     },
     "mage_r1_opt": {
       "key": "mage_r1_opt",
@@ -358,12 +325,7 @@
           "rotation": 0
         }
       ],
-      "itemIds": [
-        "heart_container",
-        "artifact_stone_death",
-        "gloves_of_haste",
-        "hammer"
-      ]
+      "itemIds": ["heart_container", "artifact_stone_death", "gloves_of_haste", "hammer"]
     },
     "mage_r8_opt": {
       "key": "mage_r8_opt",
@@ -407,12 +369,7 @@
           "rotation": 0
         }
       ],
-      "itemIds": [
-        "heart_container",
-        "artifact_stone_death",
-        "gloves_of_haste",
-        "hammer"
-      ]
+      "itemIds": ["heart_container", "artifact_stone_death", "gloves_of_haste", "hammer"]
     },
     "mage_r16_opt": {
       "key": "mage_r16_opt",
@@ -456,12 +413,7 @@
           "rotation": 0
         }
       ],
-      "itemIds": [
-        "heart_container",
-        "artifact_stone_death",
-        "gloves_of_haste",
-        "hammer"
-      ]
+      "itemIds": ["heart_container", "artifact_stone_death", "gloves_of_haste", "hammer"]
     },
     "priest_r1_opt": {
       "key": "priest_r1_opt",
@@ -517,12 +469,7 @@
           "rotation": 0
         }
       ],
-      "itemIds": [
-        "heart_container",
-        "artifact_stone_death",
-        "gloves_of_haste",
-        "more_stats"
-      ]
+      "itemIds": ["heart_container", "artifact_stone_death", "gloves_of_haste", "more_stats"]
     },
     "priest_r1_hybrid_opt": {
       "key": "priest_r1_hybrid_opt",
@@ -578,12 +525,7 @@
           "rotation": 0
         }
       ],
-      "itemIds": [
-        "heart_container",
-        "artifact_stone_death",
-        "gloves_of_haste",
-        "more_stats"
-      ]
+      "itemIds": ["heart_container", "artifact_stone_death", "gloves_of_haste", "more_stats"]
     },
     "priest_r8_opt": {
       "key": "priest_r8_opt",
@@ -639,12 +581,7 @@
           "rotation": 0
         }
       ],
-      "itemIds": [
-        "heart_container",
-        "artifact_stone_death",
-        "gloves_of_haste",
-        "more_stats"
-      ]
+      "itemIds": ["heart_container", "artifact_stone_death", "gloves_of_haste", "more_stats"]
     },
     "priest_r8_hybrid_opt": {
       "key": "priest_r8_hybrid_opt",
@@ -700,12 +637,7 @@
           "rotation": 0
         }
       ],
-      "itemIds": [
-        "heart_container",
-        "artifact_stone_death",
-        "gloves_of_haste",
-        "more_stats"
-      ]
+      "itemIds": ["heart_container", "artifact_stone_death", "gloves_of_haste", "more_stats"]
     },
     "priest_r16_opt": {
       "key": "priest_r16_opt",
@@ -761,12 +693,7 @@
           "rotation": 0
         }
       ],
-      "itemIds": [
-        "heart_container",
-        "artifact_stone_death",
-        "gloves_of_haste",
-        "more_stats"
-      ]
+      "itemIds": ["heart_container", "artifact_stone_death", "gloves_of_haste", "more_stats"]
     },
     "priest_r16_hybrid_opt": {
       "key": "priest_r16_hybrid_opt",
@@ -822,12 +749,7 @@
           "rotation": 0
         }
       ],
-      "itemIds": [
-        "heart_container",
-        "artifact_stone_death",
-        "gloves_of_haste",
-        "more_stats"
-      ]
+      "itemIds": ["heart_container", "artifact_stone_death", "gloves_of_haste", "more_stats"]
     }
   }
 }

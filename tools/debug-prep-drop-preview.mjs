@@ -73,26 +73,30 @@ async function run() {
         uiTier: document.documentElement.dataset.uiTier,
         layoutProfile: document.documentElement.dataset.layoutProfile,
       },
-      geom: cr && ar && vr ? {
-        delta: {
-          l: Math.abs(cr.left - ar.left),
-          t: Math.abs(cr.top - ar.top),
-          w: Math.abs(cr.width - ar.width),
-          h: Math.abs(cr.height - ar.height),
-        },
-        relToCol: {
-          canvas: { l: cr.left - vr.left, t: cr.top - vr.top },
-          anchor: { l: ar.left - vr.left, t: ar.top - vr.top },
-        },
-      } : null,
+      geom:
+        cr && ar && vr
+          ? {
+              delta: {
+                l: Math.abs(cr.left - ar.left),
+                t: Math.abs(cr.top - ar.top),
+                w: Math.abs(cr.width - ar.width),
+                h: Math.abs(cr.height - ar.height),
+              },
+              relToCol: {
+                canvas: { l: cr.left - vr.left, t: cr.top - vr.top },
+                anchor: { l: ar.left - vr.left, t: ar.top - vr.top },
+              },
+            }
+          : null,
       state: {
         dragPayload: !!dragPayload,
         hoverSlot,
         hoverCell,
         prepDropPreviewHover,
-        placement: typeof getPrepDropPlacement === "function"
-          ? getPrepDropPlacement(getSideState(prepViewSide), prepViewSide)
-          : null,
+        placement:
+          typeof getPrepDropPlacement === "function"
+            ? getPrepDropPlacement(getSideState(prepViewSide), prepViewSide)
+            : null,
         canEdit: typeof canEditPrepSide === "function" ? canEditPrepSide() : null,
       },
       fxPixels: countPixels(fx),

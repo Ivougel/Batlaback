@@ -6,7 +6,7 @@
 
 const fs = require("fs");
 const path = require("path");
-const { createSimSandbox, ROOT } = require("./sim-sandbox.js");
+const { createSimSandbox } = require("./sim-sandbox.js");
 
 const CLASSES = ["warrior", "rogue", "mage", "priest"];
 const ROUNDS = [1, 8, 16];
@@ -41,9 +41,7 @@ function serializeItems(items) {
 }
 
 function buildOptimalPreset(classId, round, variant = "opt") {
-  const savedArchetype = variant === "hybrid" && classId === "priest"
-    ? { ...sandbox.AI_ARCHETYPES.priest }
-    : null;
+  const savedArchetype = variant === "hybrid" && classId === "priest" ? { ...sandbox.AI_ARCHETYPES.priest } : null;
 
   if (savedArchetype) {
     sandbox.AI_ARCHETYPES.priest = {
@@ -54,15 +52,7 @@ function buildOptimalPreset(classId, round, variant = "opt") {
 
   const containers = sandbox.createStartingContainers(GRID_W, GRID_H);
   let items = sandbox.applyClassStarters(containers, [], classId);
-  items = sandbox.buildHardBotOptimalLoadout(
-    containers,
-    items,
-    classId,
-    round,
-    GRID_W,
-    GRID_H,
-    TARGET_POWER,
-  );
+  items = sandbox.buildHardBotOptimalLoadout(containers, items, classId, round, GRID_W, GRID_H, TARGET_POWER);
 
   if (typeof sandbox.applySynergyModifiers === "function") {
     sandbox.applySynergyModifiers(items);
@@ -70,9 +60,7 @@ function buildOptimalPreset(classId, round, variant = "opt") {
 
   const power = sandbox.measureHardBotPower(containers, items, classId);
   const cls = sandbox.getClassById(classId);
-  const key = variant === "hybrid"
-    ? `${classId}_r${round}_hybrid_opt`
-    : `${classId}_r${round}_opt`;
+  const key = variant === "hybrid" ? `${classId}_r${round}_hybrid_opt` : `${classId}_r${round}_opt`;
 
   if (savedArchetype) {
     sandbox.AI_ARCHETYPES.priest = savedArchetype;
@@ -80,9 +68,10 @@ function buildOptimalPreset(classId, round, variant = "opt") {
 
   return {
     key,
-    label: variant === "hybrid"
-      ? `${cls?.name || classId} hybrid optimal R${round}`
-      : `${cls?.name || classId} bot-optimal R${round}`,
+    label:
+      variant === "hybrid"
+        ? `${cls?.name || classId} hybrid optimal R${round}`
+        : `${cls?.name || classId} bot-optimal R${round}`,
     classId,
     round,
     variant,

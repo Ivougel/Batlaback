@@ -55,32 +55,58 @@
   ],
   "enhancements": {
     "head": [
-      "enh_stray_charm", "enh_ember_crown", "enh_hymn_veil",
-      "enh_shadow_hood", "enh_frost_circlet", "enh_inquisitor_mask",
-      "enh_bard_crown", "enh_oracle_diadem"
+      "enh_stray_charm",
+      "enh_ember_crown",
+      "enh_hymn_veil",
+      "enh_shadow_hood",
+      "enh_frost_circlet",
+      "enh_inquisitor_mask",
+      "enh_bard_crown",
+      "enh_oracle_diadem"
     ],
     "chest": [
-      "enh_defeated_breastplate", "enh_holy_aegis", "enh_guardian_mail",
-      "enh_zealot_vestment", "enh_plague_bindings", "enh_arcane_robe",
-      "enh_juggernaut_plate", "enh_rogue_vest"
+      "enh_defeated_breastplate",
+      "enh_holy_aegis",
+      "enh_guardian_mail",
+      "enh_zealot_vestment",
+      "enh_plague_bindings",
+      "enh_arcane_robe",
+      "enh_juggernaut_plate",
+      "enh_rogue_vest"
     ],
     "boots": [
-      "enh_mad_scholar_sandals", "enh_assassin_treads", "enh_swift_treads",
-      "enh_paladin_greaves", "enh_frost_walkers", "enh_trickster_slippers",
-      "enh_pyro_steps", "enh_guardian_sabatons"
+      "enh_mad_scholar_sandals",
+      "enh_assassin_treads",
+      "enh_swift_treads",
+      "enh_paladin_greaves",
+      "enh_frost_walkers",
+      "enh_trickster_slippers",
+      "enh_pyro_steps",
+      "enh_guardian_sabatons"
     ]
   },
   "tripleSupports": [
-    "fire_staff", "weapon_holy_mace", "armor_holy_choir",
-    "accessory_musical_slippers", "boots_steadfast", "armor_light_weave", "dagger"
+    "fire_staff",
+    "weapon_holy_mace",
+    "armor_holy_choir",
+    "accessory_musical_slippers",
+    "boots_steadfast",
+    "armor_light_weave",
+    "dagger"
   ],
   "backpackAmplifiers": [
-    "amplify_fire", "amplify_holy", "amplify_poison", "amplify_magic", "amplify_melee",
-    "amplify_staff", "amplify_wand", "amplify_twohand", "amplify_chest", "amplify_boots"
+    "amplify_fire",
+    "amplify_holy",
+    "amplify_poison",
+    "amplify_magic",
+    "amplify_melee",
+    "amplify_staff",
+    "amplify_wand",
+    "amplify_twohand",
+    "amplify_chest",
+    "amplify_boots"
   ],
-  "buildKeys": [
-    "key_ember_codex", "key_hymn_folio", "key_paladin_oath", "key_shadow_pact"
-  ],
+  "buildKeys": ["key_ember_codex", "key_hymn_folio", "key_paladin_oath", "key_shadow_pact"],
   "plannedCounts": {
     "enhancementsTotal": 24,
     "perSlot": { "head": 8, "chest": 8, "boots": 8 },

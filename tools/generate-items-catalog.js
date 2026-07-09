@@ -26,19 +26,21 @@ function shapeExpr(shape) {
 
 function fmtEffects(effects) {
   if (!effects?.length) return "[]";
-  return `[\n${effects.map((e) => {
-    const parts = Object.entries(e)
-      .filter(([, v]) => v != null)
-      .map(([k, v]) => {
-        if (typeof v === "string") return `${k}: "${esc(v)}"`;
-        if (typeof v === "boolean") return `${k}: ${v}`;
-        if (Array.isArray(v) || (typeof v === "object" && v !== null)) {
-          return `${k}: ${JSON.stringify(v)}`;
-        }
-        return `${k}: ${v}`;
-      });
-    return `      { ${parts.join(", ")} }`;
-  }).join(",\n")}\n    ]`;
+  return `[\n${effects
+    .map((e) => {
+      const parts = Object.entries(e)
+        .filter(([, v]) => v != null)
+        .map(([k, v]) => {
+          if (typeof v === "string") return `${k}: "${esc(v)}"`;
+          if (typeof v === "boolean") return `${k}: ${v}`;
+          if (Array.isArray(v) || (typeof v === "object" && v !== null)) {
+            return `${k}: ${JSON.stringify(v)}`;
+          }
+          return `${k}: ${v}`;
+        });
+      return `      { ${parts.join(", ")} }`;
+    })
+    .join(",\n")}\n    ]`;
 }
 
 function fmtMetaEffects(meta) {
@@ -48,11 +50,13 @@ function fmtMetaEffects(meta) {
 
 function fmtSynergies(synergies) {
   if (!synergies?.length) return "[]";
-  return `[\n${synergies.map((s) => {
-    const apply = s.apply;
-    const applyStr = `apply: { type: "${apply.type}", value: ${apply.value}${apply.buffTargetTags ? `, buffTargetTags: ${JSON.stringify(apply.buffTargetTags)}` : ""}${apply.cap != null ? `, cap: ${apply.cap}` : ""} }`;
-    return `      { id: "${esc(s.id)}", adjacency: "${s.adjacency}", neighborTags: ${JSON.stringify(s.neighborTags)}, target: "${s.target}", ${applyStr}, desc: "${esc(s.desc || "")}" }`;
-  }).join(",\n")}\n    ]`;
+  return `[\n${synergies
+    .map((s) => {
+      const apply = s.apply;
+      const applyStr = `apply: { type: "${apply.type}", value: ${apply.value}${apply.buffTargetTags ? `, buffTargetTags: ${JSON.stringify(apply.buffTargetTags)}` : ""}${apply.cap != null ? `, cap: ${apply.cap}` : ""} }`;
+      return `      { id: "${esc(s.id)}", adjacency: "${s.adjacency}", neighborTags: ${JSON.stringify(s.neighborTags)}, target: "${s.target}", ${applyStr}, desc: "${esc(s.desc || "")}" }`;
+    })
+    .join(",\n")}\n    ]`;
 }
 
 function main() {
@@ -102,7 +106,9 @@ function main() {
       ].filter(Boolean);
 
       lines.push(`  ${item.id}: {`);
-      opts.forEach((o) => lines.push(`    ${o},`));
+      opts.forEach((o) => {
+        lines.push(`    ${o},`);
+      });
       lines.push(`  }${comma}`);
       return;
     }
@@ -133,7 +139,9 @@ function main() {
     ].filter(Boolean);
 
     lines.push(`  ${item.id}: {`);
-    opts.forEach((o) => lines.push(`    ${o},`));
+    opts.forEach((o) => {
+      lines.push(`    ${o},`);
+    });
     lines.push(`  }${comma}`);
   });
 
@@ -159,7 +167,7 @@ function main() {
   lines.push("");
   lines.push("const ITEM_CATALOG = buildItemCatalog();");
   lines.push("");
-  lines.push("if (typeof resolveItemSlot === \"function\") {");
+  lines.push('if (typeof resolveItemSlot === "function") {');
   lines.push("  Object.values(ITEM_CATALOG).forEach((item) => {");
   lines.push("    item.slot = resolveItemSlot(item);");
   lines.push("  });");

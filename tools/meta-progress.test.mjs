@@ -4,8 +4,8 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import vm from "node:vm";
 import { fileURLToPath } from "node:url";
+import vm from "node:vm";
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 
@@ -16,7 +16,16 @@ function assert(cond, msg) {
 function loadSandbox() {
   const storage = new Map();
   const sandbox = {
-    console, Math, Object, Array, Map, Set, JSON, Number, String, Boolean,
+    console,
+    Math,
+    Object,
+    Array,
+    Map,
+    Set,
+    JSON,
+    Number,
+    String,
+    Boolean,
     window: null,
     document: { documentElement: { dataset: {} }, querySelectorAll: () => [] },
     localStorage: {
@@ -39,6 +48,7 @@ function loadSandbox() {
     "items.js",
     "items-catalog.js",
     "shop-engine.js",
+    "systems/bb-reference-unlocks.js",
     "classes.js",
     "systems/item-unlock-tiers.js",
     "systems/meta-progress.js",
@@ -53,9 +63,18 @@ function run() {
   const s = loadSandbox();
   const { MetaProgress, ItemUnlockTiers } = s;
 
+  MetaProgress.setPickerMode("classic");
+  MetaProgress.setRunMode("classic");
+
   assert(MetaProgress.isHeroUnlocked("warrior"), "warrior unlocked");
   assert(MetaProgress.isHeroUnlocked("rogue"), "rogue unlocked");
-  assert(!MetaProgress.isHeroUnlocked("mage"), "mage locked");
+  assert(!MetaProgress.isHeroUnlocked("mage"), "mage locked in classic mode");
+
+  MetaProgress.setPickerMode("solo");
+  assert(MetaProgress.isHeroUnlocked("mage"), "mage unlocked outside classic/path mode");
+
+  MetaProgress.setPickerMode("classic");
+  assert(!MetaProgress.isHeroUnlocked("mage"), "mage locked again in classic picker");
   assert(!MetaProgress.isHeroUnlocked("priest"), "priest locked");
 
   const warriorProg = MetaProgress.countItemProgress("warrior");
@@ -94,7 +113,11 @@ function run() {
   const katanaLevel = ItemUnlockTiers.getMinLevel("katana");
   assert(katanaLevel >= 10, "katana high tier unlock");
 
-  console.log("meta-progress.test.mjs: OK (8 checks)");
+  MetaProgress.setPickerMode("path");
+  MetaProgress.setRunMode("path");
+  assert(MetaProgress.isActiveForRun(), "path mode also uses meta unlock");
+
+  console.log("meta-progress.test.mjs: OK");
 }
 
 run();

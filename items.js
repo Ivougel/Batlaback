@@ -805,10 +805,12 @@ function isShopEligibleItem(item, playerClass = null, round = 1) {
 
 function getShopEligibleItems(playerClass, round = 1, opts = {}) {
   let pool = Object.values(ITEM_CATALOG).filter((item) => isShopEligibleItem(item, playerClass, round));
-  if (typeof filterItemsToPool120 === "function") {
+  if (typeof filterItemsToPool120 === "function" && !(typeof shouldFilterToPool120 === "function" && shouldFilterToPool120())) {
     pool = filterItemsToPool120(pool);
   }
-  if (opts.applyMetaUnlockFilter && typeof MetaProgress !== "undefined" && MetaProgress.isEnabled()) {
+  const metaActive = typeof MetaProgress !== "undefined" && MetaProgress.isActiveForRun();
+  const applyMeta = opts.applyMetaUnlockFilter || metaActive;
+  if (applyMeta && metaActive) {
     pool = pool.filter((item) => MetaProgress.isItemUnlocked(item.id, playerClass));
   }
   return pool;
