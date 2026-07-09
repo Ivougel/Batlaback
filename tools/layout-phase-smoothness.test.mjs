@@ -2,9 +2,10 @@
  * Плавность prep ↔ battle: layout не должен прыгать во время phase-transition.
  * Запуск: npm run test:phase-smoothness
  */
-import { chromium, devices } from "playwright";
+
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { chromium, devices } from "playwright";
 import { quickStartPrep } from "./lib/quick-start.mjs";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -24,6 +25,10 @@ const PROFILES = [
   {
     id: "ipad-portrait",
     device: { ...devices["iPad Mini"], viewport: { width: 768, height: 1024 } },
+  },
+  {
+    id: "ipad-mini-pwa",
+    device: { ...devices["iPad Mini"], viewport: { width: 1133, height: 744 } },
   },
   {
     id: "ipad-landscape",
@@ -51,28 +56,29 @@ async function sampleLayout(page) {
       appH: Math.round(parseFloat(getComputedStyle(html).getPropertyValue("--app-h")) || app?.offsetHeight || 0),
       screenTransitioning: document.body.classList.contains("screen-transitioning"),
       phaseTransitioning: document.querySelector(".game-layout")?.classList.contains("phase-transitioning"),
-      deferredLocked: document.body.classList.contains("is-ui-dragging")
-        || document.body.classList.contains("screen-transitioning")
-        || document.querySelector(".game-layout")?.classList.contains("phase-transitioning"),
+      deferredLocked:
+        document.body.classList.contains("is-ui-dragging") ||
+        document.body.classList.contains("screen-transitioning") ||
+        document.querySelector(".game-layout")?.classList.contains("phase-transitioning"),
     };
   });
 }
 
 async function waitForPhase(page, phase, timeout = 10000) {
-  await page.waitForFunction(
-    (expected) => document.getElementById("app")?.dataset.phase === expected,
-    phase,
-    { timeout },
-  );
+  await page.waitForFunction((expected) => document.getElementById("app")?.dataset.phase === expected, phase, {
+    timeout,
+  });
 }
 
 async function waitForTransitionIdle(page, timeout = 4000) {
-  await page.waitForFunction(() => {
-    const body = document.body;
-    const layout = document.querySelector(".game-layout");
-    return !body.classList.contains("screen-transitioning")
-      && !layout?.classList.contains("phase-transitioning");
-  }, { timeout });
+  await page.waitForFunction(
+    () => {
+      const body = document.body;
+      const layout = document.querySelector(".game-layout");
+      return !body.classList.contains("screen-transitioning") && !layout?.classList.contains("phase-transitioning");
+    },
+    { timeout },
+  );
 }
 
 const browser = await chromium.launch();
@@ -150,22 +156,76 @@ for (const profile of PROFILES) {
     assert(prepReturned.phase === "prep", `expected prep after return, got ${prepReturned.phase}`);
     assert(prepReturned.islandH > 48, `returned prep island too small: ${prepReturned.islandH}px`);
 
-    const battleFloorSamples = battleToPrep.filter((s) => s.phase === "battle" && s.floorH > 0 && !s.phaseTransitioning);
+    const battleFloorSamples = battleToPrep.filter(
+      (s) => s.phase === "battle" && s.floorH > 0 && !s.phaseTransitioning,
+    );
     if (battleFloorSamples.length >= 2) {
       const baseFloor = battleSettled.floorH;
       const maxFloorDelta = Math.max(...battleFloorSamples.map((s) => Math.abs(s.floorH - baseFloor)));
       assert(maxFloorDelta <= 8, `battle floor jumped during battle→prep: ${maxFloorDelta}px`);
     }
 
+    await page.evaluate(() => startBattle());
+    await waitForPhase(page, "battle");
+    await page
+      .waitForFunction(
+        () => {
+          const overlay = document.getElementById("battle-countdown-overlay");
+          if (!overlay) return true;
+          return overlay.classList.contains("hidden") || getComputedStyle(overlay).display === "none";
+        },
+        { timeout: 12000 },
+      )
+      .catch(() => {});
+    await page.waitForTimeout(600);
+    await page.evaluate(() => {
+      if (!battleState) throw new Error("no battleState for result transition");
+      fastForwardBattle(battleState);
+      if (battleState?.finished && typeof endBattle === "function") endBattle();
+    });
+    await page.waitForFunction(() => !document.getElementById("battle-result-overlay")?.classList.contains("hidden"), {
+      timeout: 10000,
+    });
+    await page.waitForTimeout(400);
+
+    const resultToPrepSamples = [];
+    const continuePromise = page.evaluate(() => {
+      document.getElementById("btn-battle-continue")?.click();
+    });
+    for (let i = 0; i < 20; i += 1) {
+      resultToPrepSamples.push(await sampleLayout(page));
+      await page.waitForTimeout(40);
+    }
+    await continuePromise;
+    await waitForPhase(page, "prep");
+    await waitForTransitionIdle(page);
+    await page.waitForTimeout(400);
+    const prepAfterResult = await sampleLayout(page);
+
+    const islandHeights = resultToPrepSamples
+      .filter((s) => s.phase === "prep" && s.islandH > 48 && !s.screenTransitioning)
+      .map((s) => s.islandH);
+    if (islandHeights.length >= 2) {
+      const islandJump = Math.max(...islandHeights) - Math.min(...islandHeights);
+      assert(islandJump <= 8, `result→prep island jumped: ${islandJump}px`);
+    }
+    assert(
+      Math.abs(prepAfterResult.islandH - prepReturned.islandH) <= 8,
+      `prep island after result differs from prep returned: ${prepAfterResult.islandH} vs ${prepReturned.islandH}`,
+    );
+
     if (errors.length) throw new Error(errors.join("; "));
 
-    console.log(`✓ ${profile.id}`, JSON.stringify({
-      prepIsland: `${prepBaseline.islandW}x${prepBaseline.islandH}`,
-      battleFloor: battleSettled.floorH,
-      prepReturnedIsland: `${prepReturned.islandW}x${prepReturned.islandH}`,
-      prepTransitionSamples: prepToBattle.length,
-      battleTransitionSamples: battleToPrep.length,
-    }));
+    console.log(
+      `✓ ${profile.id}`,
+      JSON.stringify({
+        prepIsland: `${prepBaseline.islandW}x${prepBaseline.islandH}`,
+        battleFloor: battleSettled.floorH,
+        prepReturnedIsland: `${prepReturned.islandW}x${prepReturned.islandH}`,
+        prepTransitionSamples: prepToBattle.length,
+        battleTransitionSamples: battleToPrep.length,
+      }),
+    );
   } catch (e) {
     failures.push({ id: profile.id, error: e.message });
     console.error(`✗ ${profile.id}: ${e.message}`);

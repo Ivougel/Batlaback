@@ -3,10 +3,20 @@
  * Состояние (phase, battleState, …) остаётся в game.js.
  */
 
+function isBattleResultOverlayOpen() {
+  return typeof isPopupOpen === "function" && isPopupOpen("battle-result-overlay");
+}
+
 function isBattleResultIdle() {
   return phase === "battle"
     && !battleState
-    && isPopupOpen("battle-result-overlay");
+    && isBattleResultOverlayOpen();
+}
+
+/** Result overlay на battle/replay — минимальный loop (gamepad), без FX/canvas. */
+function isBattleResultFrozen() {
+  if (!isBattleResultOverlayOpen()) return false;
+  return phase === "battle" || phase === "replay";
 }
 
 /** Меню / выбор класса — не гонять 60 FPS gameLoop и canvas. */
@@ -77,7 +87,7 @@ function battleGameLoopGapMs() {
 }
 
 function scheduleGameLoop() {
-  if (isGameLoopSuspended() || isBattleResultIdle()) {
+  if (isGameLoopSuspended() || isBattleResultFrozen()) {
     setTimeout(() => gameLoop(performance.now()), 250);
   } else if (shouldThrottleBattleGameLoop()) {
     setTimeout(() => gameLoop(performance.now()), battleGameLoopGapMs());
@@ -89,7 +99,7 @@ function scheduleGameLoop() {
 }
 
 function tickBattlePresentation() {
-  if (isBattleResultIdle()) return;
+  if (isBattleResultFrozen()) return;
   const presentState = getDisplayBattleState();
   if (!isBattleUiPhase() || !presentState) return;
   const elapsed = battleStartTime ? (Date.now() - battleStartTime) / 1000 : 0;
@@ -291,6 +301,12 @@ function gameLoop(ts) {
   lastGameLoopDt = dt;
 
   if (isGameLoopSuspended()) {
+    scheduleGameLoop();
+    return;
+  }
+
+  if (isBattleResultFrozen()) {
+    tickGamepad(dt);
     scheduleGameLoop();
     return;
   }

@@ -39,7 +39,7 @@ export const TRANSITION_BUDGETS = {
     battle: { minFps: 32, maxJank33Pct: 30 },
     result: { minFps: 30, maxJank33Pct: 32 },
     prepAfter: { minFps: 48, maxJank33Pct: 5 },
-    maxIslandJumpPx: 24,
+    maxIslandJumpPx: 8,
     maxBattleFlashFrames: 0,
     maxOverlappingFrames: 6,
   },

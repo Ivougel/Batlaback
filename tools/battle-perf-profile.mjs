@@ -2,12 +2,13 @@
  * Профилирование FPS и стоимости кадра в prep / battle.
  * Запуск: npm run profile:battle
  */
-import { chromium, devices } from "playwright";
+
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import fs from "node:fs";
-import { quickStartPrep } from "./lib/quick-start.mjs";
+import { chromium, devices } from "playwright";
 import { assertBattleBudget, assertTierFlags } from "./lib/perf-budgets.mjs";
+import { quickStartPrep } from "./lib/quick-start.mjs";
 
 const ASSERT_MODE = process.argv.includes("--assert");
 
@@ -144,24 +145,19 @@ async function installProfiler(page) {
     window.syncBattleHudAnchors = wrapCount("syncBattleHudAnchors", window.syncBattleHudAnchors);
     window.syncFxCanvasGeometry = wrapCount("syncFxCanvasGeometry", window.syncFxCanvasGeometry);
     if (typeof syncStackOrbitFromBattle === "function") {
-      window.syncStackOrbitFromBattle = wrapCount(
-        "syncStackOrbitFromBattle",
-        syncStackOrbitFromBattle,
-      );
+      window.syncStackOrbitFromBattle = wrapCount("syncStackOrbitFromBattle", syncStackOrbitFromBattle);
     }
     if (typeof syncHeroEmotionSlotAnchors === "function") {
-      window.syncHeroEmotionSlotAnchors = wrapCount(
-        "syncHeroEmotionSlotAnchors",
-        syncHeroEmotionSlotAnchors,
-      );
+      window.syncHeroEmotionSlotAnchors = wrapCount("syncHeroEmotionSlotAnchors", syncHeroEmotionSlotAnchors);
     }
 
     const origRaf = window.requestAnimationFrame.bind(window);
-    window.requestAnimationFrame = (cb) => origRaf((ts) => {
-      const t0 = performance.now();
-      cb(ts);
-      if (perf.sampling) perf.rafCbMs.push(performance.now() - t0);
-    });
+    window.requestAnimationFrame = (cb) =>
+      origRaf((ts) => {
+        const t0 = performance.now();
+        cb(ts);
+        if (perf.sampling) perf.rafCbMs.push(performance.now() - t0);
+      });
 
     let last = performance.now();
     function sampleFrame(ts) {
@@ -183,20 +179,22 @@ async function quickStart(page) {
 
 async function startBattleAndWait(page) {
   await page.evaluate(() => startBattle());
-  await page.waitForFunction(
-    () => document.getElementById("app")?.dataset.phase === "battle",
-    { timeout: 8000 },
-  );
+  await page.waitForFunction(() => document.getElementById("app")?.dataset.phase === "battle", { timeout: 8000 });
   await page.waitForTimeout(1200);
   await page.evaluate(() => {
     window.applyUiLayout?.();
     if (typeof setBattleSpeed === "function") setBattleSpeed(1);
   });
-  await page.waitForFunction(() => {
-    const overlay = document.getElementById("battle-countdown-overlay");
-    if (!overlay) return true;
-    return overlay.classList.contains("hidden") || getComputedStyle(overlay).display === "none";
-  }, { timeout: 12000 }).catch(() => {});
+  await page
+    .waitForFunction(
+      () => {
+        const overlay = document.getElementById("battle-countdown-overlay");
+        if (!overlay) return true;
+        return overlay.classList.contains("hidden") || getComputedStyle(overlay).display === "none";
+      },
+      { timeout: 12000 },
+    )
+    .catch(() => {});
   await page.waitForTimeout(800);
 }
 
@@ -223,19 +221,22 @@ async function samplePhase(page, phaseLabel) {
   await page.waitForTimeout(SAMPLE_MS);
   const metricsAfter = await readChromeMetrics(cdp);
 
-  const snapshot = await page.evaluate(({ sampleMs }) => {
-    const perf = window.__battlePerf;
-    perf.sampling = false;
-    const app = document.getElementById("app");
-    return {
-      phase: app?.dataset.phase ?? "?",
-      battleProfile: document.documentElement.dataset.battleProfile ?? "?",
-      uiTier: document.documentElement.dataset.uiTier ?? "?",
-      frameMs: perf.frameMs.slice(-Math.ceil((sampleMs / 1000) * 70)),
-      rafCbMs: perf.rafCbMs.slice(-Math.ceil((sampleMs / 1000) * 70)),
-      hooks: { ...perf.hooks },
-    };
-  }, { sampleMs: SAMPLE_MS });
+  const snapshot = await page.evaluate(
+    ({ sampleMs }) => {
+      const perf = window.__battlePerf;
+      perf.sampling = false;
+      const app = document.getElementById("app");
+      return {
+        phase: app?.dataset.phase ?? "?",
+        battleProfile: document.documentElement.dataset.battleProfile ?? "?",
+        uiTier: document.documentElement.dataset.uiTier ?? "?",
+        frameMs: perf.frameMs.slice(-Math.ceil((sampleMs / 1000) * 70)),
+        rafCbMs: perf.rafCbMs.slice(-Math.ceil((sampleMs / 1000) * 70)),
+        hooks: { ...perf.hooks },
+      };
+    },
+    { sampleMs: SAMPLE_MS },
+  );
 
   return {
     label: phaseLabel,
@@ -253,30 +254,40 @@ function printReport(results) {
   const widths = [18, 8, 5, 7, 9, 8, 7, 9];
   console.log("\n=== Battle perf profile ===\n");
   console.log(formatRow(headers, widths));
-  console.log(formatRow(headers.map(() => "—".repeat(6)), widths));
+  console.log(
+    formatRow(
+      headers.map(() => "—".repeat(6)),
+      widths,
+    ),
+  );
 
   for (const r of results) {
     const frames = summarizeFrameTimes(r.frameMs);
     const raf = summarizeCallbackTimes(r.rafCbMs);
-    console.log(formatRow([
-      r.profile,
-      r.label,
-      frames.fps,
-      frames.p95,
-      `${frames.jank16Pct}%`,
-      raf.p95,
-      r.chromeMetrics.LayoutCount,
-      r.chromeMetrics.ScriptDuration,
-    ], widths));
+    console.log(
+      formatRow(
+        [
+          r.profile,
+          r.label,
+          frames.fps,
+          frames.p95,
+          `${frames.jank16Pct}%`,
+          raf.p95,
+          r.chromeMetrics.LayoutCount,
+          r.chromeMetrics.ScriptDuration,
+        ],
+        widths,
+      ),
+    );
   }
 
   console.log("\n--- Hook calls (during sample) ---\n");
   for (const r of results) {
     const h = r.hooks;
     console.log(
-      `${r.profile} / ${r.label}: layout=${h.applyUiLayout} canvasFit=${h.scheduleCanvasFit} `
-      + `hud=${h.syncBattleHudAnchors} fx=${h.syncFxCanvasGeometry} orbit=${h.syncStackOrbitFromBattle} `
-      + `emotionAnchors=${h.syncHeroEmotionSlotAnchors}`,
+      `${r.profile} / ${r.label}: layout=${h.applyUiLayout} canvasFit=${h.scheduleCanvasFit} ` +
+        `hud=${h.syncBattleHudAnchors} fx=${h.syncFxCanvasGeometry} orbit=${h.syncStackOrbitFromBattle} ` +
+        `emotionAnchors=${h.syncHeroEmotionSlotAnchors}`,
     );
   }
 
@@ -285,9 +296,13 @@ function printReport(results) {
     const frames = summarizeFrameTimes(r.frameMs);
     const raf = summarizeCallbackTimes(r.rafCbMs);
     console.log(`${r.profile} / ${r.label} [${r.battleProfile}, tier=${r.uiTier}]`);
-    console.log(`  frames: avg=${frames.avgMs}ms p50=${frames.p50} p95=${frames.p95} p99=${frames.p99} jank33=${frames.jank33Pct}%`);
+    console.log(
+      `  frames: avg=${frames.avgMs}ms p50=${frames.p50} p95=${frames.p95} p99=${frames.p99} jank33=${frames.jank33Pct}%`,
+    );
     console.log(`  raf cb: avg=${raf.avgMs}ms p95=${raf.p95} max=${raf.maxMs}`);
-    console.log(`  chrome: layout=${r.chromeMetrics.LayoutCount} recalc=${r.chromeMetrics.RecalcStyleCount} heap+${r.chromeMetrics.JSHeapUsedSize}KB`);
+    console.log(
+      `  chrome: layout=${r.chromeMetrics.LayoutCount} recalc=${r.chromeMetrics.RecalcStyleCount} heap+${r.chromeMetrics.JSHeapUsedSize}KB`,
+    );
     console.log("");
   }
 }
@@ -339,16 +354,23 @@ await browser.close();
 printReport(all);
 
 const outPath = path.join(root, "tools", "battle-perf-report.json");
-fs.writeFileSync(outPath, JSON.stringify(all.map((r) => ({
-  profile: r.profile,
-  label: r.label,
-  battleProfile: r.battleProfile,
-  uiTier: r.uiTier,
-  frames: summarizeFrameTimes(r.frameMs),
-  rafCallback: summarizeCallbackTimes(r.rafCbMs),
-  hooks: r.hooks,
-  chromeMetrics: r.chromeMetrics,
-})), null, 2));
+fs.writeFileSync(
+  outPath,
+  JSON.stringify(
+    all.map((r) => ({
+      profile: r.profile,
+      label: r.label,
+      battleProfile: r.battleProfile,
+      uiTier: r.uiTier,
+      frames: summarizeFrameTimes(r.frameMs),
+      rafCallback: summarizeCallbackTimes(r.rafCbMs),
+      hooks: r.hooks,
+      chromeMetrics: r.chromeMetrics,
+    })),
+    null,
+    2,
+  ),
+);
 console.log(`\nJSON: ${outPath}`);
 
 if (ASSERT_MODE) {
@@ -358,7 +380,9 @@ if (ASSERT_MODE) {
   }
   if (failures.length) {
     console.error("\n✗ Perf budget failures:\n");
-    failures.forEach((f) => console.error(`  - ${f}`));
+    failures.forEach((f) => {
+      console.error(`  - ${f}`);
+    });
     process.exit(1);
   }
   console.log("\n✓ All battle perf budgets passed.");

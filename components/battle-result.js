@@ -143,7 +143,9 @@ function animateBattleResultStatCounts(root) {
   const scope = root || document.getElementById("battle-result-accordions");
   if (!scope) return;
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const lightFx = typeof BattleFxTier !== "undefined" && BattleFxTier.isLightBattleFx();
+  const countUp = typeof BattleFxTier !== "undefined" && BattleFxTier.battleResultCountUpEnabled
+    ? BattleFxTier.battleResultCountUpEnabled()
+    : !(typeof BattleFxTier !== "undefined" && BattleFxTier.isLightBattleFx());
   const counters = [...scope.querySelectorAll("[data-br-count]")];
   if (!counters.length) return;
 
@@ -156,7 +158,7 @@ function animateBattleResultStatCounts(root) {
     };
   });
 
-  if (reduced || lightFx) {
+  if (reduced || !countUp) {
     items.forEach(({ el, final }) => {
       el.textContent = formatBrCountText(el, final);
     });

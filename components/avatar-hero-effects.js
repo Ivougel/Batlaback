@@ -498,6 +498,8 @@ function syncAvatarHeroPortraitContent(team, profile, opts = {}) {
 }
 
 function scheduleHeroPortraitLayoutSync() {
+  if (typeof isBattleResultFrozen === "function" && isBattleResultFrozen()) return;
+
   const run = () => {
     if (typeof BattleHeroAnchor !== "undefined" && BattleHeroAnchor.invalidateMeasureCache) {
       BattleHeroAnchor.invalidateMeasureCache();
@@ -518,17 +520,28 @@ function scheduleHeroPortraitLayoutSync() {
     }
     if (typeof syncBattleHudAnchors === "function") syncBattleHudAnchors();
   };
+
+  const deepSync = typeof BattleFxTier !== "undefined" && BattleFxTier.battleHeroLayoutSyncDeepEnabled
+    && BattleFxTier.battleHeroLayoutSyncDeepEnabled();
+  const scheduleRun = () => {
+    if (deepSync) {
+      requestAnimationFrame(() => requestAnimationFrame(run));
+    } else {
+      requestAnimationFrame(run);
+    }
+  };
+
   const imgs = ["player-avatar-slot", "enemy-avatar-slot"]
     .map((id) => document.getElementById(id)?.querySelector(".profile-avatar-img"))
     .filter(Boolean);
   if (!imgs.length || imgs.every((img) => img.complete)) {
-    requestAnimationFrame(() => requestAnimationFrame(run));
+    scheduleRun();
     return;
   }
   let pending = imgs.filter((img) => !img.complete).length;
   const done = () => {
     pending -= 1;
-    if (pending <= 0) requestAnimationFrame(run);
+    if (pending <= 0) scheduleRun();
   };
   imgs.forEach((img) => {
     if (img.complete) return;

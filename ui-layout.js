@@ -312,9 +312,9 @@
   }
 
   const TYPE_SCALE_BY_TIER = {
-    phone: { floor: 0.96, boost: 1.2, cap: 1.05 },
-    tablet: { floor: 1.02, boost: 1.18, cap: 1.14 },
-    desktop: { floor: 0.85, boost: 1, cap: 1.05 },
+    phone: { floor: 1.02, boost: 1.28, cap: 1.14 },
+    tablet: { floor: 1.06, boost: 1.26, cap: 1.18 },
+    desktop: { floor: 0.94, boost: 1.1, cap: 1.12 },
   };
 
   const INTRO_UI_SCALE_MIN = {
@@ -975,18 +975,22 @@
     if (hudW < 96) return;
 
     const uiScale = readCssPx("--ui-scale", 1);
-    const share = readCssPx("--prep-hero-card-portrait-w-share", 0.38);
-    const minW = readCssPx("--prep-hero-card-portrait-w-min", 148 * uiScale);
-    const maxW = readCssPx("--prep-hero-card-portrait-w-max", 320 * uiScale);
+    const bannerPreset = root.dataset.prepHeroCardPreset === "banner";
+    const share = readCssPx("--prep-hero-card-portrait-w-share", bannerPreset ? 0.28 : 0.38);
+    const minW = readCssPx("--prep-hero-card-portrait-w-min", (bannerPreset ? 84 : 148) * uiScale);
+    const maxW = readCssPx("--prep-hero-card-portrait-w-max", (bannerPreset ? 148 : 320) * uiScale);
     const portraitW = Math.round(Math.max(minW, Math.min(maxW, hudW * share)));
 
-    const aspect = readCssPx("--prep-hero-card-portrait-ratio", 0.86);
-    const maxH = readCssPx("--prep-hero-card-portrait-h-max", 280 * uiScale);
-    const minH = readCssPx("--prep-hero-card-portrait-h-min", 168 * uiScale);
+    const aspect = readCssPx("--prep-hero-card-portrait-ratio", bannerPreset ? 0.92 : 0.86);
+    const maxH = readCssPx("--prep-hero-card-portrait-h-max", (bannerPreset ? 168 : 280) * uiScale);
+    const minH = readCssPx("--prep-hero-card-portrait-h-min", (bannerPreset ? 96 : 168) * uiScale);
     const portraitH = Math.round(Math.max(minH, Math.min(maxH, portraitW / Math.max(0.72, aspect))));
 
-    const refW = 156;
-    const bustScale = Math.max(1.32, Math.min(2.05, 1.96 * (refW / portraitW)));
+    const refW = bannerPreset ? 120 : 156;
+    const bustScale = Math.max(
+      bannerPreset ? 1.18 : 1.32,
+      Math.min(bannerPreset ? 1.72 : 2.05, (bannerPreset ? 1.62 : 1.96) * (refW / portraitW)),
+    );
 
     root.style.setProperty("--prep-hero-card-portrait-w", `${portraitW}px`);
     root.style.setProperty("--prep-hero-card-portrait-h", `${portraitH}px`);
@@ -2709,6 +2713,18 @@
   }
 
   function scheduleBattleHeroLayoutSync() {
+    if (typeof isBattleResultFrozen === "function" && isBattleResultFrozen()) return;
+    const throttleMs = typeof BattleFxTier !== "undefined" && BattleFxTier.battleHeroLayoutSyncThrottleMs
+      ? BattleFxTier.battleHeroLayoutSyncThrottleMs()
+      : 0;
+    if (throttleMs > 0) {
+      if (scheduleBattleHeroLayoutSync._timer) return;
+      scheduleBattleHeroLayoutSync._timer = setTimeout(() => {
+        scheduleBattleHeroLayoutSync._timer = 0;
+        syncBattleHeroLayoutPass();
+      }, throttleMs);
+      return;
+    }
     if (scheduleBattleHeroLayoutSync._raf) return;
     scheduleBattleHeroLayoutSync._raf = requestAnimationFrame(() => {
       scheduleBattleHeroLayoutSync._raf = 0;
@@ -3426,7 +3442,14 @@
     // Рюкзак в бою — в popover; canvas схлопнут CSS, не ставим 0×0 (ломает координаты).
     clearCanvasDisplaySize();
     syncMobileShopFabPosition();
-    requestAnimationFrame(() => requestAnimationFrame(syncBattleSceneGridMetrics));
+    const syncGrid = () => {
+      if (typeof syncBattleSceneGridMetrics === "function") syncBattleSceneGridMetrics();
+    };
+    if (canvasFitUsesDeepRaf()) {
+      requestAnimationFrame(() => requestAnimationFrame(syncGrid));
+    } else {
+      requestAnimationFrame(syncGrid);
+    }
   }
 
   /** Единственный источник display-size #game-canvas (bitmap — game.js applyPhaseCanvasLayout). */
@@ -3700,6 +3723,18 @@
   let canvasFitDeferRaf = 0;
   const CANVAS_FIT_MIN_MS = 160;
 
+  function canvasFitMinMs() {
+    if (typeof BattleFxTier !== "undefined" && BattleFxTier.canvasFitMinIntervalMs) {
+      return BattleFxTier.canvasFitMinIntervalMs();
+    }
+    return CANVAS_FIT_MIN_MS;
+  }
+
+  function canvasFitUsesDeepRaf() {
+    return typeof BattleFxTier !== "undefined" && BattleFxTier.canvasFitDeepSyncEnabled
+      && BattleFxTier.canvasFitDeepSyncEnabled();
+  }
+
   function isLayoutInteractionLocked() {
     const body = document.body;
     if (body?.classList.contains("is-ui-dragging")) return true;
@@ -3718,6 +3753,12 @@
     deferredCanvasFit = false;
     canvasFitLastAt = 0;
     canvasFitInProgress = false;
+    const root = document.documentElement;
+    const app = document.getElementById("app");
+    if (app?.dataset.phase === "prep") {
+      root.dataset.battleArenaLayout = "false";
+      root.removeAttribute("data-battle-hud-pin");
+    }
     runCanvasFitPass(true);
     syncPrepHeroSlotHeight();
     syncPrepHeroCardPortraitSize();
@@ -3733,9 +3774,15 @@
     window.syncPrepSellFabPosition?.();
     window.syncPrepSellFabVisibility?.();
     syncFxCanvasGeometry();
+    const zones = measureLayoutZones();
+    applyMeasuredZoneFit(zones);
   }
 
   function runCanvasFitPass(force = false) {
+    if (!force && typeof isBattleResultFrozen === "function" && isBattleResultFrozen()) {
+      deferredCanvasFit = true;
+      return;
+    }
     if (!force && isLayoutInteractionLocked()) {
       deferredCanvasFit = true;
       return;
@@ -3743,7 +3790,7 @@
     if (!force && canvasFitInProgress) return;
 
     const now = performance.now();
-    if (!force && now - canvasFitLastAt < CANVAS_FIT_MIN_MS) {
+    if (!force && now - canvasFitLastAt < canvasFitMinMs()) {
       if (!canvasFitDeferRaf) {
         canvasFitDeferRaf = requestAnimationFrame(() => {
           canvasFitDeferRaf = 0;
@@ -3785,11 +3832,17 @@
   }
 
   function scheduleCanvasFit() {
+    if (typeof isBattleResultFrozen === "function" && isBattleResultFrozen()) return;
     if (canvasFitInProgress) return;
     if (canvasFitRafId) return;
+    const deep = canvasFitUsesDeepRaf();
     canvasFitRafId = requestAnimationFrame(() => {
       canvasFitRafId = 0;
-      requestAnimationFrame(runCanvasFitPass);
+      if (deep) {
+        requestAnimationFrame(runCanvasFitPass);
+      } else {
+        runCanvasFitPass();
+      }
     });
   }
 
@@ -4040,11 +4093,7 @@
     }
   }
 
-  function scheduleLayout() {
-    if (isLayoutInteractionLocked()) {
-      deferredCanvasFit = true;
-      return;
-    }
+  function scheduleLayoutRaf() {
     if (layoutRafId) return;
     layoutRafId = requestAnimationFrame(() => {
       layoutRafId = 0;
@@ -4053,11 +4102,34 @@
       lastViewportH = h;
       applyUiLayout();
       if (!isLayoutInteractionLocked()) {
-        requestAnimationFrame(runLayoutFollowUp);
+        if (canvasFitUsesDeepRaf()) {
+          requestAnimationFrame(runLayoutFollowUp);
+        } else {
+          runLayoutFollowUp();
+        }
       } else {
         deferredCanvasFit = true;
       }
     });
+  }
+
+  function scheduleLayout() {
+    if (isLayoutInteractionLocked()) {
+      deferredCanvasFit = true;
+      return;
+    }
+    const throttleMs = typeof BattleFxTier !== "undefined" && BattleFxTier.layoutPassThrottleMs
+      ? BattleFxTier.layoutPassThrottleMs()
+      : 0;
+    if (throttleMs > 0) {
+      if (scheduleLayout._timer) return;
+      scheduleLayout._timer = setTimeout(() => {
+        scheduleLayout._timer = 0;
+        scheduleLayoutRaf();
+      }, throttleMs);
+      return;
+    }
+    scheduleLayoutRaf();
   }
 
   function scheduleLayoutOnViewportChange() {

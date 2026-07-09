@@ -195,10 +195,20 @@ const PassLaughBalls = (() => {
 
   function launch(origin = {}) {
     reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
+    const fxOk = typeof BattleFxTier === "undefined"
+      || !BattleFxTier.prepPassLaughFxEnabled
+      || BattleFxTier.prepPassLaughFxEnabled();
     const uiScale = readUiScale();
     const cx = Number.isFinite(origin.x) ? origin.x : window.innerWidth * 0.5;
     const cy = Number.isFinite(origin.y) ? origin.y : window.innerHeight * 0.5;
-    const burst = reducedMotion ? 4 : SPAWN_BURST;
+
+    if (typeof playGameSfx === "function") {
+      playGameSfx("arc_celebrate");
+      window.setTimeout(() => playGameSfx("ui_click"), 90);
+    }
+    if (reducedMotion || !fxOk) return;
+
+    const burst = SPAWN_BURST;
 
     ensureLayer();
     for (let i = 0; i < burst; i += 1) {
@@ -207,11 +217,6 @@ const PassLaughBalls = (() => {
         old?.el?.remove();
       }
       balls.push(spawnBall({ x: cx, y: cy }, EMOJIS[i % EMOJIS.length], uiScale));
-    }
-
-    if (typeof playGameSfx === "function") {
-      playGameSfx("arc_celebrate");
-      window.setTimeout(() => playGameSfx("ui_click"), 90);
     }
 
     ensureLoop();

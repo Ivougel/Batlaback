@@ -257,8 +257,10 @@ function startBattleResultTheater(summary) {
   }, 720);
 
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const lightFx = typeof BattleFxTier !== "undefined" && BattleFxTier.isLightBattleFx();
-  if (!reduced && !lightFx) {
+  const theaterOn = typeof BattleFxTier !== "undefined" && BattleFxTier.battleResultTheaterEnabled
+    ? BattleFxTier.battleResultTheaterEnabled()
+    : !(typeof BattleFxTier !== "undefined" && BattleFxTier.isLightBattleFx());
+  if (!reduced && theaterOn) {
     battleTheaterTimer = window.setInterval(() => cycleTheaterBubbles(summary), 3200);
     battleTheaterMoodTimer = window.setInterval(() => rerollTheaterMoods(summary), 6800);
   }

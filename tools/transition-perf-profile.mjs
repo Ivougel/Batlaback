@@ -2,12 +2,13 @@
  * FPS и jank по фазам: prep idle, battle, result overlay, result→prep.
  * Запуск: npm run profile:transitions
  */
-import { chromium, devices } from "playwright";
+
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import fs from "node:fs";
+import { chromium, devices } from "playwright";
+import { assertTierFlags, assertTransitionBudget } from "./lib/perf-budgets.mjs";
 import { quickStartPrep } from "./lib/quick-start.mjs";
-import { assertTransitionBudget, assertTierFlags } from "./lib/perf-budgets.mjs";
 
 const ASSERT_MODE = process.argv.includes("--assert");
 
@@ -73,23 +74,26 @@ async function samplePhase(page, label) {
     perf.sampling = true;
   });
   await page.waitForTimeout(SAMPLE_MS);
-  return page.evaluate(({ label, sampleMs }) => {
-    const perf = window.__transitionPerf;
-    perf.sampling = false;
-    const app = document.getElementById("app");
-    const island = document.getElementById("prep-field-island");
-    const islandRect = island?.getBoundingClientRect();
-    return {
-      label,
-      phase: app?.dataset.phase ?? "?",
-      uiTier: document.documentElement.dataset.uiTier ?? "?",
-      battleFxLight: document.documentElement.dataset.battleFxLight ?? "?",
-      resultOpen: !document.getElementById("battle-result-overlay")?.classList.contains("hidden"),
-      screenTransitioning: document.body.classList.contains("screen-transitioning"),
-      islandH: Math.round(islandRect?.height ?? 0),
-      frameMs: perf.frameMs.slice(-Math.ceil((sampleMs / 1000) * 70)),
-    };
-  }, { label, sampleMs: SAMPLE_MS });
+  return page.evaluate(
+    ({ label, sampleMs }) => {
+      const perf = window.__transitionPerf;
+      perf.sampling = false;
+      const app = document.getElementById("app");
+      const island = document.getElementById("prep-field-island");
+      const islandRect = island?.getBoundingClientRect();
+      return {
+        label,
+        phase: app?.dataset.phase ?? "?",
+        uiTier: document.documentElement.dataset.uiTier ?? "?",
+        battleFxLight: document.documentElement.dataset.battleFxLight ?? "?",
+        resultOpen: !document.getElementById("battle-result-overlay")?.classList.contains("hidden"),
+        screenTransitioning: document.body.classList.contains("screen-transitioning"),
+        islandH: Math.round(islandRect?.height ?? 0),
+        frameMs: perf.frameMs.slice(-Math.ceil((sampleMs / 1000) * 70)),
+      };
+    },
+    { label, sampleMs: SAMPLE_MS },
+  );
 }
 
 async function profileOne(browser, profile) {
@@ -112,11 +116,16 @@ async function profileOne(browser, profile) {
 
   await page.evaluate(() => startBattle());
   await page.waitForFunction(() => document.getElementById("app")?.dataset.phase === "battle", { timeout: 12000 });
-  await page.waitForFunction(() => {
-    const overlay = document.getElementById("battle-countdown-overlay");
-    if (!overlay) return true;
-    return overlay.classList.contains("hidden") || getComputedStyle(overlay).display === "none";
-  }, { timeout: 12000 }).catch(() => {});
+  await page
+    .waitForFunction(
+      () => {
+        const overlay = document.getElementById("battle-countdown-overlay");
+        if (!overlay) return true;
+        return overlay.classList.contains("hidden") || getComputedStyle(overlay).display === "none";
+      },
+      { timeout: 12000 },
+    )
+    .catch(() => {});
   await page.waitForTimeout(800);
   const battle = await samplePhase(page, "battle-idle");
 
@@ -125,10 +134,9 @@ async function profileOne(browser, profile) {
     fastForwardBattle(battleState);
     if (battleState?.finished && typeof endBattle === "function") endBattle();
   });
-  await page.waitForFunction(
-    () => !document.getElementById("battle-result-overlay")?.classList.contains("hidden"),
-    { timeout: 10000 },
-  );
+  await page.waitForFunction(() => !document.getElementById("battle-result-overlay")?.classList.contains("hidden"), {
+    timeout: 10000,
+  });
   await page.waitForTimeout(600);
   const result = await samplePhase(page, "result-idle");
 
@@ -137,13 +145,15 @@ async function profileOne(browser, profile) {
     document.getElementById("btn-battle-continue")?.click();
   });
   for (let i = 0; i < 20; i += 1) {
-    transitionSamples.push(await page.evaluate(() => ({
-      phase: document.getElementById("app")?.dataset.phase ?? "",
-      resultOpen: !document.getElementById("battle-result-overlay")?.classList.contains("hidden"),
-      resultToPrep: document.body.classList.contains("result-to-prep-transition"),
-      screenTransitioning: document.body.classList.contains("screen-transitioning"),
-      islandH: Math.round(document.getElementById("prep-field-island")?.getBoundingClientRect()?.height ?? 0),
-    })));
+    transitionSamples.push(
+      await page.evaluate(() => ({
+        phase: document.getElementById("app")?.dataset.phase ?? "",
+        resultOpen: !document.getElementById("battle-result-overlay")?.classList.contains("hidden"),
+        resultToPrep: document.body.classList.contains("result-to-prep-transition"),
+        screenTransitioning: document.body.classList.contains("screen-transitioning"),
+        islandH: Math.round(document.getElementById("prep-field-island")?.getBoundingClientRect()?.height ?? 0),
+      })),
+    );
     await page.waitForTimeout(40);
   }
   await continuePromise;
@@ -152,9 +162,7 @@ async function profileOne(browser, profile) {
   const prepAfter = await samplePhase(page, "prep-after-result");
 
   const islandHeights = transitionSamples.map((s) => s.islandH).filter((h) => h > 0);
-  const islandJump = islandHeights.length >= 2
-    ? Math.max(...islandHeights) - Math.min(...islandHeights)
-    : 0;
+  const islandJump = islandHeights.length >= 2 ? Math.max(...islandHeights) - Math.min(...islandHeights) : 0;
 
   await context.close();
 
@@ -166,12 +174,9 @@ async function profileOne(browser, profile) {
     prepAfter: { ...prepAfter, frames: summarizeFrameTimes(prepAfter.frameMs) },
     transition: {
       islandJumpPx: islandJump,
-      battleFlashFrames: transitionSamples.filter(
-        (s) => s.phase === "battle" && !s.resultOpen && !s.resultToPrep,
-      ).length,
-      overlappingFrames: transitionSamples.filter(
-        (s) => s.resultToPrep && s.screenTransitioning,
-      ).length,
+      battleFlashFrames: transitionSamples.filter((s) => s.phase === "battle" && !s.resultOpen && !s.resultToPrep)
+        .length,
+      overlappingFrames: transitionSamples.filter((s) => s.resultToPrep && s.screenTransitioning).length,
     },
   };
 }
@@ -183,14 +188,14 @@ function printReport(rows) {
     for (const key of ["prep", "battle", "result", "prepAfter"]) {
       const s = r[key];
       console.log(
-        `  ${s.label}: fps=${s.frames.fps} p95=${s.frames.p95}ms `
-        + `jank16=${s.frames.jank16Pct}% jank33=${s.frames.jank33Pct}% `
-        + `(tier=${s.uiTier}, lightFx=${s.battleFxLight})`,
+        `  ${s.label}: fps=${s.frames.fps} p95=${s.frames.p95}ms ` +
+          `jank16=${s.frames.jank16Pct}% jank33=${s.frames.jank33Pct}% ` +
+          `(tier=${s.uiTier}, lightFx=${s.battleFxLight})`,
       );
     }
     console.log(
-      `  result→prep: islandJump=${r.transition.islandJumpPx}px `
-      + `battleFlash=${r.transition.battleFlashFrames} overlap=${r.transition.overlappingFrames}`,
+      `  result→prep: islandJump=${r.transition.islandJumpPx}px ` +
+        `battleFlash=${r.transition.battleFlashFrames} overlap=${r.transition.overlappingFrames}`,
     );
     console.log("");
   }
@@ -218,7 +223,9 @@ if (ASSERT_MODE) {
   }
   if (failures.length) {
     console.error("\n✗ Transition perf budget failures:\n");
-    failures.forEach((f) => console.error(`  - ${f}`));
+    failures.forEach((f) => {
+      console.error(`  - ${f}`);
+    });
     process.exit(1);
   }
   console.log("\n✓ All transition perf budgets passed.");

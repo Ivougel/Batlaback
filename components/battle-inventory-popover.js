@@ -727,6 +727,10 @@ const BattleInventoryPopover = (() => {
 
   function queuePrewarmBattleInventoryPopover() {
     if (!isLiveBattlePhase() || prewarmQueued) return;
+    if (typeof BattleFxTier !== "undefined" && BattleFxTier.battleInventoryPrewarmEnabled
+      && !BattleFxTier.battleInventoryPrewarmEnabled()) {
+      return;
+    }
     prewarmQueued = true;
     const run = () => {
       prewarmQueued = false;
