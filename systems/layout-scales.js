@@ -47,7 +47,7 @@ const LayoutScales = (() => {
     return isUiSurface("tablet-side");
   }
 
-  /** Профильный множитель летящих чисел / FX (ui-layout BATTLE_PROFILES). */
+  /** Профильный множитель летящих чисел / FX (tokens.css + tablet-landscape-side в ui-layout). */
   function fxFloatScale() {
     return readCssPx("--fx-float-scale", 1);
   }

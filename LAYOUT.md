@@ -7,12 +7,27 @@
 
 | Слой | Файл | Назначение |
 |------|------|------------|
-| Оркестратор | `ui-layout.js` | resize → профили, масштабы, `--app-h`, fit |
+| Оркестратор | `ui-layout.js` | resize → `applyLayoutContext`, fit, measure zones |
 | Масштабы JS | `systems/layout-scales.js` | `LayoutScales.gameScale()`, `typePx()` |
-| Токены | `styles/tokens.css` | `--ui-scale`, `--font-*`, `--cell-size`, зоны |
+| Токены | `styles/tokens.css` | `--ui-scale`, профили `data-battle-profile` / `data-layout-profile` |
 | Поверхности | `data-ui-surface` | CSS-режим: drawer / side / stacked |
-| Профили | `data-layout-profile` | tier × orientation |
-| Бой | `data-battle-profile` | коэффициенты `BATTLE_PROFILES` |
+| Профили prep | `data-layout-profile` | коэффициенты в `tokens.css`; JS: `getPrepProfileCfg()` |
+| Профили battle | `data-battle-profile` | коэффициенты в `tokens.css`; JS: `getBattleProfileCfg()` |
+
+**Контракт `data-*`:** `applyLayoutContext()` в `ui-layout.js` — единая точка записи viewport-атрибутов на `<html>` (вызывается из `applyUiLayout()`).
+
+## Runtime-модули (`game.js`)
+
+| Файл | Роль |
+|------|------|
+| `game.js` | Состояние забега, phase, init, canvas draw |
+| `lobby-runtime.js` | Lobby / lobby2p runtime |
+| `prep-drag.js` | Drag/drop shop · bench · board · enhancement |
+| `game-tooltip.js` | Sidebar / field / class tooltips |
+| `battle-loop.js` | `gameLoop`, `tickBattlePresentation`, lobby battle tick |
+| `bot-solver.js` | Общий power/placement solver для `ai-engine` / `hard-bot-engine` |
+
+Подключение: см. `index.html` (модули перед `game.js`, без bundler — global scope).
 
 ## Матрица профилей
 
@@ -81,7 +96,9 @@ Touch-цели: `min-height: var(--touch-target-min)` (≥ 44px).
 
 **Готово (prep):** `--ui-scale`, `--type-scale`, `--game-scale`, зоны, fit по профилю, CSS по `data-ui-surface`.
 
-**Готово (battle):** `BATTLE_PROFILES` + `BattleHeroAnchor` (эмодзи от combat floor), `syncBattleHudAnchors` (HP под портретом), `syncFlankArenaHeroAnchors`.
+**Готово (battle):** профили в `tokens.css` + `getBattleProfileCfg()` (fallback в JS), `BattleHeroAnchor`, `syncBattleHudAnchors`, `syncFlankArenaHeroAnchors`.
+
+**Готово (prep):** профили в `tokens.css` + `getPrepProfileCfg()`; fluid tablet-side без iPad-only media.
 
 **Осталось (backlog):** нет — базовая автоматическая раскладка закрыта (N→R). Дальше только точечные фичи.
 
@@ -133,7 +150,7 @@ Touch-цели: `min-height: var(--touch-target-min)` (≥ 44px).
 
 ### Этап L (battle FX profile, float scale, modals)
 
-- **`BATTLE_PROFILES`** — `fxFloatScale` / `fxProjectileScale` → `--fx-float-scale`, `--fx-projectile-scale`
+- **Battle profile tokens** (`styles/tokens.css`, `html[data-battle-profile]`) — `fxFloatScale` / `fxProjectileScale` → `--fx-float-scale`, `--fx-projectile-scale`
 - **`battle-float-layer.js`** — траектории через `battleFxPx()` (viewport, не canvas px)
 - **`LayoutScales`** — `fxFloatScale()`, `battleFxPx()` для FX
 - **`battle-scale.css`** — компактные летящие числа на phone-профилях
@@ -151,7 +168,7 @@ Touch-цели: `min-height: var(--touch-target-min)` (≥ 44px).
 
 - **`modal-scale.css`** — container queries для recipe/settings/battle-result/run-complete
 - **Phone prep** — `fitMinScale: 0.65`, `--ui-scale` floor 0.58 на tier phone, type boost 1.18
-- **Tablet landscape battle** — `BATTLE_PROFILES` floorShare 0.30, `tablet-side.css` combat floor
+- **Tablet landscape battle** — `tokens.css` `tablet-landscape-side` floorShare 0.30, `tablet-side.css` combat floor
 
 ## Опасный паттерн селекторов
 
@@ -202,7 +219,7 @@ npm run test:ui       # все четыре набора
 
 - **Phone landscape prep** — `side` + `tablet-side` (магазин справа, как iPad Mini)
 - **`styles/phone-landscape.css`** — бой по `data-layout-profile="phone-landscape"`
-- **`BATTLE_PROFILES["phone-landscape"]`** — меньше hero row, больше floor
+- **`tokens.css` `phone-landscape`** — меньше hero row, больше floor
 - **`test:snapshots`** — Playwright `toHaveScreenshot` для class overlay (4 профиля)
 - **`test:phases`** — добавлен iPhone landscape (prep + battle in viewport)
 
@@ -218,6 +235,6 @@ npm run test:ui       # все четыре набора
 ## Добавление нового экрана
 
 1. Определи `data-ui-surface` / `data-layout-profile`.
-2. Размеры — через токены или `PREP_PROFILES` / `BATTLE_PROFILES`.
+2. Размеры — через токены в `styles/tokens.css` (`html[data-layout-profile]` / `html[data-battle-profile]`) или fallback в `getPrepProfileCfg()` / `getBattleProfileCfg()`.
 3. Позиции — CSS grid areas, не inline px в JS.
 4. Прогони `npm run test:layout`.

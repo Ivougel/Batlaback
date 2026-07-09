@@ -262,6 +262,55 @@ function tryResolveCrafting(containers, items, ctx = null) {
   return { items: nextItems, crafted };
 }
 
+function canApplyCraftRecipe(containers, items, recipe, clusterItems) {
+  const removeUids = new Set(clusterItems.map((item) => item.uid));
+  const remaining = items.filter((item) => !removeUids.has(item.uid));
+  const anchor = getClusterAnchor(clusterItems);
+  return !!findCraftPlacement(containers, remaining, recipe.output, anchor.col, anchor.row);
+}
+
+/**
+ * Все валидные кластеры на поле (без пересечения предметов между рецептами).
+ * @returns {{ recipe: object, clusterItems: object[], anchor: { col: number, row: number } }[]}
+ */
+function detectMatchingCraftClusters(containers, items, ctx = null) {
+  const craftCtx = ctx || (typeof getCraftContextFromGame === "function"
+    ? getCraftContextFromGame(typeof prepViewSide !== "undefined" ? prepViewSide : "player")
+    : {});
+  const usedUids = new Set();
+  const results = [];
+  let pool = items;
+  let found = true;
+
+  while (found) {
+    found = false;
+    const components = getStrongCraftComponents(pool);
+
+    for (const recipe of ITEM_RECIPES) {
+      if (typeof isCraftRecipeAvailable === "function" && !isCraftRecipeAvailable(recipe, craftCtx)) {
+        continue;
+      }
+      for (const cluster of components) {
+        if (cluster.some((item) => usedUids.has(item.uid))) continue;
+        if (!recipeMatchesCluster(cluster, recipe)) continue;
+        if (!canApplyCraftRecipe(containers, pool, recipe, cluster)) continue;
+
+        cluster.forEach((item) => usedUids.add(item.uid));
+        results.push({
+          recipe,
+          clusterItems: cluster,
+          anchor: getClusterAnchor(cluster),
+        });
+        found = true;
+        break;
+      }
+      if (found) break;
+    }
+  }
+
+  return results;
+}
+
 function getRecipesUsingIngredient(itemId) {
   return RECIPES_BY_INGREDIENT.get(itemId) || [];
 }
@@ -280,31 +329,78 @@ function formatRecipeInputs(recipe) {
   return parts.join(" + ");
 }
 
-function getCraftTooltipLines(itemId) {
+function formatCraftItemLabel(itemId, count = 1) {
+  const def = ITEM_CATALOG[itemId];
+  const label = def ? `${def.icon} ${def.name}` : itemId;
+  return count > 1 ? `${count}× ${label}` : label;
+}
+
+/** «Этот предмет + партнёры = результат» для тултипа. */
+function formatCraftComboLine(hoveredItemId, recipe) {
+  const out = ITEM_CATALOG[recipe.output];
+  const outLabel = out ? `${out.icon} ${out.name}` : recipe.output;
+  const hoverLabel = formatCraftItemLabel(hoveredItemId);
+
+  const partners = [];
+  recipe.inputs.forEach((input) => {
+    if (input.itemId === hoveredItemId) {
+      const extra = input.count - 1;
+      if (extra > 0) partners.push(formatCraftItemLabel(input.itemId, extra));
+      return;
+    }
+    partners.push(formatCraftItemLabel(input.itemId, input.count));
+  });
+
+  const partnerText = partners.length ? ` + ${partners.join(" + ")}` : "";
+  return `${hoverLabel}${partnerText} = ${outLabel}`;
+}
+
+function getCraftTooltipLines(itemId, side = null) {
   const lines = [];
+  const craftCtx = typeof getCraftContextFromGame === "function"
+    ? getCraftContextFromGame(side || (typeof prepViewSide !== "undefined" ? prepViewSide : "player"))
+    : {};
+  const comboLines = [];
+
   const asOutput = getRecipeForOutput(itemId);
   if (asOutput) {
-    const ctx = typeof getCraftContextFromGame === "function" ? getCraftContextFromGame() : {};
-    const available = typeof isCraftRecipeAvailable !== "function" || isCraftRecipeAvailable(asOutput, ctx);
-    const hint = asOutput.hint && !available ? ` (${asOutput.hint})` : "";
-    lines.push({
-      text: `⚗️ Крафт: ${formatRecipeInputs(asOutput)}${hint}`,
-      style: "normal",
-      color: available ? "#d2a8ff" : "#8b949e",
-    });
+    const available = typeof isCraftRecipeAvailable !== "function" || isCraftRecipeAvailable(asOutput, craftCtx);
+    const out = ITEM_CATALOG[asOutput.output];
+    const outLabel = out ? `${out.icon} ${out.name}` : asOutput.output;
+    if (available) {
+      comboLines.push({
+        text: `${formatRecipeInputs(asOutput)} = ${outLabel}`,
+        color: "#d2a8ff",
+      });
+    } else if (asOutput.hint) {
+      comboLines.push({
+        text: `Недоступно (${asOutput.hint})`,
+        color: "#8b949e",
+      });
+    }
   }
 
   getRecipesUsingIngredient(itemId).forEach((recipe) => {
     const out = ITEM_CATALOG[recipe.output];
     if (!out) return;
-    const ctx = typeof getCraftContextFromGame === "function" ? getCraftContextFromGame() : {};
-    const available = typeof isCraftRecipeAvailable !== "function" || isCraftRecipeAvailable(recipe, ctx);
+    const available = typeof isCraftRecipeAvailable !== "function" || isCraftRecipeAvailable(recipe, craftCtx);
     if (!available) return;
-    lines.push({
-      text: `⚗️ Рядом: ${formatRecipeInputs(recipe)} → ${out.icon} ${out.name}`,
-      style: "normal",
+    comboLines.push({
+      text: formatCraftComboLine(itemId, recipe),
       color: "#bc8cff",
     });
+  });
+
+  if (!comboLines.length) return lines;
+
+  lines.push({ text: "⚗️ Крафт", style: "label", color: "#bc8cff" });
+  comboLines.forEach((entry) => {
+    lines.push({ text: entry.text, style: "normal", color: entry.color });
+  });
+  lines.push({
+    text: "Сложите вплотную на поле — слияние в начале следующего раунда",
+    style: "normal",
+    color: "#8b949e",
   });
 
   return lines;

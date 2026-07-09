@@ -7,6 +7,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import fs from "node:fs";
 import { quickStartPrep } from "./lib/quick-start.mjs";
+import { assertBattleBudget, assertTierFlags } from "./lib/perf-budgets.mjs";
+
+const ASSERT_MODE = process.argv.includes("--assert");
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const baseUrl = `file://${root}/index.html`;
@@ -297,6 +300,15 @@ async function profileOne(browser, profile) {
 
   await quickStart(page);
   await page.waitForTimeout(WARMUP_MS);
+
+  if (ASSERT_MODE) {
+    const tierFailures = await assertTierFlags(page);
+    if (tierFailures.length) {
+      await context.close();
+      throw new Error(`Tier flags: ${tierFailures.join("; ")}`);
+    }
+  }
+
   const prep = await samplePhase(page, "prep");
   prep.profile = profile.id;
 
@@ -338,3 +350,16 @@ fs.writeFileSync(outPath, JSON.stringify(all.map((r) => ({
   chromeMetrics: r.chromeMetrics,
 })), null, 2));
 console.log(`\nJSON: ${outPath}`);
+
+if (ASSERT_MODE) {
+  const failures = [];
+  for (const r of all) {
+    failures.push(...assertBattleBudget(r.profile, r.label, summarizeFrameTimes(r.frameMs)));
+  }
+  if (failures.length) {
+    console.error("\n✗ Perf budget failures:\n");
+    failures.forEach((f) => console.error(`  - ${f}`));
+    process.exit(1);
+  }
+  console.log("\n✓ All battle perf budgets passed.");
+}

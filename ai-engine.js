@@ -74,37 +74,6 @@ function getAiTargetLoadoutPower(round, prepOpts = {}) {
   return target;
 }
 
-function measureAiLoadoutPower(containers, items, classId) {
-  if (typeof computeBackpackPower === "function") {
-    try {
-      return computeBackpackPower(containers, items, classId).score;
-    } catch {
-      return scoreFullLoadout(containers, items);
-    }
-  }
-  return scoreFullLoadout(containers, items);
-}
-
-/** Прирост computeBackpackPower при добавлении предмета в лучшую позицию (BB-style greedy eval). */
-function aiMeasureAddItemPowerGain(containers, items, itemId, classId, excludeUid = null) {
-  if (typeof computeBackpackPower !== "function" || !classId) return 0;
-  const def = ITEM_CATALOG[itemId];
-  if (!def || def.isContainer || def.isEnhancementItem) return -999;
-
-  const baseItems = excludeUid ? items.filter((i) => i.uid !== excludeUid) : items;
-  const before = measureAiLoadoutPower(containers, baseItems, classId);
-  const spot = findBestLoadoutPlacementByPower(containers, baseItems, itemId, classId);
-  if (!spot?.valid) return -999;
-
-  const trial = [
-    ...baseItems,
-    createPlacedItem(itemId, spot.col, spot.row, spot.rotation),
-  ];
-  trial[trial.length - 1].uid = "__trial__";
-  if (!validateLoadoutItems(containers, trial)) return -999;
-  return measureAiLoadoutPower(containers, trial, classId) - before;
-}
-
 function aiScoreClassAnchorBonus(itemId, classId) {
   const anchors = AI_CLASS_ANCHOR_IDS[classId];
   if (!anchors?.length) return 0;
@@ -930,33 +899,6 @@ function findBestLoadoutPlacement(containers, items, itemId, excludeUid = null) 
   return findLoadoutItemPlacement(containers, items, itemId, 0);
 }
 
-function findBestLoadoutPlacementByPower(containers, items, itemId, classId, excludeUid = null) {
-  const slots = [...buildSlotSet(containers)].map((k) => k.split(",").map(Number));
-  let best = null;
-  let bestPower = -Infinity;
-
-  for (let rot = 0; rot < 4; rot++) {
-    for (const [col, row] of slots) {
-      const placement = resolveLoadoutPlacement(containers, items, itemId, col, row, rot, excludeUid);
-      if (!placement.valid) continue;
-      const trial = [
-        ...items.filter((i) => i.uid !== excludeUid),
-        createPlacedItem(itemId, placement.col, placement.row, placement.rotation),
-      ];
-      if (excludeUid) trial[trial.length - 1].uid = excludeUid;
-      else trial[trial.length - 1].uid = "__trial__";
-      if (!validateLoadoutItems(containers, trial)) continue;
-      const power = measureAiLoadoutPower(containers, trial, classId);
-      if (power > bestPower) {
-        bestPower = power;
-        best = placement;
-      }
-    }
-  }
-
-  return best;
-}
-
 function generateAIShopSlots(count = 4, ctx = {}) {
   return rollShopBatch(count, ctx);
 }
@@ -1282,77 +1224,8 @@ function aiDeepOptimizeLoadout(state, prepOpts = {}) {
   if (!prepOpts.lobbyMode || state.items.length < 2) return;
   const classId = state.classId;
   if (typeof computeBackpackPower !== "function" || !classId) return;
-
   aiOptimizeLoadout(state, prepOpts);
-
-  let bestScore = measureAiLoadoutPower(state.containers, state.items, classId);
-  let improved = true;
-  let guard = 0;
-
-  while (improved && guard < 36) {
-    guard += 1;
-    improved = false;
-
-    for (const item of [...state.items]) {
-      const slots = [...buildSlotSet(state.containers)].map((k) => k.split(",").map(Number));
-      for (let rot = 0; rot < 4; rot += 1) {
-        for (const [col, row] of slots) {
-          const placement = resolveLoadoutPlacement(
-            state.containers,
-            state.items,
-            item.itemId,
-            col,
-            row,
-            rot,
-            item.uid,
-          );
-          if (!placement.valid) continue;
-          const same = item.col === placement.col && item.row === placement.row
-            && (item.rotation || 0) === (placement.rotation || 0);
-          if (same) continue;
-
-          const moved = state.items.map((i) =>
-            (i.uid === item.uid
-              ? { ...i, col: placement.col, row: placement.row, rotation: placement.rotation }
-              : i),
-          );
-          if (!validateLoadoutItems(state.containers, moved)) continue;
-          const after = measureAiLoadoutPower(state.containers, moved, classId);
-          if (after > bestScore + 0.8) {
-            state.items = moved;
-            bestScore = after;
-            improved = true;
-            break;
-          }
-        }
-        if (improved) break;
-      }
-      if (improved) break;
-    }
-
-    if (improved) continue;
-
-    for (let i = 0; i < state.items.length; i += 1) {
-      for (let j = i + 1; j < state.items.length; j += 1) {
-        const a = state.items[i];
-        const b = state.items[j];
-        const candidate = state.items.map((item) => {
-          if (item.uid === a.uid) return { ...item, col: b.col, row: b.row, rotation: b.rotation || 0 };
-          if (item.uid === b.uid) return { ...item, col: a.col, row: a.row, rotation: a.rotation || 0 };
-          return item;
-        });
-        if (!validateLoadoutItems(state.containers, candidate)) continue;
-        const after = measureAiLoadoutPower(state.containers, candidate, classId);
-        if (after > bestScore + 1.2) {
-          state.items = candidate;
-          bestScore = after;
-          improved = true;
-          break;
-        }
-      }
-      if (improved) break;
-    }
-  }
+  solverDeepOptimizeLoadout(state.containers, state.items, classId);
 }
 
 /** Замена слабого предмета на скамейке, если прирост силы положительный (hard-bot swap). */
@@ -1401,13 +1274,8 @@ function aiTryBenchBoardUpgrade(state, classId) {
 }
 
 function aiApplyCrafting(state) {
-  if (typeof tryResolveCrafting !== "function") return;
-  let guard = 0;
-  while (guard < 12) {
-    guard += 1;
-    const result = tryResolveCrafting(state.containers, state.items);
-    if (!result.crafted.length) break;
-    state.items = result.items;
+  if (typeof syncPendingCraftClustersOnState === "function") {
+    syncPendingCraftClustersOnState(state, "enemy");
   }
 }
 
@@ -1496,15 +1364,6 @@ function aiNudgeForCrafting(state) {
   while (guard < 32) {
     guard += 1;
     let progress = false;
-
-    if (typeof tryResolveCrafting === "function") {
-      const crafted = tryResolveCrafting(state.containers, state.items);
-      if (crafted.crafted.length) {
-        state.items = crafted.items;
-        progress = true;
-        continue;
-      }
-    }
 
     for (const recipe of recipes) {
       if (!aiHasIngredientsForRecipe(recipe, state.items, state.bench)) continue;

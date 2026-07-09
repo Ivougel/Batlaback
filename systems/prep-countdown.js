@@ -120,9 +120,8 @@ const PrepCountdown = (() => {
     if (countdown.label !== prevLabel) {
       if (countdown.label) playSfx("battle_countdown_tick");
       else playSfx("battle_countdown_go");
+      render();
     }
-
-    render();
 
     if (countdown.remaining <= 0) return finishCountdown();
     return false;

@@ -329,6 +329,13 @@ function showRunCompleteOverlay(runResults, runItemStats, roundNum, phase, board
     ? `${RUN_BATTLES} боёв пройдено · Винрейт ${winrate}% (${wins} побед, ${losses} поражений, ${draws} ничьих)`
     : `${RUN_BATTLES} боёв пройдено`;
 
+  const metaRewardEl = document.getElementById("run-complete-meta-reward");
+  if (metaRewardEl && typeof MetaProgress !== "undefined") {
+    const reward = MetaProgress.getLastRunReward();
+    metaRewardEl.innerHTML = reward ? MetaProgress.renderRunRewardHtml(reward) : "";
+    metaRewardEl.classList.toggle("hidden", !reward);
+  }
+
   const { player, enemy } = runItemStatsToArrays(runItemStats);
   const accordionsEl = document.getElementById("run-complete-accordions");
   if (accordionsEl) {

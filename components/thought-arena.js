@@ -1094,6 +1094,14 @@ const ThoughtArena = (() => {
   }
 
   function scheduleThoughtWait(ms) {
+    if (typeof PresentationClock !== "undefined" && PresentationClock.shouldOwnLoop?.("thought")) {
+      if (rafId != null || thoughtWaitTimer != null) return;
+      thoughtWaitTimer = setTimeout(() => {
+        thoughtWaitTimer = null;
+        PresentationClock.wake("thought");
+      }, Math.max(1, Math.round(ms)));
+      return;
+    }
     if (rafId != null || thoughtWaitTimer != null) return;
     thoughtWaitTimer = setTimeout(() => {
       thoughtWaitTimer = null;
@@ -1102,8 +1110,19 @@ const ThoughtArena = (() => {
   }
 
   function scheduleFrame() {
+    if (typeof PresentationClock !== "undefined" && PresentationClock.shouldOwnLoop?.("thought")) {
+      PresentationClock.wake("thought");
+      return;
+    }
     if (rafId != null || thoughtWaitTimer != null) return;
     rafId = requestAnimationFrame(step);
+  }
+
+  /** Вызывается из PresentationClock вместо автономного rAF. */
+  function tickFromClock(ts) {
+    step(ts ?? performance.now());
+    const list = getAllBodies();
+    return thoughtsNeedMotionStep(list);
   }
 
   function createBodyEl(side, glyphIndex) {
@@ -1415,5 +1434,6 @@ const ThoughtArena = (() => {
     isAnchoredFlankArena,
     triggerEquipHitReaction,
     onResize,
+    tickFromClock,
   };
 })();

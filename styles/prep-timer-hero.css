@@ -29,6 +29,7 @@ html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .lobby-prep-field-ch
   --prep-timer-accent-deep: #c8941a;
   --prep-timer-glow: rgba(245, 200, 66, 0.42);
   position: relative;
+  contain: layout style paint;
   width: calc(88px * var(--ui-scale, 1));
   height: calc(88px * var(--ui-scale, 1));
   flex: 0 0 auto;

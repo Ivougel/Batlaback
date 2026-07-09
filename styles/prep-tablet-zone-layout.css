@@ -76,6 +76,32 @@ html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel {
   padding: calc(6px * var(--ui-scale, 1)) calc(8px * var(--ui-scale, 1));
 }
 
+html:not([data-ui-tier="phone"])[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel {
+  width: min(var(--shop-panel-w, 320px), 340px);
+  min-width: 0;
+  max-width: 340px;
+  flex-basis: min(var(--shop-panel-w, 320px), 340px);
+}
+
+html:not([data-ui-tier="phone"])[data-ui-surface="tablet-side"][data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel {
+  width: min(var(--shop-panel-w, 216px), 220px);
+  max-width: 220px;
+  flex-basis: min(var(--shop-panel-w, 216px), 220px);
+  padding: calc(4px * var(--ui-scale, 1)) calc(5px * var(--ui-scale, 1));
+}
+
+html:not([data-ui-tier="phone"])[data-ui-surface="tablet-side"][data-prep-bench-popover="true"][data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel {
+  width: min(var(--shop-panel-w, 216px), 220px) !important;
+  max-width: 220px !important;
+  flex: 0 0 min(var(--shop-panel-w, 216px), 220px) !important;
+}
+
+html:not([data-ui-tier="phone"])[data-ui-surface="tablet-side"][data-prep-bench-popover="true"] #app[data-phase="prep"] #shop-panel {
+  width: min(var(--shop-panel-w, 320px), 340px) !important;
+  max-width: 340px !important;
+  flex: 0 0 min(var(--shop-panel-w, 320px), 340px) !important;
+}
+
 html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel .shop-chrome {
   flex-shrink: 0;
   padding-bottom: calc(2px * var(--ui-scale, 1));
@@ -219,52 +245,13 @@ body:has(#app[data-phase="prep"]) .bottom-chrome .recipes-toggle:hover {
   background: rgba(163, 113, 247, 0.2);
 }
 
+html[data-hero-card-mode="full-bleed"][data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-character-img {
+  max-width: 90%;
+}
+
 /* Скрыть рецепты в магазине (если остался дубликат) */
 #app[data-phase="prep"] #shop-panel .btn-recipe-book {
   display: none !important;
-}
-
-/* ─── iPad mini 7 PWA landscape (1133×744) ─── */
-
-@media (width: 1133px) and (height: 744px) {
-  html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel {
-    width: min(var(--shop-panel-w, 320px), 340px);
-    min-width: 0;
-    max-width: 340px;
-    flex-basis: min(var(--shop-panel-w, 320px), 340px);
-    padding: calc(6px * var(--ui-scale, 1)) calc(8px * var(--ui-scale, 1));
-  }
-
-  html[data-ui-surface="tablet-side"][data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel {
-    width: min(var(--shop-panel-w, 216px), 220px);
-    max-width: 220px;
-    flex-basis: min(var(--shop-panel-w, 216px), 220px);
-    padding: calc(4px * var(--ui-scale, 1)) calc(5px * var(--ui-scale, 1));
-  }
-
-  html[data-ui-surface="tablet-side"][data-prep-bench-popover="true"][data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel {
-    width: min(var(--shop-panel-w, 216px), 220px) !important;
-    max-width: 220px !important;
-    flex: 0 0 min(var(--shop-panel-w, 216px), 220px) !important;
-  }
-
-  html[data-ui-surface="tablet-side"][data-prep-bench-popover="true"] #app[data-phase="prep"] #shop-panel {
-    width: min(var(--shop-panel-w, 320px), 340px) !important;
-    max-width: 340px !important;
-    flex: 0 0 min(var(--shop-panel-w, 320px), 340px) !important;
-  }
-
-  html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel .shop-slots {
-    min-height: 0 !important;
-  }
-
-  html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-field-column > .layer-world {
-    padding-right: 4px;
-  }
-
-  html[data-hero-card-mode="full-bleed"][data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-character-img {
-    max-width: 90%;
-  }
 }
 
 /* ─── Тултип предметов: полоса между героем и сеткой (компактная карточка) ─── */

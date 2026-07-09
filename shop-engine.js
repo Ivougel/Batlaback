@@ -145,15 +145,16 @@ function pickUniqueItem(pool, ctx) {
   return pool[pool.length - 1].id;
 }
 
-function getBaseShopPool(playerClass, round = 1) {
-  return getShopEligibleItems(playerClass, round);
+function getBaseShopPool(playerClass, round = 1, ctx = null) {
+  const applyMetaUnlockFilter = !!(ctx && ctx.applyMetaUnlockFilter);
+  return getShopEligibleItems(playerClass, round, { applyMetaUnlockFilter });
 }
 
 /** Расширенный пул с учётом значков и магазинных модификаторов на поле. */
 function getExpandedShopPool(ctx) {
   const playerClass = ctx.playerClass || null;
   const round = ctx.round ?? 1;
-  const base = getBaseShopPool(playerClass, round);
+  const base = getBaseShopPool(playerClass, round, ctx);
   const byId = new Map(base.map((item) => [item.id, item]));
   const mods = ctx.shopModifiers;
 

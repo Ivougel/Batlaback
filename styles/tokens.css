@@ -234,7 +234,6 @@
   --shop-card-icon-duo-font: calc(var(--shop-item-icon-font) * 0.86);
   --fx-float-scale: 1;
   --fx-projectile-scale: 1;
-  --fx-projectile-scale: 1;
   --battle-stats-panel-w: 276px;
 
   /* Scene layer stack */
@@ -296,6 +295,252 @@
   --hint-stat-buff-purple-color: var(--juice-magic);
   --hint-emoji-shadow: 0 8px 16px rgba(46, 100, 50, 0.22);
   --hint-gem-bg: linear-gradient(180deg, #f0e8d8, #c4b89a 45%, #9a8f78);
+}
+
+/**
+ * Battle layout tokens — CSS-owned profiles (JS: getBattleProfileCfg → readCssPx).
+ */
+html[data-battle-profile="phone-portrait"] {
+  --battle-hero-from-vh: 1;
+  --fx-float-scale: 0.9;
+  --fx-projectile-scale: 0.9;
+  --battle-hero-zone-min: 148px;
+  --battle-hero-zone-max: 220px;
+  --battle-hero-zone-vh: 0.32;
+  --battle-arena-min: 128px;
+  --battle-arena-vh: 0.30;
+  --battle-hero-col-min: 140px;
+  --battle-hero-col-max: 220px;
+  --battle-hero-col-share: 0.48;
+  --battle-hero-img-ratio: 0.72;
+  --battle-hero-img-min: 120px;
+  --battle-hero-img-max: 168px;
+  --battle-portrait-zoom: 1;
+  --battle-chrome-pad: 10px;
+  --battle-portrait-object-y: 100%;
+  --battle-emoji-scale: 1;
+  --battle-floor-share: 0.30;
+  --battle-hero-share: 0.28;
+  --battle-portrait-duel-share: 0.30;
+}
+
+html[data-battle-profile="phone-landscape"] {
+  --battle-hero-from-vh: 0;
+  --fx-float-scale: 0.86;
+  --fx-projectile-scale: 0.88;
+  --battle-hero-zone-share: 0.30;
+  --battle-hero-zone-min: 108px;
+  --battle-hero-zone-max: 148px;
+  --battle-arena-min: 104px;
+  --battle-arena-vh: 0.28;
+  --battle-hero-col-min: 92px;
+  --battle-hero-col-max: 132px;
+  --battle-hero-col-share: 0.21;
+  --battle-hero-img-ratio: 0.52;
+  --battle-hero-img-min: 80px;
+  --battle-hero-img-max: 118px;
+  --battle-portrait-zoom: 0.92;
+  --battle-chrome-pad: 8px;
+  --battle-portrait-object-y: 100%;
+  --battle-emoji-scale: 1;
+  --battle-floor-share: 0.42;
+  --battle-hero-share: 0.26;
+}
+
+html[data-battle-profile="tablet-portrait"] {
+  --battle-hero-from-vh: 0;
+  --fx-float-scale: 0.94;
+  --fx-projectile-scale: 0.94;
+  --battle-hero-zone-share: 0.36;
+  --battle-hero-zone-min: 180px;
+  --battle-hero-zone-max: 320px;
+  --battle-arena-min: 96px;
+  --battle-arena-vh: 0.12;
+  --battle-hero-col-min: 100px;
+  --battle-hero-col-max: 158px;
+  --battle-hero-col-share: 0.22;
+  --battle-hero-img-ratio: 0.68;
+  --battle-hero-img-min: 128px;
+  --battle-hero-img-max: 240px;
+  --battle-portrait-zoom: 0.98;
+  --battle-chrome-pad: 12px;
+  --battle-portrait-object-y: 100%;
+  --battle-emoji-scale: 1;
+  --battle-floor-share: 0.28;
+  --battle-hero-share: 0.28;
+  --battle-portrait-duel-share: 0.28;
+}
+
+html[data-battle-profile="desktop-portrait"],
+html[data-battle-profile="desktop-landscape"] {
+  --battle-hero-from-vh: 0;
+  --fx-float-scale: 1;
+  --fx-projectile-scale: 1;
+  --battle-hero-zone-share: 0.58;
+  --battle-hero-zone-min: 300px;
+  --battle-hero-zone-max: 520px;
+  --battle-arena-min: 120px;
+  --battle-arena-vh: 0.18;
+  --battle-hero-col-min: 240px;
+  --battle-hero-col-max: 400px;
+  --battle-hero-col-share: 0.20;
+  --battle-hero-img-ratio: 0.88;
+  --battle-hero-img-min: 280px;
+  --battle-hero-img-max: 480px;
+  --battle-portrait-zoom: 1.1;
+  --battle-chrome-pad: 20px;
+  --battle-portrait-object-y: 100%;
+  --battle-emoji-scale: 1;
+  --battle-floor-share: 0.20;
+  --battle-hero-share: 0.58;
+  --battle-zone-player: 0.30;
+  --battle-zone-arena: 0.38;
+  --battle-zone-enemy: 0.30;
+  --battle-hero-portrait-bleed: 1.14;
+}
+
+html[data-battle-profile="tablet-landscape-side"] {
+  --battle-hero-from-vh: 0;
+  --fx-float-scale: 1;
+  --fx-projectile-scale: 1;
+  --battle-hero-zone-share: 0.44;
+  --battle-hero-zone-min: 200px;
+  --battle-hero-zone-max: 360px;
+  --battle-arena-min: 120px;
+  --battle-arena-vh: 0.22;
+  --battle-hero-col-min: 168px;
+  --battle-hero-col-max: 300px;
+  --battle-hero-col-share: 0.28;
+  --battle-hero-img-ratio: 0.78;
+  --battle-hero-img-min: 180px;
+  --battle-hero-img-max: 300px;
+  --battle-portrait-zoom: 0.96;
+  --battle-chrome-pad: 14px;
+  --battle-portrait-object-y: 100%;
+  --battle-emoji-scale: 1;
+  --battle-floor-share: 0.30;
+  --battle-hero-share: 0.44;
+  --battle-zone-player: 0.28;
+  --battle-zone-arena: 0.44;
+  --battle-zone-enemy: 0.28;
+  --battle-tablet-side: 1;
+}
+
+/* ─── Prep layout tokens (html[data-layout-profile]) ─── */
+
+html[data-layout-profile="phone-portrait"] {
+  --prep-fit-avail-h: 300;
+  --prep-fit-min-scale: 0.65;
+  --prep-fit-width-ratio: 0.48;
+  --prep-canvas-avail-share: 0.44;
+  --prep-canvas-max-cap: 280;
+  --prep-shop-row-base: 70;
+  --prep-shop-row-min: 54;
+  --prep-shop-row-max: 74;
+  --prep-hero-slot-height: min(280px, 34vh);
+  --prep-hero-slot-max: 300;
+  --prep-scene-avatar-h: 140;
+  --prep-scene-avatar-w: 112;
+  --prep-doll-slot: 34;
+  --prep-character-gap: 6;
+  --prep-shop-panel-w: 300;
+  --prep-lobby-shop-panel-w: 252;
+}
+
+html[data-layout-profile="phone-landscape"] {
+  --prep-fit-avail-h: 200;
+  --prep-fit-min-scale: 0.52;
+  --prep-fit-width-ratio: 1;
+  --prep-canvas-avail-share: 0.68;
+  --prep-canvas-max-cap: 320;
+  --prep-shop-row-base: 52;
+  --prep-shop-row-min: 44;
+  --prep-shop-row-max: 58;
+  --prep-hero-slot-height: 100%;
+  --prep-hero-slot-max: 220;
+  --prep-scene-avatar-h: 110;
+  --prep-scene-avatar-w: 96;
+  --prep-doll-slot: 28;
+  --prep-character-gap: 4;
+  --prep-shop-panel-w: 260;
+  --prep-lobby-shop-panel-w: 224;
+}
+
+html[data-layout-profile="tablet-portrait"] {
+  --prep-fit-avail-h: 640;
+  --prep-fit-min-scale: 0.52;
+  --prep-fit-width-ratio: 1;
+  --prep-canvas-avail-share: 0.48;
+  --prep-canvas-max-cap: 375;
+  --prep-shop-row-base: 68;
+  --prep-shop-row-min: 56;
+  --prep-shop-row-max: 84;
+  --prep-hero-slot-height: min(400px, 44vh);
+  --prep-hero-slot-max: 420;
+  --prep-scene-avatar-h: 200;
+  --prep-scene-avatar-w: 148;
+  --prep-doll-slot: 38;
+  --prep-character-gap: 8;
+  --prep-shop-panel-w: 300;
+  --prep-lobby-shop-panel-w: 252;
+  --prep-shop-cols: 5;
+}
+
+html[data-layout-profile="tablet-landscape"] {
+  --prep-fit-avail-h: 760;
+  --prep-fit-min-scale: 0.52;
+  --prep-fit-width-ratio: 1;
+  --prep-canvas-avail-share: 0.52;
+  --prep-canvas-max-cap: 420;
+  --prep-shop-row-base: 88;
+  --prep-shop-row-min: 72;
+  --prep-shop-row-max: 100;
+  --prep-hero-slot-height: min(54vh, 520px);
+  --prep-hero-slot-max: 560;
+  --prep-scene-avatar-h: 148;
+  --prep-scene-avatar-w: 118;
+  --prep-doll-slot: 38;
+  --prep-character-gap: 8;
+  --prep-shop-panel-w: 320;
+  --prep-lobby-shop-panel-w: 216;
+}
+
+html[data-layout-profile="desktop-portrait"] {
+  --prep-fit-avail-h: 640;
+  --prep-fit-min-scale: 0.52;
+  --prep-fit-width-ratio: 1;
+  --prep-canvas-avail-share: 0.32;
+  --prep-canvas-max-cap: 260;
+  --prep-shop-row-base: 72;
+  --prep-shop-row-min: 56;
+  --prep-shop-row-max: 76;
+  --prep-hero-slot-height: min(54vh, 520px);
+  --prep-hero-slot-max: 560;
+  --prep-scene-avatar-h: 152;
+  --prep-scene-avatar-w: 120;
+  --prep-doll-slot: 38;
+  --prep-character-gap: 8;
+  --prep-shop-panel-w: 320;
+  --prep-lobby-shop-panel-w: 248;
+}
+
+html[data-layout-profile="desktop-landscape"] {
+  --prep-fit-avail-h: 760;
+  --prep-fit-min-scale: 0.52;
+  --prep-fit-width-ratio: 1;
+  --prep-canvas-avail-share: 0.30;
+  --prep-canvas-max-cap: 280;
+  --prep-shop-row-base: 66;
+  --prep-shop-row-min: 54;
+  --prep-shop-row-max: 74;
+  --prep-hero-slot-height: min(54vh, 520px);
+  --prep-hero-slot-max: 560;
+  --prep-scene-avatar-h: 152;
+  --prep-scene-avatar-w: 120;
+  --prep-doll-slot: 38;
+  --prep-character-gap: 8;
+  --prep-shop-panel-w: 272;
+  --prep-lobby-shop-panel-w: 228;
 }
 
 /* ui-layout.js: --cell-size, --grid-gap, --shop-panel-w, --battle-stats-panel-w */

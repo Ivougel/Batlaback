@@ -49,25 +49,6 @@ function hardBotCanAddItem(itemId, items) {
   return true;
 }
 
-function measureHardBotPower(containers, items, classId) {
-  if (typeof computeBackpackPower !== "function") {
-    return typeof scoreFullLoadout === "function" ? scoreFullLoadout(containers, items) : 0;
-  }
-  return computeBackpackPower(containers, items, classId).score;
-}
-
-function hardBotTryCrafting(containers, items) {
-  if (typeof tryResolveCrafting !== "function") return items;
-  let guard = 0;
-  while (guard < 16) {
-    guard += 1;
-    const result = tryResolveCrafting(containers, items);
-    if (!result.crafted.length) break;
-    items.splice(0, items.length, ...result.items);
-  }
-  return items;
-}
-
 function hardBotRankPool(pool, containers, items, classId, round, gridW, gridH) {
   const archetype = AI_ARCHETYPES[classId] || AI_ARCHETYPES.warrior;
   const ctx = {
@@ -89,79 +70,6 @@ function hardBotRankPool(pool, containers, items, classId, round, gridW, gridH) 
   });
 }
 
-function hardBotFindBestAddition(containers, items, pool, classId, round, gridW, gridH) {
-  const before = measureHardBotPower(containers, items, classId);
-  let best = null;
-
-  for (const entry of pool) {
-    const itemId = entry.id;
-    if (!hardBotCanAddItem(itemId, items)) continue;
-
-    const place = typeof findBestLoadoutPlacement === "function"
-      ? findBestLoadoutPlacement(containers, items, itemId)
-      : findLoadoutItemPlacement(containers, items, itemId, 0);
-    if (!place?.valid) continue;
-
-    const trial = [
-      ...items,
-      createPlacedItem(itemId, place.col, place.row, place.rotation || 0),
-    ];
-    if (typeof validateLoadoutItems === "function" && !validateLoadoutItems(containers, trial)) {
-      continue;
-    }
-
-    const after = measureHardBotPower(containers, trial, classId);
-    const gain = after - before;
-    if (!best || gain > best.gain) {
-      best = { itemId, place, gain, trial };
-    }
-  }
-
-  return best;
-}
-
-function hardBotFindBestSwap(containers, items, pool, classId, round, gridW, gridH) {
-  const before = measureHardBotPower(containers, items, classId);
-  let best = null;
-
-  for (const victim of items) {
-    const victimDef = ITEM_CATALOG[victim.itemId];
-    if (victimDef?.protected) continue;
-
-    const without = items.filter((entry) => entry.uid !== victim.uid);
-    if (typeof validateLoadoutItems === "function" && !validateLoadoutItems(containers, without)) {
-      continue;
-    }
-
-    for (const entry of pool) {
-      const itemId = entry.id;
-      if (itemId === victim.itemId) continue;
-      if (!hardBotCanAddItem(itemId, without)) continue;
-
-      const place = typeof findBestLoadoutPlacement === "function"
-        ? findBestLoadoutPlacement(containers, without, itemId)
-        : findLoadoutItemPlacement(containers, without, itemId, 0);
-      if (!place?.valid) continue;
-
-      const trial = [
-        ...without,
-        createPlacedItem(itemId, place.col, place.row, place.rotation || 0),
-      ];
-      if (typeof validateLoadoutItems === "function" && !validateLoadoutItems(containers, trial)) {
-        continue;
-      }
-
-      const after = measureHardBotPower(containers, trial, classId);
-      const gain = after - before;
-      if (gain > 0.5 && (!best || gain > best.gain)) {
-        best = { trial, gain };
-      }
-    }
-  }
-
-  return best;
-}
-
 function hardBotAiState(containers, items, classId) {
   return {
     containers,
@@ -181,11 +89,12 @@ function hardBotRunAiOptimize(containers, items, classId) {
 
 function buildHardBotOptimalLoadout(containers, items, classId, round, gridW, gridH, targetPower) {
   const pool = hardBotRankPool(getHardBotItemPool(classId, round), containers, items, classId, round, gridW, gridH);
+  const solverOpts = { canAddItem: hardBotCanAddItem };
 
   let guard = 0;
   while (guard < 80) {
     guard += 1;
-    const addition = hardBotFindBestAddition(containers, items, pool, classId, round, gridW, gridH);
+    const addition = solverFindBestAddition(containers, items, pool, classId, solverOpts);
     if (!addition || addition.gain < 0.35) break;
     items.push(createPlacedItem(
       addition.itemId,
@@ -200,7 +109,7 @@ function buildHardBotOptimalLoadout(containers, items, classId, round, gridW, gr
   guard = 0;
   while (guard < 60 && measureHardBotPower(containers, items, classId) < targetPower) {
     guard += 1;
-    const swap = hardBotFindBestSwap(containers, items, pool, classId, round, gridW, gridH);
+    const swap = solverFindBestSwap(containers, items, pool, classId, solverOpts);
     if (!swap) break;
     items = swap.trial;
     items = hardBotTryCrafting(containers, items);

@@ -280,7 +280,10 @@ function analyzeBackgroundMatchEmotions(match) {
 function refreshLobbyBattleEmotions(lobby, matches) {
   if (!matches?.length) return;
   const now = Date.now();
-  if (refreshLobbyBattleEmotions._lastAt && now - refreshLobbyBattleEmotions._lastAt < 2800) return;
+  const emotionGap = typeof BattleFxTier !== "undefined" && BattleFxTier.lobbyEmotionRefreshMs
+    ? BattleFxTier.lobbyEmotionRefreshMs()
+    : 2800;
+  if (refreshLobbyBattleEmotions._lastAt && now - refreshLobbyBattleEmotions._lastAt < emotionGap) return;
   refreshLobbyBattleEmotions._lastAt = now;
 
   const displayState = typeof getDisplayBattleState === "function" ? getDisplayBattleState() : null;

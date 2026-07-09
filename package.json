@@ -11,6 +11,7 @@
     "generate:pool120-presets": "node tools/generate-class-pool120-presets.js",
     "sim:balance-pool120": "node tools/generate-class-pool120-presets.js && node tools/class-balance-pool120-sim.js --json",
     "test:lobby2p": "node tools/lobby2p-smoke.test.mjs",
+    "test:meta": "node tools/meta-progress.test.mjs",
     "test:layout": "node tools/layout-profiles.test.mjs",
     "test:structure": "node tools/ui-structure.test.mjs",
     "test:phases": "node tools/layout-phases.test.mjs",
@@ -25,6 +26,8 @@
     "test:ui": "npm run test:layout && npm run test:structure && npm run test:transitions && npm run test:geometry && npm run test:qa && npm run test:snapshots",
     "profile:battle": "node tools/battle-perf-profile.mjs",
     "profile:transitions": "node tools/transition-perf-profile.mjs",
+    "test:perf": "node tools/battle-perf-profile.mjs --assert && node tools/transition-perf-profile.mjs --assert",
+    "generate:pwa-precache": "node tools/generate-pwa-precache.js",
     "audit:transitions": "node tools/audit-phase-transitions.mjs"
   },
   "dependencies": {

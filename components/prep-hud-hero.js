@@ -111,8 +111,15 @@ function rerollPrepHudMood() {
 
 function startPrepHudMoodCycle() {
   stopPrepHudMoodCycle();
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  prepHudMoodTimer = window.setInterval(rerollPrepHudMood, 7200);
+  const enabled = typeof BattleFxTier !== "undefined" && BattleFxTier.prepHudMoodCycleEnabled
+    ? BattleFxTier.prepHudMoodCycleEnabled()
+    : !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!enabled) return;
+  const intervalMs = typeof BattleFxTier !== "undefined" && BattleFxTier.prepHudMoodIntervalMs
+    ? BattleFxTier.prepHudMoodIntervalMs()
+    : 7200;
+  if (!intervalMs) return;
+  prepHudMoodTimer = window.setInterval(rerollPrepHudMood, intervalMs);
 }
 
 function stopPrepHudMoodCycle() {

@@ -752,6 +752,13 @@ function showLobbyRunCompleteOverlay(lobby, runResults, runItemStats, roundNum, 
   document.getElementById("overlay-title").textContent = title;
   document.getElementById("overlay-text").textContent = subtitle;
 
+  const metaRewardEl = document.getElementById("run-complete-meta-reward");
+  if (metaRewardEl && typeof MetaProgress !== "undefined") {
+    const reward = MetaProgress.getLastRunReward();
+    metaRewardEl.innerHTML = reward ? MetaProgress.renderRunRewardHtml(reward) : "";
+    metaRewardEl.classList.toggle("hidden", !reward);
+  }
+
   const { player: playerStats, enemy: enemyStats } = runItemStatsToArrays(runItemStats);
   const accordionsEl = document.getElementById("run-complete-accordions");
   if (accordionsEl) {

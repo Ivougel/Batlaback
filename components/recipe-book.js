@@ -111,7 +111,7 @@ function renderRecipeBookRecipesSection() {
           <span class="recipe-book-arrow" aria-hidden="true">→</span>
           <span class="recipe-book-output">${out ? `${out.icon} ${out.name}` : recipe.output}</span>
         </div>
-        <p class="recipe-book-recipe-hint">Сложите все части вплотную — ребро к ребру${recipe.hint ? ` · ${recipe.hint}` : ""}</p>
+        <p class="recipe-book-recipe-hint">Сложите все части вплотную — ребро к ребру. Слияние в начале следующего раунда подготовки${recipe.hint ? ` · ${recipe.hint}` : ""}</p>
       </div>
     `;
   }).join("");

@@ -94,7 +94,7 @@ const COMPANION_CATALOG = {
     id: "s_arcane",
     name: "Искра арканы",
     emoji: "✨",
-    desc: "Магический урон +6%. Физический −8%. На манекене нельзя двуручное.",
+    desc: "Магический урон +6%. Физический −8%. Нельзя двуручное оружие.",
     equipRestrict: ["no_two_hand"],
     combat: { magicDamageMult: 0.06, damageMult: -0.08 },
     mutationBias: ["m_arcanist", "p_discipline"],
@@ -103,7 +103,7 @@ const COMPANION_CATALOG = {
     id: "s_shadow",
     name: "Тень",
     emoji: "🌑",
-    desc: "Яд +8%, предметы быстрее. Блок слабее. На манекене нельзя щит.",
+    desc: "Яд +8%, предметы быстрее. Блок слабее. Нельзя щит.",
     equipRestrict: ["no_shield"],
     combat: { poisonTagMult: 0.08, cooldownMult: -0.04, shieldBlockMult: -0.1 },
     mutationBias: ["r_assassin", "r_shadow", "r_nightblade"],
@@ -440,10 +440,13 @@ function resolveMutationProgress(ctx = {}) {
   const classId = ctx.classId;
   const companionId = ctx.companionId || "s_stranger";
   const items = ctx.items || [];
-  const doll = typeof deriveDollFromItems === "function" ? deriveDollFromItems(items) : { doll: {} };
-  const dollIds = Object.values(doll.doll || {}).filter(Boolean);
+  const slotItemIds = typeof listSlotItemIds === "function"
+    ? listSlotItemIds(items)
+    : (typeof deriveDollFromItems === "function"
+      ? Object.values(deriveDollFromItems(items).doll || {}).filter(Boolean)
+      : []);
 
-  const tagCounts = collectLoadoutTagCounts(items, dollIds);
+  const tagCounts = collectLoadoutTagCounts(items, slotItemIds);
   if (typeof applyEnhancementTagsToCounts === "function") {
     applyEnhancementTagsToCounts(tagCounts, ctx.enhancements);
   }
@@ -691,8 +694,8 @@ const COMPANION_TAG_LABELS = {
 };
 
 const COMPANION_EQUIP_RESTRICT_LABELS = {
-  no_two_hand: "Двуручное оружие нельзя надеть на манекен",
-  no_shield: "Щит нельзя надеть на манекен (leftHand и тег shield)",
+  no_two_hand: "Двуручное оружие нельзя надеть",
+  no_shield: "Щит нельзя надеть (leftHand и тег shield)",
 };
 
 function formatCompanionSignedPct(value) {
@@ -766,7 +769,7 @@ function buildCompanionTooltipLines(companionId) {
       });
     });
   } else {
-    lines.push({ text: "Экип: без ограничений на манекене", style: "sub", color: "#86efac" });
+    lines.push({ text: "Экип: без ограничений слотов", style: "sub", color: "#86efac" });
   }
 
   if (companion.mutationBias?.length) {

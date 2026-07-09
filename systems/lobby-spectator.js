@@ -659,6 +659,67 @@ function renderLobbyPrepTimerHTML(remaining, active, opts = {}) {
   </div>`;
 }
 
+function getLobbyPrepTimerMetrics(remaining, opts = {}) {
+  const total = Math.max(1, Number(opts.total) || (typeof LOBBY_PREP_SECONDS !== "undefined" ? LOBBY_PREP_SECONDS : 50));
+  const seconds = Math.max(0, Math.ceil(remaining));
+  const ringR = 34;
+  const ringLen = 2 * Math.PI * ringR;
+  const display = formatLobbyPrepTimer(remaining);
+  return {
+    total,
+    seconds,
+    urgent: seconds <= 10,
+    critical: seconds <= 5,
+    pct: Math.max(0, Math.min(1, remaining / total)),
+    ringLen,
+    ringOffset: ringLen * (1 - Math.max(0, Math.min(1, remaining / total))),
+    display,
+    isShort: !display.includes(":"),
+  };
+}
+
+/** Инкрементальное обновление таймера — без innerHTML, чтобы не сбрасывать CSS-анимации. */
+function syncLobbyPrepTimerDOM(container, remaining, active, opts = {}) {
+  if (!container) return;
+  if (!active) {
+    container.innerHTML = "";
+    container.classList.add("hidden");
+    return;
+  }
+  container.classList.remove("hidden");
+
+  let timer = container.querySelector(".prep-timer-hero");
+  if (!timer) {
+    container.innerHTML = renderLobbyPrepTimerHTML(remaining, active, opts);
+    return;
+  }
+
+  const m = getLobbyPrepTimerMetrics(remaining, opts);
+  timer.classList.toggle("prep-timer-hero--urgent", m.urgent);
+  timer.classList.toggle("prep-timer-hero--critical", m.critical);
+  timer.setAttribute("aria-label", `До боя ${m.display}`);
+
+  const valueEl = timer.querySelector(".prep-timer-hero__value");
+  if (valueEl && valueEl.textContent !== m.display) valueEl.textContent = m.display;
+
+  const ringFill = timer.querySelector(".prep-timer-hero__ring-fill");
+  if (ringFill) {
+    const dasharray = m.ringLen.toFixed(2);
+    const dashoffset = m.ringOffset.toFixed(2);
+    if (ringFill.style.strokeDasharray !== dasharray) ringFill.style.strokeDasharray = dasharray;
+    if (ringFill.style.strokeDashoffset !== dashoffset) ringFill.style.strokeDashoffset = dashoffset;
+  }
+
+  const unitEl = timer.querySelector(".prep-timer-hero__unit");
+  if (unitEl) {
+    const wantClock = !m.isShort;
+    unitEl.classList.toggle("prep-timer-hero__unit--clock", wantClock);
+    const wantText = wantClock ? "до боя" : "сек";
+    if (unitEl.textContent !== wantText) unitEl.textContent = wantText;
+  }
+}
+
 window.renderLobbyPrepTimerHTML = renderLobbyPrepTimerHTML;
+window.syncLobbyPrepTimerDOM = syncLobbyPrepTimerDOM;
 
 window.findLobbyPlayerMatchIndex = findLobbyPlayerMatchIndex;

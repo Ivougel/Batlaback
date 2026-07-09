@@ -36,16 +36,17 @@ alwaysApply: true
 
 ## Нельзя без явного запроса пользователя
 
-- Менять `--shop-panel-w`, `PREP_PROFILES.tablet-landscape`, `IPAD_MINI_SHOP`, row-h магазина
+- Менять `--shop-panel-w`, `html[data-layout-profile="tablet-landscape"]` в `tokens.css`, `getPrepProfileCfg()`, row-h магазина
 - Менять ориентацию/позицию сетки (7×9 → другое, center вместо flex-end)
 - Сворачивать hero-card HUD в круг / compact chip
 - Раздувать магазин (340px+, крупные touch-карточки на всю колонку)
 - Переносить bench обратно в `#shop-panel` на tablet-side
-- Менять `BATTLE_PROFILES["tablet-landscape-side"]` zone shares / hero img ratio
+- Менять `html[data-battle-profile="tablet-landscape-side"]` в `tokens.css` / `getBattleProfileCfg()` — zone shares, hero img ratio
 
 ## Файлы-владельцы (осторожно)
 
-- `ui-layout.js` — `syncTabletSidePrepGridMetrics`, `applyPrepProfileVars`, `fitFlankArenaBattleLayout`
+- `ui-layout.js` — `applyLayoutContext`, `syncTabletSidePrepGridMetrics`, `applyPrepProfileVars`, `fitFlankArenaBattleLayout`
+- `styles/tokens.css` — коэффициенты `data-layout-profile` / `data-battle-profile`
 - `styles/prep-tablet-zone-layout.css`, `styles/tablet-side.css`, `styles/prep-hero-card.css`
 - `styles/hero-portrait-frame.css`, `styles/hero-card.css`, `styles/battle-arena-layout.css`
 

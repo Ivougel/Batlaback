@@ -11,12 +11,16 @@ const path = require("path");
 const ROOT = path.join(__dirname, "..");
 const INDEX = path.join(ROOT, "index.html");
 const OUT = path.join(ROOT, "pwa-precache.js");
-const CACHE_VERSION = "bb-pwa-v10";
+const CACHE_VERSION = "bb-pwa-v11";
 
 const STATIC_EXT = new Set([".js", ".css", ".png", ".jpg", ".jpeg", ".webp", ".svg", ".mp3", ".woff", ".woff2"]);
 
 function toRelUrl(filePath) {
   return filePath.split(path.sep).join("/");
+}
+
+function basePath(url) {
+  return url.split("?")[0].split("#")[0];
 }
 
 function walk(dir, out = []) {
@@ -48,10 +52,16 @@ function urlsFromIndex(html) {
   return urls;
 }
 
+function buildPrecacheList(html) {
+  const fromIndex = urlsFromIndex(html);
+  const indexBases = new Set([...fromIndex].map(basePath));
+  const walked = walk(ROOT).filter((p) => !indexBases.has(p));
+  return [...new Set([...fromIndex, ...walked])].sort();
+}
+
 function main() {
   const html = fs.readFileSync(INDEX, "utf8");
-  const urls = new Set([...urlsFromIndex(html), ...walk(ROOT)]);
-  const sorted = [...urls].sort();
+  const sorted = buildPrecacheList(html);
 
   const body = `// Auto-generated — node tools/generate-pwa-precache.js
 self.PWA_CACHE_VERSION = "${CACHE_VERSION}";

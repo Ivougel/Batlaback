@@ -60,9 +60,10 @@ function countLoadoutFamilies(side) {
   if (typeof collectLoadoutTagCounts !== "function" || typeof countTagFamiliesFromCounts !== "function") {
     return 0;
   }
-  const doll = typeof deriveDollFromItems === "function" ? deriveDollFromItems(side.items || []) : { doll: {} };
-  const dollIds = Object.values(doll.doll || {}).filter(Boolean);
-  const counts = collectLoadoutTagCounts(side.items || [], dollIds);
+  const slotItemIds = typeof listSlotItemIds === "function"
+    ? listSlotItemIds(side.items || [])
+    : [];
+  const counts = collectLoadoutTagCounts(side.items || [], slotItemIds);
   return countTagFamiliesFromCounts(counts);
 }
 

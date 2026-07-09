@@ -28,15 +28,14 @@ function buildLoadoutFingerprint(rt) {
     .map((it) => it?.itemId)
     .filter(Boolean)
     .sort();
-  const doll = typeof deriveDollFromItems === "function"
-    ? deriveDollFromItems(rt.items || [])
-    : { doll: {} };
-  const dollIds = Object.values(doll.doll || {}).filter(Boolean).sort();
+  const slotItemIds = typeof listSlotItemIds === "function"
+    ? listSlotItemIds(rt.items || []).sort()
+    : [];
   const enh = rt.enhancements || {};
   const enhKey = ["head", "chest", "boots"]
     .map((slot) => `${slot}:${enh[slot] || ""}`)
     .join("|");
-  return JSON.stringify({ itemIds, dollIds, enhKey, classId: rt.classId, companionId: rt.companionId });
+  return JSON.stringify({ itemIds, slotItemIds, enhKey, classId: rt.classId, companionId: rt.companionId });
 }
 
 function captureMutationProgressSnapshot(progress) {

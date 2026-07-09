@@ -1,0 +1,16 @@
+/* Подсветка партнёров крафта на скамье при drag из магазина */
+#bench-slots .bench-card.craft-partner-glow {
+  box-shadow:
+    0 0 0 2px rgba(188, 140, 255, 0.55),
+    0 0 18px rgba(140, 90, 220, 0.45);
+}
+
+#bench-slots .bench-card.craft-partner-glow .icon-glyph,
+#bench-slots .bench-card.craft-partner-glow .icon-duo {
+  filter: drop-shadow(0 0 6px rgba(188, 140, 255, 0.85));
+}
+
+html[data-craft-merge-active="true"] #btn-fight {
+  pointer-events: none;
+  opacity: 0.55;
+}

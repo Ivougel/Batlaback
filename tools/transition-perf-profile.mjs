@@ -7,6 +7,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import fs from "node:fs";
 import { quickStartPrep } from "./lib/quick-start.mjs";
+import { assertTransitionBudget, assertTierFlags } from "./lib/perf-budgets.mjs";
+
+const ASSERT_MODE = process.argv.includes("--assert");
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const baseUrl = `file://${root}/index.html`;
@@ -96,6 +99,14 @@ async function profileOne(browser, profile) {
   await page.waitForFunction(() => typeof startRunFromOverlay === "function", { timeout: 10000 });
   await installSampler(page);
   await quickStartPrep(page, { settleMs: 900 });
+
+  if (ASSERT_MODE) {
+    const tierFailures = await assertTierFlags(page);
+    if (tierFailures.length) {
+      await context.close();
+      throw new Error(`Tier flags: ${tierFailures.join("; ")}`);
+    }
+  }
 
   const prep = await samplePhase(page, "prep-idle");
 
@@ -199,3 +210,16 @@ printReport(rows);
 const outPath = path.join(root, "tools", "transition-perf-report.json");
 fs.writeFileSync(outPath, JSON.stringify(rows, null, 2));
 console.log(`JSON: ${outPath}`);
+
+if (ASSERT_MODE) {
+  const failures = [];
+  for (const row of rows) {
+    failures.push(...assertTransitionBudget(row));
+  }
+  if (failures.length) {
+    console.error("\n✗ Transition perf budget failures:\n");
+    failures.forEach((f) => console.error(`  - ${f}`));
+    process.exit(1);
+  }
+  console.log("\n✓ All transition perf budgets passed.");
+}

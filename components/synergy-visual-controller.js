@@ -78,6 +78,10 @@ const SynergyVisualController = (() => {
 
   function drawEnhancements(ctx, time, side, items) {
     if (typeof phase !== "undefined" && phase !== "prep") return;
+    if (typeof BattleFxTier !== "undefined" && BattleFxTier.prepSynergyFxEnabled
+      && !BattleFxTier.prepSynergyFxEnabled()) {
+      return;
+    }
 
     const synergies = side === "enemy"
       ? synergyState.enemyActiveSynergies

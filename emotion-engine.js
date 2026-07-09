@@ -688,6 +688,10 @@ function detectSnapshotEvents(prev, cur, elapsedReal) {
 }
 
 function analyzeBattleState(battleState, elapsedReal) {
+  if (typeof BattleFxTier !== "undefined" && BattleFxTier.battleEmotionReactive
+    && !BattleFxTier.battleEmotionReactive()) {
+    return;
+  }
   const now = Date.now();
   const analyzeGap = getEmotionAnalyzeGapMs();
   if (now - emotionEngine.lastAnalyzeAt < analyzeGap) return;

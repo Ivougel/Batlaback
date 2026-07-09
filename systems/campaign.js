@@ -1,12 +1,12 @@
 /**
- * Режим кампании — испытания на сборку билда с обучением и манекенами.
+ * Режим кампании — испытания на сборку билда с обучением.
  */
 const Campaign = (() => {
   const TRIALS = {
     "build-trial": {
       id: "build-trial",
       title: "Испытание сборки",
-      subtitle: "Рюкзак, манекен и первый бой",
+      subtitle: "Рюкзак, заполнение и тренировочные бои",
       emoji: "🎓",
       steps: [
         {
@@ -22,7 +22,7 @@ const Campaign = (() => {
             minFightItems: 1,
           },
           enemy: { classId: "warrior", hpScale: 0.32, damageScale: 0.1 },
-          fightLabel: "К манекену",
+          fightLabel: "К тренировке",
         },
         {
           id: "fill-grid",
@@ -37,28 +37,27 @@ const Campaign = (() => {
             minFightItems: 3,
           },
           enemy: { classId: "warrior", hpScale: 0.38, damageScale: 0.14 },
-          fightLabel: "К манекену",
+          fightLabel: "К тренировке",
         },
         {
-          id: "doll-equip",
-          title: "Урок 3: Манекен",
-          hint: "Откройте 🪆 Экипировка и наденьте кинжал или меч на манекена",
+          id: "weapon-basics",
+          title: "Урок 3: Оружие",
+          hint: "Купите кинжал или деревянный меч и положите в рюкзак",
           prep: {
             gold: 5,
             shop: ["dagger", "wooden_sword", null, null, null],
             allowRefresh: false,
             allowSell: true,
             carryLoadout: true,
-            openDoll: true,
-            minDollItems: 1,
+            minFightItems: 1,
           },
           enemy: { classId: "warrior", hpScale: 0.42, damageScale: 0.18 },
-          fightLabel: "Проверка на манекене",
+          fightLabel: "Проверка билда",
         },
         {
           id: "build-exam",
           title: "Урок 4: Экзамен",
-          hint: "Докупите еду, соберите синергии и победите тренировочный манекен",
+          hint: "Докупите еду, соберите синергии и победите тренировочного противника",
           prep: {
             gold: 10,
             shop: ["apple", "banana", "healing_herb", "garlic", "cheese"],
@@ -68,7 +67,7 @@ const Campaign = (() => {
             minFightItems: 2,
           },
           enemy: { classId: "warrior", hpScale: 0.55, damageScale: 0.22 },
-          fightLabel: "Финальный манекен",
+          fightLabel: "Финальный бой",
         },
       ],
     },
@@ -78,26 +77,25 @@ const Campaign = (() => {
   let stepIndex = 0;
   let rt = null;
 
-  function registerCampaignRuntime(deps) {
-    rt = deps;
+  function registerCampaignRuntime(runtime) {
+    rt = runtime;
   }
 
   function listTrials() {
     return Object.values(TRIALS);
   }
 
-  function getTrial(id = activeTrialId) {
-    return id ? TRIALS[id] || null : null;
+  function getTrial() {
+    return activeTrialId ? TRIALS[activeTrialId] : null;
   }
 
   function getStep() {
     const trial = getTrial();
-    if (!trial) return null;
-    return trial.steps[stepIndex] || null;
+    return trial?.steps?.[stepIndex] || null;
   }
 
   function isActive() {
-    return !!activeTrialId && !!getStep();
+    return !!activeTrialId;
   }
 
   function startTrial(trialId) {
@@ -114,9 +112,8 @@ const Campaign = (() => {
 
   function getProgressLabel() {
     const trial = getTrial();
-    const step = getStep();
-    if (!trial || !step) return "";
-    return `${step.title} · ${stepIndex + 1}/${trial.steps.length}`;
+    if (!trial) return "";
+    return `${stepIndex + 1}/${trial.steps.length} · ${getStep()?.title || ""}`;
   }
 
   function countPlacedBackpackItems(items, containers) {
@@ -130,20 +127,10 @@ const Campaign = (() => {
     return items.filter((it) => uids.has(it.uid)).length;
   }
 
-  function countDollItems(items) {
-    if (typeof listDollEquippedItems === "function") {
-      return listDollEquippedItems(items || []).length;
-    }
-    return 0;
-  }
-
   function meetsFightRequirement(items, containers) {
     const step = getStep();
     if (!step) return true;
     const prep = step.prep || {};
-    if (prep.minDollItems) {
-      return countDollItems(items) >= prep.minDollItems;
-    }
     const minItems = prep.minFightItems ?? 1;
     return countPlacedBackpackItems(items, containers) >= minItems;
   }
@@ -152,12 +139,6 @@ const Campaign = (() => {
     const step = getStep();
     if (!step) return "";
     const prep = step.prep || {};
-    if (prep.minDollItems) {
-      const n = countDollItems(items);
-      if (n < prep.minDollItems) {
-        return "Наденьте предмет на манекена через 🪆 Экипировка";
-      }
-    }
     const minItems = prep.minFightItems ?? 1;
     const placed = countPlacedBackpackItems(items, containers);
     if (placed < minItems) {
@@ -187,10 +168,6 @@ const Campaign = (() => {
       allowSell: prep.allowSell !== false,
     });
 
-    if (prep.openDoll) {
-      rt.openDoll?.();
-    }
-
     rt.syncChrome?.();
   }
 
@@ -208,7 +185,7 @@ const Campaign = (() => {
     };
   }
 
-  function applyMannequinBattleModifiers(battleState, step = getStep()) {
+  function applyTrainingBattleModifiers(battleState, step = getStep()) {
     if (!battleState?.enemy || !step?.enemy) return;
     const { hpScale = 0.4, damageScale = 0.15 } = step.enemy;
     const baseHp = battleState.enemy.maxHp || battleState.enemy.hp || 108;
@@ -220,8 +197,13 @@ const Campaign = (() => {
     battleState.enemy.cooldownMult = (battleState.enemy.cooldownMult || 1) * 1.35;
   }
 
+  /** @deprecated */
+  function applyMannequinBattleModifiers(battleState, step) {
+    applyTrainingBattleModifiers(battleState, step);
+  }
+
   function getFightLabel() {
-    return getStep()?.fightLabel || "К манекену";
+    return getStep()?.fightLabel || "К тренировке";
   }
 
   function getHintText() {
@@ -258,6 +240,7 @@ const Campaign = (() => {
     fightBlockReason,
     applyPrepStep,
     createEnemyPrep,
+    applyTrainingBattleModifiers,
     applyMannequinBattleModifiers,
     getFightLabel,
     getHintText,

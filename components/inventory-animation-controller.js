@@ -344,6 +344,10 @@ const InventoryAnimationController = (() => {
   }
 
   function drawCellReactions(ctx, team) {
+    if (typeof BattleFxTier !== "undefined" && BattleFxTier.prepLobbyFxReduced?.()
+      && BattleFxTier.prepLobbyFxReduced()) {
+      return;
+    }
     cellPulses.forEach((pulse, key) => {
       const [col, row] = key.split(",").map(Number);
       const rect = cellRect(team, col, row);

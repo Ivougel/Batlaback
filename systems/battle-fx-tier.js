@@ -1,6 +1,10 @@
 (function initBattleFxTier() {
   const STORAGE_KEY = "bb-light-battle-fx";
 
+  let cachedPerfTier = null;
+  let cachedPerfTierAt = 0;
+  const PERF_TIER_CACHE_MS = 2000;
+
   function prefersReducedMotion() {
     return window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
   }
@@ -21,17 +25,73 @@
     return document.documentElement?.dataset?.touch === "true";
   }
 
-  /** Touch phone/tablet — нужны throttle и авто-light FX. Десктоп с мышью — нет. */
+  /**
+   * Авто-уровень производительности по экрану и устройству.
+   * low — слабое / save-data / reduced-motion
+   * medium — touch phone/tablet, компактный desktop
+   * high — desktop с запасом
+   */
+  function resolvePerfTier(force = false) {
+    const now = performance.now();
+    if (!force && cachedPerfTier && now - cachedPerfTierAt < PERF_TIER_CACHE_MS) {
+      return cachedPerfTier;
+    }
+
+    if (prefersReducedMotion()) {
+      cachedPerfTier = "low";
+      cachedPerfTierAt = now;
+      return cachedPerfTier;
+    }
+
+    if (navigator.connection?.saveData) {
+      cachedPerfTier = "low";
+      cachedPerfTierAt = now;
+      return cachedPerfTier;
+    }
+
+    const uiTier = document.documentElement?.dataset?.uiTier || "desktop";
+    const touch = isTouchUiDevice();
+    const dpr = window.devicePixelRatio || 1;
+    const cores = navigator.hardwareConcurrency || 8;
+
+    let score = 0;
+    if (uiTier === "phone") score += 3;
+    else if (uiTier === "tablet") score += 2;
+    if (touch) score += 1;
+    if (dpr >= 2) score += 1;
+    if (cores <= 4) score += 2;
+    else if (cores <= 6) score += 1;
+
+    if (score >= 5 || cores <= 2) cachedPerfTier = "low";
+    else if (score >= 2) cachedPerfTier = "medium";
+    else cachedPerfTier = "high";
+
+    cachedPerfTierAt = now;
+    return cachedPerfTier;
+  }
+
+  function isPerfTierAtMost(maxTier) {
+    const order = { low: 0, medium: 1, high: 2 };
+    const cur = resolvePerfTier();
+    return (order[cur] ?? 1) <= (order[maxTier] ?? 1);
+  }
+
+  /** Touch / medium+low tier — throttle sim presentation и canvas. */
   function isPerfConstrainedDevice() {
     if (prefersReducedMotion()) return true;
-    if (!isTouchUiDevice()) return false;
-    return isAutoLightTier();
+    const perf = resolvePerfTier();
+    if (perf === "low") return true;
+    if (perf === "medium" && isTouchUiDevice()) return true;
+    return false;
   }
 
   function isLightBattleFx() {
     if (prefersReducedMotion()) return true;
     const stored = readStoredLightFx();
     if (stored !== null) return stored;
+    const perf = resolvePerfTier();
+    if (perf === "low") return true;
+    if (perf === "medium") return true;
     return isAutoLightTier();
   }
 
@@ -69,6 +129,8 @@
 
   function battleGameLoopGapMs() {
     if (!shouldThrottleGameLoop()) return 0;
+    const perf = resolvePerfTier();
+    if (perf === "low") return isPhoneTier() ? 50 : 66;
     return isPhoneTier() ? 33 : 50;
   }
 
@@ -87,10 +149,44 @@
     return isPhoneTier() ? 800 : 1000;
   }
 
+  function prepFxStepHz() {
+    const perf = resolvePerfTier();
+    if (perf === "low") return 20;
+    if (isLightBattleFx()) return 24;
+    return 30;
+  }
+
+  function lobbyHpTickMs() {
+    if (!isLightBattleFx()) return 500;
+    return isPhoneTier() ? 700 : 650;
+  }
+
+  function lobbyProfileTickMs() {
+    if (!isLightBattleFx()) return 1400;
+    return isPhoneTier() ? 2000 : 1800;
+  }
+
+  function lobbyAvatarTickMs() {
+    if (!isLightBattleFx()) return 1800;
+    return isPhoneTier() ? 2400 : 2200;
+  }
+
+  function lobbyChromeTickMs() {
+    if (!isLightBattleFx()) return 1200;
+    return isPhoneTier() ? 1600 : 1500;
+  }
+
+  function lobbyEmotionRefreshMs() {
+    if (!isLightBattleFx()) return 2800;
+    return isPhoneTier() ? 4000 : 3600;
+  }
+
   function applyBattleFxTierFlags() {
     const light = isLightBattleFx();
+    const perf = resolvePerfTier(true);
     const root = document.documentElement;
     root.dataset.battleFxLight = light ? "true" : "false";
+    root.dataset.perfTier = perf;
     if (isStaticBattleThoughts()) root.dataset.battleThoughtsStatic = "true";
     else root.removeAttribute("data-battle-thoughts-static");
     if (isPhoneTier()) {
@@ -114,6 +210,7 @@
   }
 
   function emotionAnalyzeGapMs() {
+    if (!battleEmotionReactive()) return 2400;
     if (isFlankBattleThoughtFxActive() && isLightBattleFx()) return 1800;
     if (isLightBattleFx()) return 1200;
     return 500;
@@ -183,6 +280,24 @@
     return !isLightBattleFx();
   }
 
+  function prepHudMoodIntervalMs() {
+    if (prefersReducedMotion()) return 0;
+    if (!isLightBattleFx()) return 7200;
+    const perf = resolvePerfTier();
+    if (perf === "low") return 12000;
+    return isPhoneTier() ? 10000 : 9000;
+  }
+
+  function prepHudMoodCycleEnabled() {
+    if (prefersReducedMotion()) return false;
+    if (resolvePerfTier() === "low") return false;
+    return true;
+  }
+
+  function prepSynergyFxEnabled() {
+    return !prepLobbyFxReduced();
+  }
+
   function syncLightBattleFxSettingsUi() {
     const cb = document.getElementById("settings-light-battle-fx");
     if (cb) cb.checked = isLightBattleFx();
@@ -198,6 +313,8 @@
   }
 
   window.BattleFxTier = {
+    resolvePerfTier,
+    isPerfTierAtMost,
     isLightBattleFx,
     isPerfConstrainedDevice,
     shouldThrottleGameLoop,
@@ -223,6 +340,15 @@
     battleHudLiteGapMs,
     battleProfileTickMs,
     battleFloatPresentGapMs,
+    prepFxStepHz,
+    lobbyHpTickMs,
+    lobbyProfileTickMs,
+    lobbyAvatarTickMs,
+    lobbyChromeTickMs,
+    lobbyEmotionRefreshMs,
+    prepHudMoodIntervalMs,
+    prepHudMoodCycleEnabled,
+    prepSynergyFxEnabled,
     applyBattleFxTierFlags,
     syncLightBattleFxSettingsUi,
   };

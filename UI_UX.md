@@ -47,7 +47,8 @@
 
 ## Размеры по профилям
 
-Задаёт `ui-layout.js` → `BATTLE_PROFILES` / `PREP_PROFILES`:
+Коэффициенты в **`styles/tokens.css`** (`html[data-battle-profile]`, `html[data-layout-profile]`).  
+JS читает их через `getBattleProfileCfg()` / `getPrepProfileCfg()` (`ui-layout.js`, `readCssPx`).
 
 | Профиль | Hero zone | imgRatio | portraitZoom |
 |---------|-----------|----------|--------------|
@@ -84,6 +85,6 @@
 |------|------|
 | `styles/hero-card.css` | Full-bleed hero card |
 | `styles/battle-hud-compact.css` | HUD overlap + scrim |
-| `styles/tokens.css` | Design tokens |
-| `ui-layout.js` | Числовые коэффициенты |
+| `styles/tokens.css` | Design tokens + layout profile coefficients |
+| `ui-layout.js` | `applyLayoutContext`, fit, measure zones, `get*ProfileCfg` |
 | `components/avatar-hero-effects.js` | DOM shell |

@@ -41,6 +41,7 @@ const ENGINE_FILES = [
   "systems/combat-profile.js",
   "systems/battle-stacks.js",
   "systems/battle-debuffs.js",
+  "bot-solver.js",
   "ai-engine.js",
   "hard-bot-engine.js",
   "battle-engine.js",

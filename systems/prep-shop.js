@@ -41,6 +41,9 @@ function getShopContextForSide(side = rt.getPrepViewSide(), opts = {}) {
     unlockedBuilds: typeof collectUnlockedBuilds === "function"
       ? collectUnlockedBuilds(loadoutItems)
       : new Set(),
+    applyMetaUnlockFilter: typeof rt.shouldApplyMetaUnlockForSide === "function"
+      ? rt.shouldApplyMetaUnlockForSide(side)
+      : false,
   };
 }
 
