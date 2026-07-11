@@ -740,16 +740,9 @@ html[data-prep-layout="bb-stack"] body:has(#app[data-phase="prep"]) #bottom-chro
   display: none !important;
 }
 
-/* Только desktop mouse: узкая BB-колонка. Планшеты — на всю ширину (см. tokens / side layout). */
 @media (min-width: 1280px) and (min-height: 800px) {
-  html[data-prep-layout="bb-stack"]:not([data-ui-tier="tablet"]) #app[data-phase="prep"] {
+  html[data-prep-layout="bb-stack"] #app[data-phase="prep"] {
     max-width: min(480px, 100vw);
     margin-inline: auto;
   }
-}
-
-html[data-ui-tier="tablet"][data-prep-layout="bb-stack"] #app[data-phase="prep"] {
-  max-width: min(94vw, 720px);
-  width: 100%;
-  margin-inline: auto;
 }
