@@ -1,0 +1,34 @@
+---
+description: Hotseat mode — разработка от engine baseline, не ломая classic solo
+globs:
+  - game.js
+  - systems/**
+  - components/**
+  - index.html
+  - docs/**
+  - tools/ui-structure-manifest.json
+---
+
+# Hotseat от baseline
+
+Перед hotseat-изменениями прочитай [docs/BASELINE.md](docs/BASELINE.md).
+
+## Baseline
+
+- Tag: `engine-baseline-classic` (solo classic vs AI).
+- Feature-ветка: `hotseat`.
+- Текущий единственный режим в prod-потоке: `classic` (`GAME_MODE` в `game.js`).
+
+## Правила
+
+1. **Classic solo не регрессит** — новый код за `gameMode === "hotseat"` или guard в `RuntimeLoader`.
+2. Новый `gameMode` → manifest + [docs/ui-screens-modes.md](docs/ui-screens-modes.md) + intro steps.
+3. Hotseat = pass-and-play: два игрока, поочерёдный prep, общий экран, без сети.
+4. Layout: все 5 профилей остаются playable ([prep-hud-layout-baseline.mdc](prep-hud-layout-baseline.mdc)).
+5. Перед merge: `npm run test:meta`, `npm run test:structure`, `npm run test:layout`.
+
+## Не делать в hotseat без явного запроса
+
+- Менять default `GAME_MODE` с `classic` на `hotseat`.
+- Удалять AI-противника из classic path.
+- Ломать существующие snapshot/classic тесты без обновления эталонов.

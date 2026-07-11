@@ -1,6 +1,8 @@
 {
   "version": 2,
-  "fixedAt": "2026-07-04",
+  "fixedAt": "2026-07-11",
+  "baselineTag": "engine-baseline-classic",
+  "baselineCommit": "53d3d37",
   "gameModes": ["classic"],
   "phases": {
     "js": ["classSelect", "prep", "battle", "replay"],

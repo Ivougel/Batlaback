@@ -2,6 +2,9 @@
 
 Клон Backpack Battles (браузер).
 
+**Engine baseline (classic solo):** tag `engine-baseline-classic` — см. [docs/BASELINE.md](docs/BASELINE.md).  
+Hotseat-режим разрабатывается от этой точки (ветка `hotseat`).
+
 ## Разработка
 
 ```bash
