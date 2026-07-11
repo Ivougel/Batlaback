@@ -331,7 +331,8 @@ declare function flushDeferredLayoutPasses(): void;
 declare function scheduleCanvasFit(): void;
 declare function applyUiLayout(options?: { skipDockRemeasure?: boolean }): void;
 declare function settlePrepLayoutForReveal(): void;
-declare function settleLayoutForPhaseChange(): void;
+declare function tryRotateDragItemFromSecondaryTouch(): boolean;
+declare function getPrepDragPrimaryPointerId(): number | null;
 declare function getPendingCraftBoardUids(side: string): Set<string>;
 declare function syncPendingCraftClustersForSide(side: string, currentRound?: number): void;
 declare function syncPendingCraftClustersOnState(

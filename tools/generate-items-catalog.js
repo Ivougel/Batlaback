@@ -135,9 +135,11 @@ function main() {
   lines.push("};");
   lines.push("");
 
-  const craftIds = data.items.filter((item) => item.craftOnly).map((item) => item.id);
+  const craftOnlyCount = data.items.filter((item) => item.craftOnly).length;
   lines.push("/** Заполняется syncCraftOutputIdSet() в systems/crafting.js из ITEM_RECIPES. */");
-  lines.push(`const CRAFT_OUTPUT_IDS = new Set(${JSON.stringify(craftIds)});`);
+  lines.push("const CRAFT_OUTPUT_IDS = new Set();");
+  lines.push("");
+  lines.push(`/** craftOnly в источнике: ${craftOnlyCount} шт. — tools/sync-item-craft-flags.mjs */`);
   lines.push("");
   lines.push("function buildItemCatalog() {");
   lines.push("  const out = {};");

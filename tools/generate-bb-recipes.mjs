@@ -92,6 +92,8 @@ const RAW_RECIPES = [
   ["chili_goobert", "goobert", "chili_pepper"],
   ["carrot_goobert", "goobert", "carrot", "carrot"],
   ["poison_goobert", "goobert", "fly_agaric", "fly_agaric"],
+  ["king_crown", "glowing_crown", "box_of_riches"],
+  ["king_goobert", "goobert", "king_crown"],
   ["rat_chef", "rat", "healing_herbs"],
   ["hyper_hedgehog", "hedgehog", "heroic_potion"],
   ["sun_armor", "holy_armor", "lump_of_coal", "lump_of_coal"],
@@ -106,7 +108,13 @@ const RAW_RECIPES = [
   ["stankus_toothpick", "hero_sword", "garlic"],
   ["boiling_pot", "pan", "wooden_buckler"],
   ["holdall", "leather_armor", "goobert"],
+  ["duffle_bag", "leather_armor", "forging_hammer"],
   ["gold_armor", "holy_armor", "bunch_of_coins"],
+  ["box_of_prosperity", "box_of_riches", "maneki_neko"],
+  ["ruby_whelp", "ruby_egg"],
+  ["ruby_chonk", "ruby_whelp", "holo_fire_lizard"],
+  ["squirrel_archer", "squirrel", "shortbow"],
+  ["doom_cap", "fly_agaric", "demonic_flask"],
 ];
 
 function loadCatalogIds() {

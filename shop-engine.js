@@ -163,7 +163,7 @@ function getExpandedShopPool(ctx) {
   Object.values(ITEM_CATALOG).forEach((item) => {
     if (byId.has(item.id)) return;
     const maxAccount = typeof isMaxAccountMode === "function" && isMaxAccountMode();
-    if (item.craftOnly && !maxAccount) return;
+    if (item.craftOnly) return;
     if (isCraftOutputItemId(item.id)) return;
     if (isItemExcludedByShopModifiers(item, ctx)) return;
     if (!itemMatchesShopModifiers(item, mods)) return;

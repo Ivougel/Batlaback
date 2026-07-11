@@ -46,8 +46,8 @@ function shouldSkipCompanionIntro() {
 }
 
 /**
- * Classic = «max account»: все герои и предметы открыты (shop + craft).
- * Meta-lock и pool120 не применяются; class-restricted экипировка — да.
+ * Classic = «max account»: все герои и предметы открыты (meta + craft).
+ * Meta-lock и pool120 не применяются; craft-only и craft-outputs — не в магазине.
  */
 function isMaxAccountMode() {
   return isClassicMode();

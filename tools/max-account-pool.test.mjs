@@ -41,12 +41,16 @@ function run() {
   const classRestricted = playable.filter((item) => item.classRestriction);
   heroes.forEach((heroId) => {
     const reachable = computeReachableItemIds(s, 10, heroId);
-    const expected = classRestricted.filter((item) => item.classRestriction === heroId);
-    const bad = expected.filter((item) => !reachable.has(item.id));
+    const expectedInShop = classRestricted.filter((item) =>
+      item.classRestriction === heroId && s.isShopEligibleItem(item, heroId, 10));
+    const bad = expectedInShop.filter((item) => !reachable.has(item.id));
     if (bad.length) {
-      throw new Error(`class items unreachable for ${heroId} (${bad.length}): ${bad.slice(0, 8).map((i) => i.id).join(", ")}`);
+      throw new Error(`shop class items unreachable for ${heroId} (${bad.length}): ${bad.slice(0, 8).map((i) => i.id).join(", ")}`);
     }
   });
+
+  assert(!s.isShopEligibleItem(s.ITEM_CATALOG?.king_goobert, "warrior", 10), "craft-only not in shop");
+  assert(!s.isShopEligibleItem(s.ITEM_CATALOG?.light_goobert, "rogue", 10), "craft output not in shop");
 
   assert(!s.isItemAllowedForHeroClass({ classRestriction: "rogue" }, "warrior"), "warrior cannot equip rogue gear");
   assert(s.isItemAllowedForHeroClass({ classRestriction: "rogue" }, "rogue"), "rogue can equip rogue gear");

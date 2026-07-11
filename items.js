@@ -865,7 +865,7 @@ function getLoadoutHeroClass() {
 function isShopEligibleItem(item, playerClass = null, round = 1) {
   if (!item) return false;
   const maxAccount = typeof isMaxAccountMode === "function" && isMaxAccountMode();
-  if (item.craftOnly && !maxAccount) return false;
+  if (item.craftOnly) return false;
   if ((item.tags || []).includes("gem")) return false;
   if (item.isEnhancementItem) return false;
   if (item.isBuildKey) return false;

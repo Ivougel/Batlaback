@@ -302,6 +302,10 @@ function bindPrepLoadoutDragPointer() {
   const onUp = (e) => {
     if (!isLoadoutInteractionPhase() || !isActiveDrag()) return;
     if (e.button != null && e.button !== 0) return;
+    const primaryId = typeof window.getPrepDragPrimaryPointerId === "function"
+      ? window.getPrepDragPrimaryPointerId()
+      : null;
+    if (primaryId != null && e.pointerId !== primaryId) return;
     if (tryBuyFromPendingShopDrag(e.clientX, e.clientY)) return;
     finishDragDrop(e);
   };
@@ -1946,6 +1950,21 @@ function rotateDragItem() {
   playPrepSfx("prep_rotate");
   syncDragGhostOverlay(lastPointerClient.x, lastPointerClient.y);
 }
+
+let prepRotateTouchAt = 0;
+const PREP_ROTATE_TOUCH_COOLDOWN_MS = 120;
+
+/** Второй палец / tap во время drag — поворот предмета (PWA pointer + touch fallback). */
+function tryRotateDragItemFromSecondaryTouch() {
+  if (!dragPayload || !isLoadoutInteractionPhase()) return false;
+  const now = performance.now();
+  if (now - prepRotateTouchAt < PREP_ROTATE_TOUCH_COOLDOWN_MS) return true;
+  prepRotateTouchAt = now;
+  rotateDragItem();
+  return true;
+}
+
+window.tryRotateDragItemFromSecondaryTouch = tryRotateDragItemFromSecondaryTouch;
 
 function onMouseDown(e) {
   if (!isLoadoutInteractionPhase() || gameOver) return;

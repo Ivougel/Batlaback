@@ -453,11 +453,13 @@ function getCraftTooltipLines(itemId: string, side: string | null = null): Craft
     ? getCraftContextFromGame(side || (typeof prepViewSide !== "undefined" ? prepViewSide : "player"))
     : {};
   const comboLines: CraftTooltipLine[] = [];
+  let outputRecipeShown = false;
 
   const asOutput = getRecipeForOutput(itemId);
   if (asOutput) {
     const available = typeof isCraftRecipeAvailable !== "function" || isCraftRecipeAvailable(asOutput, craftCtx);
     if (available) {
+      outputRecipeShown = true;
       comboLines.push({
         html: renderCraftRecipeLineHtml(buildCraftRecipeParts(asOutput)),
         style: "craft-recipe",
@@ -485,7 +487,11 @@ function getCraftTooltipLines(itemId: string, side: string | null = null): Craft
 
   if (!comboLines.length) return lines;
 
-  lines.push({ text: "⚗️ Крафт", style: "label", color: "#bc8cff" });
+  lines.push({
+    text: outputRecipeShown ? "⚗️ Крафт" : "⚗️ Комбинации",
+    style: "label",
+    color: "#bc8cff",
+  });
   comboLines.forEach((entry) => {
     if (entry.html) {
       lines.push({ html: entry.html, style: entry.style || "craft-recipe", color: entry.color });

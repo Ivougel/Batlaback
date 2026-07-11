@@ -85,6 +85,7 @@ function run() {
   assert(!s.isShopEligibleItem(rogueItem, "warrior", 1), "rogue item blocked for warrior");
   assert(s.isShopEligibleItem(rogueItem, "rogue", 1), "rogue item eligible for rogue");
   assert(s.isShopEligibleItem(warriorItem, null, 1), "class-restricted item eligible when classless");
+  assert(!s.isShopEligibleItem(s.ITEM_CATALOG?.king_goobert, "warrior", 10), "craft-only king_goobert not in shop");
 
   s.MetaProgress.setPickerMode("classic");
   s.MetaProgress.setRunMode("classic");

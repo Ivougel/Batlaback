@@ -803,6 +803,7 @@ const ITEM_CATALOG_RAW = {
     damage: 2,
     cooldown: 2.6,
     staminaCost: 12,
+    craftOnly: true,
     effects: [
       { type: "damage", value: 2, valueMin: 1, valueMax: 2 },
       { type: "poison", value: 2, trigger: "on_hit" },
@@ -930,6 +931,7 @@ const ITEM_CATALOG_RAW = {
     cost: 6,
     tags: ["pet","holy"],
     cooldown: 13,
+    craftOnly: true,
     effects: [
       { type: "periodic", interval: 13, trigger: "passive", cleanseDebuffs: 6, heal: 40 },
       { type: "procChanceBonus", value: 0.25, trigger: "passive" },
@@ -985,6 +987,7 @@ const ITEM_CATALOG_RAW = {
     damage: 7,
     cooldown: 1.8,
     staminaCost: 1,
+    craftOnly: true,
     effects: [
       { type: "damage", value: 7, valueMin: 6, valueMax: 9 },
       { type: "poison", value: 3, trigger: "on_hit" },
@@ -1183,6 +1186,7 @@ const ITEM_CATALOG_RAW = {
     cost: 8,
     tags: ["potion","consumable","vampiric"],
     cooldown: 3,
+    craftOnly: true,
     effects: [
       { type: "buffTimed", stat: "damage", value: 0.1, duration: 6 },
       { type: "lifesteal", value: 0.05, trigger: "passive" },
@@ -1424,6 +1428,7 @@ const ITEM_CATALOG_RAW = {
     cost: 2,
     tags: ["accessory","fire","craft"],
     cooldown: 5,
+    craftOnly: true,
     effects: [
       { type: "statMult", stat: "damage", value: 0.08, trigger: "passive" },
       { type: "gainStack", stack: "heat", value: 12, trigger: "battle_start" },
@@ -1444,6 +1449,7 @@ const ITEM_CATALOG_RAW = {
     tags: ["accessory","fire","craft"],
     damage: 2,
     cooldown: 2,
+    craftOnly: true,
     effects: [
       { type: "statMult", stat: "damage", value: 0.08, trigger: "passive" },
       { type: "gainStack", stack: "heat", value: 2, trigger: "battle_start" },
@@ -1520,6 +1526,7 @@ const ITEM_CATALOG_RAW = {
     damage: 15,
     cooldown: 2.6,
     staminaCost: 19,
+    craftOnly: true,
     effects: [
       { type: "damage", value: 15, valueMin: 12, valueMax: 18 }
     ],
@@ -1628,6 +1635,7 @@ const ITEM_CATALOG_RAW = {
     cost: 4,
     tags: ["gloves","accessory","melee","pet","craft"],
     cooldown: 0,
+    craftOnly: true,
     effects: [
       { type: "passiveDefense", value: 3, trigger: "passive" },
       { type: "statMult", stat: "cooldown", value: -0.15, trigger: "passive" },
@@ -1648,6 +1656,7 @@ const ITEM_CATALOG_RAW = {
     cost: 6,
     tags: ["shoes","armor","melee","pet","craft"],
     cooldown: 3,
+    craftOnly: true,
     effects: [
       { type: "passiveDefense", value: 3, trigger: "passive" },
       { type: "heal", value: 5 },
@@ -1670,6 +1679,7 @@ const ITEM_CATALOG_RAW = {
     damage: 18,
     cooldown: 3,
     staminaCost: 23,
+    craftOnly: true,
     effects: [
       { type: "damage", value: 18, valueMin: 14, valueMax: 22 }
     ],
@@ -1687,6 +1697,7 @@ const ITEM_CATALOG_RAW = {
     damage: 5,
     cooldown: 2.2,
     staminaCost: 11,
+    craftOnly: true,
     effects: [
       { type: "damage", value: 5, damageType: "magic", valueMin: 2, valueMax: 5 }
     ],
@@ -1704,6 +1715,7 @@ const ITEM_CATALOG_RAW = {
     damage: 8,
     cooldown: 1.4,
     staminaCost: 12,
+    craftOnly: true,
     effects: [
       { type: "damage", value: 8, valueMin: 6, valueMax: 10 }
     ],
@@ -1910,6 +1922,7 @@ const ITEM_CATALOG_RAW = {
     damage: 11,
     cooldown: 2.8,
     staminaCost: 15,
+    craftOnly: true,
     effects: [
       { type: "damage", value: 11, valueMin: 8, valueMax: 14 }
     ],
@@ -1927,6 +1940,7 @@ const ITEM_CATALOG_RAW = {
     damage: 6,
     cooldown: 2.4,
     staminaCost: 12,
+    craftOnly: true,
     effects: [
       { type: "damage", value: 6, valueMin: 4, valueMax: 8 }
     ],
@@ -1948,6 +1962,7 @@ const ITEM_CATALOG_RAW = {
     stats: {},
     cooldown: 0,
     effects: [],
+    craftOnly: true,
     description: "+6 слотов рюкзака. +8 жар за нейтральный предмет.",
     buildHints: "Универсальный / автономный",
     _isContainerEntry: true,
@@ -2024,6 +2039,7 @@ const ITEM_CATALOG_RAW = {
     damage: 9,
     cooldown: 1.7,
     staminaCost: 1.3,
+    craftOnly: true,
     effects: [
       { type: "damage", value: 9, valueMin: 8, valueMax: 10 },
       { type: "stealWeaponDamage", value: 1, trigger: "on_hit" }
@@ -2041,6 +2057,7 @@ const ITEM_CATALOG_RAW = {
     cost: 17,
     tags: ["armor","helmet","holy"],
     cooldown: 2.4,
+    craftOnly: true,
     effects: [
       { type: "periodic", interval: 2.4, trigger: "passive", heal: 8 },
       { type: "invulnOnStaminaSpend", staminaCost: 10, duration: 2.5, trigger: "passive" }
@@ -2237,6 +2254,7 @@ const ITEM_CATALOG_RAW = {
     cost: 6,
     tags: ["potion","consumable","magic","craft"],
     cooldown: 3,
+    craftOnly: true,
     effects: [
       { type: "buffTimed", stat: "damage", value: 0.1, duration: 6 },
       { type: "hpThreshold", threshold: 0.5, direction: "below", once: true, trigger: "passive", gainStack: {"stack":"mana","value":4}, maxHp: 18 }
@@ -2256,6 +2274,7 @@ const ITEM_CATALOG_RAW = {
     damage: 6,
     cooldown: 2.2,
     staminaCost: 11,
+    craftOnly: true,
     effects: [
       { type: "damage", value: 6, damageType: "magic", valueMin: 2, valueMax: 6 },
       { type: "lifesteal", value: 0.15, trigger: "passive" }
@@ -2293,6 +2312,7 @@ const ITEM_CATALOG_RAW = {
     damage: 5,
     cooldown: 3.5,
     staminaCost: 0,
+    craftOnly: true,
     effects: [
       { type: "damage", value: 5, valueMin: 3, valueMax: 7 },
       { type: "slow", value: 0.18, duration: 2 },
@@ -2448,6 +2468,7 @@ const ITEM_CATALOG_RAW = {
     damage: 11,
     cooldown: 1.8,
     staminaCost: 1.5,
+    craftOnly: true,
     effects: [
       { type: "damage", value: 11, valueMin: 8, valueMax: 14, damageType: "magic" },
       { type: "lifestealPerTag", tag: "cold", value: 0.15, trigger: "passive" },
@@ -2665,6 +2686,7 @@ const ITEM_CATALOG_RAW = {
     cost: 5,
     tags: ["accessory","craft","holy"],
     cooldown: 3.4,
+    craftOnly: true,
     effects: [
       { type: "periodic", interval: 3.4, trigger: "passive", hpThreshold: 0.7, healIfBelow: 8, gainStackIfAbove: {"stack":"empower","value":1} },
       { type: "cooldownMultPerTag", tags: ["holy"], perTag: 0.15, trigger: "passive" }
@@ -2778,6 +2800,7 @@ const ITEM_CATALOG_RAW = {
     damage: 5,
     cooldown: 1.6,
     staminaCost: 8,
+    craftOnly: true,
     effects: [
       { type: "damage", value: 5, damageType: "magic", valueMin: 2, valueMax: 5 },
       { type: "spendStack", stack: "mana", value: 1, trigger: "on_hit", attackBuff: 6 },
@@ -3065,6 +3088,7 @@ const ITEM_CATALOG_RAW = {
     tags: ["accessory","fire","melee","craft"],
     damage: 2,
     cooldown: 2,
+    craftOnly: true,
     effects: [
       { type: "gainStack", stack: "empower", value: 1, trigger: "on_hit", chance: 0.25 }
     ],
@@ -3277,6 +3301,7 @@ const ITEM_CATALOG_RAW = {
     damage: 6,
     cooldown: 2.2,
     staminaCost: 1.5,
+    craftOnly: true,
     effects: [
       { type: "damage", value: 6, valueMin: 5, valueMax: 8 },
       { type: "slow", value: 0.12, duration: 3, chance: 0.4 }
@@ -3315,7 +3340,6 @@ const ITEM_CATALOG_RAW = {
     cost: 8,
     tags: ["accessory","luck","craft","nature"],
     cooldown: 0,
-    craftOnly: true,
     effects: [
       { type: "passiveLuck", value: 2, trigger: "passive" },
       { type: "critPerStack", stack: "luck", value: 0.05, trigger: "passive" }
@@ -3395,7 +3419,6 @@ const ITEM_CATALOG_RAW = {
     cost: 9,
     tags: ["accessory","melee","treasure","craft"],
     cooldown: 0,
-    craftOnly: true,
     effects: [
       { type: "passiveLuck", value: 5, trigger: "passive" }
     ],
@@ -3486,7 +3509,6 @@ const ITEM_CATALOG_RAW = {
     damage: 8,
     cooldown: 1.4,
     staminaCost: 1.5,
-    craftOnly: true,
     effects: [
       { type: "damage", value: 8, valueMin: 6, valueMax: 10 },
       { type: "stackThreshold", stack: "poison", threshold: 25, targetSide: "foe", critChance: 0.65, once: true, trigger: "passive" }
@@ -3750,7 +3772,6 @@ const ITEM_CATALOG_RAW = {
     tags: ["pet","magic","craft"],
     damage: 7,
     cooldown: 2,
-    craftOnly: true,
     effects: [
       { type: "statMult", stat: "damage", value: 0.08, trigger: "passive" },
       { type: "damage", value: 7, valueMin: 5, valueMax: 10, damageType: "magic" },
@@ -3995,7 +4016,6 @@ const ITEM_CATALOG_RAW = {
     cost: 10,
     tags: ["accessory","dark","craft"],
     cooldown: 2.6,
-    craftOnly: true,
     effects: [
       { type: "poison", value: 1 },
       { type: "passiveLuck", value: 3, trigger: "passive" },
@@ -4079,7 +4099,6 @@ const ITEM_CATALOG_RAW = {
     cost: 13,
     tags: ["pet","debuff","dark","craft"],
     cooldown: 3,
-    craftOnly: true,
     effects: [
       { type: "heal", value: 2 },
       { type: "periodic", interval: 3, trigger: "passive", stealWeaponDamage: 1 },
@@ -4100,7 +4119,6 @@ const ITEM_CATALOG_RAW = {
     damage: 5,
     cooldown: 2.5,
     staminaCost: 0,
-    craftOnly: true,
     effects: [
       { type: "damage", value: 5, valueMin: 4, valueMax: 7 },
       { type: "slow", value: 0.18, duration: 2 },
@@ -4121,7 +4139,6 @@ const ITEM_CATALOG_RAW = {
     cost: 10,
     tags: ["accessory","fire","dark","craft"],
     cooldown: 0,
-    craftOnly: true,
     effects: [
       { type: "statMult", stat: "damage", value: 0.08, trigger: "passive" },
       { type: "hpLossRatio", value: 0.5, trigger: "battle_start" },
@@ -4163,7 +4180,6 @@ const ITEM_CATALOG_RAW = {
     cost: 7,
     tags: ["potion","consumable","dark","craft"],
     cooldown: 3,
-    craftOnly: true,
     effects: [
       { type: "buffTimed", stat: "damage", value: 0.15, duration: 5 },
       { type: "foeHpThreshold", threshold: 0.5, once: true, trigger: "passive", damagePerFoeDebuffMult: 5, damageType: "magic" }
@@ -4202,7 +4218,6 @@ const ITEM_CATALOG_RAW = {
     cost: 8,
     tags: ["accessory","fire","pyromancer","craft"],
     cooldown: 3.8,
-    craftOnly: true,
     effects: [
       { type: "heal", value: 2 },
       { type: "stackThreshold", stack: "heat", threshold: 15, once: true, trigger: "passive", guaranteedCritHits: 3 },
@@ -4263,7 +4278,6 @@ const ITEM_CATALOG_RAW = {
     cost: 14,
     tags: ["pet","poison","craft"],
     cooldown: 3,
-    craftOnly: true,
     effects: [
       { type: "statMult", stat: "damage", value: 0.08, trigger: "passive" },
       { type: "damage", value: 7, valueMin: 5, valueMax: 10 },
@@ -4347,7 +4361,6 @@ const ITEM_CATALOG_RAW = {
     tags: ["weapon","fire","melee","craft"],
     cooldown: 2,
     staminaCost: 2,
-    craftOnly: true,
     effects: [
       { type: "heal", value: 2 },
       { type: "periodic", interval: 3, trigger: "passive", spendStack: {"stack":"heat","value":1}, gainStack: {"stack":"heat","value":2} },
@@ -4408,7 +4421,6 @@ const ITEM_CATALOG_RAW = {
     cost: 8,
     tags: ["pet","craft"],
     cooldown: 3,
-    craftOnly: true,
     effects: [
       { type: "heal", value: 1 },
       { type: "passiveMaxHp", value: 40, trigger: "passive" },
@@ -4428,7 +4440,6 @@ const ITEM_CATALOG_RAW = {
     cost: 10,
     tags: ["gloves","accessory","craft"],
     cooldown: 3,
-    craftOnly: true,
     effects: [
       { type: "slow", value: 0.12, duration: 3 },
       { type: "statMult", stat: "damage", value: 0.2, trigger: "passive" },
@@ -4556,7 +4567,6 @@ const ITEM_CATALOG_RAW = {
     cost: 15,
     tags: ["pet","cold","craft"],
     cooldown: 3,
-    craftOnly: true,
     effects: [
       { type: "damage", value: 17, valueMin: 15, valueMax: 20 },
       { type: "gainStack", stack: "cold", value: 1, targetSide: "foe", trigger: "on_hit" },
@@ -4655,7 +4665,6 @@ const ITEM_CATALOG_RAW = {
     cost: 7,
     tags: ["pet","dark","craft"],
     cooldown: 2.1,
-    craftOnly: true,
     effects: [
       { type: "heal", value: 2 },
       { type: "periodic", interval: 2.1, trigger: "passive", spendStack: {"stack":"luck","value":1}, gainDominantStack: 3 }
@@ -4756,7 +4765,6 @@ const ITEM_CATALOG_RAW = {
     cost: 18,
     tags: ["pet","fire","magic","craft"],
     cooldown: 3,
-    craftOnly: true,
     effects: [
       { type: "damage", value: 13, valueMin: 11, valueMax: 16, damageType: "magic" },
       { type: "stackThreshold", stack: "heat", threshold: 8, once: false, trigger: "passive", itemDamage: 2, guaranteedCritHits: 1 }
@@ -4775,7 +4783,6 @@ const ITEM_CATALOG_RAW = {
     cost: 7,
     tags: ["accessory","fire","pyromancer"],
     cooldown: 3.4,
-    craftOnly: true,
     effects: [
       { type: "heal", value: 2 },
       { type: "gainStack", stack: "heat", value: 2, trigger: "battle_start" },
@@ -4817,7 +4824,6 @@ const ITEM_CATALOG_RAW = {
     cost: 10,
     tags: ["pet","craft"],
     cooldown: 3,
-    craftOnly: true,
     effects: [
       { type: "damage", value: 17, valueMin: 15, valueMax: 20 },
       { type: "onActivate", hpCost: 10 },
@@ -4838,7 +4844,6 @@ const ITEM_CATALOG_RAW = {
     tags: ["weapon","ranged","craft"],
     cooldown: 1.8,
     staminaCost: 1.5,
-    craftOnly: true,
     effects: [
       { type: "damage", value: 7, valueMin: 5, valueMax: 9 },
       { type: "critDamageMult", value: 0.5, trigger: "passive" },
@@ -4857,7 +4862,6 @@ const ITEM_CATALOG_RAW = {
     cost: 8,
     tags: ["accessory","treasure","craft"],
     cooldown: 4,
-    craftOnly: true,
     effects: [
       { type: "procChanceBonus", value: 0.1, trigger: "passive" },
       { type: "periodic", interval: 4, trigger: "passive", cleanseDebuffs: 2 }
@@ -4918,7 +4922,6 @@ const ITEM_CATALOG_RAW = {
     cost: 10,
     tags: ["accessory","craft","nature"],
     cooldown: 0,
-    craftOnly: true,
     effects: [
       { type: "statMult", stat: "damage", value: 0.08, trigger: "passive" },
       { type: "passiveLuck", value: 15, trigger: "passive" },
@@ -4942,7 +4945,6 @@ const ITEM_CATALOG_RAW = {
     tags: ["food","fire","craft"],
     cooldown: 5,
     staminaCost: 0,
-    craftOnly: true,
     effects: [
       { type: "slow", value: 0.18, duration: 2 },
       { type: "applyStun", duration: 0.5, chance: 0.5, trigger: "on_hit" },
@@ -4986,7 +4988,6 @@ const ITEM_CATALOG_RAW = {
     stats: {},
     cooldown: 0,
     effects: [],
-    craftOnly: true,
     description: "Внутри: +10% крит и +3% за стак.",
     buildHints: "Билд: Ranger · Кладём Shortbow / стрелы внутрь",
     _isContainerEntry: true,
@@ -5060,7 +5061,6 @@ const ITEM_CATALOG_RAW = {
     cost: 14,
     tags: ["pet","cold","craft"],
     cooldown: 3,
-    craftOnly: true,
     effects: [
       { type: "statMult", stat: "damage", value: 0.08, trigger: "passive" },
       { type: "damage", value: 7, valueMin: 5, valueMax: 10 },
@@ -5103,7 +5103,6 @@ const ITEM_CATALOG_RAW = {
     cost: 10,
     tags: ["pet","poison","dark","craft"],
     cooldown: 2.2,
-    craftOnly: true,
     effects: [
       { type: "passiveMaxHp", value: 40, trigger: "passive" },
       { type: "periodic", interval: 2.2, trigger: "passive", foePoison: 2 },
@@ -5266,7 +5265,6 @@ const ITEM_CATALOG_RAW = {
     stats: {},
     cooldown: 0,
     effects: [],
-    craftOnly: true,
     description: "При активации предмета внутри: 22% +1 яд.",
     buildHints: "Билд: Reaper / тёмные предметы · Пары: Demonic Flask, яд",
     _isContainerEntry: true,
@@ -5299,7 +5297,6 @@ const ITEM_CATALOG_RAW = {
     cost: 15,
     tags: ["potion","consumable","holy","craft"],
     cooldown: 3,
-    craftOnly: true,
     effects: [
       { type: "buffTimed", stat: "damage", value: 0.15, duration: 5 },
       { type: "debuffThreshold", threshold: 10, once: true, trigger: "passive", cleanseDebuffs: 10, gainDominantStack: 8 }
@@ -5353,7 +5350,6 @@ const ITEM_CATALOG_RAW = {
     cost: 7,
     tags: ["potion","consumable","magic","craft"],
     cooldown: 3,
-    craftOnly: true,
     effects: [
       { type: "buffTimed", stat: "damage", value: 0.1, duration: 6 },
       { type: "hpThreshold", threshold: 0.5, direction: "below", once: true, trigger: "passive", gainStack: {"stack":"mana","value":9}, maxHp: 25 }
@@ -5409,7 +5405,6 @@ const ITEM_CATALOG_RAW = {
     cost: 12,
     tags: ["potion","consumable","vampiric","craft"],
     cooldown: 3,
-    craftOnly: true,
     effects: [
       { type: "lifesteal", value: 0.05, trigger: "passive" },
       { type: "mutualHpThreshold", threshold: 0.8, once: true, trigger: "passive", gainStack: {"stack":"mana","value":5}, damage: 20, damageType: "magic", lifesteal: 1 },
@@ -5560,7 +5555,6 @@ const ITEM_CATALOG_RAW = {
     stats: {},
     cooldown: 0,
     effects: [],
-    craftOnly: true,
     description: "+10% лечения и +3% за предмет природы внутри.",
     buildHints: "Универсальный / автономный",
     _isContainerEntry: true,
@@ -5607,7 +5601,9 @@ const ITEM_CATALOG_RAW = {
 };
 
 /** Заполняется syncCraftOutputIdSet() в systems/crafting.js из ITEM_RECIPES. */
-const CRAFT_OUTPUT_IDS = new Set(["acorn_collar","blazing_spear","blue_sage_collar","boiling_pot","bunch_of_coins","busted_blade","chain_whip","critwood_staff","death_scythe","gold_armor","improved_whetstone","magic_staff","molten_spear","pine_protector","red_orchid_collar","spiked_staff","stankus_toothpick","steel_goobert","war_scythe","white_lily_collar","amethyst_whelp","belladonnas_shade","belladonnas_whisper","blood_goobert","bloodthorne","bloody_dagger","box_of_prosperity","burning_blade","burning_sword","cap_of_discomfort","carrot_goobert","cauldron","chili_goobert","claws_of_attack","corrupted_armor","crow","cursed_dagger","dark_lantern","darksaber","demonic_flask","doom_cap","draconic_orb","dragonscale_armor","duffle_bag","emerald_whelp","flame_whip","fortunas_grace","fortunas_hope","friendly_fire","frostbite","frozen_buckler","gingerbread_jerry","gloves_of_power","heart_of_darkness","holy_spear","hyper_hedgehog","ice_armor","ice_dragon","king_goobert","light_goobert","lucky_piggy","magic_torch","miss_fortune","molten_greatsword","moon_armor","moon_shield","obsidian_dragon","oil_lamp","pandamonium","phoenix","piercing_arrow","platinum_customer_card","poison_goobert","poison_spear","present","pumpkin","rainbow_goobert","ranger_bag","rat_chef","ruby_chonk","ruby_whelp","sapphire_whelp","serpent_staff","snake","spiked_shield","squirrel_archer","staff_of_fire","staff_of_unhealing","stone_armor","stone_helm","stone_shoes","storage_coffin","strong_demonic_flask","strong_divine_potion","strong_health_potion","strong_heroic_potion","strong_mana_potion","strong_pestilence_flask","strong_stone_skin_potion","strong_vampiric_potion","sun_armor","sun_shield","tusk_piercer","tusk_poker","vampiric_armor","vampiric_gloves","vineweave_basket","winged_boots"]);
+const CRAFT_OUTPUT_IDS = new Set();
+
+/** craftOnly в источнике: 102 шт. — tools/sync-item-craft-flags.mjs */
 
 function buildItemCatalog() {
   const out = {};

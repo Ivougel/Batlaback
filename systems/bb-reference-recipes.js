@@ -1107,6 +1107,34 @@ const BB_REFERENCE_RECIPES = [
     ]
   },
   {
+    "id": "glowing_crownx1_box_of_richesx1_to_king_crown",
+    "output": "king_crown",
+    "inputs": [
+      {
+        "itemId": "glowing_crown",
+        "count": 1
+      },
+      {
+        "itemId": "box_of_riches",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "id": "goobertx1_king_crownx1_to_king_goobert",
+    "output": "king_goobert",
+    "inputs": [
+      {
+        "itemId": "goobert",
+        "count": 1
+      },
+      {
+        "itemId": "king_crown",
+        "count": 1
+      }
+    ]
+  },
+  {
     "id": "ratx1_healing_herbsx1_to_rat_chef",
     "output": "rat_chef",
     "inputs": [
@@ -1303,6 +1331,20 @@ const BB_REFERENCE_RECIPES = [
     ]
   },
   {
+    "id": "leather_armorx1_forging_hammerx1_to_duffle_bag",
+    "output": "duffle_bag",
+    "inputs": [
+      {
+        "itemId": "leather_armor",
+        "count": 1
+      },
+      {
+        "itemId": "forging_hammer",
+        "count": 1
+      }
+    ]
+  },
+  {
     "id": "holy_armorx1_bunch_of_coinsx1_to_gold_armor",
     "output": "gold_armor",
     "inputs": [
@@ -1312,6 +1354,72 @@ const BB_REFERENCE_RECIPES = [
       },
       {
         "itemId": "bunch_of_coins",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "id": "box_of_richesx1_maneki_nekox1_to_box_of_prosperity",
+    "output": "box_of_prosperity",
+    "inputs": [
+      {
+        "itemId": "box_of_riches",
+        "count": 1
+      },
+      {
+        "itemId": "maneki_neko",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "id": "ruby_eggx1_to_ruby_whelp",
+    "output": "ruby_whelp",
+    "inputs": [
+      {
+        "itemId": "ruby_egg",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "id": "ruby_whelpx1_holo_fire_lizardx1_to_ruby_chonk",
+    "output": "ruby_chonk",
+    "inputs": [
+      {
+        "itemId": "ruby_whelp",
+        "count": 1
+      },
+      {
+        "itemId": "holo_fire_lizard",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "id": "squirrelx1_shortbowx1_to_squirrel_archer",
+    "output": "squirrel_archer",
+    "inputs": [
+      {
+        "itemId": "squirrel",
+        "count": 1
+      },
+      {
+        "itemId": "shortbow",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "id": "fly_agaricx1_demonic_flaskx1_to_doom_cap",
+    "output": "doom_cap",
+    "inputs": [
+      {
+        "itemId": "fly_agaric",
+        "count": 1
+      },
+      {
+        "itemId": "demonic_flask",
         "count": 1
       }
     ]

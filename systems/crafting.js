@@ -350,10 +350,12 @@ function getCraftTooltipLines(itemId, side = null) {
   const lines = [];
   const craftCtx = typeof getCraftContextFromGame === "function" ? getCraftContextFromGame(side || (typeof prepViewSide !== "undefined" ? prepViewSide : "player")) : {};
   const comboLines = [];
+  let outputRecipeShown = false;
   const asOutput = getRecipeForOutput(itemId);
   if (asOutput) {
     const available = typeof isCraftRecipeAvailable !== "function" || isCraftRecipeAvailable(asOutput, craftCtx);
     if (available) {
+      outputRecipeShown = true;
       comboLines.push({
         html: renderCraftRecipeLineHtml(buildCraftRecipeParts(asOutput)),
         style: "craft-recipe",
@@ -378,7 +380,11 @@ function getCraftTooltipLines(itemId, side = null) {
     });
   });
   if (!comboLines.length) return lines;
-  lines.push({ text: "\u2697\uFE0F \u041A\u0440\u0430\u0444\u0442", style: "label", color: "#bc8cff" });
+  lines.push({
+    text: outputRecipeShown ? "\u2697\uFE0F \u041A\u0440\u0430\u0444\u0442" : "\u2697\uFE0F \u041A\u043E\u043C\u0431\u0438\u043D\u0430\u0446\u0438\u0438",
+    style: "label",
+    color: "#bc8cff",
+  });
   comboLines.forEach((entry) => {
     if (entry.html) {
       lines.push({ html: entry.html, style: entry.style || "craft-recipe", color: entry.color });

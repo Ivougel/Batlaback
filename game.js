@@ -1065,6 +1065,7 @@ function bindTouchInput() {
   const captureOpts = { passive: false, capture: true };
   const bubbleOpts = { passive: false };
   let activeGesture = null;
+  let prepDragPrimaryPointerId = null;
   let pointerCaptureEl = null;
 
   const isTouchLikePointer = (e) => e.pointerType === "touch" || e.pointerType === "pen";
@@ -1087,6 +1088,15 @@ function bindTouchInput() {
   };
 
   const onDown = (kind, id, x, y, e) => {
+    if (dragPayload && isLoadoutInteractionPhase()) {
+      if (activeGesture && gestureKey(kind, id) !== activeGesture) {
+        if (e.cancelable) e.preventDefault();
+        if (typeof tryRotateDragItemFromSecondaryTouch === "function") {
+          tryRotateDragItemFromSecondaryTouch();
+        }
+        return;
+      }
+    }
     if (activeGesture) return;
     if (ignoreTarget(e.target)) return;
     if (isStoragePhysicsTarget(e.target)) return;
@@ -1111,6 +1121,7 @@ function bindTouchInput() {
     if (!isLoadoutInteractionPhase() || gameOver) return;
     if (!isPrepPointerTarget(e.target)) return;
     activeGesture = gestureKey(kind, id);
+    prepDragPrimaryPointerId = kind === "pointer" ? id : null;
     lastTouchEventAt = Date.now();
     if (e.cancelable) e.preventDefault();
     const shopPointerSurface = e.target?.closest?.(
@@ -1146,6 +1157,9 @@ function bindTouchInput() {
     gamepadPointerUpAt(x, y);
     if (kind === "pointer") releasePointerSurface(id);
     activeGesture = null;
+    if (!dragPayload && !pendingShopDrag && !pendingBenchDrag) {
+      prepDragPrimaryPointerId = null;
+    }
   };
 
   document.addEventListener("pointerdown", (e) => {
@@ -1184,15 +1198,19 @@ function bindTouchInput() {
   }, bubbleOpts);
 
   document.addEventListener("touchstart", (e) => {
-    if (dragPayload && isLoadoutInteractionPhase() && e.touches.length === 2) {
+    if (dragPayload && isLoadoutInteractionPhase() && e.touches.length >= 2) {
       e.preventDefault();
-      rotateDragItem();
+      if (typeof tryRotateDragItemFromSecondaryTouch === "function") {
+        tryRotateDragItemFromSecondaryTouch();
+      }
     }
   }, bubbleOpts);
 
   bindTouchTooltipDismiss();
+  window.getPrepDragPrimaryPointerId = () => prepDragPrimaryPointerId;
   window.resetPrepTouchGesture = () => {
     activeGesture = null;
+    prepDragPrimaryPointerId = null;
     pointerCaptureEl = null;
   };
 }
