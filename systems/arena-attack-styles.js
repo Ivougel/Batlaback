@@ -1,87 +1,72 @@
-/**
- * ArenaAttackStyles — уникальные анимации атак экипировки манекена + реакции боевых эмодзи.
- * Каждый стиль: траектория полёта оружия + thoughtReaction для цели.
- */
+// Transpiled from TypeScript — npm run compile:ts
 
-const ArenaAttackStyles = (() => {
+const ArenaAttackStyles = /* @__PURE__ */ (() => {
   const ATTACK_TIME_SCALE = 2.75;
-
   function easeOutCubic(t) {
     const u = 1 - t;
     return 1 - u * u * u;
   }
-
   function easeInOutQuad(t) {
     return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
   }
-
   function easeOutBack(t) {
     const c1 = 1.70158;
     const c3 = c1 + 1;
     return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
   }
-
   function lerp(a, b, t) {
     return a + (b - a) * t;
   }
-
   function quadBezier(p0, p1, p2, t) {
     const u = 1 - t;
     return {
       x: u * u * p0.x + 2 * u * t * p1.x + t * t * p2.x,
-      y: u * u * p0.y + 2 * u * t * p1.y + t * t * p2.y,
+      y: u * u * p0.y + 2 * u * t * p1.y + t * t * p2.y
     };
   }
-
   function hashItemId(itemId) {
     let h = 0;
     const s = String(itemId || "");
-    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+    for (let i = 0; i < s.length; i++) h = h * 31 + s.charCodeAt(i) | 0;
     return Math.abs(h);
   }
-
   function itemParams(itemId) {
     const h = hashItemId(itemId);
     return {
       spin: h % 2 === 0 ? 1 : -1,
-      arc: 0.85 + (h % 7) * 0.06,
-      wobble: 0.9 + (h % 5) * 0.08,
-      hitsBonus: h % 2,
+      arc: 0.85 + h % 7 * 0.06,
+      wobble: 0.9 + h % 5 * 0.08,
+      hitsBonus: h % 2
     };
   }
-
   function arcCtrl(from, to, vmin, liftRatio = 0.14, sideBias = 0) {
     const midX = (from.x + to.x) * 0.5 + sideBias * vmin * 0.04;
     const midY = Math.min(from.y, to.y) - vmin * liftRatio;
     return { x: midX, y: midY };
   }
-
   function linearPhase(from, to, t, ease = easeOutCubic) {
     const u = ease(Math.min(1, Math.max(0, t)));
     return {
       x: lerp(from.x, to.x, u),
       y: lerp(from.y, to.y, u),
       scale: 1 + u * 0.1,
-      rotation: u * 90,
+      rotation: u * 90
     };
   }
-
   function bezierPhase(from, to, ctrl, t, ease = easeOutCubic) {
     const u = ease(Math.min(1, Math.max(0, t)));
     const pt = quadBezier(from, to, ctrl, u);
     const angle = Math.atan2(to.y - ctrl.y, to.x - ctrl.x) * (180 / Math.PI);
     return { x: pt.x, y: pt.y, scale: 0.9 + u * 0.22, rotation: angle * 0.35 };
   }
-
   function emojiAvatarArcCtrl(from, to, vmin) {
     const span = Math.abs(to.x - from.x);
     const lift = Math.max(vmin * 0.17, span * 0.32);
     return {
       x: (from.x + to.x) * 0.5,
-      y: Math.min(from.y, to.y) - lift,
+      y: Math.min(from.y, to.y) - lift
     };
   }
-
   function emojiAvatarStrikeArc(atk, t, vmin, params) {
     const from = { x: atk.fromX, y: atk.fromY };
     const to = { x: atk.targetX, y: atk.targetY };
@@ -94,13 +79,12 @@ const ArenaAttackStyles = (() => {
       x: pt.x,
       y: pt.y,
       scale: 0.9 + Math.sin(u * Math.PI) * 0.16,
-      rotation: angle + params.spin * 12,
+      rotation: angle + params.spin * 12
     };
   }
-
   function emojiAvatarRecoverArc(atk, t, vmin, params) {
-    const homeX = atk.useViewport ? atk.homeVpX : atk.homeX;
-    const homeY = atk.useViewport ? atk.homeVpY : atk.homeY;
+    const homeX = atk.useViewport ? atk.homeVpX ?? atk.homeX ?? 0 : atk.homeX ?? 0;
+    const homeY = atk.useViewport ? atk.homeVpY ?? atk.homeY ?? 0 : atk.homeY ?? 0;
     const from = { x: atk.fromX, y: atk.fromY };
     const to = { x: homeX, y: homeY };
     const ctrl = emojiAvatarArcCtrl(from, to, vmin);
@@ -110,12 +94,10 @@ const ArenaAttackStyles = (() => {
       x: pt.x,
       y: pt.y,
       scale: 1.06 - u * 0.06,
-      rotation: (1 - u) * 24 * params.spin,
+      rotation: (1 - u) * 24 * params.spin
     };
   }
-
-  /** Стили, где оружие остаётся на месте, а к цели летит отдельный снаряд-эмодзи. */
-  const PROJECTILE_STYLES = new Set([
+  const PROJECTILE_STYLES = /* @__PURE__ */ new Set([
     "arrow",
     "javelin",
     "fireball",
@@ -125,50 +107,40 @@ const ArenaAttackStyles = (() => {
     "holy",
     "drain",
     "energy",
-    "shadow",
+    "shadow"
   ]);
-
   const PROJECTILE_GLYPH = {
-    arrow: "➶",
-    javelin: "🗡️",
-    fireball: "🔥",
-    arcane: "✨",
-    ice: "❄️",
-    poisonCloud: "💨",
-    holy: "🌟",
-    drain: "🟣",
-    energy: "⚡",
-    shadow: "🌑",
+    arrow: "\u27B6",
+    javelin: "\u{1F5E1}\uFE0F",
+    fireball: "\u{1F525}",
+    arcane: "\u2728",
+    ice: "\u2744\uFE0F",
+    poisonCloud: "\u{1F4A8}",
+    holy: "\u{1F31F}",
+    drain: "\u{1F7E3}",
+    energy: "\u26A1",
+    shadow: "\u{1F311}"
   };
-
   function isProjectileStyle(styleId) {
     return PROJECTILE_STYLES.has(styleId);
   }
-
   function getProjectileGlyph(styleId, itemId) {
-    if (styleId === "fireball") return "🔥";
-    if (styleId === "arcane") return "✨";
-    return PROJECTILE_GLYPH[styleId] || "•";
+    if (styleId === "fireball") return "\u{1F525}";
+    if (styleId === "arcane") return "\u2728";
+    return PROJECTILE_GLYPH[styleId] || "\u2022";
   }
-
   function weaponHomePose(atk, body, style, vmin, params) {
-    const homeX = atk.useEmojiAvatarArc
-      ? atk.homeVpX
-      : (atk.useViewport ? atk.homeVpX : body.homeX);
-    const homeY = atk.useEmojiAvatarArc
-      ? atk.homeVpY
-      : (atk.useViewport ? atk.homeVpY : body.homeY);
+    const homeX = atk.useEmojiAvatarArc ? atk.homeVpX ?? body.homeX : atk.useViewport ? atk.homeVpX ?? body.homeX : body.homeX;
+    const homeY = atk.useEmojiAvatarArc ? atk.homeVpY ?? body.homeY : atk.useViewport ? atk.homeVpY ?? body.homeY : body.homeY;
     const holdAtk = { ...atk, fromX: homeX, fromY: homeY };
     const holdPose = style.windup ? style.windup(holdAtk, 1, vmin, params) : null;
     return {
       x: homeX,
       y: homeY,
       scale: holdPose?.scale ?? 1,
-      rotation: holdPose?.rotation ?? body.rotation ?? 0,
+      rotation: holdPose?.rotation ?? body.rotation ?? 0
     };
   }
-
-  /** @type {Record<string, object>} */
   const STYLES = {
     slash: {
       id: "slash",
@@ -181,7 +153,7 @@ const ArenaAttackStyles = (() => {
           x: atk.fromX - pull,
           y: atk.fromY + pull * 0.3,
           scale: 1 + t * 0.06,
-          rotation: -28 * params.spin * t,
+          rotation: -28 * params.spin * t
         };
       },
       strike(atk, t, vmin, params) {
@@ -198,9 +170,8 @@ const ArenaAttackStyles = (() => {
         const from = { x: atk.strikeX, y: atk.strikeY };
         const to = { x: homeX, y: homeY };
         return linearPhase(from, to, t, easeInOutQuad);
-      },
+      }
     },
-
     stab: {
       id: "stab",
       phases: { windup: 0.08, strike: 0.14, recover: 0.2 },
@@ -212,7 +183,7 @@ const ArenaAttackStyles = (() => {
           x: atk.fromX - back * params.spin,
           y: atk.fromY,
           scale: 0.92 + t * 0.05,
-          rotation: -12 * params.spin,
+          rotation: -12 * params.spin
         };
       },
       strike(atk, t, vmin, params) {
@@ -221,16 +192,15 @@ const ArenaAttackStyles = (() => {
           x: lerp(atk.fromX, atk.targetX, u),
           y: lerp(atk.fromY, atk.targetY, u),
           scale: 1 + u * 0.18,
-          rotation: u * 24 * params.spin,
+          rotation: u * 24 * params.spin
         };
       },
       recover(atk, t) {
         const homeX = atk.useViewport ? atk.homeVpX : atk.homeX;
         const homeY = atk.useViewport ? atk.homeVpY : atk.homeY;
         return linearPhase({ x: atk.strikeX, y: atk.strikeY }, { x: homeX, y: homeY }, t, easeOutCubic);
-      },
+      }
     },
-
     smash: {
       id: "smash",
       phases: { windup: 0.2, strike: 0.16, recover: 0.32 },
@@ -242,7 +212,7 @@ const ArenaAttackStyles = (() => {
           x: atk.fromX,
           y: atk.fromY - lift,
           scale: 1 + t * 0.2,
-          rotation: -55 * params.spin * t,
+          rotation: -55 * params.spin * t
         };
       },
       strike(atk, t, vmin, params) {
@@ -251,7 +221,7 @@ const ArenaAttackStyles = (() => {
           x: lerp(atk.fromX, atk.targetX, u),
           y: lerp(atk.fromY, atk.targetY, u) + Math.sin(u * Math.PI) * vmin * 0.02,
           scale: 1.15 + u * 0.2,
-          rotation: 40 * params.spin,
+          rotation: 40 * params.spin
         };
         return pt;
       },
@@ -261,9 +231,8 @@ const ArenaAttackStyles = (() => {
         const pt = linearPhase({ x: atk.strikeX, y: atk.strikeY }, { x: homeX, y: homeY }, t, easeInOutQuad);
         pt.scale = 1.2 - t * 0.2;
         return pt;
-      },
+      }
     },
-
     heavy: {
       id: "heavy",
       phases: { windup: 0.22, strike: 0.24, recover: 0.34 },
@@ -274,7 +243,7 @@ const ArenaAttackStyles = (() => {
           x: atk.fromX - vmin * 0.03 * params.spin * t,
           y: atk.fromY - vmin * 0.02 * t,
           scale: 1 + t * 0.25,
-          rotation: -70 * params.spin * t,
+          rotation: -70 * params.spin * t
         };
       },
       strike(atk, t, vmin, params) {
@@ -290,9 +259,8 @@ const ArenaAttackStyles = (() => {
         const homeX = atk.useViewport ? atk.homeVpX : atk.homeX;
         const homeY = atk.useViewport ? atk.homeVpY : atk.homeY;
         return linearPhase({ x: atk.strikeX, y: atk.strikeY }, { x: homeX, y: homeY }, t, easeInOutQuad);
-      },
+      }
     },
-
     arrow: {
       id: "arrow",
       phases: { windup: 0.1, strike: 0.28, recover: 0.22 },
@@ -301,9 +269,9 @@ const ArenaAttackStyles = (() => {
       windup(atk, t, vmin, params) {
         return {
           x: atk.fromX - vmin * 0.012 * params.spin,
-          y: atk.fromY + vmin * 0.008,
+          y: atk.fromY + vmin * 8e-3,
           scale: 0.88 + t * 0.08,
-          rotation: -18 * params.spin,
+          rotation: -18 * params.spin
         };
       },
       strike(atk, t, vmin, params) {
@@ -320,9 +288,8 @@ const ArenaAttackStyles = (() => {
         const homeX = atk.useViewport ? atk.homeVpX : atk.homeX;
         const homeY = atk.useViewport ? atk.homeVpY : atk.homeY;
         return linearPhase({ x: atk.strikeX, y: atk.strikeY }, { x: homeX, y: homeY }, t, easeOutCubic);
-      },
+      }
     },
-
     javelin: {
       id: "javelin",
       phases: { windup: 0.12, strike: 0.22, recover: 0.24 },
@@ -333,27 +300,26 @@ const ArenaAttackStyles = (() => {
           x: atk.fromX,
           y: atk.fromY - vmin * 0.025 * t,
           scale: 1 + t * 0.12,
-          rotation: -30 * params.spin * t,
+          rotation: -30 * params.spin * t
         };
       },
       strike(atk, t, vmin, params) {
         const u = easeOutCubic(t);
-        const wobble = Math.sin(t * Math.PI * 3) * vmin * 0.003;
+        const wobble = Math.sin(t * Math.PI * 3) * vmin * 3e-3;
         const angle = Math.atan2(atk.targetY - atk.fromY, atk.targetX - atk.fromX) * (180 / Math.PI);
         return {
           x: lerp(atk.fromX, atk.targetX, u),
           y: lerp(atk.fromY, atk.targetY, u) + wobble,
           scale: 1 + u * 0.14,
-          rotation: angle + t * 40 * params.spin,
+          rotation: angle + t * 40 * params.spin
         };
       },
       recover(atk, t) {
         const homeX = atk.useViewport ? atk.homeVpX : atk.homeX;
         const homeY = atk.useViewport ? atk.homeVpY : atk.homeY;
         return linearPhase({ x: atk.strikeX, y: atk.strikeY }, { x: homeX, y: homeY }, t, easeInOutQuad);
-      },
+      }
     },
-
     whip: {
       id: "whip",
       phases: { windup: 0.14, strike: 0.18, recover: 0.26 },
@@ -365,7 +331,7 @@ const ArenaAttackStyles = (() => {
           x: atk.fromX + swing,
           y: atk.fromY - vmin * 0.01 * t,
           scale: 1 + t * 0.08,
-          rotation: -90 * params.spin * t,
+          rotation: -90 * params.spin * t
         };
       },
       strike(atk, t, vmin, params) {
@@ -373,7 +339,7 @@ const ArenaAttackStyles = (() => {
         const to = { x: atk.targetX, y: atk.targetY };
         const ctrl = {
           x: from.x + (to.x - from.x) * 0.35 + vmin * 0.06 * params.spin,
-          y: Math.min(from.y, to.y) - vmin * 0.12,
+          y: Math.min(from.y, to.y) - vmin * 0.12
         };
         const pt = bezierPhase(from, to, ctrl, t, easeOutCubic);
         pt.rotation += Math.sin(t * Math.PI * 2) * 35;
@@ -383,9 +349,8 @@ const ArenaAttackStyles = (() => {
         const homeX = atk.useViewport ? atk.homeVpX : atk.homeX;
         const homeY = atk.useViewport ? atk.homeVpY : atk.homeY;
         return linearPhase({ x: atk.strikeX, y: atk.strikeY }, { x: homeX, y: homeY }, t, easeInOutQuad);
-      },
+      }
     },
-
     arcane: {
       id: "arcane",
       phases: { windup: 0.16, strike: 0.3, recover: 0.28 },
@@ -397,7 +362,7 @@ const ArenaAttackStyles = (() => {
           x: atk.fromX,
           y: atk.fromY - vmin * 0.015 * t,
           scale: 0.85 + t * 0.15 * pulse,
-          rotation: t * 120 * params.spin,
+          rotation: t * 120 * params.spin
         };
       },
       strike(atk, t, vmin, params) {
@@ -415,9 +380,8 @@ const ArenaAttackStyles = (() => {
         const pt = linearPhase({ x: atk.strikeX, y: atk.strikeY }, { x: homeX, y: homeY }, t, easeInOutQuad);
         pt.rotation *= 1 - t;
         return pt;
-      },
+      }
     },
-
     fireball: {
       id: "fireball",
       phases: { windup: 0.14, strike: 0.32, recover: 0.26 },
@@ -428,7 +392,7 @@ const ArenaAttackStyles = (() => {
           x: atk.fromX,
           y: atk.fromY - vmin * 0.02 * t,
           scale: 0.7 + t * 0.35,
-          rotation: t * 60,
+          rotation: t * 60
         };
       },
       strike(atk, t, vmin) {
@@ -444,9 +408,8 @@ const ArenaAttackStyles = (() => {
         const homeX = atk.useViewport ? atk.homeVpX : atk.homeX;
         const homeY = atk.useViewport ? atk.homeVpY : atk.homeY;
         return linearPhase({ x: atk.strikeX, y: atk.strikeY }, { x: homeX, y: homeY }, t, easeOutCubic);
-      },
+      }
     },
-
     flameSlash: {
       id: "flameSlash",
       phases: { windup: 0.1, strike: 0.18, recover: 0.24 },
@@ -457,26 +420,25 @@ const ArenaAttackStyles = (() => {
           x: atk.fromX - vmin * 0.015 * params.spin,
           y: atk.fromY,
           scale: 1 + t * 0.1,
-          rotation: -20 * params.spin + t * 40,
+          rotation: -20 * params.spin + t * 40
         };
       },
       strike(atk, t, vmin, params) {
         const u = easeOutCubic(t);
-        const trail = Math.sin(u * Math.PI * 2) * vmin * 0.004;
+        const trail = Math.sin(u * Math.PI * 2) * vmin * 4e-3;
         return {
           x: lerp(atk.fromX, atk.targetX, u),
           y: lerp(atk.fromY, atk.targetY, u) + trail,
           scale: 1 + u * 0.2,
-          rotation: u * 160 * params.spin,
+          rotation: u * 160 * params.spin
         };
       },
       recover(atk, t) {
         const homeX = atk.useViewport ? atk.homeVpX : atk.homeX;
         const homeY = atk.useViewport ? atk.homeVpY : atk.homeY;
         return linearPhase({ x: atk.strikeX, y: atk.strikeY }, { x: homeX, y: homeY }, t, easeInOutQuad);
-      },
+      }
     },
-
     ice: {
       id: "ice",
       phases: { windup: 0.12, strike: 0.26, recover: 0.28 },
@@ -485,30 +447,29 @@ const ArenaAttackStyles = (() => {
       windup(atk, t, vmin, params) {
         return {
           x: atk.fromX,
-          y: atk.fromY + vmin * 0.008 * t,
+          y: atk.fromY + vmin * 8e-3 * t,
           scale: 0.9 + t * 0.08,
-          rotation: -t * 45 * params.spin,
+          rotation: -t * 45 * params.spin
         };
       },
       strike(atk, t, vmin, params) {
         const from = { x: atk.fromX, y: atk.fromY };
         const to = { x: atk.targetX, y: atk.targetY };
         const u = easeOutCubic(t);
-        const shard = Math.sin(u * Math.PI * 5) * vmin * 0.002;
+        const shard = Math.sin(u * Math.PI * 5) * vmin * 2e-3;
         return {
           x: lerp(from.x, to.x, u) + shard,
           y: lerp(from.y, to.y, u) - Math.sin(u * Math.PI) * vmin * 0.02,
           scale: 0.95 + u * 0.12,
-          rotation: u * 90 * params.spin,
+          rotation: u * 90 * params.spin
         };
       },
       recover(atk, t) {
         const homeX = atk.useViewport ? atk.homeVpX : atk.homeX;
         const homeY = atk.useViewport ? atk.homeVpY : atk.homeY;
         return linearPhase({ x: atk.strikeX, y: atk.strikeY }, { x: homeX, y: homeY }, t, easeInOutQuad);
-      },
+      }
     },
-
     holy: {
       id: "holy",
       phases: { windup: 0.14, strike: 0.24, recover: 0.3 },
@@ -519,7 +480,7 @@ const ArenaAttackStyles = (() => {
           x: atk.fromX,
           y: atk.fromY - vmin * 0.025 * t,
           scale: 1 + t * 0.15,
-          rotation: t * 30,
+          rotation: t * 30
         };
       },
       strike(atk, t, vmin) {
@@ -528,16 +489,15 @@ const ArenaAttackStyles = (() => {
           x: lerp(atk.fromX, atk.targetX, u),
           y: lerp(atk.fromY, atk.targetY, u) - Math.sin(u * Math.PI) * vmin * 0.03,
           scale: 1 + Math.sin(u * Math.PI) * 0.2,
-          rotation: u * 45,
+          rotation: u * 45
         };
       },
       recover(atk, t) {
         const homeX = atk.useViewport ? atk.homeVpX : atk.homeX;
         const homeY = atk.useViewport ? atk.homeVpY : atk.homeY;
         return linearPhase({ x: atk.strikeX, y: atk.strikeY }, { x: homeX, y: homeY }, t, easeInOutQuad);
-      },
+      }
     },
-
     poison: {
       id: "poison",
       phases: { windup: 0.1, strike: 0.22, recover: 0.26 },
@@ -545,10 +505,10 @@ const ArenaAttackStyles = (() => {
       thoughtReaction: { kind: "poison", intensity: 1, duration: 0.48 },
       windup(atk, t, vmin, params) {
         return {
-          x: atk.fromX + Math.sin(t * Math.PI * 3) * vmin * 0.004,
+          x: atk.fromX + Math.sin(t * Math.PI * 3) * vmin * 4e-3,
           y: atk.fromY,
           scale: 0.92 + t * 0.06,
-          rotation: t * 25 * params.spin,
+          rotation: t * 25 * params.spin
         };
       },
       strike(atk, t, vmin, params) {
@@ -563,9 +523,8 @@ const ArenaAttackStyles = (() => {
         const homeX = atk.useViewport ? atk.homeVpX : atk.homeX;
         const homeY = atk.useViewport ? atk.homeVpY : atk.homeY;
         return linearPhase({ x: atk.strikeX, y: atk.strikeY }, { x: homeX, y: homeY }, t, easeOutCubic);
-      },
+      }
     },
-
     poisonCloud: {
       id: "poisonCloud",
       phases: { windup: 0.18, strike: 0.34, recover: 0.3 },
@@ -576,7 +535,7 @@ const ArenaAttackStyles = (() => {
           x: atk.fromX,
           y: atk.fromY - vmin * 0.02 * t,
           scale: 0.75 + t * 0.4,
-          rotation: t * 90,
+          rotation: t * 90
         };
       },
       strike(atk, t, vmin) {
@@ -588,16 +547,15 @@ const ArenaAttackStyles = (() => {
           x: lerp(from.x, to.x, u) + spread,
           y: lerp(from.y, to.y, u),
           scale: 0.8 + Math.sin(u * Math.PI) * 0.5,
-          rotation: u * 120,
+          rotation: u * 120
         };
       },
       recover(atk, t) {
         const homeX = atk.useViewport ? atk.homeVpX : atk.homeX;
         const homeY = atk.useViewport ? atk.homeVpY : atk.homeY;
         return linearPhase({ x: atk.strikeX, y: atk.strikeY }, { x: homeX, y: homeY }, t, easeInOutQuad);
-      },
+      }
     },
-
     drain: {
       id: "drain",
       phases: { windup: 0.14, strike: 0.28, recover: 0.3 },
@@ -608,7 +566,7 @@ const ArenaAttackStyles = (() => {
           x: atk.fromX + vmin * 0.01 * t * params.spin,
           y: atk.fromY,
           scale: 1 + t * 0.08,
-          rotation: t * 50 * params.spin,
+          rotation: t * 50 * params.spin
         };
       },
       strike(atk, t, vmin, params) {
@@ -618,16 +576,15 @@ const ArenaAttackStyles = (() => {
           x: lerp(atk.fromX, atk.targetX, u) - pull * params.spin,
           y: lerp(atk.fromY, atk.targetY, u),
           scale: 1 + Math.sin(u * Math.PI) * 0.15,
-          rotation: u * 100 * params.spin,
+          rotation: u * 100 * params.spin
         };
       },
       recover(atk, t) {
         const homeX = atk.useViewport ? atk.homeVpX : atk.homeX;
         const homeY = atk.useViewport ? atk.homeVpY : atk.homeY;
         return linearPhase({ x: atk.strikeX, y: atk.strikeY }, { x: homeX, y: homeY }, t, easeOutCubic);
-      },
+      }
     },
-
     energy: {
       id: "energy",
       phases: { windup: 0.1, strike: 0.2, recover: 0.24 },
@@ -638,26 +595,25 @@ const ArenaAttackStyles = (() => {
           x: atk.fromX,
           y: atk.fromY,
           scale: 0.9 + t * 0.12,
-          rotation: -t * 35 * params.spin,
+          rotation: -t * 35 * params.spin
         };
       },
       strike(atk, t, vmin, params) {
         const u = easeOutCubic(t);
-        const buzz = Math.sin(u * Math.PI * 8) * vmin * 0.002;
+        const buzz = Math.sin(u * Math.PI * 8) * vmin * 2e-3;
         return {
           x: lerp(atk.fromX, atk.targetX, u) + buzz,
           y: lerp(atk.fromY, atk.targetY, u) - buzz,
           scale: 1 + u * 0.16,
-          rotation: u * 130 * params.spin,
+          rotation: u * 130 * params.spin
         };
       },
       recover(atk, t) {
         const homeX = atk.useViewport ? atk.homeVpX : atk.homeX;
         const homeY = atk.useViewport ? atk.homeVpY : atk.homeY;
         return linearPhase({ x: atk.strikeX, y: atk.strikeY }, { x: homeX, y: homeY }, t, easeInOutQuad);
-      },
+      }
     },
-
     reap: {
       id: "reap",
       phases: { windup: 0.16, strike: 0.22, recover: 0.3 },
@@ -669,7 +625,7 @@ const ArenaAttackStyles = (() => {
           x: atk.fromX + sweep,
           y: atk.fromY - vmin * 0.02 * t,
           scale: 1 + t * 0.18,
-          rotation: -110 * params.spin * t,
+          rotation: -110 * params.spin * t
         };
       },
       strike(atk, t, vmin, params) {
@@ -684,9 +640,8 @@ const ArenaAttackStyles = (() => {
         const homeX = atk.useViewport ? atk.homeVpX : atk.homeX;
         const homeY = atk.useViewport ? atk.homeVpY : atk.homeY;
         return linearPhase({ x: atk.strikeX, y: atk.strikeY }, { x: homeX, y: homeY }, t, easeInOutQuad);
-      },
+      }
     },
-
     sweep: {
       id: "sweep",
       phases: { windup: 0.12, strike: 0.2, recover: 0.26 },
@@ -697,7 +652,7 @@ const ArenaAttackStyles = (() => {
           x: atk.fromX - vmin * 0.025 * params.spin * t,
           y: atk.fromY,
           scale: 1 + t * 0.05,
-          rotation: 60 * params.spin * t,
+          rotation: 60 * params.spin * t
         };
       },
       strike(atk, t, vmin, params) {
@@ -705,7 +660,7 @@ const ArenaAttackStyles = (() => {
         const to = { x: atk.targetX, y: atk.targetY };
         const ctrl = {
           x: (from.x + to.x) * 0.5,
-          y: from.y - vmin * 0.06,
+          y: from.y - vmin * 0.06
         };
         const pt = bezierPhase(from, to, ctrl, t, easeOutCubic);
         pt.rotation += 180 * params.spin * t;
@@ -715,9 +670,8 @@ const ArenaAttackStyles = (() => {
         const homeX = atk.useViewport ? atk.homeVpX : atk.homeX;
         const homeY = atk.useViewport ? atk.homeVpY : atk.homeY;
         return linearPhase({ x: atk.strikeX, y: atk.strikeY }, { x: homeX, y: homeY }, t, easeInOutQuad);
-      },
+      }
     },
-
     thrust: {
       id: "thrust",
       phases: { windup: 0.1, strike: 0.2, recover: 0.24 },
@@ -726,9 +680,9 @@ const ArenaAttackStyles = (() => {
       windup(atk, t, vmin, params) {
         return {
           x: atk.fromX - vmin * 0.028 * params.spin * t,
-          y: atk.fromY + vmin * 0.006 * t,
+          y: atk.fromY + vmin * 6e-3 * t,
           scale: 1 + t * 0.08,
-          rotation: -8 * params.spin,
+          rotation: -8 * params.spin
         };
       },
       strike(atk, t, vmin, params) {
@@ -737,40 +691,39 @@ const ArenaAttackStyles = (() => {
           x: lerp(atk.fromX, atk.targetX, u),
           y: lerp(atk.fromY, atk.targetY, u),
           scale: 1 + u * 0.14,
-          rotation: u * 18 * params.spin,
+          rotation: u * 18 * params.spin
         };
       },
       recover(atk, t) {
         const homeX = atk.useViewport ? atk.homeVpX : atk.homeX;
         const homeY = atk.useViewport ? atk.homeVpY : atk.homeY;
         return linearPhase({ x: atk.strikeX, y: atk.strikeY }, { x: homeX, y: homeY }, t, easeOutCubic);
-      },
+      }
     },
-
     shadow: {
       id: "shadow",
       phases: { windup: 0.08, strike: 0.16, recover: 0.22 },
       hits: () => [3, 5],
       thoughtReaction: { kind: "flicker", intensity: 1, duration: 0.36 },
       windup(atk, t, vmin, params) {
-        const flicker = (Math.random() - 0.5) * vmin * 0.006 * t;
+        const flicker = (Math.random() - 0.5) * vmin * 6e-3 * t;
         return {
           x: atk.fromX + flicker,
           y: atk.fromY + flicker,
           scale: 0.85 + t * 0.1,
           rotation: t * 20 * params.spin,
-          opacity: 0.7 + t * 0.3,
+          opacity: 0.7 + t * 0.3
         };
       },
       strike(atk, t, vmin, params) {
         const u = easeOutCubic(t);
-        const jitter = Math.sin(u * Math.PI * 6) * vmin * 0.003;
+        const jitter = Math.sin(u * Math.PI * 6) * vmin * 3e-3;
         return {
           x: lerp(atk.fromX, atk.targetX, u) + jitter,
           y: lerp(atk.fromY, atk.targetY, u) - jitter,
           scale: 1 + u * 0.12,
           rotation: u * 70 * params.spin,
-          opacity: 1,
+          opacity: 1
         };
       },
       recover(atk, t) {
@@ -779,9 +732,8 @@ const ArenaAttackStyles = (() => {
         const pt = linearPhase({ x: atk.strikeX, y: atk.strikeY }, { x: homeX, y: homeY }, t, easeOutCubic);
         pt.opacity = 1 - t * 0.15;
         return pt;
-      },
+      }
     },
-
     bash: {
       id: "bash",
       phases: { windup: 0.15, strike: 0.14, recover: 0.28 },
@@ -792,7 +744,7 @@ const ArenaAttackStyles = (() => {
           x: atk.fromX,
           y: atk.fromY - vmin * 0.035 * t,
           scale: 1 + t * 0.15,
-          rotation: -40 * params.spin * t,
+          rotation: -40 * params.spin * t
         };
       },
       strike(atk, t, vmin, params) {
@@ -801,18 +753,16 @@ const ArenaAttackStyles = (() => {
           x: lerp(atk.fromX, atk.targetX, u),
           y: lerp(atk.fromY, atk.targetY, u),
           scale: 1.2 + u * 0.1,
-          rotation: 25 * params.spin,
+          rotation: 25 * params.spin
         };
       },
       recover(atk, t) {
         const homeX = atk.useViewport ? atk.homeVpX : atk.homeX;
         const homeY = atk.useViewport ? atk.homeVpY : atk.homeY;
         return linearPhase({ x: atk.strikeX, y: atk.strikeY }, { x: homeX, y: homeY }, t, easeInOutQuad);
-      },
-    },
+      }
+    }
   };
-
-  /** Явная привязка предметов к стилю (уникальная анимация на каждый тип оружия). */
   const BY_ITEM = {
     wooden_sword: "slash",
     hero_sword: "slash",
@@ -863,22 +813,20 @@ const ArenaAttackStyles = (() => {
     pandamonium: "reap",
     tusk_poker: "javelin",
     tusk_piercer: "javelin",
-    friendly_fire: "fireball",
+    friendly_fire: "fireball"
   };
-
   function hasTag(def, tag) {
     return (def?.tags || []).includes(tag);
   }
-
   function resolveByTags(def) {
     if (!def) return "slash";
     const tags = def.tags || [];
     if (tags.includes("stun")) return "bash";
     if (def.id?.includes("whip") || tags.includes("spikes") && tags.includes("melee")) return "whip";
-    if (def.id?.includes("scythe") || def.icon?.includes("⚰")) return "reap";
-    if (def.id?.includes("spear") || def.icon?.includes("🔱")) return tags.includes("poison") ? "poison" : tags.includes("holy") ? "holy" : "thrust";
+    if (def.id?.includes("scythe") || def.icon?.includes("\u26B0")) return "reap";
+    if (def.id?.includes("spear") || def.icon?.includes("\u{1F531}")) return tags.includes("poison") ? "poison" : tags.includes("holy") ? "holy" : "thrust";
     if (def.id?.includes("dagger") || def.id?.includes("rapier")) return tags.includes("dark") ? "shadow" : "stab";
-    if (def.id?.includes("greatsword") || def.shape?.length > 4) return "heavy";
+    if (def.id?.includes("greatsword") || (def.shape?.length || 0) > 4) return "heavy";
     if (tags.includes("fire") && tags.includes("magic")) return "fireball";
     if (tags.includes("fire")) return "flameSlash";
     if (tags.includes("cold")) return "ice";
@@ -890,21 +838,18 @@ const ArenaAttackStyles = (() => {
     if (tags.includes("debuff") && tags.includes("melee")) return "sweep";
     if (tags.includes("dark")) return "shadow";
     if (tags.includes("ranged")) return tags.includes("spikes") ? "javelin" : "arrow";
-    if (tags.includes("melee")) return def.id?.includes("hammer") || def.icon?.includes("🔨") ? "smash" : "slash";
+    if (tags.includes("melee")) return def.id?.includes("hammer") || def.icon?.includes("\u{1F528}") ? "smash" : "slash";
     return "slash";
   }
-
   function resolveStyle(def) {
     if (!def) return STYLES.slash;
     if (def.arenaAttackStyle && STYLES[def.arenaAttackStyle]) return STYLES[def.arenaAttackStyle];
-    const key = BY_ITEM[def.id] || resolveByTags(def);
+    const key = def.id && BY_ITEM[def.id] || resolveByTags(def);
     return STYLES[key] || STYLES.slash;
   }
-
   function resolveStyleId(def) {
     return resolveStyle(def).id;
   }
-
   function rollHits(style, itemId) {
     const params = itemParams(itemId);
     const range = style.hits();
@@ -913,9 +858,8 @@ const ArenaAttackStyles = (() => {
     const bonus = params.hitsBonus && Math.random() > 0.65 ? 1 : 0;
     return Math.min(2, min + Math.floor(Math.random() * (max - min + 1)) + bonus);
   }
-
   function createAttack(body, atkBase) {
-    const style = STYLES[atkBase.styleId] || STYLES.slash;
+    const style = STYLES[atkBase.styleId || "slash"] || STYLES.slash;
     const params = itemParams(body.itemId);
     return {
       ...atkBase,
@@ -929,42 +873,40 @@ const ArenaAttackStyles = (() => {
       homeX: body.homeX,
       homeY: body.homeY,
       useEmojiAvatarArc: !!atkBase.useEmojiAvatarArc,
+      fromX: atkBase.fromX ?? body.homeX,
+      fromY: atkBase.fromY ?? body.homeY,
+      targetX: atkBase.targetX ?? body.homeX,
+      targetY: atkBase.targetY ?? body.homeY
     };
   }
-
   function fireThoughtReaction(body, style) {
     if (!style?.thoughtReaction) return;
-    if (typeof BattleFxTier !== "undefined" && BattleFxTier.equipThoughtReactionsEnabled
-      && !BattleFxTier.equipThoughtReactionsEnabled()) return;
+    if (typeof BattleFxTier !== "undefined" && BattleFxTier.equipThoughtReactionsEnabled && !BattleFxTier.equipThoughtReactionsEnabled()) return;
     if (typeof ThoughtArena === "undefined" || !ThoughtArena.triggerEquipHitReaction) return;
     const victimSide = body.side === "player" ? "enemy" : "player";
     ThoughtArena.triggerEquipHitReaction(victimSide, {
       ...style.thoughtReaction,
       fromSide: body.side,
       styleId: style.id,
-      itemId: body.itemId,
+      itemId: body.itemId
     });
   }
-
   function stepAttack(body, atk, dt, vmin) {
     const style = STYLES[atk.styleId] || STYLES.slash;
     const params = atk.styleParams || itemParams(body.itemId);
     const phases = style.phases;
     const dur = (phases[atk.phase] || 0.2) * ATTACK_TIME_SCALE;
     const projectile = isProjectileStyle(atk.styleId);
-
     atk.phaseT += dt;
     const t = atk.phaseT / dur;
-
     if (atk.projectileFade != null) {
       atk.projectileFade += dt * 5;
     }
-
     let visual;
     if (atk.phase === "windup") {
       if (atk.useEmojiAvatarArc || atk.useViewport) {
-        atk.fromX = atk.homeVpX;
-        atk.fromY = atk.homeVpY;
+        atk.fromX = atk.homeVpX ?? body.homeX;
+        atk.fromY = atk.homeVpY ?? body.homeY;
       }
       visual = style.windup(atk, t, vmin, params);
       if (projectile) atk.projectileVisual = null;
@@ -996,7 +938,6 @@ const ArenaAttackStyles = (() => {
     } else {
       visual = { x: body.renderX, y: body.renderY, scale: 1, rotation: body.rotation || 0 };
     }
-
     if (visual) {
       body.renderX = visual.x;
       body.renderY = visual.y;
@@ -1004,24 +945,20 @@ const ArenaAttackStyles = (() => {
       if (visual.rotation != null) body.rotation = visual.rotation;
       if (visual.opacity != null) body.opacity = visual.opacity;
     }
-
     if (atk.phaseT < dur) return false;
-
     atk.phaseT = 0;
     atk.hitReacted = false;
-
     if (atk.phase === "windup") {
       atk.phase = "strike";
       if (atk.useEmojiAvatarArc) {
-        atk.fromX = atk.homeVpX;
-        atk.fromY = atk.homeVpY;
+        atk.fromX = atk.homeVpX ?? body.homeX;
+        atk.fromY = atk.homeVpY ?? body.homeY;
       } else {
         atk.fromX = body.renderX;
         atk.fromY = body.renderY;
       }
       return false;
     }
-
     if (atk.phase === "strike") {
       atk.strikeX = body.renderX;
       atk.strikeY = body.renderY;
@@ -1037,8 +974,8 @@ const ArenaAttackStyles = (() => {
       } else {
         atk.phase = "windup";
         if (atk.useEmojiAvatarArc) {
-          atk.fromX = atk.homeVpX;
-          atk.fromY = atk.homeVpY;
+          atk.fromX = atk.homeVpX ?? body.homeX;
+          atk.fromY = atk.homeVpY ?? body.homeY;
         } else {
           atk.fromX = atk.strikeX;
           atk.fromY = atk.strikeY;
@@ -1046,20 +983,17 @@ const ArenaAttackStyles = (() => {
       }
       return false;
     }
-
     if (atk.phase === "recover") {
-      body.x = atk.useViewport ? atk.homeVpX : body.homeX;
-      body.y = atk.useViewport ? atk.homeVpY : body.homeY;
+      body.x = atk.useViewport ? atk.homeVpX ?? body.homeX : body.homeX;
+      body.y = atk.useViewport ? atk.homeVpY ?? body.homeY : body.homeY;
       body.renderX = body.x;
       body.renderY = body.y;
       body.displayScale = 1;
       body.opacity = 1;
       return true;
     }
-
     return false;
   }
-
   return {
     STYLES,
     BY_ITEM,
@@ -1069,6 +1003,6 @@ const ArenaAttackStyles = (() => {
     stepAttack,
     itemParams,
     isProjectileStyle,
-    getProjectileGlyph,
+    getProjectileGlyph
   };
 })();

@@ -10,7 +10,7 @@ alwaysApply: false
 
 ## Обязательно
 
-- Режимы игры: только `classic | solo | path | versus | hardbot | lobby | lobby2p | campaign` (`data-game-mode`).
+- Режим игры: только `classic` (`data-game-mode`).
 - Фазы `#app`: `prep | battle | replay`. Intro — через `#class-overlay`, не через `data-phase`.
 - Новый overlay / шаг intro → обновить `tools/ui-structure-manifest.json` + `docs/ui-screens-modes.md`.
 - После UI-изменений: `npm run test:structure` и при визуале `npm run test:snapshots`.

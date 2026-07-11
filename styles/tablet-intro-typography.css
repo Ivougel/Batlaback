@@ -3,18 +3,24 @@
  * Дополняет --type-scale из ui-layout.js; не трогает phone-drawer.
  */
 
-/* ─── Шаг «Режим»: 2×2 вместо 3 колонок — больше места под текст ─── */
+/* ─── Шаг «Режим»: 3 карточки ─── */
 
 html[data-ui-tier="tablet"] #class-overlay .class-modal #class-step-mode:not(.hidden) .game-mode-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-template-rows: repeat(2, auto);
-  max-width: min(100%, 560px);
+  grid-template-columns: 1fr;
+  grid-template-rows: auto;
+  max-width: min(100%, 480px);
   gap: clamp(10px, 1.6cqh, 16px);
   overflow: visible;
   padding: 12px;
 }
 
+html[data-ui-tier="tablet"][data-layout-profile="tablet-landscape"] #class-overlay .class-modal #class-step-mode:not(.hidden) .game-mode-grid {
+  grid-template-columns: 1fr;
+  max-width: min(100%, 520px);
+}
+
 html[data-ui-tier="tablet"] #class-overlay .class-modal .game-mode-card.glass-card {
+  --game-mode-icon-size: calc(56px * var(--ui-scale));
   min-height: calc(84px * var(--ui-scale));
   padding: calc(12px * var(--ui-scale)) calc(14px * var(--ui-scale));
   column-gap: calc(14px * var(--ui-scale));
@@ -22,8 +28,8 @@ html[data-ui-tier="tablet"] #class-overlay .class-modal .game-mode-card.glass-ca
 }
 
 html[data-ui-tier="tablet"] #class-overlay .class-modal .game-mode-card .glass-card-icon {
-  width: calc(56px * var(--ui-scale));
-  height: calc(56px * var(--ui-scale));
+  width: var(--game-mode-icon-size);
+  height: var(--game-mode-icon-size);
 }
 
 html[data-ui-tier="tablet"] #class-overlay .class-modal .game-mode-card .class-name {

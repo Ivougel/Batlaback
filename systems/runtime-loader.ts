@@ -8,22 +8,10 @@
 
   const BUNDLES = {
     combatFeed: ["components/combat-feed.js?v=4"],
-    lobby: [
-      "systems/lobby-opponents.js?v=6",
-      "systems/lobby-fighter-avatar.js?v=10",
-      "systems/lobby-spectator.js?v=9",
-      "systems/lobby-roster-float.js?v=1",
-      "components/lobby-2p-hud.js?v=3",
-      "lobby-runtime.js?v=1",
-    ],
-    hardbot: ["hard-bot-engine.js"],
   } as const;
 
-  function scriptsForMode(mode: string): string[] {
-    const urls: string[] = [];
-    if (mode === "lobby" || mode === "lobby2p") urls.push(...BUNDLES.lobby);
-    if (mode === "hardbot") urls.push(...BUNDLES.hardbot);
-    return urls;
+  function scriptsForMode(_mode: string): string[] {
+    return [];
   }
 
   function loadScript(src: string): Promise<void> {
@@ -50,11 +38,8 @@
     return p;
   }
 
-  async function ensureModeBundle(mode: string): Promise<void> {
-    const urls = scriptsForMode(mode);
-    for (const src of urls) {
-      await loadScript(src);
-    }
+  async function ensureModeBundle(_mode: string): Promise<void> {
+    return Promise.resolve();
   }
 
   async function ensureCombatFeedBundle(): Promise<void> {
@@ -69,15 +54,11 @@
     });
   }
 
-  function preloadModeBundle(mode: string): void {
-    void ensureModeBundle(mode).catch((err: unknown) => {
-      console.warn("RuntimeLoader preload failed:", err);
-    });
+  function preloadModeBundle(_mode: string): void {
   }
 
-  function isBundleLoaded(mode: string): boolean {
-    const urls = scriptsForMode(mode);
-    return urls.length === 0 || urls.every((src) => loaded.has(src));
+  function isBundleLoaded(_mode: string): boolean {
+    return true;
   }
 
   window.RuntimeLoader = {

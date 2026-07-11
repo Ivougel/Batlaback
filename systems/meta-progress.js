@@ -3,6 +3,7 @@
 const MetaProgress = (() => {
   const STORAGE_KEY = "bb-meta-progress-v1";
   const DISABLE_KEY = "bb-meta-disabled";
+  const ENABLE_KEY = "bb-meta-enabled";
   const PATH_MODE_ID = "path";
   const CLASSIC_MODE_ID = "classic";
   const VERSION = 1;
@@ -67,9 +68,10 @@ const MetaProgress = (() => {
   let state = defaultState();
   function isEnabled() {
     try {
-      return localStorage.getItem(DISABLE_KEY) !== "1";
+      if (localStorage.getItem(DISABLE_KEY) === "1") return false;
+      return localStorage.getItem(ENABLE_KEY) === "1";
     } catch (_) {
-      return true;
+      return false;
     }
   }
   function isPathMode(modeId) {
@@ -79,12 +81,17 @@ const MetaProgress = (() => {
     return modeId === CLASSIC_MODE_ID;
   }
   function usesMetaUnlock(modeId) {
-    return isPathMode(modeId) || isClassicModeId(modeId);
+    return isPathMode(modeId);
+  }
+  function isMaxAccountActive() {
+    return typeof isMaxAccountMode === "function" && isMaxAccountMode();
   }
   function isActiveForPicker() {
+    if (isMaxAccountActive()) return false;
     return isEnabled() && usesMetaUnlock(pickerModeId);
   }
   function isActiveForRun() {
+    if (isMaxAccountActive()) return false;
     return isEnabled() && usesMetaUnlock(runModeId);
   }
   function setPickerMode(modeId) {
@@ -167,6 +174,7 @@ const MetaProgress = (() => {
     });
   }
   function isHeroUnlocked(classId) {
+    if (isMaxAccountActive()) return true;
     if (!isActiveForPicker()) return true;
     return !!getHeroRecord(classId).unlocked;
   }
@@ -183,10 +191,11 @@ const MetaProgress = (() => {
     return getMaxHeroLevel();
   }
   function isItemUnlocked(itemId, heroClass) {
+    if (isMaxAccountActive()) return true;
     if (!isActiveForRun()) return true;
     if (!itemId) return false;
     const def = typeof ITEM_CATALOG !== "undefined" ? ITEM_CATALOG[itemId] : null;
-    if (def?.classRestriction && def.classRestriction !== heroClass) return false;
+    if (typeof shouldUseClassSystem === "function" && shouldUseClassSystem() && def?.classRestriction && def.classRestriction !== heroClass) return false;
     if (typeof ItemUnlockTiers !== "undefined" && ItemUnlockTiers.isStarterForHero(itemId, heroClass)) {
       return true;
     }
@@ -240,7 +249,6 @@ const MetaProgress = (() => {
       classId,
       runResults = [],
       round = 1,
-      lobbyWon = false,
       playerEliminated = false
     } = payload;
     let wins = 0;
@@ -252,7 +260,6 @@ const MetaProgress = (() => {
     let heroXp = 40;
     heroXp += wins * 12;
     heroXp += Math.min(round, 16) * 4;
-    if (lobbyWon) heroXp += 80;
     if (wins >= 10) heroXp += 30;
     const heroUnlocked = [];
     const before = { ...state.heroes };
@@ -271,7 +278,7 @@ const MetaProgress = (() => {
   function recordRunEnd(payload = {}) {
     if (!isActiveForRun()) return null;
     const reward = computeRunReward(payload);
-    const { classId, heroXp, wins, round, lobbyWon } = payload;
+    const { classId, heroXp, wins, round } = payload;
     const runResults = payload.runResults || [];
     state.runsCompleted += 1;
     state.totalWins += wins ?? 0;
@@ -291,7 +298,6 @@ const MetaProgress = (() => {
     reward.heroUnlocked = newlyUnlocked;
     state.lastRunReward = {
       ...reward,
-      lobbyWon: !!lobbyWon,
       playerEliminated: !!payload.playerEliminated
     };
     save();

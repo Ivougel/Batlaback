@@ -90,10 +90,6 @@ function run() {
   assert(typeof classic.getVisibleCraftRecipes === "function", "getVisibleCraftRecipes exists");
   assert(classic.getVisibleCraftRecipes({ playerClass: "warrior" }).length > 0, "visible recipes");
 
-  const solo = loadSandbox("solo");
-  solo.MetaProgress.setRunMode("solo");
-  assert(solo.isCraftRecipeAvailable(all[0], { playerClass: "warrior" }), "solo: all crafts available");
-
   console.log(`bb-craft.test.mjs: OK (${all.length} recipes)`);
 }
 

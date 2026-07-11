@@ -33,6 +33,7 @@ html[data-prep-layout="mobile"] .class-modal .class-grid {
 }
 
 html[data-prep-layout="mobile"] .class-modal .game-mode-card.glass-card {
+  --game-mode-icon-size: 72px;
   padding: 16px 20px;
 }
 
@@ -46,8 +47,8 @@ html[data-prep-layout="mobile"] .class-modal .class-bonus {
 }
 
 html[data-prep-layout="mobile"] .class-modal .game-mode-card .glass-card-icon {
-  width: 72px;
-  height: 72px;
+  width: var(--game-mode-icon-size);
+  height: var(--game-mode-icon-size);
   margin-bottom: 10px;
 }
 

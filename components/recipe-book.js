@@ -89,13 +89,10 @@ function renderRecipeBookItemCard(def, meta = "") {
       </div>
       ${stats ? `<p class="recipe-book-item-stats">${stats}</p>` : ""}
       ${tags ? `<p class="recipe-book-item-tags">${tags}</p>` : ""}
-      ${getUniqueItemSynergies(def).map((s) => {
-        const desc = typeof formatSynergyHumanDesc === "function"
-          ? formatSynergyHumanDesc(s)
-          : (typeof localizeSynergyDesc === "function" ? localizeSynergyDesc(s.desc) : (s.desc || ""));
+      ${getItemWikiSynergyLines(def).map((line) => {
         const html = typeof formatTooltipMechanicText === "function"
-          ? formatTooltipMechanicText(desc)
-          : desc;
+          ? formatTooltipMechanicText(line)
+          : line;
         return `<p class="recipe-book-item-synergy">${html}</p>`;
       }).join("")}
     </article>

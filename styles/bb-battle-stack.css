@@ -1,0 +1,258 @@
+/**
+ * BB Fidelity battle: enemy grid → центральный HUD → player grid.
+ * html[data-battle-layout="bb-stack"]
+ */
+
+html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="replay"]) {
+  height: var(--app-h);
+  max-height: var(--app-h);
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 18%, rgba(58, 38, 24, 0.55) 0%, transparent 62%),
+    linear-gradient(180deg, #1a120c 0%, #241810 42%, #142018 100%);
+}
+
+html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="replay"]) .game-layout,
+html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="replay"]) .board-section {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-arena {
+  display: flex !important;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-left-column {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-field-column {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  --battle-scene-offset-x: 0px;
+  --field-offset-x: 0px;
+  --field-offset-y: 0px;
+  --prep-scene-top: 0px;
+  padding:
+    calc(4px * var(--ui-scale, 1))
+    calc(6px * var(--ui-scale, 1));
+  box-sizing: border-box;
+}
+
+html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="replay"]) #shop-panel,
+html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="replay"]) #bb-prep-storage,
+html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="replay"]) #prep-top-bar,
+html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="replay"]) #battle-scene-ui,
+html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-thought-arena,
+html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-thought-layer,
+html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-hero-spec-layer,
+html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-aura-frame,
+html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="replay"]) #battle-run-hud,
+html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-character-layer {
+  display: none !important;
+}
+
+html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="replay"]) .bb-battle-hud {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 12;
+  pointer-events: none;
+}
+
+html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="replay"]) .layer-world {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="replay"]) .layer-objects,
+html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="replay"]) .layer-fx,
+html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="replay"]) .layer-hud {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="replay"]) .scene-bg {
+  background:
+    radial-gradient(ellipse 70% 45% at 50% 50%, rgba(90, 62, 34, 0.22) 0%, transparent 70%),
+    transparent;
+}
+
+html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="replay"]) .prep-field-island {
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
+  width: var(--bb-battle-canvas-display-w, var(--battle-canvas-display-w, auto)) !important;
+  height: var(--bb-battle-canvas-display-h, var(--battle-canvas-display-h, auto)) !important;
+  max-width: min(100%, var(--bb-battle-canvas-display-w, var(--battle-canvas-display-w, 100%))) !important;
+  max-height: min(100%, var(--bb-battle-canvas-display-h, var(--battle-canvas-display-h, 100%))) !important;
+  margin: 0 auto;
+  flex: 0 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="replay"]) .battle-canvas-stage,
+html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="replay"]) .canvas-scale-wrap {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="replay"]) #game-canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain;
+  border-radius: calc(8px * var(--ui-scale, 1));
+  box-shadow:
+    0 10px 36px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(255, 220, 140, 0.08);
+}
+
+html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="replay"]) .layer-hud {
+  pointer-events: none;
+}
+
+/* Центральный HUD в щели между сетками — см. .layer-world position */
+
+.bb-battle-hud {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: calc(3px * var(--ui-scale, 1));
+  width: min(96%, calc(360px * var(--ui-scale, 1)));
+  padding: calc(6px * var(--ui-scale, 1)) calc(8px * var(--ui-scale, 1));
+  border-radius: calc(10px * var(--ui-scale, 1));
+  background: rgba(20, 14, 10, 0.88);
+  border: 1px solid rgba(180, 140, 60, 0.5);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(6px);
+}
+
+.bb-battle-hud__round {
+  margin: 0;
+  text-align: center;
+  font-size: calc(0.68rem * var(--ui-scale, 1));
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: rgba(230, 200, 140, 0.92);
+  text-transform: uppercase;
+}
+
+.bb-battle-hud__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: calc(8px * var(--ui-scale, 1));
+  align-items: start;
+}
+
+.bb-battle-hud__side {
+  display: flex;
+  align-items: flex-start;
+  gap: calc(6px * var(--ui-scale, 1));
+  min-width: 0;
+}
+
+.bb-battle-hud__side--enemy {
+  flex-direction: row-reverse;
+}
+
+.bb-battle-hud__side--enemy .bb-battle-hud__vitals {
+  text-align: right;
+}
+
+.bb-battle-hud__portrait,
+.bb-battle-hud__portrait-fallback {
+  flex: 0 0 auto;
+  width: calc(30px * var(--ui-scale, 1));
+  height: calc(30px * var(--ui-scale, 1));
+  border-radius: 50%;
+  object-fit: cover;
+  background: rgba(30, 22, 16, 0.9);
+  border: 2px solid rgba(200, 160, 70, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(0.95rem * var(--ui-scale, 1));
+}
+
+.bb-battle-hud__vitals {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.bb-battle-hud__name {
+  font-size: calc(0.68rem * var(--ui-scale, 1));
+  font-weight: 700;
+  color: #f0e2c8;
+  margin-bottom: calc(1px * var(--ui-scale, 1));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bb-battle-hud .avatar-hero-bars {
+  width: 100%;
+}
+
+.bb-battle-hud .avatar-hero-hp-bar,
+.bb-battle-hud .avatar-hero-stamina-bar {
+  min-height: calc(12px * var(--ui-scale, 1));
+}
+
+.bb-battle-hud .avatar-hero-hp-label,
+.bb-battle-hud .avatar-hero-stamina-label {
+  font-size: calc(0.62rem * var(--ui-scale, 1));
+}
+
+.bb-battle-hud .battle-hud-status-stack {
+  display: none;
+}

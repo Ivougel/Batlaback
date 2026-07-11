@@ -1,14 +1,13 @@
-/**
- * Мета-эффекты предметов вне боя: магазин, золото, слоты.
- * Источник: item.metaEffects[] из каталога (колонка «Триггеры» в CSV).
- */
+// Transpiled from TypeScript — npm run compile:ts
 
 const CHIPPED_GEM_IDS = [
-  "chipped_ruby", "chipped_sapphire", "chipped_emerald", "chipped_topaz", "chipped_amethyst",
+  "chipped_ruby",
+  "chipped_sapphire",
+  "chipped_emerald",
+  "chipped_topaz",
+  "chipped_amethyst"
 ];
-
 const FLAME_ITEM_IDS = ["burning_coal", "lump_of_coal", "burning_torch", "flame_badge"];
-
 const SHOP_CLASS_OFFERS = {
   ranger: { tags: ["ranger"], classes: ["rogue"] },
   reaper: { tags: ["reaper"], classes: [] },
@@ -20,9 +19,8 @@ const SHOP_CLASS_OFFERS = {
   gem: { tags: ["gem"], classes: [] },
   card: { tags: ["card"], classes: [] },
   fire: { tags: ["fire"], classes: [] },
-  all: { allClasses: true },
+  all: { allClasses: true }
 };
-
 function collectMetaEffectsFromItems(items = []) {
   const out = [];
   (items || []).forEach((item) => {
@@ -33,28 +31,25 @@ function collectMetaEffectsFromItems(items = []) {
         ...effect,
         sourceItemId: item.itemId,
         sourceUid: item.uid,
-        sourceName: typeof getItemDisplayName === "function" ? getItemDisplayName(def) : def.name,
+        sourceName: typeof getItemDisplayName === "function" ? getItemDisplayName(def) : def.name
       });
     });
   });
   return out;
 }
-
 function filterMetaEffects(effects, phase) {
   return (effects || []).filter((e) => e.phase === phase);
 }
-
 function collectShopPoolModifiers(items = []) {
   const mods = {
-    offerTags: new Set(),
-    offerClasses: new Set(),
+    offerTags: /* @__PURE__ */ new Set(),
+    offerClasses: /* @__PURE__ */ new Set(),
     excludePlayerClass: false,
     uniqueChanceBonus: 0,
     bonusUnique: 0,
     sellBonusPct: 0,
-    startingValue: 0,
+    startingValue: 0
   };
-
   collectMetaEffectsFromItems(items).forEach((effect) => {
     if (effect.phase !== "shop_pool" && effect.phase !== "passive") return;
     switch (effect.type) {
@@ -91,10 +86,8 @@ function collectShopPoolModifiers(items = []) {
         break;
     }
   });
-
   return mods;
 }
-
 function itemMatchesShopModifiers(item, mods) {
   if (!mods || !item) return false;
   if (mods.offerClasses.has("__all__") && item.classRestriction) return true;
@@ -102,65 +95,53 @@ function itemMatchesShopModifiers(item, mods) {
   if (item.tags?.some((t) => mods.offerTags.has(t))) return true;
   return false;
 }
-
 function isItemExcludedByShopModifiers(item, ctx) {
   if (!ctx?.shopModifiers?.excludePlayerClass || !ctx.playerClass) return false;
   if (item.classRestriction === ctx.playerClass) return true;
-  const starter = typeof CLASS_CATALOG !== "undefined"
-    ? CLASS_CATALOG[ctx.playerClass]?.starterItems
-    : null;
+  const starter = typeof CLASS_CATALOG !== "undefined" ? CLASS_CATALOG[ctx.playerClass]?.starterItems : null;
   return Array.isArray(starter) && starter.includes(item.id);
 }
-
 function applyGainGoldMeta(sideState, effect, logFn) {
   const amount = Math.max(0, Number(effect.value) || 0);
   if (!amount) return 0;
   sideState.gold += amount;
   if (typeof logFn === "function") {
-    logFn(`💰 ${effect.sourceName}: +${amount} золота`);
+    logFn(`\u{1F4B0} ${effect.sourceName}: +${amount} \u0437\u043E\u043B\u043E\u0442\u0430`);
   }
   return amount;
 }
-
 function pickRandomId(ids) {
   if (!ids?.length) return null;
   return ids[Math.floor(Math.random() * ids.length)];
 }
-
 function addItemToBenchOrShop(st, itemId, ctx, logFn, sourceName) {
   if (!itemId || !st) return false;
   const def = ITEM_CATALOG[itemId];
   if (!def) return false;
-
-  if (st.bench.length < (typeof MAX_BENCH !== "undefined" ? MAX_BENCH : 8)) {
+  if (st.bench.length < 8) {
     st.bench.push({
       itemId,
-      uid: `meta-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      uid: `meta-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
     });
     if (typeof logFn === "function") {
-      logFn(`🎁 ${sourceName}: получен ${typeof getItemDisplayName === "function" ? getItemDisplayName(def) : def.name}`);
+      logFn(`\u{1F381} ${sourceName}: \u043F\u043E\u043B\u0443\u0447\u0435\u043D ${typeof getItemDisplayName === "function" ? getItemDisplayName(def) : def.name}`);
     }
     return true;
   }
-
   const emptySlot = st.shop.findIndex((id, i) => !id && !st.shopFrozen[i]);
   if (emptySlot >= 0) {
     st.shop[emptySlot] = itemId;
     if (typeof logFn === "function") {
-      logFn(`🛒 ${sourceName}: в магазине появился ${typeof getItemDisplayName === "function" ? getItemDisplayName(def) : def.name}`);
+      logFn(`\u{1F6D2} ${sourceName}: \u0432 \u043C\u0430\u0433\u0430\u0437\u0438\u043D\u0435 \u043F\u043E\u044F\u0432\u0438\u043B\u0441\u044F ${typeof getItemDisplayName === "function" ? getItemDisplayName(def) : def.name}`);
     }
     return true;
   }
   return false;
 }
-
 function rollCheapShopItem(ctx, maxCost = 3) {
-  const pool = typeof getBaseShopPool === "function"
-    ? getBaseShopPool(ctx.playerClass, ctx.round).filter((i) => (i.cost ?? 0) <= maxCost && !i.craftOnly && !(typeof isCraftOutputItemId === "function" && isCraftOutputItemId(i.id)))
-    : [];
+  const pool = typeof getBaseShopPool === "function" ? getBaseShopPool(ctx.playerClass, ctx.round).filter((i) => (i.cost ?? 0) <= maxCost && !i.craftOnly && !(typeof isCraftOutputItemId === "function" && isCraftOutputItemId(i.id))) : [];
   return pool.length ? pool[Math.floor(Math.random() * pool.length)].id : null;
 }
-
 function countHighRarityItems(items = []) {
   let n = 0;
   items.forEach((item) => {
@@ -170,35 +151,30 @@ function countHighRarityItems(items = []) {
   });
   return n;
 }
-
 const POTION_UPGRADE_MAP = {
   health_potion: "strong_health_potion",
   strong_health_potion: "strong_health_potion",
   mana_potion: "strong_mana_potion",
   strong_mana_potion: "strong_mana_potion",
   heroic_potion: "strong_heroic_potion",
-  vampiric_potion: "strong_vampiric_potion",
+  vampiric_potion: "strong_vampiric_potion"
 };
-
 function getItemGoldCost(itemId) {
   const def = ITEM_CATALOG[itemId];
   return Math.max(0, Number(def?.cost) || 0);
 }
-
 function canConsumeInRecombo(itemId) {
   const def = ITEM_CATALOG[itemId];
   if (!def || def.isContainer || def.protected || def.craftOnly) return false;
   return true;
 }
-
 function getContainersHostingItem(containers, item) {
   if (!item || typeof getItemCells !== "function") return [];
   const cells = new Set(getItemCells(item).map(([c, r]) => `${c},${r}`));
-  return (containers || []).filter((container) =>
-    getItemCells(container).some(([c, r]) => cells.has(`${c},${r}`)),
+  return (containers || []).filter(
+    (container) => getItemCells(container).some(([c, r]) => cells.has(`${c},${r}`))
   );
 }
-
 function getItemsFullyInsideContainer(container, items) {
   const slotSet = new Set(getItemCells(container).map(([c, r]) => `${c},${r}`));
   return (items || []).filter((item) => {
@@ -206,14 +182,12 @@ function getItemsFullyInsideContainer(container, items) {
     return cells.length > 0 && cells.every(([c, r]) => slotSet.has(`${c},${r}`));
   });
 }
-
 function collectRecomboVictims(items, containers, sourceItem, target = "self") {
   if (!sourceItem) return [];
   const mode = String(target || "self").toLowerCase();
-
   if (mode === "inside") {
     const hosts = getContainersHostingItem(containers, sourceItem);
-    const victimMap = new Map();
+    const victimMap = /* @__PURE__ */ new Map();
     hosts.forEach((container) => {
       getItemsFullyInsideContainer(container, items).forEach((item) => {
         if (item.uid === sourceItem.uid) return;
@@ -222,28 +196,21 @@ function collectRecomboVictims(items, containers, sourceItem, target = "self") {
     });
     return [...victimMap.values()];
   }
-
-  const victims = new Map();
+  const victims = /* @__PURE__ */ new Map();
   if (canConsumeInRecombo(sourceItem.itemId)) victims.set(sourceItem.uid, sourceItem);
   if (typeof getAdjacentItems === "function") {
     getAdjacentItems(items, sourceItem).forEach((entry) => {
-      if (canConsumeInRecombo(entry.item.itemId)) victims.set(entry.item.uid, entry.item);
+      const adj = entry.item;
+      if (canConsumeInRecombo(adj.itemId)) victims.set(adj.uid, adj);
     });
   }
   return [...victims.values()];
 }
-
 function rollRecomboRewardIds(totalCost, ctx) {
   const budget = Math.max(0, Math.floor(Number(totalCost) || 0));
   if (budget <= 0) return [];
-
-  const pool = (typeof getExpandedShopPool === "function"
-    ? getExpandedShopPool(ctx)
-    : (typeof getBaseShopPool === "function" ? getBaseShopPool(ctx.playerClass, ctx.round) : []))
-    .filter((item) => item && !item.craftOnly && getItemGoldCost(item.id) > 0);
-
+  const pool = (typeof getExpandedShopPool === "function" ? getExpandedShopPool(ctx) : typeof getBaseShopPool === "function" ? getBaseShopPool(ctx.playerClass, ctx.round) : []).filter((item) => item && !item.craftOnly && getItemGoldCost(item.id) > 0);
   if (!pool.length) return [];
-
   const rewards = [];
   let remaining = budget;
   let guard = 0;
@@ -259,123 +226,97 @@ function rollRecomboRewardIds(totalCost, ctx) {
   }
   return rewards;
 }
-
 function placeRecomboReward(st, itemId, ctx, logFn, sourceName) {
   const def = ITEM_CATALOG[itemId];
   if (!def || !st) return false;
-
   if (typeof findLoadoutItemPlacement === "function" && typeof createPlacedItem === "function") {
-    const placement = findLoadoutItemPlacement(st.containers, st.items, itemId, 0);
+    const placement = findLoadoutItemPlacement(st.containers || [], st.items, itemId, 0);
     if (placement) {
       st.items.push(createPlacedItem(itemId, placement.col, placement.row, placement.rotation));
       if (typeof logFn === "function") {
         const label = typeof getItemDisplayName === "function" ? getItemDisplayName(def) : def.name;
-        logFn(`🎰 ${sourceName}: получен ${label}`);
+        logFn(`\u{1F3B0} ${sourceName}: \u043F\u043E\u043B\u0443\u0447\u0435\u043D ${label}`);
       }
       return true;
     }
   }
-
   return addItemToBenchOrShop(st, itemId, ctx, logFn, sourceName);
 }
-
 function logRecomboFeed(text, mergeKey) {
   if (typeof CombatLog?.addEvent !== "function") return;
   CombatLog.addEvent({
     type: "craft",
     text,
     mergeKey: mergeKey || text,
-    icon: "🎰",
+    icon: "\u{1F3B0}"
   });
 }
-
 function applyConsumeRecombo(st, effect, ctx, logFn, consumedUids) {
   if (!st || !effect?.sourceUid) return false;
+  const consumed = consumedUids || /* @__PURE__ */ new Set();
   const source = st.items.find((item) => item.uid === effect.sourceUid);
-  if (!source || consumedUids.has(source.uid)) return false;
-
+  if (!source || consumed.has(source.uid)) return false;
   const target = effect.target || "self";
-  let victims = collectRecomboVictims(st.items, st.containers, source, target);
-  victims = victims.filter((item) => !consumedUids.has(item.uid));
-
+  let victims = collectRecomboVictims(st.items, st.containers || [], source, target);
+  victims = victims.filter((item) => !consumed.has(item.uid));
   if (target === "inside" && !victims.length) {
     if (typeof logFn === "function") {
-      logFn(`🎰 ${effect.sourceName}: в сумке нечего перекомбинировать`);
+      logFn(`\u{1F3B0} ${effect.sourceName}: \u0432 \u0441\u0443\u043C\u043A\u0435 \u043D\u0435\u0447\u0435\u0433\u043E \u043F\u0435\u0440\u0435\u043A\u043E\u043C\u0431\u0438\u043D\u0438\u0440\u043E\u0432\u0430\u0442\u044C`);
     }
     return false;
   }
   if (!victims.length) return false;
-
   const totalCost = victims.reduce((sum, item) => sum + getItemGoldCost(item.itemId), 0);
   if (totalCost <= 0) return false;
-
   const rewardIds = rollRecomboRewardIds(totalCost, ctx);
   if (!rewardIds.length) {
     if (typeof logFn === "function") {
-      logFn(`🎰 ${effect.sourceName}: не удалось создать предмет (${totalCost}💰)`);
+      logFn(`\u{1F3B0} ${effect.sourceName}: \u043D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043E\u0437\u0434\u0430\u0442\u044C \u043F\u0440\u0435\u0434\u043C\u0435\u0442 (${totalCost}\u{1F4B0})`);
     }
     return false;
   }
-
-  const consumedNames = victims
-    .map((item) => (typeof getItemDisplayName === "function"
-      ? getItemDisplayName(ITEM_CATALOG[item.itemId])
-      : ITEM_CATALOG[item.itemId]?.name))
-    .filter(Boolean);
+  const consumedNames = victims.map((item) => typeof getItemDisplayName === "function" ? getItemDisplayName(ITEM_CATALOG[item.itemId]) : ITEM_CATALOG[item.itemId]?.name).filter(Boolean);
   const removeSet = new Set(victims.map((item) => item.uid));
   st.items = st.items.filter((item) => !removeSet.has(item.uid));
-  victims.forEach((item) => consumedUids.add(item.uid));
-
-  const rewardNames = rewardIds
-    .map((id) => (typeof getItemDisplayName === "function"
-      ? getItemDisplayName(ITEM_CATALOG[id])
-      : ITEM_CATALOG[id]?.name))
-    .filter(Boolean);
-
+  victims.forEach((item) => consumed.add(item.uid));
+  const rewardNames = rewardIds.map((id) => typeof getItemDisplayName === "function" ? getItemDisplayName(ITEM_CATALOG[id]) : ITEM_CATALOG[id]?.name).filter(Boolean);
   if (typeof logFn === "function") {
-    logFn(`🔄 ${effect.sourceName}: ${consumedNames.join(", ")} (${totalCost}💰) → ${rewardNames.join(", ")}`);
+    logFn(`\u{1F504} ${effect.sourceName}: ${consumedNames.join(", ")} (${totalCost}\u{1F4B0}) \u2192 ${rewardNames.join(", ")}`);
   }
   logRecomboFeed(
-    `Перекомбинация: ${consumedNames.join(", ")} → ${rewardNames.join(", ")} (${totalCost}💰)`,
-    `recombo:${effect.sourceUid}:${ctx.round}:${rewardIds.join("+")}`,
+    `\u041F\u0435\u0440\u0435\u043A\u043E\u043C\u0431\u0438\u043D\u0430\u0446\u0438\u044F: ${consumedNames.join(", ")} \u2192 ${rewardNames.join(", ")} (${totalCost}\u{1F4B0})`,
+    `recombo:${effect.sourceUid}:${ctx.round}:${rewardIds.join("+")}`
   );
-
   rewardIds.forEach((itemId) => {
     placeRecomboReward(st, itemId, ctx, logFn, effect.sourceName);
   });
   return true;
 }
-
 function applyShopEnterMeta(side, items, logFn) {
   const st = typeof getSideState === "function" ? getSideState(side) : null;
   if (!st) return false;
   const ctx = typeof getShopContextForSide === "function" ? getShopContextForSide(side) : { round: 1 };
-  const consumedUids = new Set();
+  const consumedUids = /* @__PURE__ */ new Set();
   let loadoutChanged = false;
-
   filterMetaEffects(collectMetaEffectsFromItems(items), "shop_enter").forEach((effect) => {
     switch (effect.type) {
       case "gain_gold":
         applyGainGoldMeta(st, effect, logFn);
         break;
       case "dig_item": {
-        const id = typeof rollShopItemGuaranteed === "function"
-          ? rollShopItemGuaranteed(ctx)
-          : rollCheapShopItem(ctx, 12);
+        const id = typeof rollShopItemGuaranteed === "function" ? rollShopItemGuaranteed(ctx) : rollCheapShopItem(ctx, 12);
         if (id) addItemToBenchOrShop(st, id, ctx, logFn, effect.sourceName);
         break;
       }
       case "gain_buff":
         st.pendingShopBuffs = (st.pendingShopBuffs || 0) + (Number(effect.value) || 1);
         if (typeof logFn === "function") {
-          logFn(`✨ ${effect.sourceName}: +${effect.value || 1} бафф к началу боя`);
+          logFn(`\u2728 ${effect.sourceName}: +${effect.value || 1} \u0431\u0430\u0444\u0444 \u043A \u043D\u0430\u0447\u0430\u043B\u0443 \u0431\u043E\u044F`);
         }
         break;
-      case "generate_gem": {
-        const gemId = pickRandomId(CHIPPED_GEM_IDS);
-        if (gemId) addItemToBenchOrShop(st, gemId, ctx, logFn, effect.sourceName);
+      case "generate_gem":
+      case "gem_if_godly":
         break;
-      }
       case "generate_flame": {
         const chance = Number(effect.chance) || 0.65;
         if (st.gold >= 1 && Math.random() < chance) {
@@ -393,7 +334,7 @@ function applyShopEnterMeta(side, items, logFn) {
       case "items_not_gold":
         st._shopItemsNotGold = true;
         if (typeof logFn === "function") {
-          logFn(`🎁 ${effect.sourceName}: вместо золота — предметы большей ценности`);
+          logFn(`\u{1F381} ${effect.sourceName}: \u0432\u043C\u0435\u0441\u0442\u043E \u0437\u043E\u043B\u043E\u0442\u0430 \u2014 \u043F\u0440\u0435\u0434\u043C\u0435\u0442\u044B \u0431\u043E\u043B\u044C\u0448\u0435\u0439 \u0446\u0435\u043D\u043D\u043E\u0441\u0442\u0438`);
         }
         break;
       case "upgrade_adjacent_potion": {
@@ -405,10 +346,10 @@ function applyShopEnterMeta(side, items, logFn) {
             st.bench[potionIdx].itemId = upgraded;
             const def = ITEM_CATALOG[upgraded];
             if (typeof logFn === "function" && def) {
-              logFn(`🧪 ${effect.sourceName}: ${typeof getItemDisplayName === "function" ? getItemDisplayName(def) : def.name}`);
+              logFn(`\u{1F9EA} ${effect.sourceName}: ${typeof getItemDisplayName === "function" ? getItemDisplayName(def) : def.name}`);
             }
           } else if (typeof logFn === "function") {
-            logFn(`🧪 ${effect.sourceName}: зелье уже максимального уровня`);
+            logFn(`\u{1F9EA} ${effect.sourceName}: \u0437\u0435\u043B\u044C\u0435 \u0443\u0436\u0435 \u043C\u0430\u043A\u0441\u0438\u043C\u0430\u043B\u044C\u043D\u043E\u0433\u043E \u0443\u0440\u043E\u0432\u043D\u044F`);
           }
         }
         break;
@@ -418,52 +359,39 @@ function applyShopEnterMeta(side, items, logFn) {
         break;
       case "consume_inside_flame":
         if (typeof logFn === "function") {
-          logFn(`🔥 ${effect.sourceName}: содержимое превращено в пламя`);
+          logFn(`\u{1F525} ${effect.sourceName}: \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u043C\u043E\u0435 \u043F\u0440\u0435\u0432\u0440\u0430\u0449\u0435\u043D\u043E \u0432 \u043F\u043B\u0430\u043C\u044F`);
         }
         break;
-      case "gem_if_godly": {
-        const need = Number(effect.value) || 2;
-        if (countHighRarityItems(items) >= need) {
-          const gemId = pickRandomId(CHIPPED_GEM_IDS);
-          if (gemId) addItemToBenchOrShop(st, gemId, ctx, logFn, effect.sourceName);
-        }
-        break;
-      }
       default:
         break;
     }
   });
-
   return loadoutChanged;
 }
-
 function pickHigherTierItemId(itemId, ctx) {
   if (typeof upgradeShopItemToHigherTier !== "function") return itemId;
   return upgradeShopItemToHigherTier(itemId, ctx) || itemId;
 }
-
 function applyShopRefreshMeta(side, items, refreshedIndices, shopState, ctx, logFn) {
   const st = typeof getSideState === "function" ? getSideState(side) : null;
   if (!st || !shopState?.shop) return;
-
   const effects = filterMetaEffects(collectMetaEffectsFromItems(items), "shop_refresh");
   if (!effects.length) return;
-
   const refreshed = refreshedIndices.filter((i) => shopState.shop[i]);
   if (!refreshed.length) return;
-
   effects.forEach((effect) => {
     if (effect.type === "rarity_up") {
       const count = Math.max(1, Number(effect.value) || 1);
       for (let n = 0; n < count; n += 1) {
         const idx = refreshed[Math.floor(Math.random() * refreshed.length)];
         const before = shopState.shop[idx];
+        if (!before) continue;
         const after = pickHigherTierItemId(before, ctx);
         if (after && after !== before) {
           shopState.shop[idx] = after;
           const def = ITEM_CATALOG[after];
           if (typeof logFn === "function") {
-            logFn(`💳 ${effect.sourceName}: повышена редкость → ${typeof getItemDisplayName === "function" ? getItemDisplayName(def) : def.name}`);
+            logFn(`\u{1F4B3} ${effect.sourceName}: \u043F\u043E\u0432\u044B\u0448\u0435\u043D\u0430 \u0440\u0435\u0434\u043A\u043E\u0441\u0442\u044C \u2192 ${typeof getItemDisplayName === "function" ? getItemDisplayName(def) : def.name}`);
           }
         }
       }
@@ -475,49 +403,43 @@ function applyShopRefreshMeta(side, items, refreshedIndices, shopState, ctx, log
         const bonus = Math.max(1, Number(effect.value) || 3);
         st.gold += bonus;
         if (typeof logFn === "function") {
-          logFn(`🤝 ${effect.sourceName}: торговое предложение (+${bonus}💰)`);
+          logFn(`\u{1F91D} ${effect.sourceName}: \u0442\u043E\u0440\u0433\u043E\u0432\u043E\u0435 \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0438\u0435 (+${bonus}\u{1F4B0})`);
         }
       }
     }
   });
 }
-
 function applyShopBuyMeta(side, loadoutItems, boughtItemId, shopState, ctx, logFn) {
   const bought = ITEM_CATALOG[boughtItemId];
   if (!bought) return;
-
   filterMetaEffects(collectMetaEffectsFromItems(loadoutItems), "shop_buy").forEach((effect) => {
     const chance = Number(effect.chance) || 0;
     if (Math.random() >= chance) return;
-
-    if (effect.type === "restock_tag" && bought.tags?.includes(effect.tag)) {
-      const pool = typeof getExpandedShopPool === "function"
-        ? getExpandedShopPool(ctx)
-        : (typeof getBaseShopPool === "function" ? getBaseShopPool(ctx.playerClass, ctx.round) : []);
-      const match = pool.filter((i) => i.tags?.includes(effect.tag) && i.id !== boughtItemId);
+    if (effect.type === "restock_tag" && effect.tag && bought.tags?.includes(effect.tag)) {
+      const tag = effect.tag;
+      const pool = typeof getExpandedShopPool === "function" ? getExpandedShopPool(ctx) : typeof getBaseShopPool === "function" ? getBaseShopPool(ctx.playerClass, ctx.round) : [];
+      const match = pool.filter((i) => i.tags?.includes(tag) && i.id !== boughtItemId);
       const restockId = match.length ? match[Math.floor(Math.random() * match.length)].id : boughtItemId;
       const empty = shopState.shop.findIndex((id, i) => !id && !shopState.shopFrozen[i]);
       if (empty >= 0) {
         shopState.shop[empty] = restockId;
         const def = ITEM_CATALOG[restockId];
         if (typeof logFn === "function") {
-          logFn(`🧵 ${effect.sourceName}: пополнение → ${typeof getItemDisplayName === "function" ? getItemDisplayName(def) : def.name}`);
+          logFn(`\u{1F9F5} ${effect.sourceName}: \u043F\u043E\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u0435 \u2192 ${typeof getItemDisplayName === "function" ? getItemDisplayName(def) : def.name}`);
         }
       }
     }
-
     if (effect.type === "restock_bag" && bought.isContainer) {
       const empty = shopState.shop.findIndex((id, i) => !id && !shopState.shopFrozen[i]);
       if (empty >= 0) {
         shopState.shop[empty] = boughtItemId;
         if (typeof logFn === "function") {
-          logFn(`🧩 ${effect.sourceName}: в магазине снова ${typeof getItemDisplayName === "function" ? getItemDisplayName(bought) : bought.name}`);
+          logFn(`\u{1F9E9} ${effect.sourceName}: \u0432 \u043C\u0430\u0433\u0430\u0437\u0438\u043D\u0435 \u0441\u043D\u043E\u0432\u0430 ${typeof getItemDisplayName === "function" ? getItemDisplayName(bought) : bought.name}`);
         }
       }
     }
   });
 }
-
 function getSellBonusMultiplier(items = []) {
   let bonus = 0;
   collectMetaEffectsFromItems(items).forEach((effect) => {
@@ -525,7 +447,6 @@ function getSellBonusMultiplier(items = []) {
   });
   return 1 + bonus;
 }
-
 function getStarredChanceBonusFromItems(items = []) {
   let bonus = 0;
   collectMetaEffectsFromItems(items).forEach((effect) => {
@@ -535,22 +456,19 @@ function getStarredChanceBonusFromItems(items = []) {
   });
   return bonus;
 }
-
 function getStartingValueBonus(items = []) {
   return collectShopPoolModifiers(items).startingValue || 0;
 }
-
 function applyRoundGoldWithShopMeta(side, baseGold, items, logFn) {
   const st = typeof getSideState === "function" ? getSideState(side) : null;
   if (!st) return baseGold;
-
   if (st._shopItemsNotGold) {
     const ctx = typeof getShopContextForSide === "function" ? getShopContextForSide(side) : {};
     const itemId = rollCheapShopItem(ctx, 6) || rollCheapShopItem(ctx, 12);
     if (itemId) {
-      addItemToBenchOrShop(st, itemId, ctx, logFn, "Подарок");
+      addItemToBenchOrShop(st, itemId, ctx, logFn, "\u041F\u043E\u0434\u0430\u0440\u043E\u043A");
       if (typeof logFn === "function") {
-        logFn(`🎁 Подарок: предмет вместо части золота за раунд`);
+        logFn(`\u{1F381} \u041F\u043E\u0434\u0430\u0440\u043E\u043A: \u043F\u0440\u0435\u0434\u043C\u0435\u0442 \u0432\u043C\u0435\u0441\u0442\u043E \u0447\u0430\u0441\u0442\u0438 \u0437\u043E\u043B\u043E\u0442\u0430 \u0437\u0430 \u0440\u0430\u0443\u043D\u0434`);
       }
       return Math.max(0, Math.floor(baseGold * 0.5));
     }

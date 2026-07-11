@@ -242,26 +242,6 @@ html[data-prep-layout="mobile"] body:has(#class-overlay:not(.hidden)) .bottom-ch
   margin-left: 0;
 }
 
-html[data-game-mode="lobby"] body:has(#app[data-phase="battle"]) .bottom-chrome-end,
-html[data-game-mode="lobby"] body:has(#app[data-phase="replay"]) .bottom-chrome-end {
-  flex: 1 1 auto;
-  min-width: 0;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-html[data-game-mode="lobby"] body:has(#app[data-phase="battle"]) .lobby-battle-roster-bar,
-html[data-game-mode="lobby"] body:has(#app[data-phase="replay"]) .lobby-battle-roster-bar {
-  flex: 1 1 auto;
-  max-width: min(58vw, 32rem);
-}
-
-html[data-game-mode="lobby"] body:has(#app[data-phase="battle"]) .btn-lobby-return-table,
-html[data-game-mode="lobby"] body:has(#app[data-phase="replay"]) .btn-lobby-return-table {
-  font-size: var(--font-sm);
-  padding: 6px 10px;
-}
-
 .bottom-chrome-center {
   grid-column: 2;
   justify-self: center;
@@ -403,19 +383,23 @@ body:has(#app[data-phase="replay"]) .bottom-chrome-gamepad {
   min-height: var(--touch-target-min);
   height: auto;
   padding: 0 10px;
-  border: 1px solid #30363d;
+  border: var(--btn-chrome-border);
   border-radius: 7px;
-  background: #21262d;
-  color: #e6edf3;
+  background: var(--btn-chrome-bg);
+  color: var(--btn-chrome-color);
   font-size: var(--font-sm);
   font-weight: 600;
   cursor: pointer;
 }
 
+.bottom-chrome .bc-btn:hover:not(:disabled) {
+  background: var(--btn-chrome-hover-bg);
+}
+
 .bottom-chrome .bc-btn.active {
-  background: rgba(240, 193, 75, 0.18);
-  border-color: #f0c14b;
-  color: #ffe066;
+  background: var(--btn-chrome-active-bg);
+  border-color: var(--btn-chrome-active-border);
+  color: var(--btn-chrome-active-color);
 }
 
 .bottom-chrome .bc-skip {
@@ -688,18 +672,6 @@ html[data-prep-layout="mobile"] body:has(#app[data-phase="prep"]) .btn-combat-fe
   display: none;
 }
 
-body:not(:has(#app[data-phase="prep"])) .bottom-chrome .standings-anchor {
-  display: none !important;
-}
-
-html[data-lobby2p-battle] .bottom-chrome .standings-anchor {
-  display: none !important;
-}
-
-html:not([data-game-mode="lobby"]) body:has(#app[data-phase="prep"]) .bottom-chrome .standings-anchor {
-  display: none !important;
-}
-
 body:has(#app[data-phase="prep"]) .bottom-chrome-start,
 body:has(#app[data-phase="prep"]) .bottom-chrome-prep-left {
   overflow: visible;
@@ -765,71 +737,6 @@ body:has(#app[data-phase="prep"]) .bottom-chrome-prep-left {
 
 .prep-bottom-stat--hp b {
   color: #c44;
-}
-
-.prep-bottom-stats--lobby-hp .prep-bottom-stat--hp b {
-  color: #c44;
-}
-
-body:has(#app[data-phase="prep"]) .bottom-chrome .standings-toggle {
-  min-width: 36px;
-  padding: 6px 8px;
-  gap: 0.2rem;
-  white-space: nowrap;
-}
-
-body:has(#app[data-phase="prep"]) .bottom-chrome .standings-toggle .standings-alive-count {
-  font-size: 0.72em;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  opacity: 0.92;
-}
-
-.standings-anchor {
-  position: relative;
-  display: inline-flex;
-  flex-shrink: 0;
-}
-
-.standings-dropdown {
-  position: fixed;
-  z-index: calc(var(--z-layer-chrome, 40) + 8);
-  min-width: min(42vw, calc(var(--lobby-roster-emoji-size, 1.35rem) * 11));
-  max-width: min(52vw, 320px);
-  max-height: min(52vh, calc(var(--lobby-roster-emoji-size, 1.35rem) * 14));
-  padding: calc(6px * var(--ui-scale));
-  border-radius: calc(12px * var(--ui-scale));
-  background: rgba(12, 10, 8, 0.88);
-  border: 1px solid rgba(245, 200, 66, 0.22);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.42);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  pointer-events: auto;
-}
-
-.standings-dropdown.hidden {
-  display: none;
-}
-
-.standings-dropdown .lobby-roster-strip--prep-body {
-  flex-direction: column;
-  flex-wrap: nowrap;
-  max-height: none;
-  overflow: visible;
-  padding-bottom: 0;
-}
-
-.standings-dropdown .lobby-fighter-card-list {
-  flex-direction: column;
-  flex-wrap: nowrap;
-  max-height: none;
-  overflow: visible;
-}
-
-.standings-dropdown .lobby-fighter-card {
-  width: 100%;
 }
 
 /* ─── Tablet side: compact gamepad row in battle ─── */
@@ -924,34 +831,6 @@ html[data-ui-tier="phone"] body:has(#app[data-phase="replay"]) .bottom-chrome-en
   flex: 1 1 100%;
   min-width: 0;
   justify-content: flex-end;
-}
-
-html[data-ui-tier="phone"][data-game-mode="lobby"] body:has(#app[data-phase="battle"]) .lobby-battle-roster-bar,
-html[data-ui-tier="phone"][data-game-mode="lobby"] body:has(#app[data-phase="replay"]) .lobby-battle-roster-bar {
-  flex: 1 1 auto;
-  max-width: 100%;
-}
-
-html[data-ui-tier="phone"][data-game-mode="lobby"] body:has(#app[data-phase="battle"]) .btn-lobby-return-table,
-html[data-ui-tier="phone"][data-game-mode="lobby"] body:has(#app[data-phase="replay"]) .btn-lobby-return-table {
-  flex: 0 1 auto;
-  max-width: 42%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-html[data-layout-profile="phone-landscape"][data-game-mode="lobby"] body:has(#app[data-phase="battle"]) .btn-lobby-return-table,
-html[data-layout-profile="phone-landscape"][data-game-mode="lobby"] body:has(#app[data-phase="replay"]) .btn-lobby-return-table {
-  font-size: 0;
-  min-width: 40px;
-  padding: 0 8px;
-}
-
-html[data-layout-profile="phone-landscape"][data-game-mode="lobby"] body:has(#app[data-phase="battle"]) .btn-lobby-return-table::before,
-html[data-layout-profile="phone-landscape"][data-game-mode="lobby"] body:has(#app[data-phase="replay"]) .btn-lobby-return-table::before {
-  content: "🧑";
-  font-size: var(--font-md);
-  line-height: 1;
 }
 
 html[data-touch="true"] body:has(#app[data-phase="battle"]) .bottom-chrome-gamepad,

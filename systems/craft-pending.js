@@ -52,7 +52,7 @@ function syncPendingCraftClustersForContainers(containers, items, sideKey, curre
 }
 function syncPendingCraftClustersForSide(side, currentRound = typeof round !== "undefined" ? round : 1) {
   const st = getSideState(side);
-  syncPendingCraftClustersForContainers(st.containers, st.items, side, currentRound);
+  syncPendingCraftClustersForContainers(st.containers ?? [], st.items, side, currentRound);
 }
 function syncPendingCraftClustersFromLastPrep(side) {
   const currentRound = typeof round !== "undefined" ? round : 1;
@@ -72,7 +72,7 @@ function resolvePendingCraftEntry(side, entry) {
   if (clusterItems.length !== entry.itemUids.length) return null;
   const recipe = entry.recipe || ITEM_RECIPES.find((r) => r.id === entry.recipeId);
   if (!recipe || typeof applyRecipe !== "function") return null;
-  return applyRecipe(st.containers, st.items, recipe, clusterItems);
+  return applyRecipe(st.containers ?? [], st.items, recipe, clusterItems);
 }
 function logPendingCraftResult(side, recipe) {
   const out = ITEM_CATALOG[recipe.output];
@@ -87,28 +87,62 @@ function applyDuePendingCraftsInstant(side) {
   if (!due.length) return false;
   const st = getSideState(side);
   let changed = false;
+  const resolvedKeys = [];
   due.forEach((entry) => {
     const result = resolvePendingCraftEntry(side, entry);
     if (!result) return;
     st.items = result.items;
     logPendingCraftResult(side, result.recipe);
+    resolvedKeys.push(entry.key);
     changed = true;
   });
-  removePendingCraftEntries(side, due.map((entry) => entry.key));
+  removePendingCraftEntries(side, resolvedKeys);
   if (changed && typeof playPrepSfx === "function") playPrepSfx("prep_craft");
   return changed;
+}
+function postCraftEntryUiRefresh() {
+  if (typeof recalcSynergies === "function") recalcSynergies();
+  if (typeof renderBench === "function") renderBench();
+  if (typeof renderShop === "function") renderShop();
+  if (typeof updateUI === "function") updateUI();
+}
+function syncDuePendingCraftClustersOnPrepEntry() {
+  const sides = ["player"];
+  if (typeof isVersusMode === "function" && isVersusMode()) sides.push("enemy");
+  sides.forEach((side) => syncPendingCraftClustersFromLastPrep(side));
 }
 function resolveDuePendingCraftsOnPrepEntry() {
   const sides = ["player"];
   if (typeof isVersusMode === "function" && isVersusMode()) sides.push("enemy");
-  let changed = false;
-  for (const side of sides) {
-    if (resolveDuePendingCraftsForSideInstant(side)) changed = true;
+  sides.forEach((side) => syncPendingCraftClustersFromLastPrep(side));
+  const sidesWithDue = sides.filter((side) => getDuePendingCrafts(side).length > 0);
+  if (!sidesWithDue.length) return;
+  if (typeof runDuePendingCraftMergeForSide !== "function") {
+    let changed = false;
+    for (const side of sidesWithDue) {
+      if (applyDuePendingCraftsInstant(side)) changed = true;
+    }
+    if (changed) postCraftEntryUiRefresh();
+    return;
   }
-  if (changed) {
-    if (typeof recalcSynergies === "function") recalcSynergies();
-    if (typeof renderBench === "function") renderBench();
-    if (typeof renderShop === "function") renderShop();
-    if (typeof updateUI === "function") updateUI();
+  const visibleSide = typeof prepViewSide !== "undefined" ? prepViewSide : "player";
+  const instantSides = sidesWithDue.filter((side) => side !== visibleSide);
+  const animatedSides = sidesWithDue.filter((side) => side === visibleSide);
+  instantSides.forEach((side) => applyDuePendingCraftsInstant(side));
+  if (!animatedSides.length) {
+    postCraftEntryUiRefresh();
+    return;
   }
+  const runChain = (index) => {
+    if (index >= animatedSides.length) {
+      postCraftEntryUiRefresh();
+      return;
+    }
+    runDuePendingCraftMergeForSide(animatedSides[index], () => runChain(index + 1));
+  };
+  runChain(0);
+}
+if (typeof window !== "undefined") {
+  window.getPendingCraftsForSide = getPendingCraftsForSide;
+  window.syncDuePendingCraftClustersOnPrepEntry = syncDuePendingCraftClustersOnPrepEntry;
 }

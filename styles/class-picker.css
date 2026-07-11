@@ -89,6 +89,7 @@
 }
 
 #class-overlay .class-modal #class-step-mode:not(.hidden) .game-mode-grid {
+  display: grid;
   flex: 0 0 auto;
   width: 100%;
   max-width: 560px;
@@ -98,7 +99,7 @@
   padding-bottom: 0;
   gap: clamp(8px, 1.2cqh, 12px);
   grid-template-columns: 1fr;
-  grid-template-rows: repeat(2, auto);
+  grid-auto-rows: auto;
   align-content: center;
   overflow: visible;
 }
@@ -108,7 +109,7 @@
   grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
 }
 
-@container class-overlay-modal (min-width: 560px) {
+@container class-overlay-modal (min-width: 900px) {
   #class-overlay .class-modal #class-step-mode:not(.hidden) .game-mode-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     grid-template-rows: auto;
@@ -116,18 +117,16 @@
   }
 }
 
-/* Планшет: 2×2 задаётся в tablet-intro-typography.css */
+/* Desktop split (герои + модалка): одна колонка — карточки горизонтальные плитки */
+html:not([data-prep-layout="mobile"])[data-ui-surface="desktop"] #class-overlay .class-modal #class-step-mode:not(.hidden) .game-mode-grid {
+  grid-template-columns: 1fr;
+  max-width: min(100%, 520px);
+}
+
+/* Планшет portrait: одна колонка; landscape — в tablet-intro-typography.css */
 html[data-ui-tier="tablet"] #class-overlay .class-modal #class-step-mode:not(.hidden) .game-mode-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  max-width: min(100%, 560px);
-}
-
-@container class-overlay-modal (max-height: 480px) {
-  #class-overlay .class-modal #class-step-mode:not(.hidden) .game-mode-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    grid-template-rows: auto;
-    max-width: 720px;
-  }
+  grid-template-columns: 1fr;
+  max-width: min(100%, 480px);
 }
 
 #class-overlay .class-modal-footer {
@@ -313,34 +312,49 @@ html[data-visual-theme="diablo"] #class-overlay .class-modal .opponent-class-car
 
 /* Game mode cards — compact row tiles (фиксированная высота, не столбцы) */
 #class-overlay .class-modal .game-mode-card.glass-card {
+  --game-mode-icon-size: calc(52px * var(--ui-scale));
+  display: grid;
   position: relative;
   overflow: visible;
   min-height: calc(72px * var(--ui-scale));
   height: auto;
   max-height: none;
+  width: 100%;
+  align-items: center;
+  text-align: left;
   padding: calc(10px * var(--ui-scale)) calc(12px * var(--ui-scale));
-  display: grid;
-  grid-template-columns: calc(52px * var(--ui-scale)) minmax(0, 1fr);
+  flex-direction: unset;
+  grid-template-columns: var(--game-mode-icon-size) minmax(0, 1fr);
   grid-template-rows: auto auto auto;
   align-content: center;
-  align-items: center;
   column-gap: calc(12px * var(--ui-scale));
   row-gap: calc(2px * var(--ui-scale));
-  text-align: left;
 }
 
-#class-overlay .class-modal .game-mode-card .glass-card-icon {
+#class-overlay .class-modal .game-mode-card.glass-card .glass-card-icon {
   grid-column: 1;
   grid-row: 1 / span 3;
-  width: calc(52px * var(--ui-scale));
-  height: calc(52px * var(--ui-scale));
+  width: var(--game-mode-icon-size);
+  height: var(--game-mode-icon-size);
   margin: 0;
+  margin-bottom: 0;
   align-self: center;
 }
 
+#class-overlay .class-modal .game-mode-card .class-name,
+#class-overlay .class-modal .game-mode-card .class-desc {
+  margin-bottom: 0;
+}
+
+#class-overlay .class-modal .game-mode-card.selected .class-name {
+  padding-right: calc(32px * var(--ui-scale));
+}
+
 #class-overlay .class-modal .game-mode-card .class-name {
+  overflow-wrap: anywhere;
   grid-column: 2;
   grid-row: 1;
+  min-width: 0;
   font-size: max(var(--font-md), calc(0.95rem * var(--type-scale, 1)));
   font-weight: 800;
 }
@@ -348,6 +362,7 @@ html[data-visual-theme="diablo"] #class-overlay .class-modal .opponent-class-car
 #class-overlay .class-modal .game-mode-card .class-desc {
   grid-column: 2;
   grid-row: 2;
+  min-width: 0;
   font-size: max(var(--font-xs), calc(0.72rem * var(--type-scale, 1)));
   line-height: 1.25;
 }
@@ -355,6 +370,7 @@ html[data-visual-theme="diablo"] #class-overlay .class-modal .opponent-class-car
 #class-overlay .class-modal .game-mode-card .class-badge {
   grid-column: 2;
   grid-row: 3;
+  min-width: 0;
   justify-self: start;
   margin: 0;
   padding: calc(2px * var(--ui-scale)) calc(8px * var(--ui-scale));

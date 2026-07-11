@@ -177,17 +177,15 @@ const CASES = [
       await page.goto(baseUrl, { waitUntil: "domcontentloaded", timeout: 20000 });
       await page.waitForFunction(() => typeof selectPlayerClass === "function");
       await page.evaluate(() => {
-        selectGameMode("solo");
         selectPlayerClass("warrior");
-        showSecondClassStep();
-        selectOpponentClass("mage");
+        selectPlayerClass("warrior");
         window.applyUiLayout?.();
         window.syncClassOverlayAnchors?.();
       });
       await page.waitForTimeout(400);
       const m = await page.evaluate(() => {
         const chrome = document.getElementById("bottom-chrome");
-        const step = document.querySelector("#class-step-opponent:not(.hidden)");
+        const step = document.querySelector("#class-step-summary:not(.hidden)");
         const backBtn = document.getElementById("btn-class-back");
         const startBtn = document.getElementById("btn-start-run");
         const chromeRect = chrome?.getBoundingClientRect();
@@ -214,7 +212,7 @@ const CASES = [
         };
       });
       assert(m.prepLayout === "mobile", `expected mobile prep layout, got ${m.prepLayout}`);
-      assert(m.chromeVisible && m.backVisible, "intro bottom chrome hidden on opponent step");
+      assert(m.chromeVisible && m.backVisible, "intro bottom chrome hidden on summary step");
       assert(m.chromeH >= 44 || m.token >= 44, `class intro chrome too short: ${m.chromeH}px token=${m.token}`);
       assert(m.chromeBottom <= m.vh + 2, "chrome below viewport");
       assert(m.stepBottom <= m.chromeTop + 8, `class step overlaps chrome: step=${m.stepBottom} chrome=${m.chromeTop}`);

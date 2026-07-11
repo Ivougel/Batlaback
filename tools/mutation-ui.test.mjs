@@ -47,8 +47,8 @@ function loadUiSandbox() {
       formatMutationIntentLabel,
       buildClassMutationGalleryHtml,
       getPrepMutationBadgeMeta,
-      renderLobbyMutationBadgeHtml,
-      getLobbyFighterMutationEmoji,
+      renderMutationBadgeHtml,
+      getFighterMutationEmoji,
       escapeMutationUiHtml,
       MUTATION_ROUND_FORM,
       MUTATION_ROUND_FINAL,
@@ -97,8 +97,8 @@ function run() {
   assert(mutMeta?.kind === "mutation", "бейдж R16: мутация");
   passed++;
 
-  const badgeHtml = s.renderLobbyMutationBadgeHtml({ mutationFormId: "p_oracle" }, 10);
-  assert(badgeHtml.includes("lobby-mutation-badge--form"), "lobby badge form");
+  const badgeHtml = s.renderMutationBadgeHtml({ mutationFormId: "p_oracle" }, 10);
+  assert(badgeHtml.includes("prep-mutation-badge--form"), "mutation badge form");
   passed++;
 
   const sagePerks = s.getMutationPerkMeta("m_sage");

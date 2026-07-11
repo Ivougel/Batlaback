@@ -191,48 +191,6 @@
   box-shadow: none;
 }
 
-/* ─── Lobby roster (prep) — кружки на поле ─── */
-
-#app[data-phase="prep"] .lobby-prep-field-chip {
-  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.12), rgba(8, 10, 14, 0.78));
-  border-color: rgba(255, 255, 255, 0.14);
-}
-
-#app[data-phase="prep"] .lobby-prep-field-chip--yours {
-  border-color: rgba(92, 184, 92, 0.45);
-}
-
-#app[data-phase="prep"] .lobby-prep-field-chip:not(.lobby-prep-field-chip--yours):hover:not(:disabled),
-#app[data-phase="prep"] .lobby-prep-field-chip:not(.lobby-prep-field-chip--yours):focus-visible:not(:disabled),
-#app[data-phase="prep"] .lobby-prep-field-chip:not(.lobby-prep-field-chip--yours).lobby-prep-field-chip--touch:not(:disabled) {
-  border-color: rgba(245, 200, 66, 0.62);
-  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.18), rgba(20, 16, 10, 0.88));
-  box-shadow:
-    0 3px 10px rgba(0, 0, 0, 0.35),
-    0 0 0 2px rgba(245, 200, 66, 0.22);
-}
-
-#app[data-phase="prep"] .lobby-prep-field-chip--active:not(.lobby-prep-field-chip--yours),
-#app[data-phase="prep"] .lobby-prep-field-chip--next:not(.lobby-prep-field-chip--yours) {
-  border-color: rgba(255, 255, 255, 0.14);
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
-  outline: none;
-}
-
-#app[data-phase="prep"] .lobby-prep-field-chip .lobby-fighter-emoji {
-  filter: none;
-}
-
-#app[data-phase="prep"] .lobby-roster-chip {
-  background: transparent;
-  border: none;
-}
-
-#app[data-phase="prep"] .lobby-roster-chip:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.14);
-  border: none;
-}
-
 /* ─── Усиления: полоска без панели ─── */
 
 #app[data-phase="prep"] .prep-enhancement-strip {
@@ -241,16 +199,12 @@
   box-shadow: none;
 }
 
-/* ─── Магазин / скамейка: без подложек за иконками (solo, lobby, 2P, mobile drawer) ─── */
+/* ─── Магазин / скамейка: без подложек за иконками ─── */
 
 #app[data-phase="prep"] .shop-item-visual .icon,
 #app[data-phase="prep"] .shop-item-visual .item-icon-shell,
 #app[data-phase="prep"] .bench-panel .bench-card .icon,
 #app[data-phase="prep"] .bench-panel .bench-card .item-icon-shell,
-#app[data-phase="prep"] .lobby2p-shop-slots .shop-item-visual .icon,
-#app[data-phase="prep"] .lobby2p-shop-slots .shop-item-visual .item-icon-shell,
-#app[data-phase="prep"] .lobby2p-bench-slots .bench-card .icon,
-#app[data-phase="prep"] .lobby2p-bench-slots .bench-card .item-icon-shell,
 #app[data-phase="prep"] .shop-card--amplifier .item-icon-shell,
 #app[data-phase="prep"] .shop-card--enhancement .item-icon-shell--enhancement,
 #prep-shop-popover #shop-panel .shop-item-visual .icon,
@@ -311,32 +265,27 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] .btn-toggle-doll {
 
 /* ─── Магазин: пин с подложкой, цена — pill (см. item-card-chrome.css) ─── */
 
-#app[data-phase="prep"] #shop-panel .shop-pin,
-#app[data-phase="prep"] .lobby2p-shop-slots .shop-pin {
+#app[data-phase="prep"] #shop-panel .shop-pin {
   background: rgba(14, 12, 10, 0.82) !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35) !important;
 }
 
 #app[data-phase="prep"] #shop-panel .shop-pin:hover,
-#app[data-phase="prep"] #shop-panel .shop-pin:focus-visible,
-#app[data-phase="prep"] .lobby2p-shop-slots .shop-pin:hover,
-#app[data-phase="prep"] .lobby2p-shop-slots .shop-pin:focus-visible {
+#app[data-phase="prep"] #shop-panel .shop-pin:focus-visible {
   background: rgba(255, 255, 255, 0.2) !important;
   border: none !important;
   box-shadow: none !important;
 }
 
-#app[data-phase="prep"] #shop-panel .shop-pin.active,
-#app[data-phase="prep"] .lobby2p-shop-slots .shop-pin.active {
+#app[data-phase="prep"] #shop-panel .shop-pin.active {
   background: rgba(88, 166, 255, 0.28) !important;
   border: 1px solid rgba(88, 166, 255, 0.45) !important;
   box-shadow: 0 2px 8px rgba(88, 166, 255, 0.25) !important;
 }
 
 #app[data-phase="prep"] #shop-panel .shop-item-stack > .cost .cost-value,
-#app[data-phase="prep"] #shop-panel .shop-item-side-meta > .cost .cost-value,
-#app[data-phase="prep"] .lobby2p-shop-slots .shop-item-stack > .cost .cost-value {
+#app[data-phase="prep"] #shop-panel .shop-item-side-meta > .cost .cost-value {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65), 0 0 1px rgba(0, 0, 0, 0.75);
 }
 
@@ -347,7 +296,6 @@ html[data-visual-theme="diablo"] #app[data-phase="prep"] #shop-panel .shop-item-
 }
 
 #app[data-phase="prep"] .btn-refresh-shop,
-html[data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel .btn-refresh-shop,
 html[data-visual-theme="diablo"] #app[data-phase="prep"] .btn-refresh-shop {
   background: transparent !important;
   border: none !important;
@@ -355,15 +303,13 @@ html[data-visual-theme="diablo"] #app[data-phase="prep"] .btn-refresh-shop {
 }
 
 #app[data-phase="prep"] .btn-refresh-shop:hover:not(:disabled),
-html[data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel .btn-refresh-shop:hover:not(:disabled),
 html[data-visual-theme="diablo"] #app[data-phase="prep"] .btn-refresh-shop:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.18) !important;
   border: none !important;
   box-shadow: none !important;
 }
 
-#app[data-phase="prep"] #shop-panel .enh-shop-slot-tag,
-#app[data-phase="prep"] .lobby2p-shop-slots .enh-shop-slot-tag {
+#app[data-phase="prep"] #shop-panel .enh-shop-slot-tag {
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
@@ -371,15 +317,13 @@ html[data-visual-theme="diablo"] #app[data-phase="prep"] .btn-refresh-shop:hover
 }
 
 #app[data-phase="prep"] #shop-panel .item-shape-mini,
-#app[data-phase="prep"] #shop-panel .item-shape-mini--shop-overlay,
-#app[data-phase="prep"] .lobby2p-shop-slots .item-shape-mini {
+#app[data-phase="prep"] #shop-panel .item-shape-mini--shop-overlay {
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
 }
 
-#app[data-phase="prep"] #shop-panel .sell-drop-zone,
-#app[data-phase="prep"] .lobby2p-shop-slots ~ .shop-sell-zone .sell-drop-zone {
+#app[data-phase="prep"] #shop-panel .sell-drop-zone {
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;

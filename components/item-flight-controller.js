@@ -204,6 +204,40 @@ function clearItemFlightDomLayer() {
   if (layer) layer.innerHTML = "";
 }
 
+function initCraftMergeFlight(f) {
+  f.isCraftMerge = true;
+  f.x = f.fromX;
+  f.y = f.fromY;
+  f.targetX = f.toX;
+  f.targetY = f.toY;
+  f.mergeDur = f.meta?.burst ? 0.42 : 0.58;
+  f.localTime = 0;
+  f.rotation = (Math.random() - 0.5) * 12;
+  f.scale = f.meta?.burst ? 1.18 : 1.06;
+  f.shadowStrength = 0.35;
+}
+
+function tickCraftMergeFlight(f, dt) {
+  f.localTime += dt;
+  const t = Math.min(1, f.localTime / f.mergeDur);
+  const eased = easeInOutCubic(t);
+  const lift = Math.sin(t * Math.PI) * itemFlightUiPx(f.meta?.burst ? 18 : 30);
+  f.x = f.fromX + (f.targetX - f.fromX) * eased;
+  f.y = f.fromY + (f.targetY - f.fromY) * eased - lift;
+  f.scale = (f.meta?.burst ? 1.18 : 1.06) + Math.sin(t * Math.PI) * 0.12;
+  f.rotation *= 1 - Math.min(1, dt * 8);
+  f.shadowStrength = Math.sin(t * Math.PI) * 0.72;
+  if (t >= 1) {
+    f.x = f.targetX;
+    f.y = f.targetY;
+    f.scale = 1;
+    f.rotation = 0;
+    f.shadowStrength = 0;
+    f.finished = true;
+    f.despawnTime = 0;
+  }
+}
+
 function initDisplaceFlight(f) {
   const profile = resolveFlightProfile(f.itemId);
   const rand = Math.random;
@@ -247,6 +281,10 @@ function initDisplaceFlight(f) {
 }
 
 function initItemFlight(f) {
+  if (f.meta?.craftMerge) {
+    initCraftMergeFlight(f);
+    return;
+  }
   if (f.isDisplace) {
     initDisplaceFlight(f);
     return;
@@ -360,6 +398,10 @@ function beginLanding(f) {
 }
 
 function tickItemFlightPhysics(f, dt) {
+  if (f.isCraftMerge) {
+    tickCraftMergeFlight(f, dt);
+    return;
+  }
   if (f.isDisplace) {
     tickDisplaceAnimation(f, dt);
     return;

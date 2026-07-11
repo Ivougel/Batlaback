@@ -81,7 +81,9 @@ function getBenchSlotsClientPoint(slotIndex) {
 
   if (usesBenchPopoverMode() && !isBenchPopoverOpen()) return null;
 
-  const maxBench = typeof MAX_BENCH !== "undefined" ? MAX_BENCH : 6;
+  const maxBench = typeof getBenchMaxCapacity === "function"
+    ? getBenchMaxCapacity()
+    : (typeof MAX_BENCH !== "undefined" ? MAX_BENCH : 6);
   const idx = Math.min(Math.max(0, slotIndex), maxBench - 1);
   const cards = slotsEl.querySelectorAll(".bench-card");
   const targetEl = cards[idx] || cards[cards.length - 1] || slotsEl;
@@ -93,6 +95,11 @@ function getBenchSlotsClientPoint(slotIndex) {
 }
 
 function getBenchSlotClientPoint(side, slotIndex) {
+  if (typeof shouldUsePrepStoragePhysics === "function" && shouldUsePrepStoragePhysics()
+    && typeof PrepStoragePhysics !== "undefined") {
+    return PrepStoragePhysics.getInboundTarget(side, slotIndex);
+  }
+
   const slotPt = getBenchSlotsClientPoint(slotIndex);
   if (slotPt) return slotPt;
 
@@ -163,10 +170,15 @@ function queueDisplaceToBenchAnimations(side, items, team, onItemLanded) {
       delay: index * DISPLACE_STAGGER,
       meta: { side, team, item, benchSlot },
       onComplete: () => {
-        if (typeof onItemLanded === "function") onItemLanded(item, side);
+        if (typeof onItemLanded === "function") onItemLanded(item, side, to);
         landedCount += 1;
         if (landedCount >= total) {
           if (typeof renderBench === "function") renderBench(side);
+          if (typeof PrepStoragePhysics !== "undefined"
+            && typeof shouldUsePrepStoragePhysics === "function"
+            && shouldUsePrepStoragePhysics()) {
+            PrepStoragePhysics.sync(side);
+          }
           if (typeof recalcSynergies === "function") recalcSynergies();
           if (typeof updateUI === "function") updateUI();
         }

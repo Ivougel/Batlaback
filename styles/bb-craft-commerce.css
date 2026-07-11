@@ -1,0 +1,110 @@
+/**
+ * Подсветка крафта в магазине / скамейке и SVG-нити.
+ * В магазине светится только эмодзи предмета, не карточка и не shape-сетка.
+ */
+
+#app[data-phase="prep"] #shop-panel .shop-card.shop-card--craft:not(.empty),
+#app[data-phase="prep"] #shop-panel .shop-card.shop-card--craft-strong:not(.empty),
+#prep-shop-popover .shop-card.shop-card--craft:not(.empty),
+#prep-shop-popover .shop-card.shop-card--craft-strong:not(.empty) {
+  box-shadow: none;
+  animation: none;
+  filter: none;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-card.shop-card--craft:not(.empty) .shop-item-visual .icon,
+#prep-shop-popover .shop-card.shop-card--craft:not(.empty) .shop-item-visual .icon {
+  box-shadow:
+    0 0 0 3px rgba(210, 170, 255, 0.92),
+    0 0 26px rgba(160, 100, 255, 0.72);
+  animation: bb-shop-craft-icon-pulse 1.15s ease-in-out infinite;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-card.shop-card--craft-strong:not(.empty) .shop-item-visual .icon,
+#prep-shop-popover .shop-card.shop-card--craft-strong:not(.empty) .shop-item-visual .icon {
+  box-shadow:
+    0 0 0 3px rgba(235, 210, 255, 0.98),
+    0 0 32px rgba(200, 150, 255, 0.82);
+  animation: bb-shop-craft-icon-pulse-strong 0.95s ease-in-out infinite;
+}
+
+#app[data-phase="prep"] #shop-panel .shop-card.shop-card--craft:not(.empty) .shop-item-visual .icon-glyph,
+#app[data-phase="prep"] #shop-panel .shop-card.shop-card--craft:not(.empty) .shop-item-visual .icon-duo .icon-glyph,
+#prep-shop-popover .shop-card.shop-card--craft:not(.empty) .shop-item-visual .icon-glyph,
+#prep-shop-popover .shop-card.shop-card--craft:not(.empty) .shop-item-visual .icon-duo .icon-glyph,
+#app[data-phase="prep"] #shop-panel .shop-card.shop-card--craft-strong:not(.empty) .shop-item-visual .icon-glyph,
+#app[data-phase="prep"] #shop-panel .shop-card.shop-card--craft-strong:not(.empty) .shop-item-visual .icon-duo .icon-glyph,
+#prep-shop-popover .shop-card.shop-card--craft-strong:not(.empty) .shop-item-visual .icon-glyph,
+#prep-shop-popover .shop-card.shop-card--craft-strong:not(.empty) .shop-item-visual .icon-duo .icon-glyph {
+  filter:
+    drop-shadow(0 0 10px rgba(210, 170, 255, 0.95))
+    drop-shadow(0 0 18px rgba(255, 220, 140, 0.55));
+}
+
+#app[data-phase="prep"] #shop-panel .shop-card.shop-card--craft:not(.empty) .item-shape-mini--shop-overlay,
+#app[data-phase="prep"] #shop-panel .shop-card.shop-card--craft-strong:not(.empty) .item-shape-mini--shop-overlay,
+#prep-shop-popover .shop-card.shop-card--craft:not(.empty) .item-shape-mini--shop-overlay,
+#prep-shop-popover .shop-card.shop-card--craft-strong:not(.empty) .item-shape-mini--shop-overlay {
+  opacity: 0.72;
+  filter: none;
+  box-shadow: none;
+}
+
+#bench-slots .bench-card.bench-card--craft:not(.empty) .icon,
+#prep-bench-popover .bench-card.bench-card--craft:not(.empty) .icon {
+  box-shadow: 0 0 0 2px rgba(188, 140, 255, 0.72), 0 0 18px rgba(140, 90, 220, 0.42);
+}
+
+#bench-slots .bench-card.bench-card--craft-strong:not(.empty) .icon,
+#prep-bench-popover .bench-card.bench-card--craft-strong:not(.empty) .icon {
+  box-shadow: 0 0 0 2px rgba(210, 170, 255, 0.85), 0 0 22px rgba(188, 140, 255, 0.5);
+}
+
+#bench-slots .bench-card.bench-card--craft:not(.empty) .icon-glyph,
+#bench-slots .bench-card.bench-card--craft:not(.empty) .icon-duo .icon-glyph,
+#prep-bench-popover .bench-card.bench-card--craft:not(.empty) .icon-glyph,
+#prep-bench-popover .bench-card.bench-card--craft-strong:not(.empty) .icon-glyph {
+  filter: drop-shadow(0 0 8px rgba(188, 140, 255, 0.95));
+}
+
+@keyframes bb-shop-craft-icon-pulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.2); }
+}
+
+@keyframes bb-shop-craft-icon-pulse-strong {
+  0%, 100% { filter: brightness(1.06); }
+  50% { filter: brightness(1.28); }
+}
+
+.bb-craft-tether-layer {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9201;
+  overflow: visible;
+}
+
+.bb-craft-tether-layer.hidden {
+  display: none;
+}
+
+.bb-craft-tether__halo {
+  stroke-linecap: round;
+  filter: blur(2px);
+}
+
+.bb-craft-tether__core {
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 8px rgba(255, 220, 150, 0.65));
+}
+
+html[data-bb-fidelity] .bb-craft-tether__core {
+  filter: drop-shadow(0 0 10px rgba(255, 230, 170, 0.78));
+}
+
+html[data-bb-fidelity] .bb-craft-tether__halo {
+  filter: blur(2.5px) drop-shadow(0 0 12px rgba(188, 140, 255, 0.55));
+}

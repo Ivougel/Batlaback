@@ -1,0 +1,170 @@
+/**
+ * Физическое хранилище BB prep — полная ширина viewport, фиксировано над bottom chrome.
+ */
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-storage__body {
+  min-height: calc(88px * var(--ui-scale, 1));
+  max-height: min(22dvh, 148px);
+  padding: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-storage__body:empty {
+  min-height: 0;
+  max-height: 0;
+}
+
+body:has(#app:is([data-phase="battle"], [data-phase="replay"])) .prep-storage-mount,
+html[data-battle-layout="bb-stack"] .prep-storage-mount {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+.prep-storage-mount {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: var(--prep-storage-mount-bottom, 44px);
+  z-index: calc(var(--z-chrome, 50) + 3);
+  width: 100vw;
+  max-width: none;
+  margin: 0;
+  pointer-events: none;
+}
+
+.prep-storage-arena {
+  position: relative;
+  width: 100%;
+  min-height: min(calc(22dvh * var(--ui-scale, 1)), calc(148px * var(--ui-scale, 1)));
+  height: var(--prep-storage-arena-h, min(calc(22dvh * var(--ui-scale, 1)), calc(148px * var(--ui-scale, 1))));
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+  background:
+    radial-gradient(ellipse 90% 80% at 50% 100%, rgba(60, 42, 28, 0.55) 0%, transparent 70%),
+    linear-gradient(180deg, rgba(14, 11, 10, 0.35) 0%, rgba(8, 6, 6, 0.94) 100%);
+  border-top: 1px solid rgba(100, 75, 45, 0.45);
+  box-shadow:
+    inset 0 2px 10px rgba(0, 0, 0, 0.42),
+    0 -4px 18px rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+}
+
+.prep-storage-bodies {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.prep-storage-body {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  cursor: grab;
+  will-change: transform;
+  filter: none;
+}
+
+.prep-storage-body:active {
+  cursor: grabbing;
+}
+
+.prep-storage-item-glyph,
+.prep-storage-body__glyph,
+.prep-screen-flier__glyph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: inherit;
+  font-size: var(--shop-card-icon-font, var(--game-item-icon-font, calc(46px * var(--ui-scale, 1))));
+  line-height: 1;
+  text-align: center;
+  pointer-events: none;
+}
+
+.prep-storage-item-glyph--duo {
+  font-size: var(--shop-card-icon-duo-font, calc(var(--shop-card-icon-font, 50px) * 0.86));
+}
+
+.prep-storage-item-glyph .icon-duo {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--shop-item-icon-duo-gap, 0px);
+  width: auto;
+  max-width: 100%;
+  height: 100%;
+  line-height: 1;
+}
+
+.prep-storage-item-glyph .icon-glyph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: auto;
+  height: 100%;
+  line-height: 1;
+  font-size: inherit;
+  transform: translateY(calc(-0.04em * var(--ui-scale, 1)));
+}
+
+.prep-storage-item-glyph .icon,
+.prep-storage-item-glyph .item-icon-shell {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+html[data-prep-layout="bb-stack"][data-bb-storage-collapsed="true"] .prep-storage-mount {
+  opacity: 0.92;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .prep-storage-body {
+    transition: transform 0.15s ease-out;
+  }
+}
+
+.prep-screen-fling-layer {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-chrome, 50) + 14);
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.prep-screen-flier {
+  position: fixed;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  will-change: transform;
+  filter: none;
+}
+
+
+html[data-prep-screen-fling="true"] .ui-drag-ghost {
+  opacity: 0 !important;
+}
+
+html[data-prep-layout="bb-stack"] body.is-ui-dragging .ui-drag-ghost {
+  z-index: calc(var(--z-chrome, 50) + 14);
+}

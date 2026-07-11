@@ -14,7 +14,6 @@ const PrepCountdown = /* @__PURE__ */ (() => {
   let audioPhaseKey = "";
   let audioTenPlayed = false;
   let audioFivePlayed = false;
-  let lobbyAutoArmed = false;
   function playSfx(id) {
     if (typeof playGameSfx === "function") playGameSfx(id);
   }
@@ -25,11 +24,7 @@ const PrepCountdown = /* @__PURE__ */ (() => {
   }
   function onPrepPhaseStarted(phaseKey) {
     resetAudioMarks(phaseKey);
-    lobbyAutoArmed = false;
     playSfx("prep_phase_start");
-  }
-  function resetLobbyArming() {
-    lobbyAutoArmed = false;
   }
   function tickPrepTimerAudio(remainingSec, active, phaseKey) {
     if (!active) return;
@@ -108,15 +103,6 @@ const PrepCountdown = /* @__PURE__ */ (() => {
     }
     if (countdown.remaining <= 0) return finishCountdown();
     return false;
-  }
-  function tryArmLobbyAutoCountdown(remainingSec) {
-    if (lobbyAutoArmed || countdown.active) return;
-    if (remainingSec > PREP_COUNTDOWN_SEC || remainingSec <= 0) return;
-    lobbyAutoArmed = true;
-    start(() => {
-      lobbyAutoArmed = false;
-      if (typeof executeBattleStart === "function") executeBattleStart();
-    });
   }
   let battleResultClock = {
     active: false,
@@ -213,14 +199,12 @@ const PrepCountdown = /* @__PURE__ */ (() => {
     PREP_COUNTDOWN_SEC,
     BATTLE_RESULT_VIEW_SEC,
     onPrepPhaseStarted,
-    resetLobbyArming,
     tickPrepTimerAudio,
     isActive,
     cancel,
     start,
     tick,
     render,
-    tryArmLobbyAutoCountdown,
     scheduleBattleResultWindow,
     clearBattleResultWindow
   };

@@ -15,6 +15,7 @@ function assert(cond, msg) {
 
 function loadSandbox() {
   const storage = new Map();
+  storage.set("bb-meta-enabled", "1");
   const sandbox = {
     console,
     Math,
@@ -68,20 +69,24 @@ function run() {
 
   assert(MetaProgress.isHeroUnlocked("warrior"), "warrior unlocked");
   assert(MetaProgress.isHeroUnlocked("rogue"), "rogue unlocked");
-  assert(!MetaProgress.isHeroUnlocked("mage"), "mage locked in classic mode");
+  assert(MetaProgress.isHeroUnlocked("mage"), "mage unlocked in classic (meta not applied to classic)");
+  assert(!MetaProgress.isActiveForRun(), "classic run skips meta unlock filter");
 
   MetaProgress.setPickerMode("solo");
-  assert(MetaProgress.isHeroUnlocked("mage"), "mage unlocked outside classic/path mode");
+  assert(MetaProgress.isHeroUnlocked("mage"), "mage unlocked outside path mode");
 
   MetaProgress.setPickerMode("classic");
-  assert(!MetaProgress.isHeroUnlocked("mage"), "mage locked again in classic picker");
-  assert(!MetaProgress.isHeroUnlocked("priest"), "priest locked");
+  assert(MetaProgress.isHeroUnlocked("mage"), "mage still unlocked in classic picker");
+  assert(MetaProgress.isHeroUnlocked("priest"), "priest unlocked when meta not on classic");
 
   const warriorProg = MetaProgress.countItemProgress("warrior");
-  assert(warriorProg.unlocked > 0, "warrior has starter items");
-  assert(warriorProg.unlocked < warriorProg.total, "warrior not full catalog");
+  assert(warriorProg.unlocked === warriorProg.total, "classic: full shop pool when meta filter off");
 
   assert(MetaProgress.isItemUnlocked("rusty_sword", "warrior"), "rusty_sword starter");
+
+  MetaProgress.setPickerMode("path");
+  MetaProgress.setRunMode("path");
+  assert(MetaProgress.isActiveForRun(), "path run records meta progress");
 
   MetaProgress.recordRunEnd({
     classId: "warrior",
@@ -113,9 +118,9 @@ function run() {
   const katanaLevel = ItemUnlockTiers.getMinLevel("katana");
   assert(katanaLevel >= 10, "katana high tier unlock");
 
-  MetaProgress.setPickerMode("path");
-  MetaProgress.setRunMode("path");
-  assert(MetaProgress.isActiveForRun(), "path mode also uses meta unlock");
+  const pathWarriorProg = MetaProgress.countItemProgress("warrior");
+  assert(pathWarriorProg.unlocked > 0, "path: warrior has starter items");
+  assert(pathWarriorProg.unlocked < pathWarriorProg.total, "path: warrior not full catalog at level 1");
 
   console.log("meta-progress.test.mjs: OK");
 }

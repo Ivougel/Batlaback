@@ -16,7 +16,6 @@ const NODE_TESTS = [
   "placement-slots.test.mjs",
   "mutation-capstones.test.mjs",
   "mutation-ui.test.mjs",
-  "lobby-mutations.test.mjs",
   "mutation-progress-hints.test.mjs",
 ];
 

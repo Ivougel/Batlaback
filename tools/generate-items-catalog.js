@@ -6,6 +6,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const { filterCatalogItems } = require("./lib/gem-catalog-filter.mjs");
 
 const ROOT = path.join(__dirname, "..");
 const SRC = path.join(__dirname, "items-migrated.json");
@@ -48,20 +49,9 @@ function fmtMetaEffects(meta) {
   return `metaEffects: ${fmtEffects(meta)}`;
 }
 
-function fmtSynergies(synergies) {
-  if (!synergies?.length) return "[]";
-  return `[\n${synergies
-    .map((s) => {
-      const apply = s.apply;
-      const applyStr = `apply: { type: "${apply.type}", value: ${apply.value}${apply.buffTargetTags ? `, buffTargetTags: ${JSON.stringify(apply.buffTargetTags)}` : ""}${apply.cap != null ? `, cap: ${apply.cap}` : ""} }`;
-      return `      { id: "${esc(s.id)}", adjacency: "${s.adjacency}", neighborTags: ${JSON.stringify(s.neighborTags)}, target: "${s.target}", ${applyStr}, desc: "${esc(s.desc || "")}" }`;
-    })
-    .join(",\n")}\n    ]`;
-}
-
 function main() {
   const data = JSON.parse(fs.readFileSync(SRC, "utf8"));
-  const entries = data.items;
+  const entries = filterCatalogItems(data.items);
 
   const lines = [
     "/**",
@@ -97,7 +87,6 @@ function main() {
         "cooldown: 0",
         "effects: []",
         item.craftOnly ? "craftOnly: true" : null,
-        item.synergies?.length ? `synergies: ${fmtSynergies(item.synergies)}` : "synergies: []",
         item.description ? `description: "${esc(item.description)}"` : null,
         item.buildHints ? `buildHints: "${esc(item.buildHints)}"` : null,
         item.goldPerRound > 0 ? `goldPerRound: ${item.goldPerRound}` : null,
@@ -130,12 +119,10 @@ function main() {
       item.staminaCost != null ? `staminaCost: ${item.staminaCost}` : null,
       item.craftOnly ? "craftOnly: true" : null,
       `effects: ${fmtEffects(item.effects)}`,
-      item.synergies?.length ? `synergies: ${fmtSynergies(item.synergies)}` : null,
       fmtMetaEffects(item.metaEffects),
       item.description ? `description: "${esc(item.description)}"` : null,
       item.buildHints ? `buildHints: "${esc(item.buildHints)}"` : null,
       item.goldPerRound > 0 ? `goldPerRound: ${item.goldPerRound}` : null,
-      item.sockets > 0 ? `sockets: ${item.sockets}` : null,
     ].filter(Boolean);
 
     lines.push(`  ${item.id}: {`);

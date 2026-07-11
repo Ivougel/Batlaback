@@ -480,7 +480,16 @@ function createBattleSide(items, classId, prepMeta = {}) {
     const def = ITEM_CATALOG[item.itemId];
     (def?.effects || []).forEach((effect) => {
       if (effect.type !== "max_hp_per_start_item") return;
-      const startCount = countBattleStartItems(side.items);
+      let startCount;
+      const slots = typeof getPlacementSlotsForItem === "function"
+        ? getPlacementSlotsForItem(item.itemId)
+        : [];
+      const useStars = slots.some((s) => s.acceptBattleStart);
+      if (useStars && typeof countStarredGuestsForHost === "function") {
+        startCount = countStarredGuestsForHost(item, side.items, (s) => !!s.acceptBattleStart);
+      } else {
+        startCount = countBattleStartItems(side.items);
+      }
       side.maxHp += startCount * (Number(effect.value) || 0);
     });
   });
@@ -766,6 +775,7 @@ function checkDebuffThresholdEffects(state, side, foe, team) {
 }
 
 function applyClassCombatBonus(side, classId) {
+  if (typeof shouldUseClassSystem === "function" && !shouldUseClassSystem()) return;
   const cls = getClassById(classId);
   if (!cls?.combatBonus) return;
   const b = cls.combatBonus;
@@ -985,7 +995,9 @@ function applySpendStackEffect(state, effect, item, self, foe, rt, team) {
 
 function applyTagScaledStack(side, effect, item) {
   const tag = effect.tag || "armor";
-  const count = countTaggedItemsOnSide(side, tag);
+  const count = typeof countTagForItemEffect === "function"
+    ? countTagForItemEffect(side, item, tag)
+    : countTaggedItemsOnSide(side, tag);
   const per = Number(effect.perTag ?? effect.value ?? 1);
   const total = Math.floor(per * count);
   if (total <= 0) return 0;
@@ -1741,6 +1753,13 @@ function applyCrossSideBattleStartEffects(state) {
   });
 }
 
+function shouldSkipGlobalWeaponDamageStart(itemId) {
+  const slots = typeof getPlacementSlotsForItem === "function"
+    ? getPlacementSlotsForItem(itemId)
+    : [];
+  return slots.some((s) => (s.acceptTags || []).includes("weapon") && s.guestApply);
+}
+
 function applyBattleStartItemEffects(side) {
   side.firedThresholds = new Set();
   side.hpThresholdFired = new Set();
@@ -1751,7 +1770,11 @@ function applyBattleStartItemEffects(side) {
     effects.forEach((effect) => {
       if (!isBattleStartTrigger(effect)) return;
       if (effect.type === "gainStack") applyGainStackEffect(null, effect, item, side, null);
-      if (effect.type === "weaponDamageStart") applyWeaponStartDamageBonus(side, effect.value);
+      if (effect.type === "weaponDamageStart") {
+        if (!shouldSkipGlobalWeaponDamageStart(item.itemId)) {
+          applyWeaponStartDamageBonus(side, effect.value);
+        }
+      }
       if (effect.type === "tagScaledStack") applyTagScaledStack(side, effect, item);
       if (effect.type === "convertHp") applyConvertHpStart(side, effect, item);
       if (effect.type === "timedDamageReduction") applyTimedDamageReductionStart(side, effect);
@@ -2047,9 +2070,15 @@ function applyPassiveEffect(side, item, effect) {
       else side.repeatAllAttacks = true;
       break;
     case "cooldownMultPerTag":
-      applyTagCooldownMult(side, effect);
+      applyTagCooldownMult(side, effect, item);
       break;
     case "cooldownMultPerAdjacent": {
+      const slotDefs = typeof getPlacementSlotsForItem === "function"
+        ? getPlacementSlotsForItem(item.itemId)
+        : [];
+      if (slotDefs.some((s) => s.acceptStarHost)) {
+        break;
+      }
       if (typeof getAdjacentItems !== "function") break;
       const neighbors = getAdjacentItems(side.items, item);
       const per = Number(effect.perAdjacent ?? effect.perTag ?? 0.10);
@@ -2112,7 +2141,10 @@ function applyPassiveEffect(side, item, effect) {
       }
       break;
     case "lifestealPerTag": {
-      const count = countTaggedItemsOnSide(side, effect.tag || "cold");
+      const tag = effect.tag || "cold";
+      const count = typeof countTagForItemEffect === "function"
+        ? countTagForItemEffect(side, item, tag)
+        : countTaggedItemsOnSide(side, tag);
       side.lifesteal += count * (Number(effect.value) || 0.15);
       break;
     }
@@ -2217,11 +2249,15 @@ function getSideCooldownMult(side) {
   return mult;
 }
 
-function applyTagCooldownMult(side, effect) {
+function applyTagCooldownMult(side, effect, item) {
   const tags = Array.isArray(effect.tags) ? effect.tags : [effect.tag || "pet"];
   const perTag = Number(effect.perTag ?? effect.value ?? 0.15);
   let count = 0;
-  tags.forEach((tag) => { count += countTaggedItemsOnSide(side, tag); });
+  tags.forEach((tag) => {
+    count += typeof countTagForItemEffect === "function"
+      ? countTagForItemEffect(side, item, tag)
+      : countTaggedItemsOnSide(side, tag);
+  });
   if (count <= 0) return;
   const factor = Math.max(0.35, 1 - perTag * count);
   side.tagCooldownMult = (side.tagCooldownMult || 1) * factor;
@@ -2899,14 +2935,6 @@ function executeEffect(state, effect, item, self, foe, rt, team, execOptions = {
 
       const actualDmg = applyDamage(foe, dmg, state, def.name, team, self, effect, item, { isCrit });
       creditDamageStats(self, stat, actualDmg, effect.damageType);
-      if (typeof emitEffectAttackVisual === "function" && actualDmg > 0) {
-        emitEffectAttackVisual(state, item, team, effect, {
-          damage: actualDmg,
-          isCrit,
-          damageType: effect.damageType || "physical",
-          targetTeam: team === "player" ? "enemy" : "player",
-        });
-      }
       if (!execOptions.skipOnHit) processOnHitItemEffects(state, item, self, foe, team);
 
       if (!execOptions.skipExtraAttack
@@ -2985,9 +3013,6 @@ function executeEffect(state, effect, item, self, foe, rt, team, execOptions = {
         targetTeam: team,
         targetUid: item.uid,
       });
-      if (typeof emitEffectAttackVisual === "function") {
-        emitEffectAttackVisual(state, item, team, effect, { damage: 0, targetTeam: team });
-      }
       if (healed > 0 && typeof checkFoeHealTriggers === "function") {
         checkFoeHealTriggers(state, self, team, healed);
       }
@@ -3031,9 +3056,6 @@ function executeEffect(state, effect, item, self, foe, rt, team, execOptions = {
         amount,
         targetTeam: team,
       });
-      if (typeof emitEffectAttackVisual === "function") {
-        emitEffectAttackVisual(state, item, team, effect, { damage: 0, targetTeam: team });
-      }
       if (rt.grantBlockBuff?.buffTargetTags) {
         buffNeighborWeaponsOnBlock(state, item, self, rt.grantBlockBuff);
       }
@@ -3068,12 +3090,6 @@ function executeEffect(state, effect, item, self, foe, rt, team, execOptions = {
         message: `${battleTeamLabel(team)} · ${def.name}: +${added} яда${effNote} (×${foe.poisonStacks}) → ${battleTeamLabel(victimTeam)}`,
       });
       queueHitAnimation(state, item, team, `☠ +${added} яд`, "#3fb950");
-      if (typeof emitEffectAttackVisual === "function") {
-        emitEffectAttackVisual(state, item, team, effect, {
-          damage: 0,
-          targetTeam: victimTeam,
-        });
-      }
       triggerProfileAvatarCritFlip(victimTeam);
       break;
     }
@@ -3091,12 +3107,6 @@ function executeEffect(state, effect, item, self, foe, rt, team, execOptions = {
       });
       const slowPct = Math.round((effect.value || 0.1) * 100);
       queueHitAnimation(state, item, team, `🐌 −${slowPct}%`, "#a371f7");
-      if (typeof emitEffectAttackVisual === "function") {
-        emitEffectAttackVisual(state, item, team, effect, {
-          damage: 0,
-          targetTeam: victimTeam,
-        });
-      }
       break;
     }
     case "buffTimed": {
@@ -3134,13 +3144,6 @@ function applyDamage(target, amount, state, sourceLabel, attackerTeam, attackerS
         message: `${battleTeamLabel(attackerTeam)} · ${sourceLabel} → ${battleTeamLabel(targetTeam)}: промах (уклонение)`,
       });
       queueHitAnimation(state, sourceItem, attackerTeam, "MISS", "#8b949e");
-      if (typeof emitEffectAttackVisual === "function" && sourceItem && effect) {
-        emitEffectAttackVisual(state, sourceItem, attackerTeam, effect, {
-          miss: true,
-          damage: 0,
-          targetTeam,
-        });
-      }
       if (sourceItem && typeof processOnMissItemEffects === "function") {
         processOnMissItemEffects(state, sourceItem, attackerSide, target, attackerTeam);
       }
@@ -3241,6 +3244,9 @@ function applyDamage(target, amount, state, sourceLabel, attackerTeam, attackerS
       targetTeam,
       targetUid: null,
     });
+    if (sourceItem && typeof queueHitAnimation === "function") {
+      queueHitAnimation(state, sourceItem, attackerTeam, `−${Math.round(hpDmg)}`, "#f85149");
+    }
     triggerProfileAvatarHitShake(targetTeam);
   } else if (blockAbs + armorAbs > 0) {
     const absorbed = Math.round(blockAbs + armorAbs);

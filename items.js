@@ -15,6 +15,99 @@ function uiPx(value) {
 
 /** Отступ цветной плитки предмета внутри клетки (совпадает с roundRect в drawLoadoutItems). */
 const CELL_TILE_PAD = 3;
+/** Доля внутренней клетки под emoji (магазин / HUD используют ~65–80% высоты слота). */
+const CELL_EMOJI_FILL = 0.74;
+
+/**
+ * Заливка формы предмета без полос между соседними клетками (мостит cell-gap).
+ */
+function drawMergedShapeCells(ctx, team, anchorCol, anchorRow, shape, options = {}) {
+  if (!ctx || !shape?.length) return;
+  const {
+    fillStyle = null,
+    strokeStyle = null,
+    lineWidth = 0,
+    inset = 0,
+    radius = 0,
+    bridgeGaps = true,
+  } = options;
+
+  const cells = shape.map(([dx, dy]) => [anchorCol + dx, anchorRow + dy]);
+  const cellSet = new Set(cells.map(([c, r]) => `${c},${r}`));
+
+  const paintFill = (x, y, w, h) => {
+    const ix = x + inset;
+    const iy = y + inset;
+    const iw = w - inset * 2;
+    const ih = h - inset * 2;
+    if (iw <= 0 || ih <= 0) return;
+    if (radius > 0 && typeof roundRect === "function") {
+      roundRect(ix, iy, iw, ih, radius);
+      ctx.fill();
+    } else {
+      ctx.fillRect(ix, iy, iw, ih);
+    }
+  };
+
+  ctx.save();
+  if (fillStyle) {
+    ctx.fillStyle = fillStyle;
+    cells.forEach(([c, r]) => {
+      const rect = cellRect(team, c, r);
+      paintFill(rect.x, rect.y, rect.w, rect.h);
+    });
+    if (bridgeGaps) {
+      cells.forEach(([c, r]) => {
+        if (cellSet.has(`${c + 1},${r}`)) {
+          const left = cellRect(team, c, r);
+          const right = cellRect(team, c + 1, r);
+          const bx = left.x + left.w - inset;
+          const bw = (right.x + inset) - bx;
+          if (bw > 0) ctx.fillRect(bx, left.y + inset, bw, left.h - inset * 2);
+        }
+        if (cellSet.has(`${c},${r + 1}`)) {
+          const top = cellRect(team, c, r);
+          const bottom = cellRect(team, c, r + 1);
+          const by = top.y + top.h - inset;
+          const bh = (bottom.y + inset) - by;
+          if (bh > 0) ctx.fillRect(top.x + inset, by, top.w - inset * 2, bh);
+        }
+      });
+    }
+  }
+
+  if (strokeStyle && lineWidth > 0) {
+    ctx.strokeStyle = strokeStyle;
+    ctx.lineWidth = lineWidth;
+    cells.forEach(([c, r]) => {
+      const rect = cellRect(team, c, r);
+      const ix = rect.x + inset;
+      const iy = rect.y + inset;
+      const iw = rect.w - inset * 2;
+      const ih = rect.h - inset * 2;
+      if (iw <= 0 || ih <= 0) return;
+      if (radius > 0 && typeof roundRect === "function") {
+        roundRect(ix, iy, iw, ih, radius);
+        ctx.stroke();
+      } else {
+        ctx.strokeRect(ix + 0.5, iy + 0.5, Math.max(0, iw - 1), Math.max(0, ih - 1));
+      }
+    });
+  }
+  ctx.restore();
+}
+
+function drawMergedOccupiedCells(ctx, team, cells, options = {}) {
+  if (!cells?.length) return;
+  let minCol = Infinity;
+  let minRow = Infinity;
+  cells.forEach(([c, r]) => {
+    minCol = Math.min(minCol, c);
+    minRow = Math.min(minRow, r);
+  });
+  const shape = cells.map(([c, r]) => [c - minCol, r - minRow]);
+  drawMergedShapeCells(ctx, team, minCol, minRow, shape, options);
+}
 
 const CELL_EMOJI_FONT = '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
 const EMOJI_WARMUP_GLYPHS = ["🗡️", "🛡️", "🔮", "🥚", "👢"];
@@ -110,7 +203,7 @@ function withCanvasRotation(ctx, center, rotationDeg, drawFn) {
 /** Рисует emoji в точке (cx, cy) внутри квадрата innerSize×innerSize. */
 function drawCellEmojiAt(ctx, icon, cx, cy, innerSize, rotationDeg = 0) {
   ensureCellEmojiMetrics(ctx);
-  const size = Math.max(14, Math.round(Math.max(1, innerSize) * 0.62));
+  const size = Math.max(14, Math.round(Math.max(1, innerSize) * CELL_EMOJI_FILL));
   ctx.save();
   if (rotationDeg) {
     ctx.translate(cx, cy);
@@ -271,20 +364,31 @@ function drawPlacedItemIcons(ctx, def, item, cellRectFn, options = {}) {
     });
   };
 
-  if (!glow) {
+  if (!glow && !options.craftPendingGlow && !options.craftMergeChargeGlow) {
     drawIcons();
     return;
   }
 
   const lightFx = typeof BattleFxTier !== "undefined" && BattleFxTier.isLightBattleFx();
-  if (lightFx) {
+  if (lightFx && !options.craftPendingGlow && !options.craftMergeChargeGlow) {
     drawIcons();
     return;
   }
 
   ctx.save();
-  ctx.shadowColor = "rgba(255, 230, 120, 0.95)";
-  ctx.shadowBlur = 16;
+  if (options.craftMergeChargeGlow) {
+    const pulse = 0.55 + Math.sin((typeof synergyAnimTime !== "undefined" ? synergyAnimTime : 0) * 5.4) * 0.45;
+    ctx.shadowColor = "rgba(255, 240, 180, 1)";
+    ctx.shadowBlur = 24 + pulse * 22;
+    ctx.globalAlpha = 0.92 + pulse * 0.08;
+  } else if (options.craftPendingGlow) {
+    const pulse = 0.65 + Math.sin((typeof synergyAnimTime !== "undefined" ? synergyAnimTime : 0) * 2.6) * 0.35;
+    ctx.shadowColor = "rgba(255, 220, 140, 0.98)";
+    ctx.shadowBlur = 18 + pulse * 16;
+  } else {
+    ctx.shadowColor = "rgba(255, 230, 120, 0.95)";
+    ctx.shadowBlur = 16;
+  }
   drawIcons();
   ctx.restore();
 }
@@ -487,52 +591,13 @@ function formatDamageType(type) {
   return DAMAGE_TYPE_LABELS[type] || TAG_LABELS[type] || type;
 }
 
-function getBaseSynergyIdsForTags(tags) {
-  const ids = new Set();
-  (tags || []).forEach((tag) => {
-    (BASE_TAG_SYNERGIES[tag] || []).forEach((rule) => ids.add(rule.id));
-  });
-  return ids;
+/** Синергии для справочника / тултипа — только ⭐/◆ слоты. */
+function getItemWikiSynergyLines(itemIdOrDef) {
+  const def = typeof itemIdOrDef === "string" ? ITEM_CATALOG[itemIdOrDef] : itemIdOrDef;
+  if (!def) return [];
+  if (typeof getPlacementSlotTooltipLines !== "function") return [];
+  return getPlacementSlotTooltipLines(def.id);
 }
-
-/** Синергии, заданные у предмета явно — без автоподмешанных по тегам. */
-function getUniqueItemSynergies(def) {
-  const baseIds = getBaseSynergyIdsForTags(def.tags);
-  return (def.synergies || []).filter((s) => !baseIds.has(s.id));
-}
-
-/** Базовые синергии по тегам (добавляются к предметам автоматически). */
-/** Минорные синергии — небольшой бонус за укладку; основная сила в крафте. */
-const BASE_TAG_SYNERGIES = {
-  weapon: [
-    {
-      id: "weapon_near_armor",
-      adjacency: "strong",
-      neighborTags: ["armor"],
-      target: "self",
-      apply: { type: "blockBonus", value: 1 },
-      desc: "Оружие рядом с бронёй: +1 блока",
-    },
-    {
-      id: "weapon_near_poison",
-      adjacency: "strong",
-      neighborTags: ["poison"],
-      target: "self",
-      apply: { type: "poisonBonus", value: 1 },
-      desc: "Оружие рядом с ядом: +1 к яду",
-    },
-  ],
-  magic: [
-    {
-      id: "magic_near_gem",
-      adjacency: "strong",
-      neighborTags: ["gem"],
-      target: "self",
-      apply: { type: "cooldownReduction", value: 0.08 },
-      desc: "Магия рядом с кристаллом: −8% кулдаун",
-    },
-  ],
-};
 
 function shapeRect(w, h) {
   const cells = [];
@@ -597,16 +662,6 @@ function renderItemShapeMiniHTML(def, options = {}) {
   }
 
   return `<div class="item-shape-mini item-shape-mini--${size}" style="grid-template-columns:repeat(${cols},${cellPx}px)" title="Форма: ${label}" aria-label="Занимает ${label} клеток">${cells.join("")}</div>`;
-}
-
-function mergeSynergies(tags, extra = []) {
-  const list = [...extra];
-  tags.forEach((tag) => {
-    (BASE_TAG_SYNERGIES[tag] || []).forEach((rule) => {
-      if (!list.some((r) => r.id === rule.id)) list.push(rule);
-    });
-  });
-  return list;
 }
 
 /** Разброс урона по редкости (min = max(1, value − spread)). */
@@ -704,7 +759,6 @@ function getItemStaminaCost(def) {
     }
     return computeItemStaminaCostFromOpts(def);
   }
-  if (def.tags?.includes("gem")) return GEM_ACTIVATION_STAMINA_COST;
   if (def.tags?.includes("food")) {
     const hasHeal = (def.effects || []).some(
       (e) => e.type === "heal" || (e.type === "periodic" && Number(e.heal) > 0),
@@ -769,10 +823,9 @@ function defItem(opts) {
     staminaCost,
     description: opts.description ?? "",
     goldPerRound: opts.goldPerRound ?? 0,
-    sockets: opts.sockets ?? 0,
+    sockets: 0,
     effects: (opts.effects ?? []).map((e) => enrichDamageEffect(e, opts.rarity)),
     metaEffects: opts.metaEffects ?? [],
-    synergies: mergeSynergies(tags, opts.synergies ?? []),
     isContainer: false,
     craftOnly: opts.craftOnly ?? false,
   };
@@ -789,15 +842,42 @@ function isCraftOutputItemId(itemId) {
   return false;
 }
 
+function isItemAllowedForHeroClass(itemOrId, heroClass) {
+  const def = typeof itemOrId === "string" ? ITEM_CATALOG[itemOrId] : itemOrId;
+  if (!def?.classRestriction) return true;
+  if (typeof shouldApplyClassItemRestriction === "function" && !shouldApplyClassItemRestriction()) {
+    return true;
+  }
+  if (!heroClass) return true;
+  return def.classRestriction === heroClass;
+}
+
+function getLoadoutHeroClass() {
+  if (typeof playerClass !== "undefined" && playerClass) return playerClass;
+  if (typeof getSideState === "function") {
+    const side = typeof prepViewSide !== "undefined" ? prepViewSide : "player";
+    const st = getSideState(side);
+    if (st?.classId) return st.classId;
+  }
+  return null;
+}
+
 function isShopEligibleItem(item, playerClass = null, round = 1) {
-  if (!item || item.craftOnly) return false;
+  if (!item) return false;
+  const maxAccount = typeof isMaxAccountMode === "function" && isMaxAccountMode();
+  if (item.craftOnly && !maxAccount) return false;
+  if ((item.tags || []).includes("gem")) return false;
   if (item.isEnhancementItem) return false;
   if (item.isBuildKey) return false;
   if (item.isAmplifierItem) return false;
   if (isCraftOutputItemId(item.id)) return false;
-  if (item.classRestriction && item.classRestriction !== playerClass) return false;
+  if (typeof isItemAllowedForHeroClass === "function" && !isItemAllowedForHeroClass(item, playerClass)) {
+    return false;
+  }
   if (item.isContainer) {
-    if (!item.shopContainer || item.immovable) return false;
+    const shopContainer = item.shopContainer
+      || (maxAccount && !item.immovable && (item.cost ?? 0) > 0);
+    if (!shopContainer) return false;
     return isContainerAvailableInShop(item, round);
   }
   return true;
@@ -805,11 +885,12 @@ function isShopEligibleItem(item, playerClass = null, round = 1) {
 
 function getShopEligibleItems(playerClass, round = 1, opts = {}) {
   let pool = Object.values(ITEM_CATALOG).filter((item) => isShopEligibleItem(item, playerClass, round));
-  if (typeof filterItemsToPool120 === "function" && !(typeof shouldFilterToPool120 === "function" && shouldFilterToPool120())) {
+  if (typeof filterItemsToPool120 === "function" && typeof shouldFilterToPool120 === "function" && shouldFilterToPool120()) {
     pool = filterItemsToPool120(pool);
   }
-  const metaActive = typeof MetaProgress !== "undefined" && MetaProgress.isActiveForRun();
-  const applyMeta = opts.applyMetaUnlockFilter || metaActive;
+  const maxAccount = typeof isMaxAccountMode === "function" && isMaxAccountMode();
+  const metaActive = !maxAccount && typeof MetaProgress !== "undefined" && MetaProgress.isActiveForRun();
+  const applyMeta = !maxAccount && (opts.applyMetaUnlockFilter || metaActive);
   if (applyMeta && metaActive) {
     pool = pool.filter((item) => MetaProgress.isItemUnlocked(item.id, playerClass));
   }
@@ -852,7 +933,10 @@ function getShopContainerItems() {
 }
 
 function isContainerAvailableInShop(item, round = 1) {
-  if (!item?.shopContainer) return false;
+  const maxAccount = typeof isMaxAccountMode === "function" && isMaxAccountMode();
+  const purchasable = item?.shopContainer
+    || (maxAccount && !item?.immovable && (item?.cost ?? 0) > 0);
+  if (!purchasable) return false;
   return (item.minShopRound || 1) <= round;
 }
 

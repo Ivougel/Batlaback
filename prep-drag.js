@@ -14,6 +14,238 @@ function getPrepDragCommitThresholdPx() {
     : MOUSE_DRAG_THRESHOLD_PX;
 }
 
+let prepDragPointerVel = { vx: 0, vy: 0 };
+let prepDragPointerPrev = { x: 0, y: 0, t: 0 };
+let prepScreenFlingSuppress = false;
+let lastPrepDragHoverCellKey = null;
+
+function resetPrepDragPointerVelocity() {
+  prepDragPointerVel = { vx: 0, vy: 0 };
+  prepDragPointerPrev = { x: 0, y: 0, t: 0 };
+}
+
+function samplePrepDragPointerVelocity(clientX, clientY) {
+  const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+  if (prepDragPointerPrev.t > 0) {
+    const dt = Math.max(0.008, (now - prepDragPointerPrev.t) / 1000);
+    const rawVx = (clientX - prepDragPointerPrev.x) / dt;
+    const rawVy = (clientY - prepDragPointerPrev.y) / dt;
+    prepDragPointerVel.vx = prepDragPointerVel.vx * 0.55 + rawVx * 0.45;
+    prepDragPointerVel.vy = prepDragPointerVel.vy * 0.55 + rawVy * 0.45;
+  }
+  prepDragPointerPrev = { x: clientX, y: clientY, t: now };
+}
+
+function getPrepDragReleaseVelocity() {
+  return {
+    vx: prepDragPointerVel.vx * 1.12,
+    vy: prepDragPointerVel.vy * 1.22,
+  };
+}
+
+function releaseBenchEntryToStoragePhysics(st, dragFrom, clientX, clientY, side) {
+  if (!dragFrom?.benchEntry) return false;
+  const entry = dragFrom.benchEntry;
+  const idx = Math.min(Math.max(0, dragFrom.index ?? st.bench.length), st.bench.length);
+  st.bench.splice(idx, 0, entry);
+  dragFrom.benchEntry = null;
+  if (typeof PrepStoragePhysics !== "undefined"
+    && typeof shouldUsePrepStoragePhysics === "function"
+    && shouldUsePrepStoragePhysics()) {
+    const vel = getPrepDragReleaseVelocity();
+    if (typeof PrepStoragePhysics.ensureBenchEntryInteractive === "function") {
+      PrepStoragePhysics.ensureBenchEntryInteractive(entry, side, clientX, clientY, vel.vx, vel.vy);
+    } else {
+      PrepStoragePhysics.onDragCancel(entry);
+      PrepStoragePhysics.releaseAtDrop(entry, clientX, clientY, vel.vx, vel.vy, side);
+    }
+    return true;
+  }
+  return false;
+}
+
+/** Прямое размещение на сетке — только при отпускании над инвентарём (как в оригинале BB). */
+function evaluateDirectInventoryPlacementOnDrop(dropClientX, dropClientY, side, st, opts = {}) {
+  if (!dragPayload || !dragFrom) return null;
+  if (opts.flingLanding) {
+    return evaluateFlingInventoryPlacement(dropClientX, dropClientY, side, st);
+  }
+  const hoverClient = resolvePrepDragHoverClient(dropClientX, dropClientY);
+  syncPrepDragBoardHover(dropClientX, dropClientY, hoverClient.x, hoverClient.y);
+  const { x: mx, y: my } = canvasCoordsFromClient(hoverClient.x, hoverClient.y);
+  if (!isOnBoard(mx, my, side)) return null;
+  const placement = getPrepDropPlacement(st, side);
+  if (!placement?.valid) return null;
+  if (placement.kind === "item" && placement.benchOk === false) return null;
+  return placement;
+}
+
+/** Приземление после screen fling: только ghost-позиция, без отмены из-за хранилища под пальцем. */
+function evaluateFlingInventoryPlacement(clientX, clientY, side, st) {
+  if (!dragPayload || !dragFrom) return null;
+  const ghost = resolvePrepDragHoverClient(clientX, clientY);
+  const hit = findPrepBoardHoverCellFromGhostClient(ghost.x, ghost.y, side);
+  if (!hit) return null;
+  applyPrepBoardHoverFromCell(hit.col, hit.row, side, st);
+  const { x: mx, y: my } = canvasCoordsFromClient(ghost.x, ghost.y);
+  if (!isOnBoard(mx, my, side)) return null;
+  const placement = getPrepDropPlacement(st, side);
+  if (!placement?.valid) return null;
+  if (placement.kind === "item" && placement.benchOk === false) return null;
+  return placement;
+}
+
+function hasPrepThrowIntentOnDrop(dropClientX, dropClientY, pointerOnBench) {
+  const vel = getPrepDragReleaseVelocity();
+  const speed = Math.hypot(vel.vx, vel.vy);
+  if (speed >= 90) return true;
+  if (Math.abs(vel.vy) >= 110) return true;
+  if (Math.abs(vel.vx) >= 140) return true;
+  const overStorage = typeof shouldUsePrepStoragePhysics === "function"
+    && shouldUsePrepStoragePhysics()
+    && typeof PrepStoragePhysics !== "undefined"
+    && PrepStoragePhysics.isPointerInside(dropClientX, dropClientY);
+  if (pointerOnBench || overStorage) {
+    return speed >= 45 || Math.abs(vel.vy) >= 55;
+  }
+  return false;
+}
+
+function restoreDraggedItem(side = prepViewSide, source = dragFrom) {
+  if (!source) return;
+  const st = getLoadoutEditState(side);
+  if (source.type === "item") {
+    st.items = [...st.items, source.item];
+  } else if (source.type === "container") {
+    st.containers = [...st.containers, source.container];
+    st.items = [...st.items, ...source.carriedItems];
+  } else if (source.type === "bench") {
+    restoreBenchDragEntry(st, source);
+  }
+}
+
+function restoreFlingDragToStorage(flier, side) {
+  const from = flier?.dragFrom;
+  if (!from) return false;
+  const st = getLoadoutEditState(side);
+  if (from.type === "bench" && from.benchEntry) {
+    const entry = from.benchEntry;
+    const idx = Math.min(Math.max(0, from.index ?? st.bench.length), st.bench.length);
+    if (!st.bench.some((e) => e.uid === entry.uid)) {
+      st.bench.splice(idx, 0, entry);
+    }
+    from.benchEntry = null;
+    if (typeof PrepStoragePhysics !== "undefined"
+      && typeof shouldUsePrepStoragePhysics === "function"
+      && shouldUsePrepStoragePhysics()
+      && typeof PrepStoragePhysics.ensureBenchEntryInteractive === "function") {
+      PrepStoragePhysics.ensureBenchEntryInteractive(
+        entry,
+        side,
+        flier.x,
+        flier.y,
+        flier.vx * 0.25,
+        flier.vy * 0.25,
+      );
+    } else {
+      restoreBenchDragEntry(st, { type: "bench", index: idx, benchEntry: entry });
+    }
+    return true;
+  }
+  dragFrom = from;
+  dragPayload = flier.dragPayload;
+  restoreDraggedItem(side, from);
+  dragFrom = null;
+  dragPayload = null;
+  return true;
+}
+
+function tryPrepScreenFlingOnDrop(dropClientX, dropClientY, side, st, dropOnSell, dropBackToShop, pointerOnBench) {
+  if (prepScreenFlingSuppress) return false;
+  if (typeof shouldUseBBStackPrepLayout !== "function" || !shouldUseBBStackPrepLayout()) return false;
+  if (dropOnSell || dropBackToShop) return false;
+  if (evaluateDirectInventoryPlacementOnDrop(dropClientX, dropClientY, side, st)) return false;
+  if (typeof PrepStoragePhysics === "undefined" || !PrepStoragePhysics.beginScreenFling) return false;
+
+  const vel = getPrepDragReleaseVelocity();
+  const overStorage = typeof shouldUsePrepStoragePhysics === "function"
+    && shouldUsePrepStoragePhysics()
+    && PrepStoragePhysics.isPointerInside(dropClientX, dropClientY);
+  if (!hasPrepThrowIntentOnDrop(dropClientX, dropClientY, pointerOnBench)
+    && (overStorage || pointerOnBench)) {
+    return false;
+  }
+
+  return PrepStoragePhysics.beginScreenFling({
+    dragFrom,
+    dragPayload,
+    clientX: dropClientX,
+    clientY: dropClientY,
+    vx: vel.vx,
+    vy: vel.vy,
+    side,
+  });
+}
+
+function resolvePrepScreenFlingLanding(flier) {
+  if (!flier?.dragFrom || !flier?.dragPayload) return;
+  const side = flier.side || prepViewSide;
+  const st = getLoadoutEditState(side);
+
+  try {
+    prepScreenFlingSuppress = true;
+    dragFrom = flier.dragFrom;
+    dragPayload = flier.dragPayload;
+
+    const placement = evaluateFlingInventoryPlacement(flier.x, flier.y, side, st);
+    if (placement) {
+      finishDragDrop(createSyntheticPointerEvent(flier.x, flier.y));
+      return;
+    }
+
+    const sellEvt = createSyntheticPointerEvent(flier.x, flier.y);
+    if (isDropOnSell(sellEvt) && sellDraggedItem(side)) {
+      clearDragUiState();
+      renderBench(side);
+      recalcSynergies();
+      updateUI();
+      return;
+    }
+
+    if (typeof PrepStoragePhysics !== "undefined"
+      && PrepStoragePhysics.absorbAtClient(
+        flier.dragFrom,
+        flier.dragPayload,
+        flier.x,
+        flier.y,
+        flier.vx * 0.35,
+        flier.vy * 0.35,
+        side,
+      )) {
+      clearDragUiState();
+      renderBench(side);
+      recalcSynergies();
+      updateUI();
+      return;
+    }
+
+    restoreFlingDragToStorage(flier, side);
+    clearDragUiState();
+    renderBench(side);
+    recalcSynergies();
+    updateUI();
+  } finally {
+    prepScreenFlingSuppress = false;
+    dragFrom = null;
+    dragPayload = null;
+    if (typeof scheduleCanvasFit === "function") scheduleCanvasFit();
+  }
+}
+
+if (typeof window !== "undefined") {
+  window.resolvePrepScreenFlingLanding = resolvePrepScreenFlingLanding;
+}
+
 function getDropPointerClient(e) {
   if (isTouchUi() && (dragPayload || pendingShopDrag || pendingBenchDrag)) {
     return { x: lastPointerClient.x, y: lastPointerClient.y };
@@ -38,6 +270,12 @@ function bindPrepLoadoutDragPointer() {
     updatePointerFromClient(e.clientX, e.clientY);
   };
 
+  const onDocMove = (e) => {
+    if (!pendingShopDrag && !pendingBenchDrag) return;
+    if (!isLoadoutInteractionPhase()) return;
+    updatePointerFromClient(e.clientX, e.clientY);
+  };
+
   const onUp = (e) => {
     if (!isLoadoutInteractionPhase() || !isActiveDrag()) return;
     if (e.button != null && e.button !== 0) return;
@@ -48,6 +286,7 @@ function bindPrepLoadoutDragPointer() {
   window.addEventListener("pointermove", onMove, { passive: false });
   window.addEventListener("pointerup", onUp, { passive: false });
   window.addEventListener("pointercancel", onUp, { passive: false });
+  document.addEventListener("mousemove", onDocMove, { passive: false });
 }
 
 function sellDraggedItem(side = prepViewSide) {
@@ -104,6 +343,11 @@ function dropDraggedItemToBench() {
 function takeBenchEntryOnDragStart(st, index) {
   const entry = st.bench[index];
   if (!entry) return null;
+  if (typeof PrepStoragePhysics !== "undefined"
+    && typeof shouldUsePrepStoragePhysics === "function"
+    && shouldUsePrepStoragePhysics()) {
+    PrepStoragePhysics.onDragStart(entry);
+  }
   st.bench.splice(index, 1);
   if (selectedBench === index) selectedBench = -1;
   else if (selectedBench > index) selectedBench -= 1;
@@ -112,26 +356,23 @@ function takeBenchEntryOnDragStart(st, index) {
 
 function restoreBenchDragEntry(st, dragFrom) {
   if (dragFrom?.type !== "bench" || !dragFrom.benchEntry) return;
-  if (st.bench.length >= MAX_BENCH) return;
+  if (typeof canFitOnBench === "function" ? !canFitOnBench(st, 1) : st.bench.length >= MAX_BENCH) return;
+  if (typeof PrepStoragePhysics !== "undefined"
+    && typeof shouldUsePrepStoragePhysics === "function"
+    && shouldUsePrepStoragePhysics()) {
+    PrepStoragePhysics.onDragCancel(dragFrom.benchEntry);
+  }
   const idx = Math.min(Math.max(0, dragFrom.index ?? st.bench.length), st.bench.length);
   st.bench.splice(idx, 0, dragFrom.benchEntry);
   dragFrom.benchEntry = null;
 }
 
 function commitBenchDragEntry(dragFrom) {
-  if (dragFrom?.type === "bench") dragFrom.benchEntry = null;
-}
-
-function restoreDraggedItem(side = prepViewSide) {
-  if (!dragFrom) return;
-  const st = getLoadoutEditState(side);
-  if (dragFrom.type === "item") {
-    st.items = [...st.items, dragFrom.item];
-  } else if (dragFrom.type === "container") {
-    st.containers = [...st.containers, dragFrom.container];
-    st.items = [...st.items, ...dragFrom.carriedItems];
-  } else if (dragFrom.type === "bench") {
-    restoreBenchDragEntry(st, dragFrom);
+  if (dragFrom?.type !== "bench") return;
+  const uid = dragFrom.benchEntry?.uid;
+  dragFrom.benchEntry = null;
+  if (uid && typeof PrepStoragePhysics !== "undefined" && PrepStoragePhysics.releaseDragHold) {
+    PrepStoragePhysics.releaseDragHold(uid);
   }
 }
 
@@ -147,7 +388,6 @@ function syncSellDropHighlight(clientX, clientY) {
     ? createSyntheticPointerEvent(clientX, clientY)
     : null;
   const onSell = !!(sellable && synthetic && isDropOnSell(synthetic));
-  const dragSide = dragFrom?.side || prepViewSide;
 
   const sellZone = document.getElementById("shop-sell-zone");
   if (sellZone && !isPrepSellFabActive()) {
@@ -158,15 +398,8 @@ function syncSellDropHighlight(clientX, clientY) {
   }
 
   document.querySelectorAll(".sell-drop-zone").forEach((el) => {
-    let zoneActive = onSell;
-    let zoneSellable = sellable;
-    if (el.classList.contains("lobby2p-sell-zone")) {
-      const side = Number(el.dataset.human) === 0 ? "player" : "enemy";
-      zoneSellable = sellable && side === dragSide;
-      zoneActive = onSell && side === dragSide;
-    }
-    el.classList.toggle("is-drag-active", zoneSellable);
-    el.classList.toggle("is-drag-target", zoneActive);
+    el.classList.toggle("is-drag-active", sellable);
+    el.classList.toggle("is-drag-target", onSell);
   });
 }
 
@@ -308,22 +541,217 @@ function isPrepArcPlaceableCell(col, row) {
   const displacedUids = displaced.map((item) => item.uid);
   const slotOk = typeof canAddSlotItemToLoadout !== "function"
     || canAddSlotItemToLoadout(st.items, dragPayload.itemId, excludeUid, displacedUids);
-  const benchOk = st.bench.length + displaced.length <= MAX_BENCH;
+  const benchOk = typeof canFitOnBench === "function"
+    ? canFitOnBench(st, displaced.length)
+    : st.bench.length + displaced.length <= MAX_BENCH;
   return slotOk && benchOk;
 }
 
-function maybePrepArcHoverSound(col, row) {
-  if (typeof PrepDragArc === "undefined" || !PrepDragArc.isActive()) return;
-  if (col == null || row == null || !isPrepArcPlaceableCell(col, row)) {
-    PrepDragArc.syncHoverCell(null, null);
-    return;
+function uiCm(cm) {
+  return uiPx(cm * (96 / 2.54));
+}
+
+function getPrepDragGhostOffsetY() {
+  const want = uiCm(2);
+  const stride = typeof gridStrideFor === "function" ? gridStrideFor(prepViewSide) : uiPx(48);
+  // 2 см на desktop; на телефоне не больше ~40% клетки — иначе призрак улетает в магазин.
+  return Math.min(want, Math.max(uiPx(18), stride * 0.42));
+}
+
+function isClientPointInsideCanvas(clientX, clientY) {
+  if (!canvas || clientX == null || clientY == null) return false;
+  const rect = canvas.getBoundingClientRect();
+  const right = rect.right ?? rect.left + rect.width;
+  const bottom = rect.bottom ?? rect.top + rect.height;
+  if (right <= rect.left || bottom <= rect.top) return false;
+  return clientX >= rect.left && clientX <= right
+    && clientY >= rect.top && clientY <= bottom;
+}
+
+function getPrepDragGhostClientPos(clientX, clientY) {
+  const offsetY = getPrepDragGhostOffsetY();
+  let x = clientX;
+  let y = clientY - offsetY;
+  if (canvas && clientX != null && clientY != null) {
+    const rect = canvas.getBoundingClientRect();
+    const pad = 2;
+    const fingerOnCanvas = clientY >= rect.top && clientY <= rect.bottom
+      && clientX >= rect.left && clientX <= rect.right;
+    if (fingerOnCanvas) {
+      y = Math.max(rect.top + pad, Math.min(rect.bottom - pad, y));
+      x = Math.max(rect.left + pad, Math.min(rect.right - pad, x));
+    }
   }
-  const kind = isContainerItem(dragPayload?.itemId) ? "c" : "s";
-  PrepDragArc.syncHoverCell(col, row, kind);
+  return { x, y, rotation: 0 };
+}
+
+function isClientPointInsidePrepBackpack(clientX, clientY, side = prepViewSide) {
+  const rect = getPrepBackpackClientRect();
+  if (!rect) return isClientPointInsideCanvas(clientX, clientY);
+  return clientX >= rect.left && clientX <= rect.right
+    && clientY >= rect.top && clientY <= rect.bottom;
+}
+
+/** Клетка под точкой призрака. BB rotate: client-space + центры клеток; иначе inverse canvas. */
+function findPrepBoardHoverCellFromClient(clientX, clientY, side = prepViewSide) {
+  if (clientX == null || clientY == null) return null;
+  if (isPointerOverPrepSidebar(clientX, clientY)) return null;
+
+  const rotated = typeof shouldUseBBPrepDrawRotate === "function" && shouldUseBBPrepDrawRotate();
+
+  if (rotated) {
+    if (!isClientPointInsidePrepBackpack(clientX, clientY, side)) return null;
+    const stride = typeof gridStrideFor === "function" ? gridStrideFor(side) : uiPx(48);
+    const maxDist = stride * 0.72;
+    const cols = getActiveGridCols();
+    const rows = getActiveGridRows();
+    let bestCol = null;
+    let bestRow = null;
+    let bestDist = Infinity;
+
+    for (let row = 0; row < rows; row += 1) {
+      for (let col = 0; col < cols; col += 1) {
+        const center = boardCellClientCenter(col, row, side);
+        if (!center) continue;
+        const dist = Math.hypot(center.x - clientX, center.y - clientY);
+        if (dist < bestDist) {
+          bestDist = dist;
+          bestCol = col;
+          bestRow = row;
+        }
+      }
+    }
+
+    if (bestCol == null || bestDist > maxDist) return null;
+    return { col: bestCol, row: bestRow };
+  }
+
+  if (!isClientPointInsideCanvas(clientX, clientY)) return null;
+
+  const { x: mx, y: my } = canvasCoordsFromClient(clientX, clientY);
+  if (!isOnBoard(mx, my, side)) return null;
+
+  const col = xToCol(mx, side);
+  const row = yToRow(my, side);
+  const cols = getActiveGridCols();
+  const rows = getActiveGridRows();
+  if (col < 0 || col >= cols || row < 0 || row >= rows) return null;
+  return { col, row };
+}
+
+function findPrepBoardHoverCellFromGhostClient(ghostClientX, ghostClientY, side = prepViewSide) {
+  return findPrepBoardHoverCellFromClient(ghostClientX, ghostClientY, side);
+}
+
+function applyPrepBoardHoverFromCell(col, row, side, st) {
+  if (col == null || row == null) return false;
+  prepDropPreviewHover = { col, row };
+  if (isContainerItem(dragPayload.itemId)) {
+    hoverCell = { col, row };
+    hoverSlot = null;
+    return true;
+  }
+  if (isSlotCell(st.containers, col, row)) {
+    hoverSlot = { col, row };
+    hoverCell = null;
+    return true;
+  }
+  const placement = resolveLoadoutPlacementDisplacing(
+    st.containers,
+    dragPayload.itemId,
+    col,
+    row,
+    dragPayload.rotation || 0,
+  );
+  if (placement.valid) {
+    hoverSlot = { col, row };
+    hoverCell = null;
+    return true;
+  }
+  hoverCell = { col, row };
+  hoverSlot = null;
+  return true;
+}
+
+function isPrepDragGhostOverBoard(clientX, clientY) {
+  const ghost = getPrepDragGhostClientPos(clientX, clientY);
+  return !!findPrepBoardHoverCellFromGhostClient(ghost.x, ghost.y, dragFrom?.side || prepViewSide);
+}
+
+function getPrepDragBoardHoverCell() {
+  const col = prepDropPreviewHover?.col ?? hoverSlot?.col ?? hoverCell?.col;
+  const row = prepDropPreviewHover?.row ?? hoverSlot?.row ?? hoverCell?.row;
+  if (col == null || row == null) return null;
+  return { col, row };
+}
+
+/** Визуальная тень — строго под призраком (клетка под иконкой), без «лучшего» invalid-snap. */
+function getPrepDragShadowPlacement(st, side = prepViewSide) {
+  if (!dragPayload || !isLoadoutInteractionPhase()) return null;
+  const ghost = getPrepDragGhostClientPos(lastPointerClient.x, lastPointerClient.y);
+  const hover = findPrepBoardHoverCellFromGhostClient(ghost.x, ghost.y, side);
+  if (!hover) return null;
+
+  const logical = getPrepDropPlacement(st, side);
+  const rot = logical?.rotation ?? (((dragPayload.rotation || 0) % 4 + 4) % 4);
+
+  if (isContainerItem(dragPayload.itemId)) {
+    if (logical) return logical;
+    return {
+      kind: "container",
+      col: hover.col,
+      row: hover.row,
+      rotation: rot,
+      valid: false,
+      displaced: [],
+    };
+  }
+
+  if (logical?.valid) {
+    return logical;
+  }
+
+  const invalid = buildInvalidItemDropPreview(dragPayload.itemId, hover.col, hover.row, rot);
+  if (invalid) {
+    return { ...invalid, displaced: logical?.displaced || [] };
+  }
+
+  return {
+    kind: "item",
+    col: hover.col,
+    row: hover.row,
+    rotation: rot,
+    valid: false,
+    displaced: [],
+  };
+}
+
+/** Hit-test и drop — всегда по позиции призрака, не пальца. */
+function resolvePrepDragHoverClient(clientX, clientY) {
+  return getPrepDragGhostClientPos(clientX, clientY);
+}
+
+function shouldShowPrepDragBoardShadow(clientX = lastPointerClient.x, clientY = lastPointerClient.y) {
+  if (!dragPayload || !isLoadoutInteractionPhase()) return false;
+  const ghost = getPrepDragGhostClientPos(clientX, clientY);
+  return !!findPrepBoardHoverCellFromGhostClient(ghost.x, ghost.y, dragFrom?.side || prepViewSide);
+}
+
+function maybePrepDragHoverSound(col, row) {
+  const key = col != null && row != null ? `${col},${row}` : null;
+  if (key === lastPrepDragHoverCellKey) return;
+  lastPrepDragHoverCellKey = key;
+  if (key && isPrepArcPlaceableCell(col, row) && typeof playGameSfx === "function") {
+    playGameSfx("arc_hover");
+  }
+}
+
+/** @deprecated alias */
+function maybePrepArcHoverSound(col, row) {
+  maybePrepDragHoverSound(col, row);
 }
 
 function applyPrepBoardHoverFromCanvasXY(mx, my, side, st) {
-  if (isLobby2pColumnPrepLayout() && lobby2pSideFromCanvasX(mx) !== side) return false;
   if (!isOnBoard(mx, my, side)) return false;
   const col = xToCol(mx, side);
   const row = yToRow(my, side);
@@ -455,13 +883,6 @@ function isPrepSidebarArcDrag() {
     || dragFrom?.type === "bench";
 }
 
-function shouldDrawPrepGridFigurePreview() {
-  if (!isPrepSidebarArcDrag()) return true;
-  if (hoverSlot || hoverCell || prepDropPreviewHover) return true;
-  const st = typeof getSideState === "function" ? getSideState(prepViewSide) : null;
-  return !!(st && typeof getPrepDropPlacement === "function" && getPrepDropPlacement(st, prepViewSide));
-}
-
 function getPrepBackpackClientRect() {
   const team = prepViewSide;
   let ox;
@@ -484,14 +905,6 @@ function getPrepBackpackClientRect() {
 }
 
 function getShopDrawerRect(side = dragFrom?.side || prepViewSide) {
-  if (isLobby2pMode() && lobbyState?.isSplitLobby) {
-    if (typeof window.isPrepShopPopoverOpen === "function" && window.isPrepShopPopoverOpen()) {
-      const panel = document.querySelector("#prep-shop-popover .prep-shop-popover__panel");
-      const r = panel?.getBoundingClientRect();
-      if (r && r.width >= 1 && r.height >= 1) return r;
-    }
-    return null;
-  }
   const panel = document.getElementById("shop-panel");
   if (!panel) return null;
   if (typeof window.usesPrepShopPopover === "function" && window.usesPrepShopPopover()) {
@@ -518,9 +931,13 @@ function isPointerInsideShopDrawerBounds(clientX, clientY, side = dragFrom?.side
 
 /** Отмена sidebar-drag: вернули предмет в зону источника (магазин / скамья). */
 function getPrepSidebarDragCancelAt(clientX, clientY, side = dragFrom?.side || prepViewSide) {
+  const ghost = getPrepDragGhostClientPos(clientX, clientY);
+  const ghostOnBoard = !!findPrepBoardHoverCellFromGhostClient(ghost.x, ghost.y, side);
   const dropE = createSyntheticPointerEvent(clientX, clientY);
   return {
-    shop: dragFrom?.type === "shop" && isPointerInsideShopDrawerBounds(clientX, clientY, side),
+    shop: dragFrom?.type === "shop"
+      && isPointerInsideShopDrawerBounds(clientX, clientY, side)
+      && !ghostOnBoard,
     bench: dragFrom?.type === "bench" && isDropOnBench(dropE, { ignoreBoardTarget: true }),
   };
 }
@@ -529,9 +946,7 @@ function clearPrepBoardDropHover() {
   prepDropPreviewHover = null;
   hoverCell = null;
   hoverSlot = null;
-  if (typeof PrepDragArc !== "undefined" && PrepDragArc.isActive()) {
-    PrepDragArc.syncHoverCell(null, null);
-  }
+  maybePrepDragHoverSound(null, null);
 }
 
 /** Доля ширины клетки — порог перехода в соседнюю (Schmitt trigger, см. snapgrid / Fitts). */
@@ -559,6 +974,15 @@ function quantizePrepSidebarAxis(norm, count, stickyIndex) {
 /** Зона управления дугой: коридор между рюкзаком и магазином (как на UX-макете). */
 /** Зона управления дугой: коридор между рюкзаком и магазином (как на UX-макете). */
 function getPrepBenchCommerceRect() {
+  if (typeof shouldUsePrepStoragePhysics === "function" && shouldUsePrepStoragePhysics()) {
+    const r = typeof PrepStoragePhysics !== "undefined"
+      ? (PrepStoragePhysics.getStorageBandRect?.() || PrepStoragePhysics.getArenaClientRect?.())
+      : null;
+    if (r && r.width > 0 && r.height > 0) return r;
+    const body = document.getElementById("prep-storage-mount");
+    const br = body?.getBoundingClientRect();
+    if (br && br.width > 0 && br.height > 0) return br;
+  }
   if (typeof usesPrepBenchPopover === "function" && usesPrepBenchPopover()) {
     const popover = document.getElementById("prep-bench-popover");
     if (popover && !popover.hidden && !popover.classList.contains("hidden")) {
@@ -806,22 +1230,7 @@ function getPrepPlacementAnchorClient() {
 function isPointerOverPrepBackpack(clientX, clientY) {
   if (!canvas || !isLoadoutInteractionPhase() || clientX == null || clientY == null) return false;
   if (isPointerOverPrepSidebar(clientX, clientY)) return false;
-  const coords = canvasCoordsFromClient(clientX, clientY);
-  return isOnBoard(coords.x, coords.y, prepViewSide);
-}
-
-function getPrepDragGhostClientPos(clientX, clientY) {
-  if (isPrepSidebarArcDrag()) {
-    return { x: clientX, y: clientY, rotation: 0 };
-  }
-  const anchor = getDragGhostAnchorClient(clientX, clientY);
-  if (isLoadoutInteractionPhase()
-    && isPrepArcDragSource()
-    && typeof PrepDragArc !== "undefined"
-    && PrepDragArc.isActive()) {
-    return PrepDragArc.resolveGhostPosition(clientX, clientY, anchor.x, anchor.y);
-  }
-  return { x: anchor.x, y: anchor.y, rotation: 0 };
+  return !!findPrepBoardHoverCellFromGhostClient(clientX, clientY, prepViewSide);
 }
 
 function syncPrepDragBoardHover(clientX, clientY, ghostClientX, ghostClientY) {
@@ -835,40 +1244,51 @@ function syncPrepDragBoardHover(clientX, clientY, ghostClientX, ghostClientY) {
   }
   const st = getLoadoutEditState(side);
 
-  const tryCanvas = (mx, my) => applyPrepBoardHoverFromCanvasXY(mx, my, side, st);
-  const tryClient = (cx, cy) => {
-    const coords = canvasCoordsFromClient(cx, cy);
-    return tryCanvas(coords.x, coords.y);
-  };
+  const pointer = createSyntheticPointerEvent(clientX, clientY);
+  if (isDropOnBench(pointer) || isDropOnSell(pointer)) {
+    hoverCell = null;
+    hoverSlot = null;
+    maybePrepDragHoverSound(null, null);
+    return;
+  }
 
-  if (isPrepSidebarArcDrag()) {
-    if (syncPrepSidebarBoardHover(clientX, clientY, side, st)) {
-      maybePrepArcHoverSound(hoverSlot?.col ?? hoverCell?.col, hoverSlot?.row ?? hoverCell?.row);
+  const cancelAt = getPrepSidebarDragCancelAt(clientX, clientY, side);
+  if (cancelAt.shop || cancelAt.bench) {
+    clearPrepBoardDropHover();
+    return;
+  }
+
+  if (isPrepSidebarArcDrag() && !prepSidebarDragUnlocked) {
+    const inShopBounds = isPointerInsideShopDrawerBounds(clientX, clientY);
+    const inBenchBounds = dragFrom?.type === "bench"
+      && isDropOnBench(pointer, { ignoreBoardTarget: true });
+    const ghostPos = getPrepDragGhostClientPos(clientX, clientY);
+    const ghostOnBoard = isPointerOverPrepBackpack(ghostPos.x, ghostPos.y);
+    if ((inShopBounds || inBenchBounds) && !ghostOnBoard) {
+      clearPrepBoardDropHover();
       return;
     }
-  } else {
-    if (tryClient(clientX, clientY)) {
-      maybePrepArcHoverSound(hoverSlot?.col ?? hoverCell?.col, hoverSlot?.row ?? hoverCell?.row);
-      return;
-    }
-    if (ghostClientX != null && ghostClientY != null && tryClient(ghostClientX, ghostClientY)) {
-      maybePrepArcHoverSound(hoverSlot?.col ?? hoverCell?.col, hoverSlot?.row ?? hoverCell?.row);
-      return;
-    }
-    if (typeof PrepDragArc !== "undefined" && PrepDragArc.isActive() && isPrepArcDragSource()) {
-      const anchor = getDragGhostAnchorClient(clientX, clientY);
-      if (tryClient(anchor.x, anchor.y)) {
-        maybePrepArcHoverSound(hoverSlot?.col ?? hoverCell?.col, hoverSlot?.row ?? hoverCell?.row);
-        return;
-      }
-    }
+    prepSidebarDragUnlocked = true;
+    prepSidebarStickyHover = null;
+  }
+
+  const ghostPos = getPrepDragGhostClientPos(clientX, clientY);
+  const hit = findPrepBoardHoverCellFromGhostClient(ghostPos.x, ghostPos.y, side);
+  if (!hit) {
+    hoverCell = null;
+    hoverSlot = null;
+    maybePrepDragHoverSound(null, null);
+    return;
+  }
+
+  if (applyPrepBoardHoverFromCell(hit.col, hit.row, side, st)) {
+    maybePrepDragHoverSound(hoverSlot?.col ?? hoverCell?.col, hoverSlot?.row ?? hoverCell?.row);
+    return;
   }
 
   hoverCell = null;
   hoverSlot = null;
-  if (typeof PrepDragArc !== "undefined" && PrepDragArc.isActive()) {
-    PrepDragArc.syncHoverCell(null, null);
-  }
+  maybePrepDragHoverSound(null, null);
 }
 
 /** @deprecated use syncPrepDragBoardHover */
@@ -892,7 +1312,19 @@ function getPrepDropPlacement(st, side = prepViewSide, rotationOverride = null) 
   if (isContainerItem(dragPayload.itemId)) {
     const exactOnly = rotationOverride != null;
     const resolved = resolveContainerPlacementAtCursor(st, col, row, activeRot, exactOnly);
-    if (!resolved) return null;
+    if (!resolved) {
+      if (hoverCell) {
+        return {
+          kind: "container",
+          col: hoverCell.col,
+          row: hoverCell.row,
+          rotation: activeRot,
+          valid: false,
+          displaced: [],
+        };
+      }
+      return null;
+    }
     const valid = dragFrom?.type === "container"
       ? canMoveContainerWithItems(
         dragFrom.container,
@@ -946,7 +1378,9 @@ function getPrepDropPlacement(st, side = prepViewSide, rotationOverride = null) 
   const displacedUids = displaced.map((item) => item.uid);
   const slotOk = typeof canAddSlotItemToLoadout !== "function"
     || canAddSlotItemToLoadout(st.items, dragPayload.itemId, excludeUid, displacedUids);
-  const benchOk = st.bench.length + displaced.length <= MAX_BENCH;
+  const benchOk = typeof canFitOnBench === "function"
+    ? canFitOnBench(st, displaced.length)
+    : st.bench.length + displaced.length <= MAX_BENCH;
   return {
     kind: "item",
     col: placement.col,
@@ -961,31 +1395,14 @@ function buildInvalidItemDropPreview(itemId, hoverCol, hoverRow, rotation) {
   const def = ITEM_CATALOG[itemId];
   if (!def || def.isContainer) return null;
   const rot = ((rotation || 0) % 4 + 4) % 4;
-  const shape = rotateShape(def.shape, rot);
-  let best = null;
-  let bestScore = -1;
-  for (const [dx, dy] of shape) {
-    const col = hoverCol - dx;
-    const row = hoverRow - dy;
-    let score = 0;
-    for (const [sx, sy] of shape) {
-      const c = col + sx;
-      const r = row + sy;
-      if (c >= 0 && c < GRID_COLS && r >= 0 && r < GRID_ROWS) score += 1;
-    }
-    if (score > bestScore) {
-      bestScore = score;
-      best = {
-        kind: "item",
-        col,
-        row,
-        rotation: rot,
-        valid: false,
-        displaced: [],
-      };
-    }
-  }
-  return best;
+  return {
+    kind: "item",
+    col: hoverCol,
+    row: hoverRow,
+    rotation: rot,
+    valid: false,
+    displaced: [],
+  };
 }
 
 function getPrepArcSidebarAnchorClient(clientX, clientY) {
@@ -1012,7 +1429,9 @@ function getPrepArcDropState() {
     const cancelAt = getPrepSidebarDragCancelAt(lastPointerClient.x, lastPointerClient.y, side);
     if (cancelAt.shop || cancelAt.bench) return "neutral";
     if (isDropOnBench(pointer)) {
-      return st.bench.length < MAX_BENCH ? "valid" : "invalid";
+      return typeof canFitOnBench === "function"
+        ? (canFitOnBench(st, 1) ? "valid" : "invalid")
+        : (st.bench.length < MAX_BENCH ? "valid" : "invalid");
     }
     if (isDropOnSell(pointer)) {
       return "valid";
@@ -1025,7 +1444,9 @@ function getPrepArcDropState() {
   if (isPrepBackpackArcDrag()) {
     const pointer = createSyntheticPointerEvent(lastPointerClient.x, lastPointerClient.y);
     if (isDropOnBench(pointer)) {
-      return st.bench.length < MAX_BENCH ? "valid" : "invalid";
+      return typeof canFitOnBench === "function"
+        ? (canFitOnBench(st, 1) ? "valid" : "invalid")
+        : (st.bench.length < MAX_BENCH ? "valid" : "invalid");
     }
     if (isDropOnSell(pointer)) {
       return "valid";
@@ -1083,7 +1504,9 @@ function getPrepArcDropState() {
     const displacedUids = displaced.map((item) => item.uid);
     const slotOk = typeof canAddSlotItemToLoadout !== "function"
       || canAddSlotItemToLoadout(st.items, dragPayload.itemId, excludeUid, displacedUids);
-    const benchOk = st.bench.length + displaced.length <= MAX_BENCH;
+    const benchOk = typeof canFitOnBench === "function"
+    ? canFitOnBench(st, displaced.length)
+    : st.bench.length + displaced.length <= MAX_BENCH;
     return placement.valid && benchOk && slotOk ? "valid" : "invalid";
   }
 
@@ -1091,10 +1514,12 @@ function getPrepArcDropState() {
 }
 
 function maybeCelebratePrepArcDrop(success) {
-  if (!success || typeof PrepDragArc === "undefined") return false;
-  if (!isPrepArcDragSource()) return false;
-  if (!PrepDragArc.isActive()) return false;
-  PrepDragArc.celebrate(lastPointerClient.x, lastPointerClient.y);
+  if (!success || !isPrepArcDragSource()) return false;
+  if (typeof PrepDragArc !== "undefined" && PrepDragArc.celebrate) {
+    PrepDragArc.celebrate(lastPointerClient.x, lastPointerClient.y);
+    return true;
+  }
+  if (typeof playGameSfx === "function") playGameSfx("arc_celebrate");
   return true;
 }
 
@@ -1117,13 +1542,18 @@ function clearDragUiState() {
   clearSellDropHighlight();
   dragPayload = null;
   dragFrom = null;
+  resetPrepDragPointerVelocity();
   prepSidebarDragUnlocked = false;
   prepSidebarStickyHover = null;
   prepDropPreviewHover = null;
+  lastPrepDragHoverCellKey = null;
   clearGamepadBoardFocus();
   if (typeof onPrepDragEnd === "function") onPrepDragEnd();
   if (typeof PrepDragArc !== "undefined" && !PrepDragArc.isCelebrating?.()) {
     PrepDragArc.end();
+  }
+  if (typeof BBCraftTether !== "undefined") {
+    BBCraftTether.end();
   }
   hideDragGhostOverlay();
   if (typeof clearCraftPartnerBenchDom === "function") clearCraftPartnerBenchDom();
@@ -1246,6 +1676,14 @@ function syncDragGhostOverlay(clientX, clientY) {
     }
   } else {
     el.classList.remove("ui-drag-ghost--arc-flight", "ui-drag-ghost--remote-hold");
+    if (isLoadoutInteractionPhase() && hoverSlot && !isPrepSidebarArcDrag()) {
+      ghostX = anchor.x;
+      ghostY = anchor.y;
+    } else {
+      const ghostPos = getPrepDragGhostClientPos(clientX, clientY);
+      ghostX = ghostPos.x;
+      ghostY = ghostPos.y;
+    }
   }
 
   el.classList.remove("hidden");
@@ -1300,12 +1738,20 @@ function syncDragGhostOverlay(clientX, clientY) {
     drawItemPreview(offset, offset, def, dragPayload.itemId, true, ghostDrawRotation, dragGhostCtx);
   }
   if (typeof applyPrepDragGhostStyles === "function") {
-    applyPrepDragGhostStyles(el, arcRotation, { fullSize: !!ghostLayout });
+    applyPrepDragGhostStyles(el, arcRotation, { fullSize: !!ghostLayout, stable: true });
+  }
+
+  if (isLoadoutInteractionPhase()
+    && dragPayload
+    && typeof BBCraftTether !== "undefined") {
+    const tetherSide = dragFrom?.side || prepViewSide;
+    BBCraftTether.syncDragTethers(ghostX, ghostY, tetherSide);
   }
 }
 
 function updatePointerFromClient(clientX, clientY) {
   if (!canvas) return;
+  if (dragPayload) samplePrepDragPointerVelocity(clientX, clientY);
   lastPointerClient.x = clientX;
   lastPointerClient.y = clientY;
   const coords = canvasCoordsFromClient(clientX, clientY);
@@ -1323,26 +1769,25 @@ function updatePointerFromClient(clientX, clientY) {
     if (phase === "prep") updatePendingCanvasPick(clientX, clientY);
     const side = dragPayload && dragFrom?.side ? dragFrom.side : prepViewSide;
     if (dragPayload && canEditPrepSide(side)) {
-      syncPrepDragBoardHover(clientX, clientY, clientX, clientY);
+      const hoverClient = resolvePrepDragHoverClient(clientX, clientY);
+      syncPrepDragBoardHover(clientX, clientY, hoverClient.x, hoverClient.y);
       if (typeof window.syncFxCanvasGeometry === "function") window.syncFxCanvasGeometry();
     }
 
+    const overStorage = typeof isPointerOverPrepStorage === "function"
+      && isPointerOverPrepStorage(clientX, clientY);
     const overSidebar = isPointerOverPrepSidebar(clientX, clientY);
-    if (overSidebar) {
-      tooltipItem = null;
-      syncFieldTooltip();
+    if (overStorage || overSidebar) {
+      if (!sidebarTooltipPinned) {
+        tooltipItem = null;
+        syncFieldTooltip();
+      }
     } else if (dragPayload) {
       tooltipItem = null;
       hideSidebarTooltip();
     } else if ((pendingShopDrag || pendingBenchDrag) && !isTouchUi()) {
       tooltipItem = null;
       hideSidebarTooltip();
-    } else if (!isTouchUi()) {
-      if (!sidebarTooltipPinned
-        && (sidebarTooltipSource === "shop" || sidebarTooltipSource === "bench")) {
-        hideSidebarTooltip();
-      }
-      updateTooltip(mousePos.x, mousePos.y);
     }
 
     const benchPanel = document.getElementById("bench-panel");
@@ -1356,8 +1801,6 @@ function updatePointerFromClient(clientX, clientY) {
     }
     syncSellDropHighlight(clientX, clientY);
     syncPrepShopDragBackdrop(clientX, clientY);
-  } else if ((phase === "battle" || phase === "replay") && battleState && !isTouchUi()) {
-    updateTooltip(mousePos.x, mousePos.y);
   }
 
   syncDragGhostOverlay(clientX, clientY);
@@ -1372,10 +1815,7 @@ function gamepadPointerDownAt(clientX, clientY) {
 
   const shopCard = target?.closest?.(".shop-card:not(.empty)");
   if (shopCard) {
-    const side = (isLobby2pMode() && lobbyState?.isSplitLobby)
-      ? prepViewSide
-      : (lobby2pSideFromCommerceTarget(shopCard) || prepViewSide);
-    ensureLobby2pActiveHumanForSide(side);
+    const side = prepViewSide;
     if (!canEditPrepSide(side)) return;
     const index = shopCard.dataset.shopIndex != null
       ? +shopCard.dataset.shopIndex
@@ -1402,8 +1842,7 @@ function gamepadPointerDownAt(clientX, clientY) {
 
   const benchCard = target?.closest?.(".bench-card:not(.empty)");
   if (benchCard) {
-    let side = lobby2pSideFromHudTarget(benchCard) || prepViewSide;
-    ensureLobby2pActiveHumanForSide(side);
+    const side = prepViewSide;
     if (!canEditPrepSide(side)) return;
     const index = +benchCard.dataset.bench;
     if (!Number.isNaN(index)) {
@@ -1478,13 +1917,6 @@ function rotateDragItem() {
 
 function onMouseDown(e) {
   if (!isLoadoutInteractionPhase() || gameOver) return;
-  if (isLobby2pMode() && phase === "prep" && lobbyState?.isSplitLobby && !lobby2pHasActiveDuel()) {
-    const { x: mx } = canvasCoordsFromEvent(e);
-    const targetSide = lobby2pSideFromCanvasX(mx);
-    if (targetSide !== prepViewSide && canEditPrepSide(targetSide)) {
-      setLobby2pActiveHuman(targetSide === "player" ? 0 : 1);
-    }
-  }
   if (!canEditPrepSide()) return;
   const side = prepViewSide;
   const st = getLoadoutEditState(side);
@@ -1520,81 +1952,12 @@ function onMouseDown(e) {
   }
 }
 
-function tryGemSocketDrop(st, dragFrom, dragPayload, col, row, side) {
-  if (!isGemItem(dragPayload.itemId)) return false;
-  const excludeUid = isPrepLoadoutItemDrag() ? dragFrom.item.uid : null;
-  const host = findSocketHostAt(st.items, col, row, dragPayload.itemId, excludeUid);
-  if (!host) return false;
-
-  let gemId = dragPayload.itemId;
-  let purchasedGemId = null;
-
-  if (dragFrom.type === "shop") {
-    // Покупку откладываем до успешной вставки в сокет.
-    purchasedGemId = dragFrom.index;
-  } else if (dragFrom.type === "item") {
-    st.items = st.items.filter((i) => i.uid !== dragFrom.item.uid);
-  }
-
-  const hostIdx = st.items.findIndex((i) => i.uid === host.uid);
-  if (hostIdx < 0) return false;
-  if (dragFrom.type === "shop") {
-    const bought = commitShopPurchase(purchasedGemId, side);
-    if (!bought) return false;
-    gemId = bought;
-  }
-  const socketed = socketGemIntoItem(st.items[hostIdx], gemId);
-  if (!socketed) return false;
-
-  st.items[hostIdx] = socketed;
-  const gemName = ITEM_CATALOG[gemId]?.name || gemId;
-  const hostName = ITEM_CATALOG[host.itemId]?.name || host.itemId;
-  log(`💎 ${gemName} вставлен в ${hostName}`);
-  playPrepSfx("prep_gem");
-  if (side === prepViewSide && typeof CombatLog !== "undefined") {
-    CombatLog.notifyGemSocketed(gemId, host.itemId);
-  }
-  return true;
+function tryGemSocketDrop() {
+  return false;
 }
 
-function drawItemSocketMarkers(ctx, item, def, team, cellRectFn) {
-  if (typeof drawItemSocketVisuals === "function") {
-    drawItemSocketVisuals(ctx, item, def, cellRectFn);
-    return;
-  }
-  const count = getItemSocketCount(item.itemId);
-  if (!count) return;
-  const normalized = ensureSocketArray(item);
-  const cells = getItemCells(item);
-  const cols = cells.map(([c]) => c);
-  const rows = cells.map(([, r]) => r);
-  const minCol = Math.min(...cols);
-  const maxCol = Math.max(...cols);
-  const maxRow = Math.max(...rows);
-
-  for (let i = 0; i < count; i++) {
-    const col = count === 1
-      ? Math.round((minCol + maxCol) / 2)
-      : Math.round(minCol + ((maxCol - minCol) * i) / Math.max(1, count - 1));
-    const rect = cellRectFn(col, maxRow);
-    const cx = rect.x + rect.w / 2;
-    const cy = rect.y + rect.h - 6;
-    const gemId = normalized.socketedGems[i];
-    const filled = !!gemId;
-
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(cx, cy, 5, 0, Math.PI * 2);
-    ctx.fillStyle = filled ? `${ITEM_CATALOG[gemId]?.color || "#d2a8ff"}cc` : "rgba(255,255,255,0.18)";
-    ctx.fill();
-    ctx.strokeStyle = filled ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.45)";
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    if (filled && ITEM_CATALOG[gemId]) {
-      drawCellEmojiAt(ctx, getItemIcons(ITEM_CATALOG[gemId])[0], cx, cy, 10);
-    }
-    ctx.restore();
-  }
+function drawItemSocketMarkers() {
+  /* gem sockets removed */
 }
 
 function finishDragDrop(e) {
@@ -1611,18 +1974,16 @@ function finishDragDrop(e) {
   let prepArcCelebrate = false;
   const dropE = createDropPointerEvent(e);
   const { x: dropClientX, y: dropClientY } = getDropPointerClient(e);
+  if (dragPayload) samplePrepDragPointerVelocity(dropClientX, dropClientY);
 
   const side = dragFrom.side || prepViewSide;
   const st = getLoadoutEditState(side);
 
   const sidebarDragCancel = getPrepSidebarDragCancelAt(dropClientX, dropClientY, side);
+  const hoverClient = resolvePrepDragHoverClient(dropClientX, dropClientY);
 
   if (dragPayload && !sidebarDragCancel.shop && !sidebarDragCancel.bench) {
-    syncPrepDragBoardHover(dropClientX, dropClientY, dropClientX, dropClientY);
-    if (isPrepSidebarArcDrag()) {
-      const projected = projectClientPointToPrepBackpack(dropClientX, dropClientY);
-      if (projected) applyPrepSidebarCorridorHover(projected, side, st);
-    }
+    syncPrepDragBoardHover(dropClientX, dropClientY, hoverClient.x, hoverClient.y);
   } else if (sidebarDragCancel.shop || sidebarDragCancel.bench) {
     clearPrepBoardDropHover();
   }
@@ -1635,23 +1996,23 @@ function finishDragDrop(e) {
 
   const dropOnSell = isDropOnSell(dropE);
   const pointerOnBench = isDropOnBench(dropE);
-  const sidebarPlacement = isPrepSidebarArcDrag() && !pointerOnBench && !sidebarDragCancel.shop
-    ? getPrepDropPlacement(st, side)
-    : null;
-  const dropBackToShop = sidebarDragCancel.shop;
-  const dropBackToBench = sidebarDragCancel.bench;
-  const { x: mx, y: my } = canvasCoordsFromClient(dropClientX, dropClientY);
-  let onBoard = isOnBoard(mx, my, side);
-  if (onBoard && isLobby2pColumnPrepLayout() && lobby2pSideFromCanvasX(mx) !== side) {
-    onBoard = false;
+  let boardPlacement = null;
+  if (prepScreenFlingSuppress) {
+    boardPlacement = evaluateFlingInventoryPlacement(dropClientX, dropClientY, side, st);
+  } else {
+    const ghostOnBoard = isPrepDragGhostOverBoard(dropClientX, dropClientY);
+    boardPlacement = ghostOnBoard && !pointerOnBench && !sidebarDragCancel.shop
+      ? getPrepDropPlacement(st, side)
+      : null;
   }
-  const boardCol = onBoard ? xToCol(mx, side) : null;
-  const boardRow = onBoard ? yToRow(my, side) : null;
-  const dropCol = pointerOnBench ? null : (sidebarPlacement?.col ?? boardCol);
-  const dropRow = pointerOnBench ? null : (sidebarPlacement?.row ?? boardRow);
-  const hasDropCell = dropCol != null && dropRow != null;
+  const dropBackToShop = sidebarDragCancel.shop;
+  const dropBackToBench = sidebarDragCancel.bench && !prepScreenFlingSuppress;
+  const placementOnBoard = !!(boardPlacement?.valid);
+  const dropCol = placementOnBoard ? boardPlacement.col : null;
+  const dropRow = placementOnBoard ? boardPlacement.row : null;
+  const hasDropCell = placementOnBoard && dropCol != null && dropRow != null;
   const onBackpackSlot = hasDropCell && isSlotCell(st.containers, dropCol, dropRow);
-  const dropOnBench = pointerOnBench;
+  const dropOnBench = pointerOnBench && !prepScreenFlingSuppress && !placementOnBoard;
 
   if (dropOnSell && sellDraggedItem(side)) {
     if (isPrepBackpackArcDrag()) prepArcCelebrate = true;
@@ -1682,8 +2043,15 @@ function finishDragDrop(e) {
     return;
   }
 
+  if (tryPrepScreenFlingOnDrop(dropClientX, dropClientY, side, st, dropOnSell, dropBackToShop, pointerOnBench)) {
+    clearDragUiState();
+    return;
+  }
+
   if (dropBackToBench) {
-    restoreDraggedItem(side);
+    if (!releaseBenchEntryToStoragePhysics(st, dragFrom, dropClientX, dropClientY, side)) {
+      restoreDraggedItem(side);
+    }
     clearDragUiState();
     renderBench();
     recalcSynergies();
@@ -1692,35 +2060,60 @@ function finishDragDrop(e) {
   }
 
   if (dropOnBench) {
+    const storageFullMsg = typeof shouldUsePrepStoragePhysics === "function" && shouldUsePrepStoragePhysics()
+      ? "Хранилище полно!"
+      : "Скамейка полна!";
+    const hasRoom = typeof canFitOnBench === "function"
+      ? canFitOnBench(st, 1)
+      : st.bench.length < MAX_BENCH;
+    const dropVel = getPrepDragReleaseVelocity();
     if (dragFrom.type === "shop") {
-      if (st.bench.length < MAX_BENCH) {
+      if (hasRoom) {
         const itemId = commitShopPurchase(dragFrom.index, side);
         if (itemId) {
-          st.bench.push({
+          const entry = {
             itemId,
             uid: `bench-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
             rotation: dragPayload.rotation || 0,
-          });
+          };
+          st.bench.push(entry);
+          if (typeof shouldUsePrepStoragePhysics === "function" && shouldUsePrepStoragePhysics()) {
+            PrepStoragePhysics.spawnAtDrop(entry, dropE.clientX, dropE.clientY, side, dropVel);
+          }
           prepArcCelebrate = true;
           const boughtDef = ITEM_CATALOG[itemId];
           if (typeof playPrepBuyFanfare === "function") playPrepBuyFanfare(boughtDef);
         }
       } else {
-        log("Скамейка полна!");
+        log(storageFullMsg);
       }
-    } else if (dragFrom.type === "item") {
-      st.bench.push({ itemId: dragFrom.item.itemId, uid: dragFrom.item.uid, rotation: dragPayload.rotation || 0 });
+    } else if (hasRoom && dragFrom.type === "bench" && dragFrom.benchEntry) {
+      releaseBenchEntryToStoragePhysics(st, dragFrom, dropClientX, dropClientY, side);
       prepArcCelebrate = true;
-    } else if (dragFrom.type === "container") {
-      st.bench.push({
+    } else if (hasRoom && dragFrom.type === "item") {
+      const entry = { itemId: dragFrom.item.itemId, uid: dragFrom.item.uid, rotation: dragPayload.rotation || 0 };
+      st.bench.push(entry);
+      if (typeof shouldUsePrepStoragePhysics === "function" && shouldUsePrepStoragePhysics()) {
+        PrepStoragePhysics.spawnAtDrop(entry, dropE.clientX, dropE.clientY, side, dropVel);
+      }
+      prepArcCelebrate = true;
+    } else if (hasRoom && dragFrom.type === "container") {
+      const entry = {
         itemId: dragFrom.container.itemId,
         uid: dragFrom.container.uid,
         rotation: dragPayload.rotation || 0,
         carriedItems: dragFrom.carriedItems,
         originCol: dragFrom.container.col,
         originRow: dragFrom.container.row,
-      });
+      };
+      st.bench.push(entry);
+      if (typeof shouldUsePrepStoragePhysics === "function" && shouldUsePrepStoragePhysics()) {
+        PrepStoragePhysics.spawnAtDrop(entry, dropE.clientX, dropE.clientY, side, dropVel);
+      }
       prepArcCelebrate = true;
+    } else if (!hasRoom && dragFrom.type !== "shop") {
+      log(storageFullMsg);
+      restoreDraggedItem(side);
     }
   } else if (isContainerItem(dragPayload.itemId) && hasDropCell) {
     const col = dropCol;
@@ -1802,113 +2195,84 @@ function finishDragDrop(e) {
         if (typeof notifyPrepPlacementRejected === "function") notifyPrepPlacementRejected(item);
       });
     }
-  } else if (!isContainerItem(dragPayload.itemId) && hasDropCell) {
-    const col = dropCol;
-    const row = dropRow;
-    if (isSlotCell(st.containers, col, row) && tryGemSocketDrop(st, dragFrom, dragPayload, col, row, side)) {
+  } else if (!isContainerItem(dragPayload.itemId) && hasDropCell && boardPlacement?.kind === "item") {
+    const hoverAtDrop = getPrepDragBoardHoverCell();
+    const socketCol = hoverAtDrop?.col ?? dropCol;
+    const socketRow = hoverAtDrop?.row ?? dropRow;
+    if (isSlotCell(st.containers, socketCol, socketRow)
+      && tryGemSocketDrop(st, dragFrom, dragPayload, socketCol, socketRow, side)) {
       commitBenchDragEntry(dragFrom);
       // камень вставлен в сокет
-    } else if (isSlotCell(st.containers, col, row)) {
-      const excludeUid = isPrepLoadoutItemDrag() ? dragFrom.item.uid : null;
-      const placement = resolveLoadoutPlacementDisplacing(
-        st.containers,
-        dragPayload.itemId,
-        col,
-        row,
-        dragPayload.rotation || 0,
-      );
-      if (placement.valid) {
-        const displaced = getOverlappingLoadoutItems(
-          st.items,
-          dragPayload.itemId,
-          placement.col,
-          placement.row,
-          placement.rotation,
-          excludeUid,
-        );
-        const displacedUids = displaced.map((item) => item.uid);
-        const slotOk = typeof canAddSlotItemToLoadout !== "function"
-          || canAddSlotItemToLoadout(st.items, dragPayload.itemId, excludeUid, displacedUids);
-        if (st.bench.length + displaced.length > MAX_BENCH) {
-          log("Скамейка полна!");
-          if (isPrepLoadoutItemDrag()) {
-            st.items = [...st.items, dragFrom.item];
-            if (typeof notifyPrepPlacementRejected === "function") notifyPrepPlacementRejected(dragFrom.item);
-          }
-          restoreDraggedItem(side);
-          clearDragUiState();
-          renderBench();
-          recalcSynergies();
-          updateUI();
-          return;
-        }
-        if (!slotOk) {
-          if (isPrepLoadoutItemDrag()) {
-            st.items = [...st.items, dragFrom.item];
-            if (typeof notifyPrepPlacementRejected === "function") notifyPrepPlacementRejected(dragFrom.item);
-          }
-          restoreDraggedItem(side);
-          clearDragUiState();
-          renderBench();
-          recalcSynergies();
-          updateUI();
-          return;
-        }
-        let displacedItems = [];
-        if (displaced.length) {
-          displaced.forEach((existing) => {
-            st.items = st.items.filter((i) => i.uid !== existing.uid);
-          });
-          displacedItems = displaced;
-        }
-        if (dragFrom.type === "bench") {
-          commitBenchDragEntry(dragFrom);
-        } else if (dragFrom.type === "shop") {
-          const itemId = commitShopPurchase(dragFrom.index, side);
-          if (!itemId) {
-            clearDragUiState();
-            renderBench();
-            recalcSynergies();
-            updateUI();
-            return;
-          }
-          dragPayload.itemId = itemId;
-        }
-        if (displacedItems.length) {
-          renderBench(side);
-          queueDisplaceToBenchAnimations(side, displacedItems, prepViewSide, (item) => {
-            const benchState = getSideState(side);
-            benchState.bench.push({
-              itemId: item.itemId,
-              uid: item.uid,
-              rotation: item.rotation || 0,
-            });
-          });
-        }
-        const placed = createPlacedItem(dragPayload.itemId, placement.col, placement.row, placement.rotation);
-        if (isPrepLoadoutItemDrag()) {
-          placed.uid = dragFrom.item.uid;
-          if (dragFrom.item.socketedGems) placed.socketedGems = [...dragFrom.item.socketedGems];
-        }
-        st.items = [...st.items, placed];
-        dragPayload.rotation = placement.rotation;
-        if (typeof notifyPrepItemPlaced === "function") {
-          notifyPrepItemPlaced(placed, ITEM_CATALOG[placed.itemId]);
-        }
-        if (dragFrom.type === "shop" || dragFrom.type === "bench") {
-          prepArcCelebrate = true;
-        }
-      } else if (isPrepLoadoutItemDrag()) {
-        st.items = [...st.items, dragFrom.item];
-        if (typeof notifyPrepPlacementRejected === "function") notifyPrepPlacementRejected(dragFrom.item);
+    } else {
+      const placement = boardPlacement;
+      const displaced = placement.displaced || [];
+      let displacedItems = [];
+      if (displaced.length) {
+        displaced.forEach((existing) => {
+          st.items = st.items.filter((i) => i.uid !== existing.uid);
+        });
+        displacedItems = displaced;
       }
-    } else if (isPrepLoadoutItemDrag()) {
+      if (dragFrom.type === "bench") {
+        commitBenchDragEntry(dragFrom);
+      } else if (dragFrom.type === "shop") {
+        const itemId = commitShopPurchase(dragFrom.index, side);
+        if (!itemId) {
+          clearDragUiState();
+          renderBench();
+          recalcSynergies();
+          updateUI();
+          return;
+        }
+        dragPayload.itemId = itemId;
+      }
+      if (displacedItems.length) {
+        renderBench(side);
+        queueDisplaceToBenchAnimations(side, displacedItems, prepViewSide, (item, landSide, landPt) => {
+          const benchState = getSideState(side);
+          const entry = {
+            itemId: item.itemId,
+            uid: item.uid,
+            rotation: item.rotation || 0,
+          };
+          benchState.bench.push(entry);
+          if (typeof shouldUsePrepStoragePhysics === "function" && shouldUsePrepStoragePhysics() && landPt) {
+            PrepStoragePhysics.spawnFromInbound(entry, landPt.x, landPt.y, side);
+          }
+        });
+      }
+      const placed = createPlacedItem(dragPayload.itemId, placement.col, placement.row, placement.rotation);
+      if (isPrepLoadoutItemDrag()) {
+        placed.uid = dragFrom.item.uid;
+        if (dragFrom.item.socketedGems) placed.socketedGems = [...dragFrom.item.socketedGems];
+      }
+      st.items = [...st.items, placed];
+      dragPayload.rotation = placement.rotation;
+      if (typeof notifyPrepItemPlaced === "function") {
+        notifyPrepItemPlaced(placed, ITEM_CATALOG[placed.itemId]);
+      }
+      if (dragFrom.type === "shop" || dragFrom.type === "bench") {
+        prepArcCelebrate = true;
+      }
+    }
+  } else if (isPrepLoadoutItemDrag()) {
+    const heroClass = typeof getLoadoutHeroClass === "function" ? getLoadoutHeroClass() : null;
+    const wrongClass = typeof isItemAllowedForHeroClass === "function"
+      && !isItemAllowedForHeroClass(dragFrom.item.itemId, heroClass);
+    const benchRoom = typeof canFitOnBench === "function"
+      ? canFitOnBench(st, 1)
+      : st.bench.length < MAX_BENCH;
+    if (wrongClass && benchRoom) {
+      st.bench.push({
+        itemId: dragFrom.item.itemId,
+        uid: dragFrom.item.uid,
+        rotation: dragPayload.rotation || 0,
+      });
+      prepArcCelebrate = true;
+    } else {
       st.items = [...st.items, dragFrom.item];
       if (typeof notifyPrepPlacementRejected === "function") notifyPrepPlacementRejected(dragFrom.item);
     }
-  } else if (isPrepLoadoutItemDrag()) {
-    st.items = [...st.items, dragFrom.item];
-    if (typeof notifyPrepPlacementRejected === "function") notifyPrepPlacementRejected(dragFrom.item);
   } else if (dragFrom.type === "container") {
     st.containers = [...st.containers, dragFrom.container];
     st.items = [...st.items, ...dragFrom.carriedItems];
@@ -1918,7 +2282,10 @@ function finishDragDrop(e) {
   }
 
   if (dragFrom?.type === "bench" && dragFrom.benchEntry) {
-    restoreBenchDragEntry(st, dragFrom);
+    const usedPhysics = typeof shouldUsePrepStoragePhysics === "function"
+      && shouldUsePrepStoragePhysics()
+      && releaseBenchEntryToStoragePhysics(st, dragFrom, dropClientX, dropClientY, side);
+    if (!usedPhysics) restoreBenchDragEntry(st, dragFrom);
   }
 
   maybeCelebratePrepArcDrop(prepArcCelebrate);
@@ -1945,12 +2312,8 @@ function finishDragDrop(e) {
     recalcSynergies();
     updateUI();
   }
-  if (!dragPayload && !isPointerOverPrepSidebar(lastPointerClient.x, lastPointerClient.y)) {
-    if (prepTooltipsEnabled && !isTouchUi()) {
-      try { updateTooltip(mousePos.x, mousePos.y); } catch (err) { console.error("updateTooltip failed:", err); }
-    } else if (prepTooltipsEnabled && typeof applyGamepadPrepFocusTooltip === "function" && lastGamepadPrepFocus) {
-      applyGamepadPrepFocusTooltip(lastGamepadPrepFocus);
-    }
+  if (!dragPayload && typeof applyGamepadPrepFocusTooltip === "function" && lastGamepadPrepFocus) {
+    applyGamepadPrepFocusTooltip(lastGamepadPrepFocus);
   }
 }
 
@@ -1979,8 +2342,9 @@ function updatePendingCanvasPick(clientX, clientY) {
   const dx = clientX - pendingCanvasPick.clientX;
   const dy = clientY - pendingCanvasPick.clientY;
   if (Math.hypot(dx, dy) < getPrepDragCommitThresholdPx()) return;
+  const pick = pendingCanvasPick;
   pendingCanvasPick = null;
-  onMouseDown(createSyntheticPointerEvent(clientX, clientY));
+  onMouseDown(createSyntheticPointerEvent(pick.clientX, pick.clientY));
 }
 
 function tryBuyFromPendingShopDrag(clientX, clientY) {
@@ -2004,7 +2368,6 @@ function tryBuyFromPendingShopDrag(clientX, clientY) {
 
 function beginPendingShopDrag(index, e, side = prepViewSide) {
   if (!isLoadoutInteractionPhase() || gameOver || !canEditPrepSide(side)) return;
-  ensureLobby2pActiveHumanForSide(side);
   const st = getSideState(side);
   if (!st.shop[index]) return;
   const entryId = st.shop[index];
@@ -2027,6 +2390,18 @@ function updatePendingShopDrag(e) {
   clearTouchTapGesture();
   shopDidDrag = true;
   startShopDrag(index, e, side);
+}
+
+function resolveShopCardElement(_side, index) {
+  return document.querySelector(`#shop-slots .shop-card[data-index="${index}"]`)
+    || document.querySelector(`.shop-card[data-index="${index}"]`);
+}
+
+function resolveBenchCardElement(_side, index) {
+  if (typeof window.isPrepBenchPopoverOpen === "function" && window.isPrepBenchPopoverOpen()) {
+    return document.querySelector(`#bench-slots .bench-card[data-bench="${index}"]`);
+  }
+  return document.querySelector(`#bench-slots .bench-card[data-bench="${index}"]`);
 }
 
 function beginPrepDragArcFromCard(cardEl, itemIdOverride = null, originOverride = null) {
@@ -2069,6 +2444,7 @@ function startShopDrag(index, e, side = prepViewSide) {
   hideSidebarTooltip();
   dragPayload = { itemId: entryId, rotation: 0 };
   dragFrom = { type: "shop", index, side };
+  resetPrepDragPointerVelocity();
   prepSidebarDragUnlocked = usesPrepCommercePopoverMode();
   prepSidebarStickyHover = null;
   const arcCard = resolveShopCardElement(side, index);
@@ -2083,7 +2459,9 @@ function startShopDrag(index, e, side = prepViewSide) {
   if (e?.clientX != null && e?.clientY != null) {
     lastPointerClient.x = e.clientX;
     lastPointerClient.y = e.clientY;
-    syncPrepDragBoardHover(e.clientX, e.clientY, e.clientX, e.clientY);
+    samplePrepDragPointerVelocity(e.clientX, e.clientY);
+    const hoverClient = resolvePrepDragHoverClient(e.clientX, e.clientY);
+    syncPrepDragBoardHover(e.clientX, e.clientY, hoverClient.x, hoverClient.y);
   }
   syncDragGhostOverlay(lastPointerClient.x, lastPointerClient.y);
 }
@@ -2105,6 +2483,7 @@ function startBenchDrag(index, e, side = prepViewSide) {
   });
   dragPayload = { itemId: benchEntry.itemId, rotation: benchEntry.rotation || 0 };
   dragFrom = { type: "bench", index, side, benchEntry };
+  resetPrepDragPointerVelocity();
   prepSidebarDragUnlocked = usesPrepCommercePopoverMode();
   prepSidebarStickyHover = null;
   renderBench(side);
@@ -2116,7 +2495,9 @@ function startBenchDrag(index, e, side = prepViewSide) {
   if (e?.clientX != null && e?.clientY != null) {
     lastPointerClient.x = e.clientX;
     lastPointerClient.y = e.clientY;
-    syncPrepDragBoardHover(e.clientX, e.clientY, e.clientX, e.clientY);
+    samplePrepDragPointerVelocity(e.clientX, e.clientY);
+    const hoverClient = resolvePrepDragHoverClient(e.clientX, e.clientY);
+    syncPrepDragBoardHover(e.clientX, e.clientY, hoverClient.x, hoverClient.y);
   }
   syncDragGhostOverlay(lastPointerClient.x, lastPointerClient.y);
 }

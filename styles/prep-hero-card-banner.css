@@ -184,6 +184,29 @@ html[data-prep-hero-card-preset="banner"][data-visual-theme="diablo"]
   );
 }
 
+html[data-prep-hero-card-preset="banner"]:is([data-prep-layout="side"], [data-ui-surface="tablet-side"], [data-ui-surface="desktop"])
+  #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-hero-card__stats-row .prep-hero-card__identity {
+  width: 100%;
+}
+
+html[data-prep-hero-card-preset="banner"]:is([data-prep-layout="side"], [data-ui-surface="tablet-side"], [data-ui-surface="desktop"])
+  #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-hero-card__identity-sub {
+  gap: calc(3px * var(--ui-scale, 1)) calc(6px * var(--ui-scale, 1));
+}
+
+html[data-prep-hero-card-preset="banner"][data-visual-theme="meadow"]
+  #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-companion-chip {
+  background: rgba(255, 255, 255, 0.55);
+  border-color: var(--meadow-border-soft);
+}
+
+html[data-prep-hero-card-preset="banner"][data-visual-theme="meadow"]
+  #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-milestone-chip {
+  color: var(--juice-ink);
+  background: rgba(255, 248, 220, 0.88);
+  border-color: rgba(200, 160, 56, 0.45);
+}
+
 /* ─── Collapse: шапка в одну строку ─── */
 
 html[data-prep-hero-card-preset="banner"]:is([data-prep-layout="side"], [data-ui-surface="tablet-side"])

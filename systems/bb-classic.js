@@ -19,7 +19,7 @@ function isClassicMode() {
 }
 
 function usesMetaItemUnlock(modeId) {
-  return modeId === BB_CLASSIC_MODE_ID || modeId === "path";
+  return modeId === "path";
 }
 
 function shouldUseMutationSystem() {
@@ -35,25 +35,61 @@ function shouldFilterToPool120() {
 }
 
 function getPrepShopSlotCount() {
-  return isClassicMode() ? 4 : 5;
+  return 5;
 }
 
 function shouldSkipCompanionIntro() {
+  if (typeof shouldSkipBBCompanionIntro === "function" && shouldSkipBBCompanionIntro()) {
+    return true;
+  }
   return isClassicMode();
 }
 
-/** В classic — только ⭐/◆ слоты; без «любой сосед». */
-function shouldUseAdjacencySynergies() {
+/**
+ * Classic = «max account»: все герои и предметы открыты (shop + craft).
+ * Meta-lock и pool120 не применяются; class-restricted экипировка — да.
+ */
+function isMaxAccountMode() {
+  return isClassicMode();
+}
+
+/** Classic — без боевых бонусов класса и стартового оружия. */
+function shouldUseClassSystem() {
   return !isClassicMode();
+}
+
+/** «Только: класс X» на экипировку — работает и в classic (max account ≠ снятие ограничений). */
+function shouldApplyClassItemRestriction() {
+  return true;
+}
+
+/** Classic — героя выбираем для портрета и class-restricted экипировки. */
+function shouldSkipClassIntro() {
+  return false;
+}
+
+/** classId для shop/placement restrictions — выбранный герой. */
+function getMechanicalClassId(classId) {
+  return classId || null;
+}
+
+/** Только ⭐/◆ слоты (как в Backpack Battles). */
+function shouldUseAdjacencySynergies() {
+  return false;
 }
 
 window.BB_CLASSIC_MODE_ID = BB_CLASSIC_MODE_ID;
 window.isClassicGameMode = isClassicGameMode;
 window.isClassicMode = isClassicMode;
+window.isMaxAccountMode = isMaxAccountMode;
 window.usesMetaItemUnlock = usesMetaItemUnlock;
 window.shouldUseMutationSystem = shouldUseMutationSystem;
 window.shouldUseCustomShopRolls = shouldUseCustomShopRolls;
 window.shouldFilterToPool120 = shouldFilterToPool120;
 window.getPrepShopSlotCount = getPrepShopSlotCount;
 window.shouldSkipCompanionIntro = shouldSkipCompanionIntro;
+window.shouldUseClassSystem = shouldUseClassSystem;
+window.shouldApplyClassItemRestriction = shouldApplyClassItemRestriction;
+window.shouldSkipClassIntro = shouldSkipClassIntro;
+window.getMechanicalClassId = getMechanicalClassId;
 window.shouldUseAdjacencySynergies = shouldUseAdjacencySynergies;

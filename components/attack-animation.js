@@ -2,6 +2,17 @@
  * Отрисовка анимаций предметов на canvas (снаряды — в HTML-overlay).
  */
 
+function drawBattleItemCooldownBar(ctx, item, rectFn, roundRectFn) {
+  if (item.currentCooldown == null) return;
+  const [iconCol, iconRow] = getItemIconCell(item);
+  const { x, y, w, h } = rectFn(iconCol, iconRow);
+  const maxCd = getEffectiveCooldown(item);
+  const pct = maxCd > 0 ? 1 - item.currentCooldown / maxCd : 1;
+  ctx.fillStyle = pct >= 1 ? "#3fb950" : "#58a6ff";
+  roundRectFn(x + 4, y + h - 10, (w - 8) * Math.max(0, Math.min(1, pct)), 5, 2);
+  ctx.fill();
+}
+
 function drawAttackAnimations(_ctx, _state) {
   /* снаряды рисуются в renderBattleEffectsOverlay */
 }
@@ -31,15 +42,10 @@ function drawBattleItemOverlays(ctx, item, team, def, state) {
       ctx.lineWidth = 1;
       ctx.stroke();
     }
-    if (item.currentCooldown != null) {
-      const maxCd = getEffectiveCooldown(item);
-      const pct = maxCd > 0 ? 1 - item.currentCooldown / maxCd : 1;
-      ctx.fillStyle = pct >= 1 ? "#3fb950" : "#58a6ff";
-      roundRect(x + 4, y + h - 10, (w - 8) * Math.max(0, Math.min(1, pct)), 5, 2);
-      ctx.fill();
-    }
     ctx.restore();
   });
+
+  drawBattleItemCooldownBar(ctx, item, rectFn, roundRect);
 
   if (!cells.length || pulse <= 1) return;
   const [iconCol, iconRow] = getItemIconCell(item);
@@ -93,15 +99,10 @@ function drawBattleItemWithAnimation(ctx, item, team, def, cellRectFn, roundRect
       ctx.stroke();
     }
 
-    if (item.currentCooldown != null) {
-      const maxCd = getEffectiveCooldown(item);
-      const pct = maxCd > 0 ? 1 - item.currentCooldown / maxCd : 1;
-      ctx.fillStyle = pct >= 1 ? "#3fb950" : "#58a6ff";
-      roundRectFn(x + 4, y + h - 10, (w - 8) * Math.max(0, Math.min(1, pct)), 5, 2);
-      ctx.fill();
-    }
     ctx.restore();
   });
+
+  drawBattleItemCooldownBar(ctx, item, (c, r) => cellRectFn(team, c, r), roundRectFn);
 
   if (!cells.length) return;
 

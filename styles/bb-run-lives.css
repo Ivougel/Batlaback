@@ -1,0 +1,14 @@
+html[data-bb-fidelity="classic"] #app[data-phase="prep"] .bb-run-lives {
+  display: flex;
+  align-items: center;
+  gap: calc(2px * var(--ui-scale, 1));
+  flex: 0 0 auto;
+  margin-left: calc(6px * var(--ui-scale, 1));
+  font-size: calc(0.95rem * var(--ui-scale, 1));
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-top-bar .bb-run-lives {
+  order: 3;
+}

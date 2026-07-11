@@ -43,7 +43,7 @@ const ENGINE_FILES = [
   "systems/battle-debuffs.js",
   "bot-solver.js",
   "ai-engine.js",
-  "hard-bot-engine.js",
+  "tools/lib/hard-bot-engine.js",
   "battle-engine.js",
 ];
 

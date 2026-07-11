@@ -5,7 +5,7 @@
 
 /* ─── Глобальный фон ─── */
 
-body {
+html[data-visual-theme="meadow"] body {
   background: linear-gradient(
     180deg,
     var(--meadow-sky-top) 0%,
@@ -18,7 +18,7 @@ body {
 
 /* ─── Кнопки ─── */
 
-.btn-primary {
+html[data-visual-theme="meadow"] .btn-primary {
   background: linear-gradient(180deg, var(--meadow-gold-bright) 0%, var(--meadow-gold) 100%);
   border: 2px solid rgba(200, 134, 10, 0.45);
   color: var(--meadow-ink);
@@ -26,32 +26,32 @@ body {
   box-shadow: 0 3px 12px rgba(200, 134, 10, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
-.btn-primary:hover:not(:disabled) {
+html[data-visual-theme="meadow"] .btn-primary:hover:not(:disabled) {
   filter: brightness(1.05);
 }
 
-.btn-secondary {
+html[data-visual-theme="meadow"] .btn-secondary {
   background: rgba(255, 255, 255, 0.72);
   border: 2px solid var(--meadow-border);
   color: var(--meadow-ink);
   box-shadow: 0 2px 8px var(--meadow-shadow);
 }
 
-.btn-secondary:hover:not(:disabled) {
+html[data-visual-theme="meadow"] .btn-secondary:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.92);
   border-color: rgba(92, 184, 92, 0.62);
 }
 
 /* ─── Модалки и оверлеи ─── */
 
-.overlay {
+html[data-visual-theme="meadow"] .overlay {
   background: var(--meadow-overlay);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
 }
 
-.overlay > .modal,
-.modal {
+html[data-visual-theme="meadow"] .overlay > .modal,
+html[data-visual-theme="meadow"] .modal {
   background: linear-gradient(
     165deg,
     rgba(255, 252, 240, 0.97) 0%,
@@ -65,107 +65,107 @@ body {
   color: var(--meadow-ink);
 }
 
-.overlay h2,
-.modal h2 {
+html[data-visual-theme="meadow"] .overlay h2,
+html[data-visual-theme="meadow"] .modal h2 {
   color: var(--meadow-ink);
 }
 
-.run-complete-modal,
-.battle-result-modal,
-.battle-detail-modal,
-.settings-modal,
-.recipe-book-modal,
-.class-detail-modal,
-.board-preview-modal {
+html[data-visual-theme="meadow"] .run-complete-modal,
+html[data-visual-theme="meadow"] .battle-result-modal,
+html[data-visual-theme="meadow"] .battle-detail-modal,
+html[data-visual-theme="meadow"] .settings-modal,
+html[data-visual-theme="meadow"] .recipe-book-modal,
+html[data-visual-theme="meadow"] .class-detail-modal,
+html[data-visual-theme="meadow"] .board-preview-modal {
   color: var(--meadow-ink);
 }
 
-.result-static-block {
+html[data-visual-theme="meadow"] .result-static-block {
   background: rgba(255, 255, 255, 0.65);
   border: 2px solid var(--meadow-border-soft);
   border-radius: calc(12px * var(--ui-scale));
 }
 
-.result-static-block-title {
+html[data-visual-theme="meadow"] .result-static-block-title {
   background: rgba(92, 184, 92, 0.14);
   color: var(--meadow-ink);
   border-bottom: 1px solid var(--meadow-border-soft);
 }
 
-.result-static-block-body {
+html[data-visual-theme="meadow"] .result-static-block-body {
   color: var(--meadow-ink-muted);
 }
 
-.popup-trigger-row {
+html[data-visual-theme="meadow"] .popup-trigger-row {
   border: 2px solid var(--meadow-border-soft);
   background: rgba(255, 255, 255, 0.55);
 }
 
 /* ─── Prep top bar ─── */
 
-.prep-top-bar {
+html[data-visual-theme="meadow"] .prep-top-bar {
   background: var(--meadow-chrome);
   border-bottom: 1px solid var(--meadow-border);
   box-shadow: 0 4px 16px var(--meadow-shadow);
 }
 
-.prep-top-bar .prep-stats-class {
+html[data-visual-theme="meadow"] .prep-top-bar .prep-stats-class {
   border-right-color: var(--meadow-border-soft);
   color: var(--meadow-ink);
 }
 
-.prep-top-bar .prep-stats-hud,
-.prep-top-bar .prep-stats-row,
-.prep-top-bar .prep-stats-metric {
+html[data-visual-theme="meadow"] .prep-top-bar .prep-stats-hud,
+html[data-visual-theme="meadow"] .prep-top-bar .prep-stats-row,
+html[data-visual-theme="meadow"] .prep-top-bar .prep-stats-metric {
   color: var(--meadow-ink);
 }
 
 /* ─── Shop & bench ─── */
 
-#app[data-phase="prep"] #shop-panel {
+html[data-visual-theme="meadow"] #app[data-phase="prep"] #shop-panel {
   background: var(--meadow-chrome);
   border-left: 2px solid var(--meadow-border-soft);
   box-shadow: -4px 0 20px var(--meadow-shadow);
 }
 
-.bench-panel {
+html[data-visual-theme="meadow"] .bench-panel {
   background: rgba(255, 255, 255, 0.55);
   border: 2px solid var(--meadow-border-soft);
   border-radius: calc(12px * var(--ui-scale));
 }
 
-.bench-card,
-.shop-card {
+html[data-visual-theme="meadow"] .bench-card,
+html[data-visual-theme="meadow"] .shop-card {
   background: rgba(255, 255, 255, 0.7);
   border: 2px solid var(--meadow-border-soft);
   box-shadow: 0 2px 8px rgba(46, 100, 50, 0.08);
 }
 
-.bench-card:hover,
-.shop-card:hover {
+html[data-visual-theme="meadow"] .bench-card:hover,
+html[data-visual-theme="meadow"] .shop-card:hover {
   border-color: var(--meadow-border);
   background: rgba(255, 255, 255, 0.88);
 }
 
-.shop-panel h3,
-.shop-side-stat,
-.shop-panel .shop-hint {
+html[data-visual-theme="meadow"] .shop-panel h3,
+html[data-visual-theme="meadow"] .shop-side-stat,
+html[data-visual-theme="meadow"] .shop-panel .shop-hint {
   color: var(--meadow-ink-muted);
 }
 
-.btn-recipe-book {
+html[data-visual-theme="meadow"] .btn-recipe-book {
   background: rgba(140, 100, 200, 0.12);
   border-color: rgba(140, 100, 200, 0.35);
   color: #5c3d8a;
 }
 
-.btn-recipe-book:hover {
+html[data-visual-theme="meadow"] .btn-recipe-book:hover {
   background: rgba(140, 100, 200, 0.2);
 }
 
 /* ─── Bottom chrome ─── */
 
-.bottom-chrome {
+html[data-visual-theme="meadow"] .bottom-chrome {
   --bottom-chrome-bleed: #f5f0e4;
   background: var(--meadow-chrome);
   border-top: 2px solid var(--meadow-border);
@@ -174,172 +174,172 @@ body {
   box-shadow: 0 -4px 20px var(--meadow-shadow);
 }
 
-body:has(#app[data-phase="prep"]) .bottom-chrome,
-body:has(#app[data-phase="battle"]) .bottom-chrome,
-body:has(#app[data-phase="replay"]) .bottom-chrome {
+html[data-visual-theme="meadow"] body:has(#app[data-phase="prep"]) .bottom-chrome,
+html[data-visual-theme="meadow"] body:has(#app[data-phase="battle"]) .bottom-chrome,
+html[data-visual-theme="meadow"] body:has(#app[data-phase="replay"]) .bottom-chrome {
   background: var(--meadow-chrome);
   border-top-color: var(--meadow-border);
 }
 
-.bottom-chrome .prep-side-btn.active {
+html[data-visual-theme="meadow"] .bottom-chrome .prep-side-btn.active {
   border-color: var(--meadow-grass-dark);
   color: var(--meadow-grass-dark);
   background: rgba(92, 184, 92, 0.16);
 }
 
-.bottom-chrome .bc-btn {
+html[data-visual-theme="meadow"] .bottom-chrome .bc-btn {
   background: rgba(255, 255, 255, 0.65);
   border: 2px solid var(--meadow-border-soft);
   color: var(--meadow-ink);
 }
 
-.bottom-chrome .bc-btn:hover {
+html[data-visual-theme="meadow"] .bottom-chrome .bc-btn:hover {
   background: rgba(255, 255, 255, 0.9);
 }
 
 /* ─── Canvas (рюкзак) ─── */
 
-#game-canvas {
+html[data-visual-theme="meadow"] #game-canvas {
   border-radius: calc(8px * var(--ui-scale));
   box-shadow: 0 4px 20px var(--meadow-shadow);
 }
 
 /* ─── Doll / equipment slots ─── */
 
-.doll-slot {
+html[data-visual-theme="meadow"] .doll-slot {
   background: rgba(255, 255, 255, 0.6);
   border: 2px solid var(--meadow-border-soft);
 }
 
-.doll-slot:hover {
+html[data-visual-theme="meadow"] .doll-slot:hover {
   border-color: var(--meadow-border);
   background: rgba(255, 255, 255, 0.85);
 }
 
 /* ─── Мутации (prep HUD + галерея) ─── */
 
-.mutation-progress {
+html[data-visual-theme="meadow"] .mutation-progress {
   background: rgba(255, 252, 240, 0.75);
   border: 2px solid var(--meadow-border-soft);
 }
 
-.mutation-progress-target {
+html[data-visual-theme="meadow"] .mutation-progress-target {
   color: #5c3d8a;
 }
 
-.mutation-progress-fill {
+html[data-visual-theme="meadow"] .mutation-progress-fill {
   background: linear-gradient(90deg, var(--meadow-grass-dark), var(--meadow-gold-bright));
 }
 
-.mutation-gallery {
+html[data-visual-theme="meadow"] .mutation-gallery {
   background: rgba(255, 250, 235, 0.8);
   border: 2px dashed var(--meadow-border);
 }
 
-.mutation-gallery-eyebrow {
+html[data-visual-theme="meadow"] .mutation-gallery-eyebrow {
   color: #5c3d8a;
 }
 
-.mutation-silhouette {
+html[data-visual-theme="meadow"] .mutation-silhouette {
   background: rgba(255, 255, 255, 0.6);
   border: 1px dashed rgba(140, 100, 200, 0.4);
 }
 
-.prep-mutation-badge {
+html[data-visual-theme="meadow"] .prep-mutation-badge {
   background: rgba(255, 252, 240, 0.95);
   border: 1px solid var(--meadow-border);
   color: var(--meadow-ink);
   box-shadow: 0 2px 8px var(--meadow-shadow);
 }
 
-.companion-card.selected {
+html[data-visual-theme="meadow"] .companion-card.selected {
   outline: 3px solid rgba(232, 163, 23, 0.75);
 }
 
 /* ─── Combat feed ─── */
 
-.btn-combat-feed {
+html[data-visual-theme="meadow"] .btn-combat-feed {
   background: rgba(255, 252, 240, 0.92);
   border: 2px solid var(--meadow-border-soft);
   color: var(--meadow-ink);
   box-shadow: 0 4px 14px var(--meadow-shadow);
 }
 
-.btn-combat-feed.hud-orb-btn {
+html[data-visual-theme="meadow"] .btn-combat-feed.hud-orb-btn {
   background: transparent;
   border: none;
   box-shadow: none;
   color: inherit;
 }
 
-.btn-combat-feed.hud-orb-btn:hover,
-.btn-combat-feed.hud-orb-btn.btn-combat-feed--open {
+html[data-visual-theme="meadow"] .btn-combat-feed.hud-orb-btn:hover,
+html[data-visual-theme="meadow"] .btn-combat-feed.hud-orb-btn.btn-combat-feed--open {
   background: transparent;
   border: none;
   box-shadow: none;
   color: inherit;
 }
 
-.btn-combat-feed:hover {
+html[data-visual-theme="meadow"] .btn-combat-feed:hover {
   background: rgba(255, 255, 255, 0.98);
   border-color: var(--meadow-border);
   color: var(--meadow-ink);
 }
 
-.btn-combat-feed--open {
+html[data-visual-theme="meadow"] .btn-combat-feed--open {
   background: rgba(255, 244, 210, 0.95);
   border-color: var(--meadow-grass-dark);
   box-shadow: 0 6px 18px var(--meadow-shadow);
 }
 
-.combat-feed-panel {
+html[data-visual-theme="meadow"] .combat-feed-panel {
   background: var(--meadow-panel);
   border: 2px solid var(--meadow-border-soft);
   box-shadow: 0 12px 36px var(--meadow-shadow);
 }
 
-.combat-feed-title {
+html[data-visual-theme="meadow"] .combat-feed-title {
   color: var(--meadow-ink);
 }
 
-.combat-feed-toggle {
+html[data-visual-theme="meadow"] .combat-feed-toggle {
   background: rgba(92, 184, 92, 0.12);
   color: var(--meadow-ink-muted);
 }
 
-.combat-feed-toggle:hover {
+html[data-visual-theme="meadow"] .combat-feed-toggle:hover {
   background: rgba(92, 184, 92, 0.2);
   color: var(--meadow-ink);
 }
 
-.combat-feed-line {
+html[data-visual-theme="meadow"] .combat-feed-line {
   color: var(--meadow-ink-muted);
 }
 
 /* ─── Lobby ─── */
 
-.lobby-fighter-card {
+html[data-visual-theme="meadow"] .lobby-fighter-card {
   background: rgba(255, 252, 240, 0.9);
   border: 2px solid var(--meadow-border-soft);
   color: var(--meadow-ink);
 }
 
-.lobby-fighter-card.is-active {
+html[data-visual-theme="meadow"] .lobby-fighter-card.is-active {
   border-color: var(--meadow-gold-bright);
   box-shadow: 0 0 0 2px rgba(245, 200, 66, 0.35);
 }
 
-.lobby-fighter-card.is-yours {
+html[data-visual-theme="meadow"] .lobby-fighter-card.is-yours {
   border-color: var(--meadow-grass-dark);
 }
 
-.lobby-mutation-badge {
+html[data-visual-theme="meadow"] .lobby-mutation-badge {
   background: rgba(255, 252, 240, 0.95);
   border-color: rgba(140, 100, 200, 0.4);
   color: var(--meadow-ink);
 }
 
-#lobby-prep-field-roster .lobby-prep-field-chip {
+html[data-visual-theme="meadow"] #lobby-prep-field-roster .lobby-prep-field-chip {
   background: radial-gradient(circle at 35% 30%, rgba(255, 252, 240, 0.95), rgba(240, 230, 210, 0.92));
   border-color: var(--meadow-border-soft);
   color: var(--meadow-ink);
@@ -347,109 +347,111 @@ body:has(#app[data-phase="replay"]) .bottom-chrome {
 
 /* ─── Settings & recipe book ─── */
 
-.settings-modal label,
-.settings-modal h2,
-.recipe-book-modal h2 {
+html[data-visual-theme="meadow"] .settings-modal label,
+html[data-visual-theme="meadow"] .settings-modal h2,
+html[data-visual-theme="meadow"] .recipe-book-modal h2 {
   color: var(--meadow-ink);
 }
 
-.recipe-book-recipe {
+html[data-visual-theme="meadow"] .recipe-book-recipe {
   background: rgba(255, 255, 255, 0.55);
   border: 2px solid var(--meadow-border-soft);
 }
 
-.recipe-book-recipe:hover {
+html[data-visual-theme="meadow"] .recipe-book-recipe:hover {
   border-color: var(--meadow-border);
   background: rgba(255, 255, 255, 0.8);
 }
 
-.recipe-book-item {
+html[data-visual-theme="meadow"] .recipe-book-item {
   color: var(--meadow-ink-muted);
 }
 
-.settings-close {
-  color: var(--meadow-ink-muted);
+html[data-visual-theme="meadow"] .settings-close {
+  background: var(--btn-close-bg);
+  border: var(--btn-close-border);
+  color: var(--btn-close-color);
 }
 
 /* ─── Mobile prep ─── */
 
-.prep-mobile-shop-btn {
+html[data-visual-theme="meadow"] .prep-mobile-shop-btn {
   background: var(--meadow-chrome);
   border: 2px solid var(--meadow-border);
   color: var(--meadow-ink);
   box-shadow: 0 4px 16px var(--meadow-shadow);
 }
 
-html[data-prep-bench-popover="true"] .prep-bench-fab {
+html[data-visual-theme="meadow"] html[data-prep-bench-popover="true"] .prep-bench-fab {
   background: var(--meadow-chrome);
   border: 2px solid var(--meadow-border);
   color: var(--meadow-ink);
   box-shadow: 0 4px 16px var(--meadow-shadow);
 }
 
-.prep-shop-backdrop {
+html[data-visual-theme="meadow"] .prep-shop-backdrop {
   background: var(--meadow-overlay);
 }
 
-html[data-prep-layout="mobile"] #app[data-phase="prep"] #shop-panel {
+html[data-visual-theme="meadow"] html[data-prep-layout="mobile"] #app[data-phase="prep"] #shop-panel {
   background: var(--meadow-chrome);
   border-top: 2px solid var(--meadow-border);
 }
 
-.prep-shop-sheet-handle {
+html[data-visual-theme="meadow"] .prep-shop-sheet-handle {
   background: var(--meadow-border);
 }
 
 /* ─── Profile / prep hero tooltip ─── */
 
-.prep-hero-tooltip {
+html[data-visual-theme="meadow"] .prep-hero-tooltip {
   background: var(--meadow-panel);
   border: 2px solid var(--meadow-border);
   color: var(--meadow-ink);
   box-shadow: 0 8px 24px var(--meadow-shadow);
 }
 
-.run-stats-popover,
-.run-stats-panel {
+html[data-visual-theme="meadow"] .run-stats-popover,
+html[data-visual-theme="meadow"] .run-stats-panel {
   background: var(--meadow-panel);
   border: 2px solid var(--meadow-border);
   color: var(--meadow-ink);
 }
 
-.profile-avatar {
+html[data-visual-theme="meadow"] .profile-avatar {
   background: rgba(255, 255, 255, 0.65);
   border: 2px solid var(--meadow-border);
 }
 
 /* ─── Battle HUD chips (сохраняем читаемость) ─── */
 
-.battle-hud-chip {
+html[data-visual-theme="meadow"] .battle-hud-chip {
   --chip-fg: var(--meadow-ink);
   background: rgba(255, 252, 240, 0.92);
   border: 1px solid var(--meadow-border-soft);
 }
 
-.avatar-hero-name {
+html[data-visual-theme="meadow"] .avatar-hero-name {
   color: #f8fff4;
 }
 
 /* ─── Board preview ─── */
 
-.bp-grid-wrap {
+html[data-visual-theme="meadow"] .bp-grid-wrap {
   background: rgba(255, 255, 255, 0.55);
   border: 2px solid var(--meadow-border-soft);
 }
 
 /* ─── Replay chrome ─── */
 
-.replay-timeline {
+html[data-visual-theme="meadow"] .replay-timeline {
   background: rgba(255, 252, 240, 0.9);
   border: 2px solid var(--meadow-border-soft);
 }
 
 /* ─── Gamepad hints ─── */
 
-.gamepad-hints-bar {
+html[data-visual-theme="meadow"] .gamepad-hints-bar {
   background: var(--meadow-chrome);
   border-top: 1px solid var(--meadow-border-soft);
   color: var(--meadow-ink-muted);
@@ -457,7 +459,7 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] #shop-panel {
 
 /* ─── Class overlay base (styles.css fallback) ─── */
 
-#class-overlay {
+html[data-visual-theme="meadow"] #class-overlay {
   background: linear-gradient(
     180deg,
     var(--meadow-sky-top) 0%,
@@ -469,18 +471,18 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] #shop-panel {
 
 /* ─── Enhancements (prep) ─── */
 
-.prep-enhancement-strip {
+html[data-visual-theme="meadow"] .prep-enhancement-strip {
   background: rgba(255, 252, 240, 0.75);
   border: 2px solid var(--meadow-border-soft);
 }
 
-.enh-slot {
+html[data-visual-theme="meadow"] .enh-slot {
   background: rgba(255, 255, 255, 0.6);
   border: 2px solid var(--meadow-border-soft);
   color: var(--meadow-ink);
 }
 
-.enh-slot--filled {
+html[data-visual-theme="meadow"] .enh-slot--filled {
   border-color: var(--meadow-border);
   background: rgba(255, 255, 255, 0.85);
 }

@@ -35,9 +35,9 @@ html[data-ui-surface="desktop"] #app[data-phase="prep"] .prep-left-column {
 }
 
 html[data-ui-surface="desktop"] #app[data-phase="prep"] #shop-panel {
-  flex: 0 0 min(var(--shop-panel-w, 320px), 28vw);
-  width: min(var(--shop-panel-w, 320px), 28vw);
-  max-width: 360px;
+  flex: 0 0 var(--shop-panel-w);
+  width: var(--shop-panel-w);
+  max-width: var(--prep-shop-panel-max-w);
   min-height: 0;
   max-height: 100%;
   overflow: hidden;
@@ -89,14 +89,14 @@ html[data-ui-surface="desktop"] #app[data-phase="prep"] .battle-canvas-stage {
 
 /* Широкие экраны без data-ui-surface=desktop (планшет в альбомной) */
 @media (min-width: 1201px) {
-  html:not([data-prep-layout="mobile"]):not([data-prep-side-fit="true"]):not([data-ui-surface="tablet-side"]):not([data-ui-surface="phone-drawer"]) #app[data-phase="prep"] .prep-field-column {
+  html:not([data-prep-layout="mobile"]):not([data-prep-layout="bb-stack"]):not([data-prep-side-fit="true"]):not([data-ui-surface="tablet-side"]):not([data-ui-surface="phone-drawer"]) #app[data-phase="prep"] .prep-field-column {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
   }
 
-  html:not([data-prep-layout="mobile"]):not([data-prep-side-fit="true"]):not([data-ui-surface="tablet-side"]):not([data-ui-surface="phone-drawer"]) #app[data-phase="prep"] .prep-field-island {
+  html:not([data-prep-layout="mobile"]):not([data-prep-layout="bb-stack"]):not([data-prep-side-fit="true"]):not([data-ui-surface="tablet-side"]):not([data-ui-surface="phone-drawer"]) #app[data-phase="prep"] .prep-field-island {
     position: relative !important;
     flex: 0 0 auto;
     align-self: center;
@@ -109,7 +109,7 @@ html[data-ui-surface="desktop"] #app[data-phase="prep"] .battle-canvas-stage {
     min-height: 0 !important;
   }
 
-  html:not([data-prep-layout="mobile"]):not([data-prep-side-fit="true"]):not([data-ui-surface="tablet-side"]):not([data-ui-surface="phone-drawer"]) #app[data-phase="prep"] .battle-canvas-stage {
+  html:not([data-prep-layout="mobile"]):not([data-prep-layout="bb-stack"]):not([data-prep-side-fit="true"]):not([data-ui-surface="tablet-side"]):not([data-ui-surface="phone-drawer"]) #app[data-phase="prep"] .battle-canvas-stage {
     display: flex;
     align-items: flex-start;
     justify-content: center;

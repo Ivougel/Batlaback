@@ -1,13 +1,18 @@
 /**
  * Мета-прогрессия: разблокировка героев и предметов между забегами.
- * Активна в режимах «Путь героя» (path) и «Классика» (classic).
+ * Активна в режиме «Путь героя» (path), когда включена вручную.
  * localStorage: bb-meta-progress-v1
+ *
+ * QA / тестирование: по умолчанию выключена.
+ * Включить: localStorage.setItem("bb-meta-enabled", "1")
+ * Выключить: localStorage.setItem("bb-meta-disabled", "1") или removeItem("bb-meta-enabled")
  */
 import type { HeroProgressRecord, MetaProgressApi, MetaRunReward } from "../types/game";
 
 const MetaProgress: MetaProgressApi = (() => {
   const STORAGE_KEY = "bb-meta-progress-v1";
   const DISABLE_KEY = "bb-meta-disabled";
+  const ENABLE_KEY = "bb-meta-enabled";
   const PATH_MODE_ID = "path";
   const CLASSIC_MODE_ID = "classic";
   const VERSION = 1;
@@ -70,9 +75,10 @@ const MetaProgress: MetaProgressApi = (() => {
 
   function isEnabled() {
     try {
-      return localStorage.getItem(DISABLE_KEY) !== "1";
+      if (localStorage.getItem(DISABLE_KEY) === "1") return false;
+      return localStorage.getItem(ENABLE_KEY) === "1";
     } catch (_) {
-      return true;
+      return false;
     }
   }
 
@@ -85,14 +91,20 @@ const MetaProgress: MetaProgressApi = (() => {
   }
 
   function usesMetaUnlock(modeId: string | null): boolean {
-    return isPathMode(modeId) || isClassicModeId(modeId);
+    return isPathMode(modeId);
+  }
+
+  function isMaxAccountActive(): boolean {
+    return typeof isMaxAccountMode === "function" && isMaxAccountMode();
   }
 
   function isActiveForPicker() {
+    if (isMaxAccountActive()) return false;
     return isEnabled() && usesMetaUnlock(pickerModeId);
   }
 
   function isActiveForRun() {
+    if (isMaxAccountActive()) return false;
     return isEnabled() && usesMetaUnlock(runModeId);
   }
 
@@ -186,6 +198,7 @@ const MetaProgress: MetaProgressApi = (() => {
   }
 
   function isHeroUnlocked(classId: string): boolean {
+    if (isMaxAccountActive()) return true;
     if (!isActiveForPicker()) return true;
     return !!getHeroRecord(classId).unlocked;
   }
@@ -207,11 +220,13 @@ const MetaProgress: MetaProgressApi = (() => {
   }
 
   function isItemUnlocked(itemId: string, heroClass: string): boolean {
+    if (isMaxAccountActive()) return true;
     if (!isActiveForRun()) return true;
     if (!itemId) return false;
 
     const def = typeof ITEM_CATALOG !== "undefined" ? ITEM_CATALOG[itemId] : null;
-    if (def?.classRestriction && def.classRestriction !== heroClass) return false;
+    if (typeof shouldUseClassSystem === "function" && shouldUseClassSystem()
+      && def?.classRestriction && def.classRestriction !== heroClass) return false;
 
     if (typeof ItemUnlockTiers !== "undefined" && ItemUnlockTiers.isStarterForHero(itemId, heroClass)) {
       return true;
@@ -274,14 +289,12 @@ const MetaProgress: MetaProgressApi = (() => {
     classId?: string;
     runResults?: string[];
     round?: number;
-    lobbyWon?: boolean;
     playerEliminated?: boolean;
   } = {}): MetaRunReward {
     const {
       classId,
       runResults = [],
       round = 1,
-      lobbyWon = false,
       playerEliminated = false,
     } = payload;
 
@@ -295,7 +308,6 @@ const MetaProgress: MetaProgressApi = (() => {
     let heroXp = 40;
     heroXp += wins * 12;
     heroXp += Math.min(round, 16) * 4;
-    if (lobbyWon) heroXp += 80;
     if (wins >= 10) heroXp += 30;
 
     const heroUnlocked: string[] = [];
@@ -319,14 +331,13 @@ const MetaProgress: MetaProgressApi = (() => {
     heroXp?: number;
     wins?: number;
     round?: number;
-    lobbyWon?: boolean;
     playerEliminated?: boolean;
     runResults?: string[];
   } = {}): MetaRunReward | null {
     if (!isActiveForRun()) return null;
 
     const reward = computeRunReward(payload);
-    const { classId, heroXp, wins, round, lobbyWon } = payload;
+    const { classId, heroXp, wins, round } = payload;
     const runResults = payload.runResults || [];
 
     state.runsCompleted += 1;
@@ -350,7 +361,6 @@ const MetaProgress: MetaProgressApi = (() => {
 
     state.lastRunReward = {
       ...reward,
-      lobbyWon: !!lobbyWon,
       playerEliminated: !!payload.playerEliminated,
     };
     save();

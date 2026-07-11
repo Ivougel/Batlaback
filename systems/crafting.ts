@@ -1,5 +1,6 @@
 /**
- * Крафт: связные группы предметов (ребро к ребру) сливаются в новый предмет.
+ * Крафт: ингредиенты рецепта должны касаться друг друга (ребро к ребру),
+ * но не обязаны быть изолированы от остальных предметов на поле.
  */
 import type { CraftRecipe } from "../types/game";
 
@@ -108,6 +109,81 @@ function recipeMatchesCluster(clusterItems: BoardItem[], recipe: CraftRecipe): b
   return recipe.inputs.every((input) => (counts.get(input.itemId) || 0) === input.count);
 }
 
+function chooseK<T>(arr: T[], k: number): T[][] {
+  if (k === 0) return [[]];
+  if (k > arr.length) return [];
+  const out: T[][] = [];
+  const walk = (start: number, picked: T[]) => {
+    if (picked.length === k) {
+      out.push([...picked]);
+      return;
+    }
+    for (let i = start; i <= arr.length - (k - picked.length); i += 1) {
+      picked.push(arr[i]);
+      walk(i + 1, picked);
+      picked.pop();
+    }
+  };
+  walk(0, []);
+  return out;
+}
+
+function isCraftClusterConnected(clusterItems: BoardItem[], pool: BoardItem[]): boolean {
+  if (clusterItems.length <= 1) return true;
+  const uidSet = new Set(clusterItems.map((item) => item.uid));
+  const visited = new Set<string>([clusterItems[0].uid]);
+  const queue: BoardItem[] = [clusterItems[0]];
+
+  while (queue.length) {
+    const current = queue.shift()!;
+    getAdjacentItems(pool, current).forEach((entry, uid) => {
+      if (!entry.strong || !uidSet.has(uid) || visited.has(uid)) return;
+      visited.add(uid);
+      queue.push(entry.item as BoardItem);
+    });
+  }
+
+  return visited.size === clusterItems.length;
+}
+
+/** Все связные поднаборы поля, удовлетворяющие рецепту (ингредиенты касаются друг друга, но не обязаны быть изолированы от остальных). */
+function enumerateRecipeClusters(items: BoardItem[], recipe: CraftRecipe): BoardItem[][] {
+  const pool = items.filter((item) => !ITEM_CATALOG[item.itemId]?.isContainer);
+  const pickGroups: BoardItem[][][] = [];
+
+  for (const input of recipe.inputs) {
+    const matches = pool.filter((item) => item.itemId === input.itemId);
+    if (matches.length < input.count) return [];
+    pickGroups.push(chooseK(matches, input.count));
+  }
+
+  const results: BoardItem[][] = [];
+  const seen = new Set<string>();
+
+  const cartesian = (groupIndex: number, acc: BoardItem[]) => {
+    if (groupIndex >= pickGroups.length) {
+      const uids = acc.map((item) => item.uid);
+      if (new Set(uids).size !== uids.length) return;
+      const key = uids.slice().sort().join(",");
+      if (seen.has(key)) return;
+      if (!isCraftClusterConnected(acc, pool)) return;
+      seen.add(key);
+      results.push(acc.slice());
+      return;
+    }
+    for (const group of pickGroups[groupIndex]) {
+      cartesian(groupIndex + 1, acc.concat(group));
+    }
+  };
+
+  cartesian(0, []);
+  return results;
+}
+
+function hasMatchingRecipeCluster(items: BoardItem[], recipe: CraftRecipe): boolean {
+  return enumerateRecipeClusters(items, recipe).length > 0;
+}
+
 function getStrongCraftComponents(items: BoardItem[]): BoardItem[][] {
   const pool = items.filter((item) => !ITEM_CATALOG[item.itemId]?.isContainer);
   const visited = new Set<string>();
@@ -209,15 +285,13 @@ function tryResolveCrafting(containers: object[], items: BoardItem[], ctx: objec
 
   while (changed) {
     changed = false;
-    const components = getStrongCraftComponents(nextItems);
 
     for (const recipe of ITEM_RECIPES) {
       if (typeof isCraftRecipeAvailable === "function" && !isCraftRecipeAvailable(recipe, craftCtx)) {
         continue;
       }
       let applied = null;
-      for (const cluster of components) {
-        if (!recipeMatchesCluster(cluster, recipe)) continue;
+      for (const cluster of enumerateRecipeClusters(nextItems, recipe)) {
         applied = applyRecipe(containers, nextItems, recipe, cluster);
         if (applied) break;
       }
@@ -260,15 +334,13 @@ function detectMatchingCraftClusters(containers: object[], items: BoardItem[], c
 
   while (found) {
     found = false;
-    const components = getStrongCraftComponents(pool);
 
     for (const recipe of ITEM_RECIPES) {
       if (typeof isCraftRecipeAvailable === "function" && !isCraftRecipeAvailable(recipe, craftCtx)) {
         continue;
       }
-      for (const cluster of components) {
+      for (const cluster of enumerateRecipeClusters(pool, recipe)) {
         if (cluster.some((item) => usedUids.has(item.uid))) continue;
-        if (!recipeMatchesCluster(cluster, recipe)) continue;
         if (!canApplyCraftRecipe(containers, pool, recipe, cluster)) continue;
 
         cluster.forEach((item) => usedUids.add(item.uid));
@@ -432,6 +504,7 @@ function getCraftContextHeroClass(ctx: CraftContext | null = null): string | nul
 
 function isCraftRecipeAvailable(recipe: CraftRecipe, ctx: CraftContext | null = null): boolean {
   if (!recipe) return false;
+  if (typeof isClassicMode === "function" && isClassicMode()) return true;
   if (typeof MetaProgress === "undefined" || !MetaProgress.isActiveForRun()) return true;
   const heroClass = getCraftContextHeroClass(ctx);
   return recipe.inputs.every((input) => MetaProgress.isItemUnlocked(input.itemId, heroClass ?? ""));

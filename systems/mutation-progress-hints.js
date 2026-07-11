@@ -1,6 +1,5 @@
 /**
- * Подсказки при смене лидера мутации / скачке ветки ≥5%.
- * Hint-bar + дельты на полоске прогресса в prep.
+ * Трекинг прогресса мутации в prep (уведомления отключены).
  */
 
 const MUTATION_HINT_DELTA_THRESHOLD = 5;
@@ -182,23 +181,32 @@ function clearMutationProgressHintBar() {
 }
 
 function showMutationProgressHintBar(payload) {
-  if (!payload?.eyebrow) return;
-  const bar = document.getElementById("campaign-hint-bar");
-  const progressEl = document.getElementById("campaign-hint-progress");
-  const textEl = document.getElementById("campaign-hint-text");
-  if (!bar || !progressEl || !textEl) return;
+  // Уведомления мутаций отключены — оставляем только тихий трекинг прогресса.
+  void payload;
+}
 
-  mutationHintActive = true;
-  bar.classList.remove("hidden");
-  bar.classList.add("mutation-hint-active");
-  bar.dataset.mutationHint = "1";
-  progressEl.textContent = payload.eyebrow;
-  textEl.textContent = payload.text || "";
+function notifyPrepMutationProgressChange(progress, ctx = null) {
+  const afterSnap = captureMutationProgressSnapshot(progress);
+  const rt = getPrepMutationHintRuntime();
+  const fingerprint = buildLoadoutFingerprint(rt);
+  const loadoutChanged = fingerprint !== lastLoadoutFingerprint;
+  const explicitCtx = ctx || consumePrepLoadoutMutationChangeCtx();
 
-  if (mutationHintTimer) clearTimeout(mutationHintTimer);
-  mutationHintTimer = setTimeout(() => {
-    clearMutationProgressHintBar();
-  }, MUTATION_HINT_VISIBLE_MS);
+  if (!afterSnap) {
+    lastMutationSnapshot = null;
+    lastLoadoutFingerprint = fingerprint;
+    return null;
+  }
+
+  if (!lastMutationSnapshot || (!loadoutChanged && !explicitCtx)) {
+    lastMutationSnapshot = afterSnap;
+    lastLoadoutFingerprint = fingerprint;
+    return null;
+  }
+
+  lastMutationSnapshot = afterSnap;
+  lastLoadoutFingerprint = fingerprint;
+  return null;
 }
 
 function resetMutationProgressHintTracking() {
@@ -219,43 +227,6 @@ function consumePrepLoadoutMutationChangeCtx() {
   const ctx = typeof window !== "undefined" ? (window.__prepMutationChangeCtx || null) : null;
   if (typeof window !== "undefined") window.__prepMutationChangeCtx = null;
   return ctx;
-}
-
-function notifyPrepMutationProgressChange(progress, ctx = null) {
-  const afterSnap = captureMutationProgressSnapshot(progress);
-  const rt = getPrepMutationHintRuntime();
-  const fingerprint = buildLoadoutFingerprint(rt);
-  const loadoutChanged = fingerprint !== lastLoadoutFingerprint;
-  const explicitCtx = ctx || consumePrepLoadoutMutationChangeCtx();
-
-  if (!afterSnap) {
-    lastMutationSnapshot = null;
-    lastLoadoutFingerprint = fingerprint;
-    return null;
-  }
-
-  if (!lastMutationSnapshot || (!loadoutChanged && !explicitCtx)) {
-    lastMutationSnapshot = afterSnap;
-    lastLoadoutFingerprint = fingerprint;
-    return getActiveMutationProgressDeltas();
-  }
-
-  const beforeSnap = lastMutationSnapshot;
-  const diff = diffMutationProgressSnapshots(beforeSnap, afterSnap);
-  lastMutationSnapshot = afterSnap;
-  lastLoadoutFingerprint = fingerprint;
-
-  if (!diff?.hasHint) {
-    return getActiveMutationProgressDeltas();
-  }
-
-  const hint = buildMutationProgressHint(diff, beforeSnap, afterSnap, explicitCtx || {});
-  if (hint) showMutationProgressHintBar(hint);
-
-  activeMutationDeltas = diff.deltaMap;
-  activeMutationDeltasUntil = Date.now() + MUTATION_HINT_VISIBLE_MS;
-
-  return diff.deltaMap;
 }
 
 function renderMutationDeltaBadge(delta, options = {}) {

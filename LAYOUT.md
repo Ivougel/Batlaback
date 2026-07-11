@@ -21,11 +21,10 @@
 | Файл | Роль |
 |------|------|
 | `game.js` | Состояние забега, phase, init, canvas draw |
-| `lobby-runtime.js` | Lobby / lobby2p runtime |
 | `prep-drag.js` | Drag/drop shop · bench · board · enhancement |
 | `game-tooltip.js` | Sidebar / field / class tooltips |
-| `battle-loop.js` | `gameLoop`, `tickBattlePresentation`, lobby battle tick |
-| `bot-solver.js` | Общий power/placement solver для `ai-engine` / `hard-bot-engine` |
+| `battle-loop.js` | `gameLoop`, `tickBattlePresentation` |
+| `bot-solver.js` | Общий power/placement solver для `ai-engine` и balance-симов |
 
 Подключение: см. `index.html` (модули перед `game.js`, без bundler — global scope).
 
@@ -71,7 +70,7 @@ Touch-цели: `min-height: var(--touch-target-min)` (≥ 44px).
 > Скрины `tools/baseline/prep-ipad-mini-pwa-gold.png` и `battle-ipad-mini-pwa-gold.png` — **опциональный** регрессионный референс (iPad mini PWA), не жёсткий pixel-lock.  
 > Правило для агента: `.cursor/rules/prep-hud-layout-baseline.mdc`.
 
-**Prep:** hero HUD, full-body герой (или компактный вариант на узком экране), сетка 7×9, магазин + скамейка (колонка / drawer / FAB), bottom chrome.
+**Prep:** hero HUD, full-body герой (или компактный вариант на узком экране), сетка 9×7, магазин + скамейка (колонка / drawer / FAB), bottom chrome.
 
 **Battle:** `flank-arena` или компактный HUD по профилю; HP/stamina и toolbar всегда в viewport.
 

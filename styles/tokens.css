@@ -122,16 +122,67 @@
   --battle-aura-runner-size: 7vmin;
 
   --combatant-icon-gap: calc(36px * var(--ui-scale));
-  /* Лобби-ростер prep: якорь масштаба — эмодзи кнопки «скрыть» и аватары в списке */
-  --lobby-roster-emoji-size: calc(1.25rem * var(--ui-scale));
-  --lobby-roster-avatar-size: calc(var(--lobby-roster-emoji-size) * 1.88);
+  /* Ростер / эмодзи в compact UI */
+  --roster-emoji-size: calc(1.25rem * var(--ui-scale));
+  --roster-avatar-size: calc(var(--roster-emoji-size) * 1.88);
   --class-sticker-size: calc(160px * var(--game-scale));
   --game-item-icon-size: calc(54px * var(--game-scale));
   --game-item-icon-font: 2.025rem;
   --game-item-icon-duo-width: calc(var(--game-item-icon-size) * 1.85);
 
   /* Toolbar / bottom chrome */
-  --bottom-chrome-bleed: #0d1117;
+  --bottom-chrome-bleed: #f5f0e4;
+
+  /* Buttons — semantic (remap в theme-diablo.css) */
+  --btn-primary-bg: linear-gradient(180deg, var(--meadow-gold-bright) 0%, var(--meadow-gold) 100%);
+  --btn-primary-border: 2px solid rgba(200, 134, 10, 0.45);
+  --btn-primary-color: var(--meadow-ink);
+  --btn-primary-shadow: 0 3px 12px rgba(200, 134, 10, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+
+  --btn-secondary-bg: rgba(255, 255, 255, 0.72);
+  --btn-secondary-border: 2px solid var(--meadow-border);
+  --btn-secondary-color: var(--meadow-ink);
+  --btn-secondary-shadow: 0 2px 8px var(--meadow-shadow);
+
+  --btn-small-bg: rgba(255, 255, 255, 0.72);
+  --btn-small-color: var(--meadow-gold-bright);
+  --btn-small-border: 1px solid var(--meadow-border);
+
+  --btn-chrome-bg: rgba(255, 255, 255, 0.65);
+  --btn-chrome-border: 2px solid var(--meadow-border-soft);
+  --btn-chrome-color: var(--meadow-ink);
+  --btn-chrome-hover-bg: rgba(255, 255, 255, 0.9);
+  --btn-chrome-active-bg: rgba(92, 184, 92, 0.16);
+  --btn-chrome-active-border: var(--meadow-grass-dark);
+  --btn-chrome-active-color: var(--meadow-grass-dark);
+
+  --btn-close-bg: rgba(255, 255, 255, 0.72);
+  --btn-close-border: 1px solid var(--meadow-border);
+  --btn-close-color: var(--meadow-ink);
+  --btn-close-hover-border: var(--meadow-grass-dark);
+  --btn-close-hover-color: var(--meadow-grass-dark);
+
+  --surface-inset: rgba(255, 255, 255, 0.65);
+  --surface-inset-border: var(--meadow-border-soft);
+  --surface-log: rgba(255, 255, 255, 0.65);
+  --surface-log-border: var(--meadow-border-soft);
+  --surface-log-scroll: rgba(255, 252, 240, 0.92);
+
+  /* BB fidelity surfaces */
+  --bb-canvas-bg: var(--meadow-cream-deep);
+  --bb-field-bg: var(--meadow-panel);
+  --bb-chrome-bg: var(--meadow-chrome);
+  --bb-shop-bg:
+    linear-gradient(180deg, rgba(255, 252, 240, 0.98) 0%, rgba(245, 237, 212, 0.96) 100%),
+    repeating-linear-gradient(
+      90deg,
+      rgba(92, 184, 92, 0.05) 0,
+      rgba(92, 184, 92, 0.05) 3px,
+      transparent 3px,
+      transparent 22px
+    );
+  --bb-border: var(--meadow-border);
+  --bb-border-soft: var(--meadow-border-soft);
   --prep-toolbar-h: var(--bottom-chrome-h);
   --toolbar-h: var(--bottom-chrome-h);
   --toolbar-btn-h: var(--gap-md);
@@ -148,39 +199,39 @@
   --frame-pad: 8px;
   --frame-title-h: 22px;
   --grid-gap: 36px;
-  --prep-canvas-w: calc(7 * var(--cell-size) + 6 * var(--cell-gap));
-  --prep-canvas-h: calc(9 * var(--cell-size) + 8 * var(--cell-gap));
-  --battle-canvas-w: calc(2 * (7 * var(--cell-size) + 6 * var(--cell-gap)) + var(--grid-gap));
-  --battle-canvas-h: calc(9 * var(--cell-size) + 8 * var(--cell-gap));
-  --field-base-x: 12px;
-  --field-offset-x: 0px;
-  --field-offset-y: 0px;
-  --prep-scene-top: 14px;
-  --prep-top-bar-h: calc(44px * var(--ui-scale));
-  --prep-character-gap: 8px;
+  --prep-canvas-w: calc(9 * var(--cell-size) + 8 * var(--cell-gap));
+  --prep-canvas-h: calc(7 * var(--cell-size) + 6 * var(--cell-gap));
+  --battle-canvas-w: calc(2 * (9 * var(--cell-size) + 8 * var(--cell-gap)) + var(--grid-gap));
+  --battle-canvas-h: calc(7 * var(--cell-size) + 6 * var(--cell-gap));
+  --field-base-x: 1%;
+  --field-offset-x: 0%;
+  --field-offset-y: 0%;
+  --prep-scene-top: 1.2vh;
+  --prep-top-bar-h: max(calc(7vh * var(--ui-scale)), calc(44px * var(--ui-scale)));
+  --prep-character-gap: 1vh;
   --prep-character-top: calc(var(--prep-scene-top) + var(--prep-canvas-h) + var(--prep-character-gap));
-  --character-slot-h: min(380px, calc(100vh - 480px));
+  --character-slot-h: min(52vh, calc(var(--app-h, 100dvh) * 0.52));
   --character-scale: 1;
   --prep-character-slot-h: var(--character-slot-h);
   --prep-hero-slot-left: 2%;
   --prep-hero-slot-width: 28%;
   --prep-hero-slot-gap: 1%;
-  --prep-hero-slot-bottom: var(--gap-sm);
-  --prep-hero-slot-height: min(52vh, 500px);
-  --prep-hero-slot-height-max: 560px;
-  --prep-hero-float-h: min(58vh, 560px);
-  --prep-hero-float-min-h: min(44vh, 400px);
+  --prep-hero-slot-bottom: 1.5vh;
+  --prep-hero-slot-height: min(52vh, calc(var(--app-h, 100dvh) * 0.52));
+  --prep-hero-slot-height-max: min(56vh, 560px);
+  --prep-hero-float-h: min(58vh, calc(var(--app-h, 100dvh) * 0.58));
+  --prep-hero-float-min-h: min(44vh, calc(var(--app-h, 100dvh) * 0.44));
   --prep-hero-float-max-w: min(46vw, 360px);
   /* Hero card HUD: портрет = кроп головы/плеч, высота = stats + mutation */
   --prep-hero-card-portrait-ratio: 0.86;
   --prep-hero-card-portrait-w-share: 0.38;
-  --prep-hero-card-body-gap: calc(6px * var(--ui-scale));
-  --prep-hero-card-portrait-w: calc(200px * var(--ui-scale));
-  --prep-hero-card-portrait-h: calc(188px * var(--ui-scale));
-  --prep-hero-card-portrait-w-min: calc(148px * var(--ui-scale));
-  --prep-hero-card-portrait-w-max: calc(320px * var(--ui-scale));
-  --prep-hero-card-portrait-h-min: calc(168px * var(--ui-scale));
-  --prep-hero-card-portrait-h-max: calc(280px * var(--ui-scale));
+  --prep-hero-card-body-gap: calc(0.6vh * var(--ui-scale));
+  --prep-hero-card-portrait-w: calc(var(--prep-hero-card-portrait-w-share) * 100%);
+  --prep-hero-card-portrait-h: min(calc(22vh * var(--ui-scale)), calc(var(--app-h, 100dvh) * 0.22));
+  --prep-hero-card-portrait-w-min: 24%;
+  --prep-hero-card-portrait-w-max: 42%;
+  --prep-hero-card-portrait-h-min: min(calc(18vh * var(--ui-scale)), calc(var(--app-h, 100dvh) * 0.18));
+  --prep-hero-card-portrait-h-max: min(calc(28vh * var(--ui-scale)), calc(var(--app-h, 100dvh) * 0.28));
   --prep-hud-portrait-bust-scale: 2.05;
   --prep-hud-portrait-bust-y: 10%;
   --prep-hud-portrait-bust-x: 50%;
@@ -217,7 +268,9 @@
   --doll-slot-size: 38px;
   --doll-layer-w: var(--prep-doll-slot-width);
   --doll-layer-h: var(--prep-hero-slot-height);
-  --shop-panel-w: 320px;
+  --prep-shop-panel-share: 0.28;
+  --prep-shop-panel-max-w: min(360px, 34vw);
+  --shop-panel-w: min(calc(var(--prep-shop-panel-share) * var(--viewport-w, 100vw)), var(--prep-shop-panel-max-w));
   --prep-build-emoji-btn-scale: 1;
   --prep-build-emoji-btn-hud-size: calc(40px * var(--ui-scale, 1));
   --prep-build-emoji-btn-size: clamp(
@@ -236,7 +289,7 @@
   --shop-card-icon-duo-font: calc(var(--shop-item-icon-font) * 0.86);
   --fx-float-scale: 1;
   --fx-projectile-scale: 1;
-  --battle-stats-panel-w: 276px;
+  --battle-stats-panel-w: min(calc(0.24 * var(--viewport-w, 100vw)), 276px);
 
   /* Scene layer stack */
   --z-layer-world: 10;
@@ -439,14 +492,14 @@ html[data-layout-profile="phone-portrait"] {
   --prep-shop-row-base: 70;
   --prep-shop-row-min: 54;
   --prep-shop-row-max: 74;
-  --prep-hero-slot-height: min(280px, 34vh);
+  --prep-hero-slot-height: min(34vh, calc(var(--app-h, 100dvh) * 0.34));
   --prep-hero-slot-max: 300;
   --prep-scene-avatar-h: 140;
   --prep-scene-avatar-w: 112;
   --prep-doll-slot: 34;
   --prep-character-gap: 6;
+  --prep-shop-panel-share: 0.92;
   --prep-shop-panel-w: 300;
-  --prep-lobby-shop-panel-w: 252;
 }
 
 html[data-layout-profile="phone-landscape"] {
@@ -464,8 +517,8 @@ html[data-layout-profile="phone-landscape"] {
   --prep-scene-avatar-w: 96;
   --prep-doll-slot: 28;
   --prep-character-gap: 4;
+  --prep-shop-panel-share: 0.28;
   --prep-shop-panel-w: 260;
-  --prep-lobby-shop-panel-w: 224;
 }
 
 html[data-layout-profile="tablet-portrait"] {
@@ -477,14 +530,14 @@ html[data-layout-profile="tablet-portrait"] {
   --prep-shop-row-base: 68;
   --prep-shop-row-min: 56;
   --prep-shop-row-max: 84;
-  --prep-hero-slot-height: min(400px, 44vh);
+  --prep-hero-slot-height: min(44vh, calc(var(--app-h, 100dvh) * 0.44));
   --prep-hero-slot-max: 420;
   --prep-scene-avatar-h: 200;
   --prep-scene-avatar-w: 148;
   --prep-doll-slot: 38;
   --prep-character-gap: 8;
+  --prep-shop-panel-share: 0.88;
   --prep-shop-panel-w: 300;
-  --prep-lobby-shop-panel-w: 252;
   --prep-shop-cols: 5;
 }
 
@@ -497,14 +550,14 @@ html[data-layout-profile="tablet-landscape"] {
   --prep-shop-row-base: 88;
   --prep-shop-row-min: 72;
   --prep-shop-row-max: 100;
-  --prep-hero-slot-height: min(54vh, 520px);
+  --prep-hero-slot-height: min(54vh, calc(var(--app-h, 100dvh) * 0.54));
   --prep-hero-slot-max: 560;
   --prep-scene-avatar-h: 148;
   --prep-scene-avatar-w: 118;
   --prep-doll-slot: 38;
   --prep-character-gap: 8;
+  --prep-shop-panel-share: 0.31;
   --prep-shop-panel-w: 320;
-  --prep-lobby-shop-panel-w: 216;
 }
 
 html[data-layout-profile="desktop-portrait"] {
@@ -516,14 +569,14 @@ html[data-layout-profile="desktop-portrait"] {
   --prep-shop-row-base: 72;
   --prep-shop-row-min: 56;
   --prep-shop-row-max: 76;
-  --prep-hero-slot-height: min(54vh, 520px);
+  --prep-hero-slot-height: min(54vh, calc(var(--app-h, 100dvh) * 0.54));
   --prep-hero-slot-max: 560;
   --prep-scene-avatar-h: 152;
   --prep-scene-avatar-w: 120;
   --prep-doll-slot: 38;
   --prep-character-gap: 8;
+  --prep-shop-panel-share: 0.28;
   --prep-shop-panel-w: 320;
-  --prep-lobby-shop-panel-w: 248;
 }
 
 html[data-layout-profile="desktop-landscape"] {
@@ -535,14 +588,35 @@ html[data-layout-profile="desktop-landscape"] {
   --prep-shop-row-base: 66;
   --prep-shop-row-min: 54;
   --prep-shop-row-max: 74;
-  --prep-hero-slot-height: min(54vh, 520px);
+  --prep-hero-slot-height: min(54vh, calc(var(--app-h, 100dvh) * 0.54));
   --prep-hero-slot-max: 560;
   --prep-scene-avatar-h: 152;
   --prep-scene-avatar-w: 120;
   --prep-doll-slot: 38;
   --prep-character-gap: 8;
+  --prep-shop-panel-share: 0.20;
   --prep-shop-panel-w: 272;
-  --prep-lobby-shop-panel-w: 228;
+}
+
+/* BB stack prep — вертикальные зоны как доли --app-h */
+html[data-prep-layout="bb-stack"] {
+  --prep-zone-topbar-share: 0.08;
+  --prep-zone-shop-share: 0.20;
+  --prep-zone-commerce-share: 0.05;
+  --prep-zone-field-share: 0.47;
+  --prep-zone-storage-share: 0.18;
+  --prep-zone-storage-body-share: 0.12;
+  --bb-prep-hero-col-share: 24%;
+  --bb-prep-tooltip-col-share: 28%;
+  --bb-prep-grid-col-share: 48%;
+  --prep-zone-topbar-h: calc(var(--app-h, 100dvh) * var(--prep-zone-topbar-share));
+  --prep-zone-shop-h: calc(var(--app-h, 100dvh) * var(--prep-zone-shop-share));
+  --prep-zone-commerce-h: calc(var(--app-h, 100dvh) * var(--prep-zone-commerce-share));
+  --prep-zone-field-min-h: calc(var(--app-h, 100dvh) * var(--prep-zone-field-share));
+  --prep-zone-storage-h: calc(var(--app-h, 100dvh) * var(--prep-zone-storage-share));
+  --prep-zone-storage-body-max: calc(var(--app-h, 100dvh) * var(--prep-zone-storage-body-share));
+  --prep-shop-panel-share: 1;
+  --prep-shop-panel-max-w: 100%;
 }
 
 /* ui-layout.js: --cell-size, --grid-gap, --shop-panel-w, --battle-stats-panel-w */

@@ -448,19 +448,10 @@ function scoutHasHeavyBlock(scout, items) {
 }
 
 function countSynergyPotentialWith(itemId, partnerItems) {
-  const def = ITEM_CATALOG[itemId];
-  if (!def || !partnerItems.length) return 0;
-  let score = 0;
-  partnerItems.forEach((existing) => {
-    const exDef = ITEM_CATALOG[existing.itemId];
-    (def.synergies || []).forEach((rule) => {
-      if (rule.neighborTags.some((t) => exDef.tags.includes(t))) score += AI_SYNERGY_POTENTIAL_WEIGHT;
-    });
-    (exDef.synergies || []).forEach((rule) => {
-      if (rule.neighborTags.some((t) => def.tags.includes(t))) score += AI_SYNERGY_POTENTIAL_WEIGHT;
-    });
-  });
-  return score;
+  if (typeof findPlacementSynergyPartners === "function") {
+    return findPlacementSynergyPartners(itemId, partnerItems).length * AI_SYNERGY_POTENTIAL_WEIGHT;
+  }
+  return 0;
 }
 
 function shouldSellForKillBuild(item, archetype, items, scout, round, battleWon) {
@@ -539,19 +530,10 @@ function countTagAffinity(def, archetype) {
 }
 
 function countSynergyPotential(itemId, items) {
-  const def = ITEM_CATALOG[itemId];
-  if (!def || !items.length) return 0;
-  let score = 0;
-  items.forEach((existing) => {
-    const exDef = ITEM_CATALOG[existing.itemId];
-    (def.synergies || []).forEach((rule) => {
-      if (rule.neighborTags.some((t) => exDef.tags.includes(t))) score += AI_SYNERGY_POTENTIAL_WEIGHT;
-    });
-    (exDef.synergies || []).forEach((rule) => {
-      if (rule.neighborTags.some((t) => def.tags.includes(t))) score += AI_SYNERGY_POTENTIAL_WEIGHT;
-    });
-  });
-  return score;
+  if (typeof findPlacementSynergyPartners === "function") {
+    return findPlacementSynergyPartners(itemId, items).length * AI_SYNERGY_POTENTIAL_WEIGHT;
+  }
+  return 0;
 }
 
 function scoreSynergyCompletion(itemId, items, bench = []) {
@@ -678,7 +660,7 @@ function scoreItemForAI(
     return scoreContainerForAI(itemId, { containers, items, bench }, gridW, gridH);
   }
   if (def.isContainer) return -999;
-  if (def.classRestriction && classId && def.classRestriction !== classId) return -999;
+  if (typeof isItemAllowedForHeroClass === "function" && !isItemAllowedForHeroClass(def, classId)) return -999;
 
   const { score: tagScore, hasPriority } = countTagAffinity(def, archetype);
   let score = tagScore;
@@ -819,7 +801,6 @@ function scoreOwnedItem(item, archetype, items, scout = null, round = 1) {
 }
 
 function scorePlacementPosition(containers, items, itemId, placement) {
-  const def = ITEM_CATALOG[itemId];
   const temp = {
     uid: "__temp__",
     itemId,
@@ -830,19 +811,20 @@ function scorePlacementPosition(containers, items, itemId, placement) {
   const combined = [...items.filter((i) => i.uid !== temp.uid), temp];
   let score = 0;
 
+  if (typeof scorePlacementSlotPosition === "function") {
+    score += scorePlacementSlotPosition(
+      itemId,
+      placement.col,
+      placement.row,
+      placement.rotation,
+      items,
+    ) * AI_SYNERGY_PLACEMENT_STRONG;
+  }
+
   const neighbors = getAdjacentItems(combined, temp);
   neighbors.forEach((entry, neighborUid) => {
     const other = combined.find((i) => i.uid === neighborUid);
     if (!other) return;
-    const oDef = ITEM_CATALOG[other.itemId];
-    (def.synergies || []).forEach((rule) => {
-      if (entry.strong && rule.adjacency !== "weak" && rule.neighborTags.some((t) => oDef.tags.includes(t))) {
-        score += AI_SYNERGY_PLACEMENT_STRONG;
-      }
-      if (entry.weak && rule.adjacency !== "strong" && rule.neighborTags.some((t) => oDef.tags.includes(t))) {
-        score += AI_SYNERGY_PLACEMENT_WEAK;
-      }
-    });
     if (typeof getRecipesUsingIngredient === "function") {
       getRecipesUsingIngredient(itemId).forEach((recipe) => {
         recipe.inputs.forEach((input) => {
@@ -1336,6 +1318,9 @@ function aiHasIngredientsForRecipe(recipe, items, bench) {
 }
 
 function aiIsRecipeClusterReady(items, recipe) {
+  if (typeof hasMatchingRecipeCluster === "function") {
+    return hasMatchingRecipeCluster(items, recipe);
+  }
   if (typeof getStrongCraftComponents !== "function") return false;
   const components = getStrongCraftComponents(items);
   return components.some((cluster) => {
@@ -1691,7 +1676,9 @@ function aiEnemyPrepPhase(
   const shopCtx = {
     round,
     gold: next.gold,
-    playerClass: next.classId,
+    playerClass: typeof getMechanicalClassId === "function"
+      ? getMechanicalClassId(next.classId)
+      : next.classId,
     loadoutTags: collectLoadoutTags(next.items),
     loadoutItems: next.items,
     opponentLoadoutTags: scout.tags,
@@ -1784,7 +1771,8 @@ function createInitialEnemyState(round, gridW, gridH, playerItems = [], playerCl
   const scout = buildPlayerScout(playerItems);
   const killArchetype = pickKillArchetype(scout, playerClass, round, null, playerItems, null);
   const containers = createStartingContainers();
-  const items = applyClassStarters(containers, [], killArchetype.id);
+  const useClasses = typeof shouldUseClassSystem === "function" ? shouldUseClassSystem() : true;
+  const items = useClasses ? applyClassStarters(containers, [], killArchetype.id) : [];
   return aiEnemyPrepPhase(
     {
       archetype: killArchetype,

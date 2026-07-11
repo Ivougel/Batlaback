@@ -8,16 +8,10 @@ const page = await context.newPage();
 
 await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
 await page.waitForFunction(() => typeof startRunFromOverlay === "function");
-await page.evaluate(() => {
-  selectGameMode("solo");
+await page.evaluate(async () => {
   selectPlayerClass("warrior");
-  if (typeof selectCompanion === "function") {
-    selectCompanion(
-      typeof defaultCompanionForClass === "function" ? defaultCompanionForClass("warrior") : "s_stranger",
-    );
-  }
-  selectOpponentClass("mage");
-  startRunFromOverlay();
+  selectPlayerClass("warrior");
+  await startRunFromOverlay();
 });
 await page.waitForFunction(() => document.getElementById("app")?.dataset.phase === "prep");
 await page.waitForTimeout(1000);

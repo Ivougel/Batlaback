@@ -122,7 +122,7 @@ import type { PerfTier } from "../types/game";
     applyBattleFxTierFlags();
   }
 
-  function prepLobbyFxReduced() {
+  function prepFxReduced() {
     return isLightBattleFx();
   }
 
@@ -157,31 +157,6 @@ import type { PerfTier } from "../types/game";
     if (perf === "low") return 20;
     if (isLightBattleFx()) return 24;
     return 30;
-  }
-
-  function lobbyHpTickMs() {
-    if (!isLightBattleFx()) return 500;
-    return isPhoneTier() ? 700 : 650;
-  }
-
-  function lobbyProfileTickMs() {
-    if (!isLightBattleFx()) return 1400;
-    return isPhoneTier() ? 2000 : 1800;
-  }
-
-  function lobbyAvatarTickMs() {
-    if (!isLightBattleFx()) return 1800;
-    return isPhoneTier() ? 2400 : 2200;
-  }
-
-  function lobbyChromeTickMs() {
-    if (!isLightBattleFx()) return 1200;
-    return isPhoneTier() ? 1600 : 1500;
-  }
-
-  function lobbyEmotionRefreshMs() {
-    if (!isLightBattleFx()) return 2800;
-    return isPhoneTier() ? 4000 : 3600;
   }
 
   function applyBattleFxTierFlags() {
@@ -298,7 +273,7 @@ import type { PerfTier } from "../types/game";
   }
 
   function prepSynergyFxEnabled() {
-    return !prepLobbyFxReduced();
+    return !prepFxReduced();
   }
 
   function prepPassLaughFxEnabled() {
@@ -307,7 +282,7 @@ import type { PerfTier } from "../types/game";
   }
 
   function prepDragArcFxEnabled() {
-    return !prepLobbyFxReduced();
+    return !prepFxReduced();
   }
 
   function battleHeroLayoutSyncDeepEnabled() {
@@ -370,14 +345,6 @@ import type { PerfTier } from "../types/game";
     return 0;
   }
 
-  function lobbySpectatePresentationThrottleMs() {
-    if (prefersReducedMotion()) return 0;
-    const perf = resolvePerfTier();
-    if (perf === "low") return 32;
-    if (perf === "medium" || isLightBattleFx()) return 16;
-    return 0;
-  }
-
   function syncLightBattleFxSettingsUi(): void {
     const cb = document.getElementById("settings-light-battle-fx") as HTMLInputElement | null;
     if (cb) cb.checked = isLightBattleFx();
@@ -414,18 +381,13 @@ import type { PerfTier } from "../types/game";
     battleAuraFrameEnabled,
     equipIdleWobbleEnabled,
     equipSyncGapMs,
-    prepLobbyFxReduced,
+    prepFxReduced,
     equipAutoAttackEnabled,
     battleGameLoopGapMs,
     battleHudLiteGapMs,
     battleProfileTickMs,
     battleFloatPresentGapMs,
     prepFxStepHz,
-    lobbyHpTickMs,
-    lobbyProfileTickMs,
-    lobbyAvatarTickMs,
-    lobbyChromeTickMs,
-    lobbyEmotionRefreshMs,
     prepHudMoodIntervalMs,
     prepHudMoodCycleEnabled,
     prepSynergyFxEnabled,
@@ -441,7 +403,6 @@ import type { PerfTier } from "../types/game";
     canvasFitMinIntervalMs,
     canvasFitDeepSyncEnabled,
     layoutPassThrottleMs,
-    lobbySpectatePresentationThrottleMs,
     applyBattleFxTierFlags,
     syncLightBattleFxSettingsUi,
   };

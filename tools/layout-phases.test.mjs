@@ -40,7 +40,7 @@ function assert(cond, msg) {
 
 async function quickStart(page) {
   await page.goto(baseUrl, { waitUntil: "domcontentloaded", timeout: 20000 });
-  await page.waitForFunction(() => typeof selectGameMode === "function", { timeout: 10000 });
+  await page.waitForFunction(() => typeof startRunFromOverlay === "function", { timeout: 10000 });
   await quickStartPrep(page, { settleMs: 1200 });
 }
 

@@ -15,7 +15,7 @@ async function run() {
   const page = await context.newPage();
   await page.goto(URL, { waitUntil: "networkidle" });
 
-  await page.click('[data-game-mode="lobby"]');
+  await page.click('[data-game-mode="classic"]');
   await page.click('.class-card[data-class="mage"]');
   await page.click("#btn-start-run");
   await page.waitForSelector('#app[data-phase="prep"]', { timeout: 15000 });

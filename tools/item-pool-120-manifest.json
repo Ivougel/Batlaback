@@ -2,7 +2,7 @@
   "version": 2,
   "name": "pool-240",
   "description": "Курированный пул: 52 системных + 68 базовый магазин + 120 расширение из legacy",
-  "generatedAt": "2026-07-09T17:45:22.515Z",
+  "generatedAt": "2026-07-09T18:16:28.191Z",
   "counts": {
     "starter": 8,
     "amplifier": 10,

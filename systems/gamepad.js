@@ -594,6 +594,7 @@ function getMenuContext() {
   if (gpHandlers?.isRecipeBookOpen?.()) return "recipeBook";
   if (gpHandlers?.isBoardPreviewOpen?.()) return "boardPreview";
   if (gpHandlers?.isPopupOpen?.("battle-result-overlay")) return "battleResult";
+  if (gpHandlers?.isPopupOpen?.("bb-run-complete-overlay")) return "runComplete";
   if (gpHandlers?.isPopupOpen?.("overlay")) return "runComplete";
   if (gpHandlers?.isPopupOpen?.("class-overlay")) {
     if (!document.getElementById("class-step-mode")?.classList.contains("hidden")) return "classMode";
@@ -737,26 +738,35 @@ function queryMenuFocusables(context) {
     ].filter(Boolean);
   }
   if (context === "classSummary") {
-    return [
+    const bbPlay = document.getElementById("btn-bb-intro-play");
+    const items = [
       document.getElementById("class-summary-hero"),
       document.getElementById("btn-class-summary-start"),
       document.getElementById("class-summary-companion"),
       document.getElementById("btn-class-back-companion"),
       document.getElementById("btn-start-run"),
     ].filter(Boolean);
+    if (bbPlay && !bbPlay.classList.contains("hidden")) items.unshift(bbPlay);
+    return items;
   }
   if (context === "classPlayer") {
-    return [
+    const bbPlay = document.getElementById("btn-bb-intro-play");
+    const items = [
       ...document.querySelectorAll("#class-step-player .class-card[data-class]:not([disabled])"),
       document.getElementById("btn-class-back-mode"),
     ].filter(Boolean);
+    if (bbPlay && !bbPlay.classList.contains("hidden")) items.push(bbPlay);
+    return items;
   }
   if (context === "classOpponent") {
-    return [
+    const bbPlay = document.getElementById("btn-bb-intro-play");
+    const items = [
       ...document.querySelectorAll("#class-step-opponent .opponent-class-card"),
       document.getElementById("btn-class-back"),
       document.getElementById("btn-start-run"),
     ].filter(Boolean);
+    if (bbPlay && !bbPlay.classList.contains("hidden")) items.push(bbPlay);
+    return items;
   }
   if (context === "battleResult") {
     return [
@@ -773,6 +783,10 @@ function queryMenuFocusables(context) {
     ].filter((el) => el && !el.classList.contains("hidden"));
   }
   if (context === "runComplete") {
+    const bbHome = document.getElementById("btn-bb-run-complete-home");
+    if (bbHome && !bbHome.classList.contains("hidden")) {
+      return [bbHome].filter(Boolean);
+    }
     return [
       ...queryAccordionFocusables("#run-complete-accordions"),
       document.getElementById("btn-restart"),
@@ -1045,10 +1059,22 @@ function handleOverlayNavigation(pad, prevButtons, dt) {
       return true;
     }
     if (context === "classOpponent" || context === "classSummary") {
-      document.getElementById("btn-start-run")?.click();
+      const bbPlay = document.getElementById("btn-bb-intro-play");
+      if (bbPlay && !bbPlay.classList.contains("hidden") && !bbPlay.disabled) {
+        bbPlay.click();
+      } else {
+        document.getElementById("btn-start-run")?.click();
+      }
     }
     else if (context === "battleResult") document.getElementById("btn-battle-continue")?.click();
-    else if (context === "runComplete") document.getElementById("btn-restart")?.click();
+    else if (context === "runComplete") {
+      const bbHome = document.getElementById("btn-bb-run-complete-home");
+      if (bbHome && !document.getElementById("bb-run-complete-overlay")?.classList.contains("hidden")) {
+        bbHome.click();
+      } else {
+        document.getElementById("btn-restart")?.click();
+      }
+    }
     else activateMenuFocus();
     markGamepadInput();
     return true;

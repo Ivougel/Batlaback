@@ -6,7 +6,6 @@
   const OPEN_ATTR = "data-prep-bench-open";
 
   function usesPrepBenchPopover() {
-    if (document.documentElement.hasAttribute("data-lobby2p-hud")) return true;
     return document.documentElement.dataset.prepBenchPopover === "true";
   }
 
@@ -21,7 +20,15 @@
     const benchPanel = document.getElementById("bench-panel");
     const shopObjects = document.querySelector("#shop-panel .shop-objects");
     const popoverInner = document.querySelector("#prep-bench-popover .prep-bench-popover__panel");
+    const storageBody = document.getElementById("bb-prep-storage-body");
     if (!benchPanel) return;
+
+    if (document.documentElement.dataset.bbBenchDrawer === "true" && storageBody) {
+      if (benchPanel.parentElement !== storageBody) {
+        storageBody.appendChild(benchPanel);
+      }
+      return;
+    }
 
     if (usesPrepBenchPopover() && popoverInner) {
       if (benchPanel.parentElement !== popoverInner) {
@@ -81,12 +88,7 @@
     if (!next) {
       forceHidePrepBenchChrome();
     }
-    if (typeof window.syncLobby2pBenchFabExpanded === "function") {
-      window.syncLobby2pBenchFabExpanded();
-    }
-    if (typeof window.syncLobby2pBenchPopoverPosition === "function") {
-      requestAnimationFrame(() => window.syncLobby2pBenchPopoverPosition());
-    } else if (typeof window.syncPrepBenchFabPosition === "function") {
+    if (typeof window.syncPrepBenchFabPosition === "function") {
       requestAnimationFrame(() => window.syncPrepBenchFabPosition());
     }
     if (typeof window.positionPrepTooltipDock === "function") {
@@ -117,15 +119,6 @@
   function syncFabVisibility() {
     syncBenchMount();
     const fab = document.getElementById("btn-prep-bench-fab");
-    const isLobby2p = document.documentElement.hasAttribute("data-lobby2p-hud");
-    if (isLobby2p) {
-      fab?.classList.add("hidden");
-      if (fab) {
-        fab.hidden = true;
-        fab.setAttribute("aria-hidden", "true");
-      }
-      return;
-    }
     const show = usesPrepBenchPopover() && isPrepPhase();
     if (!show) {
       forceHidePrepBenchChrome();
@@ -191,7 +184,7 @@
         forceHidePrepBenchChrome();
       }
       syncFabVisibility();
-      if (!usesPrepBenchPopover() && !root.hasAttribute("data-lobby2p-hud")) {
+      if (!usesPrepBenchPopover()) {
         forceHidePrepBenchChrome();
       }
     }).observe(root, {

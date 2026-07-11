@@ -67,13 +67,14 @@ html[data-ui-tier="tablet"] #class-overlay .class-modal #class-step-mode:not(.hi
 }
 
 html[data-ui-tier="tablet"] #class-overlay .class-modal .game-mode-card.glass-card {
+  --game-mode-icon-size: calc(48px * var(--ui-scale));
   min-height: calc(64px * var(--ui-scale));
   padding: calc(8px * var(--ui-scale)) calc(10px * var(--ui-scale));
 }
 
 html[data-ui-tier="tablet"] #class-overlay .class-modal .game-mode-card .glass-card-icon {
-  width: calc(48px * var(--ui-scale));
-  height: calc(48px * var(--ui-scale));
+  width: var(--game-mode-icon-size);
+  height: var(--game-mode-icon-size);
   margin-bottom: 0;
 }
 
@@ -145,14 +146,15 @@ html[data-ui-tier="tablet"][data-layout-profile="tablet-landscape"]:not([data-pr
 }
 
 html[data-ui-tier="tablet"][data-layout-profile="tablet-landscape"]:not([data-prep-layout="mobile"]) #class-overlay .class-modal .game-mode-card.glass-card {
+  --game-mode-icon-size: calc(48px * var(--ui-scale));
   min-height: calc(64px * var(--ui-scale));
   padding: calc(8px * var(--ui-scale)) calc(10px * var(--ui-scale));
   column-gap: calc(10px * var(--ui-scale));
 }
 
 html[data-ui-tier="tablet"][data-layout-profile="tablet-landscape"]:not([data-prep-layout="mobile"]) #class-overlay .class-modal .game-mode-card .glass-card-icon {
-  width: calc(48px * var(--ui-scale));
-  height: calc(48px * var(--ui-scale));
+  width: var(--game-mode-icon-size);
+  height: var(--game-mode-icon-size);
 }
 
 /* ─── Tablet portrait: колонка, скролл shell ─── */

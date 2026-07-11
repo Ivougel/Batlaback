@@ -9,6 +9,8 @@
 
 Импорт предметов: `npm run import:bb-items` (legacy → pool append → catalog → recipes).
 
+Слоты ⭐/◆: `npm run generate:placement-slots` → `tools/bb-reference/placement-slot-overrides.json` (эталон) + pool v240.
+
 Следующие этапы fidelity:
 - расширить `recipes.json` — полный каталог крафтов BB (~200+)
 - `shop-rarity.json` — сверка с wiki

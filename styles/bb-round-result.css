@@ -1,0 +1,175 @@
+/**
+ * BB Fidelity: fullscreen итог раунда.
+ * html[data-bb-round-result]
+ */
+
+.bb-round-result-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding:
+    max(12px, env(safe-area-inset-top))
+    max(12px, env(safe-area-inset-right))
+    max(12px, env(safe-area-inset-bottom))
+    max(12px, env(safe-area-inset-left));
+}
+
+.bb-round-result-overlay__backdrop {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 75% 55% at 50% 35%, rgba(70, 45, 20, 0.5) 0%, transparent 68%),
+    linear-gradient(180deg, rgba(10, 8, 6, 0.98) 0%, rgba(22, 14, 10, 0.99) 55%, rgba(8, 12, 10, 0.99) 100%);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.bb-round-result-overlay--visible .bb-round-result-overlay__backdrop {
+  opacity: 1;
+}
+
+.bb-round-result-overlay__panel {
+  position: relative;
+  width: min(100%, 420px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(12px * var(--ui-scale, 1));
+  padding: calc(20px * var(--ui-scale, 1)) calc(16px * var(--ui-scale, 1));
+  border-radius: calc(16px * var(--ui-scale, 1));
+  background:
+    linear-gradient(180deg, rgba(48, 34, 22, 0.96) 0%, rgba(24, 16, 12, 0.98) 100%);
+  border: 2px solid rgba(190, 150, 70, 0.45);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 220, 140, 0.15);
+  opacity: 0;
+  transform: translateY(18px) scale(0.96);
+  transition:
+    opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.bb-round-result-overlay--visible .bb-round-result-overlay__panel {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.bb-round-result__hearts {
+  display: flex;
+  gap: calc(6px * var(--ui-scale, 1));
+  justify-content: center;
+}
+
+.bb-round-result__heart {
+  font-size: calc(1.35rem * var(--ui-scale, 1));
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
+}
+
+.bb-round-result__heart--lost {
+  animation: bb-heart-break 0.55s ease forwards;
+}
+
+@keyframes bb-heart-break {
+  0% { transform: scale(1); opacity: 1; }
+  40% { transform: scale(1.25); }
+  100% { transform: scale(0.85); opacity: 0.55; filter: grayscale(0.8); }
+}
+
+.bb-round-result__title {
+  margin: 0;
+  font-size: clamp(1.6rem, 7vw, 2.2rem);
+  font-weight: 900;
+  text-align: center;
+  color: #ffe8b0;
+  text-shadow: 0 3px 12px rgba(0, 0, 0, 0.55);
+}
+
+html[data-bb-round-result="win"] .bb-round-result__title {
+  color: #ffd56a;
+}
+
+html[data-bb-round-result="loss"] .bb-round-result__title {
+  color: #f0a8a0;
+}
+
+.bb-round-result__subtitle {
+  margin: 0;
+  font-size: var(--font-sm);
+  font-weight: 600;
+  text-align: center;
+  color: rgba(230, 210, 170, 0.92);
+}
+
+.bb-round-result__stats {
+  margin: 0;
+  font-size: var(--font-xs);
+  text-align: center;
+  color: rgba(200, 180, 140, 0.85);
+}
+
+.bb-round-result__trophies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(4px * var(--ui-scale, 1));
+  justify-content: center;
+  max-width: 100%;
+}
+
+.bb-round-result__trophy {
+  font-size: calc(1rem * var(--ui-scale, 1));
+  opacity: 0.45;
+}
+
+.bb-round-result__trophy--win {
+  opacity: 1;
+}
+
+.bb-round-result__trophy--loss {
+  opacity: 0.75;
+}
+
+.bb-round-result__trophy--current {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.bb-round-result__gold {
+  margin: 0;
+  font-size: var(--font-md);
+  font-weight: 700;
+  color: #ffd56a;
+}
+
+.bb-round-result__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(8px * var(--ui-scale, 1));
+  justify-content: center;
+  width: 100%;
+  margin-top: calc(4px * var(--ui-scale, 1));
+}
+
+.bb-round-result__actions .btn-primary {
+  min-width: calc(140px * var(--ui-scale, 1));
+}
+
+/* BB result: скрыть glass-модалку */
+html[data-bb-round-result] #battle-result-overlay:not(.hidden) .battle-result-modal,
+html[data-bb-round-result] #battle-result-overlay:not(.hidden) .battle-result-theater {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bb-round-result-overlay__backdrop,
+  .bb-round-result-overlay__panel,
+  .bb-round-result__heart--lost {
+    transition: none;
+    animation: none;
+  }
+}

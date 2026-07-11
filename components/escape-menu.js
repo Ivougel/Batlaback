@@ -35,14 +35,24 @@ function canOpenEscapeMenu() {
   if (escapeMenuHandlers?.isPhaseTransitioning?.()) return false;
   if (escapeMenuHandlers?.isTypingBlocked?.()) return false;
   if (isPopupOpen("overlay") && escapeMenuHandlers?.getGameOver?.()) return false;
+  if (isPopupOpen("bb-run-complete-overlay")) return false;
   return true;
 }
 
 function syncEscapeMenuActions() {
   const mainBtn = document.getElementById("btn-escape-main-menu");
-  if (!mainBtn) return;
-  const showMain = escapeMenuHandlers?.isActiveGameSession?.() === true;
-  mainBtn.classList.toggle("hidden", !showMain);
+  if (mainBtn) {
+    const showMain = escapeMenuHandlers?.isActiveGameSession?.() === true;
+    mainBtn.classList.toggle("hidden", !showMain);
+  }
+  const wikiBtn = document.getElementById("btn-escape-wiki");
+  if (wikiBtn) {
+    const showWiki = typeof shouldShowBBItemWiki === "function"
+      && shouldShowBBItemWiki()
+      && escapeMenuHandlers?.isActiveGameSession?.() === true;
+    wikiBtn.classList.toggle("hidden", !showWiki);
+    wikiBtn.toggleAttribute("hidden", !showWiki);
+  }
 }
 
 function pauseForEscapeMenu() {

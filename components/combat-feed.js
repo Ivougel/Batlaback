@@ -149,48 +149,21 @@ var CombatLog = (() => {
 
     const findHintTextEl = (target) => target?.closest?.(".combat-feed-msg-text[data-hint]");
 
-    scrollEl.addEventListener("mouseenter", (e) => {
-      const textEl = findHintTextEl(e.target);
-      if (!textEl) return;
-      showFeedHintAt(e.clientX, e.clientY, textEl.dataset.hint);
-    }, true);
-
-    scrollEl.addEventListener("mousemove", (e) => {
-      const textEl = findHintTextEl(e.target);
-      if (textEl && !feedTooltipActive) {
-        showFeedHintAt(e.clientX, e.clientY, textEl.dataset.hint);
-      }
-      if (!feedTooltipActive) return;
-      if (typeof moveSidebarTooltip === "function") {
-        moveSidebarTooltip(e, "viewport", "auto");
-      } else if (typeof positionSidebarTooltip === "function") {
-        positionSidebarTooltip(e.clientX, e.clientY, "viewport", "auto");
-      }
-    }, true);
-
-    scrollEl.addEventListener("mouseleave", (e) => {
-      if (!findHintTextEl(e.target)) return;
-      if (findHintTextEl(e.relatedTarget)) return;
-      hideFeedHint();
-    }, true);
-
     scrollEl.addEventListener("click", (e) => {
       const textEl = findHintTextEl(e.target);
       if (!textEl) return;
-      if (typeof isTouchUi === "function" && isTouchUi()) {
-        e.preventDefault();
-        e.stopPropagation();
-        if (feedTooltipActive && scrollEl.querySelector(".combat-feed-msg-text[data-hint-active]") === textEl) {
-          hideFeedHint();
-          textEl.removeAttribute("data-hint-active");
-          return;
-        }
-        scrollEl.querySelectorAll(".combat-feed-msg-text[data-hint-active]").forEach((node) => {
-          node.removeAttribute("data-hint-active");
-        });
-        textEl.dataset.hintActive = "1";
-        showFeedHintAt(e.clientX, e.clientY, textEl.dataset.hint);
+      e.preventDefault();
+      e.stopPropagation();
+      if (feedTooltipActive && scrollEl.querySelector(".combat-feed-msg-text[data-hint-active]") === textEl) {
+        hideFeedHint();
+        textEl.removeAttribute("data-hint-active");
+        return;
       }
+      scrollEl.querySelectorAll(".combat-feed-msg-text[data-hint-active]").forEach((node) => {
+        node.removeAttribute("data-hint-active");
+      });
+      textEl.dataset.hintActive = "1";
+      showFeedHintAt(e.clientX, e.clientY, textEl.dataset.hint);
     });
 
     document.addEventListener("click", (e) => {

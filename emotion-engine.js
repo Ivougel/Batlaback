@@ -48,8 +48,8 @@ function createEmotionEngineState() {
     playerMain: null,
     enemyMain: null,
     lastEmitAt: { player: 0, enemy: 0 },
-    seenAttackIds: new Set(),
     seenFloatIds: new Set(),
+    seenLogIndex: 0,
     recentDamage: [],
     durationFlags: { t30: false, t60: false, t120: false },
     firstBlood: false,
@@ -578,23 +578,18 @@ function queueDurationDialog(emoji, animation, duration = 1500) {
   }), { delay: DIALOG_REPLY_DELAY_MS, sfxRole: "reply" });
 }
 
-function scanAttackVisuals(state) {
-  (state.attackVisuals || []).forEach((fx) => {
-    if (!fx?.id || emotionEngine.seenAttackIds.has(fx.id)) return;
-    emotionEngine.seenAttackIds.add(fx.id);
-
-    if (fx.effects?.crit && fx.targetTeam) {
-      const victim = fx.targetTeam;
-      const attacker = fx.sourceTeam || foeOf(victim);
-      queueCritDialog(victim, attacker);
-    }
-
-    if (fx.effects?.poison && fx.targetTeam) {
-      const victim = fx.targetTeam;
-      const attacker = fx.sourceTeam || foeOf(victim);
-      queuePoisonDialog(victim, attacker);
-    }
-  });
+function scanBattleLogCrits(state) {
+  const log = state?.log;
+  if (!Array.isArray(log)) return;
+  const start = emotionEngine.seenLogIndex || 0;
+  for (let i = start; i < log.length; i++) {
+    const entry = log[i];
+    if (entry?.type !== "crit" || !entry.actor) continue;
+    const attacker = entry.actor;
+    const victim = foeOf(attacker);
+    queueCritDialog(victim, attacker);
+  }
+  emotionEngine.seenLogIndex = log.length;
 }
 
 function scanFloatingNumbers(state) {
@@ -697,7 +692,7 @@ function analyzeBattleState(battleState, elapsedReal) {
   if (now - emotionEngine.lastAnalyzeAt < analyzeGap) return;
   emotionEngine.lastAnalyzeAt = now;
 
-  scanAttackVisuals(battleState);
+  scanBattleLogCrits(battleState);
   scanFloatingNumbers(battleState);
 
   const snap = takeSnapshot(battleState);

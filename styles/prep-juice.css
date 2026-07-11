@@ -560,67 +560,6 @@ html[data-prep-layout="mobile"] #app:is([data-phase="prep"], [data-prep-hero-hud
     var(--juice-shadow);
 }
 
-/* ─── Лобби-ростер ─── */
-
-#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .lobby-roster-float-handle,
-#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .lobby-roster-hide-btn {
-  background: rgba(255, 255, 255, 0.35);
-  border: 2px solid rgba(255, 255, 255, 0.55);
-  border-radius: calc(10px * var(--ui-scale));
-  box-shadow: var(--juice-shadow);
-}
-
-#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .lobby-roster-float-handle:hover,
-#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .lobby-roster-hide-btn:hover {
-  background: rgba(255, 255, 255, 0.55);
-}
-
-#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .lobby-prep-roster-panel--collapsed .lobby-roster-float-handle,
-#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .lobby-prep-roster-panel--collapsed .lobby-roster-hide-btn {
-  background: rgba(255, 255, 255, 0.72);
-}
-
-#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .lobby-fighter-card-name {
-  color: var(--juice-ink);
-  font-weight: 800;
-}
-
-#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .lobby-fighter-card--yours,
-#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .lobby-fighter-card--yours-match {
-  background: rgba(255, 255, 255, 0.28);
-  border: 2px solid rgba(92, 184, 92, 0.55);
-  border-radius: calc(12px * var(--ui-scale));
-  box-shadow: none;
-}
-
-#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .lobby-fighter-card:not(.lobby-fighter-card--yours):not(.lobby-fighter-card--yours-match) {
-  background: transparent;
-  border: none;
-  border-radius: calc(12px * var(--ui-scale));
-  box-shadow: none;
-}
-
-#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .lobby-fighter-card:not(.lobby-fighter-card--yours):not(.lobby-fighter-card--yours-match):hover:not(:disabled),
-#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .lobby-fighter-card:not(.lobby-fighter-card--yours):not(.lobby-fighter-card--yours-match):focus-visible:not(:disabled),
-#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .lobby-fighter-card:not(.lobby-fighter-card--yours):not(.lobby-fighter-card--yours-match).lobby-fighter-card--touch:not(:disabled) {
-  background: rgba(255, 255, 255, 0.28);
-  border: 2px solid var(--meadow-gold-bright);
-  box-shadow: 0 0 0 3px rgba(245, 200, 66, 0.35);
-}
-
-#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .lobby-fighter-card--active:not(.lobby-fighter-card--yours):not(.lobby-fighter-card--yours-match),
-#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .lobby-fighter-card--next:not(.lobby-fighter-card--yours):not(.lobby-fighter-card--yours-match) {
-  outline: none;
-  border: none;
-  box-shadow: none;
-  background: transparent;
-}
-
-#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .lobby-fighter-card-avatar {
-  background: rgba(255, 255, 255, 0.85);
-  border: 2px solid var(--meadow-border-soft);
-}
-
 /* ─── Рюкзак: лёгкая рамка ─── */
 
 #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #game-canvas {

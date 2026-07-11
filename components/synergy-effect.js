@@ -300,10 +300,20 @@ function roundRectSynergy(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
+function shouldDrawPrepActiveSynergyLayers() {
+  return typeof shouldShowIdlePrepBoardHighlights === "function"
+    && shouldShowIdlePrepBoardHighlights();
+}
+
 function drawSynergyVisuals(ctx, time, previewBuilt, pass, teamFilter) {
   if (typeof phase === "undefined" || phase !== "prep") return;
+  // Подсветка синергий на столе отключена — только крафт-нити (BBCraftTether).
+  return;
+
+  const showActiveLayers = shouldDrawPrepActiveSynergyLayers();
 
   if (pass === "under") {
+    if (!showActiveLayers) return;
     if (!teamFilter || teamFilter === "player") {
       drawActiveSynergyCellLayer(
         ctx,
@@ -329,14 +339,16 @@ function drawSynergyVisuals(ctx, time, previewBuilt, pass, teamFilter) {
 
   if (pass === "over") {
     if (!teamFilter || teamFilter === "player") {
-      drawActiveSynergyCellLayer(
-        ctx,
-        synergyState.activeSynergyCells,
-        "player",
-        playerItems,
-        time,
-        "surface",
-      );
+      if (showActiveLayers) {
+        drawActiveSynergyCellLayer(
+          ctx,
+          synergyState.activeSynergyCells,
+          "player",
+          playerItems,
+          time,
+          "surface",
+        );
+      }
 
       if (
         synergyState.isDragging
@@ -353,7 +365,7 @@ function drawSynergyVisuals(ctx, time, previewBuilt, pass, teamFilter) {
       }
     }
 
-    if (!teamFilter || teamFilter === "enemy") {
+    if (showActiveLayers && (!teamFilter || teamFilter === "enemy")) {
       drawActiveSynergyCellLayer(
         ctx,
         synergyState.enemyActiveSynergyCells,

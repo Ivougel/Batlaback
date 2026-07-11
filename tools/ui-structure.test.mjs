@@ -19,7 +19,7 @@ function assert(cond, msg) {
 
 async function boot(page) {
   await page.goto(baseUrl, { waitUntil: "domcontentloaded", timeout: 20000 });
-  await page.waitForFunction(() => typeof selectGameMode === "function", { timeout: 10000 });
+  await page.waitForFunction(() => typeof startRunFromOverlay === "function", { timeout: 10000 });
 }
 
 async function startPrep(page, mode) {
@@ -101,35 +101,10 @@ try {
     const state = await modePage.evaluate(() => ({
       phase: document.getElementById("app")?.dataset.phase,
       gameMode: document.getElementById("app")?.dataset.gameMode,
-      campaignHintHidden: document.getElementById("campaign-hint-bar")?.classList.contains("hidden"),
-      campaignHintDisplay: document.getElementById("campaign-hint-bar")
-        ? getComputedStyle(document.getElementById("campaign-hint-bar")).display
-        : null,
-      lobbyRoster: document.getElementById("lobby-prep-field-roster")?.classList.contains("hidden"),
-      lobby2pHud: document.documentElement.hasAttribute("data-lobby2p-hud"),
-      lobby2pLayoutHidden: document.getElementById("lobby2p-prep-layout")?.classList.contains("hidden"),
     }));
 
     assert(state.gameMode === mode, `${mode}: gameMode`);
     assert(state.phase === "prep", `${mode}: phase`);
-
-    if (mode === "lobby") {
-      assert(!state.lobbyRoster, `${mode}: lobby roster should be visible`);
-    }
-    if (mode === "lobby2p") {
-      assert(state.lobby2pHud, `${mode}: data-lobby2p-hud expected`);
-      assert(!state.lobby2pLayoutHidden, `${mode}: lobby2p-prep-layout should be visible`);
-    }
-    if (mode === "campaign") {
-      assert(!state.campaignHintHidden, `${mode}: campaign-hint should be visible in prep`);
-      assert(state.campaignHintDisplay !== "none", `${mode}: campaign-hint display, got ${state.campaignHintDisplay}`);
-    } else {
-      assert(state.campaignHintHidden, `${mode}: campaign-hint should have hidden class`);
-      assert(
-        state.campaignHintDisplay === "none",
-        `${mode}: campaign-hint display none, got ${state.campaignHintDisplay}`,
-      );
-    }
     console.log(`✓ prep mode ${mode}`, JSON.stringify(state));
   }
 } catch (err) {

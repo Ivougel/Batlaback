@@ -14,8 +14,8 @@
 html[data-battle-hero-placement="flank-arena"] {
   --battle-hud-hip-portrait-ratio: 0.58;
   --battle-hud-hip-floor-ratio: 0.58;
-  --battle-vitals-band-h: 88px;
-  --battle-hud-chip-band-h: 56px;
+  --battle-vitals-band-h: min(calc(10vh * var(--ui-scale)), 88px);
+  --battle-hud-chip-band-h: min(calc(6.5vh * var(--ui-scale)), 56px);
 }
 
 /* ─── Layer compositor (battle) ─── */

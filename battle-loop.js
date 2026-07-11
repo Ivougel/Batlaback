@@ -59,6 +59,16 @@ function tickFlankBattleDomOverlay(state) {
 /** Лёгкий HUD в бою: HP/stamina без полного renderPlayerProfiles. */
 function syncLiveBattleHud(viewState) {
   if (!isBattleUiPhase() || !viewState) return;
+  if (typeof shouldUseBBStackBattleLayout === "function" && shouldUseBBStackBattleLayout()) {
+    const now = performance.now();
+    const gap = typeof BattleFxTier !== "undefined" && BattleFxTier.battleHudLiteGapMs
+      ? BattleFxTier.battleHudLiteGapMs()
+      : 120;
+    if (now - (syncLiveBattleHud._at || 0) < gap) return;
+    syncLiveBattleHud._at = now;
+    if (typeof syncBBBattleHud === "function") syncBBBattleHud(viewState);
+    return;
+  }
   const now = performance.now();
   const gap = typeof BattleFxTier !== "undefined" && BattleFxTier.battleHudLiteGapMs
     ? BattleFxTier.battleHudLiteGapMs()
@@ -101,6 +111,12 @@ function scheduleGameLoop() {
 function tickBattlePresentation() {
   if (isBattleResultFrozen()) return;
   const presentState = getDisplayBattleState();
+  if (typeof shouldUseBBStackBattleLayout === "function" && shouldUseBBStackBattleLayout()) {
+    if (isBattleUiPhase() && presentState && typeof renderBattleEffectsOverlay === "function") {
+      renderBattleEffectsOverlay(presentState);
+    }
+    return;
+  }
   if (!isBattleUiPhase() || !presentState) return;
   const elapsed = battleStartTime ? (Date.now() - battleStartTime) / 1000 : 0;
   const ctx = { presentState, elapsed, phase };
@@ -179,121 +195,6 @@ function tickSingleBattleState(state, dt) {
   }
 }
 
-function tickLobbyRoundBattles(dt, ts) {
-  if (!isAnyLobbyMode() || phase !== "battle" || !lobbyMatches.length) return false;
-
-  let playerJustFinished = false;
-  const bgInterval = 1 / (typeof getLobbyBackgroundSimHz === "function" ? getLobbyBackgroundSimHz() : 5);
-  const simOpts = { spectateMatchId: lobbySpectateMatchId };
-
-  const tickMatchStep = (match, stepDt) => {
-    const matchIndex = lobbyMatches.indexOf(match);
-    const isSpectated = matchIndex === lobbySpectateMatchId;
-    if (match.isPlayerMatch) {
-      if (!isLobby2pMode() && battleEndHandled) return;
-      if (match.state?.finished) return;
-      battleState = match.state;
-      try {
-        tickSingleBattleState(match.state, stepDt);
-      } catch (err) {
-        console.error("lobby player battleTick failed:", err);
-      }
-    } else {
-      tickLobbyMatchState(match, stepDt, () => stepDt, lobbyState);
-    }
-    if (match.state?.finished) {
-      match.finished = true;
-      if (match.isPlayerMatch && isSpectated) playerJustFinished = true;
-    }
-  };
-
-  lobbyMatches.forEach((match) => {
-    if (match.byeFighterId || !match.state || match.state.finished) return;
-    if (match.isPlayerMatch && battleEndHandled && !isLobby2pMode()) return;
-
-    const fullSim = typeof isLobbyMatchFullySimulated === "function"
-      ? isLobbyMatchFullySimulated(match, lobbyMatches.indexOf(match), simOpts)
-      : lobbyMatches.indexOf(match) === lobbySpectateMatchId;
-
-    if (fullSim) {
-      lobbyBackgroundSimAcc.delete(match.id);
-      tickMatchStep(match, dt);
-      return;
-    }
-
-    let acc = (lobbyBackgroundSimAcc.get(match.id) || 0) + dt;
-    if (acc >= bgInterval && match.state && !match.state.finished) {
-      tickMatchStep(match, bgInterval);
-      acc -= bgInterval;
-    }
-    lobbyBackgroundSimAcc.set(match.id, acc);
-    if (match.state?.finished) {
-      lobbyBackgroundSimAcc.delete(match.id);
-    }
-  });
-
-  if (battleState && !battleEndHandled) {
-    flushBattleEvents();
-  }
-
-  const lobbyHpTickMs = typeof BattleFxTier !== "undefined" && BattleFxTier.lobbyHpTickMs
-    ? BattleFxTier.lobbyHpTickMs()
-    : 500;
-  const lobbyProfileTickMs = typeof BattleFxTier !== "undefined" && BattleFxTier.lobbyProfileTickMs
-    ? BattleFxTier.lobbyProfileTickMs()
-    : 1400;
-  const lobbyAvatarTickMs = typeof BattleFxTier !== "undefined" && BattleFxTier.lobbyAvatarTickMs
-    ? BattleFxTier.lobbyAvatarTickMs()
-    : 1800;
-  const lobbyChromeTickMs = typeof BattleFxTier !== "undefined" && BattleFxTier.lobbyChromeTickMs
-    ? BattleFxTier.lobbyChromeTickMs()
-    : 1200;
-
-  if (Math.floor(ts / lobbyHpTickMs) !== Math.floor((ts - dt * 1000) / lobbyHpTickMs)) {
-    if (lobbyState) {
-      const rosterOpts = {
-        phase: "battle",
-        spectateMatchId: lobbySpectateMatchId,
-        matches: lobbyMatches,
-        round,
-      };
-      if (typeof syncLobbyFighterCardHp === "function") syncLobbyFighterCardHp(lobbyState, rosterOpts);
-      if (typeof syncLobbyBattleBottomChipMetrics === "function") {
-        syncLobbyBattleBottomChipMetrics(lobbyState, rosterOpts);
-      }
-    }
-  }
-  if (Math.floor(ts / lobbyProfileTickMs) !== Math.floor((ts - dt * 1000) / lobbyProfileTickMs)) {
-    renderBattleStats();
-    renderPlayerProfiles();
-    if (typeof refreshBattleInventoryPopover === "function") refreshBattleInventoryPopover();
-  }
-  if (Math.floor(ts / lobbyAvatarTickMs) !== Math.floor((ts - dt * 1000) / lobbyAvatarTickMs)) {
-    if (typeof syncLobbyFighterAvatars === "function" && lobbyState) {
-      syncLobbyFighterAvatars(lobbyState, {
-        phase: "battle",
-        spectateMatchId: lobbySpectateMatchId,
-        matches: lobbyMatches,
-        round,
-      });
-    }
-  }
-  if (Math.floor(ts / lobbyChromeTickMs) !== Math.floor((ts - dt * 1000) / lobbyChromeTickMs)) {
-    if (!tickLobbyRoundBattles._lastChromeAt || ts - tickLobbyRoundBattles._lastChromeAt >= lobbyChromeTickMs) {
-      tickLobbyRoundBattles._lastChromeAt = ts;
-      renderLobbyChrome();
-    }
-  }
-  if (typeof syncBattleInventoryPopoverFlash === "function") syncBattleInventoryPopoverFlash();
-  syncLiveBattleHud(getDisplayBattleState());
-  tickBattlePresentation();
-
-  if (playerJustFinished && !battleEndHandled) {
-    endBattle();
-  }
-  return true;
-}
-
 function gameLoop(ts) {
   if (!gameLoop.last) gameLoop.last = ts;
   const dt = Math.min(0.05, (ts - gameLoop.last) / 1000);
@@ -315,100 +216,35 @@ function gameLoop(ts) {
 
   if (phase === "prep") {
     try {
-    gameLoop._prepFxAcc = (gameLoop._prepFxAcc || 0) + dt;
-    const prepFxHz = typeof BattleFxTier !== "undefined" && BattleFxTier.prepFxStepHz
-      ? BattleFxTier.prepFxStepHz()
-      : 30;
-    const prepFxStep = 1 / prepFxHz;
-    if (gameLoop._prepFxAcc >= prepFxStep) {
-      const fxDt = gameLoop._prepFxAcc;
-      gameLoop._prepFxAcc = 0;
-      if (typeof tickInventoryAnimationController === "function") tickInventoryAnimationController(fxDt);
-      if (typeof tickSynergyVisualController === "function") tickSynergyVisualController(fxDt);
-    }
-    if (isLobby2pMode()) tickLobby2pSideBattles(dt);
-    if (isAnyLobbyMode() && lobbyState && typeof tickLobbyFighterThoughts === "function") {
-      const thoughtsOk = typeof BattleFxTier === "undefined"
-        || !BattleFxTier.prepLobbyFxReduced
-        || !BattleFxTier.prepLobbyFxReduced();
-      if (thoughtsOk) {
-        const thoughtDirty = tickLobbyFighterThoughts(lobbyState, {
-          phase: "prep",
-          round,
-          viewFighterId: isLobby2pMode() ? (prepViewSide === "player" ? 0 : 1) : lobbyViewFighterId,
-          matches: lobbyMatches,
-          timerRemaining: lobbyPrepTimerRemaining,
-          timerActive: lobbyPrepTimerActive && !isLobby2pMode(),
-        });
-        if (thoughtDirty && typeof syncLobbyFighterAvatars === "function") {
-          syncLobbyFighterAvatars(lobbyState, {
-            phase: "prep",
-            round,
-            viewFighterId: isLobby2pMode() ? (prepViewSide === "player" ? 0 : 1) : lobbyViewFighterId,
-            matches: lobbyMatches,
-          });
+      gameLoop._prepFxAcc = (gameLoop._prepFxAcc || 0) + dt;
+      const prepFxHz = typeof BattleFxTier !== "undefined" && BattleFxTier.prepFxStepHz
+        ? BattleFxTier.prepFxStepHz()
+        : 30;
+      const prepFxStep = 1 / prepFxHz;
+      if (gameLoop._prepFxAcc >= prepFxStep) {
+        const fxDt = gameLoop._prepFxAcc;
+        gameLoop._prepFxAcc = 0;
+        if (typeof tickInventoryAnimationController === "function") tickInventoryAnimationController(fxDt);
+        if (typeof tickSynergyVisualController === "function") tickSynergyVisualController(fxDt);
+      }
+      if (typeof tickSoloPrepThoughts === "function") {
+        const thoughtsOk = typeof BattleFxTier === "undefined"
+          || !BattleFxTier.prepFxReduced
+          || !BattleFxTier.prepFxReduced();
+        if (thoughtsOk) tickSoloPrepThoughts();
+      }
+      const dialogueOk = typeof BattleFxTier === "undefined"
+        || !BattleFxTier.prepFxReduced
+        || !BattleFxTier.prepFxReduced();
+      if (dialogueOk && typeof DialogueEngine !== "undefined") {
+        const soloCtx = { round, prepDurationSec: 60 };
+        if (DialogueEngine.shouldProcessTick(soloCtx)) {
+          DialogueEngine.tickSolo(soloCtx);
         }
       }
-    } else if (!isAnyLobbyMode() && typeof tickSoloPrepThoughts === "function") {
-      const thoughtsOk = typeof BattleFxTier === "undefined"
-        || !BattleFxTier.prepLobbyFxReduced
-        || !BattleFxTier.prepLobbyFxReduced();
-      if (thoughtsOk) tickSoloPrepThoughts();
-    }
-    const dialogueOk = typeof BattleFxTier === "undefined"
-      || !BattleFxTier.prepLobbyFxReduced
-      || !BattleFxTier.prepLobbyFxReduced();
-    if (dialogueOk && isAnyLobbyMode() && lobbyState && typeof DialogueEngine !== "undefined") {
-      const prepDurationSec = typeof LOBBY_PREP_SECONDS !== "undefined" ? LOBBY_PREP_SECONDS : 55;
-      const dialogueCtx = {
-        lobby: lobbyState,
-        phase: "prep",
-        round,
-        matches: lobbyMatches,
-        timerRemaining: isLobby2pMode() ? null : lobbyPrepTimerRemaining,
-        timerActive: isLobby2pMode() ? false : lobbyPrepTimerActive,
-        prepDurationSec,
-      };
-      if (DialogueEngine.shouldProcessTick(dialogueCtx)) {
-        DialogueEngine.tick(dialogueCtx);
+      if (typeof PrepCountdown !== "undefined" && PrepCountdown.isActive()) {
+        PrepCountdown.tick(dt);
       }
-    } else if (dialogueOk && !isAnyLobbyMode() && phase === "prep" && typeof DialogueEngine !== "undefined") {
-      const soloCtx = { round, prepDurationSec: 60 };
-      if (DialogueEngine.shouldProcessTick(soloCtx)) {
-        DialogueEngine.tickSolo(soloCtx);
-      }
-    }
-    if (isLobbyMode() && lobbyPrepTimerActive) {
-      lobbyPrepTimerRemaining = Math.max(0, lobbyPrepTimerRemaining - dt);
-      if (typeof PrepCountdown !== "undefined") {
-        PrepCountdown.tickPrepTimerAudio(
-          lobbyPrepTimerRemaining,
-          true,
-          `lobby:${round}`,
-        );
-        PrepCountdown.tryArmLobbyAutoCountdown(lobbyPrepTimerRemaining);
-      }
-      if (Math.floor(ts / 250) !== Math.floor((ts - dt * 1000) / 250)) {
-        if (typeof syncLobbyPrepTimerChrome === "function") syncLobbyPrepTimerChrome();
-        else renderLobbyChrome();
-      }
-      if (lobbyPrepTimerRemaining <= 0 && !(typeof PrepCountdown !== "undefined" && PrepCountdown.isActive())) {
-        lobbyPrepTimerActive = false;
-        if (canStartBattle()) {
-          executeBattleStart();
-        } else if (!lobbyPrepOvertimeUsed) {
-          lobbyPrepOvertimeUsed = true;
-          lobbyPrepTimerRemaining = LOBBY_PREP_OVERTIME_SEC;
-          lobbyPrepTimerActive = true;
-          if (typeof PrepCountdown !== "undefined") PrepCountdown.resetLobbyArming();
-          playPrepSfx("ui_error");
-          renderLobbyChrome();
-        }
-      }
-    }
-    if (phase === "prep" && typeof PrepCountdown !== "undefined" && PrepCountdown.isActive()) {
-      PrepCountdown.tick(dt);
-    }
     } catch (err) {
       console.error("prep gameLoop tick failed:", err);
     }
@@ -435,9 +271,7 @@ function gameLoop(ts) {
     canvas?.classList.remove("amplify-preview-mode");
   }
 
-  if (phase === "battle" && tickLobbyRoundBattles(dt, ts)) {
-    // все пары лобби тикают параллельно
-  } else if (phase === "battle" && battleState && !battleState.finished) {
+  if (phase === "battle" && battleState && !battleState.finished) {
     const countdownDt = typeof getBattleCountdownDt === "function" ? getBattleCountdownDt(dt) : dt;
     if (countdownDt > 0 && typeof tickBattleCountdown === "function") {
       tickBattleCountdown(battleState, countdownDt);
@@ -461,7 +295,7 @@ function gameLoop(ts) {
     if (typeof syncBattleInventoryPopoverFlash === "function") syncBattleInventoryPopoverFlash();
     syncLiveBattleHud(battleState);
     tickBattlePresentation();
-  } else if (phase === "battle" && battleState?.finished && !isLobbyMode()) {
+  } else if (phase === "battle" && battleState?.finished) {
     if (typeof resetStackOrbitVfx === "function") resetStackOrbitVfx();
     clearBattleFloatLayer();
     endBattle();
@@ -476,15 +310,13 @@ function gameLoop(ts) {
   }
   if (phase === "prep") {
     tickDisplaceAnimations(dt);
+    if (typeof tickCraftMergeAnimations === "function") tickCraftMergeAnimations(dt);
+    if (typeof PrepStoragePhysics !== "undefined") PrepStoragePhysics.tick(dt);
     tickGamepad(dt);
   } else {
     tickGamepad(dt);
   }
-  if (phase === "prep" && !dragPayload && !isTouchUi() && !isPointerOverPrepSidebar(lastPointerClient.x, lastPointerClient.y) && !isPointerOverCombatFeed(lastPointerClient.x, lastPointerClient.y)) {
-    if (prepTooltipsEnabled) {
-      try { updateTooltip(mousePos.x, mousePos.y); } catch (err) { console.error("updateTooltip failed:", err); }
-    }
-  } else if ((phase === "battle" || phase === "replay") && battleState && !dragPayload && !isTouchUi()) {
+  if ((phase === "battle" || phase === "replay") && battleState && !dragPayload && !isTouchUi()) {
     // tooltips off during live battle — меньше hit-test / layout
   }
   try {

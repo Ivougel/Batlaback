@@ -1,9 +1,31 @@
 /**
  * BB Fidelity — переключатель UX classic / versus под оригинальный Backpack Battles.
  */
-const BB_FIDELITY_MODES = new Set(["classic", "versus"]);
+const BB_FIDELITY_MODES = new Set(["classic"]);
+const BB_RUN_LIVES_MAX = 4;
+const BB_STORAGE_MAX_ITEMS = 18;
+
+function isBBIntroShellStep() {
+  if (typeof document === "undefined" || typeof document.getElementById !== "function") {
+    return false;
+  }
+  return isClassIntroOverlayOpen();
+}
+
+function isClassIntroOverlayOpen() {
+  if (typeof document === "undefined" || typeof document.getElementById !== "function") {
+    return false;
+  }
+  const overlay = document.getElementById("class-overlay");
+  return !!(overlay && !overlay.classList.contains("hidden"));
+}
 
 function getBBFidelityMode() {
+  // На шаге выбора режима / кампании — обычный intro, без BB-контекста.
+  if (isClassIntroOverlayOpen() && !isBBIntroShellStep()) {
+    return null;
+  }
+
   const mode = typeof gameMode !== "undefined" && gameMode
     ? gameMode
     : (typeof selectedGameMode !== "undefined" ? selectedGameMode : null);
@@ -28,12 +50,75 @@ function isBBFidelityVersus() {
   return getBBFidelityMode() === "versus";
 }
 
-/** Синергии в магазине и нити — для classic/versus в первую очередь, но полезно везде в prep. */
-function shouldShowPrepSynergyCommerceFx() {
+function getBBRunLivesMax() {
+  return BB_RUN_LIVES_MAX;
+}
+
+/** Classic BB: 4 жизни забега, −1 за поражение. */
+function shouldUseBBRunLives() {
+  return isBBFidelityClassic();
+}
+
+/** Classic/versus: fullscreen итог раунда вместо glass-модалки. */
+function shouldUseBBRoundResultScreen() {
+  return isBBFidelityMode();
+}
+
+/** Classic/versus: fullscreen конец забега вместо glass-модалки. */
+function shouldUseBBRunCompleteScreen() {
+  return isBBFidelityMode();
+}
+
+/** Classic/versus: intro в стиле BB (портрет, пергамент, зелёный CTA). */
+function shouldUseBBIntroLayout() {
+  const overlay = typeof document !== "undefined"
+    ? document.getElementById("class-overlay")
+    : null;
+  if (!overlay || overlay.classList.contains("hidden")) return false;
+  if (!isBBFidelityMode()) return false;
+  return isBBIntroShellStep();
+}
+
+/** Classic + versus BB: без шага спутника. */
+function shouldSkipBBCompanionIntro() {
+  return isBBFidelityMode();
+}
+
+/** Classic BB: без pass-and-play turn flow. */
+function shouldUseBBVersusTurnFlow() {
+  return false;
+}
+
+function syncBBIntroContext() {
+  const root = typeof document !== "undefined" ? document.documentElement : null;
+  const overlay = typeof document !== "undefined"
+    ? document.getElementById("class-overlay")
+    : null;
+  if (!root || !overlay) return;
+  const active = shouldUseBBIntroLayout();
+  if (active) {
+    root.dataset.bbIntro = getBBFidelityMode() || "classic";
+    overlay.classList.add("bb-intro-layout");
+  } else {
+    delete root.dataset.bbIntro;
+    overlay.classList.remove("bb-intro-layout");
+  }
+}
+
+/** Подсветка pending-крафта на поле в classic/versus. */
+function shouldShowIdlePrepBoardHighlights() {
   if (typeof phase !== "undefined" && phase !== "prep") return false;
-  return isBBFidelityMode()
-    || (typeof isClassicMode === "function" && isClassicMode())
-    || (typeof gameMode !== "undefined" && gameMode === "versus");
+  return typeof shouldShowPrepCraftCommerceFx === "function" && shouldShowPrepCraftCommerceFx();
+}
+
+/** Подсветка синергий на столе / в магазине / SVG-нити — отключена. */
+function shouldShowPrepSynergyCommerceFx() {
+  return false;
+}
+
+/** BB prep stack: поле без поворота (portrait-сетка, как до эксперимента с rotate). */
+function shouldRotateBBPrepField90() {
+  return false;
 }
 
 function syncBBFidelityContext() {
@@ -46,6 +131,23 @@ function syncBBFidelityContext() {
     delete root.dataset.bbFidelity;
   }
   syncBBFidelityBattleLayout();
+  syncBBIntroContext();
+  if (typeof syncPrepWikiButton === "function") syncPrepWikiButton();
+}
+
+/** BB classic/versus: физическое хранилище вместо 6 слотов скамейки. */
+function shouldUsePrepStoragePhysics() {
+  return shouldUseBBStackPrepLayout();
+}
+
+function getBenchMaxCapacity() {
+  if (shouldUsePrepStoragePhysics()) return BB_STORAGE_MAX_ITEMS;
+  return typeof MAX_BENCH !== "undefined" ? MAX_BENCH : 6;
+}
+
+function canFitOnBench(st, add = 1) {
+  const count = st?.bench?.length ?? 0;
+  return count + add <= getBenchMaxCapacity();
 }
 
 /** BB classic/versus: вертикальный стек prep (шапка → магазин → инвентарь → хранилище). */
@@ -89,6 +191,20 @@ function syncBBFidelityBattleLayout() {
   }
 }
 
+window.BB_RUN_LIVES_MAX = BB_RUN_LIVES_MAX;
+window.getBBRunLivesMax = getBBRunLivesMax;
+window.shouldUseBBRunLives = shouldUseBBRunLives;
+window.shouldUseBBRoundResultScreen = shouldUseBBRoundResultScreen;
+window.shouldUseBBRunCompleteScreen = shouldUseBBRunCompleteScreen;
+window.isBBIntroShellStep = isBBIntroShellStep;
+window.shouldUseBBIntroLayout = shouldUseBBIntroLayout;
+window.shouldSkipBBCompanionIntro = shouldSkipBBCompanionIntro;
+window.shouldUseBBVersusTurnFlow = shouldUseBBVersusTurnFlow;
+window.syncBBIntroContext = syncBBIntroContext;
+window.BB_STORAGE_MAX_ITEMS = BB_STORAGE_MAX_ITEMS;
+window.shouldUsePrepStoragePhysics = shouldUsePrepStoragePhysics;
+window.getBenchMaxCapacity = getBenchMaxCapacity;
+window.canFitOnBench = canFitOnBench;
 window.shouldUseBBStackPrepLayout = shouldUseBBStackPrepLayout;
 window.shouldUseBBVsScreen = shouldUseBBVsScreen;
 window.shouldUseBBStackBattleLayout = shouldUseBBStackBattleLayout;
@@ -98,5 +214,7 @@ window.getBBFidelityMode = getBBFidelityMode;
 window.isBBFidelityMode = isBBFidelityMode;
 window.isBBFidelityClassic = isBBFidelityClassic;
 window.isBBFidelityVersus = isBBFidelityVersus;
+window.shouldShowIdlePrepBoardHighlights = shouldShowIdlePrepBoardHighlights;
 window.shouldShowPrepSynergyCommerceFx = shouldShowPrepSynergyCommerceFx;
+window.shouldRotateBBPrepField90 = shouldRotateBBPrepField90;
 window.syncBBFidelityContext = syncBBFidelityContext;

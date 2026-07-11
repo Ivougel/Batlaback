@@ -7,6 +7,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium, devices } from "playwright";
 
+import { quickStartPrep } from "./lib/quick-start.mjs";
+
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const baseUrl = `file://${root}/index.html`;
 
@@ -45,21 +47,7 @@ const PROFILES = [
 async function prepStart(page) {
   await page.goto(baseUrl, { waitUntil: "domcontentloaded", timeout: 20000 });
   await page.waitForFunction(() => typeof startRunFromOverlay === "function");
-  await page.evaluate(() => {
-    selectGameMode("solo");
-    selectPlayerClass("warrior");
-    selectOpponentClass("mage");
-    startRunFromOverlay();
-  });
-  await page.waitForFunction(() => document.getElementById("app")?.dataset.phase === "prep");
-  await page.waitForTimeout(800);
-  await page.evaluate(() => {
-    window.applyUiLayout?.();
-    window.scheduleCanvasFit?.();
-    window.syncMobileOverlayAnchors?.();
-    window.syncMobileShopFabPosition?.();
-  });
-  await page.waitForTimeout(400);
+  await quickStartPrep(page, { settleMs: 800 });
 }
 
 async function battleStart(page) {
@@ -84,14 +72,12 @@ async function auditProfile(browser, profile) {
 
   const vh = profile.device.viewport?.height ?? 900;
 
-  // ── Class overlay: opponent step (mobile dock) ──
+  // ── Class overlay: summary step (mobile dock) ──
   await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
-  await page.waitForFunction(() => typeof showSecondClassStep === "function");
+  await page.waitForFunction(() => typeof selectPlayerClass === "function");
   await page.evaluate(() => {
-    selectGameMode("solo");
     selectPlayerClass("warrior");
-    showSecondClassStep();
-    selectOpponentClass("mage");
+    selectPlayerClass("warrior");
     window.applyUiLayout?.();
     window.syncClassOverlayAnchors?.();
   });
@@ -112,7 +98,7 @@ async function auditProfile(browser, profile) {
       return { ok: r.width >= min - 2 && r.height >= min - 2, w: r.width, h: r.height };
     }
     const dock = document.getElementById("class-mobile-dock");
-    const step = document.querySelector("#class-step-opponent:not(.hidden)");
+    const step = document.querySelector("#class-step-summary:not(.hidden)");
     const dr = rect(dock);
     const sr = rect(step);
     return {
@@ -126,14 +112,14 @@ async function auditProfile(browser, profile) {
   });
   if (classDock.dockVisible && classDock.stepBottom > classDock.dockTop + 8) {
     found.push(
-      issue(profile.id, "class-opponent", `step overlaps dock: ${classDock.stepBottom} > ${classDock.dockTop}`, "fail"),
+      issue(profile.id, "class-summary", `step overlaps dock: ${classDock.stepBottom} > ${classDock.dockTop}`, "fail"),
     );
   }
   if (classDock.dockVisible && !classDock.startBtn.ok && !classDock.startBtn.skip) {
     found.push(
       issue(
         profile.id,
-        "class-opponent",
+        "class-summary",
         `start btn too small: ${classDock.startBtn.w}x${classDock.startBtn.h}`,
         "fail",
       ),

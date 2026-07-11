@@ -1,6 +1,6 @@
 # UI — экраны, режимы и окна
 
-> **Зафиксировано:** 2026-07-04. Источник правды для структуры окон и режимов.  
+> **Зафиксировано:** 2026-07-11. Источник правды для структуры окон и режимов.  
 > Геометрия и профили viewport: [LAYOUT.md](../LAYOUT.md). Принципы UX: [UI_UX.md](../UI_UX.md).  
 > Машиночитаемый реестр: [tools/ui-structure-manifest.json](../tools/ui-structure-manifest.json).
 
@@ -32,26 +32,20 @@ body
 
 ---
 
-## Режимы игры (`gameMode` / `data-game-mode`)
+## Режим игры (`gameMode` / `data-game-mode`)
 
 | ID | Название | Противник | Особенности prep |
 |----|----------|-----------|------------------|
-| `solo` | Одиночная | ИИ | Стандартный prep, магазин, скамейка — **полный каталог** |
-| `path` | Путь героя | ИИ | Как solo, но **мета-прогрессия**: герои и предметы открываются по уровню |
-| `versus` | Противостояние | 2-й игрок | Переключение `data-prep-side` player/enemy |
-| `hardbot` | Сложный бот | Hard AI | Как solo, усиленный бот |
-| `lobby` | Лобби | 8 ghost-бойцов | `#lobby-prep-roster-panel`, таймер prep |
-| `lobby2p` | Лобби 2P | Split-screen | Два игрока + боты |
-| `campaign` | Кампания | Тренировочный манекен | Фиксированный магазин по урокам, `#campaign-hint-bar` |
+| `classic` | Классика | ИИ | Стандартный prep: магазин 5 слотов, скамейка, pool v120, без мутаций/спутников |
 
-**Intro-поток по режимам:**
+**Intro-поток:**
 
-| Режим | Шаги class-overlay |
-|-------|-------------------|
-| solo, path, hardbot, lobby | mode → player → companion → summary → старт |
-| lobby2p | mode → player → companion → класс P2 → спутник P2 → старт |
-| versus | mode → player → companion → summary → **opponent** → старт |
-| campaign | mode → **campaign-trial** → player → companion → summary → старт |
+| Шаг | DOM id | Содержимое |
+|-----|--------|------------|
+| `player` | `#class-step-player` | 4 класса |
+| `summary` | `#class-step-summary` | Итог + «Старт» |
+
+Двойной клик по герою на шаге `player` → `summary` → `startRunFromOverlay()`.
 
 ---
 
@@ -72,12 +66,8 @@ body
 
 | step key | DOM id | Содержимое |
 |----------|--------|------------|
-| `mode` | `#class-step-mode` | Карточки режима |
-| `campaignTrial` | `#class-step-campaign` | Испытания кампании |
-| `player` | `#class-step-player` | 4 класса + галерея мутаций |
-| `companion` | `#class-step-companion` | Сетка спутников |
+| `player` | `#class-step-player` | 4 класса |
 | `summary` | `#class-step-summary` | Итог + кнопка «Старт» |
-| `opponent` | `#class-step-opponent` | Класс соперника (только versus) |
 
 ---
 
@@ -86,11 +76,10 @@ body
 | Зона | id / класс | Роль |
 |------|------------|------|
 | Левая колонка | `.prep-left-column` | HUD героя + поле |
-| Верхняя панель | `#prep-top-bar` / `#prep-hero-card` | Портрет, статы, мутации |
+| Верхняя панель | `#prep-top-bar` / `#prep-hero-card` | Портрет, статы |
 | Поле | `#prep-field-column` → `#prep-field-island` → `#game-canvas` | Сетка 9×7 |
 | Герой на сцене | `#prep-character-layer` | Full-bleed модель слева/справа |
-| Ростер лобби | `#lobby-prep-roster-panel` | Список бойцов (lobby) |
-| Магазин | `#shop-panel` | 4 слота + продажа |
+| Магазин | `#shop-panel` | 5 слотов + продажа |
 | Скамейка | `#bench-panel` | 6 слотов запаса |
 | Низ | `#bottom-chrome` | Навигация, золото, HP, «БОЙ» |
 
@@ -141,9 +130,8 @@ npm run test:ui
 
 | Область | Файлы |
 |---------|-------|
-| Режимы / фазы | `game.js` |
+| Режим / фазы | `game.js`, `systems/bb-classic.js` |
 | Layout / профили | `ui-layout.js` |
 | Intro | `index.html` `#class-overlay`, `styles/class-*.css` |
 | Prep | `styles/tablet-side.css`, `mobile-prep.css`, `prep-hero-card.css` |
-| Lobby | `lobby*.js`, `#lobby-prep-roster-panel` |
 | Overlays | `styles/escape-menu.css`, `modal-scale.css` |

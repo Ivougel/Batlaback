@@ -6,7 +6,7 @@
 const STRONG_OFFSETS = [[0, -1], [0, 1], [-1, 0], [1, 0]];
 const WEAK_OFFSETS = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
 
-function getStarterBagOrigin(gridW = 7, gridH = 9, bagW = 3, bagH = 3) {
+function getStarterBagOrigin(gridW = 9, gridH = 7, bagW = 3, bagH = 3) {
   return {
     col: Math.floor((gridW - bagW) / 2),
     row: Math.floor((gridH - bagH) / 2),
@@ -96,7 +96,7 @@ function createContainer(itemId, col, row, rotation = 0) {
   };
 }
 
-function createStartingContainers(gridW = 7, gridH = 9) {
+function createStartingContainers(gridW = 9, gridH = 7) {
   const { col, row } = getStarterBagOrigin(gridW, gridH);
   return [createContainer("starter_bag", col, row, 0)];
 }
@@ -167,6 +167,10 @@ function canPlaceContainer(itemId, col, row, rotation, gridW, gridH, containers,
 function canPlaceInLoadout(itemId, col, row, rotation, containers, items, excludeUid = null) {
   const def = ITEM_CATALOG[itemId];
   if (!def || def.isContainer) return false;
+  const heroClass = typeof getLoadoutHeroClass === "function" ? getLoadoutHeroClass() : null;
+  if (typeof isItemAllowedForHeroClass === "function" && !isItemAllowedForHeroClass(itemId, heroClass)) {
+    return false;
+  }
   if (typeof canAddSlotItemToLoadout === "function"
     && !canAddSlotItemToLoadout(items, itemId, excludeUid)) {
     return false;
@@ -225,6 +229,10 @@ function resolveLoadoutPlacementDisplacing(containers, itemId, hoverCol, hoverRo
   if (!def || def.isContainer) {
     return { valid: false, col: hoverCol, row: hoverRow, rotation: 0 };
   }
+  const heroClass = typeof getLoadoutHeroClass === "function" ? getLoadoutHeroClass() : null;
+  if (typeof isItemAllowedForHeroClass === "function" && !isItemAllowedForHeroClass(itemId, heroClass)) {
+    return { valid: false, col: hoverCol, row: hoverRow, rotation: rotation || 0 };
+  }
   const slots = buildSlotSet(containers);
   const hc = hoverCol;
   const hr = hoverRow;
@@ -282,10 +290,14 @@ function translateItems(items, dCol, dRow, itemUids) {
   });
 }
 
-function validateLoadoutItems(containers, items) {
+function validateLoadoutItems(containers, items, heroClass = null) {
   const slots = buildSlotSet(containers);
+  const cls = heroClass ?? (typeof getLoadoutHeroClass === "function" ? getLoadoutHeroClass() : null);
   const occupied = new Map();
   for (const item of items) {
+    if (typeof isItemAllowedForHeroClass === "function" && !isItemAllowedForHeroClass(item.itemId, cls)) {
+      return false;
+    }
     for (const [c, r] of getItemCells(item)) {
       if (!slots.has(`${c},${r}`)) return false;
       const key = `${c},${r}`;
@@ -311,6 +323,7 @@ function canMoveContainerWithItems(container, newCol, newRow, containers, items,
 }
 
 function applyClassStarters(containers, items, classId) {
+  if (typeof shouldUseClassSystem === "function" && !shouldUseClassSystem()) return [...items];
   const cls = getClassById(classId);
   if (!cls) return [...items];
   const next = [...items];
@@ -392,20 +405,6 @@ function getAdjacentItems(items, sourceItem) {
   return result;
 }
 
-function itemHasTag(itemId, tags) {
-  const def = ITEM_CATALOG[itemId];
-  return tags.some((t) => def.tags.includes(t));
-}
-
-function neighborMatchesRule(entry, rule) {
-  if (rule.adjacency === "strong") return entry.strong && itemHasTag(entry.item.itemId, rule.neighborTags);
-  if (rule.adjacency === "weak") return entry.weak && itemHasTag(entry.item.itemId, rule.neighborTags);
-  if (rule.adjacency === "both") {
-    return (entry.strong || entry.weak) && itemHasTag(entry.item.itemId, rule.neighborTags);
-  }
-  return false;
-}
-
 function createRuntimeState(item) {
   return {
     cooldownMult: 1,
@@ -427,25 +426,6 @@ function createRuntimeState(item) {
 function applySynergyModifiers(items) {
   items.forEach((item) => {
     item.runtime = createRuntimeState(item);
-  });
-
-  items.forEach((item) => {
-    const def = ITEM_CATALOG[item.itemId];
-    if (!def.synergies?.length) return;
-    const neighbors = getAdjacentItems(items, item);
-    def.synergies.forEach((rule) => {
-      neighbors.forEach((entry) => {
-        if (!neighborMatchesRule(entry, rule)) return;
-        const targetItem = rule.target === "neighbor" ? entry.item : item;
-        if (!targetItem.runtime) targetItem.runtime = createRuntimeState(targetItem);
-        applySynergyEffect(rule, item, targetItem, entry);
-        targetItem.runtime.activeSynergies.push({
-          from: def.name,
-          desc: typeof formatSynergyHumanDesc === "function" ? formatSynergyHumanDesc(rule) : rule.desc,
-          ruleId: rule.id,
-        });
-      });
-    });
   });
 
   items.forEach((item) => {

@@ -194,8 +194,45 @@
     return Math.round(Math.min(300, Math.max(168, usable * 0.32)));
   }
 
-  const PREP_GRID_COLS = 7;
-  const PREP_GRID_ROWS = 9;
+  const PREP_GRID_COLS = 9;
+  const PREP_GRID_ROWS = 7;
+
+  /** BB stack prep: ячейки под доступную высоту/ширину колонки инвентаря. */
+  function syncBBStackPrepGridMetrics() {
+    if (document.body?.classList.contains("is-ui-dragging")) return false;
+    const root = document.documentElement;
+    if (root.dataset.prepLayout !== "bb-stack") return false;
+    const app = document.getElementById("app");
+    if (app?.dataset.phase !== "prep") return false;
+
+    const fieldCol = document.getElementById("prep-field-column");
+    const layerWorld = fieldCol?.querySelector(".layer-world");
+    if (!fieldCol || !layerWorld || layerWorld.clientWidth < 80 || layerWorld.clientHeight < 80) {
+      return false;
+    }
+
+    const gridCol = layerWorld.querySelector(".bb-prep-inventory-grid");
+    const measureEl = gridCol && gridCol.clientWidth > 48 ? gridCol : layerWorld;
+    const uiScale = readCssPx("--ui-scale", 1);
+    const gap = Math.max(1, Math.round(1 * uiScale));
+    const pad = Math.round(8 * uiScale);
+    const availW = Math.max(120, measureEl.clientWidth - pad * 2);
+    const availH = Math.max(140, measureEl.clientHeight - pad * 2);
+
+    const minCell = Math.round(30 * uiScale);
+    const maxCell = Math.round(48 * uiScale);
+    const byW = Math.floor((availW - (PREP_GRID_COLS - 1) * gap) / PREP_GRID_COLS);
+    const byH = Math.floor((availH - (PREP_GRID_ROWS - 1) * gap) / PREP_GRID_ROWS);
+    const cell = Math.min(maxCell, Math.max(minCell, Math.min(byW, byH)));
+
+    const prevCell = readCssPx("--cell-size", 0);
+    const prevGap = readCssPx("--cell-gap", 0);
+    if (Math.abs(prevCell - cell) < 1 && Math.abs(prevGap - gap) < 1) return false;
+
+    root.style.setProperty("--cell-size", `${cell}px`);
+    root.style.setProperty("--cell-gap", `${gap}px`);
+    return true;
+  }
 
   /** Side prep (tablet-side): крупные ячейки, сетка заполняет колонку поля. */
   function syncTabletSidePrepGridMetrics() {
@@ -238,10 +275,12 @@
     const cell = Math.min(maxCell, Math.max(minCell, Math.min(byW, byH)));
 
     const prev = readCssPx("--cell-size", 0);
-    if (Math.abs(prev - cell) < 1 && readCssPx("--prep-hero-reserve-w", -1) === heroReserveW) return false;
+    const heroReserveShare = Math.min(0.36, Math.max(0.18, heroReserveW > 0 ? heroReserveW / colW : 0.22));
+    const prevReserve = parseFloat(getComputedStyle(root).getPropertyValue("--prep-hero-reserve-w"));
+    if (Math.abs(prev - cell) < 1 && Math.abs(prevReserve - heroReserveShare * 100) < 0.5) return false;
 
     root.style.setProperty("--cell-size", `${cell}px`);
-    root.style.setProperty("--prep-hero-reserve-w", `${heroReserveW}px`);
+    root.style.setProperty("--prep-hero-reserve-w", `${Math.round(heroReserveShare * 1000) / 10}%`);
     return true;
   }
 
@@ -351,7 +390,7 @@
       shopRowBase: 70, shopRowMin: 54, shopRowMax: 74,
       heroSlotHeight: "min(280px, 34vh)", heroSlotMax: 300,
       sceneAvatarH: 140, sceneAvatarW: 112, dollSlot: 34, characterGap: 6,
-      shopPanelW: 300, lobbyShopPanelW: 252,
+      shopPanelW: 300,
     },
     "phone-landscape": {
       fitAvailH: 200, fitMinScale: SCALE_MIN, fitWidthRatio: 1,
@@ -359,7 +398,7 @@
       shopRowBase: 52, shopRowMin: 44, shopRowMax: 58,
       heroSlotHeight: "100%", heroSlotMax: 220,
       sceneAvatarH: 110, sceneAvatarW: 96, dollSlot: 28, characterGap: 4,
-      shopPanelW: 260, lobbyShopPanelW: 224,
+      shopPanelW: 260,
     },
     "tablet-portrait": {
       fitAvailH: PREP_STACKED_CONTENT_H, fitMinScale: SCALE_MIN, fitWidthRatio: 1,
@@ -367,7 +406,7 @@
       shopRowBase: 68, shopRowMin: 56, shopRowMax: 84,
       heroSlotHeight: "min(400px, 44vh)", heroSlotMax: 420,
       sceneAvatarH: 200, sceneAvatarW: 148, dollSlot: 38, characterGap: 8,
-      shopPanelW: 300, lobbyShopPanelW: 252, shopCols: 5,
+      shopPanelW: 300, shopCols: 5,
     },
     "tablet-landscape": {
       fitAvailH: PREP_SIDE_CONTENT_H, fitMinScale: SCALE_MIN, fitWidthRatio: 1,
@@ -375,7 +414,7 @@
       shopRowBase: 88, shopRowMin: 72, shopRowMax: 100,
       heroSlotHeight: "min(54vh, 520px)", heroSlotMax: 560,
       sceneAvatarH: 148, sceneAvatarW: 118, dollSlot: 38, characterGap: 8,
-      shopPanelW: 320, lobbyShopPanelW: 216,
+      shopPanelW: 320,
     },
     "desktop-portrait": {
       fitAvailH: PREP_STACKED_CONTENT_H, fitMinScale: SCALE_MIN, fitWidthRatio: 1,
@@ -383,7 +422,7 @@
       shopRowBase: 72, shopRowMin: 56, shopRowMax: 76,
       heroSlotHeight: "min(54vh, 520px)", heroSlotMax: 560,
       sceneAvatarH: 152, sceneAvatarW: 120, dollSlot: 38, characterGap: 8,
-      shopPanelW: 320, lobbyShopPanelW: 248,
+      shopPanelW: 320,
     },
     "desktop-landscape": {
       fitAvailH: PREP_SIDE_CONTENT_H, fitMinScale: SCALE_MIN, fitWidthRatio: 1,
@@ -391,7 +430,7 @@
       shopRowBase: 66, shopRowMin: 54, shopRowMax: 74,
       heroSlotHeight: "min(54vh, 520px)", heroSlotMax: 560,
       sceneAvatarH: 152, sceneAvatarW: 120, dollSlot: 38, characterGap: 8,
-      shopPanelW: 272, lobbyShopPanelW: 228,
+      shopPanelW: 272,
     },
   };
 
@@ -418,50 +457,65 @@
       sceneAvatarW: readBattleProfileCssNum("--prep-scene-avatar-w", fb.sceneAvatarW),
       dollSlot: readBattleProfileCssNum("--prep-doll-slot", fb.dollSlot),
       characterGap: readBattleProfileCssNum("--prep-character-gap", fb.characterGap),
+      shopPanelShare: readBattleProfileCssNum("--prep-shop-panel-share", fb.shopPanelShare ?? 0.28),
       shopPanelW: readBattleProfileCssNum("--prep-shop-panel-w", fb.shopPanelW),
-      lobbyShopPanelW: readBattleProfileCssNum("--prep-lobby-shop-panel-w", fb.lobbyShopPanelW),
       shopCols: shopColsRaw > 0 ? shopColsRaw : undefined,
     };
   }
 
-  function isSoloLobbyPrepPhase() {
-    const app = document.getElementById("app");
-    const mode = app?.dataset?.gameMode || document.documentElement.dataset?.gameMode;
-    return mode === "lobby" && app?.dataset?.phase === "prep";
+
+  const BB_STACK_SHOP_ROW_BASE = 118;
+
+  function applyPrepShopIconVars(root, rowH, prepLayout = root.dataset.prepLayout) {
+    const bbStack = prepLayout === "bb-stack";
+    const iconShare = bbStack ? 0.58 : 0.80;
+    const fontShare = bbStack ? 0.48 : 0.65;
+    const shopIconSize = Math.round(rowH * iconShare);
+    const shopIconFont = Math.round(rowH * fontShare);
+    root.style.setProperty("--prep-shop-row-h", `${rowH}px`);
+    root.style.setProperty("--shop-card-row-h", `${rowH}px`);
+    root.style.setProperty("--shop-item-icon-size", `${shopIconSize}px`);
+    root.style.setProperty("--shop-item-icon-font", `${shopIconFont}px`);
+    root.style.setProperty("--shop-item-icon-duo-width", `${Math.round(shopIconSize * 1.38)}px`);
+    root.style.setProperty("--game-item-icon-size", `${shopIconSize}px`);
+    root.style.setProperty("--game-item-icon-font", `${shopIconFont}px`);
+    root.style.setProperty("--game-item-icon-duo-width", `${Math.round(shopIconSize * 1.85)}px`);
+    root.style.setProperty("--prep-bench-row-h", `${Math.max(44, Math.round(rowH * 0.78))}px`);
   }
 
   function applyPrepProfileVars(layoutProfile, fitScale = 1) {
     const cfg = getPrepProfileCfg(layoutProfile.id);
     const root = document.documentElement;
-    const lobbyPrep = isSoloLobbyPrepPhase();
+    const prepLayout = root.dataset.prepLayout;
     root.style.setProperty("--prep-hero-slot-height", cfg.heroSlotHeight);
-    root.style.setProperty("--prep-hero-slot-height-max", `${cfg.heroSlotMax}px`);
+    root.style.setProperty("--prep-hero-slot-height-max", `min(${cfg.heroSlotMax}px, calc(var(--app-h, 100dvh) * 0.56))`);
     root.style.setProperty("--prep-scene-avatar-h", `calc(${cfg.sceneAvatarH}px * var(--game-scale))`);
     root.style.setProperty("--prep-scene-avatar-w", `calc(${cfg.sceneAvatarW}px * var(--game-scale))`);
     root.style.setProperty("--doll-slot-size", `calc(${cfg.dollSlot}px * var(--game-scale))`);
     root.style.setProperty("--prep-character-gap", `${cfg.characterGap}px`);
-    const shopPanelW = lobbyPrep
-      ? (cfg.lobbyShopPanelW ?? Math.round(cfg.shopPanelW * 0.68))
-      : cfg.shopPanelW;
-    root.style.setProperty("--shop-panel-w", `${shopPanelW}px`);
-    const shopRowH = Math.round(Math.max(
-      cfg.shopRowMin,
-      Math.min(cfg.shopRowMax, cfg.shopRowBase * fitScale),
-    ));
-    const lobbyRowCap = layoutProfile.id === "tablet-landscape" ? 76 : 72;
-    const rowH = lobbyPrep
-      ? Math.max(cfg.shopRowMin, Math.min(lobbyRowCap, Math.round(shopRowH * 0.82)))
-      : shopRowH;
-    root.style.setProperty("--prep-shop-row-h", `${rowH}px`);
-    const shopIconSize = Math.round(rowH * 0.76);
-    const shopIconFont = Math.round(rowH * 0.6);
-    root.style.setProperty("--shop-card-row-h", `${rowH}px`);
-    root.style.setProperty("--shop-item-icon-size", `${shopIconSize}px`);
-    root.style.setProperty("--shop-item-icon-font", `${shopIconFont}px`);
-    root.style.setProperty("--shop-item-icon-duo-width", `${Math.round(shopIconSize * 1.38)}px`);
-    const benchRowH = Math.max(44, Math.round(rowH * 0.78));
-    root.style.setProperty("--prep-bench-row-h", `${benchRowH}px`);
-    if (cfg.shopCols) {
+    const shopShare = cfg.shopPanelShare;
+    if (prepLayout === "bb-stack") {
+      root.style.setProperty("--shop-panel-w", "100%");
+    } else {
+      root.style.setProperty(
+        "--shop-panel-w",
+        `min(calc(var(--viewport-w, 100vw) * ${shopShare}), var(--prep-shop-panel-max-w, 360px))`,
+      );
+    }
+    let rowH;
+    if (prepLayout === "bb-stack") {
+      rowH = Math.round(Math.max(96, Math.min(128, BB_STACK_SHOP_ROW_BASE * fitScale)));
+    } else {
+      const shopRowH = Math.round(Math.max(
+        cfg.shopRowMin,
+        Math.min(cfg.shopRowMax, cfg.shopRowBase * fitScale),
+      ));
+      rowH = shopRowH;
+    }
+    applyPrepShopIconVars(root, rowH);
+    if (prepLayout === "bb-stack") {
+      root.style.setProperty("--prep-shop-cols", "5");
+    } else if (cfg.shopCols) {
       root.style.setProperty("--prep-shop-cols", String(cfg.shopCols));
     } else {
       root.style.removeProperty("--prep-shop-cols");
@@ -471,12 +525,17 @@
 
   function applyFluidGridMetrics(uiScale) {
     const root = document.documentElement;
+    if (root.dataset.prepLayout === "bb-stack") {
+      root.style.setProperty("--cell-gap", `${Math.max(1, Math.round(1 * uiScale))}px`);
+      root.style.setProperty("--battle-stats-panel-w", "min(calc(0.24 * var(--viewport-w, 100vw)), 276px)");
+      return;
+    }
     const cell = Math.round(Math.max(36, Math.min(46, 36 + 10 * uiScale)));
     const gap = Math.round(Math.max(20, Math.min(36, 20 + 16 * uiScale)));
-    const statsW = Math.round(Math.max(248, Math.min(276, 248 + 28 * uiScale)));
+    const statsW = "min(calc(0.24 * var(--viewport-w, 100vw)), 276px)";
     root.style.setProperty("--cell-size", `${cell}px`);
     root.style.setProperty("--grid-gap", `${gap}px`);
-    root.style.setProperty("--battle-stats-panel-w", `${statsW}px`);
+    root.style.setProperty("--battle-stats-panel-w", statsW);
   }
 
   /** Боевые профили — fallback; активные значения в styles/tokens.css (data-battle-profile). */
@@ -1681,14 +1740,6 @@
       if (typeof window.syncShopMount === "function") window.syncShopMount();
       return;
     }
-    if (root.hasAttribute("data-lobby2p-hud")) {
-      root.dataset.prepShopPopover = "true";
-      root.dataset.prepBenchPopover = "true";
-      if (typeof window.syncShopMount === "function") window.syncShopMount();
-      if (typeof window.syncBenchMount === "function") window.syncBenchMount();
-      if (typeof window.syncPrepShopPopoverPosition === "function") window.syncPrepShopPopoverPosition();
-      return;
-    }
     const surface = root.dataset.uiSurface;
     const drawer = root.dataset.prepShopDrawer === "true";
     const use = prepLayout === "side"
@@ -1950,38 +2001,6 @@
     if (root.dataset.prepShopPopover !== "true") return;
     if (document.getElementById("app")?.dataset.phase !== "prep") return;
 
-    if (root.hasAttribute("data-lobby2p-hud")) {
-      const humanId = typeof window.getLobby2pShopPopoverHuman === "function"
-        ? window.getLobby2pShopPopoverHuman()
-        : (document.getElementById("app")?.dataset.prepSide === "enemy" ? 1 : 0);
-      const split = document.getElementById("lobby2p-split");
-      const splitRect = split?.getBoundingClientRect();
-      const fab = document.querySelector(`.lobby2p-shop-fab[data-human="${humanId}"]`);
-      const fabRect = fab?.getBoundingClientRect();
-      const uiScale = readCssPx("--ui-scale", 1);
-      const gap = Math.round(8 * uiScale);
-      const chrome = getBottomChrome();
-      const chromeTop = chrome && getComputedStyle(chrome).display !== "none"
-        ? chrome.getBoundingClientRect().top
-        : (window.visualViewport?.height ?? window.innerHeight);
-      const colW = splitRect ? Math.max(160, Math.floor(splitRect.width / 2) - gap * 2) : Math.round(240 * uiScale);
-      const colLeft = splitRect
-        ? Math.round(splitRect.left + (humanId === 0 ? gap : splitRect.width / 2 + gap))
-        : gap;
-      const top = fabRect && fabRect.top > gap
-        ? Math.max(gap, Math.round(fabRect.top - gap))
-        : gap;
-      const height = Math.max(180, Math.round((fabRect?.top ?? chromeTop) - gap * 2 - top));
-      root.style.setProperty("--prep-shop-popover-x", `${colLeft}px`);
-      root.style.removeProperty("--prep-shop-popover-right");
-      root.style.setProperty("--prep-shop-popover-y", `${Math.max(gap, top - Math.min(height, 280))}px`);
-      root.style.setProperty("--prep-shop-popover-w", `${colW}px`);
-      root.style.setProperty("--prep-shop-popover-max-h", `${Math.max(200, Math.min(320, height))}px`);
-      root.style.removeProperty("--prep-shop-popover-h");
-      syncOpenPrepTooltipDock();
-      return;
-    }
-
     const uiScale = readCssPx("--ui-scale", 1);
     const gap = Math.round(8 * uiScale);
     const panelW = readCssPx("--shop-panel-w", 300);
@@ -2005,37 +2024,6 @@
     root.style.setProperty("--prep-shop-popover-w", `${corridorW}px`);
     root.style.setProperty("--prep-shop-popover-max-h", `${height}px`);
     root.style.removeProperty("--prep-shop-popover-h");
-    syncOpenPrepTooltipDock();
-  }
-
-  function syncLobby2pBenchPopoverPosition() {
-    const root = document.documentElement;
-    if (root.dataset.prepBenchPopover !== "true") return;
-    if (!root.hasAttribute("data-lobby2p-hud")) return;
-    if (document.getElementById("app")?.dataset.phase !== "prep") return;
-
-    const humanId = typeof window.getLobby2pBenchPopoverHuman === "function"
-      ? window.getLobby2pBenchPopoverHuman()
-      : (document.getElementById("app")?.dataset.prepSide === "enemy" ? 1 : 0);
-    const split = document.getElementById("lobby2p-split");
-    const splitRect = split?.getBoundingClientRect();
-    const fab = document.querySelector(`.lobby2p-bench-fab[data-human="${humanId}"]`);
-    const fabRect = fab?.getBoundingClientRect();
-    const uiScale = readCssPx("--ui-scale", 1);
-    const gap = Math.round(8 * uiScale);
-    const colW = splitRect ? Math.max(160, Math.floor(splitRect.width / 2) - gap * 2) : Math.round(240 * uiScale);
-    const colLeft = splitRect
-      ? Math.round(splitRect.left + (humanId === 0 ? gap : splitRect.width / 2 + gap))
-      : gap;
-    const top = fabRect && fabRect.top > gap
-      ? Math.max(gap, Math.round(fabRect.top - gap * 3))
-      : gap;
-    const height = Math.max(160, Math.min(260, Math.round((fabRect?.top ?? top) - gap * 2)));
-    root.style.setProperty("--prep-bench-popover-x", `${colLeft}px`);
-    root.style.setProperty("--prep-bench-popover-w", `${colW}px`);
-    root.style.setProperty("--prep-bench-popover-y", `${Math.max(gap, top - height)}px`);
-    root.style.setProperty("--prep-bench-popover-max-h", `${height}px`);
-    root.style.removeProperty("--prep-bench-popover-bottom");
     syncOpenPrepTooltipDock();
   }
 
@@ -3398,6 +3386,98 @@
     "--tablet-battle-chrome-bottom",
   ];
 
+  function applyBBStackBattleCssVars(root, canvas, displayW, displayH) {
+    const logicalW = `${canvas.width}px`;
+    const logicalH = `${canvas.height}px`;
+    const dispW = `${displayW}px`;
+    const dispH = `${displayH}px`;
+    const names = [
+      ["--battle-canvas-w", logicalW],
+      ["--battle-canvas-h", logicalH],
+      ["--battle-canvas-display-w", dispW],
+      ["--battle-canvas-display-h", dispH],
+      ["--prep-canvas-w", logicalW],
+      ["--prep-canvas-h", logicalH],
+      ["--bb-battle-canvas-display-w", dispW],
+      ["--bb-battle-canvas-display-h", dispH],
+      ["--battle-scene-offset-x", "0px"],
+      ["--field-offset-x", "0px"],
+      ["--field-offset-y", "0px"],
+      ["--prep-scene-top", "0px"],
+    ];
+    const app = document.getElementById("app");
+    names.forEach(([name, value]) => {
+      root.style.setProperty(name, value);
+      app?.style.setProperty(name, value);
+    });
+  }
+
+  function clearBBPrepCanvasTransform(canvas) {
+    if (!canvas) return;
+    canvas.style.transform = "";
+    canvas.style.transformOrigin = "";
+    const wrap = canvas.closest(".canvas-scale-wrap");
+    if (wrap) {
+      wrap.style.width = "";
+      wrap.style.height = "";
+      wrap.style.overflow = "";
+    }
+    const stage = canvas.closest(".battle-canvas-stage");
+    if (stage) {
+      stage.style.width = "";
+      stage.style.height = "";
+    }
+    if (typeof clearBBPrepBoardView === "function") clearBBPrepBoardView();
+  }
+
+  /** BB Fidelity prep: portrait canvas, fit в layer-world без upscale. */
+  function fitBBStackPrepLayout(root, canvas, fieldCol) {
+    const layerWorld = fieldCol?.querySelector(".layer-world");
+    const gridCol = layerWorld?.querySelector(".bb-prep-inventory-grid");
+    const measureEl = gridCol && gridCol.clientWidth > 48 ? gridCol : layerWorld;
+    const availW = Math.max(80, measureEl?.clientWidth ?? fieldCol?.clientWidth ?? 0);
+    const availH = Math.max(80, measureEl?.clientHeight ?? fieldCol?.clientHeight ?? 0);
+    if (availW < 48 || availH < 48 || canvas.width <= 0 || canvas.height <= 0) return;
+
+    const uiScale = readCssPx("--ui-scale", 1);
+    const pad = Math.round(8 * uiScale);
+    const fitW = Math.max(40, availW - pad * 2);
+    const fitH = Math.max(40, availH - pad * 2);
+
+    const finalScale = Math.min(fitW / canvas.width, fitH / canvas.height, 1);
+    const displayW = Math.max(1, Math.floor(canvas.width * finalScale));
+    const displayH = Math.max(1, Math.floor(canvas.height * finalScale));
+
+    if (typeof clearBBPrepBoardView === "function") clearBBPrepBoardView();
+
+    const sized = setCanvasDisplaySize(canvas, displayW, displayH);
+    root.style.setProperty("--prep-canvas-display-w", `${displayW}px`);
+    root.style.setProperty("--prep-canvas-display-h", `${displayH}px`);
+
+    const wrap = canvas.closest(".canvas-scale-wrap");
+    const stage = canvas.closest(".battle-canvas-stage");
+    if (wrap) {
+      if (sized
+        || Math.abs((parseFloat(wrap.style.width) || 0) - displayW) > 1
+        || Math.abs((parseFloat(wrap.style.height) || 0) - displayH) > 1) {
+        wrap.style.width = `${displayW}px`;
+        wrap.style.height = `${displayH}px`;
+      }
+      wrap.style.overflow = "visible";
+    }
+    if (stage) {
+      if (sized
+        || Math.abs((parseFloat(stage.style.width) || 0) - displayW) > 1
+        || Math.abs((parseFloat(stage.style.height) || 0) - displayH) > 1) {
+        stage.style.width = `${displayW}px`;
+        stage.style.height = `${displayH}px`;
+      }
+    }
+    canvas.style.transform = "";
+    canvas.style.transformOrigin = "";
+    canvas.style.objectFit = "";
+  }
+
   /** BB Fidelity: вертикальный стек сеток, canvas по центру. */
   function fitBBStackBattleLayout(root, canvas, fieldCol, stageW) {
     setBattleArenaLayout(false);
@@ -3405,28 +3485,80 @@
     root.dataset.battleLayout = "bb-stack";
     root.removeAttribute("data-battle-mobile-stack");
     clearBattleLayoutVars(BATTLE_LAYOUT_VAR_NAMES);
+    clearBBPrepCanvasTransform(canvas);
+    root.removeAttribute("data-bb-prep-field-rotated");
+    root.style.removeProperty("--prep-field-visual-w");
+    root.style.removeProperty("--prep-field-visual-h");
 
-    const fieldH = fieldCol?.clientHeight ?? 0;
+    if (typeof applyBBStackBattleCanvasSize === "function") applyBBStackBattleCanvasSize();
+    const logical = typeof getBBBattleCanvasLogicalSize === "function"
+      ? getBBBattleCanvasLogicalSize()
+      : { w: canvas.width, h: canvas.height };
+    if (canvas.width !== logical.w || canvas.height !== logical.h) {
+      canvas.width = logical.w;
+      canvas.height = logical.h;
+      const fx = document.getElementById("canvas-fx");
+      if (fx) {
+        fx.width = canvas.width;
+        fx.height = canvas.height;
+      }
+    }
+
+    const layerWorld = fieldCol?.querySelector(".layer-world");
     const hudReserve = measureBattleHudReserve();
     const vh = window.visualViewport?.height ?? window.innerHeight;
-    const maxH = Math.max(180, (fieldH > 80 ? fieldH : vh - hudReserve - 48));
+    const vw = window.visualViewport?.width ?? window.innerWidth;
+    const uiScale = readCssPx("--ui-scale", 1);
+    const pad = Math.round(10 * uiScale);
+    const viewportFitH = Math.max(280, vh - hudReserve - pad * 2);
+    const viewportFitW = Math.max(240, vw - pad * 2);
+    const layerW = layerWorld?.clientWidth ?? fieldCol?.clientWidth ?? stageW ?? 0;
+    const layerH = layerWorld?.clientHeight ?? fieldCol?.clientHeight ?? 0;
+    const fitW = Math.max(200, Math.min(viewportFitW, layerW > 120 ? layerW - pad * 2 : viewportFitW));
+    const fitH = Math.max(
+      240,
+      Math.max(viewportFitH, layerH > 180 ? layerH - pad * 2 : 0),
+    );
     const aspect = canvas.width / Math.max(1, canvas.height);
-    let displayH = maxH;
+
+    let displayH = fitH;
     let displayW = Math.round(displayH * aspect);
-    if (displayW > stageW) {
-      displayW = Math.max(120, stageW);
+    if (displayW > fitW) {
+      displayW = fitW;
       displayH = Math.round(displayW / aspect);
     }
     displayW = Math.max(1, displayW);
     displayH = Math.max(1, displayH);
 
     setCanvasDisplaySize(canvas, displayW, displayH);
-    root.style.setProperty("--bb-battle-canvas-display-w", `${displayW}px`);
-    root.style.setProperty("--bb-battle-canvas-display-h", `${displayH}px`);
+    applyBBStackBattleCssVars(root, canvas, displayW, displayH);
+
+    const island = canvas.closest(".prep-field-island");
+    const wrap = canvas.closest(".canvas-scale-wrap");
+    const stage = canvas.closest(".battle-canvas-stage");
+    if (island) {
+      island.style.width = "";
+      island.style.height = "";
+    }
+    if (wrap) {
+      wrap.style.width = "100%";
+      wrap.style.height = "100%";
+      wrap.style.overflow = "hidden";
+    }
+    if (stage) {
+      stage.style.width = "100%";
+      stage.style.height = "100%";
+    }
 
     const syncGrid = () => {
+      const remeasureH = layerWorld?.clientHeight ?? fieldCol?.clientHeight ?? 0;
+      if (remeasureH > layerH + 48 && layerH < viewportFitH * 0.72) {
+        fitBBStackBattleLayout(root, canvas, fieldCol, fieldCol?.clientWidth ?? stageW);
+        return;
+      }
       if (typeof syncBattleSceneGridMetrics === "function") syncBattleSceneGridMetrics();
       if (typeof syncBBBattleHud === "function") syncBBBattleHud();
+      syncFxCanvasGeometry();
     };
     requestAnimationFrame(() => requestAnimationFrame(syncGrid));
   }
@@ -3584,41 +3716,6 @@
       return;
     }
 
-    if (document.documentElement.hasAttribute("data-lobby2p-hud")) {
-      const host = document.getElementById("lobby2p-canvas-host");
-      const hostW = host?.clientWidth ?? 0;
-      const hostH = host?.clientHeight ?? 0;
-      if (hostW > 8 && hostH > 8 && canvas.width > 0 && canvas.height > 0) {
-        const aspect = canvas.width / canvas.height;
-        let w = hostW;
-        let h = Math.round(w / aspect);
-        if (h > hostH) {
-          h = hostH;
-          w = Math.round(h * aspect);
-        }
-        setCanvasDisplaySize(canvas, w, h);
-        root.style.setProperty("--prep-canvas-display-w", `${w}px`);
-        root.style.setProperty("--prep-canvas-display-h", `${h}px`);
-        ["battle-canvas-stage", "canvas-scale-wrap", "prep-field-island"].forEach((sel) => {
-          const el = host?.querySelector(`.${sel}`) || canvas.closest(`.${sel}`);
-          if (!el) return;
-          el.style.width = "100%";
-          el.style.height = "100%";
-          el.style.display = "flex";
-          el.style.alignItems = "center";
-          el.style.justifyContent = "center";
-        });
-        canvas.style.width = `${w}px`;
-        canvas.style.height = `${h}px`;
-        canvas.style.maxWidth = `${w}px`;
-        canvas.style.maxHeight = `${h}px`;
-        canvas.style.objectFit = "contain";
-        syncMobileShopFabPosition();
-        syncFxCanvasGeometry();
-        return;
-      }
-    }
-
     root.dataset.battleMobileFit = "false";
     [
       "--battle-canvas-display-w",
@@ -3626,6 +3723,25 @@
       "--battle-field-display-w",
       "--battle-grid-gap-display",
     ].forEach((name) => root.style.removeProperty(name));
+
+    clearBBPrepCanvasTransform(canvas);
+    root.removeAttribute("data-bb-prep-field-rotated");
+    root.style.removeProperty("--prep-field-visual-w");
+    root.style.removeProperty("--prep-field-visual-h");
+
+    if (root.dataset.prepLayout === "bb-stack") {
+      const fieldCol = canvas.closest(".prep-field-column");
+      if (fieldCol) {
+        const gridChanged = syncBBStackPrepGridMetrics();
+        if (gridChanged && typeof window.applyGridMetricsFromCss === "function") {
+          window.applyGridMetricsFromCss();
+        }
+        fitBBStackPrepLayout(root, canvas, fieldCol);
+        syncMobileShopFabPosition();
+        syncFxCanvasGeometry();
+        return;
+      }
+    }
 
     const sideFit = root.dataset.prepSideFit === "true";
     const mobileFit = root.dataset.prepMobileFit === "true";
@@ -3810,6 +3926,7 @@
     const body = document.body;
     if (body?.classList.contains("is-ui-dragging")) return true;
     if (body?.classList.contains("screen-transitioning")) return true;
+    if (typeof PrepStoragePhysics !== "undefined" && PrepStoragePhysics.hasActiveScreenFliers?.()) return true;
     return !!document.querySelector(".game-layout")?.classList.contains("phase-transitioning");
   }
 
@@ -3835,6 +3952,8 @@
     syncPrepHeroCardPortraitSize();
     if (usesTabletPrepHeroLayout()) {
       syncTabletSidePrepGridMetrics();
+    } else if (document.documentElement.dataset.prepLayout === "bb-stack") {
+      syncBBStackPrepGridMetrics();
     }
     if (typeof window.applyGridMetricsFromCss === "function") {
       window.applyGridMetricsFromCss();
@@ -3959,13 +4078,12 @@
     }
 
     if (prepLayout === "bb-stack") {
-      document.documentElement.dataset.prepViewportFit = "true";
+      document.documentElement.dataset.prepViewportFit = "false";
       document.documentElement.dataset.prepShopDrawer = "false";
       document.documentElement.removeAttribute("data-prep-shop-open");
-      let fitScale = Math.min(baseScale, available / cfg.fitAvailH, w / (DESIGN_W * 0.92));
+      let fitScale = Math.min(baseScale, available / (cfg.fitAvailH ?? 520), w / (DESIGN_W * 0.88));
       fitScale = Math.max(cfg.fitMinScale ?? SCALE_MIN, Math.min(SCALE_MAX, fitScale));
-      const canvasMax = Math.round(Math.min(available * 0.42, (cfg.canvasMaxCap ?? 320) * fitScale));
-      document.documentElement.style.setProperty("--prep-canvas-max-h", `${canvasMax}px`);
+      document.documentElement.style.removeProperty("--prep-canvas-max-h");
       return Math.round(fitScale * 1000) / 1000;
     }
 
@@ -4012,11 +4130,22 @@
     if (w <= 720 || h <= 520) tier = "phone";
     else if (w <= 1366 || h <= 940) tier = "tablet";
 
-    const prepLayout = (typeof shouldUseBBStackPrepLayout === "function" && shouldUseBBStackPrepLayout())
-      ? "bb-stack"
-      : (shouldUseMobilePrepLayout(w, h, tier)
+    const introModeStepOpen = (() => {
+      const overlay = document.getElementById("class-overlay");
+      if (!overlay || overlay.classList.contains("hidden")) return false;
+      const step = overlay.dataset.classIntroStep || "mode";
+      return step === "mode" || step === "campaign";
+    })();
+
+    const prepLayout = introModeStepOpen
+      ? (shouldUseMobilePrepLayout(w, h, tier)
         ? "mobile"
-        : (shouldUseStackedPrep(w, h, tier) ? "stacked" : "side"));
+        : (shouldUseStackedPrep(w, h, tier) ? "stacked" : "side"))
+      : ((typeof shouldUseBBStackPrepLayout === "function" && shouldUseBBStackPrepLayout())
+        ? "bb-stack"
+        : (shouldUseMobilePrepLayout(w, h, tier)
+          ? "mobile"
+          : (shouldUseStackedPrep(w, h, tier) ? "stacked" : "side")));
     const tabletSideFit = shouldUseTabletSideFit(w, h, prepLayout, touchDev, tier);
     const tabletPrepHero = tabletSideFit
       || (prepLayout === "side" && w > h && tier === "tablet" && touchDev);
@@ -4147,6 +4276,8 @@
 
       if (usesTabletPrepHeroLayout() && appPhase === "prep") {
         syncTabletSidePrepGridMetrics();
+      } else if (document.documentElement.dataset.prepLayout === "bb-stack" && appPhase === "prep") {
+        syncBBStackPrepGridMetrics();
       }
       if (typeof window.applyGridMetricsFromCss === "function") {
         window.applyGridMetricsFromCss();
@@ -4295,7 +4426,6 @@
   window.syncMobileShopFabPosition = syncMobileShopFabPosition;
   window.syncPrepBenchFabPosition = syncPrepBenchFabPosition;
   window.syncPrepShopPopoverPosition = syncPrepShopPopoverPosition;
-  window.syncLobby2pBenchPopoverPosition = syncLobby2pBenchPopoverPosition;
   window.syncPrepSellFabPosition = syncPrepSellFabPosition;
   window.syncTabletPortraitShopRows = syncTabletPortraitShopRows;
   window.syncMobileOverlayAnchors = syncMobileOverlayAnchors;

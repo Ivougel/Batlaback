@@ -103,7 +103,7 @@ function hudViewportPoint(team, anchor = "avatar") {
 }
 
 function getHudCx(team, canvasW) {
-  const cols = typeof BACKPACK_COLS !== "undefined" ? BACKPACK_COLS : 7;
+  const cols = typeof BACKPACK_COLS !== "undefined" ? BACKPACK_COLS : 9;
   const cell = typeof CELL !== "undefined" ? CELL : 50;
   const playerX = typeof PLAYER_X !== "undefined" ? PLAYER_X : 36;
   const enemyX = typeof ENEMY_X !== "undefined" ? ENEMY_X : 0;

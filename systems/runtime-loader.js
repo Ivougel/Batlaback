@@ -4,22 +4,10 @@
   const loaded = /* @__PURE__ */ new Set();
   const inflight = /* @__PURE__ */ new Map();
   const BUNDLES = {
-    combatFeed: ["components/combat-feed.js?v=4"],
-    lobby: [
-      "systems/lobby-opponents.js?v=6",
-      "systems/lobby-fighter-avatar.js?v=10",
-      "systems/lobby-spectator.js?v=9",
-      "systems/lobby-roster-float.js?v=1",
-      "components/lobby-2p-hud.js?v=3",
-      "lobby-runtime.js?v=1"
-    ],
-    hardbot: ["hard-bot-engine.js"]
+    combatFeed: ["components/combat-feed.js?v=4"]
   };
-  function scriptsForMode(mode) {
-    const urls = [];
-    if (mode === "lobby" || mode === "lobby2p") urls.push(...BUNDLES.lobby);
-    if (mode === "hardbot") urls.push(...BUNDLES.hardbot);
-    return urls;
+  function scriptsForMode(_mode) {
+    return [];
   }
   function loadScript(src) {
     if (loaded.has(src)) return Promise.resolve();
@@ -43,11 +31,8 @@
     inflight.set(src, p);
     return p;
   }
-  async function ensureModeBundle(mode) {
-    const urls = scriptsForMode(mode);
-    for (const src of urls) {
-      await loadScript(src);
-    }
+  async function ensureModeBundle(_mode) {
+    return Promise.resolve();
   }
   async function ensureCombatFeedBundle() {
     for (const src of BUNDLES.combatFeed) {
@@ -59,14 +44,10 @@
       console.warn("RuntimeLoader combat-feed preload failed:", err);
     });
   }
-  function preloadModeBundle(mode) {
-    void ensureModeBundle(mode).catch((err) => {
-      console.warn("RuntimeLoader preload failed:", err);
-    });
+  function preloadModeBundle(_mode) {
   }
-  function isBundleLoaded(mode) {
-    const urls = scriptsForMode(mode);
-    return urls.length === 0 || urls.every((src) => loaded.has(src));
+  function isBundleLoaded(_mode) {
+    return true;
   }
   window.RuntimeLoader = {
     BUNDLES,

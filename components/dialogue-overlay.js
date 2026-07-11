@@ -14,7 +14,7 @@ const DialogueOverlay = (() => {
   let layerEl = null;
 
   function isLiteFx() {
-    return typeof BattleFxTier !== "undefined" && BattleFxTier.prepLobbyFxReduced?.();
+    return typeof BattleFxTier !== "undefined" && BattleFxTier.prepFxReduced?.();
   }
 
   function ensureLayer() {
@@ -32,11 +32,6 @@ const DialogueOverlay = (() => {
   }
 
   function getFighterAnchorRect(fighterId) {
-    const chip = document.querySelector(`[data-lobby-fighter-avatar="${fighterId}"]`)
-      || document.querySelector(`[data-lobby-fighter="${fighterId}"] .lobby-prep-field-chip-avatar`)
-      || document.querySelector(`[data-lobby-fighter-card="${fighterId}"] .lobby-fighter-card-avatar`);
-    if (chip) return chip.getBoundingClientRect();
-
     if (fighterId === "player" || fighterId === 0) {
       const el = document.getElementById("prep-character-player");
       if (el && !el.hasAttribute("hidden")) return el.getBoundingClientRect();

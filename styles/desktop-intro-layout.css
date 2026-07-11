@@ -120,7 +120,7 @@
     margin-top: auto;
   }
 
-  /* ─── Сетка режимов: просторная 2×2 ─── */
+  /* ─── Сетка режимов: три карточки в ряд ─── */
 
   html:not([data-prep-layout="mobile"]) #class-overlay .class-modal #class-step-mode:not(.hidden) {
     justify-content: center;
@@ -129,29 +129,33 @@
   }
 
   html:not([data-prep-layout="mobile"]) #class-overlay .class-modal #class-step-mode:not(.hidden) .game-mode-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: repeat(2, minmax(0, 1fr));
-    max-width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-auto-rows: auto;
+    max-width: min(100%, 520px);
     width: 100%;
-    flex: 1 1 auto;
-    min-height: min(420px, 52vh);
-    gap: clamp(14px, 1.8vh, 22px);
-    align-content: stretch;
+    margin: 0 auto;
+    flex: 0 0 auto;
+    min-height: 0;
+    gap: clamp(10px, 1.4vh, 16px);
+    align-content: start;
     overflow: visible;
     padding: 14px;
   }
 
   html:not([data-prep-layout="mobile"]) #class-overlay .class-modal .game-mode-card.glass-card {
-    min-height: clamp(108px, 13vh, 148px);
-    height: 100%;
-    padding: clamp(14px, 1.6vh, 20px) clamp(16px, 1.6vw, 24px);
-    column-gap: clamp(14px, 1.2vw, 18px);
-    row-gap: clamp(4px, 0.6vh, 8px);
+    --game-mode-icon-size: clamp(48px, 3.5vw, 56px);
+    min-height: auto;
+    height: auto;
+    max-height: none;
+    padding: clamp(12px, 1.2vh, 16px) clamp(14px, 1.4vw, 20px);
+    column-gap: clamp(12px, 1vw, 16px);
+    row-gap: clamp(4px, 0.5vh, 6px);
   }
 
   html:not([data-prep-layout="mobile"]) #class-overlay .class-modal .game-mode-card .glass-card-icon {
-    width: clamp(56px, 4.5vw, 72px);
-    height: clamp(56px, 4.5vw, 72px);
+    width: var(--game-mode-icon-size);
+    height: var(--game-mode-icon-size);
   }
 
   html:not([data-prep-layout="mobile"]) #class-overlay .class-modal .game-mode-card .class-name {
@@ -160,7 +164,7 @@
   }
 
   html:not([data-prep-layout="mobile"]) #class-overlay .class-modal .game-mode-card .class-desc {
-    font-size: var(--font-lg);
+    font-size: var(--font-sm);
     line-height: 1.35;
   }
 
@@ -270,6 +274,6 @@
   }
 
   html:not([data-prep-layout="mobile"]) #class-overlay .class-modal #class-step-mode:not(.hidden) .game-mode-grid {
-    min-height: min(460px, 54vh);
+    min-height: 0;
   }
 }

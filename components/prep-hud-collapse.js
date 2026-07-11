@@ -160,7 +160,10 @@ function syncPrepHudCollapseChrome() {
   const toggle = getHudCollapseToggle();
   const enabled = isPrepHudCollapseEnabled();
 
-  toggle?.classList.toggle("hidden", !enabled);
+  if (toggle) {
+    toggle.classList.toggle("hidden", !enabled);
+    toggle.toggleAttribute("hidden", !enabled);
+  }
 
   if (!enabled || !panel) {
     panel?.classList.remove("is-collapsed");

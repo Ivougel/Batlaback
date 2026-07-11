@@ -844,6 +844,9 @@ function clearBattleDamageSummary(state) {
 }
 
 function isAggregatedWeaponDamage(text, color, kind) {
+  if (typeof shouldUseBBStackBattleLayout === "function" && shouldUseBBStackBattleLayout()) {
+    return false;
+  }
   if (kind !== "damage" || color === "#8b949e") return false;
   if (color === "#f85149") return true;
   const t = String(text);

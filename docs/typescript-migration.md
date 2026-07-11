@@ -6,7 +6,7 @@
 
 | Модуль | Назначение |
 |--------|------------|
-| `systems/runtime-loader.ts` | ленивая подгрузка lobby/hardbot |
+| `systems/runtime-loader.ts` | ленивая подгрузка combat-feed |
 | `systems/presentation-clock.ts` | единый scheduler визуальных каналов боя |
 | `systems/layout-scales.ts` | CSS-масштабы UI (`LayoutScales`) |
 | `systems/input-mode.ts` | touch / mouse / gamepad |
@@ -16,7 +16,6 @@
 | `systems/emoji-orbit-speed.ts` | скорость орбиты эмодзи-стаков |
 | `systems/prep-countdown.ts` | отсчёт 3-2-1 и окно результата боя |
 | `systems/battle-fx-tier.ts` | perf tier / light battle FX |
-| `systems/lobby-runtime-stub.ts` | заглушки lobby до lazy-load |
 | `systems/screen-transitions.ts` | переходы intro / prep / battle / results |
 | `systems/craft-pending.ts` | отложенный крафт между раундами |
 | `systems/build-tracker.ts` | отслеживание билда в магазине |
@@ -31,6 +30,24 @@
 | `systems/meta-progress.ts` | мета-прогресс между забегами |
 | `systems/build-keys.ts` | ключи веток в магазине |
 | `systems/prep-shop.ts` | магазин и скамейка в prep |
+| `systems/item-presentation.ts` | unlock/locked состояние предметов |
+| `systems/triple-support-items.ts` | опоры троек + bias магазина |
+| `systems/synergy.ts` | синергии и подсветка клеток |
+| `systems/item-locale.ts` | русские строки предметов для тултипов |
+| `systems/tooltip-effect-text.ts` | человекочитаемые строки эффектов в тултипах |
+| `systems/gem-sockets.ts` | камни в сокетах предметов |
+| `systems/meta-effects.ts` | мета-эффекты вне боя (магазин, золото, recombo) |
+| `systems/sfx.ts` | Web Audio SFX, громкость, глобальные клики |
+| `systems/music.ts` | фоновая музыка, плейлист, настройки |
+| `systems/battle-debuffs.ts` | дебаффы, оглушение, перерождение |
+| `systems/battle-stacks.ts` | боевые стаки (шипы, блок, усиление…) |
+| `systems/animation.ts` | анимации боя, летящие числа, пульсация |
+| `systems/arena-attack-styles.ts` | стили атак экипировки манекена + thought reactions |
+| `systems/attack-events.ts` | декoupled события атаки для визуального слоя |
+| `systems/battle-analyzer.ts` | метрики боя для UI (DPS, прогноз лечения) |
+| `systems/stack-orbit-vfx.ts` | орбита стаков вокруг аватара + снаряды fireStack |
+| `systems/dialogue-catalog.ts` | каталог реплик, голоса героев, emoji-диалоги |
+| `systems/dialogue-engine.ts` | сквозные диалоги забега (DialogueEngine) |
 
 **Не трогаем** (выпиливаются отдельно): `mutations`, `mutation-ui`, `mutation-capstones`, `mutation-progress-hints`.
 
@@ -62,6 +79,6 @@ npm run typecheck       # compile:ts + checkJs + strict TS
 
 ## Дальше
 
-- Переводить изолированные `systems/*` по одному (`synergy`, `combat`, …)
+- Переводить изолированные `systems/*` по одному (`combat-profile`, `battle-hero-anchor`, …)
 - `items.js` / `game.js` — в конце (много глобальных связей)
 - Полный ESM (`import`/`export`) — после большинства systems

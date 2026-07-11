@@ -82,6 +82,10 @@ function getDollState(items) {
 function canAddSlotItemToLoadout(items, itemId, excludeUid = null, alsoExcludeUids = []) {
   const def = ITEM_CATALOG[itemId];
   if (!def?.slot) return true;
+  const heroClass = typeof getLoadoutHeroClass === "function" ? getLoadoutHeroClass() : null;
+  if (typeof isItemAllowedForHeroClass === "function" && !isItemAllowedForHeroClass(itemId, heroClass)) {
+    return false;
+  }
   if (typeof canCompanionEquipItem === "function" && typeof getActiveCompanionIdForLoadout === "function") {
     const companionId = getActiveCompanionIdForLoadout();
     if (!canCompanionEquipItem(companionId, itemId, def)) return false;

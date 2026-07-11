@@ -1,5 +1,5 @@
 /**
- * Общий solver для ai-engine / hard-bot-engine: сила рюкзака, placement, greedy add/swap.
+ * Общий solver для ai-engine и balance-симов: сила рюкзака, placement, greedy add/swap.
  */
 
 function measureLoadoutPower(containers, items, classId) {

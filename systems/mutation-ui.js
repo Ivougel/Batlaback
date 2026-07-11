@@ -563,7 +563,7 @@ function renderPrepMutationBadgeHtml(formId, mutationId, round = 1) {
   `;
 }
 
-function getLobbyFighterMutationEmoji(fighter, round = 1) {
+function getFighterMutationEmoji(fighter, round = 1) {
   if (fighter?.mutationId) return getMutationUiEmoji(fighter.mutationId);
   const formRound = typeof MUTATION_ROUND_FORM !== "undefined" ? MUTATION_ROUND_FORM : 8;
   if (fighter?.mutationFormId && round >= formRound) {
@@ -572,12 +572,12 @@ function getLobbyFighterMutationEmoji(fighter, round = 1) {
   return null;
 }
 
-function renderLobbyMutationBadgeHtml(fighter, round = 1) {
+function renderMutationBadgeHtml(fighter, round = 1) {
   const meta = getPrepMutationBadgeMeta(fighter?.mutationFormId, fighter?.mutationId, round);
   if (!meta) return "";
   return `
-    <span class="lobby-mutation-badge lobby-mutation-badge--${meta.kind}" title="${escapeMutationUiHtml(meta.label)}">
-      <span class="lobby-mutation-badge-emoji" aria-hidden="true">${meta.emoji}</span>
+    <span class="prep-mutation-badge prep-mutation-badge--compact prep-mutation-badge--${meta.kind}" title="${escapeMutationUiHtml(meta.label)}">
+      <span class="prep-mutation-badge-emoji" aria-hidden="true">${meta.emoji}</span>
     </span>
   `;
 }
@@ -665,6 +665,12 @@ function ensurePrepBuildEmojiDom() {
   }
 
   return { heroSlot, btn };
+}
+
+function isBBStackPrepArchetypeChromeHidden() {
+  const root = document.documentElement;
+  return root.dataset.prepLayout === "bb-stack"
+    && document.getElementById("app")?.dataset?.phase === "prep";
 }
 
 function isPrepBuildEmojiHeroHudMount() {
@@ -771,6 +777,16 @@ function syncPrepBuildEmojiBtnMount() {
       heroSlot.setAttribute("aria-hidden", "true");
     }
     btn.classList.add("hidden");
+  } else if (isBBStackPrepArchetypeChromeHidden()) {
+    hideBattleArchetypeFloat("player");
+    hideBattleArchetypeFloat("enemy");
+    btn.classList.add("hidden");
+    if (heroSlot) {
+      heroSlot.classList.remove("prep-hero-card__build-slot--hud-inline");
+      restorePrepBuildEmojiHeroSlot(heroCard, heroSlot);
+      heroSlot.setAttribute("aria-hidden", "true");
+    }
+    if (specSlot) specSlot.setAttribute("aria-hidden", "true");
   } else if (heroHud && heroSlot) {
     specSlot?.setAttribute("aria-hidden", "true");
     btn.classList.remove("prep-build-emoji-btn--hero-field-float");
@@ -960,6 +976,11 @@ function syncPrepBuildEmojiBtn(opts = {}) {
   if (!btn) return;
 
   syncPrepBuildEmojiBtnMount();
+
+  if (isBBStackPrepArchetypeChromeHidden()) {
+    btn.classList.add("hidden");
+    return;
+  }
 
   if (isBattlePrepHeroSpecFloat()) {
     syncBattlePlayerArchetypeFloat(opts);
@@ -1151,24 +1172,9 @@ function clearMutationRevealFx() {
 }
 
 function triggerMutationMilestoneCelebration(side, milestone = "mutation") {
-  const elId = side === "enemy" ? "prep-character-enemy" : "prep-character-player";
-  const el = document.getElementById(elId);
-  const app = document.getElementById("app");
-  if (!el && !app) return;
-
+  void side;
+  void milestone;
   clearMutationRevealFx();
-  el?.classList.add("prep-character--mutation-reveal");
-  if (app) {
-    app.dataset.mutationReveal = side;
-    app.dataset.mutationMilestone = milestone;
-  }
-
-  mutationRevealTimer = setTimeout(() => {
-    el?.classList.remove("prep-character--mutation-reveal");
-    app?.removeAttribute("data-mutation-reveal");
-    app?.removeAttribute("data-mutation-milestone");
-    mutationRevealTimer = null;
-  }, MUTATION_REVEAL_MS);
 }
 
 function formatArchetypeTooltipLabel(pathId, opts = {}) {
@@ -1270,4 +1276,20 @@ function bindAvatarArchetypeBannerInteractions(banner) {
 
 window.bindAvatarArchetypeBannerInteractions = bindAvatarArchetypeBannerInteractions;
 window.bindMutationProgressInteractions = bindMutationProgressInteractions;
+function syncPrepHeroMutationBadge(formId, mutationId, roundNum = 1) {
+  const mount = document.getElementById("prep-hero-mutation-badge-mount");
+  if (!mount) return;
+  if (isBBStackPrepArchetypeChromeHidden()) {
+    mount.innerHTML = "";
+    mount.setAttribute("aria-hidden", "true");
+    return;
+  }
+  const html = typeof renderPrepMutationBadgeHtml === "function"
+    ? renderPrepMutationBadgeHtml(formId, mutationId, roundNum)
+    : "";
+  mount.innerHTML = html;
+  mount.toggleAttribute("aria-hidden", !html);
+}
+
 window.getPrepMutationBadgeMeta = getPrepMutationBadgeMeta;
+window.syncPrepHeroMutationBadge = syncPrepHeroMutationBadge;

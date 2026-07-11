@@ -1,6 +1,6 @@
 /**
  * Prep zone layout — tablet-side / iPad mini PWA.
- * Красная зона: сетка 7×9, прижата вправо.
+ * Красная зона: сетка 9×7, прижата вправо.
  * Зелёная зона: компактный магазин + иконка продажи.
  */
 
@@ -23,9 +23,9 @@ html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-field-column >
   display: flex;
   align-items: flex-start;
   justify-content: flex-end;
-  padding-top: var(--prep-scene-top, 8px);
-  padding-right: calc(6px * var(--ui-scale, 1));
-  padding-left: calc(4px * var(--ui-scale, 1));
+  padding-top: var(--prep-scene-top, 0.8vh);
+  padding-right: 0.6%;
+  padding-left: 0.4%;
   box-sizing: border-box;
 }
 
@@ -39,7 +39,7 @@ html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .prep-field-island {
   top: auto !important;
   width: var(--prep-canvas-display-w, var(--prep-canvas-w)) !important;
   height: var(--prep-canvas-display-h, var(--prep-canvas-h)) !important;
-  max-width: calc(100% - var(--prep-hero-reserve-w, 0px)) !important;
+  max-width: calc(100% - var(--prep-hero-reserve-w, 22%)) !important;
 }
 
 html[data-ui-surface="tablet-side"] #app[data-phase="prep"] .battle-canvas-stage {
@@ -77,29 +77,16 @@ html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel {
 }
 
 html:not([data-ui-tier="phone"])[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel {
-  width: min(var(--shop-panel-w, 320px), 340px);
+  width: var(--shop-panel-w);
   min-width: 0;
-  max-width: 340px;
-  flex-basis: min(var(--shop-panel-w, 320px), 340px);
-}
-
-html:not([data-ui-tier="phone"])[data-ui-surface="tablet-side"][data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel {
-  width: min(var(--shop-panel-w, 216px), 220px);
-  max-width: 220px;
-  flex-basis: min(var(--shop-panel-w, 216px), 220px);
-  padding: calc(4px * var(--ui-scale, 1)) calc(5px * var(--ui-scale, 1));
-}
-
-html:not([data-ui-tier="phone"])[data-ui-surface="tablet-side"][data-prep-bench-popover="true"][data-game-mode="lobby"] #app[data-phase="prep"] #shop-panel {
-  width: min(var(--shop-panel-w, 216px), 220px) !important;
-  max-width: 220px !important;
-  flex: 0 0 min(var(--shop-panel-w, 216px), 220px) !important;
+  max-width: min(var(--prep-shop-panel-max-w), 34%);
+  flex-basis: var(--shop-panel-w);
 }
 
 html:not([data-ui-tier="phone"])[data-ui-surface="tablet-side"][data-prep-bench-popover="true"] #app[data-phase="prep"] #shop-panel {
-  width: min(var(--shop-panel-w, 320px), 340px) !important;
-  max-width: 340px !important;
-  flex: 0 0 min(var(--shop-panel-w, 320px), 340px) !important;
+  width: var(--shop-panel-w) !important;
+  max-width: min(var(--prep-shop-panel-max-w), 34%) !important;
+  flex: 0 0 var(--shop-panel-w) !important;
 }
 
 html[data-ui-surface="tablet-side"] #app[data-phase="prep"] #shop-panel .shop-chrome {

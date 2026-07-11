@@ -52,20 +52,14 @@ const floatLayer = (() => {
     el.style.top = `${vy}px`;
     layer.appendChild(el);
 
-    const hasFlyTarget = opts.toVx != null && opts.toVy != null;
     const flyUp = battleFxPx(52);
-    const keyframes = hasFlyTarget
-      ? [
-        { transform: "translateX(-50%) translateY(0) scale(1)", opacity: 1, left: `${vx}px`, top: `${vy}px` },
-        { transform: "translateX(-50%) translateY(0) scale(0.82)", opacity: 0.15, left: `${opts.toVx}px`, top: `${opts.toVy}px` },
-      ]
-      : [
-        { transform: "translateX(-50%) translateY(0) scale(0.92)", opacity: 0 },
-        { transform: "translateX(-50%) translateY(0) scale(1)", opacity: 1, offset: 0.14 },
-        { transform: `translateX(-50%) translateY(-${flyUp}px) scale(0.96)`, opacity: 0 },
-      ];
+    const keyframes = [
+      { transform: "translateX(-50%) translateY(0) scale(0.92)", opacity: 0 },
+      { transform: "translateX(-50%) translateY(0) scale(1)", opacity: 1, offset: 0.14 },
+      { transform: `translateX(-50%) translateY(-${flyUp}px) scale(0.96)`, opacity: 0 },
+    ];
 
-    const duration = hasFlyTarget ? 620 : 980;
+    const duration = 980;
     el.animate(keyframes, {
       duration,
       easing: "cubic-bezier(0.22, 1, 0.36, 1)",
@@ -127,18 +121,11 @@ const floatLayer = (() => {
     spawn(emoji, "emotion", vx, vy, opts);
   }
 
-  function spawnEmotionFly(canvas, emoji, fromTeam, fromCol, fromRow, toTeam, toCol, toRow) {
-    const from = cellCenterViewport(canvas, fromTeam, fromCol, fromRow);
-    const to = cellCenterViewport(canvas, toTeam, toCol, toRow);
-    spawn(emoji, "emotion", from.vx, from.vy, { toVx: to.vx, toVy: to.vy });
-  }
-
   return {
     spawn,
     spawnDamage,
     spawnHeal,
     spawnEmotion,
-    spawnEmotionFly,
     canvasToViewport,
   };
 })();
@@ -340,6 +327,23 @@ function getBattleStatsPanelCenter() {
 }
 
 function getItemViewportCenter(item, team) {
+  if (isBBStackBattleUi()) {
+    if (item && typeof getItemCells === "function" && typeof cellRect === "function") {
+      const cells = getItemCells(item);
+      if (cells.length) {
+        let sx = 0;
+        let sy = 0;
+        cells.forEach(([c, r]) => {
+          const rect = cellRect(team, c, r);
+          sx += rect.x + rect.w / 2;
+          sy += rect.y + rect.h / 2;
+        });
+        return canvasPointToViewport(sx / cells.length, sy / cells.length);
+      }
+    }
+    const hudCenter = getBBBattleHudSideCenter(team);
+    if (hudCenter) return hudCenter;
+  }
   if (isFlankArenaBattleUi()) {
     return getBattleHeroFloatViewport(team, 0);
   }
@@ -404,7 +408,25 @@ function getProfileDebuffChipCenter(team, debuffId) {
   return getProfileAvatarViewportCenter(team);
 }
 
+function getBBBattleHudSideCenter(team) {
+  const slot = document.getElementById(`bb-battle-hud-${team}`);
+  if (!slot) return null;
+  const target = slot.querySelector(".bb-battle-hud__portrait, .bb-battle-hud__portrait-fallback, .bb-battle-hud__vitals");
+  if (!target) return null;
+  const rect = target.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) return null;
+  return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+}
+
+function isBBStackBattleUi() {
+  return document.documentElement.dataset.battleLayout === "bb-stack";
+}
+
 function getProfileAvatarViewportCenter(team) {
+  if (isBBStackBattleUi()) {
+    const hudCenter = getBBBattleHudSideCenter(team);
+    if (hudCenter) return hudCenter;
+  }
   const avatarId = team === "player" ? "player-avatar-panel" : "enemy-avatar-panel";
   const avatar = document.querySelector(`#${avatarId} .profile-avatar`);
   if (avatar) {

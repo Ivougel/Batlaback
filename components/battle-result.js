@@ -272,6 +272,10 @@ function hideBattleResultPopupAsync(variant = "result") {
   hideDetailPopup();
   if (typeof stopBattleResultTheater === "function") stopBattleResultTheater();
   if (typeof PrepCountdown !== "undefined") PrepCountdown.clearBattleResultWindow();
+  const bbOverlay = document.getElementById("bb-round-result-overlay");
+  if (bbOverlay && !bbOverlay.classList.contains("hidden") && typeof hideBBRoundResult === "function") {
+    return hideBBRoundResult();
+  }
   const overlay = document.getElementById("battle-result-overlay");
   if (!overlay || overlay.classList.contains("hidden")) return Promise.resolve();
   if (typeof ScreenTransitions !== "undefined") {

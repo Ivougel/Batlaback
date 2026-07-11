@@ -1,0 +1,739 @@
+/**
+ * BB Fidelity prep: вертикальный стек — шапка → магазин → золото/рeroll → инвентарь (90°) → хранилище.
+ * html[data-prep-layout="bb-stack"]
+ */
+
+html[data-prep-layout="bb-stack"] body:has(#app[data-phase="prep"]) {
+  --bottom-chrome-h: 0px;
+}
+
+html[data-prep-layout="bb-stack"] body:has(#app[data-phase="prep"]) #bottom-chrome {
+  display: none !important;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] {
+  height: var(--app-h);
+  max-height: var(--app-h);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding:
+    max(4px, env(safe-area-inset-top))
+    max(4px, env(safe-area-inset-right))
+    max(2px, env(safe-area-inset-bottom))
+    max(4px, env(safe-area-inset-left));
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .game-layout,
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .board-section,
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .battle-arena {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .prep-left-column {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-top-bar {
+  order: 1;
+  flex: 0 0 auto;
+  min-height: max(var(--prep-zone-topbar-h), calc(44px * var(--ui-scale, 1)));
+  max-height: calc(var(--app-h, 100dvh) * 0.11);
+  padding:
+    calc(6px * var(--ui-scale, 1))
+    calc(10px * var(--ui-scale, 1));
+  background: var(--bb-chrome-bg);
+  border-bottom: 1px solid var(--bb-border);
+  box-shadow: 0 3px 14px var(--meadow-shadow);
+  gap: calc(8px * var(--ui-scale, 1));
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-top-bar .prep-hero-card {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: calc(8px * var(--ui-scale, 1));
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-top-bar .prep-hero-card__portrait {
+  flex: 0 0 auto;
+  width: min(calc(12vw * var(--ui-scale, 1)), calc(var(--app-h, 100dvh) * 0.08));
+  height: min(calc(12vw * var(--ui-scale, 1)), calc(var(--app-h, 100dvh) * 0.08));
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-top-bar .prep-hero-card__body {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  align-items: center;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-top-bar .prep-hero-card__build-slot,
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-top-bar .prep-hero-card__actions,
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-top-bar #btn-hud-collapse-toggle {
+  display: none !important;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-top-bar .prep-stats-hud {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-top-bar .prep-hero-card__stats-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: calc(10px * var(--ui-scale, 1));
+  width: 100%;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-top-bar .prep-hero-card__identity,
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-top-bar .prep-hero-card__identity-sub,
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-top-bar .mutation-progress,
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-top-bar .prep-enhancement-strip,
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-top-bar .prep-modifier-strip {
+  display: none !important;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-top-bar .prep-stats-metrics {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: calc(12px * var(--ui-scale, 1));
+  flex: 1 1 auto;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-top-bar .prep-stats-row {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(4px * var(--ui-scale, 1));
+  font-size: var(--font-md);
+  font-weight: 700;
+  color: rgba(255, 244, 220, 0.95);
+  white-space: nowrap;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-top-bar .prep-stats-row b {
+  font-size: calc(1.05em * var(--ui-scale, 1));
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-inventory-hero .prep-character-spec-slot {
+  display: none !important;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-top-bar {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: calc(8px * var(--ui-scale, 1));
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-top-bar .prep-hero-card {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-header-actions {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  margin-left: 0;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-top-bar .bb-run-lives:not(.hidden) {
+  display: flex !important;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-header-actions .btn-fight-header {
+  min-height: calc(40px * var(--ui-scale, 1));
+  padding: calc(8px * var(--ui-scale, 1)) calc(14px * var(--ui-scale, 1));
+  font-size: var(--font-md);
+  font-weight: 700;
+  border-radius: calc(10px * var(--ui-scale, 1));
+  background: var(--btn-primary-bg);
+  border: var(--btn-primary-border);
+  color: var(--btn-primary-color);
+  box-shadow: var(--btn-primary-shadow);
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] {
+  --prep-shop-row-h: calc(118px * var(--ui-scale, 1));
+  --shop-card-row-h: calc(118px * var(--ui-scale, 1));
+  --shop-item-icon-size: calc(var(--shop-card-row-h) * 0.58);
+  --shop-item-icon-font: calc(var(--shop-card-row-h) * 0.48);
+  --shop-item-icon-duo-width: calc(var(--shop-item-icon-size) * 1.38);
+  --shop-card-icon-box: calc(var(--shop-item-icon-size) * 1.12);
+  --shop-card-icon-font: calc(var(--shop-item-icon-font) * 1.08);
+  --shop-card-icon-duo-w: calc(var(--shop-item-icon-size) * 1.38);
+  --shop-card-icon-duo-font: calc(var(--shop-item-icon-font) * 0.86);
+  --game-item-icon-size: var(--shop-item-icon-size);
+  --game-item-icon-font: var(--shop-item-icon-font);
+  --game-item-icon-duo-width: calc(var(--shop-item-icon-size) * 1.85);
+  --prep-bench-row-h: calc(var(--shop-card-row-h) * 0.78);
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #shop-panel {
+  order: 2;
+  display: flex !important;
+  flex: 0 0 auto;
+  flex-direction: column;
+  position: relative;
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  max-height: var(--prep-zone-shop-h);
+  margin: 0;
+  padding:
+    calc(4px * var(--ui-scale, 1))
+    calc(10px * var(--ui-scale, 1))
+    calc(6px * var(--ui-scale, 1));
+  border: none;
+  border-bottom: 1px solid var(--bb-border-soft);
+  border-radius: 0;
+  background: var(--bb-shop-bg);
+  box-shadow: inset 0 2px 0 rgba(255, 220, 150, 0.1);
+  overflow: hidden;
+  transform: none;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #shop-panel .shop-panel-header {
+  display: none !important;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #shop-panel .shop-panel-header .btn-refresh-shop {
+  display: none !important;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #shop-panel .shop-panel-header .prep-build-emoji-btn,
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-top-bar .prep-build-emoji-btn,
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-top-bar .prep-hero-card__build-slot,
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-top-bar .prep-hero-card__mutation-badge-mount,
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .prep-character-spec-slot .battle-archetype-float {
+  display: none !important;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-section-label--shop {
+  display: none !important;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-section-label {
+  margin: 0;
+  font-size: var(--font-sm);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 236, 200, 0.92);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #shop-panel .shop-hint,
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #shop-panel .shop-hint-touch,
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #shop-panel .prep-shop-drawer-close {
+  display: none !important;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #shop-panel .shop-objects {
+  flex: 0 0 auto;
+  min-height: 0;
+  overflow: visible;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #shop-panel .shop-slots {
+  display: grid;
+  grid-template-columns: repeat(var(--prep-shop-cols, 5), minmax(0, 1fr));
+  grid-auto-rows: minmax(var(--shop-card-row-h), auto);
+  grid-auto-flow: row;
+  gap: calc(6px * var(--ui-scale, 1));
+  align-content: start;
+  min-height: var(--shop-card-row-h);
+  max-height: none;
+  overflow: visible;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #shop-panel .shop-card {
+  min-height: var(--shop-card-row-h);
+  max-height: none;
+  overflow: visible;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #shop-panel .shop-item-stack > .cost {
+  flex-shrink: 0;
+  visibility: visible;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #shop-panel .shop-card:not(.empty):last-child:nth-child(odd),
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #shop-panel .shop-card:has(.icon--duo) {
+  grid-column: span 1;
+  width: auto;
+  justify-self: stretch;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-commerce-bar {
+  order: 3;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(10px * var(--ui-scale, 1));
+  min-height: max(var(--prep-zone-commerce-h), calc(40px * var(--ui-scale, 1)));
+  padding:
+    calc(4px * var(--ui-scale, 1))
+    calc(12px * var(--ui-scale, 1));
+  background: linear-gradient(180deg, rgba(28, 22, 18, 0.96), rgba(18, 14, 12, 0.98));
+  border-bottom: 1px solid rgba(100, 75, 45, 0.4);
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-commerce-bar__gold {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(2px * var(--ui-scale, 1));
+  min-width: 0;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-commerce-bar__gold-label {
+  font-size: var(--font-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(220, 200, 160, 0.82);
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-commerce-bar__gold-value {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(6px * var(--ui-scale, 1));
+  padding: calc(4px * var(--ui-scale, 1)) calc(16px * var(--ui-scale, 1));
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(52, 40, 28, 0.95), rgba(36, 28, 20, 0.98));
+  border: 1px solid rgba(160, 120, 60, 0.45);
+  font-size: var(--font-md);
+  font-weight: 800;
+  color: rgba(255, 236, 180, 0.96);
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-commerce-bar__reroll {
+  flex: 0 0 auto;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .btn-refresh-shop--bb-stack {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(2px * var(--ui-scale, 1));
+  min-width: calc(52px * var(--ui-scale, 1));
+  min-height: calc(52px * var(--ui-scale, 1));
+  padding: calc(6px * var(--ui-scale, 1));
+  border-radius: calc(10px * var(--ui-scale, 1));
+  background: linear-gradient(180deg, rgba(92, 68, 44, 0.95), rgba(62, 44, 28, 0.98));
+  border: 1px solid rgba(140, 100, 55, 0.5);
+  font-size: var(--font-xs);
+  font-weight: 700;
+  line-height: 1.1;
+  white-space: pre-line;
+  text-align: center;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .prep-field-column {
+  order: 4;
+  flex: 1 1 auto;
+  min-height: var(--prep-zone-field-min-h);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  overflow: hidden;
+  position: relative;
+  margin: calc(4px * var(--ui-scale, 1)) calc(8px * var(--ui-scale, 1)) 0;
+  border: 1px solid var(--bb-border-soft);
+  border-radius: calc(8px * var(--ui-scale, 1));
+  background: var(--bb-field-bg);
+  box-shadow: inset 0 1px 0 rgba(255, 220, 150, 0.06);
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .prep-field-column > .layer-world {
+  flex: 1 1 auto;
+  min-height: 0;
+  position: relative !important;
+  inset: auto !important;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: stretch;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-inventory-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns:
+    minmax(0, var(--bb-prep-hero-col-share))
+    minmax(0, 1fr)
+    minmax(0, var(--bb-prep-tooltip-col-share));
+  gap: 0 2%;
+  width: 100%;
+  height: 100%;
+  align-items: stretch;
+  padding: calc(6px * var(--ui-scale, 1)) calc(4px * var(--ui-scale, 1));
+  box-sizing: border-box;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-inventory-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+  overflow: visible;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-inventory-hero .prep-character-layer {
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0;
+  max-width: none !important;
+  max-height: none !important;
+  display: flex !important;
+  align-items: flex-end;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 2;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-inventory-hero .prep-character-img,
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-inventory-hero .prep-character-emoji {
+  max-height: 100%;
+  max-width: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  object-position: center bottom;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-inventory-grid {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+  overflow: visible;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-inventory-tip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .prep-field-column::after,
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-field-island::after,
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .prep-field-column::before {
+  content: none !important;
+  display: none !important;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .layer-world > .bb-battle-hud {
+  display: none !important;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-hud-hero-round {
+  display: none !important;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .prep-field-column .scene-bg {
+  display: none !important;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .prep-field-column > .layer-objects,
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .prep-field-column > .layer-fx,
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .prep-field-column > .layer-hud {
+  display: none !important;
+}
+
+/* Tooltip dock — fixed overlay над правой колонкой (вне overflow:hidden prep-field-column) */
+html[data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--hero-grid:not(.hidden),
+html[data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--item:not(.hidden) {
+  position: fixed !important;
+  z-index: 9500 !important;
+  top: var(--bb-prep-tooltip-top, auto);
+  left: var(--bb-prep-tooltip-left, auto);
+  width: var(--bb-prep-tooltip-width, auto);
+  max-height: var(--bb-prep-tooltip-max-h, min(72vh, 420px));
+  height: auto;
+  right: auto;
+  bottom: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: calc(4px * var(--ui-scale, 1));
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  pointer-events: none;
+  overflow: visible !important;
+  box-sizing: border-box;
+}
+
+html[data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--hero-grid .sidebar-tooltip:not(.hidden),
+html[data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--item .sidebar-tooltip:not(.hidden) {
+  pointer-events: auto;
+}
+
+html[data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--hero-grid .sidebar-tooltip:not(.hidden):not(.sidebar-tooltip--card) {
+  width: 100%;
+  max-width: 100%;
+  max-height: none;
+  margin: 0;
+  padding: calc(8px * var(--ui-scale, 1)) calc(10px * var(--ui-scale, 1));
+  background: var(--tooltip-bg);
+  border: 1px solid var(--tooltip-border);
+  border-radius: calc(10px * var(--ui-scale, 1));
+  box-shadow: var(--tooltip-shadow);
+  pointer-events: auto;
+  overflow: visible;
+}
+
+html[data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--hero-grid .sidebar-tooltip.sidebar-tooltip--card:not(.hidden) {
+  width: 100%;
+  max-width: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+  pointer-events: auto;
+}
+
+html[data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock .sidebar-tooltip--card .item-hint-card {
+  width: min(var(--hint-w), 100%);
+  max-width: 100%;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-field-island {
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
+  width: auto !important;
+  height: auto !important;
+  min-width: 0;
+  max-width: 100%;
+  max-height: 100%;
+  margin: 0;
+  flex: 0 0 auto;
+  min-height: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  overflow: visible;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-field-island .battle-canvas-stage {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-field-island .canvas-scale-wrap {
+  position: relative;
+  display: block;
+  flex: 0 0 auto;
+  overflow: visible;
+  border-radius: calc(6px * var(--ui-scale, 1));
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 0 0 1px rgba(140, 100, 55, 0.42);
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-field-island #game-canvas {
+  display: block;
+  flex: 0 0 auto;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-storage {
+  order: 5;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column-reverse;
+  min-height: 0;
+  max-height: var(--prep-zone-storage-h);
+  background: linear-gradient(180deg, rgba(18, 14, 12, 0.96), rgba(10, 8, 8, 0.98));
+  border-top: 1px solid rgba(80, 60, 40, 0.45);
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-storage__handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  gap: calc(8px * var(--ui-scale, 1));
+  width: 100%;
+  min-height: calc(40px * var(--ui-scale, 1));
+  padding: calc(8px * var(--ui-scale, 1)) calc(12px * var(--ui-scale, 1));
+  border: none;
+  background: linear-gradient(180deg, rgba(24, 18, 16, 0.96), rgba(12, 10, 10, 0.98));
+  color: rgba(230, 220, 200, 0.92);
+  font-size: var(--font-sm);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-storage__label {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(6px * var(--ui-scale, 1));
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-storage__chevron {
+  position: absolute;
+  right: calc(12px * var(--ui-scale, 1));
+  display: inline-block;
+  transform: rotate(180deg);
+  transition: transform 150ms ease;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-storage__body {
+  flex: 0 0 auto;
+  max-height: var(--prep-zone-storage-body-max);
+  overflow: auto;
+  padding: calc(4px * var(--ui-scale, 1)) calc(8px * var(--ui-scale, 1)) calc(8px * var(--ui-scale, 1));
+}
+
+html[data-prep-layout="bb-stack"][data-bb-storage-collapsed="true"] #app[data-phase="prep"] .bb-prep-storage__body {
+  display: none;
+}
+
+html[data-prep-layout="bb-stack"][data-bb-storage-collapsed="true"] #app[data-phase="prep"] .bb-prep-storage__chevron {
+  transform: rotate(0deg);
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-storage .bench-panel {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-storage .bench-panel__title {
+  display: none;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-storage .bench-slots {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: calc(4px * var(--ui-scale, 1));
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #shop-panel .shop-sell-zone {
+  display: none;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-commerce-bar__sell {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-commerce-bar .shop-sell-zone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-commerce-bar .sell-drop-zone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(40px * var(--ui-scale, 1));
+  height: calc(40px * var(--ui-scale, 1));
+  min-width: calc(40px * var(--ui-scale, 1));
+  padding: 0;
+  border-radius: calc(10px * var(--ui-scale, 1));
+  border: 1px solid rgba(200, 134, 10, 0.55);
+  background: rgba(22, 27, 34, 0.94);
+  font-size: calc(22px * var(--ui-scale, 1));
+  line-height: 1;
+  cursor: pointer;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-commerce-bar .sell-drop-zone.is-drag-target,
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-commerce-bar .shop-sell-zone.sell-drop-target {
+  border-color: rgba(255, 210, 80, 0.95);
+  box-shadow: 0 0 0 2px rgba(255, 200, 60, 0.35);
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .campaign-hint-bar {
+  order: 1;
+  flex: 0 0 auto;
+}
+
+html[data-ui-surface="bb-stack"] #app[data-phase="prep"] #shop-panel .shop-slots {
+  grid-template-columns: repeat(var(--prep-shop-cols, 5), minmax(0, 1fr));
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .board-hint,
+html[data-prep-layout="bb-stack"] .prep-mobile-shop-btn,
+html[data-prep-layout="bb-stack"] .prep-bench-fab,
+html[data-prep-layout="bb-stack"] .prep-mobile-sell-btn {
+  display: none !important;
+}
+
+html[data-prep-layout="bb-stack"] body:has(#app[data-phase="prep"]) #bottom-chrome .bottom-chrome-prep-right .btn-fight-header {
+  display: none !important;
+}
+
+@media (min-width: 1280px) and (min-height: 800px) {
+  html[data-prep-layout="bb-stack"] #app[data-phase="prep"] {
+    max-width: min(480px, 100vw);
+    margin-inline: auto;
+  }
+}

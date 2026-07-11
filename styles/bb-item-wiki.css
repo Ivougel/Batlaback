@@ -1,0 +1,319 @@
+/**
+ * BB Item Wiki — справочник предметов (режим classic).
+ */
+
+.bb-item-wiki-overlay {
+  z-index: var(--z-modal, 9000);
+  background: rgba(6, 4, 2, 0.88);
+  backdrop-filter: blur(6px);
+}
+
+.bb-item-wiki-modal {
+  display: flex;
+  flex-direction: column;
+  width: min(960px, calc(100vw - 24px));
+  max-height: min(92vh, 900px);
+  margin: auto;
+  padding: 0;
+  border-radius: calc(14px * var(--ui-scale, 1));
+  border: 2px solid rgba(185, 145, 65, 0.45);
+  background:
+    linear-gradient(180deg, rgba(44, 30, 20, 0.97) 0%, rgba(16, 10, 6, 0.99) 100%);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.65);
+  overflow: hidden;
+}
+
+.bb-item-wiki-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: calc(12px * var(--ui-scale, 1));
+  padding: calc(14px * var(--ui-scale, 1)) calc(16px * var(--ui-scale, 1)) calc(10px * var(--ui-scale, 1));
+  border-bottom: 1px solid rgba(185, 145, 65, 0.28);
+  flex-shrink: 0;
+}
+
+.bb-item-wiki-heading h2 {
+  margin: 0 0 calc(4px * var(--ui-scale, 1));
+  font-family: Cinzel, Nunito, sans-serif;
+  font-size: calc(1.15rem * var(--ui-scale, 1));
+  color: rgba(255, 230, 170, 0.98);
+}
+
+.bb-item-wiki-subtitle {
+  margin: 0;
+  font-size: calc(0.78rem * var(--ui-scale, 1));
+  color: rgba(210, 190, 150, 0.75);
+}
+
+.bb-item-wiki-close {
+  flex-shrink: 0;
+  width: calc(36px * var(--ui-scale, 1));
+  height: calc(36px * var(--ui-scale, 1));
+  border: 1px solid rgba(185, 145, 65, 0.35);
+  border-radius: calc(8px * var(--ui-scale, 1));
+  background: rgba(0, 0, 0, 0.35);
+  color: rgba(255, 230, 170, 0.9);
+  font-size: calc(1rem * var(--ui-scale, 1));
+  cursor: pointer;
+}
+
+.bb-item-wiki-close:hover {
+  background: rgba(185, 145, 65, 0.18);
+}
+
+.bb-item-wiki-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(6px * var(--ui-scale, 1));
+  padding: calc(8px * var(--ui-scale, 1)) calc(16px * var(--ui-scale, 1));
+  border-bottom: 1px solid rgba(185, 145, 65, 0.18);
+  flex-shrink: 0;
+}
+
+.bb-item-wiki-tab {
+  padding: calc(6px * var(--ui-scale, 1)) calc(14px * var(--ui-scale, 1));
+  border-radius: calc(999px * var(--ui-scale, 1));
+  border: 1px solid rgba(185, 145, 65, 0.28);
+  background: rgba(0, 0, 0, 0.25);
+  color: rgba(220, 200, 160, 0.85);
+  font-size: calc(0.82rem * var(--ui-scale, 1));
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.bb-item-wiki-tab.is-active {
+  background: rgba(185, 145, 65, 0.28);
+  border-color: rgba(255, 210, 90, 0.55);
+  color: rgba(255, 240, 200, 0.98);
+}
+
+.bb-item-wiki-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(8px * var(--ui-scale, 1));
+  padding: calc(10px * var(--ui-scale, 1)) calc(16px * var(--ui-scale, 1));
+  border-bottom: 1px solid rgba(185, 145, 65, 0.12);
+  flex-shrink: 0;
+}
+
+.bb-item-wiki-search {
+  flex: 1 1 180px;
+  min-width: 0;
+  padding: calc(8px * var(--ui-scale, 1)) calc(12px * var(--ui-scale, 1));
+  border-radius: calc(8px * var(--ui-scale, 1));
+  border: 1px solid rgba(185, 145, 65, 0.32);
+  background: rgba(0, 0, 0, 0.35);
+  color: rgba(255, 240, 210, 0.95);
+  font-size: calc(0.85rem * var(--ui-scale, 1));
+}
+
+.bb-item-wiki-search::placeholder {
+  color: rgba(200, 180, 140, 0.5);
+}
+
+.bb-item-wiki-filter {
+  padding: calc(7px * var(--ui-scale, 1)) calc(10px * var(--ui-scale, 1));
+  border-radius: calc(8px * var(--ui-scale, 1));
+  border: 1px solid rgba(185, 145, 65, 0.32);
+  background: rgba(0, 0, 0, 0.35);
+  color: rgba(255, 240, 210, 0.95);
+  font-size: calc(0.82rem * var(--ui-scale, 1));
+}
+
+.bb-item-wiki-count {
+  font-size: calc(0.78rem * var(--ui-scale, 1));
+  color: rgba(200, 180, 140, 0.7);
+  white-space: nowrap;
+}
+
+.bb-item-wiki-tagbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(4px * var(--ui-scale, 1));
+  padding: 0 calc(16px * var(--ui-scale, 1)) calc(10px * var(--ui-scale, 1));
+  flex-shrink: 0;
+}
+
+.bb-item-wiki-tag {
+  padding: calc(3px * var(--ui-scale, 1)) calc(10px * var(--ui-scale, 1));
+  border-radius: calc(999px * var(--ui-scale, 1));
+  border: 1px solid rgba(185, 145, 65, 0.22);
+  background: rgba(0, 0, 0, 0.2);
+  color: rgba(210, 190, 150, 0.85);
+  font-size: calc(0.72rem * var(--ui-scale, 1));
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.bb-item-wiki-tag.is-active {
+  border-color: rgba(255, 210, 90, 0.5);
+  background: rgba(185, 145, 65, 0.22);
+  color: rgba(255, 240, 200, 0.98);
+}
+
+.bb-item-wiki-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: calc(12px * var(--ui-scale, 1)) calc(16px * var(--ui-scale, 1)) calc(18px * var(--ui-scale, 1));
+  -webkit-overflow-scrolling: touch;
+}
+
+.bb-item-wiki-panel[hidden] {
+  display: none !important;
+}
+
+.bb-item-wiki-items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: calc(10px * var(--ui-scale, 1));
+}
+
+.bb-item-wiki-item {
+  border-radius: calc(10px * var(--ui-scale, 1));
+  border: 1px solid rgba(185, 145, 65, 0.22);
+  background: rgba(0, 0, 0, 0.28);
+  padding: calc(10px * var(--ui-scale, 1));
+}
+
+.bb-item-wiki-item--locked {
+  opacity: 0.72;
+}
+
+.bb-item-wiki-item-head {
+  display: flex;
+  align-items: flex-start;
+  gap: calc(10px * var(--ui-scale, 1));
+  margin-bottom: calc(6px * var(--ui-scale, 1));
+}
+
+.bb-item-wiki-item-icon {
+  font-size: calc(1.6rem * var(--ui-scale, 1));
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.bb-item-wiki-item-title h4 {
+  margin: 0 0 calc(2px * var(--ui-scale, 1));
+  font-size: calc(0.92rem * var(--ui-scale, 1));
+}
+
+.bb-item-wiki-item-meta {
+  font-size: calc(0.72rem * var(--ui-scale, 1));
+  color: rgba(200, 180, 140, 0.75);
+}
+
+.bb-item-wiki-item-stats,
+.bb-item-wiki-item-tags,
+.bb-item-wiki-item-slot,
+.bb-item-wiki-item-desc {
+  margin: calc(4px * var(--ui-scale, 1)) 0 0;
+  font-size: calc(0.76rem * var(--ui-scale, 1));
+  line-height: 1.45;
+  color: rgba(220, 205, 170, 0.88);
+}
+
+.bb-item-wiki-item-slot {
+  color: rgba(255, 220, 130, 0.92);
+}
+
+.bb-item-wiki-empty {
+  padding: calc(24px * var(--ui-scale, 1));
+  text-align: center;
+  color: rgba(200, 180, 140, 0.65);
+  font-size: calc(0.88rem * var(--ui-scale, 1));
+}
+
+.bb-item-wiki-mechanics {
+  display: flex;
+  flex-direction: column;
+  gap: calc(14px * var(--ui-scale, 1));
+  max-width: 52rem;
+}
+
+.bb-item-wiki-mechanics section {
+  padding: calc(12px * var(--ui-scale, 1));
+  border-radius: calc(10px * var(--ui-scale, 1));
+  border: 1px solid rgba(185, 145, 65, 0.2);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.bb-item-wiki-mechanics h3 {
+  margin: 0 0 calc(8px * var(--ui-scale, 1));
+  font-size: calc(0.95rem * var(--ui-scale, 1));
+  color: rgba(255, 230, 170, 0.95);
+}
+
+.bb-item-wiki-mechanics p,
+.bb-item-wiki-mechanics li {
+  margin: 0 0 calc(6px * var(--ui-scale, 1));
+  font-size: calc(0.82rem * var(--ui-scale, 1));
+  line-height: 1.5;
+  color: rgba(210, 195, 160, 0.88);
+}
+
+.bb-item-wiki-mechanics ul {
+  margin: 0;
+  padding-left: calc(18px * var(--ui-scale, 1));
+}
+
+/* Intro: кнопка справочника на шаге режима */
+.bb-classic-wiki-entry {
+  margin-top: calc(14px * var(--ui-scale, 1));
+  padding-top: calc(12px * var(--ui-scale, 1));
+  border-top: 1px dashed rgba(185, 145, 65, 0.28);
+  text-align: center;
+}
+
+.bb-classic-wiki-entry.hidden {
+  display: none !important;
+}
+
+.bb-classic-wiki-btn {
+  width: 100%;
+  max-width: 360px;
+  font-weight: 800;
+}
+
+.bb-classic-wiki-hint {
+  margin: calc(8px * var(--ui-scale, 1)) 0 0;
+  font-size: calc(0.76rem * var(--ui-scale, 1));
+  color: rgba(200, 180, 140, 0.72);
+}
+
+.bb-intro-wiki-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(34px * var(--ui-scale, 1));
+  height: calc(34px * var(--ui-scale, 1));
+  margin-right: calc(4px * var(--ui-scale, 1));
+  border-radius: calc(8px * var(--ui-scale, 1));
+  border: 1px solid rgba(185, 145, 65, 0.35);
+  background: rgba(0, 0, 0, 0.35);
+  color: rgba(255, 230, 170, 0.95);
+  font-size: calc(1rem * var(--ui-scale, 1));
+  cursor: pointer;
+}
+
+.bb-intro-wiki-btn.hidden {
+  display: none !important;
+}
+
+.bb-intro-wiki-btn:hover {
+  background: rgba(185, 145, 65, 0.2);
+}
+
+html[data-bb-fidelity="classic"] #app[data-phase="prep"] .btn-bb-item-wiki {
+  display: inline-flex;
+}
+
+.btn-bb-item-wiki {
+  display: none;
+}
+
+body.bb-item-wiki-open {
+  overflow: hidden;
+}

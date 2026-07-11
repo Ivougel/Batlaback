@@ -161,7 +161,7 @@ html[data-battle-hero-placement="flank-arena"] .avatar-thought-slot .arena-equip
   top: 0;
   pointer-events: none;
   z-index: 46;
-  font-size: calc(var(--lobby-roster-emoji-size, 22px) * 1.05);
+  font-size: calc(var(--roster-emoji-size, 22px) * 1.05);
   line-height: 1;
   transform-origin: center center;
   will-change: transform, opacity;
@@ -169,7 +169,7 @@ html[data-battle-hero-placement="flank-arena"] .avatar-thought-slot .arena-equip
 }
 
 .arena-equip-projectile--arrow {
-  font-size: calc(var(--lobby-roster-emoji-size, 22px) * 0.95);
+  font-size: calc(var(--roster-emoji-size, 22px) * 0.95);
 }
 
 .arena-equip-projectile--fireball {

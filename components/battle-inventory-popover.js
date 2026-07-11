@@ -30,18 +30,18 @@ const BattleInventoryPopover = (() => {
     return phase === "battle" || phase === "replay";
   }
 
-  function isLobbySpectateLive() {
-    return typeof isAnyLobbyMode === "function" && isAnyLobbyMode()
-      && typeof lobbyMatches !== "undefined" && lobbyMatches?.length > 0
-      && typeof lobbyState !== "undefined" && !!lobbyState;
-  }
+  function getLiveSideData(team) {
+    const state = getActiveBattleState();
+    if (!state || !state[team]) return null;
 
-  function resolveLobbySpectateFighter(team) {
-    if (!isLobbySpectateLive()) return null;
-    const match = lobbyMatches[lobbySpectateMatchId];
-    if (!match || match.byeFighterId) return null;
-    const fighterId = team === "player" ? match.fighterAId : match.fighterBId;
-    return lobbyState.fighters[fighterId] || null;
+    return {
+      team,
+      scopeKey: "classic",
+      containers: team === "player" ? playerContainers : enemyContainers,
+      items: state[team].items || [],
+      classId: team === "player" ? playerClass : enemyClass,
+      displayName: null,
+    };
   }
 
   function ensurePopoverEl(team) {
@@ -100,32 +100,6 @@ const BattleInventoryPopover = (() => {
       return getDisplayBattleState() || battleState;
     }
     return battleState;
-  }
-
-  function getLiveSideData(team) {
-    const state = getActiveBattleState();
-    if (!state || !state[team]) return null;
-
-    const lobbyFighter = resolveLobbySpectateFighter(team);
-    if (lobbyFighter) {
-      return {
-        team,
-        scopeKey: `lobby:${lobbySpectateMatchId}`,
-        containers: lobbyFighter.containers,
-        items: state[team].items || [],
-        classId: lobbyFighter.classId,
-        displayName: lobbyFighter.name,
-      };
-    }
-
-    return {
-      team,
-      scopeKey: "solo",
-      containers: team === "player" ? playerContainers : enemyContainers,
-      items: state[team].items || [],
-      classId: team === "player" ? playerClass : enemyClass,
-      displayName: null,
-    };
   }
 
   function getTeamTitle(team, classId, data = null) {

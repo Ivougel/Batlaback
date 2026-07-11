@@ -42,14 +42,6 @@ function bindPrepModChipTooltips(root = null) {
     if (typeof bindPointerTapTooltip === "function") {
       bindPointerTapTooltip(chip, (clientX, clientY) => showAt(clientX, clientY, true));
     }
-    chip.addEventListener("mouseenter", (event) => {
-      if (isTouchUi() || dragPayload) return;
-      showAt(event.clientX, event.clientY);
-    });
-    chip.addEventListener("mouseleave", () => {
-      if (isTouchUi() || sidebarTooltipPinned) return;
-      if (sidebarTooltipSource === "mod-chip") hideSidebarTooltip();
-    });
     chip.addEventListener("keydown", (event) => {
       if (event.key !== "Enter" && event.key !== " ") return;
       event.preventDefault();
@@ -97,22 +89,7 @@ function bindPrepCompanionTooltip(root = document) {
     if (typeof bindPointerTapTooltip === "function") {
       bindPointerTapTooltip(btn, (clientX, clientY) => showAt(clientX, clientY, true));
     }
-    btn.addEventListener("mouseenter", (e) => {
-      if (isSyntheticMouseFromTouch()) return;
-      if (!prepTooltipsEnabled) return;
-      cancelScheduledTooltipHide();
-      showAt(e.clientX, e.clientY, false);
-    });
-    btn.addEventListener("mousemove", (e) => {
-      if (isSyntheticMouseFromTouch()) return;
-      if (sidebarTooltipSource !== "companion") return;
-      positionSidebarTooltip(e.clientX, e.clientY, "viewport", "companion");
-    });
-    btn.addEventListener("mouseleave", () => {
-      if (sidebarTooltipPinned || sidebarTooltipSource !== "companion") return;
-      requestHideSidebarTooltip();
-    });
-    btn.style.cursor = "help";
+    btn.style.cursor = "pointer";
   });
 }
 
@@ -128,20 +105,7 @@ function bindCompanionCardTooltips() {
     if (typeof bindPointerTapTooltip === "function") {
       bindPointerTapTooltip(btn, (clientX, clientY) => showAt(clientX, clientY, true));
     }
-    btn.addEventListener("mouseenter", (e) => {
-      if (isSyntheticMouseFromTouch()) return;
-      cancelScheduledTooltipHide();
-      showAt(e.clientX, e.clientY, false);
-    });
-    btn.addEventListener("mousemove", (e) => {
-      if (isSyntheticMouseFromTouch()) return;
-      positionSidebarTooltip(e.clientX, e.clientY, "viewport", "companion");
-    });
-    btn.addEventListener("mouseleave", () => {
-      if (sidebarTooltipPinned || sidebarTooltipSource !== "companion") return;
-      requestHideSidebarTooltip();
-    });
-    btn.style.cursor = "help";
+    btn.style.cursor = "pointer";
   });
 }
 
@@ -268,6 +232,14 @@ function isTabletSidePrepTooltipDock() {
   return isLivePrepSession() && document.documentElement.dataset.uiSurface === "tablet-side";
 }
 
+function isBBStackPrepTooltipDock() {
+  return isLivePrepSession() && document.documentElement.dataset.prepLayout === "bb-stack";
+}
+
+function usesPrepItemTooltipDock() {
+  return isMobilePrepPortrait() || isTabletSidePrepTooltipDock() || isBBStackPrepTooltipDock();
+}
+
 function getPrepHeroGridTooltipZone(margin = 10) {
   const heroLayer = document.getElementById("prep-character-layer");
   const fieldIsland = document.getElementById("prep-field-island");
@@ -360,7 +332,7 @@ function syncPrepTooltipDockVisibility() {
     return;
   }
 
-  if (isMobilePrepPortrait() || isTabletSidePrepTooltipDock()) {
+  if (usesPrepItemTooltipDock()) {
     const hasItemTip = el && !el.classList.contains("hidden")
       && !el.classList.contains("sidebar-tooltip--floating");
     const shopHeroTip = hasItemTip && isTabletSideShopHeroTooltipDock();
@@ -368,7 +340,10 @@ function syncPrepTooltipDockVisibility() {
     dock.classList.toggle("hidden", !hasItemTip);
     dock.classList.toggle("prep-tooltip-dock--item", hasItemTip);
     dock.classList.toggle("prep-tooltip-dock--hero-portrait", shopHeroTip);
-    dock.classList.toggle("prep-tooltip-dock--hero-grid", isTabletSidePrepTooltipDock() && hasItemTip && !shopHeroTip);
+    dock.classList.toggle(
+      "prep-tooltip-dock--hero-grid",
+      (isTabletSidePrepTooltipDock() || isBBStackPrepTooltipDock()) && hasItemTip && !shopHeroTip,
+    );
     if (hasItemTip) positionPrepTooltipDock();
     return;
   }
@@ -397,7 +372,7 @@ function shouldUsePrepTooltipDock(placement) {
   const ctx = placement || sidebarTooltipSource;
   const itemCtx = ctx === "shop" || ctx === "bench" || ctx === "field" || ctx === "inventory" || ctx === "doll";
   if (!itemCtx) return false;
-  return isMobilePrepPortrait() || isTabletSidePrepTooltipDock();
+  return usesPrepItemTooltipDock();
 }
 
 function positionMobilePrepTooltipDock(dock) {
@@ -527,6 +502,78 @@ function positionTabletSidePrepTooltipDock(dock) {
   dock.style.height = `${zoneH}px`;
 }
 
+function positionBBStackPrepTooltipDock(dock) {
+  const root = document.documentElement;
+  const uiScale = parseFloat(getComputedStyle(root).getPropertyValue("--ui-scale")) || 1;
+  const margin = Math.round(6 * uiScale);
+  const tipCol = document.getElementById("bb-prep-inventory-tip");
+  const shell = document.querySelector(".bb-prep-inventory-shell");
+  const fieldCol = document.getElementById("prep-field-column");
+  const topBar = document.getElementById("prep-top-bar");
+  const bottomChrome = document.getElementById("bottom-chrome");
+  const vv = window.visualViewport;
+  const viewLeft = vv?.offsetLeft ?? 0;
+  const viewTop = vv?.offsetTop ?? 0;
+  const viewW = vv?.width ?? window.innerWidth;
+  const viewH = vv?.height ?? window.innerHeight;
+  const viewRight = viewLeft + viewW;
+  const viewBottom = (bottomChrome?.getBoundingClientRect().top ?? viewTop + viewH) - margin;
+  const topLimit = (topBar?.getBoundingClientRect().bottom ?? viewTop) + margin;
+
+  const tooltipShareRaw = parseFloat(getComputedStyle(root).getPropertyValue("--bb-prep-tooltip-col-share"));
+  const tooltipShare = Number.isFinite(tooltipShareRaw) && tooltipShareRaw > 0
+    ? tooltipShareRaw / 100
+    : 0.28;
+
+  let left;
+  let width;
+  let top = topLimit;
+
+  const tipRect = tipCol?.getBoundingClientRect();
+  const shellRect = shell?.getBoundingClientRect();
+  const fieldRect = fieldCol?.getBoundingClientRect();
+
+  if (tipRect && tipRect.width >= 48 && tipRect.height >= 24) {
+    left = tipRect.left + margin;
+    width = tipRect.width - margin * 2;
+    top = Math.max(topLimit, tipRect.top + margin);
+  } else if (shellRect && shellRect.width >= 120) {
+    width = Math.max(120, shellRect.width * tooltipShare - margin * 2);
+    left = shellRect.right - shellRect.width * tooltipShare + margin;
+    top = Math.max(topLimit, shellRect.top + margin);
+  } else if (fieldRect && fieldRect.width >= 160) {
+    width = Math.max(120, fieldRect.width * tooltipShare - margin * 2);
+    left = fieldRect.right - fieldRect.width * tooltipShare + margin;
+    top = Math.max(topLimit, fieldRect.top + margin);
+  } else {
+    width = Math.round(228 * uiScale);
+    left = viewRight - width - margin;
+  }
+
+  width = Math.max(120, Math.min(width, viewW - margin * 2));
+  left = Math.max(viewLeft + margin, Math.min(left, viewRight - width - margin));
+  const maxHeight = Math.max(160, Math.min(viewBottom - top, Math.round(viewH * 0.72)));
+
+  const leftPct = ((left - viewLeft) / viewW) * 100;
+  const widthPct = (width / viewW) * 100;
+  const topPct = ((top - viewTop) / viewH) * 100;
+
+  root.style.setProperty("--bb-prep-tooltip-left", `${leftPct.toFixed(3)}%`);
+  root.style.setProperty("--bb-prep-tooltip-width", `${widthPct.toFixed(3)}%`);
+  root.style.setProperty("--bb-prep-tooltip-top", `${topPct.toFixed(3)}%`);
+  root.style.setProperty("--bb-prep-tooltip-max-h", `${Math.round(maxHeight)}px`);
+
+  dock.style.setProperty("position", "fixed", "important");
+  dock.style.setProperty("left", `${Math.round(left)}px`, "important");
+  dock.style.setProperty("top", `${Math.round(top)}px`, "important");
+  dock.style.setProperty("width", `${Math.round(width)}px`, "important");
+  dock.style.setProperty("max-height", `${Math.round(maxHeight)}px`, "important");
+  dock.style.setProperty("height", "auto", "important");
+  dock.style.setProperty("right", "auto", "important");
+  dock.style.setProperty("bottom", "auto", "important");
+  dock.style.zIndex = "9500";
+}
+
 function positionPrepTooltipDock() {
   const dock = document.getElementById("prep-tooltip-dock");
   if (!dock) return;
@@ -538,6 +585,11 @@ function positionPrepTooltipDock() {
 
   if (isTabletSidePrepTooltipDock()) {
     positionTabletSidePrepTooltipDock(dock);
+    return;
+  }
+
+  if (isBBStackPrepTooltipDock()) {
+    positionBBStackPrepTooltipDock(dock);
     return;
   }
 
@@ -589,22 +641,11 @@ function positionPrepTooltipDock() {
 }
 
 function scheduleHideSidebarTooltip() {
-  if (!isTouchUi()) {
-    hideSidebarTooltip();
-    return;
-  }
-  cancelScheduledTooltipHide();
-  tooltipHideTimer = window.setTimeout(() => {
-    tooltipHideTimer = null;
-    hideSidebarTooltip();
-  }, TOOLTIP_CONFIG.hideDelay);
+  /* Sticky tooltips: dismiss only via bindGlobalTooltipDismiss. */
 }
 
 function requestHideSidebarTooltip() {
-  if (isSyntheticMouseFromTouch()) return;
-  if (sidebarTooltipPinned) return;
-  if (isTouchUi()) scheduleHideSidebarTooltip();
-  else hideSidebarTooltip();
+  /* Sticky tooltips: dismiss only via bindGlobalTooltipDismiss. */
 }
 
 function isSidebarTooltipVisible() {
@@ -623,7 +664,7 @@ function dismissSidebarTooltipFromPointer(e) {
   if (!isSidebarTooltipVisible()) return false;
   tooltipDismissGesture = {
     pointerId: e?.pointerId ?? null,
-    sourceEl: e?.target?.closest?.(".shop-card, .bench-card, .doll-slot, .profile-avatar, .combat-feed-msg-text--hinted, .profile-status-chip, .profile-stack-chip, .prep-companion-tip, .enh-slot") || null,
+    sourceEl: e?.target?.closest?.(".shop-card, .bench-card, .prep-storage-body, .doll-slot, .profile-avatar, .combat-feed-msg-text--hinted, .profile-status-chip, .profile-stack-chip, .prep-companion-tip, .enh-slot") || null,
   };
   hideSidebarTooltip();
   tooltipItem = null;
@@ -756,6 +797,7 @@ function handlePrepTooltipsHotkey(e) {
     || isRecipeBookOpen()
     || isPopupOpen("class-overlay")
     || isPopupOpen("overlay")
+    || isPopupOpen("bb-run-complete-overlay")
     || isPopupOpen("battle-result-overlay")
   ) {
     return false;
@@ -995,10 +1037,69 @@ function isDescribeEffectFallback(e, def) {
 }
 
 function getStrongCanonicalEffectTexts(def) {
-  return (def.effects || [])
-    .filter((e) => !isDescribeEffectFallback(e, def))
-    .map((e) => describeEffect(e, def))
-    .filter(Boolean);
+  const seen = new Set();
+  const out = [];
+  for (const e of def.effects || []) {
+    if (isDescribeEffectFallback(e, def)) continue;
+    const text = describeEffect(e, def);
+    if (!text) continue;
+    const key = normalizeTooltipCompareText(text);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push(text);
+  }
+  return out;
+}
+
+function getPlacementSlotCanonicalTexts(itemId) {
+  if (typeof getPlacementSlotsForItem !== "function") return [];
+  const slots = getPlacementSlotsForItem(itemId);
+  if (!slots.length) return [];
+
+  const seen = new Set();
+  const out = [];
+  const push = (text) => {
+    if (!text) return;
+    const key = normalizeTooltipCompareText(text);
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    out.push(text);
+  };
+
+  if (typeof getPlacementSlotTooltipLines === "function") {
+    getPlacementSlotTooltipLines(itemId).forEach(push);
+  }
+  slots.forEach((slot) => {
+    push((slot.desc || "").replace(/^[⭐◆]\s*/, ""));
+  });
+  return out;
+}
+
+function getTooltipCanonicalTexts(def) {
+  return [
+    ...getStrongCanonicalEffectTexts(def),
+    ...getPlacementSlotCanonicalTexts(def.id),
+  ];
+}
+
+function dedupeTooltipLines(lines) {
+  const kept = [];
+  const canonicalForDedupe = [];
+  for (const line of lines) {
+    if (line.sep || line.style === "title" || line.style === "label") {
+      kept.push(line);
+      continue;
+    }
+    const text = line.text;
+    if (!text) {
+      kept.push(line);
+      continue;
+    }
+    if (isTooltipTextCoveredBy(text, canonicalForDedupe)) continue;
+    kept.push(line);
+    canonicalForDedupe.push(text);
+  }
+  return kept;
 }
 
 function normalizeTooltipCompareText(text) {
@@ -1097,7 +1198,7 @@ function buildItemTooltipLines(def, contentItem, rotation, context = "field", op
     const containerDesc = typeof getItemTooltipDescription === "function"
       ? getItemTooltipDescription(def)
       : def.description;
-    const containerCanonicalTexts = getStrongCanonicalEffectTexts(def);
+    const containerCanonicalTexts = getTooltipCanonicalTexts(def);
     const filteredContainerDesc = containerDesc
       ? filterRedundantTooltipText(containerDesc, containerCanonicalTexts)
       : null;
@@ -1124,7 +1225,10 @@ function buildItemTooltipLines(def, contentItem, rotation, context = "field", op
     lines.push({ text: `${shape.length} кл.`, style: "sub", color: "#8b949e" });
   }
 
-  const canonicalEffectTexts = getStrongCanonicalEffectTexts(def);
+  const placementSlotLines = typeof getPlacementSlotTooltipLines === "function"
+    ? getPlacementSlotTooltipLines(def.id)
+    : [];
+  const canonicalEffectTexts = getTooltipCanonicalTexts(def);
 
   const tooltipDescription = typeof getItemTooltipDescription === "function"
     ? getItemTooltipDescription(def)
@@ -1156,11 +1260,9 @@ function buildItemTooltipLines(def, contentItem, rotation, context = "field", op
     });
   }
 
-  if (typeof getPlacementSlotTooltipLines === "function") {
-    getPlacementSlotTooltipLines(def.id).forEach((line) => {
-      lines.push({ text: line, style: "normal", color: "#f0c14b" });
-    });
-  }
+  placementSlotLines.forEach((line) => {
+    lines.push({ text: line, style: "normal", color: "#f0c14b" });
+  });
 
   if (isGemItem(def.id) && context === "field") {
     lines.push({ text: "Перетащите на предмет с сокетом для вставки", style: "normal", color: "#bc8cff" });
@@ -1219,14 +1321,6 @@ function buildItemTooltipLines(def, contentItem, rotation, context = "field", op
     lines.push({ text: `Только: ${c?.name || def.classRestriction}`, style: "normal", color: "#f0c14b" });
   }
 
-  getUniqueItemSynergies(def).forEach((s) => {
-    const desc = typeof formatSynergyHumanDesc === "function"
-      ? formatSynergyHumanDesc(s)
-      : (typeof localizeSynergyDesc === "function" ? localizeSynergyDesc(s.desc) : s.desc);
-    if (isTooltipTextCoveredBy(desc, canonicalEffectTexts)) return;
-    lines.push({ text: desc, style: "normal", color: "#79c0ff" });
-  });
-
   if (typeof getCraftTooltipLines === "function") {
     const craftSide = typeof prepViewSide !== "undefined" ? prepViewSide : "player";
     getCraftTooltipLines(def.id, craftSide).forEach((line) => lines.push(line));
@@ -1262,7 +1356,7 @@ function buildItemTooltipLines(def, contentItem, rotation, context = "field", op
     }
   }
 
-  return lines;
+  return dedupeTooltipLines(lines);
 }
 
 function getTooltipBounds(boundsKind = "viewport") {
@@ -1299,8 +1393,60 @@ function isPointerOverPrepSidebar(clientX, clientY) {
   const hit = document.elementFromPoint(clientX, clientY);
   if (!hit) return false;
   return !!hit.closest(
-    "#shop-panel, #prep-bench-popover, #bench-panel, #bench-slots, .bench-card, #btn-prep-bench-fab, #prep-shop-popover, .run-stats-anchor, #prep-run-stats-anchor, #run-stats-popover, #sidebar-tooltip, #prep-tooltip-dock, #recipe-book-overlay, #combat-feed-dock, #combat-feed-panel, #combat-feed-scroll, #prep-doll-layer, .lobby2p-col-shop, .lobby2p-col-bench, .lobby2p-shop-slots, .lobby2p-bench-slots",
+    "#shop-panel, #prep-bench-popover, #bench-panel, #bench-slots, .bench-card, #btn-prep-bench-fab, #prep-shop-popover, .run-stats-anchor, #prep-run-stats-anchor, #run-stats-popover, #sidebar-tooltip, #prep-tooltip-dock, #recipe-book-overlay, #bb-item-wiki-overlay, #combat-feed-dock, #combat-feed-panel, #combat-feed-scroll, #prep-doll-layer",
   );
+}
+
+function isPointerOverPrepStorage(clientX, clientY) {
+  if (clientX == null || clientY == null) return false;
+  if (typeof shouldUsePrepStoragePhysics !== "function" || !shouldUsePrepStoragePhysics()) return false;
+  const hit = document.elementFromPoint(clientX, clientY);
+  if (hit?.closest?.(".prep-storage-body, #prep-storage-mount, .prep-storage-arena")) return true;
+  return typeof PrepStoragePhysics !== "undefined" && PrepStoragePhysics.isPointerInside(clientX, clientY);
+}
+
+function resolvePrepStorageBenchEntry(clientX, clientY) {
+  if (typeof shouldUsePrepStoragePhysics !== "function" || !shouldUsePrepStoragePhysics()) return null;
+  const hit = document.elementFromPoint(clientX, clientY);
+  const bodyEl = hit?.closest?.(".prep-storage-body");
+  const side = typeof prepViewSide !== "undefined" ? prepViewSide : "player";
+  const st = typeof getSideState === "function" ? getSideState(side) : null;
+  if (!st?.bench?.length) return null;
+
+  if (bodyEl) {
+    const idx = Number(bodyEl.dataset.bench);
+    const entry = Number.isFinite(idx) && idx >= 0 ? st.bench[idx] : null;
+    if (entry?.uid === bodyEl.dataset.uid) {
+      return { entry, sourceEl: bodyEl };
+    }
+    const byUid = st.bench.find((e) => e.uid === bodyEl.dataset.uid);
+    if (byUid) return { entry: byUid, sourceEl: bodyEl };
+  }
+
+  if (typeof PrepStoragePhysics === "undefined") return null;
+  const benchIndex = PrepStoragePhysics.hitTestBenchIndex(clientX, clientY);
+  if (benchIndex < 0) return null;
+  const entry = st.bench[benchIndex];
+  if (!entry) return null;
+  const sourceEl = document.querySelector(`.prep-storage-body[data-uid="${entry.uid}"]`);
+  return { entry, sourceEl };
+}
+
+function tryShowPrepStorageTooltip(clientX, clientY) {
+  if (typeof prepTooltipsEnabled !== "undefined" && !prepTooltipsEnabled) return false;
+  if (typeof dragPayload !== "undefined" && dragPayload) return false;
+  const resolved = resolvePrepStorageBenchEntry(clientX, clientY);
+  if (!resolved) return false;
+  showSidebarTooltipAt(
+    clientX,
+    clientY,
+    resolved.entry.itemId,
+    resolved.entry,
+    "bench",
+    resolved.sourceEl,
+    { pinned: true },
+  );
+  return true;
 }
 
 function isPointerOverCombatFeed(clientX, clientY) {
@@ -1534,7 +1680,7 @@ function positionSidebarTooltip(clientX, clientY, boundsKind = "viewport", place
 function syncFieldTooltip() {
   try {
     if (!tooltipItem || dragPayload) {
-      if (fieldTooltipVisible && sidebarTooltipSource !== "combat-feed") {
+      if (fieldTooltipVisible && sidebarTooltipSource !== "combat-feed" && !sidebarTooltipPinned) {
         hideSidebarTooltip();
       }
       return;
@@ -1545,7 +1691,7 @@ function syncFieldTooltip() {
     }
 
     sidebarTooltipSource = "field";
-    sidebarTooltipPinned = false;
+    sidebarTooltipPinned = true;
     const { itemId, x, y, contentItem, rotation } = tooltipItem;
     const el = document.getElementById("sidebar-tooltip");
     const def = ITEM_CATALOG[itemId];
@@ -1567,12 +1713,41 @@ function syncFieldTooltip() {
   }
 }
 
+function pickClosestEntityAtCanvasPoint(mx, my, entities, team, pad = 0) {
+  let best = null;
+  let bestDist = Infinity;
+  for (let i = entities.length - 1; i >= 0; i -= 1) {
+    const entity = entities[i];
+    getItemCells(entity).forEach(([c, r]) => {
+      const rect = cellRect(team, c, r);
+      if (mx < rect.x - pad || mx > rect.x + rect.w + pad || my < rect.y - pad || my > rect.y + rect.h + pad) {
+        return;
+      }
+      const cx = rect.x + rect.w / 2;
+      const cy = rect.y + rect.h / 2;
+      const dist = Math.hypot(mx - cx, my - cy);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = entity;
+      }
+    });
+  }
+  return best;
+}
+
 function findItemAtCanvasPoint(mx, my, items, team = "player") {
+  if (!isTouchUi()) {
+    const picked = pickClosestEntityAtCanvasPoint(mx, my, items, team);
+    if (picked) return picked;
+    const col = xToCol(mx, team);
+    const row = yToRow(my, team);
+    return findItemAtSlot(items, col, row);
+  }
+
   const col = xToCol(mx, team);
   const row = yToRow(my, team);
   const exact = findItemAtSlot(items, col, row);
   if (exact) return exact;
-  if (!isTouchUi()) return null;
 
   const stride = gridStrideFor(team);
   const pad = TOOLTIP_CONFIG.touchPadding;
@@ -1599,11 +1774,14 @@ function findItemAtCanvasPoint(mx, my, items, team = "player") {
 }
 
 function findContainerAtCanvasPoint(mx, my, containers, team = "player") {
+  if (!isTouchUi()) {
+    return pickClosestEntityAtCanvasPoint(mx, my, containers, team);
+  }
+
   const col = xToCol(mx, team);
   const row = yToRow(my, team);
   const exact = findContainerAtCell(containers, col, row);
   if (exact) return exact;
-  if (!isTouchUi()) return null;
 
   const stride = gridStrideFor(team);
   const pad = TOOLTIP_CONFIG.touchPadding;
@@ -1673,20 +1851,17 @@ function updateTooltip(mx, my) {
     return;
   }
 
-  const sidebarEl = document.getElementById("sidebar-tooltip");
-  const sidebarHoverActive = sidebarEl
-    && !sidebarEl.classList.contains("hidden")
-    && (sidebarTooltipSource === "shop" || sidebarTooltipSource === "bench"
-      || sidebarTooltipSource === "combat-feed" || sidebarTooltipSource === "doll"
-      || sidebarTooltipSource === "inventory");
-  if (sidebarHoverActive) {
+  const stickyTooltip = isSidebarTooltipVisible() && sidebarTooltipPinned;
+  if (stickyTooltip && sidebarTooltipSource !== "field") {
     return;
   }
 
   const sources = getTooltipBoardSources();
   if (!sources) {
-    tooltipItem = null;
-    syncFieldTooltip();
+    if (!stickyTooltip) {
+      tooltipItem = null;
+      syncFieldTooltip();
+    }
     return;
   }
 
@@ -1712,8 +1887,10 @@ function updateTooltip(mx, my) {
         }
       }
     }
-    tooltipItem = null;
-    syncFieldTooltip();
+    if (!stickyTooltip) {
+      tooltipItem = null;
+      syncFieldTooltip();
+    }
     return;
   }
 
@@ -1755,8 +1932,10 @@ function updateTooltip(mx, my) {
     }
   }
 
-  tooltipItem = null;
-  syncFieldTooltip();
+  if (!stickyTooltip) {
+    tooltipItem = null;
+    syncFieldTooltip();
+  }
 }
 
 function showSidebarTooltipAt(clientX, clientY, itemId, contentItem, context = "shop", sourceEl = null, options = {}) {
@@ -1765,7 +1944,7 @@ function showSidebarTooltipAt(clientX, clientY, itemId, contentItem, context = "
   const def = ITEM_CATALOG[itemId];
   if (!el || !def) return;
   cancelScheduledTooltipHide();
-  sidebarTooltipPinned = !!options.pinned;
+  sidebarTooltipPinned = options.pinned !== false;
   sidebarTooltipSource = context;
   if (typeof syncDomSparkleFromTooltipSource === "function") {
     syncDomSparkleFromTooltipSource(sourceEl);
@@ -1809,7 +1988,7 @@ function showSidebarTooltipAt(clientX, clientY, itemId, contentItem, context = "
 }
 
 function showSidebarTooltip(e, itemId, contentItem, context = "shop") {
-  showSidebarTooltipAt(e.clientX, e.clientY, itemId, contentItem, context, e.currentTarget);
+  showSidebarTooltipAt(e.clientX, e.clientY, itemId, contentItem, context, e.currentTarget, { pinned: true });
 }
 
 function moveSidebarTooltip(e, boundsKind = "viewport", placement = "auto") {
@@ -1910,30 +2089,8 @@ function tryShowPrepPointerTapTooltip(clientX, clientY) {
 
 function bindItemTooltipEvents(el, itemId, contentItem, context = "shop") {
   if (!itemId || !el) return;
-  const boundsKind = context === "shop" ? "shop"
-    : context === "bench" ? "bench"
-      : context === "field" ? "field"
-        : context === "inventory" ? "viewport"
-          : "viewport";
-  const refresh = (e) => {
-    if (!prepTooltipsEnabled) return;
-    const liveItemId = el.dataset.itemId || itemId;
-    if (!liveItemId) return;
-    showSidebarTooltip(e, liveItemId, contentItem, context);
-  };
-
-  el.addEventListener("mouseenter", (e) => {
-    if (isSyntheticMouseFromTouch()) return;
-    cancelScheduledTooltipHide();
-    refresh(e);
-  });
-  el.addEventListener("mousemove", (e) => {
-    if (isSyntheticMouseFromTouch()) return;
-    cancelScheduledTooltipHide();
-    refresh(e);
-    moveSidebarTooltip(e, boundsKind, context);
-  });
-  el.addEventListener("mouseleave", requestHideSidebarTooltip);
+  if (el.dataset.itemTooltipBound === "1") return;
+  el.dataset.itemTooltipBound = "1";
 
   bindPointerTapTooltip(el, (clientX, clientY) => {
     if (!prepTooltipsEnabled) return;
@@ -1943,7 +2100,7 @@ function bindItemTooltipEvents(el, itemId, contentItem, context = "shop") {
   });
 
   if (context === "shop" || context === "bench" || context === "field" || context === "inventory") {
-    el.style.cursor = "help";
+    el.style.cursor = "pointer";
   }
   if (typeof bindItemEmojiSparklePointer === "function") {
     bindItemEmojiSparklePointer(el);
@@ -1956,3 +2113,5 @@ window.getPrepHeroPortraitTooltipZone = getPrepHeroPortraitTooltipZone;
 window.syncPrepTooltipDockVisibility = syncPrepTooltipDockVisibility;
 window.isLivePrepSession = isLivePrepSession;
 window.bindPointerTapTooltip = bindPointerTapTooltip;
+window.tryShowPrepStorageTooltip = tryShowPrepStorageTooltip;
+window.isPointerOverPrepStorage = isPointerOverPrepStorage;

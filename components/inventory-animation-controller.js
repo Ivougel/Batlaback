@@ -155,6 +155,15 @@ const InventoryAnimationController = (() => {
 
   function applyDragGhostStyles(el, arcRotation = null, opts = {}) {
     if (!el) return;
+    const spinDeg = getGhostSpinCssDeg();
+    if (opts.stable) {
+      el.style.transform = spinDeg
+        ? `translate(-50%, -50%) rotate(${spinDeg.toFixed(2)}deg)`
+        : "translate(-50%, -50%)";
+      el.style.filter = "drop-shadow(0 4px 14px rgba(0, 0, 0, 0.45))";
+      el.style.opacity = "0.94";
+      return;
+    }
     const fullSize = !!opts.fullSize;
     const speed = Math.hypot(dragVelX, dragVelY);
     const swingLimit = fullSize ? 12 : 8;
@@ -174,7 +183,6 @@ const InventoryAnimationController = (() => {
       : arcRotation != null
         ? arcRotation * 0.35
         : Math.max(-10, Math.min(10, dragVelX * 0.12));
-    const spinDeg = getGhostSpinCssDeg();
     const spinScale = spinDeg > 0 ? 1 + Math.sin((spinDeg / 90) * Math.PI) * 0.045 : 1;
     el.style.transform = `translate(-50%, -50%) translate(${(swingX + orbitX).toFixed(2)}px, ${(swingY + floatY + orbitY).toFixed(2)}px) scale(${(scale * spinScale).toFixed(4)}) rotate(${(tilt + spinDeg).toFixed(2)}deg)`;
     el.style.filter = fullSize
@@ -344,8 +352,8 @@ const InventoryAnimationController = (() => {
   }
 
   function drawCellReactions(ctx, team) {
-    if (typeof BattleFxTier !== "undefined" && BattleFxTier.prepLobbyFxReduced?.()
-      && BattleFxTier.prepLobbyFxReduced()) {
+    if (typeof BattleFxTier !== "undefined" && BattleFxTier.prepFxReduced?.()
+      && BattleFxTier.prepFxReduced()) {
       return;
     }
     cellPulses.forEach((pulse, key) => {
@@ -409,19 +417,11 @@ const InventoryAnimationController = (() => {
     const ghostItem = { itemId, col, row, rotation: rotation || 0, uid: "__prep-drop-preview__" };
     const shape = rotateShape(def.shape, rotation || 0);
     const fill = itemPreviewFill(def.color, valid);
-    const stroke = valid ? "rgba(120,220,140,0.75)" : "rgba(255,120,110,0.6)";
 
-    shape.forEach(([dx, dy]) => {
-      const { x, y, w, h } = cellRect(team, col + dx, row + dy);
-      ctx.save();
-      ctx.fillStyle = fill;
-      roundRect(x + CELL_TILE_PAD, y + CELL_TILE_PAD, w - CELL_TILE_PAD * 2, h - CELL_TILE_PAD * 2, 5);
-      ctx.fill();
-      ctx.strokeStyle = stroke;
-      ctx.lineWidth = valid ? 2 : 1.5;
-      roundRect(x + CELL_TILE_PAD, y + CELL_TILE_PAD, w - CELL_TILE_PAD * 2, h - CELL_TILE_PAD * 2, 5);
-      ctx.stroke();
-      ctx.restore();
+    drawMergedShapeCells(ctx, team, col, row, shape, {
+      fillStyle: fill,
+      bridgeGaps: true,
+      inset: 0,
     });
 
     ctx.save();
@@ -459,11 +459,10 @@ const InventoryAnimationController = (() => {
       if (!itemDef) return;
       ctx.save();
       ctx.globalAlpha = valid ? 0.24 : 0.16;
-      getItemCells(item).forEach(([c, r]) => {
-        const { x, y, w, h } = cellRect(team, c, r);
-        ctx.fillStyle = "rgba(210,153,34,0.55)";
-        roundRect(x + CELL_TILE_PAD, y + CELL_TILE_PAD, w - CELL_TILE_PAD * 2, h - CELL_TILE_PAD * 2, 5);
-        ctx.fill();
+      drawMergedOccupiedCells(ctx, team, getItemCells(item), {
+        fillStyle: "rgba(210,153,34,0.55)",
+        bridgeGaps: true,
+        inset: 0,
       });
       if (typeof drawPlacedItemIcons === "function") {
         drawPlacedItemIcons(ctx, itemDef, item, (c, r) => cellRect(team, c, r));
@@ -474,60 +473,61 @@ const InventoryAnimationController = (() => {
 
   function drawEnhancedDropPreview(ctx, team, st) {
     if (typeof dragPayload === "undefined" || !dragPayload) return;
+    const shadowPlacement = typeof getPrepDragShadowPlacement === "function"
+      ? getPrepDragShadowPlacement(st, team)
+      : null;
+    if (!shadowPlacement) return;
+
     const logicalPlacement = typeof getPrepDropPlacement === "function"
       ? getPrepDropPlacement(st, team)
       : null;
-    if (!logicalPlacement) return;
 
     const visual = getDragVisualRotation();
+    const def = ITEM_CATALOG[dragPayload.itemId];
+    if (!def) return;
 
-    if (logicalPlacement.kind === "item" && logicalPlacement.valid && !visual.spinning) {
+    if (logicalPlacement?.kind === "item" && logicalPlacement.valid && !visual.spinning) {
       const nextRot = logicalPlacement.rotation || 0;
       if ((dragPayload.rotation || 0) !== nextRot) {
         dragPayload.rotation = nextRot;
       }
     }
 
-    const visualPlacement = resolveVisualDropPlacement(st, team, logicalPlacement);
+    const visualPlacement = visual.spinning
+      ? resolveVisualDropPlacement(st, team, shadowPlacement)
+      : shadowPlacement;
     const pulse = 0.5 + Math.sin(spreadPhase * 5) * 0.12;
     const { col, row, rotation, valid } = visualPlacement;
-    const shape = rotateShape(ITEM_CATALOG[dragPayload.itemId].shape, rotation || 0);
+    const shape = rotateShape(def.shape, rotation || 0);
+    const fillColor = itemPreviewFill(def.color, valid);
+    const strokeColor = valid
+      ? `rgba(130,255,160,${0.92 + pulse * 0.06})`
+      : `rgba(255,110,100,${0.9 + pulse * 0.05})`;
+    const strokeW = Math.max(2, typeof uiPx === "function" ? uiPx(2.5) : 2.5);
 
     withDragSpinTransform(ctx, team, col, row, shape, visual.spinDeg, () => {
-      shape.forEach(([dx, dy]) => {
-        const { x, y, w, h } = cellRect(team, col + dx, row + dy);
-        ctx.save();
-        ctx.fillStyle = valid
-          ? `rgba(63,185,80,${0.32 + pulse * 0.18})`
-          : `rgba(248,81,73,${0.28 + pulse * 0.12})`;
-        roundRect(x + 3, y + 3, w - 6, h - 6, 5);
-        ctx.fill();
-        ctx.strokeStyle = valid
-          ? `rgba(120,220,140,${0.4 + pulse * 0.12})`
-          : `rgba(255,120,110,${0.3 + pulse * 0.1})`;
-        ctx.lineWidth = valid ? 2 : 1.5;
-        roundRect(x + 3, y + 3, w - 6, h - 6, 5);
-        ctx.stroke();
-        ctx.restore();
+      drawMergedShapeCells(ctx, team, col, row, shape, {
+        fillStyle: fillColor,
+        strokeStyle: strokeColor,
+        lineWidth: strokeW,
+        bridgeGaps: true,
+        inset: 0,
       });
-
-      const showFigure = typeof shouldDrawPrepGridFigurePreview !== "function"
-        || shouldDrawPrepGridFigurePreview();
-      if (showFigure) {
-        drawPlacementFigureShadow(ctx, team, visualPlacement, { includeDisplaced: false });
-      }
     });
 
-    (logicalPlacement.displaced || []).forEach((item) => {
-      getItemCells(item).forEach(([c, r]) => {
-        const { x, y, w, h } = cellRect(team, c, r);
-        ctx.save();
-        ctx.fillStyle = logicalPlacement.valid
-          ? `rgba(210,153,34,${0.22 + pulse * 0.08})`
-          : `rgba(248,81,73,${0.16})`;
-        roundRect(x + 3, y + 3, w - 6, h - 6, 5);
-        ctx.fill();
-        ctx.restore();
+    (shadowPlacement.displaced || []).forEach((item) => {
+      const displacedFill = shadowPlacement.valid
+        ? `rgba(255,210,80,${0.38 + pulse * 0.12})`
+        : `rgba(255,110,100,${0.28 + pulse * 0.08})`;
+      const displacedStroke = shadowPlacement.valid
+        ? `rgba(255,220,120,${0.75 + pulse * 0.08})`
+        : `rgba(255,110,100,${0.65})`;
+      drawMergedOccupiedCells(ctx, team, getItemCells(item), {
+        fillStyle: displacedFill,
+        strokeStyle: displacedStroke,
+        lineWidth: Math.max(1.5, strokeW * 0.75),
+        bridgeGaps: true,
+        inset: 0,
       });
     });
   }
@@ -611,8 +611,9 @@ function tickInventoryAnimationController(dt) {
   if (typeof dragPayload !== "undefined" && dragPayload && typeof getDragGhostCanvas === "function") {
     const el = getDragGhostCanvas();
     if (el && !el.classList.contains("hidden")) {
-      const fullSize = typeof isPrepSidebarArcDrag === "function" && isPrepSidebarArcDrag();
-      InventoryAnimationController.applyDragGhostStyles(el, null, { fullSize });
+      const fullSize = false;
+      const stable = true;
+      InventoryAnimationController.applyDragGhostStyles(el, null, { fullSize, stable });
       if (rotateSpinFinished && typeof syncDragGhostOverlay === "function") {
         syncDragGhostOverlay(lastPointerClient.x, lastPointerClient.y);
       }

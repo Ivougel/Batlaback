@@ -42,6 +42,9 @@ html[data-ui-surface="tablet-stacked"] #class-overlay #class-step-summary:not(.h
   color: var(--meadow-grass-dark, #2d5a27);
   letter-spacing: 0.02em;
   line-height: 1.35;
+  padding-inline: clamp(6px, 3vw, 16px);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .class-summary-stage {
@@ -54,6 +57,14 @@ html[data-ui-surface="tablet-stacked"] #class-overlay #class-step-summary:not(.h
   min-height: min(50vh, 440px);
   padding: clamp(4px, 1vw, 12px) 0 clamp(8px, 1.5vw, 16px);
   overflow: visible;
+}
+
+.class-summary-stage.class-summary-stage--solo-pick {
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto;
+  justify-items: center;
+  align-items: center;
+  min-height: min(44vh, 400px);
 }
 
 .class-summary-float {

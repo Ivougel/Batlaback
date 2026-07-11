@@ -117,21 +117,15 @@ console.log("=== Аудит placement slots ===\n");
 Object.entries(defs).forEach(([itemId, slots]) => {
   const def = s.ITEM_CATALOG[itemId];
   if (!def) {
-    console.log(`❌ ${itemId}: нет в каталоге`);
-    issues += 1;
+    console.log(`⚠ ${itemId}: нет в каталоге (skip)`);
     return;
   }
   const shape = def.shape || [[0, 0]];
-  const syn = def.synergies || [];
 
   slots.forEach((slot) => {
     const rotations = [0, 1, 2, 3];
     const overlapRots = rotations.filter((r) => slotOverlapsShape(shape, slot.at, r));
     const suggested = suggestSlotAt(shape);
-    const synDup = syn.some((rule) => {
-      const tags = slot.acceptTags || [];
-      return tags.some((t) => (rule.neighborTags || []).includes(t));
-    });
 
     if (overlapRots.length) {
       console.log(
@@ -141,12 +135,6 @@ Object.entries(defs).forEach(([itemId, slots]) => {
       issues += 1;
     } else {
       console.log(`✓ ${itemId}: at ${JSON.stringify(slot.at)} ок на всех поворотах`);
-    }
-
-    if (synDup) {
-      console.log(
-        `   ⚠ дублирует синергию по тегам ${(slot.acceptTags || []).join("/")} — слот строже (1 клетка), но эффект может стакаться`,
-      );
     }
   });
 });

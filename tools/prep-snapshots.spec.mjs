@@ -1,5 +1,5 @@
 /**
- * Pixel-snapshots prep (solo + lobby) — iPad Mini landscape PWA.
+ * Pixel-snapshots prep (classic) — iPad Mini landscape PWA.
  * Обновить: npm run test:snapshots:update
  */
 
@@ -19,10 +19,10 @@ const IPAD_LANDSCAPE = {
   hasTouch: true,
 };
 
-async function startPrep(page, mode) {
+async function startPrep(page) {
   await page.goto(baseUrl, { waitUntil: "domcontentloaded", timeout: 20000 });
   await page.waitForFunction(() => typeof startRunFromOverlay === "function", { timeout: 10000 });
-  await quickStartPrep(page, { mode, settleMs: 1400 });
+  await quickStartPrep(page, { settleMs: 1400 });
   await page.evaluate(() => {
     window.fitCanvasDisplaySize?.();
   });
@@ -39,7 +39,7 @@ for (const snap of manifest.prepSnapshots) {
     page.on("pageerror", (e) => errors.push(e.message));
 
     try {
-      await startPrep(page, snap.mode);
+      await startPrep(page);
       const target = page.locator(snap.target);
       await expect(target).toBeVisible({ timeout: 8000 });
 
@@ -53,8 +53,6 @@ for (const snap of manifest.prepSnapshots) {
         mask: [
           page.locator("#prep-hero-card-timer"),
           page.locator("#prep-hud-hero-round"),
-          page.locator("#lobby2p-top-round"),
-          page.locator("#lobby2p-top-alive-count"),
         ],
       });
     } finally {

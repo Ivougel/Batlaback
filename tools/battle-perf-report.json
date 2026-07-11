@@ -1,0 +1,346 @@
+[
+  {
+    "profile": "iphone-portrait",
+    "label": "prep",
+    "battleProfile": "phone-portrait",
+    "uiTier": "phone",
+    "frames": {
+      "samples": 480,
+      "fps": 60,
+      "avgMs": 16.67,
+      "p50": 16.7,
+      "p95": 17.5,
+      "p99": 17.6,
+      "jank16": 192,
+      "jank33": 0,
+      "jank16Pct": 40,
+      "jank33Pct": 0
+    },
+    "rafCallback": {
+      "samples": 0,
+      "avgMs": 0,
+      "p50": 0,
+      "p95": 0,
+      "p99": 0,
+      "maxMs": 0
+    },
+    "hooks": {
+      "applyUiLayout": 0,
+      "scheduleCanvasFit": 0,
+      "syncBattleHudAnchors": 0,
+      "syncFxCanvasGeometry": 0,
+      "syncStackOrbitFromBattle": 0,
+      "syncHeroEmotionSlotAnchors": 0
+    },
+    "chromeMetrics": {
+      "LayoutCount": 0,
+      "RecalcStyleCount": 480,
+      "LayoutDuration": 0,
+      "RecalcStyleDuration": 0.156,
+      "ScriptDuration": 0.151,
+      "TaskDuration": 0.621,
+      "JSHeapUsedSize": -617
+    }
+  },
+  {
+    "profile": "iphone-portrait",
+    "label": "battle",
+    "battleProfile": "phone-portrait",
+    "uiTier": "phone",
+    "frames": {
+      "samples": 480,
+      "fps": 60,
+      "avgMs": 16.67,
+      "p50": 16.7,
+      "p95": 17.5,
+      "p99": 17.6,
+      "jank16": 270,
+      "jank33": 0,
+      "jank16Pct": 56.3,
+      "jank33Pct": 0
+    },
+    "rafCallback": {
+      "samples": 0,
+      "avgMs": 0,
+      "p50": 0,
+      "p95": 0,
+      "p99": 0,
+      "maxMs": 0
+    },
+    "hooks": {
+      "applyUiLayout": 0,
+      "scheduleCanvasFit": 0,
+      "syncBattleHudAnchors": 0,
+      "syncFxCanvasGeometry": 0,
+      "syncStackOrbitFromBattle": 0,
+      "syncHeroEmotionSlotAnchors": 0
+    },
+    "chromeMetrics": {
+      "LayoutCount": 549,
+      "RecalcStyleCount": 929,
+      "LayoutDuration": 0.056,
+      "RecalcStyleDuration": 0.346,
+      "ScriptDuration": 0.209,
+      "TaskDuration": 0.922,
+      "JSHeapUsedSize": -938
+    }
+  },
+  {
+    "profile": "iphone-landscape",
+    "label": "prep",
+    "battleProfile": "phone-landscape",
+    "uiTier": "phone",
+    "frames": {
+      "samples": 481,
+      "fps": 60,
+      "avgMs": 16.67,
+      "p50": 16.7,
+      "p95": 17.5,
+      "p99": 17.6,
+      "jank16": 207,
+      "jank33": 0,
+      "jank16Pct": 43,
+      "jank33Pct": 0
+    },
+    "rafCallback": {
+      "samples": 0,
+      "avgMs": 0,
+      "p50": 0,
+      "p95": 0,
+      "p99": 0,
+      "maxMs": 0
+    },
+    "hooks": {
+      "applyUiLayout": 0,
+      "scheduleCanvasFit": 0,
+      "syncBattleHudAnchors": 0,
+      "syncFxCanvasGeometry": 0,
+      "syncStackOrbitFromBattle": 0,
+      "syncHeroEmotionSlotAnchors": 0
+    },
+    "chromeMetrics": {
+      "LayoutCount": 0,
+      "RecalcStyleCount": 481,
+      "LayoutDuration": 0,
+      "RecalcStyleDuration": 0.257,
+      "ScriptDuration": 0.161,
+      "TaskDuration": 0.76,
+      "JSHeapUsedSize": -316
+    }
+  },
+  {
+    "profile": "iphone-landscape",
+    "label": "battle",
+    "battleProfile": "phone-landscape",
+    "uiTier": "phone",
+    "frames": {
+      "samples": 477,
+      "fps": 60,
+      "avgMs": 16.77,
+      "p50": 16.7,
+      "p95": 17.6,
+      "p99": 17.7,
+      "jank16": 276,
+      "jank33": 0,
+      "jank16Pct": 57.9,
+      "jank33Pct": 0
+    },
+    "rafCallback": {
+      "samples": 10,
+      "avgMs": 0.8,
+      "p50": 0.2,
+      "p95": 2.9,
+      "p99": 2.9,
+      "maxMs": 2.9
+    },
+    "hooks": {
+      "applyUiLayout": 0,
+      "scheduleCanvasFit": 0,
+      "syncBattleHudAnchors": 0,
+      "syncFxCanvasGeometry": 0,
+      "syncStackOrbitFromBattle": 0,
+      "syncHeroEmotionSlotAnchors": 0
+    },
+    "chromeMetrics": {
+      "LayoutCount": 575,
+      "RecalcStyleCount": 926,
+      "LayoutDuration": 0.065,
+      "RecalcStyleDuration": 0.495,
+      "ScriptDuration": 0.119,
+      "TaskDuration": 1.083,
+      "JSHeapUsedSize": -1061
+    }
+  },
+  {
+    "profile": "ipad-landscape",
+    "label": "prep",
+    "battleProfile": "tablet-landscape-side",
+    "uiTier": "tablet",
+    "frames": {
+      "samples": 462,
+      "fps": 58,
+      "avgMs": 17.35,
+      "p50": 16.7,
+      "p95": 17.6,
+      "p99": 34.3,
+      "jank16": 186,
+      "jank33": 12,
+      "jank16Pct": 40.3,
+      "jank33Pct": 2.6
+    },
+    "rafCallback": {
+      "samples": 0,
+      "avgMs": 0,
+      "p50": 0,
+      "p95": 0,
+      "p99": 0,
+      "maxMs": 0
+    },
+    "hooks": {
+      "applyUiLayout": 0,
+      "scheduleCanvasFit": 0,
+      "syncBattleHudAnchors": 0,
+      "syncFxCanvasGeometry": 0,
+      "syncStackOrbitFromBattle": 0,
+      "syncHeroEmotionSlotAnchors": 0
+    },
+    "chromeMetrics": {
+      "LayoutCount": 0,
+      "RecalcStyleCount": 462,
+      "LayoutDuration": 0,
+      "RecalcStyleDuration": 0.229,
+      "ScriptDuration": 0.152,
+      "TaskDuration": 0.715,
+      "JSHeapUsedSize": -758
+    }
+  },
+  {
+    "profile": "ipad-landscape",
+    "label": "battle",
+    "battleProfile": "tablet-landscape-side",
+    "uiTier": "tablet",
+    "frames": {
+      "samples": 359,
+      "fps": 45,
+      "avgMs": 22.29,
+      "p50": 16.7,
+      "p95": 33.4,
+      "p99": 34.3,
+      "jank16": 249,
+      "jank33": 47,
+      "jank16Pct": 69.4,
+      "jank33Pct": 13.1
+    },
+    "rafCallback": {
+      "samples": 12,
+      "avgMs": 0.35,
+      "p50": 0.1,
+      "p95": 1,
+      "p99": 1,
+      "maxMs": 1
+    },
+    "hooks": {
+      "applyUiLayout": 0,
+      "scheduleCanvasFit": 0,
+      "syncBattleHudAnchors": 0,
+      "syncFxCanvasGeometry": 0,
+      "syncStackOrbitFromBattle": 0,
+      "syncHeroEmotionSlotAnchors": 0
+    },
+    "chromeMetrics": {
+      "LayoutCount": 414,
+      "RecalcStyleCount": 767,
+      "LayoutDuration": 0.051,
+      "RecalcStyleDuration": 0.429,
+      "ScriptDuration": 0.121,
+      "TaskDuration": 0.92,
+      "JSHeapUsedSize": -1342
+    }
+  },
+  {
+    "profile": "desktop",
+    "label": "prep",
+    "battleProfile": "tablet-landscape-side",
+    "uiTier": "tablet",
+    "frames": {
+      "samples": 313,
+      "fps": 39,
+      "avgMs": 25.62,
+      "p50": 32.3,
+      "p95": 34.2,
+      "p99": 49.9,
+      "jank16": 228,
+      "jank33": 96,
+      "jank16Pct": 72.8,
+      "jank33Pct": 30.7
+    },
+    "rafCallback": {
+      "samples": 313,
+      "avgMs": 1.04,
+      "p50": 1,
+      "p95": 1.9,
+      "p99": 2.6,
+      "maxMs": 3.1
+    },
+    "hooks": {
+      "applyUiLayout": 0,
+      "scheduleCanvasFit": 0,
+      "syncBattleHudAnchors": 0,
+      "syncFxCanvasGeometry": 0,
+      "syncStackOrbitFromBattle": 0,
+      "syncHeroEmotionSlotAnchors": 0
+    },
+    "chromeMetrics": {
+      "LayoutCount": 0,
+      "RecalcStyleCount": 313,
+      "LayoutDuration": 0,
+      "RecalcStyleDuration": 0.15,
+      "ScriptDuration": 0.186,
+      "TaskDuration": 0.732,
+      "JSHeapUsedSize": 1508
+    }
+  },
+  {
+    "profile": "desktop",
+    "label": "battle",
+    "battleProfile": "tablet-landscape-side",
+    "uiTier": "tablet",
+    "frames": {
+      "samples": 291,
+      "fps": 36,
+      "avgMs": 27.6,
+      "p50": 32.9,
+      "p95": 49.9,
+      "p99": 50,
+      "jank16": 230,
+      "jank33": 100,
+      "jank16Pct": 79,
+      "jank33Pct": 34.4
+    },
+    "rafCallback": {
+      "samples": 301,
+      "avgMs": 1.22,
+      "p50": 0.9,
+      "p95": 3.3,
+      "p99": 4.1,
+      "maxMs": 5.4
+    },
+    "hooks": {
+      "applyUiLayout": 0,
+      "scheduleCanvasFit": 0,
+      "syncBattleHudAnchors": 0,
+      "syncFxCanvasGeometry": 0,
+      "syncStackOrbitFromBattle": 0,
+      "syncHeroEmotionSlotAnchors": 0
+    },
+    "chromeMetrics": {
+      "LayoutCount": 380,
+      "RecalcStyleCount": 1145,
+      "LayoutDuration": 0.03,
+      "RecalcStyleDuration": 0.277,
+      "ScriptDuration": 0.112,
+      "TaskDuration": 0.593,
+      "JSHeapUsedSize": -457
+    }
+  }
+]

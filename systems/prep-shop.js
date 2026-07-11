@@ -18,7 +18,7 @@ function getShopContextForSide(side = rt.getPrepViewSide(), opts = {}) {
     goldSpentTotal: side === "player" ? rt.getGoldSpentTotal() : 0,
     goldEarnedTotal: side === "player" ? rt.getGoldEarnedTotal() : 0,
     recentResults: rt.getRecentBattleResults().slice(-3),
-    playerClass: st.classId,
+    playerClass: typeof getMechanicalClassId === "function" ? getMechanicalClassId(st.classId) : st.classId,
     loadoutTags: collectLoadoutTags(loadoutItems),
     loadoutItems,
     opponentLoadoutTags: collectLoadoutTags(otherItems),
@@ -45,35 +45,16 @@ function ensureSideShopArrays(st) {
     if (st.shopFrozen[i] === void 0) st.shopFrozen[i] = false;
   }
 }
-function isLobby2pSplitPrep() {
-  return typeof rt.isLobby2pSplitPrep === "function" && rt.isLobby2pSplitPrep();
-}
 function resolveShopContainer(side, containerEl) {
   if (containerEl) return containerEl;
   return document.getElementById("shop-slots");
 }
 function resolveBenchContainer(side, containerEl) {
   if (containerEl) return containerEl;
-  if (isLobby2pSplitPrep()) {
-    if (typeof window.isPrepBenchPopoverOpen === "function" && window.isPrepBenchPopoverOpen()) {
-      return document.getElementById("bench-slots");
-    }
-    return null;
-  }
   return document.getElementById("bench-slots");
 }
 function renderCommerceForMode(affectedSide) {
-  if (isLobby2pSplitPrep()) {
-    const shopOpen = typeof window.isPrepShopPopoverOpen === "function" && window.isPrepShopPopoverOpen();
-    if (shopOpen) {
-      renderShop(rt.getPrepViewSide(), document.getElementById("shop-slots"));
-    }
-    const benchOpen = typeof window.isPrepBenchPopoverOpen === "function" && window.isPrepBenchPopoverOpen();
-    if (benchOpen) {
-      renderBench(rt.getPrepViewSide(), document.getElementById("bench-slots"));
-    }
-    if (typeof window.syncLobby2pBenchFabBadges === "function") window.syncLobby2pBenchFabBadges();
-  } else if (affectedSide) {
+  if (affectedSide) {
     renderShop(affectedSide);
     renderBench(affectedSide);
   } else {
@@ -211,8 +192,9 @@ function buyFromShop(index, side = rt.getPrepViewSide()) {
   if (rt.getPhase() !== "prep" || rt.getGameOver() || !rt.canEditPrepSide(side)) return;
   const st = rt.getSideState(side);
   if (!st.shop[index]) return;
-  if (st.bench.length >= MAX_BENCH) {
-    rt.log("\u0421\u043A\u0430\u043C\u0435\u0439\u043A\u0430 \u043F\u043E\u043B\u043D\u0430!");
+  const fullMsg = typeof shouldUsePrepStoragePhysics === "function" && shouldUsePrepStoragePhysics() ? "\u0425\u0440\u0430\u043D\u0438\u043B\u0438\u0449\u0435 \u043F\u043E\u043B\u043D\u043E!" : "\u0421\u043A\u0430\u043C\u0435\u0439\u043A\u0430 \u043F\u043E\u043B\u043D\u0430!";
+  if (typeof canFitOnBench === "function" ? !canFitOnBench(st, 1) : st.bench.length >= MAX_BENCH) {
+    rt.log(fullMsg);
     return;
   }
   const itemId = commitShopPurchase(index, side);
@@ -398,8 +380,9 @@ function renderShop(side = rt.getPrepViewSide(), containerEl = null) {
           const frozen = st.shopFrozen[index];
           const affordable = st.gold >= (def.cost ?? 0);
           const pinBtn = renderShopPinButton(index, frozen, editable);
+          const craftClasses = typeof getShopCraftExtraClasses === "function" ? getShopCraftExtraClasses(itemId, st.containers ?? [], st.items, st.bench, side) : "";
           return renderShopCardHTML(def, {
-            extraClasses: [frozen ? "frozen" : "", affordable || !editable ? "" : "unaffordable"].filter(Boolean).join(" "),
+            extraClasses: [frozen ? "frozen" : "", affordable || !editable ? "" : "unaffordable", craftClasses].filter(Boolean).join(" "),
             innerBefore: pinBtn,
             shapeSize: "md",
             trackItemId: itemId,
@@ -447,12 +430,36 @@ function renderShop(side = rt.getPrepViewSide(), containerEl = null) {
         }
         buyFromShop(+htmlCard.dataset.index, side);
       });
+      const hasCraftGlow = htmlCard.classList.contains("shop-card--craft") || htmlCard.classList.contains("shop-card--craft-strong");
+      if (hasCraftGlow && typeof BBCraftTether !== "undefined") {
+        const tetherItemId = htmlCard.dataset.itemId ?? "";
+        htmlCard.addEventListener("mouseenter", () => {
+          if (typeof dragPayload !== "undefined" && dragPayload) return;
+          BBCraftTether.showHoverCard(
+            htmlCard,
+            tetherItemId,
+            st.containers ?? [],
+            st.items,
+            st.bench,
+            side
+          );
+        });
+        htmlCard.addEventListener("mouseleave", () => {
+          if (typeof dragPayload !== "undefined" && dragPayload) return;
+          BBCraftTether.end();
+        });
+      }
     }
   });
   if (typeof refreshGamepadPrepFocus === "function") refreshGamepadPrepFocus();
   if (typeof restoreDomSparkleFromTooltipSource === "function") restoreDomSparkleFromTooltipSource();
 }
 function renderBench(side = rt.getPrepViewSide(), containerEl = null) {
+  if (typeof shouldUsePrepStoragePhysics === "function" && shouldUsePrepStoragePhysics()) {
+    if (typeof PrepStoragePhysics !== "undefined") PrepStoragePhysics.sync(side);
+    if (typeof window.syncPrepBenchFabBadge === "function") window.syncPrepBenchFabBadge();
+    return;
+  }
   const el = resolveBenchContainer(side, containerEl);
   if (!el) return;
   const st = rt.getSideState(side);

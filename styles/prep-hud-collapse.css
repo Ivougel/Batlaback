@@ -8,6 +8,10 @@
   transition: max-height 0.35s ease, opacity 0.3s ease;
 }
 
+.hud-character-panel:not(.is-collapsed) {
+  overflow: visible;
+}
+
 .hud-character-panel.is-collapsed {
   opacity: 0.97;
 }
@@ -20,6 +24,11 @@
   z-index: 5;
   flex: 0 0 auto;
   pointer-events: auto;
+}
+
+.hud-collapse-toggle.hidden,
+.hud-collapse-toggle[hidden] {
+  display: none !important;
 }
 
 .hud-collapse-icon {
@@ -38,6 +47,10 @@
   align-items: center;
   gap: calc(4px * var(--ui-scale, 1)) calc(10px * var(--ui-scale, 1));
   min-width: 0;
+}
+
+.hud-character-panel.is-collapsed .prep-hero-card__identity-sub {
+  display: none !important;
 }
 
 .hud-character-panel.is-collapsed .hud-character-panel__collapsible,

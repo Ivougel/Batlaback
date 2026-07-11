@@ -1,0 +1,174 @@
+/**
+ * BB Fidelity VS-экран перед боем.
+ * html[data-bb-vs-active="true"]
+ */
+
+.bb-vs-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding:
+    max(12px, env(safe-area-inset-top))
+    max(12px, env(safe-area-inset-right))
+    max(12px, env(safe-area-inset-bottom))
+    max(12px, env(safe-area-inset-left));
+  pointer-events: auto;
+}
+
+.bb-vs-overlay__backdrop {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 40%, rgba(60, 40, 20, 0.55) 0%, transparent 70%),
+    linear-gradient(180deg, rgba(12, 8, 6, 0.97) 0%, rgba(20, 14, 10, 0.98) 50%, rgba(8, 6, 4, 0.99) 100%);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.bb-vs-overlay--visible .bb-vs-overlay__backdrop {
+  opacity: 1;
+}
+
+.bb-vs-overlay__content {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: clamp(8px, 3vw, 24px);
+  width: min(100%, 520px);
+  opacity: 0;
+  transform: scale(0.92);
+  transition:
+    opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.bb-vs-overlay--visible .bb-vs-overlay__content {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.bb-vs-fighter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(8px * var(--ui-scale, 1));
+  min-width: 0;
+}
+
+.bb-vs-fighter--player {
+  transform: translateX(-24px);
+  opacity: 0;
+  transition:
+    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.08s,
+    opacity 0.4s ease 0.08s;
+}
+
+.bb-vs-fighter--enemy {
+  transform: translateX(24px);
+  opacity: 0;
+  transition:
+    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.08s,
+    opacity 0.4s ease 0.08s;
+}
+
+.bb-vs-overlay--visible .bb-vs-fighter--player,
+.bb-vs-overlay--visible .bb-vs-fighter--enemy {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.bb-vs-fighter__portrait-wrap {
+  position: relative;
+  width: clamp(96px, 28vw, 148px);
+  height: clamp(96px, 28vw, 148px);
+  border-radius: 50%;
+  padding: 3px;
+  background: linear-gradient(145deg, #c9a227 0%, #6b4e12 45%, #3d2a08 100%);
+  box-shadow:
+    0 0 0 2px rgba(0, 0, 0, 0.45),
+    0 8px 28px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 220, 140, 0.35);
+}
+
+.bb-vs-fighter__portrait {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  background: rgba(30, 22, 16, 0.9);
+}
+
+.bb-vs-fighter__name {
+  margin: 0;
+  font-size: clamp(0.85rem, 3.2vw, 1rem);
+  font-weight: 700;
+  color: #f5e6c8;
+  text-align: center;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+  line-height: 1.2;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bb-vs-fighter__sub {
+  margin: 0;
+  font-size: clamp(0.72rem, 2.8vw, 0.85rem);
+  font-weight: 500;
+  color: rgba(210, 190, 150, 0.85);
+  text-align: center;
+}
+
+.bb-vs-badge {
+  font-size: clamp(2rem, 10vw, 3.2rem);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: #ffd56a;
+  text-shadow:
+    0 0 18px rgba(255, 180, 40, 0.65),
+    0 3px 8px rgba(0, 0, 0, 0.75);
+  transform: scale(0.4);
+  opacity: 0;
+  transition:
+    transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s,
+    opacity 0.3s ease 0.2s;
+}
+
+.bb-vs-overlay--visible .bb-vs-badge {
+  transform: scale(1);
+  opacity: 1;
+  animation: bb-vs-pulse 1.2s ease-in-out 0.55s infinite alternate;
+}
+
+@keyframes bb-vs-pulse {
+  from {
+    filter: brightness(1);
+    text-shadow:
+      0 0 14px rgba(255, 180, 40, 0.5),
+      0 3px 8px rgba(0, 0, 0, 0.75);
+  }
+  to {
+    filter: brightness(1.15);
+    text-shadow:
+      0 0 28px rgba(255, 200, 60, 0.85),
+      0 3px 8px rgba(0, 0, 0, 0.75);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bb-vs-overlay__backdrop,
+  .bb-vs-overlay__content,
+  .bb-vs-fighter--player,
+  .bb-vs-fighter--enemy,
+  .bb-vs-badge {
+    transition: none;
+    animation: none;
+    transform: none;
+    opacity: 1;
+  }
+}

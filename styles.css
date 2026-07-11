@@ -2625,28 +2625,36 @@ button:disabled {
 
 .btn-primary {
   padding: 14px;
-  background: linear-gradient(135deg, #238636, #2ea043);
-  color: white;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-color);
+  border: var(--btn-primary-border);
+  box-shadow: var(--btn-primary-shadow);
   font-size: var(--font-lg);
+  font-weight: 700;
 }
 
 .btn-primary:hover:not(:disabled) {
-  filter: brightness(1.1);
+  filter: brightness(1.05);
 }
 
 .btn-secondary {
   padding: var(--gap-md);
-  background: #21262d;
-  color: var(--text);
-  border: 1px solid var(--border);
+  background: var(--btn-secondary-bg);
+  color: var(--btn-secondary-color);
+  border: var(--btn-secondary-border);
+  box-shadow: var(--btn-secondary-shadow);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  filter: brightness(1.03);
 }
 
 .btn-small {
   padding: 4px 8px;
   font-size: var(--font-xs);
-  background: #21262d;
-  color: var(--gold);
-  border: 1px solid var(--border);
+  background: var(--btn-small-bg);
+  color: var(--btn-small-color);
+  border: var(--btn-small-border);
 }
 
 /* ─── Лог боя в попапе результата ─── */
@@ -2658,8 +2666,8 @@ button:disabled {
   margin-bottom: 8px;
   padding: 8px 10px;
   border-radius: 8px;
-  background: #161b22;
-  border: 1px solid #30363d;
+  background: var(--surface-log);
+  border: 1px solid var(--surface-log-border);
   font-size: var(--font-sm);
   color: var(--muted);
 }
@@ -2681,9 +2689,9 @@ button:disabled {
 .battle-log-scroll {
   max-height: 320px;
   overflow-y: auto;
-  border: 1px solid #30363d;
+  border: 1px solid var(--surface-log-border);
   border-radius: 8px;
-  background: #0d1117;
+  background: var(--surface-log-scroll);
 }
 
 .battle-log-line {
@@ -3423,11 +3431,6 @@ html[data-visual-theme="diablo"] body:has(#class-overlay:not(.hidden)) {
 .class-badge--hardbot {
   background: rgba(180, 83, 9, 0.38);
   color: #fdba74;
-}
-
-.class-badge--lobby {
-  background: rgba(14, 116, 144, 0.38);
-  color: #67e8f9;
 }
 
 .class-modal .class-card-disabled,
@@ -4595,9 +4598,9 @@ html[data-touch="true"] .sidebar-tooltip.synergy-tooltip .synergy-tt-source {
 }
 
 .settings-close {
-  border: 1px solid var(--border);
-  background: #21262d;
-  color: var(--text);
+  border: var(--btn-close-border);
+  background: var(--btn-close-bg);
+  color: var(--btn-close-color);
   border-radius: 8px;
   width: 36px;
   height: 36px;
@@ -4607,8 +4610,8 @@ html[data-touch="true"] .sidebar-tooltip.synergy-tooltip .synergy-tt-source {
 }
 
 .settings-close:hover {
-  border-color: #58a6ff;
-  color: #79c0ff;
+  border-color: var(--btn-close-hover-border);
+  color: var(--btn-close-hover-color);
 }
 
 .settings-body {
@@ -4643,7 +4646,7 @@ html[data-touch="true"] .sidebar-tooltip.synergy-tooltip .synergy-tt-source {
 
 .settings-theme-option:hover {
   border-color: var(--accent, rgba(92, 184, 92, 0.55));
-  background: rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--accent, #4a9e4a) 8%, var(--surface-inset, rgba(255, 255, 255, 0.65)));
 }
 
 .settings-theme-option.is-selected {

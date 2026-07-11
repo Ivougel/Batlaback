@@ -70,20 +70,40 @@ function run() {
   assert(!s.shouldUseMutationSystem(), "mutations off");
   assert(!s.shouldUseCustomShopRolls(), "custom shop rolls off");
   assert(!s.shouldFilterToPool120(), "pool120 filter off");
-  assert(s.getPrepShopSlotCount() === 4, "4 shop slots");
+  assert(!s.shouldUseAdjacencySynergies(), "classic uses star slots not adjacency");
+  assert(s.getPrepShopSlotCount() === 5, "5 shop slots in classic");
+  assert(s.isMaxAccountMode(), "max account in classic");
+  assert(!s.shouldUseClassSystem(), "class combat bonuses off in classic");
+  assert(s.shouldApplyClassItemRestriction(), "class item restriction on in classic");
+  assert(!s.shouldSkipClassIntro(), "hero pick stays in classic (cosmetic only)");
+  assert(s.getMechanicalClassId("warrior") === "warrior", "mechanical class preserved for restrictions");
+
+  const warriorItem = { id: "test_warrior", classRestriction: "warrior", craftOnly: false, tags: [] };
+  const rogueItem = { id: "test_rogue", classRestriction: "rogue", craftOnly: false, tags: [] };
+  assert(s.isShopEligibleItem(warriorItem, "warrior", 1), "warrior item eligible for warrior");
+  assert(!s.isShopEligibleItem(warriorItem, "rogue", 1), "warrior item blocked for rogue");
+  assert(!s.isShopEligibleItem(rogueItem, "warrior", 1), "rogue item blocked for warrior");
+  assert(s.isShopEligibleItem(rogueItem, "rogue", 1), "rogue item eligible for rogue");
+  assert(s.isShopEligibleItem(warriorItem, null, 1), "class-restricted item eligible when classless");
 
   s.MetaProgress.setPickerMode("classic");
   s.MetaProgress.setRunMode("classic");
-  assert(s.MetaProgress.isActiveForRun(), "meta unlock in classic run");
-  assert(s.MetaProgress.isItemUnlocked("rusty_sword", "warrior"), "starter unlocked");
+  const heroes = ["warrior", "rogue", "mage", "priest"];
+  heroes.forEach((id) => {
+    assert(s.MetaProgress.isHeroUnlocked(id), `hero unlocked: ${id}`);
+  });
+  assert(!s.MetaProgress.isActiveForRun(), "meta unlock off in classic (max account)");
+  assert(s.MetaProgress.isItemUnlocked("rusty_sword", "warrior"), "starter unlocked when meta off");
+  assert(s.MetaProgress.isItemUnlocked("katana", "warrior"), "all items unlocked when meta off");
 
-  const locked = s.getItemPresentationState("katana", "warrior");
-  assert(typeof locked.locked === "boolean", "presentation state");
+  const katana = s.getItemPresentationState("katana", "warrior");
+  assert(!katana.locked, "no lock overlay when meta off");
 
   s.gameMode = "solo";
   s.selectedGameMode = "solo";
   assert(!s.isClassicMode(), "solo is not classic");
   assert(s.shouldUseMutationSystem(), "mutations on in solo");
+  assert(!s.shouldUseAdjacencySynergies(), "solo uses star slots not adjacency");
   assert(s.getPrepShopSlotCount() === 5, "5 shop slots in solo");
 
   console.log("bb-classic.test.mjs: OK");

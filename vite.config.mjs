@@ -15,12 +15,6 @@ const STATIC_COPY = [
   { src: "sw.js", dest: "." },
   { src: "pwa-precache.js", dest: "." },
   { src: "styles.css", dest: "." },
-  { src: "systems/lobby-opponents.js", dest: "systems" },
-  { src: "systems/lobby-fighter-avatar.js", dest: "systems" },
-  { src: "systems/lobby-spectator.js", dest: "systems" },
-  { src: "components/lobby-2p-hud.js", dest: "components" },
-  { src: "lobby-runtime.js", dest: "." },
-  { src: "hard-bot-engine.js", dest: "." },
 ];
 
 export default defineConfig({

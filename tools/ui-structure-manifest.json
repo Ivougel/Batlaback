@@ -1,18 +1,14 @@
 {
   "version": 2,
   "fixedAt": "2026-07-04",
-  "gameModes": ["classic", "solo", "path", "versus", "hardbot", "lobby", "lobby2p", "campaign"],
+  "gameModes": ["classic"],
   "phases": {
     "js": ["classSelect", "prep", "battle", "replay"],
     "appDataset": ["prep", "battle", "replay"]
   },
   "classIntroSteps": [
-    { "key": "mode", "elementId": "class-step-mode", "overlayAttr": "mode" },
-    { "key": "campaignTrial", "elementId": "class-step-campaign", "overlayAttr": "campaignTrial" },
     { "key": "player", "elementId": "class-step-player", "overlayAttr": "player" },
-    { "key": "companion", "elementId": "class-step-companion", "overlayAttr": "companion" },
-    { "key": "summary", "elementId": "class-step-summary", "overlayAttr": "summary" },
-    { "key": "opponent", "elementId": "class-step-opponent", "overlayAttr": "opponent" }
+    { "key": "summary", "elementId": "class-step-summary", "overlayAttr": "summary" }
   ],
   "overlays": [
     { "id": "class-overlay", "layer": "menu", "hiddenByDefault": false },
@@ -23,34 +19,21 @@
     { "id": "battle-detail-overlay", "layer": "system", "hiddenByDefault": true },
     { "id": "board-preview-overlay", "layer": "system", "hiddenByDefault": true },
     { "id": "recipe-book-overlay", "layer": "system", "hiddenByDefault": true },
+    { "id": "bb-item-wiki-overlay", "layer": "system", "hiddenByDefault": true },
     { "id": "class-detail-overlay", "layer": "menu", "hiddenByDefault": true }
   ],
   "appSheets": [],
   "gamePanels": [
-    { "id": "shop-panel", "phases": ["prep"], "modes": ["classic", "solo", "path", "versus", "hardbot", "lobby", "campaign"] },
-    { "id": "bench-panel", "phases": ["prep"], "modes": ["classic", "solo", "path", "versus", "hardbot", "lobby", "campaign"] },
-    { "id": "prep-top-bar", "phases": ["prep"], "modes": ["classic", "solo", "path", "versus", "hardbot", "lobby", "campaign"] },
-    { "id": "prep-field-column", "phases": ["prep", "battle", "replay"], "modes": ["*"] },
-    { "id": "lobby-prep-field-roster", "phases": ["prep"], "modes": ["lobby"] },
-    { "id": "lobby2p-prep-layout", "phases": ["prep"], "modes": ["lobby2p"] },
-    { "id": "lobby2p-battle-hud", "phases": ["battle", "replay"], "modes": ["lobby2p"] },
-    { "id": "campaign-hint-bar", "phases": ["prep"], "modes": ["campaign"] }
+    { "id": "shop-panel", "phases": ["prep"], "modes": ["classic"] },
+    { "id": "bench-panel", "phases": ["prep"], "modes": ["classic"] },
+    { "id": "prep-top-bar", "phases": ["prep"], "modes": ["classic"] },
+    { "id": "prep-field-column", "phases": ["prep", "battle", "replay"], "modes": ["*"] }
   ],
   "prepSnapshots": [
     {
-      "name": "ipad-landscape-solo-prep",
-      "mode": "solo",
+      "name": "ipad-landscape-classic-prep",
+      "mode": "classic",
       "target": "#prep-field-column"
-    },
-    {
-      "name": "ipad-landscape-lobby-prep",
-      "mode": "lobby",
-      "target": "#prep-field-column"
-    },
-    {
-      "name": "ipad-landscape-lobby2p-prep",
-      "mode": "lobby2p",
-      "target": "#lobby2p-prep-layout"
     }
   ],
   "layoutProfiles": [

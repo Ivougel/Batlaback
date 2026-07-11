@@ -2,9 +2,9 @@
  * Доменные типы игры (постепенное расширение).
  */
 
-export type GameMode = "solo" | "path" | "versus" | "hardbot" | "lobby" | "lobby2p" | "campaign";
+export type GameMode = "classic";
 
-export type LoaderMode = "solo" | "lobby" | "lobby2p" | "hardbot" | (string & {});
+export type LoaderMode = "classic" | (string & {});
 
 export type InputMode = "gamepad" | "touch" | "mouse";
 
@@ -19,6 +19,190 @@ export type EmojiOrbitPresetId = "slow" | "normal" | "fast" | "custom";
 export type PerfTier = "low" | "medium" | "high";
 
 export type BattleSide = "player" | "enemy";
+
+export type BattleStackType =
+  | "spikes"
+  | "block"
+  | "empower"
+  | "regen"
+  | "luck"
+  | "heat"
+  | "mana"
+  | "cold"
+  | "poison";
+
+export interface BattleSideState {
+  poisonStacks?: number;
+  slowDebuff?: number;
+  slowTimer?: number;
+  groundFire?: number;
+  groundFireTimer?: number;
+  stunTimer?: number;
+  invulnerableTimer?: number;
+  reviveCharges?: number;
+  reviveHpRatio?: number;
+  reviveInvuln?: number;
+  hp?: number;
+  maxHp?: number;
+  stamina?: number;
+  maxStamina?: number;
+  hearts?: number;
+  coldStacks?: number;
+  block?: number;
+  luck?: number;
+  classId?: string;
+  stacks?: Partial<Record<BattleStackType, number>>;
+  items?: Array<{ itemId: string; uid: string; runtime?: Record<string, unknown>; col?: number; row?: number }>;
+}
+
+export interface StatusChip {
+  id: string;
+  icon: string;
+  value: number;
+  title: string;
+  lines: string[];
+}
+
+export interface ArenaAttackPose {
+  x: number;
+  y: number;
+  scale?: number;
+  rotation?: number;
+  opacity?: number;
+}
+
+export interface ArenaAttackStyleDef {
+  id: string;
+  phases: { windup: number; strike: number; recover: number };
+  hits: () => number[];
+  thoughtReaction?: { kind: string; intensity: number; duration: number };
+  windup: (atk: ArenaAttackCtx, t: number, vmin: number, params?: ArenaItemParams) => ArenaAttackPose;
+  strike: (atk: ArenaAttackCtx, t: number, vmin: number, params?: ArenaItemParams) => ArenaAttackPose;
+  recover: (atk: ArenaAttackCtx, t: number, vmin?: number, params?: ArenaItemParams) => ArenaAttackPose;
+}
+
+export interface ArenaItemParams {
+  spin: number;
+  arc: number;
+  wobble: number;
+  hitsBonus: number;
+}
+
+export interface ArenaAttackCtx {
+  fromX: number;
+  fromY: number;
+  targetX: number;
+  targetY: number;
+  homeX?: number;
+  homeY?: number;
+  homeVpX?: number;
+  homeVpY?: number;
+  strikeX?: number;
+  strikeY?: number;
+  useViewport?: boolean;
+  useEmojiAvatarArc?: boolean;
+  styleId?: string;
+}
+
+export interface ArenaEquipBody {
+  itemId: string;
+  side: string;
+  homeX: number;
+  homeY: number;
+  renderX: number;
+  renderY: number;
+  x: number;
+  y: number;
+  rotation?: number;
+  displayScale?: number;
+  opacity?: number;
+}
+
+export interface ArenaAttackState extends ArenaAttackCtx {
+  styleId: string;
+  styleParams?: ArenaItemParams;
+  phase: string;
+  phaseT: number;
+  hitsTotal: number;
+  hitsDone: number;
+  hitReacted: boolean;
+  projectileFade?: number | null;
+  projectileVisual?: ArenaAttackPose | null;
+}
+
+export interface ArenaAttackStylesApi {
+  STYLES: Record<string, ArenaAttackStyleDef>;
+  BY_ITEM: Record<string, string>;
+  resolveStyle(def: { id?: string; tags?: string[]; arenaAttackStyle?: string; icon?: string; shape?: unknown[] } | null | undefined): ArenaAttackStyleDef;
+  resolveStyleId(def: { id?: string; tags?: string[]; arenaAttackStyle?: string; icon?: string; shape?: unknown[] } | null | undefined): string;
+  createAttack(body: ArenaEquipBody, atkBase: Partial<ArenaAttackState> & { styleId?: string }): ArenaAttackState;
+  stepAttack(body: ArenaEquipBody, atk: ArenaAttackState, dt: number, vmin: number): boolean;
+  itemParams(itemId: string): ArenaItemParams;
+  isProjectileStyle(styleId: string): boolean;
+  getProjectileGlyph(styleId: string, itemId: string): string;
+}
+
+export type AttackVisualId = "slash" | "arrow" | "bolt" | "magic" | "orb" | "aoe" | "support";
+
+export type AttackMotionType = "melee" | "projectile" | "magic" | "aoe" | "support";
+
+export interface AttackEvent {
+  id: string;
+  timestamp: number;
+  sourceItemUid: string;
+  sourceItemId: string;
+  sourceTeam: string;
+  targetTeam: string;
+  attackType: AttackMotionType;
+  visual: AttackVisualId;
+  icon: string;
+  damage: number;
+  damageType: string;
+  duration: number;
+  delay: number;
+  effects: {
+    crit: boolean;
+    miss: boolean;
+    poison: boolean;
+    burn: boolean;
+    heal: boolean;
+    block: boolean;
+    slow: boolean;
+  };
+}
+
+export interface AttackEventContext {
+  visual?: AttackVisualId;
+  targetTeam?: string;
+  damage?: number;
+  damageType?: string;
+  isCrit?: boolean;
+  miss?: boolean;
+}
+
+export interface MetaEffect {
+  type?: string;
+  phase?: string;
+  value?: number;
+  tag?: string;
+  classId?: string;
+  chance?: number;
+  sourceItemId?: string;
+  sourceUid?: string;
+  sourceName?: string;
+  target?: string;
+  build?: string;
+}
+
+export interface ShopPoolModifiers {
+  offerTags: Set<string>;
+  offerClasses: Set<string>;
+  excludePlayerClass: boolean;
+  uniqueChanceBonus: number;
+  bonusUnique: number;
+  sellBonusPct: number;
+  startingValue: number;
+}
 
 export type SoundThemeId = "classic" | "dopamine" | "gentle" | "meat" | "mirror" | "forest" | (string & {});
 
@@ -103,7 +287,6 @@ export interface MetaRunReward {
   heroUnlocked?: string[];
   beforeHeroes?: Record<string, HeroProgressRecord>;
   levelResult?: { leveledUp: boolean; newLevel: number };
-  lobbyWon?: boolean;
   playerEliminated?: boolean;
 }
 
@@ -141,11 +324,14 @@ export interface PrepShopSideState {
   gold: number;
   classId: string;
   items: object[];
+  containers?: object[];
   bench: Array<{ itemId: string; uid: string; carriedItems?: Array<{ itemId: string }> }>;
   shop: Array<string | null>;
   shopFrozen: boolean[];
   shopReadyForRound?: number;
   bonusUniqueGranted?: boolean;
+  pendingShopBuffs?: number;
+  _shopItemsNotGold?: boolean;
 }
 
 export interface PrepShopRuntime {
@@ -186,7 +372,6 @@ export interface PrepShopRuntime {
   applyFixedShop?(side: string): void;
   canRefreshShop?(side: string): boolean;
   canSellShop?(side: string): boolean;
-  isLobby2pSplitPrep?(): boolean;
   shouldApplyMetaUnlockForSide?(side: string): boolean;
   renderTdBuildPanel?(): void;
 }
@@ -213,6 +398,39 @@ export interface BuildKeyChip {
   ariaLabel: string;
 }
 
+export interface ItemPresentationState {
+  locked: boolean;
+  hint: string;
+  showStats: boolean;
+  showName: boolean;
+  showDescription: boolean;
+}
+
+export interface SynergyRule {
+  id?: string;
+  desc?: string;
+  adjacency?: "strong" | "weak" | "both";
+  neighborTags?: string[];
+  target?: "self" | "neighbor";
+  apply?: { type: string; value?: number; cap?: number };
+}
+
+export interface SynergyEntry {
+  items: string[];
+  itemUids: string[];
+  names: string[];
+  icons: string[];
+  condition: string;
+  effect: string;
+  bonus: string;
+  desc: string;
+  ruleId?: string;
+  applyType?: string;
+  type: string;
+  strength: string;
+  status: string;
+}
+
 export type PlacementSlotKind = "star" | "diamond";
 
 export interface PlacementSlotDef {
@@ -220,6 +438,10 @@ export interface PlacementSlotDef {
   at: [number, number];
   acceptTags?: string[];
   acceptItemIds?: string[];
+  /** Предмет с эффектом «начало боя» (как у Piggybank). */
+  acceptBattleStart?: boolean;
+  /** Предмет-хост со своими ⭐ (как для Flute). */
+  acceptStarHost?: boolean;
   effects?: object[];
 }
 

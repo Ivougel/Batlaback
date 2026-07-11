@@ -48,12 +48,12 @@ html:is([data-prep-layout="side"], [data-ui-surface="tablet-side"], [data-ui-sur
 html[data-prep-layout="side"] #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-hero-card,
 html[data-ui-surface="tablet-side"] #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-hero-card {
   display: grid;
-  grid-template-columns: var(--prep-hero-card-portrait-w, calc(118px * var(--ui-scale))) minmax(0, 1fr);
+  grid-template-columns: minmax(var(--prep-hero-card-portrait-w-min, 24%), var(--prep-hero-card-portrait-w, 38%)) minmax(0, 1fr);
   grid-template-rows: auto auto auto;
   align-items: stretch;
   width: 100%;
   max-width: 100%;
-  min-height: calc(168px * var(--ui-scale, 1));
+  min-height: min(calc(18vh * var(--ui-scale, 1)), calc(var(--app-h, 100dvh) * 0.18));
   border-radius: 0 0 calc(14px * var(--ui-scale, 1)) calc(14px * var(--ui-scale, 1));
   overflow: visible;
 }
@@ -73,8 +73,8 @@ html[data-ui-surface="tablet-side"] #app:is([data-phase="prep"], [data-prep-hero
   position: relative;
   width: 100%;
   min-width: 0;
-  height: var(--prep-hero-card-portrait-h, calc(188px * var(--ui-scale, 1)));
-  max-height: var(--prep-hero-card-portrait-h, calc(280px * var(--ui-scale, 1)));
+  height: var(--prep-hero-card-portrait-h, min(calc(22vh * var(--ui-scale, 1)), calc(var(--app-h, 100dvh) * 0.22)));
+  max-height: var(--prep-hero-card-portrait-h-max, min(calc(28vh * var(--ui-scale, 1)), calc(var(--app-h, 100dvh) * 0.28)));
   min-height: 0;
   align-self: start;
   display: flex;
@@ -96,6 +96,63 @@ html[data-ui-surface="tablet-side"] #app:is([data-phase="prep"], [data-prep-hero
 @keyframes prep-hero-card-frame-glow {
   0%, 100% { box-shadow: inset 0 0 0 2px rgba(245, 200, 66, 0.28); }
   50% { box-shadow: inset 0 0 0 2px rgba(245, 200, 66, 0.52), inset 0 0 24px rgba(245, 200, 66, 0.12); }
+}
+
+.prep-hero-card__mutation-badge-mount {
+  position: absolute;
+  left: calc(4px * var(--ui-scale, 1));
+  right: calc(4px * var(--ui-scale, 1));
+  bottom: calc(4px * var(--ui-scale, 1));
+  z-index: 4;
+  pointer-events: none;
+}
+
+.prep-hero-card__mutation-badge-mount .prep-mutation-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(2px * var(--ui-scale, 1));
+  width: 100%;
+  padding:
+    calc(4px * var(--ui-scale, 1))
+    calc(6px * var(--ui-scale, 1));
+  border-radius: calc(8px * var(--ui-scale, 1));
+  font-size: max(9px, calc(0.58rem * var(--type-scale, 1)));
+  font-weight: 800;
+  text-align: center;
+  line-height: 1.2;
+  background: rgba(8, 6, 4, 0.82);
+  border: 1px solid rgba(200, 160, 56, 0.45);
+  color: rgba(255, 244, 220, 0.95);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.prep-hero-card__mutation-badge-mount .prep-mutation-badge-text {
+  font-size: max(10px, calc(0.62rem * var(--type-scale, 1)));
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+html[data-visual-theme="meadow"] .prep-hero-card__mutation-badge-mount .prep-mutation-badge {
+  background: rgba(255, 252, 240, 0.94);
+  border-color: var(--meadow-border-soft);
+  color: var(--meadow-ink);
+  box-shadow: 0 2px 8px var(--meadow-shadow);
+}
+
+html[data-prep-hero-card-preset="banner"] #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-hero-card__mutation-badge-mount .prep-mutation-badge {
+  padding:
+    calc(3px * var(--ui-scale, 1))
+    calc(4px * var(--ui-scale, 1));
+}
+
+html[data-prep-hero-card-preset="banner"] #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-hero-card__mutation-badge-mount .prep-mutation-badge-perk,
+html[data-prep-hero-card-preset="banner"] #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-hero-card__mutation-badge-mount .prep-mutation-badge-sub {
+  display: none;
+}
+
+.hud-character-panel.is-collapsed .prep-hero-card__mutation-badge-mount {
+  display: none !important;
 }
 
 html:is([data-prep-layout="side"], [data-ui-surface="tablet-side"], [data-ui-surface="desktop"]) #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-hero-card__stats-row,
@@ -211,14 +268,105 @@ html[data-ui-surface="tablet-side"] #app:is([data-phase="prep"], [data-prep-hero
 
 html[data-prep-layout="side"] #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-hero-card__stats-row .prep-stats-class,
 html[data-ui-surface="tablet-side"] #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-hero-card__stats-row .prep-stats-class {
-  flex: 0 0 auto;
+  flex: 1 1 auto;
   margin: 0;
   padding: 0;
   border: none;
-  max-width: none;
+  max-width: 100%;
   font-size: max(var(--font-lg), calc(1.05rem * var(--type-scale, 1)));
   font-weight: 900;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.prep-hero-card__identity {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: calc(4px * var(--ui-scale, 1));
+  pointer-events: none;
+}
+
+.prep-hero-card__identity-sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(4px * var(--ui-scale, 1)) calc(8px * var(--ui-scale, 1));
+  min-width: 0;
+  pointer-events: none;
+}
+
+.prep-hero-card__companion-wrap {
+  pointer-events: auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.prep-milestone-chip,
+.prep-mode-hint-chip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding:
+    calc(2px * var(--ui-scale, 1))
+    calc(7px * var(--ui-scale, 1));
+  border-radius: calc(999px * var(--ui-scale, 1));
+  font-size: max(9px, calc(0.58rem * var(--type-scale, 1)));
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.prep-milestone-chip {
+  color: rgba(255, 236, 180, 0.96);
+  background: rgba(120, 72, 16, 0.72);
+  border: 1px solid rgba(245, 200, 66, 0.45);
+}
+
+.prep-mode-hint-chip {
+  color: rgba(48, 56, 44, 0.88);
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(120, 96, 48, 0.28);
+  white-space: normal;
+}
+
+.prep-companion-chip {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(4px * var(--ui-scale, 1)) calc(6px * var(--ui-scale, 1));
+  max-width: 100%;
+  padding:
+    calc(2px * var(--ui-scale, 1))
+    calc(6px * var(--ui-scale, 1));
+  border-radius: calc(8px * var(--ui-scale, 1));
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.prep-companion-chip .prep-companion-tip {
+  font-size: max(10px, calc(0.62rem * var(--type-scale, 1)));
+  font-weight: 800;
+}
+
+.prep-companion-chip-hint {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: max(9px, calc(0.56rem * var(--type-scale, 1)));
+  font-weight: 600;
+  opacity: 0.88;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 html[data-prep-layout="side"] #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) .prep-hero-card__stats-row .prep-stats-metrics .prep-stats-row:not(.prep-stats-row--companion),

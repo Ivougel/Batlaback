@@ -162,13 +162,17 @@ function getExpandedShopPool(ctx) {
 
   Object.values(ITEM_CATALOG).forEach((item) => {
     if (byId.has(item.id)) return;
-    if (item.craftOnly) return;
+    const maxAccount = typeof isMaxAccountMode === "function" && isMaxAccountMode();
+    if (item.craftOnly && !maxAccount) return;
     if (isCraftOutputItemId(item.id)) return;
     if (isItemExcludedByShopModifiers(item, ctx)) return;
     if (!itemMatchesShopModifiers(item, mods)) return;
-    if (item.isContainer && (!item.shopContainer || item.immovable)) return;
-    if (item.classRestriction && item.classRestriction !== playerClass) {
-      if (!itemMatchesShopModifiers(item, mods)) return;
+    if (item.isContainer && (!item.shopContainer || item.immovable)) {
+      const maxContainer = maxAccount && !item.immovable && (item.cost ?? 0) > 0;
+      if (!maxContainer) return;
+    }
+    if (typeof isItemAllowedForHeroClass === "function" && !isItemAllowedForHeroClass(item, playerClass)) {
+      return;
     }
     byId.set(item.id, item);
   });

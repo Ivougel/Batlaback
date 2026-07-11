@@ -6,7 +6,6 @@
   const OPEN_ATTR = "data-prep-shop-open";
 
   function usesPrepShopPopover() {
-    if (document.documentElement.hasAttribute("data-lobby2p-hud")) return true;
     return document.documentElement.dataset.prepShopPopover === "true";
   }
 
@@ -17,14 +16,26 @@
     const popoverInner = document.querySelector("#prep-shop-popover .prep-shop-popover__panel");
     if (!shopPanel) return;
 
-    if (document.documentElement.dataset.prepLayout === "bb-stack" && battleArena) {
-      if (shopPanel.parentElement !== battleArena) {
-        const storage = document.getElementById("bb-prep-storage");
-        if (storage && storage.parentElement === battleArena) {
-          battleArena.insertBefore(shopPanel, storage);
-        } else {
-          battleArena.appendChild(shopPanel);
-        }
+    if (document.documentElement.dataset.prepLayout === "bb-stack") {
+      const prepLeft = document.getElementById("prep-left-column");
+      const fieldColumn = document.getElementById("prep-field-column");
+      if (prepLeft && fieldColumn) {
+        const insertBeforeAnchor = (el, anchor, parent) => {
+          if (!el || !anchor || !parent) return;
+          if (el.parentElement !== parent) {
+            parent.insertBefore(el, anchor);
+            return;
+          }
+          if (el.nextElementSibling !== anchor) {
+            parent.insertBefore(el, anchor);
+          }
+        };
+        const commerce = document.getElementById("bb-prep-commerce-bar");
+        insertBeforeAnchor(shopPanel, fieldColumn, prepLeft);
+        if (commerce) insertBeforeAnchor(commerce, fieldColumn, prepLeft);
+        if (commerce) insertBeforeAnchor(shopPanel, commerce, prepLeft);
+      } else if (battleArena && shopPanel.parentElement !== battleArena) {
+        battleArena.appendChild(shopPanel);
       }
       return;
     }
@@ -97,9 +108,6 @@
       popover.hidden = false;
       popover.setAttribute("aria-hidden", "false");
     }
-    if (typeof window.syncLobby2pShopFabExpanded === "function") {
-      window.syncLobby2pShopFabExpanded();
-    }
     if (typeof window.syncPrepShopPopoverPosition === "function") {
       requestAnimationFrame(() => window.syncPrepShopPopoverPosition());
     }
@@ -151,7 +159,7 @@
       "#prep-shop-popover .prep-shop-popover__panel, #prep-bench-popover .prep-bench-popover__panel",
     )) return false;
     if (target.closest(
-      "#btn-prep-sell-fab, #btn-prep-bench-fab, #btn-mobile-shop, #btn-prep-shop-close, #btn-prep-bench-close, .lobby2p-shop-fab, .lobby2p-bench-fab",
+      "#btn-prep-sell-fab, #btn-prep-bench-fab, #btn-mobile-shop, #btn-prep-shop-close, #btn-prep-bench-close",
     )) return false;
     if (target.closest(".shop-card, .bench-card")) return false;
     if (target.closest("#game-canvas, #prep-field-island, .prep-field-island, .canvas-scale-wrap")) return false;

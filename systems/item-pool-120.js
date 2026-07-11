@@ -8,7 +8,7 @@ const ITEM_POOL_120_MANIFEST = {
   "version": 2,
   "name": "pool-240",
   "description": "Курированный пул: 52 системных + 68 базовый магазин + 120 расширение из legacy",
-  "generatedAt": "2026-07-09T17:45:22.515Z",
+  "generatedAt": "2026-07-09T18:16:28.191Z",
   "counts": {
     "starter": 8,
     "amplifier": 10,
@@ -482,7 +482,10 @@ function setItemPool120Enabled(_enabled) {
 }
 
 function isItemInPool120(itemId) {
-  return ITEM_POOL_120_ID_SET.has(itemId);
+  if (!ITEM_POOL_120_ID_SET.has(itemId)) return false;
+  if (typeof ITEM_CATALOG !== "undefined" && !ITEM_CATALOG[itemId]) return false;
+  if (typeof isGemItem === "function" && isGemItem(itemId)) return false;
+  return true;
 }
 
 function filterItemsToPool120(itemsOrDefs) {

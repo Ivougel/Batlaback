@@ -443,8 +443,8 @@ function renderStatusSectionHTML(label, chips, type) {
 function applyProfileIdentity(profile, classId, gold) {
   const cls = getClassById(classId);
   profile.classId = classId || null;
-  profile.className = cls?.name || "Неизвестно";
-  profile.classIcon = cls?.icon || "❓";
+  profile.className = cls?.name || profile.name || "—";
+  profile.classIcon = cls?.icon || "🎒";
   profile.classIconSrc = typeof getClassHeroPortraitSrc === "function"
     ? getClassHeroPortraitSrc(classId)
     : (cls?.heroPortraitSrc || cls?.iconSrc || null);

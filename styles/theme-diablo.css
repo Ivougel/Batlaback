@@ -102,6 +102,58 @@ html[data-visual-theme="diablo"] {
   --hint-stat-buff-purple-color: #a371f7;
   --hint-emoji-shadow: 0 8px 16px rgba(0, 0, 0, 0.45);
   --hint-gem-bg: linear-gradient(180deg, #e2e8f0, #94a3b8 45%, #64748b);
+
+  --btn-primary-bg: linear-gradient(180deg, #5c3a20 0%, #3a2214 50%, #2a1810 100%);
+  --btn-primary-border: 2px solid var(--meadow-gold);
+  --btn-primary-color: var(--meadow-gold-bright);
+  --btn-primary-shadow:
+    0 4px 0 #1a1008,
+    0 0 20px rgba(201, 162, 39, 0.35),
+    inset 0 1px 0 rgba(255, 220, 150, 0.15);
+
+  --btn-secondary-bg: linear-gradient(180deg, #3a3028 0%, #2a2218 100%);
+  --btn-secondary-border: 2px solid var(--meadow-border-soft);
+  --btn-secondary-color: var(--meadow-ink);
+  --btn-secondary-shadow: inset 0 1px 0 rgba(255, 220, 150, 0.08), 0 2px 8px rgba(0, 0, 0, 0.4);
+
+  --btn-small-bg: linear-gradient(180deg, #3a3028 0%, #2a2218 100%);
+  --btn-small-color: var(--meadow-gold-bright);
+  --btn-small-border: 1px solid var(--meadow-border-soft);
+
+  --btn-chrome-bg: linear-gradient(180deg, #3a3028 0%, #2a2218 100%);
+  --btn-chrome-border: 2px solid var(--meadow-border-soft);
+  --btn-chrome-color: var(--meadow-ink);
+  --btn-chrome-hover-bg: linear-gradient(180deg, #4a3828 0%, #3a2818 100%);
+  --btn-chrome-active-bg: rgba(201, 162, 39, 0.22);
+  --btn-chrome-active-border: var(--meadow-gold);
+  --btn-chrome-active-color: var(--meadow-gold-bright);
+
+  --btn-close-bg: linear-gradient(180deg, #3a3028 0%, #2a2218 100%);
+  --btn-close-border: 1px solid var(--meadow-border-soft);
+  --btn-close-color: var(--meadow-ink);
+  --btn-close-hover-border: var(--meadow-gold);
+  --btn-close-hover-color: var(--meadow-gold-bright);
+
+  --surface-inset: rgba(42, 34, 24, 0.88);
+  --surface-inset-border: var(--meadow-border-soft);
+  --surface-log: rgba(32, 24, 18, 0.92);
+  --surface-log-border: var(--meadow-border-soft);
+  --surface-log-scroll: rgba(18, 12, 8, 0.96);
+
+  --bb-canvas-bg: #16110e;
+  --bb-field-bg: linear-gradient(180deg, rgba(14, 10, 8, 0.98) 0%, rgba(8, 6, 6, 0.99) 100%);
+  --bb-chrome-bg: linear-gradient(180deg, rgba(36, 28, 22, 0.98) 0%, rgba(22, 16, 12, 0.98) 100%);
+  --bb-shop-bg:
+    linear-gradient(180deg, rgba(148, 108, 62, 0.55) 0%, rgba(98, 68, 38, 0.62) 100%),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 220, 160, 0.06) 0,
+      rgba(255, 220, 160, 0.06) 3px,
+      transparent 3px,
+      transparent 22px
+    );
+  --bb-border: rgba(120, 90, 50, 0.45);
+  --bb-border-soft: rgba(140, 105, 55, 0.48);
 }
 
 /* ─── Типографика ─── */
@@ -454,6 +506,44 @@ html[data-visual-theme="diablo"] .btn-secondary {
 html[data-visual-theme="diablo"] .btn-secondary:hover:not(:disabled) {
   border-color: var(--meadow-gold);
   color: var(--meadow-gold-bright);
+  background: linear-gradient(180deg, #4a3828 0%, #3a2818 100%);
+}
+
+html[data-visual-theme="diablo"] .btn-small:hover:not(:disabled) {
+  border-color: var(--meadow-gold);
+  color: var(--meadow-gold-bright);
+}
+
+html[data-visual-theme="diablo"] .settings-theme-option:hover {
+  background: rgba(201, 162, 39, 0.1);
+  border-color: var(--meadow-gold);
+}
+
+html[data-visual-theme="diablo"] .settings-theme-option.is-selected {
+  background: rgba(201, 162, 39, 0.14);
+  border-color: var(--meadow-gold);
+  box-shadow: 0 0 0 1px rgba(201, 162, 39, 0.28);
+}
+
+/* ─── Battle inventory popover (meadow-theme-ui → diablo) ─── */
+
+html[data-visual-theme="diablo"] .battle-inventory-popover .bp-grid-wrap {
+  background: rgba(32, 24, 18, 0.92);
+  border-color: var(--meadow-border-soft);
+}
+
+html[data-visual-theme="diablo"] .battle-inventory-popover .bp-cell {
+  background: rgba(42, 34, 24, 0.75);
+  border-color: var(--meadow-border-soft);
+}
+
+html[data-visual-theme="diablo"] .battle-inventory-popover .bp-cell.bp-slot {
+  background: color-mix(in srgb, var(--bp-fill, var(--meadow-grass-dark)) 18%, rgba(32, 24, 18, 0.82));
+}
+
+html[data-visual-theme="diablo"] .battle-inventory-popover .bp-cell.bp-has-item {
+  background: color-mix(in srgb, var(--bp-fill, var(--meadow-gold)) 22%, rgba(42, 34, 24, 0.88));
+  border-color: var(--meadow-border);
 }
 
 /* ─── Модалки ─── */
@@ -695,9 +785,7 @@ html[data-visual-theme="diablo"] #app[data-phase="prep"] #shop-panel .shop-item-
 html[data-visual-theme="diablo"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-card .icon,
 html[data-visual-theme="diablo"] #app[data-phase="prep"] #shop-panel .bench-panel .bench-card .item-icon-shell,
 html[data-visual-theme="diablo"] #app[data-phase="prep"] .shop-card--enhancement .item-icon-shell--enhancement,
-html[data-visual-theme="diablo"] #app[data-phase="prep"] .shop-card--amplifier .item-icon-shell,
-html[data-visual-theme="diablo"] #app[data-phase="prep"] .lobby2p-shop-slots .shop-item-visual .icon,
-html[data-visual-theme="diablo"] #app[data-phase="prep"] .lobby2p-shop-slots .shop-item-visual .item-icon-shell {
+html[data-visual-theme="diablo"] #app[data-phase="prep"] .shop-card--amplifier .item-icon-shell {
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;

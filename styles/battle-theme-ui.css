@@ -5,101 +5,101 @@
 
 /* ─── Popover: сетка и синергии ─── */
 
-.battle-inventory-popover .bp-grid-wrap {
+html[data-visual-theme="meadow"] .battle-inventory-popover .bp-grid-wrap {
   background: rgba(255, 255, 255, 0.62);
   border: 2px solid var(--meadow-border-soft);
   border-radius: calc(10px * var(--ui-scale, 1));
 }
 
-.battle-inventory-popover .bp-grid-wrap.bp-team-player {
+html[data-visual-theme="meadow"] .battle-inventory-popover .bp-grid-wrap.bp-team-player {
   box-shadow: inset 0 0 0 1px rgba(92, 184, 92, 0.28);
 }
 
-.battle-inventory-popover .bp-grid-wrap.bp-team-enemy {
+html[data-visual-theme="meadow"] .battle-inventory-popover .bp-grid-wrap.bp-team-enemy {
   box-shadow: inset 0 0 0 1px rgba(232, 163, 23, 0.22);
 }
 
-.battle-inventory-popover .bp-cell {
+html[data-visual-theme="meadow"] .battle-inventory-popover .bp-cell {
   background: rgba(255, 255, 255, 0.45);
   border-color: var(--meadow-border-soft);
 }
 
-.battle-inventory-popover .bp-cell.bp-slot {
+html[data-visual-theme="meadow"] .battle-inventory-popover .bp-cell.bp-slot {
   background: color-mix(in srgb, var(--bp-fill, var(--meadow-grass-mid)) 22%, rgba(255, 255, 255, 0.52));
   border-color: var(--meadow-border-soft);
 }
 
-.battle-inventory-popover .bp-cell.bp-has-item {
+html[data-visual-theme="meadow"] .battle-inventory-popover .bp-cell.bp-has-item {
   background: color-mix(in srgb, var(--bp-fill, var(--meadow-grass)) 32%, rgba(255, 255, 255, 0.68));
   border-color: var(--meadow-border);
 }
 
-.battle-inventory-popover .bp-cell.bp-synergy {
+html[data-visual-theme="meadow"] .battle-inventory-popover .bp-cell.bp-synergy {
   box-shadow: inset 0 0 0 1px rgba(245, 200, 66, 0.45);
 }
 
-.battle-inventory-popover .synergy-chip {
+html[data-visual-theme="meadow"] .battle-inventory-popover .synergy-chip {
   background: rgba(255, 255, 255, 0.78);
   border: 2px solid var(--meadow-border-soft);
   color: var(--meadow-ink);
 }
 
-.battle-inventory-popover .synergy-chip:hover {
+html[data-visual-theme="meadow"] .battle-inventory-popover .synergy-chip:hover {
   border-color: var(--meadow-border);
   box-shadow: 0 2px 10px var(--meadow-shadow);
 }
 
-.battle-inventory-popover .synergy-chip-strong {
+html[data-visual-theme="meadow"] .battle-inventory-popover .synergy-chip-strong {
   border-color: rgba(232, 163, 23, 0.55);
 }
 
-.battle-inventory-popover .synergy-chip-strong .synergy-chip-glow {
+html[data-visual-theme="meadow"] .battle-inventory-popover .synergy-chip-strong .synergy-chip-glow {
   background: linear-gradient(180deg, rgba(245, 200, 66, 0.22) 0%, rgba(255, 255, 255, 0.35) 100%);
   box-shadow: inset 0 0 12px rgba(245, 200, 66, 0.12);
 }
 
-.battle-inventory-popover .synergy-chip-weak {
+html[data-visual-theme="meadow"] .battle-inventory-popover .synergy-chip-weak {
   border-color: rgba(92, 184, 92, 0.38);
 }
 
-.battle-inventory-popover .synergy-chip-weak .synergy-chip-glow {
+html[data-visual-theme="meadow"] .battle-inventory-popover .synergy-chip-weak .synergy-chip-glow {
   box-shadow: inset 0 0 10px rgba(92, 184, 92, 0.1);
 }
 
-.battle-inventory-popover .stat-bp.bp-tier-mid .stat-bp-tier {
+html[data-visual-theme="meadow"] .battle-inventory-popover .stat-bp.bp-tier-mid .stat-bp-tier {
   color: var(--meadow-grass-dark);
 }
 
-.battle-inventory-popover .stat-bp.bp-tier-strong .stat-bp-tier {
+html[data-visual-theme="meadow"] .battle-inventory-popover .stat-bp.bp-tier-strong .stat-bp-tier {
   color: var(--meadow-grass);
 }
 
-.battle-inventory-popover .stat-bp.bp-tier-elite .stat-bp-tier {
+html[data-visual-theme="meadow"] .battle-inventory-popover .stat-bp.bp-tier-elite .stat-bp-tier {
   color: var(--meadow-gold);
 }
 
 /* Компактный dock — тёмное стекло поверх арены (mobile / replay) */
-.battle-inventory-popover--compact .bp-grid-wrap {
+html[data-visual-theme="meadow"] .battle-inventory-popover--compact .bp-grid-wrap {
   background: rgba(0, 0, 0, 0.38);
   border-color: rgba(255, 255, 255, 0.1);
 }
 
-.battle-inventory-popover--compact .bp-cell {
+html[data-visual-theme="meadow"] .battle-inventory-popover--compact .bp-cell {
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.08);
 }
 
-.battle-inventory-popover--compact .bp-cell.bp-slot {
+html[data-visual-theme="meadow"] .battle-inventory-popover--compact .bp-cell.bp-slot {
   background: color-mix(in srgb, var(--bp-fill, #5cb85c) 18%, rgba(0, 0, 0, 0.35));
   border-color: rgba(255, 255, 255, 0.1);
 }
 
-.battle-inventory-popover--compact .bp-cell.bp-has-item {
+html[data-visual-theme="meadow"] .battle-inventory-popover--compact .bp-cell.bp-has-item {
   background: color-mix(in srgb, var(--bp-fill, #58a6ff) 28%, rgba(0, 0, 0, 0.42));
   border-color: rgba(255, 255, 255, 0.14);
 }
 
-.battle-inventory-popover--compact .synergy-chip {
+html[data-visual-theme="meadow"] .battle-inventory-popover--compact .synergy-chip {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.14);
   color: rgba(230, 240, 225, 0.92);
@@ -107,60 +107,61 @@
 
 .battle-inventory-popover--compact .stat-bp.bp-tier-mid .stat-bp-tier,
 .battle-inventory-popover--compact .stat-bp.bp-tier-strong .stat-bp-tier,
-.battle-inventory-popover--compact .stat-bp.bp-tier-elite .stat-bp-tier {
+html[data-visual-theme="meadow"] .battle-inventory-popover--compact .stat-bp.bp-tier-elite .stat-bp-tier {
   color: rgba(200, 230, 170, 0.95);
 }
 
 /* ─── Bottom chrome: скорость, пропуск, геймпад ─── */
 
-body:has(#app[data-phase="battle"]) .bottom-chrome .bc-btn,
-body:has(#app[data-phase="replay"]) .bottom-chrome .bc-btn {
-  background: rgba(255, 255, 255, 0.72);
-  border: 2px solid var(--meadow-border-soft);
-  color: var(--meadow-ink);
+html[data-visual-theme="meadow"] body:has(#app[data-phase="battle"]) .bottom-chrome .bc-btn,
+html[data-visual-theme="meadow"] body:has(#app[data-phase="replay"]) .bottom-chrome .bc-btn {
+  background: var(--btn-chrome-bg);
+  border: var(--btn-chrome-border);
+  color: var(--btn-chrome-color);
+  box-shadow: 0 1px 4px var(--meadow-shadow);
 }
 
-body:has(#app[data-phase="battle"]) .bottom-chrome .bc-btn:hover,
-body:has(#app[data-phase="replay"]) .bottom-chrome .bc-btn:hover {
-  background: rgba(255, 255, 255, 0.95);
+html[data-visual-theme="meadow"] body:has(#app[data-phase="battle"]) .bottom-chrome .bc-btn:hover,
+html[data-visual-theme="meadow"] body:has(#app[data-phase="replay"]) .bottom-chrome .bc-btn:hover {
+  background: var(--btn-chrome-hover-bg);
   border-color: var(--meadow-border);
 }
 
-body:has(#app[data-phase="battle"]) .bottom-chrome .bc-btn.active,
-body:has(#app[data-phase="replay"]) .bottom-chrome .bc-btn.active {
+html[data-visual-theme="meadow"] body:has(#app[data-phase="battle"]) .bottom-chrome .bc-btn.active,
+html[data-visual-theme="meadow"] body:has(#app[data-phase="replay"]) .bottom-chrome .bc-btn.active {
   background: rgba(92, 184, 92, 0.18);
   border-color: var(--meadow-grass-dark);
   color: var(--meadow-grass-dark);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
-body:has(#app[data-phase="battle"]) .bottom-chrome .battle-controls-hint,
-body:has(#app[data-phase="replay"]) .bottom-chrome .battle-controls-hint,
-body:has(#app[data-phase="battle"]) .bottom-chrome .gamepad-hints-status,
-body:has(#app[data-phase="replay"]) .bottom-chrome .gamepad-hints-status {
+html[data-visual-theme="meadow"] body:has(#app[data-phase="battle"]) .bottom-chrome .battle-controls-hint,
+html[data-visual-theme="meadow"] body:has(#app[data-phase="replay"]) .bottom-chrome .battle-controls-hint,
+html[data-visual-theme="meadow"] body:has(#app[data-phase="battle"]) .bottom-chrome .gamepad-hints-status,
+html[data-visual-theme="meadow"] body:has(#app[data-phase="replay"]) .bottom-chrome .gamepad-hints-status {
   color: var(--meadow-ink-muted);
 }
 
-body:has(#app[data-phase="battle"]) .bottom-chrome .gamepad-hints-status.is-connected,
-body:has(#app[data-phase="replay"]) .bottom-chrome .gamepad-hints-status.is-connected {
+html[data-visual-theme="meadow"] body:has(#app[data-phase="battle"]) .bottom-chrome .gamepad-hints-status.is-connected,
+html[data-visual-theme="meadow"] body:has(#app[data-phase="replay"]) .bottom-chrome .gamepad-hints-status.is-connected {
   color: var(--meadow-grass-dark);
 }
 
 /* ─── Лобби: полоса бойцов в нижнем chrome ─── */
 
-.lobby-battle-bottom-chip {
+html[data-visual-theme="meadow"] .lobby-battle-bottom-chip {
   background: rgba(255, 252, 240, 0.92);
   border: 2px solid var(--meadow-border-soft);
   color: var(--meadow-ink);
   box-shadow: 0 2px 8px rgba(46, 100, 50, 0.08);
 }
 
-.lobby-battle-bottom-chip:hover:not(:disabled) {
+html[data-visual-theme="meadow"] .lobby-battle-bottom-chip:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.98);
   border-color: var(--meadow-border);
 }
 
-.lobby-battle-bottom-chip--active {
+html[data-visual-theme="meadow"] .lobby-battle-bottom-chip--active {
   border-color: var(--meadow-gold-bright);
   background: rgba(245, 200, 66, 0.16);
   box-shadow:
@@ -169,45 +170,45 @@ body:has(#app[data-phase="replay"]) .bottom-chrome .gamepad-hints-status.is-conn
 }
 
 .lobby-battle-bottom-chip--yours,
-.lobby-battle-bottom-chip--yours-match {
+html[data-visual-theme="meadow"] .lobby-battle-bottom-chip--yours-match {
   border-color: var(--meadow-grass-dark);
 }
 
-.lobby-battle-bottom-chip--live {
+html[data-visual-theme="meadow"] .lobby-battle-bottom-chip--live {
   border-color: rgba(92, 184, 92, 0.62);
 }
 
-.lobby-battle-bottom-chip-avatar {
+html[data-visual-theme="meadow"] .lobby-battle-bottom-chip-avatar {
   border: 2px solid var(--meadow-border-soft);
   background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.85), rgba(92, 184, 92, 0.12));
 }
 
-.lobby-battle-bottom-chip-hp {
+html[data-visual-theme="meadow"] .lobby-battle-bottom-chip-hp {
   color: var(--meadow-grass-dark);
 }
 
 .lobby-battle-bottom-chip-status,
-.lobby-battle-bottom-status-emoji {
+html[data-visual-theme="meadow"] .lobby-battle-bottom-status-emoji {
   display: none !important;
 }
 
-.lobby-battle-bottom-chip--out .lobby-battle-bottom-chip-hp {
+html[data-visual-theme="meadow"] .lobby-battle-bottom-chip--out .lobby-battle-bottom-chip-hp {
   color: #c45c5c;
 }
 
-.lobby-battle-strip-label {
+html[data-visual-theme="meadow"] .lobby-battle-strip-label {
   color: var(--meadow-ink-muted);
 }
 
 body:has(#app[data-phase="battle"]) .btn-lobby-return-table,
-body:has(#app[data-phase="replay"]) .btn-lobby-return-table {
+html[data-visual-theme="meadow"] body:has(#app[data-phase="replay"]) .btn-lobby-return-table {
   background: rgba(255, 255, 255, 0.72);
   border: 2px solid var(--meadow-border-soft);
   color: var(--meadow-ink);
 }
 
 body:has(#app[data-phase="battle"]) .btn-lobby-return-table:hover,
-body:has(#app[data-phase="replay"]) .btn-lobby-return-table:hover {
+html[data-visual-theme="meadow"] body:has(#app[data-phase="replay"]) .btn-lobby-return-table:hover {
   background: rgba(255, 255, 255, 0.95);
   border-color: var(--meadow-border);
   color: var(--meadow-grass-dark);
