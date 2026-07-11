@@ -22,15 +22,18 @@
 | **TypeScript** | `systems/*.ts` → compile pipeline |
 | **PWA** | Precache, iPad mini PWA как опциональный visual ref |
 
-## Что **не** входит (задача hotseat)
+## Что **не** входит (ещё в работе)
 
-- Режим `hotseat` / `versus` как отдельный `gameMode`
-- Выбор класса для игрока 2
-- Поочерёдный prep (pass-and-play)
-- Раздельные экономики / магазины двух игроков
-- Hotseat intro flow
+- Раздельный счётчик жизней для обоих игроков hotseat
+- Параллельный split-screen prep (сейчас строго поочерёдный)
 
-Инфраструктура для versus UX частично есть (`bb-fidelity.js`, `bb-intro-layout.js`, `bb-vs-overlay.js`), но **не активирована** — `BB_FIDELITY_MODES = new Set(["classic"])`.
+## Что уже есть (hotseat MVP)
+
+- Режим `hotseat` в intro (`#class-step-mode`)
+- Выбор класса игрока 2 (`#class-step-opponent`)
+- Поочерёдный prep + `#hotseat-handoff-overlay`
+- Без AI shopping на стороне игрока 2
+- Те же BB-правила classic (max account, без спутников)
 
 ---
 

@@ -108,6 +108,12 @@ import type { PerfTier } from "../types/game";
     return isPerfConstrainedDevice();
   }
 
+  /** Бой: rAF на medium/tablet; setTimeout только на low tier (prep по-прежнему через shouldThrottleGameLoop). */
+  function shouldThrottleBattleGameLoop() {
+    if (prefersReducedMotion()) return true;
+    return resolvePerfTier() === "low";
+  }
+
   function isPhoneTier() {
     return document.documentElement?.dataset?.uiTier === "phone";
   }
@@ -394,6 +400,7 @@ import type { PerfTier } from "../types/game";
     isLightBattleFx,
     isPerfConstrainedDevice,
     shouldThrottleGameLoop,
+    shouldThrottleBattleGameLoop,
     isTouchUiDevice,
     isStaticBattleThoughts,
     equipThoughtReactionsEnabled,

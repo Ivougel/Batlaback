@@ -82,6 +82,10 @@
   function shouldThrottleGameLoop() {
     return isPerfConstrainedDevice();
   }
+  function shouldThrottleBattleGameLoop() {
+    if (prefersReducedMotion()) return true;
+    return resolvePerfTier() === "low";
+  }
   function isPhoneTier() {
     return document.documentElement?.dataset?.uiTier === "phone";
   }
@@ -317,6 +321,7 @@
     isLightBattleFx,
     isPerfConstrainedDevice,
     shouldThrottleGameLoop,
+    shouldThrottleBattleGameLoop,
     isTouchUiDevice,
     isStaticBattleThoughts,
     equipThoughtReactionsEnabled,

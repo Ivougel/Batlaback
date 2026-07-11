@@ -27,9 +27,9 @@ body
 ├── #battle-result-overlay
 ├── #battle-detail-overlay
 ├── #board-preview-overlay
-└── #recipe-book-overlay
+├── #recipe-book-overlay
+└── #hotseat-handoff-overlay  ← передача хода (hotseat)
 ```
-
 ---
 
 ## Режим игры (`gameMode` / `data-game-mode`)
@@ -37,15 +37,21 @@ body
 | ID | Название | Противник | Особенности prep |
 |----|----------|-----------|------------------|
 | `classic` | Классика | ИИ | Стандартный prep: магазин 5 слотов, скамейка, pool v120, без мутаций/спутников |
+| `hotseat` | Hotseat | Игрок 2 (pass-and-play) | Те же правила classic; поочерёдный prep; без AI shopping |
 
 **Intro-поток:**
 
 | Шаг | DOM id | Содержимое |
 |-----|--------|------------|
-| `player` | `#class-step-player` | 4 класса |
+| `mode` | `#class-step-mode` | Классика / Hotseat |
+| `player` | `#class-step-player` | 4 класса (Игрок 1) |
+| `opponent` | `#class-step-opponent` | 4 класса (Игрок 2, только hotseat) |
 | `summary` | `#class-step-summary` | Итог + «Старт» |
 
-Двойной клик по герою на шаге `player` → `summary` → `startRunFromOverlay()`.
+Classic: `mode` → `player` → `summary` → старт.  
+Hotseat: `mode` → `player` → `opponent` → `summary` → старт.
+
+Двойной клик по герою продвигает на следующий шаг.
 
 ---
 
@@ -66,8 +72,12 @@ body
 
 | step key | DOM id | Содержимое |
 |----------|--------|------------|
+| `mode` | `#class-step-mode` | Классика / Hotseat |
 | `player` | `#class-step-player` | 4 класса |
+| `opponent` | `#class-step-opponent` | 4 класса (hotseat) |
 | `summary` | `#class-step-summary` | Итог + кнопка «Старт» |
+
+Hotseat prep: `#hotseat-handoff-overlay` — экран передачи устройства между ходами.
 
 ---
 

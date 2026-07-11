@@ -209,6 +209,8 @@ const GAME_MODE = "classic";
 let gameMode = GAME_MODE;
 let lastEndedBattleState = null;
 let prepViewSide = "player";
+/** Hotseat: чей сейчас ход prep (`player` | `enemy`). */
+let prepTurnSide = "player";
 
 function playPrepSfx(id, opts) {
   if (typeof playGameSfx === "function") playGameSfx(id, opts);
@@ -303,10 +305,28 @@ function syncPrepHeroHudDom() {
 }
 
 function getEnemyDisplayName() {
+  if (typeof isHotseatMode === "function" && isHotseatMode()) {
+    if (enemyClass && typeof getClassById === "function") {
+      const cls = getClassById(enemyClass);
+      if (cls?.heroLabel || cls?.noviceLabel || cls?.name) {
+        return cls.heroLabel || cls.noviceLabel || cls.name;
+      }
+    }
+    return "Игрок 2";
+  }
   return "ИИ";
 }
 
 function getPlayerProfileName() {
+  if (typeof isHotseatMode === "function" && isHotseatMode()) {
+    if (playerClass && typeof getClassById === "function") {
+      const cls = getClassById(playerClass);
+      if (cls?.heroLabel || cls?.noviceLabel || cls?.name) {
+        return cls.heroLabel || cls.noviceLabel || cls.name;
+      }
+    }
+    return "Игрок 1";
+  }
   if (playerClass && typeof getClassById === "function") {
     const cls = getClassById(playerClass);
     if (cls?.heroLabel || cls?.noviceLabel || cls?.name) {
@@ -320,7 +340,14 @@ function canEditPrepSide(side = prepViewSide) {
   if (phase === "prep" && typeof isCraftMergeBlockingPrep === "function" && isCraftMergeBlockingPrep()) {
     return false;
   }
+  if (typeof shouldUseBBVersusTurnFlow === "function" && shouldUseBBVersusTurnFlow()) {
+    return side === prepTurnSide;
+  }
   return side === "player";
+}
+
+function isHotseatTurnFlowActive() {
+  return typeof shouldUseBBVersusTurnFlow === "function" && shouldUseBBVersusTurnFlow();
 }
 
 function getPrepFieldTeam() {
@@ -477,8 +504,23 @@ function updatePrepSideUI() {
   const refreshBtn = document.getElementById("btn-refresh");
   const playerBtn = document.getElementById("btn-prep-player");
   const enemyBtn = document.getElementById("btn-prep-enemy");
+  const hotseat = typeof isHotseatMode === "function" && isHotseatMode();
 
-  if (prepViewSide === "enemy") {
+  if (hotseat) {
+    setPrepSideBtnContent(playerBtn, "1️⃣", "Игрок 1");
+    setPrepSideBtnContent(enemyBtn, "2️⃣", "Игрок 2");
+    if (hint) {
+      if (!editable) {
+        hint.textContent = prepViewSide === prepTurnSide
+          ? "Ход другого игрока — только просмотр"
+          : `Сейчас ход: ${prepTurnSide === "player" ? "Игрок 1" : "Игрок 2"} · только просмотр`;
+      } else if (prepTurnSide === "player") {
+        hint.textContent = "Игрок 1: соберите рюкзак · затем «Готово → Игрок 2»";
+      } else {
+        hint.textContent = "Игрок 2: соберите рюкзак · затем «В бой!»";
+      }
+    }
+  } else if (prepViewSide === "enemy") {
     setPrepSideBtnContent(playerBtn, "🧑", "Мой стол");
     setPrepSideBtnContent(enemyBtn, "🤖", "Противник");
     if (hint) hint.textContent = "ИИ управляет этим билдом сам — только просмотр";
@@ -563,7 +605,9 @@ function getRunDisplayTitle(side = "player") {
 }
 
 const CLASS_INTRO_STEP_IDS = {
+  mode: "class-step-mode",
   player: "class-step-player",
+  opponent: "class-step-opponent",
   summary: "class-step-summary",
 };
 
@@ -571,12 +615,20 @@ function classIntroSkipsCompanion() {
   return typeof shouldSkipCompanionIntro === "function" && shouldSkipCompanionIntro();
 }
 
-/** Порядок шагов intro — classic: один экран «Играть». */
+function isHotseatModeSelected() {
+  return selectedGameMode === "hotseat"
+    || (typeof isHotseatGameMode === "function" && isHotseatGameMode(selectedGameMode));
+}
+
+/** Порядок шагов intro. */
 function getClassIntroStepSequence() {
   if (typeof shouldSkipClassIntro === "function" && shouldSkipClassIntro()) {
     return ["player"];
   }
-  return ["player", "summary"];
+  if (isHotseatModeSelected()) {
+    return ["mode", "player", "opponent", "summary"];
+  }
+  return ["mode", "player", "summary"];
 }
 
 function getClassIntroStepNumber(stepKey) {
@@ -668,6 +720,7 @@ function bindClassSummaryInteractions() {
 
 function renderClassSummaryStep() {
   const cls = pendingPlayerClass ? getClassById(pendingPlayerClass) : null;
+  const enemyCls = selectedEnemyClass ? getClassById(selectedEnemyClass) : null;
   const skipCompanion = typeof shouldSkipCompanionIntro === "function" && shouldSkipCompanionIntro();
   const companion = !skipCompanion && pendingPlayerCompanionId ? COMPANION_CATALOG?.[pendingPlayerCompanionId] : null;
   const lead = document.getElementById("class-summary-lead");
@@ -680,12 +733,18 @@ function renderClassSummaryStep() {
   const companionBlock = companionEmoji?.closest(".class-summary-companion, [data-summary-kind=\"companion\"]");
   const stage = document.getElementById("class-summary-stage");
   const backBtn = document.getElementById("btn-class-back-companion");
+  const hotseat = isHotseatModeSelected();
 
   const heroLabel = cls?.heroLabel || cls?.noviceLabel || cls?.name || "—";
+  const enemyLabel = enemyCls?.heroLabel || enemyCls?.noviceLabel || enemyCls?.name || "—";
   if (lead) {
-    lead.textContent = skipCompanion
-      ? `Ваш выбор: ${heroLabel}`
-      : `Ваш выбор: ${heroLabel} и ${companion?.name || "—"}`;
+    if (hotseat) {
+      lead.textContent = `Игрок 1: ${heroLabel}  ·  Игрок 2: ${enemyLabel}`;
+    } else {
+      lead.textContent = skipCompanion
+        ? `Ваш выбор: ${heroLabel}`
+        : `Ваш выбор: ${heroLabel} и ${companion?.name || "—"}`;
+    }
   }
   if (heroImg && pendingPlayerClass) {
     const src = typeof getClassHeroPortraitSrc === "function"
@@ -694,18 +753,53 @@ function renderClassSummaryStep() {
     if (heroImg.getAttribute("src") !== src) heroImg.setAttribute("src", src || "");
     heroImg.alt = heroLabel;
   }
-  if (heroName) heroName.textContent = heroLabel;
-  if (companionEmoji) companionEmoji.textContent = companion?.emoji || (skipCompanion ? "" : "🐾");
-  if (companionName) companionName.textContent = companion?.name || (skipCompanion ? "" : "—");
-  if (companionBlock) companionBlock.classList.toggle("hidden", skipCompanion);
-  if (stage) stage.classList.toggle("class-summary-stage--solo-pick", skipCompanion);
-  if (backBtn) backBtn.textContent = skipCompanion ? "← Герой" : "← Спутник";
+  if (heroName) heroName.textContent = hotseat ? `Игрок 1 · ${heroLabel}` : heroLabel;
+  if (companionEmoji) {
+    if (hotseat && selectedEnemyClass) {
+      companionEmoji.textContent = "";
+      const enemySrc = typeof getClassHeroPortraitSrc === "function"
+        ? getClassHeroPortraitSrc(selectedEnemyClass)
+        : "";
+      let enemyImg = companionEmoji.parentElement?.querySelector(".class-summary-enemy-img");
+      if (!enemyImg && companionEmoji.parentElement) {
+        enemyImg = document.createElement("img");
+        enemyImg.className = "class-summary-hero-img class-summary-enemy-img";
+        enemyImg.alt = "";
+        enemyImg.draggable = false;
+        companionEmoji.parentElement.insertBefore(enemyImg, companionEmoji);
+      }
+      if (enemyImg) {
+        if (enemyImg.getAttribute("src") !== enemySrc) enemyImg.setAttribute("src", enemySrc || "");
+        enemyImg.alt = enemyLabel;
+        enemyImg.hidden = false;
+      }
+      companionEmoji.hidden = true;
+    } else {
+      const enemyImg = companionEmoji.parentElement?.querySelector(".class-summary-enemy-img");
+      if (enemyImg) enemyImg.hidden = true;
+      companionEmoji.hidden = false;
+      companionEmoji.textContent = companion?.emoji || (skipCompanion ? "" : "🐾");
+    }
+  }
+  if (companionName) {
+    companionName.textContent = hotseat
+      ? `Игрок 2 · ${enemyLabel}`
+      : (companion?.name || (skipCompanion ? "" : "—"));
+  }
+  if (companionBlock) companionBlock.classList.toggle("hidden", !hotseat && skipCompanion);
+  if (stage) stage.classList.toggle("class-summary-stage--solo-pick", !hotseat && skipCompanion);
+  if (backBtn) {
+    backBtn.textContent = hotseat ? "← Игрок 2" : (skipCompanion ? "← Герой" : "← Спутник");
+  }
   if (heroFloat) {
     if (pendingPlayerClass) heroFloat.dataset.class = pendingPlayerClass;
     else heroFloat.removeAttribute("data-class");
   }
   if (startBtn) {
-    startBtn.disabled = !(pendingPlayerClass && (skipCompanion || pendingPlayerCompanionId));
+    const ready = hotseat
+      ? !!(pendingPlayerClass && selectedEnemyClass)
+      : !!(pendingPlayerClass && (skipCompanion || pendingPlayerCompanionId));
+    startBtn.disabled = !ready;
     startBtn.textContent = "Старт";
   }
 }
@@ -714,15 +808,19 @@ function showSummaryStep() {
   dismissClassOverlayTooltip();
   hideClassSummaryTooltip();
   const skipCompanion = typeof shouldSkipCompanionIntro === "function" && shouldSkipCompanionIntro();
-  if (!pendingPlayerClass || (!skipCompanion && !pendingPlayerCompanionId)) return;
+  const hotseat = isHotseatModeSelected();
+  if (!pendingPlayerClass || (!hotseat && !skipCompanion && !pendingPlayerCompanionId)) return;
+  if (hotseat && !selectedEnemyClass) return;
   setClassIntroStep("summary");
-  if (!selectedEnemyClass) {
+  if (!hotseat && !selectedEnemyClass) {
     selectedEnemyClass = pendingPlayerClass === "mage" ? "warrior" : "mage";
   }
-  document.getElementById("class-modal-title").textContent = "Классика";
-  document.getElementById("class-modal-subtitle").textContent = skipCompanion
-    ? "Classic · полный доступ · старт с пустым рюкзаком"
-    : "Наведите на героя или спутника — подробности о выборе";
+  document.getElementById("class-modal-title").textContent = hotseat ? "Hotseat" : "Классика";
+  document.getElementById("class-modal-subtitle").textContent = hotseat
+    ? "Два игрока · поочерёдный prep · один экран"
+    : (skipCompanion
+      ? "Classic · полный доступ · старт с пустым рюкзаком"
+      : "Наведите на героя или спутника — подробности о выборе");
   renderClassSummaryStep();
   syncClassOverlayUi();
   syncClassMobileDock();
@@ -732,15 +830,27 @@ function showSummaryStep() {
 function syncClassOverlayUi() {
   const badge = document.getElementById("class-step-badge");
   const hint = document.getElementById("class-action-hint");
+  const modeStep = document.getElementById("class-step-mode");
   const playerStep = document.getElementById("class-step-player");
+  const opponentStep = document.getElementById("class-step-opponent");
   const summaryStep = document.getElementById("class-step-summary");
   if (!badge || !hint) return;
 
-  if (playerStep && !playerStep.classList.contains("hidden")) {
-    badge.textContent = formatClassIntroStepBadge("player", "Герой");
+  if (modeStep && !modeStep.classList.contains("hidden")) {
+    badge.textContent = formatClassIntroStepBadge("mode", "Режим");
+    hint.textContent = "Классика (vs ИИ) или Hotseat (два игрока)";
+  } else if (playerStep && !playerStep.classList.contains("hidden")) {
+    badge.textContent = formatClassIntroStepBadge("player", isHotseatModeSelected() ? "Игрок 1" : "Герой");
     hint.textContent = pendingPlayerClass
+      ? (isHotseatModeSelected()
+        ? "Нажмите героя ещё раз — к выбору игрока 2"
+        : "Нажмите героя ещё раз — к обзору и старту")
+      : "Выберите героя · слева — портрет и «Подробнее»";
+  } else if (opponentStep && !opponentStep.classList.contains("hidden")) {
+    badge.textContent = formatClassIntroStepBadge("opponent", "Игрок 2");
+    hint.textContent = selectedEnemyClass
       ? "Нажмите героя ещё раз — к обзору и старту"
-      : "Выберите героиню · слева — портрет и «Подробнее»";
+      : "Игрок 2: выберите героя";
   } else if (summaryStep && !summaryStep.classList.contains("hidden")) {
     badge.textContent = formatClassIntroStepBadge("summary", "Старт");
     hint.textContent = "Проверьте выбор · «Старт» или «Играть» внизу";
@@ -821,12 +931,77 @@ function syncClassHeroShowcase() {
   updateClassHeroShowcase(pendingPlayerClass || null);
 }
 
+function showModeStep() {
+  dismissClassOverlayTooltip();
+  hideClassSummaryTooltip();
+  setClassIntroStep("mode");
+  document.getElementById("class-modal-title").textContent = "Режим игры";
+  document.getElementById("class-modal-subtitle").textContent = "Классика против ИИ или hotseat на одном экране";
+  document.querySelectorAll(".game-mode-card[data-game-mode]").forEach((card) => {
+    card.classList.toggle("selected", card.dataset.gameMode === selectedGameMode);
+  });
+  syncClassOverlayUi();
+  syncClassMobileDock();
+  if (typeof syncBBFidelityContext === "function") syncBBFidelityContext();
+}
+
+function selectGameMode(modeId) {
+  if (modeId !== "classic" && modeId !== "hotseat") return;
+  const reclick = selectedGameMode === modeId;
+  selectedGameMode = modeId;
+  document.querySelectorAll(".game-mode-card[data-game-mode]").forEach((card) => {
+    card.classList.toggle("selected", card.dataset.gameMode === modeId);
+  });
+  if (typeof MetaProgress !== "undefined") MetaProgress.setPickerMode(modeId);
+  if (typeof syncBBFidelityContext === "function") syncBBFidelityContext();
+  if (reclick) {
+    showPlayerClassStep();
+    return;
+  }
+  syncClassOverlayUi();
+  if (typeof syncBBIntroLayout === "function") syncBBIntroLayout();
+}
+
+function showOpponentStep() {
+  dismissClassOverlayTooltip();
+  hideClassSummaryTooltip();
+  if (!pendingPlayerClass) return;
+  setClassIntroStep("opponent");
+  document.getElementById("class-modal-title").textContent = "Игрок 2";
+  document.getElementById("class-modal-subtitle").textContent = "Hotseat · выберите героя второго игрока";
+  document.querySelectorAll(".opponent-class-card[data-opponent-class]").forEach((card) => {
+    card.classList.toggle("selected", card.dataset.opponentClass === selectedEnemyClass);
+  });
+  syncClassOverlayUi();
+  syncClassMobileDock();
+  if (typeof syncBBFidelityContext === "function") syncBBFidelityContext();
+  if (typeof syncBBIntroLayout === "function") syncBBIntroLayout();
+}
+
+function selectOpponentClass(classId) {
+  const reclick = selectedEnemyClass === classId;
+  selectedEnemyClass = classId;
+  document.querySelectorAll(".opponent-class-card[data-opponent-class]").forEach((card) => {
+    card.classList.toggle("selected", card.dataset.opponentClass === classId);
+  });
+  scrollClassPickerCardIntoView(document.querySelector(`.opponent-class-card[data-opponent-class="${classId}"]`));
+  if (reclick) {
+    showSummaryStep();
+    return;
+  }
+  syncClassOverlayUi();
+  if (typeof syncBBIntroLayout === "function") syncBBIntroLayout();
+}
+
 function showPlayerClassStep() {
   dismissClassOverlayTooltip();
   hideClassSummaryTooltip();
   setClassIntroStep("player");
-  document.getElementById("class-modal-title").textContent = "Выберите героя";
-  document.getElementById("class-modal-subtitle").textContent = "Classic · все герои и предметы открыты · выберите портрет";
+  const hotseat = isHotseatModeSelected();
+  document.getElementById("class-modal-title").textContent = hotseat ? "Игрок 1" : "Выберите героя";
+  document.getElementById("class-modal-subtitle").textContent = hotseat
+    ? "Hotseat · герой первого игрока"
+    : "Classic · все герои и предметы открыты · выберите портрет";
   const grid = document.getElementById("player-class-grid");
   if (grid) {
     grid.classList.remove("hidden");
@@ -851,10 +1026,15 @@ function resetClassSelectOverlay() {
   pendingPlayerCompanionId = null;
   selectedEnemyClass = null;
   selectedGameMode = GAME_MODE;
+  prepTurnSide = "player";
   if (typeof MetaProgress !== "undefined") MetaProgress.setPickerMode(GAME_MODE);
   document.querySelectorAll(".class-card[data-class]").forEach((card) => card.classList.remove("selected"));
+  document.querySelectorAll(".opponent-class-card[data-opponent-class]").forEach((card) => card.classList.remove("selected"));
+  document.querySelectorAll(".game-mode-card[data-game-mode]").forEach((card) => {
+    card.classList.toggle("selected", card.dataset.gameMode === GAME_MODE);
+  });
   if (typeof renderClassMutationGallery === "function") renderClassMutationGallery(null);
-  showPlayerClassStep();
+  showModeStep();
   updateStartRunButton();
   if (typeof syncClassPickerCardsFromCatalog === "function") syncClassPickerCardsFromCatalog();
   if (typeof MetaProgress !== "undefined") MetaProgress.refreshClassPickerCards();
@@ -881,11 +1061,13 @@ function syncClassMobileDock() {
 function updateStartRunButton() {
   const btn = document.getElementById("btn-start-run");
   if (!btn) return;
-  const ready = !!pendingPlayerClass;
+  const ready = isHotseatModeSelected()
+    ? !!(pendingPlayerClass && selectedEnemyClass)
+    : !!pendingPlayerClass;
   btn.disabled = !ready;
   btn.textContent = "Старт";
   const summaryBtn = document.getElementById("btn-class-summary-start");
-  if (summaryBtn) summaryBtn.disabled = !pendingPlayerClass;
+  if (summaryBtn) summaryBtn.disabled = !ready;
 }
 
 function scrollClassPickerCardIntoView(card) {
@@ -923,7 +1105,8 @@ function selectPlayerClass(classId) {
   }
   if (reclick) {
     pendingPlayerCompanionId = null;
-    showSummaryStep();
+    if (isHotseatModeSelected()) showOpponentStep();
+    else showSummaryStep();
     return;
   }
   syncClassOverlayUi();
@@ -1288,7 +1471,7 @@ function init() {
   });
   bindTouchInput();
   bindPrepLoadoutDragPointer();
-  document.getElementById("btn-fight").addEventListener("click", () => startBattle());
+  document.getElementById("btn-fight").addEventListener("click", () => onFightButtonClick());
   document.getElementById("btn-refresh")?.addEventListener("click", () => refreshShop(true));
   document.getElementById("sell-drop-zone")?.addEventListener("click", sellSelected);
   document.getElementById("btn-restart").addEventListener("click", returnToMainMenu);
@@ -1298,23 +1481,41 @@ function init() {
     MetaProgress.refreshClassPickerCards();
   }
   if (typeof syncClassHeroRosterCaption === "function") syncClassHeroRosterCaption();
+  document.querySelectorAll(".game-mode-card[data-game-mode]").forEach((btn) => {
+    btn.addEventListener("click", () => selectGameMode(btn.dataset.gameMode));
+  });
   document.querySelectorAll(".class-card[data-class]").forEach((btn) => {
     btn.addEventListener("click", () => selectPlayerClass(btn.dataset.class));
+  });
+  document.querySelectorAll(".opponent-class-card[data-opponent-class]").forEach((btn) => {
+    btn.addEventListener("click", () => selectOpponentClass(btn.dataset.opponentClass));
   });
   document.getElementById("btn-classic-intro-play")?.addEventListener("click", () => {
     if (typeof beginClassicRun === "function") beginClassicRun();
   });
   document.getElementById("btn-class-back")?.addEventListener("click", () => {
     const summaryStep = document.getElementById("class-step-summary");
+    const opponentStep = document.getElementById("class-step-opponent");
     const playerStep = document.getElementById("class-step-player");
+    const modeStep = document.getElementById("class-step-mode");
     if (summaryStep && !summaryStep.classList.contains("hidden")) {
+      if (isHotseatModeSelected()) showOpponentStep();
+      else showPlayerClassStep();
+    } else if (opponentStep && !opponentStep.classList.contains("hidden")) {
       showPlayerClassStep();
     } else if (playerStep && !playerStep.classList.contains("hidden")) {
-      showPlayerClassStep();
+      showModeStep();
+    } else if (modeStep && !modeStep.classList.contains("hidden")) {
+      /* already at root */
     }
   });
+  document.getElementById("btn-class-back-mode")?.addEventListener("click", () => showModeStep());
+  document.getElementById("btn-class-back-player-opponent")?.addEventListener("click", () => showPlayerClassStep());
   document.getElementById("btn-class-back-player")?.addEventListener("click", () => showPlayerClassStep());
-  document.getElementById("btn-class-back-companion")?.addEventListener("click", () => showPlayerClassStep());
+  document.getElementById("btn-class-back-companion")?.addEventListener("click", () => {
+    if (isHotseatModeSelected()) showOpponentStep();
+    else showPlayerClassStep();
+  });
   document.getElementById("btn-chrome-back")?.addEventListener("click", () => returnToMainMenu());
   bindClassSummaryInteractions();
   document.getElementById("btn-start-run")?.addEventListener("click", startRunFromOverlay);
@@ -1540,8 +1741,8 @@ function shouldThrottleBattleCanvasDraw() {
 function battleCanvasDrawFps() {
   const perfLimited = typeof BattleFxTier !== "undefined" && BattleFxTier.isPerfConstrainedDevice?.();
   if (!perfLimited) return 30;
-  if (document.documentElement.dataset.uiTier === "tablet") return 12;
-  return 18;
+  if (document.documentElement.dataset.uiTier === "tablet") return 20;
+  return 24;
 }
 
 function tickBattleHudLite() {
@@ -2024,17 +2225,19 @@ function startRunFromOverlay() {
   if (typeof MetaProgress !== "undefined" && MetaProgress.isActiveForPicker()
     && !MetaProgress.isHeroUnlocked(pendingPlayerClass)) return;
   if (typeof ScreenTransitions !== "undefined" && ScreenTransitions.isScreenTransitioning()) return;
+  const runMode = selectedGameMode === "hotseat" ? "hotseat" : GAME_MODE;
+  if (runMode === "hotseat" && !selectedEnemyClass) return;
   if (!selectedEnemyClass) {
     selectedEnemyClass = pendingPlayerClass === "mage" ? "warrior" : "mage";
   }
 
   const proceedStartRun = () => {
-    gameMode = GAME_MODE;
-    selectedGameMode = GAME_MODE;
+    gameMode = runMode;
+    selectedGameMode = runMode;
     if (typeof refreshCraftRecipesForCurrentMode === "function") {
       refreshCraftRecipesForCurrentMode();
     }
-    if (typeof MetaProgress !== "undefined") MetaProgress.setRunMode(GAME_MODE);
+    if (typeof MetaProgress !== "undefined") MetaProgress.setRunMode(runMode);
     playerClass = pendingPlayerClass;
     playerCompanionId = null;
     enemyCompanionId = typeof defaultCompanionForClass === "function"
@@ -2047,6 +2250,7 @@ function startRunFromOverlay() {
     enemyClass = selectedEnemyClass || pendingPlayerClass;
     enemyArchetype = AI_ARCHETYPES[enemyClass] || AI_ARCHETYPES.warrior;
     prepViewSide = "player";
+    prepTurnSide = "player";
     dismissClassOverlayTooltip();
     hideClassSummaryTooltip();
     const overlay = document.getElementById("class-overlay");
@@ -2079,7 +2283,7 @@ function startRunFromOverlay() {
   };
 
   if (typeof RuntimeLoader !== "undefined") {
-    return RuntimeLoader.ensureModeBundle(GAME_MODE)
+    return RuntimeLoader.ensureModeBundle(runMode)
       .then(proceedStartRun)
       .catch((err) => {
         console.error("Mode bundle load failed:", err);
@@ -2146,16 +2350,31 @@ function restartGame() {
   enemyGold = START_GOLD;
   enemyBench = [];
   {
-    const enemyState = createInitialEnemyState(round, GRID_COLS, GRID_ROWS, playerItems, playerClass);
-    enemyArchetype = enemyState.archetype;
-    enemyClass = enemyState.classId;
-    enemyGold = enemyState.gold;
-    enemyContainers = enemyState.containers;
-    enemyItems = enemyState.items;
-    enemyBench = enemyState.bench;
-    enemyShop = Array(MAX_SHOP).fill(null);
-    enemyShopFrozen = Array(MAX_SHOP).fill(false);
-    enemyShopReadyForRound = 0;
+    const hotseat = typeof isHotseatMode === "function" && isHotseatMode();
+    if (hotseat) {
+      enemyClass = selectedEnemyClass || enemyClass || "warrior";
+      enemyArchetype = AI_ARCHETYPES[enemyClass] || AI_ARCHETYPES.warrior;
+      enemyContainers = createStartingContainers();
+      enemyItems = [];
+      enemyBench = [];
+      enemyGold = START_GOLD;
+      enemyShop = Array(MAX_SHOP).fill(null);
+      enemyShopFrozen = Array(MAX_SHOP).fill(false);
+      enemyShopReadyForRound = 0;
+      prepTurnSide = "player";
+    } else {
+      const enemyState = createInitialEnemyState(round, GRID_COLS, GRID_ROWS, playerItems, playerClass);
+      enemyArchetype = enemyState.archetype;
+      enemyClass = enemyState.classId;
+      enemyGold = enemyState.gold;
+      enemyContainers = enemyState.containers;
+      enemyItems = enemyState.items;
+      enemyBench = enemyState.bench;
+      enemyShop = Array(MAX_SHOP).fill(null);
+      enemyShopFrozen = Array(MAX_SHOP).fill(false);
+      enemyShopReadyForRound = 0;
+      prepTurnSide = "player";
+    }
   }
   prepViewSide = "player";
   battleState = null;
@@ -2201,7 +2420,9 @@ function restartGame() {
     updatePrepSideUI();
     if (typeof applyUiLayout === "function") applyUiLayout();
   });
-  log("Классика: соберите рюкзак и нажмите «Бой».");
+  log(typeof isHotseatMode === "function" && isHotseatMode()
+    ? "Hotseat: игрок 1 собирает рюкзак, затем передаёт ход."
+    : "Классика: соберите рюкзак и нажмите «Бой».");
 }
 
 function isPopupOpen(id) {
@@ -2561,6 +2782,16 @@ function syncPendingCraftsForSide(side = prepViewSide) {
 function canStartBattle() {
   if (phase !== "prep" || gameOver) return false;
   if (round > RUN_BATTLES) return false;
+  if (isHotseatTurnFlowActive()) {
+    if (prepTurnSide === "player") {
+      return playerItems.length > 0
+        && !(typeof isItemAllowedForHeroClass === "function"
+          && playerItems.some((item) => !isItemAllowedForHeroClass(item.itemId, playerClass)));
+    }
+    return enemyItems.length > 0
+      && !(typeof isItemAllowedForHeroClass === "function"
+        && enemyItems.some((item) => !isItemAllowedForHeroClass(item.itemId, enemyClass)));
+  }
   if (playerItems.length === 0) return false;
   if (typeof isItemAllowedForHeroClass === "function"
     && playerItems.some((item) => !isItemAllowedForHeroClass(item.itemId, playerClass))) {
@@ -2576,16 +2807,72 @@ function renderFightButton() {
   btn.classList.toggle("hidden", !visible);
   if (visible) btn.disabled = !canStartBattle();
   if (visible) {
-    btn.textContent = (typeof isBBFidelityMode === "function" && isBBFidelityMode())
-      ? "⚔️ В бой!"
-      : "⚔️ Бой";
-    btn.title = playerItems.length === 0
-      ? "Положите предметы в сумку"
-      : (typeof isItemAllowedForHeroClass === "function"
-        && playerItems.some((item) => !isItemAllowedForHeroClass(item.itemId, playerClass)))
-        ? "Уберите экипировку другого класса"
-        : "";
+    if (isHotseatTurnFlowActive() && prepTurnSide === "player") {
+      btn.textContent = "➡️ Готово → Игрок 2";
+      btn.title = playerItems.length === 0
+        ? "Положите предметы в сумку игрока 1"
+        : "Передать ход игроку 2";
+    } else {
+      btn.textContent = (typeof isBBFidelityMode === "function" && isBBFidelityMode())
+        ? "⚔️ В бой!"
+        : "⚔️ Бой";
+      const activeItems = isHotseatTurnFlowActive() ? enemyItems : playerItems;
+      const activeClass = isHotseatTurnFlowActive() ? enemyClass : playerClass;
+      btn.title = activeItems.length === 0
+        ? (isHotseatTurnFlowActive() ? "Положите предметы в сумку игрока 2" : "Положите предметы в сумку")
+        : (typeof isItemAllowedForHeroClass === "function"
+          && activeItems.some((item) => !isItemAllowedForHeroClass(item.itemId, activeClass)))
+          ? "Уберите экипировку другого класса"
+          : "";
+    }
   }
+}
+
+function showHotseatHandoff(nextLabel, onContinue) {
+  const overlay = document.getElementById("hotseat-handoff-overlay");
+  const body = document.getElementById("hotseat-handoff-body");
+  const btn = document.getElementById("btn-hotseat-handoff-continue");
+  if (!overlay || !btn) {
+    onContinue?.();
+    return;
+  }
+  if (body) body.textContent = `Ход: ${nextLabel}`;
+  overlay.classList.remove("hidden");
+  overlay.setAttribute("aria-hidden", "false");
+  const finish = () => {
+    overlay.classList.add("hidden");
+    overlay.setAttribute("aria-hidden", "true");
+    btn.removeEventListener("click", finish);
+    onContinue?.();
+  };
+  btn.addEventListener("click", finish, { once: true });
+}
+
+function handoffPrepToEnemy() {
+  if (!canStartBattle()) {
+    playPrepSfx("ui_error");
+    if (playerItems.length === 0) log("Игрок 1: положите хотя бы один предмет в сумку!");
+    return;
+  }
+  showHotseatHandoff("Игрок 2", () => {
+    prepTurnSide = "enemy";
+    setPrepViewSide("enemy");
+    ensureShopReadyForSide("enemy");
+    renderShop();
+    renderBench();
+    renderFightButton();
+    updatePrepSideUI();
+    updateUI();
+    log("Ход игрока 2 — соберите рюкзак и нажмите «В бой!»");
+  });
+}
+
+function onFightButtonClick() {
+  if (isHotseatTurnFlowActive() && prepTurnSide === "player") {
+    handoffPrepToEnemy();
+    return;
+  }
+  startBattle();
 }
 
 function recalcSynergies() {
@@ -2726,9 +3013,17 @@ function getLoadoutEditState(side = prepViewSide) {
   return getSideState(side);
 }
 
+function dismissBBVsCover() {
+  if (typeof BBVsOverlay === "undefined") return;
+  if (typeof BBVsOverlay.dismiss === "function") BBVsOverlay.dismiss();
+  else if (typeof BBVsOverlay.cancel === "function") BBVsOverlay.cancel();
+}
+
 function startBattle() {
   if (typeof BBVsOverlay !== "undefined" && BBVsOverlay.isActive()) {
-    BBVsOverlay.cancel();
+    // Не hide(): VS остаётся поверх prep, пока battle не применится.
+    if (typeof BBVsOverlay.release === "function") BBVsOverlay.release();
+    else BBVsOverlay.cancel();
     executeBattleStart();
     return;
   }
@@ -2744,7 +3039,9 @@ function startBattle() {
   }
   if (!canStartBattle()) {
     playPrepSfx("ui_error");
-    if (phase === "prep" && playerItems.length === 0) {
+    if (phase === "prep" && isHotseatTurnFlowActive() && prepTurnSide === "enemy" && enemyItems.length === 0) {
+      log("Игрок 2: положите хотя бы один предмет в сумку!");
+    } else if (phase === "prep" && playerItems.length === 0) {
       log("Положите хотя бы один предмет в сумку! (не только на скамейку)");
     }
     return;
@@ -2779,6 +3076,7 @@ function executeBattleStart() {
   } catch (err) {
     console.error("startBattle prepare failed:", err);
     rollbackBattleStartPrep();
+    dismissBBVsCover();
     playPrepSfx("ui_error");
     log("Не удалось начать бой — проверьте консоль");
     return;
@@ -2793,6 +3091,7 @@ function executeBattleStart() {
       if (typeof ScreenTransitions !== "undefined" && typeof ScreenTransitions.clearPhaseTransitionLock === "function") {
         ScreenTransitions.clearPhaseTransitionLock();
       }
+      dismissBBVsCover();
       transitionToPhase("prep", () => {
         ensureShopReady();
         renderShop();
@@ -2801,7 +3100,10 @@ function executeBattleStart() {
         setPhaseLabel("Подготовка", false);
         log("Не удалось начать бой — проверьте консоль");
       });
+      return;
     }
+    // Снимаем VS только когда battle уже в DOM — иначе мелькает prep.
+    dismissBBVsCover();
   });
 }
 
@@ -2856,6 +3158,16 @@ function endBattle() {
     }
     gold += goldReward;
     goldEarnedTotal += goldReward;
+    if (typeof isHotseatMode === "function" && isHotseatMode()) {
+      const enemyPiggy = getLoadoutGoldPerRoundBonus(enemyItems);
+      if (enemyPiggy > 0) enemyGold += enemyPiggy;
+      let enemyReward = ROUND_GOLD;
+      if (battleWinner === "enemy") enemyReward = ROUND_GOLD + WIN_GOLD;
+      if (typeof applyRoundGoldWithShopMeta === "function") {
+        enemyReward = applyRoundGoldWithShopMeta("enemy", enemyReward, enemyItems, () => {});
+      }
+      enemyGold += enemyReward;
+    }
     if (battleWinner === "player") {
       recentBattleResults.push("win");
       log(`Победа в бою! +${goldReward}💰`);
@@ -2983,32 +3295,41 @@ function applyPostBattlePrep(battleWinner) {
   if (typeof syncDuePendingCraftClustersOnPrepEntry === "function") {
     syncDuePendingCraftClustersOnPrepEntry();
   }
-  const enemyPrep = aiEnemyPrepPhase(
-    {
-      archetype: enemyArchetype,
-      classId: enemyClass,
-      gold: enemyGold,
-      containers: enemyContainers,
-      items: enemyItems,
-      bench: enemyBench,
-    },
-    round,
-    GRID_COLS,
-    GRID_ROWS,
-    enemyBattleWon,
-    playerItems,
-    playerClass,
-    { forceArchetypeId: enemyClass },
-  );
-  enemyArchetype = enemyPrep.archetype;
-  enemyClass = enemyPrep.classId;
-  enemyGold = enemyPrep.gold;
-  enemyContainers = enemyPrep.containers;
-  enemyItems = enemyPrep.items;
-  enemyBench = enemyPrep.bench;
 
-  resetShopForNewRoundForSide("player");
-  prepViewSide = "player";
+  if (typeof isHotseatMode === "function" && isHotseatMode()) {
+    resetShopForNewRoundForSide("player");
+    resetShopForNewRoundForSide("enemy");
+    prepTurnSide = "player";
+    prepViewSide = "player";
+  } else {
+    const enemyPrep = aiEnemyPrepPhase(
+      {
+        archetype: enemyArchetype,
+        classId: enemyClass,
+        gold: enemyGold,
+        containers: enemyContainers,
+        items: enemyItems,
+        bench: enemyBench,
+      },
+      round,
+      GRID_COLS,
+      GRID_ROWS,
+      enemyBattleWon,
+      playerItems,
+      playerClass,
+      { forceArchetypeId: enemyClass },
+    );
+    enemyArchetype = enemyPrep.archetype;
+    enemyClass = enemyPrep.classId;
+    enemyGold = enemyPrep.gold;
+    enemyContainers = enemyPrep.containers;
+    enemyItems = enemyPrep.items;
+    enemyBench = enemyPrep.bench;
+
+    resetShopForNewRoundForSide("player");
+    prepViewSide = "player";
+    prepTurnSide = "player";
+  }
 
   recalcSynergies();
   renderBattleStats();

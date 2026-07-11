@@ -102,28 +102,36 @@ const BBIntroLayout = (() => {
   }
 
   function getPlayButtonState() {
+    const modeStep = document.getElementById("class-step-mode");
     const playerStep = document.getElementById("class-step-player");
     const summaryStep = document.getElementById("class-step-summary");
     const opponentStep = document.getElementById("class-step-opponent");
+    const onMode = modeStep && !modeStep.classList.contains("hidden");
     const onPlayer = playerStep && !playerStep.classList.contains("hidden");
     const onSummary = summaryStep && !summaryStep.classList.contains("hidden");
     const onOpponent = opponentStep && !opponentStep.classList.contains("hidden");
     const skipCompanion = typeof shouldSkipCompanionIntro === "function" && shouldSkipCompanionIntro();
     const mode = typeof selectedGameMode !== "undefined" ? selectedGameMode : "classic";
+    const hotseat = mode === "hotseat";
 
+    if (onMode && mode) {
+      return { show: true, disabled: false, label: "Продолжить" };
+    }
     if (onPlayer && pendingPlayerClass) {
+      return { show: true, disabled: false, label: hotseat ? "Игрок 2 →" : "Продолжить" };
+    }
+    if (onOpponent && selectedEnemyClass) {
       return { show: true, disabled: false, label: "Продолжить" };
     }
     if (onSummary) {
-      const ready = !!(pendingPlayerClass && (skipCompanion || pendingPlayerCompanionId));
+      const ready = hotseat
+        ? !!(pendingPlayerClass && selectedEnemyClass)
+        : !!(pendingPlayerClass && (skipCompanion || pendingPlayerCompanionId));
       return {
         show: true,
         disabled: !ready,
-        label: mode === "versus" ? "Игрок 2 →" : "Играть",
+        label: "Играть",
       };
-    }
-    if (onOpponent && selectedEnemyClass) {
-      return { show: true, disabled: false, label: "Начать игру" };
     }
     return { show: false, disabled: true, label: "Играть" };
   }
@@ -144,27 +152,36 @@ const BBIntroLayout = (() => {
   }
 
   function onPlayClick() {
+    const modeStep = document.getElementById("class-step-mode");
     const playerStep = document.getElementById("class-step-player");
     const summaryStep = document.getElementById("class-step-summary");
     const opponentStep = document.getElementById("class-step-opponent");
+    const onMode = modeStep && !modeStep.classList.contains("hidden");
     const onPlayer = playerStep && !playerStep.classList.contains("hidden");
     const onSummary = summaryStep && !summaryStep.classList.contains("hidden");
     const onOpponent = opponentStep && !opponentStep.classList.contains("hidden");
+    const mode = typeof selectedGameMode !== "undefined" ? selectedGameMode : "classic";
 
+    if (onMode) {
+      if (typeof showPlayerClassStep === "function") showPlayerClassStep();
+      return;
+    }
     if (onPlayer && typeof pendingPlayerClass !== "undefined" && pendingPlayerClass) {
-      if (typeof shouldSkipCompanionIntro === "function" && shouldSkipCompanionIntro()) {
+      if (mode === "hotseat") {
+        if (typeof showOpponentStep === "function") showOpponentStep();
+      } else if (typeof shouldSkipCompanionIntro === "function" && shouldSkipCompanionIntro()) {
         if (typeof showSummaryStep === "function") showSummaryStep();
       } else if (typeof showCompanionStep === "function") {
         showCompanionStep({ keepSelection: false });
       }
       return;
     }
-    if (onSummary) {
-      document.getElementById("btn-class-summary-start")?.click();
+    if (onOpponent && typeof selectedEnemyClass !== "undefined" && selectedEnemyClass) {
+      if (typeof showSummaryStep === "function") showSummaryStep();
       return;
     }
-    if (onOpponent) {
-      document.getElementById("btn-start-run")?.click();
+    if (onSummary) {
+      document.getElementById("btn-class-summary-start")?.click();
     }
   }
 

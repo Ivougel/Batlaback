@@ -303,6 +303,8 @@ declare function playPrepCommerceSfx(kind: string, phase: string): void;
 declare function playPrepBuyFanfare(def: object): void;
 declare function playPrepItemPlacedSfx(item: object, def?: object | null): void;
 declare function isVersusMode(): boolean;
+declare function isHotseatMode(): boolean;
+declare function usesClassicRules(): boolean;
 declare function recalcSynergies(): void;
 declare function renderBench(): void;
 declare function renderShop(): void;

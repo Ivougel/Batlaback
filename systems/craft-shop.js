@@ -6,7 +6,7 @@ function shouldShowPrepCraftCommerceFx() {
   if (typeof phase !== "undefined" && phase !== "prep") return false;
   return (typeof isBBFidelityMode === "function" && isBBFidelityMode())
     || (typeof isClassicMode === "function" && isClassicMode())
-    || (typeof gameMode !== "undefined" && gameMode === "versus");
+    || (typeof gameMode !== "undefined" && (gameMode === "versus" || gameMode === "hotseat"));
 }
 
 /**

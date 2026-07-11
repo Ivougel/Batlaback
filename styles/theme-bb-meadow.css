@@ -43,6 +43,11 @@ html[data-visual-theme="meadow"][data-prep-layout="bb-stack"] #app[data-phase="p
   box-shadow: 0 4px 16px var(--meadow-shadow);
 }
 
+html[data-visual-theme="meadow"][data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-field-island .canvas-scale-wrap {
+  background: linear-gradient(180deg, rgba(62, 44, 28, 0.96), rgba(36, 26, 16, 0.98));
+  border-color: rgba(160, 110, 50, 0.55);
+}
+
 html[data-visual-theme="meadow"][data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-storage {
   background: var(--meadow-chrome);
   border-top: 2px solid var(--meadow-border-soft);

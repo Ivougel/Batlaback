@@ -1,21 +1,46 @@
 /**
  * Classic Backpack Battles — fidelity mode без мутаций, спутников и кастомных shop-роллов.
+ * Hotseat использует те же правила экономики/магазина, но PvP pass-and-play.
  */
 const BB_CLASSIC_MODE_ID = "classic";
+const BB_HOTSEAT_MODE_ID = "hotseat";
+
+function getActiveGameModeId() {
+  if (typeof selectedGameMode !== "undefined" && selectedGameMode) {
+    return selectedGameMode;
+  }
+  if (typeof gameMode !== "undefined" && gameMode) {
+    return gameMode;
+  }
+  const dm = typeof document !== "undefined" ? document.documentElement?.dataset?.gameMode : null;
+  return dm || null;
+}
 
 function isClassicGameMode(modeId) {
   return modeId === BB_CLASSIC_MODE_ID;
 }
 
+function isHotseatGameMode(modeId) {
+  return modeId === BB_HOTSEAT_MODE_ID;
+}
+
 function isClassicMode() {
-  if (typeof selectedGameMode !== "undefined" && selectedGameMode) {
-    return isClassicGameMode(selectedGameMode);
-  }
-  if (typeof gameMode !== "undefined" && gameMode) {
-    return isClassicGameMode(gameMode);
-  }
-  const dm = typeof document !== "undefined" ? document.documentElement?.dataset?.gameMode : null;
-  return dm === BB_CLASSIC_MODE_ID;
+  return isClassicGameMode(getActiveGameModeId());
+}
+
+function isHotseatMode() {
+  return isHotseatGameMode(getActiveGameModeId());
+}
+
+/** Alias для существующего кода (craft-pending, VS overlay labels). */
+function isVersusMode() {
+  return isHotseatMode();
+}
+
+/** Classic + hotseat: max account, без мутаций/спутников, BB shop. */
+function usesClassicRules() {
+  const mode = getActiveGameModeId();
+  return isClassicGameMode(mode) || isHotseatGameMode(mode);
 }
 
 function usesMetaItemUnlock(modeId) {
@@ -23,15 +48,15 @@ function usesMetaItemUnlock(modeId) {
 }
 
 function shouldUseMutationSystem() {
-  return !isClassicMode();
+  return !usesClassicRules();
 }
 
 function shouldUseCustomShopRolls() {
-  return !isClassicMode();
+  return !usesClassicRules();
 }
 
 function shouldFilterToPool120() {
-  return !isClassicMode();
+  return !usesClassicRules();
 }
 
 function getPrepShopSlotCount() {
@@ -42,20 +67,20 @@ function shouldSkipCompanionIntro() {
   if (typeof shouldSkipBBCompanionIntro === "function" && shouldSkipBBCompanionIntro()) {
     return true;
   }
-  return isClassicMode();
+  return usesClassicRules();
 }
 
 /**
- * Classic = «max account»: все герои и предметы открыты (meta + craft).
+ * Classic/hotseat = «max account»: все герои и предметы открыты (meta + craft).
  * Meta-lock и pool120 не применяются; craft-only и craft-outputs — не в магазине.
  */
 function isMaxAccountMode() {
-  return isClassicMode();
+  return usesClassicRules();
 }
 
-/** Classic — без боевых бонусов класса и стартового оружия. */
+/** Classic/hotseat — без боевых бонусов класса и стартового оружия. */
 function shouldUseClassSystem() {
-  return !isClassicMode();
+  return !usesClassicRules();
 }
 
 /** «Только: класс X» на экипировку — работает и в classic (max account ≠ снятие ограничений). */
@@ -63,7 +88,7 @@ function shouldApplyClassItemRestriction() {
   return true;
 }
 
-/** Classic — героя выбираем для портрета и class-restricted экипировки. */
+/** Classic/hotseat — героя выбираем для портрета и class-restricted экипировки. */
 function shouldSkipClassIntro() {
   return false;
 }
@@ -79,8 +104,14 @@ function shouldUseAdjacencySynergies() {
 }
 
 window.BB_CLASSIC_MODE_ID = BB_CLASSIC_MODE_ID;
+window.BB_HOTSEAT_MODE_ID = BB_HOTSEAT_MODE_ID;
+window.getActiveGameModeId = getActiveGameModeId;
 window.isClassicGameMode = isClassicGameMode;
+window.isHotseatGameMode = isHotseatGameMode;
 window.isClassicMode = isClassicMode;
+window.isHotseatMode = isHotseatMode;
+window.isVersusMode = isVersusMode;
+window.usesClassicRules = usesClassicRules;
 window.isMaxAccountMode = isMaxAccountMode;
 window.usesMetaItemUnlock = usesMetaItemUnlock;
 window.shouldUseMutationSystem = shouldUseMutationSystem;

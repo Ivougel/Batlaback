@@ -29,7 +29,7 @@
   <link rel="stylesheet" href="styles/container-queries.css?v=2">
   <link rel="stylesheet" href="styles/modal-scale.css?v=6">
   <link rel="stylesheet" href="styles/replay-chrome.css?v=2">
-  <link rel="stylesheet" href="styles/emotion-thoughts.css?v=11">
+  <link rel="stylesheet" href="styles/emotion-thoughts.css?v=12">
   <link rel="stylesheet" href="styles/hero-dialogue.css?v=4">
   <link rel="stylesheet" href="styles/player-spec-emoji.css?v=9">
   <link rel="stylesheet" href="styles/archetype-magic-glow.css?v=3">
@@ -71,6 +71,7 @@
   <link rel="stylesheet" href="styles/bb-prep-stack.css?v=16">
   <link rel="stylesheet" href="styles/prep-storage-physics.css?v=3">
   <link rel="stylesheet" href="styles/bb-vs-overlay.css?v=1">
+  <link rel="stylesheet" href="styles/hotseat-handoff.css?v=1">
   <link rel="stylesheet" href="styles/bb-battle-stack.css?v=2">
   <link rel="stylesheet" href="styles/bb-round-result.css?v=1">
   <link rel="stylesheet" href="styles/bb-run-complete.css?v=1">
@@ -125,7 +126,7 @@
     })();
   </script>
   <script src="systems/layout-scales.js?v=2"></script>
-  <script src="systems/battle-fx-tier.js?v=24"></script>
+  <script src="systems/battle-fx-tier.js?v=25"></script>
   <script src="systems/runtime-loader.js?v=1"></script>
   <script src="systems/battle-hero-anchor.js?v=38"></script>
   <script src="ui-layout.js?v=136"></script>
@@ -356,7 +357,7 @@
   </div>
 
   <div class="layer-system" id="layer-system">
-  <div class="overlay hidden" id="class-overlay" data-class-intro-step="player">
+  <div class="overlay hidden" id="class-overlay" data-class-intro-step="mode">
       <div class="class-overlay-bg" aria-hidden="true">
         <div class="hero-scene-hill hero-scene-hill--back"></div>
         <div class="hero-scene-hill hero-scene-hill--mid"></div>
@@ -417,9 +418,9 @@
             <span class="bb-intro-currency" id="bb-intro-gold">🪙 490</span>
           </div>
           <p class="class-modal-eyebrow">BACKPACK BATTLES</p>
-          <p class="class-step-badge" id="class-step-badge">Шаг 1 из 4</p>
-          <h2 class="class-modal-title" id="class-modal-title">Выберите героя</h2>
-          <p class="class-subtitle" id="class-modal-subtitle">Классический забег Backpack Battles</p>
+          <p class="class-step-badge" id="class-step-badge">Шаг 1 из 2</p>
+          <h2 class="class-modal-title" id="class-modal-title">Режим игры</h2>
+          <p class="class-subtitle" id="class-modal-subtitle">Классика против ИИ или hotseat на одном экране</p>
         </header>
         <p class="class-action-hint" id="class-action-hint" role="status">Выберите режим забега</p>
         <p class="class-controls-hint">✚ — выбор · A — подтвердить · B — назад · + — начать</p>
@@ -436,14 +437,30 @@
             <p class="bb-intro-hero-stage__bonus" id="bb-intro-hero-bonus"></p>
           </div>
         </div>
-        <div class="class-step" id="class-step-player">
+        <div class="class-step" id="class-step-mode">
+          <div class="game-mode-grid">
+            <button type="button" class="class-card game-mode-card glass-card selected" data-game-mode="classic">
+              <span class="glass-card-icon glass-card-icon--solo class-icon" aria-hidden="true">🤖</span>
+              <span class="class-name">Классика</span>
+              <span class="class-desc">Один игрок против ИИ</span>
+              <span class="class-badge class-badge--solo">Solo</span>
+            </button>
+            <button type="button" class="class-card game-mode-card glass-card" data-game-mode="hotseat">
+              <span class="glass-card-icon glass-card-icon--versus class-icon" aria-hidden="true">⚔️</span>
+              <span class="class-name">Hotseat</span>
+              <span class="class-desc">Два игрока за одним экраном</span>
+              <span class="class-badge class-badge--versus">PvP</span>
+            </button>
+          </div>
+        </div>
+        <div class="class-step hidden" id="class-step-player">
         <div class="bb-classic-wiki-entry" id="bb-classic-wiki-entry">
           <button type="button" class="btn-secondary bb-classic-wiki-btn" id="btn-bb-classic-wiki-intro">📖 Справочник предметов</button>
           <p class="bb-classic-wiki-hint">Все предметы, ⭐ слоты и рецепты крафта Backpack Battles</p>
         </div>
         <button type="button" class="btn-primary bb-classic-intro-play hidden" id="btn-classic-intro-play" hidden>Играть</button>
-        <div class="class-step-actions class-step-actions-top hidden" aria-hidden="true">
-          <button type="button" class="btn-secondary btn-glass-back hidden" id="btn-class-back-mode" tabindex="-1">← Назад</button>
+        <div class="class-step-actions class-step-actions-top">
+          <button type="button" class="btn-secondary btn-glass-back" id="btn-class-back-mode">← Режим</button>
         </div>
         <div class="class-grid" id="player-class-grid">
           <button type="button" class="class-card glass-card" data-class="warrior">
@@ -481,9 +498,45 @@
         </div>
         <div class="mutation-gallery-wrap hidden" id="class-mutation-gallery" aria-live="polite"></div>
         </div>
+        <div class="class-step hidden" id="class-step-opponent">
+          <div class="class-step-actions class-step-actions-top">
+            <button type="button" class="btn-secondary btn-glass-back" id="btn-class-back-player-opponent">← Игрок 1</button>
+          </div>
+          <p class="class-subtitle class-step-sub">Игрок 2 — выберите героя</p>
+          <div class="class-grid class-grid--opponent" id="opponent-class-grid">
+            <button type="button" class="class-card opponent-class-card glass-card" data-opponent-class="warrior">
+              <span class="glass-card-icon glass-card-icon--class class-icon"><img src="img/sticker_warrior.png" alt="" class="class-sticker" draggable="false"></span>
+              <div class="class-card-foot">
+                <span class="class-name">Воин-мартовичок</span>
+                <span class="class-bonus">+3% HP на весь забег</span>
+              </div>
+            </button>
+            <button type="button" class="class-card opponent-class-card glass-card" data-opponent-class="rogue">
+              <span class="glass-card-icon glass-card-icon--class class-icon"><img src="img/sticker_rogue.png" alt="" class="class-sticker" draggable="false"></span>
+              <div class="class-card-foot">
+                <span class="class-name">Разбойник-роксивичок</span>
+                <span class="class-bonus">+3% скорость атаки</span>
+              </div>
+            </button>
+            <button type="button" class="class-card opponent-class-card glass-card" data-opponent-class="mage">
+              <span class="glass-card-icon glass-card-icon--class class-icon"><img src="img/sticker_mage.png" alt="" class="class-sticker" draggable="false"></span>
+              <div class="class-card-foot">
+                <span class="class-name">Маг-морковичок</span>
+                <span class="class-bonus">+4% магический урон</span>
+              </div>
+            </button>
+            <button type="button" class="class-card opponent-class-card glass-card" data-opponent-class="priest">
+              <span class="glass-card-icon glass-card-icon--class class-icon"><img src="img/sticker_priest.png" alt="" class="class-sticker" draggable="false"></span>
+              <div class="class-card-foot">
+                <span class="class-name">Жрец-мыковичок</span>
+                <span class="class-bonus">+1.5% HP за еду, еда +8% хил</span>
+              </div>
+            </button>
+          </div>
+        </div>
         <div class="class-step hidden" id="class-step-summary">
           <div class="class-step-actions class-step-actions-top">
-            <button type="button" class="btn-secondary btn-glass-back" id="btn-class-back-companion">← Герой</button>
+            <button type="button" class="btn-secondary btn-glass-back" id="btn-class-back-companion">← Назад</button>
           </div>
           <p class="class-summary-lead" id="class-summary-lead">Ваш выбор</p>
           <div class="class-summary-stage" id="class-summary-stage">
@@ -569,6 +622,16 @@
           <p class="bb-vs-fighter__name" id="bb-vs-enemy-name"></p>
           <p class="bb-vs-fighter__sub" id="bb-vs-enemy-sub" hidden></p>
         </div>
+      </div>
+    </div>
+
+    <div class="overlay hotseat-handoff-overlay hidden" id="hotseat-handoff-overlay" aria-hidden="true">
+      <div class="hotseat-handoff-overlay__backdrop" aria-hidden="true"></div>
+      <div class="hotseat-handoff-overlay__panel" role="dialog" aria-labelledby="hotseat-handoff-title">
+        <p class="hotseat-handoff-overlay__eyebrow">Hotseat</p>
+        <h2 class="hotseat-handoff-overlay__title" id="hotseat-handoff-title">Передайте устройство</h2>
+        <p class="hotseat-handoff-overlay__body" id="hotseat-handoff-body">Ход игрока 2</p>
+        <button type="button" class="btn-primary" id="btn-hotseat-handoff-continue">Готово</button>
       </div>
     </div>
 
@@ -1087,7 +1150,7 @@
   <script src="components/bb-craft-tether.js?v=1"></script>
   <script src="components/bb-prep-layout.js?v=5"></script>
   <script src="components/prep-storage-physics.js?v=9"></script>
-  <script src="components/bb-vs-overlay.js?v=1"></script>
+  <script src="components/bb-vs-overlay.js?v=2"></script>
   <script src="components/bb-battle-hud.js?v=2"></script>
   <script src="components/bb-round-result.js?v=1"></script>
   <script src="components/bb-run-complete.js?v=1"></script>
@@ -1104,7 +1167,7 @@
   <script src="systems/dialogue-engine.js?v=5"></script>
   <script src="battle-engine.js?v=2"></script>
   <script src="battle-float-layer.js?v=21"></script>
-  <script src="components/thought-arena.js?v=31"></script>
+  <script src="components/thought-arena.js?v=32"></script>
   <script src="components/arena-equipment.js?v=34"></script>
   <script src="components/emotion-presenter.js?v=5"></script>
   <script src="emotion-engine.js?v=26"></script>
@@ -1116,9 +1179,9 @@
   <script src="components/prep-hud-hero.js?v=4"></script>
   <script src="prep-drag.js?v=10"></script>
   <script src="game-tooltip.js?v=8"></script>
-  <script src="systems/presentation-clock.js?v=2"></script>
-  <script src="battle-loop.js?v=3"></script>
-  <script src="game.js?v=137"></script>
+  <script src="systems/presentation-clock.js?v=3"></script>
+  <script src="battle-loop.js?v=4"></script>
+  <script src="game.js?v=138"></script>
   <script src="pwa-wake-lock.js"></script>
   <script src="pwa-register.js"></script>
 </body>

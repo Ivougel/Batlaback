@@ -3,13 +3,15 @@
   "fixedAt": "2026-07-11",
   "baselineTag": "engine-baseline-classic",
   "baselineCommit": "53d3d37",
-  "gameModes": ["classic"],
+  "gameModes": ["classic", "hotseat"],
   "phases": {
     "js": ["classSelect", "prep", "battle", "replay"],
     "appDataset": ["prep", "battle", "replay"]
   },
   "classIntroSteps": [
+    { "key": "mode", "elementId": "class-step-mode", "overlayAttr": "mode" },
     { "key": "player", "elementId": "class-step-player", "overlayAttr": "player" },
+    { "key": "opponent", "elementId": "class-step-opponent", "overlayAttr": "opponent" },
     { "key": "summary", "elementId": "class-step-summary", "overlayAttr": "summary" }
   ],
   "overlays": [
@@ -22,13 +24,14 @@
     { "id": "board-preview-overlay", "layer": "system", "hiddenByDefault": true },
     { "id": "recipe-book-overlay", "layer": "system", "hiddenByDefault": true },
     { "id": "bb-item-wiki-overlay", "layer": "system", "hiddenByDefault": true },
-    { "id": "class-detail-overlay", "layer": "menu", "hiddenByDefault": true }
+    { "id": "class-detail-overlay", "layer": "menu", "hiddenByDefault": true },
+    { "id": "hotseat-handoff-overlay", "layer": "system", "hiddenByDefault": true }
   ],
   "appSheets": [],
   "gamePanels": [
-    { "id": "shop-panel", "phases": ["prep"], "modes": ["classic"] },
-    { "id": "bench-panel", "phases": ["prep"], "modes": ["classic"] },
-    { "id": "prep-top-bar", "phases": ["prep"], "modes": ["classic"] },
+    { "id": "shop-panel", "phases": ["prep"], "modes": ["classic", "hotseat"] },
+    { "id": "bench-panel", "phases": ["prep"], "modes": ["classic", "hotseat"] },
+    { "id": "prep-top-bar", "phases": ["prep"], "modes": ["classic", "hotseat"] },
     { "id": "prep-field-column", "phases": ["prep", "battle", "replay"], "modes": ["*"] }
   ],
   "prepSnapshots": [

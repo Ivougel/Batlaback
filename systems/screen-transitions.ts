@@ -6,7 +6,7 @@ import type { IntroStepId } from "../types/game";
  * частые переходы ≤280ms, наградные моменты до 360ms, выход быстрее входа.
  */
 (function initScreenTransitions(): void {
-  const INTRO_ORDER: readonly IntroStepId[] = ["mode", "tdDifficulty", "campaignTrial", "player", "companion", "opponent", "summary"];
+  const INTRO_ORDER: readonly IntroStepId[] = ["mode", "player", "companion", "opponent", "summary"];
 
   const TIMING = {
     introEnter: 240,

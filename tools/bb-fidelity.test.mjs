@@ -272,6 +272,13 @@ function run() {
   classicBattle.phase = "battle";
   assert(!classicBattle.shouldUseBBVersusTurnFlow(), "classic no versus turn flow");
 
+  const hotseat = loadSandbox("hotseat");
+  hotseat.isHotseatMode = () => true;
+  assert(hotseat.shouldUseBBVersusTurnFlow(), "hotseat uses versus turn flow");
+  assert(hotseat.isBBFidelityMode(), "hotseat is BB fidelity mode");
+  assert(hotseat.isBBFidelityVersus(), "hotseat counts as BB versus UX");
+  assert(!hotseat.shouldUseBBRunLives(), "hotseat does not use solo run lives");
+
   console.log("bb-fidelity.test.mjs: OK");
 }
 

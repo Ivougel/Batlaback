@@ -1,0 +1,65 @@
+/**
+ * Hotseat handoff — экран «передайте устройство» между ходами prep.
+ */
+.hotseat-handoff-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding:
+    max(16px, env(safe-area-inset-top))
+    max(16px, env(safe-area-inset-right))
+    max(16px, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
+}
+
+.hotseat-handoff-overlay.hidden {
+  display: none;
+}
+
+.hotseat-handoff-overlay__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 8, 6, 0.88);
+}
+
+.hotseat-handoff-overlay__panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: min(100%, 360px);
+  padding: 28px 24px;
+  border-radius: 16px;
+  background: linear-gradient(165deg, #3a2a1a 0%, #1c140e 100%);
+  border: 1px solid rgba(201, 162, 39, 0.45);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+  text-align: center;
+}
+
+.hotseat-handoff-overlay__eyebrow {
+  margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(210, 190, 150, 0.75);
+}
+
+.hotseat-handoff-overlay__title {
+  margin: 0;
+  font-size: clamp(1.25rem, 4vw, 1.6rem);
+  color: #f5e6c8;
+}
+
+.hotseat-handoff-overlay__body {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  color: rgba(230, 210, 170, 0.9);
+}
+
+.hotseat-handoff-overlay__panel .btn-primary {
+  min-width: 160px;
+}

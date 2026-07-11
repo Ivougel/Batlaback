@@ -1,7 +1,7 @@
 // Transpiled from TypeScript — npm run compile:ts
 
 (function initScreenTransitions() {
-  const INTRO_ORDER = ["mode", "tdDifficulty", "campaignTrial", "player", "companion", "opponent", "summary"];
+  const INTRO_ORDER = ["mode", "player", "companion", "opponent", "summary"];
   const TIMING = {
     introEnter: 240,
     introExit: 160,

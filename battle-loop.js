@@ -32,9 +32,12 @@ function shouldThrottlePrepGameLoop() {
   return typeof BattleFxTier !== "undefined" && BattleFxTier.shouldThrottleGameLoop?.();
 }
 
-/** Touch phone/tablet: бой — 20–30 Hz (dt сохраняет точность симуляции). */
+/** Touch phone/tablet: бой — setTimeout только на low tier; medium/tablet → rAF. */
 function shouldThrottleBattleGameLoop() {
   if (!isBattleUiPhase()) return false;
+  if (typeof BattleFxTier !== "undefined" && BattleFxTier.shouldThrottleBattleGameLoop) {
+    return BattleFxTier.shouldThrottleBattleGameLoop();
+  }
   return typeof BattleFxTier !== "undefined" && BattleFxTier.shouldThrottleGameLoop?.();
 }
 

@@ -75,6 +75,29 @@ html[data-battle-hero-placement="flank-arena"] .battle-thought-body {
   z-index: 1;
 }
 
+/* Устоявшиеся мысли во flank: dance на GPU через CSS, JS только позиция по gap. */
+html[data-battle-hero-placement="flank-arena"] .battle-thought-body.battle-thought-body--css-dance {
+  animation: battle-thought-idle-wobble 2.8s ease-in-out infinite;
+  animation-delay: calc(var(--thought-dance-phase, 0) * -1s);
+  will-change: transform;
+}
+
+@keyframes battle-thought-idle-wobble {
+  0%, 100% {
+    transform: translate(-50%, -50%) rotate(0deg) scale(var(--thought-idle-scale, 1));
+  }
+  50% {
+    transform: translate(calc(-50% + 2px), calc(-50% - 2px)) rotate(2deg) scale(calc(var(--thought-idle-scale, 1) * 1.02));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-battle-hero-placement="flank-arena"] .battle-thought-body.battle-thought-body--css-dance {
+    animation: none;
+    transform: translate(-50%, -50%) scale(var(--thought-idle-scale, 1));
+  }
+}
+
 .battle-thought-body--player {
   z-index: 2;
 }

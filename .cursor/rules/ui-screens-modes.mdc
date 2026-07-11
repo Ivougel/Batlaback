@@ -10,7 +10,7 @@ alwaysApply: false
 
 ## Обязательно
 
-- Режим игры: только `classic` (`data-game-mode`).
+- Режим игры: `classic` | `hotseat` (`data-game-mode`). Default prod — `classic`.
 - Фазы `#app`: `prep | battle | replay`. Intro — через `#class-overlay`, не через `data-phase`.
 - Новый overlay / шаг intro → обновить `tools/ui-structure-manifest.json` + `docs/ui-screens-modes.md`.
 - После UI-изменений: `npm run test:structure` и при визуале `npm run test:snapshots`.

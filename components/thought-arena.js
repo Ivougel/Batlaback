@@ -635,21 +635,41 @@ const ThoughtArena = (() => {
     const speed = Math.hypot(body.vx ?? 0, body.vy ?? 0);
     const stretch = Math.min(0.008, speed * 0.0004);
     const squash = 1 + stretch * Math.sin((body.turbPhase ?? 0) * 1.6);
-    const dance = isAnchoredFlankArena() ? sampleThoughtDance(body) : { ox: 0, oy: 0, rot: 0, scaleMult: 1 };
+    const useCssIdleDance = isAnchoredFlankArena() && !isStaticThoughts() && isAnchoredBodySettled(body);
+    body.el.classList.toggle("battle-thought-body--css-dance", useCssIdleDance);
+    const dance = useCssIdleDance
+      ? { ox: 0, oy: 0, rot: 0, scaleMult: 1 }
+      : (isAnchoredFlankArena() ? sampleThoughtDance(body) : { ox: 0, oy: 0, rot: 0, scaleMult: 1 });
     const scale = body.displayScale * squash * (body.reactScale ?? 1) * dance.scaleMult;
     const mirrorX = body.mirrorX ? -1 : 1;
     const x = (body.renderX ?? body.x) + (body.reactOx ?? 0) + dance.ox;
     const y = (body.renderY ?? body.y) + (body.reactOy ?? 0) + dance.oy;
     const rot = (body.renderRot ?? body.rotation ?? 0) + (body.reactRot ?? 0) + dance.rot;
-    const transform = [
-      `translate3d(${x}px, ${y}px, 0)`,
-      `translate(-50%, -50%)`,
-      `rotate(${rot}deg)`,
-      `scale(${mirrorX * scale}, ${scale})`,
-    ].join(" ");
-    if (body._lastTransform !== transform) {
-      body._lastTransform = transform;
-      body.el.style.transform = transform;
+
+    if (useCssIdleDance) {
+      const posKey = `${x.toFixed(1)}|${y.toFixed(1)}|${scale.toFixed(3)}|${mirrorX}`;
+      if (body._lastPos !== posKey) {
+        body._lastPos = posKey;
+        body.el.style.left = `${x}px`;
+        body.el.style.top = `${y}px`;
+        body.el.style.setProperty("--thought-idle-scale", String(mirrorX * scale));
+      }
+      if (body._lastTransform !== "") {
+        body._lastTransform = "";
+        body.el.style.removeProperty("transform");
+      }
+    } else {
+      body._lastPos = null;
+      const transform = [
+        `translate3d(${x}px, ${y}px, 0)`,
+        `translate(-50%, -50%)`,
+        `rotate(${rot}deg)`,
+        `scale(${mirrorX * scale}, ${scale})`,
+      ].join(" ");
+      if (body._lastTransform !== transform) {
+        body._lastTransform = transform;
+        body.el.style.transform = transform;
+      }
     }
     const opacity = String(body.opacity);
     if (body._lastOpacity !== opacity) {
@@ -1004,10 +1024,22 @@ const ThoughtArena = (() => {
     });
   }
 
+  function isAnchoredBodySettled(body) {
+    if (!isAnchoredFlankArena()) return false;
+    return Math.hypot(body.vx ?? 0, body.vy ?? 0) < 0.12
+      && Math.abs(body.rotVel ?? 0) < 0.2
+      && Math.abs((body.renderX ?? body.x) - body.x) < 0.2
+      && Math.abs((body.renderY ?? body.y) - body.y) < 0.2
+      && Math.abs((body.displayScale ?? 1) - (body.targetScale ?? 1)) < 0.025
+      && (body.opacity ?? 1) >= 0.97
+      && !body.fadeOut
+      && !body.reactOx && !body.reactOy && !body.reactRot && !body.reactFilter;
+  }
+
   function thoughtsNeedMotionStep(list) {
     if (equipReactions.player.length || equipReactions.enemy.length) return true;
-    if (isAnchoredFlankArena() && !isStaticThoughts() && list.length > 0) return true;
     for (const body of list) {
+      if (isAnchoredBodySettled(body)) continue;
       if (body.fadeOut) return true;
       if (Math.abs((body.displayScale ?? 1) - (body.targetScale ?? 1)) > 0.025) return true;
       if ((body.opacity ?? 1) < 0.97) return true;
@@ -1137,6 +1169,9 @@ const ThoughtArena = (() => {
   function styleBodyEl(body, glyph) {
     const size = thoughtDiameterPx(body.mountEl ? 1 : body.glyphCount);
     body.el.textContent = glyph;
+    if (body.dancePhaseOffset != null) {
+      body.el.style.setProperty("--thought-dance-phase", String(body.dancePhaseOffset));
+    }
     if (isAnchoredFlankArena()) {
       body.el.style.width = "";
       body.el.style.height = "";

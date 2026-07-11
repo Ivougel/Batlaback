@@ -1,7 +1,7 @@
 /**
  * BB Fidelity — переключатель UX classic / versus под оригинальный Backpack Battles.
  */
-const BB_FIDELITY_MODES = new Set(["classic"]);
+const BB_FIDELITY_MODES = new Set(["classic", "hotseat"]);
 const BB_RUN_LIVES_MAX = 4;
 const BB_STORAGE_MAX_ITEMS = 18;
 
@@ -47,7 +47,8 @@ function isBBFidelityClassic() {
 }
 
 function isBBFidelityVersus() {
-  return getBBFidelityMode() === "versus";
+  const mode = getBBFidelityMode();
+  return mode === "hotseat" || mode === "versus";
 }
 
 function getBBRunLivesMax() {
@@ -84,9 +85,9 @@ function shouldSkipBBCompanionIntro() {
   return isBBFidelityMode();
 }
 
-/** Classic BB: без pass-and-play turn flow. */
+/** Hotseat: поочерёдный prep (pass-and-play). */
 function shouldUseBBVersusTurnFlow() {
-  return false;
+  return typeof isHotseatMode === "function" ? isHotseatMode() : getBBFidelityMode() === "hotseat";
 }
 
 function syncBBIntroContext() {

@@ -82,13 +82,8 @@ const BBVsOverlay = (() => {
     document.documentElement.removeAttribute("data-bb-vs-active");
   }
 
-  function finish() {
-    const cb = onComplete;
-    cancel();
-    if (cb) cb();
-  }
-
-  function cancel() {
+  /** Останавливает таймер/колбэк, оверлей не трогает (чтобы не мелькал prep под VS). */
+  function release() {
     active = false;
     onComplete = null;
     startedAt = 0;
@@ -96,7 +91,23 @@ const BBVsOverlay = (() => {
       clearTimeout(timerId);
       timerId = null;
     }
+  }
+
+  /** Снять VS после того, как battle уже в DOM — без вспышки prep. */
+  function dismiss() {
+    release();
     hide();
+  }
+
+  function finish() {
+    const cb = onComplete;
+    // Не hide(): executeBattleStart держит VS до applyPhase("battle").
+    release();
+    if (cb) cb();
+  }
+
+  function cancel() {
+    dismiss();
   }
 
   function show() {
@@ -143,7 +154,7 @@ const BBVsOverlay = (() => {
     }
   }
 
-  return { shouldUse, isActive, start, cancel, tickStaleGuard, HOLD_MS };
+  return { shouldUse, isActive, start, cancel, release, dismiss, tickStaleGuard, HOLD_MS };
 })();
 
 function syncBBVsOverlay() {

@@ -35,7 +35,16 @@
   }
   function wake(id) {
     const ch = channels.get(id);
-    if (ch) ch.wake = true;
+    if (!ch) return;
+    const now = performance.now();
+    const gap = typeof ch.gapMs === "function" ? ch.gapMs({}) : ch.gapMs;
+    if (gap <= 0) {
+      ch.wake = true;
+      return;
+    }
+    if (now - ch.lastAt < gap * 0.85) {
+      ch.lastAt = now - gap;
+    }
   }
   function shouldOwnLoop(id) {
     return isBattleCentralized() && !isPaused() && channels.has(id);
@@ -48,7 +57,7 @@
         continue;
       }
       const gap = typeof ch.gapMs === "function" ? ch.gapMs(ctx) : ch.gapMs;
-      const due = ch.wake || gap <= 0 || now - ch.lastAt >= gap;
+      const due = gap <= 0 || now - ch.lastAt >= gap;
       if (!due) continue;
       ch.lastAt = now;
       ch.wake = false;
