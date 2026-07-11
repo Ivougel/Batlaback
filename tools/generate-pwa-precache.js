@@ -11,9 +11,24 @@ const path = require("path");
 const ROOT = path.join(__dirname, "..");
 const INDEX = path.join(ROOT, "index.html");
 const OUT = path.join(ROOT, "pwa-precache.js");
-const CACHE_VERSION = "bb-pwa-v12";
+/** Бамп при любом изменении списка — iPad/PWA сбрасывает старый Cache Storage. */
+const CACHE_VERSION = "bb-pwa-v13";
 
 const STATIC_EXT = new Set([".js", ".css", ".png", ".jpg", ".jpeg", ".webp", ".svg", ".mp3", ".woff", ".woff2"]);
+
+/** Каталоги, которые нельзя класть в offline-кэш (OOM на iPad Mini PWA). */
+const SKIP_DIRS = new Set([
+  "node_modules",
+  "dist",
+  "tools",
+  ".git",
+  ".cursor",
+  ".github",
+  "coverage",
+  "playwright-report",
+  "test-results",
+  "agent-transcripts",
+]);
 
 function toRelUrl(filePath) {
   return filePath.split(path.sep).join("/");
@@ -26,7 +41,7 @@ function basePath(url) {
 function walk(dir, out = []) {
   if (!fs.existsSync(dir)) return out;
   for (const name of fs.readdirSync(dir)) {
-    if (name === "tools" || name === ".git") continue;
+    if (SKIP_DIRS.has(name)) continue;
     const full = path.join(dir, name);
     const st = fs.statSync(full);
     if (st.isDirectory()) walk(full, out);
@@ -47,7 +62,10 @@ function urlsFromIndex(html) {
       continue;
     }
     const clean = raw.split("#")[0].replace(/^\//, "");
-    if (clean) urls.add(clean);
+    if (!clean) continue;
+    const top = basePath(clean).split("/")[0];
+    if (SKIP_DIRS.has(top)) continue;
+    urls.add(clean);
   }
   return urls;
 }
@@ -62,6 +80,12 @@ function buildPrecacheList(html) {
 function main() {
   const html = fs.readFileSync(INDEX, "utf8");
   const sorted = buildPrecacheList(html);
+  const nm = sorted.filter((u) => u.includes("node_modules")).length;
+  const dist = sorted.filter((u) => u.startsWith("dist/") || u === "dist").length;
+  if (nm || dist) {
+    console.error(`Refusing to write precache with node_modules=${nm} dist=${dist}`);
+    process.exit(1);
+  }
 
   const body = `// Auto-generated — node tools/generate-pwa-precache.js
 self.PWA_CACHE_VERSION = "${CACHE_VERSION}";

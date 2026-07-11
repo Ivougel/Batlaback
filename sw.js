@@ -1,17 +1,38 @@
 /**
  * Service Worker — офлайн-кэш для PWA.
+ * Не кэшируем node_modules/dist: иначе iPad Mini jetsam'ит WebView (OOM).
  */
 importScripts("pwa-precache.js");
 
 const CACHE = self.PWA_CACHE_VERSION || "bb-pwa-v1";
-const PRECACHE = self.PWA_PRECACHE_URLS || ["index.html", "manifest.webmanifest"];
+const RAW_PRECACHE = self.PWA_PRECACHE_URLS || ["index.html", "manifest.webmanifest"];
+
+function isBlockedPrecacheUrl(url) {
+  const path = String(url || "").split("?")[0];
+  return /(^|\/)node_modules(\/|$)/.test(path)
+    || /(^|\/)dist(\/|$)/.test(path)
+    || /(^|\/)tools(\/|$)/.test(path);
+}
+
+const PRECACHE = RAW_PRECACHE.filter((url) => !isBlockedPrecacheUrl(url));
+
+async function precacheUrls(cache, urls) {
+  // addAll падает целиком на одном 404; по одному — частичный успех + меньше пик памяти.
+  const results = await Promise.allSettled(
+    urls.map((url) => cache.add(new Request(url, { cache: "reload" }))),
+  );
+  const failed = results.filter((r) => r.status === "rejected").length;
+  if (failed) {
+    console.warn(`[sw] precache: ${urls.length - failed}/${urls.length} ok, ${failed} failed`);
+  }
+}
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE)
-      .then((cache) => cache.addAll(PRECACHE.map((url) => new Request(url, { cache: "reload" }))))
+      .then((cache) => precacheUrls(cache, PRECACHE))
       .then(() => self.skipWaiting())
-      .catch((err) => console.warn("[sw] precache partial fail", err)),
+      .catch((err) => console.warn("[sw] precache install fail", err)),
   );
 });
 
@@ -36,6 +57,7 @@ function sameOrigin(request) {
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET" || !sameOrigin(request)) return;
+  if (isBlockedPrecacheUrl(request.url)) return;
 
   event.respondWith(
     caches.match(request).then((cached) => {
