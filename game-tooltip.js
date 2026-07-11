@@ -566,20 +566,32 @@ function positionBBStackPrepTooltipDock(dock) {
         Number.isFinite(storageTop) ? storageTop - margin : viewBottom,
         bounds.bottom - margin,
       );
-      const maxDockW = tabletLandscape
-        ? Math.min(bounds.width - margin * 2, Math.round(248 * uiScale))
-        : Math.min(bounds.width - margin * 2, viewW * 0.92);
-      width = Math.max(168, maxDockW);
-      left = bounds.left + (bounds.width - width) / 2;
-      const bandH = Math.max(140, bandBottom - bandTop);
-      maxHeight = Math.max(160, Math.min(bandH, Math.round(viewH * (tabletLandscape ? 0.68 : 0.58))));
-      // Чуть ниже центра поля — карточка и flyout остаются в зоне видимости.
-      top = bandTop + Math.max(0, Math.round((bandH - maxHeight) * 0.28));
-      if (top + maxHeight > bandBottom) {
-        top = Math.max(bandTop, bandBottom - maxHeight);
+      if (tabletLandscape) {
+        // Карточка + левый flyout-оверлей: dock шире карточки, без scroll.
+        const cardW = Math.round(210 * uiScale);
+        const flyoutReserve = Math.round(212 * uiScale);
+        width = Math.min(bounds.width - margin * 2, cardW + flyoutReserve);
+        // Карточка справа в dock (flyout слева) — центрируем footprint по сетке.
+        left = bounds.left + (bounds.width - width) / 2;
+        const bandH = Math.max(160, bandBottom - bandTop);
+        maxHeight = Math.max(180, Math.min(bandH, Math.round(viewH * 0.72)));
+        top = bandTop + Math.max(0, Math.round((bandH - maxHeight) * 0.18));
+        if (top + maxHeight > bandBottom) {
+          top = Math.max(bandTop, bandBottom - maxHeight);
+        }
+      } else {
+        width = Math.max(168, Math.min(bounds.width - margin * 2, viewW * 0.92));
+        left = bounds.left + (bounds.width - width) / 2;
+        const bandH = Math.max(140, bandBottom - bandTop);
+        maxHeight = Math.max(160, Math.min(bandH, Math.round(viewH * 0.58)));
+        // Чуть ниже центра поля — карточка и flyout остаются в зоне видимости.
+        top = bandTop + Math.max(0, Math.round((bandH - maxHeight) * 0.28));
+        if (top + maxHeight > bandBottom) {
+          top = Math.max(bandTop, bandBottom - maxHeight);
+        }
       }
     } else {
-      width = Math.max(140, Math.min(viewW * 0.88, tabletLandscape ? Math.round(248 * uiScale) : 320));
+      width = Math.max(140, Math.min(viewW * 0.88, tabletLandscape ? Math.round(422 * uiScale) : 320));
       left = viewLeft + (viewW - width) / 2;
       top = topLimit + Math.round(viewH * 0.22);
       maxHeight = Math.max(160, Math.min(viewBottom - top, Math.round(viewH * 0.5)));

@@ -167,10 +167,10 @@ html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: calc(3px * var(--ui-scale, 1));
-  width: min(96%, calc(360px * var(--ui-scale, 1)));
-  padding: calc(6px * var(--ui-scale, 1)) calc(8px * var(--ui-scale, 1));
-  border-radius: calc(10px * var(--ui-scale, 1));
+  gap: calc(5px * var(--ui-scale, 1));
+  width: min(96%, calc(440px * var(--ui-scale, 1)));
+  padding: calc(10px * var(--ui-scale, 1)) calc(12px * var(--ui-scale, 1));
+  border-radius: calc(12px * var(--ui-scale, 1));
   background: rgba(20, 14, 10, 0.88);
   border: 1px solid rgba(180, 140, 60, 0.5);
   box-shadow: 0 6px 22px rgba(0, 0, 0, 0.5);
@@ -180,7 +180,7 @@ html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="
 .bb-battle-hud__round {
   margin: 0;
   text-align: center;
-  font-size: calc(0.68rem * var(--ui-scale, 1));
+  font-size: calc(0.78rem * var(--ui-scale, 1));
   font-weight: 700;
   letter-spacing: 0.06em;
   color: rgba(230, 200, 140, 0.92);
@@ -190,14 +190,14 @@ html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="
 .bb-battle-hud__row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: calc(8px * var(--ui-scale, 1));
+  gap: calc(12px * var(--ui-scale, 1));
   align-items: start;
 }
 
 .bb-battle-hud__side {
   display: flex;
   align-items: flex-start;
-  gap: calc(6px * var(--ui-scale, 1));
+  gap: calc(8px * var(--ui-scale, 1));
   min-width: 0;
 }
 
@@ -212,8 +212,8 @@ html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="
 .bb-battle-hud__portrait,
 .bb-battle-hud__portrait-fallback {
   flex: 0 0 auto;
-  width: calc(30px * var(--ui-scale, 1));
-  height: calc(30px * var(--ui-scale, 1));
+  width: calc(42px * var(--ui-scale, 1));
+  height: calc(42px * var(--ui-scale, 1));
   border-radius: 50%;
   object-fit: cover;
   background: rgba(30, 22, 16, 0.9);
@@ -221,7 +221,7 @@ html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: calc(0.95rem * var(--ui-scale, 1));
+  font-size: calc(1.15rem * var(--ui-scale, 1));
 }
 
 .bb-battle-hud__vitals {
@@ -230,10 +230,10 @@ html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="
 }
 
 .bb-battle-hud__name {
-  font-size: calc(0.68rem * var(--ui-scale, 1));
+  font-size: calc(0.82rem * var(--ui-scale, 1));
   font-weight: 700;
   color: #f0e2c8;
-  margin-bottom: calc(1px * var(--ui-scale, 1));
+  margin-bottom: calc(3px * var(--ui-scale, 1));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -241,18 +241,80 @@ html[data-battle-layout="bb-stack"] #app:is([data-phase="battle"], [data-phase="
 
 .bb-battle-hud .avatar-hero-bars {
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: calc(4px * var(--ui-scale, 1));
+}
+
+.bb-battle-hud .avatar-hero-bars-col {
+  display: flex;
+  flex-direction: column;
+  gap: calc(4px * var(--ui-scale, 1));
+  width: 100%;
 }
 
 .bb-battle-hud .avatar-hero-hp-bar,
 .bb-battle-hud .avatar-hero-stamina-bar {
-  min-height: calc(12px * var(--ui-scale, 1));
+  height: calc(18px * var(--ui-scale, 1));
+  min-height: calc(18px * var(--ui-scale, 1));
 }
 
 .bb-battle-hud .avatar-hero-hp-label,
 .bb-battle-hud .avatar-hero-stamina-label {
-  font-size: calc(0.62rem * var(--ui-scale, 1));
+  font-size: calc(0.78rem * var(--ui-scale, 1));
+  letter-spacing: 0;
 }
 
 .bb-battle-hud .battle-hud-status-stack {
   display: none;
+}
+
+/* iPad landscape / широкий экран: ещё крупнее HP/stamina в щели между сетками */
+html[data-layout-profile="tablet-landscape"] .bb-battle-hud,
+html[data-battle-profile="tablet-landscape-side"] .bb-battle-hud,
+html[data-battle-profile="desktop-landscape"] .bb-battle-hud {
+  width: min(92%, calc(520px * var(--ui-scale, 1)));
+  padding: calc(12px * var(--ui-scale, 1)) calc(14px * var(--ui-scale, 1));
+  gap: calc(6px * var(--ui-scale, 1));
+}
+
+html[data-layout-profile="tablet-landscape"] .bb-battle-hud__portrait,
+html[data-layout-profile="tablet-landscape"] .bb-battle-hud__portrait-fallback,
+html[data-battle-profile="tablet-landscape-side"] .bb-battle-hud__portrait,
+html[data-battle-profile="tablet-landscape-side"] .bb-battle-hud__portrait-fallback,
+html[data-battle-profile="desktop-landscape"] .bb-battle-hud__portrait,
+html[data-battle-profile="desktop-landscape"] .bb-battle-hud__portrait-fallback {
+  width: calc(48px * var(--ui-scale, 1));
+  height: calc(48px * var(--ui-scale, 1));
+}
+
+html[data-layout-profile="tablet-landscape"] .bb-battle-hud__name,
+html[data-battle-profile="tablet-landscape-side"] .bb-battle-hud__name,
+html[data-battle-profile="desktop-landscape"] .bb-battle-hud__name {
+  font-size: calc(0.9rem * var(--ui-scale, 1));
+}
+
+html[data-layout-profile="tablet-landscape"] .bb-battle-hud__round,
+html[data-battle-profile="tablet-landscape-side"] .bb-battle-hud__round,
+html[data-battle-profile="desktop-landscape"] .bb-battle-hud__round {
+  font-size: calc(0.84rem * var(--ui-scale, 1));
+}
+
+html[data-layout-profile="tablet-landscape"] .bb-battle-hud .avatar-hero-hp-bar,
+html[data-layout-profile="tablet-landscape"] .bb-battle-hud .avatar-hero-stamina-bar,
+html[data-battle-profile="tablet-landscape-side"] .bb-battle-hud .avatar-hero-hp-bar,
+html[data-battle-profile="tablet-landscape-side"] .bb-battle-hud .avatar-hero-stamina-bar,
+html[data-battle-profile="desktop-landscape"] .bb-battle-hud .avatar-hero-hp-bar,
+html[data-battle-profile="desktop-landscape"] .bb-battle-hud .avatar-hero-stamina-bar {
+  height: calc(22px * var(--ui-scale, 1));
+  min-height: calc(22px * var(--ui-scale, 1));
+}
+
+html[data-layout-profile="tablet-landscape"] .bb-battle-hud .avatar-hero-hp-label,
+html[data-layout-profile="tablet-landscape"] .bb-battle-hud .avatar-hero-stamina-label,
+html[data-battle-profile="tablet-landscape-side"] .bb-battle-hud .avatar-hero-hp-label,
+html[data-battle-profile="tablet-landscape-side"] .bb-battle-hud .avatar-hero-stamina-label,
+html[data-battle-profile="desktop-landscape"] .bb-battle-hud .avatar-hero-hp-label,
+html[data-battle-profile="desktop-landscape"] .bb-battle-hud .avatar-hero-stamina-label {
+  font-size: calc(0.88rem * var(--ui-scale, 1));
 }
