@@ -37,6 +37,7 @@
     "test:phases": "node tools/layout-phases.test.mjs",
     "test:geometry": "node tools/layout-geometry.test.mjs",
     "test:y700-intro": "node tools/y700-intro-controls.test.mjs",
+    "test:y700-prep": "node tools/y700-prep-layout.test.mjs",
     "test:qa": "node tools/layout-qa-audit.mjs",
     "test:drag-stability": "node tools/layout-drag-stability.test.mjs",
     "test:prep-drag-alignment": "node tools/prep-drag-alignment.test.mjs",

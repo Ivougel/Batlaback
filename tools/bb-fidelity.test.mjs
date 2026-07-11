@@ -252,6 +252,33 @@ function run() {
   };
   assert(classicIntro.shouldUseBBIntroLayout(), "BB intro on hero steps for classic");
 
+  const tabletLandscape = loadSandbox("classic");
+  tabletLandscape.window = {
+    innerWidth: 2560,
+    innerHeight: 1600,
+    ontouchstart: true,
+  };
+  tabletLandscape.document.documentElement.dataset.touch = "true";
+  assert(!tabletLandscape.shouldUseBBStackPrepLayout(), "touch tablet landscape skips bb-stack");
+
+  const tabletPortrait = loadSandbox("classic");
+  tabletPortrait.window = {
+    innerWidth: 1600,
+    innerHeight: 2560,
+    ontouchstart: true,
+  };
+  tabletPortrait.document.documentElement.dataset.touch = "true";
+  assert(!tabletPortrait.shouldUseBBStackPrepLayout(), "touch tablet portrait skips bb-stack");
+
+  const phonePortrait = loadSandbox("classic");
+  phonePortrait.window = {
+    innerWidth: 390,
+    innerHeight: 844,
+    ontouchstart: true,
+  };
+  phonePortrait.document.documentElement.dataset.touch = "true";
+  assert(phonePortrait.shouldUseBBStackPrepLayout(), "phone portrait keeps bb-stack");
+
   const classicBattle = loadSandbox("classic");
   classicBattle.phase = "battle";
   assert(!classicBattle.shouldUseBBVersusTurnFlow(), "classic no versus turn flow");

@@ -156,7 +156,21 @@ function shouldUseBBStackPrepLayout() {
     ? document.getElementById("app")?.dataset?.phase
     : null;
   if (appPhase !== "prep") return false;
-  return isBBFidelityMode();
+  if (!isBBFidelityMode()) return false;
+  if (typeof window === "undefined") return true;
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  const touch = typeof document !== "undefined"
+    && (document.documentElement?.dataset?.touch === "true"
+      || "ontouchstart" in window
+      || navigator.maxTouchPoints > 0);
+  if (touch) {
+    const shortSide = Math.min(w, h);
+    const longSide = Math.max(w, h);
+    // Touch-планшет (iPad, Y700 native/scaled) — side/stacked через ui-layout, не bb-stack колонка.
+    if (shortSide >= 600 && longSide <= 2800) return false;
+  }
+  return true;
 }
 
 /** BB classic/versus: полноэкранный VS перед боем вместо 3-2-1. */
