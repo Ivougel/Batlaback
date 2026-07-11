@@ -331,6 +331,7 @@ declare function flushDeferredLayoutPasses(): void;
 declare function scheduleCanvasFit(): void;
 declare function applyUiLayout(options?: { skipDockRemeasure?: boolean }): void;
 declare function settlePrepLayoutForReveal(): void;
+declare function getItemGrimFlavor(itemId: string): string;
 declare function tryRotateDragItemFromSecondaryTouch(): boolean;
 declare function getPrepDragPrimaryPointerId(): number | null;
 declare function getPendingCraftBoardUids(side: string): Set<string>;

@@ -383,7 +383,7 @@ function getCraftTooltipLines(itemId, side = null) {
   lines.push({
     text: outputRecipeShown ? "\u2697\uFE0F \u041A\u0440\u0430\u0444\u0442" : "\u2697\uFE0F \u041A\u043E\u043C\u0431\u0438\u043D\u0430\u0446\u0438\u0438",
     style: "label",
-    color: "#bc8cff",
+    color: "#bc8cff"
   });
   comboLines.forEach((entry) => {
     if (entry.html) {
@@ -392,11 +392,14 @@ function getCraftTooltipLines(itemId, side = null) {
       lines.push({ text: entry.text, style: "normal", color: entry.color });
     }
   });
-  lines.push({
-    text: "\u0421\u043B\u043E\u0436\u0438\u0442\u0435 \u0432\u043F\u043B\u043E\u0442\u043D\u0443\u044E \u043D\u0430 \u043F\u043E\u043B\u0435 \u2014 \u0441\u043B\u0438\u044F\u043D\u0438\u0435 \u0432 \u043D\u0430\u0447\u0430\u043B\u0435 \u0441\u043B\u0435\u0434\u0443\u044E\u0449\u0435\u0433\u043E \u0440\u0430\u0443\u043D\u0434\u0430",
-    style: "normal",
-    color: "#8b949e"
-  });
+  const flavor = typeof getItemGrimFlavor === "function" ? getItemGrimFlavor(itemId) : "";
+  if (flavor) {
+    lines.push({
+      text: flavor,
+      style: "flavor",
+      color: "#848896"
+    });
+  }
   return lines;
 }
 function isCraftIngredient(itemId) {

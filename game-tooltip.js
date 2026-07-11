@@ -1323,7 +1323,15 @@ function buildItemTooltipLines(def, contentItem, rotation, context = "field", op
 
   if (typeof getCraftTooltipLines === "function") {
     const craftSide = typeof prepViewSide !== "undefined" ? prepViewSide : "player";
-    getCraftTooltipLines(def.id, craftSide).forEach((line) => lines.push(line));
+    const craftLines = getCraftTooltipLines(def.id, craftSide);
+    if (craftLines.length) {
+      craftLines.forEach((line) => lines.push(line));
+    } else if (typeof getItemGrimFlavor === "function" && context !== "shop") {
+      const flavor = getItemGrimFlavor(def.id);
+      if (flavor) {
+        lines.push({ text: flavor, style: "flavor", color: "#848896" });
+      }
+    }
   }
 
   if (context === "field" && contentItem?.runtime) {

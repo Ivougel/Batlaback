@@ -3762,6 +3762,18 @@ html[data-game-phase="prep"] #sidebar-tooltip.sidebar-tooltip--floating {
   margin-bottom: var(--gap-xs);
 }
 
+.sidebar-tooltip .tt-flavor {
+  color: #848896;
+  font-style: italic;
+  line-height: 1.45;
+  margin-top: calc(4px * var(--ui-scale, 1));
+  margin-bottom: var(--gap-xs);
+}
+
+html[data-touch="true"] .sidebar-tooltip .tt-flavor {
+  font-size: var(--font-sm);
+}
+
 .mechanic-tag {
   display: inline;
   color: var(--tooltip-mechanic);

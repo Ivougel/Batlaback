@@ -499,11 +499,14 @@ function getCraftTooltipLines(itemId: string, side: string | null = null): Craft
       lines.push({ text: entry.text, style: "normal", color: entry.color });
     }
   });
-  lines.push({
-    text: "Сложите вплотную на поле — слияние в начале следующего раунда",
-    style: "normal",
-    color: "#8b949e",
-  });
+  const flavor = typeof getItemGrimFlavor === "function" ? getItemGrimFlavor(itemId) : "";
+  if (flavor) {
+    lines.push({
+      text: flavor,
+      style: "flavor",
+      color: "#848896",
+    });
+  }
 
   return lines;
 }
