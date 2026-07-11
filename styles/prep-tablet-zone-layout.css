@@ -257,7 +257,7 @@ html[data-ui-surface="tablet-side"][data-game-phase="prep"] #prep-tooltip-dock.p
   -webkit-backdrop-filter: none !important;
   pointer-events: none;
   overflow: visible;
-  z-index: 9001;
+  z-index: var(--z-prep-tooltip, 9700);
 }
 
 html[data-ui-surface="tablet-side"][data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--hero-portrait .sidebar-tooltip:not(.hidden):not(.sidebar-tooltip--card) {

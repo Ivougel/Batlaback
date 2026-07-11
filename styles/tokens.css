@@ -301,6 +301,8 @@
   --z-chrome: 50;
   --z-system: 100;
   --z-drag-ghost: 5;
+  /* Prep item/hero hints — поверх shop, field, FAB, но ниже drag-ghost и модалок */
+  --z-prep-tooltip: 9700;
 
   /* Tooltips — plain sidebar + item hint card (meadow default) */
   --tooltip-bg: rgba(255, 252, 240, 0.98);
@@ -617,6 +619,17 @@ html[data-prep-layout="bb-stack"] {
   --prep-zone-storage-body-max: calc(var(--app-h, 100dvh) * var(--prep-zone-storage-body-share));
   --prep-shop-panel-share: 1;
   --prep-shop-panel-max-w: 100%;
+}
+
+/* Phone portrait bb-stack: крупнее поле по умолчанию; JS пересчитывает доли от aspect. */
+html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"],
+html[data-bb-prep-phone-overlay="true"][data-prep-layout="bb-stack"] {
+  --prep-zone-shop-share: 0.17;
+  --prep-zone-field-share: 0.54;
+  --prep-zone-storage-share: 0.16;
+  --bb-prep-hero-col-share: 0%;
+  --bb-prep-tooltip-col-share: 0%;
+  --bb-prep-grid-col-share: 100%;
 }
 
 /* ui-layout.js: --cell-size, --grid-gap, --shop-panel-w, --battle-stats-panel-w */

@@ -646,7 +646,7 @@ html[data-touch="true"] .item-hint-card__emoji--orbit {
 }
 
 html[data-prep-shop-open][data-game-phase="prep"] #prep-tooltip-dock:not(.hidden) {
-  z-index: 9480 !important;
+  z-index: var(--z-prep-tooltip, 9700) !important;
 }
 
 html[data-prep-shop-open][data-game-phase="prep"] #prep-tooltip-dock .sidebar-tooltip.sidebar-tooltip--card:not(.hidden) .item-hint-card {

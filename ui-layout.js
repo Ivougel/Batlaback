@@ -206,6 +206,67 @@
   const PREP_GRID_COLS = 9;
   const PREP_GRID_ROWS = 7;
 
+  /**
+   * Узкий touch-портрет в bb-stack: overlay-bust + % доли зон.
+   * Не только layoutProfile=phone-portrait — на случай mis-tier (высокий DPR / desktop mode).
+   */
+  function isBbStackPhoneOverlayPrep(root = document.documentElement) {
+    if (root.dataset.prepLayout !== "bb-stack") return false;
+    if (root.dataset.layoutProfile === "phone-portrait") return true;
+    const { w, h } = viewportSize();
+    return root.dataset.touch === "true" && h >= w && w <= 520;
+  }
+
+  /**
+   * Доли зон от aspect: на высоком экране поле не раздувается выше доски,
+   * лишняя высота уходит в магазин/commerce — как на эталоне ~430×932.
+   */
+  function syncBbStackPhonePrepZoneShares(root, w, h) {
+    if (!isBbStackPhoneOverlayPrep(root)) {
+      root.removeAttribute("data-bb-prep-phone-overlay");
+      [
+        "--prep-zone-topbar-share",
+        "--prep-zone-shop-share",
+        "--prep-zone-commerce-share",
+        "--prep-zone-field-share",
+        "--prep-zone-storage-share",
+      ].forEach((name) => root.style.removeProperty(name));
+      root.style.removeProperty("--prep-phone-shop-pad");
+      root.style.removeProperty("--prep-phone-leftover-px");
+      return false;
+    }
+
+    root.dataset.bbPrepPhoneOverlay = "true";
+
+    const margin = 16;
+    const fieldW = Math.max(200, w - margin);
+    // Сетка 9×7 — высота доски при заполнении ширины.
+    const boardH = fieldW * (PREP_GRID_ROWS / PREP_GRID_COLS);
+    const targetBoardFill = 0.80;
+    const appH = Math.max(360, h);
+
+    let fieldShare = (boardH / targetBoardFill) / appH;
+    fieldShare = Math.min(0.54, Math.max(0.40, fieldShare));
+
+    // Shop/storage — контентные доли; остаток экрана → паддинг магазина + зазор у хранилища.
+    const topbarShare = 0.08;
+    const storageShare = 0.12;
+    const commerceShare = 0.06;
+    const shopShare = 0.18;
+    const reserved = topbarShare + shopShare + commerceShare + fieldShare + storageShare;
+    const leftoverPx = Math.max(0, Math.round((1 - reserved) * appH));
+    const shopPad = Math.min(36, Math.round(leftoverPx * 0.32));
+
+    root.style.setProperty("--prep-zone-topbar-share", String(roundScale(topbarShare)));
+    root.style.setProperty("--prep-zone-shop-share", String(roundScale(shopShare)));
+    root.style.setProperty("--prep-zone-commerce-share", String(roundScale(commerceShare)));
+    root.style.setProperty("--prep-zone-field-share", String(roundScale(fieldShare)));
+    root.style.setProperty("--prep-zone-storage-share", String(roundScale(storageShare)));
+    root.style.setProperty("--prep-phone-shop-pad", `${shopPad}px`);
+    root.style.setProperty("--prep-phone-leftover-px", `${leftoverPx}px`);
+    return true;
+  }
+
   /** BB stack prep: ячейки под доступную высоту/ширину колонки инвентаря. */
   function syncBBStackPrepGridMetrics() {
     if (document.body?.classList.contains("is-ui-dragging")) return false;
@@ -223,13 +284,15 @@
     const gridCol = layerWorld.querySelector(".bb-prep-inventory-grid");
     const measureEl = gridCol && gridCol.clientWidth > 48 ? gridCol : layerWorld;
     const uiScale = readCssPx("--ui-scale", 1);
+    const phoneOverlay = isBbStackPhoneOverlayPrep(root);
     const gap = Math.max(1, Math.round(1 * uiScale));
-    const pad = Math.round(8 * uiScale);
+    const pad = Math.round((phoneOverlay ? 4 : 8) * uiScale);
     const availW = Math.max(120, measureEl.clientWidth - pad * 2);
     const availH = Math.max(140, measureEl.clientHeight - pad * 2);
 
-    const minCell = Math.round(30 * uiScale);
-    const maxCell = Math.round(48 * uiScale);
+    // Phone overlay: крупнее ячейки — сетка на всю ширину поля.
+    const minCell = Math.round((phoneOverlay ? 34 : 30) * uiScale);
+    const maxCell = Math.round((phoneOverlay ? 72 : 48) * uiScale);
     const byW = Math.floor((availW - (PREP_GRID_COLS - 1) * gap) / PREP_GRID_COLS);
     const byH = Math.floor((availH - (PREP_GRID_ROWS - 1) * gap) / PREP_GRID_ROWS);
     const cell = Math.min(maxCell, Math.max(minCell, Math.min(byW, byH)));
@@ -520,7 +583,19 @@
     }
     let rowH;
     if (prepLayout === "bb-stack") {
-      rowH = Math.round(Math.max(96, Math.min(128, BB_STACK_SHOP_ROW_BASE * fitScale)));
+      const phoneOverlay = isBbStackPhoneOverlayPrep(root);
+      if (phoneOverlay) {
+        // Иконки магазина — доля зоны shop + бонус от leftover высокого экрана.
+        const shopZoneShare = parseFloat(root.style.getPropertyValue("--prep-zone-shop-share"))
+          || parseFloat(getComputedStyle(root).getPropertyValue("--prep-zone-shop-share"))
+          || 0.17;
+        const leftoverPx = parseFloat(root.style.getPropertyValue("--prep-phone-leftover-px")) || 0;
+        const { h } = viewportSize();
+        const shopZoneH = Math.max(72, h * shopZoneShare + leftoverPx * 0.25);
+        rowH = Math.round(Math.max(88, Math.min(118, shopZoneH * 0.72)));
+      } else {
+        rowH = Math.round(Math.max(96, Math.min(128, BB_STACK_SHOP_ROW_BASE * fitScale)));
+      }
     } else {
       const shopRowH = Math.round(Math.max(
         cfg.shopRowMin,
@@ -528,7 +603,7 @@
       ));
       rowH = shopRowH;
     }
-    applyPrepShopIconVars(root, rowH);
+    applyPrepShopIconVars(root, rowH, prepLayout);
     if (prepLayout === "bb-stack") {
       root.style.setProperty("--prep-shop-cols", "5");
     } else if (cfg.shopCols) {
@@ -4227,6 +4302,7 @@
 
     clamped = applyPrepLayoutFit(w, h, prepLayout, preFitScale, touchDev, layoutProfile);
     clamped = applyIntroUiScaleFloor(clamped, layoutProfile);
+    syncBbStackPhonePrepZoneShares(document.documentElement, w, h);
     applyPrepProfileVars(layoutProfile, clamped);
     syncPrepBenchPopoverMode(prepLayout);
     syncPrepShopPopoverMode(prepLayout);
@@ -4297,6 +4373,9 @@
     if (typeof syncBBPrepLayout === "function") syncBBPrepLayout();
     if (typeof syncBBFidelityBattleLayout === "function") syncBBFidelityBattleLayout();
     if (typeof syncBBBattleHud === "function") syncBBBattleHud();
+    if (typeof window.refreshPrepFieldHeroPortrait === "function") {
+      window.refreshPrepFieldHeroPortrait();
+    }
 
     if (isBattleUiPhase() && syncHeroEmotionSlotAnchors._layout) {
       syncHeroEmotionSlotAnchors._layout.player = "";
@@ -4468,6 +4547,8 @@
 
   window.applyUiLayout = applyUiLayout;
   window.applyLayoutContext = applyLayoutContext;
+  window.isBbStackPhoneOverlayPrep = isBbStackPhoneOverlayPrep;
+  window.syncBbStackPhonePrepZoneShares = syncBbStackPhonePrepZoneShares;
   window.getBattleProfileCfg = getBattleProfileCfg;
   window.getPrepProfileCfg = getPrepProfileCfg;
   window.fitCanvasDisplaySize = fitCanvasDisplaySize;

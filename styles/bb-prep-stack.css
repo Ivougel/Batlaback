@@ -374,6 +374,30 @@ html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .prep-field-column {
   box-shadow: inset 0 1px 0 rgba(255, 220, 150, 0.06);
 }
 
+/* Phone overlay: высота поля строго по % доле; лишнее уходит в зазор над хранилищем */
+html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"] #app[data-phase="prep"] .prep-field-column,
+html[data-bb-prep-phone-overlay="true"][data-prep-layout="bb-stack"] #app[data-phase="prep"] .prep-field-column {
+  flex: 0 0 auto;
+  height: var(--prep-zone-field-min-h);
+  max-height: var(--prep-zone-field-min-h);
+  min-height: var(--prep-zone-field-min-h);
+}
+
+html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"] #app[data-phase="prep"] #shop-panel,
+html[data-bb-prep-phone-overlay="true"][data-prep-layout="bb-stack"] #app[data-phase="prep"] #shop-panel {
+  flex: 0 0 auto;
+  min-height: 0;
+  max-height: none;
+  height: auto;
+  padding-top: calc(4px * var(--ui-scale, 1) + var(--prep-phone-shop-pad, 0px));
+  padding-bottom: calc(6px * var(--ui-scale, 1) + var(--prep-phone-shop-pad, 0px));
+}
+
+html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-storage,
+html[data-bb-prep-phone-overlay="true"][data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-storage {
+  margin-top: auto;
+}
+
 html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .prep-field-column > .layer-world {
   flex: 1 1 auto;
   min-height: 0;
@@ -405,6 +429,90 @@ html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-inventory-she
   align-items: stretch;
   padding: calc(6px * var(--ui-scale, 1)) calc(4px * var(--ui-scale, 1));
   box-sizing: border-box;
+}
+
+/* Phone: одна колонка под сетку, герой — overlay снизу слева (как BB-референс) */
+html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-inventory-shell,
+html[data-bb-prep-phone-overlay="true"][data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-inventory-shell {
+  position: relative;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  gap: 0;
+  padding: calc(4px * var(--ui-scale, 1));
+}
+
+html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-inventory-grid,
+html[data-bb-prep-phone-overlay="true"][data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-inventory-grid {
+  grid-column: 1;
+  grid-row: 1;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-inventory-hero,
+html[data-bb-prep-phone-overlay="true"][data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-inventory-hero {
+  position: absolute;
+  left: 2.5%;
+  bottom: 2.5%;
+  width: min(24%, 22vw, 104px);
+  height: min(24%, 22vw, 104px);
+  aspect-ratio: 1;
+  z-index: 3;
+  pointer-events: none;
+  align-items: center;
+  justify-content: center;
+}
+
+html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-inventory-hero .prep-character-layer,
+html[data-bb-prep-phone-overlay="true"][data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-inventory-hero .prep-character-layer {
+  width: 100% !important;
+  height: 100% !important;
+  align-items: center;
+  justify-content: center;
+}
+
+html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-inventory-hero .prep-field-bust,
+html[data-bb-prep-phone-overlay="true"][data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-inventory-hero .prep-field-bust {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 2px solid rgba(220, 180, 100, 0.75);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 4px 12px rgba(0, 0, 0, 0.45);
+  background: radial-gradient(ellipse at 50% 25%, rgba(255, 230, 180, 0.18), rgba(20, 14, 10, 0.88));
+}
+
+html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-inventory-hero .prep-field-bust .hero-portrait-media,
+html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-inventory-hero .prep-character-img,
+html[data-bb-prep-phone-overlay="true"][data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-inventory-hero .prep-field-bust .hero-portrait-media,
+html[data-bb-prep-phone-overlay="true"][data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-inventory-hero .prep-character-img {
+  max-height: none;
+  max-width: none;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 18%;
+  border-radius: 50%;
+}
+
+html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-inventory-hero .prep-field-bust-emoji,
+html[data-bb-prep-phone-overlay="true"][data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-inventory-hero .prep-field-bust-emoji {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  font-size: calc(36px * var(--ui-scale, 1));
+  background: rgba(20, 14, 10, 0.85);
+  border: 2px solid rgba(220, 180, 100, 0.75);
+}
+
+html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-inventory-tip,
+html[data-bb-prep-phone-overlay="true"][data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-inventory-tip {
+  display: none;
 }
 
 html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-inventory-hero {
@@ -492,7 +600,7 @@ html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .prep-field-column > .
 html[data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--hero-grid:not(.hidden),
 html[data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--item:not(.hidden) {
   position: fixed !important;
-  z-index: 9500 !important;
+  z-index: var(--z-prep-tooltip, 9700) !important;
   top: var(--bb-prep-tooltip-top, auto);
   left: var(--bb-prep-tooltip-left, auto);
   width: var(--bb-prep-tooltip-width, auto);
@@ -553,6 +661,66 @@ html[data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock .si
   max-width: 100%;
 }
 
+/* Phone: flyout не вбок/вверх, а вниз внутри dock — чтобы подсказки оставались в кадре */
+html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--hero-grid:not(.hidden),
+html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--item:not(.hidden),
+html[data-bb-prep-phone-overlay="true"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--hero-grid:not(.hidden),
+html[data-bb-prep-phone-overlay="true"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--item:not(.hidden) {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  align-items: center;
+  justify-content: flex-start;
+  padding: calc(6px * var(--ui-scale, 1));
+}
+
+html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock .sidebar-tooltip.sidebar-tooltip--card:not(.hidden) {
+  width: min(100%, calc(240px * var(--ui-scale, 1)));
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock .item-hint-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: min(var(--hint-w), 100%);
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock .item-hint-card__side-flyout {
+  position: static;
+  right: auto;
+  top: auto;
+  width: 100%;
+  height: auto;
+  margin-top: calc(8px * var(--ui-scale, 1));
+  order: 2;
+}
+
+html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock .item-hint-card__frame {
+  order: 1;
+}
+
+html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock:has(.item-info-popup--in-card:not(.hidden)),
+html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock:has(.item-craft-popup--in-card:not(.hidden)) {
+  padding-left: calc(6px * var(--ui-scale, 1)) !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock .item-info-popup--in-card:not(.hidden),
+html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock .item-craft-popup--in-card:not(.hidden) {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  max-height: none;
+}
+
 html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-field-island {
   position: relative !important;
   left: auto !important;
@@ -590,6 +758,8 @@ html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-field-island .ca
   flex: 0 0 auto;
   overflow: visible;
   border-radius: calc(6px * var(--ui-scale, 1));
+  background: rgba(28, 20, 14, 0.92);
+  border: 1px solid rgba(180, 130, 70, 0.55);
   box-shadow:
     0 12px 40px rgba(0, 0, 0, 0.35),
     inset 0 1px 0 rgba(255, 255, 255, 0.04),

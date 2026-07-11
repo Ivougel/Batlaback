@@ -1138,13 +1138,36 @@ window.syncPrepBuildEmojiBtnFromRuntime = syncPrepBuildEmojiBtnFromRuntime;
 
 function renderPrepCharacterHtml(side, profile, runRound = 1) {
   const classId = profile?.classId;
+  const alt = escapeMutationUiHtml(profile?.className || "");
+  const root = document.documentElement;
+  const phoneFieldBust = (root.dataset.bbPrepPhoneOverlay === "true"
+    || (root.dataset.prepLayout === "bb-stack" && root.dataset.layoutProfile === "phone-portrait"))
+    && (typeof phase === "undefined" || phase === "prep");
+
+  // Phone bb-stack: компактный bust/стикер вместо full-body в поле.
+  if (phoneFieldBust && classId) {
+    const cls = typeof getClassById === "function" ? getClassById(classId) : null;
+    const bustSrc = cls?.iconSrc
+      || (typeof getClassHudPortraitSrc === "function" ? getClassHudPortraitSrc(classId) : null)
+      || profile?.classIconSrc
+      || null;
+    if (bustSrc) {
+      return `<div class="hero-portrait-frame prep-field-bust" data-hud-portrait="sticker" data-class="${escapeMutationUiHtml(classId)}">
+        <span class="hero-portrait-frame__shine" aria-hidden="true"></span>
+        <img class="hero-portrait-media prep-character-img" src="${escapeMutationUiHtml(bustSrc)}" alt="${alt}" draggable="false">
+      </div>`;
+    }
+    if (cls?.icon || profile?.classIcon) {
+      return `<span class="prep-character-emoji prep-field-bust-emoji">${cls?.icon || profile.classIcon}</span>`;
+    }
+  }
+
   const portraitSrc = classId && typeof getClassHeroPortraitSrc === "function"
     ? getClassHeroPortraitSrc(classId)
     : (profile?.classIconSrc || null);
-  const alt = escapeMutationUiHtml(profile?.className || "");
 
   if (portraitSrc) {
-    const fullBleed = document.documentElement.dataset.heroCardMode === "full-bleed";
+    const fullBleed = root.dataset.heroCardMode === "full-bleed";
     if (fullBleed) {
       return `<img class="prep-character-img prep-character-img--float" src="${escapeMutationUiHtml(portraitSrc)}" alt="${alt}" draggable="false">`;
     }
@@ -1160,6 +1183,41 @@ function renderPrepCharacterHtml(side, profile, runRound = 1) {
   }
   return `<span class="prep-character-emoji">${profile?.classIcon || "❓"}</span>`;
 }
+
+/** После applyUiLayout: переключить full-body ↔ bust, если layout уже известен. */
+function refreshPrepFieldHeroPortrait() {
+  if (typeof phase !== "undefined" && phase !== "prep") return;
+  const playerEl = document.getElementById("prep-character-player");
+  if (!playerEl) return;
+  const wantBust = document.documentElement.dataset.bbPrepPhoneOverlay === "true"
+    || (document.documentElement.dataset.prepLayout === "bb-stack"
+      && document.documentElement.dataset.layoutProfile === "phone-portrait");
+  const hasBust = !!playerEl.querySelector(".prep-field-bust, .prep-field-bust-emoji");
+  if (wantBust === hasBust) return;
+
+  const fill = (side, el) => {
+    if (!el) return;
+    const rt = typeof getSideMutationRuntime === "function" ? getSideMutationRuntime(side) : null;
+    const classId = rt?.classId || el.dataset.class;
+    if (!classId) return;
+    const cls = typeof getClassById === "function" ? getClassById(classId) : null;
+    const profile = {
+      classId,
+      className: cls?.heroLabel || cls?.name || "",
+      classIcon: cls?.icon,
+      classIconSrc: typeof getClassHeroPortraitSrc === "function"
+        ? getClassHeroPortraitSrc(classId)
+        : (cls?.heroPortraitSrc || null),
+    };
+    el.innerHTML = renderPrepCharacterHtml(side, profile, typeof round !== "undefined" ? round : 1);
+    el.dataset.class = classId;
+  };
+
+  fill("player", playerEl);
+  fill("enemy", document.getElementById("prep-character-enemy"));
+}
+
+window.refreshPrepFieldHeroPortrait = refreshPrepFieldHeroPortrait;
 
 function clearMutationRevealFx() {
   if (mutationRevealTimer) {

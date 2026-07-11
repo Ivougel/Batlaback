@@ -557,7 +557,7 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] .btn-refresh-shop {
 
 /* Tooltip dock — полоса между полем и магазином / toolbar (#prep-tooltip-dock вне #app) */
 html[data-prep-layout="mobile"][data-game-phase="prep"] #prep-tooltip-dock:not(.hidden) {
-  z-index: 9350;
+  z-index: var(--z-prep-tooltip, 9700);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -569,7 +569,7 @@ html[data-prep-layout="mobile"][data-game-phase="prep"] #prep-tooltip-dock:not(.
 }
 
 html[data-prep-layout="mobile"][data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--item {
-  z-index: 9400;
+  z-index: var(--z-prep-tooltip, 9700);
 }
 
 html[data-prep-layout="mobile"][data-game-phase="prep"] #prep-tooltip-dock .sidebar-tooltip:not(.hidden) {

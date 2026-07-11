@@ -513,48 +513,72 @@ function positionBBStackPrepTooltipDock(dock) {
   const fieldCol = document.getElementById("prep-field-column");
   const topBar = document.getElementById("prep-top-bar");
   const bottomChrome = document.getElementById("bottom-chrome");
+  const storage = document.querySelector(".bb-prep-storage");
+  const commerce = document.querySelector(".bb-prep-commerce-bar");
   const vv = window.visualViewport;
   const viewLeft = vv?.offsetLeft ?? 0;
   const viewTop = vv?.offsetTop ?? 0;
   const viewW = vv?.width ?? window.innerWidth;
   const viewH = vv?.height ?? window.innerHeight;
   const viewRight = viewLeft + viewW;
-  const viewBottom = (bottomChrome?.getBoundingClientRect().top ?? viewTop + viewH) - margin;
+  const chromeRect = bottomChrome?.getBoundingClientRect();
+  const chromeVisible = !!(bottomChrome
+    && getComputedStyle(bottomChrome).display !== "none"
+    && (chromeRect?.height ?? 0) > 8);
+  const viewBottom = (chromeVisible ? chromeRect.top : viewTop + viewH) - margin;
   const topLimit = (topBar?.getBoundingClientRect().bottom ?? viewTop) + margin;
-
-  const tooltipShareRaw = parseFloat(getComputedStyle(root).getPropertyValue("--bb-prep-tooltip-col-share"));
-  const tooltipShare = Number.isFinite(tooltipShareRaw) && tooltipShareRaw > 0
-    ? tooltipShareRaw / 100
-    : 0.28;
+  const phonePortrait = root.dataset.layoutProfile === "phone-portrait"
+    || root.dataset.bbPrepPhoneOverlay === "true";
 
   let left;
   let width;
   let top = topLimit;
+  let maxHeight;
 
   const tipRect = tipCol?.getBoundingClientRect();
   const shellRect = shell?.getBoundingClientRect();
   const fieldRect = fieldCol?.getBoundingClientRect();
+  const tipCollapsed = !(tipRect && tipRect.width >= 48 && tipRect.height >= 24);
 
-  if (tipRect && tipRect.width >= 48 && tipRect.height >= 24) {
+  // Phone / collapsed tip: держим dock внутри поля, не у верхней кромки магазина.
+  if (tipCollapsed || phonePortrait) {
+    const bounds = (fieldRect && fieldRect.height >= 80) ? fieldRect : shellRect;
+    if (bounds && bounds.width >= 120) {
+      const commerceBottom = commerce?.getBoundingClientRect().bottom ?? 0;
+      const storageTop = storage?.getBoundingClientRect().top;
+      const bandTop = Math.max(topLimit, bounds.top + margin, commerceBottom + margin);
+      const bandBottom = Math.min(
+        viewBottom,
+        Number.isFinite(storageTop) ? storageTop - margin : viewBottom,
+        bounds.bottom - margin,
+      );
+      width = Math.max(168, Math.min(bounds.width - margin * 2, viewW * 0.92));
+      left = bounds.left + (bounds.width - width) / 2;
+      const bandH = Math.max(140, bandBottom - bandTop);
+      maxHeight = Math.max(160, Math.min(bandH, Math.round(viewH * 0.58)));
+      // Чуть ниже центра поля — карточка и flyout остаются в зоне видимости.
+      top = bandTop + Math.max(0, Math.round((bandH - maxHeight) * 0.28));
+      if (top + maxHeight > bandBottom) {
+        top = Math.max(bandTop, bandBottom - maxHeight);
+      }
+    } else {
+      width = Math.max(140, Math.min(viewW * 0.88, 320));
+      left = viewLeft + (viewW - width) / 2;
+      top = topLimit + Math.round(viewH * 0.22);
+      maxHeight = Math.max(160, Math.min(viewBottom - top, Math.round(viewH * 0.5)));
+    }
+  } else {
     left = tipRect.left + margin;
     width = tipRect.width - margin * 2;
     top = Math.max(topLimit, tipRect.top + margin);
-  } else if (shellRect && shellRect.width >= 120) {
-    width = Math.max(120, shellRect.width * tooltipShare - margin * 2);
-    left = shellRect.right - shellRect.width * tooltipShare + margin;
-    top = Math.max(topLimit, shellRect.top + margin);
-  } else if (fieldRect && fieldRect.width >= 160) {
-    width = Math.max(120, fieldRect.width * tooltipShare - margin * 2);
-    left = fieldRect.right - fieldRect.width * tooltipShare + margin;
-    top = Math.max(topLimit, fieldRect.top + margin);
-  } else {
-    width = Math.round(228 * uiScale);
-    left = viewRight - width - margin;
   }
 
   width = Math.max(120, Math.min(width, viewW - margin * 2));
   left = Math.max(viewLeft + margin, Math.min(left, viewRight - width - margin));
-  const maxHeight = Math.max(160, Math.min(viewBottom - top, Math.round(viewH * 0.72)));
+  if (!(Number.isFinite(maxHeight) && maxHeight > 0)) {
+    maxHeight = Math.max(160, Math.min(viewBottom - top, Math.round(viewH * 0.72)));
+  }
+  maxHeight = Math.max(140, Math.min(maxHeight, viewBottom - top));
 
   const leftPct = ((left - viewLeft) / viewW) * 100;
   const widthPct = (width / viewW) * 100;
@@ -573,7 +597,7 @@ function positionBBStackPrepTooltipDock(dock) {
   dock.style.setProperty("height", "auto", "important");
   dock.style.setProperty("right", "auto", "important");
   dock.style.setProperty("bottom", "auto", "important");
-  dock.style.zIndex = "9500";
+  dock.style.setProperty("z-index", "var(--z-prep-tooltip, 9700)", "important");
 }
 
 function positionPrepTooltipDock() {
@@ -674,12 +698,22 @@ function dismissSidebarTooltipFromPointer(e) {
   return true;
 }
 
+/** Клик/tap внутри карточки подсказки или её inline-попапов — не закрывать тултип. */
+function isPointerInsideSidebarTooltipSurface(target) {
+  if (!target?.closest) return false;
+  const tip = document.getElementById("sidebar-tooltip");
+  if (!tip || tip.classList.contains("hidden")) return false;
+  if (target.closest("#sidebar-tooltip")) return true;
+  return !!target.closest(".item-info-popup--in-card:not(.hidden), .item-craft-popup--in-card:not(.hidden)");
+}
+
 function bindGlobalTooltipDismiss() {
   if (document.documentElement.dataset.globalTooltipDismissBound) return;
   document.documentElement.dataset.globalTooltipDismissBound = "1";
   document.addEventListener("pointerdown", (e) => {
     if (e.pointerType === "mouse" && e.button !== 0) return;
-    if (isSyntheticMouseFromTouch()) return;
+    // Только синтетический mouse после touch — не блокировать реальные touch/pen pointerdown.
+    if (e.pointerType === "mouse" && isSyntheticMouseFromTouch()) return;
     if (!isSidebarTooltipVisible()) return;
     if (!e.target.closest(".item-hint-card__tag-icon") && typeof hideItemHintTagCaptions === "function") {
       hideItemHintTagCaptions();
@@ -687,7 +721,7 @@ function bindGlobalTooltipDismiss() {
     if (e.target.closest(".item-hint-card__edge-btn, .item-hint-card__icon-btn, .item-hint-card__tag-icon, .item-info-popup--in-card, .item-craft-popup--in-card")) return;
     if (typeof hideItemHintSecondaryOverlays === "function" && hideItemHintSecondaryOverlays()) return;
     if (typeof hideItemHintCraftOverlay === "function" && hideItemHintCraftOverlay()) return;
-    if (e.target.closest("#sidebar-tooltip, #prep-tooltip-dock")) return;
+    if (isPointerInsideSidebarTooltipSurface(e.target)) return;
     dismissSidebarTooltipFromPointer(e);
   }, true);
   document.addEventListener("pointerup", () => {
