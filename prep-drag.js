@@ -579,10 +579,13 @@ function uiCm(cm) {
 }
 
 function getPrepDragGhostOffsetY() {
-  const want = uiCm(2);
   const stride = typeof gridStrideFor === "function" ? gridStrideFor(prepViewSide) : uiPx(48);
-  // 2 см на desktop; на телефоне не больше ~40% клетки — иначе призрак улетает в магазин.
-  return Math.min(want, Math.max(uiPx(18), stride * 0.42));
+  if (typeof isTouchUi === "function" && isTouchUi()) {
+    // Touch: 2–3 видимые клетки над пальцем — проще видеть куда кладём.
+    return stride * 2.5;
+  }
+  const want = uiCm(2);
+  return Math.min(want, Math.max(uiPx(18), stride * 0.85));
 }
 
 function isClientPointInsideCanvas(clientX, clientY) {
@@ -597,6 +600,7 @@ function isClientPointInsideCanvas(clientX, clientY) {
 
 function getPrepDragGhostClientPos(clientX, clientY) {
   const offsetY = getPrepDragGhostOffsetY();
+  const touchLift = typeof isTouchUi === "function" && isTouchUi();
   let x = clientX;
   let y = clientY - offsetY;
   if (canvas && clientX != null && clientY != null) {
@@ -605,8 +609,13 @@ function getPrepDragGhostClientPos(clientX, clientY) {
     const fingerOnCanvas = clientY >= rect.top && clientY <= rect.bottom
       && clientX >= rect.left && clientX <= rect.right;
     if (fingerOnCanvas) {
-      y = Math.max(rect.top + pad, Math.min(rect.bottom - pad, y));
       x = Math.max(rect.left + pad, Math.min(rect.right - pad, x));
+      if (touchLift) {
+        // Ghost may float above the field — only keep it from diving below canvas.
+        y = Math.min(rect.bottom - pad, y);
+      } else {
+        y = Math.max(rect.top + pad, Math.min(rect.bottom - pad, y));
+      }
     }
   }
   return { x, y, rotation: 0 };
