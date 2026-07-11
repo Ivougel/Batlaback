@@ -596,6 +596,15 @@ html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-field-island .ca
 html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-field-island #game-canvas {
   display: block;
   flex: 0 0 auto;
+  touch-action: none;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-field-island .canvas-scale-wrap {
+  touch-action: none;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .prep-storage-arena {
+  touch-action: none;
 }
 
 html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-storage {

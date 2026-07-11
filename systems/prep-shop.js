@@ -409,10 +409,18 @@ function renderShop(side = rt.getPrepViewSide(), containerEl = null) {
       toggleShopFreeze(+btn.dataset.pin, side);
     });
   });
+  const bindShopTouchDragStart = (cardEl, index) => {
+    cardEl.addEventListener("pointerdown", (e) => {
+      if (e.pointerType === "mouse") return;
+      if (e.button !== 0 || e.target.closest(".shop-pin")) return;
+      rt.beginPendingShopDrag(index, e, side);
+    }, { passive: false });
+  };
   if (typeof syncBuildTrackShopBar === "function") syncBuildTrackShopBar();
   el.querySelectorAll(".shop-card:not(.empty)").forEach((card) => {
     const htmlCard = card;
     if (!htmlCard.dataset.unaffordable) {
+      bindShopTouchDragStart(htmlCard, +htmlCard.dataset.index);
       htmlCard.addEventListener("mousedown", (e) => {
         const me = e;
         if (rt.isSyntheticMouseFromTouch()) return;
@@ -483,6 +491,11 @@ function renderBench(side = rt.getPrepViewSide(), containerEl = null) {
   if (!rt.canEditPrepSide(side)) return;
   el.querySelectorAll(".bench-card:not(.empty)").forEach((card) => {
     const idx = +card.dataset.bench;
+    card.addEventListener("pointerdown", (e) => {
+      if (e.pointerType === "mouse") return;
+      if (e.button !== 0) return;
+      rt.beginPendingBenchDrag(idx, e, side);
+    }, { passive: false });
     card.addEventListener("mousedown", (e) => {
       const me = e;
       if (rt.isSyntheticMouseFromTouch()) return;

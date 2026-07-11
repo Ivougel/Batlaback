@@ -1872,6 +1872,10 @@ function gamepadPointerDownAt(clientX, clientY) {
 
   if (!canEditPrepSide()) return;
 
+  if (target?.closest?.("#prep-storage-mount, .prep-storage-body, .prep-screen-flier")) {
+    return;
+  }
+
   const clickable = target?.closest?.("button:not([disabled]), .shop-pin");
   if (clickable && !clickable.closest("#game-canvas")) {
     clickable.click();

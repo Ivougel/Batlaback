@@ -1051,30 +1051,45 @@ function bindTouchInput() {
   const prepShopPopover = document.getElementById("prep-shop-popover");
   const benchPopover = document.getElementById("prep-bench-popover");
   const benchFab = document.getElementById("btn-prep-bench-fab");
-  const touchTargets = [boardSection, canvas, shopPanel, prepShopPopover, benchPopover, benchFab].filter(Boolean);
+  const prepPointerSelector = [
+    "#game-canvas",
+    ".canvas-scale-wrap",
+    "#prep-field-island",
+    ".board-section",
+    "#shop-panel",
+    "#prep-shop-popover",
+    "#prep-bench-popover",
+    "#prep-storage-mount",
+    "#btn-prep-bench-fab",
+  ].join(", ");
   const captureOpts = { passive: false, capture: true };
   const bubbleOpts = { passive: false };
   let activeGesture = null;
+  let pointerCaptureEl = null;
 
   const isTouchLikePointer = (e) => e.pointerType === "touch" || e.pointerType === "pen";
   const gestureKey = (kind, id) => `${kind}:${id}`;
   const ignoreTarget = (target) => target?.closest?.("button, a, input, select, textarea");
+  const isPrepPointerTarget = (target) => !!target?.closest?.(prepPointerSelector);
+  const isStoragePhysicsTarget = (target) => !!target?.closest?.(".prep-storage-body, .prep-screen-flier");
 
-  const prepPointerSurface = canvas;
-  const capturePointerSurface = (id) => {
+  const capturePointerSurface = (id, el) => {
+    pointerCaptureEl = el || canvas;
     try {
-      prepPointerSurface?.setPointerCapture(id);
+      pointerCaptureEl?.setPointerCapture(id);
     } catch (_) {}
   };
   const releasePointerSurface = (id) => {
     try {
-      prepPointerSurface?.releasePointerCapture(id);
+      pointerCaptureEl?.releasePointerCapture(id);
     } catch (_) {}
+    pointerCaptureEl = null;
   };
 
   const onDown = (kind, id, x, y, e) => {
     if (activeGesture) return;
     if (ignoreTarget(e.target)) return;
+    if (isStoragePhysicsTarget(e.target)) return;
 
     markTouchInteraction();
 
@@ -1094,6 +1109,7 @@ function bindTouchInput() {
     }
 
     if (!isLoadoutInteractionPhase() || gameOver) return;
+    if (!isPrepPointerTarget(e.target)) return;
     activeGesture = gestureKey(kind, id);
     lastTouchEventAt = Date.now();
     if (e.cancelable) e.preventDefault();
@@ -1101,7 +1117,9 @@ function bindTouchInput() {
       "#prep-shop-popover, #shop-panel, .shop-card, .shop-pin, .btn-refresh-shop",
     );
     if (kind === "pointer" && !shopPointerSurface) {
-      capturePointerSurface(id);
+      const captureEl = e.target?.closest?.("#game-canvas, .canvas-scale-wrap, .prep-storage-arena")
+        || canvas;
+      capturePointerSurface(id, captureEl);
     }
     gamepadPointerDownAt(x, y);
   };
@@ -1109,7 +1127,7 @@ function bindTouchInput() {
   const onMove = (kind, id, x, y, e) => {
     if (activeGesture !== gestureKey(kind, id)) return;
     updateTouchTapGestureMove(x, y);
-    if (e.cancelable) e.preventDefault();
+    if (e?.cancelable) e.preventDefault();
     updatePointerFromClient(x, y);
   };
 
@@ -1117,9 +1135,7 @@ function bindTouchInput() {
     if (activeGesture !== gestureKey(kind, id)) return;
     lastTouchEventAt = Date.now();
     const tapHandled = finishTouchTapGesture(x, y);
-    if (tapHandled && !dragPayload) {
-      pendingShopDrag = null;
-      pendingBenchDrag = null;
+    if (tapHandled && !dragPayload && !pendingShopDrag && !pendingBenchDrag) {
       pendingCanvasPick = null;
       syncUiDragState();
       activeGesture = null;
@@ -1131,26 +1147,25 @@ function bindTouchInput() {
     activeGesture = null;
   };
 
-  prepPointerSurface?.addEventListener("pointerdown", (e) => {
+  document.addEventListener("pointerdown", (e) => {
     if (!isTouchLikePointer(e)) return;
     onDown("pointer", e.pointerId, e.clientX, e.clientY, e);
   }, captureOpts);
 
-  prepPointerSurface?.addEventListener("pointermove", (e) => {
+  document.addEventListener("pointermove", (e) => {
     if (!isTouchLikePointer(e)) return;
     onMove("pointer", e.pointerId, e.clientX, e.clientY, e);
   }, captureOpts);
 
-  prepPointerSurface?.addEventListener("pointerup", (e) => {
+  document.addEventListener("pointerup", (e) => {
     if (!isTouchLikePointer(e)) return;
     onUp("pointer", e.pointerId, e.clientX, e.clientY);
   }, captureOpts);
 
-  prepPointerSurface?.addEventListener("pointercancel", (e) => {
+  document.addEventListener("pointercancel", (e) => {
     if (!isTouchLikePointer(e)) return;
     onUp("pointer", e.pointerId, e.clientX, e.clientY);
   }, captureOpts);
-
 
   window.addEventListener("touchmove", (e) => {
     if (!activeGesture?.startsWith("touch:")) return;
@@ -1177,6 +1192,7 @@ function bindTouchInput() {
   bindTouchTooltipDismiss();
   window.resetPrepTouchGesture = () => {
     activeGesture = null;
+    pointerCaptureEl = null;
   };
 }
 
