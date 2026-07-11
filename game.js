@@ -1271,6 +1271,10 @@ function bindTouchInput() {
   let activeGesture = null;
   let prepDragPrimaryPointerId = null;
   let pointerCaptureEl = null;
+  /** Активные pointerId во время prep-drag (для multitouch rotate на iPad PWA). */
+  const prepLivePointerIds = new Set();
+  /** Primary был отменён OS из‑за второго касания — drag держим, пока есть касания. */
+  let prepDragOrphanedAfterCancel = false;
 
   const isFatFingerPointer = (e) => e.pointerType === "touch";
   const isStylusPointer = (e) => e.pointerType === "pen";
@@ -1278,6 +1282,53 @@ function bindTouchInput() {
   const ignoreTarget = (target) => target?.closest?.("button, a, input, select, textarea");
   const isPrepPointerTarget = (target) => !!target?.closest?.(prepPointerSelector);
   const isStoragePhysicsTarget = (target) => !!target?.closest?.(".prep-storage-body, .prep-screen-flier");
+
+  const trackPrepPointerDown = (id) => {
+    if (id != null) prepLivePointerIds.add(id);
+  };
+  const trackPrepPointerUp = (id) => {
+    if (id != null) prepLivePointerIds.delete(id);
+  };
+
+  const isSecondaryPrepRotatePointer = (pointerId) => {
+    if (!dragPayload || !isLoadoutInteractionPhase()) return false;
+    if (prepDragPrimaryPointerId != null && pointerId !== prepDragPrimaryPointerId) return true;
+    if (activeGesture) {
+      const asPointer = gestureKey("pointer", pointerId);
+      const asStylus = gestureKey("stylus", pointerId);
+      if (activeGesture !== asPointer && activeGesture !== asStylus) return true;
+    }
+    // Primary сбросили при старте shop/bench drag — новое касание = поворот.
+    if (prepDragPrimaryPointerId == null) return true;
+    return false;
+  };
+
+  const tryPrepSecondaryRotate = (e) => {
+    if (e?.cancelable) e.preventDefault();
+    if (typeof tryRotateDragItemFromSecondaryTouch === "function") {
+      tryRotateDragItemFromSecondaryTouch();
+    }
+  };
+
+  /**
+   * iPadOS/PWA: второй палец или касание во время Pencil часто шлёт pointercancel
+   * на primary — нельзя бросать предмет, иначе «поворот не работает».
+   */
+  const shouldSuppressPrepDragCancel = (pointerId) => {
+    if (!dragPayload || !isLoadoutInteractionPhase()) return false;
+    // Secondary cancel never ends the drag.
+    if (pointerId != null && prepDragPrimaryPointerId != null && pointerId !== prepDragPrimaryPointerId) {
+      return true;
+    }
+    // После trackPrepPointerUp в set остались другие pointers.
+    if (prepLivePointerIds.size > 0) return true;
+    // Только что был поворот вторым касанием — OS часто cancel'ит primary.
+    if (typeof performance !== "undefined" && typeof prepRotateTouchAt === "number"
+      && performance.now() - prepRotateTouchAt < 500) {
+      return true;
+    }
+    return false;
+  };
 
   const capturePointerSurface = (id, el) => {
     pointerCaptureEl = el || canvas;
@@ -1292,16 +1343,52 @@ function bindTouchInput() {
     pointerCaptureEl = null;
   };
 
-  const onDown = (kind, id, x, y, e) => {
-    if (dragPayload && isLoadoutInteractionPhase()) {
-      if (activeGesture && gestureKey(kind, id) !== activeGesture) {
-        if (e.cancelable) e.preventDefault();
-        if (typeof tryRotateDragItemFromSecondaryTouch === "function") {
-          tryRotateDragItemFromSecondaryTouch();
-        }
-        return;
-      }
+  const transferPrepDragPrimary = (nextId, kind) => {
+    if (nextId == null) return;
+    prepDragPrimaryPointerId = nextId;
+    activeGesture = gestureKey(kind, nextId);
+    prepDragOrphanedAfterCancel = false;
+    capturePointerSurface(nextId, pointerCaptureEl || canvas);
+  };
+
+  const finishPrepDragFromGesture = (kind, id, x, y) => {
+    lastTouchEventAt = Date.now();
+    const tapHandled = finishTouchTapGesture(x, y);
+    if (tapHandled && !dragPayload && !pendingShopDrag && !pendingBenchDrag) {
+      pendingCanvasPick = null;
+      syncUiDragState();
+      activeGesture = null;
+      prepDragOrphanedAfterCancel = false;
+      if (kind === "pointer" || kind === "stylus") releasePointerSurface(id);
+      return;
     }
+    gamepadPointerUpAt(x, y);
+    if (kind === "pointer" || kind === "stylus") releasePointerSurface(id);
+    activeGesture = null;
+    prepDragOrphanedAfterCancel = false;
+    if (!dragPayload && !pendingShopDrag && !pendingBenchDrag) {
+      prepDragPrimaryPointerId = null;
+      prepLivePointerIds.clear();
+    }
+  };
+
+  const onDown = (kind, id, x, y, e) => {
+    trackPrepPointerDown(id);
+
+    // Вторичное касание во время drag → поворот (два пальца / палец + Pencil).
+    if (isSecondaryPrepRotatePointer(id)) {
+      tryPrepSecondaryRotate(e);
+      return;
+    }
+
+    // После cancel primary: новое касание подхватывает drag.
+    if (dragPayload && prepDragOrphanedAfterCancel && isLoadoutInteractionPhase()) {
+      if (e.cancelable) e.preventDefault();
+      transferPrepDragPrimary(id, kind === "stylus" ? "stylus" : "pointer");
+      updatePointerFromClient(x, y);
+      return;
+    }
+
     if (activeGesture) return;
     if (ignoreTarget(e.target)) return;
     if (isStoragePhysicsTarget(e.target)) return;
@@ -1330,6 +1417,7 @@ function bindTouchInput() {
     if (!isPrepPointerTarget(e.target)) return;
     activeGesture = gestureKey(kind, id);
     prepDragPrimaryPointerId = kind === "pointer" ? id : null;
+    prepDragOrphanedAfterCancel = false;
     lastTouchEventAt = Date.now();
     if (e.cancelable) e.preventDefault();
     const shopPointerSurface = e.target?.closest?.(
@@ -1344,6 +1432,8 @@ function bindTouchInput() {
   };
 
   const onMove = (kind, id, x, y, e) => {
+    // Secondary finger must not steal ghost position.
+    if (prepDragPrimaryPointerId != null && id !== prepDragPrimaryPointerId) return;
     if (activeGesture !== gestureKey(kind, id)) return;
     updateTouchTapGestureMove(x, y);
     const dragging = !!(dragPayload || pendingShopDrag || pendingBenchDrag);
@@ -1351,23 +1441,32 @@ function bindTouchInput() {
     updatePointerFromClient(x, y);
   };
 
-  const onUp = (kind, id, x, y) => {
-    if (activeGesture !== gestureKey(kind, id)) return;
-    lastTouchEventAt = Date.now();
-    const tapHandled = finishTouchTapGesture(x, y);
-    if (tapHandled && !dragPayload && !pendingShopDrag && !pendingBenchDrag) {
-      pendingCanvasPick = null;
-      syncUiDragState();
-      activeGesture = null;
-      if (kind === "pointer") releasePointerSurface(id);
+  const onUp = (kind, id, x, y, { isCancel = false } = {}) => {
+    trackPrepPointerUp(id);
+
+    // Вторичный pointer up/cancel — только снять tracking, drag не трогать.
+    if (prepDragPrimaryPointerId != null && id !== prepDragPrimaryPointerId) {
       return;
     }
-    gamepadPointerUpAt(x, y);
-    if (kind === "pointer") releasePointerSurface(id);
-    activeGesture = null;
-    if (!dragPayload && !pendingShopDrag && !pendingBenchDrag) {
-      prepDragPrimaryPointerId = null;
+    if (activeGesture && activeGesture !== gestureKey(kind, id) && !prepDragOrphanedAfterCancel) {
+      return;
     }
+
+    if (isCancel && shouldSuppressPrepDragCancel(id)) {
+      const others = [...prepLivePointerIds].filter((pid) => pid !== id);
+      if (others.length > 0) {
+        // Палец остался после cancel Pencil / первого пальца — продолжаем drag им.
+        transferPrepDragPrimary(others[0], "pointer");
+        return;
+      }
+      prepDragOrphanedAfterCancel = true;
+      activeGesture = null;
+      releasePointerSurface(id);
+      return;
+    }
+
+    if (activeGesture !== gestureKey(kind, id) && !prepDragOrphanedAfterCancel) return;
+    finishPrepDragFromGesture(kind, id, x, y);
   };
 
   // —— Fat finger (touch) ——
@@ -1383,17 +1482,20 @@ function bindTouchInput() {
 
   document.addEventListener("pointerup", (e) => {
     if (!isFatFingerPointer(e)) return;
-    onUp("pointer", e.pointerId, e.clientX, e.clientY);
+    onUp("pointer", e.pointerId, e.clientX, e.clientY, { isCancel: false });
   }, captureOpts);
 
   document.addEventListener("pointercancel", (e) => {
     if (!isFatFingerPointer(e)) return;
-    onUp("pointer", e.pointerId, e.clientX, e.clientY);
+    if (e.cancelable) e.preventDefault();
+    onUp("pointer", e.pointerId, e.clientX, e.clientY, { isCancel: true });
   }, captureOpts);
 
   // —— Stylus (pen): precise mouse-like path ——
   const onStylusDown = (e) => {
     if (!isStylusPointer(e)) return;
+    trackPrepPointerDown(e.pointerId);
+
     if (e.button !== 0 && e.button !== -1) {
       // Barrel / eraser / right-click while dragging → rotate
       if (dragPayload && isLoadoutInteractionPhase() && typeof rotateDragItem === "function") {
@@ -1402,6 +1504,20 @@ function bindTouchInput() {
       }
       return;
     }
+
+    // Палец уже тащит / orphaned: Pencil не перехватывает; secondary → rotate.
+    if (isSecondaryPrepRotatePointer(e.pointerId)) {
+      tryPrepSecondaryRotate(e);
+      return;
+    }
+    if (dragPayload && prepDragOrphanedAfterCancel && isLoadoutInteractionPhase()) {
+      if (e.cancelable) e.preventDefault();
+      if (typeof markStylusInteraction === "function") markStylusInteraction();
+      transferPrepDragPrimary(e.pointerId, "stylus");
+      updatePointerFromClient(e.clientX, e.clientY);
+      return;
+    }
+
     if (activeGesture) return;
     if (ignoreTarget(e.target)) return;
     if (isStoragePhysicsTarget(e.target)) return;
@@ -1412,6 +1528,7 @@ function bindTouchInput() {
 
     if ((phase === "battle" || phase === "replay") && e.target?.closest?.("#game-canvas") && !dragPayload) {
       activeGesture = gestureKey("stylus", e.pointerId);
+      prepDragPrimaryPointerId = e.pointerId;
       if (e.cancelable) e.preventDefault();
       if (typeof handleBattleHudClick === "function") {
         handleBattleHudClick(e.clientX, e.clientY);
@@ -1425,6 +1542,7 @@ function bindTouchInput() {
 
     activeGesture = gestureKey("stylus", e.pointerId);
     prepDragPrimaryPointerId = e.pointerId;
+    prepDragOrphanedAfterCancel = false;
     if (e.cancelable) e.preventDefault();
 
     const shopPointerSurface = e.target?.closest?.(
@@ -1458,6 +1576,7 @@ function bindTouchInput() {
       return;
     }
 
+    if (prepDragPrimaryPointerId != null && e.pointerId !== prepDragPrimaryPointerId) return;
     if (activeGesture !== gestureKey("stylus", e.pointerId)) return;
     updateTouchTapGestureMove(e.clientX, e.clientY);
     if ((dragPayload || pendingShopDrag || pendingBenchDrag || pendingCanvasPick) && e.cancelable) {
@@ -1471,46 +1590,19 @@ function bindTouchInput() {
     }
   };
 
-  const onStylusUp = (e) => {
+  const onStylusUp = (e, { isCancel = false } = {}) => {
     if (!isStylusPointer(e)) return;
-    if (activeGesture !== gestureKey("stylus", e.pointerId)) return;
-    lastTouchEventAt = Date.now();
-    const x = e.clientX;
-    const y = e.clientY;
-
-    if (pendingCanvasPick && !dragPayload) {
-      const tapHandled = finishTouchTapGesture(x, y);
-      pendingCanvasPick = null;
-      if (!tapHandled && typeof tryBuyFromPendingShopDrag === "function") {
-        tryBuyFromPendingShopDrag(x, y);
-      }
-      releasePointerSurface(e.pointerId);
-      activeGesture = null;
-      syncUiDragState();
-      return;
-    }
-
-    if (pendingShopDrag && !dragPayload) {
-      if (!tryBuyFromPendingShopDrag(x, y)) {
-        gamepadPointerUpAt(x, y);
-      }
-      releasePointerSurface(e.pointerId);
-      activeGesture = null;
-      return;
-    }
-
-    gamepadPointerUpAt(x, y);
-    releasePointerSurface(e.pointerId);
-    activeGesture = null;
-    if (!dragPayload && !pendingShopDrag && !pendingBenchDrag) {
-      prepDragPrimaryPointerId = null;
-    }
+    onUp("stylus", e.pointerId, e.clientX, e.clientY, { isCancel });
   };
 
   document.addEventListener("pointerdown", onStylusDown, captureOpts);
   document.addEventListener("pointermove", onStylusMove, { passive: false, capture: true });
-  document.addEventListener("pointerup", onStylusUp, captureOpts);
-  document.addEventListener("pointercancel", onStylusUp, captureOpts);
+  document.addEventListener("pointerup", (e) => onStylusUp(e, { isCancel: false }), captureOpts);
+  document.addEventListener("pointercancel", (e) => {
+    if (!isStylusPointer(e)) return;
+    if (e.cancelable) e.preventDefault();
+    onStylusUp(e, { isCancel: true });
+  }, captureOpts);
 
   window.addEventListener("touchmove", (e) => {
     if (!activeGesture?.startsWith("touch:")) return;
@@ -1521,31 +1613,46 @@ function bindTouchInput() {
   }, bubbleOpts);
 
   window.addEventListener("touchend", (e) => {
-    if (!activeGesture?.startsWith("touch:")) return;
+    if (!activeGesture?.startsWith("touch:")) {
+      // Orphaned drag после pointercancel: все пальцы подняты → завершить.
+      if (prepDragOrphanedAfterCancel && dragPayload && e.touches.length === 0) {
+        finishPrepDragFromGesture("pointer", prepDragPrimaryPointerId, e.changedTouches[0]?.clientX ?? 0, e.changedTouches[0]?.clientY ?? 0);
+      }
+      return;
+    }
     const t = e.changedTouches[0];
     if (!t) return;
-    onUp("touch", t.identifier, t.clientX, t.clientY);
+    onUp("touch", t.identifier, t.clientX, t.clientY, { isCancel: false });
   }, bubbleOpts);
 
   document.addEventListener("touchstart", (e) => {
-    // Два пальца ИЛИ палец во время stylus-drag → поворот
-    if (dragPayload && isLoadoutInteractionPhase()) {
-      const stylusDrag = typeof isStylusInteraction === "function" && isStylusInteraction();
-      if (e.touches.length >= 2 || (stylusDrag && e.touches.length >= 1)) {
-        e.preventDefault();
-        if (typeof tryRotateDragItemFromSecondaryTouch === "function") {
-          tryRotateDragItemFromSecondaryTouch();
-        }
-      }
-    }
-  }, bubbleOpts);
+    // Capture: iPad PWA часто не доставляет second pointerdown, но touchstart есть.
+    if (!dragPayload || !isLoadoutInteractionPhase()) return;
+    const stylusOrPreciseDrag = (typeof isStylusInteraction === "function" && isStylusInteraction())
+      || (typeof isPreciseInteraction === "function" && isPreciseInteraction())
+      || prepDragPrimaryPointerId != null;
+    const multiTouch = e.touches.length >= 2;
+    const fingerDuringPenDrag = stylusOrPreciseDrag && e.touches.length >= 1;
+    if (!multiTouch && !fingerDuringPenDrag) return;
+    if (e.cancelable) e.preventDefault();
+    tryPrepSecondaryRotate(e);
+  }, captureOpts);
 
   bindTouchTooltipDismiss();
   window.getPrepDragPrimaryPointerId = () => prepDragPrimaryPointerId;
-  window.resetPrepTouchGesture = () => {
+  window.setPrepDragPrimaryPointerId = (id) => {
+    prepDragPrimaryPointerId = id;
+  };
+  window.resetPrepTouchGesture = (opts = {}) => {
     activeGesture = null;
-    prepDragPrimaryPointerId = null;
     pointerCaptureEl = null;
+    // keepPrimary: старт shop/bench drag — не сбрасывать id, иначе secondary touch
+    // не сможет повернуть предмет (iPad PWA / Pencil + палец).
+    if (!opts.keepPrimary) {
+      prepDragPrimaryPointerId = null;
+      prepLivePointerIds.clear();
+      prepDragOrphanedAfterCancel = false;
+    }
   };
 }
 

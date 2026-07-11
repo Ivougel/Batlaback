@@ -24,7 +24,7 @@ self.PWA_PRECACHE_URLS = [
   "components/bb-craft-tether.js?v=1",
   "components/bb-intro-layout.js?v=1",
   "components/bb-item-wiki.js?v=1",
-  "components/bb-prep-layout.js?v=5",
+  "components/bb-prep-layout.js?v=6",
   "components/bb-round-result.js?v=1",
   "components/bb-run-complete.js?v=1",
   "components/bb-run-lives.js?v=1",
@@ -990,7 +990,7 @@ self.PWA_PRECACHE_URLS = [
   "styles/bb-craft-commerce.css?v=2",
   "styles/bb-intro.css?v=4",
   "styles/bb-item-wiki.css?v=1",
-  "styles/bb-prep-stack.css?v=16",
+  "styles/bb-prep-stack.css?v=17",
   "styles/bb-round-result.css?v=1",
   "styles/bb-run-complete.css?v=1",
   "styles/bb-run-lives.css?v=1",
@@ -1058,7 +1058,7 @@ self.PWA_PRECACHE_URLS = [
   "styles/tablet-stacked.css?v=7",
   "styles/theme-diablo.css?v=8",
   "styles/theme-bb-meadow.css?v=2",
-  "styles/tokens.css?v=21",
+  "styles/tokens.css?v=23",
   "styles/ui-ornament-frame.css?v=1",
   "sw.js",
   "systems/animation.js",
@@ -1124,5 +1124,5 @@ self.PWA_PRECACHE_URLS = [
   "systems/tooltip-effect-text.js",
   "systems/triple-support-items.js?v=1",
   "systems/visual-theme.js?v=1",
-  "ui-layout.js?v=135"
+  "ui-layout.js?v=137"
 ];

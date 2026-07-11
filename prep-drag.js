@@ -289,6 +289,10 @@ function bindPrepLoadoutDragPointer() {
 
   const onMove = (e) => {
     if (!isLoadoutInteractionPhase() || !isActiveDrag()) return;
+    const primaryId = typeof window.getPrepDragPrimaryPointerId === "function"
+      ? window.getPrepDragPrimaryPointerId()
+      : null;
+    if (primaryId != null && e.pointerId !== primaryId) return;
     if (e.cancelable) e.preventDefault();
     updatePointerFromClient(e.clientX, e.clientY);
   };
@@ -2515,7 +2519,9 @@ function startShopDrag(index, e, side = prepViewSide) {
   arcCard?.classList.add("shop-dragging");
   syncUiDragState();
   if (typeof onPrepDragStart === "function") onPrepDragStart();
-  if (typeof window.resetPrepTouchGesture === "function") window.resetPrepTouchGesture();
+  if (typeof window.resetPrepTouchGesture === "function") {
+    window.resetPrepTouchGesture({ keepPrimary: true });
+  }
   if (e?.clientX != null && e?.clientY != null) {
     lastPointerClient.x = e.clientX;
     lastPointerClient.y = e.clientY;
@@ -2548,7 +2554,9 @@ function startBenchDrag(index, e, side = prepViewSide) {
   prepSidebarStickyHover = null;
   renderBench(side);
   beginPrepDragArcFromCard(arcCard, benchEntry.itemId, arcOrigin);
-  if (typeof window.resetPrepTouchGesture === "function") window.resetPrepTouchGesture();
+  if (typeof window.resetPrepTouchGesture === "function") {
+    window.resetPrepTouchGesture({ keepPrimary: true });
+  }
   startSynergyPreview();
   syncUiDragState();
   if (typeof onPrepDragStart === "function") onPrepDragStart();

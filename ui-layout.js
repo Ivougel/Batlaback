@@ -291,8 +291,11 @@
     const availH = Math.max(140, measureEl.clientHeight - pad * 2);
 
     // Phone overlay: крупнее ячейки — сетка на всю ширину поля.
+    // Tablet landscape bb-stack: выше cap — поле занимает большую долю экрана.
+    const tabletLandscape = root.dataset.layoutProfile === "tablet-landscape";
     const minCell = Math.round((phoneOverlay ? 34 : 30) * uiScale);
-    const maxCell = Math.round((phoneOverlay ? 72 : 48) * uiScale);
+    const maxCellBase = phoneOverlay ? 72 : (tabletLandscape ? 72 : 48);
+    const maxCell = Math.round(maxCellBase * uiScale);
     const byW = Math.floor((availW - (PREP_GRID_COLS - 1) * gap) / PREP_GRID_COLS);
     const byH = Math.floor((availH - (PREP_GRID_ROWS - 1) * gap) / PREP_GRID_ROWS);
     const cell = Math.min(maxCell, Math.max(minCell, Math.min(byW, byH)));
@@ -593,6 +596,11 @@
         const { h } = viewportSize();
         const shopZoneH = Math.max(72, h * shopZoneShare + leftoverPx * 0.25);
         rowH = Math.round(Math.max(88, Math.min(118, shopZoneH * 0.72)));
+      } else if (layoutProfile.id === "tablet-landscape") {
+        rowH = Math.round(Math.max(
+          cfg.shopRowMin,
+          Math.min(cfg.shopRowMax, cfg.shopRowBase * fitScale),
+        ));
       } else {
         rowH = Math.round(Math.max(96, Math.min(128, BB_STACK_SHOP_ROW_BASE * fitScale)));
       }

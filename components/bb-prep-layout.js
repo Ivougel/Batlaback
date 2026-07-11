@@ -113,16 +113,39 @@ const BBPrepLayout = (() => {
       && document.getElementById("app")?.dataset.phase === "prep";
   }
 
+  /** Tablet landscape: refresh/sell в top bar, commerce bar скрыт (золото уже в HUD). */
+  function useHeaderCommerceActions() {
+    const root = document.documentElement;
+    if (!isActive()) return false;
+    if (root.hasAttribute("data-bb-prep-phone-overlay")) return false;
+    if (root.dataset.layoutProfile === "phone-portrait") return false;
+    return true;
+  }
+
+  function ensureHeaderActionSlot(headerSlot, id, className) {
+    let slot = headerSlot.querySelector(`#${id}`);
+    if (slot) return slot;
+    slot = document.createElement("div");
+    slot.id = id;
+    slot.className = className;
+    headerSlot.appendChild(slot);
+    return slot;
+  }
+
   function syncCommerceBar() {
     const bar = document.getElementById("bb-prep-commerce-bar");
     const rerollSlot = document.getElementById("bb-prep-commerce-reroll");
     const sellMount = document.getElementById("bb-prep-commerce-sell");
+    const headerSlot = document.getElementById("bb-prep-header-actions");
     const refreshBtn = document.getElementById("btn-refresh");
     const sellZone = document.getElementById("shop-sell-zone");
-    if (!bar || !rerollSlot || !refreshBtn) return;
+    if (!refreshBtn) return;
+
+    const headerMode = useHeaderCommerceActions();
 
     if (!isActive()) {
-      bar.hidden = true;
+      if (bar) bar.hidden = true;
+      refreshBtn.classList.remove("btn-refresh-shop--bb-stack", "btn-refresh-shop--header");
       if (refreshBtnHome && refreshBtn.parentElement !== refreshBtnHome) {
         refreshBtnHome.appendChild(refreshBtn);
       }
@@ -130,22 +153,55 @@ const BBPrepLayout = (() => {
         sellZoneHome.appendChild(sellZone);
       }
       sellMount?.setAttribute("aria-hidden", "true");
+      document.getElementById("bb-prep-header-reroll")?.remove();
+      document.getElementById("bb-prep-header-sell")?.remove();
       return;
     }
 
-    bar.hidden = false;
     if (!refreshBtnHome) {
       refreshBtnHome = refreshBtn.parentElement;
     }
-    if (refreshBtn.parentElement !== rerollSlot) {
+    if (sellZone && !sellZoneHome) {
+      sellZoneHome = sellZone.parentElement;
+    }
+
+    if (headerMode && headerSlot) {
+      if (bar) bar.hidden = true;
+      headerSlot.hidden = false;
+      const headerReroll = ensureHeaderActionSlot(
+        headerSlot,
+        "bb-prep-header-reroll",
+        "bb-prep-header-actions__reroll"
+      );
+      const headerSell = ensureHeaderActionSlot(
+        headerSlot,
+        "bb-prep-header-sell",
+        "bb-prep-header-actions__sell"
+      );
+      if (refreshBtn.parentElement !== headerReroll) {
+        headerReroll.appendChild(refreshBtn);
+      }
+      refreshBtn.classList.add("btn-refresh-shop--bb-stack", "btn-refresh-shop--header");
+      if (sellZone) {
+        if (sellZone.parentElement !== headerSell) {
+          headerSell.appendChild(sellZone);
+        }
+        headerSell.removeAttribute("aria-hidden");
+      }
+      sellMount?.setAttribute("aria-hidden", "true");
+      return;
+    }
+
+    if (bar) bar.hidden = false;
+    document.getElementById("bb-prep-header-reroll")?.remove();
+    document.getElementById("bb-prep-header-sell")?.remove();
+    if (rerollSlot && refreshBtn.parentElement !== rerollSlot) {
       rerollSlot.appendChild(refreshBtn);
     }
     refreshBtn.classList.add("btn-refresh-shop--bb-stack");
+    refreshBtn.classList.remove("btn-refresh-shop--header");
 
     if (sellZone && sellMount) {
-      if (!sellZoneHome) {
-        sellZoneHome = sellZone.parentElement;
-      }
       if (sellZone.parentElement !== sellMount) {
         sellMount.appendChild(sellZone);
       }
@@ -173,6 +229,10 @@ const BBPrepLayout = (() => {
     if (!shopPanel || !prepLeft || !fieldColumn || !isActive()) return;
 
     insertBeforeAnchor(shopPanel, fieldColumn, prepLeft);
+    if (useHeaderCommerceActions()) {
+      if (commerce) commerce.hidden = true;
+      return;
+    }
     if (commerce) insertBeforeAnchor(commerce, fieldColumn, prepLeft);
     if (commerce) insertBeforeAnchor(shopPanel, commerce, prepLeft);
   }
@@ -205,7 +265,8 @@ const BBPrepLayout = (() => {
     if (isActive()) {
       if (!fightBtnHome) fightBtnHome = chromeHome;
       headerSlot.hidden = false;
-      if (btn.parentElement !== headerSlot) headerSlot.appendChild(btn);
+      // Fight last: refresh/sell slots may already be in header.
+      headerSlot.appendChild(btn);
       btn.classList.add("btn-fight-header--bb-stack");
       if (typeof isBBFidelityMode === "function" && isBBFidelityMode()) {
         btn.textContent = "⚔️ В бой!";

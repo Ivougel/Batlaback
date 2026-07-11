@@ -156,7 +156,63 @@ html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-header-action
   display: flex;
   align-items: center;
   flex: 0 0 auto;
+  gap: calc(6px * var(--ui-scale, 1));
   margin-left: 0;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-header-actions__reroll,
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-header-actions__sell {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-header-actions .shop-sell-zone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-header-actions .sell-drop-zone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: max(var(--touch-target-min), calc(40px * var(--ui-scale, 1)));
+  height: max(var(--touch-target-min), calc(40px * var(--ui-scale, 1)));
+  min-width: max(var(--touch-target-min), calc(40px * var(--ui-scale, 1)));
+  padding: 0;
+  border-radius: calc(10px * var(--ui-scale, 1));
+  border: 1px solid rgba(200, 134, 10, 0.55);
+  background: rgba(22, 27, 34, 0.94);
+  font-size: calc(20px * var(--ui-scale, 1));
+  line-height: 1;
+  cursor: pointer;
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-header-actions .sell-drop-zone.is-drag-target,
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-header-actions .shop-sell-zone.sell-drop-target {
+  border-color: rgba(255, 210, 80, 0.95);
+  box-shadow: 0 0 0 2px rgba(255, 200, 60, 0.35);
+}
+
+html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .btn-refresh-shop--header {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: calc(4px * var(--ui-scale, 1));
+  min-width: 0;
+  min-height: max(var(--touch-target-min), calc(40px * var(--ui-scale, 1)));
+  padding: calc(6px * var(--ui-scale, 1)) calc(10px * var(--ui-scale, 1));
+  border-radius: calc(10px * var(--ui-scale, 1));
+  background: linear-gradient(180deg, rgba(92, 68, 44, 0.95), rgba(62, 44, 28, 0.98));
+  border: 1px solid rgba(140, 100, 55, 0.5);
+  font-size: var(--font-sm);
+  font-weight: 700;
+  line-height: 1.15;
+  white-space: nowrap;
+  text-align: center;
 }
 
 html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-top-bar .bb-run-lives:not(.hidden) {
@@ -173,6 +229,36 @@ html[data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-header-action
   border: var(--btn-primary-border);
   color: var(--btn-primary-color);
   box-shadow: var(--btn-primary-shadow);
+}
+
+/* Tablet landscape: commerce bar убран — золото в HUD, actions в top bar */
+html[data-layout-profile="tablet-landscape"][data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-commerce-bar,
+html[data-layout-profile="tablet-landscape"][data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-commerce-bar__gold {
+  display: none !important;
+}
+
+html[data-layout-profile="tablet-landscape"][data-prep-layout="bb-stack"] #app[data-phase="prep"] {
+  --prep-shop-row-h: calc(84px * var(--ui-scale, 1));
+  --shop-card-row-h: calc(84px * var(--ui-scale, 1));
+}
+
+html[data-layout-profile="tablet-landscape"][data-prep-layout="bb-stack"] #app[data-phase="prep"] #shop-panel {
+  max-height: var(--prep-zone-shop-h);
+  padding:
+    calc(2px * var(--ui-scale, 1))
+    calc(8px * var(--ui-scale, 1))
+    calc(4px * var(--ui-scale, 1));
+}
+
+html[data-layout-profile="tablet-landscape"][data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-inventory-shell {
+  grid-template-columns:
+    minmax(0, var(--bb-prep-hero-col-share))
+    minmax(0, 1fr);
+  gap: 0 1.5%;
+}
+
+html[data-layout-profile="tablet-landscape"][data-prep-layout="bb-stack"] #app[data-phase="prep"] .bb-prep-inventory-tip {
+  display: none !important;
 }
 
 html[data-prep-layout="bb-stack"] #app[data-phase="prep"] {

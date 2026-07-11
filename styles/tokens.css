@@ -621,6 +621,22 @@ html[data-prep-layout="bb-stack"] {
   --prep-shop-panel-max-w: 100%;
 }
 
+/* iPad landscape bb-stack: без commerce bar, крупнее поле и сетка */
+html[data-layout-profile="tablet-landscape"][data-prep-layout="bb-stack"] {
+  --prep-zone-topbar-share: 0.07;
+  --prep-zone-shop-share: 0.14;
+  --prep-zone-commerce-share: 0;
+  --prep-zone-field-share: 0.67;
+  --prep-zone-storage-share: 0.12;
+  --prep-zone-storage-body-share: 0.08;
+  --bb-prep-hero-col-share: 18%;
+  --bb-prep-tooltip-col-share: 0%;
+  --bb-prep-grid-col-share: 82%;
+  --prep-shop-row-base: 72;
+  --prep-shop-row-min: 56;
+  --prep-shop-row-max: 84;
+}
+
 /* Phone portrait bb-stack: крупнее поле по умолчанию; JS пересчитывает доли от aspect. */
 html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"],
 html[data-bb-prep-phone-overlay="true"][data-prep-layout="bb-stack"] {
