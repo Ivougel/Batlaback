@@ -751,7 +751,9 @@ html[data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock .si
 html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--hero-grid:not(.hidden),
 html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--item:not(.hidden),
 html[data-bb-prep-phone-overlay="true"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--hero-grid:not(.hidden),
-html[data-bb-prep-phone-overlay="true"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--item:not(.hidden) {
+html[data-bb-prep-phone-overlay="true"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--item:not(.hidden),
+html[data-layout-profile="tablet-landscape"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--hero-grid:not(.hidden),
+html[data-layout-profile="tablet-landscape"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock.prep-tooltip-dock--item:not(.hidden) {
   overflow-x: hidden !important;
   overflow-y: auto !important;
   -webkit-overflow-scrolling: touch;
@@ -761,13 +763,17 @@ html[data-bb-prep-phone-overlay="true"][data-prep-layout="bb-stack"][data-game-p
   padding: calc(6px * var(--ui-scale, 1));
 }
 
-html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock .sidebar-tooltip.sidebar-tooltip--card:not(.hidden) {
+html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock .sidebar-tooltip.sidebar-tooltip--card:not(.hidden),
+html[data-bb-prep-phone-overlay="true"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock .sidebar-tooltip.sidebar-tooltip--card:not(.hidden),
+html[data-layout-profile="tablet-landscape"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock .sidebar-tooltip.sidebar-tooltip--card:not(.hidden) {
   width: min(100%, calc(240px * var(--ui-scale, 1)));
   max-width: 100%;
   margin: 0 auto;
 }
 
-html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock .item-hint-card {
+html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock .item-hint-card,
+html[data-bb-prep-phone-overlay="true"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock .item-hint-card,
+html[data-layout-profile="tablet-landscape"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock .item-hint-card {
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -776,7 +782,9 @@ html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"][data-gam
   margin: 0 auto;
 }
 
-html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock .item-hint-card__side-flyout {
+html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock .item-hint-card__side-flyout,
+html[data-bb-prep-phone-overlay="true"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock .item-hint-card__side-flyout,
+html[data-layout-profile="tablet-landscape"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock .item-hint-card__side-flyout {
   position: static;
   right: auto;
   top: auto;
@@ -786,25 +794,37 @@ html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"][data-gam
   order: 2;
 }
 
-html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock .item-hint-card__frame {
+html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock .item-hint-card__frame,
+html[data-bb-prep-phone-overlay="true"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock .item-hint-card__frame,
+html[data-layout-profile="tablet-landscape"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock .item-hint-card__frame {
   order: 1;
 }
 
 html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock:has(.item-info-popup--in-card:not(.hidden)),
-html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock:has(.item-craft-popup--in-card:not(.hidden)) {
+html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock:has(.item-craft-popup--in-card:not(.hidden)),
+html[data-bb-prep-phone-overlay="true"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock:has(.item-info-popup--in-card:not(.hidden)),
+html[data-bb-prep-phone-overlay="true"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock:has(.item-craft-popup--in-card:not(.hidden)),
+html[data-layout-profile="tablet-landscape"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock:has(.item-info-popup--in-card:not(.hidden)),
+html[data-layout-profile="tablet-landscape"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock:has(.item-craft-popup--in-card:not(.hidden)) {
   padding-left: calc(6px * var(--ui-scale, 1)) !important;
   overflow-x: hidden !important;
   overflow-y: auto !important;
 }
 
 html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock .item-info-popup--in-card:not(.hidden),
-html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock .item-craft-popup--in-card:not(.hidden) {
-  position: relative;
-  inset: auto;
-  width: 100%;
-  max-width: 100%;
-  height: auto;
-  max-height: none;
+html[data-layout-profile="phone-portrait"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock .item-craft-popup--in-card:not(.hidden),
+html[data-bb-prep-phone-overlay="true"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock .item-info-popup--in-card:not(.hidden),
+html[data-bb-prep-phone-overlay="true"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock .item-craft-popup--in-card:not(.hidden),
+html[data-layout-profile="tablet-landscape"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock .item-info-popup--in-card:not(.hidden),
+html[data-layout-profile="tablet-landscape"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock:not(.hidden):has(.sidebar-tooltip--card:not(.hidden)) {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+html[data-layout-profile="tablet-landscape"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock:not(.hidden):has(.item-hint-card--has-rail),
+html[data-layout-profile="tablet-landscape"][data-prep-layout="bb-stack"][data-game-phase="prep"] #prep-tooltip-dock:not(.hidden):has(.item-hint-card--has-cost) {
+  padding-top: calc(6px * var(--ui-scale, 1)) !important;
+  padding-left: calc(6px * var(--ui-scale, 1)) !important;
 }
 
 html[data-prep-layout="bb-stack"] #app[data-phase="prep"] #prep-field-island {

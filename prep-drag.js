@@ -305,11 +305,20 @@ function bindPrepLoadoutDragPointer() {
 
   const onUp = (e) => {
     if (!isLoadoutInteractionPhase() || !isActiveDrag()) return;
+    // iPadOS: Pencil/primary часто получает pointercancel при тапе пальцем для поворота.
+    // bindTouchInput держит drag (orphaned / transfer) — здесь cancel никогда не дропает.
+    if (e.type === "pointercancel") return;
     if (e.button != null && e.button !== 0) return;
     const primaryId = typeof window.getPrepDragPrimaryPointerId === "function"
       ? window.getPrepDragPrimaryPointerId()
       : null;
     if (primaryId != null && e.pointerId !== primaryId) return;
+    // После cancel primary обнулён: любой pointerup (палец после rotate) иначе сбросит предмет.
+    if (primaryId == null
+      && typeof window.isPrepDragOrphanedAfterCancel === "function"
+      && window.isPrepDragOrphanedAfterCancel()) {
+      return;
+    }
     if (tryBuyFromPendingShopDrag(e.clientX, e.clientY)) return;
     finishDragDrop(e);
   };

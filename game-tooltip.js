@@ -241,6 +241,12 @@ function isBBStackPrepTooltipDock() {
   return isLivePrepSession() && document.documentElement.dataset.prepLayout === "bb-stack";
 }
 
+function isBBStackTabletLandscapePrep(root = document.documentElement) {
+  return root.dataset.prepLayout === "bb-stack"
+    && root.dataset.layoutProfile === "tablet-landscape"
+    && root.dataset.bbPrepPhoneOverlay !== "true";
+}
+
 function usesPrepItemTooltipDock() {
   return isMobilePrepPortrait() || isTabletSidePrepTooltipDock() || isBBStackPrepTooltipDock();
 }
@@ -532,6 +538,7 @@ function positionBBStackPrepTooltipDock(dock) {
   const topLimit = (topBar?.getBoundingClientRect().bottom ?? viewTop) + margin;
   const phonePortrait = root.dataset.layoutProfile === "phone-portrait"
     || root.dataset.bbPrepPhoneOverlay === "true";
+  const tabletLandscape = isBBStackTabletLandscapePrep(root);
 
   let left;
   let width;
@@ -541,11 +548,15 @@ function positionBBStackPrepTooltipDock(dock) {
   const tipRect = tipCol?.getBoundingClientRect();
   const shellRect = shell?.getBoundingClientRect();
   const fieldRect = fieldCol?.getBoundingClientRect();
+  const gridRect = shell?.querySelector(".bb-prep-inventory-grid")?.getBoundingClientRect();
   const tipCollapsed = !(tipRect && tipRect.width >= 48 && tipRect.height >= 24);
 
-  // Phone / collapsed tip: держим dock внутри поля, не у верхней кромки магазина.
-  if (tipCollapsed || phonePortrait) {
-    const bounds = (fieldRect && fieldRect.height >= 80) ? fieldRect : shellRect;
+  // Phone / collapsed tip / tablet landscape: держим dock внутри поля (на планшете — в колонке сетки).
+  if (tipCollapsed || phonePortrait || tabletLandscape) {
+    let bounds = (fieldRect && fieldRect.height >= 80) ? fieldRect : shellRect;
+    if (tabletLandscape && gridRect && gridRect.width >= 120 && gridRect.height >= 80) {
+      bounds = gridRect;
+    }
     if (bounds && bounds.width >= 120) {
       const commerceBottom = commerce?.getBoundingClientRect().bottom ?? 0;
       const storageTop = storage?.getBoundingClientRect().top;
@@ -555,17 +566,20 @@ function positionBBStackPrepTooltipDock(dock) {
         Number.isFinite(storageTop) ? storageTop - margin : viewBottom,
         bounds.bottom - margin,
       );
-      width = Math.max(168, Math.min(bounds.width - margin * 2, viewW * 0.92));
+      const maxDockW = tabletLandscape
+        ? Math.min(bounds.width - margin * 2, Math.round(248 * uiScale))
+        : Math.min(bounds.width - margin * 2, viewW * 0.92);
+      width = Math.max(168, maxDockW);
       left = bounds.left + (bounds.width - width) / 2;
       const bandH = Math.max(140, bandBottom - bandTop);
-      maxHeight = Math.max(160, Math.min(bandH, Math.round(viewH * 0.58)));
+      maxHeight = Math.max(160, Math.min(bandH, Math.round(viewH * (tabletLandscape ? 0.68 : 0.58))));
       // Чуть ниже центра поля — карточка и flyout остаются в зоне видимости.
       top = bandTop + Math.max(0, Math.round((bandH - maxHeight) * 0.28));
       if (top + maxHeight > bandBottom) {
         top = Math.max(bandTop, bandBottom - maxHeight);
       }
     } else {
-      width = Math.max(140, Math.min(viewW * 0.88, 320));
+      width = Math.max(140, Math.min(viewW * 0.88, tabletLandscape ? Math.round(248 * uiScale) : 320));
       left = viewLeft + (viewW - width) / 2;
       top = topLimit + Math.round(viewH * 0.22);
       maxHeight = Math.max(160, Math.min(viewBottom - top, Math.round(viewH * 0.5)));

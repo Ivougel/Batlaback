@@ -41,6 +41,7 @@
     "test:phone-prep-field": "node tools/phone-prep-field.test.mjs",
     "test:phone-prep-tooltip": "node tools/phone-prep-tooltip.test.mjs",
     "test:phone-prep-tooltip-dismiss": "node tools/phone-prep-tooltip-dismiss.test.mjs",
+    "test:prep-drag-rotate-touch": "node tools/prep-drag-rotate-touch.test.mjs",
     "test:qa": "node tools/layout-qa-audit.mjs",
     "test:drag-stability": "node tools/layout-drag-stability.test.mjs",
     "test:prep-drag-alignment": "node tools/prep-drag-alignment.test.mjs",
