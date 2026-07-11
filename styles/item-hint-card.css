@@ -15,10 +15,29 @@
 
 .item-hint-card {
   --hint-w: calc(210px * var(--ui-scale, 1));
+  --hint-flyout-w: calc(196px * var(--ui-scale, 1));
   --hint-rarity: #30363d;
   width: var(--hint-w);
   position: relative;
   user-select: none;
+  overflow: visible;
+}
+
+.item-hint-card__side-flyout {
+  position: absolute;
+  z-index: 8;
+  top: 0;
+  right: calc(100% + 10px * var(--ui-scale, 1));
+  width: var(--hint-flyout-w);
+  height: 100%;
+  display: flex;
+  align-items: stretch;
+  pointer-events: none;
+}
+
+.item-hint-card__side-flyout > .item-info-popup--in-card:not(.hidden),
+.item-hint-card__side-flyout > .item-craft-popup--in-card:not(.hidden) {
+  pointer-events: auto;
 }
 
 .item-hint-card__frame {
@@ -39,13 +58,267 @@
   z-index: 2;
   flex: 0 0 auto;
   padding:
-    calc(11px * var(--ui-scale, 1))
+    calc(8px * var(--ui-scale, 1))
     calc(12px * var(--ui-scale, 1))
-    calc(10px * var(--ui-scale, 1));
+    calc(8px * var(--ui-scale, 1));
   background: var(--hint-hud-bg);
   border-bottom: 1px solid var(--hint-hud-border);
   overflow: visible;
   max-height: none;
+}
+
+.item-hint-card__header {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: calc(8px * var(--ui-scale, 1));
+  padding:
+    calc(10px * var(--ui-scale, 1))
+    calc(10px * var(--ui-scale, 1))
+    calc(4px * var(--ui-scale, 1));
+  background: var(--hint-hud-bg);
+  border-bottom: 1px solid color-mix(in srgb, var(--hint-hud-border) 65%, transparent);
+}
+
+.item-hint-card__rail {
+  position: absolute;
+  z-index: 7;
+  left: calc(-6px * var(--ui-scale, 1));
+  top: calc(-4px * var(--ui-scale, 1));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(8px * var(--ui-scale, 1));
+  pointer-events: none;
+}
+
+.item-hint-card__rail > * {
+  pointer-events: auto;
+}
+
+.item-hint-card__edge-btn {
+  width: calc(38px * var(--ui-scale, 1));
+  height: calc(42px * var(--ui-scale, 1));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 50% 50% 46% 46%;
+  border: calc(2px * var(--ui-scale, 1)) solid rgba(255, 255, 255, 0.28);
+  font-size: calc(16px * var(--ui-scale, 1));
+  font-weight: 900;
+  line-height: 1;
+  color: #fff;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.45),
+    0 0 10px rgba(255, 255, 255, 0.08);
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+
+.item-hint-card__edge-btn:hover,
+.item-hint-card__edge-btn:focus-visible {
+  filter: brightness(1.08);
+  outline: none;
+}
+
+.item-hint-card__edge-btn:active {
+  transform: scale(0.94);
+}
+
+.item-hint-card__info-btn {
+  background:
+    radial-gradient(circle at 32% 28%, #ffe8a3 0%, #f0b429 42%, #c27803 78%, #8a5a00 100%);
+  border-color: #fde68a;
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.45),
+    0 0 12px rgba(240, 180, 41, 0.42);
+}
+
+.item-hint-card__craft-btn {
+  background:
+    radial-gradient(circle at 32% 28%, #d4b896 0%, #9a7349 42%, #6b4f31 78%, #4a3522 100%);
+  border-color: #e8d0b0;
+  font-size: calc(15px * var(--ui-scale, 1));
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.45),
+    0 0 12px rgba(154, 115, 73, 0.38);
+}
+
+.item-hint-card--has-rail,
+.item-hint-card--has-cost {
+  overflow: visible;
+  padding-top: calc(10px * var(--ui-scale, 1));
+  padding-left: calc(14px * var(--ui-scale, 1));
+}
+
+.item-hint-card--has-tags {
+  overflow: visible;
+}
+
+.item-hint-card__tags-row {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding:
+    calc(8px * var(--ui-scale, 1))
+    calc(10px * var(--ui-scale, 1));
+  background: color-mix(in srgb, var(--hint-hud-bg) 92%, #000 8%);
+  border-bottom: 1px solid var(--hint-hud-border);
+  overflow: visible;
+}
+
+.item-hint-card__meta-bar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(34px * var(--ui-scale, 1));
+  padding:
+    calc(10px * var(--ui-scale, 1))
+    calc(10px * var(--ui-scale, 1))
+    calc(8px * var(--ui-scale, 1));
+  background: color-mix(in srgb, var(--hint-hud-bg) 88%, #000 12%);
+  border-top: 1px solid var(--hint-hud-border);
+  overflow: visible;
+}
+
+.item-hint-card__meta {
+  font-size: var(--font-xs);
+  font-weight: 700;
+  color: var(--hint-line-sub-color);
+  text-align: center;
+  line-height: 1.25;
+}
+
+.item-hint-card__tag-icons {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: calc(6px * var(--ui-scale, 1));
+  width: 100%;
+}
+
+.item-hint-card__tag-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(34px * var(--ui-scale, 1));
+  height: calc(34px * var(--ui-scale, 1));
+  padding: 0;
+  border: calc(1.5px * var(--ui-scale, 1)) solid rgba(255, 255, 255, 0.16);
+  border-radius: calc(8px * var(--ui-scale, 1));
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition:
+    transform 0.12s ease,
+    background 0.12s ease,
+    border-color 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.item-hint-card__tag-icon:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.24);
+}
+
+.item-hint-card__tag-icon:active {
+  transform: scale(0.94);
+}
+
+.item-hint-card__tag-icon:focus-visible {
+  outline: calc(2px * var(--ui-scale, 1)) solid rgba(121, 192, 255, 0.85);
+  outline-offset: calc(2px * var(--ui-scale, 1));
+}
+
+.item-hint-card__tag-emoji {
+  font-size: calc(18px * var(--ui-scale, 1));
+  line-height: 1;
+}
+
+.item-hint-card__tag-caption {
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 8px * var(--ui-scale, 1));
+  left: auto;
+  bottom: auto;
+  transform: translateY(-50%) translateX(6px);
+  padding:
+    calc(6px * var(--ui-scale, 1))
+    calc(12px * var(--ui-scale, 1));
+  border-radius: calc(8px * var(--ui-scale, 1));
+  background: rgba(8, 12, 20, 0.98);
+  border: calc(1.5px * var(--ui-scale, 1)) solid rgba(255, 255, 255, 0.22);
+  color: #f3f6fa;
+  font-size: max(var(--font-sm), calc(13px * var(--ui-scale, 1)));
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.12s ease, transform 0.12s ease, visibility 0.12s ease;
+  z-index: 30;
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+
+.item-hint-card__tag-caption::after {
+  content: "";
+  position: absolute;
+  left: 100%;
+  right: auto;
+  top: 50%;
+  bottom: auto;
+  transform: translateY(-50%);
+  border: calc(6px * var(--ui-scale, 1)) solid transparent;
+  border-left-color: rgba(8, 12, 20, 0.98);
+  border-bottom-color: transparent;
+  border-top-color: transparent;
+  filter: drop-shadow(1px 0 0 rgba(255, 255, 255, 0.12));
+}
+
+.item-hint-card__tag-icon--show-caption .item-hint-card__tag-caption {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) translateX(0);
+}
+
+html[data-touch="true"] .item-hint-card__tag-icon {
+  width: calc(38px * var(--ui-scale, 1));
+  height: calc(38px * var(--ui-scale, 1));
+}
+
+html[data-touch="true"] .item-hint-card__tag-emoji {
+  font-size: calc(20px * var(--ui-scale, 1));
+}
+
+.item-hint-card__frame:has(.item-hint-card__tags-row),
+.item-hint-card__frame:has(.item-hint-card__tag-icon--show-caption) {
+  overflow: visible;
+}
+
+.item-hint-card__tags-row .item-hint-card__tag-icon--show-caption {
+  z-index: 8;
 }
 
 .item-hint-card__art {
@@ -56,8 +329,9 @@
   align-items: center;
   justify-content: center;
   min-height: calc(128px * var(--ui-scale, 1));
-  padding: calc(8px * var(--ui-scale, 1)) calc(6px * var(--ui-scale, 1)) calc(14px * var(--ui-scale, 1));
+  padding: calc(8px * var(--ui-scale, 1)) calc(6px * var(--ui-scale, 1)) calc(10px * var(--ui-scale, 1));
   background: var(--hint-art-bg);
+  overflow: visible;
 }
 
 .item-hint-card__art-glow {
@@ -69,20 +343,92 @@
   pointer-events: none;
 }
 
-.item-hint-card__emoji {
+.item-hint-card__emoji-stage {
   position: relative;
   z-index: 1;
-  font-size: calc(108px * var(--ui-scale, 1));
+  width: calc(112px * var(--ui-scale, 1));
+  height: calc(112px * var(--ui-scale, 1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: hint-card-emoji-levitate 3.2s ease-in-out infinite;
+}
+
+.item-hint-card__emoji-stage--duo {
+  width: calc(128px * var(--ui-scale, 1));
+  height: calc(128px * var(--ui-scale, 1));
+}
+
+.item-hint-card__emoji {
+  position: relative;
   line-height: 1;
   filter: drop-shadow(var(--hint-emoji-shadow));
+  pointer-events: none;
+}
+
+.item-hint-card__emoji--primary {
+  z-index: 2;
+  font-size: calc(108px * var(--ui-scale, 1));
+}
+
+.item-hint-card__emoji--orbit {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 3;
+  --hint-orbit-r: calc(52px * var(--ui-scale, 1));
+  width: calc(62px * var(--ui-scale, 1));
+  height: calc(62px * var(--ui-scale, 1));
+  margin:
+    calc(-31px * var(--ui-scale, 1))
+    0
+    0
+    calc(-31px * var(--ui-scale, 1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(62px * var(--ui-scale, 1));
+  animation: hint-card-emoji-orbit 4.6s linear infinite;
+}
+
+@keyframes hint-card-emoji-levitate {
+  0%, 100% {
+    transform: translateY(calc(-5px * var(--ui-scale, 1)));
+  }
+  50% {
+    transform: translateY(calc(7px * var(--ui-scale, 1)));
+  }
+}
+
+@keyframes hint-card-emoji-orbit {
+  from {
+    transform: rotate(0deg) translateX(var(--hint-orbit-r)) rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg) translateX(var(--hint-orbit-r)) rotate(-360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item-hint-card__emoji-stage {
+    animation: none;
+    transform: none;
+  }
+
+  .item-hint-card__emoji--orbit {
+    animation: none;
+    transform: rotate(35deg) translateX(var(--hint-orbit-r)) rotate(-35deg);
+  }
 }
 
 .item-hint-card__title {
+  flex: 1 1 auto;
   font-size: var(--font-lg);
   font-weight: 800;
   line-height: 1.22;
   letter-spacing: 0.01em;
-  margin-bottom: calc(5px * var(--ui-scale, 1));
+  margin: 0;
+  padding-right: calc(4px * var(--ui-scale, 1));
   color: color-mix(in srgb, var(--hint-rarity, var(--hint-title-color)) 58%, var(--hint-title-color));
   text-shadow: var(--hint-title-shadow);
 }
@@ -156,10 +502,10 @@
 }
 
 .item-hint-card__cost {
-  position: absolute;
-  z-index: 4;
-  top: calc(-10px * var(--ui-scale, 1));
-  left: calc(-10px * var(--ui-scale, 1));
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  pointer-events: none;
   width: calc(38px * var(--ui-scale, 1));
   height: calc(42px * var(--ui-scale, 1));
   display: flex;
@@ -186,14 +532,15 @@
   position: absolute;
   z-index: 3;
   left: 50%;
-  bottom: calc(8px * var(--ui-scale, 1));
-  transform: translateX(-50%);
+  top: 0;
+  transform: translate(-50%, -50%);
   width: calc(14px * var(--ui-scale, 1));
   height: calc(18px * var(--ui-scale, 1));
   border-radius: 50% / 40%;
   background: var(--hint-gem-bg);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
   opacity: 0.75;
+  pointer-events: none;
 }
 
 html[data-game-phase="prep"] #prep-tooltip-dock:not(.hidden):has(.sidebar-tooltip--card:not(.hidden)),
@@ -222,13 +569,24 @@ html[data-game-phase="prep"] #prep-tooltip-dock .sidebar-tooltip.sidebar-tooltip
   overflow: visible !important;
 }
 
+.item-hint-card--has-rail .item-hint-card__header,
+.item-hint-card--has-rail .item-hint-card__hud,
+.item-hint-card--has-cost .item-hint-card__header,
 .item-hint-card--has-cost .item-hint-card__hud {
-  padding-top: calc(13px * var(--ui-scale, 1));
-  padding-left: calc(26px * var(--ui-scale, 1));
+  padding-left: calc(24px * var(--ui-scale, 1));
 }
 
 .item-hint-card--has-cost .item-hint-card__title {
   padding-right: calc(4px * var(--ui-scale, 1));
+}
+
+html[data-game-phase="prep"] #prep-tooltip-dock:not(.hidden):has(.item-hint-card--has-rail),
+html[data-game-phase="prep"] #prep-tooltip-dock:not(.hidden):has(.item-hint-card--has-cost),
+html[data-game-phase="prep"] #sidebar-tooltip.sidebar-tooltip--card.sidebar-tooltip--floating:has(.item-hint-card--has-rail),
+html[data-game-phase="prep"] #sidebar-tooltip.sidebar-tooltip--card.sidebar-tooltip--floating:has(.item-hint-card--has-cost) {
+  padding-top: calc(10px * var(--ui-scale, 1)) !important;
+  padding-left: calc(12px * var(--ui-scale, 1)) !important;
+  overflow: visible !important;
 }
 
 html[data-game-phase="prep"] #prep-tooltip-dock .sidebar-tooltip--card {
@@ -274,8 +632,20 @@ html[data-touch="true"] .item-hint-card {
   --hint-w: calc(220px * var(--ui-scale, 1));
 }
 
-html[data-touch="true"] .item-hint-card__emoji {
+html[data-touch="true"] .item-hint-card__emoji--primary {
   font-size: calc(117px * var(--ui-scale, 1));
+}
+
+html[data-touch="true"] .item-hint-card__emoji--orbit {
+  --hint-orbit-r: calc(56px * var(--ui-scale, 1));
+  width: calc(68px * var(--ui-scale, 1));
+  height: calc(68px * var(--ui-scale, 1));
+  margin:
+    calc(-34px * var(--ui-scale, 1))
+    0
+    0
+    calc(-34px * var(--ui-scale, 1));
+  font-size: calc(68px * var(--ui-scale, 1));
 }
 
 /* Открытый popover магазина: подсказка поверх панели + магическое свечение */
@@ -312,11 +682,20 @@ html[data-prep-shop-open][data-game-phase="prep"] #prep-tooltip-dock .item-hint-
   animation: hint-magic-glow-pulse 2.4s ease-in-out infinite;
 }
 
-html[data-prep-shop-open][data-game-phase="prep"] #prep-tooltip-dock .item-hint-card__emoji {
+html[data-prep-shop-open][data-game-phase="prep"] #prep-tooltip-dock .item-hint-card__emoji--primary {
   filter:
     drop-shadow(var(--hint-emoji-shadow))
     drop-shadow(0 0 calc(16px * var(--ui-scale, 1)) color-mix(in srgb, var(--hint-rarity, #5a7354) 58%, transparent));
-  animation: hint-magic-glow-pulse 2.4s ease-in-out infinite;
+  animation: hint-card-emoji-glow-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes hint-card-emoji-glow-pulse {
+  0%, 100% {
+    opacity: 0.92;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 html[data-visual-theme="diablo"][data-prep-shop-open][data-game-phase="prep"] #prep-tooltip-dock .item-hint-card__frame {
@@ -424,4 +803,177 @@ html[data-visual-theme="diablo"][data-prep-shop-open][data-game-phase="prep"] #p
 
 .item-hint-card__frame:has(.craft-recipe-chip) {
   overflow: visible;
+}
+
+/* Попап info / craft — слева от карточки, не перекрывая её */
+.item-info-popup--in-card,
+.item-craft-popup--in-card {
+  position: relative;
+  inset: auto;
+  z-index: 9;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  width: 100%;
+  height: 100%;
+  max-height: min(calc(420px * var(--ui-scale, 1)), 72vh);
+  padding: 0;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.item-info-popup--in-card.hidden,
+.item-craft-popup--in-card.hidden {
+  display: none;
+}
+
+.item-info-popup__panel,
+.item-craft-popup__panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  border-radius: calc(12px * var(--ui-scale, 1));
+  border: calc(1.5px * var(--ui-scale, 1)) solid color-mix(in srgb, #c9a86a 38%, rgba(255, 255, 255, 0.12));
+  background: rgba(24, 18, 12, 0.98);
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+
+.item-craft-popup__panel {
+  border-color: color-mix(in srgb, #bc8cff 42%, rgba(255, 255, 255, 0.12));
+  background: rgba(10, 14, 24, 0.98);
+}
+
+.item-info-popup__header,
+.item-craft-popup__header {
+  display: flex;
+  align-items: flex-start;
+  gap: calc(8px * var(--ui-scale, 1));
+  padding:
+    calc(10px * var(--ui-scale, 1))
+    calc(10px * var(--ui-scale, 1))
+    calc(8px * var(--ui-scale, 1));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.item-info-popup__title,
+.item-craft-popup__title {
+  flex: 1 1 auto;
+  margin: 0;
+  font-size: var(--font-sm);
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.item-info-popup__title { color: #f0c882; }
+.item-craft-popup__title { color: #e9d5ff; }
+
+.item-info-popup__close,
+.item-craft-popup__close {
+  flex: 0 0 auto;
+  width: calc(28px * var(--ui-scale, 1));
+  height: calc(28px * var(--ui-scale, 1));
+  border: none;
+  border-radius: calc(8px * var(--ui-scale, 1));
+  background: rgba(255, 255, 255, 0.06);
+  color: #c9d1d9;
+  font-size: calc(18px * var(--ui-scale, 1));
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.item-info-popup__close:hover,
+.item-info-popup__close:focus-visible,
+.item-craft-popup__close:hover,
+.item-craft-popup__close:focus-visible {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  outline: none;
+}
+
+.item-info-popup__body,
+.item-craft-popup__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding:
+    calc(8px * var(--ui-scale, 1))
+    calc(10px * var(--ui-scale, 1))
+    calc(12px * var(--ui-scale, 1));
+}
+
+.item-info-entry + .item-info-entry {
+  margin-top: calc(10px * var(--ui-scale, 1));
+  padding-top: calc(10px * var(--ui-scale, 1));
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.item-info-entry__head {
+  display: flex;
+  align-items: center;
+  gap: calc(8px * var(--ui-scale, 1));
+  margin-bottom: calc(4px * var(--ui-scale, 1));
+}
+
+.item-info-entry__icon {
+  font-size: calc(16px * var(--ui-scale, 1));
+  line-height: 1;
+}
+
+.item-info-entry__title {
+  margin: 0;
+  font-size: var(--font-sm);
+  font-weight: 800;
+  color: #f0c882;
+}
+
+.item-info-entry__desc {
+  font-size: var(--font-xs);
+  line-height: 1.45;
+  color: #d4c4a8;
+}
+
+.item-info-entry__desc .mechanic-tag {
+  color: #79c0ff;
+  font-weight: 600;
+}
+
+.item-craft-popup__line + .item-craft-popup__line {
+  margin-top: calc(8px * var(--ui-scale, 1));
+}
+
+.item-craft-popup__line--text {
+  font-size: var(--font-sm);
+  line-height: 1.35;
+  color: #c9d1d9;
+}
+
+.item-craft-popup__line--flavor {
+  font-size: var(--font-xs);
+  line-height: 1.4;
+  font-style: italic;
+  color: #848896;
+}
+
+.item-craft-popup__line--recipe {
+  overflow: visible;
+}
+
+.item-hint-card:has(.item-info-popup--in-card:not(.hidden)),
+.item-hint-card:has(.item-craft-popup--in-card:not(.hidden)) {
+  overflow: visible;
+}
+
+html[data-game-phase="prep"] #prep-tooltip-dock:has(.item-info-popup--in-card:not(.hidden)),
+html[data-game-phase="prep"] #prep-tooltip-dock:has(.item-craft-popup--in-card:not(.hidden)),
+html[data-game-phase="prep"] #sidebar-tooltip.sidebar-tooltip--card.sidebar-tooltip--floating:has(.item-info-popup--in-card:not(.hidden)),
+html[data-game-phase="prep"] #sidebar-tooltip.sidebar-tooltip--card.sidebar-tooltip--floating:has(.item-craft-popup--in-card:not(.hidden)) {
+  padding-left: calc(212px * var(--ui-scale, 1)) !important;
+  overflow: visible !important;
 }

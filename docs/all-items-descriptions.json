@@ -1,0 +1,5219 @@
+{
+  "generatedAt": "2026-07-11",
+  "count": 291,
+  "items": [
+    {
+      "id": "amethyst_whelp",
+      "name": "Аметистовый дракончик",
+      "icon": "🐉💜",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 14,
+      "tags": [
+        "питомец",
+        "магия",
+        "крафт"
+      ],
+      "description": "В начале боя: +4 случайных стака. При попадании: украсть стак у противника.",
+      "buildHints": "Билд: мана / магия, питомцы · Пары: Mana Orb, Mana Potion, магические посохи",
+      "flavor": "Магия здесь не светится. Она шепчет и портит воздух, как плесень в вентиляции.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "pineapple",
+      "name": "Ананас",
+      "icon": "🍍",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 6,
+      "tags": [
+        "еда",
+        "природа"
+      ],
+      "description": "На 10% быстрее за «еда». Каждые 2.9 сек: +1 удача, лечит на 4 HP.",
+      "buildHints": "Билд: еда / Pan · Синергия: стан → Dagger extra attack",
+      "flavor": "Запах домашний. Но дома давно нет — только эта комната и твой голод, который не утолняется.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "antitoxin",
+      "name": "Антидот",
+      "icon": "🧴",
+      "rarity": "uncommon",
+      "rarityLabel": "Необычный",
+      "cost": 3,
+      "tags": [
+        "универсальный",
+        "природа",
+        "лечение"
+      ],
+      "description": "Лечение 4 HP.",
+      "buildHints": "",
+      "flavor": "Инструмент из ящика «на всякий случай». В этом городе «всякий случай» — это каждый день.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "artifact_stone_heat",
+      "name": "Артефактный камень: Жар",
+      "icon": "🪨🔥",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 9,
+      "tags": [
+        "аксессуар",
+        "огонь"
+      ],
+      "description": "При попадании: +3 жар. До 1 активаций за бой. При 10+ жар: оружие +8 урона, один раз за бой. Удар 4–6 урона.",
+      "buildHints": "Билд: огонь / Pyromancer · Пары: Draconic Orb, Oil Lamp, Flame-крафты",
+      "flavor": "Огонь не освещает. Он показывает то, что стояло в темноте, пока ты отводил взгляд.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "artifact_stone_death",
+      "name": "Артефактный камень: Смерть",
+      "icon": "💀",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 8,
+      "tags": [
+        "аксессуар",
+        "яд"
+      ],
+      "description": "1 бросок. Урон от усталости при попадании. +7% крит за уровень усталости противника.",
+      "buildHints": "Билд: яд / DoT · Пары: Pestilence Flask, Death Scythe, ядовитые питомцы",
+      "flavor": "Капля на металле расползается медленно — как пятно на стене, которое появляется каждую ночь.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "artifact_stone_cold",
+      "name": "Артефактный камень: Холод",
+      "icon": "🪨❄️",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 10,
+      "tags": [
+        "аксессуар",
+        "лёд"
+      ],
+      "description": "При попадании: +3 холод. До 1 активаций за бой. Каждые 5 сек: +1 холод, лечит на 4 HP. Удар 2–4 урона.",
+      "buildHints": "Билд: лёд",
+      "flavor": "Прикосновение ледянее, чем должно быть. Как ручка двери в подвал, которую никто не открывал годами.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "banana",
+      "name": "Банан",
+      "icon": "🍌",
+      "rarity": "common",
+      "rarityLabel": "Обычный",
+      "cost": 3,
+      "tags": [
+        "еда",
+        "природа"
+      ],
+      "description": "Каждые 5 сек: лечит на 4 HP, +1 выносливости.",
+      "buildHints": "Билд: еда / Pan · Синергия: стан → Dagger extra attack",
+      "flavor": "На вкус как память. Неприятная. Настоящая. Ты всё равно проглотишь.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "squirrel",
+      "name": "Белка",
+      "icon": "🐿️",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 5,
+      "tags": [
+        "питомец",
+        "крафт"
+      ],
+      "description": "На 15% быстрее за «питомцы/еда». Каждые 4 сек: украсть 1 урона у оружия врага.",
+      "buildHints": "Билд: питомцы",
+      "flavor": "Спутник не живой. Он просто ещё не понял, что давно умер — и потому остаётся рядом. Оставлено для тех, кто ещё помнит своё имя — белка не прощает забывчивых.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "squirrel_archer",
+      "name": "Белка-лучник",
+      "icon": "🐿️🏹",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 9,
+      "tags": [
+        "питомец",
+        "дальний",
+        "крафт"
+      ],
+      "description": "При попадании: украсть 1 урона. Быстрее на 15% за питомца/еду.",
+      "buildHints": "Билд: Ranger дальний бой, питомцы · Крафт: Squirrel + Bow and Arrow · Пары: Lucky Clover, Acorn Collar, Fortuna-ветка",
+      "flavor": "Спутник не живой. Он просто ещё не понял, что давно умер — и потому остаётся рядом.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "bandage",
+      "name": "Бинт",
+      "icon": "🩹",
+      "rarity": "common",
+      "rarityLabel": "Обычный",
+      "cost": 1,
+      "tags": [
+        "универсальный",
+        "еда",
+        "лечение"
+      ],
+      "description": "Лечение 3 HP.",
+      "buildHints": "",
+      "flavor": "Запах домашний. Но дома давно нет — только эта комната и твой голод, который не утолняется.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "fortunas_grace",
+      "name": "Благодать Фортуны",
+      "icon": "🏹✨",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 10,
+      "tags": [
+        "оружие",
+        "удача",
+        "дальний",
+        "крафт"
+      ],
+      "description": "В начале боя: +5 удачи.",
+      "buildHints": "Билд: Ranger дальний бой, крит / Luck · Крафт: Bow and Arrow + 2× Lucky Clover · Пары: Whetstone, Gloves of Haste",
+      "flavor": "Железо, которое не ржавеет от времени — только от того, что на него смотрят слишком долго.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "shiny_shell",
+      "name": "Блестящая раковина",
+      "icon": "🐚",
+      "rarity": "common",
+      "rarityLabel": "Обычный",
+      "cost": 2,
+      "tags": [
+        "аксессуар",
+        "святой",
+        "природа"
+      ],
+      "description": "+3 лечения за соседний «святой». Каждые 5 сек: лечит на 5 HP.",
+      "buildHints": "Билд: святой / Ranger · Крафт: Shelly, Shell Totem · Пары: Holy Armor, Divine Potion",
+      "flavor": "Украшение с чужого запястья. Размер подходит. Это должно тревожить сильнее, чем тревожит.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "war_scythe",
+      "name": "Боевая коса",
+      "icon": "⚔️🌾",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 14,
+      "tags": [
+        "оружие",
+        "ближний",
+        "яд",
+        "тёмный",
+        "крафт"
+      ],
+      "description": "При атаке: −1 жар → снять 3 яда с противника и +5 урона. +0.35 урона и +3% крит за дебафф.",
+      "buildHints": "Крафт: Death Scythe + Whetstone · Reaper / яд",
+      "flavor": "Удар им не больнее обычного. Просто после удара дольше не слышишь собственный пульс.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "war_hammer",
+      "name": "Боевой молот",
+      "icon": "🔨",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 12,
+      "tags": [
+        "оружие",
+        "ближний"
+      ],
+      "description": "+50% пробивания блока. Удар 20–25 урона.",
+      "buildHints": "",
+      "flavor": "Когда-то это было оружием. Теперь — улика. Кровь здесь не красная, а цвета старой плёнки. Оставлено для тех, кто ещё помнит своё имя — боевой молот не прощает забывчивых.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "divine_potion",
+      "name": "Божественное зелье",
+      "icon": "🧪✨",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 7,
+      "tags": [
+        "зелье",
+        "расходник",
+        "святой"
+      ],
+      "description": "При 10+ негативах снимает 10, один раз за бой. Лечение 12 HP.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Тяжелее, чем выглядит. Как вина, которую ты ещё не совершил, но уже несёшь.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "more_stats",
+      "name": "Больше статов",
+      "icon": "📊",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 5,
+      "tags": [
+        "аксессуар"
+      ],
+      "description": "В начале боя: +12% макс. HP. +5% урона оружия.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Украшение с чужого запястья. Размер подходит. Это должно тревожить сильнее, чем тревожит.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "large_sack",
+      "name": "Большой мешок",
+      "icon": "🛄",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 9,
+      "tags": [
+        "сумка"
+      ],
+      "description": "+6 слотов рюкзака.",
+      "buildHints": "",
+      "flavor": "Внутри больше места, чем снаружи. Как комната, в которую ты заходишь и понимаешь — выхода не было никогда.",
+      "craftOnly": false,
+      "isContainer": true
+    },
+    {
+      "id": "great_shield",
+      "name": "Большой щит",
+      "icon": "🛡️",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 8,
+      "tags": [
+        "броня",
+        "щит"
+      ],
+      "description": "Блок 18.",
+      "buildHints": "",
+      "flavor": "Броня не защищает от ударов. Она защищает от осознания, что удар уже был — просто ты ещё не упал.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "vampiric_armor",
+      "name": "Вампирская броня",
+      "icon": "🦺🩸",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 15,
+      "tags": [
+        "броня",
+        "вампирский",
+        "крафт"
+      ],
+      "description": "В начале боя: −50 HP → +100 регена и +4 блока. Каждые 2.8с: −10 HP → +20 регена.",
+      "buildHints": "Билд: вампиризм · Крафт: Leather Armor + Blood Amulet · Пары: Blood Amulet, Hungry Blade, Blood Goobert",
+      "flavor": "Броня не защищает от ударов. Она защищает от осознания, что удар уже был — просто ты ещё не упал.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "vampiric_gloves",
+      "name": "Вампирские перчатки",
+      "icon": "🧤🩸",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 12,
+      "tags": [
+        "перчатки",
+        "аксессуар",
+        "вампирский",
+        "крафт"
+      ],
+      "description": "Через 4с: предметы на 35% быстрее.",
+      "buildHints": "Билд: вампиризм · Крафт: Gloves of Haste + Blood Amulet · Пары: Blood Amulet, Hungry Blade, Blood Goobert",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "vampiric_potion",
+      "name": "Вампирское зелье",
+      "icon": "🧪🩸",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 8,
+      "tags": [
+        "зелье",
+        "расходник",
+        "вампирский"
+      ],
+      "description": "Лечит на 5% от нанесённого урона. Если у обоих меньше 80% здоровья: +3 мана, 15 магического урона (лечит на 100% от урона), один раз за бой. +10% урона на 6 сек.",
+      "buildHints": "Билд: вампиризм · Пары: Blood Amulet, Hungry Blade, Blood Goobert",
+      "flavor": "Тяжелее, чем выглядит. Как вина, которую ты ещё не совершил, но уже несёшь.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "twine_badge",
+      "name": "Верёвочный значок",
+      "icon": "🧵",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 5,
+      "tags": [
+        "аксессуар",
+        "крафт"
+      ],
+      "description": "На 5% чаще срабатывают эффекты предметов. В магазине чаще встречаются предметы: авантюрист. При покупке «сокровища» 40% шанс дополняет витрину.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "the_lovers",
+      "name": "Влюблённые",
+      "icon": "🃏💕",
+      "rarity": "common",
+      "rarityLabel": "Обычный",
+      "cost": 3,
+      "tags": [
+        "карта",
+        "крафт"
+      ],
+      "description": "В начале боя: лечение 3 HP. лечение 4 HP. +25% урона на 4 сек.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "holdall",
+      "name": "Вместительная сумка",
+      "icon": "🧳",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 7,
+      "tags": [
+        "сумка"
+      ],
+      "description": "+6 слотов рюкзака. +8 жар за нейтральный предмет.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Внутри больше места, чем снаружи. Как комната, в которую ты заходишь и понимаешь — выхода не было никогда.",
+      "craftOnly": true,
+      "isContainer": true
+    },
+    {
+      "id": "wolf_badge",
+      "name": "Волчий значок",
+      "icon": "🐺",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 5,
+      "tags": [
+        "аксессуар",
+        "крафт"
+      ],
+      "description": "Боевая ярость (<50% HP): −урон, быстрее предметы. Если здоровье ниже 50%, один раз за бой. В магазине чаще встречаются предметы: берсерк.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "wolpertinger",
+      "name": "Вольпертингер",
+      "icon": "🐰",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 12,
+      "tags": [
+        "питомец",
+        "удача"
+      ],
+      "description": "На 15% быстрее за «питомцы/luck». Каждые 5 сек: +1 к самому слабому бонусу. Лечение 2 HP.",
+      "buildHints": "Билд: крит / Luck, питомцы",
+      "flavor": "Глаза у него как у игрушки из автомата: стеклянные, и в них отражается не ты.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "crow",
+      "name": "Ворон",
+      "icon": "🐦‍⬛",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 13,
+      "tags": [
+        "питомец",
+        "дебафф",
+        "тёмный",
+        "крафт"
+      ],
+      "description": "Каждые 3с: украсть 1 урона. Предметы на 6% быстрее за питомца/дебафф.",
+      "buildHints": "Билд: Reaper дебаффы, питомцы",
+      "flavor": "Спутник не живой. Он просто ещё не понял, что давно умер — и потому остаётся рядом.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "hero_long_sword",
+      "name": "Геройский длинный меч",
+      "icon": "🗡️",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 0,
+      "tags": [
+        "оружие",
+        "ближний"
+      ],
+      "description": "Удар 8–14 урона.",
+      "buildHints": "",
+      "flavor": "Удар им не больнее обычного. Просто после удара дольше не слышишь собственный пульс.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "hero_sword",
+      "name": "Геройский меч",
+      "icon": "⚔️",
+      "rarity": "uncommon",
+      "rarityLabel": "Необычный",
+      "cost": 0,
+      "tags": [
+        "оружие",
+        "ближний"
+      ],
+      "description": "Удар 4–8 урона.",
+      "buildHints": "",
+      "flavor": "Железо, которое не ржавеет от времени — только от того, что на него смотрят слишком долго.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "heroic_potion",
+      "name": "Геройское зелье",
+      "icon": "🧪⚔️",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 6,
+      "tags": [
+        "зелье",
+        "расходник",
+        "stamina"
+      ],
+      "description": "При нулевой выносливости: +2 выносливости и +1 усиление. +20% урона на 5 сек.",
+      "buildHints": "Билд: оружие со стаминой · Крафт: Eggscalibur · Пары: Stamina Sack, много ⚡-оружия",
+      "flavor": "Предмет, который не должен был попасть в твои руки. Но в этом месте «не должен» ничего не значит.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "hyper_hedgehog",
+      "name": "Гиперёжик",
+      "icon": "🦔⚡",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 12,
+      "tags": [
+        "питомец",
+        "шипы",
+        "крафт",
+        "святой"
+      ],
+      "description": "Каждые 5с: 10 маг. урона +1 за шип. При HP <70%: +4 шипа и +35 HP (раз).",
+      "buildHints": "Билд: шипы / отражение, питомцы · Крафт: Hedgehog + Walrus Tusk",
+      "flavor": "Глаза у него как у игрушки из автомата: стеклянные, и в них отражается не ты.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "holo_fire_lizard",
+      "name": "Голографическая огненная ящерица",
+      "icon": "🃏🦎",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 5,
+      "tags": [
+        "карта",
+        "огонь",
+        "питомец",
+        "крафт"
+      ],
+      "description": "+8% к магическому урону. Маг. удар 12 (+4/карта). В начале боя: +4 жар. +8% к урону. +25% урона на 4 сек.",
+      "buildHints": "Билд: огонь / Pyromancer, питомцы · Пары: Draconic Orb, Oil Lamp, Flame-крафты",
+      "flavor": "Жар от него пахнет не дымом — горелой бумагой и чужими фотографиями.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "hungry_blade",
+      "name": "Голодный клинок",
+      "icon": "🗡️🩸",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 7,
+      "tags": [
+        "оружие",
+        "ближний",
+        "вампирский",
+        "крафт"
+      ],
+      "description": "В начале боя: +1 шип. При попадании: +1 шип. +8% к урону. +1 урона за каждый шип. Удар 3–6 урона.",
+      "buildHints": "Билд: вампиризм · Ветка: Manathirst / Bloodthorne / Frostbite · Пары: Healing Herbs, реген",
+      "flavor": "Удар им не больнее обычного. Просто после удара дольше не слышишь собственный пульс.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "bunch_of_coins",
+      "name": "Горсть монет",
+      "icon": "🪙",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 9,
+      "tags": [
+        "аксессуар",
+        "ближний",
+        "сокровище",
+        "крафт"
+      ],
+      "description": "Ничего не делают, но их можно продать с прибылью!",
+      "buildHints": "Билд: экономика / золото",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "burning_coal",
+      "name": "Горящий уголь",
+      "icon": "🔥",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 2,
+      "tags": [
+        "аксессуар",
+        "огонь",
+        "крафт"
+      ],
+      "description": "В начале боя: +12 жар. 12% шанс: +6 урона. +8% к урону. Каждые 5 сек: +2 жар, снимает 3 негатива.",
+      "buildHints": "Билд: огонь / Pyromancer · Крафт: Lump of Coal + источник огня · Пары: Draconic Orb, Oil Lamp, Flame-крафты",
+      "flavor": "Огонь не освещает. Он показывает то, что стояло в темноте, пока ты отводил взгляд.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "storage_coffin",
+      "name": "Гроб-хранилище",
+      "icon": "⚰️",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 20,
+      "tags": [
+        "сумка",
+        "тёмный",
+        "reaper"
+      ],
+      "description": "При активации предмета внутри: 22% +1 яд.",
+      "buildHints": "Билд: Reaper / тёмные предметы · Пары: Demonic Flask, яд",
+      "flavor": "Внутри больше места, чем снаружи. Как комната, в которую ты заходишь и понимаешь — выхода не было никогда.",
+      "craftOnly": false,
+      "isContainer": true
+    },
+    {
+      "id": "goobert",
+      "name": "Губерт",
+      "icon": "🟢",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 6,
+      "tags": [
+        "питомец",
+        "крафт"
+      ],
+      "description": "После 6 активаций: +12 HP, +2 жар. Лечение 2 HP.",
+      "buildHints": "Ветка питомцев Goobert · Крафт: Steel / Blood / Light / King Goobert",
+      "flavor": "Глаза у него как у игрушки из автомата: стеклянные, и в них отражается не ты.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "demonic_flask",
+      "name": "Демоническая склянка",
+      "icon": "🧪😈",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 7,
+      "tags": [
+        "зелье",
+        "расходник",
+        "тёмный",
+        "крафт"
+      ],
+      "description": "Противник <50% HP: 5 маг. урона за каждый его дебафф.",
+      "buildHints": "Билд: Reaper дебаффы",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "wooden_sword",
+      "name": "Деревянный меч",
+      "icon": "🗡️🪵",
+      "rarity": "common",
+      "rarityLabel": "Обычный",
+      "cost": 3,
+      "tags": [
+        "оружие",
+        "ближний",
+        "крафт"
+      ],
+      "description": "25% шанс: +1 урона (макс. +2). Удар 1–3 урона.",
+      "buildHints": "Старт Ranger · Крафт: → Hero Sword · Пары: Whetstone для раннего апгрейда",
+      "flavor": "Удар им не больнее обычного. Просто после удара дольше не слышишь собственный пульс. Оставлено для тех, кто ещё помнит своё имя — деревянный меч не прощает забывчивых.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "wooden_buckler",
+      "name": "Деревянный щиток",
+      "icon": "🛡️🪵",
+      "rarity": "common",
+      "rarityLabel": "Обычный",
+      "cost": 4,
+      "tags": [
+        "щит",
+        "броня"
+      ],
+      "description": "При блоке или уклонении (30% шанс): блокирует 7 урона, забирает 0.3 выносливости у врага. Блок 5.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Броня не защищает от ударов. Она защищает от осознания, что удар уже был — просто ты ещё не упал.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "jimbo",
+      "name": "Джимбо",
+      "icon": "🃏🤠",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 4,
+      "tags": [
+        "карта",
+        "крафт"
+      ],
+      "description": "+20 удачи. На 10% чаще срабатывают эффекты предметов. +2 защиты. Лечение 5 HP.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "duffle_bag",
+      "name": "Дорожная сумка",
+      "icon": "🛄",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 16,
+      "tags": [
+        "сумка",
+        "крафт"
+      ],
+      "description": "При HP <50%: боевая ярость, −20% урона, +20 блока.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего. Оставлено для тех, кто ещё помнит своё имя — дорожная сумка не прощает забывчивых.",
+      "craftOnly": true,
+      "isContainer": true
+    },
+    {
+      "id": "titan_armor",
+      "name": "Доспех титана",
+      "icon": "🦾",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 10,
+      "tags": [
+        "броня"
+      ],
+      "description": "+16 защиты. +15 к макс. здоровью.",
+      "buildHints": "",
+      "flavor": "Щит тяжелее, чем кажется. Как дверь, которую ты закрывал, зная, что за ней кто-то стоит.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "dragon_claws",
+      "name": "Драконьи когти",
+      "icon": "🐉🐾",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 4,
+      "tags": [
+        "перчатки",
+        "аксессуар",
+        "ближний",
+        "питомец",
+        "крафт"
+      ],
+      "description": "+3 защиты. Предметы перезаряжаются на 15% быстрее. На 10% чаще срабатывают эффекты предметов. Боевая ярость (<50% HP): −урон, быстрее предметы.",
+      "buildHints": "Билд: питомцы · Крафт: Gloves of Haste + Forging Hammer",
+      "flavor": "Глаза у него как у игрушки из автомата: стеклянные, и в них отражается не ты.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "draconic_orb",
+      "name": "Драконья сфера",
+      "icon": "🔮🐉",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 8,
+      "tags": [
+        "аксессуар",
+        "огонь",
+        "pyromancer",
+        "крафт"
+      ],
+      "description": "При 15 жара: 3 гарантированных крита. Каждые 3.8с: украсть 1 жар.",
+      "buildHints": "Билд: огонь · Крафт: Staff of Fire, Obsidian Dragon",
+      "flavor": "Огонь не освещает. Он показывает то, что стояло в темноте, пока ты отводил взгляд.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "dragonscale_armor",
+      "name": "Драконья чешуя",
+      "icon": "🐉🦺",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 7,
+      "tags": [
+        "броня",
+        "ближний",
+        "питомец",
+        "крафт"
+      ],
+      "description": "При боевой ярости (<50% HP): +45 блока, −8% урона.",
+      "buildHints": "Билд: питомцы · Крафт: Leather Armor + Forging Hammer",
+      "flavor": "Броня не защищает от ударов. Она защищает от осознания, что удар уже был — просто ты ещё не упал.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "smoke_bomb",
+      "name": "Дымовая бомба",
+      "icon": "💨",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 10,
+      "tags": [
+        "яд",
+        "универсальный",
+        "дебафф"
+      ],
+      "description": "Уклонение каждые 3 сек. Накладывает 2 яда.",
+      "buildHints": "",
+      "flavor": "Яд здесь не зелёный. Он прозрачный, как вода из крана в пустом доме.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "hedgehog",
+      "name": "Ёжик",
+      "icon": "🦔",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 6,
+      "tags": [
+        "питомец",
+        "шипы",
+        "крафт"
+      ],
+      "description": "+0.5 урона за каждый шип. На 15% быстрее за «питомцы/еда». Каждые 5 сек: наносит 10 магического урона. Если здоровье ниже 70%: лечит на 25 HP, +2 шип, один раз за бой. Накладывает 1 яда.",
+      "buildHints": "Билд: шипы / отражение, питомцы",
+      "flavor": "Спутник не живой. Он просто ещё не понял, что давно умер — и потому остаётся рядом.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "toad",
+      "name": "Жаба",
+      "icon": "🐸",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 6,
+      "tags": [
+        "питомец",
+        "яд",
+        "тёмный",
+        "крафт"
+      ],
+      "description": "Каждые 3.8 сек: +1 мана, отравляет врага (1). При 10+ усиление: +12 HP, один раз за бой. Лечение 2 HP.",
+      "buildHints": "Билд: яд / DoT, Reaper дебаффы, питомцы · Пары: Pestilence Flask, Death Scythe, ядовитые питомцы",
+      "flavor": "Яд здесь не зелёный. Он прозрачный, как вода из крана в пустом доме.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "manathirst",
+      "name": "Жаждущий маны",
+      "icon": "🩸",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 0,
+      "tags": [
+        "оружие",
+        "магия",
+        "ближний"
+      ],
+      "description": "Лечит на 15% от нанесённого урона. Магический удар 2–6 урона.",
+      "buildHints": "",
+      "flavor": "Удар им не больнее обычного. Просто после удара дольше не слышишь собственный пульс.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "iron_patch",
+      "name": "Железная заплатка",
+      "icon": "🔩",
+      "rarity": "common",
+      "rarityLabel": "Обычный",
+      "cost": 3,
+      "tags": [
+        "универсальный"
+      ],
+      "description": "+2 защиты.",
+      "buildHints": "",
+      "flavor": "Инструмент из ящика «на всякий случай». В этом городе «всякий случай» — это каждый день.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "iron_helmet",
+      "name": "Железный шлем",
+      "icon": "⛑️",
+      "rarity": "common",
+      "rarityLabel": "Обычный",
+      "cost": 2,
+      "tags": [
+        "броня",
+        "шлем"
+      ],
+      "description": "+3 защиты. Блок 4.",
+      "buildHints": "",
+      "flavor": "Щит тяжелее, чем кажется. Как дверь, которую ты закрывал, зная, что за ней кто-то стоит.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "iron_shield",
+      "name": "Железный щит",
+      "icon": "🛡️",
+      "rarity": "common",
+      "rarityLabel": "Обычный",
+      "cost": 3,
+      "tags": [
+        "броня",
+        "щит"
+      ],
+      "description": "Блок 5.",
+      "buildHints": "",
+      "flavor": "Щит тяжелее, чем кажется. Как дверь, которую ты закрывал, зная, что за ней кто-то стоит.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "acorn_collar",
+      "name": "Жёлудевой ошейник",
+      "icon": "🌰",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 8,
+      "tags": [
+        "аксессуар",
+        "удача",
+        "крафт",
+        "природа"
+      ],
+      "description": "+2 удачи. +5% крит за каждую удачу.",
+      "buildHints": "Билд: крит / Luck",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "time_dilator",
+      "name": "Замедлитель времени",
+      "icon": "⏳",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 8,
+      "tags": [
+        "аксессуар"
+      ],
+      "description": "Предметы перезаряжаются на 8% быстрее. Предметы перезаряжаются на 30% медленнее. Каждые 1 сек: ускорить предмет на 6%. замедление 12%.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Украшение с чужого запястья. Размер подходит. Это должно тревожить сильнее, чем тревожит.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "frozen_flame",
+      "name": "Замёрзшее пламя",
+      "icon": "🧊",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 10,
+      "tags": [
+        "аксессуар",
+        "огонь",
+        "лёд"
+      ],
+      "description": "+8 жар за «огонь». +8% к урону. +2% шанс крита. +2% крит. урона. При 6+ жар: +2 жар. В магазине чаще встречаются предметы: огонь.",
+      "buildHints": "Билд: огонь / Pyromancer, лёд · Пары: Draconic Orb, Oil Lamp, Flame-крафты",
+      "flavor": "Пламя в стекле, которое не греет. Его принесли из комнаты, где всегда горит телевизор без сигнала.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "frozen_buckler",
+      "name": "Замёрзший щиток",
+      "icon": "🛡️❄️",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 8,
+      "tags": [
+        "щит",
+        "броня",
+        "лёд",
+        "крафт"
+      ],
+      "description": "Блок +15%. При блоке (30%): −12 урона, −0.9 выносливости, +1 яд.",
+      "buildHints": "Билд: лёд · Крафт: Wooden Buckler + Spell Scroll: Frostbolt",
+      "flavor": "Прикосновение ледянее, чем должно быть. Как ручка двери в подвал, которую никто не открывал годами.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "protective_purse",
+      "name": "Защитная сумочка",
+      "icon": "👛🛡️",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 2,
+      "tags": [
+        "сумка",
+        "щит",
+        "броня"
+      ],
+      "description": "+1 слотов рюкзака. В начале боя: +15 блок.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Броня не защищает от ударов. Она защищает от осознания, что удар уже был — просто ты ещё не упал.",
+      "craftOnly": false,
+      "isContainer": true
+    },
+    {
+      "id": "star_of_courage",
+      "name": "Звезда мужества",
+      "icon": "⭐",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 1,
+      "tags": [
+        "аксессуар",
+        "святой"
+      ],
+      "description": "+1💰 в начале забега.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Украшение с чужого запястья. Размер подходит. Это должно тревожить сильнее, чем тревожит.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "health_potion",
+      "name": "Зелье здоровья",
+      "icon": "🧪❤️",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 4,
+      "tags": [
+        "зелье",
+        "расходник",
+        "лечение",
+        "природа"
+      ],
+      "description": "Если здоровье ниже 50%: лечит на 11 HP, снимает 4 негатива, один раз за бой. Лечение 6 HP.",
+      "buildHints": "Универсальный сейв · Ветка: Strong Health, Mana Potion · Пары: Potion Belt",
+      "flavor": "На поверхности пыль. Под пылью — следы пальцев, которые совпадают с твоими.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "stone_skin_potion",
+      "name": "Зелье каменной кожи",
+      "icon": "🧪🪨",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 6,
+      "tags": [
+        "зелье",
+        "расходник"
+      ],
+      "description": "При 45+ блок, один раз за бой. +10% урона на 6 сек.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Его нашли у дороги в тумане. Никто не вернулся за ним — возможно, потому что уже не мог.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "mana_potion",
+      "name": "Зелье маны",
+      "icon": "🧪🔮",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 6,
+      "tags": [
+        "зелье",
+        "расходник",
+        "магия",
+        "крафт"
+      ],
+      "description": "Если здоровье ниже 50%: +4 мана, один раз за бой. +10% урона на 6 сек.",
+      "buildHints": "Билд: мана / магия · Крафт: Health Potion + Blueberries · Пары: Mana Orb, Mana Potion, магические посохи",
+      "flavor": "Формула выучена не из книги — из сна, который повторяется каждый раз, когда засыпаешь в коридоре.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "rage_potion",
+      "name": "Зелье ярости",
+      "icon": "🧪",
+      "rarity": "uncommon",
+      "rarityLabel": "Необычный",
+      "cost": 8,
+      "tags": [
+        "еда",
+        "зелье"
+      ],
+      "description": "+30% урона на 5 сек.",
+      "buildHints": "",
+      "flavor": "На вкус как память. Неприятная. Настоящая. Ты всё равно проглотишь.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "serpent_staff",
+      "name": "Змеиный посох",
+      "icon": "🪄🐍",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 17,
+      "tags": [
+        "оружие",
+        "яд",
+        "магия",
+        "тёмный",
+        "ближний",
+        "крафт"
+      ],
+      "description": "При атаке: −4 маны → +2 урона и +1 яд (40% дубль).",
+      "buildHints": "Билд: яд / DoT, мана / магия, Reaper дебаффы · Пары: Pestilence Flask, Death Scythe, ядовитые питомцы",
+      "flavor": "Железо, которое не ржавеет от времени — только от того, что на него смотрят слишком долго.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "snake",
+      "name": "Змея",
+      "icon": "🐍",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 10,
+      "tags": [
+        "питомец",
+        "яд",
+        "тёмный",
+        "крафт"
+      ],
+      "description": "В начале боя: +4 маны и +40 макс. HP за питомца. Каждые 2.2с: +2 яда.",
+      "buildHints": "Билд: яд / DoT, Reaper дебаффы, питомцы · Пары: Pestilence Flask, Death Scythe, ядовитые питомцы",
+      "flavor": "Яд здесь не зелёный. Он прозрачный, как вода из крана в пустом доме.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "puzzle_badge",
+      "name": "Значок головоломки",
+      "icon": "🧩",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 5,
+      "tags": [
+        "аксессуар",
+        "удача",
+        "крафт"
+      ],
+      "description": "Предметы перезаряжаются на 20% медленнее. Каждые 5 сек: ускорить предмет на 50%. При покупке сумки 35% шанс та же сумка снова появляется в магазине.",
+      "buildHints": "Билд: крит / Luck",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "gold_armor",
+      "name": "Золотая броня",
+      "icon": "🦺🪙",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 16,
+      "tags": [
+        "броня",
+        "святой",
+        "сокровище",
+        "крафт"
+      ],
+      "description": "В начале боя: +75 блока. +4 удачи. Каждые 2.2с: −2 блока, +8 HP, снять 1 яд.",
+      "buildHints": "Крафт: Holy Armor + Bunch of Coins",
+      "flavor": "Щит тяжелее, чем кажется. Как дверь, которую ты закрывал, зная, что за ней кто-то стоит.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "stankus_toothpick",
+      "name": "Зубочистка Стэнкуса",
+      "icon": "🗡️🧄",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 10,
+      "tags": [
+        "оружие",
+        "ближний",
+        "еда",
+        "крафт"
+      ],
+      "description": "−12% кулдаун за каждую еду на панели. При попадании: +2 яда, 35% замедление.",
+      "buildHints": "Крафт: Hero Sword + Garlic",
+      "flavor": "Железо, которое не ржавеет от времени — только от того, что на него смотрят слишком долго.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "emerald_whelp",
+      "name": "Изумрудный дракончик",
+      "icon": "🐉💚",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 14,
+      "tags": [
+        "питомец",
+        "яд",
+        "крафт"
+      ],
+      "description": "В начале боя: +3 яда себе. При попадании: +3 яда противнику.",
+      "buildHints": "Билд: яд / DoT, питомцы · Пары: Pestilence Flask, Death Scythe, ядовитые питомцы",
+      "flavor": "Капля на металле расползается медленно — как пятно на стене, которое появляется каждую ночь.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "fancy_fencing_rapier",
+      "name": "Изящная шпага",
+      "icon": "🤺🍀",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 12,
+      "tags": [
+        "оружие",
+        "удача",
+        "ближний"
+      ],
+      "description": "При попадании: тратит 3 удача, следующая атака +3 урона. При промахе: +3 удача. Удар 10–16 урона.",
+      "buildHints": "Билд: крит / Luck · Пары: Whetstone, Gloves of Haste",
+      "flavor": "Железо, которое не ржавеет от времени — только от того, что на него смотрят слишком долго.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "corrupted_armor",
+      "name": "Искажённая броня",
+      "icon": "🦺🌑",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 20,
+      "tags": [
+        "броня",
+        "святой",
+        "тёмный",
+        "крафт"
+      ],
+      "description": "В начале боя: +85 блока. Каждые 2.4с: снять 2 дебаффа.",
+      "buildHints": "Билд: Reaper дебаффы · Крафт: Holy Armor + Corrupted Crystal",
+      "flavor": "Щит тяжелее, чем кажется. Как дверь, которую ты закрывал, зная, что за ней кто-то стоит.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "corrupted_crystal",
+      "name": "Искажённый кристалл",
+      "icon": "💎",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 7,
+      "tags": [
+        "аксессуар",
+        "тёмный"
+      ],
+      "description": "+5% к урону. +8% к магическому урону. Каждые 3.9 сек: отравляет врага (2). При 7+ негативах снимает 1, один раз за бой. Если у противника меньше 30% здоровья.",
+      "buildHints": "Билд: Reaper дебаффы",
+      "flavor": "Украшение с чужого запястья. Размер подходит. Это должно тревожить сильнее, чем тревожит.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "spark_stone",
+      "name": "Искорка",
+      "icon": "✨",
+      "rarity": "uncommon",
+      "rarityLabel": "Необычный",
+      "cost": 4,
+      "tags": [
+        "универсальный",
+        "магия"
+      ],
+      "description": "Магический удар 1–3 урона.",
+      "buildHints": "",
+      "flavor": "Формула выучена не из книги — из сна, который повторяется каждый раз, когда засыпаешь в коридоре.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "stone_armor",
+      "name": "Каменная броня",
+      "icon": "🪨🦺",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 13,
+      "tags": [
+        "броня",
+        "крафт"
+      ],
+      "description": "В начале боя: +120 блока. Каждые 4с: снять 1 яд с себя и 2 с противника.",
+      "buildHints": "Крафт: Leather Armor + Stone Skin Potion",
+      "flavor": "Броня не защищает от ударов. Она защищает от осознания, что удар уже был — просто ты ещё не упал.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "stone_shoes",
+      "name": "Каменные ботинки",
+      "icon": "👞🪨",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 12,
+      "tags": [
+        "обувь",
+        "броня",
+        "крафт"
+      ],
+      "description": "При HP ниже 70%: +1 удача, +45 блока, −35% маг. урона на 7с (раз).",
+      "buildHints": "Крафт: Leather Boots + Stone Skin Potion",
+      "flavor": "Щит тяжелее, чем кажется. Как дверь, которую ты закрывал, зная, что за ней кто-то стоит.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "stone_golem",
+      "name": "Каменный голем",
+      "icon": "🗿🦺",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 16,
+      "tags": [
+        "броня"
+      ],
+      "description": "+4 защиты. При попадании: +1 блок. При попадании: 30% оглушает на 0.5 сек. замедление 18%.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Щит тяжелее, чем кажется. Как дверь, которую ты закрывал, зная, что за ней кто-то стоит.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "stone_badge",
+      "name": "Каменный значок",
+      "icon": "🪨",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 5,
+      "tags": [
+        "аксессуар",
+        "крафт"
+      ],
+      "description": "Каждые 3 сек: +1 блок. Лечение 2 HP. В магазине не продаются стартовые предметы вашего класса. В магазине даёт случайный предмет за 1 золота.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "stone_helm",
+      "name": "Каменный шлем",
+      "icon": "⛑️🪨",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 13,
+      "tags": [
+        "броня",
+        "шлем",
+        "крафт"
+      ],
+      "description": "В начале боя: Снизить получаемый урон на 25% на 5с и получить 35 блоков 30% шанс сопротивляться критические удары блока 40% шанс сопротивляться оглушениям блока",
+      "buildHints": "Крафт: Cap of Resilience + Stone Skin Potion",
+      "flavor": "Щит тяжелее, чем кажется. Как дверь, которую ты закрывал, зная, что за ней кто-то стоит.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "stone",
+      "name": "Камень",
+      "icon": "🪨",
+      "rarity": "common",
+      "rarityLabel": "Обычный",
+      "cost": 1,
+      "tags": [
+        "аксессуар",
+        "природа"
+      ],
+      "description": "Уничтожить 4 бонусов у врага. До 1 активаций за бой. Удар 2–4 урона.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Украшение с чужого запястья. Размер подходит. Это должно тревожить сильнее, чем тревожит.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "pocket_sand",
+      "name": "Карманный песок",
+      "icon": "🏖️",
+      "rarity": "common",
+      "rarityLabel": "Обычный",
+      "cost": 2,
+      "tags": [
+        "аксессуар",
+        "дебафф",
+        "природа"
+      ],
+      "description": "В начале боя: +1 удача. +8% к урону.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Предмет, который не лечит. Он только помогает болезни найти дорогу быстрее.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "customer_card",
+      "name": "Карта покупателя",
+      "icon": "💳",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 4,
+      "tags": [
+        "аксессуар",
+        "сокровище"
+      ],
+      "description": "На 10% чаще срабатывают эффекты предметов. При обновлении витрины иногда повышает редкость товара. При обновлении магазина 10% шанс: +3 золота.",
+      "buildHints": "Билд: экономика / золото",
+      "flavor": "Украшение с чужого запястья. Размер подходит. Это должно тревожить сильнее, чем тревожит.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "katana",
+      "name": "Катана",
+      "icon": "🗾⚔️",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 14,
+      "tags": [
+        "оружие",
+        "ближний"
+      ],
+      "description": "При попадании: украсть 1 урона у оружия врага. Удар 8–10 урона.",
+      "buildHints": "Пары: Whetstone, Gloves of Haste",
+      "flavor": "Удар им не больнее обычного. Просто после удара дольше не слышишь собственный пульс.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "dagger",
+      "name": "Кинжал",
+      "icon": "🔪",
+      "rarity": "common",
+      "rarityLabel": "Обычный",
+      "cost": 2,
+      "tags": [
+        "оружие",
+        "ближний"
+      ],
+      "description": "Дополнительная атака по оглушённому противнику. Удар 1–3 урона.",
+      "buildHints": "",
+      "flavor": "Удар им не больнее обычного. Просто после удара дольше не слышишь собственный пульс.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "boiling_pot",
+      "name": "Кипящий котёл",
+      "icon": "🍲",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 8,
+      "tags": [
+        "аксессуар",
+        "еда",
+        "зелье",
+        "крафт"
+      ],
+      "description": "Каждые 4с: +10 HP. В начале боя: +1 реген за еду, +1 мана за зелье, −15% кулдаун.",
+      "buildHints": "Крафт: Pan + Wooden Buckler",
+      "flavor": "Запах домашний. Но дома давно нет — только эта комната и твой голод, который не утолняется.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "shadow_blade",
+      "name": "Клинок тени",
+      "icon": "🌑",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 15,
+      "tags": [
+        "оружие",
+        "яд",
+        "ближний"
+      ],
+      "description": "+25% шанс крита. Удар 8–13 урона.",
+      "buildHints": "",
+      "flavor": "Удар им не больнее обычного. Просто после удара дольше не слышишь собственный пульс.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "beast_fang",
+      "name": "Клык зверя",
+      "icon": "🦷",
+      "rarity": "uncommon",
+      "rarityLabel": "Необычный",
+      "cost": 6,
+      "tags": [
+        "аксессуар",
+        "природа"
+      ],
+      "description": "Предметы перезаряжаются на 15% быстрее. +10% к урону.",
+      "buildHints": "",
+      "flavor": "Украшение с чужого запястья. Размер подходит. Это должно тревожить сильнее, чем тревожит.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "walrus_tusk",
+      "name": "Клык моржа",
+      "icon": "🦷",
+      "rarity": "common",
+      "rarityLabel": "Обычный",
+      "cost": 4,
+      "tags": [
+        "аксессуар",
+        "шипы",
+        "природа"
+      ],
+      "description": "В начале боя: +1 шип. +8% к урону. +1 защиты.",
+      "buildHints": "Билд: шипы / отражение",
+      "flavor": "Украшение с чужого запястья. Размер подходит. Это должно тревожить сильнее, чем тревожит.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "tusk_poker",
+      "name": "Клыковый колун",
+      "icon": "🦷🏹",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 8,
+      "tags": [
+        "оружие",
+        "шипы",
+        "дальний",
+        "крафт"
+      ],
+      "description": "При попадании: 50% шанс +1 шип. +1 урона за шип.",
+      "buildHints": "Билд: Ranger дальний бой, шипы / отражение · Крафт: Shortbow + Walrus Tusk · Пары: Whetstone, Gloves of Haste",
+      "flavor": "Железо, которое не ржавеет от времени — только от того, что на него смотрят слишком долго.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "tusk_piercer",
+      "name": "Клыковый пробойник",
+      "icon": "🦷🎯",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 10,
+      "tags": [
+        "оружие",
+        "шипы",
+        "дальний",
+        "крафт"
+      ],
+      "description": "В начале боя: +4 шипа. При попадании: потратить 1 шип → +9 урона следующей атаке.",
+      "buildHints": "Билд: Ranger дальний бой, шипы / отражение · Крафт: Bow and Arrow + Walrus Tusk · Пары: Whetstone, Gloves of Haste",
+      "flavor": "Когда-то это было оружием. Теперь — улика. Кровь здесь не красная, а цвета старой плёнки.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "claws_of_attack",
+      "name": "Когти атаки",
+      "icon": "🐾⚔️",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 8,
+      "tags": [
+        "перчатки",
+        "аксессуар",
+        "шипы",
+        "крафт"
+      ],
+      "description": "Каждые 4 попадания: +1 шип.",
+      "buildHints": "Билд: шипы / отражение · Крафт: Gloves of Haste + Walrus Tusk",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "leather_armor",
+      "name": "Кожаная броня",
+      "icon": "🦺",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 7,
+      "tags": [
+        "броня"
+      ],
+      "description": "+4 защиты. В начале боя: +45 блок. +8% к урону.",
+      "buildHints": "Билд: выживание · Ветка: Stone / Vampiric / Holy / Ice Armor",
+      "flavor": "Броня не защищает от ударов. Она защищает от осознания, что удар уже был — просто ты ещё не упал.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "leather_bag",
+      "name": "Кожаная сумка",
+      "icon": "👜",
+      "rarity": "common",
+      "rarityLabel": "Обычный",
+      "cost": 4,
+      "tags": [
+        "сумка"
+      ],
+      "description": "+4 слотов рюкзака. На 5% быстрее за «accessory».",
+      "buildHints": "Расширение инвентаря · Ветка: Fanny Pack → Holdall",
+      "flavor": "Внутри больше места, чем снаружи. Как комната, в которую ты заходишь и понимаешь — выхода не было никогда.",
+      "craftOnly": false,
+      "isContainer": true
+    },
+    {
+      "id": "leather_boots",
+      "name": "Кожаные сапоги",
+      "icon": "👢",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 6,
+      "tags": [
+        "обувь",
+        "броня",
+        "удача"
+      ],
+      "description": "Если здоровье ниже 70%: +1 удача, один раз за бой. Блок 5.",
+      "buildHints": "Билд: крит / Luck",
+      "flavor": "Броня не защищает от ударов. Она защищает от осознания, что удар уже был — просто ты ещё не упал.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "leather_pouch",
+      "name": "Кожаный мешочек",
+      "icon": "👝",
+      "rarity": "common",
+      "rarityLabel": "Обычный",
+      "cost": 2,
+      "tags": [
+        "сумка"
+      ],
+      "description": "+2 слотов рюкзака.",
+      "buildHints": "",
+      "flavor": "Внутри больше места, чем снаружи. Как комната, в которую ты заходишь и понимаешь — выхода не было никогда.",
+      "craftOnly": false,
+      "isContainer": true
+    },
+    {
+      "id": "deck_of_cards",
+      "name": "Колода карт",
+      "icon": "🃏",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 3,
+      "tags": [
+        "аксессуар",
+        "карта",
+        "удача"
+      ],
+      "description": "В начале боя: +2 удача. +8% к урону. На 5% чаще срабатывают эффекты предметов. В магазине чаще встречаются предметы: карты.",
+      "buildHints": "RNG / карточные эффекты · Ветка: Ace of Spades, The Fool, драконы",
+      "flavor": "Украшение с чужого запястья. Размер подходит. Это должно тревожить сильнее, чем тревожит.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "ring_of_power",
+      "name": "Кольцо силы",
+      "icon": "💍",
+      "rarity": "uncommon",
+      "rarityLabel": "Необычный",
+      "cost": 5,
+      "tags": [
+        "аксессуар",
+        "кольцо"
+      ],
+      "description": "+15% к урону.",
+      "buildHints": "",
+      "flavor": "Украшение с чужого запястья. Размер подходит. Это должно тревожить сильнее, чем тревожит.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "piggybank",
+      "name": "Копилка",
+      "icon": "🐷",
+      "rarity": "common",
+      "rarityLabel": "Обычный",
+      "cost": 3,
+      "tags": [
+        "аксессуар",
+        "ближний",
+        "сокровище"
+      ],
+      "description": "+2 макс. HP за стартовый предмет. +2 к макс. здоровью. В магазине даёт +1 усиление к следующему бою.",
+      "buildHints": "Билд: экономика / золото",
+      "flavor": "Копилка из детской палаты. Монеты внутри — настоящие. Звук, когда трясёшь, — как далёкий смех по радио без частоты.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "spear",
+      "name": "Копьё",
+      "icon": "🔱",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 6,
+      "tags": [
+        "оружие",
+        "ближний",
+        "крафт"
+      ],
+      "description": "Удар 3–8 урона.",
+      "buildHints": "Билд: анти-блок · Оставлять пустые клетки впереди · Ветка: Poison / Holy / Molten Spear",
+      "flavor": "Железо, которое не ржавеет от времени — только от того, что на него смотрят слишком долго.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "king_crown",
+      "name": "Королевская корона",
+      "icon": "👑👑",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 17,
+      "tags": [
+        "броня",
+        "шлем",
+        "святой"
+      ],
+      "description": "Потратить 10 выносливости — неуязвимость на 2.5 сек. Каждые 2.4 сек: лечит на 8 HP.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Броня не защищает от ударов. Она защищает от осознания, что удар уже был — просто ты ещё не упал.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "royal_helmet",
+      "name": "Королевский шлем",
+      "icon": "👑",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 10,
+      "tags": [
+        "броня",
+        "шлем"
+      ],
+      "description": "+10 защиты. +15 к макс. здоровью. Блок 10.",
+      "buildHints": "",
+      "flavor": "Броня не защищает от ударов. Она защищает от осознания, что удар уже был — просто ты ещё не упал.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "king_goobert",
+      "name": "Король губерт",
+      "icon": "👑🟢",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 23,
+      "tags": [
+        "питомец",
+        "крафт",
+        "святой"
+      ],
+      "description": "После 6 активаций: +35 HP. Потратить 4 выносливости: неуязвимость 1.5с.",
+      "buildHints": "Билд: питомцы · Крафт: King Crown + Goobert",
+      "flavor": "Глаза у него как у игрушки из автомата: стеклянные, и в них отражается не ты.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "shortbow",
+      "name": "Короткий лук",
+      "icon": "🏹",
+      "rarity": "common",
+      "rarityLabel": "Обычный",
+      "cost": 4,
+      "tags": [
+        "оружие",
+        "дальний",
+        "крафт"
+      ],
+      "description": "100% шанс: +1 урона (макс. +3). Удар 2–3 урона.",
+      "buildHints": "Билд: Ranger дальний бой · Пары: Whetstone, Gloves of Haste",
+      "flavor": "Когда-то это было оружием. Теперь — улика. Кровь здесь не красная, а цвета старой плёнки. Оставлено для тех, кто ещё помнит своё имя — короткий лук не прощает забывчивых.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "death_scythe",
+      "name": "Коса смерти",
+      "icon": "☠️🌾",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 12,
+      "tags": [
+        "оружие",
+        "ближний",
+        "яд",
+        "тёмный"
+      ],
+      "description": "Когда у противника 25 яда: +65% крит (раз).",
+      "buildHints": "Билд: яд / Reaper · Пары: Pestilence Flask, Poison Goobert, яд-еда",
+      "flavor": "Удар им не больнее обычного. Просто после удара дольше не слышишь собственный пульс.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "cauldron",
+      "name": "Котёл",
+      "icon": "🫕",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 10,
+      "tags": [
+        "аксессуар",
+        "тёмный",
+        "крафт"
+      ],
+      "description": "В магазине: улучшить зелье. Каждые 2.6с: случайный эффект (лечение/реген/удача).",
+      "buildHints": "Билд: Reaper дебаффы",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего. Оставлено для тех, кто ещё помнит своё имя — котёл не прощает забывчивых.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "wonky_snowman",
+      "name": "Кривой снеговик",
+      "icon": "⛄",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 8,
+      "tags": [
+        "аксессуар",
+        "лёд"
+      ],
+      "description": "50% замедление при попадании.",
+      "buildHints": "Билд: лёд",
+      "flavor": "Холод не снаружи. Он внутри предмета — там, где давно не было тепла живого тела.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "blood_amulet",
+      "name": "Кровавый амулет",
+      "icon": "📿",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 8,
+      "tags": [
+        "аксессуар",
+        "вампирский",
+        "крафт"
+      ],
+      "description": "В начале боя: +2 реген. +20 к макс. здоровью.",
+      "buildHints": "Билд: вампиризм · Крафт: Bloody Dagger, Vampiric Armor, Blood Goobert",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "blood_goobert",
+      "name": "Кровавый губерт",
+      "icon": "🔴",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 15,
+      "tags": [
+        "питомец",
+        "вампирский",
+        "крафт"
+      ],
+      "description": "В начале боя: Получить 5 стаков После 6 активаций предметов: Нанести 10 маг. Урона с 100% вампиризмом. Даёт +1 за каждый стака",
+      "buildHints": "Билд: вампиризм, питомцы · Крафт: Goobert + Blood Amulet · Пары: Blood Amulet, Hungry Blade, Blood Goobert",
+      "flavor": "Спутник не живой. Он просто ещё не понял, что давно умер — и потому остаётся рядом.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "bloody_dagger",
+      "name": "Кровавый кинжал",
+      "icon": "🔪🩸",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 12,
+      "tags": [
+        "оружие",
+        "ближний",
+        "вампирский",
+        "крафт"
+      ],
+      "description": "При попадании: +1 усиление. +4 лечения за вампирский предмет. Доп. атака при оглушении.",
+      "buildHints": "Билд: вампиризм · Крафт: Dagger + Blood Amulet",
+      "flavor": "Когда-то это было оружием. Теперь — улика. Кровь здесь не красная, а цвета старой плёнки.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "bloodthorne",
+      "name": "Кровавый шип",
+      "icon": "🌹🩸",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 15,
+      "tags": [
+        "оружие",
+        "вампирский",
+        "шипы",
+        "ближний",
+        "крафт"
+      ],
+      "description": "При попадании: +1 шип. Потратить 1 шип: +1 HP и ещё +1 шип. +1 урона за шип.",
+      "buildHints": "Билд: вампиризм, шипы / отражение · Крафт: Hungry Blade + Thorn Whip · Пары: Whetstone, Gloves of Haste",
+      "flavor": "Железо, которое не ржавеет от времени — только от того, что на него смотрят слишком долго.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "winged_boots",
+      "name": "Крылатые сапоги",
+      "icon": "👢🪽",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 13,
+      "tags": [
+        "обувь",
+        "броня",
+        "святой",
+        "крафт"
+      ],
+      "description": "При HP ниже 70%: +1 удача, снять 15 дебаффов, уклонение (раз).",
+      "buildHints": "Крафт: Leather Boots + Divine Potion",
+      "flavor": "Щит тяжелее, чем кажется. Как дверь, которую ты закрывал, зная, что за ней кто-то стоит.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "rat",
+      "name": "Крыса",
+      "icon": "🐀",
+      "rarity": "common",
+      "rarityLabel": "Обычный",
+      "cost": 4,
+      "tags": [
+        "питомец",
+        "крафт"
+      ],
+      "description": "На 15% быстрее за «питомцы/еда». Каждые 3.3 сек: наносит 5 магического урона, отравляет врага (1).",
+      "buildHints": "Билд: питомцы",
+      "flavor": "Спутник не живой. Он просто ещё не понял, что давно умер — и потому остаётся рядом. Оставлено для тех, кто ещё помнит своё имя — крыса не прощает забывчивых.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "rat_chef",
+      "name": "Крыса-повар",
+      "icon": "🐀👨‍🍳",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 8,
+      "tags": [
+        "питомец",
+        "крафт"
+      ],
+      "description": "В начале боя: +1 удача за еду. Каждые 7с: +2 выносливости и +1 усиление. Быстрее на 15% за питомца/еду.",
+      "buildHints": "Билд: питомцы · Крафт: Rat + Cheese",
+      "flavor": "Глаза у него как у игрушки из автомата: стеклянные, и в них отражается не ты.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "cthulhu",
+      "name": "Ктулху",
+      "icon": "🐙👁️",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 8,
+      "tags": [
+        "питомец",
+        "тёмный"
+      ],
+      "description": "На 15% быстрее за «еда». Каждые 3.3 сек: +1 к самому слабому бонусу, наносит 10 магического урона, лечит на 100% от урона.",
+      "buildHints": "Билд: Reaper дебаффы, питомцы",
+      "flavor": "Спутник не живой. Он просто ещё не понял, что давно умер — и потому остаётся рядом.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "cubert",
+      "name": "Куберт",
+      "icon": "🧊",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 8,
+      "tags": [
+        "питомец"
+      ],
+      "description": "Каждые 4 сек: +1 холод.",
+      "buildHints": "Билд: питомцы",
+      "flavor": "Спутник не живой. Он просто ещё не понял, что давно умер — и потому остаётся рядом.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "forging_hammer",
+      "name": "Кузнечный молот",
+      "icon": "🔨",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 3,
+      "tags": [
+        "аксессуар",
+        "ближний",
+        "крафт"
+      ],
+      "description": "+5% к урону. +1 урона за каждый бонус на панели. Удар 2–5 урона.",
+      "buildHints": "Синергия: стан → Dagger extra attack",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего. Оставлено для тех, кто ещё помнит своё имя — кузнечный молот не прощает забывчивых.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "lump_of_coal",
+      "name": "Кусок угля",
+      "icon": "🪨",
+      "rarity": "common",
+      "rarityLabel": "Обычный",
+      "cost": 2,
+      "tags": [
+        "аксессуар",
+        "огонь"
+      ],
+      "description": "70% шанс: +1 урона (макс. +99). В начале боя: +8 жар. +8% к урону. Поджигает поле (1 урона в секунду). Каждые 3 сек: +1 к самому слабому бонусу.",
+      "buildHints": "Билд: огонь / Pyromancer · Пары: Draconic Orb, Oil Lamp, Flame-крафты",
+      "flavor": "Жар от него пахнет не дымом — горелой бумагой и чужими фотографиями.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "djinn_lamp",
+      "name": "Лампа джинна",
+      "icon": "🪔",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 11,
+      "tags": [
+        "аксессуар",
+        "магия",
+        "удача",
+        "шипы"
+      ],
+      "description": "+8 удачи. +2 защиты. +10% к магическому урону. Каждые 1.6 сек: случайно: +1 удача, +1 мана или +1 шип. Лечение 2 HP.",
+      "buildHints": "Билд: мана / магия, крит / Luck, шипы / отражение · Пары: Mana Orb, Mana Potion, магические посохи",
+      "flavor": "Магия здесь не светится. Она шепчет и портит воздух, как плесень в вентиляции.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "ice_armor",
+      "name": "Ледяная броня",
+      "icon": "🦺❄️",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 11,
+      "tags": [
+        "броня",
+        "лёд",
+        "крафт"
+      ],
+      "description": "В начале боя: +100 блока и +4 блока.",
+      "buildHints": "Билд: лёд · Крафт: Leather Armor + Spell Scroll: Frostbolt",
+      "flavor": "Прикосновение ледянее, чем должно быть. Как ручка двери в подвал, которую никто не открывал годами.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "ice_dragon",
+      "name": "Ледяной дракон",
+      "icon": "🐉❄️",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 15,
+      "tags": [
+        "питомец",
+        "лёд",
+        "крафт"
+      ],
+      "description": "При попадании: +1 холод противнику. При 10 холода у него: +90 блока. −20% маг. урона.",
+      "buildHints": "Билд: лёд, питомцы · Крафт: Ruby Whelp + White-Eyes Blue Dragon",
+      "flavor": "Прикосновение ледянее, чем должно быть. Как ручка двери в подвал, которую никто не открывал годами.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "leaf_badge",
+      "name": "Листовой значок",
+      "icon": "🍃",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 5,
+      "tags": [
+        "аксессуар",
+        "крафт",
+        "природа"
+      ],
+      "description": "Каждые 2.2 сек: +1 к самому слабому бонусу. Лечение 2 HP. В магазине чаще встречаются предметы: следопыт.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "vineweave_basket",
+      "name": "Лозоплетёная корзина",
+      "icon": "🧺",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 20,
+      "tags": [
+        "сумка",
+        "природа",
+        "крафт"
+      ],
+      "description": "+10% лечения и +3% за предмет природы внутри.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего. Оставлено для тех, кто ещё помнит своё имя — лозоплетёная корзина не прощает забывчивых.",
+      "craftOnly": false,
+      "isContainer": true
+    },
+    {
+      "id": "shovel",
+      "name": "Лопата",
+      "icon": "⛏️",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 8,
+      "tags": [
+        "оружие",
+        "дебафф",
+        "ближний",
+        "крафт"
+      ],
+      "description": "Удар 5–8 урона. замедление 12%. В магазине выдаёт случайный предмет.",
+      "buildHints": "",
+      "flavor": "Когда-то это было оружием. Теперь — улика. Кровь здесь не красная, а цвета старой плёнки.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "bow_and_arrow",
+      "name": "Лук со стрелами",
+      "icon": "🏹🎯",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 7,
+      "tags": [
+        "оружие",
+        "дальний",
+        "крафт"
+      ],
+      "description": "100% шанс: +1 урона (макс. +7). Удар 6–9 урона.",
+      "buildHints": "Билд: Ranger дальний бой · Пары: Whetstone, Gloves of Haste",
+      "flavor": "Удар им не больнее обычного. Просто после удара дольше не слышишь собственный пульс.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "moon_armor",
+      "name": "Лунная броня",
+      "icon": "🌙🦺",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 19,
+      "tags": [
+        "броня",
+        "святой",
+        "магия",
+        "крафт"
+      ],
+      "description": "В начале боя: +50 блока и +20 за каждый предмет брони. Каждые 2.6с: +3 блока.",
+      "buildHints": "Билд: мана / магия · Крафт: Holy Armor + Mana Orb · Пары: Mana Orb, Mana Potion, магические посохи",
+      "flavor": "Формула выучена не из книги — из сна, который повторяется каждый раз, когда засыпаешь в коридоре.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "moon_shield",
+      "name": "Лунный щит",
+      "icon": "🛡️🌙",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 18,
+      "tags": [
+        "щит",
+        "броня",
+        "магия",
+        "крафт",
+        "святой"
+      ],
+      "description": "+30% блока. В начале боя: +5 блока.",
+      "buildHints": "Билд: мана / магия · Крафт: Shield of Valor + Mana Orb · Пары: Mana Orb, Mana Potion, магические посохи",
+      "flavor": "Формула выучена не из книги — из сна, который повторяется каждый раз, когда засыпаешь в коридоре.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "magic_badge",
+      "name": "Магический значок",
+      "icon": "✨",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 5,
+      "tags": [
+        "аксессуар",
+        "крафт"
+      ],
+      "description": "В начале боя: +5 мана. +8% к урону. +25% к магическому урону. На 30% чаще срабатывают эффекты предметов. В магазине чаще предметы класса «маг».",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "enchanted_staff",
+      "name": "Магический посох",
+      "icon": "🪄",
+      "rarity": "uncommon",
+      "rarityLabel": "Необычный",
+      "cost": 0,
+      "tags": [
+        "оружие",
+        "магия",
+        "ближний"
+      ],
+      "description": "Магический удар 2–5 урона.",
+      "buildHints": "",
+      "flavor": "Железо, которое не ржавеет от времени — только от того, что на него смотрят слишком долго.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "magic_staff",
+      "name": "Магический посох",
+      "icon": "🪄✨",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 10,
+      "tags": [
+        "оружие",
+        "магия",
+        "дальний",
+        "крафт"
+      ],
+      "description": "При атаке: −3 маны → +6 урона и +2 урона навсегда.",
+      "buildHints": "Билд: мана-маг · Ветка: Staff of Fire, Critwood, Unhealing · Пары: Mana Orb, Broom",
+      "flavor": "Железо, которое не ржавеет от времени — только от того, что на него смотрят слишком долго.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "magic_torch",
+      "name": "Магический факел",
+      "icon": "✨",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 11,
+      "tags": [
+        "аксессуар",
+        "огонь",
+        "магия",
+        "крафт"
+      ],
+      "description": "При попадании: −1 выносливости → +1 урона этому предмету и оружию.",
+      "buildHints": "Билд: огонь / Pyromancer, мана / магия · Крафт: Torch + Mana Potion · Пары: Draconic Orb, Oil Lamp, Flame-крафты",
+      "flavor": "Магия здесь не светится. Она шепчет и портит воздух, как плесень в вентиляции.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "lil_chestnut",
+      "name": "Маленький каштан",
+      "icon": "🌰",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 6,
+      "tags": [
+        "питомец"
+      ],
+      "description": "На 1% быстрее за стоимость предметов. Каждые 6 сек: +3 к самому сильному бонусу. При обновлении магазина 40% шанс: +3 золота.",
+      "buildHints": "Билд: питомцы",
+      "flavor": "Глаза у него как у игрушки из автомата: стеклянные, и в них отражается не ты.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "mana_crystal",
+      "name": "Мана-кристалл",
+      "icon": "💎",
+      "rarity": "uncommon",
+      "rarityLabel": "Необычный",
+      "cost": 5,
+      "tags": [
+        "магия"
+      ],
+      "description": "Магический удар 1–4 урона.",
+      "buildHints": "",
+      "flavor": "Магия здесь не светится. Она шепчет и портит воздух, как плесень в вентиляции.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "maneki_neko",
+      "name": "Манэки-нэко",
+      "icon": "🐱",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 10,
+      "tags": [
+        "аксессуар",
+        "удача",
+        "святой"
+      ],
+      "description": "+3 защиты. +15 удачи. На 3% чаще срабатывают эффекты предметов. +1 удачи.",
+      "buildHints": "Билд: крит / Luck",
+      "flavor": "Украшение с чужого запястья. Размер подходит. Это должно тревожить сильнее, чем тревожит.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "oil_lamp",
+      "name": "Масляная лампа",
+      "icon": "🪔",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 7,
+      "tags": [
+        "аксессуар",
+        "огонь",
+        "pyromancer"
+      ],
+      "description": "В начале боя: +2 жара. Каждые 3.4с: оружие +1 урона.",
+      "buildHints": "Билд: огонь / Pyromancer · Пары: Burning Sword, Draconic Orb",
+      "flavor": "Огонь не освещает. Он показывает то, что стояло в темноте, пока ты отводил взгляд.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "broom",
+      "name": "Метла",
+      "icon": "🧹",
+      "rarity": "common",
+      "rarityLabel": "Обычный",
+      "cost": 4,
+      "tags": [
+        "оружие",
+        "дебафф",
+        "ближний"
+      ],
+      "description": "При промахе: следующая атака сильнее на 2. При попадании: 33% шанс: +1 яда. Удар 2–4 урона.",
+      "buildHints": "Пары: Whetstone, Gloves of Haste",
+      "flavor": "Мётла из закрытого кинотеатра. Щетина пахнет сырой плиткой и чужим потом. Ею уже кто-то пытался вымести следы — следы остались.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "villain_sword",
+      "name": "Меч злодея",
+      "icon": "🗡️😈",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 7,
+      "tags": [
+        "оружие",
+        "ближний",
+        "тёмный"
+      ],
+      "description": "+4 урона за каждый предмет «тёмный». Удар 2–4 урона.",
+      "buildHints": "Билд: тёмный carry · Пары: много соседних мечей (⭐)",
+      "flavor": "Когда-то это было оружием. Теперь — улика. Кровь здесь не красная, а цвета старой плёнки.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "knight_sword",
+      "name": "Меч рыцаря",
+      "icon": "⚔️",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 9,
+      "tags": [
+        "оружие",
+        "ближний"
+      ],
+      "description": "Удар 12–16 урона.",
+      "buildHints": "",
+      "flavor": "Когда-то это было оружием. Теперь — улика. Кровь здесь не красная, а цвета старой плёнки.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "stamina_sack",
+      "name": "Мешок выносливости",
+      "icon": "🎒",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 5,
+      "tags": [
+        "сумка",
+        "stamina"
+      ],
+      "description": "+3 слотов рюкзака. +1 макс. выносливости.",
+      "buildHints": "Билд: много оружия / высокая ⚡-стоимость · Пары: Heroic Potion",
+      "flavor": "Внутри больше места, чем снаружи. Как комната, в которую ты заходишь и понимаешь — выхода не было никогда.",
+      "craftOnly": false,
+      "isContainer": true
+    },
+    {
+      "id": "bag_of_stones",
+      "name": "Мешок камней",
+      "icon": "🪨",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 3,
+      "tags": [
+        "аксессуар",
+        "природа"
+      ],
+      "description": "Камни можно бросать много раз.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Украшение с чужого запястья. Размер подходит. Это должно тревожить сильнее, чем тревожит.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "miss_fortune",
+      "name": "Мисс Фортуна",
+      "icon": "🐱🍀",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 7,
+      "tags": [
+        "питомец",
+        "тёмный",
+        "крафт"
+      ],
+      "description": "Каждые 2.1с: −1 удача → +3 к самому большому стаку.",
+      "buildHints": "Билд: Reaper дебаффы, питомцы",
+      "flavor": "Глаза у него как у игрушки из автомата: стеклянные, и в них отражается не ты.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "mrs_struggles",
+      "name": "Миссис Страглз",
+      "icon": "😤",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 7,
+      "tags": [
+        "питомец"
+      ],
+      "description": "На 10% быстрее за «тёмный». Каждые 4.7 сек: снять по 1 бонусу каждого типа у врага.",
+      "buildHints": "Билд: питомцы",
+      "flavor": "Спутник не живой. Он просто ещё не понял, что давно умер — и потому остаётся рядом.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "mr_struggles",
+      "name": "Мистер Страглз",
+      "icon": "😰",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 10,
+      "tags": [
+        "питомец"
+      ],
+      "description": "Каждые 3 сек: наносит 4 магического урона. В магазине чаще встречаются предметы: питомцы.",
+      "buildHints": "Билд: питомцы",
+      "flavor": "Глаза у него как у игрушки из автомата: стеклянные, и в них отражается не ты.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "hammer",
+      "name": "Молот",
+      "icon": "🔨",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 8,
+      "tags": [
+        "оружие",
+        "ближний",
+        "оглушение"
+      ],
+      "description": "При попадании: 45% оглушает на 0.5 сек. Удар 10–13 урона. замедление 18%.",
+      "buildHints": "Билд: стан · Пары: Dagger (extra attack) · Утилита: Piggybank → монеты",
+      "flavor": "Когда-то это было оружием. Теперь — улика. Кровь здесь не красная, а цвета старой плёнки.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "carrot_goobert",
+      "name": "Морковный губерт",
+      "icon": "🥕",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 12,
+      "tags": [
+        "питомец",
+        "природа",
+        "крафт"
+      ],
+      "description": "После 5 активаций: снять 3 дебаффа и +2 усиления.",
+      "buildHints": "Билд: питомцы · Крафт: Goobert + 2× Carrot",
+      "flavor": "Глаза у него как у игрушки из автомата: стеклянные, и в них отражается не ты.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "carrot",
+      "name": "Морковь",
+      "icon": "🥕",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 3,
+      "tags": [
+        "еда",
+        "удача",
+        "природа",
+        "крафт"
+      ],
+      "description": "Каждые 2.7 сек: 55% +1 удача, снимает 1 негатива. Лечение 3 HP.",
+      "buildHints": "Билд: крит / Luck, еда / Pan",
+      "flavor": "На вкус как память. Неприятная. Настоящая. Ты всё равно проглотишь.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "frost_crystal",
+      "name": "Морозный кристалл",
+      "icon": "❄️",
+      "rarity": "uncommon",
+      "rarityLabel": "Необычный",
+      "cost": 6,
+      "tags": [
+        "магия",
+        "лёд"
+      ],
+      "description": "Магический удар 1–4 урона. замедление 15%.",
+      "buildHints": "",
+      "flavor": "Формула выучена не из книги — из сна, который повторяется каждый раз, когда засыпаешь в коридоре.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "fly_agaric",
+      "name": "Мухомор",
+      "icon": "🍄",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 3,
+      "tags": [
+        "еда",
+        "яд",
+        "природа"
+      ],
+      "description": "Каждые 3.6 сек: отравляет врага (1). +15% урона на 5 сек.",
+      "buildHints": "Билд: яд / DoT, еда / Pan · Пары: Pestilence Flask, Death Scythe, ядовитые питомцы",
+      "flavor": "Капля на металле расползается медленно — как пятно на стене, которое появляется каждую ночь.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "fortunas_hope",
+      "name": "Надежда Фортуны",
+      "icon": "🏹🍀",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 8,
+      "tags": [
+        "оружие",
+        "удача",
+        "дальний",
+        "крафт"
+      ],
+      "description": "При попадании: 75% шанс +1 удача.",
+      "buildHints": "Билд: Ranger дальний бой, крит / Luck · Крафт: Shortbow + 2× Lucky Clover · Пары: Whetstone, Gloves of Haste",
+      "flavor": "Удар им не больнее обычного. Просто после удара дольше не слышишь собственный пульс.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "impractically_large_greatsword",
+      "name": "Непрактично огромный двуручник",
+      "icon": "⚔️📏",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 14,
+      "tags": [
+        "оружие",
+        "ближний"
+      ],
+      "description": "При 5+ жар: +1 усиление. Удар 40–50 урона.",
+      "buildHints": "Пары: Whetstone, Gloves of Haste",
+      "flavor": "Железо, которое не ржавеет от времени — только от того, что на него смотрят слишком долго.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "unstable_recombobulator",
+      "name": "Нестабильный перекомбобулятор",
+      "icon": "🎰",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 6,
+      "tags": [
+        "аксессуар"
+      ],
+      "description": "+12 удачи. Каждые 4 сек: случайно: +1 удача, отравляет врага (1) или лечит на 5 HP. +15% урона на 3 сек. В магазине перерабатывает себя и соседние предметы в новые (по их общей цене).",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Украшение с чужого запястья. Размер подходит. Это должно тревожить сильнее, чем тревожит.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "frostbite",
+      "name": "Обморожение",
+      "icon": "🗡️❄️",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 11,
+      "tags": [
+        "оружие",
+        "лёд",
+        "вампирский",
+        "крафт",
+        "ближний"
+      ],
+      "description": "+1 урона за яд у противника. Когда у противника 30 яда: +12 HP (раз).",
+      "buildHints": "Билд: лёд, вампиризм · Крафт: Hungry Blade + Spell Scroll: Frostbolt · Пары: Whetstone, Gloves of Haste",
+      "flavor": "Железо, которое не ржавеет от времени — только от того, что на него смотрят слишком долго.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "obsidian_dragon",
+      "name": "Обсидиановый дракон",
+      "icon": "🐉🖤",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 18,
+      "tags": [
+        "питомец",
+        "огонь",
+        "магия",
+        "крафт"
+      ],
+      "description": "При 8 жара: +2 урона и гарантированный крит.",
+      "buildHints": "Билд: огонь / Pyromancer, мана / магия, питомцы · Крафт: Ruby Whelp + Draconic Orb · Пары: Draconic Orb, Oil Lamp, Flame-крафты",
+      "flavor": "Формула выучена не из книги — из сна, который повторяется каждый раз, когда засыпаешь в коридоре.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "flame_badge",
+      "name": "Огненный значок",
+      "icon": "🔥",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 5,
+      "tags": [
+        "аксессуар",
+        "огонь",
+        "крафт"
+      ],
+      "description": "+8% к урону. Поджигает поле (6 урона в секунду). На 5% чаще срабатывают эффекты предметов. В магазине чаще встречаются предметы: пиромант. В магазине (65% шанс) создаёт предмет пламени за 1 золото.",
+      "buildHints": "Билд: огонь / Pyromancer · Пары: Draconic Orb, Oil Lamp, Flame-крафты",
+      "flavor": "Огонь не освещает. Он показывает то, что стояло в темноте, пока ты отводил взгляд.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "flame_whip",
+      "name": "Огненный кнут",
+      "icon": "🔥🪢",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 10,
+      "tags": [
+        "оружие",
+        "огонь",
+        "шипы",
+        "ближний",
+        "крафт"
+      ],
+      "description": "При атаке: −1 жар → +8 урона и +4 шипа.",
+      "buildHints": "Билд: огонь / Pyromancer, шипы / отражение · Крафт: Thorn Whip + 2× Flame · Пары: Whetstone, Gloves of Haste",
+      "flavor": "Когда-то это было оружием. Теперь — улика. Кровь здесь не красная, а цвета старой плёнки.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "fire_staff",
+      "name": "Огненный посох",
+      "icon": "🔥",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 12,
+      "tags": [
+        "оружие",
+        "магия",
+        "огонь",
+        "ближний"
+      ],
+      "description": "Поджигает поле (3 урона в секунду). +15% пробивания блока. Огненный удар 6–11 урона.",
+      "buildHints": "",
+      "flavor": "Удар им не больнее обычного. Просто после удара дольше не слышишь собственный пульс.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "staff_of_fire",
+      "name": "Огненный посох",
+      "icon": "🪄🔥",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 18,
+      "tags": [
+        "оружие",
+        "огонь",
+        "магия",
+        "крафт",
+        "ближний"
+      ],
+      "description": "При атаке: −2 маны и −2 жара → +6 урона.",
+      "buildHints": "Билд: огонь / Pyromancer, мана / магия · Крафт: Magic Staff + Draconic Orb · Пары: Whetstone, Gloves of Haste",
+      "flavor": "Удар им не больнее обычного. Просто после удара дольше не слышишь собственный пульс.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "friendly_fire",
+      "name": "Огонь по своим",
+      "icon": "🔥🤝",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 10,
+      "tags": [
+        "оружие",
+        "огонь",
+        "ближний",
+        "крафт"
+      ],
+      "description": "Каждые 3с: −1 жар → +2 жара. При 20 жара: 100 маг. урона.",
+      "buildHints": "Билд: огонь / Pyromancer · Пары: Whetstone, Gloves of Haste",
+      "flavor": "Удар им не больнее обычного. Просто после удара дольше не слышишь собственный пульс.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "chili_goobert",
+      "name": "Острый губерт",
+      "icon": "🌶️",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 11,
+      "tags": [
+        "питомец",
+        "огонь",
+        "крафт"
+      ],
+      "description": "После 6 активаций: +12 HP и +2 жара.",
+      "buildHints": "Билд: огонь / Pyromancer, питомцы · Крафт: Goobert + Chili Pepper · Пары: Draconic Orb, Oil Lamp, Flame-крафты",
+      "flavor": "Жар от него пахнет не дымом — горелой бумагой и чужими фотографиями.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "white_lily_collar",
+      "name": "Ошейник белой лилии",
+      "icon": "🤍",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 14,
+      "tags": [
+        "аксессуар",
+        "удача",
+        "святой",
+        "крафт"
+      ],
+      "description": "+3 удачи, +2 защиты. Каждые 3.5с: +6 HP и снять 1 дебафф.",
+      "buildHints": "Крафт: Red Orchid Collar + Holy Armor",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "red_orchid_collar",
+      "name": "Ошейник красной орхидеи",
+      "icon": "🌺",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 10,
+      "tags": [
+        "аксессуар",
+        "удача",
+        "вампирский",
+        "крафт"
+      ],
+      "description": "+2 удачи. +4% вампиризма за соседнее оружие. +4% крит за удачу.",
+      "buildHints": "Крафт: Acorn Collar + Blood Amulet · ветка Lily/Sage",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "blue_sage_collar",
+      "name": "Ошейник синего шалфея",
+      "icon": "💠",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 14,
+      "tags": [
+        "аксессуар",
+        "удача",
+        "магия",
+        "крафт"
+      ],
+      "description": "В начале боя: +4 маны. При атаке: −2 маны → +5 урона и гарант. крит 1.2с.",
+      "buildHints": "Крафт: Red Orchid Collar + Mana Crystal",
+      "flavor": "Формула выучена не из книги — из сна, который повторяется каждый раз, когда засыпаешь в коридоре.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "pandamonium",
+      "name": "Пандемоний",
+      "icon": "🐼☠️",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 11,
+      "tags": [
+        "оружие",
+        "яд",
+        "ближний",
+        "тёмный",
+        "крафт"
+      ],
+      "description": "+1 урона за еду. +1 яд при попадании. +4% крит за дебафф противника.",
+      "buildHints": "Билд: яд / DoT, Reaper дебаффы · Крафт: Pan + Corrupted Crystal · Пары: Pestilence Flask, Death Scythe, ядовитые питомцы",
+      "flavor": "Железо, которое не ржавеет от времени — только от того, что на него смотрят слишком долго.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "spider_web",
+      "name": "Паутина",
+      "icon": "🕸️",
+      "rarity": "uncommon",
+      "rarityLabel": "Необычный",
+      "cost": 5,
+      "tags": [
+        "природа",
+        "дебафф",
+        "универсальный"
+      ],
+      "description": "замедление 10%.",
+      "buildHints": "",
+      "flavor": "Предмет, который не лечит. Он только помогает болезни найти дорогу быстрее.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "chili_pepper",
+      "name": "Перец чили",
+      "icon": "🌶️",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 5,
+      "tags": [
+        "еда",
+        "огонь",
+        "крафт"
+      ],
+      "description": "Каждые 4.5 сек: +1 жар, лечит на 5 HP. При 10+ жар: снимает 1 негатива.",
+      "buildHints": "Билд: огонь / Pyromancer, еда / Pan · Пары: Draconic Orb, Oil Lamp, Flame-крафты",
+      "flavor": "Жар от него пахнет не дымом — горелой бумагой и чужими фотографиями.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "gloves_of_power",
+      "name": "Перчатки силы",
+      "icon": "🧤💪",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 10,
+      "tags": [
+        "перчатки",
+        "аксессуар",
+        "крафт"
+      ],
+      "description": "+20% урона, −10% скорости. При попадании: +7 усиления.",
+      "buildHints": "Крафт: Gloves of Haste + Stone Skin Potion",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "gloves_of_haste",
+      "name": "Перчатки спешки",
+      "icon": "🧤⚡",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 4,
+      "tags": [
+        "перчатки",
+        "аксессуар",
+        "универсальный",
+        "крафт"
+      ],
+      "description": "В начале боя: предметы срабатывают на 20% быстрее.",
+      "buildHints": "Билд: темпо · Крафт-ядро: Falcon Blade, Vampiric Gloves · Ставить на «запястья» оружия/питомцев",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "ripsaw_blade",
+      "name": "Пила-раздиратор",
+      "icon": "🪚🩸",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 7,
+      "tags": [
+        "оружие",
+        "шипы",
+        "ближний"
+      ],
+      "description": "При попадании: украсть 1 урона у оружия врага. Удар 8–10 урона.",
+      "buildHints": "Билд: шипы / отражение · Пары: Whetstone, Gloves of Haste",
+      "flavor": "Удар им не больнее обычного. Просто после удара дольше не слышишь собственный пульс.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "platinum_customer_card",
+      "name": "Платиновая карта покупателя",
+      "icon": "💳",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 8,
+      "tags": [
+        "аксессуар",
+        "сокровище",
+        "крафт"
+      ],
+      "description": "+10% к прокам. Каждые 4с: снять 2 дебаффа.",
+      "buildHints": "Билд: экономика / золото · Крафт: Customer Card + Customer Card",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "snowmaster",
+      "name": "Повелитель снега",
+      "icon": "❄️",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 9,
+      "tags": [
+        "аксессуар",
+        "лёд"
+      ],
+      "description": "На 10% быстрее за «холод». Каждые 1.3 сек: снимает 1 негатива, +1 холод (себе или врагу). замедление 12%.",
+      "buildHints": "Билд: лёд",
+      "flavor": "Прикосновение ледянее, чем должно быть. Как ручка двери в подвал, которую никто не открывал годами.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "repeater",
+      "name": "Повторитель",
+      "icon": "🔁",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 8,
+      "tags": [
+        "аксессуар"
+      ],
+      "description": "Повтор магии (100%). Каждые 12 сек: +1 к самому слабому бонусу.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Украшение с чужого запястья. Размер подходит. Это должно тревожить сильнее, чем тревожит.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "present",
+      "name": "Подарок",
+      "icon": "🎁",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 10,
+      "tags": [
+        "аксессуар",
+        "крафт",
+        "природа"
+      ],
+      "description": "В начале боя: +5 удачи и +15 HP.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "pop",
+      "name": "Поп",
+      "icon": "💥",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 6,
+      "tags": [
+        "аксессуар"
+      ],
+      "description": "На 3% быстрее за сокет. Каждые 8 сек: отравляет врага (3).",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Украшение с чужого запястья. Размер подходит. Это должно тревожить сильнее, чем тревожит.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "critwood_staff",
+      "name": "Посох критического древа",
+      "icon": "🪄🌳",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 18,
+      "tags": [
+        "оружие",
+        "магия",
+        "крафт",
+        "ближний"
+      ],
+      "description": "При атаке: −3 маны → +7 урона и гарантированный крит 1.5с.",
+      "buildHints": "Билд: мана / магия · Крафт: Magic Staff + Acorn Collar · Пары: Whetstone, Gloves of Haste",
+      "flavor": "Удар им не больнее обычного. Просто после удара дольше не слышишь собственный пульс.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "staff_of_unhealing",
+      "name": "Посох неисцеления",
+      "icon": "🪄💀",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 19,
+      "tags": [
+        "оружие",
+        "магия",
+        "тёмный",
+        "крафт",
+        "ближний",
+        "лечение"
+      ],
+      "description": "Каждые 2с: +20 HP.",
+      "buildHints": "Билд: мана / магия, Reaper дебаффы · Крафт: Magic Staff + Demonic Flask · Пары: Whetstone, Gloves of Haste",
+      "flavor": "Железо, которое не ржавеет от времени — только от того, что на него смотрят слишком долго.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "apprentice_staff",
+      "name": "Посох ученика",
+      "icon": "🪄",
+      "rarity": "common",
+      "rarityLabel": "Обычный",
+      "cost": 3,
+      "tags": [
+        "оружие",
+        "магия",
+        "ближний"
+      ],
+      "description": "Магический удар 1–3 урона.",
+      "buildHints": "",
+      "flavor": "Железо, которое не ржавеет от времени — только от того, что на него смотрят слишком долго.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "potion_belt",
+      "name": "Пояс зелий",
+      "icon": "🧷",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 5,
+      "tags": [
+        "сумка",
+        "аксессуар"
+      ],
+      "description": "+4 слотов рюкзака. На 8% чаще срабатывают эффекты предметов. При 4+ негативах снимает 10, один раз за бой.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Украшение с чужого запястья. Размер подходит. Это должно тревожить сильнее, чем тревожит.",
+      "craftOnly": false,
+      "isContainer": true
+    },
+    {
+      "id": "fanny_pack",
+      "name": "Поясная сумка",
+      "icon": "🎒",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 3,
+      "tags": [
+        "сумка"
+      ],
+      "description": "+2 слотов рюкзака. Предметы внутри на 10% быстрее.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Внутри больше места, чем снаружи. Как комната, в которую ты заходишь и понимаешь — выхода не было никогда.",
+      "craftOnly": false,
+      "isContainer": true
+    },
+    {
+      "id": "prismatic_orb",
+      "name": "Призматическая сфера",
+      "icon": "🔮",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 14,
+      "tags": [
+        "аксессуар",
+        "магия",
+        "святой"
+      ],
+      "description": "+2 мана за «магия». +1 мана за «огонь». +12% к магическому урону. +4% к лечению. Каждые 8 сек: +1 ко всем бонусам. Лечение 2 HP.",
+      "buildHints": "Билд: мана / магия · Пары: Mana Orb, Mana Potion, магические посохи",
+      "flavor": "Магия здесь не светится. Она шепчет и портит воздух, как плесень в вентиляции.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "prismatic_sword",
+      "name": "Призматический меч",
+      "icon": "🗡️🌈",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 15,
+      "tags": [
+        "оружие",
+        "ближний",
+        "магия",
+        "огонь",
+        "лёд"
+      ],
+      "description": "При попадании: +1 мана. +15% к лечению от урона за каждый предмет «холод». На 8% быстрее за «огонь». Магический удар 8–14 урона.",
+      "buildHints": "Билд: мультистихия · Пары: Prismatic Orb, все типы кристаллов",
+      "flavor": "Когда-то это было оружием. Теперь — улика. Кровь здесь не красная, а цвета старой плёнки.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "spectral_dagger",
+      "name": "Призрачный кинжал",
+      "icon": "👻",
+      "rarity": "uncommon",
+      "rarityLabel": "Необычный",
+      "cost": 0,
+      "tags": [
+        "оружие",
+        "магия",
+        "ближний"
+      ],
+      "description": "При попадании: тратит 1 мана, следующая атака +6 урона. Дополнительная атака по оглушённому противнику. Магический удар 2–5 урона.",
+      "buildHints": "",
+      "flavor": "Железо, которое не ржавеет от времени — только от того, что на него смотрят слишком долго.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "cork_charm",
+      "name": "Пробка-оберег",
+      "icon": "🧿",
+      "rarity": "common",
+      "rarityLabel": "Обычный",
+      "cost": 2,
+      "tags": [
+        "универсальный",
+        "аксессуар"
+      ],
+      "description": "Блок 2.",
+      "buildHints": "",
+      "flavor": "Инструмент из ящика «на всякий случай». В этом городе «всякий случай» — это каждый день.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "cursed_dagger",
+      "name": "Проклятый кинжал",
+      "icon": "🔪🌑",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 10,
+      "tags": [
+        "оружие",
+        "ближний",
+        "тёмный",
+        "крафт"
+      ],
+      "description": "Доп. атака при оглушении. +2 яда. +1% крит за дебафф противника.",
+      "buildHints": "Билд: Reaper дебаффы · Крафт: Dagger + Corrupted Crystal · Пары: Whetstone, Gloves of Haste",
+      "flavor": "Удар им не больнее обычного. Просто после удара дольше не слышишь собственный пульс.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "piercing_arrow",
+      "name": "Пронзающая стрела",
+      "icon": "🏹💥",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 10,
+      "tags": [
+        "оружие",
+        "дальний",
+        "крафт"
+      ],
+      "description": "+50% крит. урона. При крите: снять 15 блока.",
+      "buildHints": "Билд: Ranger дальний бой · Пары: Whetstone, Gloves of Haste",
+      "flavor": "Удар им не больнее обычного. Просто после удара дольше не слышишь собственный пульс.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "gingerbread_jerry",
+      "name": "Пряничный Джерри",
+      "icon": "🍪",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 8,
+      "tags": [
+        "питомец",
+        "крафт"
+      ],
+      "description": "В начале боя: +40 макс. здоровья. Каждые 3с: потратить 1, 1 и 1: получить 1, 3 и +20 макс. здоровья. Еда: срабатывает на 10% быстрее за каждую еду другого типа (кроме Пряничного Джерри).",
+      "buildHints": "Билд: питомцы",
+      "flavor": "Спутник не живой. Он просто ещё не понял, что давно умер — и потому остаётся рядом.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "blazing_spear",
+      "name": "Пылающее копьё",
+      "icon": "🔱🔥",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 14,
+      "tags": [
+        "оружие",
+        "огонь",
+        "ближний",
+        "крафт"
+      ],
+      "description": "Перед промахом: −1 жар → попадание и +8 урона. Снять 8 блока. При попадании: +2 жара.",
+      "buildHints": "Крафт: Molten Spear + 4× Lump of Coal",
+      "flavor": "Когда-то это было оружием. Теперь — улика. Кровь здесь не красная, а цвета старой плёнки.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "burning_blade",
+      "name": "Пылающий клинок",
+      "icon": "🔥⚔️",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 17,
+      "tags": [
+        "оружие",
+        "огонь",
+        "ближний",
+        "крафт"
+      ],
+      "description": "При попадании: +1 жар. При 6 жара: оружие +1 урона.",
+      "buildHints": "Билд: огонь / Pyromancer · Крафт: Burning Sword + 2× Whetstone · Пары: Whetstone, Gloves of Haste",
+      "flavor": "Удар им не больнее обычного. Просто после удара дольше не слышишь собственный пульс.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "burning_sword",
+      "name": "Пылающий меч",
+      "icon": "🗡️🔥",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 13,
+      "tags": [
+        "оружие",
+        "ближний",
+        "огонь",
+        "крафт"
+      ],
+      "description": "При попадании: 60% +1 жар. При 7 жара: оружие +1 урона.",
+      "buildHints": "Билд: огонь / Pyromancer · Ветка: → Burning Blade · Пары: Draconic Orb, Oil Lamp",
+      "flavor": "Когда-то это было оружием. Теперь — улика. Кровь здесь не красная, а цвета старой плёнки.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "burning_torch",
+      "name": "Пылающий факел",
+      "icon": "🔥",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 5,
+      "tags": [
+        "аксессуар",
+        "огонь",
+        "крафт"
+      ],
+      "description": "В начале боя: +2 жар. При попадании: +1 усиление. +8% к урону.",
+      "buildHints": "Билд: огонь / Pyromancer · Крафт: Torch + источник огня · Пары: Draconic Orb, Oil Lamp, Flame-крафты",
+      "flavor": "Жар от него пахнет не дымом — горелой бумагой и чужими фотографиями.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "rainbow_goobert",
+      "name": "Радужный губерт",
+      "icon": "🌈",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 50,
+      "tags": [
+        "питомец",
+        "яд",
+        "вампирский",
+        "дебафф",
+        "дальний",
+        "крафт"
+      ],
+      "description": "После 9 активаций: +40 HP, +2 выносливости, +20 блока, +20 HP, оружие +4, +3 яда.",
+      "buildHints": "Билд: яд / DoT, вампиризм, Ranger дальний бой · Крафт: Steel+Blood+Light+Goobert+класс · Пары: Pestilence Flask, Death Scythe, ядовитые питомцы",
+      "flavor": "Капля на металле расползается медленно — как пятно на стене, которое появляется каждую ночь.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "rainbow_badge",
+      "name": "Радужный значок",
+      "icon": "🌈",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 5,
+      "tags": [
+        "аксессуар",
+        "дальний",
+        "крафт"
+      ],
+      "description": "Каждые 7 сек: +1 к самому слабому бонусу. В магазине чаще предметы класса «любой класс».",
+      "buildHints": "Билд: Ranger дальний бой · Пары: Lucky Clover, Acorn Collar, Fortuna-ветка",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "paradise_birb",
+      "name": "Райская птичка",
+      "icon": "🦜",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 20,
+      "tags": [
+        "питомец",
+        "святой"
+      ],
+      "description": "На 7% чаще срабатывают эффекты предметов. +7% к лечению. На 7% быстрее за «питомцы». Каждые 2.7 сек: 7% +1 усиление.",
+      "buildHints": "Билд: питомцы",
+      "flavor": "Спутник не живой. Он просто ещё не понял, что давно умер — и потому остаётся рядом.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "molten_spear",
+      "name": "Раскалённое копьё",
+      "icon": "🔱🌋",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 8,
+      "tags": [
+        "оружие",
+        "огонь",
+        "ближний",
+        "крафт"
+      ],
+      "description": "Перед промахом: −1 жар → попадание и +5 урона. Снять 5 блока.",
+      "buildHints": "Билд: огонь / Pyromancer · Крафт: Spear + 2× Flame · Пары: Whetstone, Gloves of Haste",
+      "flavor": "Удар им не больнее обычного. Просто после удара дольше не слышишь собственный пульс.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "molten_greatsword",
+      "name": "Раскалённый двуручник",
+      "icon": "⚔️🌋",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 18,
+      "tags": [
+        "оружие",
+        "огонь",
+        "ближний",
+        "крафт"
+      ],
+      "description": "При попадании: −2 жара → +4 жара. При 5+ жара: +1 усиление.",
+      "buildHints": "Билд: огонь / Pyromancer · Пары: Whetstone, Gloves of Haste",
+      "flavor": "Когда-то это было оружием. Теперь — улика. Кровь здесь не красная, а цвета старой плёнки.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "molten_dagger",
+      "name": "Раскалённый кинжал",
+      "icon": "🔪🌋",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 6,
+      "tags": [
+        "оружие",
+        "огонь",
+        "ближний",
+        "крафт"
+      ],
+      "description": "тратит 1 жар, следующая атака +2 урона. Дополнительная атака по оглушённому противнику. Удар 3–7 урона. замедление 18%.",
+      "buildHints": "Билд: огонь / Pyromancer · Крафт: Dagger + 2× Flame · Пары: Whetstone, Gloves of Haste",
+      "flavor": "Когда-то это было оружием. Теперь — улика. Кровь здесь не красная, а цвета старой плёнки.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "reverse",
+      "name": "Реверс!",
+      "icon": "🃏🔄",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 3,
+      "tags": [
+        "карта",
+        "крафт"
+      ],
+      "description": "В начале боя: +2 усиление. +25% урона на 4 сек.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "rusty_sword",
+      "name": "Ржавый меч",
+      "icon": "🗡️",
+      "rarity": "common",
+      "rarityLabel": "Обычный",
+      "cost": 2,
+      "tags": [
+        "оружие",
+        "ближний"
+      ],
+      "description": "Удар 1–3 урона.",
+      "buildHints": "",
+      "flavor": "Удар им не больнее обычного. Просто после удара дольше не слышишь собственный пульс.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "ruby_egg",
+      "name": "Рубиновое яйцо",
+      "icon": "🥚💎",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 10,
+      "tags": [
+        "питомец"
+      ],
+      "description": "В начале боя: +4 шип. +8% к урону.",
+      "buildHints": "Билд: питомцы",
+      "flavor": "Глаза у него как у игрушки из автомата: стеклянные, и в них отражается не ты.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "ruby_whelp",
+      "name": "Рубиновый дракончик",
+      "icon": "🐉💎",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 10,
+      "tags": [
+        "питомец",
+        "огонь"
+      ],
+      "description": "В начале боя: Получить 5 жаров Отражает 3 дебаффов жара",
+      "buildHints": "Билд: огонь / драконы · Ветка: Ruby Chonk → Obsidian Dragon",
+      "flavor": "Огонь не освещает. Он показывает то, что стояло в темноте, пока ты отводил взгляд.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "ruby_chonk",
+      "name": "Рубиновый толстяк",
+      "icon": "🐲💎",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 15,
+      "tags": [
+        "питомец",
+        "огонь",
+        "крафт"
+      ],
+      "description": "При попадании: +1 жар. При <12 выносливости: 30% оглушение 0.4с.",
+      "buildHints": "Билд: огонь / Pyromancer, питомцы · Крафт: Ruby Whelp + Holo Fire Lizard · Пары: Draconic Orb, Oil Lamp, Flame-крафты · Синергия: стан → Dagger extra attack",
+      "flavor": "Жар от него пахнет не дымом — горелой бумагой и чужими фотографиями.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "rune_of_protection",
+      "name": "Руна защиты",
+      "icon": "🔷",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 7,
+      "tags": [
+        "магия",
+        "универсальный"
+      ],
+      "description": "+38% эффективности блока. Блок 6.",
+      "buildHints": "",
+      "flavor": "Магия здесь не светится. Она шепчет и портит воздух, как плесень в вентиляции.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "rune_of_magic",
+      "name": "Руна магии",
+      "icon": "✨",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 7,
+      "tags": [
+        "магия"
+      ],
+      "description": "+35% к магическому урону. Магический удар 1–4 урона.",
+      "buildHints": "",
+      "flavor": "Магия здесь не светится. Она шепчет и портит воздух, как плесень в вентиляции.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "backpack",
+      "name": "Рюкзак",
+      "icon": "🎒",
+      "rarity": "uncommon",
+      "rarityLabel": "Необычный",
+      "cost": 4,
+      "tags": [
+        "сумка"
+      ],
+      "description": "+3 слотов рюкзака.",
+      "buildHints": "",
+      "flavor": "Внутри больше места, чем снаружи. Как комната, в которую ты заходишь и понимаешь — выхода не было никогда.",
+      "craftOnly": false,
+      "isContainer": true
+    },
+    {
+      "id": "dragonskin_boots",
+      "name": "Сапоги из драконьей кожи",
+      "icon": "👢🐉",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 6,
+      "tags": [
+        "обувь",
+        "броня",
+        "ближний",
+        "питомец",
+        "крафт"
+      ],
+      "description": "+3 защиты. +4 защиты. Боевая ярость (<50% HP): −урон, быстрее предметы. Лечение 5 HP.",
+      "buildHints": "Билд: питомцы · Крафт: Leather Boots + Forging Hammer",
+      "flavor": "Щит тяжелее, чем кажется. Как дверь, которую ты закрывал, зная, что за ней кто-то стоит.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "sapphire_whelp",
+      "name": "Сапфировый дракончик",
+      "icon": "🐉💙",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 14,
+      "tags": [
+        "питомец",
+        "лёд",
+        "крафт"
+      ],
+      "description": "В начале боя: +6 блока. При попадании: −1 блок → +10 блока и случайный стак.",
+      "buildHints": "Билд: лёд, питомцы",
+      "flavor": "Прикосновение ледянее, чем должно быть. Как ручка двери в подвал, которую никто не открывал годами.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "blood_harvester",
+      "name": "Сборщик крови",
+      "icon": "🩸🌾",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 11,
+      "tags": [
+        "аксессуар",
+        "вампирский",
+        "крафт"
+      ],
+      "description": "Бонусы на панели на 100% эффективнее. На 5% быстрее за каждый бонус на панели.",
+      "buildHints": "Билд: вампиризм · Пары: Blood Amulet, Hungry Blade, Blood Goobert",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "light_goobert",
+      "name": "Светлый губерт",
+      "icon": "💡",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 18,
+      "tags": [
+        "питомец",
+        "дебафф",
+        "крафт",
+        "святой"
+      ],
+      "description": "После 6 активаций: +20 HP и +6 яда.",
+      "buildHints": "Билд: питомцы · Крафт: Goobert + Lightsaber",
+      "flavor": "Спутник не живой. Он просто ещё не понял, что давно умер — и потому остаётся рядом.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "lightsaber",
+      "name": "Световой меч",
+      "icon": "⚔️💡",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 9,
+      "tags": [
+        "оружие",
+        "дебафф",
+        "ближний",
+        "святой"
+      ],
+      "description": "Потратить 3 выносливости — неуязвимость на 2 сек. +1 урона за каждый негатив на враге. Удар 8–12 урона.",
+      "buildHints": "Пары: Whetstone, Gloves of Haste",
+      "flavor": "Когда-то это было оружием. Теперь — улика. Кровь здесь не красная, а цвета старой плёнки.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "spell_scroll_frostbolt",
+      "name": "Свиток заклинания: Ледяная стрела",
+      "icon": "📜❄️",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 4,
+      "tags": [
+        "аксессуар",
+        "лёд",
+        "крафт"
+      ],
+      "description": "До 3 активаций за бой. Каждые 3 сек: наносит 5 магического урона. замедление 12%.",
+      "buildHints": "Билд: лёд",
+      "flavor": "Свиток из библиотеки, где книги стоят лицом к стене. Руны на пергаменте не светятся — они просто холоднее воздуха вокруг.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "holy_armor",
+      "name": "Святая броня",
+      "icon": "🦺✨",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 12,
+      "tags": [
+        "броня",
+        "святой"
+      ],
+      "description": "+4 защиты. В начале боя: +65 блок. +2 блок за «броня». Каждые 2.2 сек: тратит 2 блок.",
+      "buildHints": "Билд: анти-яд / святой · Пары: Holy Spear, святые аксессуары",
+      "flavor": "Щит тяжелее, чем кажется. Как дверь, которую ты закрывал, зная, что за ней кто-то стоит.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "holy_spear",
+      "name": "Святое копьё",
+      "icon": "🔱✨",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 18,
+      "tags": [
+        "оружие",
+        "святой",
+        "ближний",
+        "крафт"
+      ],
+      "description": "При попадании: снять 1 дебафф. Потратить 25 выносливости: неуязвимость 3с.",
+      "buildHints": "Крафт: Spear + Glowing Crown · Пары: Whetstone, Gloves of Haste",
+      "flavor": "Удар им не больнее обычного. Просто после удара дольше не слышишь собственный пульс.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "heart_container",
+      "name": "Сердечный сосуд",
+      "icon": "❤️",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 11,
+      "tags": [
+        "аксессуар",
+        "святой"
+      ],
+      "description": "Каждые 3с: +1 сердце. При 7 сердцах: +100 макс. HP и +2 регена (раз).",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Украшение с чужого запястья. Размер подходит. Это должно тревожить сильнее, чем тревожит.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "heart_of_darkness",
+      "name": "Сердце тьмы",
+      "icon": "🖤",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 19,
+      "tags": [
+        "аксессуар",
+        "тёмный",
+        "крафт"
+      ],
+      "description": "Каждые 4с: украсть 2 урона. При 7 сердцах: +100 HP и +4 регена. Быстрее за тёмные предметы.",
+      "buildHints": "Билд: Reaper дебаффы · Крафт: Heart Container + Corrupted Crystal",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "strong_demonic_flask",
+      "name": "Сильная демоническая склянка",
+      "icon": "🧪🔥",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 14,
+      "tags": [
+        "зелье",
+        "расходник",
+        "тёмный",
+        "крафт"
+      ],
+      "description": "Противник <50% или вы <25% HP: 8 маг. урона за дебафф.",
+      "buildHints": "Билд: Reaper дебаффы · Крафт: Demonic Flask + Corrupted Crystal",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "strong_divine_potion",
+      "name": "Сильное божественное зелье",
+      "icon": "🧪🌟",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 15,
+      "tags": [
+        "зелье",
+        "расходник",
+        "святой",
+        "крафт"
+      ],
+      "description": "При 10+ дебаффах: снять 10 и +8 к сильнейшему стаку.",
+      "buildHints": "Крафт: Divine Potion + Cauldron",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "strong_vampiric_potion",
+      "name": "Сильное вампирское зелье",
+      "icon": "🧪🦇",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 12,
+      "tags": [
+        "зелье",
+        "расходник",
+        "вампирский",
+        "крафт"
+      ],
+      "description": "Оба ниже 80% HP: +5 маны, 20 маг. урона с 100% вампиризмом.",
+      "buildHints": "Билд: вампиризм · Крафт: Vampiric Potion + Cauldron · Пары: Blood Amulet, Hungry Blade, Blood Goobert",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "strong_heroic_potion",
+      "name": "Сильное геройское зелье",
+      "icon": "🧪💪",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 9,
+      "tags": [
+        "зелье",
+        "расходник",
+        "крафт"
+      ],
+      "description": "При нулевой выносливости: +4 выносливости и +1 усиление.",
+      "buildHints": "Крафт: Heroic Potion + Banana",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "strong_health_potion",
+      "name": "Сильное зелье здоровья",
+      "icon": "🧪💗",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 8,
+      "tags": [
+        "зелье",
+        "расходник",
+        "природа",
+        "крафт"
+      ],
+      "description": "При HP ниже 50%: +24 HP, +3 регена и снять 4 дебаффа (раз).",
+      "buildHints": "Крафт: Health Potion + Healing Herbs",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "strong_stone_skin_potion",
+      "name": "Сильное зелье каменной кожи",
+      "icon": "🧪🛡️",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 9,
+      "tags": [
+        "зелье",
+        "расходник",
+        "крафт"
+      ],
+      "description": "При 45 блока: −15 HP → +35 регена и +2 усиления.",
+      "buildHints": "Крафт: Stone Skin Potion + 2× Stone",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "strong_mana_potion",
+      "name": "Сильное зелье маны",
+      "icon": "🧪✨",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 7,
+      "tags": [
+        "зелье",
+        "расходник",
+        "магия",
+        "крафт"
+      ],
+      "description": "При HP ниже 50%: +9 маны и +25 макс. HP (раз).",
+      "buildHints": "Билд: мана / магия · Крафт: Mana Potion + Cauldron · Пары: Mana Orb, Mana Potion, магические посохи",
+      "flavor": "Формула выучена не из книги — из сна, который повторяется каждый раз, когда засыпаешь в коридоре.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "strong_pestilence_flask",
+      "name": "Сильное ядовитое зелье",
+      "icon": "🧪💀",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 10,
+      "tags": [
+        "зелье",
+        "расходник",
+        "яд",
+        "крафт"
+      ],
+      "description": "Когда противник лечится: +3 яда. Каждые 3.5с: +3 яда.",
+      "buildHints": "Билд: яд / DoT · Крафт: Fly Agaric + Pestilence Flask · Пары: Pestilence Flask, Death Scythe, ядовитые питомцы",
+      "flavor": "Яд здесь не зелёный. Он прозрачный, как вода из крана в пустом доме.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "white_eyes_blue_dragon",
+      "name": "Синий глазами белый дракон",
+      "icon": "🃏🐉",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 5,
+      "tags": [
+        "карта",
+        "питомец",
+        "крафт"
+      ],
+      "description": "В начале боя: +12 удача. +5 удача за карту. В начале боя: +3 холод. +15% к урону. +25% урона на 4 сек.",
+      "buildHints": "Билд: питомцы",
+      "flavor": "Спутник не живой. Он просто ещё не понял, что давно умер — и потому остаётся рядом.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "glowing_crown",
+      "name": "Сияющая корона",
+      "icon": "👑✨",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 12,
+      "tags": [
+        "броня",
+        "шлем",
+        "святой"
+      ],
+      "description": "Потратить 10 выносливости — неуязвимость на 2 сек. Каждые 2.4 сек: снимает 1 негатива, лечит на 5 HP.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Броня не защищает от ударов. Она защищает от осознания, что удар уже был — просто ты ещё не упал.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "pan",
+      "name": "Сковородка",
+      "icon": "🍳",
+      "rarity": "common",
+      "rarityLabel": "Обычный",
+      "cost": 4,
+      "tags": [
+        "оружие",
+        "ближний",
+        "еда",
+        "крафт"
+      ],
+      "description": "+1 урона за каждый предмет «еда». Удар 5–6 урона.",
+      "buildHints": "Билд: еда / Pan · Ветка: Eggscalibur, Pandamonium, Shovel · Пары: любая еда (⭐)",
+      "flavor": "Железо, которое не ржавеет от времени — только от того, что на него смотрят слишком долго.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "crossblades",
+      "name": "Скрещённые клинки",
+      "icon": "⚔️",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 0,
+      "tags": [
+        "оружие",
+        "ближний"
+      ],
+      "description": "Удар 12–18 урона.",
+      "buildHints": "",
+      "flavor": "Удар им не больнее обычного. Просто после удара дольше не слышишь собственный пульс.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "busted_blade",
+      "name": "Сломанный клинок",
+      "icon": "⚔️💥",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 16,
+      "tags": [
+        "оружие",
+        "ближний",
+        "крафт"
+      ],
+      "description": "Боевая ярость: предметы на 40% быстрее. +1 урона за каждый бонус на панели.",
+      "buildHints": "Крафт: Impractically Large Greatsword + Forging Hammer",
+      "flavor": "Когда-то это было оружием. Теперь — улика. Кровь здесь не красная, а цвета старой плёнки.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "snow_stick",
+      "name": "Снежная палка",
+      "icon": "🪄❄️",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 8,
+      "tags": [
+        "оружие",
+        "лёд",
+        "ближний"
+      ],
+      "description": "При попадании: +3 яда. При попадании: +2 яда себе. Удар 6–9 урона.",
+      "buildHints": "Билд: лёд · Пары: Whetstone, Gloves of Haste",
+      "flavor": "Детская палочка из реквизита «Снежной королевы». После последнего спектакля её нашли в пустой раздевалке — рядом со сценарием, где финал вычёркнут. Машни: из наконечника сыплется не снег, а белая пыль больничного коридора.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "snowcake",
+      "name": "Снежный пирог",
+      "icon": "🍰❄️",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 6,
+      "tags": [
+        "еда",
+        "лёд"
+      ],
+      "description": "На 10% быстрее за «еда». Каждые 3 сек: +1 холод. замедление 12%.",
+      "buildHints": "Билд: лёд, еда / Pan",
+      "flavor": "Прикосновение ледянее, чем должно быть. Как ручка двери в подвал, которую никто не открывал годами.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "snowball",
+      "name": "Снежок",
+      "icon": "⛄",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 4,
+      "tags": [
+        "аксессуар",
+        "лёд",
+        "крафт"
+      ],
+      "description": "В начале боя: +2 холод. +8% к урону.",
+      "buildHints": "Билд: лёд",
+      "flavor": "Слеплен из снега у входа в заброшенную школу. Внутри — не вода, а крошечные бумажные обрывки с чужими именами.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "falcon_blade",
+      "name": "Соколиный клинок",
+      "icon": "🦅",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 0,
+      "tags": [
+        "оружие",
+        "ближний"
+      ],
+      "description": "Удар 6–10 урона.",
+      "buildHints": "",
+      "flavor": "Когда-то это было оружием. Теперь — улика. Кровь здесь не красная, а цвета старой плёнки.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "sun_armor",
+      "name": "Солнечная броня",
+      "icon": "☀️🦺",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 15,
+      "tags": [
+        "броня",
+        "огонь",
+        "святой",
+        "крафт"
+      ],
+      "description": "Каждые 3с: −1 блок → +12 HP и снять 2 дебаффа.",
+      "buildHints": "Билд: огонь / Pyromancer · Крафт: Holy Armor + 2× Flame · Пары: Draconic Orb, Oil Lamp, Flame-крафты",
+      "flavor": "Жар от него пахнет не дымом — горелой бумагой и чужими фотографиями.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "sun_shield",
+      "name": "Солнечный щит",
+      "icon": "🛡️☀️",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 14,
+      "tags": [
+        "щит",
+        "броня",
+        "огонь",
+        "крафт",
+        "святой"
+      ],
+      "description": "При 12 блока: 4 маг. урона. При блоке (30%): −14 урона, −0.7 выносливости.",
+      "buildHints": "Билд: огонь / Pyromancer · Крафт: Shield of Valor + 2× Flame · Пары: Draconic Orb, Oil Lamp, Flame-крафты",
+      "flavor": "Жар от него пахнет не дымом — горелой бумагой и чужими фотографиями.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "pine_protector",
+      "name": "Сосновый защитник",
+      "icon": "🛡️🌲",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 10,
+      "tags": [
+        "щит",
+        "броня",
+        "природа",
+        "крафт"
+      ],
+      "description": "При блоке: +8 HP и +2 регена. +1 защиты.",
+      "buildHints": "Крафт: Spiked Shield + Pineapple",
+      "flavor": "Броня не защищает от ударов. Она защищает от осознания, что удар уже был — просто ты ещё не упал.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "stable_recombobulator",
+      "name": "Стабильный перекомбобулятор",
+      "icon": "⚗️",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 6,
+      "tags": [
+        "аксессуар"
+      ],
+      "description": "+10% к урону. Каждые 2.5 сек: +1 к самому слабому бонусу, снимает 1 негатива. В магазине перерабатывает содержимое сумки в новые предметы (по их общей цене).",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Украшение с чужого запястья. Размер подходит. Это должно тревожить сильнее, чем тревожит.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "steel_goobert",
+      "name": "Стальной губерт",
+      "icon": "⚙️",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 17,
+      "tags": [
+        "питомец",
+        "ближний",
+        "крафт"
+      ],
+      "description": "После 6 активаций: оружие +2 урона и +16 блока.",
+      "buildHints": "Билд: питомцы · Крафт: Goobert + Hero Sword",
+      "flavor": "Глаза у него как у игрушки из автомата: стеклянные, и в них отражается не ты.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "starter_bag",
+      "name": "Сумка",
+      "icon": "👜",
+      "rarity": "common",
+      "rarityLabel": "Обычный",
+      "cost": 0,
+      "tags": [
+        "сумка"
+      ],
+      "description": "",
+      "buildHints": "",
+      "flavor": "Внутри больше места, чем снаружи. Как комната, в которую ты заходишь и понимаешь — выхода не было никогда.",
+      "craftOnly": false,
+      "isContainer": true
+    },
+    {
+      "id": "ranger_bag",
+      "name": "Сумка следопыта",
+      "icon": "🏹👜",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 16,
+      "tags": [
+        "сумка",
+        "ranger",
+        "дальний"
+      ],
+      "description": "Внутри: +10% крит и +3% за стак.",
+      "buildHints": "Билд: Ranger · Кладём Shortbow / стрелы внутрь",
+      "flavor": "Внутри больше места, чем снаружи. Как комната, в которую ты заходишь и понимаешь — выхода не было никогда.",
+      "craftOnly": false,
+      "isContainer": true
+    },
+    {
+      "id": "storage_chest",
+      "name": "Сундук",
+      "icon": "📦",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 7,
+      "tags": [
+        "сумка"
+      ],
+      "description": "+4 слотов рюкзака.",
+      "buildHints": "",
+      "flavor": "Внутри больше места, чем снаружи. Как комната, в которую ты заходишь и понимаешь — выхода не было никогда.",
+      "craftOnly": false,
+      "isContainer": true
+    },
+    {
+      "id": "mana_orb",
+      "name": "Сфера маны",
+      "icon": "🔮",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 16,
+      "tags": [
+        "магия"
+      ],
+      "description": "Повтор магии (100%). Магический удар 2–7 урона.",
+      "buildHints": "",
+      "flavor": "Формула выучена не из книги — из сна, который повторяется каждый раз, когда засыпаешь в коридоре.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "mana_orb_charm",
+      "name": "Сфера маны (талисман)",
+      "icon": "🔮",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 6,
+      "tags": [
+        "аксессуар",
+        "магия",
+        "крафт"
+      ],
+      "description": "+10% к магическому урону. Потратить 35 выносливости — неуязвимость на 2 сек.",
+      "buildHints": "Билд: мана · Крафт: Magic Staff, Spectral Dagger · Пары: посохи, мана-зелья",
+      "flavor": "Формула выучена не из книги — из сна, который повторяется каждый раз, когда засыпаешь в коридоре.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "happy_bomb",
+      "name": "Счастливая бомба",
+      "icon": "🎉",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 7,
+      "tags": [
+        "аксессуар"
+      ],
+      "description": "Каждые 12 сек: наносит 20 магического урона. +15% урона на 4 сек.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Украшение с чужого запястья. Размер подходит. Это должно тревожить сильнее, чем тревожит.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "lucky_piggy",
+      "name": "Счастливая копилка",
+      "icon": "🐷",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 7,
+      "tags": [
+        "аксессуар",
+        "удача",
+        "сокровище",
+        "крафт"
+      ],
+      "description": "В начале боя: +2 удачи. Эффекты на 12% чаще.",
+      "buildHints": "Билд: крит / Luck, экономика / золото · Крафт: Piggybank + 2× Lucky Clover",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "lucky_clover",
+      "name": "Счастливый клевер",
+      "icon": "🍀",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 2,
+      "tags": [
+        "аксессуар",
+        "удача",
+        "ranger",
+        "природа"
+      ],
+      "description": "В начале боя: +1 удача. +8% к урону.",
+      "buildHints": "Билд: крит / Ranger · Крафт: Fortuna's Hope/Grace, Lucky Piggy",
+      "flavor": "Украшение с чужого запястья. Размер подходит. Это должно тревожить сильнее, чем тревожит.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "cheese",
+      "name": "Сыр",
+      "icon": "🧀",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 8,
+      "tags": [
+        "еда",
+        "питомец"
+      ],
+      "description": "Каждые 3.8 сек: +10 к макс. здоровью, даёт случайное усиление. Лечение 3 HP.",
+      "buildHints": "Билд: питомцы, еда / Pan",
+      "flavor": "На вкус как память. Неприятная. Настоящая. Ты всё равно проглотишь.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "sir_sand",
+      "name": "Сэр Песок",
+      "icon": "🏖️",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 5,
+      "tags": [
+        "аксессуар",
+        "дебафф",
+        "ближний",
+        "крафт"
+      ],
+      "description": "В начале боя: получает на 25% меньше урона на 7 сек. В начале боя: +3 яда. +8% к урону.",
+      "buildHints": "Крафт: Pocket Sand + Hero Sword",
+      "flavor": "Предмет, который не лечит. Он только помогает болезни найти дорогу быстрее.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "lucky_charm",
+      "name": "Талисман",
+      "icon": "🍀",
+      "rarity": "common",
+      "rarityLabel": "Обычный",
+      "cost": 2,
+      "tags": [
+        "универсальный",
+        "удача",
+        "аксессуар"
+      ],
+      "description": "+35 удачи.",
+      "buildHints": "",
+      "flavor": "Инструмент из ящика «на всякий случай». В этом городе «всякий случай» — это каждый день.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "dancing_dragon",
+      "name": "Танцующий дракон",
+      "icon": "🐉💃",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 12,
+      "tags": [
+        "питомец",
+        "музыка"
+      ],
+      "description": "В начале боя: +1 усиление. В начале боя: +1 удача. +8% к урону. +1 урона за каждый усиление.",
+      "buildHints": "Билд: питомцы",
+      "flavor": "Глаза у него как у игрушки из автомата: стеклянные, и в них отражается не ты.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "darkest_lotus",
+      "name": "Тёмнейший лотос",
+      "icon": "🪷🌑",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 5,
+      "tags": [
+        "карта",
+        "яд",
+        "тёмный",
+        "крафт"
+      ],
+      "description": "+4 усиление за карту. В начале боя: +4 усиление. В начале боя: крадёт 3 бонус у врага. +25% урона на 4 сек.",
+      "buildHints": "Билд: яд / DoT, Reaper дебаффы · Пары: Pestilence Flask, Death Scythe, ядовитые питомцы",
+      "flavor": "Яд здесь не зелёный. Он прозрачный, как вода из крана в пустом доме.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "darksaber",
+      "name": "Тёмный меч",
+      "icon": "⚔️🌑",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 16,
+      "tags": [
+        "оружие",
+        "дебафф",
+        "тёмный",
+        "крафт",
+        "ближний"
+      ],
+      "description": "При атаке: потратить 1 ману → +1 яд противнику. +0.5 урона за каждый дебафф противника.",
+      "buildHints": "Билд: Reaper дебаффы · Крафт: Lightsaber + Corrupted Crystal · Пары: Whetstone, Gloves of Haste",
+      "flavor": "Железо, которое не ржавеет от времени — только от того, что на него смотрят слишком долго.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "dark_lantern",
+      "name": "Тёмный фонарь",
+      "icon": "🏮",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 10,
+      "tags": [
+        "аксессуар",
+        "огонь",
+        "тёмный",
+        "крафт"
+      ],
+      "description": "В начале боя: −50% HP. Перед поражением: перерождение с 50% HP, неуязвимость 1.5с, урон и яд по тегам огня.",
+      "buildHints": "Билд: огонь / Pyromancer, Reaper дебаффы · Крафт: Oil Lamp + Corrupted Crystal · Пары: Draconic Orb, Oil Lamp, Flame-крафты",
+      "flavor": "Огонь не освещает. Он показывает то, что стояло в темноте, пока ты отводил взгляд.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "belladonnas_shade",
+      "name": "Тень белладонны",
+      "icon": "🏹☠️",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 11,
+      "tags": [
+        "оружие",
+        "яд",
+        "дальний",
+        "крафт"
+      ],
+      "description": "При попадании: 70% шанс +2 яда.",
+      "buildHints": "Билд: яд / DoT, Ranger дальний бой · Крафт: Shortbow + Pestilence Flask · Пары: Pestilence Flask, Death Scythe, ядовитые питомцы",
+      "flavor": "Когда-то это было оружием. Теперь — улика. Кровь здесь не красная, а цвета старой плёнки.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "tim",
+      "name": "Тим",
+      "icon": "🐢",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 10,
+      "tags": [
+        "питомец"
+      ],
+      "description": "При попадании: 50% крадёт 1 бонус у врага. +5% к урону. Если у противника меньше 30% здоровья: лечит на 50 HP, +5 к самому сильному бонусу, один раз за бой.",
+      "buildHints": "Билд: питомцы",
+      "flavor": "Глаза у него как у игрушки из автомата: стеклянные, и в них отражается не ты.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "axe",
+      "name": "Топор",
+      "icon": "🪓",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 6,
+      "tags": [
+        "оружие",
+        "ближний",
+        "крафт"
+      ],
+      "description": "При попадании: +1 усиление. Удар 3–6 урона.",
+      "buildHints": "Пары: Whetstone, Gloves of Haste",
+      "flavor": "Удар им не больнее обычного. Просто после удара дольше не слышишь собственный пульс. Оставлено для тех, кто ещё помнит своё имя — топор не прощает забывчивых.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "shell_totem",
+      "name": "Тотем раковины",
+      "icon": "🗿",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 5,
+      "tags": [
+        "аксессуар",
+        "крафт",
+        "святой"
+      ],
+      "description": "На 15% быстрее за «святой». Каждые 3.4 сек: лечит на 8 HP, если здоровье низкое.",
+      "buildHints": "Крафт: Shiny Shell + Shell Totem",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "whetstone",
+      "name": "Точильный камень",
+      "icon": "🪨",
+      "rarity": "common",
+      "rarityLabel": "Обычный",
+      "cost": 4,
+      "tags": [
+        "аксессуар",
+        "крафт",
+        "универсальный"
+      ],
+      "description": "В начале боя: оружие +1 урона.",
+      "buildHints": "Универсальный буст оружия · Крафт: Hero Sword · Пары: любое оружие (⭐)",
+      "flavor": "Камень из мастерской, где давно не включают свет. Точишь им оружие — и слышишь, как за стеной кто-то тоже точит.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "unsettling_presence",
+      "name": "Тревожное присутствие",
+      "icon": "👁️",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 10,
+      "tags": [
+        "аксессуар"
+      ],
+      "description": "Лечение наносит 30% магического урона. Каждые 3 сек: лечит на 12 HP, тратит 1 случайный бонус. замедление 8%.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Украшение с чужого запястья. Размер подходит. Это должно тревожить сильнее, чем тревожит.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "ace_of_spades",
+      "name": "Туз пик",
+      "icon": "🃏♠️",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 3,
+      "tags": [
+        "карта",
+        "крафт"
+      ],
+      "description": "При попадании: +15% урона на 4 сек. +25% урона на 4 сек.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "pumpkin",
+      "name": "Тыква",
+      "icon": "🎃",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 8,
+      "tags": [
+        "еда",
+        "огонь",
+        "крафт"
+      ],
+      "description": "50% оглушение. При усталости: +10 жара. Быстрее за еду.",
+      "buildHints": "Билд: огонь / Pyromancer, еда / Pan · Пары: Draconic Orb, Oil Lamp, Flame-крафты · Синергия: стан → Dagger extra attack",
+      "flavor": "Жар от него пахнет не дымом — горелой бумагой и чужими фотографиями.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "storm_burst",
+      "name": "Удар бури",
+      "icon": "🌩️",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 5,
+      "tags": [
+        "оружие",
+        "магия"
+      ],
+      "description": "При активации: При активации: тратит 1 мана, следующая атака +8 урона и Магический удар 1–4 урона.",
+      "buildHints": "",
+      "flavor": "Удар им не больнее обычного. Просто после удара дольше не слышишь собственный пульс.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "improved_whetstone",
+      "name": "Улучшенный точильный камень",
+      "icon": "🪨✨",
+      "rarity": "uncommon",
+      "rarityLabel": "Необычный",
+      "cost": 5,
+      "tags": [
+        "аксессуар",
+        "крафт",
+        "универсальный"
+      ],
+      "description": "В начале боя: оружие +1 урона. Больше слотов для соседей.",
+      "buildHints": "Крафт: Whetstone + Forging Hammer",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "utility_pouch",
+      "name": "Утилитарный мешочек",
+      "icon": "👝⚔️",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 18,
+      "tags": [
+        "сумка"
+      ],
+      "description": "+8 слотов рюкзака. +30% к урону. Предметы перезаряжаются на 30% медленнее. Лечит на 35% от нанесённого урона. Каждые 5 сек: ускорить предмет на 35%.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Внутри больше места, чем снаружи. Как комната, в которую ты заходишь и понимаешь — выхода не было никогда. Оставлено для тех, кто ещё помнит своё имя — утилитарный мешочек не прощает забывчивых.",
+      "craftOnly": false,
+      "isContainer": true
+    },
+    {
+      "id": "torch",
+      "name": "Факел",
+      "icon": "🔦",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 5,
+      "tags": [
+        "аксессуар",
+        "огонь",
+        "ближний",
+        "крафт"
+      ],
+      "description": "При попадании: +1 усиление.",
+      "buildHints": "Билд: огонь / Pyromancer · Крафт: Wooden Sword + Lump of Coal · Пары: Draconic Orb, Oil Lamp, Flame-крафты",
+      "flavor": "Жар от него пахнет не дымом — горелой бумагой и чужими фотографиями.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "fanfare",
+      "name": "Фанфары",
+      "icon": "🎺",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 7,
+      "tags": [
+        "аксессуар",
+        "музыка"
+      ],
+      "description": "Каждые 3 сек: −1 выносливости врагу, оглушение 1с каждые 5 тика.",
+      "buildHints": "Синергия: стан → Dagger extra attack",
+      "flavor": "Украшение с чужого запястья. Размер подходит. Это должно тревожить сильнее, чем тревожит.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "phoenix",
+      "name": "Феникс",
+      "icon": "🔥🐦",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 10,
+      "tags": [
+        "питомец",
+        "крафт"
+      ],
+      "description": "При атаке: −10 HP. Перерождение с 6% HP.",
+      "buildHints": "Билд: питомцы",
+      "flavor": "Спутник не живой. Он просто ещё не понял, что давно умер — и потому остаётся рядом.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "flute",
+      "name": "Флейта",
+      "icon": "🎵",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 6,
+      "tags": [
+        "аксессуар",
+        "музыка"
+      ],
+      "description": "На 10% быстрее за соседа. Каждые 4.7 сек: случайно: +14 блока, +2 выносливости или +2 удача.",
+      "buildHints": "Билд: Musical · Пары: Fanfare, Dancing Dragon",
+      "flavor": "Украшение с чужого запястья. Размер подходит. Это должно тревожить сильнее, чем тревожит.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "relic_case",
+      "name": "Футляр реликвии",
+      "icon": "📿👜",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 12,
+      "tags": [
+        "сумка"
+      ],
+      "description": "+4 слотов рюкзака. Каждые 2.5 сек: оружие внутри +1 урона.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Внутри больше места, чем снаружи. Как комната, в которую ты заходишь и понимаешь — выхода не было никогда.",
+      "craftOnly": false,
+      "isContainer": true
+    },
+    {
+      "id": "healing_herb",
+      "name": "Целебная трава",
+      "icon": "🌿",
+      "rarity": "common",
+      "rarityLabel": "Обычный",
+      "cost": 2,
+      "tags": [
+        "еда",
+        "природа",
+        "лечение"
+      ],
+      "description": "Лечение 5 HP.",
+      "buildHints": "",
+      "flavor": "Запах домашний. Но дома давно нет — только эта комната и твой голод, который не утолняется.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "healing_herbs",
+      "name": "Целебные травы",
+      "icon": "🌿",
+      "rarity": "common",
+      "rarityLabel": "Обычный",
+      "cost": 4,
+      "tags": [
+        "еда",
+        "природа"
+      ],
+      "description": "В начале боя: +2 удача. +8% к урону.",
+      "buildHints": "Билд: еда / Pan",
+      "flavor": "На вкус как память. Неприятная. Настоящая. Ты всё равно проглотишь.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "chain_whip",
+      "name": "Цепной кнут",
+      "icon": "⛓️🪢",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 11,
+      "tags": [
+        "оружие",
+        "ближний",
+        "шипы",
+        "крафт"
+      ],
+      "description": "При попадании: +12 HP и +1 шип. +0.6 урона за дебафф противника.",
+      "buildHints": "Крафт: Thorn Whip + Forging Hammer · Berserker",
+      "flavor": "Когда-то это было оружием. Теперь — улика. Кровь здесь не красная, а цвета старой плёнки.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "offering_bowl",
+      "name": "Чаша подношений",
+      "icon": "🥣",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 8,
+      "tags": [
+        "сумка",
+        "аксессуар",
+        "дальний"
+      ],
+      "description": "+4 слотов рюкзака. В начале боя: +1 удача. +4 слота в контейнере. Содержимое можно переработать в магазине. В магазине превращает содержимое контейнера в пламя.",
+      "buildHints": "Билд: Ranger дальний бой · Пары: Lucky Clover, Acorn Collar, Fortuna-ветка",
+      "flavor": "Украшение с чужого запястья. Размер подходит. Это должно тревожить сильнее, чем тревожит.",
+      "craftOnly": false,
+      "isContainer": true
+    },
+    {
+      "id": "skull_badge",
+      "name": "Черепной значок",
+      "icon": "💀",
+      "rarity": "unique",
+      "rarityLabel": "Уникальный",
+      "cost": 5,
+      "tags": [
+        "аксессуар",
+        "яд",
+        "крафт"
+      ],
+      "description": "Каждые 1.5 сек: отравляет врага (1). Накладывает 1 яда. В магазине чаще встречаются предметы: жнец.",
+      "buildHints": "Билд: яд / DoT · Пары: Pestilence Flask, Death Scythe, ядовитые питомцы",
+      "flavor": "Капля на металле расползается медленно — как пятно на стене, которое появляется каждую ночь.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "blueberries",
+      "name": "Черника",
+      "icon": "🫐",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 2,
+      "tags": [
+        "еда",
+        "магия"
+      ],
+      "description": "Каждые 3.5 сек: +1 к самому слабому бонусу (удвоенная мана при 10+). Лечение 2 HP.",
+      "buildHints": "Билд: мана / магия, еда / Pan · Пары: Mana Orb, Mana Potion, магические посохи",
+      "flavor": "Магия здесь не светится. Она шепчет и портит воздух, как плесень в вентиляции.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "garlic",
+      "name": "Чеснок",
+      "icon": "🧄",
+      "rarity": "common",
+      "rarityLabel": "Обычный",
+      "cost": 2,
+      "tags": [
+        "еда",
+        "яд",
+        "природа"
+      ],
+      "description": "Каждые 4 сек: +3 блок, 30% снимает 1 негатива. Лечение 2 HP.",
+      "buildHints": "Билд: яд / DoT, еда / Pan · Пары: Pestilence Flask, Death Scythe, ядовитые питомцы",
+      "flavor": "Головка, найденная в ящике стола санитарки. Запах не отталкивает нежить — он напоминает, что ты всё ещё дышишь в этом месте.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "cap_of_discomfort",
+      "name": "Шапка дискомфорта",
+      "icon": "🧢😣",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 14,
+      "tags": [
+        "броня",
+        "шлем",
+        "тёмный",
+        "крафт"
+      ],
+      "description": "В начале боя: −25% получаемого урона на 5с.",
+      "buildHints": "Билд: Reaper дебаффы · Крафт: Cap of Resilience + Corrupted Crystal",
+      "flavor": "Броня не защищает от ударов. Она защищает от осознания, что удар уже был — просто ты ещё не упал.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "doom_cap",
+      "name": "Шапка рока",
+      "icon": "🎩☠️",
+      "rarity": "godly",
+      "rarityLabel": "Божественный",
+      "cost": 10,
+      "tags": [
+        "броня",
+        "шлем",
+        "яд",
+        "тёмный",
+        "крафт"
+      ],
+      "description": "Каждые 3.1с: +3 яда.",
+      "buildHints": "Билд: яд / DoT, Reaper дебаффы · Пары: Pestilence Flask, Death Scythe, ядовитые питомцы",
+      "flavor": "Яд здесь не зелёный. Он прозрачный, как вода из крана в пустом доме.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "cap_of_resilience",
+      "name": "Шапка стойкости",
+      "icon": "🧢💪",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 7,
+      "tags": [
+        "броня",
+        "шлем",
+        "крафт"
+      ],
+      "description": "В начале боя: получает на 25% меньше урона на 3 сек. +8% к урону.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Щит тяжелее, чем кажется. Как дверь, которую ты закрывал, зная, что за ней кто-то стоит.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "shelly",
+      "name": "Шелли",
+      "icon": "🐚",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 6,
+      "tags": [
+        "питомец",
+        "святой"
+      ],
+      "description": "На 25% чаще срабатывают эффекты предметов. На 20% быстрее за «зелья». Каждые 13 сек: снимает 6 негатива, лечит на 40 HP.",
+      "buildHints": "Билд: питомцы",
+      "flavor": "Спутник не живой. Он просто ещё не понял, что давно умер — и потому остаётся рядом.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "belladonnas_whisper",
+      "name": "Шёпот белладонны",
+      "icon": "🏹🌿",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 13,
+      "tags": [
+        "оружие",
+        "яд",
+        "дальний",
+        "крафт"
+      ],
+      "description": "При попадании: +1 яд. +0.5 урона за дебафф противника.",
+      "buildHints": "Билд: яд / DoT, Ranger дальний бой · Крафт: Bow and Arrow + Pestilence Flask · Пары: Pestilence Flask, Death Scythe, ядовитые питомцы",
+      "flavor": "Удар им не больнее обычного. Просто после удара дольше не слышишь собственный пульс.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "thorn_whip",
+      "name": "Шипастый кнут",
+      "icon": "🪢🌵",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 8,
+      "tags": [
+        "оружие",
+        "ближний",
+        "шипы",
+        "крафт"
+      ],
+      "description": "При попадании: +1 шип. +1 урона за каждый шип. Удар 4–9 урона.",
+      "buildHints": "Билд: шипы · Крафт: Bloodthorne, Flame Whip · Пары: Walrus Tusk",
+      "flavor": "Железо, которое не ржавеет от времени — только от того, что на него смотрят слишком долго.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "spiked_collar",
+      "name": "Шипастый ошейник",
+      "icon": "⭕",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 6,
+      "tags": [
+        "аксессуар",
+        "шипы",
+        "крафт"
+      ],
+      "description": "В начале боя: +1 шип. +2 защиты.",
+      "buildHints": "Билд: шипы / отражение",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "spiked_staff",
+      "name": "Шипастый посох",
+      "icon": "🪄🌵",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 12,
+      "tags": [
+        "оружие",
+        "магия",
+        "ближний",
+        "шипы",
+        "крафт"
+      ],
+      "description": "При атаке: −3 маны → +6 урона, +4 шипа, +1 урона навсегда и +2 усиления.",
+      "buildHints": "Крафт: Magic Staff + Spiked Collar · Berserker / шипы",
+      "flavor": "Удар им не больнее обычного. Просто после удара дольше не слышишь собственный пульс. Оставлено для тех, кто ещё помнит своё имя — шипастый посох не прощает забывчивых.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "spiked_shield",
+      "name": "Шипастый щит",
+      "icon": "🛡️🌵",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 8,
+      "tags": [
+        "щит",
+        "броня",
+        "шипы",
+        "крафт"
+      ],
+      "description": "При блоке: 30% шанс +1 шип.",
+      "buildHints": "Билд: шипы / отражение · Крафт: Wooden Buckler + Walrus Tusk",
+      "flavor": "Щит тяжелее, чем кажется. Как дверь, которую ты закрывал, зная, что за ней кто-то стоит.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "the_fool",
+      "name": "Шут",
+      "icon": "🃏🤡",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 1,
+      "tags": [
+        "карта",
+        "крафт"
+      ],
+      "description": "В начале боя: +1 удача. +10 удачи. +25% урона на 4 сек.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Собран из обломков чужих вещей. Здесь всё когда-нибудь становится частью чего-то худшего.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "shield_of_valor",
+      "name": "Щит доблести",
+      "icon": "🛡️⭐",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 11,
+      "tags": [
+        "щит",
+        "броня",
+        "крафт",
+        "святой"
+      ],
+      "description": "При блоке или уклонении (30% шанс): блокирует 14 урона, забирает 0.7 выносливости у врага. +2 защиты. +30% эффективности блока.",
+      "buildHints": "Универсальный / автономный",
+      "flavor": "Щит тяжелее, чем кажется. Как дверь, которую ты закрывал, зная, что за ней кто-то стоит.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "apple",
+      "name": "Яблоко",
+      "icon": "🍎",
+      "rarity": "common",
+      "rarityLabel": "Обычный",
+      "cost": 1,
+      "tags": [
+        "еда",
+        "лечение"
+      ],
+      "description": "Лечение 3 HP.",
+      "buildHints": "",
+      "flavor": "Запах домашний. Но дома давно нет — только эта комната и твой голод, который не утолняется.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "poison_vial",
+      "name": "Яд",
+      "icon": "☠️",
+      "rarity": "common",
+      "rarityLabel": "Обычный",
+      "cost": 2,
+      "tags": [
+        "яд",
+        "расходник"
+      ],
+      "description": "Накладывает 1 яда.",
+      "buildHints": "",
+      "flavor": "Капля на металле расползается медленно — как пятно на стене, которое появляется каждую ночь.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "pestilence_flask",
+      "name": "Ядовитое зелье",
+      "icon": "🧪☠️",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 7,
+      "tags": [
+        "зелье",
+        "яд",
+        "расходник",
+        "крафт"
+      ],
+      "description": "Когда враг лечится: +1 яда ему. Накладывает 3 яда.",
+      "buildHints": "Билд: яд · Крафт: Poison Dagger / Spear · Пары: Death Scythe, яд-питомцы",
+      "flavor": "Яд здесь не зелёный. Он прозрачный, как вода из крана в пустом доме.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "poison_spear",
+      "name": "Ядовитое копьё",
+      "icon": "🔱☠️",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 13,
+      "tags": [
+        "оружие",
+        "яд",
+        "ближний",
+        "крафт"
+      ],
+      "description": "При попадании: +3 яда, +2 себе, снять 6 блока.",
+      "buildHints": "Билд: яд / DoT · Крафт: Spear + Pestilence Flask · Пары: Pestilence Flask, Death Scythe, ядовитые питомцы",
+      "flavor": "Удар им не больнее обычного. Просто после удара дольше не слышишь собственный пульс.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "poison_goobert",
+      "name": "Ядовитый губерт",
+      "icon": "🟢☠️",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 12,
+      "tags": [
+        "питомец",
+        "яд",
+        "крафт"
+      ],
+      "description": "После 5 активаций: +9 HP и +4 яда.",
+      "buildHints": "Билд: яд / DoT, питомцы · Крафт: Goobert + 2× Fly Agaric · Пары: Pestilence Flask, Death Scythe, ядовитые питомцы",
+      "flavor": "Капля на металле расползается медленно — как пятно на стене, которое появляется каждую ночь.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "poison_dagger",
+      "name": "Ядовитый кинжал",
+      "icon": "🗡️",
+      "rarity": "common",
+      "rarityLabel": "Обычный",
+      "cost": 3,
+      "tags": [
+        "оружие",
+        "яд",
+        "ближний"
+      ],
+      "description": "При попадании: +2 яда. Дополнительная атака по оглушённому противнику. Удар 1–2 урона.",
+      "buildHints": "",
+      "flavor": "Клинок из ящика «острые предметы» в кабинете директора. Ржавчина на стали — не самая тёмная вещь, что с него стекает.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "eggscalibur",
+      "name": "Яйце-экскалибур",
+      "icon": "🥚",
+      "rarity": "legendary",
+      "rarityLabel": "Легендарный",
+      "cost": 0,
+      "tags": [
+        "оружие",
+        "ближний"
+      ],
+      "description": "Удар 14–22 урона.",
+      "buildHints": "",
+      "flavor": "Железо, которое не ржавеет от времени — только от того, что на него смотрят слишком долго.",
+      "craftOnly": true,
+      "isContainer": false
+    },
+    {
+      "id": "box_of_riches",
+      "name": "Ящик богатства",
+      "icon": "📦",
+      "rarity": "rare",
+      "rarityLabel": "Редкий",
+      "cost": 5,
+      "tags": [
+        "аксессуар",
+        "сокровище"
+      ],
+      "description": "В магазине даёт сколотый камень. В магазине чаще встречаются предметы: камни.",
+      "buildHints": "Билд: экономика / золото",
+      "flavor": "Украшение с чужого запястья. Размер подходит. Это должно тревожить сильнее, чем тревожит.",
+      "craftOnly": false,
+      "isContainer": false
+    },
+    {
+      "id": "box_of_prosperity",
+      "name": "Ящик процветания",
+      "icon": "📦",
+      "rarity": "epic",
+      "rarityLabel": "Эпический",
+      "cost": 5,
+      "tags": [
+        "сумка",
+        "сокровище"
+      ],
+      "description": "Рюкзак 4 слота, внутри 2+ Уникальный/Божественный — сколотый камень за раунд",
+      "buildHints": "Билд: экономика / камни · Крафт: Box of Riches + Maneki-neko / Hammer",
+      "flavor": "Внутри больше места, чем снаружи. Как комната, в которую ты заходишь и понимаешь — выхода не было никогда.",
+      "craftOnly": true,
+      "isContainer": true
+    }
+  ]
+}

@@ -77,6 +77,12 @@ declare function tryResolveCrafting(
 ): { items: object[]; crafted: import("./game").CraftRecipe[] };
 declare function getRecipeForOutput(itemId: string): import("./game").CraftRecipe | null;
 declare function getCraftTooltipLines(itemId: string, side?: string | null): object[];
+declare function getCraftTooltipMeta(itemId: string, side?: string | null): {
+  buttonLabel: string;
+  buttonHint: string;
+  lines: object[];
+  recipeCount: number;
+} | null;
 declare function isCraftIngredient(itemId: string): boolean;
 declare function getAllCraftRecipes(): import("./game").CraftRecipe[];
 declare function refreshCraftRecipesForCurrentMode(): void;

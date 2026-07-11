@@ -26,7 +26,7 @@
   filter: grayscale(0.35) saturate(0.75);
 }
 
-.item-hint-card--locked .item-hint-card__emoji {
+.item-hint-card--locked .item-hint-card__emoji--primary {
   opacity: 0.55;
 }
 

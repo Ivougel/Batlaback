@@ -198,6 +198,8 @@ function cancelScheduledTooltipHide() {
 function hideSidebarTooltip() {
   cancelScheduledTooltipHide();
   sidebarTooltipPinned = false;
+  if (typeof hideItemHintSecondaryOverlays === "function") hideItemHintSecondaryOverlays();
+  else if (typeof hideItemHintCraftOverlay === "function") hideItemHintCraftOverlay();
   if (typeof clearDomSparkleHighlights === "function") clearDomSparkleHighlights();
   const el = document.getElementById("sidebar-tooltip");
   const wasCombatFeed = sidebarTooltipSource === "combat-feed";
@@ -679,6 +681,12 @@ function bindGlobalTooltipDismiss() {
     if (e.pointerType === "mouse" && e.button !== 0) return;
     if (isSyntheticMouseFromTouch()) return;
     if (!isSidebarTooltipVisible()) return;
+    if (!e.target.closest(".item-hint-card__tag-icon") && typeof hideItemHintTagCaptions === "function") {
+      hideItemHintTagCaptions();
+    }
+    if (e.target.closest(".item-hint-card__edge-btn, .item-hint-card__icon-btn, .item-hint-card__tag-icon, .item-info-popup--in-card, .item-craft-popup--in-card")) return;
+    if (typeof hideItemHintSecondaryOverlays === "function" && hideItemHintSecondaryOverlays()) return;
+    if (typeof hideItemHintCraftOverlay === "function" && hideItemHintCraftOverlay()) return;
     if (e.target.closest("#sidebar-tooltip, #prep-tooltip-dock")) return;
     dismissSidebarTooltipFromPointer(e);
   }, true);
@@ -1167,6 +1175,252 @@ function filterRedundantTooltipText(text, canonicalTexts) {
   return /[.!?]$/.test(text.trim()) ? `${joined}.` : joined;
 }
 
+const TOOLTIP_RARITY_LABELS = {
+  common: "Обычный",
+  uncommon: "Необычный",
+  rare: "Редкий",
+  epic: "Эпический",
+  legendary: "Легендарный",
+  godly: "Божественный",
+  unique: "Уникальный",
+};
+
+const TOOLTIP_TAG_ICONS = {
+  food: "🍖",
+  nature: "🌱",
+  potion: "🧪",
+  poison: "☠",
+  weapon: "⚔",
+  armor: "🛡",
+  shield: "🛡",
+  magic: "✨",
+  gem: "💎",
+  pet: "🐾",
+  fire: "🔥",
+  cold: "❄",
+  luck: "🍀",
+  craft: "⚗️",
+  consumable: "🧪",
+  utility: "🔧",
+  heal: "❤",
+  card: "🃏",
+};
+
+function pushTooltipInfoEntry(entries, seen, key, entry) {
+  if (!entry || seen.has(key)) return;
+  seen.add(key);
+  entries.push(entry);
+}
+
+function buildItemTooltipFooterMeta(def, context = "field") {
+  if (!def) return null;
+  const level = typeof ItemUnlockTiers !== "undefined" ? ItemUnlockTiers.getMinLevel(def.id) : null;
+  const tags = (def.tags || []).slice(0, 6).map((tag) => {
+    const glossary = typeof getItemTagGlossaryEntry === "function" ? getItemTagGlossaryEntry(tag) : null;
+    const rawLabel = typeof formatTagLabel === "function" ? formatTagLabel(tag) : tag;
+    const caption = glossary?.title
+      || (rawLabel ? rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1) : tag);
+    return {
+      id: tag,
+      icon: TOOLTIP_TAG_ICONS[tag] || "🏷",
+      label: caption,
+      caption,
+    };
+  });
+  return {
+    rarityLabel: TOOLTIP_RARITY_LABELS[def.rarity] || def.rarity || "Обычный",
+    level,
+    tags,
+  };
+}
+
+function buildItemTooltipInfoEntries(def, contentItem, rotation, context, opts, detailLines = []) {
+  const entries = [];
+  const seen = new Set();
+
+  const tooltipDescription = typeof getItemTooltipDescription === "function"
+    ? getItemTooltipDescription(def)
+    : def.description;
+  if (typeof collectMechanicTagsFromText === "function") {
+    collectMechanicTagsFromText(tooltipDescription).forEach((label) => {
+      const hint = typeof getMechanicTagHint === "function" ? getMechanicTagHint(label) : null;
+      if (!hint) return;
+      pushTooltipInfoEntry(entries, seen, `mechanic:${label.toLowerCase()}`, {
+        icon: typeof getMechanicTagIcon === "function" ? getMechanicTagIcon(label) : "❓",
+        title: label,
+        desc: hint,
+        kind: "mechanic",
+      });
+    });
+  }
+
+  (def.tags || []).forEach((tag) => {
+    const glossary = typeof getItemTagGlossaryEntry === "function" ? getItemTagGlossaryEntry(tag) : null;
+    if (!glossary) return;
+    pushTooltipInfoEntry(entries, seen, `tag:${tag}`, {
+      icon: glossary.icon,
+      title: glossary.title,
+      desc: glossary.desc,
+      kind: "tag",
+    });
+  });
+
+  if (typeof isCraftIngredient === "function" && isCraftIngredient(def.id)) {
+    pushTooltipInfoEntry(entries, seen, "ingredient", {
+      icon: "⚗️",
+      title: "Ингредиент",
+      desc: "Используется в рецептах крафта с другими предметами.",
+      kind: "tag",
+    });
+  }
+
+  detailLines.forEach((line, index) => {
+    if (!line || line.sep || line.style === "title") return;
+    const text = line.text || line.html;
+    if (!text) return;
+    pushTooltipInfoEntry(entries, seen, `detail:${index}:${String(text).slice(0, 24)}`, {
+      icon: line.style === "label" ? "📋" : "ℹ️",
+      title: line.style === "label" ? String(line.text || "Подробнее") : "Подробнее",
+      descHtml: line.html || null,
+      desc: line.html ? null : String(line.text || ""),
+      kind: "detail",
+      tone: line.style || "normal",
+    });
+  });
+
+  if (context === "field" && contentItem?.runtime?.activeSynergies?.length) {
+    const activeLines = typeof formatActiveSynergyTooltipLines === "function"
+      ? formatActiveSynergyTooltipLines(contentItem.runtime.activeSynergies)
+      : contentItem.runtime.activeSynergies.map((s) => s.desc);
+    activeLines.forEach((text, index) => {
+      pushTooltipInfoEntry(entries, seen, `synergy:${index}`, {
+        icon: "🔗",
+        title: index === 0 ? "Активно на поле" : "Синергия",
+        desc: text,
+        kind: "runtime",
+      });
+    });
+  }
+
+  const craftSide = typeof prepViewSide !== "undefined" ? prepViewSide : "player";
+  if (!getCraftTooltipMeta?.(def.id, craftSide) && typeof getItemGrimFlavor === "function") {
+    const flavor = getItemGrimFlavor(def.id);
+    if (flavor) {
+      pushTooltipInfoEntry(entries, seen, "flavor", {
+        icon: "📜",
+        title: "Описание",
+        desc: flavor,
+        kind: "flavor",
+      });
+    }
+  }
+
+  return entries;
+}
+
+/** Разнесённая подсказка: компактная карточка + попапы info/craft (реф. Backpack Battles). */
+function buildItemTooltipPayload(def, contentItem, rotation, context = "field", opts = {}) {
+  const heroClass = opts.heroClass
+    || (typeof pendingPlayerClass !== "undefined" ? pendingPlayerClass : null)
+    || (typeof playerClass !== "undefined" ? playerClass : null);
+  const presentation = typeof getItemPresentationState === "function"
+    ? getItemPresentationState(def.id, heroClass, opts)
+    : null;
+  if (presentation?.locked && typeof buildLockedItemTooltipLines === "function") {
+    const lockedLines = buildLockedItemTooltipLines(def, presentation);
+    return {
+      locked: true,
+      titleText: typeof getItemDisplayName === "function" ? getItemDisplayName(def) : def.name,
+      summaryLines: lockedLines.filter((l) => l.style !== "title"),
+      infoEntries: [],
+      footerMeta: buildItemTooltipFooterMeta(def, context),
+      craftSide: typeof prepViewSide !== "undefined" ? prepViewSide : "player",
+      hasInfo: false,
+      hasCraft: false,
+    };
+  }
+
+  const fullLines = buildItemTooltipLines(def, contentItem, rotation, context, opts);
+  const titleLine = fullLines.find((l) => l.style === "title");
+  const titleText = stripLeadingEmoji(titleLine?.text || "")
+    || (typeof getItemDisplayName === "function" ? getItemDisplayName(def) : def.name)
+    || "Предмет";
+
+  const summaryLines = [];
+  const detailLines = [];
+  const canonicalEffectTexts = getTooltipCanonicalTexts(def);
+  const tooltipDescription = typeof getItemTooltipDescription === "function"
+    ? getItemTooltipDescription(def)
+    : def.description;
+  const hasTooltipDescription = Boolean(tooltipDescription?.trim());
+  const filteredTooltipDescription = tooltipDescription
+    ? filterRedundantTooltipText(tooltipDescription, canonicalEffectTexts)
+    : null;
+  const displayDescription = filteredTooltipDescription || tooltipDescription;
+
+  if (displayDescription) {
+    summaryLines.push({ text: displayDescription, style: "normal", color: "#c9d1d9" });
+  }
+
+  fullLines.forEach((line) => {
+    if (!line || line.sep || line.style === "title") return;
+    if (line.text === displayDescription) return;
+
+    const isSummaryStat = !!line.statDelta;
+    const isPrimaryDescription = line.text === displayDescription;
+
+    if (isPrimaryDescription) return;
+
+    if (isSummaryStat) {
+      summaryLines.push(line);
+      return;
+    }
+
+    if (line.style === "normal" && hasTooltipDescription && !line.statDelta && !line.html) {
+      detailLines.push(line);
+      return;
+    }
+
+    if (line.style === "sub" || line.style === "label" || line.style === "flavor" || line.html) {
+      detailLines.push(line);
+      return;
+    }
+
+    if (!hasTooltipDescription) {
+      summaryLines.push(line);
+    } else {
+      detailLines.push(line);
+    }
+  });
+
+  const craftSide = typeof prepViewSide !== "undefined" ? prepViewSide : "player";
+  const infoEntries = buildItemTooltipInfoEntries(
+    def,
+    contentItem,
+    rotation,
+    context,
+    opts,
+    detailLines,
+  );
+
+  return {
+    locked: false,
+    titleText,
+    summaryLines: dedupeTooltipLines(summaryLines),
+    infoEntries,
+    footerMeta: buildItemTooltipFooterMeta(def, context),
+    craftSide,
+    hasInfo: infoEntries.length > 0,
+    hasCraft: typeof getCraftTooltipMeta === "function" && !!getCraftTooltipMeta(def.id, craftSide),
+  };
+}
+
+function stripLeadingEmoji(text) {
+  return String(text ?? "")
+    .replace(/^(\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?)*)\s*/u, "")
+    .trim();
+}
+
 /** context: shop — магазин; bench — скамейка; field — предмет на поле / canvas */
 function buildItemTooltipLines(def, contentItem, rotation, context = "field", opts = {}) {
   const heroClass = opts.heroClass
@@ -1321,12 +1575,10 @@ function buildItemTooltipLines(def, contentItem, rotation, context = "field", op
     lines.push({ text: `Только: ${c?.name || def.classRestriction}`, style: "normal", color: "#f0c14b" });
   }
 
-  if (typeof getCraftTooltipLines === "function") {
+  if (typeof getCraftTooltipMeta === "function") {
     const craftSide = typeof prepViewSide !== "undefined" ? prepViewSide : "player";
-    const craftLines = getCraftTooltipLines(def.id, craftSide);
-    if (craftLines.length) {
-      craftLines.forEach((line) => lines.push(line));
-    } else if (typeof getItemGrimFlavor === "function" && context !== "shop") {
+    const craftMeta = getCraftTooltipMeta(def.id, craftSide);
+    if (!craftMeta && typeof getItemGrimFlavor === "function" && context !== "shop") {
       const flavor = getItemGrimFlavor(def.id);
       if (flavor) {
         lines.push({ text: flavor, style: "flavor", color: "#848896" });
@@ -1706,8 +1958,11 @@ function syncFieldTooltip() {
     if (!el || !def) return;
 
     el.classList.remove("synergy-tooltip");
-    const lines = buildItemTooltipLines(def, contentItem, rotation || 0, "field");
-    applySidebarTooltipCard(el, lines, getItemTooltipCardOptions(def, "field"));
+    const cardOpts = getItemTooltipCardOptions(def, "field");
+    cardOpts.itemId = def.id;
+    cardOpts.craftSide = typeof prepViewSide !== "undefined" ? prepViewSide : "player";
+    const payload = buildItemTooltipPayload(def, contentItem, rotation || 0, "field");
+    applySidebarTooltipCard(el, payload, cardOpts);
     el.classList.remove("hidden");
     fieldTooltipVisible = true;
 
@@ -1969,16 +2224,24 @@ function showSidebarTooltipAt(clientX, clientY, itemId, contentItem, context = "
     cardOpts.emoji = "🔒";
     cardOpts.locked = true;
     cardOpts.rarityColor = "#484f58";
+  } else {
+    cardOpts.itemId = def.id;
+    cardOpts.craftSide = typeof prepViewSide !== "undefined" ? prepViewSide : "player";
   }
   if (sourceEl?.dataset?.unaffordable) {
     const sideGold = getSideState(prepViewSide).gold;
-    applySidebarTooltipCard(el, [
-      { text: "Недостаточно золота", style: "title", color: "#f85149" },
-      { text: `${def.cost}💰 · у вас ${sideGold}💰`, style: "sub", color: "#8b949e" },
-    ], getItemTooltipCardOptions(def, context));
+    const payload = buildItemTooltipPayload(def, contentItem, 0, context, { heroClass });
+    applySidebarTooltipCard(el, {
+      ...payload,
+      summaryLines: [
+        { text: "Недостаточно золота", style: "label", color: "#f85149" },
+        { text: `${def.cost}💰 · у вас ${sideGold}💰`, style: "sub", color: "#8b949e" },
+        ...(payload.summaryLines || []),
+      ],
+    }, cardOpts);
   } else {
-    const lines = buildItemTooltipLines(def, contentItem, 0, context);
-    applySidebarTooltipCard(el, lines, cardOpts);
+    const payload = buildItemTooltipPayload(def, contentItem, 0, context, { heroClass });
+    applySidebarTooltipCard(el, payload, cardOpts);
   }
   el.classList.remove("hidden");
   syncPrepTooltipDockVisibility();

@@ -511,6 +511,27 @@ function getCraftTooltipLines(itemId: string, side: string | null = null): Craft
   return lines;
 }
 
+function getCraftTooltipMeta(itemId: string, side: string | null = null) {
+  const lines = getCraftTooltipLines(itemId, side);
+  if (!lines.length) return null;
+  const labelLine = lines.find((line) => line.style === "label");
+  const labelText = labelLine?.text || "⚗️ Крафт";
+  const isCombo = labelText.includes("Комбинации");
+  const recipeCount = lines.filter(
+    (line) => line.style === "craft-recipe" || (line.html && line.style !== "flavor"),
+  ).length;
+  return {
+    buttonLabel: labelText.replace(/^⚗️\s*/, "") || "Крафт",
+    buttonHint: isCombo
+      ? "Рецепты, где участвует этот предмет"
+      : recipeCount > 1
+        ? `${recipeCount} рецепта крафта`
+        : "Как создать этот предмет",
+    lines,
+    recipeCount,
+  };
+}
+
 function isCraftIngredient(itemId: string): boolean {
   return RECIPES_BY_INGREDIENT.has(itemId);
 }

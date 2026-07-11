@@ -402,6 +402,22 @@ function getCraftTooltipLines(itemId, side = null) {
   }
   return lines;
 }
+function getCraftTooltipMeta(itemId, side = null) {
+  const lines = getCraftTooltipLines(itemId, side);
+  if (!lines.length) return null;
+  const labelLine = lines.find((line) => line.style === "label");
+  const labelText = labelLine?.text || "\u2697\uFE0F \u041A\u0440\u0430\u0444\u0442";
+  const isCombo = labelText.includes("\u041A\u043E\u043C\u0431\u0438\u043D\u0430\u0446\u0438\u0438");
+  const recipeCount = lines.filter(
+    (line) => line.style === "craft-recipe" || line.html && line.style !== "flavor"
+  ).length;
+  return {
+    buttonLabel: labelText.replace(/^⚗️\s*/, "") || "\u041A\u0440\u0430\u0444\u0442",
+    buttonHint: isCombo ? "\u0420\u0435\u0446\u0435\u043F\u0442\u044B, \u0433\u0434\u0435 \u0443\u0447\u0430\u0441\u0442\u0432\u0443\u0435\u0442 \u044D\u0442\u043E\u0442 \u043F\u0440\u0435\u0434\u043C\u0435\u0442" : recipeCount > 1 ? `${recipeCount} \u0440\u0435\u0446\u0435\u043F\u0442\u0430 \u043A\u0440\u0430\u0444\u0442\u0430` : "\u041A\u0430\u043A \u0441\u043E\u0437\u0434\u0430\u0442\u044C \u044D\u0442\u043E\u0442 \u043F\u0440\u0435\u0434\u043C\u0435\u0442",
+    lines,
+    recipeCount
+  };
+}
 function isCraftIngredient(itemId) {
   return RECIPES_BY_INGREDIENT.has(itemId);
 }
