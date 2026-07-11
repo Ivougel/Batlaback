@@ -149,7 +149,10 @@ import type { IntroStepId } from "../types/game";
     transitioning = false;
     document.body.classList.remove("screen-transitioning");
     window.flushDeferredLayoutPasses?.();
-    window.scheduleCanvasFit?.();
+  }
+
+  function settlePhaseLayout() {
+    window.settleLayoutForPhaseChange?.();
   }
 
   function transitionPhase(
@@ -181,6 +184,7 @@ import type { IntroStepId } from "../types/game";
       try {
         applyPhase(newPhase);
         afterTransition?.();
+        settlePhaseLayout();
       } catch (err) {
         console.error("transitionPhase failed:", err);
         clearPhaseTransitionLock();
@@ -216,24 +220,35 @@ import type { IntroStepId } from "../types/game";
         try {
           applyPhase("prep");
           afterTransition?.();
-          window.applyUiLayout?.();
-          window.settlePrepLayoutForReveal?.();
+          settlePhaseLayout();
         } catch (err) {
           console.error("result→prep applyPrepWork failed:", err);
         }
-        resolve();
+        requestAnimationFrame(() => {
+          try {
+            settlePhaseLayout();
+          } catch (err) {
+            console.error("result→prep settle failed:", err);
+          }
+          resolve();
+        });
       });
     });
 
     const revealPrep = () => new Promise<void>((resolve) => {
       requestAnimationFrame(() => {
-        window.settlePrepLayoutForReveal?.();
-        requestAnimationFrame(() => {
-          transitioning = false;
-          document.body.classList.remove("screen-transitioning", "result-to-prep-transition");
-          window.flushDeferredLayoutPasses?.();
-          resolve();
-        });
+        const app = document.getElementById("app");
+        transitioning = false;
+        document.body.classList.remove("screen-transitioning", "result-to-prep-transition");
+        if (app && !prefersReducedScreenMotion()) {
+          app.style.setProperty("opacity", "0");
+          app.style.setProperty("visibility", "visible");
+          void app.offsetWidth;
+          app.style.removeProperty("opacity");
+          app.style.removeProperty("visibility");
+        }
+        window.flushDeferredLayoutPasses?.();
+        resolve();
       });
     });
 
@@ -260,9 +275,9 @@ import type { IntroStepId } from "../types/game";
         app.style.removeProperty("pointer-events");
       }
       onMidpoint?.();
+      settlePhaseLayout();
       await hideScreenOverlay(overlay, "menu");
       window.flushDeferredLayoutPasses?.();
-      window.scheduleCanvasFit?.();
     });
   }
 

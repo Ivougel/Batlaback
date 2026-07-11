@@ -3936,27 +3936,21 @@
     scheduleLayout();
   }
 
-  /** Синхронный prep-layout перед reveal после result→prep (обходит transition-lock). */
-  function settlePrepLayoutForReveal() {
-    deferredCanvasFit = false;
-    canvasFitLastAt = 0;
-    canvasFitInProgress = false;
-    const root = document.documentElement;
-    const app = document.getElementById("app");
-    if (app?.dataset.phase === "prep") {
-      root.dataset.battleArenaLayout = "false";
-      root.removeAttribute("data-battle-hud-pin");
-    }
-    runCanvasFitPass(true);
+  /** Синхронный layout на midpoint phase-transition (prep/battle/result→prep). */
+  function syncPhaseLayoutMetrics(appPhase) {
     syncPrepHeroSlotHeight();
     syncPrepHeroCardPortraitSize();
-    if (usesTabletPrepHeroLayout()) {
+    if (usesTabletPrepHeroLayout() && appPhase === "prep") {
       syncTabletSidePrepGridMetrics();
-    } else if (document.documentElement.dataset.prepLayout === "bb-stack") {
+    } else if (document.documentElement.dataset.prepLayout === "bb-stack" && appPhase === "prep") {
       syncBBStackPrepGridMetrics();
     }
-    if (typeof window.applyGridMetricsFromCss === "function") {
+    if (appPhase === "prep" && typeof window.applyGridMetricsFromCss === "function") {
       window.applyGridMetricsFromCss();
+    }
+    if (isBattleUiPhase()) {
+      syncBattleSceneGridMetrics();
+      syncBattleHudAnchors();
     }
     syncMobileShopFabPosition();
     syncPrepBenchFabPosition();
@@ -3964,8 +3958,36 @@
     window.syncPrepSellFabPosition?.();
     window.syncPrepSellFabVisibility?.();
     syncFxCanvasGeometry();
-    const zones = measureLayoutZones();
+  }
+
+  function settleLayoutForPhaseChange() {
+    deferredCanvasFit = false;
+    canvasFitLastAt = 0;
+    canvasFitInProgress = false;
+    const root = document.documentElement;
+    const app = document.getElementById("app");
+    const appPhase = app?.dataset.phase ?? "prep";
+    if (appPhase === "prep") {
+      root.dataset.battleArenaLayout = "false";
+      root.removeAttribute("data-battle-hud-pin");
+    }
+    applyUiLayout({ skipDockRemeasure: true });
+    runCanvasFitPass(true);
+    syncPhaseLayoutMetrics(appPhase);
+    let zones = measureLayoutZones();
     applyMeasuredZoneFit(zones);
+    if (document.documentElement.style.getPropertyValue("--zone-fit-shrink")) {
+      runCanvasFitPass(true);
+      syncPhaseLayoutMetrics(appPhase);
+      zones = measureLayoutZones();
+      applyMeasuredZoneFit(zones);
+    }
+    deferredCanvasFit = false;
+  }
+
+  /** Синхронный prep-layout перед reveal после result→prep (обходит transition-lock). */
+  function settlePrepLayoutForReveal() {
+    settleLayoutForPhaseChange();
   }
 
   function runCanvasFitPass(force = false) {
@@ -4118,7 +4140,9 @@
     }
   }
 
-  function applyUiLayout() {
+  function applyUiLayout(options = {}) {
+    const skipDockRemeasure = options.skipDockRemeasure === true
+      || isLayoutInteractionLocked();
     const { w, h } = viewportSize();
     const rawScale = Math.min(w / DESIGN_W, h / DESIGN_H);
 
@@ -4216,18 +4240,20 @@
       );
     }
 
-    requestAnimationFrame(() => {
-      syncBottomChromeDock();
-      const dockH = measureBottomChromeHeight();
-      document.documentElement.style.setProperty("--bottom-chrome-h-measured", `${dockH}px`);
-      document.documentElement.style.setProperty("--hud-offset", `${dockH}px`);
-      document.documentElement.style.setProperty(
-        "--app-h",
-        hudVisible
-          ? "calc(var(--viewport-h, 100dvh) - var(--hud-offset) - env(safe-area-inset-top))"
-          : "calc(var(--viewport-h, 100dvh) - var(--hud-offset) - env(safe-area-inset-top) - env(safe-area-inset-bottom))",
-      );
-    });
+    if (!skipDockRemeasure) {
+      requestAnimationFrame(() => {
+        syncBottomChromeDock();
+        const dockH = measureBottomChromeHeight();
+        document.documentElement.style.setProperty("--bottom-chrome-h-measured", `${dockH}px`);
+        document.documentElement.style.setProperty("--hud-offset", `${dockH}px`);
+        document.documentElement.style.setProperty(
+          "--app-h",
+          hudVisible
+            ? "calc(var(--viewport-h, 100dvh) - var(--hud-offset) - env(safe-area-inset-top))"
+            : "calc(var(--viewport-h, 100dvh) - var(--hud-offset) - env(safe-area-inset-top) - env(safe-area-inset-bottom))",
+        );
+      });
+    }
 
     const appPhase = document.getElementById("app")?.dataset.phase ?? "prep";
     syncTabletSideLayoutVars(h, appPhase);
@@ -4423,6 +4449,7 @@
   window.scheduleCanvasFit = scheduleCanvasFit;
   window.flushDeferredLayoutPasses = flushDeferredLayoutPasses;
   window.settlePrepLayoutForReveal = settlePrepLayoutForReveal;
+  window.settleLayoutForPhaseChange = settleLayoutForPhaseChange;
   window.syncMobileShopFabPosition = syncMobileShopFabPosition;
   window.syncPrepBenchFabPosition = syncPrepBenchFabPosition;
   window.syncPrepShopPopoverPosition = syncPrepShopPopoverPosition;

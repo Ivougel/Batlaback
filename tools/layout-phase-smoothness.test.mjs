@@ -44,15 +44,21 @@ async function sampleLayout(page) {
   return page.evaluate(() => {
     const island = document.getElementById("prep-field-island");
     const floor = document.getElementById("battle-thought-arena");
+    const canvas = document.getElementById("game-canvas");
     const app = document.getElementById("app");
     const html = document.documentElement;
+    const bbStackBattle = html.dataset.battleLayout === "bb-stack";
     const islandRect = island?.getBoundingClientRect();
     const floorRect = floor?.getBoundingClientRect();
+    const canvasRect = canvas?.getBoundingClientRect();
+    const floorH = bbStackBattle
+      ? Math.round(canvasRect?.height ?? 0)
+      : Math.round(floorRect?.height ?? 0);
     return {
       phase: app?.dataset.phase ?? "",
       islandW: Math.round(islandRect?.width ?? 0),
       islandH: Math.round(islandRect?.height ?? 0),
-      floorH: Math.round(floorRect?.height ?? 0),
+      floorH,
       appH: Math.round(parseFloat(getComputedStyle(html).getPropertyValue("--app-h")) || app?.offsetHeight || 0),
       screenTransitioning: document.body.classList.contains("screen-transitioning"),
       phaseTransitioning: document.querySelector(".game-layout")?.classList.contains("phase-transitioning"),

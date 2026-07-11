@@ -409,6 +409,7 @@ function renderShop(side = rt.getPrepViewSide(), containerEl = null) {
       toggleShopFreeze(+btn.dataset.pin, side);
     });
   });
+  if (typeof syncBuildTrackShopBar === "function") syncBuildTrackShopBar();
   const bindShopTouchDragStart = (cardEl, index) => {
     cardEl.addEventListener("pointerdown", (e) => {
       if (e.pointerType === "mouse") return;
@@ -416,7 +417,6 @@ function renderShop(side = rt.getPrepViewSide(), containerEl = null) {
       rt.beginPendingShopDrag(index, e, side);
     }, { passive: false });
   };
-  if (typeof syncBuildTrackShopBar === "function") syncBuildTrackShopBar();
   el.querySelectorAll(".shop-card:not(.empty)").forEach((card) => {
     const htmlCard = card;
     if (!htmlCard.dataset.unaffordable) {

@@ -79,6 +79,7 @@ declare function getRecipeForOutput(itemId: string): import("./game").CraftRecip
 declare function getCraftTooltipLines(itemId: string, side?: string | null): object[];
 declare function isCraftIngredient(itemId: string): boolean;
 declare function getAllCraftRecipes(): import("./game").CraftRecipe[];
+declare function refreshCraftRecipesForCurrentMode(): void;
 declare function getCraftOutputItemIds(): string[];
 declare function getCraftIngredientItemIds(): string[];
 declare function syncCraftPartnerBenchDom(benchIndices?: number[]): void;
@@ -328,8 +329,9 @@ declare const GameSfx: {
 };
 declare function flushDeferredLayoutPasses(): void;
 declare function scheduleCanvasFit(): void;
-declare function applyUiLayout(): void;
+declare function applyUiLayout(options?: { skipDockRemeasure?: boolean }): void;
 declare function settlePrepLayoutForReveal(): void;
+declare function settleLayoutForPhaseChange(): void;
 declare function getPendingCraftBoardUids(side: string): Set<string>;
 declare function syncPendingCraftClustersForSide(side: string, currentRound?: number): void;
 declare function syncPendingCraftClustersOnState(
@@ -531,8 +533,9 @@ interface Window {
   playPrepItemPlacedSfx: (item: object, def?: object | null) => void;
   flushDeferredLayoutPasses: () => void;
   scheduleCanvasFit: () => void;
-  applyUiLayout: () => void;
+  applyUiLayout: (options?: { skipDockRemeasure?: boolean }) => void;
   settlePrepLayoutForReveal: () => void;
+  settleLayoutForPhaseChange: () => void;
   isPrepBenchPopoverOpen?: () => boolean;
   isPrepShopPopoverOpen?: () => boolean;
   syncPrepBenchFabBadge?: () => void;

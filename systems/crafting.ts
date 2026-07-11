@@ -45,10 +45,24 @@ function initCraftRecipes(): CraftRecipe[] {
   return FALLBACK_RECIPES.slice();
 }
 
-const ITEM_RECIPES: CraftRecipe[] = initCraftRecipes();
+const SOURCE_CRAFT_RECIPES: CraftRecipe[] = initCraftRecipes();
+const ITEM_RECIPES: CraftRecipe[] = SOURCE_CRAFT_RECIPES.slice();
 
 const RECIPES_BY_INGREDIENT = new Map<string, CraftRecipe[]>();
 const RECIPES_BY_OUTPUT = new Map<string, CraftRecipe>();
+
+function isGameModeKnown(): boolean {
+  if (typeof selectedGameMode !== "undefined" && selectedGameMode) return true;
+  if (typeof gameMode !== "undefined" && gameMode) return true;
+  if (typeof document !== "undefined" && document.documentElement?.dataset?.gameMode) return true;
+  return false;
+}
+
+/** Pool v240 pruning only when mode is known and path/solo — not at script load before classic. */
+function shouldPruneCraftRecipesForPool(): boolean {
+  if (!isGameModeKnown()) return false;
+  return typeof shouldFilterToPool120 === "function" && shouldFilterToPool120();
+}
 
 function rebuildCraftRecipeIndex() {
   RECIPES_BY_INGREDIENT.clear();
@@ -64,21 +78,17 @@ function rebuildCraftRecipeIndex() {
   });
 }
 
-
 function pruneCraftRecipesOutsidePool() {
-  if (typeof shouldFilterToPool120 === "function" && shouldFilterToPool120()) {
-    if (typeof isItemInPool120 !== "function") return;
-    for (let i = ITEM_RECIPES.length - 1; i >= 0; i -= 1) {
-      const recipe = ITEM_RECIPES[i];
-      const ids = [recipe.output, ...recipe.inputs.map((input) => input.itemId)];
-      if (ids.some((id) => !isItemInPool120(id))) {
-        ITEM_RECIPES.splice(i, 1);
-      }
+  if (!shouldPruneCraftRecipesForPool()) return;
+  if (typeof isItemInPool120 !== "function") return;
+  for (let i = ITEM_RECIPES.length - 1; i >= 0; i -= 1) {
+    const recipe = ITEM_RECIPES[i];
+    const ids = [recipe.output, ...recipe.inputs.map((input) => input.itemId)];
+    if (ids.some((id) => !isItemInPool120(id))) {
+      ITEM_RECIPES.splice(i, 1);
     }
   }
 }
-
-pruneCraftRecipesOutsidePool();
 
 function syncCraftOutputIdSet() {
   if (typeof CRAFT_OUTPUT_IDS === "undefined") return;
@@ -88,8 +98,18 @@ function syncCraftOutputIdSet() {
   });
 }
 
-rebuildCraftRecipeIndex();
-syncCraftOutputIdSet();
+function refreshCraftRecipesForCurrentMode() {
+  ITEM_RECIPES.length = 0;
+  ITEM_RECIPES.push(...SOURCE_CRAFT_RECIPES);
+  pruneCraftRecipesOutsidePool();
+  rebuildCraftRecipeIndex();
+  syncCraftOutputIdSet();
+  if (typeof ItemUnlockTiers !== "undefined" && ItemUnlockTiers.rebuild) {
+    ItemUnlockTiers.rebuild();
+  }
+}
+
+refreshCraftRecipesForCurrentMode();
 
 function recipeInputTotal(recipe: CraftRecipe): number {
   return recipe.inputs.reduce((sum, input) => sum + input.count, 0);
@@ -521,3 +541,5 @@ function getCraftIngredientItemIds(): string[] {
   });
   return [...ids];
 }
+
+window.refreshCraftRecipesForCurrentMode = refreshCraftRecipesForCurrentMode;

@@ -767,6 +767,11 @@ const PrepStoragePhysics = (() => {
     if (isScreenFlingEnabled()) tickScreen(dt);
 
     if (!isActive() || !arenaEl) return;
+    const anyAwake = [...bodies.values()].some((body) => body.awake);
+    if (!anyAwake && (!isScreenFlingEnabled() || !screenFliers.length)) {
+      tickAcc = 0;
+      return;
+    }
     tickAcc += dt;
     const step = prefersReducedMotion() ? 0.05 : 1 / 50;
     let stepped = false;

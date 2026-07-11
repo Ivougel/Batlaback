@@ -26,9 +26,9 @@ function isGameLoopSuspended() {
   return isPopupOpen("class-overlay");
 }
 
-/** Touch phone/tablet: prep без drag — 30 Hz вместо 60. */
+/** Touch phone/tablet/PWA: prep throttled (including during drag). */
 function shouldThrottlePrepGameLoop() {
-  if (phase !== "prep" || dragPayload || synergyState?.isDragging) return false;
+  if (phase !== "prep") return false;
   return typeof BattleFxTier !== "undefined" && BattleFxTier.shouldThrottleGameLoop?.();
 }
 
@@ -102,7 +102,10 @@ function scheduleGameLoop() {
   } else if (shouldThrottleBattleGameLoop()) {
     setTimeout(() => gameLoop(performance.now()), battleGameLoopGapMs());
   } else if (shouldThrottlePrepGameLoop()) {
-    setTimeout(() => gameLoop(performance.now()), 33);
+    const gap = typeof BattleFxTier !== "undefined" && BattleFxTier.prepGameLoopGapMs
+      ? BattleFxTier.prepGameLoopGapMs()
+      : 33;
+    setTimeout(() => gameLoop(performance.now()), gap);
   } else {
     requestAnimationFrame(gameLoop);
   }
@@ -251,21 +254,32 @@ function gameLoop(ts) {
   }
 
   if (phase === "prep" && synergyState.isDragging && dragPayload) {
-    const st = getSideState(prepViewSide);
-    const otherItems = prepViewSide === "player" ? enemyItems : playerItems;
-    synergyPreviewBuilt = refreshPreviewSynergies(
-      st.containers,
-      st.items,
-      dragPayload,
-      hoverSlot,
-      dragFrom,
-      otherItems,
-    );
+    const hoverKey = [
+      hoverSlot?.col ?? "",
+      hoverSlot?.row ?? "",
+      hoverCell?.col ?? "",
+      hoverCell?.row ?? "",
+      dragPayload.rotation ?? 0,
+    ].join(",");
+    if (hoverKey !== gameLoop._synergyHoverKey) {
+      gameLoop._synergyHoverKey = hoverKey;
+      const st = getSideState(prepViewSide);
+      const otherItems = prepViewSide === "player" ? enemyItems : playerItems;
+      synergyPreviewBuilt = refreshPreviewSynergies(
+        st.containers,
+        st.items,
+        dragPayload,
+        hoverSlot,
+        dragFrom,
+        otherItems,
+      );
+    }
     canvas?.classList.toggle(
       "synergy-preview-mode",
       synergyState.previewSynergies.length > 0,
     );
   } else {
+    gameLoop._synergyHoverKey = null;
     synergyPreviewBuilt = null;
     canvas?.classList.remove("synergy-preview-mode");
     canvas?.classList.remove("amplify-preview-mode");
@@ -322,9 +336,20 @@ function gameLoop(ts) {
   try {
     const needsSmoothDraw = !!dragPayload || synergyState.isDragging;
     const throttleBattleDraw = shouldThrottleBattleCanvasDraw() && !needsSmoothDraw;
-    if ((phase === "prep" && !needsSmoothDraw) || throttleBattleDraw) {
+    const throttlePrepDraw = phase === "prep" && (
+      !needsSmoothDraw
+      || (typeof BattleFxTier !== "undefined" && BattleFxTier.shouldThrottleGameLoop?.())
+    );
+    if (throttlePrepDraw || throttleBattleDraw) {
       const accKey = throttleBattleDraw ? "_battleDrawAcc" : "_drawAcc";
-      const fps = throttleBattleDraw ? battleCanvasDrawFps() : 30;
+      let fps = 30;
+      if (throttleBattleDraw) {
+        fps = battleCanvasDrawFps();
+      } else if (needsSmoothDraw && typeof BattleFxTier !== "undefined" && BattleFxTier.prepDragDrawFps) {
+        fps = BattleFxTier.prepDragDrawFps();
+      } else if (typeof BattleFxTier !== "undefined" && BattleFxTier.prepIdleDrawFps) {
+        fps = BattleFxTier.prepIdleDrawFps();
+      }
       gameLoop[accKey] = (gameLoop[accKey] || 0) + dt;
       if (gameLoop[accKey] < 1 / fps) {
         // skip canvas redraw this frame

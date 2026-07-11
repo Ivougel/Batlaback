@@ -27,6 +27,11 @@ import type { PerfTier } from "../types/game";
     return document.documentElement?.dataset?.touch === "true";
   }
 
+  function isStandalonePwa() {
+    return !!(window.matchMedia?.("(display-mode: standalone)")?.matches
+      || (window.navigator as Navigator & { standalone?: boolean }).standalone);
+  }
+
   /**
    * Авто-уровень производительности по экрану и устройству.
    * low — слабое / save-data / reduced-motion
@@ -64,6 +69,7 @@ import type { PerfTier } from "../types/game";
     if (dpr >= 2) score += 1;
     if (cores <= 4) score += 2;
     else if (cores <= 6) score += 1;
+    if (isStandalonePwa()) score += 1;
 
     if (score >= 5 || cores <= 2) cachedPerfTier = "low";
     else if (score >= 2) cachedPerfTier = "medium";
@@ -157,6 +163,29 @@ import type { PerfTier } from "../types/game";
     if (perf === "low") return 20;
     if (isLightBattleFx()) return 24;
     return 30;
+  }
+
+  function prepIdleDrawFps() {
+    const perf = resolvePerfTier();
+    if (perf === "low") return 20;
+    if (isLightBattleFx()) return 24;
+    return 30;
+  }
+
+  function prepDragDrawFps() {
+    const perf = resolvePerfTier();
+    if (perf === "low") return isPhoneTier() ? 20 : 24;
+    if (isLightBattleFx()) return isPhoneTier() ? 24 : 28;
+    return 30;
+  }
+
+  function prepGameLoopGapMs() {
+    if (!shouldThrottleGameLoop()) return 0;
+    return isPhoneTier() ? 33 : 50;
+  }
+
+  function shouldSkipHeavyPrepBoardFxDuringDrag() {
+    return isLightBattleFx();
   }
 
   function applyBattleFxTierFlags() {
@@ -388,6 +417,11 @@ import type { PerfTier } from "../types/game";
     battleProfileTickMs,
     battleFloatPresentGapMs,
     prepFxStepHz,
+    prepIdleDrawFps,
+    prepDragDrawFps,
+    prepGameLoopGapMs,
+    shouldSkipHeavyPrepBoardFxDuringDrag,
+    isStandalonePwa,
     prepHudMoodIntervalMs,
     prepHudMoodCycleEnabled,
     prepSynergyFxEnabled,

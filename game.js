@@ -1127,7 +1127,8 @@ function bindTouchInput() {
   const onMove = (kind, id, x, y, e) => {
     if (activeGesture !== gestureKey(kind, id)) return;
     updateTouchTapGestureMove(x, y);
-    if (e?.cancelable) e.preventDefault();
+    const dragging = !!(dragPayload || pendingShopDrag || pendingBenchDrag);
+    if (dragging && e?.cancelable) e.preventDefault();
     updatePointerFromClient(x, y);
   };
 
@@ -1641,8 +1642,9 @@ function renderPhase() {
   if (typeof syncBBFidelityContext === "function") syncBBFidelityContext();
   syncClassOverlayHiddenDuringGame();
   applyPhaseCanvasLayout();
+  const phaseTransitioning = typeof ScreenTransitions !== "undefined" && ScreenTransitions.isScreenTransitioning();
   setBattleControlsVisible(isBattleUiPhase());
-  syncBattleArenaLayout();
+  syncBattleArenaLayout({ skipCanvasFit: phaseTransitioning });
   syncPrepHeroHudDom();
   if (phase !== "prep") {
     window.forceHidePrepBenchChrome?.();
@@ -1668,7 +1670,9 @@ function renderPhase() {
   if (phase !== "prep") closeAllFighterCharacteristicsPopups();
   if (!isBattleUiPhase() && typeof closeBattleInventoryPopover === "function") closeBattleInventoryPopover();
   if (phase !== "prep" && typeof closeMobilePrepShop === "function") closeMobilePrepShop();
-  if (typeof applyUiLayout === "function") scheduleLayoutAfterPhase();
+  if (typeof applyUiLayout === "function" && !(typeof ScreenTransitions !== "undefined" && ScreenTransitions.isScreenTransitioning())) {
+    scheduleLayoutAfterPhase();
+  }
   syncRunHudPhase();
   syncBattleHudVisibility();
   if (typeof CombatLog?.syncCombatFeedPhase === "function") CombatLog.syncCombatFeedPhase();
@@ -2009,6 +2013,9 @@ function startRunFromOverlay() {
   const proceedStartRun = () => {
     gameMode = GAME_MODE;
     selectedGameMode = GAME_MODE;
+    if (typeof refreshCraftRecipesForCurrentMode === "function") {
+      refreshCraftRecipesForCurrentMode();
+    }
     if (typeof MetaProgress !== "undefined") MetaProgress.setRunMode(GAME_MODE);
     playerClass = pendingPlayerClass;
     playerCompanionId = null;
@@ -3516,7 +3523,10 @@ function drawWorldLayer() {
     drawContainers(st.containers, side, false);
     drawSynergyVisuals(ctx, synergyAnimTime, synergyPreviewBuilt, "under", side);
     drawLoadoutItems(st.items, side, false);
-    if (typeof drawAllPrepItemIdleEffects === "function") {
+    const skipHeavyPrepFx = dragPayload
+      && typeof BattleFxTier !== "undefined"
+      && BattleFxTier.shouldSkipHeavyPrepBoardFxDuringDrag?.();
+    if (!skipHeavyPrepFx && typeof drawAllPrepItemIdleEffects === "function") {
       drawAllPrepItemIdleEffects(ctx, st.items, side, synergyAnimTime);
     }
     if (typeof drawPrepPlacementSlotVisuals === "function") {
@@ -3551,7 +3561,8 @@ function drawWorldLayer() {
       });
     }
     drawSynergyVisuals(ctx, synergyAnimTime, synergyPreviewBuilt, "over", side);
-    if (typeof drawPrepSynergyEnhancements === "function"
+    if (!skipHeavyPrepFx
+      && typeof drawPrepSynergyEnhancements === "function"
       && typeof shouldShowIdlePrepBoardHighlights === "function"
       && shouldShowIdlePrepBoardHighlights()) {
       drawPrepSynergyEnhancements(ctx, synergyAnimTime, side, st.items);
@@ -3578,7 +3589,8 @@ function drawWorldLayer() {
       : null;
     const hasCraftHighlights = typeof drawPrepCraftHighlights === "function"
       && drawPrepCraftHighlights(ctx, synergyAnimTime, side, st.items, st.bench, craftDragCtx);
-    if (typeof drawPrepPendingCraftHighlights === "function"
+    if (!skipHeavyPrepFx
+      && typeof drawPrepPendingCraftHighlights === "function"
       && typeof shouldShowIdlePrepBoardHighlights === "function"
       && shouldShowIdlePrepBoardHighlights()) {
       drawPrepPendingCraftHighlights(ctx, synergyAnimTime, side, st.items);

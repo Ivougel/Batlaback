@@ -3,8 +3,31 @@
  * Состояние (dragPayload, dragFrom, pending*Drag, …) остаётся в game.js.
  */
 
-function getDragThresholdPx() {
-  return isTouchUi() ? TOUCH_DRAG_THRESHOLD_PX : MOUSE_DRAG_THRESHOLD_PX;
+let prepDragGhostRaf = 0;
+let prepDragGhostPending = null;
+
+function cancelPrepDragGhostRaf() {
+  if (prepDragGhostRaf) {
+    cancelAnimationFrame(prepDragGhostRaf);
+    prepDragGhostRaf = 0;
+  }
+  prepDragGhostPending = null;
+}
+
+function scheduleSyncDragGhostOverlay(clientX, clientY) {
+  if (!dragPayload) {
+    cancelPrepDragGhostRaf();
+    return;
+  }
+  prepDragGhostPending = { x: clientX, y: clientY };
+  if (prepDragGhostRaf) return;
+  prepDragGhostRaf = requestAnimationFrame(() => {
+    prepDragGhostRaf = 0;
+    const pending = prepDragGhostPending;
+    prepDragGhostPending = null;
+    if (!pending || !dragPayload) return;
+    syncDragGhostOverlay(pending.x, pending.y);
+  });
 }
 
 /** На touch drag стартует только после «свободы» для tap-to-tooltip. */
@@ -1556,6 +1579,7 @@ function clearDragUiState() {
     BBCraftTether.end();
   }
   hideDragGhostOverlay();
+  cancelPrepDragGhostRaf();
   if (typeof clearCraftPartnerBenchDom === "function") clearCraftPartnerBenchDom();
   syncUiDragState();
   if (typeof window.resetPrepTouchGesture === "function") window.resetPrepTouchGesture();
@@ -1771,7 +1795,6 @@ function updatePointerFromClient(clientX, clientY) {
     if (dragPayload && canEditPrepSide(side)) {
       const hoverClient = resolvePrepDragHoverClient(clientX, clientY);
       syncPrepDragBoardHover(clientX, clientY, hoverClient.x, hoverClient.y);
-      if (typeof window.syncFxCanvasGeometry === "function") window.syncFxCanvasGeometry();
     }
 
     const overStorage = typeof isPointerOverPrepStorage === "function"
@@ -1803,7 +1826,12 @@ function updatePointerFromClient(clientX, clientY) {
     syncPrepShopDragBackdrop(clientX, clientY);
   }
 
-  syncDragGhostOverlay(clientX, clientY);
+  if (dragPayload) {
+    scheduleSyncDragGhostOverlay(clientX, clientY);
+  } else {
+    cancelPrepDragGhostRaf();
+    syncDragGhostOverlay(clientX, clientY);
+  }
   if (dragPayload && typeof onPrepDragMove === "function") onPrepDragMove(clientX, clientY);
 }
 

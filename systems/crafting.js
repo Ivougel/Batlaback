@@ -31,9 +31,20 @@ function initCraftRecipes() {
   if (ref?.length) return ref.slice();
   return FALLBACK_RECIPES.slice();
 }
-const ITEM_RECIPES = initCraftRecipes();
+const SOURCE_CRAFT_RECIPES = initCraftRecipes();
+const ITEM_RECIPES = SOURCE_CRAFT_RECIPES.slice();
 const RECIPES_BY_INGREDIENT = /* @__PURE__ */ new Map();
 const RECIPES_BY_OUTPUT = /* @__PURE__ */ new Map();
+function isGameModeKnown() {
+  if (typeof selectedGameMode !== "undefined" && selectedGameMode) return true;
+  if (typeof gameMode !== "undefined" && gameMode) return true;
+  if (typeof document !== "undefined" && document.documentElement?.dataset?.gameMode) return true;
+  return false;
+}
+function shouldPruneCraftRecipesForPool() {
+  if (!isGameModeKnown()) return false;
+  return typeof shouldFilterToPool120 === "function" && shouldFilterToPool120();
+}
 function rebuildCraftRecipeIndex() {
   RECIPES_BY_INGREDIENT.clear();
   RECIPES_BY_OUTPUT.clear();
@@ -48,18 +59,16 @@ function rebuildCraftRecipeIndex() {
   });
 }
 function pruneCraftRecipesOutsidePool() {
-  if (typeof shouldFilterToPool120 === "function" && shouldFilterToPool120()) {
-    if (typeof isItemInPool120 !== "function") return;
-    for (let i = ITEM_RECIPES.length - 1; i >= 0; i -= 1) {
-      const recipe = ITEM_RECIPES[i];
-      const ids = [recipe.output, ...recipe.inputs.map((input) => input.itemId)];
-      if (ids.some((id) => !isItemInPool120(id))) {
-        ITEM_RECIPES.splice(i, 1);
-      }
+  if (!shouldPruneCraftRecipesForPool()) return;
+  if (typeof isItemInPool120 !== "function") return;
+  for (let i = ITEM_RECIPES.length - 1; i >= 0; i -= 1) {
+    const recipe = ITEM_RECIPES[i];
+    const ids = [recipe.output, ...recipe.inputs.map((input) => input.itemId)];
+    if (ids.some((id) => !isItemInPool120(id))) {
+      ITEM_RECIPES.splice(i, 1);
     }
   }
 }
-pruneCraftRecipesOutsidePool();
 function syncCraftOutputIdSet() {
   if (typeof CRAFT_OUTPUT_IDS === "undefined") return;
   CRAFT_OUTPUT_IDS.clear();
@@ -67,8 +76,17 @@ function syncCraftOutputIdSet() {
     if (recipe?.output) CRAFT_OUTPUT_IDS.add(recipe.output);
   });
 }
-rebuildCraftRecipeIndex();
-syncCraftOutputIdSet();
+function refreshCraftRecipesForCurrentMode() {
+  ITEM_RECIPES.length = 0;
+  ITEM_RECIPES.push(...SOURCE_CRAFT_RECIPES);
+  pruneCraftRecipesOutsidePool();
+  rebuildCraftRecipeIndex();
+  syncCraftOutputIdSet();
+  if (typeof ItemUnlockTiers !== "undefined" && ItemUnlockTiers.rebuild) {
+    ItemUnlockTiers.rebuild();
+  }
+}
+refreshCraftRecipesForCurrentMode();
 function recipeInputTotal(recipe) {
   return recipe.inputs.reduce((sum, input) => sum + input.count, 0);
 }
@@ -408,3 +426,4 @@ function getCraftIngredientItemIds() {
   });
   return [...ids];
 }
+window.refreshCraftRecipesForCurrentMode = refreshCraftRecipesForCurrentMode;
