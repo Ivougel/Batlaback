@@ -7,7 +7,7 @@
   position: fixed;
   left: 0;
   right: 0;
-  bottom: calc(-1 * var(--bottom-chrome-pin-y, 0px));
+  bottom: calc(var(--bottom-chrome-lift-y, 0px) - var(--bottom-chrome-pin-y, 0px));
   flex-shrink: 0;
   z-index: var(--z-chrome);
   display: grid;
@@ -57,6 +57,13 @@ body:has(#overlay:not(.hidden)) .bottom-chrome {
     max(var(--bottom-chrome-h-measured, 0px), var(--bottom-chrome-h, 44px))
   );
   box-sizing: border-box;
+  /* Пропускать тапы в зону bottom-chrome (Android PWA / lift pin). */
+  pointer-events: none;
+}
+
+#class-overlay:not(.hidden) .class-overlay-shell .class-modal,
+#class-overlay:not(.hidden) .bb-intro-header {
+  pointer-events: auto;
 }
 
 body:has(#class-overlay:not(.hidden)) .bottom-chrome {

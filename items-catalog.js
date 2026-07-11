@@ -77,7 +77,7 @@ const ITEM_CATALOG_RAW = {
   bag_of_stones: {
     id: "bag_of_stones",
     name: "Мешок камней",
-    icon: "🪨",
+    icon: "🪨🎒",
     color: "#58a6ff",
     shape: [[0,0]],
     rarity: "rare",
@@ -288,7 +288,7 @@ const ITEM_CATALOG_RAW = {
   fanny_pack: {
     id: "fanny_pack",
     name: "Поясная сумка",
-    icon: "🎒",
+    icon: "🎒👝",
     color: "#58a6ff",
     shape: [[0,0],[0,1]],
     internalCols: 1,
@@ -309,7 +309,7 @@ const ITEM_CATALOG_RAW = {
   fire_staff: {
     id: "fire_staff",
     name: "Огненный посох",
-    icon: "🔥",
+    icon: "🔥🪄",
     color: "#f0883e",
     shape: [[0,0],[0,1],[1,1]],
     classRestriction: "mage",
@@ -434,7 +434,7 @@ const ITEM_CATALOG_RAW = {
   healing_herbs: {
     id: "healing_herbs",
     name: "Целебные травы",
-    icon: "🌿",
+    icon: "🌿🧺",
     color: "#8b949e",
     shape: [[0,0]],
     rarity: "common",
@@ -666,7 +666,7 @@ const ITEM_CATALOG_RAW = {
   lump_of_coal: {
     id: "lump_of_coal",
     name: "Кусок угля",
-    icon: "🪨",
+    icon: "🪨♨️",
     color: "#8b949e",
     shape: shapeRect(2, 1),
     rarity: "common",
@@ -907,7 +907,7 @@ const ITEM_CATALOG_RAW = {
   rusty_sword: {
     id: "rusty_sword",
     name: "Ржавый меч",
-    icon: "🗡️",
+    icon: "🗡️🕸️",
     color: "#8b949e",
     shape: [[0,0],[0,1]],
     rarity: "common",
@@ -943,7 +943,7 @@ const ITEM_CATALOG_RAW = {
   shiny_shell: {
     id: "shiny_shell",
     name: "Блестящая раковина",
-    icon: "🐚",
+    icon: "🐚✨",
     color: "#8b949e",
     shape: [[0,0]],
     rarity: "common",
@@ -1441,7 +1441,7 @@ const ITEM_CATALOG_RAW = {
   burning_torch: {
     id: "burning_torch",
     name: "Пылающий факел",
-    icon: "🔥",
+    icon: "🔦🔥",
     color: "#a371f7",
     shape: [[0,0]],
     rarity: "epic",
@@ -1497,7 +1497,7 @@ const ITEM_CATALOG_RAW = {
   corrupted_crystal: {
     id: "corrupted_crystal",
     name: "Искажённый кристалл",
-    icon: "💎",
+    icon: "💎🌀",
     color: "#a371f7",
     shape: [[0,0]],
     rarity: "epic",
@@ -1517,7 +1517,7 @@ const ITEM_CATALOG_RAW = {
   crossblades: {
     id: "crossblades",
     name: "Скрещённые клинки",
-    icon: "⚔️",
+    icon: "⚔️✖️",
     color: "#a371f7",
     shape: [[0,0],[1,0],[0,1]],
     rarity: "epic",
@@ -1688,7 +1688,7 @@ const ITEM_CATALOG_RAW = {
   enchanted_staff: {
     id: "enchanted_staff",
     name: "Магический посох",
-    icon: "🪄",
+    icon: "🪄💫",
     color: "#bc8cff",
     shape: [[0,0],[0,1]],
     rarity: "uncommon",
@@ -1760,7 +1760,7 @@ const ITEM_CATALOG_RAW = {
   flame_badge: {
     id: "flame_badge",
     name: "Огненный значок",
-    icon: "🔥",
+    icon: "🔥🏅",
     color: "#ffa657",
     shape: [[0,0]],
     rarity: "unique",
@@ -1799,7 +1799,7 @@ const ITEM_CATALOG_RAW = {
   forging_hammer: {
     id: "forging_hammer",
     name: "Кузнечный молот",
-    icon: "🔨",
+    icon: "🔨⚒️",
     color: "#ffa657",
     shape: [[0,0]],
     classRestriction: "warrior",
@@ -1819,7 +1819,7 @@ const ITEM_CATALOG_RAW = {
   frozen_flame: {
     id: "frozen_flame",
     name: "Замёрзшее пламя",
-    icon: "🧊",
+    icon: "🧊🔥",
     color: "#ffa657",
     shape: [[0,0]],
     rarity: "unique",
@@ -1859,7 +1859,7 @@ const ITEM_CATALOG_RAW = {
   great_shield: {
     id: "great_shield",
     name: "Большой щит",
-    icon: "🛡️",
+    icon: "🛡️🔰",
     color: "#58a6ff",
     shape: [[0,0],[1,0],[0,1],[1,1]],
     rarity: "rare",
@@ -1913,7 +1913,7 @@ const ITEM_CATALOG_RAW = {
   hero_long_sword: {
     id: "hero_long_sword",
     name: "Геройский длинный меч",
-    icon: "🗡️",
+    icon: "🗡️📏",
     color: "#58a6ff",
     shape: [[0,0],[0,1],[0,2]],
     rarity: "rare",
@@ -1931,7 +1931,7 @@ const ITEM_CATALOG_RAW = {
   hero_sword: {
     id: "hero_sword",
     name: "Геройский меч",
-    icon: "⚔️",
+    icon: "⚔️🦸",
     color: "#79c0ff",
     shape: [[0,0],[0,1]],
     rarity: "uncommon",
@@ -2170,7 +2170,7 @@ const ITEM_CATALOG_RAW = {
   lucky_clover: {
     id: "lucky_clover",
     name: "Счастливый клевер",
-    icon: "🍀",
+    icon: "☘️",
     color: "#58a6ff",
     shape: [[0,0]],
     classRestriction: "rogue",
@@ -2188,7 +2188,7 @@ const ITEM_CATALOG_RAW = {
   magic_badge: {
     id: "magic_badge",
     name: "Магический значок",
-    icon: "✨",
+    icon: "✨🏅",
     color: "#ffa657",
     shape: [[0,0]],
     rarity: "unique",
@@ -2229,7 +2229,7 @@ const ITEM_CATALOG_RAW = {
   mana_orb_charm: {
     id: "mana_orb_charm",
     name: "Сфера маны (талисман)",
-    icon: "🔮",
+    icon: "🔮📿",
     color: "#a371f7",
     shape: [[0,0]],
     rarity: "epic",
@@ -2438,7 +2438,7 @@ const ITEM_CATALOG_RAW = {
   prismatic_orb: {
     id: "prismatic_orb",
     name: "Призматическая сфера",
-    icon: "🔮",
+    icon: "🔮🌈",
     color: "#ff7b72",
     shape: [[0,0]],
     rarity: "godly",
@@ -2625,7 +2625,7 @@ const ITEM_CATALOG_RAW = {
   rune_of_magic: {
     id: "rune_of_magic",
     name: "Руна магии",
-    icon: "✨",
+    icon: "📜✨",
     color: "#a371f7",
     shape: [[0,0],[0,1]],
     rarity: "rare",
@@ -2735,7 +2735,7 @@ const ITEM_CATALOG_RAW = {
   sir_sand: {
     id: "sir_sand",
     name: "Сэр Песок",
-    icon: "🏖️",
+    icon: "🏖️⚔️",
     color: "#a371f7",
     shape: [[0,0]],
     rarity: "epic",
@@ -2773,7 +2773,7 @@ const ITEM_CATALOG_RAW = {
   snowmaster: {
     id: "snowmaster",
     name: "Повелитель снега",
-    icon: "❄️",
+    icon: "❄️👑",
     color: "#f0c14b",
     shape: [[0,0]],
     rarity: "legendary",
@@ -2903,7 +2903,7 @@ const ITEM_CATALOG_RAW = {
   stamina_sack: {
     id: "stamina_sack",
     name: "Мешок выносливости",
-    icon: "🎒",
+    icon: "🎒💪",
     color: "#a371f7",
     shape: [[0,0],[0,1],[0,2]],
     internalCols: 1,
@@ -2924,7 +2924,7 @@ const ITEM_CATALOG_RAW = {
   stone_badge: {
     id: "stone_badge",
     name: "Каменный значок",
-    icon: "🪨",
+    icon: "🪨🏅",
     color: "#ffa657",
     shape: [[0,0]],
     rarity: "unique",
@@ -2965,7 +2965,7 @@ const ITEM_CATALOG_RAW = {
   storage_chest: {
     id: "storage_chest",
     name: "Сундук",
-    icon: "📦",
+    icon: "📦🗄️",
     color: "#6e4c2a",
     shape: [[0,0],[1,0],[0,1],[1,1]],
     internalCols: 2,
@@ -3178,7 +3178,7 @@ const ITEM_CATALOG_RAW = {
   walrus_tusk: {
     id: "walrus_tusk",
     name: "Клык моржа",
-    icon: "🦷",
+    icon: "🦷🌊",
     color: "#8b949e",
     shape: [[0,0]],
     rarity: "common",
@@ -3196,7 +3196,7 @@ const ITEM_CATALOG_RAW = {
   war_hammer: {
     id: "war_hammer",
     name: "Боевой молот",
-    icon: "🔨",
+    icon: "🔨⚔️",
     color: "#ffa657",
     shape: [[0,0],[1,0],[0,1]],
     classRestriction: "warrior",
@@ -3215,7 +3215,7 @@ const ITEM_CATALOG_RAW = {
   whetstone: {
     id: "whetstone",
     name: "Точильный камень",
-    icon: "🪨",
+    icon: "🪨🔧",
     color: "#8b949e",
     shape: [[0,0]],
     rarity: "common",
@@ -3314,7 +3314,7 @@ const ITEM_CATALOG_RAW = {
   starter_bag: {
     id: "starter_bag",
     name: "Сумка",
-    icon: "👜",
+    icon: "👜🌱",
     color: "#6e4c2a",
     shape: [[0,0],[1,0],[2,0],[0,1],[1,1],[2,1],[0,2],[1,2],[2,2]],
     internalCols: 3,
@@ -3332,7 +3332,7 @@ const ITEM_CATALOG_RAW = {
   acorn_collar: {
     id: "acorn_collar",
     name: "Жёлудевой ошейник",
-    icon: "🌰",
+    icon: "🌰📿",
     color: "#a371f7",
     shape: [[0,0]],
     classRestriction: "rogue",
@@ -3784,7 +3784,7 @@ const ITEM_CATALOG_RAW = {
   artifact_stone_death: {
     id: "artifact_stone_death",
     name: "Артефактный камень: Смерть",
-    icon: "💀",
+    icon: "🪨💀",
     color: "#ffa657",
     shape: [[0,0]],
     rarity: "unique",
@@ -3909,7 +3909,7 @@ const ITEM_CATALOG_RAW = {
   box_of_prosperity: {
     id: "box_of_prosperity",
     name: "Ящик процветания",
-    icon: "📦",
+    icon: "📦💰",
     color: "#a371f7",
     shape: shapeRect(2, 2),
     internalCols: 2,
@@ -3990,7 +3990,7 @@ const ITEM_CATALOG_RAW = {
   carrot_goobert: {
     id: "carrot_goobert",
     name: "Морковный губерт",
-    icon: "🥕",
+    icon: "🥕🟢",
     color: "#a371f7",
     shape: [[0,0]],
     rarity: "epic",
@@ -4031,7 +4031,7 @@ const ITEM_CATALOG_RAW = {
   chili_goobert: {
     id: "chili_goobert",
     name: "Острый губерт",
-    icon: "🌶️",
+    icon: "🌶️🟢",
     color: "#a371f7",
     shape: [[0,0]],
     rarity: "epic",
@@ -4249,7 +4249,7 @@ const ITEM_CATALOG_RAW = {
   duffle_bag: {
     id: "duffle_bag",
     name: "Дорожная сумка",
-    icon: "🛄",
+    icon: "🛄✈️",
     color: "#ffa657",
     shape: shapeRect(2, 3),
     internalCols: 2,
@@ -4615,7 +4615,7 @@ const ITEM_CATALOG_RAW = {
   lucky_piggy: {
     id: "lucky_piggy",
     name: "Счастливая копилка",
-    icon: "🐷",
+    icon: "🐷🍀",
     color: "#a371f7",
     shape: [[0,0]],
     rarity: "epic",
@@ -4639,7 +4639,7 @@ const ITEM_CATALOG_RAW = {
   magic_torch: {
     id: "magic_torch",
     name: "Магический факел",
-    icon: "✨",
+    icon: "🔦✨",
     color: "#f0c14b",
     shape: [[0,0]],
     rarity: "legendary",
@@ -4775,7 +4775,7 @@ const ITEM_CATALOG_RAW = {
   oil_lamp: {
     id: "oil_lamp",
     name: "Масляная лампа",
-    icon: "🪔",
+    icon: "🪔🛢️",
     color: "#a371f7",
     shape: [[0,0]],
     classRestriction: "mage",
@@ -4855,7 +4855,7 @@ const ITEM_CATALOG_RAW = {
   platinum_customer_card: {
     id: "platinum_customer_card",
     name: "Платиновая карта покупателя",
-    icon: "💳",
+    icon: "💳💎",
     color: "#a371f7",
     shape: [[0,0]],
     rarity: "epic",
@@ -4957,7 +4957,7 @@ const ITEM_CATALOG_RAW = {
   rainbow_goobert: {
     id: "rainbow_goobert",
     name: "Радужный губерт",
-    icon: "🌈",
+    icon: "🌈🟢",
     color: "#ff7b72",
     shape: [[0,0]],
     rarity: "godly",
@@ -5343,7 +5343,7 @@ const ITEM_CATALOG_RAW = {
   strong_mana_potion: {
     id: "strong_mana_potion",
     name: "Сильное зелье маны",
-    icon: "🧪✨",
+    icon: "🧪💠",
     color: "#f0c14b",
     shape: [[0,0]],
     rarity: "legendary",
@@ -5583,7 +5583,7 @@ const ITEM_CATALOG_RAW = {
   wonky_snowman: {
     id: "wonky_snowman",
     name: "Кривой снеговик",
-    icon: "⛄",
+    icon: "⛄🎩",
     color: "#a371f7",
     shape: [[0,0]],
     rarity: "epic",

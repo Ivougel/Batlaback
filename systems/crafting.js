@@ -198,10 +198,24 @@ function getClusterAnchor(items) {
   return { col: Number.isFinite(col) ? col : 0, row: Number.isFinite(row) ? row : 0 };
 }
 function findCraftPlacement(containers, items, outputId, preferCol, preferRow) {
-  const candidates = [{ col: preferCol, row: preferRow }];
+  const candidates = [];
+  const seen = /* @__PURE__ */ new Set();
+  const addCandidate = (col, row) => {
+    const key = `${col},${row}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    candidates.push({ col, row });
+  };
+  addCandidate(preferCol, preferRow);
   items.forEach((item) => {
-    getItemCells(item).forEach(([c, r]) => candidates.push({ col: c, row: r }));
+    getItemCells(item).forEach(([c, r]) => addCandidate(c, r));
   });
+  if (typeof buildSlotSet === "function") {
+    buildSlotSet(containers).forEach((key) => {
+      const [c, r] = key.split(",").map(Number);
+      addCandidate(c, r);
+    });
+  }
   for (let i = 0; i < candidates.length; i += 1) {
     const { col, row } = candidates[i];
     for (let rotation = 0; rotation < 4; rotation += 1) {
@@ -277,7 +291,6 @@ function detectMatchingCraftClusters(containers, items, ctx = null) {
       }
       for (const cluster of enumerateRecipeClusters(pool, recipe)) {
         if (cluster.some((item) => usedUids.has(item.uid))) continue;
-        if (!canApplyCraftRecipe(containers, pool, recipe, cluster)) continue;
         cluster.forEach((item) => usedUids.add(item.uid));
         results.push({
           recipe,

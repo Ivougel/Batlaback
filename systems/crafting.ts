@@ -248,10 +248,25 @@ function findCraftPlacement(
   preferCol: number,
   preferRow: number,
 ) {
-  const candidates = [{ col: preferCol, row: preferRow }];
+  const candidates: Array<{ col: number; row: number }> = [];
+  const seen = new Set<string>();
+  const addCandidate = (col: number, row: number) => {
+    const key = `${col},${row}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    candidates.push({ col, row });
+  };
+
+  addCandidate(preferCol, preferRow);
   items.forEach((item) => {
-    getItemCells(item).forEach(([c, r]: [number, number]) => candidates.push({ col: c, row: r }));
+    getItemCells(item).forEach(([c, r]: [number, number]) => addCandidate(c, r));
   });
+  if (typeof buildSlotSet === "function") {
+    buildSlotSet(containers).forEach((key) => {
+      const [c, r] = key.split(",").map(Number);
+      addCandidate(c, r);
+    });
+  }
 
   for (let i = 0; i < candidates.length; i += 1) {
     const { col, row } = candidates[i];
@@ -361,7 +376,8 @@ function detectMatchingCraftClusters(containers: object[], items: BoardItem[], c
       }
       for (const cluster of enumerateRecipeClusters(pool, recipe)) {
         if (cluster.some((item) => usedUids.has(item.uid))) continue;
-        if (!canApplyCraftRecipe(containers, pool, recipe, cluster)) continue;
+        // Место под результат проверяем при applyRecipe — pending-крафт ставится в очередь,
+        // даже если 2×2 ещё занято (освободится после боя или перестановки).
 
         cluster.forEach((item) => usedUids.add(item.uid));
         results.push({

@@ -323,9 +323,11 @@ html[data-bb-intro] body:has(#class-overlay.bb-intro-layout[data-class-intro-ste
 html[data-bb-intro] body:has(#class-overlay.bb-intro-layout:not(.hidden)) .bottom-chrome-intro-end .btn-glass-back,
 html[data-bb-intro] body:has(#class-overlay.bb-intro-layout:not(.hidden)) .bottom-chrome-intro-end .bb-intro-play-btn {
   flex: 0 0 auto;
-  min-width: 0;
+  min-width: max(calc(88px * var(--ui-scale, 1)), var(--touch-target-min, 44px));
+  min-height: var(--touch-target-min, 44px);
   padding-inline: calc(10px * var(--ui-scale, 1));
   overflow: visible;
   text-overflow: clip;
   white-space: nowrap;
+  touch-action: manipulation;
 }

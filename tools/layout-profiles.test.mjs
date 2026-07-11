@@ -73,6 +73,73 @@ const PROFILES = [
       overlayVisible: true,
     },
   },
+  {
+    id: "y700-landscape",
+    device: {
+      ...devices["Galaxy Tab S9"],
+      viewport: { width: 1280, height: 800 },
+      deviceScaleFactor: 2,
+      isMobile: true,
+      hasTouch: true,
+    },
+    expect: {
+      orientation: "landscape",
+      tier: "tablet",
+      layoutProfile: "tablet-landscape",
+      htmlNotNone: true,
+      overlayVisible: true,
+    },
+  },
+  {
+    id: "y700-portrait",
+    device: {
+      ...devices["Galaxy Tab S9"],
+      viewport: { width: 800, height: 1280 },
+      deviceScaleFactor: 2,
+      isMobile: true,
+      hasTouch: true,
+    },
+    expect: {
+      orientation: "portrait",
+      tier: "tablet",
+      layoutProfile: "tablet-portrait",
+      prepLayoutNot: "mobile",
+      htmlNotNone: true,
+      overlayVisible: true,
+    },
+  },
+  {
+    id: "y700-native-landscape",
+    device: {
+      viewport: { width: 2560, height: 1600 },
+      isMobile: true,
+      hasTouch: true,
+    },
+    expect: {
+      orientation: "landscape",
+      tier: "tablet",
+      layoutProfile: "tablet-landscape",
+      prepLayoutNot: "mobile",
+      htmlNotNone: true,
+      overlayVisible: true,
+    },
+  },
+  {
+    id: "y700-native-portrait",
+    device: {
+      viewport: { width: 1600, height: 2560 },
+      isMobile: true,
+      hasTouch: true,
+    },
+    expect: {
+      orientation: "portrait",
+      tier: "tablet",
+      layoutProfile: "tablet-portrait",
+      prepLayoutNot: "mobile",
+      htmlNotNone: true,
+      overlayVisible: true,
+    },
+  },
 ];
 
 function assert(cond, msg) {

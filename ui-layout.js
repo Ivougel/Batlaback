@@ -62,10 +62,12 @@
 
     if (!bar || bar.classList.contains("hidden") || getComputedStyle(bar).display === "none") {
       root.style.removeProperty("--bottom-chrome-pin-y");
+      root.style.removeProperty("--bottom-chrome-lift-y");
       return;
     }
     if (isLayoutBlockingModal() && !isClassOverlayOpen()) {
       root.style.removeProperty("--bottom-chrome-pin-y");
+      root.style.removeProperty("--bottom-chrome-lift-y");
       return;
     }
 
@@ -74,6 +76,7 @@
     const shouldPin = (tier === "tablet" && touch) || isPwaStandalone();
     if (!shouldPin) {
       root.style.removeProperty("--bottom-chrome-pin-y");
+      root.style.removeProperty("--bottom-chrome-lift-y");
       if (isClassOverlayOpen()) {
         root.style.setProperty(
           "--class-intro-chrome-h",
@@ -83,20 +86,25 @@
       return;
     }
 
-    const viewBottom = screenBottom();
-    const rect = bar.getBoundingClientRect();
-    const gap = Math.max(0, viewBottom - rect.bottom);
-    const pinY = gap > 0.5 ? Math.round(gap) : 0;
+    root.style.removeProperty("--bottom-chrome-pin-y");
+    root.style.removeProperty("--bottom-chrome-lift-y");
 
-    if (pinY > 0) {
-      root.style.setProperty("--bottom-chrome-pin-y", `${pinY}px`);
-    } else {
-      root.style.removeProperty("--bottom-chrome-pin-y");
+    const visualBottom = visualViewportBottom();
+    const rect = bar.getBoundingClientRect();
+    const delta = Math.round(visualBottom - rect.bottom);
+
+    if (delta > 0.5) {
+      root.style.setProperty("--bottom-chrome-pin-y", `${delta}px`);
+    } else if (delta < -0.5) {
+      root.style.setProperty("--bottom-chrome-lift-y", `${Math.abs(delta)}px`);
     }
+
+    const pinY = readCssPx("--bottom-chrome-pin-y", 0);
+    const liftY = readCssPx("--bottom-chrome-lift-y", 0);
 
     if (isClassOverlayOpen()) {
       const reserve = Math.max(
-        Math.round(bar.offsetHeight + pinY),
+        Math.round(bar.offsetHeight + pinY + liftY),
         readCssPx("--bottom-chrome-h", 44),
       );
       root.style.setProperty("--class-intro-chrome-h", `${reserve}px`);
@@ -106,6 +114,7 @@
   function measureBottomChromeHeight() {
     syncBottomChromeDock();
     const pinY = readCssPx("--bottom-chrome-pin-y", 0);
+    const liftY = readCssPx("--bottom-chrome-lift-y", 0);
 
     if (isClassOverlayOpen()) {
       const reserve = readCssPx("--class-intro-chrome-h", 0);
@@ -113,7 +122,7 @@
       const bar = getBottomChrome();
       if (!bar || bar.classList.contains("hidden")) return readCssPx("--bottom-chrome-h", 44);
       if (getComputedStyle(bar).display === "none") return readCssPx("--bottom-chrome-h", 44);
-      return bar.offsetHeight + pinY || readCssPx("--bottom-chrome-h", 44);
+      return bar.offsetHeight + pinY + liftY || readCssPx("--bottom-chrome-h", 44);
     }
     if (isLayoutBlockingModal()) return 0;
     const bar = getBottomChrome();
@@ -373,7 +382,14 @@
   function applyIntroUiScaleFloor(clamped, layoutProfile) {
     if (!isClassOverlayOpen() || layoutProfile.tier !== "tablet") return clamped;
     const min = INTRO_UI_SCALE_MIN[layoutProfile.id] ?? 0.8;
-    return roundScale(Math.max(min, clamped));
+    let result = roundScale(Math.max(min, clamped));
+    const { w, h } = viewportSize();
+    const longSide = Math.max(w, h);
+    if (longSide > 1366) {
+      const nativeCap = roundScale(Math.max(SCALE_MIN, DESIGN_W / longSide));
+      result = Math.min(result, nativeCap);
+    }
+    return result;
   }
 
   function computeGameScale(uiScale, profile) {
@@ -4140,6 +4156,18 @@
     }
   }
 
+  function resolveUiTier(w, h, touchDev) {
+    if (w <= 720 || h <= 520) return "phone";
+    if (w <= 1366 || h <= 940) return "tablet";
+    // Native-DPI touch-планшеты (Legion Y700 2560×1600, iPad Pro в DevTools без DPR и т.п.)
+    const shortSide = Math.min(w, h);
+    const longSide = Math.max(w, h);
+    if (touchDev && shortSide <= 1700 && longSide <= 2800 && longSide / shortSide <= 2.1) {
+      return "tablet";
+    }
+    return "desktop";
+  }
+
   function applyUiLayout(options = {}) {
     const skipDockRemeasure = options.skipDockRemeasure === true
       || isLayoutInteractionLocked();
@@ -4150,9 +4178,7 @@
     const gamepadMode = typeof isGamepadInteraction === "function" && isGamepadInteraction();
     const gamepadHud = (touchDev && !gamepadMode) ? "hidden" : "auto";
 
-    let tier = "desktop";
-    if (w <= 720 || h <= 520) tier = "phone";
-    else if (w <= 1366 || h <= 940) tier = "tablet";
+    let tier = resolveUiTier(w, h, touchDev);
 
     const introModeStepOpen = (() => {
       const overlay = document.getElementById("class-overlay");
