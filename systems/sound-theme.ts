@@ -1,6 +1,6 @@
 /**
  * Звуковое оформление (localStorage: bb-sound-theme).
- * classic · dopamine · gentle · meat (Diablo) · mirror (Black Mirror UI) · forest (дубовый мох).
+ * classic · dopamine · gentle · meat · mirror · forest — подписи в SfxThemes.META.
  */
 import type { SoundThemeId } from "../types/game";
 

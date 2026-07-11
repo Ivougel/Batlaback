@@ -156,7 +156,17 @@ function shouldUseBBStackPrepLayout() {
     ? document.getElementById("app")?.dataset?.phase
     : null;
   if (appPhase !== "prep") return false;
-  return isBBFidelityMode();
+  if (!isBBFidelityMode()) return false;
+  if (typeof window === "undefined") return true;
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  // Мышь / трекпад (fine pointer): desktop/laptop → side prep по LAYOUT.md,
+  // не телефонная колонка 480px. Touch/coarse (phone, Y700, iPad) оставляем bb-stack.
+  try {
+    const fine = window.matchMedia("(pointer: fine)").matches;
+    if (fine && w > h && Math.min(w, h) >= 700) return false;
+  } catch (_) { /* ignore */ }
+  return true;
 }
 
 /** BB classic/versus: полноэкранный VS перед боем вместо 3-2-1. */

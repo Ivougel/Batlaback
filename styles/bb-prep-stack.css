@@ -14,6 +14,9 @@ html[data-prep-layout="bb-stack"] body:has(#app[data-phase="prep"]) #bottom-chro
 html[data-prep-layout="bb-stack"] #app[data-phase="prep"] {
   height: var(--app-h);
   max-height: var(--app-h);
+  max-width: none;
+  width: 100%;
+  margin-inline: auto;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -738,11 +741,4 @@ html[data-prep-layout="bb-stack"] .prep-mobile-sell-btn {
 
 html[data-prep-layout="bb-stack"] body:has(#app[data-phase="prep"]) #bottom-chrome .bottom-chrome-prep-right .btn-fight-header {
   display: none !important;
-}
-
-@media (min-width: 1280px) and (min-height: 800px) {
-  html[data-prep-layout="bb-stack"] #app[data-phase="prep"] {
-    max-width: min(480px, 100vw);
-    margin-inline: auto;
-  }
 }

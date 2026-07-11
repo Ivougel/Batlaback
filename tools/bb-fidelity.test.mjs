@@ -252,6 +252,22 @@ function run() {
   };
   assert(classicIntro.shouldUseBBIntroLayout(), "BB intro on hero steps for classic");
 
+  const desktopMouse = loadSandbox("classic");
+  desktopMouse.window = {
+    innerWidth: 1440,
+    innerHeight: 900,
+    matchMedia: (q) => ({ matches: String(q).includes("pointer: fine") }),
+  };
+  assert(!desktopMouse.shouldUseBBStackPrepLayout(), "desktop fine pointer skips bb-stack");
+
+  const phoneTouch = loadSandbox("classic");
+  phoneTouch.window = {
+    innerWidth: 390,
+    innerHeight: 844,
+    matchMedia: () => ({ matches: false }),
+  };
+  assert(phoneTouch.shouldUseBBStackPrepLayout(), "phone portrait keeps bb-stack");
+
   const classicBattle = loadSandbox("classic");
   classicBattle.phase = "battle";
   assert(!classicBattle.shouldUseBBVersusTurnFlow(), "classic no versus turn flow");
