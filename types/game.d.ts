@@ -6,7 +6,7 @@ export type GameMode = "classic";
 
 export type LoaderMode = "classic" | (string & {});
 
-export type InputMode = "gamepad" | "touch" | "mouse";
+export type InputMode = "gamepad" | "touch" | "mouse" | "stylus";
 
 export type PrepHudPresetId = "hero-card" | "unit-frame";
 

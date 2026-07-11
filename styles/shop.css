@@ -967,11 +967,12 @@ html[data-prep-layout="stacked"] #app[data-phase="prep"] #shop-panel .shop-actio
   min-height: 44px;
 }
 
-.shop-hint-touch {
+.shop-hint-touch,
+.shop-hint-stylus {
   display: none;
 }
 
-html[data-touch="true"] .shop-hint:not(.shop-hint-touch) {
+html[data-touch="true"] .shop-hint:not(.shop-hint-touch):not(.shop-hint-stylus) {
   display: none;
 }
 
@@ -979,7 +980,8 @@ html[data-touch="true"] .shop-hint-touch {
   display: block;
 }
 
-.hint-touch {
+.hint-touch,
+.hint-stylus {
   display: none;
 }
 
@@ -993,21 +995,37 @@ html[data-touch="true"] .hint-touch {
 
 /* Подсказки по активному режиму ввода */
 html[data-input-mode="mouse"] .shop-hint-touch,
-html[data-input-mode="gamepad"] .shop-hint-touch {
+html[data-input-mode="mouse"] .shop-hint-stylus,
+html[data-input-mode="gamepad"] .shop-hint-touch,
+html[data-input-mode="gamepad"] .shop-hint-stylus {
   display: none;
 }
 
-html[data-input-mode="mouse"] .shop-hint:not(.shop-hint-touch),
-html[data-input-mode="gamepad"] .shop-hint:not(.shop-hint-touch) {
+html[data-input-mode="mouse"] .shop-hint:not(.shop-hint-touch):not(.shop-hint-stylus),
+html[data-input-mode="gamepad"] .shop-hint:not(.shop-hint-touch):not(.shop-hint-stylus) {
   display: block;
 }
 
-html[data-input-mode="touch"] .shop-hint:not(.shop-hint-touch) {
+html[data-input-mode="touch"] .shop-hint:not(.shop-hint-touch),
+html[data-input-mode="stylus"] .shop-hint:not(.shop-hint-stylus) {
   display: none;
 }
 
 html[data-input-mode="touch"] .shop-hint-touch {
   display: block;
+}
+
+html[data-input-mode="stylus"] .shop-hint-stylus {
+  display: block;
+}
+
+html[data-input-mode="stylus"] .hint-front,
+html[data-input-mode="stylus"] .hint-touch {
+  display: none;
+}
+
+html[data-input-mode="stylus"] .hint-stylus {
+  display: inline;
 }
 
 html[data-touch="true"] #app[data-phase="prep"] .shop-panel .shop-slots {

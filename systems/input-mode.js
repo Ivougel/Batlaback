@@ -1,5 +1,9 @@
 // Transpiled from TypeScript — npm run compile:ts
 
+/**
+ * Автопереключение режима ввода: gamepad | touch | mouse | stylus.
+ * stylus = точный pointer (Apple Pencil / Surface Pen).
+ */
 let interactionMode = "mouse";
 const interactionModeListeners = [];
 function isTouchCapableDevice() {
@@ -24,14 +28,23 @@ function isTouchInteraction() {
 function isMouseInteraction() {
   return interactionMode === "mouse";
 }
+function isStylusInteraction() {
+  return interactionMode === "stylus";
+}
 function isGamepadInteraction() {
   return interactionMode === "gamepad";
+}
+function isPreciseInteraction() {
+  return interactionMode === "mouse" || interactionMode === "stylus";
+}
+function isFatFingerInteraction() {
+  return interactionMode === "touch";
 }
 function onInteractionModeChange(listener) {
   if (typeof listener === "function") interactionModeListeners.push(listener);
 }
 function setInteractionMode(mode) {
-  if (mode !== "gamepad" && mode !== "touch" && mode !== "mouse") return;
+  if (mode !== "gamepad" && mode !== "touch" && mode !== "mouse" && mode !== "stylus") return;
   if (mode === interactionMode) return;
   const prev = interactionMode;
   interactionMode = mode;
@@ -48,6 +61,9 @@ function markTouchInteraction() {
 }
 function markMouseInteraction() {
   setInteractionMode("mouse");
+}
+function markStylusInteraction() {
+  setInteractionMode("stylus");
 }
 function markGamepadInteraction() {
   setInteractionMode("gamepad");

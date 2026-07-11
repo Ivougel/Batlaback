@@ -119,6 +119,7 @@ function syncShopHintsVisibility() {
   const hide = shouldHideShopHints();
   document.getElementById("shop-panel-hint")?.toggleAttribute("hidden", hide);
   document.querySelector("#shop-panel .shop-hint-touch")?.toggleAttribute("hidden", hide);
+  document.querySelector("#shop-panel .shop-hint-stylus")?.toggleAttribute("hidden", hide);
   document.querySelector("#shop-panel .shop-sell-hint")?.toggleAttribute("hidden", hide);
 }
 function refillShopSlots() {
@@ -412,7 +413,8 @@ function renderShop(side = rt.getPrepViewSide(), containerEl = null) {
   if (typeof syncBuildTrackShopBar === "function") syncBuildTrackShopBar();
   const bindShopTouchDragStart = (cardEl, index) => {
     cardEl.addEventListener("pointerdown", (e) => {
-      if (e.pointerType === "mouse") return;
+      // Только палец. Стилус идёт через precise path в bindTouchInput.
+      if (e.pointerType !== "touch") return;
       if (e.button !== 0 || e.target.closest(".shop-pin")) return;
       rt.beginPendingShopDrag(index, e, side);
     }, { passive: false });
@@ -492,7 +494,7 @@ function renderBench(side = rt.getPrepViewSide(), containerEl = null) {
   el.querySelectorAll(".bench-card:not(.empty)").forEach((card) => {
     const idx = +card.dataset.bench;
     card.addEventListener("pointerdown", (e) => {
-      if (e.pointerType === "mouse") return;
+      if (e.pointerType !== "touch") return;
       if (e.button !== 0) return;
       rt.beginPendingBenchDrag(idx, e, side);
     }, { passive: false });

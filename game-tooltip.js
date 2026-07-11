@@ -181,7 +181,10 @@ function showClassSummaryTooltip(kind, anchorEl, options = {}) {
 
 function armPointerTapTooltip(clientX, clientY, onTap, { pointerType, allowMouse = true } = {}) {
   beginTouchTapGesture({ clientX, clientY, allowMouse, onTap });
-  if (isTouchLikePointerType(pointerType) || (!pointerType && isTouchUi())) {
+  const fatFinger = typeof isFatFingerPointerType === "function"
+    ? isFatFingerPointerType(pointerType)
+    : pointerType === "touch";
+  if (fatFinger || (!pointerType && isTouchUi())) {
     finishTouchTapGesture(clientX, clientY);
     return true;
   }
@@ -2325,7 +2328,10 @@ function bindPointerTapTooltip(el, onTapAt) {
   el.addEventListener("pointerup", (e) => {
     if (activePointer == null || e.pointerId !== activePointer) return;
     activePointer = null;
-    if (isTouchLikePointerType(e.pointerType)) return;
+    // Палец показывает tooltip на down; мышь/стилус — на up.
+    if (typeof isFatFingerPointerType === "function"
+      ? isFatFingerPointerType(e.pointerType)
+      : e.pointerType === "touch") return;
     finishTouchTapGesture(e.clientX, e.clientY);
   }, captureOpts);
   el.addEventListener("pointercancel", () => {

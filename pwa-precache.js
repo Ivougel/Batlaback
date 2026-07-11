@@ -1091,7 +1091,7 @@ self.PWA_PRECACHE_URLS = [
   "systems/enhancements.js?v=1",
   "systems/gamepad.js",
   "systems/gem-sockets.js",
-  "systems/input-mode.js",
+  "systems/input-mode.js?v=2",
   "systems/item-locale.js",
   "systems/item-pool-120.js?v=1",
   "systems/item-presentation.js?v=1",

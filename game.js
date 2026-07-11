@@ -702,7 +702,9 @@ function bindClassSummaryInteractions() {
       if (!classSummaryTooltipPinned) hideClassSummaryTooltip();
     });
     btn.addEventListener("click", (event) => {
-      const coarse = window.matchMedia?.("(hover: none)")?.matches || event.pointerType === "touch";
+      const coarse = window.matchMedia?.("(hover: none)")?.matches
+        || event.pointerType === "touch"
+        || event.pointerType === "pen";
       if (!coarse) return;
       event.preventDefault();
       if (classSummaryTooltipPinned && classSummaryTooltipKind === kind) {
@@ -1134,12 +1136,31 @@ function isSyntheticMouseFromTouch() {
 }
 
 function isTouchUi() {
-  return typeof isTouchInteraction === "function"
-    ? isTouchInteraction()
-    : document.documentElement.dataset.touch === "true";
+  // Fat-finger UX only. Stylus uses precise (mouse-like) thresholds/buy/ghost.
+  if (typeof isFatFingerInteraction === "function") return isFatFingerInteraction();
+  if (typeof isTouchInteraction === "function") return isTouchInteraction();
+  return document.documentElement.dataset.touch === "true"
+    && document.documentElement.dataset.inputMode !== "stylus";
 }
 
+function isPreciseUi() {
+  if (typeof isPreciseInteraction === "function") return isPreciseInteraction();
+  return !isTouchUi();
+}
 
+function isFatFingerPointerType(pointerType) {
+  return pointerType === "touch";
+}
+
+function isStylusPointerType(pointerType) {
+  return pointerType === "pen";
+}
+
+function isPrecisePointerType(pointerType) {
+  return pointerType === "mouse" || pointerType === "pen";
+}
+
+/** @deprecated prefer isFatFingerPointerType for UX; keep for sparkle/dismiss that accept both. */
 function isTouchLikePointerType(pointerType) {
   return pointerType === "touch" || pointerType === "pen";
 }
@@ -1251,7 +1272,8 @@ function bindTouchInput() {
   let prepDragPrimaryPointerId = null;
   let pointerCaptureEl = null;
 
-  const isTouchLikePointer = (e) => e.pointerType === "touch" || e.pointerType === "pen";
+  const isFatFingerPointer = (e) => e.pointerType === "touch";
+  const isStylusPointer = (e) => e.pointerType === "pen";
   const gestureKey = (kind, id) => `${kind}:${id}`;
   const ignoreTarget = (target) => target?.closest?.("button, a, input, select, textarea");
   const isPrepPointerTarget = (target) => !!target?.closest?.(prepPointerSelector);
@@ -1295,6 +1317,9 @@ function bindTouchInput() {
         clientY: y,
         onTap: () => {
           updatePointerFromClient(x, y);
+          if (typeof handleBattleHudClick === "function") {
+            handleBattleHudClick(x, y);
+          }
           updateTooltip(mousePos.x, mousePos.y);
         },
       });
@@ -1345,25 +1370,147 @@ function bindTouchInput() {
     }
   };
 
+  // —— Fat finger (touch) ——
   document.addEventListener("pointerdown", (e) => {
-    if (!isTouchLikePointer(e)) return;
+    if (!isFatFingerPointer(e)) return;
     onDown("pointer", e.pointerId, e.clientX, e.clientY, e);
   }, captureOpts);
 
   document.addEventListener("pointermove", (e) => {
-    if (!isTouchLikePointer(e)) return;
+    if (!isFatFingerPointer(e)) return;
     onMove("pointer", e.pointerId, e.clientX, e.clientY, e);
   }, captureOpts);
 
   document.addEventListener("pointerup", (e) => {
-    if (!isTouchLikePointer(e)) return;
+    if (!isFatFingerPointer(e)) return;
     onUp("pointer", e.pointerId, e.clientX, e.clientY);
   }, captureOpts);
 
   document.addEventListener("pointercancel", (e) => {
-    if (!isTouchLikePointer(e)) return;
+    if (!isFatFingerPointer(e)) return;
     onUp("pointer", e.pointerId, e.clientX, e.clientY);
   }, captureOpts);
+
+  // —— Stylus (pen): precise mouse-like path ——
+  const onStylusDown = (e) => {
+    if (!isStylusPointer(e)) return;
+    if (e.button !== 0 && e.button !== -1) {
+      // Barrel / eraser / right-click while dragging → rotate
+      if (dragPayload && isLoadoutInteractionPhase() && typeof rotateDragItem === "function") {
+        if (e.cancelable) e.preventDefault();
+        rotateDragItem();
+      }
+      return;
+    }
+    if (activeGesture) return;
+    if (ignoreTarget(e.target)) return;
+    if (isStoragePhysicsTarget(e.target)) return;
+
+    if (typeof markStylusInteraction === "function") markStylusInteraction();
+    else markMouseInteraction();
+    lastTouchEventAt = Date.now();
+
+    if ((phase === "battle" || phase === "replay") && e.target?.closest?.("#game-canvas") && !dragPayload) {
+      activeGesture = gestureKey("stylus", e.pointerId);
+      if (e.cancelable) e.preventDefault();
+      if (typeof handleBattleHudClick === "function") {
+        handleBattleHudClick(e.clientX, e.clientY);
+      }
+      beginPendingCanvasPick(e.clientX, e.clientY);
+      return;
+    }
+
+    if (!isLoadoutInteractionPhase() || gameOver) return;
+    if (!isPrepPointerTarget(e.target)) return;
+
+    activeGesture = gestureKey("stylus", e.pointerId);
+    prepDragPrimaryPointerId = e.pointerId;
+    if (e.cancelable) e.preventDefault();
+
+    const shopPointerSurface = e.target?.closest?.(
+      "#prep-shop-popover, #shop-panel, .shop-card, .shop-pin, .btn-refresh-shop",
+    );
+    if (!shopPointerSurface) {
+      const captureEl = e.target?.closest?.("#game-canvas, .canvas-scale-wrap, .prep-storage-arena")
+        || canvas;
+      capturePointerSurface(e.pointerId, captureEl);
+    }
+
+    // Precise path: canvas pick / shop pending via mouse-equivalent helpers
+    if (e.target?.closest?.("#game-canvas, .canvas-scale-wrap")) {
+      beginPendingCanvasPick(e.clientX, e.clientY);
+    } else {
+      gamepadPointerDownAt(e.clientX, e.clientY);
+    }
+  };
+
+  const onStylusMove = (e) => {
+    if (!isStylusPointer(e)) return;
+
+    // Hover (proximity / hover-capable pens): preview tooltips without contact
+    if (e.buttons === 0 && !dragPayload && !pendingShopDrag && !pendingBenchDrag && !activeGesture) {
+      updatePointerFromClient(e.clientX, e.clientY);
+      if (prepTooltipsEnabled && typeof updateTooltip === "function") {
+        if (phase === "prep" || phase === "battle" || phase === "replay") {
+          updateTooltip(mousePos.x, mousePos.y);
+        }
+      }
+      return;
+    }
+
+    if (activeGesture !== gestureKey("stylus", e.pointerId)) return;
+    updateTouchTapGestureMove(e.clientX, e.clientY);
+    if ((dragPayload || pendingShopDrag || pendingBenchDrag || pendingCanvasPick) && e.cancelable) {
+      e.preventDefault();
+    }
+    updatePointerFromClient(e.clientX, e.clientY);
+    if (pendingCanvasPick) updatePendingCanvasPick(e.clientX, e.clientY);
+    if (pendingShopDrag) updatePendingShopDrag(e);
+    if (pendingBenchDrag && typeof updatePendingBenchDrag === "function") {
+      updatePendingBenchDrag(e);
+    }
+  };
+
+  const onStylusUp = (e) => {
+    if (!isStylusPointer(e)) return;
+    if (activeGesture !== gestureKey("stylus", e.pointerId)) return;
+    lastTouchEventAt = Date.now();
+    const x = e.clientX;
+    const y = e.clientY;
+
+    if (pendingCanvasPick && !dragPayload) {
+      const tapHandled = finishTouchTapGesture(x, y);
+      pendingCanvasPick = null;
+      if (!tapHandled && typeof tryBuyFromPendingShopDrag === "function") {
+        tryBuyFromPendingShopDrag(x, y);
+      }
+      releasePointerSurface(e.pointerId);
+      activeGesture = null;
+      syncUiDragState();
+      return;
+    }
+
+    if (pendingShopDrag && !dragPayload) {
+      if (!tryBuyFromPendingShopDrag(x, y)) {
+        gamepadPointerUpAt(x, y);
+      }
+      releasePointerSurface(e.pointerId);
+      activeGesture = null;
+      return;
+    }
+
+    gamepadPointerUpAt(x, y);
+    releasePointerSurface(e.pointerId);
+    activeGesture = null;
+    if (!dragPayload && !pendingShopDrag && !pendingBenchDrag) {
+      prepDragPrimaryPointerId = null;
+    }
+  };
+
+  document.addEventListener("pointerdown", onStylusDown, captureOpts);
+  document.addEventListener("pointermove", onStylusMove, { passive: false, capture: true });
+  document.addEventListener("pointerup", onStylusUp, captureOpts);
+  document.addEventListener("pointercancel", onStylusUp, captureOpts);
 
   window.addEventListener("touchmove", (e) => {
     if (!activeGesture?.startsWith("touch:")) return;
@@ -1381,10 +1528,14 @@ function bindTouchInput() {
   }, bubbleOpts);
 
   document.addEventListener("touchstart", (e) => {
-    if (dragPayload && isLoadoutInteractionPhase() && e.touches.length >= 2) {
-      e.preventDefault();
-      if (typeof tryRotateDragItemFromSecondaryTouch === "function") {
-        tryRotateDragItemFromSecondaryTouch();
+    // Два пальца ИЛИ палец во время stylus-drag → поворот
+    if (dragPayload && isLoadoutInteractionPhase()) {
+      const stylusDrag = typeof isStylusInteraction === "function" && isStylusInteraction();
+      if (e.touches.length >= 2 || (stylusDrag && e.touches.length >= 1)) {
+        e.preventDefault();
+        if (typeof tryRotateDragItemFromSecondaryTouch === "function") {
+          tryRotateDragItemFromSecondaryTouch();
+        }
       }
     }
   }, bubbleOpts);

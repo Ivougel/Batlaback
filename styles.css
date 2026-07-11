@@ -5550,11 +5550,13 @@ html[data-prep-layout="stacked"] .battle-arena.is-battle {
 
 
 html[data-input-mode="mouse"] .hint-touch,
+html[data-input-mode="stylus"] .hint-touch,
 html[data-input-mode="gamepad"] .hint-touch {
   display: none;
 }
 
 html[data-input-mode="mouse"] .hint-front,
+html[data-input-mode="stylus"] .hint-front,
 html[data-input-mode="gamepad"] .hint-front {
   display: inline;
 }
@@ -5565,6 +5567,14 @@ html[data-input-mode="touch"] .hint-front {
 
 html[data-input-mode="touch"] .hint-touch {
   display: inline;
+}
+
+html[data-input-mode="stylus"] .hint-stylus {
+  display: inline;
+}
+
+html:not([data-input-mode="stylus"]) .hint-stylus {
+  display: none;
 }
 
 html[data-touch="true"] #app[data-phase="prep"] .battle-canvas-stage {

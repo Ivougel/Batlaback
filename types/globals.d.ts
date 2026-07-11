@@ -276,7 +276,26 @@ declare const rt: {
   getPhase(): string;
 };
 
-declare function getSideState(side: string): import("./game").PrepShopSideState;
+declare function isTouchUi(): boolean;
+declare function isPreciseUi(): boolean;
+declare function isFatFingerPointerType(pointerType: string | undefined): boolean;
+declare function isStylusPointerType(pointerType: string | undefined): boolean;
+declare function isPrecisePointerType(pointerType: string | undefined): boolean;
+declare function isTouchLikePointerType(pointerType: string | undefined): boolean;
+declare function isTouchInteraction(): boolean;
+declare function isMouseInteraction(): boolean;
+declare function isStylusInteraction(): boolean;
+declare function isPreciseInteraction(): boolean;
+declare function isFatFingerInteraction(): boolean;
+declare function markTouchInteraction(): void;
+declare function markMouseInteraction(): void;
+declare function markStylusInteraction(): void;
+declare function markGamepadInteraction(): void;
+declare function getInteractionMode(): import("./game").InputMode;
+declare function initInteractionMode(): void;
+declare function onInteractionModeChange(
+  listener: (mode: import("./game").InputMode, prev: import("./game").InputMode) => void,
+): void;
 declare function getShopContextForSide(side?: string, opts?: { isReroll?: boolean }): {
   playerClass?: string;
   round?: number;

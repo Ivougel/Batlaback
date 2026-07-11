@@ -653,22 +653,29 @@ function refreshGamepadHints() {
 }
 
 function preferSwitchPrepHints(pad) {
-  return isSwitchGamepad(pad) || isTouchInteraction() || document.documentElement.dataset.touch === "true";
+  return isSwitchGamepad(pad)
+    || isTouchInteraction()
+    || (typeof isStylusInteraction === "function" && isStylusInteraction())
+    || document.documentElement.dataset.touch === "true";
 }
 
 function refreshPrepToolbarHints(pad) {
   const el = document.getElementById("prep-toolbar-hints");
   if (!el) return;
   const context = getMenuContext();
-  const desktopKeyboard = !isTouchInteraction()
-    && !isGamepadInteraction()
+  const precisePointer = (typeof isPreciseInteraction === "function"
+    ? isPreciseInteraction()
+    : !isTouchInteraction())
+    && !isGamepadInteraction();
+  const desktopKeyboard = precisePointer
     && (context === "prep" || context === "prepDrag");
 
   if (desktopKeyboard) {
     el.classList.remove("hidden");
+    const stylus = typeof isStylusInteraction === "function" && isStylusInteraction();
     const hints = context === "prepDrag"
       ? [
-        { keys: "ПКМ / R", label: "поворот" },
+        { keys: stylus ? "палец / ПКМ" : "ПКМ / R", label: "поворот" },
         { keys: "B", label: "магазин" },
         { keys: "Esc", label: "отмена" },
       ]

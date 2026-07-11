@@ -505,7 +505,7 @@ function renderShop(side = rt.getPrepViewSide(), containerEl: HTMLElement | null
   if (typeof syncBuildTrackShopBar === "function") syncBuildTrackShopBar();
   const bindShopTouchDragStart = (cardEl: HTMLElement, index: number) => {
     cardEl.addEventListener("pointerdown", (e: PointerEvent) => {
-      if (e.pointerType === "mouse") return;
+      if (e.pointerType !== "touch") return;
       if (e.button !== 0 || (e.target as Element).closest(".shop-pin")) return;
       rt.beginPendingShopDrag(index, e, side);
     }, { passive: false });
@@ -587,7 +587,7 @@ function renderBench(side = rt.getPrepViewSide(), containerEl: HTMLElement | nul
   el.querySelectorAll(".bench-card:not(.empty)").forEach((card: Element) => {
     const idx = +(card as HTMLElement).dataset.bench!;
     card.addEventListener("pointerdown", (e: PointerEvent) => {
-      if (e.pointerType === "mouse") return;
+      if (e.pointerType !== "touch") return;
       if (e.button !== 0) return;
       rt.beginPendingBenchDrag(idx, e, side);
     }, { passive: false });

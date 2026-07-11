@@ -1,6 +1,9 @@
 /**
- * Автопереключение режима ввода: gamepad | touch | mouse.
+ * Автопереключение режима ввода: gamepad | touch | mouse | stylus.
  * Последний зафиксированный тип ввода определяет логику взаимодействия.
+ *
+ * stylus = Apple Pencil / Surface Pen: точный pointer (как мышь),
+ * без fat-finger порогов и ghost-offset над пальцем.
  */
 import type { InputMode } from "../types/game";
 
@@ -40,8 +43,22 @@ function isMouseInteraction(): boolean {
   return interactionMode === "mouse";
 }
 
+function isStylusInteraction(): boolean {
+  return interactionMode === "stylus";
+}
+
 function isGamepadInteraction(): boolean {
   return interactionMode === "gamepad";
+}
+
+/** Мышь или стилус — точный pointer (мелкий порог drag, click-buy, без finger-lift). */
+function isPreciseInteraction(): boolean {
+  return interactionMode === "mouse" || interactionMode === "stylus";
+}
+
+/** Палец — fat-finger UX (tap-tooltip, увеличенный порог, ghost над пальцем). */
+function isFatFingerInteraction(): boolean {
+  return interactionMode === "touch";
 }
 
 function onInteractionModeChange(listener: InteractionModeListener): void {
@@ -49,7 +66,7 @@ function onInteractionModeChange(listener: InteractionModeListener): void {
 }
 
 function setInteractionMode(mode: InputMode): void {
-  if (mode !== "gamepad" && mode !== "touch" && mode !== "mouse") return;
+  if (mode !== "gamepad" && mode !== "touch" && mode !== "mouse" && mode !== "stylus") return;
   if (mode === interactionMode) return;
   const prev = interactionMode;
   interactionMode = mode;
@@ -69,6 +86,10 @@ function markTouchInteraction(): void {
 
 function markMouseInteraction(): void {
   setInteractionMode("mouse");
+}
+
+function markStylusInteraction(): void {
+  setInteractionMode("stylus");
 }
 
 function markGamepadInteraction(): void {
