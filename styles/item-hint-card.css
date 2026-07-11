@@ -348,10 +348,13 @@ html[data-touch="true"] .item-hint-card__tag-emoji {
   z-index: 1;
   width: calc(112px * var(--ui-scale, 1));
   height: calc(112px * var(--ui-scale, 1));
+  --item-icon-stage-size: calc(112px * var(--ui-scale, 1));
+  --item-icon-levitate-rise: calc(7px * var(--ui-scale, 1));
+  --item-icon-levitate-drop: calc(5px * var(--ui-scale, 1));
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: hint-card-emoji-levitate 3.2s ease-in-out infinite;
+  animation: item-icon-levitate 3.2s ease-in-out infinite;
 }
 
 .item-hint-card__emoji-stage--duo {
@@ -376,7 +379,7 @@ html[data-touch="true"] .item-hint-card__tag-emoji {
   left: 50%;
   top: 50%;
   z-index: 3;
-  --hint-orbit-r: calc(52px * var(--ui-scale, 1));
+  --item-icon-orbit-r: calc(52px * var(--ui-scale, 1));
   width: calc(62px * var(--ui-scale, 1));
   height: calc(62px * var(--ui-scale, 1));
   margin:
@@ -388,25 +391,7 @@ html[data-touch="true"] .item-hint-card__tag-emoji {
   align-items: center;
   justify-content: center;
   font-size: calc(62px * var(--ui-scale, 1));
-  animation: hint-card-emoji-orbit 4.6s linear infinite;
-}
-
-@keyframes hint-card-emoji-levitate {
-  0%, 100% {
-    transform: translateY(calc(-5px * var(--ui-scale, 1)));
-  }
-  50% {
-    transform: translateY(calc(7px * var(--ui-scale, 1)));
-  }
-}
-
-@keyframes hint-card-emoji-orbit {
-  from {
-    transform: rotate(0deg) translateX(var(--hint-orbit-r)) rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg) translateX(var(--hint-orbit-r)) rotate(-360deg);
-  }
+  animation: item-icon-orbit 4.6s linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -417,7 +402,7 @@ html[data-touch="true"] .item-hint-card__tag-emoji {
 
   .item-hint-card__emoji--orbit {
     animation: none;
-    transform: rotate(35deg) translateX(var(--hint-orbit-r)) rotate(-35deg);
+    transform: rotate(35deg) translateX(var(--item-icon-orbit-r)) rotate(-35deg);
   }
 }
 

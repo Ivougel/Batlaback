@@ -186,7 +186,7 @@ html[data-prep-shop-popover="true"] #prep-shop-popover #shop-panel .shop-card:no
   justify-self: center;
 }
 
-html[data-prep-shop-popover="true"] #prep-shop-popover #shop-panel .shop-card:has(.icon--duo) {
+html[data-prep-shop-popover="true"] #prep-shop-popover #shop-panel .shop-card:has(.icon--duo):not(:has(.icon--stage)) {
   grid-column: 1 / -1;
   width: 100%;
   justify-self: stretch;

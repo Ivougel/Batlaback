@@ -208,12 +208,6 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] .shop-panel-header .prep
   justify-self: center;
 }
 
-/* Двухэмодзийные предметы — всегда на всю ширину ряда (читаемость + touch) */
-#app[data-phase="prep"] #shop-panel .shop-card:has(.icon--duo) {
-  grid-column: 1 / -1;
-  width: 100%;
-  justify-self: stretch;
-}
 
 #app[data-phase="prep"] #shop-panel .shop-card.empty {
   display: none;
@@ -293,6 +287,42 @@ html[data-prep-layout="mobile"] #app[data-phase="prep"] .shop-panel-header .prep
   overflow: visible;
   box-sizing: border-box;
   padding: calc(2px * var(--ui-scale));
+}
+
+/* Анимированная сцена emoji — магазин и popover */
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel)
+  .shop-card .shop-item-visual .icon.icon--stage {
+  --item-icon-stage-size: var(--shop-card-icon-box);
+  --item-icon-levitate-rise: calc(4px * var(--ui-scale, 1));
+  --item-icon-levitate-drop: calc(3px * var(--ui-scale, 1));
+  width: var(--shop-card-icon-box);
+  height: var(--shop-card-icon-box);
+  font-size: var(--shop-card-icon-font);
+  overflow: visible;
+  padding: 0;
+}
+
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel)
+  .shop-card .shop-item-visual .icon.icon--stage-duo {
+  width: var(--shop-card-icon-box);
+  height: var(--shop-card-icon-box);
+  font-size: var(--shop-card-icon-font);
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel)
+  .shop-card .shop-item-visual .icon.icon--stage .item-icon-stage {
+  width: 100%;
+  height: 100%;
+}
+
+:is(#app[data-phase="prep"] #shop-panel, #prep-shop-popover #shop-panel)
+  .shop-card:has(.icon--stage-duo) {
+  grid-column: auto;
+  width: auto;
+  justify-self: stretch;
 }
 
 #app[data-phase="prep"] #shop-panel .shop-card .shop-item-visual .icon.icon--duo {

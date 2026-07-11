@@ -195,7 +195,13 @@ body:has(#app:is([data-phase="prep"], [data-prep-hero-hud="true"])) {
 #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-card.rarity-rare .shop-item-visual .icon.icon--duo,
 #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-card.rarity-epic .shop-item-visual .icon.icon--duo,
 #app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-card.rarity-legendary .shop-item-visual .icon.icon--duo,
-#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-card.frozen .shop-item-visual .icon.icon--duo {
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-card.frozen .shop-item-visual .icon.icon--duo,
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-card.rarity-common .shop-item-visual .icon.icon--stage-duo,
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-card.rarity-uncommon .shop-item-visual .icon.icon--stage-duo,
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-card.rarity-rare .shop-item-visual .icon.icon--stage-duo,
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-card.rarity-epic .shop-item-visual .icon.icon--stage-duo,
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-card.rarity-legendary .shop-item-visual .icon.icon--stage-duo,
+#app:is([data-phase="prep"], [data-prep-hero-hud="true"]) #shop-panel .shop-card.frozen .shop-item-visual .icon.icon--stage-duo {
   box-shadow: none !important;
 }
 

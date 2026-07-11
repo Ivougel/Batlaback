@@ -276,7 +276,7 @@ function getSocketGemDisplayIcon(def) {
   return isGem ? icons[icons.length - 1] : icons[0];
 }
 
-/** HTML для магазина / скамейки: до 2 эмодзи в одной подложке, слева направо. */
+/** HTML для магазина / скамейки: до 2 эмодзi в одной подложке, слева направо. */
 function renderItemIconsHTML(def) {
   const sparkles = typeof renderItemEmojiSparklesHTML === "function"
     ? renderItemEmojiSparklesHTML()
@@ -287,10 +287,31 @@ function renderItemIconsHTML(def) {
   return `${sparkles}<span class="icon-duo" aria-hidden="true">${icons.map((glyph) => `<span class="icon-glyph">${glyph}</span>`).join("")}</span>`;
 }
 
-/** Класс оболочки иконки: два эмодзи — та же подложка, уже глифы внутри. */
+/** Левитация + орбита (как в item-hint-card) — для магазина. */
+function renderShopItemIconsHTML(def) {
+  const sparkles = typeof renderItemEmojiSparklesHTML === "function"
+    ? renderItemEmojiSparklesHTML()
+    : "";
+  const icons = getItemIcons(def).slice(0, 2);
+  if (!icons.length) icons.push("📦");
+  if (icons.length === 1) {
+    return `${sparkles}<div class="item-icon-stage" aria-hidden="true"><span class="item-icon-stage__emoji item-icon-stage__emoji--primary">${icons[0]}</span></div>`;
+  }
+  return `${sparkles}<div class="item-icon-stage item-icon-stage--duo" aria-hidden="true"><span class="item-icon-stage__emoji item-icon-stage__emoji--primary">${icons[0]}</span><span class="item-icon-stage__emoji item-icon-stage__emoji--orbit">${icons[1]}</span></div>`;
+}
+
+/** Класс оболочки иконки: два эмодзi — та же подложка, уже глифы внутри. */
 function getItemIconShellClass(def) {
   const duo = getItemIcons(def).length > 1;
   return duo ? "icon icon--duo item-emoji-sparkle-host" : "icon item-emoji-sparkle-host";
+}
+
+/** Оболочка иконки магазина — анимированная сцена. */
+function getShopItemIconShellClass(def) {
+  const duo = getItemIcons(def).length > 1;
+  return duo
+    ? "icon icon--stage icon--stage-duo item-emoji-sparkle-host"
+    : "icon icon--stage item-emoji-sparkle-host";
 }
 
 /** Компактно: оба эмодзи в одной клетке (магазин, скамейка, 1×1 на поле). */

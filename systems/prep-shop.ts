@@ -401,7 +401,7 @@ function renderShopCardHTML(
         ${trackBadge}${innerBefore}
         <div class="shop-item-hero">
           <div class="shop-item-visual">
-            <div class="${getItemIconShellClass(def)}">${renderItemIconsHTML(def)}</div>
+            <div class="${getShopItemIconShellClass(def)}">${renderShopItemIconsHTML(def)}</div>
           </div>
           ${shapeHtml}
         </div>

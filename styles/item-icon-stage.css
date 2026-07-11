@@ -1,0 +1,81 @@
+/**
+ * Левитация и орбита emoji — магазин, карточка предмета и др.
+ * Размер через --item-icon-stage-size на контейнере .item-icon-stage.
+ */
+
+@keyframes item-icon-levitate {
+  0%, 100% {
+    transform: translateY(calc(-1 * var(--item-icon-levitate-drop, calc(3px * var(--ui-scale, 1)))));
+  }
+  50% {
+    transform: translateY(var(--item-icon-levitate-rise, calc(4px * var(--ui-scale, 1))));
+  }
+}
+
+@keyframes item-icon-orbit {
+  from {
+    transform: rotate(0deg) translateX(var(--item-icon-orbit-r)) rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg) translateX(var(--item-icon-orbit-r)) rotate(-360deg);
+  }
+}
+
+.item-icon-stage {
+  --item-icon-stage-size: calc(56px * var(--ui-scale, 1));
+  --item-icon-orbit-r: calc(0.38 * var(--item-icon-stage-size));
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  line-height: 1;
+  animation: item-icon-levitate 3.2s ease-in-out infinite;
+}
+
+.item-icon-stage__emoji {
+  line-height: 1;
+  pointer-events: none;
+}
+
+.item-icon-stage__emoji--primary {
+  position: relative;
+  z-index: 2;
+  font-size: 1em;
+}
+
+.item-icon-stage--duo .item-icon-stage__emoji--primary {
+  font-size: 0.92em;
+}
+
+.item-icon-stage__emoji--orbit {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 3;
+  width: calc(0.48 * var(--item-icon-stage-size));
+  height: calc(0.48 * var(--item-icon-stage-size));
+  margin:
+    calc(-0.24 * var(--item-icon-stage-size))
+    0
+    0
+    calc(-0.24 * var(--item-icon-stage-size));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(0.52 * var(--item-icon-stage-size));
+  animation: item-icon-orbit 4.6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item-icon-stage {
+    animation: none;
+    transform: none;
+  }
+
+  .item-icon-stage__emoji--orbit {
+    animation: none;
+    transform: rotate(35deg) translateX(var(--item-icon-orbit-r)) rotate(-35deg);
+  }
+}

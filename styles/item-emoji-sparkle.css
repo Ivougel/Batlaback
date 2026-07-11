@@ -27,6 +27,7 @@
 
 .item-emoji-sparkle-host .icon-glyph,
 .item-emoji-sparkle-host .icon-duo,
+.item-emoji-sparkle-host .item-icon-stage,
 .item-emoji-sparkle-host .enh-shop-icon {
   position: relative;
   z-index: 2;
@@ -55,6 +56,17 @@
     brightness(1.12)
     saturate(1.15);
   transform: scale(1.04);
+}
+
+.shop-card:hover .item-emoji-sparkle-host .item-icon-stage,
+.shop-card.is-sparkle-source .item-emoji-sparkle-host .item-icon-stage,
+.item-emoji-sparkle-host:hover .item-icon-stage,
+.item-emoji-sparkle-host.is-sparkle-active .item-icon-stage {
+  filter:
+    drop-shadow(0 0 6px rgba(255, 230, 120, 0.85))
+    drop-shadow(0 0 14px rgba(255, 196, 77, 0.55))
+    brightness(1.12)
+    saturate(1.15);
 }
 
 .item-emoji-sparkle {

@@ -30,12 +30,16 @@
 
 #app[data-phase="prep"] #shop-panel .shop-card.shop-card--craft:not(.empty) .shop-item-visual .icon-glyph,
 #app[data-phase="prep"] #shop-panel .shop-card.shop-card--craft:not(.empty) .shop-item-visual .icon-duo .icon-glyph,
+#app[data-phase="prep"] #shop-panel .shop-card.shop-card--craft:not(.empty) .shop-item-visual .item-icon-stage__emoji,
 #prep-shop-popover .shop-card.shop-card--craft:not(.empty) .shop-item-visual .icon-glyph,
 #prep-shop-popover .shop-card.shop-card--craft:not(.empty) .shop-item-visual .icon-duo .icon-glyph,
+#prep-shop-popover .shop-card.shop-card--craft:not(.empty) .shop-item-visual .item-icon-stage__emoji,
 #app[data-phase="prep"] #shop-panel .shop-card.shop-card--craft-strong:not(.empty) .shop-item-visual .icon-glyph,
 #app[data-phase="prep"] #shop-panel .shop-card.shop-card--craft-strong:not(.empty) .shop-item-visual .icon-duo .icon-glyph,
+#app[data-phase="prep"] #shop-panel .shop-card.shop-card--craft-strong:not(.empty) .shop-item-visual .item-icon-stage__emoji,
 #prep-shop-popover .shop-card.shop-card--craft-strong:not(.empty) .shop-item-visual .icon-glyph,
-#prep-shop-popover .shop-card.shop-card--craft-strong:not(.empty) .shop-item-visual .icon-duo .icon-glyph {
+#prep-shop-popover .shop-card.shop-card--craft-strong:not(.empty) .shop-item-visual .icon-duo .icon-glyph,
+#prep-shop-popover .shop-card.shop-card--craft-strong:not(.empty) .shop-item-visual .item-icon-stage__emoji {
   filter:
     drop-shadow(0 0 10px rgba(210, 170, 255, 0.95))
     drop-shadow(0 0 18px rgba(255, 220, 140, 0.55));

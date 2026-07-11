@@ -115,7 +115,7 @@ const PrepStoragePhysics = (() => {
       '#shop-panel .shop-card:not(.empty) .shop-item-visual .icon:not(.icon--duo)',
     );
     const duoIcon = document.querySelector(
-      '#shop-panel .shop-card:not(.empty) .shop-item-visual .icon.icon--duo',
+      '#shop-panel .shop-card:not(.empty) .shop-item-visual .icon.icon--duo, #shop-panel .shop-card:not(.empty) .shop-item-visual .icon.icon--stage-duo',
     );
     const refIcon = soloIcon || duoIcon || document.querySelector(
       '#shop-panel .shop-card:not(.empty) .shop-item-visual .icon',

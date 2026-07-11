@@ -649,7 +649,9 @@ declare function getRarityCardClasses(rarity: string, base: string): string;
 declare function getRarityNameColor(rarity: string): string;
 declare function renderItemShapeMiniHTML(def: object, opts?: { size?: string }): string;
 declare function getItemIconShellClass(def: object): string;
+declare function getShopItemIconShellClass(def: object): string;
 declare function renderItemIconsHTML(def: object): string;
+declare function renderShopItemIconsHTML(def: object): string;
 declare function buildItemCardHTML(def: object, opts?: object): string;
 declare function bindItemTooltipEvents(
   el: Element,
